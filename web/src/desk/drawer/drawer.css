@@ -71,6 +71,9 @@
 /* W3-B (atlas 2026-10-27): the toolbar sits under the title bar, outside
    the scroll; the view is two dense toggle verbs at its right end. */
 .drawer-window .drawer-body > .kit-toolbar { flex: 0 0 auto; }
+/* W6 (atlas pass 3): the toolbar answers to the window's width (its verbs
+   fold into More at phone width), as a surface body's toolbar does. */
+.drawer-window .drawer-body { container: surface / inline-size; }
 .drawer-view { display: inline-flex; align-items: center; gap: 2px; }
 /* The Sources rows: the provider's object glyph (no GH / J plate), the
    scope, then the state as a dot and a sentence-case word. */

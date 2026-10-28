@@ -21,6 +21,7 @@ import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 import { FootSlotContext } from "./foot";
 import { Button } from "../../components/signal/Signal";
+import { WorkMenu } from "../components/DeskMenu";
 // kit.css is imported by surface.css (the kit restyles live beside it).
 
 /** One token of a StatusStrip: a lamp square and a word, a word alone, a
@@ -200,6 +201,72 @@ export function Toolbar({
       <span className="kit-toolbar-sort" />
       {trailing ? <span className="kit-toolbar-trailing">{trailing}</span> : null}
     </div>
+  );
+}
+
+/** One verb of a ToolbarFold: its word, its glyph, its press. */
+export type ToolbarFoldVerb = {
+  key: string;
+  label: string;
+  glyph?: ToolGlyphKind;
+  onSelect(): void;
+  /** The hover title (an address a link opens, a longer name). */
+  title?: string;
+  testId?: string;
+  /** The verb runs now: its Button shows the wait; the menu leaves it out. */
+  busy?: boolean;
+};
+
+/** W6 (atlas pass 3, defect 12) — the toolbar's overflow. On a wide
+ *  surface each verb is a quiet toolbar Button with its glyph AND its word;
+ *  on a narrow one (the phone) the verbs fold into one `More ▾` Button that
+ *  opens them as a menu with their words. Never bare icons: a verb always
+ *  says its name. `foldAt` is the surface width at which they fold:
+ *  `narrow` (520 px, the phone) or `medium` (640 px, a window of many verbs). */
+export function ToolbarFold({
+  verbs,
+  label = "More",
+  foldAt = "narrow",
+  "data-testid": testId,
+}: {
+  verbs: ReadonlyArray<ToolbarFoldVerb>;
+  label?: string;
+  foldAt?: "narrow" | "medium";
+  "data-testid"?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const moreRef = useRef<HTMLButtonElement | null>(null);
+  if (!verbs.length) return null;
+  const rect = open ? moreRef.current?.getBoundingClientRect() : null;
+  return (
+    <span className="kit-toolbar-fold" data-fold-at={foldAt} data-testid={testId}>
+      {verbs.map((verb) => (
+        <Button key={verb.key} dense variant="ghost" className="kit-toolbar-fold-verb" title={verb.title}
+          loading={verb.busy} disabled={verb.busy} onClick={() => verb.onSelect()} data-testid={verb.testId}>
+          {verb.glyph ? <ToolGlyph kind={verb.glyph} /> : null}{verb.label}
+        </Button>
+      ))}
+      <Button ref={moreRef} dense variant="ghost" className="kit-toolbar-more" aria-haspopup="menu" aria-expanded={open}
+        aria-label={label} onClick={() => setOpen((value) => !value)} data-testid={testId ? `${testId}-more` : undefined}>
+        {label}
+        <svg className="kit-toolbar-more-caret" width={10} height={10} viewBox="0 0 10 10" fill="none" stroke="currentColor"
+          strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <path d="M2.5 3.75L5 6.25l2.5-2.5" />
+        </svg>
+      </Button>
+      {open && rect ? (
+        <WorkMenu
+          label={label}
+          x={rect.left}
+          y={rect.bottom}
+          opener={moreRef.current}
+          autoFocus
+          returnFocus={() => moreRef.current?.focus()}
+          entries={verbs.filter((verb) => !verb.busy).map((verb) => ({ type: "item" as const, id: verb.key, label: verb.label, onSelect: () => verb.onSelect() }))}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
+    </span>
   );
 }
 

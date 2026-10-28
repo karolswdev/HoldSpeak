@@ -5,6 +5,7 @@ import { useDesk } from "../../store";
 import HONEST_DECISIONS from "../../../test/wire/decisions.honest-faces.wire.json";
 
 const apiFetch = vi.hoisted(() => vi.fn());
+const apiRequest = vi.hoisted(() => vi.fn());
 
 // One `subscribe` for the whole file, as the real provider gives (a
 // `useCallback`). A new function per render made the view subscribe again on
@@ -28,8 +29,10 @@ vi.mock("../../openObject", async (importOriginal) => ({
   openRef,
 }));
 
-vi.mock("../../../lib/api", () => ({
+vi.mock("../../../lib/api", async (importOriginal) => ({
+  ApiError: (await importOriginal<typeof import("../../../lib/api")>()).ApiError,
   apiFetch,
+  apiRequest,
   readableError: (reason: unknown) => reason instanceof Error ? reason.message : "Request failed",
 }));
 
@@ -360,5 +363,65 @@ describe("Decisions rows on the recorded hub", () => {
     expect(text).toContain("Ledger cutover sync");
     expect(text).not.toMatch(/D-[0-9a-f]{6,}/i);
     expect(text).not.toMatch(/dec-[0-9a-f]{6,}|record-[0-9a-f]{6,}/);
+  });
+});
+
+describe("W6 (atlas pass 3): an open decision's reader has its verbs", () => {
+  // The from-desk producer's record (decision_records.py create_from_desk):
+  // source_type desk, source_id the Desk decision, the state read from that
+  // decision (decision_record_service `_decorate`); fenced on the hub by
+  // tests/unit/test_decision_records_routes.py (W6 case).
+  const open = {
+    id: "rec-open", title: "Drop the nightly export", decision_text: "Drop the nightly export",
+    rationale: "About: Payments Platform Rewrite\n\nWhy: The event bus replaces it.",
+    alternatives: null, owner: null, review_date: null, lifecycle: "active", status: "proposed",
+    source_type: "desk", source_id: "d-open", created_at: "2026-10-27T09:00:00",
+    sources: [], work: [], revisions: [],
+  };
+  let status = "proposed";
+  beforeEach(() => {
+    status = "proposed";
+    apiFetch.mockReset();
+    apiRequest.mockReset();
+    openRef.mockReset();
+    apiFetch.mockImplementation((path: string) => path === "/api/decision-records/rec-open"
+      ? Promise.resolve({ ...open, status }) : hub(path));
+    apiRequest.mockImplementation(async (path: string, init: RequestInit) => {
+      status = JSON.parse(String(init.body)).status;
+      return new Response(JSON.stringify({ decision: { id: "d-open", status } }), { status: 200 });
+    });
+    useDesk.setState({ refresh: vi.fn(() => Promise.resolve()) } as never);
+  });
+
+  it("Accept writes the Desk decision's state and the reader reads Accepted", async () => {
+    render(<DecisionsView windowed receiptId="rec-open" />);
+    const toolbar = await screen.findByTestId("decision-reader-toolbar");
+    await screen.findByTestId("decision-reader-accept");
+    expect(screen.queryByTestId("decision-reader-send")).toBeNull();
+    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Open");
+    expect(toolbar.textContent).toContain("Edit");
+    fireEvent.click(screen.getByTestId("decision-reader-accept"));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith("/api/decisions/d-open/status", expect.objectContaining({ method: "PUT" })));
+    expect(JSON.parse(String(apiRequest.mock.calls[0][1].body))).toEqual({ status: "accepted" });
+    await waitFor(() => expect(screen.getByTestId("decision-reader-state").textContent).toMatch(/^Accepted/));
+    expect(screen.queryByTestId("decision-reader-accept")).toBeNull();
+    expect(screen.getByTestId("decision-reader-send")).toBeTruthy();
+  });
+
+  it("a refused Accept says so in words and keeps the decision open", async () => {
+    apiRequest.mockImplementation(async () => new Response("{}", { status: 503 }));
+    render(<DecisionsView windowed receiptId="rec-open" />);
+    fireEvent.click(await screen.findByTestId("decision-reader-accept"));
+    expect((await screen.findByTestId("decision-reader-failure")).textContent).toBe("Could not accept it · Not available now");
+    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Open");
+  });
+
+  it("Edit opens the Desk decision's own window in its editor", async () => {
+    const { hasDecisionEditRequest, takeDecisionEditRequest } = await import("../decisionEdit");
+    render(<DecisionsView windowed receiptId="rec-open" />);
+    fireEvent.click(await screen.findByTestId("decision-reader-edit"));
+    await waitFor(() => expect(openRef).toHaveBeenCalledWith("desk_decision:d-open"));
+    expect(hasDecisionEditRequest("d-open")).toBe(true);
+    takeDecisionEditRequest("d-open");
   });
 });

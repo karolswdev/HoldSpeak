@@ -119,7 +119,7 @@ export { SPARSE_THRESHOLD } from "./sparse";
 
 export { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 // Phase 16: the interior kit (COMPOSITOR.md §11; contract.md "The interior kit").
-export { AppHead, StatusStrip, FilterBar, Toolbar, StatusBar, TickNumber, DotWord, ToolGlyph, countWords, KindPlate, Avatar, AvatarStack, AppTile, FigureStrip, Steps, initialsOf, hueOf, type StatusStripItem, type StatusBarItem, type ToolGlyphKind, type Figure, type Step } from "./kit";
+export { AppHead, StatusStrip, FilterBar, Toolbar, ToolbarFold, type ToolbarFoldVerb, StatusBar, TickNumber, DotWord, ToolGlyph, countWords, KindPlate, Avatar, AvatarStack, AppTile, FigureStrip, Steps, initialsOf, hueOf, type StatusStripItem, type StatusBarItem, type ToolGlyphKind, type Figure, type Step } from "./kit";
 
 export {
   LedgerFilterBar,

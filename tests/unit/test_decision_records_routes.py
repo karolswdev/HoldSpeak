@@ -113,3 +113,43 @@ def test_from_desk_unauthenticated_refusal_writes_no_source_or_record(tmp_path, 
     assert "authenticated principal" in response.json()["error"]
     assert database.desk_decisions.list() == []
     assert DecisionRecordService(database).list_records(None) == []
+
+
+def test_open_desk_record_names_its_desk_decision_and_accept_there_is_its_state(tmp_path, monkeypatch) -> None:
+    """W6 (atlas pass 3, defect 18): the Decisions reader's Accept and Edit.
+
+    An open record made from the Desk names the Desk decision it came from
+    (source_type desk, source_id); its state is that decision's, so the
+    reader's Accept writes `PUT /api/decisions/{source_id}/status` and the
+    record then reads accepted.
+    """
+    from holdspeak.web.routes.primitives.decisions import build_desk_decisions_router
+
+    database = Database(tmp_path / "accept.db")
+    monkeypatch.setattr(record_routes, "get_database", lambda: database)
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+
+    context = WebContext(get_state=lambda: {}, primitive_service=PrimitiveService(database))
+    app.include_router(record_routes.build_decision_records_router(context))
+    app.include_router(build_desk_decisions_router(context))
+    client = TestClient(app)
+
+    made = client.post("/api/decision-records/from-desk", json={
+        "title": "Drop the nightly export", "status": "proposed",
+        "project_name": "Payments Platform Rewrite", "why": "The event bus replaces it.",
+    })
+    assert made.status_code == 201, made.text
+    record_id = made.json()["record"]["id"]
+    desk_id = made.json()["decision"]["id"]
+
+    read = client.get(f"/api/decision-records/{record_id}").json()
+    assert (read["source_type"], read["source_id"], read["status"]) == ("desk", desk_id, "proposed")
+
+    accepted = client.put(f"/api/decisions/{desk_id}/status", json={"status": "accepted"})
+    assert accepted.status_code == 200, accepted.text
+    assert client.get(f"/api/decision-records/{record_id}").json()["status"] == "accepted"
