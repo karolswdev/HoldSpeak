@@ -22,6 +22,7 @@ import {
 } from "../shell";
 import * as deskApi from "../api";
 import { useDesk } from "../store";
+import { DESK_WINDOW } from "../../lib/tokens.gen";
 import { verbById } from "../verbRegistry";
 import { keyContext } from "../keymap";
 
@@ -147,7 +148,7 @@ describe("snapForPointer (edge tiling)", () => {
     const left = snapForPointer(10, 450, VW, VH)!;
     expect(left.x).toBe(10);
     expect(left.y).toBe(28);
-    expect(left.h).toBe(VH - 28 - 60);
+    expect(left.h).toBe(VH - 28 - DESK_WINDOW.snapBottom);
     const right = snapForPointer(VW - 5, 450, VW, VH)!;
     expect(right.x + right.w).toBe(VW - 10);
     expect(right.w).toBe(left.w);
@@ -170,7 +171,8 @@ describe("placeWindow (HS-97-02, the open-placement engine)", () => {
   const VW = 1440;
   const VH = 900;
   const TOP = 28;
-  const BOTTOM = 60;
+  // The dock's reserve is the generated token (84 px, #1497), one source.
+  const BOTTOM = DESK_WINDOW.snapBottom;
 
   const headsClash = (
     a: { x: number; y: number; w: number },
@@ -292,7 +294,7 @@ describe("exposeLayout (HS-97-06, the pick grid)", () => {
 describe("clampIntoBand (HS-97-02, clamp-on-open)", () => {
   it("a rect persisted on a larger viewport lands whole", () => {
     const r = clampIntoBand({ x: 1300, y: 800, w: 640, h: 480 }, 1440, 900);
-    expect(r).toEqual({ x: 790, y: 360, w: 640, h: 480 });
+    expect(r).toEqual({ x: 790, y: 900 - DESK_WINDOW.snapBottom - 480, w: 640, h: 480 });
   });
 
   it("an in-band rect is untouched", () => {
@@ -302,16 +304,18 @@ describe("clampIntoBand (HS-97-02, clamp-on-open)", () => {
 });
 
 describe("the working band clears the measured Dock", () => {
-  it("places and clamps a window above the Dock's published height, not only the 60 px band", () => {
-    // Dock.tsx publishes `--desk-dock-h` (the 76 px shelf). A window placed at
-    // the band's foot had its footer verbs under the Dock.
-    document.documentElement.style.setProperty("--desk-dock-h", "76px");
+  it("places and clamps a window above the Dock's published height, not only the reserved band", () => {
+    // Dock.tsx publishes `--desk-dock-h`. A Dock taller than the reserved
+    // band (84 px, #1497) moves the foot up: a window placed at the band's
+    // foot had its footer verbs under the Dock.
+    const dock = DESK_WINDOW.snapBottom + 16;
+    document.documentElement.style.setProperty("--desk-dock-h", `${dock}px`);
     try {
       const clamped = clampIntoBand({ x: 1000, y: 800, w: 400, h: 538 }, 1440, 900);
-      expect(clamped.y + clamped.h).toBeLessThanOrEqual(900 - 76);
+      expect(clamped.y + clamped.h).toBeLessThanOrEqual(900 - dock);
       const thread = { x: 1022, y: 64, w: 400, h: 361 };
       const placed = placeWindow({ x: 1022, y: 64, w: 400, h: 538 }, [thread], 1440, 900);
-      expect(placed.y + placed.h).toBeLessThanOrEqual(900 - 76);
+      expect(placed.y + placed.h).toBeLessThanOrEqual(900 - dock);
     } finally {
       document.documentElement.style.removeProperty("--desk-dock-h");
     }
