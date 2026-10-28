@@ -208,6 +208,11 @@ def _seed_unfiled(hub: Hub) -> dict[str, str]:
 
     db = hub.db
     now = datetime.now()
+    # A due a week out: Priya's item then sits in the Door's waiting column on
+    # every weekday. A spoken "Friday" fell inside the two-day "now" window
+    # (follow_through_service._lane) from Wednesday to Friday, and the row
+    # read DUE TODAY instead of WAITING ON PRIYA SHAH (a calendar red).
+    due = (now + timedelta(days=7)).date().isoformat()
     action_id = "action_philo15_08_priya"
     with db._connection() as conn:
         conn.execute(
@@ -229,8 +234,8 @@ def _seed_unfiled(hub: Hub) -> dict[str, str]:
             )
         conn.execute(
             "INSERT INTO action_items (id, meeting_id, task, owner, due, status, review_state, created_at) "
-            "VALUES (?, ?, ?, 'Priya Shah', 'Friday', 'pending', 'pending', ?)",
-            (action_id, UNFILED, ACTION, now.isoformat()),
+            "VALUES (?, ?, ?, 'Priya Shah', ?, 'pending', 'pending', ?)",
+            (action_id, UNFILED, ACTION, due, now.isoformat()),
         )
         conn.execute(
             "INSERT INTO artifacts (id, meeting_id, origin, artifact_type, title, structured_json, "
@@ -239,7 +244,7 @@ def _seed_unfiled(hub: Hub) -> dict[str, str]:
             " 'draft', 'meeting_summary', '1')",
             (f"summary-items-{UNFILED}", UNFILED, json.dumps({
                 "decisions": [{"decision": DECISION, "rationale": None}],
-                "action_items": [{"task": ACTION, "owner": "Priya Shah", "due": "Friday",
+                "action_items": [{"task": ACTION, "owner": "Priya Shah", "due": due,
                                   "action_item_id": action_id}],
             })),
         )

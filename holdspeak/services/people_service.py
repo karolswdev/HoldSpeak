@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timezone
-from holdspeak.timestamps import local_wall
+from holdspeak.timestamps import aware, local_wall
 from typing import Any
 
 from ..principals import PrincipalKind
@@ -650,7 +650,9 @@ class PeopleService:
         try:
             conn_factory = db._connection
             with conn_factory() as conn:
-                now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+                # The hub clock seam (``local_wall``), so a pinned rig day and
+                # the real day read the same "next" 1:1.
+                now = aware(local_wall()).astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
                 relationship_links = {
                     (str(link.get("uid") or ""), str(link.get("source_id") or ""))
                     for link in relationship.get("calendar_links") or []

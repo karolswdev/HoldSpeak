@@ -17,7 +17,7 @@ as the ISO day it names on the recon's week, moved by the same days.
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -162,7 +162,7 @@ WIRE_DAY = date(2026, 10, 20)
 def pin_wire_day(hub: Any, monkeypatch: Any, *, brief: bool = False) -> None:
     from holdspeak.services import (
         attention_ranking, follow_through_service, needs_you_aggregate,
-        needs_you_membership, project_service,
+        needs_you_membership, people_service, person_overlay, project_service,
     )
 
     class WireDate(date):
@@ -172,8 +172,15 @@ def pin_wire_day(hub: Any, monkeypatch: Any, *, brief: bool = False) -> None:
 
     monkeypatch.setattr(follow_through_service, "date", WireDate)
     wire_now = lambda: datetime(2026, 10, 20, 10, 0).astimezone()
-    for module in (attention_ranking, needs_you_aggregate, needs_you_membership, project_service):
+    for module in (attention_ranking, needs_you_aggregate, needs_you_membership, people_service, project_service):
         monkeypatch.setattr(module, "local_wall", wire_now)
+    # The calendar reads "next" on the same day (_calendar_today seeds the
+    # wire day's events): the Door's upcoming and the People overlay.
+    monkeypatch.setattr(person_overlay, "utc_now_iso",
+                        lambda: wire_now().astimezone(timezone.utc).isoformat())
+    door = getattr(hub.root, "door_service", None)
+    if door is not None:
+        monkeypatch.setattr(door, "_clock", wire_now)
     if brief:
         hub.root.monday_brief_service._clock = wire_now
 
@@ -183,7 +190,11 @@ def normalize_wire_change_stamps(hub: Any, project_id: str) -> None:
     from contextlib import closing
     from holdspeak.people import production_people_store
 
-    stamp = "2026-10-20T07:40:00+00:00"
+    # Tuesday 01:40 on the hub's wall (07:40Z in Denver), 8 h 20 min before
+    # the pinned 10:00: a fixed UTC stamp lay after the pinned "now" east of
+    # UTC+8 (Auckland), and Changed lost all four rows.
+    wire_now = datetime(2026, 10, 20, 10, 0).astimezone()
+    stamp = (wire_now - timedelta(hours=8, minutes=20)).astimezone(timezone.utc).isoformat(timespec="seconds")
     with hub.db._connection() as conn:
         project = conn.execute("UPDATE projects SET created_at=? WHERE id=?", (stamp, project_id))
         decisions = conn.execute(
@@ -191,7 +202,15 @@ def normalize_wire_change_stamps(hub: Any, project_id: str) -> None:
             "WHERE state='confirmed' AND kind='decision' AND meeting_id IN (?, ?)",
             (stamp, "m-daily-architecture-review", "m-daily-platform-sync"),
         )
-        assert project.rowcount == 1 and decisions.rowcount == 2
+        # Their records too: the brief's "new decisions" reads the record's
+        # created_at inside the pinned week, never the real day's stamp.
+        records = conn.execute(
+            "UPDATE decision_records SET created_at=? WHERE id IN ("
+            " SELECT decision_record_id FROM follow_through_proposals "
+            " WHERE state='confirmed' AND kind='decision' AND meeting_id IN (?, ?))",
+            (stamp, "m-daily-architecture-review", "m-daily-platform-sync"),
+        )
+        assert project.rowcount == 1 and decisions.rowcount == 2 and records.rowcount == 2
     store = production_people_store()
     with closing(store._connect()) as conn:
         people = conn.execute("UPDATE records SET created_at=? WHERE kind='relationship'", (stamp,))
