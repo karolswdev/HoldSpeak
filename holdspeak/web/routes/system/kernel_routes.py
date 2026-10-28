@@ -22,7 +22,7 @@ def build_kernel_router() -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/kernel/read")
-    async def api_kernel_read(
+    def api_kernel_read(
         request: Request, refs: list[str] = Query(default=[]),
         view: str = "state", consistency: str = "committed",
     ) -> Any:
@@ -70,7 +70,7 @@ def build_kernel_router() -> APIRouter:
             return JSONResponse({"error": "expected_revision_required"}, status_code=400)
 
     @router.get("/api/kernel/events")
-    async def api_kernel_events(
+    def api_kernel_events(
         request: Request, after_cursor: int = 0, operation_id: str = "",
         event_type: str = "", privacy_class: str = "", stream: str = "",
     ) -> Any:
@@ -87,7 +87,7 @@ def build_kernel_router() -> APIRouter:
             return _refused(exc)
 
     @router.post("/api/kernel/executor/claim")
-    async def api_kernel_claim(request: Request) -> Any:
+    def api_kernel_claim(request: Request) -> Any:
         try:
             with _as_principal(request.state.principal):
                 return JSONResponse(kernel.claim())
@@ -111,7 +111,7 @@ def build_kernel_router() -> APIRouter:
             return _refused(exc)
 
     @router.get("/api/kernel/executor/operations/{operation_id}/reconcile")
-    async def api_kernel_reconcile(operation_id: str, request: Request) -> Any:
+    def api_kernel_reconcile(operation_id: str, request: Request) -> Any:
         try:
             with _as_principal(request.state.principal):
                 return JSONResponse(kernel.reconcile(operation_id))

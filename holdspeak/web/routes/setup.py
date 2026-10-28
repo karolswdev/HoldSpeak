@@ -69,7 +69,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         return service_refusal(exc)
 
     @router.get("/api/setup/status")
-    async def api_setup_status(request: Request) -> Any:
+    def api_setup_status(request: Request) -> Any:
         try:
             return service.status(request.state.principal)
         except ServiceError as exc:
@@ -153,7 +153,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to look on the network")
 
     @router.get("/api/setup/hub-default-summary")
-    async def api_hub_default_summary() -> Any:
+    def api_hub_default_summary() -> Any:
         try:
             from ...inference_targets import this_machine_target
 
@@ -178,7 +178,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to test runtime")
 
     @router.put("/api/setup/onboarding")
-    async def api_onboarding_disposition(request: Request, payload: dict[str, Any]) -> Any:
+    def api_onboarding_disposition(request: Request, payload: dict[str, Any]) -> Any:
         try:
             return service.set_onboarding_disposition(request.state.principal, payload or {})
         except ServiceError as exc:
@@ -187,7 +187,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update onboarding disposition")
 
     @router.post("/api/setup/first-value/start")
-    async def api_first_value_start(request: Request, payload: dict[str, Any]) -> Any:
+    def api_first_value_start(request: Request, payload: dict[str, Any]) -> Any:
         try:
             return JSONResponse(service.start_first_value(request.state.principal, payload or {}), status_code=201)
         except ServiceError as exc:
@@ -196,7 +196,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to start first-value receipt")
 
     @router.post("/api/setup/first-value/{attempt_id}/finish")
-    async def api_first_value_finish(attempt_id: str, request: Request, payload: dict[str, Any]) -> Any:
+    def api_first_value_finish(attempt_id: str, request: Request, payload: dict[str, Any]) -> Any:
         try:
             return service.finish_first_value(request.state.principal, attempt_id, payload or {})
         except ServiceError as exc:
@@ -205,7 +205,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to finish first-value receipt")
 
     @router.post("/api/setup/first-value/{attempt_id}/event")
-    async def api_first_value_event(attempt_id: str, request: Request, payload: dict[str, Any]) -> Any:
+    def api_first_value_event(attempt_id: str, request: Request, payload: dict[str, Any]) -> Any:
         allowed = {"event_id", "kind"}
         if set(payload or {}).difference(allowed):
             return JSONResponse({"success": False, "error": "First-value events accept only event_id and kind."}, status_code=400)
@@ -269,7 +269,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to discover local runtime models")
 
     @router.get("/api/inference/setup")
-    async def api_inference_setup(request: Request) -> Any:
+    def api_inference_setup(request: Request) -> Any:
         try:
             return {"setup": inference_setup.get_inference_setup(request.state.principal)}
         except ServiceError as exc:
@@ -278,7 +278,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read inference setup")
 
     @router.get("/api/inference/capabilities")
-    async def api_inference_capabilities(request: Request) -> Any:
+    def api_inference_capabilities(request: Request) -> Any:
         try:
             if inference_capabilities is None:
                 raise RuntimeError("InferenceCapabilityApplicationService must be supplied at application composition")
@@ -289,7 +289,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read inference capabilities")
 
     @router.get("/api/inference/capabilities/{capability_id}")
-    async def api_inference_capability(capability_id: str, request: Request) -> Any:
+    def api_inference_capability(capability_id: str, request: Request) -> Any:
         try:
             if inference_capabilities is None:
                 raise RuntimeError("InferenceCapabilityApplicationService must be supplied at application composition")
@@ -300,7 +300,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read inference capability")
 
     @router.get("/api/inference/acquisitions/{job_id}")
-    async def api_inference_acquisition(job_id: str, request: Request) -> Any:
+    def api_inference_acquisition(job_id: str, request: Request) -> Any:
         try:
             if inference_acquisition is None:
                 raise ServiceError("inference_acquisition_unavailable", "Model downloads are unavailable on this hub.", context={"status": 503})
