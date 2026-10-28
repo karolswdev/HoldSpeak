@@ -63,6 +63,15 @@ export function deskChanges(data: unknown): Record<string, unknown>[] {
   return listed.length ? listed : [value];
 }
 
+/** True when every change a `desk_changed` frame names is a window change
+ *  (open, close, move, raise, seat, zoom: the hub's `windows` kind). Nothing
+ *  in Needs you depends on where a window is, so such a frame reads nothing
+ *  again (owner 2026-10-28: a window open waited 2-3 s on the rebuild). */
+export function onlyWindowChanges(data: unknown): boolean {
+  const changes = deskChanges(data);
+  return changes.length > 0 && changes.every((change) => change.kind === "windows");
+}
+
 function frameOutcome(data: unknown): DockSendOutcome | null {
   const value = record(data);
   const raw = text(value.state) || text(value.outcome) || text(value.status) || text(value.op);

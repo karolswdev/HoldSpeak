@@ -22,6 +22,7 @@ import type { PanelRect } from "../store/types";
 import { onReturnToTask } from "../returnToTask";
 import { refreshNeedsYou } from "../needsYou";
 import { burstTimer } from "../burstTimer";
+import { onlyWindowChanges } from "../components/window/dockState";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { needYouWords } from "../surface";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
@@ -92,8 +93,12 @@ function Arrival() {
   useEffect(() => onReturnToTask(() => { void readAssignments(); }), [readAssignments]);
   const { subscribe: subscribeFrames } = useRuntimeBus();
   useEffect(() => {
-    const burst = burstTimer(() => { void refreshNeedsYou(true); }, 300);
-    const unsubscribe = subscribeFrames("desk_changed", burst.bump);
+    // Never a forced rebuild: a hub write that changes the answer marks the
+    // hub's cache dirty. A frame of window changes only reads nothing.
+    const burst = burstTimer(() => { void refreshNeedsYou(false); }, 300);
+    const unsubscribe = subscribeFrames("desk_changed", (frame) => {
+      if (!onlyWindowChanges(frame.data)) burst.bump();
+    });
     const onFocus = () => { void readAssignments(); };
     window.addEventListener("focus", onFocus);
     return () => {
@@ -107,8 +112,9 @@ function Arrival() {
   // Conductor drawer read it). K3: an agent that begins or stops waiting
   // moves Needs you now (the `scope:"coder"` frame).
   useAgentFlightsLive();
+  // The agent rows are read live on every needs-you read (not cached).
   const onCoderFrame = useCallback(() => {
-    void refreshNeedsYou(true);
+    void refreshNeedsYou(false);
   }, []);
   useOnCoderFrame(onCoderFrame);
 

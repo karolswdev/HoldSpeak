@@ -1008,6 +1008,10 @@ class NeedsYouCache:
             with self._lock:
                 if self._generation != generation and self._data is not None:
                     return self._data
+            # The wall clock at the START of the build: a write that marks
+            # the cache dirty while this build runs is newer, so the next
+            # read rebuilds again instead of keeping a build that missed it.
+            wall = utc_now_iso()
             try:
                 self.build_count += 1
                 data = self._builder()
@@ -1019,7 +1023,6 @@ class NeedsYouCache:
                 log.warning("needs-you: rebuild failed, serving stale: %s", exc)
                 # Honest: the payload is the LAST observation, said so.
                 return {**last, "stale": True}
-            wall = utc_now_iso()
             with self._lock:
                 data["stale"] = False
                 data["sweepId"] = self._sweep_id

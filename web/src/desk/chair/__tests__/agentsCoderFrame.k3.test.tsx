@@ -50,13 +50,38 @@ describe("the agents store follows the coder frame (Conductor K3; C4: no AGENTS 
   it("re-reads the agents and Needs you on a coder frame", async () => {
     render(<ChairHome />);
     await waitFor(() => expect(calls("/api/coders/sessions?include_ended=false")).toBe(1));
-    const freshBefore = calls("/api/desk/needs-you?fresh=1");
+    // PERF-DOCK 2026-10-28: the agent rows are read live on every read, so
+    // the coder frame reads plainly; it never forces the hub's rebuild.
+    const readsBefore = calls("/api/desk/needs-you");
 
     act(() => emit({ type: "intel_status", data: { scope: "belt" } }));
     expect(calls("/api/coders/sessions?include_ended=false")).toBe(1);
 
     act(() => emit({ type: "intel_status", data: { state: "ready", scope: "coder" } }));
     await waitFor(() => expect(calls("/api/coders/sessions?include_ended=false")).toBe(2));
-    await waitFor(() => expect(calls("/api/desk/needs-you?fresh=1")).toBeGreaterThan(freshBefore));
+    await waitFor(() => expect(calls("/api/desk/needs-you")).toBeGreaterThan(readsBefore));
+    expect(calls("/api/desk/needs-you?fresh=1")).toBe(0);
+  });
+
+  // PERF-DOCK (owner 2026-10-28: a window open waited 2-3 s): a frame of
+  // window changes only reads nothing; any other desk change reads plainly.
+  it("reads Needs you on a desk change, never on a window change, and never with fresh=1", async () => {
+    render(<ChairHome />);
+    await waitFor(() => expect(calls("/api/desk/needs-you")).toBeGreaterThan(0));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const before = calls("/api/desk/needs-you");
+
+    act(() => emit({ type: "desk_changed", data: {
+      kind: "windows", id: "today", op: "open",
+      changes: [{ kind: "windows", id: "today", op: "open" }],
+    } }));
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    expect(calls("/api/desk/needs-you")).toBe(before);
+
+    act(() => emit({ type: "desk_changed", data: {
+      kind: "note", id: "n1", op: "update", changes: [{ kind: "note", id: "n1", op: "update" }],
+    } }));
+    await waitFor(() => expect(calls("/api/desk/needs-you")).toBeGreaterThan(before));
+    expect(calls("/api/desk/needs-you?fresh=1")).toBe(0);
   });
 });
