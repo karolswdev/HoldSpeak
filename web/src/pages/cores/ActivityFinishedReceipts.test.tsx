@@ -123,6 +123,17 @@ describe("Activity Finished receipts", () => {
     expect(mocks.apiFetch.mock.calls.every((call) => call[1].method === "GET")).toBe(true);
   });
 
+  it("DELIGHT slice 4: no receipts is the memory object on its halo and one line", async () => {
+    const result = wire();
+    result.projections = [];
+    mocks.apiFetch.mockResolvedValue(result);
+    const view = render(<ActivityFinishedReceipts query=""/>);
+    expect(await screen.findByText("No finished receipts")).toBeInTheDocument();
+    const seat = view.container.querySelector(".surface-state-object");
+    expect(seat?.getAttribute("data-kind")).toBe("memory");
+    expect(seat?.querySelector("img")?.getAttribute("src")).toMatch(/\/memory\.png$/);
+  });
+
   it("names a failed first read without claiming an empty or successful list", async () => {
     mocks.apiFetch.mockRejectedValue(new Error("offline"));
     render(<ActivityFinishedReceipts query=""/>);

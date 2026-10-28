@@ -267,6 +267,16 @@ METRONOME = [  # a wedge on a plinth, the arm swung right
     S(C(32, 38, 3), "navy", plain=True),
     S(R(9, 44, 46, 12, 3), "grey"),
 ]
+# A desk telephone, front on (Calls, 2026-10-28): the blue handset lies on a
+# grey cradle; the keys are trim that vanishes below 64.
+HANDSET_D = ("M6 23Q6 13 16 13H48Q58 13 58 23V29Q58 32 55 32H47Q44 32 44 29V25"
+             "H20V29Q20 32 17 32H9Q6 32 6 29Z")
+TELEPHONE = (
+    [S(P([(15, 28), (49, 28), (56, 56), (8, 56)]), "grey")]
+    + [S(R(20 + 9 * c, 37 + 7 * r, 6, 4, 1.5), "paper", nool=True, detail=True)
+       for r in range(2) for c in range(3)]
+    + [S(D(HANDSET_D), "blue")]
+)
 CHAT = [
     S(D(bubble_d(20, 8, 36, 24, 8, "right")), "grey"),
     S(D(bubble_d(8, 20, 38, 26, 8, "left")), "blue"),
@@ -299,6 +309,7 @@ WORLD = {
         S(C(38.5, 28.5, 2.6), "amber", nool=True),
         S(R(19, 48, 18, 3.5, 1.75), "grey", nool=True, detail=True),
     ],
+    "call": TELEPHONE,
     "cartridge": CARTRIDGE,
     "conductor-drawer": folder("paper", emblem=[
         S(R(24, 31, 16, 19, 4.5), "amber"),
