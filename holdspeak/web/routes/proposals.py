@@ -12,6 +12,7 @@ Routes:
 """
 from __future__ import annotations
 
+import threading
 from typing import Any, Optional
 
 from fastapi import APIRouter, Body, Request
@@ -24,6 +25,7 @@ from ..context import WebContext
 from ..runtime_support import error_500
 
 log = get_logger("web.routes.proposals")
+_service_lock = threading.Lock()
 
 
 def _principal(request: Request):
@@ -31,13 +33,14 @@ def _principal(request: Request):
 
 
 def _service(ctx: WebContext) -> ProposalBridgeService:
-    service = getattr(ctx, "proposal_bridge_service", None)
-    if service is not None:
+    with _service_lock:
+        service = getattr(ctx, "proposal_bridge_service", None)
+        if service is not None:
+            return service
+        from ...db import get_database
+        service = ProposalBridgeService(get_database())
+        ctx.proposal_bridge_service = service  # type: ignore[attr-defined]
         return service
-    from ...db import get_database
-    service = ProposalBridgeService(get_database())
-    ctx.proposal_bridge_service = service  # type: ignore[attr-defined]
-    return service
 
 
 def _status(result: dict[str, Any]) -> int:
@@ -54,7 +57,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(tags=["proposals"])
 
     @router.get("/api/meetings/{meeting_id}/follow-through-proposals")
-    async def api_meeting_proposals(
+    def api_meeting_proposals(
         meeting_id: str,
         request: Request,
         state: Optional[str] = None,
@@ -66,7 +69,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list meeting proposals")
 
     @router.get("/api/meetings/{meeting_id}/outcome-review")
-    async def api_meeting_outcome_review(meeting_id: str, request: Request) -> Any:
+    def api_meeting_outcome_review(meeting_id: str, request: Request) -> Any:
         try:
             review = _service(ctx).meeting_review(meeting_id)
             if "error" in review:
@@ -76,7 +79,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read the meeting review")
 
     @router.post("/api/meetings/{meeting_id}/proposals/accept-reviewed")
-    async def api_accept_reviewed(meeting_id: str, request: Request) -> Any:
+    def api_accept_reviewed(meeting_id: str, request: Request) -> Any:
         try:
             result = _service(ctx).accept_reviewed(_principal(request), meeting_id)
             if "error" in result:
@@ -86,7 +89,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to accept the reviewed proposals")
 
     @router.get("/api/projects/{project_id}/proposals")
-    async def api_project_proposals(
+    def api_project_proposals(
         project_id: str,
         request: Request,
         state: Optional[str] = None,
@@ -98,7 +101,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list project proposals")
 
     @router.post("/api/proposals/{proposal_id}/confirm")
-    async def api_confirm_proposal(
+    def api_confirm_proposal(
         proposal_id: str,
         request: Request,
         body: dict[str, Any] = Body(default={}),
@@ -118,7 +121,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to confirm proposal")
 
     @router.post("/api/proposals/{proposal_id}/edit")
-    async def api_edit_proposal(
+    def api_edit_proposal(
         proposal_id: str,
         request: Request,
         body: dict[str, Any] = Body(default={}),
@@ -139,7 +142,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to edit proposal")
 
     @router.post("/api/proposals/{proposal_id}/dismiss")
-    async def api_dismiss_proposal(
+    def api_dismiss_proposal(
         proposal_id: str,
         request: Request,
     ) -> Any:
@@ -152,7 +155,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to dismiss proposal")
 
     @router.post("/api/proposals/{proposal_id}/restore")
-    async def api_restore_proposal(
+    def api_restore_proposal(
         proposal_id: str,
         request: Request,
     ) -> Any:
@@ -166,7 +169,7 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to restore proposal")
 
     @router.post("/api/proposals/{proposal_id}/defer")
-    async def api_defer_proposal(
+    def api_defer_proposal(
         proposal_id: str,
         request: Request,
         body: dict[str, Any] = Body(default={}),
