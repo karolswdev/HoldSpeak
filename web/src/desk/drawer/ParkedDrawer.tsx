@@ -246,7 +246,9 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
           )}
         </div>
       </div>
-      <SurfaceFooter
+      {/* Atlas pass 3 #22: no fact, no bar (an empty grey foot is a dead
+          foot). The foot is drawn only for a receipt, a failed read or a count. */}
+      {receipt || notRead.length || drawerReceipt(rows.length, selected ? 1 : 0) ? <SurfaceFooter
         receipt={
           receipt ? (
             <ParkReceipt outcome={receipt} onRestore={(refs) => void restore(refs)} data-testid="parked-receipt" />
@@ -261,7 +263,7 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
             </span>
           )
         }
-      />
+      /> : null}
     </DeskWindowFrame>
   );
 }

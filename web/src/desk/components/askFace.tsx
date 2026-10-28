@@ -520,12 +520,19 @@ export function askReasonLine(reason: string, fallbackWords: string): string {
   return fallbackWords;
 }
 
+/** The reasons that mean the engine itself did not answer. */
+const ENGINE_DOWN = new Set(["did_not_answer", "not_reachable", "timed_out"]);
+
 /** Not answered: ONE line under the question that says why, and the one
- *  verb that fixes it. The question is kept. Never red, never mono. */
+ *  verb that fixes it. The question is kept. Never mono; an engine that
+ *  did not answer has the red dot (W6-B). */
+
 export function AskNotAnswered({ reason, words, verb }: { reason: string; words: string; verb?: ReactNode }) {
   return (
     <div className="desk-ask-fail" data-testid="ask-not-answered" data-reason={reason} role="status">
-      <DotWord tone={reason === "stopped" ? "idle" : "warn"}>{words}</DotWord>
+      {/* W6-B (atlas pass 3, defect 7): the engine did not answer is the
+          danger tone at every width, as the toolbar's Not answering lamp. */}
+      <DotWord tone={reason === "stopped" ? "idle" : ENGINE_DOWN.has(reason) ? "fail" : "warn"}>{words}</DotWord>
       {verb}
     </div>
   );

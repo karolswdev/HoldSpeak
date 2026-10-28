@@ -3,6 +3,7 @@ import { fromWireMeeting } from "./api";
 import { apiFetch } from "../lib/api";
 import {
   dedupAttention,
+  normalizeTitle,
   rankAttention,
   type RankableItem,
   type AttentionSource,
@@ -320,7 +321,34 @@ function doorItems(
       });
     }
   }
-  return rows;
+  return mergeUnassignedTwins(rows);
+}
+
+/** Two unassigned Door rows with the same text and Project are one row. Two
+ *  meetings can make the same action item with no owner; the owner sees it
+ *  one time. The row with the earlier `created_at` stays (no stamp sorts
+ *  last). The twin of `merge_unassigned_twins` (needs_you_membership.py). */
+export function mergeUnassignedTwins(rows: NeedsYouRoomItem[]): NeedsYouRoomItem[] {
+  const kept = new Map<string, number>();
+  const out: NeedsYouRoomItem[] = [];
+  const stamp = (row: NeedsYouRoomItem) =>
+    String((row._doorCard as NeedsYouDoorCard | undefined)?.created_at ?? "") || "\uffff";
+  for (const row of rows) {
+    const title = normalizeTitle(row.title);
+    if (!row._isUnassigned || !title) {
+      out.push(row);
+      continue;
+    }
+    const key = `${title}\u0000${row.projectId ?? ""}`;
+    const index = kept.get(key);
+    if (index === undefined) {
+      kept.set(key, out.length);
+      out.push(row);
+    } else if (stamp(row) < stamp(out[index])) {
+      out[index] = row;
+    }
+  }
+  return out;
 }
 
 /** R4: decisions awaiting review, as attention rows. The ref is the Desk

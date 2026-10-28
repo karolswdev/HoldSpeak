@@ -631,3 +631,50 @@ describe("W1-DOORS (atlas 2026-10-27): the palette names where a parked app land
   });
 });
 
+describe("W6-B (atlas pass 3): exact names and one row per question", () => {
+  it("defect 3: \"Rhythm\" selects Notices, and Enter opens Settings, never Ask", async () => {
+    // A note that says the words, so an object row is a candidate too.
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [
+      { kind: "note", id: "n-r", title: "Team rhythm", bodyMarkdown: "Our rhythm and how we change places.", tags: [], createdAt: "" } as Note,
+    ] } });
+    const askQuestion = vi.fn();
+    useDesk.setState({ askQuestion } as never);
+    const input = await deck();
+    await type(input, "Rhythm", 700);
+    expect(top()?.textContent).toContain("Notices — Settings");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(askQuestion).not.toHaveBeenCalled();
+    expect(openedSurfaces.calls).toContainEqual(["configure-settings", "rhythm"]);
+  });
+
+  it("defect 3: \"Change places\" selects Wallpaper, and Enter opens Settings ▸ Desk", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [
+      { kind: "note", id: "n-p", title: "Change places plan", bodyMarkdown: "We change places on Friday.", tags: [], createdAt: "" } as Note,
+    ] } });
+    const askQuestion = vi.fn();
+    useDesk.setState({ askQuestion } as never);
+    const input = await deck();
+    await type(input, "Change places", 700);
+    expect(top()?.textContent).toContain("Wallpaper — Settings ▸ Desk");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(askQuestion).not.toHaveBeenCalled();
+    expect(openedSurfaces.calls).toContainEqual(["configure-settings", "wallpaper"]);
+  });
+
+  it("defect 4: a question asked twice is one Thread row, the newest", async () => {
+    const thread = (id: string, at: string) => ({
+      kind: "thread", id, title: "Is the ledger cutover still on track?", untitled: false,
+      recipeId: null, profileOverride: null, directoryId: null, parentThreadId: null, statusLine: null,
+      tokenIn: 0, tokenOut: 0, createdAt: at, updatedAt: at, lastTurnAt: at,
+    });
+    useDesk.setState({ items: { ...EMPTY_ITEMS, thread: [
+      thread("th_old", "2026-10-28T01:00:00"), thread("th_new", "2026-10-28T03:00:00"),
+    ] } as never });
+    const input = await deck();
+    await type(input, "ledger cutover", 700);
+    const ids = rows().map((o) => o.id.replace("desk-palette-option-", ""));
+    expect(ids).toContain("thread:th_new");
+    expect(ids).not.toContain("thread:th_old");
+  });
+});
+

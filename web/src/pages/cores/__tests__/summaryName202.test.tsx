@@ -21,12 +21,13 @@
  */
 import { render, screen, waitFor, act } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WingSlotContext } from "../../../desk/surface/wings";
 
 type Frame = { type: string; data: unknown };
 
 const mocks = vi.hoisted(() => ({
+  bus: "connected" as string,
   listeners: new Map<string, Set<(frame: Frame) => void>>(),
   apiFetch: vi.fn(),
 }));
@@ -54,8 +55,8 @@ vi.mock("../../../lib/api", () => ({
 }));
 
 vi.mock("../../../runtime/RuntimeBus", () => ({
-  useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe }),
-  useOptionalRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe }),
+  useRuntimeBus: () => ({ state: mocks.bus, lastFrame: null, subscribe }),
+  useOptionalRuntimeBus: () => ({ state: mocks.bus, lastFrame: null, subscribe }),
   useRuntimeFrame: () => null,
 }));
 
@@ -253,13 +254,23 @@ describe("Live's row and its receipt hold different facts (M6)", () => {
     mocks.apiFetch.mockResolvedValue({});
   });
 
+  afterEach(() => { mocks.bus = "connected"; });
+
   it("never says the same state word twice", async () => {
+    // W6-A (atlas pass 3, defect 17): a connected hub link is the normal
+    // case and says nothing ("Link connected — which link?").
     await mount();
-    // Window grammar (2026-10-24): both facts are status-bar words, a dot
-    // and a word each; the link is not the capture.
+    expect(screen.getByTestId("live-capture-state").textContent).toBe("Ready");
+    expect(screen.queryByTestId("live-link-state")).toBeNull();
+    expect(document.body.textContent ?? "").not.toContain("Link connected");
+  });
+
+  it("a lost hub link names what is lost, apart from the capture", async () => {
+    mocks.bus = "reconnecting";
+    await mount();
     const row = screen.getByTestId("live-link-state").textContent ?? "";
     const receipt = screen.getByTestId("live-capture-state").textContent ?? "";
-    expect(row).toBe("Link connected");
+    expect(row).toBe("Connecting to the hub");
     expect(receipt).toBe("Ready");
     expect(row.toUpperCase()).not.toContain(receipt.toUpperCase());
   });
