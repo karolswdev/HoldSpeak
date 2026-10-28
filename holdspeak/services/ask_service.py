@@ -363,6 +363,59 @@ _FACT_SQL = {
 }
 
 
+_DECISION_KINDS = {"decision", "desk_decision", "decision_record"}
+
+
+def _decision_key(db: Database, fact: dict[str, Any]) -> str:
+    """The one decision a reference row names: a decision record counts as
+    the decision it was recorded from; else the decision's own name."""
+    kind, _, rid = str(fact.get("ref") or "").partition(":")
+    rid = rid.split("#", 1)[0]
+    if kind in {"decision", "desk_decision"} and rid:
+        return f"desk:{rid}"
+    if kind == "decision_record" and rid:
+        try:
+            with db._connection() as conn:
+                row = conn.execute(
+                    "SELECT source_type, source_id FROM decision_records WHERE id=?", (rid,),
+                ).fetchone()
+        except Exception:
+            row = None
+        if row is not None and row["source_type"] == "desk" and row["source_id"]:
+            return f"desk:{row['source_id']}"
+    return "title:" + " ".join(str(fact.get("title") or "").split()).casefold()
+
+
+def one_row_per_decision(db: Database, facts: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """W6-B (atlas pass 3, defect 5): a decision cited in two states (its
+    desk record Proposed, its decision record Active) is one row.  The desk
+    decision is the row: it opens, and its state is the one every other face
+    shows (a decision record is ``active`` by default).  Two rows with no
+    desk decision keep the newest."""
+    out: list[dict[str, Any]] = []
+    by_title: dict[str, int] = {}
+    by_key: dict[str, int] = {}
+    for fact in facts:
+        if fact.get("kind") not in _DECISION_KINDS:
+            out.append(fact)
+            continue
+        key = _decision_key(db, fact)
+        title = "title:" + " ".join(str(fact.get("title") or "").split()).casefold()
+        at = by_key.get(key, by_title.get(title) if title != "title:" else None)
+        if at is None:
+            by_key[key] = by_title[title] = len(out)
+            out.append(fact)
+            continue
+        kept = out[at]
+        desk = [row for row in (kept, fact) if row.get("kind") != "decision_record"]
+        if len(desk) == 1:
+            out[at] = desk[0]
+        elif str(fact.get("at") or "") > str(kept.get("at") or ""):
+            out[at] = fact
+        by_key[key] = by_title[title] = at
+    return out
+
+
 def reference_facts(db: Database, rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     """Each looked-at row as ``{ref, title, kind, at?, state?}``.
 
@@ -957,10 +1010,28 @@ class AskService:
                     answer_id=str((result.get("message_ids") or {}).get("answer") or ""))
         return result
 
-    def _facts_and_claims(self, result: dict[str, Any]) -> None:
+    def _earlier_asks(self, thread_id: str, context: list[dict[str, Any]], grounding: Any) -> tuple[str, ...]:
+        """W6-B (atlas pass 3, defect 6): an answer never reads or cites his
+        own earlier asks.  Every kept thread is left out of the memory
+        recall, except a thread he put in About."""
+        about = {ref.split("#", 1)[0] for ref, _title in self._about_refs(context, grounding, [])}
+        try:
+            kept = [f"thread:{thread.id}" for thread in self._db.threads.list(limit=500)]
+        except Exception:
+            kept = []
+        own = [f"thread:{thread_id}"] if thread_id else []
+        return tuple(dict.fromkeys(ref for ref in [*own, *kept] if ref not in about))
+
+    def _facts_and_claims(self, result: dict[str, Any], *, about: Sequence[str] = ()) -> None:
         """Ask hub gaps 2 and 3: reference rows with their facts; claims kept
-        with the record that supports each."""
-        result["looked_at"] = reference_facts(self._db, result.get("looked_at") or [])
+        with the record that supports each.  W6-B (defect 6): an earlier ask
+        is never a reference, unless he put it in About."""
+        chosen = {str(ref).split("#", 1)[0] for ref in about}
+        result["looked_at"] = one_row_per_decision(self._db, reference_facts(self._db, [
+            row for row in result.get("looked_at") or []
+            if not str(row.get("ref") or "").startswith("thread:")
+            or str(row.get("ref") or "").split("#", 1)[0] in chosen
+        ]))
         claims = claims_by_record(self._db, str(result.get("output") or ""), result["looked_at"])
         if claims:
             result["grounding_claims"] = claims
@@ -986,7 +1057,7 @@ class AskService:
         result = await self.ask(
             principal, question, grounding, lens=lens, context=context,
             invocation_id=invocation_id, history=history,
-            memory_exclude_refs=(f"thread:{thread_id}",) if thread_id else (),
+            memory_exclude_refs=self._earlier_asks(thread_id, context or [], grounding),
             desk_tools=desk_tools, _prepared_note=pinned,
         )
         text = str(question or "").strip()
@@ -1028,7 +1099,7 @@ class AskService:
             used = use_by_trace(self._db, [ask_trace(invocation_id)]).get(ask_trace(invocation_id)) or {}
             result["used"] = used
             result["looked_at"] = _with_tool_reads(result["looked_at"], used)
-        self._facts_and_claims(result)
+        self._facts_and_claims(result, about=[ref for ref, _title in about])
         if looked:
             frozen_refs = dict(looked)
             claims = result.get("grounding_claims") or []
@@ -1095,7 +1166,7 @@ class AskService:
             "used": used,
             "tools": "desk",
         }
-        self._facts_and_claims(result)
+        self._facts_and_claims(result, about=refs)
         return result
 
     def _tap_loop_text(self, service: Any, thread_id: str, invocation_id: str) -> None:

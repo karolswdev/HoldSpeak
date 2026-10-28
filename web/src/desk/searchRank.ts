@@ -73,7 +73,7 @@ export function wordScore(query: string, text: string | undefined): number {
 
 /** Fuzzy relevance with a recency boost; 0 = no match. */
 export function rankRow(
-  row: { label: string; terms?: string; body?: string; name?: string; kindWord?: string },
+  row: { label: string; terms?: string; body?: string; name?: string; oldName?: string; kindWord?: string },
   query: string,
   recent: boolean,
   recentBoostsEmpty = false,
@@ -83,7 +83,9 @@ export function rankRow(
   // Automations program at 100, so the program leads the objects of that kind).
   const name = row.name?.toLocaleLowerCase();
   const asked = query.toLocaleLowerCase();
-  const named = name && (name === asked || stem(name) === stem(asked)) ? 100 : 0;
+  // W6-B: a parked application's old name (Rhythm) is its name too.
+  const old = row.oldName?.toLocaleLowerCase();
+  const named = [name, old].some((n) => n && (n === asked || stem(n) === stem(asked))) ? 100 : 0;
   const score = Math.max(
     named,
     fuzzyScore(query, row.label),

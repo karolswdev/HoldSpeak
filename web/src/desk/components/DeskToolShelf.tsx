@@ -96,6 +96,10 @@ interface DeckRow {
   body?: string;
   /** PHILO-13-14 (C4): the program's own name (an exact name ranks first). */
   name?: string;
+  /** W6-B (atlas pass 3, defect 3): the old name of a parked application
+   *  (Rhythm, Change places). Typed exactly, it is the first press, as its
+   *  own name is; the Ask row never takes it. */
+  oldName?: string;
   /** PHILO-13-14 (C4): a week verb's label wraps (never an ellipsis over the
    * destination he picks). */
   wrap?: boolean;
@@ -738,6 +742,7 @@ export function DeskToolShelf() {
         keycap: v.key,
         terms: `${tool.label} ${tool.description} ${(tool.aliases ?? []).join(" ")} ${tool.parked ?? ""}`.toLocaleLowerCase(),
         name: tool.paletteLabel ?? tool.label,
+        oldName: tool.paletteLabel ? tool.label : undefined,
         verbEntries: [{ type: "item", id: `app.open.${tool.action}`, label: "Open", glyph: "▷", onSelect: () => v.run(ctx) }],
         run: () => v.run(ctx),
       });
@@ -761,7 +766,21 @@ export function DeskToolShelf() {
     // ── OBJECTS: desk items (query) + projects ──
     if (normalized) {
       // PHILO-17: no face draws zones; the palette lists no ZONE row.
+      // W6-B (atlas pass 3, defect 4): one Thread row per question, as Ask's
+      // Recent shows it; the newest thread of a question is the row.
+      const newestThread = new Map<string, { id: string; at: string }>();
+      for (const thread of items.thread ?? []) {
+        const question = thread.title.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+        const at = thread.lastTurnAt || thread.updatedAt || thread.createdAt || "";
+        const known = newestThread.get(question);
+        if (question && (!known || at > known.at)) newestThread.set(question, { id: thread.id, at });
+      }
       for (const item of allObjects(items)) {
+        if (item.kind === "thread") {
+          const question = item.title.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+          const newest = newestThread.get(question);
+          if (newest && newest.id !== item.id) continue;
+        }
         const kind = KIND_LABEL[item.kind] ?? item.kind.replace(/_/g, " ");
         push({
           id: `${item.kind}:${item.id}`,
@@ -996,7 +1015,8 @@ export function DeskToolShelf() {
   // that exact app match ahead of an object whose title merely contains the
   // word. Other queries retain the objects-first default.
   const exactNamed = normalized
-    ? runnable.findIndex((row) => row.name?.toLocaleLowerCase() === normalized)
+    ? runnable.findIndex((row) =>
+      row.name?.toLocaleLowerCase() === normalized || row.oldName?.toLocaleLowerCase() === normalized)
     : -1;
   const firstObject = runnable.findIndex((row) => FIRST_PRESS_OBJECT_SECTIONS.has(row.section));
   // A question's first press is Ask (Betterment Q3).
