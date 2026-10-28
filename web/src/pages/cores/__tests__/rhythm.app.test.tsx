@@ -119,13 +119,13 @@ describe("Rhythm: the brief row", () => {
     expect(row.textContent).not.toContain("Daily brief");
 
     const cadence = screen.getByTestId("rhythm-brief-cadence").textContent?.trim() ?? "";
-    expect(cadence).toMatch(/^DAILY \d{2}:00$/);
+    expect(cadence).toMatch(/^Daily \d{2}:00$/);
     expect(cadence).not.toMatch(/WEEKLY|MON/);
-    await waitFor(() => expect(screen.getByTestId("rhythm-brief-last").textContent).toContain("LAST OCT 07"));
+    await waitFor(() => expect(screen.getByTestId("rhythm-brief-last").textContent).toContain("Last Oct 07"));
 
     const summary = await screen.findByTestId("rhythm-brief-summary");
-    expect(summary.textContent).toBe("4 MEETINGS · 1 ARMED · 1 COMMITMENT DUE");
-    expect(summary.textContent).not.toContain("WATCH ITEM");
+    expect(summary.textContent).toBe("4 meetings · 1 armed · 1 commitment due");
+    expect(summary.textContent).not.toContain("watch item");
     expect(within(row).getByTestId("rhythm-generate-now").textContent).toContain("Generate");
   });
 
@@ -138,7 +138,7 @@ describe("Rhythm: the brief row", () => {
     const row = await screen.findByTestId("rhythm-brief-row");
     await waitFor(() => expect(row.textContent).toContain("Daily brief"));
     expect(row.textContent).not.toContain("Weekly brief");
-    expect(screen.getByTestId("rhythm-brief-cadence").textContent).toContain("DAILY");
+    expect(screen.getByTestId("rhythm-brief-cadence").textContent).toContain("Daily");
     expect(screen.queryByTestId("rhythm-brief-summary")).toBeNull();
   });
 });
@@ -153,9 +153,9 @@ describe("Rhythm: the local clock", () => {
     });
     render(<CadenceCore />);
     const facts = await screen.findByTestId("rhythm-sweep-facts");
-    await waitFor(() => expect(facts.textContent).toMatch(/LAST \d{2}:\d{2}/));
-    expect(facts.textContent).toContain("LAST 21:06");
-    expect(facts.textContent).toContain("NEXT 21:21");
+    await waitFor(() => expect(facts.textContent).toMatch(/Last \d{2}:\d{2}/));
+    expect(facts.textContent).toContain("Last 21:06");
+    expect(facts.textContent).toContain("Next 21:21");
     expect(facts.textContent).not.toContain("03:06");
   });
 });
@@ -224,7 +224,7 @@ describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", ()
     for (const id of ["rhythm-sweep-row", "rhythm-brief-row", "rhythm-notify-row"]) expect(screen.getByTestId(id), id).toBeTruthy();
     expect(screen.getByTestId("rhythm-run-now").textContent).toBe("Run now");
     expect(screen.getByTestId("rhythm-generate-now").textContent).toBe("Generate");
-    expect(screen.getByTestId("rhythm-sweep-facts").textContent).not.toContain("HELD");
+    expect(screen.getByTestId("rhythm-sweep-facts").textContent).not.toContain("Held");
   });
 
   it("the Sweep interval set to 30 puts it on the hub and the headline reads Every 30 min", async () => {
@@ -246,12 +246,12 @@ describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", ()
     render(<CadenceCore />);
     const facts = await screen.findByTestId("rhythm-sweep-facts");
     await waitFor(() => expect(screen.getByTestId("rhythm-headline").textContent).toBe("Every 15 min"));
-    expect(facts.textContent).not.toContain("LAST");
+    expect(facts.textContent).not.toContain("Last");
     fireEvent.click(screen.getByTestId("rhythm-run-now"));
-    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toMatch(/LAST \d{2}:\d{2}/));
+    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toMatch(/Last \d{2}:\d{2}/));
     const receipt = steps[1].answer as { rooms: number; duration_ms: number };
-    expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(`${Math.round(receipt.duration_ms)} MS`);
-    expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(`${receipt.rooms} ROOM`);
+    expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(`${Math.round(receipt.duration_ms)} ms`);
+    expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(receipt.rooms > 0 ? `Checked ${receipt.rooms} room` : "Checked no rooms");
     expect(presses).toEqual(["POST /api/settings/heartbeat/run-now"]);
   });
 
@@ -259,12 +259,12 @@ describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", ()
     // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_mute_toggle
     const presses = replay(RHYTHM.mute.steps as Step[]);
     render(<CadenceCore />);
-    const token = await screen.findByRole("checkbox", { name: "Q4 PLATFORM" });
+    const token = await screen.findByRole("checkbox", { name: "Q4 Platform" });
     expect((token as HTMLInputElement).checked).toBe(true);
     fireEvent.click(token);
-    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 PLATFORM" }) as HTMLInputElement).checked).toBe(false));
-    fireEvent.click(screen.getByRole("checkbox", { name: "Q4 PLATFORM" }));
-    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 PLATFORM" }) as HTMLInputElement).checked).toBe(true));
+    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 Platform" }) as HTMLInputElement).checked).toBe(false));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Q4 Platform" }));
+    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 Platform" }) as HTMLInputElement).checked).toBe(true));
     expect(presses).toEqual(["PUT /api/settings/heartbeat", "PUT /api/settings/heartbeat"]);
   });
 
@@ -274,10 +274,10 @@ describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", ()
     expect((steps[1].gets["/api/settings/heartbeat"] as { notify_finished: boolean }).notify_finished).toBe(false);
     const presses = replay(steps);
     render(<CadenceCore />);
-    const token = await screen.findByRole("checkbox", { name: "FINISHED WORK" });
+    const token = await screen.findByRole("checkbox", { name: "Finished work" });
     await waitFor(() => expect((token as HTMLInputElement).checked).toBe(true));
     fireEvent.click(token);
-    await waitFor(() => expect((screen.getByRole("checkbox", { name: "FINISHED WORK" }) as HTMLInputElement).checked).toBe(false));
+    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Finished work" }) as HTMLInputElement).checked).toBe(false));
     expect(presses).toEqual(["PUT /api/settings/heartbeat"]);
   });
 
@@ -289,8 +289,8 @@ describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", ()
     const steps = RHYTHM.quiet.steps as Step[];
     replay([{ ...steps[1], name: "after" }]);
     render(<CadenceCore />);
-    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain("HELD · QUIET UNTIL 11:00"));
-    expect(screen.getByTestId("rhythm-notify-row").textContent).toContain("HELD");
+    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain("Held · Quiet until 11:00"));
+    expect(screen.getByTestId("rhythm-notify-row").textContent).toContain("Held");
   });
 });
 
@@ -321,8 +321,8 @@ describe("Rhythm (recorded hub): Runs on", () => {
     await waitFor(() => expect([...(gadget as HTMLSelectElement).options].map((o) => o.value)).toEqual(["local", "192.168.1.43"]));
     expect(screen.queryByTestId("rhythm-runs-on-caption")).toBeNull();
     await act(async () => { fireEvent.change(gadget, { target: { value: "192.168.1.43" } }); });
-    await waitFor(() => expect(screen.getByTestId("rhythm-runs-on-caption").textContent).toBe("WHILE THIS MAC IS AWAKE"));
-    expect(screen.getByTestId("rhythm-runs-on-facts").textContent).toContain("LAST RUN");
+    await waitFor(() => expect(screen.getByTestId("rhythm-runs-on-caption").textContent).toBe("While this Mac is awake"));
+    expect(screen.getByTestId("rhythm-runs-on-facts").textContent).toContain("Last run");
     expect(presses).toEqual(["PUT /api/settings/heartbeat"]);
   });
 });
@@ -340,9 +340,9 @@ describe("Rhythm embedded in Settings ▸ Rhythm (Betterment setup ST1)", () => 
     expect(screen.queryByTestId("rhythm-headline")).toBeNull();
     expect(screen.queryByTestId("rhythm-notify-row")).toBeNull();
     expect(document.querySelector(".surface-footer-layout")).toBeNull();
-    const token = await screen.findByRole("checkbox", { name: "Q4 PLATFORM" });
+    const token = await screen.findByRole("checkbox", { name: "Q4 Platform" });
     fireEvent.click(token);
-    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 PLATFORM" }) as HTMLInputElement).checked).toBe(false));
+    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 Platform" }) as HTMLInputElement).checked).toBe(false));
     expect(presses).toEqual(["PUT /api/settings/heartbeat"]);
   });
 });

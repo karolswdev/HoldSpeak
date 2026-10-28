@@ -214,6 +214,7 @@ export function SurfaceRow({
 export function SurfaceState({
   loading,
   error,
+  errorTitle,
   empty,
   emptyLabel = "Nothing yet",
   emptyHint,
@@ -229,6 +230,9 @@ export function SurfaceState({
 }: {
   loading?: boolean;
   error?: string;
+  /** W6-F words: the raw reason (a code, the hub's words) of `error`, for
+   *  the hover title only; the face says `error` in plain words. */
+  errorTitle?: string;
   empty?: boolean;
   emptyLabel?: string;
   /** W4-REDS-C (2026-10-27): an optional second quiet line under the
@@ -278,7 +282,7 @@ export function SurfaceState({
         <span className="surface-state-glyph" aria-hidden>
           ⚠︎
         </span>
-        <span>{error}</span>
+        <span title={errorTitle || undefined}>{error}</span>
         {onRetry ? (
           <Button dense variant="ghost" onClick={onRetry}>
             {retryLabel}

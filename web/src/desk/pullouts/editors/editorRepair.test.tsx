@@ -75,9 +75,9 @@ describe("editor repair save authority", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Body" }), { target: { value: "Keep these words" } });
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Done" })); });
     expect(close).not.toHaveBeenCalled();
-    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+    expect(screen.getByRole("status")).toHaveTextContent("Could not save · Your changes stay here");
     expect(keptEditorPatch("note", note.id)).toEqual({ body_markdown: "Keep these words" });
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Retry" })); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Try again" })); });
     expect(update).toHaveBeenNthCalledWith(2, "note", note.id, { body_markdown: "Keep these words" });
     expect(keptEditorPatch("note", note.id)).toEqual({});
     expect(close).not.toHaveBeenCalled();
@@ -156,8 +156,8 @@ describe("Knowledge and Workflow editors", () => {
     expect(keptEditorPatch("kb", kb.id)).toEqual({ body_markdown: "Recovered architecture text" });
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save as Note" })); });
     expect(keptEditorPatch("kb", kb.id)).toEqual({ body_markdown: "Recovered architecture text", recovery_note_id: "recovered-note" });
-    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Retry" })); });
+    expect(screen.getByRole("status")).toHaveTextContent("Could not save · Your changes stay here");
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Try again" })); });
     expect(vi.mocked(apiFetch).mock.calls.filter(([path]) => path === "/api/notes")).toHaveLength(1);
     expect(keptEditorPatch("kb", kb.id)).toEqual({});
     expect(screen.queryByRole("button", { name: "Save as Note" })).not.toBeInTheDocument();

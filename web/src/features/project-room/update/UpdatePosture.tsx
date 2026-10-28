@@ -582,7 +582,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
         </SurfaceVerbs>
 
         {ctrl.error ? (
-          <SurfaceState error={ctrl.error} onRetry={() => void ctrl.enterUpdates()} />
+          <SurfaceState error={ctrl.error} errorTitle={ctrl.errorTitle} onRetry={() => void ctrl.enterUpdates()} />
         ) : null}
 
         <EngineLine
@@ -636,7 +636,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
     return (
       <div className="update-posture" data-testid="update-posture" data-phase="editor">
         {ctrl.error ? (
-          <SurfaceState error={ctrl.error} onRetry={ctrl.retryFailed ?? undefined} />
+          <SurfaceState error={ctrl.error} errorTitle={ctrl.errorTitle} onRetry={ctrl.retryFailed ?? undefined} />
         ) : null}
 
         {/* Betterment P1: the records draft is made in under a second; its

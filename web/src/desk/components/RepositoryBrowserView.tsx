@@ -75,7 +75,7 @@ export function RepositoryBrowserView({
       </span>
       {trailingNavigation}
     </nav>
-    {browser.failure ? <SurfaceState error={browser.failure.message} onRetry={browser.retry} retryLabel="Retry" /> : null}
+    {browser.failure ? <SurfaceState error={browser.failure.message} errorTitle={browser.failure.reason} onRetry={browser.retry} /> : null}
     {browser.busy ? <div className="repo-browser-loading" role="status" aria-busy="true">Reading {browser.busy === "tree" ? "folder" : "file"}…</div> : null}
     <div className="repo-browser-content">
       <ScrollHint axis="y" scrollRef={collectionRef} className="repo-browser-collection-hint"><div ref={collectionRef} className="repo-browser-collection">
