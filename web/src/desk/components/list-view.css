@@ -35,7 +35,7 @@
   display: block;
   margin: 12px 8px 2px;
   color: var(--text-muted);
-  font: 600 var(--desk-surface-label-size) var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 16px var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -57,7 +57,7 @@
   background: none;
   justify-content: flex-start;
   color: var(--text-faint);
-  font: 600 var(--desk-surface-label-size) var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 16px var(--font-mono);
 }
 .desk-next .desk-list-name .desk-list-mark[data-selected] {
   color: var(--accent);
@@ -100,7 +100,7 @@
 .desk-next .desk-list-status {
   margin: 0;
   color: var(--text-muted);
-  font: 600 var(--desk-surface-label-size) var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 16px var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -206,7 +206,7 @@
 }
 .desk-sortable-table thead th {
   color: var(--text-muted);
-  font: 600 var(--desk-surface-label-size) var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 16px var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -255,7 +255,7 @@
   border-bottom: 0;
   color: var(--text-muted);
   background: var(--surface-2);
-  font: 600 var(--desk-surface-label-size) var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 16px var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -321,7 +321,7 @@
   border-bottom: 0;
   background: var(--surface-2);
   color: var(--text-muted);
-  font: 600 var(--desk-surface-label-size) var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 16px var(--font-mono);
   letter-spacing: 0.06em;
 }
 .desk-next .desk-list-sortable.desk-sortable-table-wrap {
@@ -331,7 +331,7 @@
 .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(4),
 .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(5) {
   color: var(--text-muted);
-  font: 600 var(--desk-surface-label-size) var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 16px var(--font-mono);
   letter-spacing: 0.05em;
 }
 .desk-list-name-cell {
@@ -402,7 +402,7 @@
     flex-wrap: wrap;
     gap: 0 6px;
     color: var(--text-muted);
-    font: 600 var(--desk-surface-label-size) var(--font-mono);
+    font: 600 var(--desk-surface-label-size) / 16px var(--font-mono);
     letter-spacing: 0.05em;
   }
   .desk-list-fold-token + .desk-list-fold-token::before {

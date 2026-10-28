@@ -364,13 +364,9 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
         Red("readable", r"^overlap '1' x 'People, DRAWER, 1:1 [\d:]+'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
             "the People icon's count badge 1 overlaps its caption", maybe=True),
     ],
-    ("surface-engines", 1440): [
-        # The ratified order: the jobs paint before the detection, the engines
-        # fill in (useRunsOn.ts:222, fenced by runsOn.test.tsx "paints the
-        # roster's jobs before the detection lands"). Holding them is a ruling.
-        Red("still", r"^(switchboard-job-\w+|concierge-[\w-]+) moved \d+ px$",
-            "Runs on: the switchboard job rows move 84 px after the window settles", maybe=True),
-    ],
+    # ENGINES-STILL (2026-10-28): the surface-engines "maybe" still red is
+    # gone. Its real cause was the late mono webfont swap (the catalog moved
+    # 4 px); the metric twin fixes it (tests/unit/test_css_mono_line_height.py).
     ("room", 1440): [
         # PHILO-17 (Astra r1 on #1111): an ITEM ROW (testid item-row) under
         # the ask bar (testid room-ask-*); which rows sit there depends on the

@@ -153,7 +153,7 @@
   margin: 0;
   overflow: auto;
   color: var(--text-muted);
-  font: var(--font-size-xs) var(--font-mono);
+  font: var(--font-size-xs) / 16px var(--font-mono);
   white-space: pre-wrap;
 }
 .desk-next .desk-coder-answer-state {

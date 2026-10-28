@@ -103,7 +103,7 @@
 .signal-eyebrow {
   grid-column: 1;
   color: var(--accent);
-  font: 500 var(--font-size-xs) var(--font-mono);
+  font: 500 var(--font-size-xs) / 16px var(--font-mono);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-eyebrow);
 }

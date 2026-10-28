@@ -112,7 +112,7 @@ export default function XtermPane({
       cursorBlink: false,
       cursorStyle: "block",
       scrollback: 4000,
-      fontFamily: tokenValue("--font-mono", "JetBrains Mono, monospace"),
+      fontFamily: tokenValue("--font-mono", "\"JetBrains Mono\", \"JetBrains Mono Fallback\", monospace"),
       fontSize: 12,
       lineHeight: 1.2,
       theme,
