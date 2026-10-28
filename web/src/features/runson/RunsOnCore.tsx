@@ -930,11 +930,13 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     ) : speech.canSetUp ? (
       <>
         {/* Window Program W4: at phone width the bar keeps its first fact
-            whole; the host and the size move to the verb's hover title. */}
-        {speechHost && !compact ? <EgressChip label={speechHost} scope="cloud" /> : null}
+            whole; the host chip hides (runson.css) and the host and size
+            move to the verb's hover title. */}
+        {speechHost && !compact ? <span className="runson-speech-host"><EgressChip label={speechHost} scope="cloud" /></span> : null}
         <Button
           dense
           variant="secondary"
+          title={speechHost ? `Downloads from ${speechHost}` : undefined}
           loading={speech.ai.busy}
           disabled={speech.ai.busy}
           data-testid="runson-speech-setup-verb"

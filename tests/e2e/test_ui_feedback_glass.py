@@ -478,6 +478,9 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     paper.wait_for(timeout=T)
     assert "Freeze the old ledger on Nov 5." in paper.inner_text()
 
+    # W4-PHONE (2026-10-27): the toolbar's Send… opens the one Send sheet
+    # in place of the words (the reader grammar).
+    window.locator("[data-testid=artifact-send]").click()
     send = window.locator("[data-testid=send-well]")
     send.wait_for(timeout=T)
     rows = send.locator("[data-testid=destination-row]")
@@ -522,11 +525,16 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
         return {actual, expected};
     }""")
     assert facts["actual"] == facts["expected"], facts
+    # The preview is the document on the window's paper: no frame of its own.
     assert second.locator(".send-open").evaluate(
         "el => getComputedStyle(el).backgroundColor"
-    ) == paper.evaluate("el => getComputedStyle(el).backgroundColor")
-    action_frame = second.locator(".surface-footer:has([data-send=actions])")
-    assert action_frame.bounding_box()["height"] <= 72, "Send must not add a second deep window foot"
+    ) == "rgba(0, 0, 0, 0)"
+    # Send is the sheet's toolbar verb; with no receipt yet the status line
+    # folds away, and it is never a second deep window foot.
+    assert send.locator("[data-testid=send-sheet-header] [data-testid=send-verb]").is_visible()
+    action_frame = window.locator(".surface-footer:has([data-send=actions])")
+    if action_frame.count() and action_frame.first.is_visible():
+        assert action_frame.first.bounding_box()["height"] <= 72, "Send must not add a second deep window foot"
 
     feedback_button = window.get_by_role(
         "button", name="Give feedback on Cutover requirements", exact=True

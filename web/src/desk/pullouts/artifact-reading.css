@@ -1,3 +1,38 @@
+/* W4-PHONE (2026-10-27): the artifact window on the reader grammar (as
+   the Decision reader): the toolbar touches the frame, the words sit in a
+   reader inset that scrolls, the status bar at the foot. */
+.artifact-window {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.artifact-reader {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+  color: var(--wb-ink);
+}
+@container surface (max-width: 559.9px) {
+  .artifact-reader { padding: 12px 16px 20px; }
+}
+/* Send… opens the one Send sheet in place of the words: its toolbar is
+   the window's toolbar (it touches the frame); the rows run edge to edge. */
+.artifact-send-sheet {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+}
+
 .artifact-reading {
   --text: var(--wb-text);
   --text-muted: var(--wb-muted);
@@ -8,15 +43,26 @@
   min-width: 0;
 }
 
+/* W4-PHONE (2026-10-27): the result is the words on the window's paper —
+   no card in the window (the well keeps its class for the reading hooks,
+   but draws no frame). */
 .artifact-reading .surface-well {
-  background: var(--alive-paper, var(--wb-paper));
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: var(--wb-text);
 }
 
 .artifact-reading .surface-well-body {
   max-height: none;
-  padding: 24px;
+  padding: 8px 4px 16px;
   overflow: visible;
+}
+
+.artifact-filing {
+  padding: 6px 4px 10px;
+  border-bottom: 1px solid var(--wb-rule-soft);
 }
 
 .artifact-reading .surface-material {

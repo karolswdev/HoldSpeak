@@ -677,9 +677,13 @@
   padding: 0;
   background: var(--wb-field);
 }
-/* An in-place status bar (no frame foot: a reference specimen). */
+/* An in-place status bar (no frame foot: a reference specimen, or a face
+   whose host gives no foot slot: Today). W4-PHONE (2026-10-27): it is its
+   own `surface` container, so the phone rule above (one line) answers to
+   the window's width here too; without it Today's bar wrapped to two. */
 .kit-statusbar-foot {
   flex: none;
+  container: surface / inline-size;
   border-top: 1px solid var(--wb-rule-soft);
   background: var(--wb-field);
 }
