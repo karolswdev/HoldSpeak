@@ -79,7 +79,7 @@ describe("the agents store follows the coder frame (Conductor K3; C4: no AGENTS 
     expect(calls("/api/desk/needs-you")).toBe(before);
 
     act(() => emit({ type: "desk_changed", data: {
-      kind: "note", id: "n1", op: "update", changes: [{ kind: "note", id: "n1", op: "update" }],
+      kind: "action_item", id: "a1", op: "update", changes: [{ kind: "action_item", id: "a1", op: "update" }],
     } }));
     await waitFor(() => expect(calls("/api/desk/needs-you")).toBeGreaterThan(before));
     expect(calls("/api/desk/needs-you?fresh=1")).toBe(0);

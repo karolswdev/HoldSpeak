@@ -88,7 +88,7 @@ export function ComingUp({ limit, emptyLine, "data-testid": testId = "coming-up"
     void desk.loadSchedules();
   }, []);
   useEffect(() => { load(); }, [load]);
-  useOnDeskChanged(load);
+  useOnDeskChanged(load, ["calendar", "calendar_event", "meeting", "scheduled_recording"]);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
     return () => window.clearInterval(timer);

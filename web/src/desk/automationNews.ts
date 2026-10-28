@@ -6,7 +6,7 @@
  * result is a write, so NEW goes everywhere at once) and after a run ends. */
 import { useCallback, useEffect, useState } from "react";
 import { fetchAutomationNews, type AutomationNews } from "./api";
-import { useBusSubscribe, useOnDeskChanged } from "./useDeskChangedRefresh";
+import { useBusSubscribe, useOnDeskChanged, WORKBENCH_CHANGE_KINDS } from "./useDeskChangedRefresh";
 
 export type { AutomationNews };
 
@@ -24,7 +24,7 @@ export function useAutomationNews(): { rows: AutomationNews[] | null; count: num
     void fetchAutomationNews().then(setRows).catch(() => undefined);
   }, []);
   useEffect(() => { reload(); }, [reload]);
-  useOnDeskChanged(reload);
+  useOnDeskChanged(reload, WORKBENCH_CHANGE_KINDS);
   const subscribe = useBusSubscribe();
   useEffect(() => {
     if (!subscribe) return undefined;

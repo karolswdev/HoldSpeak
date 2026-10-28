@@ -63,6 +63,42 @@ export function deskChanges(data: unknown): Record<string, unknown>[] {
   return listed.length ? listed : [value];
 }
 
+/**
+ * Return whether a desk reader must re-read for this frame.
+ *
+ * The hub repeats the first change at the top level and lists all changes in
+ * `changes`. Older hubs sent only the top-level object, or no kind at all.
+ * An unrecognised kind is deliberately a read: a stale surface is worse than
+ * one extra request. Window placement is the one known change that never
+ * changes desk data.
+ */
+export function frameNames(data: unknown, kinds: readonly string[]): boolean {
+  const names = new Set(kinds);
+  const changes = deskChanges(data);
+  const value = record(data);
+  const hasShape = (Array.isArray(value.changes) && value.changes.length > 0) || text(value.kind) !== "";
+  if (!hasShape) return true;
+  return changes.some((change) => {
+    const kind = text(change.kind);
+    if (kind === "windows") return false;
+    return kind === "" || names.has(kind) || !KNOWN_DESK_CHANGE_KINDS.has(kind);
+  });
+}
+
+/** Kinds currently emitted by the hub's services and HTTP announcement path. */
+const KNOWN_DESK_CHANGE_KINDS = new Set([
+  "action", "action_item", "agent", "artifact", "assignment", "automation", "door",
+  "brief", "calendar", "calendar_event", "chain", "channel", "coder",
+  "commitment", "decision", "decision_record", "destination", "directory",
+  "engine", "follow_through", "inference", "inference_assignment", "kb", "launch", "meeting",
+  "meeting_ready_read", "meeting_summary", "mode", "model", "model_profile",
+  "note", "person", "pipeline_event", "project", "project_item", "project_update", "relationship",
+  "proposal", "prompt", "recipe", "receipt", "repository", "resource",
+  "scheduled_recording", "send", "sequence", "setting", "settings", "skill", "source",
+  "thought", "thread", "watch", "workbench", "workbench_item", "workflow",
+  "windows",
+]);
+
 /** True when every change a `desk_changed` frame names is a window change
  *  (open, close, move, raise, seat, zoom: the hub's `windows` kind). Nothing
  *  in Needs you depends on where a window is, so such a frame reads nothing

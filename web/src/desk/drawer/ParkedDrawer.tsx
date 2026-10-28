@@ -116,7 +116,7 @@ function useParked() {
   const [read, setRead] = useState<ParkedRead | null>(null);
   const [failed, setFailed] = useState(false);
   const [tick, setTick] = useState(0);
-  useOnDeskChanged(() => setTick((n) => n + 1));
+  useOnDeskChanged(() => setTick((n) => n + 1), ["meeting", "project", "workbench", "workbench_item"]);
   const revision = useDrawers((s) => s.revision);
   const reread = useCallback(() => setTick((n) => n + 1), []);
   useEffect(() => {

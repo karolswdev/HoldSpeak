@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
 import { useDesk } from "../../desk/store";
-import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { triggerWorkbenchRun } from "../../desk/api";
 import { SurfaceState } from "../../desk/surface/Surface";
 import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../desk/surface/kit";
@@ -105,7 +105,7 @@ export function WorkbenchesHomeCore(_props: CoreProps) {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-  useOnDeskChanged(() => void load(true));
+  useOnDeskChanged(() => void load(true), WORKBENCH_CHANGE_KINDS);
 
   const open = (id: string) => useDesk.getState().openWorkbenchWindow(id);
   const runNow = async (automation: AutomationDetail) => {

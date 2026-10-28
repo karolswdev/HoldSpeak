@@ -325,7 +325,7 @@ export function DecisionsView({
         if (lands()) { setResults(rows); setTotal(all); }
       })
       .catch(() => undefined);
-  });
+  }, ["action", "action_item", "decision", "decision_record"]);
 
   useEffect(() => {
     let active = true;

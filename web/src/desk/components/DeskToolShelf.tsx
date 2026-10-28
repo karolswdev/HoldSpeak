@@ -50,7 +50,7 @@ import { SETTINGS_PALETTE_ROWS } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
 import { readProjectCounts } from "../needsYou";
-import { useOnDeskChanged } from "../useDeskChangedRefresh";
+import { NEEDS_YOU_CHANGE_KINDS, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { Button } from "../../components/signal/Signal";
 import type { WorkMenuEntry } from "./DeskMenu";
 import { PaletteHitLine, snippetParts, snippetText, type PaletteHit } from "./paletteHit";
@@ -426,7 +426,7 @@ export function DeskToolShelf() {
   // runs once, on the ranked first row, when the list draws (at most the
   // cap). More typing, Escape or a closed deck forgets it.
   const [pendingEnter, setPendingEnter] = useState(false);
-  useOnDeskChanged(readNeedsYou);
+  useOnDeskChanged(readNeedsYou, NEEDS_YOU_CHANGE_KINDS);
 
   useEffect(() => {
     // ⌘K itself lives in desk/keymap.ts (the one binder). PHILO-13-14 (C4):

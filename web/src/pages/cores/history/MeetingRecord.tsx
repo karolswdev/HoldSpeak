@@ -43,6 +43,8 @@ import { useWindowId } from "../../../desk/components/window/windowIdContext";
 import { SEND_OPEN, windowDoc } from "../../../desk/windowSend";
 import { MEETING_OPEN_EVENT, peekMeetingRequest, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
 import { useCoreWings } from "../core-hooks";
+import { MEETING_CHANGE_KINDS } from "../../../desk/useDeskChangedRefresh";
+import { frameNames } from "../../../desk/components/window/dockState";
 import type { MeetingDetailResponse } from "../core-types";
 import {
   ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, clockTime, download, intelStateOf,
@@ -195,7 +197,9 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       void load();
     };
     const burst = burstTimer(refresh, 300);
-    const offDeskChanged = subscribe("desk_changed", burst.bump);
+    const offDeskChanged = subscribe("desk_changed", (frame) => {
+      if (frameNames(frame?.data, MEETING_CHANGE_KINDS)) burst.bump();
+    });
     const offAftercare = subscribe("aftercare_ready", burst.bump);
     const offReturn = onReturnToTask(refresh);
     window.addEventListener("focus", refresh);
