@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ....agent_capabilities import Capability, require_capability
 from ....db.gate import APPROVED, DENIED, HELD
@@ -179,7 +180,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/gate/config")
     async def api_gate_config() -> Any:
         from ....coder_gate import load_gate_config
-        return JSONResponse(load_gate_config().to_dict())
+        return JSONResponse((await run_in_threadpool(load_gate_config)).to_dict())
 
     return router
 

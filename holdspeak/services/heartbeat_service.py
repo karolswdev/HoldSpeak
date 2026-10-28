@@ -455,7 +455,9 @@ class HeartbeatService:
             with self._db._connection() as conn:
                 rows = conn.execute(
                     "SELECT DISTINCT caller FROM pipeline_events "
-                    "WHERE origin = 'remote' AND caller != '' "
+                    # origin != 'local' lets SQLite use the partial index
+                    # idx_pipeline_events_origin (PERF-HUB 2026-10-28).
+                    "WHERE origin = 'remote' AND origin != 'local' AND caller != '' "
                     "AND timestamp > ? "
                     "ORDER BY caller",
                     (thirty_days_ago,),

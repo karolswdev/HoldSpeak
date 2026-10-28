@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ...principals import PrincipalKind, UNAUTHENTICATED
 from ...services.errors import ServiceError
@@ -21,7 +22,8 @@ def build_door_router(ctx: WebContext) -> APIRouter:
     @router.get("")
     async def get_door(request: Request) -> Any:
         try:
-            return JSONResponse(service.get(getattr(request.state, "principal", UNAUTHENTICATED)))
+            return JSONResponse(await run_in_threadpool(
+                service.get, getattr(request.state, "principal", UNAUTHENTICATED)))
         except ServiceError as exc:
             return _error(exc)
 

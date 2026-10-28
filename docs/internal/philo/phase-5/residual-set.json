@@ -2143,7 +2143,7 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/front_door.py::build_front_door_router.get_topology",
+      "entry_point": "holdspeak/web/routes/front_door.py::build_front_door_router._topology",
       "discriminator": "InferenceAssignmentService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },
@@ -2323,7 +2323,7 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/system/settings.py::build_settings_router.api_settings_hub",
+      "entry_point": "holdspeak/web/routes/system/settings.py::build_settings_router._settings_hub",
       "discriminator": "HeartbeatService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },

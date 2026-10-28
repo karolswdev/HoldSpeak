@@ -26,6 +26,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
@@ -75,7 +76,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
                      "message": "GitHub provider is not configured"},
                     status_code=404,
                 )
-            result = adapter.connection_status(principal(request))
+            result = await run_in_threadpool(adapter.connection_status, principal(request))
             return JSONResponse(result)
         except Exception as exc:
             return error_500(exc, log, "Failed to get GitHub connection status")
@@ -119,7 +120,8 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
                      "message": "GitHub provider is not configured"},
                     status_code=404,
                 )
-            result = adapter.discover(
+            result = await run_in_threadpool(
+                adapter.discover,
                 principal(request),
                 query=query,
                 cursor=cursor,

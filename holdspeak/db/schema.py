@@ -2595,6 +2595,17 @@ ON pipeline_events(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_pipeline_events_service_method
 ON pipeline_events(service, method, timestamp DESC);
 
+-- PERF-HUB 2026-10-28: the Room reads its receipts by method alone, and the
+-- remote-host and remote-origin reads filter on origin. Without these two
+-- indexes each of those reads scanned the whole table (1.4 M rows on the
+-- owner's desk) on every needs-you, settings and projections read.
+CREATE INDEX IF NOT EXISTS idx_pipeline_events_method
+ON pipeline_events(method, timestamp DESC);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_events_origin
+ON pipeline_events(origin, timestamp DESC)
+WHERE origin != 'local';
+
 CREATE INDEX IF NOT EXISTS idx_pipeline_events_principal
 ON pipeline_events(principal_kind, principal_identity, timestamp DESC);
 

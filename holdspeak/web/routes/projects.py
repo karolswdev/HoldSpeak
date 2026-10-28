@@ -10,6 +10,7 @@ from typing import Any
 
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ... import operations
 from ...logging_config import get_logger
@@ -75,7 +76,8 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/projects/{project_id}/room")
     async def api_project_room(project_id: str, request: Request) -> Any:
         try:
-            return JSONResponse(ops().invoke(principal(request), "project.get_room", {"project_id": project_id}))
+            return JSONResponse(await run_in_threadpool(
+                ops().invoke, principal(request), "project.get_room", {"project_id": project_id}))
         except NotFound as exc:
             return not_found(exc)
         except Exception as exc:
@@ -644,18 +646,24 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             nonlocal _owner_principal
             _owner_principal = principal(request)
             force = fresh == "1"
-            data = _needs_you_cache.get(force=force)
-            # The Room read is cached; the Door, the engine blockers and the
-            # failed summaries are local reads, so the one rule is applied on
-            # every request and the number is current.
-            from holdspeak.services.needs_you_membership import compose, filter_answer
+            owner = _owner_principal
 
-            data = compose(_get_db(), _owner_principal, data)
-            data = filter_answer(
-                data, direction=direction, person=person, project=project,
-                week=str(week or "").lower() in ("1", "true", "yes"),
-            )
-            return JSONResponse(data)
+            def _answer() -> dict:
+                data = _needs_you_cache.get(force=force)
+                # The Room read is cached; the Door, the engine blockers and the
+                # failed summaries are local reads, so the one rule is applied on
+                # every request and the number is current.
+                from holdspeak.services.needs_you_membership import compose, filter_answer
+
+                data = compose(_get_db(), owner, data)
+                return filter_answer(
+                    data, direction=direction, person=person, project=project,
+                    week=str(week or "").lower() in ("1", "true", "yes"),
+                )
+
+            # PERF-HUB 2026-10-28: the build reads the database for seconds;
+            # off the event loop, so other requests (sprites too) never wait.
+            return JSONResponse(await run_in_threadpool(_answer))
         except Exception as exc:
             return error_500(exc, log, "Failed to build desk needs-you")
 

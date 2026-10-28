@@ -1812,6 +1812,12 @@ class MeetingWebServer:
 
         @app.on_event("startup")
         async def _startup() -> None:
+            # PERF-HUB 2026-10-28: HOLDSPEAK_LOOP_WATCH=1 names any handler
+            # that holds the event loop longer than 100 ms. Off by default.
+            from .web import loop_watch
+
+            if loop_watch.enabled():
+                loop_watch.start(asyncio.get_running_loop())
             # Calls: with calls on and enabled, the hub waits for a call.
             try:
                 from .calls.service import CALLS
@@ -1992,6 +1998,18 @@ class MeetingWebServer:
                 start_memory_conductor()
             except Exception as e:
                 log.error(f"memory conductor startup failed: {e}")
+            # PERF-HUB 2026-10-28: old READ receipts leave pipeline_events
+            # (a daemon thread, after the hub is up, then daily). Owner-only,
+            # like every other scheduled work.
+            try:
+                from .db import get_database
+                from .db.pipeline_events_retention import start_retention
+                from .intel_queue_conductor import owns_database
+
+                if owns_database():
+                    start_retention(get_database()._connection)
+            except Exception as e:
+                log.error(f"pipeline event retention startup failed: {e}")
             # Owner ruling 2026-10-05 ("strong defaults, batteries included"):
             # a LOCAL engine becomes "Default for AI work" by itself; network
             # and cloud engines become proposals.  Background thread: the

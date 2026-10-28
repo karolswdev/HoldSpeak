@@ -192,7 +192,10 @@ class ProjectionRepository(BaseRepository):
                 rows = conn.execute(
                     "SELECT args_summary, origin, caller, caller_identity "
                     "FROM pipeline_events WHERE origin != 'local' "
-                    "ORDER BY timestamp DESC LIMIT 200",
+                    # +timestamp keeps the planner off the timestamp index
+                    # (a full scan) and on the partial index
+                    # idx_pipeline_events_origin (PERF-HUB 2026-10-28).
+                    "ORDER BY +timestamp DESC LIMIT 200",
                 ).fetchall()
         except Exception:
             return {}
