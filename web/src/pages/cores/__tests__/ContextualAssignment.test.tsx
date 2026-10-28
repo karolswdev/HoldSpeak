@@ -72,6 +72,37 @@ describe("ContextualAssignment", () => {
     expect(getAssignmentEditor).toHaveBeenLastCalledWith(subjectScope, capabilityId);
   });
 
+  // W6-D (2026-10-28): a recipe run with no engine of its own follows
+  // Answers (the hub's _FOLLOWS); the Mode window says the followed engine,
+  // never "No default model".
+  it("says the followed engine and Follows Answers for a recipe run with no row", async () => {
+    const recipeScope = { kind: "subject" as const, subject_kind: "recipe", subject_id: "recipe-17", capability_id: "recipe.run" };
+    const answersScope = { kind: "capability" as const, capability_id: "ask.answer" };
+    vi.mocked(getAssignmentEditor).mockResolvedValue({
+      ...editor,
+      scope: recipeScope,
+      selected_capability: { ...editor.selected_capability, id: "recipe.run", label: "Recipe run" },
+      configured_assignment: null,
+      effective: { status: "assigned" as const, inherited_from: "capability" as const, assignment: { id: "a2", revision: 3, scope: answersScope, entries: [entry], retry_policy_id: null, issues: [] }, repair: null },
+    } as never);
+    render(<ContextualAssignment label="Which engine runs it" capabilityId="recipe.run" scope={recipeScope} />);
+    expect(await screen.findByText("Quick Qwen · Follows Answers")).toBeInTheDocument();
+    expect(screen.queryByText(/No default model/)).toBeNull();
+  });
+
+  it("an own recipe run row reads without the follow word", async () => {
+    const recipeScope = { kind: "subject" as const, subject_kind: "recipe", subject_id: "recipe-17", capability_id: "recipe.run" };
+    const ownScope = { kind: "capability" as const, capability_id: "recipe.run" };
+    vi.mocked(getAssignmentEditor).mockResolvedValue({
+      ...editor,
+      scope: recipeScope,
+      effective: { status: "assigned" as const, inherited_from: "capability" as const, assignment: { id: "a3", revision: 1, scope: ownScope, entries: [entry], retry_policy_id: null, issues: [] }, repair: null },
+    } as never);
+    render(<ContextualAssignment label="Which engine runs it" capabilityId="recipe.run" scope={recipeScope} />);
+    expect(await screen.findByText("Uses capability · Quick Qwen")).toBeInTheDocument();
+    expect(screen.queryByText(/Follows/)).toBeNull();
+  });
+
   it("keeps the host surface alive for an incomplete server response", async () => {
     vi.mocked(getAssignmentEditor).mockResolvedValue({} as never);
     render(<ContextualAssignment label="Recipe run" capabilityId="recipe.run" scope={scope} />);
