@@ -91,3 +91,8 @@
 .drawer-window .surface-ledger-meta .kit-dotword { white-space: nowrap; }
 /* The foot's facts read from the left, as a status bar's items do. */
 .desk-next .drawer-window .surface-footer-receipt { justify-content: flex-start; }
+
+/* W3-ZONE (atlas 2026-10-27): the Archive's list runs edge to edge under
+   its toolbar; the empty state keeps the drawer's inset. */
+.parked-drawer .drawer-body > .kit-toolbar { flex: 0 0 auto; }
+.parked-drawer .parked-scroll:has(> .object-list) { padding: 0; }

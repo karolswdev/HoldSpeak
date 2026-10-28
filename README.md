@@ -30,7 +30,7 @@ HoldSpeak is one local workbench for all of it.
 Whisper runs on your machine. The language model is yours: a local GGUF or MLX model, or any OpenAI-compatible endpoint you choose. There is no account and no HoldSpeak cloud.
 
 <p align="center">
-  <img src="docs/assets/readme/desk-meeting-review.jpg" alt="The HoldSpeak Desk: twelve items need you across three projects, a weekly brief, and a meeting with decisions ready to confirm" width="100%">
+  <img src="docs/assets/readme/desk-meeting-review.jpg" alt="The HoldSpeak Desk with Today open: what needs you (a pull request, an overdue milestone, decisions to confirm), the day as a timeline with the next 1:1, and the meetings still to finish" width="100%">
 </p>
 
 ## What's inside
@@ -90,7 +90,7 @@ Fact extraction, belief consolidation, and page generation need an assigned mode
 ## A Desk for the work you lead
 
 <p align="center">
-  <img src="docs/assets/readme/desk-project-room.jpg" alt="A Project Room: what is open, its sources, the people in the Room, Ask this project, and a Draft update verb" width="100%">
+  <img src="docs/assets/readme/desk-project-room.jpg" alt="A note beside Ask: the note links a person, a Project, a pull request and a Jira key; Ask answers about it with its references, and the answer also lands in the note's margin" width="100%">
 </p>
 
 - **Needs you** ranks what waits on you across every project: overdue actions, decisions to review, people to answer.
