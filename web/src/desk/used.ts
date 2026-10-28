@@ -6,6 +6,10 @@ export interface UsedRow {
   ref: string;
   label: string;
   kind?: string;
+  /** Ask hub gap 2: a read with no desk record keeps what its tool said
+   *  (a pull request's state; a time when the tool returned one). */
+  state?: string;
+  at?: string;
   /** The captured before/after rows of one revision-safe desk window Undo. */
   window_undo?: WindowUndo;
 }
@@ -96,7 +100,11 @@ export function parseUse(raw: unknown): AgentUse | null {
       : {}),
   });
   return {
-    looked_at: rows(value.looked_at).map(base),
+    looked_at: rows(value.looked_at).map((row) => ({
+      ...base(row),
+      ...(typeof row.state === "string" && row.state ? { state: row.state } : {}),
+      ...(typeof row.at === "string" && row.at ? { at: row.at } : {}),
+    })),
     wrote: rows(value.wrote).map((row) => ({ ...base(row), undo: row.undo === true })),
     prepared: rows(value.prepared).map((row) => ({
       ...base(row),

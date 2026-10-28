@@ -263,7 +263,7 @@ gear wing tab is a small bare `⚙` in the title bar (Meetings, Activity).
 | Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE, W2-LIVE-2) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 3 | **19** |
 | Speak (+ wings) (W1-FACES; Talk at 393, Learned: W3-B) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | Components (W2-BUILDER) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
-| Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
+| Ask (W3-ASK-HUB) | 2 | 1 | 3 | 3 | 1 | 1 | 1 | 1 | **13** |
 | Decision record (W1-TRUTH; Lane / PR: W3-A) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 3 | **17** |
 | Memory (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 3 | 2 | 2 | **17** |
 | Context (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** |
@@ -477,6 +477,17 @@ Shots: [no engine 1440](atlas-2026-10-27/ask-noengine-1440.png) · [no engine 39
   `web/src/desk/surface/Material.tsx`.
 - **Fix needs:** a canvas (lane ASK, P1): composition, composer height, what the empty Ask
   offers on a full desk, About as a list view.
+- **W3-ASK-HUB (2026-10-27), the hub gaps behind D1:** the answer's words arrive under the
+  question as the engine writes them (`ask_text` frames by invocation id; the status bar keeps
+  `Writing the answer · N s` with Stop); References say the hub's facts (`Note · just now`,
+  `● Accepted`, a pull request's state); `Grounded in 4 records` in the verbs row opens each
+  claim beside the record that supports it, and a reopened thread keeps them; an ask whose
+  window closed keeps running, Recent shows it `● Writing…`, and its answer lands (only Stop
+  ends a run). Shots: `scratchpad/shots/w3-ask-hub/{arriving,references,grounded-open,recovered-rail,recovered-arriving,recovered-landed}-1440.png`,
+  `{references,grounded-open}-393.png`. Left: the phone still hides reference meta (D1's
+  `@container` rule); a Jira item has no single-read tool, so it has no row to carry facts.
+  Scores: H2→3 (the run says what it writes and comes back), F2→3 (a closed window loses
+  nothing). Lane / PR: W3-ASK-HUB.
 
 #### Meetings — `surface-meetings` + Record, ⚙ Meeting plumbing (18)
 

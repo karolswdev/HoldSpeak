@@ -57,6 +57,20 @@ def _loaded(locator):
     return locator
 
 
+def _desk_loaded(page):
+    """The desk screen is drawn. At 393 a sheet covers the floor and its
+    icon labels are hidden under it by design (#1526), so the floor's words
+    may be empty: then the open sheet is the drawn content."""
+    screen = page.get_by_test_id("desk-screen")
+    screen.wait_for(state="visible", timeout=10_000)
+    words = (screen.inner_text() or "").strip()
+    if words in {"", "…", "...", "Loading…"}:
+        sheet = page.locator(".desk-window-shell.is-sheet").first
+        sheet.wait_for(state="visible", timeout=10_000)
+        assert (sheet.inner_text() or "").strip() not in {"", "…", "...", "Loading…"}
+    return screen
+
+
 def _hit(locator, *, fit=True):
     if locator.count() != 1 or not locator.is_visible():
         return False
@@ -82,7 +96,7 @@ def _desk(page, base, *, capture=False):
     _normal_chair(page)
     # PHILO-14 A1 (#939): the Chair is the screen; its windows open on
     # demand: Window > Chair > Capture at 1440, the Dock's Speak at 393.
-    _loaded(page.get_by_test_id("desk-screen"))
+    _desk_loaded(page)
     if capture:
         if page.viewport_size["width"] > 720:
             # Betterment shell S0/S1 (#1257, #1259): Window > Desk shows only
@@ -349,7 +363,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             mark = page.locator(".desk-mark")
             assert _hit(mark), "The HoldSpeak menu is unreachable"
             mark.click()
-            page.locator(".desk-menu-list").first.wait_for()
+            # #1526: at 393 the floor's Go list (also a .desk-menu-list) is
+            # hidden under an open sheet; wait for the menu that is drawn.
+            page.locator(".desk-menu-list:visible").first.wait_for()
             choose = page.locator("[role^=menuitem]").filter(
                 has=page.locator(".desk-menu-label", has_text=re.compile(r"^Engines$"))).last
             _loaded(choose)
@@ -776,7 +792,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             page.emulate_media(reduced_motion="reduce")
             page.goto(base + "/?token=" + TOKEN)
             _normal_chair(page)
-            _loaded(page.get_by_test_id("desk-screen"))
+            _desk_loaded(page)
             _refind_note(page, note_id)
             shot("note-after-restart")
             _desk(page, base)

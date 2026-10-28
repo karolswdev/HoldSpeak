@@ -38,13 +38,19 @@ def build_ask_service(ctx: WebContext) -> AskService:
     from .._thread_factory import thread_service_from_ctx
     # Betterment Q7: an Ask on an HTTP engine that takes tool calls runs the
     # hub's tool loop (the Thread turn) with the Ask's prompt and palette.
-    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer(),progress=lambda event: _ask_progress(ctx,event),thread_service=lambda **overrides: thread_service_from_ctx(ctx,**overrides))
+    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer(),progress=lambda event: _ask_progress(ctx,event),thread_service=lambda **overrides: thread_service_from_ctx(ctx,**overrides),text=lambda event: _ask_text(ctx,event))
 
 def _ask_progress(ctx: WebContext, event: dict[str, Any]) -> None:
     """Betterment Q2: one running Ask's progress (busy, trying again) to the face."""
     if ctx.broadcast is None: return
     try: ctx.broadcast("ask_progress", event)
     except Exception as exc: log.debug(f"ask progress frame dropped: {exc}")
+
+def _ask_text(ctx: WebContext, event: dict[str, Any]) -> None:
+    """Ask hub gap 1: one running Ask's words so far, to the face."""
+    if ctx.broadcast is None: return
+    try: ctx.broadcast("ask_text", event)
+    except Exception as exc: log.debug(f"ask text frame dropped: {exc}")
 
 def build_ask_router(ctx: WebContext) -> APIRouter:
     router=APIRouter()
@@ -85,8 +91,14 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             context=body.get("context") if isinstance(body.get("context"),list) else []
             if body.get("thread") is True or body.get("thread_id"):
                 # Betterment Q4: the Ask window keeps every Ask as a thread;
-                # a thread_id continues that thread.
-                result=await service().ask_in_thread(principal(request),str(body.get("prompt") or ""),body.get("grounding"),thread_id=str(body.get("thread_id") or ""),lens=str(body.get("lens") or "Ask"),context=context,invocation_id=invocation_id,source_snapshot=body.get("source_snapshot"))
+                # a thread_id continues that thread.  Ask hub gap 5: the run
+                # is its own task, so a window that closes (its request
+                # dropped) does not end it; the answer is kept and claimed
+                # back through /api/ask/runs.
+                import asyncio
+                run=asyncio.ensure_future(service().ask_in_thread(principal(request),str(body.get("prompt") or ""),body.get("grounding"),thread_id=str(body.get("thread_id") or ""),lens=str(body.get("lens") or "Ask"),context=context,invocation_id=invocation_id,source_snapshot=body.get("source_snapshot")))
+                run.add_done_callback(lambda task: task.cancelled() or task.exception())
+                result=await asyncio.shield(run)
                 return JSONResponse(result)
             result=await service().ask(principal(request),str(body.get("prompt") or ""),body.get("grounding"),lens=str(body.get("lens") or "Ask"),context=context,model=body.get("model"),inference_target_id=body.get("inference_target_id"),profile_id=body.get("profile_id"),max_tokens=body.get("max_tokens"),temperature=body.get("temperature"),invocation_id=invocation_id,source_snapshot=body.get("source_snapshot"))
             return JSONResponse(result)
@@ -101,6 +113,12 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(result,status_code=201)
         except ServiceError as exc: return _error(exc)
         except Exception as exc: return error_500(exc,log,"Failed to keep ask")
+    @router.get("/api/ask/runs")
+    async def api_ask_runs(request: Request) -> Any:
+        # Ask hub gap 5: the asks a window left running, by invocation id.
+        from ....services.ask_service import runs
+        ids=[part for part in str(request.query_params.get("ids") or "").split(",") if part.strip()][:20]
+        return JSONResponse({"runs":runs(ids)})
     @router.post("/api/ask/{invocation_id}/cancel")
     async def api_cancel_ask(invocation_id: str, request: Request) -> Any:
         try:

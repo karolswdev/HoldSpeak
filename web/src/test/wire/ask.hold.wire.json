@@ -3,7 +3,7 @@
  "hold": {
   "invocation_id": "ask_cccccccccccccccccccccccccccccccc",
   "state": "hold",
-  "thread_id": "th_220ffa222563",
+  "thread_id": "th_6f3aaaef6c69",
   "holds": [
    {
     "call_id": "VaitvNv5sXJHFhU8i42tMaevEtuoiqrD",
@@ -25,15 +25,17 @@
   "egress": {
    "scope": "private_network"
   },
-  "thread_id": "th_220ffa222563",
+  "thread_id": "th_6f3aaaef6c69",
   "message_ids": {
-   "question": "tm_f23c58a3b61a",
-   "answer": "tm_4bc8e3aa8e77"
+   "question": "tm_66c15cf13a53",
+   "answer": "tm_f61c030c7606"
   },
   "looked_at": [
    {
     "ref": "meeting:m-mira-1on1",
-    "title": "1:1 with Mira"
+    "title": "1:1 with Mira",
+    "kind": "meeting",
+    "at": "2026-10-25T22:50:07.221206+00:00"
    }
   ],
   "used": {
@@ -47,6 +49,72 @@
    "wrote": [],
    "prepared": []
   },
-  "tools": "desk"
+  "tools": "desk",
+  "grounding_claims": [
+   {
+    "text": "Here's what you owe Mira this week, from the 1:1 (m-mira-1on1, 2026-10-15):",
+    "score": 0.6,
+    "label": "entailed",
+    "flagged": false,
+    "ref": "meeting:m-mira-1on1",
+    "title": "1:1 with Mira"
+   },
+   {
+    "text": "**Give Mira feedback on her cutover design doc** — due Friday 2026-10-23.",
+    "score": 0.778,
+    "label": "entailed",
+    "flagged": false,
+    "ref": "meeting:m-mira-1on1",
+    "title": "1:1 with Mira"
+   },
+   {
+    "text": "That's the only open item owed to her. The follow-through board and the meeting's proposals are both empty, so there's nothing else pending from that conversation.",
+    "score": 0.077,
+    "label": "unsupported",
+    "flagged": true
+   },
+   {
+    "text": "I've made it a task:",
+    "score": 0.0,
+    "label": "unsupported",
+    "flagged": true
+   },
+   {
+    "text": "**Task:** Give Mira feedback on the cutover design doc",
+    "score": 0.714,
+    "label": "entailed",
+    "flagged": false,
+    "ref": "meeting:m-mira-1on1",
+    "title": "1:1 with Mira"
+   },
+   {
+    "text": "**Owner:** Me",
+    "score": 0.0,
+    "label": "unsupported",
+    "flagged": true
+   },
+   {
+    "text": "**Due:** 2026-10-23 (Friday)",
+    "score": 0.667,
+    "label": "entailed",
+    "flagged": false,
+    "ref": "meeting:m-mira-1on1",
+    "title": "1:1 with Mira"
+   },
+   {
+    "text": "**Source:** meeting m-mira-1on1",
+    "score": 0.75,
+    "label": "entailed",
+    "flagged": false,
+    "ref": "meeting:m-mira-1on1",
+    "title": "1:1 with Mira"
+   },
+   {
+    "text": "It's now on your Door as an open item.",
+    "score": 0.0,
+    "label": "unsupported",
+    "flagged": true
+   }
+  ]
  }
 }
