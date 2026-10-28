@@ -1,0 +1,17 @@
+/* The fresh-build bar (runtime/FreshBuildBar.tsx): the kit StatusBar, held
+   at the screen's foot above the desk while a new build reloads the tab. */
+.fresh-build {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: var(--z-toast);
+  max-width: calc(100vw - 32px);
+  transform: translateX(-50%);
+  border: 1px solid var(--wb-rule);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 6px 18px var(--shadow-ink-1);
+}
+.fresh-build .kit-statusbar-foot {
+  border-top: 0;
+}

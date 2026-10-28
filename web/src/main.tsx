@@ -6,6 +6,7 @@ import { bootstrapAuth } from "./lib/auth";
 import { DeskChangedRefresh } from "./desk/useDeskChangedRefresh";
 import { HubWindowsSync } from "./desk/compositor/HubWindowsSync";
 import { RuntimeBusProvider } from "./runtime/RuntimeBus";
+import { FreshBuildBar } from "./runtime/FreshBuildBar";
 import "./styles/global.css";
 import "./styles/react-app.css";
 
@@ -24,6 +25,8 @@ createRoot(root).render(
         {/* PHILO-16 (16b): the hub owns the desk's windows; this view follows. */}
         <HubWindowsSync />
         <App />
+        {/* 2026-10-28: a new build on the hub reloads this tab once. */}
+        <FreshBuildBar />
       </RuntimeBusProvider>
     </BrowserRouter>
   </StrictMode>,

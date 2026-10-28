@@ -1,10 +1,15 @@
 import { readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { readBuilds } from "./prune-builds.mjs";
+
 const assets = fileURLToPath(
   new URL("../../holdspeak/static/_built/assets/", import.meta.url),
 );
-const files = readdirSync(assets);
+// The hub keeps the last three builds' assets (prune-builds.mjs): the gate
+// reads only the newest build's files.
+const newest = readBuilds(fileURLToPath(new URL("../../holdspeak/static/_built/", import.meta.url)))[0];
+const files = newest ? newest.assets : readdirSync(assets);
 const deskJs = files.filter((name) => /^desk-[^.]+\.js$/.test(name));
 const deskCss = files.filter((name) => /^desk-[^.]+\.css$/.test(name));
 const maps = files.filter((name) => name.endsWith(".map"));
