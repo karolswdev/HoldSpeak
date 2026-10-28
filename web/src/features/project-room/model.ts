@@ -546,6 +546,20 @@ export type RoomSnapshot = {
   receipts: RoomSection<RoomReceiptsData>;
   /** Betterment P3: the Now wing's reads (absent on an older hub). */
   now?: RoomSection<RoomNowData>;
+  /** Programs (2026-10-28, §9b): the Room's Programs fold, worst first
+   *  (absent on a hub without Programs). */
+  programs?: RoomSection<{ programs: RoomProgramRow[] }>;
+};
+
+/** Programs (§9b): one Program of the Project, as the Room's fold draws it. */
+export type RoomProgramRow = {
+  id: string;
+  title: string;
+  state: string;
+  state_word: string;
+  done: number;
+  total: number;
+  your_turn: number;
 };
 
 /** Betterment P3: one line of This week, with the source it rests on. */
@@ -867,6 +881,19 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
                 }))
               : [],
           }))
+        : [],
+    })),
+    programs: decodeSection<{ programs: RoomProgramRow[] }>(raw.programs, (s) => ({
+      programs: Array.isArray(s.programs)
+        ? (s.programs as Record<string, unknown>[]).map((r) => ({
+            id: String(r.id ?? ""),
+            title: String(r.title ?? ""),
+            state: String(r.state ?? ""),
+            state_word: String(r.state_word ?? r.state ?? ""),
+            done: Number(r.done ?? 0) || 0,
+            total: Number(r.total ?? 0) || 0,
+            your_turn: Number(r.your_turn ?? 0) || 0,
+          })).filter((r) => r.id)
         : [],
     })),
     decisions: decodeSection<{ items: RoomDecisionItem[] }>(raw.decisions, (s) => ({

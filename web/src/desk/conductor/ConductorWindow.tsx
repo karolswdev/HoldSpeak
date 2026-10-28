@@ -10,6 +10,7 @@
  *  This window is where agents live: the Agents application and the
  *  Arrival's AGENTS section fold into it (PROPOSAL §3, Movement C).
  */
+import { ProgramStepLine } from "../programs/StepLine";
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -366,6 +367,8 @@ function CoderRow({
           <Pill member={member} />
           {helper ? <span data-testid="conductor-helper-of">{helper}</span> : null}
           {reviewWords(member.review) ? <span data-testid="conductor-review">{reviewWords(member.review)}</span> : null}
+          {/* Programs (2026-10-28): "Step 4 of …", a press opens the Program. */}
+          <ProgramStepLine program={member.program} />
           {meta}
         </span>
         <ReviewResult review={member.review} />

@@ -5126,7 +5126,9 @@
         "GET"
       ],
       "module": "web.routes.programs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/programs",
@@ -5134,7 +5136,9 @@
         "POST"
       ],
       "module": "web.routes.programs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/programs/templates",

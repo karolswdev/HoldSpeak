@@ -126,6 +126,12 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     # Calls (2026-10-28): the Calls faces read `/api/calls/status`; its
     # `engine.profile_id` is drawn as the engine row's words, never chosen.
     "web/src/desk/calls/api.ts": ("display-transport", "143-11"),
+    # Programs (2026-10-28): the Runs on picker reads the Engines window's
+    # detection (`profileId` names an engine) and writes a step's harness
+    # and engine through the Programs routes (plan / PATCH); it never writes
+    # an inference assignment.
+    "web/src/desk/programs/RunsOn.tsx": ("display-transport", "143-11"),
+    "web/src/desk/programs/ProgramWindow.tsx": ("display-transport", "143-11"),
     "web/src/desk/calls/types.ts": ("display-transport", "143-11"),
     "web/src/desk/calls/__fixtures__/status.notRunning.ts": ("display-transport", "143-11"),
     "web/src/desk/calls/__fixtures__/status.off.ts": ("display-transport", "143-11"),

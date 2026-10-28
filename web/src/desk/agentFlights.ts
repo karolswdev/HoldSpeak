@@ -8,6 +8,7 @@
  * the PR. The Door row, the Room's OPEN HERE row, the arrival AGENTS section,
  * the Agents window and the Needs you coder row all read this one store.
  */
+import { flightProgramOf, type FlightProgram } from "./programs/flightProgram";
 import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../lib/api";
@@ -137,6 +138,8 @@ export interface AgentFlight {
   stateSource?: "hook" | "screen" | "review" | null;
   /** Betterment AG7: the agent's screen as the hub's rules read it. */
   screen?: AgentScreen | null;
+  /** Programs (2026-10-28): the Program step this launch works. */
+  program?: FlightProgram | null;
 }
 
 /** Betterment AG7: what the hub's screen rules read on an agent's pane:
@@ -284,6 +287,7 @@ export function fromWireFlight(body: any): AgentFlight {
     queuedAt: body?.queued_at ? String(body.queued_at) : null,
     deskAnswer: fromWireDeskAnswer(body?.desk_answer),
     helperOf: body?.helper_of ? String(body.helper_of) : null,
+    program: flightProgramOf(body?.program),
     helperRequest: body?.helper_request?.status === "awaiting_owner"
       ? {
           requestId: String(body.helper_request.request_id ?? ""),

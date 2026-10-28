@@ -77,6 +77,8 @@ export interface ConductorMember extends ObjectListRow {
   screen?: AgentScreen | null;
   /** AG15: this row belongs to the owner's own pane; it has no launch or Stop. */
   ownAgent?: OwnAgent;
+  /** Programs (2026-10-28): the Program step this agent works. */
+  program?: AgentFlight["program"];
 }
 
 export interface ConductorReads {
@@ -394,6 +396,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       deskAnswer: flight?.deskAnswer ?? null,
       screen: flight?.screen ?? row.screen ?? null,
       helperOf: flight?.helperOf ?? null,
+      program: flight?.program ?? null,
       helperRequest: flight?.helperRequest ?? null,
       review: flight?.review ?? null,
       group: liveGroup(state),
@@ -442,6 +445,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       deskAnswer: flight.deskAnswer ?? null,
       screen: flight.screen ?? null,
       helperOf: flight.helperOf ?? null,
+      program: flight.program ?? null,
       helperRequest: flight.helperRequest ?? null,
       review: flight.review ?? null,
       group: liveGroup(state),

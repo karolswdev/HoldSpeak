@@ -43,4 +43,8 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   // Calls (2026-10-28): the call as a document and its toolbar on one row.
   // A SurfaceWindows host: applications.ts carries the same size.
   calls: { w: 720, h: 520 },
+  // Programs (canvas programs-2026-10-28): the board of direction C, its
+  // six columns on one row; twenty steps fit 864 px with no scroll.
+  program: { w: 1000, h: 660 },
+  programs: { w: 960, h: 560 },
 };

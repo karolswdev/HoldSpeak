@@ -1001,6 +1001,25 @@ StationTrack (C-4 on the A lane): an `ol` of `{ word, sub?, state:
 hollow. The sub-lines fold away in a `surface` of 520 px or less. Props:
 `label`, `stations`.
 
+### The Program StationTrack (Programs, 2026-10-28)
+
+`web/src/desk/programs/StationTrack.tsx` (canvas
+`docs/internal/betterment/programs/canvases/programs-2026-10-28.html`, kit
+list "NEW StationTrack"): a step's six stations BRIEF · WORK · CHECK ·
+REVIEW · PR · MERGE as one `ol.pg-track`, its accessible name the current
+station in words (`At Check green`). Props: `stations` (from
+`programs/model.ts` `stationsOf(step)`: `{ key, word, sub?, state:
+"passed"|"current"|"ahead"|"skip", tone, live?, person? }`), `form`
+(`"dots"`: six 8 px dots and 10 px links, the current one 10 px in its tone,
+98 px in all, the board row's track; `"words"`: each station a dot and its
+word with the quiet word after it, `Check green`, `PR #1591`, the Gate
+fold's track), `label?`. Passed is filled grey, ahead hollow, a station
+outside the step's gate (no reviewer, no merge) a short dash; a person's
+review draws her `Avatar`. The live current station breathes with
+`kit-lamp-live` (2.4 s, a box-shadow; none under reduced motion); nothing
+moves on hover. It is a sibling of the lane's StationTrack above (the
+square stations of a lane), not a replacement.
+
 ### AskWell
 
 The question well (A-4), a raised plate: `<AGENT> ASKS · <AGE>`, the

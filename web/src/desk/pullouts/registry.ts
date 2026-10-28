@@ -47,3 +47,7 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   game: FallbackPullout,
   layout: FallbackPullout,
 } satisfies Record<PrimitiveKind, PulloutContent>;
+
+// Programs (2026-10-28): the pullout families whose object is the hub's,
+// not a desk primitive (`pullout:program:<id>`). Pullout.tsx reads them first.
+export { PULLOUT_FAMILIES } from "./families";
