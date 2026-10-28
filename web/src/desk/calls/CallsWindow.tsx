@@ -22,7 +22,7 @@ import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
 import { spriteUrl } from "../sprites";
 import { useWindowInterior } from "../surface/interior";
-import { StatusBar, TickNumber, ToolGlyph, Toolbar, countWords, type StatusBarItem, type ToolGlyphKind } from "../surface/kit";
+import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem, type ToolGlyphKind } from "../surface/kit";
 import { ObjectList, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../surface/objects/ObjectList";
 import { SurfaceState } from "../surface/Surface";
 import { decide, hangUp, placeCall, readCall, refusalWords, useCalls, withTranscript } from "./api";
@@ -121,11 +121,22 @@ function noteWhen(call: CallSummary): string {
   return `Call · ${day} ${clock}`;
 }
 
+/** DELIGHT slice 4 (2026-10-28): the held question's answer settles out,
+ *  the Needs-you Done settle (180 ms, a wash that fades, opacity and colour
+ *  only): green for Yes, the quiet rule for No. None under reduced motion
+ *  (or with no media query). */
+export const SETTLE_MS = 180;
+function motionAllowed(): boolean {
+  return Boolean(window.matchMedia?.("(prefers-reduced-motion: no-preference)")?.matches);
+}
+
 /** The call as a document: the transcript, the held question, what it did. */
-function CallDocument({ call, live, busy, onDecide }: {
+function CallDocument({ call, live, busy, settle, onDecide }: {
   call: Call;
   live: boolean;
   busy: boolean;
+  /** The answer that is settling out (`yes`, `no`), or none. */
+  settle?: "" | "yes" | "no";
   onDecide?: (decision: "approve" | "deny") => void;
 }) {
   const start = at(call.answered_at) || at(call.started_at);
@@ -144,7 +155,7 @@ function CallDocument({ call, live, busy, onDecide }: {
     <div className="calls-doc" data-testid="calls-document" data-call={call.id}>
       {segments.length ? <LiveTranscript segments={segments} listening={live && !call.hold} /> : null}
       {live && call.hold ? (
-        <div className="calls-hold" role="group" aria-label="HoldSpeak asks" data-testid="calls-hold">
+        <div className="calls-hold" role="group" aria-label="HoldSpeak asks" data-testid="calls-hold" data-settle={settle || undefined}>
           <span className="calls-hold-words">{call.hold.words}</span>
           <span className="calls-hold-verbs">
             <Button variant="primary" dense loading={busy} onClick={() => onDecide?.("approve")} data-testid="calls-yes">Yes</Button>
@@ -201,6 +212,7 @@ export function CallsCore(_props: CoreProps) {
   const [viewing, setViewing] = useState<Call | null>(null);
   const [busy, setBusy] = useState<"" | "place" | "hangup" | "decide" | "open">("");
   const [refusal, setRefusal] = useState("");
+  const [settle, setSettle] = useState<"" | "yes" | "no">("");
   const [sort, setSort] = useState<ObjectListSort>({ key: "when", dir: "desc" });
   const active = calls.active;
   const shown = active ?? calls.ended ?? viewing;
@@ -223,7 +235,15 @@ export function CallsCore(_props: CoreProps) {
   });
   const hangup = () => { if (active) void run("hangup", async () => { calls.apply(withTranscript(await hangUp(active.id), active)); }); };
   const answer = (decision: "approve" | "deny") => {
-    if (active) void run("decide", async () => { calls.apply(withTranscript(await decide(active.id, decision), active)); });
+    if (active) void run("decide", async () => {
+      const next = withTranscript(await decide(active.id, decision), active);
+      if (motionAllowed()) {
+        setSettle(decision === "approve" ? "yes" : "no");
+        await new Promise((resolve) => window.setTimeout(resolve, SETTLE_MS));
+      }
+      setSettle("");
+      calls.apply(next);
+    });
   };
   const open = (id: string) => void run("open", async () => { setViewing(await readCall(id)); });
   const back = () => { setViewing(null); calls.clearEnded(); };
@@ -233,7 +253,8 @@ export function CallsCore(_props: CoreProps) {
     const length = call.duration_sec && call.duration_sec > 0 ? clockWords(call.duration_sec) : "";
     return {
       id: call.id,
-      kind: "meeting",
+      kind: "call",
+      kindWord: "Call",
       name: call.first_words ? `“${call.first_words}”` : (call.direction === "out" ? "HoldSpeak called you" : "No words"),
       when: callWhen(call.started_at),
       whenSort: at(call.started_at) || 0,
@@ -247,8 +268,9 @@ export function CallsCore(_props: CoreProps) {
   const statusItems: Array<StatusBarItem | null> = refusal ? [
     { key: "refusal", lamp: "warn", text: refusal, testId: "calls-refusal" },
   ] : active ? [
-    { key: "live", lamp: "fail", text: "On a call", testId: "calls-status-live" },
-    clock != null ? { key: "clock", text: <TickNumber value={clockWords(clock)} className="calls-clock" />, testId: "calls-clock" } : null,
+    { key: "live", lamp: "fail", live: true, text: "On a call", testId: "calls-status-live" },
+    // The clock counts in place: no fade each second (a moment runs once).
+    clock != null ? { key: "clock", text: <span className="calls-clock">{clockWords(clock)}</span>, testId: "calls-clock" } : null,
     active.hold ? { key: "hold", text: "Waiting for your answer" } : null,
   ] : shown ? [
     { key: "ended", text: <span className="calls-idle-word"><span className="kit-dot" data-tone="idle" aria-hidden="true" />Call ended</span> },
@@ -272,16 +294,20 @@ export function CallsCore(_props: CoreProps) {
   if (!active) statusItems.push({ key: "count", text: countWords(ended, "call") });
 
   let body: ReactNode;
+  /* The body's phase keys it, so what arrives after the first read (the
+     list, a call, the empty object) fades up under the toolbar once, as the
+     first paint does (pullout.css). A call that changes in place does not. */
+  const phase = calls.loading || calls.error ? "read" : shown ? `call-${shown.id}` : !ended ? "empty" : "list";
   if (calls.loading || calls.error) {
     body = <SurfaceState loading={calls.loading} error={calls.error} onRetry={() => void calls.reload()} />;
   } else if (shown) {
-    body = <CallDocument call={shown} live={Boolean(active)} busy={busy === "decide"} onDecide={answer} />;
+    body = <CallDocument call={shown} live={Boolean(active)} busy={busy === "decide" && !settle} settle={settle} onDecide={answer} />;
   } else if (!ended) {
     body = (
       <SurfaceState
         empty
-        emptyKind="meeting"
-        emptyImage={spriteUrl("meeting", "calls")}
+        emptyKind="call"
+        emptyImage={spriteUrl("call", "calls")}
         emptyLabel="No calls yet"
         emptyHint="Call me rings your number and HoldSpeak answers."
         actionLabel={canCall ? "Call me" : "Set up calls"}
@@ -345,7 +371,7 @@ export function CallsCore(_props: CoreProps) {
           </>
         )}
       </Toolbar>
-      <div className="calls-body">{body}</div>
+      <div className="calls-body" key={phase} data-phase={phase}>{body}</div>
       <StatusBar
         data-testid="calls-status"
         items={statusItems}

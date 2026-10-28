@@ -17,7 +17,7 @@ import { ActionNotice } from "../../desk/surface/patterns/ActionNotice";
 import { StatusBar, ToolGlyph, countWords, type StatusBarItem } from "../../desk/surface/kit";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
 import type { ObjectTone } from "../../desk/surface/objects/kinds";
-import { SYSTEM } from "../../desk/systemSprites";
+import { spriteUrl } from "../../desk/sprites";
 
 type ReceiptPage = { offset: number; limit: number; total: number; has_more: boolean };
 type ReceiptRead = { projections: DeskProjection[]; page: ReceiptPage };
@@ -236,7 +236,7 @@ export function ActivityFinishedReceipts({ query, records = [] }: {
       </ActionNotice> : null}
       {loading && listRows.length === 0 ? <SurfaceState loading/> : null}
       {!loading && !error && listRows.length === 0
-        ? <SurfaceState empty emptyImage={SYSTEM.dockDeskMemory} emptyLabel={needle ? "No matching receipts" : "No finished receipts"}/>
+        ? <SurfaceState empty emptyImage={spriteUrl("memory", "activity")} emptyKind="memory" emptyLabel={needle ? "No matching receipts" : "No finished receipts"}/>
         : null}
       {listRows.length > 0 ? (
         <ObjectList

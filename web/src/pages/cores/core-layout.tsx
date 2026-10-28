@@ -35,6 +35,7 @@ export function CoreResourceGuard({
   emptyLabel,
   emptyGlyph,
   emptyImage,
+  emptyKind,
   onAction,
   actionLabel,
   children,
@@ -44,6 +45,9 @@ export function CoreResourceGuard({
   emptyLabel?: string;
   emptyGlyph?: string;
   emptyImage?: string;
+  /** DELIGHT: with `emptyImage`, the empty state is the kind's object on
+   *  its halo (SurfaceState `emptyKind`). */
+  emptyKind?: string;
   onAction?: () => void;
   actionLabel?: string;
   children: ReactNode;
@@ -56,6 +60,7 @@ export function CoreResourceGuard({
       emptyLabel={emptyLabel}
       emptyGlyph={emptyGlyph}
       emptyImage={emptyImage}
+      emptyKind={emptyKind}
       onAction={onAction}
       actionLabel={actionLabel}
       onRetry={() => void resource.reload()}

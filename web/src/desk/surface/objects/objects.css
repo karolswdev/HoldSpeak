@@ -484,7 +484,7 @@
    same map. */
 :is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card) { --row-kind: var(--kind-other); }
 :is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="project"], [data-kind="room"]) { --row-kind: var(--kind-project); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card)[data-kind="meeting"] { --row-kind: var(--kind-meeting); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="meeting"], [data-kind="call"]) { --row-kind: var(--kind-meeting); }
 :is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="person"], [data-kind="people"]) { --row-kind: var(--kind-person); }
 :is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="decision"], [data-kind="decision_record"]) { --row-kind: var(--kind-decision); }
 :is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="note"], [data-kind="thought"]) { --row-kind: var(--kind-note); }

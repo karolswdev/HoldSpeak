@@ -45,6 +45,45 @@
   color: var(--wb-ink);
 }
 .desk-next .calls-hold-verbs { display: inline-flex; flex: none; gap: 6px; }
+/* DELIGHT slice 4 (2026-10-28) — the answer settles out: once the hub has
+   the Yes or the No, the row washes (green for Yes, the quiet rule for No)
+   and fades, 180 ms, opacity and colour only (CallsWindow SETTLE_MS); then
+   the call reads on without it. Nothing under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .desk-next .calls-hold[data-settle] {
+    pointer-events: none;
+    animation: calls-hold-settle-yes 180ms var(--ease-standard) both;
+  }
+  .desk-next .calls-hold[data-settle="no"] { animation-name: calls-hold-settle-no; }
+}
+@keyframes calls-hold-settle-yes {
+  from {
+    border-color: color-mix(in srgb, var(--ok-strong) 40%, var(--wb-rule-soft));
+    background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper));
+    box-shadow: inset 3px 0 0 var(--ok-strong);
+    opacity: 1;
+  }
+  to {
+    border-color: color-mix(in srgb, var(--ok-strong) 40%, var(--wb-rule-soft));
+    background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper));
+    box-shadow: inset 3px 0 0 var(--ok-strong);
+    opacity: 0;
+  }
+}
+@keyframes calls-hold-settle-no {
+  from {
+    border-color: var(--wb-rule-soft);
+    background: color-mix(in srgb, var(--wb-muted) 12%, var(--wb-paper));
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--wb-muted) 60%, transparent);
+    opacity: 1;
+  }
+  to {
+    border-color: var(--wb-rule-soft);
+    background: color-mix(in srgb, var(--wb-muted) 12%, var(--wb-paper));
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--wb-muted) 60%, transparent);
+    opacity: 0;
+  }
+}
 
 /* Done on this call: dense rows, a kind mark, the label, the effect word. */
 .desk-next .calls-done { margin-left: 64px; }
@@ -72,7 +111,16 @@
   text-align: left;
   cursor: pointer;
 }
-.desk-next .calls-result:hover:not(:disabled) { background: var(--wb-row-hover); }
+/* DELIGHT slice 4 — a result wears its kind's hue (the --kind-* tokens,
+   objects.css): the mark's seat (13 % wash, 22 % rule) and the hover wash
+   (8 %). A send keeps the Send's ember. */
+.desk-next .calls-result { --row-kind: var(--kind-other); }
+.desk-next .calls-result[data-kind="note"] { --row-kind: var(--kind-note); }
+.desk-next .calls-result:is([data-kind="action"], [data-kind="task"]) { --row-kind: var(--kind-action); }
+.desk-next .calls-result[data-kind="decision"] { --row-kind: var(--kind-decision); }
+.desk-next .calls-result[data-kind="project"] { --row-kind: var(--kind-project); }
+.desk-next .calls-result[data-kind="send"] { --row-kind: var(--wb-ember-ink); }
+.desk-next .calls-result:hover:not(:disabled) { background: color-mix(in srgb, var(--row-kind) 8%, var(--wb-paper)); }
 .desk-next .calls-result:focus-visible { outline: 2px solid var(--wb-sel-vivid); outline-offset: -2px; }
 .desk-next .calls-result:disabled { cursor: default; }
 .desk-next .calls-result-mark {
@@ -81,19 +129,11 @@
   width: 18px;
   height: 18px;
   border-radius: 4px;
-  background: color-mix(in srgb, var(--wb-info-ink) 12%, var(--wb-paper));
-  color: var(--wb-info-ink);
+  background: color-mix(in srgb, var(--row-kind) 13%, var(--wb-paper));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--row-kind) 22%, transparent);
+  color: var(--row-kind);
 }
 .desk-next .calls-result-mark .kit-toolglyph { width: 14px; height: 14px; color: inherit; }
-.desk-next .calls-result[data-kind="action"] .calls-result-mark,
-.desk-next .calls-result[data-kind="task"] .calls-result-mark {
-  background: color-mix(in srgb, var(--wb-ok-ink) 14%, var(--wb-paper));
-  color: var(--wb-ok-ink);
-}
-.desk-next .calls-result[data-kind="send"] .calls-result-mark {
-  background: color-mix(in srgb, var(--wb-ember-ink) 14%, var(--wb-paper));
-  color: var(--wb-ember-ink);
-}
 .desk-next .calls-result-label {
   min-width: 0;
   overflow: hidden;

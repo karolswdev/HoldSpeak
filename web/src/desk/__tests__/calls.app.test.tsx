@@ -333,3 +333,164 @@ describe("Settings ▸ Calls", () => {
     expect(calls).toEqual(["GET /api/settings"]);
   });
 });
+
+/** DELIGHT slice 4 (2026-10-28): the Calls window in the delight system. */
+describe("DELIGHT slice 4: the Calls window", () => {
+  const motion = (allowed: boolean) => {
+    const real = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: allowed && query.includes("no-preference"),
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    return () => { window.matchMedia = real; };
+  };
+
+  it("wears its own object: the desk telephone in the title bar, the empty state and every row", async () => {
+    const app = DESK_APPLICATIONS.find((entry) => entry.action === "open-calls");
+    expect(app?.surface?.sprite).toBe("call");
+    hub({
+      "GET /api/settings": { calls: settingsCalls },
+      "GET /api/calls/status": statusReady,
+      "GET /api/calls": callsEmpty,
+    });
+    const { container, unmount } = render(<CallsCore />);
+    await screen.findByText("No calls yet");
+    const seat = container.querySelector(".surface-state-object");
+    expect(seat?.getAttribute("data-kind")).toBe("call");
+    expect(seat?.querySelector("img")?.getAttribute("src")).toMatch(/\/call\.png$/);
+    unmount();
+
+    hub({
+      "GET /api/settings": { calls: settingsCalls },
+      "GET /api/calls/status": statusReady,
+      "GET /api/calls": callsList,
+    });
+    render(<CallsCore />);
+    const rows = await screen.findAllByTestId("calls-row");
+    expect(rows.map((row) => row.getAttribute("data-kind"))).toEqual(["call", "call"]);
+    expect(rows[0].querySelector("img")?.getAttribute("src")).toMatch(/\/call\.png$/);
+  });
+
+  it("on a call the status lamp is live (it glows and breathes); the clock counts without a fade", async () => {
+    hub({
+      "GET /api/settings": { calls: settingsCalls },
+      "GET /api/calls/status": { ...statusReady, active: { ...callLive, transcript: undefined } },
+      "GET /api/calls": { calls: [] },
+      "GET /api/calls/c9b1e0": callLive,
+    });
+    render(<CallsCore />);
+    await screen.findByTestId("calls-hangup");
+    const lamp = screen.getByTestId("calls-status-live").querySelector(".kit-dot");
+    expect(lamp?.getAttribute("data-tone")).toBe("fail");
+    expect(lamp?.hasAttribute("data-live")).toBe(true);
+    expect(screen.getByTestId("calls-clock").querySelector(".kit-tick")).toBeNull();
+  });
+
+  it("Ready for calls is a lit lamp, not a live one", async () => {
+    hub({
+      "GET /api/settings": { calls: settingsCalls },
+      "GET /api/calls/status": statusReady,
+      "GET /api/calls": callsList,
+    });
+    render(<CallsCore />);
+    await screen.findAllByTestId("calls-row");
+    const lamp = screen.getByTestId("calls-status-ready").querySelector(".kit-dot");
+    expect(lamp?.getAttribute("data-tone")).toBe("ok");
+    expect(lamp?.hasAttribute("data-live")).toBe(false);
+  });
+
+  it("Yes settles the held row out in green, then the call reads on without it", async () => {
+    const restore = motion(true);
+    try {
+      hub({
+        "GET /api/settings": { calls: settingsCalls },
+        "GET /api/calls/status": { ...statusReady, active: { ...callLive, transcript: undefined } },
+        "GET /api/calls": { calls: [] },
+        "GET /api/calls/c9b1e0": callLive,
+        "POST /api/calls/c9b1e0/decide": () => ({ ...frameDecided.call, transcript: undefined }),
+      });
+      render(<CallsCore />);
+      fireEvent.click(await screen.findByTestId("calls-yes"));
+      await waitFor(() => expect(screen.getByTestId("calls-hold").getAttribute("data-settle")).toBe("yes"));
+      // While it settles the verbs keep their words (no spinner in a fading row).
+      expect(screen.getByTestId("calls-yes").getAttribute("aria-busy")).not.toBe("true");
+      await waitFor(() => expect(screen.queryByTestId("calls-hold")).toBeNull());
+      expect(screen.getAllByTestId("calls-result").map((row) => row.textContent)).toContain("Runbook reminder to Platform channelSent on your yes");
+    } finally {
+      restore();
+    }
+  });
+
+  it("No settles the held row out in the quiet rule; under reduced motion nothing settles", async () => {
+    const restore = motion(true);
+    try {
+      hub({
+        "GET /api/settings": { calls: settingsCalls },
+        "GET /api/calls/status": { ...statusReady, active: { ...callLive, transcript: undefined } },
+        "GET /api/calls": { calls: [] },
+        "GET /api/calls/c9b1e0": callLive,
+        "POST /api/calls/c9b1e0/decide": { ...callLive, hold: null, transcript: undefined },
+      });
+      render(<CallsCore />);
+      fireEvent.click(await screen.findByTestId("calls-no"));
+      await waitFor(() => expect(screen.getByTestId("calls-hold").getAttribute("data-settle")).toBe("no"));
+      await waitFor(() => expect(screen.queryByTestId("calls-hold")).toBeNull());
+    } finally {
+      restore();
+    }
+    cleanup();
+    hub({
+      "GET /api/settings": { calls: settingsCalls },
+      "GET /api/calls/status": { ...statusReady, active: { ...callLive, transcript: undefined } },
+      "GET /api/calls": { calls: [] },
+      "GET /api/calls/c9b1e0": callLive,
+      "POST /api/calls/c9b1e0/decide": { ...callLive, hold: null, transcript: undefined },
+    });
+    render(<CallsCore />);
+    const hold = await screen.findByTestId("calls-hold");
+    fireEvent.click(screen.getByTestId("calls-no"));
+    await waitFor(() => expect(screen.queryByTestId("calls-hold")).toBeNull());
+    expect(hold.hasAttribute("data-settle")).toBe(false);
+  });
+
+  it("a result wears its kind: the row names data-kind for its hue", async () => {
+    hub({
+      "GET /api/settings": { calls: settingsCalls },
+      "GET /api/calls/status": statusReady,
+      "GET /api/calls": callsList,
+      "GET /api/calls/c7a2f1": callEnded,
+    });
+    render(<CallsCore />);
+    const rows = await screen.findAllByTestId("calls-row");
+    fireEvent.click(rows[0].querySelector(".object-list-open") ?? rows[0], { detail: 1 });
+    const results = await screen.findAllByTestId("calls-result");
+    expect(results.every((row) => row.getAttribute("data-kind"))).toBe(true);
+    expect(screen.getByTestId("calls-transcript-note").getAttribute("data-kind")).toBe("note");
+  });
+
+  it("the body fades up once per phase: the list replaces the read with a new body; a live call does not", async () => {
+    hub({
+      "GET /api/settings": { calls: settingsCalls },
+      "GET /api/calls/status": statusReady,
+      "GET /api/calls": callsList,
+    });
+    const { container } = render(<CallsCore />);
+    await screen.findAllByTestId("calls-row");
+    expect(container.querySelector(".calls-body")?.getAttribute("data-phase")).toBe("list");
+  });
+
+  it("Settings ▸ Calls: the dots turn only after the first read (data-turns)", async () => {
+    hub({ "GET /api/settings": { calls: settingsCallsFresh }, "GET /api/calls/status": statusOff });
+    render(<CallsSettingsPane />);
+    const pane = await screen.findByTestId("calls-settings");
+    await waitFor(() => expect(pane.getAttribute("aria-busy")).toBeNull());
+    await waitFor(() => expect(pane.hasAttribute("data-turns")).toBe(true));
+    expect(within(pane).getByTestId("calls-step-state-install").classList.contains("kit-dotword")).toBe(true);
+  });
+});

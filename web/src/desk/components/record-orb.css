@@ -28,20 +28,26 @@
 .desk-next .desk-orb:hover .desk-orb-face {
   filter: brightness(1.15);
 }
+/* DELIGHT slice 4 (2026-10-28, canvas motion 6) — the Record tile
+   BREATHES while a meeting records: a red ring around the orb opens and
+   closes, 2.4 s a breath (a drop-shadow on the face: paint only, the tile
+   never moves). It stops the moment recording stops. It replaces the
+   1.2 s hard blink. Under reduced motion the ring stays, still. */
 .desk-next .desk-orb.is-recording .desk-orb-face {
-  animation: desk-next-orb-pulse 1.2s steps(2, jump-none) infinite;
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--wb-rec) 55%, transparent));
+  animation: desk-next-orb-breath 2.4s ease-in-out infinite;
 }
 .desk-next .desk-orb.is-busy {
   opacity: 0.6;
   cursor: default;
 }
-@keyframes desk-next-orb-pulse {
+@keyframes desk-next-orb-breath {
   0%,
   100% {
-    filter: brightness(1);
+    filter: drop-shadow(0 0 1px color-mix(in srgb, var(--wb-rec) 45%, transparent));
   }
   50% {
-    filter: brightness(1.4);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--wb-rec) 80%, transparent));
   }
 }
 .desk-next .desk-orb-elapsed {
@@ -58,7 +64,7 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-orb.is-recording .desk-orb-face {
     animation: none;
-    filter: brightness(1.4);
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--wb-rec) 70%, transparent));
   }
 }
 

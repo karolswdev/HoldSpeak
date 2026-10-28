@@ -16,6 +16,7 @@ import {
   StringGadget,
 } from "../../desk/surface/gadgets";
 import { DotWord, Toolbar, ToolGlyph } from "../../desk/surface/kit";
+import { spriteUrl } from "../../desk/sprites";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { apiFetch } from "../../lib/api";
 import { asRows, rowId, useResource } from "../pageSupport";
@@ -143,6 +144,8 @@ export function ActivityCore({ hero }: CoreProps) {
         empty={!rows.length}
         emptyLabel={kind === "rules" ? "No rules yet" : "No activity yet"}
         emptyGlyph="◍"
+        emptyKind={kind === "rules" ? "project" : "memory"}
+        emptyImage={kind === "rules" ? spriteUrl("project", "activity-rules") : spriteUrl("memory", "activity")}
       >
         <SurfaceRows>
           {rows.map((row, index) => {

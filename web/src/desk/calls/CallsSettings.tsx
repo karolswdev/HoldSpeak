@@ -162,6 +162,16 @@ export function CallsSettingsPane({ highlight }: { highlight?: string }) {
     }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  /* DELIGHT slice 4 (2026-10-28): a step's dot turns with the task tick's
+     settle (kit.css `data-turns`) when a write changes it. The switch is
+     set two frames after the first read, so nothing turns on load. */
+  const [turns, setTurns] = useState(false);
+  useEffect(() => {
+    if (!loaded) return;
+    let second = 0;
+    const first = window.requestAnimationFrame(() => { second = window.requestAnimationFrame(() => setTurns(true)); });
+    return () => { window.cancelAnimationFrame(first); window.cancelAnimationFrame(second); };
+  }, [loaded]);
 
   const write = async (key: keyof CallsSettings | "passphrase", value: unknown) => {
     setBusy(key);
@@ -272,7 +282,7 @@ export function CallsSettingsPane({ highlight }: { highlight?: string }) {
   };
 
   return (
-    <div className="calls-settings" data-testid="calls-settings" aria-busy={loaded ? undefined : true}>
+    <div className="calls-settings" data-testid="calls-settings" aria-busy={loaded ? undefined : true} data-turns={turns || undefined}>
       {refusal ? <p className="calls-refusal" role="alert">{refusal}</p> : null}
       <GadgetGroup material="inset" label="Set up calls">
         <div className="calls-steps" data-testid="calls-steps">
