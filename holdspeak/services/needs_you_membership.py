@@ -43,7 +43,7 @@ from datetime import date, datetime, timedelta, timezone
 from holdspeak.timestamps import local_wall, parse_stamp, utc_now, utc_now_iso
 from typing import Any, Callable, Iterable
 
-from .attention_ranking import dedup_items, rank_items
+from .attention_ranking import dedup_items, normalize_title, rank_items
 
 log = logging.getLogger(__name__)
 
@@ -168,7 +168,35 @@ def door_items(
                 **({"_dueWord": door_due_word(due_at, now.date())} if column == "now" else {}),
                 **({"_dueWord": "OVERDUE"} if column == "overdue" else {}),
             })
-    return rows
+    return merge_unassigned_twins(rows)
+
+
+def merge_unassigned_twins(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Two unassigned Door rows with the same text and Project are one row.
+
+    Two meetings can make the same action item (``Write the rollback
+    runbook``) with no owner; the owner sees it one time. The row with the
+    earlier ``created_at`` stays (no stamp sorts last); the other is dropped.
+    The twin of ``mergeUnassignedTwins`` (web/src/desk/needsYou.ts).
+    """
+    def stamp(item: dict[str, Any]) -> str:
+        return str((item.get("_doorCard") or {}).get("created_at") or "") or "\uffff"
+
+    kept: dict[tuple[str, str], int] = {}
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        title = normalize_title(row.get("title"))
+        if not row.get("_isUnassigned") or not title:
+            out.append(row)
+            continue
+        key = (title, str(row.get("projectId") or ""))
+        if key not in kept:
+            kept[key] = len(out)
+            out.append(row)
+            continue
+        if stamp(row) < stamp(out[kept[key]]):
+            out[kept[key]] = row
+    return out
 
 
 def helper_request_items(
