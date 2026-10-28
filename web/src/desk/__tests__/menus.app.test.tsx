@@ -300,17 +300,20 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
   // Floor lane (2026-10-26): Archive left the floor; Go ▸ Archive is its door.
   const DAILY_WORK = ["Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents",
     "Ask AI", "Speak", "Automations", "Memory", "Calls", "Voice commands", "Archive"];
+  // Recordings (2026-10-28) is on the desktop Go only: a phone cannot film its screen.
+  const DESK_DAILY_WORK = [...DAILY_WORK.slice(0, DAILY_WORK.indexOf("Calls") + 1), "Recordings",
+    ...DAILY_WORK.slice(DAILY_WORK.indexOf("Calls") + 1)];
 
   it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {
     phone(isPhone);
     render(<DeskMenuBar />);
-    const expected = isPhone ? [...DAILY_WORK, "New"] : DAILY_WORK;
+    const expected = isPhone ? [...DAILY_WORK, "New"] : DESK_DAILY_WORK;
     expect(top(goMenu())).toEqual(expected);
     fireEvent.keyDown(document.body, { key: "Escape" });
 
     act(() => useBuilderTools.getState().setOn(true));
     const menu = goMenu();
-    const withBuilder = isPhone ? [...DAILY_WORK, "Builder", "New"] : [...DAILY_WORK, "Builder"];
+    const withBuilder = isPhone ? [...DAILY_WORK, "Builder", "New"] : [...DESK_DAILY_WORK, "Builder"];
     expect(top(menu)).toEqual(withBuilder);
     fireEvent.click(within(menu).getByRole("menuitem", { name: /^Builder\W*$/ }));
     const builder = screen.getAllByRole("menu").at(-1)!;
@@ -350,9 +353,9 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     const fromManifest = GO_GROUPS.flatMap(goRows).length;
     // Daily: Today, Needs you, Capture, Projects ▸ and six applications
     // (daily D5 retired Brief and The week into Today; P4 added Decisions).
-    // Work declares seven rows, including the opt-in feedback verb,
-    // Archive (off the floor 2026-10-26) and Calls (2026-10-28).
-    expect(fromManifest).toBe(10 + 7 + 8);
+    // Work declares eight rows, including the opt-in feedback verb,
+    // Archive (off the floor 2026-10-26), Calls and Recordings (2026-10-28).
+    expect(fromManifest).toBe(10 + 8 + 8);
   });
 
   // Betterment P4 (projects): Projects and Decisions are one press from Go,

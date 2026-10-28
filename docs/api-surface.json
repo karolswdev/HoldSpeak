@@ -6002,6 +6002,114 @@
       ]
     },
     {
+      "path": "/api/recordings",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recordings",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recordings/folder/open",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recordings/{recording_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recordings/{recording_id}/chunks",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recordings/{recording_id}/park",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": []
+    },
+    {
+      "path": "/api/recordings/{recording_id}/poster",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": []
+    },
+    {
+      "path": "/api/recordings/{recording_id}/retry",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": []
+    },
+    {
+      "path": "/api/recordings/{recording_id}/share",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": []
+    },
+    {
+      "path": "/api/recordings/{recording_id}/stop",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recordings/{recording_id}/unshare",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": []
+    },
+    {
+      "path": "/api/recordings/{recording_id}/video",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.recordings",
+      "consumers": []
+    },
+    {
       "path": "/api/repositories",
       "methods": [
         "GET"
@@ -7926,6 +8034,14 @@
         "GET"
       ],
       "module": "web.routes.pages",
+      "consumers": []
+    },
+    {
+      "path": "/r/{recording_id}/{token}/{name}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.recordings",
       "consumers": []
     },
     {

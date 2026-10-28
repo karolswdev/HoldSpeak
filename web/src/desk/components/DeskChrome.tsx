@@ -15,6 +15,7 @@ import { verbById, verbLabel, type VerbContext } from "../verbRegistry";
 import { useKeymap } from "../keymap";
 import { egressBadge, inboundBadge, type EgressBadge } from "../setup";
 import { LampGadget } from "../surface/gadgets";
+import { ScreenRecordLamp } from "../recordings/ScreenRecord";
 import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { callLoopState, stopCallLoop } from "../../lib/callLoop";
 import { TALK_STOP_EVENT } from "./MicButton";
@@ -331,6 +332,7 @@ export function DeskChrome({
       ) : null}
 
       <div className="desk-chrome desk-chrome-tr">
+        <ScreenRecordLamp />
         <MicLamp />
         <AttentionBell />
         <DeskToolShelf />

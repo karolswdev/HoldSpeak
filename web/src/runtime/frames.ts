@@ -33,6 +33,7 @@ export const RUNTIME_FRAME_TYPES = [
   "meeting_started",
   "meeting_updated",
   "plugin_jobs_processed",
+  "recording_state",
   "runtime_activity",
   "runtime_queue",
   "scheduled_recording.arming",

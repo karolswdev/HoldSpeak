@@ -21,6 +21,7 @@ import { windowIcons } from "./seatIcons";
 import { VerbGlyph } from "./VerbGlyph";
 import { TickNumber } from "../../surface/kit";
 import { RecordClock } from "../RecordClock";
+import { ScreenRecordTile } from "../../recordings/ScreenRecord";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, PHONE_DOCK_APPLICATIONS } from "../../applications";
 import { useAgentsTile } from "../../conductor/fleetTile";
@@ -635,6 +636,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           2026-10-10, "everything must become one desk"): the Chair/Floor
           toggle is gone; the Screen is the one desk. */}
       {!compact ? center : null}
+      {/* Recordings (2026-10-28): the screen-record tile follows the Record
+          key. On the phone it shows only while a recording runs (its Stop). */}
+      <ScreenRecordTile compact={compact} />
       {/* PHILO-16 (A1) §5: a seated window always has a seat. One whose
           application has no tile here gets its own, after a thin rule. */}
       {seatedWithoutTile.length > 0 ? (
