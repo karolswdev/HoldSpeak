@@ -225,7 +225,7 @@
 }
 .runson-kind-name { font-weight: 600; }
 .runson-kind-hint {
-  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
+  font: 500 var(--font-size-xs, 12px) / 16px var(--font-mono, "JetBrains Mono", "JetBrains Mono Fallback", monospace);
   letter-spacing: .04em;
   opacity: .8;
   overflow-wrap: anywhere;
@@ -236,7 +236,7 @@
 .runson-kind-row-name { font-weight: 600; min-width: 0; }
 .runson-kind-install { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
 .runson-kind-install code {
-  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
+  font: 500 var(--font-size-xs, 12px) / 16px var(--font-mono, "JetBrains Mono", "JetBrains Mono Fallback", monospace);
   padding: 2px 6px;
   background: var(--wb-well);
   border: 1px solid var(--wb-ink);

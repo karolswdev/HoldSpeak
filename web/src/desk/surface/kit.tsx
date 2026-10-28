@@ -460,15 +460,18 @@ export function DotWord({
   tone,
   children,
   className,
+  title,
   "data-testid": testId,
 }: {
   tone?: ObjectTone | "idle";
   children: ReactNode;
   className?: string;
+  /** The raw reason (a code, the hub's words) for the hover only. */
+  title?: string;
   "data-testid"?: string;
 }) {
   return (
-    <span className={className ? `kit-dotword ${className}` : "kit-dotword"} data-tone={tone ?? "idle"} data-testid={testId}>
+    <span className={className ? `kit-dotword ${className}` : "kit-dotword"} data-tone={tone ?? "idle"} data-testid={testId} title={title || undefined}>
       <span className="kit-dot" data-tone={tone ?? "idle"} aria-hidden="true" />
       {children}
     </span>

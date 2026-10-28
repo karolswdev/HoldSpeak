@@ -25,6 +25,32 @@
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
+/* ENGINES-STILL (2026-10-28): the metric twin of JetBrains Mono. The webfont
+   swaps in late (font-display: swap); until then the stack falls back to a
+   local mono face. That face has other vertical metrics (Menlo: a 14 px line
+   at 12 px, JetBrains Mono: 16 px), so every mono line with `line-height:
+   normal` grew when the webfont landed and the text below it moved (the
+   Engines window moved 4 px after it settled). The twin is the local face
+   with JetBrains Mono's own metrics (ascent 1020, descent 300, line gap 0 per
+   1000; the advance is 600 in both), so the swap changes no size. Every mono
+   stack names it second (tests/unit/test_css_mono_line_height.py). */
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  font-weight: 100 500;
+  src: local("Menlo"), local("Menlo-Regular"), local("DejaVu Sans Mono"), local("Liberation Mono"), local("Courier New");
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  font-weight: 600 900;
+  src: local("Menlo-Bold"), local("Menlo Bold"), local("DejaVu Sans Mono Bold"), local("Liberation Mono Bold"), local("Courier New Bold");
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
 *,
 *::before,
 *::after {

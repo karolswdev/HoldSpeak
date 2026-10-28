@@ -16,6 +16,7 @@ import { Button } from "../components/signal/Signal";
 import { useDesk } from "../desk/store";
 import { refOpener } from "../desk/openObject";
 import { StringGadget } from "../desk/surface/gadgets";
+import { DotWord } from "../desk/surface/kit";
 import { SurfaceRow, SurfaceRows, SurfaceSection } from "../desk/surface/Surface";
 import { decideFromMeeting, decisionsFromMeeting } from "../desk/decide";
 import { writeFailureReason } from "../desk/hooks/useWriteReceipt";
@@ -147,7 +148,7 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
             Cancel
           </Button>
           {refusal ? (
-            <span className="surface-token" data-chip data-testid="decide-refused">⚠ {refusal}</span>
+            <DotWord tone="fail" data-testid="decide-refused" title={refusal}>Could not save the decision · Your title stays here · Try again</DotWord>
           ) : null}
         </div>
       ) : (

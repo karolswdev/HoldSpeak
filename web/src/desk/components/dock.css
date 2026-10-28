@@ -23,7 +23,7 @@
   background: var(--wb-blue);
 }
 .desk-next .desk-settle-capture {
-  font: var(--font-size-xs) var(--font-mono);
+  font: var(--font-size-xs) / 16px var(--font-mono);
   color: var(--text);
   white-space: nowrap;
 }
@@ -441,7 +441,7 @@
   background: transparent;
   color: var(--desk-dock-glass-ink);
   box-shadow: none;
-  font: 700 12px var(--font-mono);
+  font: 700 12px / 16px var(--font-mono);
   white-space: nowrap;
 }
 /* a launcher's own count is not refreshed while the hub is away either */
@@ -701,7 +701,7 @@
     background: var(--desk-dock-glass-solid);
     box-shadow: none;
     color: var(--desk-dock-glass-ink);
-    font: 700 18px var(--font-mono);
+    font: 700 18px / 23px var(--font-mono);
     z-index: 2;
   }
 }

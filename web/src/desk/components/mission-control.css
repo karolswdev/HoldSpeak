@@ -59,7 +59,7 @@
   border: 1px solid var(--surface-3);
   border-radius: 2px;
   backdrop-filter: none;
-  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-family: var(--font-mono, "JetBrains Mono", "JetBrains Mono Fallback", monospace);
   font-size: 12px;
   color: var(--text-muted);
 }

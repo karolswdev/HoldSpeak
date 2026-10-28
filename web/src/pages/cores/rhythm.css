@@ -44,3 +44,39 @@
   color: var(--text-faint);
   padding: 2px 0 0;
 }
+
+/* W6-F words: the facts are one quiet sans line in sentence case; mono
+   stays for code and ids only. */
+.rhythm-facts {
+  letter-spacing: normal;
+  gap: 4px 10px;
+}
+.rhythm-facts-line,
+.rhythm-fact {
+  font: 400 var(--desk-surface-detail-size, 12px) / 1.4 var(--font-sans);
+  color: var(--text-muted);
+}
+/* A fact in a ledger row's cells keeps the `surface-token` class for the
+   hub ledger's layout (at 393 the facts flow under the name) but reads as
+   quiet sans words, not a mono caps chip. */
+.surface-ledger .surface-token.rhythm-fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  font: 400 var(--desk-surface-detail-size, 12px) / 1.4 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-muted);
+}
+.rhythm-runs-on-caption {
+  font: 400 var(--desk-surface-detail-size, 12px) / 1.4 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.rhythm-section .gadget-check-token-face {
+  font: 500 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
+}

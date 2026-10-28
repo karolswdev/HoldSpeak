@@ -66,7 +66,7 @@
   );
 }
 .atmosphere-preview-kicker {
-  font: var(--font-size-xs) var(--font-mono);
+  font: var(--font-size-xs) / 16px var(--font-mono);
   letter-spacing: 0.17em;
   color: var(--text-muted);
 }

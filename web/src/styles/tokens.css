@@ -75,7 +75,7 @@
     "Segoe UI", sans-serif;
   --p-font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  --p-font-mono: "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
+  --p-font-mono: "JetBrains Mono", "JetBrains Mono Fallback", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
     monospace;
 
   /* ============================================================
@@ -128,7 +128,7 @@
     "Segoe UI", sans-serif;
   --font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
+  --font-mono: "JetBrains Mono", "JetBrains Mono Fallback", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
     monospace;
   --font-sans: var(--font-ui); /* HS-202-05: the project alias UX-CANON C names; consumers already spell --font-sans (surface.css, chair.css, intelligence.css) */
   --canvas: var(--surface-1);
