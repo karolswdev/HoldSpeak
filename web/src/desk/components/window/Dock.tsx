@@ -32,6 +32,7 @@ import {
   EMPTY_DOCK_LIVE,
   deskChanges,
   formatDockTime,
+  onlyWindowChanges,
   reduceDockFrame,
   type DockLiveState,
 } from "./dockState";
@@ -202,10 +203,11 @@ function useDockLiveReads(): {
     if (runtimeState !== "connected") return;
     const requestedReadyGeneration = readyReadGeneration.current;
     const [ready] = await Promise.allSettled([readUnreadReadyMeetings()]);
-    // A live invalidation always refreshes A2 through its shared read. This
-    // explicit refresh is the event path; the Dock does not start the hook's
-    // minute poll.
-    await refreshNeedsYou(true).catch(() => undefined);
+    // A live invalidation refreshes A2 through its shared read. This is the
+    // event path; the Dock does not start the hook's minute poll. It never
+    // forces a rebuild: a hub write that changes the answer marks the hub's
+    // cache dirty, so the plain read is current (PERF-DOCK 2026-10-28).
+    await refreshNeedsYou(false).catch(() => undefined);
     const readAt = Date.now();
     setReads((previous) => ({
       ...previous,
@@ -232,6 +234,8 @@ function useDockLiveReads(): {
     const unsubscribers = DOCK_LIVE_FRAMES.map((type) =>
       subscribe(type, (frame) => {
         setLive((previous) => reduceDockFrame(previous, frame));
+        // A window open, close or move changes nothing the Dock reads.
+        if (frame.type === "desk_changed" && onlyWindowChanges(frame.data)) return;
         if (frame.type === "desk_changed") {
           for (const value of deskChanges(frame.data)) {
             if (value.kind !== "meeting_ready_read") continue;

@@ -322,6 +322,33 @@ describe("H-C3 Dock rendering", () => {
     expect(mocks.apiFetch.mock.calls.some(([path]) => String(path).startsWith("/api/channels/sends"))).toBe(false);
   });
 
+  // PERF-DOCK (owner 2026-10-28: "I open a window and often need to wait
+  // 2-3 seconds"): a window open sends a desk_changed frame of kind
+  // `windows`; the Dock reads nothing for it, and it never forces a rebuild.
+  it("reads nothing on a frame of window changes only, and reads without fresh=1 on others", async () => {
+    render(<Dock />);
+    await waitFor(() => expect(mocks.refreshNeedsYou).toHaveBeenCalled());
+    expect((mocks.refreshNeedsYou.mock.calls as unknown[][]).every((args) => args[0] === false)).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    mocks.refreshNeedsYou.mockClear();
+    mocks.apiFetch.mockClear();
+
+    mocks.emitRuntime("desk_changed", {
+      kind: "windows", id: "today", op: "open",
+      changes: [{ kind: "windows", id: "today", op: "open" }, { kind: "windows", id: "meetings", op: "raise" }],
+    });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(mocks.refreshNeedsYou).not.toHaveBeenCalled();
+    expect(mocks.apiFetch).not.toHaveBeenCalledWith("/api/meetings/ready");
+
+    mocks.emitRuntime("desk_changed", {
+      kind: "windows", id: "today", op: "close",
+      changes: [{ kind: "windows", id: "today", op: "close" }, { kind: "meeting_ready_read", id: "m1", op: "update" }],
+    });
+    await waitFor(() => expect(mocks.refreshNeedsYou).toHaveBeenCalledTimes(1));
+    expect(mocks.refreshNeedsYou).toHaveBeenCalledWith(false);
+  });
+
   // PHILO-15-09 (B11, Astra r2): the shared seed (an item with a folded
   // question, an unread source, an arming recording) reads one number.
   // PHILO-17 (needsyou): the Dock shows no copy of it on Intelligence.
