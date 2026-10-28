@@ -20,7 +20,7 @@
   border: 1px solid var(--wb-rule, #22313b);
   border-radius: var(--desk-window-radius, 8px);
   background: var(--wb-paper);
-  box-shadow: 0 10px 28px rgb(20 32 44 / 22%), 0 1px 3px rgb(20 32 44 / 18%);
+  box-shadow: var(--depth-card), var(--depth-row); /* DELIGHT slice 2: the depth scale (was 0 10px 28px + 0 1px 3px in a near ink) */
 }
 
 .hs-feedback-strip .hs-feedback-toolbar {

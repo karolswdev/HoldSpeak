@@ -492,3 +492,46 @@ describe("the decision window chooses a named state", () => {
     expect(hub.puts.map((put) => put.body)).toEqual([{ status: "deprecated" }, { status: "deprecated" }]);
   });
 });
+
+describe("DELIGHT 2 small joy: Accept counts what is left", () => {
+  // The hub's `PUT /api/decisions/{id}/status` answers `{decision}`
+  // (holdspeak/web/routes/primitives/decisions.py:142-153).
+  async function renderOpen(others: string[]) {
+    hub.decisions = [
+      decisionWire({ id: "joy-decision", title: "Freeze on Nov 12", status: "proposed" }),
+      ...others.map((status, i) => decisionWire({ id: `joy-other-${i}`, title: `Other ${i}`, status })),
+    ];
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      const url = String(input);
+      const id = /^\/api\/decisions\/([^/?]+)\/status$/.exec(url)?.[1];
+      if (id && init?.method === "PUT") {
+        const body = JSON.parse(String(init.body));
+        hub.decisions = hub.decisions.map((d) => d.id === id ? { ...d, status: body.status } : d);
+        return Promise.resolve(json({ decision: hub.decisions.find((d) => d.id === id) }));
+      }
+      return hubFetch(input, init);
+    });
+    await act(async () => { await useDesk.getState().refresh(); });
+    function Face() {
+      const items = useDesk((state) => state.items);
+      const object = objectByRef(items, "decision:joy-decision");
+      return object ? <DecisionPullout object={object} onClose={() => {}} /> : null;
+    }
+    render(<Face />);
+  }
+  const stateText = () => screen.getByTestId("desk-decision-state").textContent ?? "";
+
+  it("Accept makes the status bar say \"Accepted · 3 open\"", async () => {
+    await renderOpen(["proposed", "proposed", "proposed", "accepted"]);
+    expect(stateText()).toBe("Open");
+    fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+    await waitFor(() => expect(stateText()).toBe("Accepted · 3 open"));
+  });
+
+  it("the last open decision reads \"all decided\", never a count of zero", async () => {
+    await renderOpen(["accepted"]);
+    fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+    await waitFor(() => expect(stateText()).toBe("Accepted · all decided"));
+    expect(stateText()).not.toMatch(/\b0\b/);
+  });
+});

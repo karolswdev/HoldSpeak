@@ -599,6 +599,9 @@ export function PeopleCore({ hero, scope }: CoreProps) {
           rowProps={(row) => ({
             "data-testid": row.group ? "people-suggestion" : "people-row",
             "data-suggested": row.group ? "" : undefined,
+            // DELIGHT 2 (small joys): a person's next 1:1 is in their own
+            // teal (people.css), not grey; "None" and suggestions stay quiet.
+            "data-next-one-on-one": !row.group && String(row.cells?.next ?? "").startsWith("1:1 ") ? "" : undefined,
           })}
         />
       </div>

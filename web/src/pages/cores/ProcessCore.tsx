@@ -191,7 +191,7 @@ export function ProcessCore(_props: CoreProps) {
           onRetry={() => void useProcessWindow.getState().poll()}
         />
       ) : total === 0 ? (
-        <SurfaceState empty emptyLabel="No runs yet" />
+        <SurfaceState empty emptyLabel="No runs yet" emptyImage={spriteUrl("workflow", "processes")} emptyKind="process" />
       ) : (
         <div className="process-list" data-testid="process-list">
           <ObjectList

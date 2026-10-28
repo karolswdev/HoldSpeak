@@ -838,6 +838,11 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+/* DELIGHT 2 (small joys): the next 1:1 in the person's own teal, the person
+   ink (5.6:1 on paper). Colour only; a selected row keeps its paper text. */
+.people-list .object-list-row[data-next-one-on-one] .object-list-cell[data-col="next"] {
+  color: var(--wb-person-ink);
+}
 .people-list .object-list-row[data-selected="true"] .object-list-cell[data-col] {
   color: var(--wb-paper);
 }

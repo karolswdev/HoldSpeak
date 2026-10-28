@@ -784,6 +784,10 @@ describe("A7: home, New automation and starters", () => {
     // The empty home: the one line, and the starters as large cards.
     expect(await screen.findByText("An automation does one job for you, again and again.")).toBeInTheDocument();
     expect(await within(screen.getByTestId("automation-home-empty")).findByTestId("automation-starter-friday-team-update")).toBeInTheDocument();
+    // DELIGHT 2: the line sits under the automation object with its making verb.
+    const object = screen.getByTestId("automation-home-empty").querySelector('.surface-state[data-object="automation"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/cartridge\.png$/);
+    expect(within(object).getByRole("button", { name: "New automation" })).toBeInTheDocument();
     let presses = 0;
 
     fireEvent.click(screen.getByTestId("automation-new")); presses += 1;

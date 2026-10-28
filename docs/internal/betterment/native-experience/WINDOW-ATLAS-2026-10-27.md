@@ -268,7 +268,7 @@ gear wing tab is a small bare `⚙` in the title bar (Meetings, Activity).
 | Memory (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 3 | 2 | 2 | **17** |
 | Context (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** |
 | Capture (W2-ASKWELLS) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
-| Today (W2-ASKWELLS words) | 2 | 2 | 2 | 3 | 2 | 2 | 2 | 1 | **16** |
+| Today (W2-ASKWELLS words; Lane / PR: W4-DELIGHT2) | 2 | 2 | 2 | 3 | 3 | 2 | 2 | 1 | **17** (W4-DELIGHT2; was 16) |
 | Room ▸ Now (Ask: W2-ASKWELLS; Plan: W3-B) | 2 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
 | People (W1-KIT; was 15 + W1-TRUTH; Lane / PR: W3-DELIGHT) | 2 | 2 | 1 | 3 | 3 | 3 | 2 | 3 | **19** (W3-DELIGHT; was 18) |
 | Decisions (W1-TRUTH; Lane / PR: W3-DELIGHT) | 3 | 3 | 2 | 2 | 3 | 2 | 2 | 2 | **19** (W3-DELIGHT; was 18) |
@@ -287,6 +287,8 @@ gear wing tab is a small bare `⚙` in the title bar (Meetings, Activity).
 | New decision | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | **21** |
 
 W3-DELIGHT (2026-10-27, canvas `canvases/delight-2026-10-27.html`): the kind hue on every dense list row and Needs-you row (a 20 px glyph on its kind's seat, the hover wash, the quiet selection of an unfocused list), the status-bar lamp that glows and pulses once on each save, the Note's task tick, the body's first-paint fade, Done settling a Needs-you row, and the object empty state (Meetings, Decisions, People). Delight rescored where it shows; Today stays 2 until its day light (slice 2).
+
+W4-DELIGHT2 (2026-10-27, slice 2 of the same canvas): Today greets by the hour (`Tuesday morning · 27 Oct`) and its paper takes the day's light (a warm wash from the toolbar in the morning, a cool one in the evening, 6 %, static), and after the day's last meeting the status bar says `That is the day`; a Done or a Confirm on Needs you ticks the dock's badge, the chips' counts and the status bar's number together (one 160 ms fade, opacity only); found rows in the Note's margin land in their kind's wash, an Ask card's lead draws in, and the margin card and the peek card carry a 3 px rule in the object's hue; five shadow steps are tokens (`--depth-paper`, `-row`, `-card`, `-menu`, `-dock`); Accept says `Accepted · N open`; the Meetings list's Try again turns its dot blue while it runs; a person's next 1:1 is in the person teal; the object empty state reaches Projects, Agents, Automations, Engines, Processes, Room ▸ History, the Archive, the zone drawer, Memory and Speak's Journal, Blocks and Learned. Shots: `scratchpad/shots/delight2/`.
 
 No window scores 2 or more on every axis. The phone axis and the consistency axis are the
 weakest across the board.

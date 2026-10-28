@@ -286,7 +286,7 @@
   --desk-window-fill: var(--wb-paper); /* near-white window paper */
   --desk-panel-fill: var(--wb-field); /* secondary cool slate panel fill */
   --desk-window-radius: 8px; /* modern window radius */
-  --desk-window-shadow: 0 22px 48px rgba(22, 40, 62, 0.24), 0 4px 12px rgba(22, 40, 62, 0.12); /* the front window floats: a soft, deep shadow (window grammar 2026-10-24) */
+  --desk-window-shadow: var(--depth-paper); /* the front window floats: a soft, deep shadow (window grammar 2026-10-24) */
   --desk-window-shadow-rest: 0 5px 14px rgba(22, 40, 62, 0.10), 0 0 0 1px var(--wb-rule-soft); /* reduced depth for a resting window */
   --desk-window-keyline: var(--wb-sel); /* fine blue edge for the front window */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
@@ -370,6 +370,13 @@
   --kind-action: #8a5a3d; /* DELIGHT 2026-10-27, the kind hue of an action item: the ember ink (5.6:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
   --kind-agent: #a84a1c; /* DELIGHT 2026-10-27, the kind hue of an agent: the coder orange (5.5:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
   --kind-other: var(--wb-sel); /* DELIGHT 2026-10-27: the kind hue of any other object (the Workbench blue) */
+  --depth-paper: 0 22px 48px rgba(22, 40, 62, 0.24), 0 4px 12px rgba(22, 40, 62, 0.12); /* DELIGHT 2026-10-27, the depth scale, step 1 of 5: the front window's paper over the floor */
+  --depth-row: 0 1px 3px rgba(22, 40, 62, 0.12); /* DELIGHT 2026-10-27, the depth scale, step 2 of 5: a lifted row or a card that sits in its column (the Note's margin card) */
+  --depth-card: 0 10px 28px rgba(8, 14, 22, 0.22); /* DELIGHT 2026-10-27, the depth scale, step 3 of 5: a card that floats over the text (the peek card, the completion list, the feedback strip) */
+  --depth-menu: 0 8px 22px rgba(22, 40, 62, 0.12); /* DELIGHT 2026-10-27, the depth scale, step 4 of 5: a menu, a popover or a sheet */
+  --depth-dock: 0 10px 30px rgba(8, 14, 22, 0.45), 0 2px 6px rgba(8, 14, 22, 0.3); /* DELIGHT 2026-10-27, the depth scale, step 5 of 5: the dock glass over the floor */
+  --today-light-warm: rgba(236, 160, 64, 0.06); /* DELIGHT 2026-10-27: Today's morning light, a warm wash from the toolbar (6 % at the top, gone by 120 px) */
+  --today-light-cool: rgba(64, 112, 196, 0.06); /* DELIGHT 2026-10-27: Today's evening light, a cool wash from the toolbar (6 % at the top, gone by 120 px) */
   --wb-row-hover: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper)); /* a list row lifted under the pointer */
   --wb-row-dense: 30px; /* dense list view row on the desktop; narrow rows stay 44px */
   --desk-floor-label-halo: 0 1px 2px rgba(12, 20, 32, 0.9), 0 0 1px rgba(12, 20, 32, 0.95), 0 0 8px rgba(12, 20, 32, 0.55); /* a floor label's soft dark halo: paper ink reads on the slate floor and on a wallpaper, with no plate */
@@ -384,7 +391,7 @@
   --desk-dock-glass: rgba(30, 43, 58, 0.72); /* the floating dock (2026-10-26): the floor's slate as glass, not paper */
   --desk-dock-glass-solid: #222f3e; /* the dock glass as one opaque tone, for the phone shelf's sticky gutter cover */
   --desk-dock-glass-rule: rgba(233, 238, 245, 0.16); /* the dock plate's 1 px rim and the rule before the seated windows */
-  --desk-dock-glass-shade: 0 10px 30px rgba(8, 14, 22, 0.45), 0 2px 6px rgba(8, 14, 22, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1); /* the dock plate's shadow on the floor and its top shine */
+  --desk-dock-glass-shade: var(--depth-dock), inset 0 1px 0 rgba(255, 255, 255, 0.1); /* the dock plate's shadow on the floor and its top shine */
   --desk-dock-glass-ink: #e9eef5; /* paper ink on the dock glass (the running dot, the offline tag) */
   --desk-dock-tile-plate: rgba(233, 238, 245, 0.1); /* the soft plate under the front app's tile and a tile under the pointer */
   --desk-dock-tile-plate-strong: rgba(233, 238, 245, 0.16); /* the front app's tile under the pointer */
@@ -393,7 +400,7 @@
   --wb-gadget-w: 32px; /* desktop title-bar gadget width */
   --wb-raised: none; /* modern controls use a fine border and soft depth */
   --wb-sunken: none; /* modern fields use a fine border */
-  --wb-drop: 0 8px 22px rgba(22, 40, 62, 0.12); /* soft shell depth */
+  --wb-drop: var(--depth-menu); /* soft shell depth */
   --wb-stipple: none; /* modern bars have a quiet solid fill */
   --wb-stipple-fine: none; /* modern bars have no title hatching */
   --wb-ink-dim: #4d5e75; /* quiet inactive title ink on light steel */

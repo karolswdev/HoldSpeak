@@ -22,6 +22,22 @@
   color: var(--wb-muted);
   white-space: nowrap;
 }
+/* DELIGHT slice 2 (2026-10-27, canvases/delight-2026-10-27.html "Today
+   knows the hour"): the day line greets by the hour ("Tuesday morning"),
+   then the date, quiet. The greeting is the window's one warm word. */
+.desk-next .today-greeting {
+  color: var(--wb-ink);
+  font-weight: 600;
+}
+/* The day's light: a warm wash falls from the toolbar in the morning, a
+   cool one in the evening and at night; the afternoon is plain paper.
+   Static colour (6 % at the top, gone by 120 px), never motion. */
+.desk-next .desk-pullout-body.today[data-light="warm"] .today-scroll {
+  background-image: linear-gradient(180deg, var(--today-light-warm) 0, transparent 120px);
+}
+.desk-next .desk-pullout-body.today[data-light="cool"] .today-scroll {
+  background-image: linear-gradient(180deg, var(--today-light-cool) 0, transparent 120px);
+}
 .desk-next .today-needs-count {
   margin-inline-start: 6px;
   padding: 0 6px;
