@@ -158,7 +158,7 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     // decision), never a cycle at the top; a refused write keeps its Retry.
     await renderEditor(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Accept" }));
-      await screen.findByText("Could not change the status");
+      await screen.findByText("Could not change the status. The decision is unchanged; choose a status again.");
     });
     fillDraft("to keep");
     const statusRetry = screen.getByRole("button", { name: "Try again" });
@@ -484,7 +484,7 @@ describe("the decision window chooses a named state", () => {
       return hubFetch(input, init);
     });
     fireEvent.click(screen.getByRole("button", { name: "Retire" }));
-    expect(await screen.findByText("Could not change the status")).toBeInTheDocument();
+    expect(await screen.findByText("Could not change the status. The decision is unchanged; choose a status again.")).toBeInTheDocument();
     expect(stateText()).toContain("Accepted");
     refuse = false;
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));

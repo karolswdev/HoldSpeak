@@ -321,8 +321,8 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
             <DeskDecisionSendSheet id={o.id} title={o.title} version={documentVersion} onBack={() => setSending(false)} />
           ) : (
             <>
-              {statusFailure ? <div className="attention-record-feedback" title={`Could not change the status · ${statusFailure}`}>
-                <SurfaceState error="Could not change the status" />
+              {statusFailure ? <div className="attention-record-feedback" title={statusFailure}>
+                <SurfaceState error="Could not change the status. The decision is unchanged; choose a status again." />
                 <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Try again</Button>
               </div> : null}
               {editingDecision && writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
