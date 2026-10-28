@@ -30,7 +30,7 @@ from typing import Any, Iterable, Iterator
 
 # The contracts of a turn the owner waits for.  ``holdspeak.ask`` and
 # ``holdspeak.thread`` are the classic (pre-route) contracts of the same turns.
-FOREGROUND_CONTRACTS = frozenset({"ask.answer", "chat.turn", "holdspeak.ask", "holdspeak.thread"})
+FOREGROUND_CONTRACTS = frozenset({"ask.answer", "chat.turn", "calls.turn", "holdspeak.ask", "holdspeak.thread"})
 
 # A background call never waits longer than this for a foreground turn.  A
 # turn ends within its own deadline (60 s per attempt); this only stops a lost

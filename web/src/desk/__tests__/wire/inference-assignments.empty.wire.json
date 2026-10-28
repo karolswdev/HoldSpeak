@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T02:01:23.831818Z",
+  "captured_at": "2026-10-28T04:13:34.105389Z",
   "wire": {
     "issue_count": 1,
     "rows": [
@@ -201,6 +201,24 @@
         "id": "calendar.snapshot_extract",
         "issues": [],
         "label": "Calendar snapshot extraction",
+        "queue": null
+      },
+      {
+        "effective": {
+          "assignment": null,
+          "capability_id": "calls.turn",
+          "inherited_from": null,
+          "repair": "Choose default",
+          "status": "no_assignment"
+        },
+        "group": {
+          "id": "thoughts_notes",
+          "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "calls.turn",
+        "issues": [],
+        "label": "Phone calls",
         "queue": null
       },
       {
@@ -890,7 +908,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:21.890763Z",
+            "created_at": "2026-10-28T04:13:32.306883Z",
             "effective_retry_policy_id": "retry.audio.transcription",
             "entries": [
               {
@@ -903,7 +921,7 @@
                 "readiness": "unavailable"
               }
             ],
-            "id": "ia_0e1ed459ae1a45ae80fe1743d47e3710",
+            "id": "ia_c1b725ed84684625ae1382c7a7f6b558",
             "issues": [
               {
                 "code": "binding_not_ready",
@@ -920,7 +938,7 @@
               "capability_id": "speech.transcribe",
               "kind": "capability"
             },
-            "sha256": "sha256:65033b09f2596b8a4f8059b667039d43ddb884935169724d9e8f6d7c438ce4bf"
+            "sha256": "sha256:4dd421735a4d36873afaffd1b4cf58222fbef502fd72f00ef18a033ef48f11fa"
           },
           "capability_id": "speech.transcribe",
           "inherited_from": "capability",

@@ -187,6 +187,24 @@ def _lazy_ask_tools() -> frozenset[str]:
     return _ASK_TOOLS & _lazy_conductor_tools()
 
 
+# ── CALL: what a phone call's turn may call (Calls, 2026-10-28) ─────────
+#
+# ASK, plus the two egress tools the owner named ("send things"): a send of a
+# prepared document and a nudge. Each of the two is offered only to a call's
+# turn, and each call of it holds for his spoken yes after the call's gate
+# (allowed numbers, then the passphrase): ``ThreadToolExecutor(held_egress=)``.
+# Config and authority tools are never on a call.
+
+CALL = "CALL"
+
+#: The egress tools a call offers, each held for his spoken yes.
+CALL_HELD_EGRESS: frozenset[str] = frozenset({"channel.send", "nudge.send"})
+
+
+def _lazy_call_tools() -> frozenset[str]:
+    return _lazy_ask_tools() | (CALL_HELD_EGRESS & _lazy_all_tools())
+
+
 # ── Public API ──────────────────────────────────────────────────────────
 
 #: The names the owner may issue in the Reach credential well. CONDUCTOR is
@@ -212,4 +230,6 @@ def resolve_palette(name: str) -> frozenset[str]:
         return _lazy_conductor_tools()
     if upper == ASK:
         return _lazy_ask_tools()
+    if upper == CALL:
+        return _lazy_call_tools()
     raise ValueError(f"Unknown palette: {name!r}")

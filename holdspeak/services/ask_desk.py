@@ -60,6 +60,8 @@ _HOLD_WORDS = {
     "zone.file": "Put an item in a drawer",
     "project.item.create": "Add an item to a project",
     "channel.prepare": "Prepare a send",
+    "channel.send": "Send it",
+    "nudge.send": "Post a nudge on GitHub",
 }
 
 #: How long one Ask waits for the hub's tool loop (holds included).
@@ -80,21 +82,27 @@ def hold_words(name: str) -> str:
     return _HOLD_WORDS.get(str(name or ""), "Change your desk")
 
 
-def _answers_deployment(db: Any) -> Optional[SimpleNamespace]:
-    """The first engine on the Answers row: kind, endpoint, model and profile."""
+def _answers_deployment(db: Any, capability_id: str = "ask.answer") -> Optional[SimpleNamespace]:
+    """The first engine on the Answers row (or ``capability_id``'s row):
+    kind, endpoint, model and profile."""
     from .inference_assignment_service import InferenceAssignmentService
-    from .model_profile_service import resolve_v1_profile_execution
 
     try:
-        effective = InferenceAssignmentService(db).resolve_effective(_OWNER, capability_id="ask.answer")
+        effective = InferenceAssignmentService(db).resolve_effective(_OWNER, capability_id=capability_id)
     except Exception as exc:
-        log.info(f"Answers engine not read: {exc}")
+        log.info(f"{capability_id} engine not read: {exc}")
         return None
     assignment = effective.get("assignment") if isinstance(effective, dict) else None
     entries = (assignment or {}).get("entries") or []
     if not entries:
         return None
-    entry = entries[0]
+    return deployment_for_entry(db, entries[0])
+
+
+def deployment_for_entry(db: Any, entry: dict[str, Any]) -> Optional[SimpleNamespace]:
+    """One assignment entry's engine: kind, endpoint, model and profile."""
+    from .model_profile_service import resolve_v1_profile_execution
+
     profile_id = str(entry.get("profile_id") or "")
     with db._connection() as conn:
         if int(entry.get("profile_schema_version", 2)) == 1:
@@ -194,9 +202,11 @@ def server_tools_on() -> bool:
     return os.environ.get("HOLDSPEAK_ASK_SERVER_TOOLS", "on").strip().lower() not in {"off", "0", "false", "no"}
 
 
-def tools_mode(db: Any) -> str:
-    """How the Answers engine can use the desk: ``cli``, ``loop`` or ``""``."""
-    deployment = _answers_deployment(db)
+def tools_mode(db: Any, capability_id: str = "ask.answer", deployment: Any = None) -> str:
+    """How the Answers engine (or ``capability_id``'s, or ``deployment``) can
+    use the desk: ``cli``, ``loop`` or ``""``."""
+    if deployment is None:
+        deployment = _answers_deployment(db, capability_id)
     if deployment is None:
         return NONE
     from ..intel.cli_engine import cli_engines_on, is_cli_endpoint, parse_cli_endpoint

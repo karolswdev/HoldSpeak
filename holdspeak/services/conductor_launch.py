@@ -422,6 +422,8 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
 # launch made (the kernel cancels only its caller's own run as well); the
 # ``automation.*`` aliases keep their Workbench tool's rule.
 LAUNCH_RULES["workbench.cancel"] = (OWN, "workbench", "workbench_id")
+# Calls (2026-10-28): the owner's phone call is never a launch's to end.
+LAUNCH_RULES["calls.hangup"] = (NEVER, "", "")
 # Betterment AG11: the helper a launch starts is recorded as its own
 # (``launch:<id>``); every other helper tool names it.
 LAUNCH_RULES.update({

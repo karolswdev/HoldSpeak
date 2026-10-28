@@ -52,6 +52,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
                                 # payload: {invocation_id, text}
     "audio_level",              # live mic level
     "bookmark",                 # a moment was named mid-meeting
+    "call_state",               # a phone call changed (Calls, 2026-10-28)
+                                # payload: {reason: incoming|heard|said|hold|
+                                #           decided|result|ended|status, call}
     "capture_recovery",         # capture degraded and wants a choice
     "device_health",            # an attached device's battery/RSSI moved
     "dictation.journal.entry",  # one dictation journal row was stored (HS-176-02)
@@ -115,6 +118,11 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
+    "call_state": (
+        "Calls (2026-10-28): the hub slice ships first; the Calls window, "
+        "Settings > Calls and the phone tile (the FACES lane, design doc "
+        "betterment/calls §6) subscribe to it."
+    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

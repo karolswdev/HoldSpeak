@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-20T10:13:36.845635Z",
+  "captured_at": "2026-10-28T04:13:29.638115Z",
   "wire": {
     "capabilities": [
       {
@@ -65,6 +65,15 @@
         "lamp": "local",
         "reason": "model_incompatible",
         "state": "needs_setup"
+      },
+      {
+        "group": "thoughts_notes",
+        "id": "calls.turn",
+        "inherited_from": "global",
+        "label": "Phone calls",
+        "lamp": "local",
+        "reason": null,
+        "state": "inherited_from_default"
       },
       {
         "group": "thoughts_notes",

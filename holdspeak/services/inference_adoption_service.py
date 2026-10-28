@@ -67,6 +67,7 @@ ADOPTED_CAPABILITIES = (
     # absent here.
     "recipe.run",
     "chat.turn",  # HS-151-02: replaces retired recipe.chat
+    "calls.turn",  # Calls (2026-10-28): one turn of a phone call
     "workbench.item",
     "voice.reference_resolve",
     "sequence.step",

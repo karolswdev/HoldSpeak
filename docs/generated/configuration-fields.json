@@ -12,12 +12,52 @@
       "line": 27
     },
     {
+      "class": "CallsConfig",
+      "field": "enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/calls.py",
+      "line": 37
+    },
+    {
+      "class": "CallsConfig",
+      "field": "aiphone_dir",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/calls.py",
+      "line": 38
+    },
+    {
+      "class": "CallsConfig",
+      "field": "greeting",
+      "type": "str",
+      "default_expression": "DEFAULT_GREETING",
+      "path": "holdspeak/config/calls.py",
+      "line": 39
+    },
+    {
+      "class": "CallsConfig",
+      "field": "allowed_numbers",
+      "type": "list[str]",
+      "default_expression": "field(default_factory=list)",
+      "path": "holdspeak/config/calls.py",
+      "line": 40
+    },
+    {
+      "class": "CallsConfig",
+      "field": "passphrase",
+      "type": "str",
+      "default_expression": "''",
+      "path": "holdspeak/config/calls.py",
+      "line": 41
+    },
+    {
       "class": "Config",
       "field": "config_version",
       "type": "int",
       "default_expression": "CONFIG_VERSION",
       "path": "holdspeak/config/core.py",
-      "line": 286
+      "line": 287
     },
     {
       "class": "Config",
@@ -25,7 +65,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/core.py",
-      "line": 290
+      "line": 291
     },
     {
       "class": "Config",
@@ -33,7 +73,7 @@
       "type": "str",
       "default_expression": "'yolo'",
       "path": "holdspeak/config/core.py",
-      "line": 294
+      "line": 295
     },
     {
       "class": "Config",
@@ -41,7 +81,7 @@
       "type": "HotkeyConfig",
       "default_expression": "field(default_factory=HotkeyConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 295
+      "line": 296
     },
     {
       "class": "Config",
@@ -49,7 +89,7 @@
       "type": "ModelConfig",
       "default_expression": "field(default_factory=ModelConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 296
+      "line": 297
     },
     {
       "class": "Config",
@@ -57,7 +97,7 @@
       "type": "UIConfig",
       "default_expression": "field(default_factory=UIConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 297
+      "line": 298
     },
     {
       "class": "Config",
@@ -65,7 +105,7 @@
       "type": "MeetingConfig",
       "default_expression": "field(default_factory=MeetingConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 298
+      "line": 299
     },
     {
       "class": "Config",
@@ -73,7 +113,7 @@
       "type": "DictationConfig",
       "default_expression": "field(default_factory=DictationConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 299
+      "line": 300
     },
     {
       "class": "Config",
@@ -81,7 +121,7 @@
       "type": "DeviceConfig",
       "default_expression": "field(default_factory=DeviceConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 300
+      "line": 301
     },
     {
       "class": "Config",
@@ -89,7 +129,7 @@
       "type": "PresenceConfig",
       "default_expression": "field(default_factory=PresenceConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 301
+      "line": 302
     },
     {
       "class": "Config",
@@ -97,7 +137,7 @@
       "type": "WakeWordConfig",
       "default_expression": "field(default_factory=WakeWordConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 302
+      "line": 303
     },
     {
       "class": "Config",
@@ -105,7 +145,15 @@
       "type": "MeshConfig",
       "default_expression": "field(default_factory=MeshConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 303
+      "line": 304
+    },
+    {
+      "class": "Config",
+      "field": "remote",
+      "type": "RemoteConfig",
+      "default_expression": "field(default_factory=RemoteConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 305
     },
     {
       "class": "Config",
@@ -113,7 +161,7 @@
       "type": "CadenceConfig",
       "default_expression": "field(default_factory=CadenceConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 304
+      "line": 306
     },
     {
       "class": "Config",
@@ -121,7 +169,7 @@
       "type": "TelegramConfig",
       "default_expression": "field(default_factory=TelegramConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 305
+      "line": 307
     },
     {
       "class": "Config",
@@ -129,7 +177,7 @@
       "type": "RailsObserverConfig",
       "default_expression": "field(default_factory=RailsObserverConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 306
+      "line": 308
     },
     {
       "class": "Config",
@@ -137,7 +185,7 @@
       "type": "ThoughtsConfig",
       "default_expression": "field(default_factory=ThoughtsConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 307
+      "line": 309
     },
     {
       "class": "Config",
@@ -145,7 +193,7 @@
       "type": "CalendarConfig",
       "default_expression": "field(default_factory=CalendarConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 308
+      "line": 310
     },
     {
       "class": "Config",
@@ -153,7 +201,7 @@
       "type": "OwnerConfig",
       "default_expression": "field(default_factory=OwnerConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 310
+      "line": 312
     },
     {
       "class": "Config",
@@ -161,7 +209,7 @@
       "type": "PeopleConfig",
       "default_expression": "field(default_factory=PeopleConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 312
+      "line": 314
     },
     {
       "class": "Config",
@@ -169,7 +217,15 @@
       "type": "AgentsConfig",
       "default_expression": "field(default_factory=AgentsConfig)",
       "path": "holdspeak/config/core.py",
-      "line": 314
+      "line": 316
+    },
+    {
+      "class": "Config",
+      "field": "calls",
+      "type": "CallsConfig",
+      "default_expression": "field(default_factory=CallsConfig)",
+      "path": "holdspeak/config/core.py",
+      "line": 318
     },
     {
       "class": "DeviceConfig",
@@ -204,12 +260,36 @@
       "line": 52
     },
     {
+      "class": "RemoteConfig",
+      "field": "streamable_http_enabled",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/device.py",
+      "line": 67
+    },
+    {
+      "class": "RemoteConfig",
+      "field": "bind_host",
+      "type": "str | None",
+      "default_expression": "None",
+      "path": "holdspeak/config/device.py",
+      "line": 68
+    },
+    {
+      "class": "RemoteConfig",
+      "field": "port",
+      "type": "int | None",
+      "default_expression": "None",
+      "path": "holdspeak/config/device.py",
+      "line": 69
+    },
+    {
       "class": "WakeWordConfig",
       "field": "enabled",
       "type": "bool",
       "default_expression": "False",
       "path": "holdspeak/config/device.py",
-      "line": 70
+      "line": 94
     },
     {
       "class": "WakeWordConfig",
@@ -217,7 +297,7 @@
       "type": "str",
       "default_expression": "'hey_jarvis'",
       "path": "holdspeak/config/device.py",
-      "line": 71
+      "line": 95
     },
     {
       "class": "WakeWordConfig",
@@ -225,7 +305,7 @@
       "type": "float",
       "default_expression": "0.5",
       "path": "holdspeak/config/device.py",
-      "line": 72
+      "line": 96
     },
     {
       "class": "WakeWordConfig",
@@ -233,7 +313,7 @@
       "type": "float",
       "default_expression": "8.0",
       "path": "holdspeak/config/device.py",
-      "line": 73
+      "line": 97
     },
     {
       "class": "WakeWordConfig",
@@ -241,7 +321,7 @@
       "type": "str",
       "default_expression": "'preview'",
       "path": "holdspeak/config/device.py",
-      "line": 74
+      "line": 98
     },
     {
       "class": "CalendarSource",
@@ -1124,12 +1204,20 @@
       "line": 27
     },
     {
+      "class": "UIConfig",
+      "field": "builder_tools",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/ui.py",
+      "line": 31
+    },
+    {
       "class": "VoiceMacroAction",
       "field": "kind",
       "type": "str",
       "default_expression": null,
       "path": "holdspeak/config/ui.py",
-      "line": 54
+      "line": 58
     },
     {
       "class": "VoiceMacroAction",
@@ -1137,7 +1225,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/ui.py",
-      "line": 55
+      "line": 59
     },
     {
       "class": "VoiceMacro",
@@ -1145,7 +1233,7 @@
       "type": "str",
       "default_expression": null,
       "path": "holdspeak/config/ui.py",
-      "line": 103
+      "line": 107
     },
     {
       "class": "VoiceMacro",
@@ -1153,7 +1241,7 @@
       "type": "VoiceMacroAction",
       "default_expression": null,
       "path": "holdspeak/config/ui.py",
-      "line": 104
+      "line": 108
     },
     {
       "class": "MacrosConfig",
@@ -1161,7 +1249,7 @@
       "type": "bool",
       "default_expression": "True",
       "path": "holdspeak/config/ui.py",
-      "line": 137
+      "line": 141
     },
     {
       "class": "MacrosConfig",
@@ -1169,7 +1257,7 @@
       "type": "list[VoiceMacro] | None",
       "default_expression": "None",
       "path": "holdspeak/config/ui.py",
-      "line": 138
+      "line": 142
     }
   ]
 }

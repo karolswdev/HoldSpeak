@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-20T10:13:37.668668Z",
+  "captured_at": "2026-10-28T04:13:30.455283Z",
   "wire": {
     "_calendar_sources": [],
     "_calendar_subscription": {
@@ -25,7 +25,7 @@
         "target_name": ""
       }
     },
-    "_revision": "e82e960a856cc1e8",
+    "_revision": "1502f9970f69d421",
     "_runtime_status": {
       "counters": {
         "classify_calls": 0,
@@ -82,6 +82,13 @@
     "calendar": {
       "sources": [],
       "subscription": ""
+    },
+    "calls": {
+      "aiphone_dir": "",
+      "allowed_numbers": [],
+      "enabled": false,
+      "greeting": "Hello. What can I do?",
+      "passphrase_set": false
     },
     "config_version": 1,
     "control_mode": "yolo",

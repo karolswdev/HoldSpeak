@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-20T10:13:37.671531Z",
+  "captured_at": "2026-10-28T04:13:30.458597Z",
   "wire": {
     "capabilities": [
       {
@@ -62,6 +62,15 @@
         "id": "calendar.snapshot_extract",
         "inherited_from": null,
         "label": "Calendar snapshot extraction",
+        "lamp": null,
+        "reason": "no_default",
+        "state": "needs_setup"
+      },
+      {
+        "group": "thoughts_notes",
+        "id": "calls.turn",
+        "inherited_from": null,
+        "label": "Phone calls",
         "lamp": null,
         "reason": "no_default",
         "state": "needs_setup"
