@@ -497,7 +497,7 @@ export function ThreadComposer({
   const loadGuardrailsOnce = useCallback(() => { void readChoices("guardrails"); }, [readChoices]);
   useOnDeskChanged(() => {
     for (const kind of Object.keys(choiceReadsRef.current) as ChoiceKind[]) void readChoices(kind, true);
-  });
+  }, ["mode", "note", "person", "recipe", "relationship", "thought"]);
 
   // ── focus return after turn_done (double-rAF precedent) ──────────
   useEffect(() => {

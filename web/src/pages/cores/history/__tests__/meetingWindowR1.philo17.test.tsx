@@ -17,8 +17,8 @@ vi.mock("../../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../../lib/api")>()),
   apiFetch: vi.fn(),
 }));
-const listeners = new Map<string, Set<() => void>>();
-const subscribe = (type: string, listener: () => void) => {
+const listeners = new Map<string, Set<(frame?: { type: string; data: unknown }) => void>>();
+const subscribe = (type: string, listener: (frame?: { type: string; data: unknown }) => void) => {
   const set = listeners.get(type) ?? new Set();
   set.add(listener);
   listeners.set(type, set);
@@ -28,7 +28,10 @@ vi.mock("../../../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe }),
   useRuntimeFrame: () => null,
 }));
-const emit = (type: string) => listeners.get(type)?.forEach((l) => l());
+const emit = (type: string) => listeners.get(type)?.forEach((l) => l({
+  type: "desk_changed",
+  data: { kind: "meeting", id: "m-1", op: "update", origin: "agent", changes: [{ kind: "meeting", id: "m-1", op: "update" }] },
+}));
 const isDetail = (url: string) => url.split("?")[0] === "/api/meetings/m-1";
 
 const meeting = (intel: string) => ({

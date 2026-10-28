@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useAgentFlights, useAgentFlightsLive } from "../agentFlights";
 import { useDesk } from "../store";
-import { useOnDeskChanged } from "../useDeskChangedRefresh";
+import { PEOPLE_CHANGE_KINDS, ROOM_CHANGE_KINDS, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { useProjectRoomController } from "../../features/project-room/useProjectRoomController";
 import { fetchRoomPeople, type RoomPersonItem } from "../../features/project-room/api";
 import { drawerHead, drawerMembers, type DrawerMember, type DrawerReads } from "./members";
@@ -27,7 +27,7 @@ export function useDrawerData(projectId: string) {
   const ctrl = useProjectRoomController(`project:${projectId}`, undefined);
   const revision = useDrawers((s) => s.revision);
   const [tick, setTick] = useState(0);
-  useOnDeskChanged(() => setTick((n) => n + 1));
+  useOnDeskChanged(() => setTick((n) => n + 1), ROOM_CHANGE_KINDS);
   useEffect(() => {
     if (revision || tick) void ctrl.load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,7 +45,7 @@ export function useProjectResourceRefs(projectId: string) {
   const resourceRead = useRef<{ generation: number; controller: AbortController | null }>({ generation: 0, controller: null });
   const currentRead = useRef<Promise<ResourcesRead> | null>(null);
   const [tick, setTick] = useState(0);
-  useOnDeskChanged(() => setTick((n) => n + 1));
+  useOnDeskChanged(() => setTick((n) => n + 1), [...ROOM_CHANGE_KINDS, "repository", "thought"]);
   const refreshResources = useCallback((): Promise<ResourcesRead> => {
     const generation = ++resourceRead.current.generation;
     resourceRead.current.controller?.abort();
@@ -112,7 +112,7 @@ export function useDrawerMembers(projectId: string, ctrl: ReturnType<typeof useP
   const [people, setPeople] = useState<RoomPersonItem[]>([]);
   const [peopleFailed, setPeopleFailed] = useState(false);
   const [tick, setTick] = useState(0);
-  useOnDeskChanged(() => setTick((n) => n + 1));
+  useOnDeskChanged(() => setTick((n) => n + 1), PEOPLE_CHANGE_KINDS);
   const { resources, resourceRefs, resourcesState, refreshResources, firstRead: resourcesFirstRead } = useProjectResourceRefs(projectId);
 
   const readPeople = useCallback(() => {

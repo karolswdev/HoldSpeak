@@ -92,7 +92,7 @@ export function useEngine(capabilityId: string): EngineFact {
       summary.listeners.delete(listener);
     };
   }, [capabilityId]);
-  useOnDeskChanged(reread);
+  useOnDeskChanged(reread, ["assignment", "engine", "inference_assignment", "model", "model_profile"]);
   return factFromSummary(capabilityId);
 }
 

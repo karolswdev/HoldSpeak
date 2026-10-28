@@ -60,6 +60,7 @@ import { ObjectList } from "../../surface/objects/ObjectList";
 import { objectSprite } from "../../surface/objects/kinds";
 import { ArtifactSendWells } from "../../documentSends";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
+import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
 import { SentenceLine } from "./SentenceLine";
 import { AutomationBuilder } from "./AutomationBuilder";
@@ -309,10 +310,10 @@ export function AutomationWindow({
   useEffect(() => { void load(); }, [load]);
 
   const bus = useOptionalRuntimeBus();
+  useOnDeskChanged(load, WORKBENCH_CHANGE_KINDS);
   useEffect(() => {
     if (!bus) return undefined;
     const offs = [
-      bus.subscribe("desk_changed", () => { void load(); }),
       ...WORKBENCH_RUN_FRAME_TYPES.map((type) => bus.subscribe(type, (frame) => {
         const data = (frame.data ?? {}) as { workbench_id?: unknown };
         if (String(data.workbench_id ?? "") === workbenchId) void load();

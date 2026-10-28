@@ -46,6 +46,8 @@ import "./history/meetings-list.css";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
 import { objectWindowStandIn } from "../../desk/objectWindows";
 import { Token } from "../../desk/surface/Token";
+import { MEETING_CHANGE_KINDS } from "../../desk/useDeskChangedRefresh";
+import { frameNames } from "../../desk/components/window/dockState";
 
 /** PHILO-17: the list window's faces: the list, and Record (capture C7: the
  *  one home for recording; a chosen file opens the import form). Chrome lane
@@ -254,7 +256,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   useEffect(() => {
     const refresh = () => void reloadRef.current();
     const burst = burstTimer(refresh, 300);
-    const offDeskChanged = subscribeFrames("desk_changed", burst.bump);
+    const offDeskChanged = subscribeFrames("desk_changed", (frame) => {
+      if (frameNames(frame?.data, MEETING_CHANGE_KINDS)) burst.bump();
+    });
     const offAftercare = subscribeFrames("aftercare_ready", burst.bump);
     const offReturn = onReturnToTask(refresh);
     window.addEventListener("focus", refresh);

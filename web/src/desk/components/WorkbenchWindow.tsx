@@ -40,6 +40,7 @@ import {
   retryMint,
 } from "../api";
 import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
+import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useWriteReceipt, type WriteAttempt } from "../hooks/useWriteReceipt";
 import { ApiError, apiRequest } from "../../lib/api";
@@ -1162,7 +1163,9 @@ export function WorkbenchWindow({
   const readEngine = useCallback(() => { setHubRefusedNoEngine(false); load(); }, [load]);
   // He comes back from Models, or the desk changed: read again.
   useEffect(() => onReturnToTask(readEngine), [readEngine]);
-  useEffect(() => bus.subscribe("desk_changed", () => { load(); }), [bus, load]);
+  useOnDeskChanged(readEngine, [
+    "assignment", "engine", "inference_assignment", "model", "model_profile", "workbench",
+  ]);
   const chooseEngine = () => {
     rememberTaskFocus();
     openSurfaceOr("configure-runs-on", "/settings", "models");

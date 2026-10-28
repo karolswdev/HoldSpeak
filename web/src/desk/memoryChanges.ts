@@ -20,7 +20,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { burstTimer } from "./burstTimer";
-import { DESK_CHANGED_DEBOUNCE_MS, useBusSubscribe } from "./useDeskChangedRefresh";
+import { frameNames } from "./components/window/dockState";
+import { DESK_CHANGED_DEBOUNCE_MS, MEMORY_CHANGE_KINDS, useBusSubscribe } from "./useDeskChangedRefresh";
 
 interface Held {
   id: string;
@@ -79,6 +80,7 @@ export function useMemoryChanges(
         );
     }, debounceMs);
     const unsubscribe = subscribe("desk_changed", (frame) => {
+      if (!frameNames(frame?.data, MEMORY_CHANGE_KINDS)) return;
       const ids = changedIds(frame?.data);
       if (ids.length) {
         seq.current += 1;

@@ -32,10 +32,11 @@ import {
   EMPTY_DOCK_LIVE,
   deskChanges,
   formatDockTime,
-  onlyWindowChanges,
+  frameNames,
   reduceDockFrame,
   type DockLiveState,
 } from "./dockState";
+import { NEEDS_YOU_CHANGE_KINDS } from "../../useDeskChangedRefresh";
 import { burstTimer } from "../../burstTimer";
 import { DOCK_HEIGHT_EVENT } from "./windowGeometry";
 
@@ -235,7 +236,7 @@ function useDockLiveReads(): {
       subscribe(type, (frame) => {
         setLive((previous) => reduceDockFrame(previous, frame));
         // A window open, close or move changes nothing the Dock reads.
-        if (frame.type === "desk_changed" && onlyWindowChanges(frame.data)) return;
+        if (frame.type === "desk_changed" && !frameNames(frame?.data, NEEDS_YOU_CHANGE_KINDS)) return;
         if (frame.type === "desk_changed") {
           for (const value of deskChanges(frame.data)) {
             if (value.kind !== "meeting_ready_read") continue;

@@ -71,7 +71,7 @@ function wire() {
 
 function emitDeskChanged() {
   for (const listener of frameListeners.get("desk_changed") ?? []) {
-    listener({ data: { kind: "note", id: "n1", op: "update", origin: "agent" } });
+    listener({ data: { kind: "action_item", id: "a1", op: "update", origin: "agent" } });
   }
 }
 
