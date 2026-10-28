@@ -308,7 +308,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         <Button dense variant="ghost" onClick={() => void load()}>Retry</Button>
       </div>
     ) : (
-      <SurfaceState loading />
+      <SurfaceState loading onRetry={() => void load()} />
     );
   }
 

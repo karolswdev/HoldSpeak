@@ -269,9 +269,9 @@ export function useRunsOn(scope?: string) {
     }
   }, []);
 
-  const loadDetection = useCallback(() => {
+  const loadDetection = useCallback((fresh = false) => {
     if (mounted.current) setDetectionFailed(false);
-    const promise = readDetection()
+    const promise = readDetection(fresh)
       .then((next) => {
         if (mounted.current) setDetection(next);
         return next;
@@ -1092,7 +1092,7 @@ export function useRunsOn(scope?: string) {
     roster,
     detection,
     detectionFailed,
-    readAgain: () => void loadDetection(),
+    readAgain: () => void loadDetection(true),
     error,
     engines,
     selected,

@@ -463,3 +463,39 @@ def test_a_whole_completion_reads_as_its_answer_and_a_stream_stays_a_stream() ->
     assert [(d.kind, d.text) for d in local] == [("text", "Ready."), ("usage", ""), ("done", "")]
     assert _whole_reply_deltas(iter([])) is None
     assert _whole_reply_deltas(x for x in []) is None
+
+
+def test_an_endpoint_that_answers_a_streamed_request_with_json_reads_as_its_answer() -> None:
+    """The OpenAI SDK's Stream over a plain JSON completion (an endpoint that
+    ignores ``stream``) is read as that completion, never as no answer."""
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    from openai import OpenAI
+
+    from holdspeak.intel.engine import _whole_reply_deltas
+
+    class Plain(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            self.rfile.read(int(self.headers.get("Content-Length") or 0))
+            body = json.dumps({"id": "x", "object": "chat.completion", "model": "m", "choices": [
+                {"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": "FALLBACK ENGINE ANSWER"}}]}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_args: Any) -> None:
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Plain)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        stream = OpenAI(base_url=f"http://127.0.0.1:{server.server_port}/v1", api_key="x").chat.completions.create(
+            model="m", messages=[{"role": "user", "content": "hi"}], stream=True)
+        deltas = _whole_reply_deltas(stream)
+        assert deltas is not None
+        assert [d.text for d in deltas if d.kind == "text"] == ["FALLBACK ENGINE ANSWER"]
+    finally:
+        server.shutdown()
