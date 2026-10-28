@@ -55,8 +55,8 @@ describe("the Parked drawer on the hub's recorded answers", () => {
     vi.spyOn(useDesk.getState(), "refresh").mockResolvedValue(undefined as never);
     render(<ParkedDrawer origin={null} />);
     const list = await screen.findByRole("grid", { name: "Archive" });
-    await screen.findByRole("button", { name: /^Architecture review: tracing, MEETING/ });
-    const project = screen.getByRole("button", { name: /^Staff hiring loop, PROJECT/ });
+    await screen.findByRole("button", { name: /^Architecture review: tracing, Meeting/ });
+    const project = screen.getByRole("button", { name: /^Staff hiring loop, Project/ });
     expect(within(list).getAllByRole("row")).toHaveLength(3); // the head + two rows
 
     fireEvent.click(project);
@@ -66,7 +66,7 @@ describe("the Parked drawer on the hub's recorded answers", () => {
     expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual(["/api/projects/p-hiring/restore"]);
     await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^RESTORED/));
     await waitFor(() => expect(screen.queryByRole("button", { name: /^Staff hiring loop/ })).toBeNull());
-    expect(screen.getByRole("button", { name: /^Architecture review: tracing, MEETING/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Architecture review: tracing, Meeting/ })).toBeTruthy();
     expect(within(screen.getByRole("grid", { name: "Archive" })).getAllByRole("row")).toHaveLength(2);
     expect(misses).toEqual([]);
   });
