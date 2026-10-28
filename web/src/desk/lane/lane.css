@@ -299,7 +299,7 @@
 
 /* the two columns: the steps, then what it made (a column at 1440) */
 .desk-next .is-lane .lw-cols { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: 0; border-top: 1px solid var(--wb-rule-soft); }
-.desk-next .is-lane .lw-objects-col { border-left: 1px solid var(--wb-rule-soft); align-self: stretch; }
+.desk-next .is-lane .lw-objects-col { box-shadow: inset 1px 0 0 var(--wb-rule-soft); align-self: stretch; }
 .desk-next .is-lane .lw-cols > .lw-col { gap: 0; }
 
 .desk-next .is-lane .lw-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
