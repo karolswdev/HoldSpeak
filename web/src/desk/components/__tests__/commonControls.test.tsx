@@ -134,11 +134,11 @@ describe("common controls keep their actions", () => {
     const view = render(<Harness enabled={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Enable resourcefulness" }));
     fireEvent.click(screen.getByRole("button", { name: "RUN AS OWNER?" }));
-    expect(await screen.findByText(/ENABLE RESOURCEFULNESS FAILED/)).toBeTruthy();
+    expect(await screen.findByText("Could not turn on resourcefulness")).toBeTruthy();
     // An authoritative policy read now exposes Pause while the refused Enable
     // receipt remains. Its Retry still replays the original write callback.
     view.rerender(<Harness enabled />);
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     const pause = screen.getByRole("button", { name: "Pause" });
     expect(pause).toBeDisabled();
     expect(pause).toHaveAttribute("aria-busy", "true");
@@ -149,7 +149,7 @@ describe("common controls keep their actions", () => {
     fireEvent.click(pause);
     await waitFor(() => expect(updatePolicy).toHaveBeenCalledTimes(3));
     expect(updatePolicy.mock.calls.map(([, update]) => update.enabled)).toEqual([true, true, false]);
-    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
   it("runs the same capability once while busy and keeps the artifact and assignment actions", async () => {

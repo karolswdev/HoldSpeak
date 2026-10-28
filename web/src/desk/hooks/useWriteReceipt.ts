@@ -4,8 +4,8 @@
 // refused, and the surface said nothing. Every desk write verb now reports
 // into this channel. It renders in the surface's existing receipt slot
 // (footer receipt bar / in-flow strip) — never over the work — names the
-// verb and the cause in label grammar, and offers RETRY when the same call
-// can be re-issued. Success stays quiet: a clean write clears the channel
+// verb in one plain sentence ("Could not save the note"; the cause is in the
+// hover title), and offers Try again when the same call can be re-issued. Success stays quiet: a clean write clears the channel
 // and draws nothing.
 //
 // Two doors, one grammar:
@@ -23,9 +23,11 @@ import { Button } from "../../components/signal/Signal";
 import "./write-receipt.css";
 
 export interface WriteFailure {
-  /** The verb that failed, in label grammar ("ADD ITEM"). */
+  /** The verb that failed, upper case ("ADD ITEM"). It is the failure's
+   *  identity (callers compare it); the face says it as a sentence. */
   verb: string;
-  /** Why it failed, in label grammar ("HUB UNREACHABLE", "HTTP 422"). */
+  /** Why it failed, in label grammar ("HUB UNREACHABLE", "HTTP 422"). It is
+   *  shown only in the hover title, never on the face. */
   reason: string;
   /** Re-issues the exact same write, or null when it cannot be replayed. */
   retry: (() => void) | null;
@@ -35,14 +37,18 @@ export interface WriteFailure {
   /** What the failed write was about (e.g. "decision:abc"), so a later
    *  landed write clears only its own failure. */
   subject?: string;
-  /** PHILO-13-04 — the face's own state when "<VERB> FAILED" is not the
-   *  truth to show (a refused start is "NOT RECORDING · <why>"). */
+  /** PHILO-13-04 — the face's own state when "Could not <verb>" is not the
+   *  truth to show (a refused start is "Not recording · <why>"). */
   label?: string;
-  /** Atlas pass 3 (defect 16): the label is a sentence (`Could not mark it
-   *  seen`), drawn in sans and sentence case, with the reason in the hover
-   *  title only; never the mono caps `MARK SEEN FAILED · HTTP 404`. */
+  /** W6-E words: the face of every write failure is one sans sentence in
+   *  sentence case (`Could not save the note · Try again`), a round dot, the
+   *  reason in the hover title only. The old mono caps face
+   *  (`SAVE FAILED · HTTP 404`) is parked behind this opt-in. */
+  mono?: boolean;
+  /** Atlas pass 3 (defect 16): the opt-in that #1567 added. The plain face
+   *  is the default now, so this changes nothing; it stays for old callers. */
   plain?: boolean;
-  /** The retry verb's word when it is not `Retry` (`Try again`). */
+  /** The retry verb's word when it is not `Try again`. */
   retryLabel?: string;
 }
 
@@ -83,9 +89,133 @@ export function writeFailureDetail(cause: unknown): string | undefined {
   return message;
 }
 
-/** The one label every write refusal wears. */
+/* W6-E words — the noun a failed write was about, from its subject
+   (`note:abc`) or its kind (`kb`), in the owner's words. */
+const WRITE_NOUNS: Record<string, string> = {
+  note: "note",
+  decision: "decision",
+  meeting: "meeting",
+  artifact: "result",
+  kb: "drawer",
+  knowledge: "drawer",
+  directory: "zone",
+  zone: "zone",
+  recipe: "mode",
+  persona: "mode",
+  chain: "workflow",
+  sequence: "workflow",
+  workflow: "workflow",
+  workbench: "automation",
+  project: "project",
+  thread: "thread",
+  roadmap: "roadmap",
+  repository: "repository",
+  coder: "agent",
+  agent: "agent",
+  "action-item": "task",
+  action_item: "task",
+  proposal: "proposal",
+  person: "person",
+  people: "person",
+};
+
+function writeNoun(token: string | undefined): string | null {
+  if (!token) return null;
+  const kind = token.split(":", 1)[0].trim().toLowerCase();
+  return WRITE_NOUNS[kind] ?? null;
+}
+
+/* W6-E words — each write verb's own phrase: the face reads
+   `Could not <phrase>`. Keys are the verb in upper case. A verb that is not
+   here is said in lower case (`Could not <verb>`). */
+const WRITE_PHRASES: Record<string, string | ((noun: string | null) => string)> = {
+  SAVE: (noun) => (noun ? `save the ${noun}` : "save it"),
+  RENAME: (noun) => (noun ? `rename the ${noun}` : "rename it"),
+  DELETE: (noun) => (noun ? `delete the ${noun}` : "delete it"),
+  "RENAME ZONE": "rename the zone",
+  "SEED DESK": "set up the desk",
+  "NEW NOTE": "make the note",
+  "SEND TURN": "send it",
+  "MARK SEEN": "mark it seen",
+  "OPEN THREAD": "open the thread",
+  "IMPORT CHATS": "import the chats",
+  "START RECORDING": "start the recording",
+  "STOP RECORDING": "stop the recording",
+  "RECOVER CAPTURE": "recover the recording",
+  // Automations (WorkbenchWindow, WorkbenchAutomations, WorkbenchResourceful)
+  "SAVE ITEM": "save the item",
+  "RE-RUN ITEM": "run the item again",
+  "DISMISS ITEM": "dismiss the item",
+  "PARK ITEM": "park the item",
+  "CLEAR DONE": "clear the done items",
+  "ADD ITEM": "add the item",
+  KEEP: "keep the result",
+  "RETRY MINT": "keep the result",
+  "SAVE AUTOMATION": "save the automation",
+  "TEST AUTOMATION": "test the automation",
+  "ADD AUTOMATION": "add the automation",
+  RUN: "start the run",
+  "DROP TO WORK": "add it to the work",
+  "CLEAR MEMORY": "clear the memory",
+  "PROMOTE TO SKILL": "make it a skill",
+  "ENABLE RESOURCEFULNESS": "turn on resourcefulness",
+  "PAUSE RESOURCEFULNESS": "pause resourcefulness",
+  "SAVE POLICY": "save the policy",
+  // Needs you (NeedsDrawer)
+  "ALLOW HELPER": "allow the helper",
+  APPROVE: "approve it",
+  DENY: "deny it",
+  DROP: "drop it",
+  DONE: "mark it done",
+  "MARK DONE": "mark it done",
+  LATER: "move it to later",
+  CONFIRM: "confirm it",
+  DEFER: "defer it",
+  DECLINE: "decline it",
+  ACCEPT: "accept it",
+  "NOT NOW": "defer it",
+  CHECK: "check it",
+  SEND: "send it",
+  "TRY AGAIN": "send it",
+  DISCARD: "discard it",
+  "NAME AN OWNER": "name an owner",
+  "SET A DATE": "set the date",
+  "WHOSE?": "set the owner",
+  NUDGE: "send the nudge",
+  UNDO: "undo it",
+  ACKNOWLEDGE: "mark it read",
+  "RUN SUMMARY": "run the summary",
+  // Ask (AskPanel)
+  "USE ANOTHER ENGINE": "change the engine",
+  "SAVE AS NOTE": "save the answer as a note",
+  "ADD TO NOTE": "add it to the note",
+  "ALLOW ONCE": "allow it once",
+  "MAKE IT A TASK": "make it a task",
+  FORGET: "forget the chat",
+};
+
+/** The phrase after `Could not` for one failed verb (`save the note`). */
+export function writeFailurePhrase(verb: string, subject?: string): string {
+  const key = verb.trim().toUpperCase();
+  const known = WRITE_PHRASES[key];
+  if (typeof known === "function") return known(writeNoun(subject));
+  if (known) return known;
+  // A create or a read names its kind in the verb (`CREATE note`, `READ Notes`).
+  const create = /^CREATE\s+(.+)$/.exec(key);
+  if (create) {
+    const noun = writeNoun(create[1]) ?? create[1].toLowerCase();
+    return `make the ${noun}`;
+  }
+  const read = /^READ\s+(.+)$/.exec(key);
+  if (read) return `load the ${read[1].toLowerCase()}`;
+  return verb.trim().toLowerCase();
+}
+
+/** The one label every write refusal wears: `Could not save the note`. The
+ *  parked mono face says `SAVE FAILED · HTTP 404`. */
 export function writeFailureLabel(failure: WriteFailure): string {
-  return failure.label ?? `${failure.verb} FAILED · ${failure.reason}`;
+  if (failure.mono) return failure.label ?? `${failure.verb} FAILED · ${failure.reason}`;
+  return failure.label ?? `Could not ${writeFailurePhrase(failure.verb, failure.subject)}`;
 }
 
 /** A resolved Response that the hub refused is a failure too (no throw). */
@@ -100,12 +230,13 @@ function receiptElement(
   onDismiss: () => void,
 ): ReactElement | null {
   if (!failure) return null;
-  const title = [writeFailureLabel(failure), failure.plain ? failure.reason : "", failure.detail ?? ""]
+  // The reason (HTTP code, hub words) is in the hover title only.
+  const title = [writeFailureLabel(failure), failure.mono ? "" : failure.reason, failure.detail ?? ""]
     .filter(Boolean)
     .join(" · ");
   return createElement(
     "span",
-    { className: failure.plain ? "write-receipt write-receipt-plain" : "write-receipt", role: "status" },
+    { className: failure.mono ? "write-receipt write-receipt-mono" : "write-receipt write-receipt-plain", role: "status" },
     createElement("span", { className: "write-receipt-lamp" }),
     createElement(
       "span",
@@ -122,7 +253,7 @@ function receiptElement(
             className: "write-receipt-retry",
             onClick: failure.retry,
           },
-          failure.retryLabel ?? "Retry",
+          failure.retryLabel ?? (failure.mono ? "Retry" : "Try again"),
         )
       : null,
     createElement(
@@ -231,7 +362,7 @@ export function reportWriteFailure(
   retry?: () => void,
   subject?: string,
   label?: string,
-  face?: { plain?: boolean; retryLabel?: string },
+  face?: { plain?: boolean; mono?: boolean; retryLabel?: string },
 ): WriteFailure {
   const failure: WriteFailure = {
     verb: verb.toUpperCase(),
@@ -241,6 +372,7 @@ export function reportWriteFailure(
     subject,
     ...(label ? { label } : {}),
     ...(face?.plain ? { plain: true } : {}),
+    ...(face?.mono ? { mono: true } : {}),
     ...(face?.retryLabel ? { retryLabel: face.retryLabel } : {}),
   };
   publish(failure);

@@ -286,7 +286,7 @@ describe("Run with no engine", () => {
     expect(door()).toBeTruthy();
     expect(screen.getByRole("button", { name: "Run: No engine" })).toBeDisabled();
     expect(container.textContent).not.toMatch(/HTTP \d+/);
-    expect(container.textContent).not.toContain("RUN FAILED");
+    expect(container.textContent).not.toContain("Could not start the run");
   });
 
   it("500, then Retry answered by the named 409: the receipt clears and the door shows", async () => {
@@ -298,13 +298,13 @@ describe("Run with no engine", () => {
     const run = await screen.findByRole("button", { name: "Run this automation now" });
     await waitFor(() => expect(run).not.toBeDisabled());
     await act(async () => { fireEvent.click(run); });
-    expect((await screen.findByText("RUN FAILED · HTTP 500"))).toBeTruthy();
+    expect((await screen.findByText("Could not start the run"))).toBeTruthy();
     expect(screen.queryByTestId("wb-no-engine")).toBeNull();
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Retry" })); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Try again" })); });
     await screen.findByTestId("wb-no-engine");
     expect(door()).toBeTruthy();
     expect(container.textContent).not.toMatch(/HTTP \d+/);
-    expect(container.textContent).not.toContain("RUN FAILED");
+    expect(container.textContent).not.toContain("Could not start the run");
     expect(screen.getByRole("button", { name: "Run: No engine" })).toBeDisabled();
   });
 });

@@ -2,8 +2,8 @@
 
 A hub with no meeting recorder wired (the rig of
 ``tests/unit/test_philo5_the_loop.py``) refuses a start with 501. The face's
-words for that answer ("NOT RECORDING · NO RECORDER ON THIS HUB", OK and no
-Retry) are fenced in ``web/src/desk/store/__tests__/recordingSlice.test.ts``.
+words for that answer ("Not recording · No recorder on this hub", OK and no
+Try again) are fenced in ``web/src/desk/store/__tests__/recordingSlice.test.ts``.
 """
 from __future__ import annotations
 
