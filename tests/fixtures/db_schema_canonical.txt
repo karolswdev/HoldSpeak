@@ -125,6 +125,8 @@ index idx_monday_brief_shelf_brief: CREATE INDEX idx_monday_brief_shelf_brief ON
 index idx_note_outcomes_note: CREATE INDEX idx_note_outcomes_note ON note_outcomes(note_id, ordinal)
 index idx_notes_modified: CREATE INDEX idx_notes_modified ON notes(last_modified DESC)
 index idx_pipeline_events_correlation: CREATE INDEX idx_pipeline_events_correlation ON pipeline_events(correlation_id) WHERE correlation_id != ''
+index idx_pipeline_events_method: CREATE INDEX idx_pipeline_events_method ON pipeline_events(method, timestamp DESC)
+index idx_pipeline_events_origin: CREATE INDEX idx_pipeline_events_origin ON pipeline_events(origin, timestamp DESC) WHERE origin != 'local'
 index idx_pipeline_events_principal: CREATE INDEX idx_pipeline_events_principal ON pipeline_events(principal_kind, principal_identity, timestamp DESC)
 index idx_pipeline_events_service_method: CREATE INDEX idx_pipeline_events_service_method ON pipeline_events(service, method, timestamp DESC)
 index idx_pipeline_events_timestamp: CREATE INDEX idx_pipeline_events_timestamp ON pipeline_events(timestamp DESC)

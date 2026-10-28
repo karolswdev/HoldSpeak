@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ...logging_config import get_logger
 from ...services.errors import ConflictError, NotFound, ServiceError
@@ -118,7 +119,7 @@ def build_inference_assignments_router(ctx: WebContext) -> APIRouter:
                     {"code": "inference_defaults_unavailable", "message": "Defaults are not available."},
                     status_code=503,
                 )
-            return defaults.state(request.state.principal)
+            return await run_in_threadpool(defaults.state, request.state.principal)
         except ServiceError as exc:
             return _safe_error(exc)
         except Exception as exc:

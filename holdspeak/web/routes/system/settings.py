@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
@@ -148,6 +149,10 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
         One read returning the seven module rows' state tokens from existing
         services. Counts are integers; the face applies the zero law.
         """
+        # PERF-HUB 2026-10-28: seconds of reads; off the event loop.
+        return await run_in_threadpool(_settings_hub, request)
+
+    def _settings_hub(request: Request) -> Any:
         try:
             from ....config import Config
             from ....services.model_library_service import ModelLibraryApplicationService
@@ -375,7 +380,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             from ....services.heartbeat_service import HeartbeatService
 
             hb = HeartbeatService(get_database())
-            return JSONResponse(hb.get_settings())
+            return JSONResponse(await run_in_threadpool(hb.get_settings))
         except Exception as exc:
             return error_500(exc, log, "Failed to load heartbeat settings")
 

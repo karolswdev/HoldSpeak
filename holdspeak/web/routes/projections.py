@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
@@ -30,7 +31,7 @@ def build_projections_router(ctx: WebContext) -> APIRouter:
         include_dismissed: bool = False, offset: int = 0, limit: int = 50,
     ) -> Any:
         try:
-            result = service.list(principal(request), {"q": q, "kind": kind,
+            result = await run_in_threadpool(service.list, principal(request), {"q": q, "kind": kind,
                 "attention_state": attention_state, "subject_ref": subject_ref,
                 "include_dismissed": include_dismissed, "offset": offset, "limit": limit})
             return JSONResponse({"version": 1, **result})

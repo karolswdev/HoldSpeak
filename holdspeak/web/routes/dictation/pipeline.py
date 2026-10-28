@@ -15,6 +15,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ....db import get_observer
 from ....logging_config import get_logger
@@ -241,6 +242,10 @@ def build_pipeline_router(
     @router.get("/api/dictation/readiness")
     async def api_dictation_readiness(project_root: Optional[str] = None) -> Any:
         """Return one browser-facing readiness snapshot for dictation setup."""
+        # PERF-HUB 2026-10-28: config, project and target reads; off the loop.
+        return await run_in_threadpool(_dictation_readiness, project_root)
+
+    def _dictation_readiness(project_root: Optional[str]) -> Any:
         from ....agent_context import get_recent_agent_session
         from ....config import Config
         from ....plugins.dictation.project_kb import ProjectKBError, kb_path_for, read_project_kb

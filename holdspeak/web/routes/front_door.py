@@ -29,6 +29,11 @@ def build_front_door_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/recommendation")
     async def get_recommendation(request: Request) -> Any:
+        # PERF-HUB 2026-10-28: the hardware and runtime probes open sockets
+        # for seconds; the whole read runs off the event loop.
+        return await run_in_threadpool(_recommendation, request)
+
+    def _recommendation(request: Request) -> Any:
         principal = getattr(request.state, "principal", UNAUTHENTICATED)
         if principal.kind is not PrincipalKind.OWNER:
             return _error(ServiceError(
@@ -131,7 +136,7 @@ def build_front_door_router(ctx: WebContext) -> APIRouter:
                             has_cloud_credential = True
                             break
 
-            result = await run_in_threadpool(recommend,
+            result = recommend(
                 hardware=hardware,
                 catalog_entries=entries,
                 known_endpoints=known_endpoints,
@@ -349,6 +354,10 @@ def build_front_door_router(ctx: WebContext) -> APIRouter:
         Aggregates inference targets (list_inference_targets), hardware
         runtimes, and assignment summary rows into the topology wire shape.
         """
+        # PERF-HUB 2026-10-28: the same probes as the recommendation.
+        return await run_in_threadpool(_topology, request)
+
+    def _topology(request: Request) -> Any:
         principal = getattr(request.state, "principal", UNAUTHENTICATED)
         if principal.kind is not PrincipalKind.OWNER:
             return _error(ServiceError(

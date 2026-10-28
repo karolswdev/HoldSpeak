@@ -103,7 +103,8 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
 
                     engine_fits(
                         result["engines"],
-                        authority_fit(
+                        await run_in_threadpool(
+                            authority_fit,
                             ctx.inference_assignment_service,
                             getattr(request.state, "principal", None),
                             db,
@@ -121,7 +122,8 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             try:
                 from ...services.concierge_service import repairs
 
-                result["repairs"] = repairs(
+                result["repairs"] = await run_in_threadpool(
+                    repairs,
                     db=db,
                     assignment_service=ctx.inference_assignment_service,
                     principal=getattr(request.state, "principal", None),
@@ -133,7 +135,7 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             # groups, read from its receipt, survive a reload.
             from ...services.concierge_service import last_apply
 
-            result["lastApply"] = last_apply(db)
+            result["lastApply"] = await run_in_threadpool(last_apply, db)
             return JSONResponse(result)
         except ServiceError as exc:
             return _safe_error(exc)
