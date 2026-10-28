@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent window directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material: the values are copied from web/src/styles/tokens.css (2026-10-27),
+   the same set the Note, Ask and Live canvases use. */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-rec:#b3261e;
+  --ok:#34d399; --ok-strong:#10b981; --ember:#a86e4a; --ember-ink:#8a5a3d; --warn:#f59e0b; --danger:#dc2626;
+  --violet:#7c5cc4; --teal:#1f7a6b; --head-ink:#2b4a7a;
+  --lamp-ring:0 0 0 1.5px var(--wb-paper),0 1px 2px rgba(12,20,32,.4);
+  --win-shadow:0 18px 44px rgba(8,14,22,.40),0 3px 10px rgba(8,14,22,.24);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9eef4;color:var(--wb-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 14px/1.3 var(--font-ui);margin:20px 0 8px;color:var(--wb-muted)}
+p{margin:0 0 10px;max-width:1080px}
+section.block{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#fff;color:var(--wb-muted);box-shadow:0 0 0 1px var(--wb-rule)}
+.lede{display:grid;grid-template-columns:1fr 560px;gap:32px;align-items:start}
+.now{display:flex;gap:12px}
+.now figure{margin:0}
+.now img{display:block;border-radius:6px;border:1px solid var(--wb-rule)}
+figcaption{font-size:12px;color:var(--wb-muted);margin-top:4px;max-width:420px}
+.inv{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1440px}
+.inv div{background:#fff;border:1px solid var(--wb-rule-soft);border-radius:8px;padding:12px 14px}
+.inv h4{font:600 13px var(--font-display);margin:0 0 6px;color:var(--head-ink)}
+.inv ul{margin:0;padding:0 0 0 16px;font-size:13px;line-height:1.5}
+.inv li{margin:0 0 5px}
+.inv code{font:12px var(--font-mono);color:var(--wb-muted)}
+.inv .gap{color:var(--ember-ink)}
+.qa{display:grid;grid-template-columns:220px 1fr 1fr;max-width:1240px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;font-size:13px}
+.qa > div{padding:9px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.qa > div:nth-child(3n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.qa > .h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.qa > .h.rec{background:var(--wb-blue);color:var(--head-ink)}
+.qa > .rec{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+.order{font-size:14px;max-width:1200px;padding-left:22px}
+.order li{margin:0 0 6px}
+.order code,.cost code{font:12.5px var(--font-mono);color:var(--wb-muted)}
+
+.moment{display:grid;grid-template-columns:220px 820px;gap:20px;align-items:start;margin:0 0 22px}
+.moment .say{font-size:13.5px}
+.moment .say b{display:block;font:600 15px var(--font-display);color:var(--head-ink);margin-bottom:4px}
+.stage{position:relative;width:820px;height:620px;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);background:url(agent-window-2026-10-27/desk-1440.png) -40px -200px/1440px 900px no-repeat}
+
+/* the window */
+.win{position:absolute;left:30px;top:30px;width:760px;height:560px;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:20px;text-align:center;font-size:15px;opacity:.9}
+.tb .gl{width:18px;height:18px;border-radius:4px;background:#fff;display:grid;place-items:center}
+.tb .gl img{width:14px;height:14px}
+.tb .name{font:600 13.5px/1 var(--font-display);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .gad{display:flex;gap:2px}
+.tb .gad span{width:28px;height:22px;display:grid;place-items:center}
+.tb .gad svg{width:14px;height:14px;stroke:#f7f9fc;fill:none;stroke-width:1.6}
+/* the wing strip: the chrome segment the Speak and Room windows wear */
+.wings{display:inline-flex;background:rgba(255,255,255,.12);border-radius:6px;padding:2px;gap:2px;margin-right:6px}
+.wings span{font:500 12px/1 var(--font-ui);padding:4px 10px;border-radius:4px;color:#e6edf8}
+.wings span.on{background:#f7f9fc;color:var(--wb-sel)}
+.toolbar{flex:0 0 36px;display:flex;align-items:center;gap:4px;padding:0 6px;border-bottom:1px solid var(--wb-rule-soft)}
+.toolbar .grow{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc;padding:0 11px}
+.btn.danger{color:var(--wb-rec);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wb-rec) 45%,#fff)}
+.btn.secondary{background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.btn.sm{height:22px;font-size:12px;padding:0 8px}
+.body{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:8px;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .sep{opacity:.5}
+.sb .grow{flex:1}
+.lamp{width:8px;height:8px;border-radius:50%;background:var(--ok-strong);box-shadow:var(--lamp-ring);display:inline-block;flex:none}
+.lamp.warn{background:var(--warn)}
+.lamp.info{background:var(--wb-sel-vivid)}
+.lamp.breathe{animation:breathe 1.4s ease-in-out infinite alternate}
+@keyframes breathe{from{opacity:1}to{opacity:.4}}
+
+/* A: the two columns */
+.cols{display:grid;grid-template-columns:1fr 262px;height:100%}
+.steps{overflow:hidden;padding:4px 0 0}
+.cap{font:600 12px var(--font-ui);color:var(--wb-muted);padding:8px 12px 4px;display:flex;align-items:center;gap:8px}
+.cap .grow{flex:1}
+.cap .q{font-weight:400;color:var(--wb-faint)}
+.step{display:grid;grid-template-columns:44px 18px 1fr;align-items:center;gap:0 8px;height:30px;padding:0 12px 0 6px;font-size:13px;border-bottom:1px solid #edf1f6;white-space:nowrap}
+.step .t{text-align:right;color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums}
+.step .w{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.step .w code{font:12px var(--font-mono);color:var(--wb-ink)}
+.step .w .m{color:var(--wb-muted)}
+.step .w q{color:var(--wb-ink);font-style:italic}
+.step.tall{height:auto;min-height:30px;padding-top:6px;padding-bottom:6px;white-space:normal;align-items:start}
+.step.tall .t,.step.tall .g{padding-top:1px}
+.step.now{background:color-mix(in srgb,var(--wb-sel-vivid) 8%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--wb-sel-vivid)}
+.step.now .t{color:var(--wb-sel-vivid);font-weight:600}
+.g{width:18px;height:18px;border-radius:5px;display:grid;place-items:center}
+.g svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.g.read{background:#e6eef9;color:#2f67c8}
+.g.write{background:#f6ece4;color:#a86e4a}
+.g.run{background:#e3f5ec;color:#167a55}
+.g.says{background:#efeafa;color:#7c5cc4}
+.g.commit{background:#e2f1ee;color:#1f7a6b}
+.g.brief{background:var(--wb-steel);color:var(--wb-muted)}
+.g.answer{background:#fdf1dc;color:#9a6408}
+.objects{border-left:1px solid var(--wb-rule-soft);background:#fff;padding:4px 0}
+.orow{display:flex;align-items:center;gap:9px;height:32px;padding:0 12px;font-size:13px;white-space:nowrap}
+.orow img{width:20px;height:20px;flex:none}
+.orow .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.orow .tx code{font:12px var(--font-mono)}
+.orow .dw{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.orow.sub{height:26px;padding-left:41px;font-size:12px}
+.orow.sub code{font:12px var(--font-mono);color:var(--wb-ink)}
+.fileic{width:14px;height:14px;flex:none;color:var(--wb-faint)}
+
+/* the waiting card: a soft plate, the ask first */
+.ask{margin:10px 12px 6px;border-radius:8px;background:color-mix(in srgb,var(--warn) 8%,var(--wb-paper));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 30%,var(--wb-rule-soft));padding:10px 12px 12px}
+.ask .hd{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ember-ink);font-weight:600}
+.ask .hd .age{margin-left:auto;font-weight:400;color:var(--wb-muted);font-size:12px}
+.ask .qn{font:500 15px/1.45 var(--font-ui);margin:6px 0 9px;color:var(--wb-ink)}
+.ask .row{display:flex;gap:6px;align-items:center}
+.field{flex:1;height:30px;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px var(--wb-rule);display:flex;align-items:center;padding:0 10px;font-size:13px;color:var(--wb-faint);gap:8px}
+.field .mic{margin-left:auto;width:16px;height:16px;color:var(--wb-muted)}
+.ask .draft{margin-top:8px;font-size:12.5px;color:var(--wb-muted);display:flex;align-items:center;gap:8px}
+.ask .draft b{font-weight:500;color:var(--wb-ink)}
+.ask .why{font-size:12px;color:var(--wb-faint);margin-top:6px}
+/* the result card */
+.result{margin:10px 12px 6px;border-radius:8px;background:color-mix(in srgb,var(--ok) 8%,var(--wb-paper));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ok) 35%,var(--wb-rule-soft));padding:10px 12px 10px}
+.result .hd{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#167a55;font-weight:600}
+.result .hd .age{margin-left:auto;font-weight:400;color:var(--wb-muted);font-size:12px}
+.result .said{font:14px/1.5 var(--font-ui);margin:6px 0 2px}
+.result .said code{font:12.5px var(--font-mono)}
+.fold{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--wb-muted);padding:8px 12px 2px}
+.fold::before{content:"▸";font-size:10px}
+
+/* B: the conversation */
+.conv{padding:12px 18px;display:flex;flex-direction:column;gap:12px;height:100%;font-size:14px}
+.turn{display:grid;grid-template-columns:28px 1fr;gap:10px}
+.turn .who{width:28px;height:28px;border-radius:7px;background:var(--wb-steel);display:grid;place-items:center}
+.turn .who img{width:20px;height:20px}
+.turn .who.me{background:#e6eef9;font:600 11px var(--font-ui);color:var(--wb-sel)}
+.turn .bub{background:#fff;border-radius:9px;box-shadow:0 0 0 1px var(--wb-rule-soft);padding:8px 12px;line-height:1.5}
+.turn .bub .meta{font-size:12px;color:var(--wb-faint);margin-bottom:2px}
+.turn .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.turn .chips span{font-size:12px;color:var(--wb-muted);background:var(--wb-steel-2);border-radius:999px;padding:2px 9px}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;background:var(--wb-paper);border-top:1px solid var(--wb-rule-soft);display:flex;gap:6px}
+
+/* the terminal face */
+.term{height:100%;background:#0f1722;color:#cfe0f5;font:12.5px/1.55 var(--font-mono);padding:10px 14px;position:relative}
+.term .dim{color:#7f93ad}
+.term .ok{color:#5fd3a2}
+.term .hl{color:#f5c26b}
+.term .keys{position:absolute;left:0;right:0;bottom:0;height:32px;background:#16202d;border-top:1px solid #253345;display:flex;align-items:center;gap:8px;padding:0 12px;font:12px var(--font-ui);color:#9fb1c8}
+.term .keys .k{background:#223044;border-radius:4px;padding:2px 8px;color:#dbe6f5}
+
+/* the phone */
+.phone{position:relative;width:393px;height:760px;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px var(--wb-rule);background:var(--wb-paper);display:flex;flex-direction:column}
+.phone .tb{flex:0 0 44px}
+.phone .tb .back{font:500 13px var(--font-ui);opacity:.95}
+.phone .toolbar{flex:0 0 40px}
+.phones{display:flex;gap:24px;align-items:flex-start}
+.note{font-size:12.5px;color:var(--wb-muted);max-width:360px;margin-top:6px}
+.mark{display:inline-block;font:600 11px/1 var(--font-ui);color:#fff;background:var(--ember);border-radius:999px;padding:3px 7px;margin-left:6px;vertical-align:1px}
+</style>
+</head>
+<body>
+<main>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-read" viewBox="0 0 12 12"><path d="M1 6s1.8-3.5 5-3.5S11 6 11 6 9.2 9.5 6 9.5 1 6 1 6Z"/><circle cx="6" cy="6" r="1.5"/></symbol>
+    <symbol id="i-write" viewBox="0 0 12 12"><path d="M8 1.5l2.5 2.5L4.5 10H2V7.5Z"/></symbol>
+    <symbol id="i-run" viewBox="0 0 12 12"><path d="M3.5 2v8L10 6Z"/></symbol>
+    <symbol id="i-says" viewBox="0 0 12 12"><path d="M2 2.5h8v5.5H5.5L3 10V8H2Z"/></symbol>
+    <symbol id="i-commit" viewBox="0 0 12 12"><circle cx="6" cy="6" r="2.2"/><path d="M0.5 6h3.3M8.2 6h3.3"/></symbol>
+    <symbol id="i-brief" viewBox="0 0 12 12"><path d="M2.5 1.5h5l2 2v7h-7Z M4 5.5h4M4 7.5h4"/></symbol>
+    <symbol id="i-answer" viewBox="0 0 12 12"><path d="M10 2.5H2v5.5h4.5L9 10V8h1Z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 14 14"><path d="M3 1.5h5.5l2.5 2.5v8.5H3Z M8.5 1.5V4H11" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+    <symbol id="i-ask" viewBox="0 0 16 16"><path d="M2.5 3h11v7.5H7L4 13v-2.5H2.5Z"/></symbol>
+    <symbol id="i-open" viewBox="0 0 16 16"><path d="M9 2.75h4.25V7 M13.25 2.75 7.5 8.5 M11.5 9.5v3.75h-8.75V4.5H6.5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 16 16"><path d="M8 2a2 2 0 0 1 2 2v4a2 2 0 0 1-4 0V4a2 2 0 0 1 2-2Z M4.5 7.5a3.5 3.5 0 0 0 7 0 M8 11v3" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+  </defs>
+</svg>
+
+<div class="lede">
+  <div>
+    <h1>The agent's window</h1>
+    <p>What the window of one running agent shows while it works, when it waits for you, and when it is done; and where its terminal lives. The first user hands work to Claude Code and Codex and checks the follow-through (J4). He opens this window to answer three questions: <b>what is it doing now</b>, <b>does it need me</b>, and <b>what did it make</b>.</p>
+    <p>Two directions at real size, 760 × 560 over the real desk, and the recommended one at 393. The data in every frame is the lane rig's seed (<code>tests/e2e/agents_lane_rig.py</code>), the same hook events, commit and PR the hub reports.</p>
+  </div>
+  <div class="now">
+    <figure><img src="agent-window-2026-10-27/now-waiting-1440.png" width="400" alt="The agent window today at 1440"><figcaption>Today, at 1440: the ask in mono caps in an ink frame, the rail of mono caps words, a PR card, and the white <i>Terminal</i> tab in the title bar.</figcaption></figure>
+    <figure><img src="agent-window-2026-10-27/now-waiting-393.png" width="140" alt="The agent window today at 393"><figcaption>393</figcaption></figure>
+  </div>
+</div>
+
+<section class="block">
+<h2>What the hub knows about a running agent</h2>
+<p>Read from <code>GET /api/agent/launches/{id}/lane</code> (<code>holdspeak/services/launch_lane.py:478-553</code>) and the flights read. Honest: blue is real today, ember is not.</p>
+<div class="inv">
+  <div><h4>Real, from the launch</h4><ul>
+    <li>The agent, the brief text, the branch, the worktree path, when it was launched, the control mode (<code>launch_lane.py:478-509</code>).</li>
+    <li>A stop by you, queued instructions, every instruction sent, with receipts.</li>
+    <li>The PR from the follow-through: number, URL, state, checks, review (<code>:515-527</code>).</li>
+    <li>The worktree from git: commits (sha, subject, time) and changed files (<code>worktree_facts</code>, <code>:148</code>).</li>
+  </ul></div>
+  <div><h4>Real only when the agent's hooks report</h4><ul>
+    <li>The events (<code>:530</code>): each tool call with its tool and a head: the file path for Read, Edit, Write; the first 120 characters of a Bash command; for Codex the files of an <code>apply_patch</code> (<code>holdspeak/agent_context/event_log.py:19-31</code>).</li>
+    <li>What it says at the end of a turn (Stop's message), each prompt it got, a Notification's message.</li>
+    <li>The wait: the question, its kind (answer, approve, HoldSpeak decides), when it began, HoldSpeak's draft (<code>_wait</code>, <code>:241-299</code>).</li>
+    <li>A held call: the command, why it waits (<code>gated</code>).</li>
+    <li>What it read, wrote and prepared on the desk with its launch key (<code>used</code>, <code>:546</code>), its last words (<code>:548</code>).</li>
+  </ul></div>
+  <div><h4>Not known (do not draw it)</h4><ul>
+    <li class="gap">The result of a tool run: the hook keeps no output, so “6 passed” is not there (<code>web/src/desk/lane/laneWire.ts:299-305</code>).</li>
+    <li class="gap">The current step as a fact: the hub reports past events only. The window lights the newest event while the agent works, and says so in the time column (“now” is not drawn without a fresh event).</li>
+    <li class="gap">When the PR opened (the hub keeps no PR time): the PR row has no time mark.</li>
+    <li class="gap">A diff per file; durations; cost per step.</li>
+    <li class="gap">A “this work is done” fact on the launch: no route closes a launch (<code>/api/agent/launches/{id}/…</code> has answer, deliver, explain, rebrief, resume, seen). A <i>Done</i> verb needs a hub slice.</li>
+    <li class="gap">An agent with no hooks: no events at all; the hub reads its screen instead (<code>agentFlights.ts:135-150</code>), so the window says “No steps reported yet” and its last words from the screen.</li>
+    <li class="gap">In the rig: no live terminal pane (the pane read says it is not there).</li>
+  </ul></div>
+</div>
+</section>
+
+<section class="block">
+<h2>Recommendation: A, the step log <span class="tag">recommended</span></h2>
+<p><b>A</b> makes the body a dense list of steps with time marks (30 px rows, a coloured glyph per kind, the path or the command in mono, the agent's words in quotes), the newest step lit while it works. The objects it made (the PR, the branch, the changed files) are object rows beside the steps at 1440 and above them at 393. When it asks, the question is a soft card at the top with <i>Answer</i> as the window's one primary. When it is done, the result card leads: its last words and what it made, with <i>Open PR</i> as the primary. The terminal is a wing in the title bar (<i>Steps · Terminal</i>), the same segment Speak and the Room wear; the white tab goes.</p>
+<p><b>B</b>, the conversation, draws the work as a chat: the agent's words as bubbles, the tool calls folded into chips, the answer field docked at the bottom. It reads friendly, but it hides the work he comes to inspect behind folds, and a chat says “talk to it” when the job is “check it”. Keep B's one good idea: the agent's words read as words, not as a log line.</p>
+<div class="qa">
+  <div class="h"></div><div class="h rec">A · the step log</div><div class="h">B · the conversation</div>
+  <div>What is it doing now?</div><div class="rec">The lit newest step and the status bar: <i>Working · last step 1 min ago</i>.</div><div>The last bubble; the work is in a chip.</div>
+  <div>Does it need me?</div><div class="rec">The ask card first, Answer primary, the draft one press away.</div><div>The question is the last bubble; the field is at the bottom.</div>
+  <div>What did it make?</div><div class="rec">The PR, branch and files as object rows, always shown.</div><div>A summary bubble; objects behind a fold.</div>
+  <div>No hooks (no events)</div><div class="rec">One quiet line, <i>No steps reported yet</i>, and its last words from the screen.</div><div>An empty chat.</div>
+  <div>Grammar</div><div class="rec">Toolbar → list view → status bar: the window grammar of 2026-10-24.</div><div>A new species (bubbles) the desk does not have.</div>
+  <div>Cost</div><div class="rec">Front end only: one lane component (the step list), the wing, the toolbars, the cards. No hub change for slice 1.</div><div>A new chat species, and the work folded behind it.</div>
+</div>
+<h3>Build order</h3>
+<ol class="order">
+  <li><b>Slice 1 (this lane):</b> the step list as the body, from real events (<code>eventEntries</code>), with <i>No steps reported yet</i> when there are none; the three toolbars (working: Tell it · Open PR · Stop; waiting: the same, the card's Answer primary; done: Open PR primary · Tell it); the Terminal as a wing (<i>Steps · Terminal</i>), the title-bar tab gone; the waiting card first; the objects (PR, branch, files) as object rows.</li>
+  <li><b>Slice 2:</b> the ask card on the kit's soft plate for every kind (answer, approve a held call, HoldSpeak decides); the held call's command whole in the card.</li>
+  <li><b>Slice 3 (hub):</b> a launch-close fact (<i>Done</i>: the work is checked, the row leaves Agents), and the tool run's result in the event detail (so a test run says “6 passed”).</li>
+  <li><b>Later:</b> <i>Open in Processes</i> from the Terminal wing, for a terminal beside the steps.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>One truth for the agent's state (atlas pass 2)</h2>
+<div class="inv">
+  <div><h4>Found</h4><ul>
+    <li class="gap">The agent's window said “Claude Code is working” while the Agents list said “Session gone” for the same launch: the window guessed “working” when it had no live flight; the list read the hub's launch history.</li>
+    <li class="gap">Agents mixes runs and installed tools in one list (a version number in the What column), and its status bar says “1 working” while no row says Working.</li>
+  </ul></div>
+  <div><h4>Slice 1 ships</h4><ul>
+    <li>The window reads its state from the same source as the Agents list: the live flight, else the launch in the hub's history (<code>useConductor.history</code>, <code>members.ts closeReceipt</code>).</li>
+    <li>A gone session reads <i>Session gone</i> (or <i>Stopped by restart</i>, <i>Could not resume</i>, <i>Ended</i>) in the status bar; nothing is lit; Tell it and Stop leave; the one verb is <i>Start again</i> (a new agent on the same item, Hand again), with Open PR beside it.</li>
+  </ul></div>
+  <div><h4>Next (the Agents lane)</h4><ul>
+    <li>Runs and installed tools apart: the runs list, and the tools as a quiet footer or the Settings ▸ Agents pane.</li>
+    <li>The status bar's count from the rows it lists (no “1 working” with no Working row).</li>
+    <li class="gap"><i>Remove</i> a gone launch: the hub has no route for it (with Done, slice 3).</li>
+  </ul></div>
+</div>
+</section>
+
+<section class="block">
+<h2>A · the step log <span class="tag">recommended</span></h2>
+
+<div class="moment">
+  <div class="say"><b>It works</b>The steps as they happen, the newest lit. The objects it made on the right. Toolbar: Tell it, Open PR, Stop (trailing, a danger outline: two presses). The status bar says the state and when the last step came.</div>
+  <div class="stage"><div class="win">
+    <div class="tb"><span class="x">✕</span><span class="gl"><img src="agent-window-2026-10-27/agent-claude-code.png" alt=""></span><span class="name">Claude Code: Write the rollback runbook</span><span class="wings"><span class="on">Steps</span><span>Terminal</span></span><span class="gad"><span><svg viewBox="0 0 14 14"><path d="M2 9h10"/></svg></span><span><svg viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10"/></svg></span></span></div>
+    <div class="toolbar"><span class="btn secondary"><svg><use href="#i-ask"/></svg>Tell it</span><span class="btn"><svg><use href="#i-open"/></svg>Open PR</span><span class="grow"></span><span class="btn danger">Stop</span></div>
+    <div class="body"><div class="cols">
+      <div class="steps">
+        <div class="cap">Steps<span class="grow"></span><span class="q">Brief, 19 words ▸</span></div>
+        <div class="step"><span class="t">19:31</span><span class="g brief"><svg><use href="#i-brief"/></svg></span><span class="w">Got the brief <span class="m">· Write the ledger rollback runbook.</span></span></div>
+        <div class="step"><span class="t">19:32</span><span class="g read"><svg><use href="#i-read"/></svg></span><span class="w">Read <code>ledger/freeze.py</code>, <code>docs/runbooks/README.md</code> <span class="m">and 1 more</span></span></div>
+        <div class="step tall"><span class="t">19:33</span><span class="g says"><svg><use href="#i-says"/></svg></span><span class="w"><q>I will draft the runbook from the freeze decision and the Nov 12 rollback window.</q></span></div>
+        <div class="step"><span class="t">19:35</span><span class="g write"><svg><use href="#i-write"/></svg></span><span class="w">Wrote <code>docs/ledger-rollback.md</code></span></div>
+        <div class="step"><span class="t">19:36</span><span class="g run"><svg><use href="#i-run"/></svg></span><span class="w">Ran <code>pytest tests/runbooks -q</code></span></div>
+        <div class="step"><span class="t">19:37</span><span class="g commit"><svg><use href="#i-commit"/></svg></span><span class="w">Committed <code>5b7c64e</code> <span class="m">Draft the ledger rollback runbook</span></span></div>
+        <div class="step now"><span class="t">19:38</span><span class="g read"><svg><use href="#i-read"/></svg></span><span class="w">Read <code>docs/ledger-rollback.md</code></span></div>
+      </div>
+      <div class="objects">
+        <div class="cap">It made</div>
+        <div class="orow"><img src="agent-window-2026-10-27/pull-request.png" alt=""><span class="tx">#413 Write the rollback runbook</span><span class="dw"><span class="lamp warn"></span>Checks 6 of 7</span></div>
+        <div class="orow"><img src="agent-window-2026-10-27/repository.png" alt=""><span class="tx"><code>hs/write-the-rollback-runbook</code></span></div>
+        <div class="orow"><svg class="fileic"><use href="#i-file"/></svg><span class="tx">2 files changed</span></div>
+        <div class="orow sub"><code>docs/ledger-rollback.md</code></div>
+        <div class="orow sub"><code>freeze.py</code></div>
+      </div>
+    </div></div>
+    <div class="sb"><span class="it"><span class="lamp info breathe"></span>Working</span><span class="sep">·</span><span>Last step 1 min ago</span><span class="sep">·</span><span>7 steps</span><span class="grow"></span></div>
+  </div></div>
+</div>
+
+<div class="moment">
+  <div class="say"><b>It waits</b>The question is the first thing in the body, on a soft warm plate: <i>Asks you</i> as a dot and a word, the age quiet. <i>Answer</i> is the window's one primary; HoldSpeak's draft is one press. The steps stay under it, the ask step lit.</div>
+  <div class="stage"><div class="win">
+    <div class="tb"><span class="x">✕</span><span class="gl"><img src="agent-window-2026-10-27/agent-claude-code.png" alt=""></span><span class="name">Claude Code: Write the rollback runbook</span><span class="wings"><span class="on">Steps</span><span>Terminal</span></span><span class="gad"><span><svg viewBox="0 0 14 14"><path d="M2 9h10"/></svg></span><span><svg viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10"/></svg></span></span></div>
+    <div class="toolbar"><span class="btn secondary"><svg><use href="#i-ask"/></svg>Tell it</span><span class="btn"><svg><use href="#i-open"/></svg>Open PR</span><span class="grow"></span><span class="btn danger">Stop</span></div>
+    <div class="body">
+      <div class="ask">
+        <div class="hd"><span class="lamp warn"></span>Asks you<span class="age">Asked 1 min ago</span></div>
+        <div class="qn">The runbook needs a rollback owner. Jordan or Avery?</div>
+        <div class="row"><span class="field">Say or type the answer<svg class="mic"><use href="#i-mic"/></svg></span><span class="btn primary">Answer</span></div>
+        <div class="draft">Draft: <b>Jordan owns it. Avery reviews.</b><span class="btn sm secondary">Use draft</span></div>
+      </div>
+      <div class="cols" style="height:auto">
+        <div class="steps">
+          <div class="step"><span class="t">19:35</span><span class="g write"><svg><use href="#i-write"/></svg></span><span class="w">Wrote <code>docs/ledger-rollback.md</code></span></div>
+          <div class="step"><span class="t">19:36</span><span class="g run"><svg><use href="#i-run"/></svg></span><span class="w">Ran <code>pytest tests/runbooks -q</code></span></div>
+          <div class="step"><span class="t">19:37</span><span class="g commit"><svg><use href="#i-commit"/></svg></span><span class="w">Committed <code>5b7c64e</code> <span class="m">Draft the ledger rollback runbook</span></span></div>
+          <div class="step now"><span class="t">19:38</span><span class="g answer"><svg><use href="#i-answer"/></svg></span><span class="w">Asked you <span class="m">· above</span></span></div>
+        </div>
+        <div class="objects">
+          <div class="orow"><img src="agent-window-2026-10-27/pull-request.png" alt=""><span class="tx">#413 Write the rollback runbook</span><span class="dw"><span class="lamp warn"></span>Checks 6 of 7</span></div>
+          <div class="orow"><img src="agent-window-2026-10-27/repository.png" alt=""><span class="tx"><code>hs/write-the-rollback-runbook</code></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb"><span class="it"><span class="lamp warn"></span>Asks you</span><span class="sep">·</span><span>Last step 1 min ago</span><span class="grow"></span></div>
+  </div></div>
+</div>
+
+<div class="moment">
+  <div class="say"><b>It is done</b>The result leads: its last words and what it made. <i>Open PR</i> is the primary; <i>Tell it</i> continues the work. <i>Done</i> (the work is checked) is drawn as a gap: the hub has no route for it yet (slice 3).</div>
+  <div class="stage"><div class="win">
+    <div class="tb"><span class="x">✕</span><span class="gl"><img src="agent-window-2026-10-27/agent-claude-code.png" alt=""></span><span class="name">Claude Code: Write the rollback runbook</span><span class="wings"><span class="on">Steps</span><span>Terminal</span></span><span class="gad"><span><svg viewBox="0 0 14 14"><path d="M2 9h10"/></svg></span><span><svg viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10"/></svg></span></span></div>
+    <div class="toolbar"><span class="btn primary"><svg><use href="#i-open"/></svg>Open PR</span><span class="btn secondary"><svg><use href="#i-ask"/></svg>Tell it</span><span class="btn" style="opacity:.5;box-shadow:inset 0 0 0 1px var(--wb-rule);border-style:dashed">Done <span class="mark">hub gap</span></span><span class="grow"></span></div>
+    <div class="body">
+      <div class="result">
+        <div class="hd"><span class="lamp"></span>Done<span class="age">2 min ago</span></div>
+        <div class="said">The runbook is in <code>docs/ledger-rollback.md</code>. Jordan owns the rollback; Avery reviews. Tests pass. PR #413 is open.</div>
+      </div>
+      <div class="cols" style="height:auto">
+        <div class="steps">
+          <div class="cap">Steps<span class="grow"></span><span class="q">7 steps ▸</span></div>
+          <div class="step"><span class="t">19:36</span><span class="g run"><svg><use href="#i-run"/></svg></span><span class="w">Ran <code>pytest tests/runbooks -q</code></span></div>
+          <div class="step"><span class="t">19:37</span><span class="g commit"><svg><use href="#i-commit"/></svg></span><span class="w">Committed <code>5b7c64e</code> <span class="m">Draft the ledger rollback runbook</span></span></div>
+          <div class="step"><span class="t">19:39</span><span class="g says"><svg><use href="#i-says"/></svg></span><span class="w">Said it is done <span class="m">· above</span></span></div>
+        </div>
+        <div class="objects">
+          <div class="cap">It made</div>
+          <div class="orow"><img src="agent-window-2026-10-27/pull-request.png" alt=""><span class="tx">#413 Write the rollback runbook</span><span class="dw"><span class="lamp"></span>Checks 7 of 7</span></div>
+          <div class="orow"><img src="agent-window-2026-10-27/repository.png" alt=""><span class="tx"><code>hs/write-the-rollback-runbook</code></span></div>
+          <div class="orow"><svg class="fileic"><use href="#i-file"/></svg><span class="tx">2 files changed</span></div>
+          <div class="orow sub"><code>docs/ledger-rollback.md</code></div>
+          <div class="orow sub"><code>freeze.py</code></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb"><span class="it"><span class="lamp"></span>Done</span><span class="sep">·</span><span>Last step 2 min ago</span><span class="grow"></span></div>
+  </div></div>
+</div>
+
+<div class="moment">
+  <div class="say"><b>The terminal, a wing</b><i>Terminal</i> is the second face of the same window, in the title bar's wing strip. Its keys fold at the bottom. The rig has no live pane: the shipped face says “Terminal unavailable” with <i>Retry</i>.<br><br><b>Not chosen:</b> the Processes window as the terminal's only place. It is right for a terminal beside the steps (<i>Open in Processes</i>, later), wrong as the one door: two windows for one agent.</div>
+  <div class="stage"><div class="win">
+    <div class="tb"><span class="x">✕</span><span class="gl"><img src="agent-window-2026-10-27/agent-claude-code.png" alt=""></span><span class="name">Claude Code: Write the rollback runbook</span><span class="wings"><span>Steps</span><span class="on">Terminal</span></span><span class="gad"><span><svg viewBox="0 0 14 14"><path d="M2 9h10"/></svg></span><span><svg viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10"/></svg></span></span></div>
+    <div class="toolbar"><span class="btn secondary"><svg><use href="#i-ask"/></svg>Tell it</span><span class="btn"><svg><use href="#i-open"/></svg>Open PR</span><span class="grow"></span><span class="btn danger">Stop</span></div>
+    <div class="body"><div class="term">
+      <div><span class="dim">⏺</span> Read(docs/ledger-rollback.md)</div>
+      <div class="dim">  ⎿ Read 42 lines</div>
+      <div><span class="dim">⏺</span> Bash(pytest tests/runbooks -q)</div>
+      <div class="ok">  ⎿ 6 passed in 0.41s</div>
+      <div>&nbsp;</div>
+      <div><span class="hl">⏺</span> The runbook needs a rollback owner. Jordan or Avery?</div>
+      <div>&nbsp;</div>
+      <div class="dim">╭──────────────────────────────────────────────────╮</div>
+      <div class="dim">│ &gt; <span style="color:#cfe0f5">▍</span>                                                │</div>
+      <div class="dim">╰──────────────────────────────────────────────────╯</div>
+      <div class="keys">Keys ▾<span class="k">Esc</span><span class="k">Enter</span><span class="k">⇧Tab</span><span style="margin-left:auto">Normal · arm to type</span></div>
+    </div></div>
+    <div class="sb"><span class="it"><span class="lamp warn"></span>Asks you</span><span class="sep">·</span><span>Last step 1 min ago</span><span class="grow"></span></div>
+  </div></div>
+</div>
+
+<h3>A at 393 (the phone)</h3>
+<div class="phones">
+  <div>
+    <div class="phone">
+      <div class="tb"><span class="back">‹ Back</span><span class="name">Claude Code: Write the…</span><span class="wings"><span class="on">Steps ▾</span></span></div>
+      <div class="toolbar"><span class="btn secondary"><svg><use href="#i-ask"/></svg>Tell it</span><span class="btn"><svg><use href="#i-open"/></svg>Open PR</span><span class="grow"></span><span class="btn danger">Stop</span></div>
+      <div class="body">
+        <div class="ask">
+          <div class="hd"><span class="lamp warn"></span>Asks you<span class="age">1 min ago</span></div>
+          <div class="qn">The runbook needs a rollback owner. Jordan or Avery?</div>
+          <div class="row"><span class="field">Say or type the answer<svg class="mic"><use href="#i-mic"/></svg></span></div>
+          <div class="row" style="margin-top:6px"><span class="btn sm secondary">Use draft</span><span class="grow" style="flex:1"></span><span class="btn primary">Answer</span></div>
+          <div class="draft">Draft: <b>Jordan owns it. Avery reviews.</b></div>
+        </div>
+        <div class="orow"><img src="agent-window-2026-10-27/pull-request.png" alt=""><span class="tx">#413 Write the rollback runbook</span><span class="dw"><span class="lamp warn"></span>6 of 7</span></div>
+        <div class="orow"><img src="agent-window-2026-10-27/repository.png" alt=""><span class="tx"><code>hs/write-the-rollback-runbook</code></span></div>
+        <div class="cap">Steps</div>
+        <div class="step"><span class="t">19:32</span><span class="g read"><svg><use href="#i-read"/></svg></span><span class="w">Read <code>ledger/freeze.py</code> <span class="m">and 2 more</span></span></div>
+        <div class="step tall"><span class="t">19:33</span><span class="g says"><svg><use href="#i-says"/></svg></span><span class="w"><q>I will draft the runbook from the freeze decision and the Nov 12 rollback window.</q></span></div>
+        <div class="step"><span class="t">19:35</span><span class="g write"><svg><use href="#i-write"/></svg></span><span class="w">Wrote <code>docs/ledger-rollback.md</code></span></div>
+        <div class="step"><span class="t">19:36</span><span class="g run"><svg><use href="#i-run"/></svg></span><span class="w">Ran <code>pytest tests/runbooks -q</code></span></div>
+        <div class="step"><span class="t">19:37</span><span class="g commit"><svg><use href="#i-commit"/></svg></span><span class="w">Committed <code>5b7c64e</code></span></div>
+        <div class="step now"><span class="t">19:38</span><span class="g answer"><svg><use href="#i-answer"/></svg></span><span class="w">Asked you</span></div>
+      </div>
+      <div class="sb"><span class="it"><span class="lamp warn"></span>Asks you</span><span class="sep">·</span><span>1 min ago</span></div>
+    </div>
+    <p class="note">At 393 the wing strip folds to one menu (<i>Steps ▾</i>, the strip menu every wing uses). One column: the ask, the objects, then the steps. The answer row wraps: Use draft left, Answer right.</p>
+  </div>
+</div>
+</section>
+
+<section class="block">
+<h2>B · the conversation <span class="tag alt">not recommended</span></h2>
+<div class="moment">
+  <div class="say"><b>It works / it waits</b>The agent's words as bubbles; the tool calls folded into chips; the answer field docked at the bottom like a chat. Friendly, but the work is behind chips and the PR is a line in a bubble.</div>
+  <div class="stage"><div class="win">
+    <div class="tb"><span class="x">✕</span><span class="gl"><img src="agent-window-2026-10-27/agent-claude-code.png" alt=""></span><span class="name">Claude Code: Write the rollback runbook</span><span class="wings"><span class="on">Talk</span><span>Terminal</span></span><span class="gad"><span><svg viewBox="0 0 14 14"><path d="M2 9h10"/></svg></span><span><svg viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10"/></svg></span></span></div>
+    <div class="toolbar"><span class="btn"><svg><use href="#i-open"/></svg>Open PR</span><span class="grow"></span><span class="btn danger">Stop</span></div>
+    <div class="body">
+      <div class="conv">
+        <div class="turn"><span class="who me">You</span><div class="bub"><div class="meta">Brief · 19:31</div>Write the ledger rollback runbook. Sources: the freeze decision; the Nov 12 window.</div></div>
+        <div class="turn"><span class="who"><img src="agent-window-2026-10-27/agent-claude-code.png" alt=""></span><div class="bub"><div class="meta">Claude Code · 19:33</div>I will draft the runbook from the freeze decision and the Nov 12 rollback window.<div class="chips"><span>Read 3 files</span><span>Wrote 1 file</span><span>Ran tests</span><span>Committed 5b7c64e</span></div></div></div>
+        <div class="turn"><span class="who"><img src="agent-window-2026-10-27/agent-claude-code.png" alt=""></span><div class="bub" style="box-shadow:0 0 0 1px color-mix(in srgb,var(--warn) 45%,var(--wb-rule-soft))"><div class="meta">Asks you · 19:38</div>The runbook needs a rollback owner. Jordan or Avery?</div></div>
+      </div>
+      <div class="dock"><span class="field">Answer Claude Code<svg class="mic"><use href="#i-mic"/></svg></span><span class="btn primary">Answer</span></div>
+    </div>
+    <div class="sb"><span class="it"><span class="lamp warn"></span>Asks you</span><span class="grow"></span></div>
+  </div></div>
+</div>
+</section>
+
+</main>
+</body>
+</html>

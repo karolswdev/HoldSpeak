@@ -256,3 +256,111 @@
 }
 .desk-next .is-lane .lw-work-caption { font: 600 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
 .desk-next .is-lane .lw-work-line { color: var(--wb-ink); }
+
+/* ── W3 AGENT WINDOW (canvas agent-window-2026-10-27, direction A) ──────
+   The body is the step log: the ask first on a soft plate, the result on a
+   soft green plate, then the steps (30 px rows, a coloured glyph per kind)
+   beside what it made (object rows). No ink frames, no mono caps words. */
+.desk-next .is-lane .desk-pullout-body section.ask-well[data-plate="true"] {
+  padding: 10px 12px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--lamp-warn) 8%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-warn) 30%, var(--wb-rule-soft));
+}
+.desk-next .is-lane .lw-quiet { font: 12px/1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .is-lane .desk-pullout-body section.lw-result {
+  gap: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--lamp-ok) 8%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-ok) 35%, var(--wb-rule-soft));
+}
+.desk-next .is-lane .lw-result-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12.5px / 1.3 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--wb-ink);
+}
+.desk-next .is-lane .lw-result-cap::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lamp-ok);
+}
+.desk-next .is-lane .lw-result-said { font-size: 14px; line-height: 1.5; }
+.desk-next .is-lane .lw-result-facts { font: 12px / 1.4 var(--font-sans); color: var(--wb-muted); }
+
+.desk-next .is-lane .lw-toolbar-end { display: inline-flex; align-items: center; gap: 6px; }
+
+/* the two columns: the steps, then what it made (a column at 1440) */
+.desk-next .is-lane .lw-cols { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: 0; border-top: 1px solid var(--wb-rule-soft); }
+.desk-next .is-lane .lw-objects-col { border-left: 1px solid var(--wb-rule-soft); align-self: stretch; }
+.desk-next .is-lane .lw-cols > .lw-col { gap: 0; }
+
+.desk-next .is-lane .lw-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.desk-next .is-lane .lw-step {
+  display: grid;
+  grid-template-columns: 44px 18px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  min-height: 30px;
+  padding: 0 8px 0 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
+  font: 13px / 18px var(--font-sans);
+  color: var(--wb-ink);
+}
+.desk-next .is-lane .lw-step[data-tall="true"] { align-items: start; padding-top: 6px; padding-bottom: 6px; }
+.desk-next .is-lane .lw-step[aria-current="step"] {
+  background: color-mix(in srgb, var(--lamp-info) 9%, var(--wb-paper));
+  box-shadow: inset 3px 0 0 var(--lamp-info);
+}
+.desk-next .is-lane .lw-step[aria-current="step"] .lw-step-time { color: var(--wb-sel, var(--wb-ink)); font-weight: 600; }
+.desk-next .is-lane .lw-step[data-pending="true"] { color: var(--wb-muted); }
+.desk-next .is-lane .lw-step-time { text-align: right; font: 12px / 18px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--wb-muted); }
+.desk-next .is-lane .lw-step-glyph {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  background: var(--wb-steel);
+  color: var(--wb-muted);
+}
+.desk-next .is-lane .lw-step-glyph[data-family="read"] { background: #e6eef9; color: #2f67c8; }
+.desk-next .is-lane .lw-step-glyph[data-family="write"] { background: #f6ece4; color: #a86e4a; }
+.desk-next .is-lane .lw-step-glyph[data-family="run"] { background: #e3f5ec; color: #167a55; }
+.desk-next .is-lane .lw-step-glyph[data-family="says"] { background: #efeafa; color: #6b4fb8; }
+.desk-next .is-lane .lw-step-glyph[data-family="commit"] { background: #e2f1ee; color: #1f7a6b; }
+.desk-next .is-lane .lw-step-glyph[data-family="answer"] { background: #fdf1dc; color: #94600a; }
+.desk-next .is-lane .lw-step-glyph[data-family="held"] { background: #fdf1dc; color: #94600a; }
+.desk-next .is-lane .lw-step-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.desk-next .is-lane .lw-step-line { min-width: 0; overflow-wrap: anywhere; }
+.desk-next .is-lane .lw-step-code { font: 12px / 18px var(--font-mono); color: var(--wb-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.desk-next .is-lane .lw-step-muted { color: var(--wb-muted); }
+.desk-next .is-lane .lw-step-says { font: italic 13px / 18px var(--font-sans); color: var(--wb-ink); }
+.desk-next .is-lane .lw-step-quote { quotes: "\201C" "\201D"; font: italic 13px / 18px var(--font-sans); color: var(--wb-ink); }
+.desk-next .is-lane .lw-step-verbs { display: inline-flex; gap: 6px; }
+
+/* what it made: object rows */
+.desk-next .is-lane .desk-pullout-body section.lw-objects { display: flex; flex-direction: column; padding: 4px 0; gap: 0; border: 0; background: none; box-shadow: none; }
+.desk-next .is-lane .lw-objects-cap,
+.desk-next .is-lane .lw-files-cap { font: 600 12px / 1.3 var(--font-sans); color: var(--wb-muted); padding: 6px 12px 4px; }
+.desk-next .is-lane .lw-files-cap { padding: 0; font-weight: 400; color: var(--wb-ink); font-size: 13px; }
+.desk-next .is-lane .lw-obj { display: flex; align-items: center; gap: 9px; min-height: 32px; padding: 4px 12px; font: 13px / 1.35 var(--font-sans); min-width: 0; flex-wrap: wrap; }
+.desk-next .is-lane .lw-obj-sprite { width: 20px; height: 20px; flex: none; image-rendering: auto; }
+.desk-next .is-lane .lw-obj-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 9em; }
+.desk-next .is-lane .lw-obj-title { overflow-wrap: anywhere; }
+.desk-next .is-lane .lw-obj-sub { font-size: 12px; color: var(--wb-muted); }
+.desk-next .is-lane .lw-obj-code { font: 12px / 1.4 var(--font-mono); overflow-wrap: anywhere; }
+.desk-next .is-lane .lw-obj-facts { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; padding-left: 29px; flex-basis: 100%; }
+.desk-next .is-lane .lw-files { display: flex; flex-direction: column; gap: 2px; padding: 6px 12px 6px 41px; }
+.desk-next .is-lane .lw-file { font: 12px / 1.5 var(--font-mono); color: var(--wb-ink); overflow-wrap: anywhere; }
+
+@container surface (max-width: 520px) {
+  .desk-next .is-lane .lw-cols { grid-template-columns: 1fr; }
+}
