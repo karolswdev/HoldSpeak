@@ -18,10 +18,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
-import { GONE, markLaunchSeen, reviewResult, useAgentFlights, type AgentFlight } from "../agentFlights";
+import { GONE, markLaunchSeen, reviewResult, useAgentFlights, type AgentFlight, type CoderSessionRow } from "../agentFlights";
 import { handRefOf, openHand } from "../agentHand";
 import type { AgentId } from "../firstrun/agentsStep";
 import { useConductor } from "../conductor/store";
+import { launchLive, liveWord, type LiveState } from "../conductor/members";
 import { WhyThisState } from "../agents/WhyThisState";
 import { ResultBlock, filesWords } from "./ResultBlock";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
@@ -37,7 +38,6 @@ import {
   ActionNotice,
   FoldGadget,
   PaneWell,
-  StationTrack,
   StringGadget,
   TransportKey,
 } from "../surface";
@@ -140,7 +140,10 @@ function LaneFrame({ launchId }: { launchId: string }) {
     if (!live && useConductor.getState().flightsState !== "ok") void useConductor.getState().readFlights();
   }, [live, launchId]);
   const gone = flight && GONE.has(flight.state) ? flight : null;
-  const flightTurn = live?.state === "waiting" && (live.turnEnd === "idle" || live.turnEnd === "done") ? live.turnEnd : null;
+  // W4 AGENT 2: the window's state word is the Agents row's word, from the
+  // same source (the hub's flight with its session row: members.launchLive).
+  const sessionRow = useAgentFlights((s) => (live?.sessionKey ? s.sessions.find((row) => row.key === live.sessionKey) ?? null : null));
+  const shared = gone ? null : sharedState(flight, sessionRow);
   const front = useFrontWindowId() === LANE_WINDOW_ID;
   const compact = useCompactViewport();
   const reload = useCallback(() => {
@@ -205,23 +208,22 @@ function LaneFrame({ launchId }: { launchId: string }) {
       open
       onClose={() => useLane.getState().close()}
     >
-      {lane ? <LaneToolbar lane={lane} done={flight?.state === "done"} agent={agent} gone={gone} flightTurn={flightTurn} /> : null}
+      {lane ? <LaneToolbar lane={lane} agent={agent} gone={gone} shared={shared} /> : null}
       <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""}
-        done={flight?.state === "done"} gone={Boolean(gone)} flightTurn={flightTurn} screenSaid={flight?.screen?.said ?? null} />
-      {lane ? <LaneFooter lane={lane} agent={agent} done={flight?.state === "done"} gone={gone} flightTurn={flightTurn} /> : null}
+        gone={Boolean(gone)} shared={shared} screenSaid={flight?.screen?.said ?? null} />
+      {lane ? <LaneFooter lane={lane} agent={agent} gone={gone} shared={shared} /> : null}
     </DeskWindowFrame>
   );
 }
 
 function LaneBody({
-  lane, error, raw, agent, compact, itemTitle, done = false, screenSaid = null, gone = false, flightTurn = null,
+  lane, error, raw, agent, compact, itemTitle, screenSaid = null, gone = false, shared = null,
 }: {
-  flightTurn?: "done" | "idle" | null;
+  /** The launch's one state (the Agents row's word); null before a read. */
+  shared?: LaneShared | null;
   /** The session is gone (the Agents list's truth): nothing is lit. */
   gone?: boolean;
   screenSaid?: string | null;
-  /** Betterment AG10: the turn is done; its Result leads the Story. */
-  done?: boolean;
   lane: LaneWire | null;
   error: string | null;
   raw: boolean;
@@ -255,7 +257,9 @@ function LaneBody({
   const worktree = lane.worktree;
   const branch = branchFace(lane.launch.branch ?? (isNotRead(worktree) ? null : worktree.branch)) || undefined;
   const base = isNotRead(worktree) ? "" : baseWord(worktree.base);
-  const doing = gone ? { word: "", tone: "idle" as const } : laneDoing(lane, agent, done, flightTurn);
+  const doing = gone ? { word: "", tone: "idle" as const, key: "gone" as const } : laneDoing(lane, agent, shared);
+  // Betterment AG10: the turn is done; its Result leads the Story.
+  const done = doing.key === "done";
   // W3 AGENT WINDOW (canvas direction A): the objects the agent made, as
   // object rows: the PR, its branch, the files it changed.
   const objects = (
@@ -268,7 +272,7 @@ function LaneBody({
   const steps = stepEntries(lane, entries, briefOpen, () => setBriefOpen((v) => !v));
   // The newest reported step is lit while the agent works; the wait is lit
   // while it asks; nothing is lit when it is done, idle or stopped.
-  const lit = doing.tone === "info" && doing.word.endsWith("is working")
+  const lit = doing.key === "work"
     ? [...steps].reverse().find((s) => s.at != null && s.kind !== "brief")?.id ?? null
     : steps.find((s) => s.kind === "asks")?.id ?? null;
   const rail = onlyBrief ? (
@@ -303,7 +307,7 @@ function LaneBody({
       {lane.launch.stopped ? null : rebrief ? <RebriefWell /> : (
         <>
           {!raw ? <HeldPlate lane={lane} agent={agent} /> : null}
-          <WaitWell lane={lane} agent={agent} flightTurn={flightTurn} />
+          <WaitWell lane={lane} agent={agent} shared={shared?.key ?? null} />
         </>
       )}
       {!raw && (done || Boolean(reviewResult(lane.launch.review))) ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
@@ -340,7 +344,17 @@ function LaneBody({
         </div>
       )}
       <FoldGadget title="Details" className="lw-details">
-        <StationTrack data-testid="lane-track" label="Recorded stages" stations={stations.filter((s) => s.state !== "ahead")} />
+        {/* W4 AGENT 2 (slice 2): the recorded stages as dots and words. */}
+        <ol className="lw-track" data-testid="lane-track" aria-label="Recorded stages">
+          {stations.filter((s) => s.state !== "ahead").map((station) => (
+            <li key={station.word} className="lw-track-step" data-state={station.state} aria-current={station.state === "current" ? "step" : undefined}>
+              <DotWord tone={station.state === "current" || station.tone !== "ok" ? station.tone ?? "idle" : "ok"}>
+                {sentenceCaps(station.word)}
+              </DotWord>
+              {station.sub && station.sub !== "—" ? <span className="lw-track-sub">{` · ${sentenceCaps(String(station.sub))}`}</span> : null}
+            </li>
+          ))}
+        </ol>
       </FoldGadget>
     </div>
   );
@@ -511,14 +525,16 @@ function NotReadLine({ part, reason, testId }: { part: string; reason: string; t
 
 /* ── the wait ─────────────────────────────────────────────────────── */
 
-function WaitWell({ lane, agent, flightTurn = null }: { lane: LaneWire; agent: string; flightTurn?: "done" | "idle" | null }) {
+function WaitWell({ lane, agent, shared = null }: { lane: LaneWire; agent: string; shared?: LaneShared["key"] | null }) {
   const wait = lane.wait;
   if (isNotRead(wait)) return <NotReadLine part="ASKS" reason={wait.not_read} />;
   if (!wait || !wait.question) return null;
+  // W4 AGENT 2: a done turn is not a wait: its Result (below) says it.
+  if (shared === "done" && turnWord(wait).word !== "ASKS") return null;
   if (wait.kind === "TO ANSWER") return <AnswerWell lane={lane} wait={wait} agent={agent} />;
   // TO APPROVE: the held plate above says it (HeldPlate).
   if (wait.kind === "TO APPROVE") return null;
-  const turn = turnEndWord(wait) ? (flightTurn ? (flightTurn === "done" ? "DONE" : "IDLE") : turnEndWord(wait)) : null;
+  const turn = turnEndWord(wait) ? (shared === "idle" ? "IDLE" : turnEndWord(wait)) : null;
   if (turn) {
     // PHILO-15 15: the agent's last words, as a fact; not a wait for you.
     return (
@@ -529,11 +545,16 @@ function WaitWell({ lane, agent, flightTurn = null }: { lane: LaneWire; agent: s
     );
   }
   if (wait.kind === "DECIDING") {
+    // W4 AGENT 2 (slice 2): the same soft plate as the waiting card.
+    const age = waitAge(wait.started);
     return (
-      <div className="lw-deciding" data-testid="lane-deciding">
-        <span className="lw-word">HoldSpeak decides</span>
-        <AgentWords className="lw-ev-text" text={wait.question} />
-      </div>
+      <section className="lw-soft-plate" data-tone="info" data-testid="lane-deciding" aria-label="HoldSpeak decides">
+        <header className="ask-well-head">
+          <span className="ask-well-state" data-tone="info"><span className="ask-well-dot" aria-hidden="true" />HoldSpeak decides</span>
+          {age ? <span className="ask-well-age">{`Asked ${age} ago`}</span> : null}
+        </header>
+        <AgentWords className="lw-ask-q" text={wait.question} />
+      </section>
     );
   }
   return null;
@@ -619,7 +640,7 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
   const last = [...answers].reverse().find((a) => (a.outcome === "delivered" || a.outcome === "auto_answered") && a.text_head);
   const lastAt = last ? wireDate(last.ts)?.getTime() : undefined;
   // PHILO-15 15 (B47): an answer the desk typed is its own receipt.
-  const word = last?.outcome === "auto_answered" ? "THE DESK ANSWERED" : "SENT";
+  const word = last?.outcome === "auto_answered" ? "The desk answered" : "Sent";
   const shown = receipt ?? (last ? { word, at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
   const queuedList = Array.isArray(lane.launch.queued_rebriefs)
     ? lane.launch.queued_rebriefs.filter((q) => q?.text)
@@ -627,17 +648,18 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
   const queued = !stopped && queuedList.length ? queuedList : null;
   // Phase 16: what was typed into the agent (the brief, an answer) is drawn
   // by AgentWords, cut at a whole word; the other receipts are tokens.
-  const sentWords = Boolean(shown && (shown.word === "SENT" || shown.word === "THE DESK ANSWERED") && shown.text);
+  const sentWords = Boolean(shown && /^(SENT|Sent|The desk answered)$/.test(shown.word) && shown.text);
   return (
     <>
-      {stopped ? <ReceiptTokens testId="lane-stopped" tokens={["STOPPED", wireClock(stopped.at), "BY YOU"]} /> : null}
+      {stopped ? <ReceiptTokens testId="lane-stopped" word="Stopped by you" at={wireDate(stopped.at)?.getTime()} /> : null}
       {queued
         ? queued.map((q, i) => (
             <div className="lw-queued" key={String(q.id ?? i)}>
               <ReceiptTokens
                 testId="lane-queued"
                 tone="warn"
-                tokens={["QUEUED", i === 0 ? "AFTER THIS TURN" : `AFTER ${i + 1} TURNS`, String(q.text)]}
+                word={i === 0 ? "Queued after this turn" : `Queued after ${i + 1} turns`}
+                text={String(q.text)}
               />
               {q.id ? (
                 <Button
@@ -657,7 +679,9 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
         <ReceiptTokens
           testId="lane-receipt"
           tone={shown.tone}
-          tokens={[shown.word, shown.at ? wireClock(shown.at) : "", sentWords ? "" : shown.text]}
+          word={shown.word}
+          at={shown.at}
+          text={sentWords ? "" : shown.text}
           words={sentWords ? (receipt ? shown.text : sentHead(shown.text)) : undefined}
         />
       ) : null}
@@ -678,20 +702,31 @@ export function sentHead(text: string): string {
   return space > 0 ? `${flat.slice(0, space).replace(/[\s·]+$/, "")} …` : cutAtWord(flat, flat.length);
 }
 
-/** One receipt: tokens joined by ` · ` (the word, the time), then what was
- *  sent: one or two lines by AgentWords (compact). */
-function ReceiptTokens({ tokens, tone, testId, words }: { tokens: string[]; tone?: string; testId: string; words?: string }) {
-  const shown = tokens.filter(Boolean);
+/** One receipt (W4 AGENT 2, slice 2): a dot and a sentence-case word, the
+ *  age quiet (`6 min ago`), then what was sent: one or two lines by
+ *  AgentWords (compact), or the receipt's own fact. */
+function ReceiptTokens({ word, at, text, tone, testId, words }: {
+  word: string; at?: number; text?: string; tone?: string; testId: string; words?: string;
+}) {
+  const dot = tone === "ok" || tone === "warn" || tone === "fail" ? tone : "idle";
+  const when = at ? spokeWord(new Date(at)) : "";
+  const head = (
+    <>
+      <DotWord tone={dot} className="lw-receipt-word">{sentenceCaps(word)}</DotWord>
+      {when ? <span className="lw-receipt-age">{` · ${when}`}</span> : null}
+      {text ? <span className="lw-receipt-fact">{` · ${sentenceCaps(text)}`}</span> : null}
+    </>
+  );
   if (!words?.trim()) {
     return (
       <p className="lw-receipt" data-tone={tone} data-testid={testId}>
-        {shown.join(" · ")}
+        {head}
       </p>
     );
   }
   return (
     <div className="lw-receipt lw-receipt-words" data-tone={tone} data-testid={testId}>
-      <span className="lw-receipt-head">{`${shown.join(" · ")} · `}</span>
+      <span className="lw-receipt-head">{head}{" · "}</span>
       <AgentWords compact lines={2} ask={false} className="lw-receipt-text" text={words} />
     </div>
   );
@@ -728,32 +763,54 @@ function startAgain(flight: AgentFlight): void {
   openHand({ kind: ref.kind, id: ref.id, title: flight.title, projectId: flight.projectId || null, agent: flight.agent as AgentId });
 }
 
-/** PHILO-17 THE REFIT: what the coder does now, as the lane's one headline. */
+/** W4 AGENT 2: the launch's one state, as the Agents row says it. */
+export interface LaneShared {
+  key: LiveState | "merged";
+  word: string;
+  tone: "ok" | "warn" | "info" | "idle";
+  /** A done turn's end (the hub's `done_at`). */
+  doneAt?: string | null;
+}
+
+/** The launch's state from the hub's flight and its session row (the
+ *  Agents row's own derivation, `members.launchLive`); null with no flight
+ *  read yet. The open window has seen a done turn: it says Done. */
+export function sharedState(flight: AgentFlight | null | undefined, row: CoderSessionRow | null = null): LaneShared | null {
+  if (!flight) return null;
+  if (flight.state === "merged") {
+    return { key: "merged", word: flight.pr?.number != null ? `PR #${flight.pr.number} merged` : "Merged", tone: "ok" };
+  }
+  const key = launchLive(flight, row);
+  const said = liveWord(key, {
+    pr: flight.pr?.number ?? null,
+    phase: flight.state === "starting" ? "starting" : flight.state === "resuming" ? "resuming" : null,
+  });
+  return { key, word: said.word, tone: said.tone === "danger" ? "warn" : said.tone, doneAt: key === "done" ? flight.doneAt ?? null : null };
+}
+
+/** PHILO-17 THE REFIT: what the coder does now, as the lane's one headline:
+ *  the Agents row's word (W4 AGENT 2). A call the gate holds now is the
+ *  lane's own fact (the plate above): it says so first. */
 export function laneDoing(
-  lane: LaneWire, agent: string, done = false,
-  /** The flight's own turn end (the Agents list reads it): it leads the
-   *  lane's wait when the two differ, so both faces say the same word. */
-  flightTurn: "done" | "idle" | null = null,
-): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
-  const name = agent || "The agent";
-  if (lane.launch.stopped) return { word: "Stopped by you", tone: "idle" };
-  // AG12: a durable pair finding is the lane's owner-facing state. Keep the
-  // lane headline aligned with the ordinary row while the builder waits for
-  // the owner's correction; the persisted pair Result remains below it.
-  if (lane.launch.review?.status === "needs_you") return { word: `${name} needs you`, tone: "warn" };
-  // Betterment AG10: the flight knows the turn is done (also from a screen,
-  // with no hook to say it); the head never says "working" then.
-  if (done) return { word: `${name} is done`, tone: "ok" };
+  lane: LaneWire, agent: string,
+  shared: LaneShared | null = null,
+): { word: string; tone: "ok" | "warn" | "info" | "idle"; key: LaneShared["key"] | "stopped" | "gone" } {
+  void agent;
+  if (lane.launch.stopped) return { word: "Stopped by you", tone: "idle", key: "stopped" };
+  // AG12: a durable pair finding is the owner-facing state on every face.
+  if (lane.launch.review?.status === "needs_you" || shared?.key === "needs_you") return { word: "Needs you", tone: "warn", key: "needs_you" };
+  if (heldNow(lane)) return { word: "Wants to run", tone: "warn", key: "held" };
+  if (shared) return shared;
+  // No flight read yet: the lane's own read, in the same words.
   const wait = isNotRead(lane.wait) ? null : lane.wait;
-  if (heldNow(lane) || wait?.kind === "TO APPROVE") return { word: `${name} wants to run`, tone: "warn" };
-  if (wait?.question && wait.kind === "TO ANSWER") return { word: `${name} asks you`, tone: "warn" };
-  if (wait?.question && wait.kind === "DECIDING") return { word: "HoldSpeak drafts the answer", tone: "info" };
-  const turn = flightTurn ? (flightTurn === "done" ? "DONE" : "IDLE") : wait ? turnEndWord(wait) : null;
-  if (turn === "DONE") return { word: `${name} is done`, tone: "ok" };
-  if (turn === "IDLE") return { word: `${name} is idle`, tone: "idle" };
+  if (wait?.kind === "TO APPROVE") return { word: "Wants to run", tone: "warn", key: "held" };
+  const turn = wait ? (turnEndWord(wait) ?? (wait.question && wait.kind === "TO ANSWER" && turnWord(wait).word !== "ASKS" ? turnWord(wait).word : null)) : null;
+  if (turn === "DONE") return { word: "Done", tone: "ok", key: "done" };
+  if (turn === "IDLE") return { word: "Idle", tone: "idle", key: "idle" };
+  if (wait?.question && (wait.kind === "TO ANSWER" || wait.kind === "DECIDING")) return { word: "Asks you", tone: "warn", key: "ask" };
   const pr = lane.follow_through?.pr;
-  if (pr?.number != null && pr.state === "merged") return { word: `PR #${pr.number} merged`, tone: "ok" };
-  return { word: `${name} is working`, tone: "info" };
+  if (pr?.number != null && pr.state === "merged") return { word: `PR #${pr.number} merged`, tone: "ok", key: "merged" };
+  return { word: "Working", tone: "info", key: "work" };
 }
 
 /** When the agent last reported a step: its newest event. (The hub's
@@ -782,22 +839,29 @@ function HeldPlate({ lane, agent }: { lane: LaneWire; agent: string }) {
   const wait = isNotRead(lane.wait) ? null : lane.wait;
   const asks = wait?.kind === "TO APPROVE" && wait.question ? wait : null;
   if (!held && !asks) return null;
-  const age = waitAge(asks?.started ?? held?.created_at).toUpperCase();
+  const age = waitAge(asks?.started ?? held?.created_at);
+  const reason = held?.hold_reason ? reasonWords(held.hold_reason) : null;
+  // W4 AGENT 2 (slice 2): the soft plate of the waiting card: the head a dot
+  // and a word with the age quiet, the reason in sentence case, the call as
+  // code (the one mono part), Deny / Approve.
   return (
-    <section className="lw-plate" aria-label={`${agent} wants to run`} data-testid="lane-approve-well">
-      <header className="lw-plate-bar">
-        <span className="lw-plate-label">Wants to run</span>
-        {age ? <span className="lw-plate-age">{age}</span> : null}
+    <section className="lw-plate lw-soft-plate" data-tone="warn" aria-label={`${agent} wants to run`} data-testid="lane-approve-well">
+      <header className="ask-well-head">
+        <span className="ask-well-state" data-tone="warn"><span className="ask-well-dot" aria-hidden="true" />Wants to run</span>
+        {age ? <span className="ask-well-age">{`${age} ago`}</span> : null}
       </header>
-      <div className="lw-plate-body">
-        {asks ? <AgentWords className="lw-ask-q" text={String(asks.question)} /> : null}
-        {held ? (
-          <code className="lw-plate-call" data-testid="lane-held-call">
-            {held.hold_reason ? <span className="lw-plate-why">{held.hold_reason}</span> : null}
-            {gatedHead(held)}
-          </code>
-        ) : null}
-      </div>
+      {asks ? <AgentWords className="lw-ask-q" text={String(asks.question)} /> : null}
+      {held ? (
+        <div className="lw-plate-callbox" data-testid="lane-held-call">
+          {reason ? (
+            <span className="lw-plate-why">
+              {reason.word}
+              {reason.target ? <code className="lw-plate-target">{reason.target}</code> : null}
+            </span>
+          ) : null}
+          <code className="lw-plate-call">{gatedHead(held)}</code>
+        </div>
+      ) : null}
       <div className="lw-plate-verbs">
         {held ? (
           <DecideVerbs call={held} />
@@ -809,6 +873,22 @@ function HeldPlate({ lane, agent }: { lane: LaneWire; agent: string }) {
       </div>
     </section>
   );
+}
+
+/** The gate's hold reason (`OUTSIDE THE WORKTREE · /tmp/x`) in his words:
+ *  the reason in sentence case, the path or command word as code. */
+export function reasonWords(reason: string): { word: string; target: string } {
+  const [head, ...rest] = String(reason).split(" · ");
+  return { word: sentenceCaps(head), target: rest.join(" · ") };
+}
+
+/** `HUB UNREACHABLE` → `Hub unreachable`; a token with any lower case letter
+ *  (an agent's words, a path) stays as it is; `PR` keeps its caps. */
+export function sentenceCaps(token: string): string {
+  const text = String(token ?? "");
+  if (!/[A-Z]/.test(text) || /[a-z]/.test(text)) return text;
+  const lower = text.toLowerCase().replace(/\bpr\b/g, "PR");
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
 /** Tell it (was Re-brief; Betterment AG1): the owner's new instruction to
@@ -1002,14 +1082,15 @@ function RawPane() {
  *  asking: Tell it, Open PR; the answer to a waiting ask is its card's
  *  primary. Done: Open PR is the primary, Tell it continues the work. Stop
  *  (two presses) and the mode's ARM stay at the right end. */
-function LaneToolbar({ lane, done = false, agent, gone = null, flightTurn = null }: { lane: LaneWire; done?: boolean; agent: string; gone?: AgentFlight | null; flightTurn?: "done" | "idle" | null }) {
+function LaneToolbar({ lane, agent, gone = null, shared = null }: { lane: LaneWire; agent: string; gone?: AgentFlight | null; shared?: LaneShared | null }) {
   const pr = lane.follow_through?.pr;
   const prUrl = pr?.number != null && pr.url ? pr.url : null;
   const sessionKey = lane.launch.stopped || (lane.control && !isNotRead(lane.control) && lane.control.pane === false) ? null : lane.launch.session_key;
   const rebrief = useLane((s) => s.rebrief);
   const canStop = Boolean(lane.launch.session_key && !lane.launch.stopped && (!lane.control || isNotRead(lane.control) || lane.control.pane !== false));
   const armHere = rebrief || !lane.wait || isNotRead(lane.wait) || lane.wait.kind !== "TO ANSWER" || !lane.wait.question;
-  const finished = laneDoing(lane, agent, done, flightTurn).tone === "ok";
+  const state = laneDoing(lane, agent, shared).key;
+  const finished = state === "done" || state === "merged";
   // The one filled primary: Open PR when the work is done and nothing else
   // asks for a press (a held call's Approve, an answer).
   const prPrimary = finished && !approveShowing(lane);
@@ -1079,17 +1160,20 @@ function LaneToolbar({ lane, done = false, agent, gone = null, flightTurn = null
 /** The status bar: the agent's state as a dot and a word, when it last
  *  reported a step, how many it reported, and the lane's receipts (the stop,
  *  the last send or refusal). */
-function LaneFooter({ lane, agent, done = false, gone = null, flightTurn = null }: { lane: LaneWire; agent: string; done?: boolean; gone?: AgentFlight | null; flightTurn?: "done" | "idle" | null }) {
+function LaneFooter({ lane, agent, gone = null, shared = null }: { lane: LaneWire; agent: string; gone?: AgentFlight | null; shared?: LaneShared | null }) {
   const events = useLane((s) => s.events);
   const spoke = lastStep(events);
-  const doing = gone ? { word: goneWord(gone), tone: "idle" as const } : laneDoing(lane, agent, done, flightTurn);
+  const doing = gone ? { word: goneWord(gone), tone: "idle" as const } : laneDoing(lane, agent, shared);
   const steps = events.filter(isToolCall).length;
+  const finished = !gone && shared?.key === "done" ? wireDate(shared.doneAt ?? null) : null;
   return (
     <StatusBar
       className="lw-footer"
       data-testid="lane-status"
       items={[
         { key: "state", text: doing.word, lamp: doing.tone === "idle" ? undefined : doing.tone, testId: "lane-head" },
+        // W4 AGENT 2 (slice 3): the done fact: when the turn ended.
+        finished ? { key: "finished", text: `Finished ${spokeWord(finished)}`, testId: "lane-finished" } : null,
         spoke ? { key: "spoke", text: `Last step ${spokeWord(spoke)}`, testId: "lane-last-step" } : null,
         steps ? { key: "steps", text: `${steps} ${steps === 1 ? "step" : "steps"}`, testId: "lane-step-count" } : null,
       ]}

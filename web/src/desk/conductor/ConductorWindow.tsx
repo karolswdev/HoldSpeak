@@ -42,11 +42,12 @@ import {
   fleetRank,
   fleetWords,
   headWords,
+  liveWord,
   ownAgentMember,
   reviewWords,
   type ConductorMember,
 } from "./members";
-import { allowHelper, answerMember, answers, cancelQueuedHand, openMember, resumeAll, stopMember, stops } from "./open";
+import { allowHelper, answerMember, answers, cancelQueuedHand, openMember, removeLaunch, resumeAll, stopMember, stops } from "./open";
 import { StartAgent } from "./StartAgent";
 import { handRefOf, openHand } from "../agentHand";
 import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
@@ -281,30 +282,14 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
     return { word: "Ready", tone: "ok" };
   }
   if (member.role === "stale") return { word: plainReceipt(member.receipt ?? "Ended"), tone: member.state?.tone === "ok" ? "ok" : "idle" };
-  switch (member.live) {
-    case "ask":
-      return { word: "Asks you", tone: "warn", live: true };
-    case "held":
-      return { word: "Wants to run", tone: "warn", live: true };
-    case "needs_you":
-      return { word: "Needs you", tone: "warn", live: true };
-    case "idle":
-      return { word: "Idle", tone: "idle" };
-    case "pr":
-      return { word: member.lamp?.label.startsWith("PR #") ? `${member.lamp.label} open` : "PR open", tone: "ok" };
-    case "queued":
-      // Betterment AG5: at the working-at-once limit the hand waits.
-      return { word: "Waits for a free agent", tone: "idle" };
-    case "no_signal":
-      // Betterment AG7: no hook and no screen rule for ten minutes.
-      return { word: "No signal", tone: "idle" };
-    case "done":
-      // Betterment AG0: Done · New until he opens it, then Quiet.
-      return member.isNew ? { word: "Done · New", tone: "ok" } : { word: "Quiet", tone: "idle" };
-    default:
-      if (member.lamp?.label === "RESUMES") return { word: "Resuming", tone: "info", live: true };
-      return { word: member.lamp?.label === "STARTS" ? "Starting" : "Working", tone: "info", live: true };
-  }
+  // W4 AGENT 2: the same word the agent's window says (members.liveWord).
+  const label = member.lamp?.label ?? "";
+  const pr = /^PR #(\d+)/.exec(label);
+  return liveWord(member.live ?? "work", {
+    isNew: member.isNew,
+    pr: pr ? Number(pr[1]) : null,
+    phase: label === "RESUMES" ? "resuming" : label === "STARTS" ? "starting" : null,
+  });
 }
 
 /** `PR #413 MERGED · ITEM CLOSED` → `PR #413 merged · item closed`. */
@@ -431,8 +416,16 @@ function ReadyVerb({ member, lead }: { member: ConductorMember; lead: boolean })
  * dot and a word, When) → StatusBar (`1 working · 2 on this Mac · 2 stopped
  * today`, never a zero) with the selected row's verbs at its right. A press
  * selects a row; Enter or a double press opens it. */
-const ROW_GROUP = { work: 0, mac: 1, restart: 2, ended: 3, own: 4 } as const;
+const ROW_GROUP = { work: 0, own: 1, restart: 2, ended: 3, mac: 4 } as const;
 type RowGroup = keyof typeof ROW_GROUP;
+/** W4 AGENT 2 (atlas: "runs and installed tools in one list"): the window's
+ *  three sections, each its own list under a quiet caption: the runs that
+ *  live, the runs that ended, the tools on this Mac with their state. */
+const SECTIONS = [
+  { id: "running", word: "Running", groups: ["work", "own"] },
+  { id: "ended", word: "Ended today", groups: ["restart", "ended"] },
+  { id: "installed", word: "Installed", groups: ["mac"] },
+] as const satisfies ReadonlyArray<{ id: string; word: string; groups: readonly RowGroup[] }>;
 
 const LIST_COLUMNS = [
   { key: "name", word: "Name", track: "minmax(132px, 0.7fr)" },
@@ -460,6 +453,8 @@ function RowVerb({
   onResume,
   cancelling,
   onCancel,
+  removing = null,
+  onRemove,
 }: {
   member: ConductorMember;
   group: RowGroup;
@@ -467,6 +462,8 @@ function RowVerb({
   onResume: () => void;
   cancelling: string | null;
   onCancel: () => void;
+  removing?: string | null;
+  onRemove?: () => void;
 }) {
   if (group === "mac") return <ReadyVerb member={member} lead={false} />;
   if (group === "restart") {
@@ -489,6 +486,13 @@ function RowVerb({
   }
   return (
     <>
+      {group === "ended" && member.launchId ? (
+        // W4 AGENT 2 (slice 3): the hub keeps the record; the list lets it go.
+        <Button dense variant="ghost" loading={removing === member.id} disabled={removing !== null}
+          onClick={onRemove} data-testid="conductor-remove">
+          Remove
+        </Button>
+      ) : null}
       {group === "ended" && HAND_AGAIN.has(String(member.flightState)) && member.origin ? (
         // Gaps: a new agent continues in the same worktree.
         <Button dense variant="secondary" onClick={() => handAgain(member)} data-testid="conductor-hand-again">
@@ -589,9 +593,9 @@ export function ConductorWindow() {
     void resumeAll(targets).finally(() => setResuming(null));
   };
   const fixable = ready.filter((m) => m.detect && m.detect.installed && needsHooks(m.detect));
-  // Betterment AG8: "On this Mac" shows only when something is missing: an
-  // agent whose hooks are not in, or no agent installed at all.
-  const missing = fixable.length ? fixable : ready.some((m) => m.detect?.installed) ? [] : ready;
+  // W4 AGENT 2: Installed lists every tool the hub looked for, each with its
+  // state (was AG8: only when something was missing, inside the runs).
+  const missing = ready;
   const question = (m: ConductorMember) => sessions.find((row) => row.key === m.sessionKey)?.question ?? "";
   const waitIdOf = (m: ConductorMember) => {
     const raw = sessions.find((row) => row.key === m.sessionKey)?.raw ?? {};
@@ -602,6 +606,7 @@ export function ConductorWindow() {
   // makes an agent) is the one primary, empty or full; an ask's verbs stay
   // plain. While Start an agent is open, its Start is the one primary.
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
   const cancelQueued = (m: ConductorMember) => {
     setCancelling(m.id);
     void cancelQueuedHand(m).finally(() => setCancelling(null));
@@ -726,12 +731,20 @@ export function ConductorWindow() {
     };
   });
   const hasRows = rows.length > 0;
-  const nothing = !loading && !asks.length && !hasRows && !ownAsks.length && !failed.length && !starting;
+  const sectionRows = SECTIONS.map((section) => ({
+    ...section,
+    rows: rows.filter((row) => (section.groups as readonly RowGroup[]).includes(groupOf.get(row.id) as RowGroup)),
+  })).filter((section) => section.rows.length);
+  // The empty face says what an agent is while nothing runs; the tools on
+  // this Mac stay listed under it.
+  const runs = rows.some((row) => groupOf.get(row.id) !== "mac");
+  const nothing = !loading && !asks.length && !runs && !ownAsks.length && !failed.length && !starting;
   const selectedGroup = selected ? groupOf.get(selected.id) ?? null : null;
 
   // The status bar: what is there, in warm words; never a zero.
   const queued = members.filter((m) => m.role === "live" && m.live === "queued").length;
   const fleet = fleetWords(counts);
+  const workingRows = listed.filter(({ m, group }) => group === "work" && memberPill(m).word === "Working").length;
   const items: Array<StatusBarItem | null> = [
     ...failed.map((f) => ({
       key: `fail-${f.part}`,
@@ -741,9 +754,10 @@ export function ConductorWindow() {
     })),
     counts.needYou ? { key: "ask", lamp: "ask" as const, text: `${counts.needYou} ${counts.needYou === 1 ? "needs" : "need"} you` } : null,
     { key: "new", lamp: "ok" as const, text: countWords(counts.fresh, "new", "new") },
-    { key: "working", lamp: "info" as const, text: countWords(counts.working, "working", "working") },
+    // W4 AGENT 2: "N working" counts the rows that say Working, no other.
+    { key: "working", lamp: "info" as const, text: countWords(workingRows, "working", "working") },
     { key: "queued", text: countWords(queued, "waiting", "waiting") },
-    { key: "mac", lamp: fixable.length ? "warn" as const : undefined, text: missing.length ? `${missing.length} on this Mac` : null },
+    { key: "mac", lamp: "warn" as const, text: fixable.length ? `${fixable.length} not connected` : null },
     { key: "restart", lamp: "warn" as const, text: countWords(stopped.length, "stopped by restart", "stopped by restart") },
     { key: "ended", text: ended.length ? `${ended.length} stopped today` : null },
     { key: "own", text: ownMembers.length ? `${ownMembers.length} started by you` : null },
@@ -836,14 +850,15 @@ export function ConductorWindow() {
             </section>
           ) : null}
 
-          {hasRows ? (
-            <div className="cw-list" data-testid="conductor-list">
+          {sectionRows.map((section) => (
+            <div key={section.id} className="cw-list" role="group" data-testid="conductor-list" data-section={section.id} aria-label={section.word}>
+              <h3 className="cw-list-cap" data-testid="conductor-section">{section.word}</h3>
               <ObjectList
-                label="Agents"
+                label={section.word}
                 density="dense"
-                rows={rows}
+                rows={section.rows}
                 columns={LIST_COLUMNS.filter((column) => !["project", "when", "what"].includes(column.key)
-                  || rows.some((row) => column.key === "when" ? row.when : row.cells?.[column.key]))}
+                  || section.rows.some((row) => column.key === "when" ? row.when : row.cells?.[column.key]))}
                 sort={sort}
                 onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
                 selectedId={selectedId}
@@ -859,7 +874,7 @@ export function ConductorWindow() {
                 rowProps={(row) => ({ "data-testid": "conductor-row", "data-group": groupOf.get(row.id) })}
               />
             </div>
-          ) : null}
+          ))}
           {/* AG12: a selected agent's pair result reads under the list. */}
           {selected && selectedGroup && reviewResult(selected.review) ? (
             <div className="cw-pane cw-selection" data-testid="conductor-selection">
@@ -886,6 +901,11 @@ export function ConductorWindow() {
                 onResume={() => resume([selected], selected.id)}
                 cancelling={cancelling}
                 onCancel={() => cancelQueued(selected)}
+                removing={removing}
+                onRemove={() => {
+                  setRemoving(selected.id);
+                  void removeLaunch(selected).finally(() => setRemoving(null));
+                }}
               />
             ) : null}
             <MemberVerbs member={selected} onInfo={() => info(selected)} trim />

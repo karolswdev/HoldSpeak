@@ -131,3 +131,24 @@ export async function allowHelper(member: ConductorMember): Promise<boolean> {
     void useConductor.getState().readFlights();
   }
 }
+
+/** W4 AGENT 2 (slice 3): Remove an ended launch from the list. The hub keeps
+ *  its record (`removed_at`); a refusal lands on the member (the receipt in
+ *  the foot); the flights read again. */
+export async function removeLaunch(member: ConductorMember): Promise<boolean> {
+  const launchId = member.launchId;
+  if (!launchId) return false;
+  try {
+    await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/remove`, { method: "POST", json: {} });
+    return true;
+  } catch (error) {
+    const payload = ((error as { payload?: Record<string, unknown> })?.payload ?? {}) as Record<string, unknown>;
+    const reason = String(payload.reason ?? payload.code ?? "") || "hub_unreachable";
+    useConductor.getState().setStop(member.ref, {
+      word: "NOT REMOVED", at: Date.now(), text: reason === "in_flight" ? "it runs again" : reason.replace(/_/g, " "), tone: "fail",
+    });
+    return false;
+  } finally {
+    void useConductor.getState().readFlights();
+  }
+}

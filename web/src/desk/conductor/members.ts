@@ -174,6 +174,61 @@ function flightState(flight: AgentFlight): LiveState {
   return "work";
 }
 
+/** W4 AGENT 2 — THE state of a launch, the one every face says (the Agents
+ *  row, the agent's window, an object's Agent line). The hub's flight leads:
+ *  its turn end reads the launch's own facts (an open PR is work done, the
+ *  responder's record of the wait), which the session row alone cannot.
+ *  `Done`: the turn ended and its work is complete (a Stop after a prompt,
+ *  or a turn end with its PR open). `Idle`: the turn ended with no question
+ *  and no work behind it; it waits for the next instruction. */
+export function launchLive(flight: AgentFlight | null | undefined, row: CoderSessionRow | null = null): LiveState {
+  if (flight?.review?.status === "needs_you") return "needs_you";
+  if (flight?.helperRequest?.status === "awaiting_owner") return "held";
+  const turned = flight?.turnEnd === "done" || flight?.turnEnd === "idle" ? flight.turnEnd : null;
+  if (row) {
+    const own = sessionState(row);
+    // PHILO-15 15: a turn end the hub read as DONE / IDLE is not an ask; the
+    // session's own guess (no PR, no responder) never overrules the flight.
+    return turned && (own === "ask" || own === "idle" || own === "pr") ? turned : own;
+  }
+  if (!flight) return "work";
+  if (flight.state === "pr_open" && turned) return turned;
+  return flightState(flight);
+}
+
+/** The plain word of a live state (never a wire code) and its tone: the
+ *  Agents row and the agent's window say this same word. */
+export function liveWord(
+  state: LiveState,
+  opts: { isNew?: boolean; pr?: number | null; phase?: "starting" | "resuming" | null } = {},
+): { word: string; tone: "ok" | "warn" | "danger" | "info" | "idle"; live?: boolean } {
+  switch (state) {
+    case "ask":
+      return { word: "Asks you", tone: "warn", live: true };
+    case "held":
+      return { word: "Wants to run", tone: "warn", live: true };
+    case "needs_you":
+      return { word: "Needs you", tone: "warn", live: true };
+    case "idle":
+      return { word: "Idle", tone: "idle" };
+    case "pr":
+      return { word: opts.pr != null ? `PR #${opts.pr} open` : "PR open", tone: "ok" };
+    case "queued":
+      // Betterment AG5: at the working-at-once limit the hand waits.
+      return { word: "Waits for a free agent", tone: "idle" };
+    case "no_signal":
+      // Betterment AG7: no hook and no screen rule for ten minutes.
+      return { word: "No signal", tone: "idle" };
+    case "done":
+      // Betterment AG0: New until he opens it; then Done (W4 AGENT 2: one
+      // word on every face, was "Quiet").
+      return opts.isNew ? { word: "Done · New", tone: "ok" } : { word: "Done", tone: "ok" };
+    default:
+      if (opts.phase === "resuming") return { word: "Resuming", tone: "info", live: true };
+      return { word: opts.phase === "starting" ? "Starting" : "Working", tone: "info", live: true };
+  }
+}
+
 function ownLiveState(agent: OwnAgent): LiveState {
   switch (agent.screen?.state) {
     case "approve": return "held";
@@ -309,13 +364,8 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     liveKeys.add(row.key);
     const flight = row.flight;
     const launchId = flight?.launchId ?? null;
-    // PHILO-15 15: a turn end the responder read as DONE / IDLE is not an ask.
-    const turned = turnOf(flight);
-    const state: LiveState = flight?.review?.status === "needs_you"
-      ? "needs_you"
-      : flight?.helperRequest?.status === "awaiting_owner"
-      ? "held"
-      : turned && sessionState(row) === "ask" ? turned : sessionState(row);
+    // W4 AGENT 2: the launch's one state (the agent's window reads it too).
+    const state: LiveState = flight ? launchLive(flight, row) : sessionState(row);
     const lamp = liveLamp(state, flight?.pr?.number);
     const raw = (row.raw?.session ?? row.raw ?? {}) as Record<string, unknown>;
     // Betterment AG8: an ask is as old as its wait, not its last hook.
@@ -363,9 +413,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     const ref = flight.launchId ? `launch:${flight.launchId}` : flight.queueId ? `queue:${flight.queueId}` : null;
     if (!inFlight(flight) || !ref) continue;
     if (flight.sessionKey && liveKeys.has(flight.sessionKey)) continue;
-    const state: LiveState = flight.review?.status === "needs_you"
-      ? "needs_you"
-      : flight.helperRequest?.status === "awaiting_owner" ? "held" : flightState(flight);
+    const state: LiveState = launchLive(flight);
     const lamp = flight.state === "starting"
       ? { tone: "info" as const, label: "STARTS" }
       : flight.state === "resuming"

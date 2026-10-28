@@ -245,7 +245,7 @@ describe("AG12 review pair state", () => {
       wait: null,
     });
     await openLane(lane);
-    expect(screen.getByTestId("lane-head")).toHaveTextContent("Claude Code needs you");
+    expect(screen.getByTestId("lane-head").textContent).toBe("Needs you");
     expect(screen.getByTestId("lane-result")).toHaveTextContent("1 round");
     expect(screen.getByTestId("lane-result")).toHaveTextContent("MUST: src/login.py: fix the timeout");
   });
@@ -370,8 +370,23 @@ describe("the agent's window", () => {
     useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude",
       state: "waiting", turn_end: "idle", session_key: KEY, launch_id: "launch_f2_runbook" })] });
     await openLane(fixture({ gated: [], wait: { ...(fixture().wait as object), kind: "DONE", turn_end: "done", question: "Tests pass." } as never }));
-    expect(screen.getByTestId("lane-head").textContent).toBe("Claude Code is idle");
+    // W4 AGENT 2: the Agents row's own word.
+    expect(screen.getByTestId("lane-head").textContent).toBe("Idle");
     expect(screen.getByTestId("lane-turn-end").textContent).toContain("Idle");
+  });
+
+  it("W4 AGENT 2: a turn end with its PR open reads Done on the window as on the Agents row, with when it finished", async () => {
+    const doneAt = new Date(Date.now() - 6 * 60_000).toISOString();
+    useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude",
+      state: "pr_open", turn_end: "done", turn_id: "w1", new: true, done_at: doneAt, session_key: KEY, launch_id: "launch_f2_runbook",
+      pr: { number: 413, url: "https://github.com/acme/payments-ledger/pull/413", state: "open" } })] });
+    await openLane(fixture({ gated: [], wait: { ...(fixture().wait as object), kind: "TO ANSWER", turn_end: "done", question: "Tests pass. PR #413 is open." } as never }));
+    expect(screen.getByTestId("lane-head").textContent).toBe("Done");
+    expect(screen.getByTestId("lane-finished").textContent).toBe("Finished 6 min ago");
+    // The done turn is not a wait: the Result says it, no answer field.
+    expect(screen.getByTestId("lane-result")).toBeTruthy();
+    expect(screen.queryByTestId("lane-ask")).toBeNull();
+    expect(screen.getByTestId("lane-open-pr").className).toMatch(/primary/);
   });
 
   it("renders the title, the track, the ask well, the rail, the PR card, the files and the footer", async () => {
@@ -437,7 +452,7 @@ describe("the agent's window", () => {
     fireEvent.keyDown(field, { key: "Enter" });
     await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Jordan owns it.", submit: true, kind: "answer", wait_id: "w-1" }]));
     await waitFor(() => expect(field.value).toBe(""));
-    expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^SENT · \d\d:\d\d · Jordan owns it\.$/);
+    expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Sent · .+ · Jordan owns it\.$/);
   });
 
   it("the lane's actions go to its own session, not to the pane Panes picked", async () => {
@@ -476,7 +491,7 @@ describe("the agent's window", () => {
       expect(button.getAttribute("aria-busy")).toBeNull();
       expect(button).not.toBeDisabled();
       const receipt = screen.getByTestId("lane-receipt");
-      expect(receipt.textContent).toMatch(/^NOT CONFIRMED · \d\d:\d\d · Jordan owns it\.$/);
+      expect(receipt.textContent).toMatch(/^Not confirmed · .+ · Jordan owns it\.$/);
       expect(receipt.textContent).not.toContain("NOT SENT");
       // Nothing is sent again by itself.
       await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
@@ -486,7 +501,7 @@ describe("the agent's window", () => {
         late?.({ ok: true, status: 200, json: async () => ({ status: "delivered" }) } as unknown as Response);
         await vi.advanceTimersByTimeAsync(0);
       });
-      expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^NOT CONFIRMED/);
+      expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Not confirmed/);
       expect(field.value).toBe("Jordan owns it. Avery reviews.");
       // The next press sends again: a new answer to the same wait.
       answer({});
@@ -496,7 +511,7 @@ describe("the agent's window", () => {
         { text: "Jordan owns it.", submit: true, kind: "answer", wait_id: "w-1" },
         { text: "Jordan owns it. Avery reviews.", submit: true, kind: "answer", wait_id: "w-1" },
       ]);
-      expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^SENT · /);
+      expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Sent · /);
     } finally {
       vi.useRealTimers();
     }
@@ -508,7 +523,7 @@ describe("the agent's window", () => {
     const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
     fireEvent.change(field, { target: { value: "Late." } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/NOT SENT · \d\d:\d\d · QUESTION ANSWERED OR CHANGED/));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/Not sent · .+ · Question answered or changed/));
     expect(field.value).toBe("Late.");
   });
 
@@ -522,7 +537,7 @@ describe("the agent's window", () => {
     fireEvent.keyDown(field, { key: "Enter" });
     await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Jordan.", submit: true, kind: "answer", wait_id: "w-1" }]));
     expect(posts(ARM)).toEqual([]);
-    expect(screen.getByTestId("lane-receipt").textContent).not.toContain("ARM FIRST");
+    expect(screen.getByTestId("lane-receipt").textContent).not.toContain("Arm first");
   });
 
   it("Stop: Normal unarmed never arms by itself; YOLO arms per press, then kills", async () => {
@@ -530,7 +545,7 @@ describe("the agent's window", () => {
     fireEvent.click(screen.getByTestId("lane-stop"));
     expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
     fireEvent.click(screen.getByTestId("lane-stop-confirm"));
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("Arm first"));
     expect(posts("/arm")).toEqual([]);
     expect(posts("/kill")).toEqual([]);
   });
@@ -546,7 +561,7 @@ describe("the agent's window", () => {
 
   it("a stopped launch shows its receipt and withdraws Answer, Re-brief and Stop", async () => {
     await openLane(fixture({ wait: null, launch: { ...fixture().launch, state: "stopped_by_owner", stopped: { by: "owner", at: T("10:01"), audit_id: 1 } } }));
-    expect(screen.getByTestId("lane-stopped").textContent).toMatch(/^STOPPED · \d\d:\d\d · BY YOU$/);
+    expect(screen.getByTestId("lane-stopped").textContent).toMatch(/^Stopped by you · .+$/);
     expect(screen.queryByTestId("lane-ask")).toBeNull();
     expect(screen.queryByTestId("lane-stop")).toBeNull();
     expect(screen.queryByTestId("lane-rebrief")).toBeNull();
@@ -662,7 +677,7 @@ describe("the agent's window", () => {
     await waitFor(() => expect(posts(REBRIEF)).toEqual([{ text: "Re-brief: name Jordan as the owner." }]));
     expect(posts(STEER)).toEqual([]);
     await waitFor(() => expect(screen.queryByTestId("lane-rebrief-well")).toBeNull());
-    expect(screen.getByTestId("lane-receipt").textContent).toContain("SENT");
+    expect(screen.getByTestId("lane-receipt").textContent).toContain("Sent");
     expect(screen.getByTestId("lane-receipt").textContent).toContain("Re-brief: name Jordan as the owner.");
   });
 
@@ -731,7 +746,7 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     // W3 AGENT WINDOW: the plate's head is a dot and a word.
     expect(within(screen.getByTestId("lane-ask")).getByText("Idle")).toBeTruthy();
     expect(within(screen.getByTestId("lane-ask")).queryByText("Asks you")).toBeNull();
-    expect(within(screen.getByTestId("lane-track")).getByText("IDLE")).toBeTruthy();
+    expect(within(screen.getByTestId("lane-track")).getByText("Idle")).toBeTruthy();
   });
 
   it("B50: the PR card names the PR's own title and number; the item is the second line", async () => {
@@ -758,7 +773,7 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Tell it" }) as HTMLInputElement;
     fireEvent.change(field, { target: { value: "Re-brief: use the security address." } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("lane-queued").textContent).toBe("QUEUED · AFTER THIS TURN · Re-brief: use the security address."));
+    await waitFor(() => expect(screen.getByTestId("lane-queued").textContent).toBe("Queued after this turn · Re-brief: use the security address."));
     expect(screen.queryByTestId("lane-rebrief-well")).toBeNull();
     expect(posts(STEER)).toEqual([]);
 
@@ -768,7 +783,7 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
       await useLane.getState().load();
     });
     await waitFor(() => expect(screen.queryByTestId("lane-queued")).toBeNull());
-    expect(screen.getByTestId("lane-receipt").textContent).toBe(`SENT · ${wireClock("2026-10-07T16:52:00Z")} · Re-brief: use the security address.`);
+    expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Sent · .+ · Re-brief: use the security address\.$/);
     expect(screen.queryByText(/QUEUED/)).toBeNull();
   });
 
@@ -795,7 +810,7 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
       { id: "a", text: "Re-brief: a.", at: "2026-10-07T16:40:00Z" }, { id: "b", text: "Re-brief: b.", at: "2026-10-07T16:41:00Z" },
     ] } }));
     expect(screen.getAllByTestId("lane-queued").map((el) => el.textContent)).toEqual([
-      "QUEUED · AFTER THIS TURN · Re-brief: a.", "QUEUED · AFTER 2 TURNS · Re-brief: b.",
+      "Queued after this turn · Re-brief: a.", "Queued after 2 turns · Re-brief: b.",
     ]);
   });
 
@@ -841,7 +856,7 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
     await waitFor(() => expect(api.fetch.mock.calls.some(([url, init]) =>
       String(url) === "/api/gate/proposals/toolu_cut/decide" && (init as { json?: { decision?: string } })?.json?.decision === "approved")).toBe(true));
     // Astra r1 on #1011 (P2-6): the decision leaves its receipt on Raw.
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^APPROVED · \d\d:\d\d$/));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Approved · .+$/));
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
   });
 
@@ -858,7 +873,7 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
     const held = await screen.findByTestId("lane-raw-held");
     await waitFor(() => expect(within(held).getByTestId("lane-raw-approve")).toBeTruthy());
     fireEvent.click(within(held).getByTestId("lane-raw-approve"));
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^NOT DECIDED · \d\d:\d\d · ALREADY DENIED$/));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Not decided · .+ · Already denied$/));
   });
 
   it("B63: a call the hub did not keep whole is Deny only", async () => {
@@ -895,7 +910,7 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
     answer({ [`${REBRIEF}/press-1/take-back`]: [200, { status: "taken_back" }] });
     serve(fixture({ wait: null }));
     fireEvent.click(screen.getByTestId("lane-take-back"));
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^TAKEN BACK · .* · Re-brief: do not write outside/));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Taken back · .* · Re-brief: do not write outside/));
     expect(posts(`${REBRIEF}/press-1/take-back`)).toEqual([{}]);
     await waitFor(() => expect(screen.queryByTestId("lane-queued")).toBeNull());
   });
@@ -906,7 +921,7 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
     ] } }));
     answer({ [`${REBRIEF}/press-2/take-back`]: [409, { status: "not_queued" }] });
     fireEvent.click(screen.getByTestId("lane-take-back"));
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^NOT TAKEN BACK · .* · ALREADY SENT$/));
+    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Not taken back · .* · Already sent$/));
   });
 
   it("the rail names a taken-back press", async () => {
@@ -939,7 +954,7 @@ describe("Phase 16: the lane draws the agent's words with AgentWords", () => {
     noLiteralMarks(rail.textContent ?? "");
     expect(rail.querySelector(".lane-rail-says")).toBeNull(); // the current question is shown once, whole, above
     const receipt = screen.getByTestId("lane-receipt").textContent ?? "";
-    expect(receipt).toMatch(/^SENT · \d\d:\d\d · HoldSpeak hands you one item: /);
+    expect(receipt).toMatch(/^Sent · .+ · HoldSpeak hands you one item: /);
     expect(receipt.endsWith('line". …')).toBe(true);
   });
 

@@ -3849,6 +3849,46 @@
         "summary": "Api Agent Rebrief Take Back"
       }
     },
+    "/api/agent/launches/{launch_id}/remove": {
+      "post": {
+        "description": "W4 AGENT 2 (slice 3): Remove an ended launch from the Agents list\n(``removed_at`` on the launch; the record stays). Owner only. 200 when\nremoved; 409 for a launch still in flight; 404 for an unknown one.",
+        "operationId": "api_agent_launch_remove_api_agent_launches__launch_id__remove_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Remove Api Agent Launches  Launch Id  Remove Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Remove"
+      }
+    },
     "/api/agent/launches/{launch_id}/resume": {
       "post": {
         "description": "Betterment AG6: Resume an agent a restart stopped: a new terminal\nin its worktree runs the agent's own resume (``claude --resume``,\n``codex resume``, ``pi --session``). 202 with the launch's resume\nstate; a refusal is 409 (404 for an unknown launch) with its code.",

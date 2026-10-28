@@ -214,6 +214,28 @@ def test_history_cuts_on_the_end_not_the_launch(db, tmp_path, registry):
     assert flight["ended_at"] == history[0]["ended_at"]
 
 
+def test_remove_takes_an_ended_launch_off_the_list_and_keeps_its_record(db, tmp_path, registry):
+    """W4 AGENT 2 (slice 3): Remove retires an ended launch from the history
+    (``removed_at``; the ledger keeps the record); a launch in flight is
+    refused, an unknown one is said."""
+    from holdspeak.services.agent_flights import launch_history, remove_ended_launch
+
+    now = datetime.now(timezone.utc)
+    hook(registry, "claude", "gone", "SessionEnd", now=now - timedelta(minutes=5))
+    hook(registry, "claude", "live", "PreToolUse", tool_name="Write")
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    _launch(ledger, "l-gone", ("action", "ai_1"), attempt_id=_attempt(db, "claude:gone", "action:ai_1"))
+    _launch(ledger, "l-live", ("decision", "d1"), attempt_id=_attempt(db, "claude:live", "decision:d1"))
+    assert [f["launch_id"] for f in launch_history(db, ledger=ledger, now=now)] == ["l-gone"]
+    assert remove_ended_launch(db, "l-live", ledger=ledger, now=now) == {
+        "launch_id": "l-live", "removed": False, "reason": "in_flight", "state": "working"}
+    assert remove_ended_launch(db, "l-none", ledger=ledger, now=now)["reason"] == "unknown"
+    removed = remove_ended_launch(db, "l-gone", ledger=ledger, now=now)
+    assert removed["removed"] is True and removed["removed_at"]
+    assert launch_history(db, ledger=ledger, now=now) == []
+    assert ledger.get("l-gone")["removed_at"] == removed["removed_at"]
+
+
 def test_a_relaunch_keeps_the_earlier_receipt(db, tmp_path, registry):
     """Relaunching an item: the flight is the new launch; the earlier launch,
     merged and closed an hour ago, stays in the history with its close."""
@@ -315,6 +337,38 @@ def test_a_stop_without_a_question_is_done_without_a_pr(db, tmp_path, registry):
          message="Claude is waiting for your input")
     [after] = agent_flights(db, ledger=ledger)
     assert (after["state"], after["turn_id"], after["new"]) == ("done", flight["turn_id"], True)
+
+
+def test_a_turn_end_with_its_pr_open_is_done_on_the_flight_as_on_the_lane(db, tmp_path, registry):
+    """W4 AGENT 2: the agent's window said "Done" (the lane reads the open PR
+    as work done) while the Agents row said "Idle" (the flight carried no
+    turn end for a launch whose PR is open). Now the flight names the turn
+    end the lane names: done (and new) after a Stop, asks for a question, and
+    none while the agent works."""
+    from holdspeak.services.launch_lane import _wait
+
+    pr = {"number": 413, "url": "https://github.com/acme/ledger/pull/413", "state": "open"}
+    _turn(registry, "s1", "The runbook is in docs/ledger-rollback.md. PR #413 is open.")
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    _launch(ledger, "l1", ("action", "ai_1"), attempt_id=_attempt(db, "claude:s1", "action:ai_1"),
+            follow_through={"pr": pr, "pr_state": "pr_open"})
+    [flight] = agent_flights(db, ledger=ledger)
+    assert (flight["state"], flight["turn_end"], flight["new"]) == ("pr_open", "done", True)
+    assert flight["turn_id"] and flight["done_at"]
+    # A turn end that waits (a Notification with no question): the lane's own
+    # read of it and the flight say the same word.
+    hook(registry, "claude", "s1", "Notification", message="The runbook is in place. PR #413 is open.")
+    [waits] = agent_flights(db, ledger=ledger)
+    [session] = agent_context.list_agent_sessions(state_path=registry)
+    assert _wait(session.to_dict(), None, work_done=True)["turn_end"] == waits["turn_end"] == "done"
+
+    hook(registry, "claude", "s1", "UserPromptSubmit", prompt="Name the owner.")
+    [working] = agent_flights(db, ledger=ledger)
+    assert (working["state"], working["turn_end"], working["new"], working["done_at"]) == ("pr_open", None, False, None)
+
+    hook(registry, "claude", "s1", "Stop", last_assistant_message=QUESTION)
+    [asks] = agent_flights(db, ledger=ledger)
+    assert (asks["state"], asks["turn_end"]) == ("pr_open", "asks")
 
 
 def test_a_stop_with_a_question_asks(db, tmp_path, registry):
