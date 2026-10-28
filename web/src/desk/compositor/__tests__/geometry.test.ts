@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   bandFor,
   cascade,
+  EXPOSE_CAPTION,
   exposeGrid,
   gather,
   inside,
@@ -138,6 +139,33 @@ describe("arrangements", () => {
         const b = vis[j];
         const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
         expect(apart).toBe(true);
+      }
+  });
+
+  // W7 (canvas 2026-10-28 (a)): five, seven and nine plates each keep
+  // EXPOSE_CAPTION px under them, inside the band and clear of every other plate.
+  it.each([
+    [1440, 900, 5],
+    [1440, 900, 7],
+    [1440, 900, 9],
+    [1920, 1080, 5],
+  ] as const)("exposé keeps caption room under every plate at %ix%i with %i windows", (vw, vh, n) => {
+    const band = bandFor(vw, vh);
+    const ids = Array.from({ length: n }, (_, i) => `w${i}`);
+    const sizes: Record<string, Rect> = {};
+    ids.forEach((id, i) => { sizes[id] = { x: 0, y: 0, w: i % 2 ? 900 : 640, h: i % 3 ? 620 : 480 }; });
+    const m = exposeGrid(ids, sizes, band);
+    const zones = ids.map((id) => {
+      const p = m.get(id)!;
+      const v = plateVisual(resolveRect(p.rect, band), p.k);
+      return { ...v, h: v.h + EXPOSE_CAPTION };
+    });
+    for (const z of zones) expect(z.y + z.h).toBeLessThanOrEqual(band.y + band.h);
+    for (let i = 0; i < zones.length; i++)
+      for (let j = i + 1; j < zones.length; j++) {
+        const a = zones[i];
+        const b = zones[j];
+        expect(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y).toBe(true);
       }
   });
 

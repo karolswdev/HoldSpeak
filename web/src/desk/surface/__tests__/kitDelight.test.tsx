@@ -154,14 +154,28 @@ describe("DELIGHT — motion honours reduced motion", () => {
     expect(turn![1]).not.toMatch(/\btransform\b/);
   });
 
-  it("slice 4: the Record tile breathes a red ring (paint only), never the hard blink", () => {
+  // W7 (canvas 2026-10-28 (b), direction A): the drop-shadow breath is
+  // retired for a solid ring with a breathing halo (box-shadow on a lamp).
+  it("W7: the Record tile wears a solid red ring whose halo breathes (paint only), still under reduced motion", () => {
     const orb = sheet("src/desk/components/record-orb.css").replace(/\/\*[\s\S]*?\*\//g, "");
-    expect(orb).toMatch(/\.desk-orb\.is-recording \.desk-orb-face \{[^}]*animation:\s*desk-next-orb-breath 2\.4s ease-in-out infinite/);
+    const RING = String.raw`:is(.desk-orb.is-recording, .desk-dock .desk-dock-launch.desk-dock-app[data-recording])::before`;
+    const at = (from: number) => orb.slice(orb.indexOf(RING, from) + RING.length);
+    expect(orb.indexOf(RING), "record-orb.css: the ring selector").toBeGreaterThan(-1);
+    expect(at(0)).toMatch(/^ \{[^}]*box-shadow:\s*0 0 0 3px var\(--wb-rec\)/);
+    const live = orb.slice(orb.indexOf("prefers-reduced-motion: no-preference"));
+    expect(live.indexOf(RING)).toBeGreaterThan(-1);
+    expect(live.slice(live.indexOf(RING) + RING.length)).toMatch(/^ \{\s*animation: desk-orb-ring 2\.4s ease-in-out infinite;/);
+    expect(orb).not.toMatch(/desk-next-orb-breath/);
     expect(orb).not.toMatch(/steps\(2/);
-    const breath = /@keyframes desk-next-orb-breath \{([\s\S]*?)\n\}/.exec(orb);
-    expect(breath![1]).toMatch(/drop-shadow/);
-    expect(breath![1]).not.toMatch(/transform|scale/);
-    expect(orb).toMatch(/prefers-reduced-motion: reduce\)[\s\S]*?\.desk-orb\.is-recording \.desk-orb-face \{\s*animation: none;/);
+    const ring = /@keyframes desk-orb-ring \{([\s\S]*?)\n\}/.exec(orb);
+    expect(ring, "record-orb.css: the ring keyframes").not.toBeNull();
+    expect(ring![1]).toMatch(/0 0 0 11px color-mix\(in srgb, var\(--wb-rec\) 18%/);
+    expect(ring![1]).not.toMatch(/transform|scale|filter/);
+    const still = orb.slice(orb.indexOf("prefers-reduced-motion: reduce"));
+    expect(still.slice(still.indexOf(RING) + RING.length)).toMatch(/^ \{\s*animation: none;/);
+    // The 4 px running dot under the Record tile is gone: the ring says it.
+    const dock = sheet("src/desk/components/dock.css").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(dock).not.toMatch(/\.desk-orb\.is-recording::before/);
   });
 
   it("nothing in the kit moves on hover", () => {

@@ -91,3 +91,37 @@ describe("Astra r2: the orb's first state read never undoes a newer Start or Sto
     }
   });
 });
+
+// W7 (canvas 2026-10-28 (b), direction A "The ring and the clock").
+describe("the Record tile while it records: the ring and the clock", () => {
+  it("recording with a start time: the ring state and a clock with the elapsed time", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    try {
+      vi.setSystemTime(new Date("2026-10-28T10:00:00Z"));
+      useDesk.setState({ recording: "recording", recordingStartedAt: Date.now() - (12 * 60 + 4) * 1000 });
+      render(<RecordOrb />);
+      const orb = screen.getByRole("button", { name: "Stop recording, 12:04" });
+      expect(orb.className).toContain("is-recording");
+      const clock = screen.getByTestId("desk-orb-clock");
+      expect(clock.textContent).toBe("12:04");
+      expect(clock).toHaveAttribute("aria-hidden", "true");
+      await act(async () => { vi.advanceTimersByTime(1000); });
+      expect(screen.getByTestId("desk-orb-clock").textContent).toBe("12:05");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("idle: no clock and no ring state", () => {
+    render(<RecordOrb />);
+    expect(screen.queryByTestId("desk-orb-clock")).toBeNull();
+    expect(screen.getByRole("button", { name: "Record a meeting" }).className).not.toContain("is-recording");
+  });
+
+  it("recording with no start time from the hub: no clock (never 0:00)", () => {
+    useDesk.setState({ recording: "recording", recordingStartedAt: null });
+    render(<RecordOrb />);
+    expect(screen.getByRole("button", { name: "Stop recording" }).className).toContain("is-recording");
+    expect(screen.queryByTestId("desk-orb-clock")).toBeNull();
+  });
+});

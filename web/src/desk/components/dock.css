@@ -474,19 +474,9 @@
   width: 48px;
   height: 48px;
 }
-/* while recording: the orb's live pulse (record-orb.css) and the dot */
-.desk-next .desk-dock .desk-orb.is-recording::before {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  left: calc(50% - 2px);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--wb-rec);
-  box-shadow: 0 0 4px var(--wb-rec);
-  pointer-events: none;
-}
+/* while recording: the ring and the clock (record-orb.css). W7 (canvas
+   2026-10-28 (b)): the 4 px running dot under the tile is gone; the ring
+   says it. */
 /* the Record tile's hover label: Record a meeting, or Recording 0:42 */
 .desk-next .desk-dock .desk-orb-label {
   position: absolute;

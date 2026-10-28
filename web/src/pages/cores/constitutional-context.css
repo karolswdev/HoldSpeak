@@ -52,3 +52,35 @@
   box-shadow: none;
   font: 400 14px / 1.55 var(--font-sans);
 }
+
+/* W7 (canvas 2026-10-28 (c), direction B "The pad says it"): while the pad
+   is empty, one quiet head row says what the window is for. It goes at the
+   first character. */
+.desk-next .constitutional-context-editor-section,
+.constitutional-context-editor-section {
+  flex-direction: column;
+  background: var(--wb-paper);
+}
+.constitutional-context-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 16px 0;
+  padding: 0 0 10px;
+  border-bottom: 1px dashed var(--wb-rule-soft);
+  color: var(--wb-ink);
+}
+.constitutional-context-head img {
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+.constitutional-context-head b {
+  display: block;
+  font: 600 13px / 18px var(--font-sans);
+}
+.constitutional-context-head span {
+  display: block;
+  font: 400 12px / 16px var(--font-sans);
+  color: var(--wb-muted);
+}

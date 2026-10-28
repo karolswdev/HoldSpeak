@@ -34,6 +34,8 @@ export type RegisteredWindow = {
   glyph: string;
   close: () => void;
   dock: boolean;
+  /** The kind word the window announced (Note, Decision, Agent...), if any. */
+  kind?: string;
 };
 export let registrySnapshot: RegisteredWindow[] = [];
 /** The open windows the Dock and Overview show (every window with a chip). */

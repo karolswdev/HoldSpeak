@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ConstitutionalContextCore } from "../ConstitutionalContextCore";
+import { ConstitutionalContextCore, EXAMPLE_FACT } from "../ConstitutionalContextCore";
 import type { ContextState, HistoryEntry } from "../core-types";
 
 const RAW = "'Database' object has no attribute '_conn'";
@@ -142,5 +142,54 @@ describe("Context status", () => {
     expect(screen.queryByText(/^Viewing revision/)).toBeNull();
     expect(screen.queryByText("Not saved yet")).toBeNull();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+});
+
+// W7 (canvas 2026-10-28 (c), direction B "The pad says it").
+describe("Context says what it is for while the pad is empty", () => {
+  const empty: ContextState = { content: "", revision: 0, content_hash: "", char_limit: 32768 };
+
+  it("shows the head row, the example fact and Use the example; Save is off", async () => {
+    contextReplies(empty);
+    render(<ConstitutionalContextCore />);
+    const pad = await screen.findByRole("textbox", { name: "Constitutional context" });
+    const head = screen.getByTestId("context-head");
+    expect(head.textContent).toContain("Every engine run reads this first");
+    expect(head.textContent).toContain("One fact per line. You can change it at any time.");
+    expect(head.querySelector("img")?.getAttribute("src")).toContain("32/artifact.png");
+    expect(pad).toHaveAttribute("placeholder", EXAMPLE_FACT);
+    expect(screen.getByRole("button", { name: "Use the example" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
+  it("Use the example puts the fact in as text: Save is live, the head row goes", async () => {
+    contextReplies(empty);
+    render(<ConstitutionalContextCore />);
+    const pad = await screen.findByRole("textbox", { name: "Constitutional context" });
+    fireEvent.click(screen.getByRole("button", { name: "Use the example" }));
+    expect(pad).toHaveValue(EXAMPLE_FACT);
+    expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
+    expect(screen.queryByTestId("context-head")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Use the example" })).toBeNull();
+    expect(screen.getByText("Not saved yet")).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(pad));
+    expect((pad as HTMLTextAreaElement).selectionStart).toBe(EXAMPLE_FACT.length);
+  });
+
+  it("one typed character makes Save live and takes the head row away", async () => {
+    contextReplies(empty);
+    render(<ConstitutionalContextCore />);
+    const pad = await screen.findByRole("textbox", { name: "Constitutional context" });
+    fireEvent.change(pad, { target: { value: "I" } });
+    expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
+    expect(screen.queryByTestId("context-head")).toBeNull();
+  });
+
+  it("a saved Context has no head row and no example verb", async () => {
+    contextReplies({ ...empty, content: "Senior architect", revision: 1 });
+    render(<ConstitutionalContextCore />);
+    await screen.findByRole("textbox", { name: "Constitutional context" });
+    expect(screen.queryByTestId("context-head")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Use the example" })).toBeNull();
   });
 });

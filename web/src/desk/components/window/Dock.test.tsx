@@ -409,6 +409,27 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     expect(screen.queryByTestId("desk-dock-send-state")).toBeNull();
   });
 
+  // W7 (canvas 2026-10-28 (b), direction A): on the phone the Capture tile is
+  // the Record tile. While a meeting records it wears the ring
+  // (data-recording) and the clock above it with the elapsed time; idle,
+  // neither.
+  it("the phone's Record tile wears the ring and the clock while a meeting records", () => {
+    mocks.compact = true;
+    mocks.desk.recording = "recording";
+    mocks.desk.recordingStartedAt = Date.now() - (12 * 60 + 4) * 1000;
+    const view = render(<Dock />);
+    const capture = screen.getByRole("button", { name: "Capture" });
+    expect(capture).toHaveAttribute("data-recording");
+    expect(screen.getByTestId("desk-orb-clock").textContent).toMatch(/^12:0[45]$/);
+    view.unmount();
+
+    mocks.desk.recording = "idle";
+    mocks.desk.recordingStartedAt = null;
+    render(<Dock />);
+    expect(screen.getByRole("button", { name: "Capture" })).not.toHaveAttribute("data-recording");
+    expect(screen.queryByTestId("desk-orb-clock")).toBeNull();
+  });
+
   it("names the five daily seats in the phone manifest and omits the old gadget", () => {
     mocks.compact = true;
     render(<Dock />);

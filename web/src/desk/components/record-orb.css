@@ -28,27 +28,84 @@
 .desk-next .desk-orb:hover .desk-orb-face {
   filter: brightness(1.15);
 }
-/* DELIGHT slice 4 (2026-10-28, canvas motion 6) — the Record tile
-   BREATHES while a meeting records: a red ring around the orb opens and
-   closes, 2.4 s a breath (a drop-shadow on the face: paint only, the tile
-   never moves). It stops the moment recording stops. It replaces the
-   1.2 s hard blink. Under reduced motion the ring stays, still. */
-.desk-next .desk-orb.is-recording .desk-orb-face {
-  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--wb-rec) 55%, transparent));
-  animation: desk-next-orb-breath 2.4s ease-in-out infinite;
+/* W7 (canvas 2026-10-28 (b), direction A "The ring and the clock"): while a
+   meeting records, a 3 px solid red ring sits around the orb the whole time,
+   and a red halo outside it opens and fades, 2.4 s a breath. It is a
+   box-shadow on a lamp: colour only, the tile never moves. Under
+   reduced motion the ring stays, still, at mid-breath. The ring is the
+   ::before: a Button's ::after is its hit face (global.css). On the phone
+   the Record tile is the Capture launcher (Dock.tsx): it wears the same
+   ring (data-recording). It replaces the
+   drop-shadow breath of DELIGHT slice 4 (parked below as a comment):
+     @keyframes desk-next-orb-breath {
+       0%, 100% { filter: drop-shadow(0 0 1px color-mix(in srgb, var(--wb-rec) 45%, transparent)); }
+       50% { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--wb-rec) 80%, transparent)); }
+     } */
+.desk-next .desk-orb {
+  position: relative;
+  --desk-orb-ring: 40px;
+}
+.desk-next .desk-dock-app[data-recording] {
+  --desk-orb-ring: 40px;
+}
+.desk-next :is(.desk-orb.is-recording, .desk-dock .desk-dock-launch.desk-dock-app[data-recording])::before {
+  content: "";
+  position: absolute;
+  left: calc(50% - var(--desk-orb-ring) / 2);
+  top: calc(50% - var(--desk-orb-ring) / 2);
+  width: var(--desk-orb-ring);
+  height: var(--desk-orb-ring);
+  bottom: auto;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    0 0 0 3px var(--wb-rec),
+    0 0 0 5px color-mix(in srgb, var(--wb-rec) 50%, transparent);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .desk-next :is(.desk-orb.is-recording, .desk-dock .desk-dock-launch.desk-dock-app[data-recording])::before {
+    animation: desk-orb-ring 2.4s ease-in-out infinite;
+  }
+}
+@keyframes desk-orb-ring {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px var(--wb-rec),
+      0 0 0 5px color-mix(in srgb, var(--wb-rec) 50%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px var(--wb-rec),
+      0 0 0 11px color-mix(in srgb, var(--wb-rec) 18%, transparent);
+  }
+}
+/* The clock: a red pill above the Record tile, the elapsed time in white
+   tabular figures (RecordOrb.tsx places it over the tile; it is drawn in the
+   desk root, so the phone dock's scroll box does not clip it). The hover
+   label takes its place. */
+.desk-next .desk-orb-clock {
+  position: fixed;
+  z-index: var(--desk-z-dock);
+  transform: translateX(-50%);
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--wb-rec);
+  color: #fff;
+  font: 600 12px / 18px var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1.5px var(--wb-paper), 0 1px 3px rgba(12, 20, 32, 0.4);
+  pointer-events: none;
+}
+.desk-next:has(.desk-dock .desk-orb:is(:hover, :focus-visible)) .desk-orb-clock {
+  opacity: 0;
 }
 .desk-next .desk-orb.is-busy {
   opacity: 0.6;
   cursor: default;
-}
-@keyframes desk-next-orb-breath {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 1px color-mix(in srgb, var(--wb-rec) 45%, transparent));
-  }
-  50% {
-    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--wb-rec) 80%, transparent));
-  }
 }
 .desk-next .desk-orb-elapsed {
   font-size: var(--font-size-xs);
@@ -62,9 +119,11 @@
   letter-spacing: 0.04em;
 }
 @media (prefers-reduced-motion: reduce) {
-  .desk-next .desk-orb.is-recording .desk-orb-face {
+  .desk-next :is(.desk-orb.is-recording, .desk-dock .desk-dock-launch.desk-dock-app[data-recording])::before {
     animation: none;
-    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--wb-rec) 70%, transparent));
+    box-shadow:
+      0 0 0 3px var(--wb-rec),
+      0 0 0 8px color-mix(in srgb, var(--wb-rec) 34%, transparent);
   }
 }
 
