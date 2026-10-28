@@ -8,6 +8,8 @@ from its name (`project.watch.pause` -> `Project watch pause`).
 """
 from __future__ import annotations
 
+from typing import Any
+
 PROCESS_WORDS: dict[str, str] = {
     # Setup and connections
     "setup.lan.scan": "Checked the LAN",
@@ -142,3 +144,14 @@ def process_label(kind: str, operation_name: str = "") -> str:
         return ""
     words = " ".join(name.replace(".", " ").replace("_", " ").replace("-", " ").split()).lower()
     return words[:1].upper() + words[1:]
+
+
+def labelled(read: dict[str, Any]) -> dict[str, Any]:
+    """The kernel read with each process given its ``label`` (kept when a
+    codec already set one). ``Broker.read`` returns through this."""
+    for item in read.get("objects", ()):
+        process = item.get("process")
+        if isinstance(process, dict) and not process.get("label"):
+            operation = item.get("operation") or {}
+            process["label"] = process_label(str(process.get("kind") or ""), str(operation.get("name") or ""))
+    return read
