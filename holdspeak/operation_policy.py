@@ -395,7 +395,7 @@ def resolve_policy(
 
 
 #: The Control mode a person reads (the config stores safe/neutral/yolo).
-MODE_LABELS = {"safe": "Secure", "neutral": "Normal", "yolo": "YOLO"}
+MODE_LABELS = {"safe": "Secure", "neutral": "Normal", "yolo": "Open throttle"}
 
 
 def _resolve_tool_gate(

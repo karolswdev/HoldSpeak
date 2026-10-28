@@ -27,11 +27,11 @@
 }
 
 .lw-caption { font: 600 12px/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 0; }
-.lw-fact { font: 12px/1.3 var(--font-mono); color: var(--text-muted); letter-spacing: 0.04em; }
+.lw-fact { font: 12px/1.3 var(--font-sans); color: var(--text-muted); }
 .lw-fact b { color: var(--text); font-weight: 600; }
 .lw-verbs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 /* An honest line: a part that could not be read, said once. */
-.lw-notread { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.lw-notread { margin: 0; font: 12px/1.4 var(--font-sans); color: var(--text-muted); }
 .lw-word { font: 700 12px/18px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; flex: none; }
 .lw-ev-text { font: 13px/18px var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
 .lw-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; }
@@ -360,6 +360,10 @@
 .desk-next .is-lane .lw-obj-facts { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; padding-left: 29px; flex-basis: 100%; }
 .desk-next .is-lane .lw-files { display: flex; flex-direction: column; gap: 2px; padding: 6px 12px 6px 41px; }
 .desk-next .is-lane .lw-file { font: 12px / 1.5 var(--font-mono); color: var(--wb-ink); overflow-wrap: anywhere; }
+/* W5-WORDS: a part not read is a quiet 12 px line (the pullout body's 13 px
+ * ink `p` rule would win), set in under the object it is about. */
+.desk-next .is-lane .lw-notread { font: 12px / 1.4 var(--font-sans); color: var(--wb-muted, var(--text-muted)); }
+.desk-next .is-lane .lw-files-notread { padding: 2px 12px 6px 41px; }
 
 @container surface (max-width: 520px) {
   .desk-next .is-lane .lw-cols { grid-template-columns: 1fr; }

@@ -137,12 +137,36 @@ class InferenceInvokeCodec:
         return {"invocation_id": native_id}
 
     def project_process(self, native_id: str, operation: Mapping[str, Any]) -> dict[str, Any]:
-        return {
+        process = {
             "process_id": f"process:{operation['operation_id']}", "kind": self.name,
             "principal": operation["principal_identity"], "generic_state": operation["state"],
             "domain_state": operation["state"], "target_ref": operation["target_ref"],
             "current_operation_id": operation["operation_id"],
         }
+        label = self._placement_label(str(operation.get("target_ref") or ""))
+        if label:
+            process["placement_label"] = label
+        return process
+
+    def _placement_label(self, target_ref: str) -> str:
+        """W5-WORDS: the engine's name for the Processes window's Where
+        column (the placement is a hash). The profile's label, else the
+        revision's model; empty when neither resolves."""
+        if not target_ref.startswith("deployment-revision:"):
+            return ""
+        try:
+            revision = self._database.deployment_revisions.get(target_ref.removeprefix("deployment-revision:"))
+            if revision is None:
+                return ""
+            with self._database._connection() as conn:
+                row = conn.execute(
+                    "SELECT label FROM model_profile_revisions WHERE profile_id=? ORDER BY revision DESC LIMIT 1",
+                    (revision.destination_id,),
+                ).fetchone()
+            label = str(row["label"]).strip() if row else ""
+            return label or str(revision.model or "").strip()
+        except Exception:
+            return ""
 
     def project_receipts(self, native_id: str) -> list[dict[str, Any]]:
         return []

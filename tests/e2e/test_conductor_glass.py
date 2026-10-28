@@ -178,7 +178,7 @@ class TestDropToHandGlass:
                 assert page.locator(".drag-ghost").count() == 0
                 fact = line.locator(".confirm-line-fact")
                 page.wait_for_function(
-                    "() => /^CLAUDE CODE · YOLO · hs\\//.test(document.querySelector('.drawer-window .confirm-line-fact')?.textContent || '')",
+                    "() => /^CLAUDE CODE · OPEN THROTTLE · hs\\//.test(document.querySelector('.drawer-window .confirm-line-fact')?.textContent || '')",
                     timeout=T,
                 )
                 assert line.locator(".confirm-line-title").inner_text() == ACTION

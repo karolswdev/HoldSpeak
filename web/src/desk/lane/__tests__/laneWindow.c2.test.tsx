@@ -435,10 +435,10 @@ describe("the agent's window", () => {
       wait: { not_read: "sessions: OSError" },
       gated: { not_read: "gated: OperationalError" },
     }));
-    expect(screen.getByTestId("lane-events-not-read").textContent).toBe("TIMELINE · NOT READ · events: OperationalError: locked");
-    expect(screen.getByTestId("lane-files-not-read").textContent).toBe("FILES · NOT READ · the worktree is gone");
-    expect(screen.getByText("ASKS · NOT READ · sessions: OSError")).toBeTruthy();
-    expect(screen.getByText("HELD · NOT READ · gated: OperationalError")).toBeTruthy();
+    expect(screen.getByTestId("lane-events-not-read").textContent).toBe("Timeline not read · events: OperationalError: locked");
+    expect(screen.getByTestId("lane-files-not-read").textContent).toBe("Files not read · the worktree is gone");
+    expect(screen.getByText("Asks not read · sessions: OSError")).toBeTruthy();
+    expect(screen.getByText("Held not read · gated: OperationalError")).toBeTruthy();
     expect(screen.queryByTestId("lane-files")).toBeNull();
   });
 
@@ -573,9 +573,9 @@ describe("the agent's window", () => {
       attempt_events: { not_read: "attempt events: RuntimeError" },
       usage: { not_read: "usage: RuntimeError" },
     }));
-    expect(screen.getByTestId("lane-not-read-answers").textContent).toBe("ANSWERS · NOT READ · answers: RuntimeError");
-    expect(screen.getByTestId("lane-not-read-attempt").textContent).toBe("ATTEMPT · NOT READ · attempt events: RuntimeError");
-    expect(screen.getByTestId("lane-not-read-usage").textContent).toBe("USAGE · NOT READ · usage: RuntimeError");
+    expect(screen.getByTestId("lane-not-read-answers").textContent).toBe("Answers not read · answers: RuntimeError");
+    expect(screen.getByTestId("lane-not-read-attempt").textContent).toBe("Attempt not read · attempt events: RuntimeError");
+    expect(screen.getByTestId("lane-not-read-usage").textContent).toBe("Usage not read · usage: RuntimeError");
   });
 
   it("TO ANSWER: Speak answer starts the well's mic", async () => {

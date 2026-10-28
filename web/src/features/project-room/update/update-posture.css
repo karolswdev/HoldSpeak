@@ -164,3 +164,13 @@
   align-items: center;
   gap: var(--space-1);
 }
+
+/* W5-WORDS: metadata is quiet sans 12 in sentence case, never a caps token. */
+.update-quiet { font: 12px/1.4 var(--font-sans); color: var(--text-muted); overflow-wrap: anywhere; }
+.update-quiet[data-tone="warn"] { color: var(--warn); }
+.update-readonly-line { margin: 0 0 var(--space-2); }
+.desk-next .surface-footer-receipt > .surface-footer-receipt-line.update-footer-words {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}

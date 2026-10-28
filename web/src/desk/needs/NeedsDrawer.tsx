@@ -31,7 +31,7 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { ConfirmVerb, ScrollHint, StatusBar, StatusStrip, StringGadget, SurfaceSection, SurfaceState, TickNumber, Toolbar, type StatusBarItem } from "../surface";
+import { ConfirmVerb, ScrollHint, StatusBar, StringGadget, SurfaceSection, SurfaceState, TickNumber, Toolbar, type StatusBarItem } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -1285,12 +1285,16 @@ export function NeedsDrawer() {
           {chipRow}
         </Toolbar>
       ) : null}
-      {coverage.expected > 0 ? <Disclosure label={`${coverage.available} of ${coverage.expected} available`} ariaLabel="Coverage">
-        <StatusStrip items={[{ lamp: coverage.complete ? "ok" : "warn", text: coverage.complete ? "All sources checked" : "Sources need a check" }]} />
-        {coverage.gaps.length + coverage.quiet.length > 0 ? <ul className="needs-coverage-details">
-          {[...coverage.gaps, ...coverage.quiet].map((source, index) => <li key={index}>{source.label || source.source_id}</li>)}
-        </ul> : null}
-      </Disclosure> : null}
+      {/* W5-WORDS: every source read is no row (`16 of 16 available` was a
+          count that said nothing); a gap names how many and which. */}
+      {!coverage.complete && coverage.expected > 0 ? (() => {
+        const missing = Math.max(coverage.expected - coverage.available, coverage.gaps.length, 1);
+        return <Disclosure label={`${missing} ${missing === 1 ? "source" : "sources"} not checked`} ariaLabel="Coverage">
+          {coverage.gaps.length > 0 ? <ul className="needs-coverage-details">
+            {coverage.gaps.map((source, index) => <li key={index}>{source.label || source.source_id}</li>)}
+          </ul> : null}
+        </Disclosure>;
+      })() : null}
       {needs.peopleUnread ? <PeopleReadFailed testId="needs-people-read-failed" onRetry={() => void refreshNeedsYou()} /> : null}
       {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
       <div ref={listRef} onClick={onRowPress} data-testid="needs-list" className="needs-drawer-list">

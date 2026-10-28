@@ -648,7 +648,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
       editor = (await screen.findByTestId("update-plain-text")) as HTMLTextAreaElement;
       expect(editor.value).toContain("AAA-saved-words");
       expect(editor.value).toContain("BBB-newer-words");
-      expect(screen.getByTestId("update-footer-receipt").textContent).toContain("UNSAVED");
+      expect(screen.getByTestId("update-footer-receipt").textContent).toContain("Not saved");
       if (save === "failed") expect(screen.getByText(/NOT SAVED/)).toBeTruthy();
       expect(puts()).toHaveLength(1);
     });

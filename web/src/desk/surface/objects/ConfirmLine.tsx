@@ -1,7 +1,7 @@
 /** PHILO-14 B1 — ConfirmLine: the YOLO hand in one line (board A-3).
  *
  *  The item's sprite → the agent's sprite, the item's title (primary
- *  step), the fact line (`CLAUDE CODE · YOLO · hs/write-the-cutover-comms`,
+ *  step), the fact line (`CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms`,
  *  mono), and the three verbs: **Brief ▸** (the brief one press away),
  *  **Cancel**, **Hand** (primary). A sunken well: it sits in the drawer, at
  *  the top, while the drop waits for the press.
