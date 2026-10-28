@@ -424,6 +424,15 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
 LAUNCH_RULES["workbench.cancel"] = (OWN, "workbench", "workbench_id")
 # Calls (2026-10-28): the owner's phone call is never a launch's to end.
 LAUNCH_RULES["calls.hangup"] = (NEVER, "", "")
+# Programs (2026-10-28): held in ProgramService, the one boundary every
+# transport reaches: a launch runs only the Programs it made, writes lines and
+# its report only on its own step, and never decides or overturns.
+LAUNCH_RULES.update({
+    name: (CREATE, "", "") for name in (
+        "program.create", "program.plan", "program.update", "program.start", "program.park", "program.resume",
+        "program.checkpoint", "program.step_done",
+    )
+})
 # Betterment AG11: the helper a launch starts is recorded as its own
 # (``launch:<id>``); every other helper tool names it.
 LAUNCH_RULES.update({

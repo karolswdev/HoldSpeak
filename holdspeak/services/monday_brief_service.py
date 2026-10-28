@@ -1009,6 +1009,8 @@ class MondayBriefService:
         "Decision confirmed": _DAY_TOP - 3,
         "Action done": _DAY_TOP - 4,
         "Agent launched": _DAY_TOP - 5,
+        # Programs (2026-10-28, §9b): a Project's line counts its running Programs.
+        "Programs": _DAY_TOP - 6,
     }
     #: How an update left (``project_update_deliveries.channel``).
     _CHANNEL_WORDS = {
@@ -1081,7 +1083,37 @@ class MondayBriefService:
         except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
             log.warning("brief: the Room updates were not read: %s", exc)
             unread.append(_not_read_item("updates", exc))
+        try:
+            self._collect_programs(items, today)
+        except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
+            log.warning("brief: the Programs were not read: %s", exc)
+            unread.append(_not_read_item("programs", exc))
         return items, unread
+
+    def _collect_programs(self, items: list[BriefItem], today: Any) -> None:
+        """One row per Project with a running Program: how many run, how many
+        wait on him (Programs §9b)."""
+        from holdspeak.services.program_service import ProgramService
+
+        service = ProgramService(self._db)
+        projects: dict[str, dict[str, int]] = {}
+        for row in service.list().get("programs") or []:
+            if row["state"] not in ("running", "waiting") or not row.get("project_id"):
+                continue
+            counts = projects.setdefault(str(row["project_id"]), {"running": 0, "waiting": 0})
+            counts["running"] += 1
+            counts["waiting"] += 1 if row["state"] == "waiting" else 0
+        if not projects:
+            return
+        with self._db._connection() as conn:
+            names = {str(r["id"]): str(r["name"]) for r in conn.execute("SELECT id, name FROM projects")}
+        for project_id, counts in sorted(projects.items()):
+            detail = f"{counts['running']} running" + (f", {counts['waiting']} wait on you" if counts["waiting"] else "")
+            items.append(BriefItem(
+                id=f"brief-item-{uuid.uuid4().hex}", section="changed",
+                text=f"Programs: {names.get(project_id, project_id)}", detail=detail,
+                source_ref=f"project:{project_id}", priority=self._DAY_PRIORITY["Programs"],
+            ))
 
     def _collect_launches(self, items: list[BriefItem], inside: Callable[[Any], bool],
                           today: Any) -> set[str]:

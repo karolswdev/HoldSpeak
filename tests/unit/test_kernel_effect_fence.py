@@ -340,6 +340,17 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "process site outside plugin/connector scope",
     (
+        "holdspeak/services/program_runner.py",
+        "_default_runner",
+        "run",
+        1,
+    ): (
+        "Programs (2026-10-28): the engine's one process site in a step's own worktree: "
+        "git rev-parse/status/push, gh pr create/merge on the step's branch, and the gate "
+        "command writing its log; each engine decision is its own program.step kernel "
+        "operation (holdspeak/kernel/program_ops.py)"
+    ),
+    (
         "holdspeak/delivery/pr_receipts.py",
         "_default_runner",
         "run",

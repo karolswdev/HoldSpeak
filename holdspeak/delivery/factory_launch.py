@@ -197,6 +197,7 @@ ORIGIN_KINDS = (
     "meeting",
     "artifact",
     "issue",  # Conductor R4: a Room issue, ``<watch_id>.<entity_id>``
+    "program_step",  # Programs (2026-10-28): one step of a Program
 )
 _ORIGIN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 
@@ -971,7 +972,7 @@ class LaunchService:
         _, worktree_path, _ = self._resolve_worktree(request, source)
         self._require_process_gate(profile, worktree_path)
 
-    def _preflight(self, profile: Mapping[str, Any]) -> None:
+    def _preflight(self, profile: Mapping[str, Any], engine_id: str = "") -> None:
         """Refuse before any envelope when the agent or tmux is not on
         this machine: ``executable_absent`` / ``tmux_absent``; a Codex whose
         config does not trust the launch hooks: ``codex_hooks_untrusted``; a
@@ -980,7 +981,7 @@ class LaunchService:
         which = self._which
         if which is None:
             self._require_codex_trust(profile)
-            self._require_pi_engine(profile)
+            self._require_pi_engine(profile, engine_id)
             return
         if which("tmux") is None:
             raise LaunchRefused("tmux_absent", "tmux is not installed on this machine")
@@ -990,17 +991,23 @@ class LaunchService:
                 "executable_absent", f"{executable} is not installed on this machine"
             )
         self._require_codex_trust(profile)
-        self._require_pi_engine(profile)
+        self._require_pi_engine(profile, engine_id)
 
-    def pi_engine(self) -> Any:
-        """The engine a pi launch runs on now, or the route's refusal."""
+    def pi_engine(self, engine_id: str = "") -> Any:
+        """The engine a pi launch runs on now, or the route's refusal.
+
+        Programs (2026-10-28): ``engine_id`` names an engine profile of the
+        model library (a step's Runs on); empty is the desk's ``agent.code``
+        assignment."""
         if self._pi_engine is None:
             raise LaunchRefused("no_assignment", "pi has no engine for coding work")
+        if engine_id:
+            return self._pi_engine(engine_id)
         return self._pi_engine()
 
-    def _require_pi_engine(self, profile: Mapping[str, Any]) -> None:
+    def _require_pi_engine(self, profile: Mapping[str, Any], engine_id: str = "") -> None:
         if str(profile.get("executable") or "") == "pi":
-            self.pi_engine()
+            self.pi_engine(engine_id)
 
     def _require_codex_trust(self, profile: Mapping[str, Any]) -> None:
         """Refuse a Codex launch whose hooks Codex would not run (untrusted:
@@ -1229,7 +1236,7 @@ class LaunchService:
 
     def _agent_argv(
         self, executable: str, argv: list[str], launch_id: str, mode: Any, parent_operation_id: str,
-        *, read_only: bool = False,
+        *, read_only: bool = False, engine_id: str = "",
     ) -> dict[str, Any]:
         """The agent's own flags on top of the profile argv: the rider and
         gate hooks, the HoldSpeak MCP, the Control mode's permission flags,
@@ -1295,7 +1302,7 @@ class LaunchService:
             # HoldSpeak MCP, the gate and rider commands), the transcript
             # folder and the extension. The engine's key rides the spawn's
             # one-shot file (by its slot), never argv.
-            engine = self.pi_engine()
+            engine = self.pi_engine(engine_id)
             pi_folder = pi_launch.write_pi_dir(
                 launch_id, engine, hub_url=agent_credentials.hub_url,
                 hooks=coder_gate.pi_spawn_hooks(coder_gate.spawn_prefix()),
@@ -1373,7 +1380,8 @@ class LaunchService:
         argv = self._profiles.resolve_argv(profile_id, request.get("options"))
         origin_ref = origin_ref_of(request)
         profile = self._profiles.get(profile_id) or {}
-        self._preflight(profile)
+        engine_id = str(request.get("engine_id") or "").strip()
+        self._preflight(profile, engine_id)
         project, story_id = self._story_ref(request)
         source_id = str(request.get("source_id") or "")
         source = self._registry.get(source_id)
@@ -1396,7 +1404,9 @@ class LaunchService:
             raise LaunchRefused("reviewer_read_only_required", "reviewer launches are always read-only")
         read_only = role == "reviewer"
         executable = str(profile.get("executable") or "")
-        agent_argv = self._agent_argv(executable, argv, launch_id, mode, parent_operation_id, read_only=read_only)
+        agent_argv = self._agent_argv(
+            executable, argv, launch_id, mode, parent_operation_id, read_only=read_only, engine_id=engine_id,
+        )
         argv, codex_tail = agent_argv["argv"], agent_argv["codex_tail"]
         launch_env, model_key_slot = agent_argv["env"], agent_argv["model_key_slot"]
         if agent_argv["gated"]:
@@ -1822,7 +1832,7 @@ class LaunchService:
         worktree_path = self._worktree_path(record)
         if not worktree_path or not Path(worktree_path).is_dir():
             raise LaunchRefused("worktree_gone", "the agent's worktree is gone")
-        self._preflight(profile)
+        self._preflight(profile, str(record.get("engine_id") or ""))
         parent = str(record.get("operation_id") or "")
         if parent:
             self._require_process_gate(profile, worktree_path)
@@ -1832,7 +1842,7 @@ class LaunchService:
         read_only = role == "reviewer"
         composed = self._agent_argv(
             executable, [executable, *profile["args"]], launch_id, mode, parent,
-            read_only=read_only,
+            read_only=read_only, engine_id=str(record.get("engine_id") or ""),
         )
         argv = composed["argv"]
         if executable == "codex":
@@ -2174,7 +2184,7 @@ def default_launch_service(database: Any) -> LaunchService:
         processor=processor,
         local_node_id="local",
     )
-    from .pi_launch import coding_engine
+    from .pi_launch import coding_engine, engine_for_profile
 
     service = LaunchService(
         profiles=AgentProfileStore(),
@@ -2184,7 +2194,9 @@ def default_launch_service(database: Any) -> LaunchService:
         attempts=database.work_attempts,
         ledger=LaunchLedger(),
         local_node_id="local",
-        pi_engine=lambda: coding_engine(database),
+        pi_engine=lambda engine_id="": (
+            engine_for_profile(database, engine_id) if engine_id else coding_engine(database)
+        ),
     )
     _DEFAULT_SERVICES[key] = service
     return service

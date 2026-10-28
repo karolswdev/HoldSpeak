@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T02:01:46.013078Z",
+  "captured_at": "2026-10-28T18:05:46.370759Z",
   "wire": {
     "code": "no_repository",
     "detail": "the item's Project names no local repository",

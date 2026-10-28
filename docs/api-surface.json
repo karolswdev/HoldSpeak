@@ -5121,6 +5121,132 @@
       ]
     },
     {
+      "path": "/api/programs",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/templates",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.programs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/programs/{program_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.programs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/programs/{program_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.programs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/programs/{program_id}/close",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/decisions/{decision_id}/overturn",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/from-desk",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/park",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/plan",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/resume",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/start",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/steps/{step_id}/checkpoint",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/steps/{step_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/steps/{step_id}/race",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/project-setups",
       "methods": [
         "POST"

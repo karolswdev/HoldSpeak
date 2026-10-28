@@ -1,12 +1,12 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T02:01:26.416852Z",
+  "captured_at": "2026-10-28T18:05:35.870163Z",
   "wire": {
     "answers": [],
     "attempt_events": [
       {
         "from": null,
-        "occurred_at": "2026-10-28T02:01:26.379216Z",
+        "occurred_at": "2026-10-28T18:05:35.817307Z",
         "reason": "created:launch",
         "to": "working"
       }
@@ -27,7 +27,7 @@
         "id": 1,
         "text": "The runbook needs a rollback owner. Jordan or Avery?",
         "tool": null,
-        "ts": "2026-10-28T02:01:26.377742Z"
+        "ts": "2026-10-28T18:05:35.815101Z"
       }
     ],
     "events_next_after": null,
@@ -43,7 +43,7 @@
     "last_words": null,
     "launch": {
       "agent": "claude",
-      "attempt_id": "att_b816ef4593254069",
+      "attempt_id": "att_181d366bf7fb40c3",
       "branch": "hs/action-m-cutover-a0",
       "brief_sent_at": null,
       "brief_text": null,
@@ -52,7 +52,7 @@
       "gate": "gated",
       "instruction_state": "sent",
       "launch_id": "launch_c4_runbook",
-      "launched_at": "2026-10-28T01:31:26.379197Z",
+      "launched_at": "2026-10-28T17:35:35.817275Z",
       "origin_ref": {
         "id": "m-cutover-a0",
         "kind": "action"
@@ -69,14 +69,14 @@
       "worktree_path": null
     },
     "session": {
-      "created_at": "2026-10-28T02:01:26.377742Z",
+      "created_at": "2026-10-28T18:05:35.815101Z",
       "event_count": 1,
       "last_assistant_text": null,
       "last_tool_name": null,
       "lifecycle": "waiting",
       "model": null,
       "state": "waiting",
-      "updated_at": "2026-10-28T02:01:26.377742Z"
+      "updated_at": "2026-10-28T18:05:35.815101Z"
     },
     "usage": null,
     "used": {
@@ -89,14 +89,14 @@
       "draft": null,
       "kind": "TO ANSWER",
       "question": "The runbook needs a rollback owner. Jordan or Avery?",
-      "started": "2026-10-28T02:01:26.377742Z",
+      "started": "2026-10-28T18:05:35.815101Z",
       "turn_end": "asks",
-      "wait_id": "2026-10-28T02:01:26.377742Z#1",
+      "wait_id": "2026-10-28T18:05:35.815101Z#1",
       "wait_kind": "answer"
     },
     "worktree": {
       "not_read": "the launch has no worktree",
-      "read_at": 1793152886.415689
+      "read_at": 1793210735.8686059
     }
   }
 }

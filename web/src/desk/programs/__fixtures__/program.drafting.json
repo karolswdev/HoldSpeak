@@ -1,0 +1,250 @@
+{
+  "asks": 0,
+  "check_command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-28T17:50:12.408303+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 76,
+      "kind": null,
+      "line": "Added 2 steps",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:12.406573+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 75,
+      "kind": null,
+      "line": "Made the program from the Overnight on the home box template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "yolo",
+  "control_word": "YOLO",
+  "created_at": "2026-10-28T17:50:12.406451+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "pi",
+    "engine": {
+      "id": "engine-tailscale-karol-8080",
+      "label": "qwen3.8-27b on karol",
+      "model": "qwen3.8-27b",
+      "short": "qwen"
+    },
+    "profile": "pi-default"
+  },
+  "done": 0,
+  "for_person_id": null,
+  "goal": "Calls on the home box.",
+  "id": "program-a4a1fa396eb2",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-10-28T17:50:12.408303+00:00",
+    "by": "owner",
+    "choice": null,
+    "id": 76,
+    "kind": null,
+    "line": "Added 2 steps",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "note_id": "program-program-a4a1fa396eb2",
+  "note_window": "pullout:note:program-program-a4a1fa396eb2",
+  "origin_ref": null,
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "prefer_idle": true,
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/app"
+  },
+  "reviewer": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default"
+  },
+  "revision": 1,
+  "spend_limit_usd": null,
+  "state": "drafting",
+  "state_word": "Drafting",
+  "status_line": "Drafting · 0 of 2 done · check: fake_program_check.sh · control YOLO",
+  "steps": [
+    {
+      "after": [],
+      "agent": "pi",
+      "branch": null,
+      "brief": "Run a call turn on qwen.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "medium",
+      "elapsed": "",
+      "elapsed_seconds": null,
+      "ended_at": null,
+      "engine": {
+        "id": "engine-tailscale-karol-8080",
+        "label": "qwen3.8-27b on karol",
+        "model": "qwen3.8-27b",
+        "short": "qwen"
+      },
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "agent",
+        "review_depth": "delta"
+      },
+      "held_reason": null,
+      "id": "step-27fdade15269",
+      "last_checkpoint": null,
+      "launch_id": null,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": true,
+      "profile": "pi-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "started_at": null,
+      "state": "planned",
+      "state_word": "Planned",
+      "station": -1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "The call runner",
+      "updated_at": "2026-10-28T17:50:12.408109+00:00",
+      "worktree": null
+    },
+    {
+      "after": [
+        1
+      ],
+      "agent": "pi",
+      "branch": null,
+      "brief": "Draw the call.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "medium",
+      "elapsed": "",
+      "elapsed_seconds": null,
+      "ended_at": null,
+      "engine": {
+        "id": "engine-tailscale-karol-8080",
+        "label": "qwen3.8-27b on karol",
+        "model": "qwen3.8-27b",
+        "short": "qwen"
+      },
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "agent",
+        "review_depth": "delta"
+      },
+      "held_reason": null,
+      "id": "step-2631b41e01e8",
+      "last_checkpoint": null,
+      "launch_id": null,
+      "ordinal": 2,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": true,
+      "profile": "pi-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "started_at": null,
+      "state": "planned",
+      "state_word": "Planned",
+      "station": -1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "The calls window",
+      "updated_at": "2026-10-28T17:50:12.408109+00:00",
+      "worktree": null
+    }
+  ],
+  "template": "overnight",
+  "title": "Calls on the home box",
+  "total": 2,
+  "updated_at": "2026-10-28T17:50:12.408366+00:00",
+  "your_turn": 0,
+  "your_turn_items": []
+}

@@ -298,6 +298,60 @@ def decision_items(decisions: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
+# ── Programs (2026-10-28): what only the owner can do on a Program ──
+
+
+PROGRAM_SOURCE = "program"
+
+#: The reason token of each Program your-turn kind.
+PROGRAM_WHY = {
+    "merge": "TO MERGE", "finding": "TO DECIDE", "parked": "TO RESUME", "ask_review": "TO ASK",
+    "core": "TO DECIDE", "race": "TO PICK", "add_step": "TO DECIDE", "close": "TO CLOSE",
+}
+
+
+def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The Programs' your-turn items as attention rows: merge asks, findings
+    left after two rounds, steps the engine parked, a person to ask for a
+    review. An agent's question is NOT here: the coder row carries it
+    (``coder_items``). The group is the Program's title; each verb is a
+    REST decide call (``POST /api/programs/{id}/steps/{sid}/decide``)."""
+    rows: list[dict[str, Any]] = []
+    for item in items:
+        kind = str(item.get("kind") or "")
+        if kind not in PROGRAM_WHY or not item.get("program_id") or not (item.get("step_id") or kind == "close"):
+            continue
+        ref = f"{PROGRAM_SOURCE}:{item['program_id']}:{item['id']}"
+        since = str(item.get("since") or "")
+        rows.append({
+            "id": ref,
+            "ref": ref,
+            "projectId": str(item.get("project_id") or ""),
+            "projectName": "",
+            "title": str(item.get("title") or "Program"),
+            "why": PROGRAM_WHY[kind],
+            "ageToken": since,
+            "since": since,
+            "dueAt": None,
+            "dueWord": "now",
+            "kind": PROGRAM_SOURCE,
+            "source": PROGRAM_SOURCE,
+            "verbHref": None,
+            "openRef": f"program:{item['program_id']}",
+            "severity": "warning",
+            "group": str(item.get("program_title") or ""),
+            "program": {
+                "programId": str(item["program_id"]), "stepId": str(item["step_id"]),
+                "ordinal": item.get("ordinal"), "kind": kind, "choices": list(item.get("choices") or []),
+                "findingId": item.get("finding_id"), "pr": item.get("pr"),
+                "decide": (f"/api/programs/{item['program_id']}/close" if kind == "close"
+                           else f"/api/programs/{item['program_id']}/steps/{item['step_id']}/decide"),
+            },
+            "personId": item.get("for_person_id") or None,
+        })
+    return rows
+
+
 # ── R5: the coding agents that wait for the owner's answer ──────────
 
 
@@ -1031,7 +1085,7 @@ def fold_asks(items: list[dict[str, Any]], flights: Iterable[dict[str, Any]]) ->
 #: engine or a connection is missing (the blockers, a failed summary).
 DIRECTIONS: tuple[str, ...] = ("mine", "theirs", "decide", "setup")
 
-_DECIDE_SOURCES = frozenset({DECISION_SOURCE, CODER_SOURCE, GATE_SOURCE})
+_DECIDE_SOURCES = frozenset({DECISION_SOURCE, CODER_SOURCE, GATE_SOURCE, PROGRAM_SOURCE})
 
 
 def row_direction(row: dict[str, Any], is_me: Callable[[dict[str, Any]], bool]) -> str:
@@ -1103,6 +1157,7 @@ def compute_needs_you(
     gate_holds: Iterable[dict[str, Any]] = (),
     flights: Iterable[dict[str, Any]] = (),
     send_items: Iterable[dict[str, Any]] = (),
+    programs: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     known_people: Iterable[str] | None = None,
@@ -1198,7 +1253,7 @@ def compute_needs_you(
         coder_items(coders, clock), gate_items(holds, clock), holds, clock,
     )
     helper_rows = helper_request_items(flights, clock)
-    singles = people + decision_items(decisions) + coder_rows + gate_rows + helper_rows
+    singles = people + decision_items(decisions) + coder_rows + gate_rows + helper_rows + program_items(programs)
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -1959,6 +2014,16 @@ def compose(
     except Exception as exc:
         log.warning("needs-you: the flight read failed: %s", exc)
 
+    # Programs (2026-10-28): merge asks, findings left, parked steps.
+    programs: list[dict[str, Any]] = []
+    try:
+        from .program_service import default_program_service
+
+        programs = default_program_service(db).needs_you_items()
+    except Exception as exc:
+        log.warning("needs-you: the program read failed: %s", exc)
+        errors["programs"] = _reason(exc)
+
     result = compute_needs_you(
         door=door,
         room_items=room_items,
@@ -1972,6 +2037,7 @@ def compose(
         gate_holds=gate_holds,
         flights=flights,
         send_items=send_items,
+        programs=programs,
         self_names=names,
         personal_names=personal,
         known_people=known_people,

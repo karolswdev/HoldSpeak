@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 85  # informational; 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
+SCHEMA_VERSION = 86  # informational; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -5182,4 +5182,92 @@ CREATE TABLE IF NOT EXISTS note_outcomes (
     confirmed_at TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_note_outcomes_note ON note_outcomes(note_id, ordinal);
+-- Programs (2026-10-28, docs/internal/betterment/programs/): a goal cut into
+-- steps; each step is one agent launch in one worktree, checked by a verified
+-- log, reviewed, and merged on the owner's press or by delegation. The
+-- engine (services/program_runner.py) is the only writer of the states.
+CREATE TABLE IF NOT EXISTS programs (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    goal_markdown TEXT NOT NULL DEFAULT '',
+    project_id TEXT,
+    repo_root TEXT NOT NULL DEFAULT '',
+    base_branch TEXT NOT NULL DEFAULT 'main',
+    control TEXT NOT NULL DEFAULT 'normal',
+    spend_limit_usd REAL,
+    check_command TEXT,
+    reviewer_profile TEXT,
+    reviewer_engine TEXT,
+    default_profile TEXT NOT NULL DEFAULT 'claude-default',
+    default_engine TEXT,
+    prefer_idle INTEGER NOT NULL DEFAULT 0,
+    template TEXT NOT NULL DEFAULT '',
+    origin_ref TEXT,
+    for_person_id TEXT,
+    created_by TEXT NOT NULL DEFAULT 'owner',
+    state TEXT NOT NULL DEFAULT 'drafting',
+    note_id TEXT,
+    closed_at TEXT,
+    revision INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS program_steps (
+    id TEXT PRIMARY KEY,
+    program_id TEXT NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
+    ordinal INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    brief_markdown TEXT NOT NULL DEFAULT '',
+    owns_json TEXT NOT NULL DEFAULT '[]',
+    after_json TEXT NOT NULL DEFAULT '[]',
+    profile TEXT,
+    engine TEXT,
+    prefer_idle INTEGER NOT NULL DEFAULT 0,
+    effort TEXT NOT NULL DEFAULT 'medium',
+    race INTEGER NOT NULL DEFAULT 0,
+    race_of TEXT,
+    gate_check INTEGER NOT NULL DEFAULT 1,
+    gate_review TEXT NOT NULL DEFAULT 'none',
+    review_depth TEXT NOT NULL DEFAULT 'delta',
+    gate_merge TEXT NOT NULL DEFAULT 'owner',
+    state TEXT NOT NULL DEFAULT 'planned',
+    held_reason TEXT,
+    launch_id TEXT,
+    worktree TEXT,
+    branch TEXT,
+    head_commit TEXT,
+    checked_commit TEXT,
+    pr_url TEXT,
+    pr_number INTEGER,
+    check_log TEXT,
+    check_verdict TEXT,
+    facts_json TEXT NOT NULL DEFAULT '{}',
+    review_verdict TEXT,
+    findings_json TEXT NOT NULL DEFAULT '[]',
+    report TEXT,
+    rounds INTEGER NOT NULL DEFAULT 0,
+    parked_reason TEXT,
+    parked_by TEXT,
+    origin_ref TEXT,
+    for_person_id TEXT,
+    started_at TEXT,
+    ended_at TEXT,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_program_steps_program ON program_steps(program_id, ordinal);
+CREATE TABLE IF NOT EXISTS program_checkpoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    step_id TEXT NOT NULL,
+    program_id TEXT NOT NULL,
+    at TEXT NOT NULL,
+    by_kind TEXT NOT NULL,
+    line TEXT NOT NULL,
+    operation_id TEXT,
+    kind TEXT,
+    choice TEXT,
+    rule TEXT,
+    overturnable INTEGER NOT NULL DEFAULT 0,
+    overturned_at TEXT,
+    undo_json TEXT NOT NULL DEFAULT '{}'
+);
 """

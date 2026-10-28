@@ -1,0 +1,373 @@
+{
+  "asks": 0,
+  "check_command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-28T17:50:11.740735+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 62,
+      "kind": null,
+      "line": "The program is done",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.740631+00:00",
+      "by": "engine",
+      "choice": "close",
+      "id": 61,
+      "kind": "program_done",
+      "line": "Closed the program: every step is finished",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal: the engine closes a finished program",
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.740034+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 60,
+      "kind": null,
+      "line": "Merged #104",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-3e25a3565c48",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.738031+00:00",
+      "by": "engine",
+      "choice": "merge",
+      "id": 59,
+      "kind": "merge",
+      "line": "Merged PR #104 of step 1 (check green)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal merges on a green check and a passed review",
+      "step_id": "step-3e25a3565c48",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.733965+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 58,
+      "kind": null,
+      "line": "Opened PR #104",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-3e25a3565c48",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.563135+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 57,
+      "kind": null,
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-3e25a3565c48/.tmp/program-check/step-3e25a3565c48/20261028T175011Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-3e25a3565c48",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.462321+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 56,
+      "kind": null,
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-3e25a3565c48",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.461817+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 55,
+      "kind": null,
+      "line": "New commit c5294db7; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-3e25a3565c48",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.356128+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 54,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-3e25a3565c48",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-3e25a3565c48",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.185476+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 53,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.184366+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 52,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.183107+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 51,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": "2026-10-28T17:50:11.740567+00:00",
+  "control": "normal",
+  "control_word": "Normal",
+  "created_at": "2026-10-28T17:50:11.182901+00:00",
+  "decided_for_you": [
+    {
+      "at": "2026-10-28T17:50:11.740631+00:00",
+      "choice": "close",
+      "id": 61,
+      "kind": "program_done",
+      "line": "Closed the program: every step is finished",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal: the engine closes a finished program",
+      "step_id": null
+    },
+    {
+      "at": "2026-10-28T17:50:11.738031+00:00",
+      "choice": "merge",
+      "id": 59,
+      "kind": "merge",
+      "line": "Merged PR #104 of step 1 (check green)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal merges on a green check and a passed review",
+      "step_id": "step-3e25a3565c48"
+    }
+  ],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default"
+  },
+  "done": 1,
+  "done_in": "under a minute",
+  "for_person_id": null,
+  "goal": "Wave 6 of the atlas.",
+  "id": "program-3326df04493f",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-10-28T17:50:11.740735+00:00",
+    "by": "engine",
+    "choice": null,
+    "id": 62,
+    "kind": null,
+    "line": "The program is done",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "note_id": "program-program-3326df04493f",
+  "note_window": "pullout:note:program-program-3326df04493f",
+  "origin_ref": null,
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "prefer_idle": false,
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/app"
+  },
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 3,
+  "spend_limit_usd": null,
+  "state": "done",
+  "state_word": "Done",
+  "status_line": "Done · 1 of 1 done · check: fake_program_check.sh · control Normal",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/wave-6-of-the-atlas/1-atlas-anchors",
+      "brief": "Cite each anchor once.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "commit": "c5294db76be7af86824acddf6e7c3a6445e8be0d",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-3e25a3565c48/.tmp/program-check/step-3e25a3565c48/20261028T175011Z.log",
+        "minutes": 0.0,
+        "reasons": [],
+        "running": false,
+        "sections": [
+          {
+            "name": "build",
+            "state": "green"
+          },
+          {
+            "name": "vitest",
+            "state": "green"
+          },
+          {
+            "name": "pytest",
+            "state": "green"
+          },
+          {
+            "name": "sweep",
+            "state": "green"
+          },
+          {
+            "name": "canon",
+            "state": "green"
+          },
+          {
+            "name": "repo",
+            "state": "green"
+          }
+        ],
+        "verdict": "green"
+      },
+      "contenders": [],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": "2026-10-28T17:50:11.739928+00:00",
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "held_reason": null,
+      "id": "step-3e25a3565c48",
+      "last_checkpoint": {
+        "at": "2026-10-28T17:50:11.740034+00:00",
+        "by": "engine",
+        "choice": null,
+        "id": 60,
+        "kind": null,
+        "line": "Merged #104",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "rule": null,
+        "step_id": "step-3e25a3565c48",
+        "undo": {}
+      },
+      "launch_id": "L12",
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": {
+        "number": 104,
+        "url": "https://github.com/acme/app/pull/104"
+      },
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "started_at": "2026-10-28T17:50:11.355705+00:00",
+      "state": "done",
+      "state_word": "Done",
+      "station": 5,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Atlas anchors",
+      "updated_at": "2026-10-28T17:50:11.740159+00:00",
+      "worktree": "hs-program-step-3e25a3565c48"
+    }
+  ],
+  "template": "fast-cycle",
+  "title": "Wave 6 of the atlas",
+  "total": 1,
+  "updated_at": "2026-10-28T17:50:11.740686+00:00",
+  "your_turn": 0,
+  "your_turn_items": []
+}

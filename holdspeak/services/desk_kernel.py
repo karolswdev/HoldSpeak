@@ -90,6 +90,11 @@ def _target(name: str, args: Mapping[str, Any]) -> str:
         return target_ref("note", args.get("note_id"))
     if name.startswith("delegation."):
         return target_ref("agent", args.get("agent_identity"))
+    if name == "program.step":
+        # Programs: the step is the target (the Program when no step).
+        if args.get("step_id"):
+            return target_ref("program_step", args.get("step_id"))
+        return target_ref("program", args.get("program_id"))
     return target_ref("desk", name)
 
 

@@ -97,6 +97,10 @@ class AgentHandRefused(ServiceError):
 def item_exists(db: Any, kind: str, item_id: str) -> bool:
     from ..grounding import hydrate_refs_detailed
 
+    if kind == "program_step":
+        from ..db.programs import ProgramStore
+
+        return ProgramStore(db).get_step(item_id) is not None
     if kind == "issue":
         from .agent_issue import read_issue
 
@@ -113,6 +117,10 @@ def item_title(db: Any, kind: str, item_id: str) -> str:
     """The item's own title (its desk name), or ``""`` when it has none."""
     from ..grounding import hydrate_refs_detailed
 
+    if kind == "program_step":
+        from ..db.programs import ProgramStore
+
+        return str((ProgramStore(db).get_step(item_id) or {}).get("title") or "")
     if kind == "issue":
         from .agent_issue import read_issue
 
@@ -168,6 +176,46 @@ def worktree_spec(kind: str, item_id: str, round_: int = 1, title: str = "") -> 
 
 #: The most hand-offs of one item that get their own worktree name.
 _MAX_ROUNDS = 50
+
+
+def program_step_spec(db: Any, step_id: str) -> Optional[dict[str, str]]:
+    """Programs (design §11): a step's worktree ``hs-program-<step id>`` on the
+    branch ``program/<program slug>/<ordinal>-<step slug>``, from the
+    Program's base branch."""
+    from ..db.programs import ProgramStore
+
+    store = ProgramStore(db)
+    step = store.get_step(step_id)
+    program = store.get_program(step["program_id"]) if step else None
+    if step is None or program is None:
+        return None
+    name = _NAME_UNSAFE.sub("-", f"hs-program-{step_id}").strip("-.")[:64]
+    words = branch_slug(step["title"], 32) or "step"
+    branch = f"program/{branch_slug(program['title'], 32) or 'program'}/{int(step['ordinal'])}-{words}"
+    if step.get("race_of"):
+        branch += f"-{_NAME_UNSAFE.sub('-', step_id)[-6:]}"
+    spec = {"mode": "new", "name": name, "branch": branch}
+    if program.get("base_branch"):
+        spec["start_point"] = str(program["base_branch"])
+    return spec
+
+
+def program_step_source(db: Any, step_id: str, registry: Any) -> Any:
+    """The Delivery Source of a step's Program repository (registered when
+    it is not one yet)."""
+    from ..db.programs import ProgramStore
+
+    store = ProgramStore(db)
+    step = store.get_step(step_id)
+    program = store.get_program(step["program_id"]) if step else None
+    root = str((program or {}).get("repo_root") or "")
+    if not root:
+        return None
+    try:
+        source, _ = registry.register(root, label=Path(root).name)
+    except RegistryError:
+        return None
+    return source
 
 
 def free_worktree_spec(
@@ -346,6 +394,7 @@ class AgentHandService:
         start_point: Optional[str] = None,
         review: Optional[Mapping[str, Any]] = None,
         review_by: Optional[str] = None,
+        engine: Optional[str] = None,
     ) -> dict[str, Any]:
         """Hand the item. A clone this hand made is named on the answer AND on
         a later refusal (the launch can still fail after it): the face shows
@@ -360,7 +409,7 @@ class AgentHandService:
                 principal, kind, item_id, made,
                 instruction=instruction, profile=profile, project_id=project_id,
                 queue=queue, helper_of=helper_of, helper_round=helper_round, review=review, review_by=review_by,
-                start_point=start_point,
+                start_point=start_point, engine=engine,
             )
         except ServiceError as exc:
             if made.get("clone"):
@@ -386,6 +435,7 @@ class AgentHandService:
         start_point: Optional[str] = None,
         review: Optional[Mapping[str, Any]] = None,
         review_by: Optional[str] = None,
+        engine: Optional[str] = None,
     ) -> dict[str, Any]:
         try:
             kind, item_id = parse_item_ref({"kind": kind, "id": item_id})
@@ -400,21 +450,29 @@ class AgentHandService:
         if agent is None:
             raise AgentHandRefused("profile_unknown", f"unknown agent profile {profile_id!r}")
         try:
-            launcher._preflight(agent)
+            if engine:
+                launcher._preflight(agent, str(engine))
+            else:
+                launcher._preflight(agent)
         except LaunchRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
 
         project_id = project_id or project_for_item(self._db, kind, item_id)
         _reload_registry(launcher._registry)
-        try:
-            source = resolve_project_repository(
-                self._db, project_id, launcher._registry, project_map=self._project_map,
-                registrations=self.repositories,
-            )
-        except StoreNotRead as exc:
-            raise AgentHandRefused(exc.code, exc.detail) from exc
+        if kind == "program_step":
+            # Programs: the repository is the Program's own (a path or its
+            # Project's), whatever the Project's Room watches.
+            source = program_step_source(self._db, item_id, launcher._registry)
+        else:
+            try:
+                source = resolve_project_repository(
+                    self._db, project_id, launcher._registry, project_map=self._project_map,
+                    registrations=self.repositories,
+                )
+            except StoreNotRead as exc:
+                raise AgentHandRefused(exc.code, exc.detail) from exc
         clone: Optional[dict[str, Any]] = None
-        if source is None:
+        if source is None and kind != "program_step":
             # PHILO-15 16: the Project's registered repository, cloned on its
             # first hand (one receipt), then registered as a Delivery Source.
             source, clone = self._clone_registered(principal, project_id, launcher._registry)
@@ -428,7 +486,7 @@ class AgentHandService:
             raise AgentHandRefused(
                 "no_repository", "the item's Project names no local repository"
             )
-        spec = free_worktree_spec(
+        spec = (program_step_spec(self._db, item_id) if kind == "program_step" else None) or free_worktree_spec(
             launcher._registry, source.primary_path, kind, item_id, item_title(self._db, kind, item_id),
         )
         parent: Optional[Mapping[str, Any]] = None
@@ -510,16 +568,24 @@ class AgentHandService:
 
         mode = self._control_mode()
         try:
-            brief = compose_agent_brief(
-                self._db,
-                {"kind": kind, "id": item_id},
-                project_id=project_id,
-                instruction=instruction,
-                control_mode=mode,
-                repo_path=source.primary_path,
-                principal=principal,
-                issue_reads=self.issue_reads,
-            )
+            if kind == "program_step" and not helper_of:
+                from .program_brief import compose as compose_program_step
+
+                brief = compose_program_step(
+                    self._db, item_id, control_mode=mode, repo_path=source.primary_path,
+                    worktree=str(worktree_path), branch=spec["branch"],
+                )
+            else:
+                brief = compose_agent_brief(
+                    self._db,
+                    {"kind": kind, "id": item_id},
+                    project_id=project_id,
+                    instruction=instruction,
+                    control_mode=mode,
+                    repo_path=source.primary_path,
+                    principal=principal,
+                    issue_reads=self.issue_reads,
+                )
         except AgentBriefRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
         if isinstance(review, Mapping):
@@ -548,6 +614,8 @@ class AgentHandService:
             "origin_ref": {"kind": kind, "id": item_id},
             **({"helper_of": helper_of} if helper_of else {}),
             **({"review": dict(review)} if isinstance(review, Mapping) else {}),
+            # Programs: a step's Runs on engine (pi only; empty: agent.code).
+            **({"engine_id": str(engine)} if engine and str(agent.get("executable") or "") == "pi" else {}),
         }
         if isinstance(review, Mapping) and str(review.get("role") or "") == "reviewer":
             # The profile's existing option slots enforce read-only process

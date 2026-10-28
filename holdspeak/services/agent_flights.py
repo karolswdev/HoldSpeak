@@ -152,6 +152,24 @@ def _turn_end(session: Any, pr_state: str) -> str:
     return turn_end(session, work_done=pr_state == "open")
 
 
+def _program_of(db: Any, kind: str, item_id: str) -> Optional[dict[str, Any]]:
+    """``{id, title, step_id, step_ordinal}`` of a Program step's launch, else ``None``."""
+    if kind != "program_step" or db is None:
+        return None
+    try:
+        from ..db.programs import ProgramStore
+
+        store = ProgramStore(db)
+        step = store.get_step(item_id)
+        program = store.get_program(step["program_id"]) if step else None
+    except Exception:
+        return None
+    if not step or not program:
+        return None
+    return {"id": program["id"], "title": program["title"], "step_id": step["id"],
+            "step_ordinal": int(step["ordinal"])}
+
+
 def _title_of(db: Any, ref: str) -> str:
     from ..grounding import hydrate_refs_detailed
 
@@ -297,6 +315,8 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "project_name": project_name,
         "agent": _agent_of(record),
         "state": state,
+        # Programs (2026-10-28): the step this agent works ("Step 4 of ...").
+        "program": _program_of(db, kind, item_id),
         # PHILO-15 B48: how a waiting agent's turn ended (``asks`` /
         # ``idle`` / ``done``); IDLE is a lamp, never a Needs you row.
         # PHILO-15 B48 (lane 14) and 15: the responder's record of the

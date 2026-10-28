@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T02:01:25.979577Z",
+  "captured_at": "2026-10-28T18:05:39.673334Z",
   "wire": {
     "proposals": [
       {
@@ -10,11 +10,11 @@
         "args_hidden": 90,
         "args_sha256": "7af555d734f240dc818edfcf752d27af068a3b20c2cb3a5c9a562ea1cf3a2293",
         "args_shown": "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
-        "created_at": 1793152885.820587,
+        "created_at": 1793210739.515265,
         "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
         "decided_at": null,
         "decided_by": null,
-        "expires_at": 1793156485.820587,
+        "expires_at": 1793214339.515265,
         "hold_reason": "OUTSIDE THE WORKTREE",
         "id": "toolu_cut",
         "operation": {
@@ -29,8 +29,8 @@
           "effect_class": "agent/tool_call_hold",
           "family": "tool_gate",
           "fixed_destination": true,
-          "kernel_operation_id": "op_3b044381bf364dce86fbdc5d409cecde",
-          "operation_id": "op_3b044381bf364dce86fbdc5d409cecde",
+          "kernel_operation_id": "op_b8f3643d41a04583bb45059de9207413",
+          "operation_id": "op_b8f3643d41a04583bb45059de9207413",
           "project_scope": null,
           "resource_scope": "Bash",
           "tool_call": {
@@ -85,11 +85,11 @@
         "args_hidden": 65927,
         "args_sha256": "05f72db5a00f49b0c4b6b8a6785de9a64ae049f9385c86c665c0c26722e8042d",
         "args_shown": "cat > /tmp/hs_huge.txt <<'EOF'\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "created_at": 1793152885.833241,
+        "created_at": 1793210739.528779,
         "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
         "decided_at": null,
         "decided_by": null,
-        "expires_at": 1793156485.833241,
+        "expires_at": 1793214339.528779,
         "hold_reason": "OUTSIDE THE WORKTREE",
         "id": "toolu_cut_huge",
         "operation": {
@@ -104,8 +104,8 @@
           "effect_class": "agent/tool_call_hold",
           "family": "tool_gate",
           "fixed_destination": true,
-          "kernel_operation_id": "op_20cabe829ce74313b2f0e15f0c874c4c",
-          "operation_id": "op_20cabe829ce74313b2f0e15f0c874c4c",
+          "kernel_operation_id": "op_806f9460fbe141cc8f8835f6a61d32e2",
+          "operation_id": "op_806f9460fbe141cc8f8835f6a61d32e2",
           "project_scope": null,
           "resource_scope": "Bash",
           "tool_call": {

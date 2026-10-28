@@ -519,7 +519,8 @@ from .workbench_templates import MORNING_PREP_ID as _MORNING_PREP_ID  # noqa: E4
 
 
 class WorkbenchConductor:
-    """Background scheduler that checks for due workbenches every 60 seconds."""
+    """Background scheduler: due workbenches every 60 seconds, the Programs
+    engine every 30 seconds."""
 
     def __init__(self) -> None:
         self._stop = threading.Event()
@@ -541,12 +542,27 @@ class WorkbenchConductor:
         log.info("Workbench conductor stopped")
 
     def _loop(self) -> None:
+        last = 0.0
         while not self._stop.is_set():
-            try:
-                self._tick()
-            except Exception as exc:
-                log.error(f"Conductor tick failed: {exc}", exc_info=True)
-            self._stop.wait(60)
+            # The scheduled runs every 60 s; the Programs engine every 30 s
+            # (Programs design §6). ``HOLDSPEAK_PROGRAMS=off`` ticks nothing.
+            if time.monotonic() - last >= 59:
+                last = time.monotonic()
+                try:
+                    self._tick()
+                except Exception as exc:
+                    log.error(f"Conductor tick failed: {exc}", exc_info=True)
+            self._tick_programs()
+            self._stop.wait(30)
+
+    def _tick_programs(self) -> None:
+        """One Programs pass (``services/program_runner.tick``)."""
+        try:
+            from .services.program_runner import tick as program_tick
+
+            program_tick()
+        except Exception as exc:
+            log.error(f"Programs tick failed: {exc}", exc_info=True)
 
     def _tick(self) -> None:
         """One pass (scheduled runs, watches, reactions, the steward drain).
