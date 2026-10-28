@@ -742,6 +742,8 @@ function WorkspaceReady({
         statusWords ? {
           key: "save",
           lamp: statusWords.tone === "danger" ? "fail" : statusWords.tone === "busy" ? "info" : "ok",
+          /* DELIGHT: each save pulses the lamp once (the kept time changes). */
+          pulse: statusWords.tone === "ok" ? writer.keptAt ?? null : null,
           text: <span className="thought-note-status" data-tone={statusWords.tone === "danger" ? "danger" : undefined} data-lamp={statusWords.tone}>{statusWords.text}</span>,
         } : null,
         working ? { key: "working", lamp: "info", text: "Working" } : null,

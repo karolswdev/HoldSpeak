@@ -245,9 +245,12 @@ export function CatalogRail({
   runRefusal,
   narrowed,
   emptyImage,
+  onEmptyAction,
 }: {
   /** The app's illustrated icon for the empty list (one true line under it). */
   emptyImage?: string;
+  /** DELIGHT (2026-10-27): the empty list's one verb (Import a recording). */
+  onEmptyAction?: () => void;
   meetingRows: Record<string, unknown>[];
   meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
   /** The selected row (the list's own selection; it opens nothing). */
@@ -303,6 +306,9 @@ export function CatalogRail({
         /* UX-CANON A.3: an empty state is ONE true line with the next move. */
         emptyLabel="Record or import a meeting"
         emptyImage={emptyImage}
+        emptyKind="meeting"
+        onAction={onEmptyAction}
+        actionLabel="Import a recording"
         onRetry={() => void meetings.reload()}
       >
         <ObjectList

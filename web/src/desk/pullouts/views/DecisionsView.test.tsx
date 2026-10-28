@@ -134,6 +134,29 @@ describe("Intelligence → Decisions (PHILO-17: every decision, its date and its
     expect(screen.queryByTestId("decisions-more")).toBeNull();
   });
 
+  it("DELIGHT: each row names its kind for its hue; an empty desk is the decision object, one line, New decision", async () => {
+    const { container, unmount } = render(<DecisionsView windowed />);
+    expect((await screen.findAllByTestId("decisions-row")).length).toBeGreaterThan(0);
+    for (const row of container.querySelectorAll("[data-testid=decisions-row]")) expect(row.getAttribute("data-kind")).toBe("decision");
+    unmount();
+    apiFetch.mockImplementation((path: string) => path.startsWith("/api/decisions?")
+      ? Promise.resolve({ decisions: [], page: { total: 0 } }) : hub(path));
+    const createPrimitive = vi.fn(async () => undefined);
+    const before = useDesk.getState().createPrimitive;
+    useDesk.setState({ createPrimitive } as never);
+    try {
+      const empty = render(<DecisionsView windowed />);
+      const line = await screen.findByText("No decisions yet");
+      expect(line.className).toBe("surface-state-line");
+      expect(empty.container.querySelector(".surface-state-object")?.getAttribute("data-kind")).toBe("decision");
+      const verbs = screen.getAllByRole("button", { name: /New decision/ });
+      fireEvent.click(verbs[verbs.length - 1]);
+      expect(createPrimitive).toHaveBeenCalledWith("decision", {});
+    } finally {
+      useDesk.setState({ createPrimitive: before } as never);
+    }
+  });
+
   it("the hub searches; Current only asks the hub for standing decisions", async () => {
     render(<DecisionsView />);
     await screen.findByText("Keep the old ledger");
