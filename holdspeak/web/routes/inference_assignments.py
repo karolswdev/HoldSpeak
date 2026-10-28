@@ -51,7 +51,7 @@ def build_inference_assignments_router(ctx: WebContext) -> APIRouter:
         return body
 
     @router.get("/api/inference/assignments")
-    async def get_assignments(request: Request) -> Any:
+    def get_assignments(request: Request) -> Any:
         try:
             _owner(request)
             return service.assignment_summary(request.state.principal)

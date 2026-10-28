@@ -22,7 +22,7 @@ def build_workflows_router(ctx:WebContext)->APIRouter:
   from ....db import get_database,get_observer
   return PrimitiveService(get_database(),observer=get_observer())
  @router.get("/api/workflows")
- async def list_(request:Request):return JSONResponse({"workflows":svc().list_workflows(p(request))})
+ def list_(request:Request):return JSONResponse({"workflows":svc().list_workflows(p(request))})
  @router.post("/api/workflows")
  async def create(request:Request):
   body=await _json_body(request)
@@ -30,7 +30,7 @@ def build_workflows_router(ctx:WebContext)->APIRouter:
   try:return JSONResponse({"workflow":svc().create_workflow(p(request),workflow_id=str(body.get("id") or "") or None,name=str(body.get("name") or ""),prompt=str(body.get("prompt") or ""),graph_json=dict(body.get("graph_json") or {}))},status_code=201)
   except (ValidationError,ValueError) as exc:return JSONResponse({"error":str(exc)},status_code=400)
  @router.get("/api/workflows/{workflow_id}")
- async def get_(workflow_id:str,request:Request):
+ def get_(workflow_id:str,request:Request):
   try:return JSONResponse({"workflow":svc().get_workflow(p(request),workflow_id)})
   except NotFound:return JSONResponse({"error":f"Unknown workflow: {workflow_id}"},status_code=404)
  @router.put("/api/workflows/{workflow_id}")
@@ -40,7 +40,7 @@ def build_workflows_router(ctx:WebContext)->APIRouter:
   try:return JSONResponse({"workflow":svc().update_workflow(p(request),workflow_id,name=body.get("name"),prompt=body.get("prompt"),graph_json=body.get("graph_json"))})
   except NotFound:return JSONResponse({"error":f"Unknown workflow: {workflow_id}"},status_code=404)
  @router.delete("/api/workflows/{workflow_id}")
- async def delete(workflow_id:str,request:Request):
+ def delete(workflow_id:str,request:Request):
   try:svc().delete_workflow(p(request),workflow_id);return JSONResponse({"success":True})
   except NotFound:return JSONResponse({"error":f"Unknown workflow: {workflow_id}"},status_code=404)
  @router.post("/api/workflows/{workflow_id}/run")
@@ -64,7 +64,7 @@ def build_workflows_router(ctx:WebContext)->APIRouter:
   except ServiceError as exc:return JSONResponse({"error":str(exc),**dict(exc.context or {})},status_code=int((exc.context or {}).get("status",500)))
   except Exception as exc:return error_500(exc,log,"Failed to run workflow")
  @router.post("/api/workflows/runs/{parent_operation_id}/cancel")
- async def cancel(parent_operation_id:str,request:Request):
+ def cancel(parent_operation_id:str,request:Request):
   try:
    from ....db import get_database
    from ....kernel.runtime import _configure

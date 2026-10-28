@@ -44,7 +44,7 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
         return getattr(request.state, "principal", None)
 
     @router.get("/api/notes")
-    async def api_list_notes(request: Request) -> Any:
+    def api_list_notes(request: Request) -> Any:
         try:
             tag = request.query_params.get("tag")
             args = {"tag": tag} if tag is not None else {}
@@ -73,7 +73,7 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create note")
 
     @router.get("/api/notes/{note_id}")
-    async def api_get_note(note_id: str, request: Request) -> Any:
+    def api_get_note(note_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"note": _ops().invoke(_principal(request), "note.read", {"note_id": note_id})})
         except NotFound:

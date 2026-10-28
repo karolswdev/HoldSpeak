@@ -39,7 +39,7 @@ def build_model_profiles_router() -> APIRouter:
         return service
 
     @router.get("/api/model-profiles")
-    async def api_list_model_profiles(request: Request) -> Any:
+    def api_list_model_profiles(request: Request) -> Any:
         try:
             service = _owner_service(request)
             return JSONResponse(service.list_profiles(_principal(request)))
@@ -61,7 +61,7 @@ def build_model_profiles_router() -> APIRouter:
             return _error(exc)
 
     @router.get("/api/model-profiles/{profile_id}")
-    async def api_get_model_profile(profile_id: str, request: Request) -> Any:
+    def api_get_model_profile(profile_id: str, request: Request) -> Any:
         try:
             service = _owner_service(request)
         except ServiceError as exc:
@@ -93,7 +93,7 @@ def build_model_profiles_router() -> APIRouter:
             return _error(exc)
 
     @router.delete("/api/model-profiles/{profile_id}")
-    async def api_delete_model_profile(profile_id: str, request: Request) -> Any:
+    def api_delete_model_profile(profile_id: str, request: Request) -> Any:
         try:
             service = _owner_service(request)
         except ServiceError as exc:
@@ -141,7 +141,7 @@ def build_model_profiles_router() -> APIRouter:
             return _error(exc)
 
     @router.delete("/api/model-profiles/{profile_id}/binding")
-    async def api_unbind_model_profile(profile_id: str, request: Request) -> Any:
+    def api_unbind_model_profile(profile_id: str, request: Request) -> Any:
         try:
             service = _owner_service(request)
         except ServiceError as exc:
