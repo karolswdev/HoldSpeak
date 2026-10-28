@@ -2805,7 +2805,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         {pageSection("meetings", "Meetings", renderModule("meetings"))}
         {pageSection("notices", "Notices", renderModule("rhythm"))}
         {pageSection("accounts", "Accounts", renderModule("integrations"))}
-        {pageSection("calls", "Calls", moduleId === "calls" ? <CallsSettingsPane highlight={focusHighlight} /> : null)}
+        {pageSection("calls", "Calls", moduleId === "calls" ? <CallsSettingsPane highlight={focusHighlight} onSaved={() => setWrittenAt(new Date().toTimeString().slice(0, 8))} /> : null)}
         {pageSection("agents", "Agents", <>
           {renderModule("agents")}
           <GadgetGroup material="inset" label="Agents act">
@@ -2860,11 +2860,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
             onToggle={() => setGrantReceiptOpen((open) => !open)}
           />
         ) : null}
-        hubWrittenAt={
-          moduleId !== "you" && hub.data.writtenAt != null
-            ? new Date(hub.data.writtenAt * 1000).toTimeString().slice(0, 5)
-            : null
-        }
+        /* W6-A (atlas pass 3, defect 1): the bar says Saved only for a
+           write made in this window. The settings file's own mtime
+           (hub.writtenAt) is any writer's, so at open the bar was
+           "Saved just now" for a save he never made. */
+        hubWrittenAt={null}
       />
     </>
   );
