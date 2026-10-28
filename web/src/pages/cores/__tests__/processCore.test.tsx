@@ -86,6 +86,21 @@ describe("ProcessCore", () => {
     expect(activate).toHaveBeenCalledOnce();
   });
 
+  it("names the engine the hub resolved for an inference placement (W5-WORDS)", () => {
+    const run: ProcessRow = {
+      ...row, operationId: "op_infer", correlationId: "op_infer", kind: "inference.invoke",
+      placement: "node:inference-d380f9fc7c6dc84f", placementLabel: "Studio engine",
+      state: "succeeded", latestEventType: "operation.succeeded",
+    };
+    useProcessWindow.setState({
+      sections: sections.map((section) => section.id === "recently-ended" ? { ...section, rows: [run] } : { ...section, rows: [] }),
+      loading: false, inflight: false, error: "", started: true,
+    });
+    const { container } = render(<ProcessCore />);
+    expect(screen.getByText("You · Studio engine").getAttribute("title")).toBe("owner · node:inference-d380f9fc7c6dc84f");
+    expect(container.textContent).not.toMatch(/inference-d380/);
+  });
+
   it("shows one truthful empty line, then the populated list", () => {
     useProcessWindow.setState({
       sections: sections.map((section) => ({ ...section, rows: [] })),

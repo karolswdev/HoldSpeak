@@ -1,6 +1,6 @@
 /** PHILO-14 C3 — the YOLO hand in one line (board A-3, A-3 at 393).
  *
- *  `<item> → <agent>  Write the cutover comms · [CLAUDE CODE ⇄] · YOLO ·
+ *  `<item> → <agent>  Write the cutover comms · [CLAUDE CODE ⇄] · OPEN THROTTLE ·
  *  hs/write-the-cutover-comms  [Brief ▸] [Cancel] [Hand]`. The agent is a
  *  token the owner flips (PHILO-15 16, B39: CLAUDE CODE ⇄ CODEX). The fact line is
  *  the hub's preview (`POST /api/agent/hand/preview`, no side effect); Brief ▸

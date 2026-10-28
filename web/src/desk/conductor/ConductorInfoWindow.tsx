@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
+import { CONTROL_MODE_LABELS } from "../../lib/productLanguage";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { GetInfo, SurfaceFooter, type GetInfoFacts } from "../surface";
 import { windowName } from "../windowName";
@@ -22,7 +23,11 @@ interface LaunchBlock {
   control_mode?: string | null;
 }
 
-const CONTROL_WORD: Record<string, string> = { safe: "SECURE", secure: "SECURE", normal: "NORMAL", yolo: "YOLO" };
+/** The Control mode in the registry's words (CONTROL_MODE_LABELS): Secure,
+ *  Normal, Open throttle; sentence case in Get Info. */
+const CONTROL_WORD: Record<string, string> = {
+  ...CONTROL_MODE_LABELS, secure: CONTROL_MODE_LABELS.safe, normal: CONTROL_MODE_LABELS.neutral,
+};
 
 /** The launch facts the lane route holds, added to the member's own. */
 export function launchFacts(base: GetInfoFacts, launch: LaunchBlock | null, now: Date = new Date()): GetInfoFacts {
@@ -35,7 +40,7 @@ export function launchFacts(base: GetInfoFacts, launch: LaunchBlock | null, now:
     more: [
       ...(base.more ?? []),
       { key: "launched", word: "Launched", value: madeWord(launch.launched_at, now) },
-      { key: "control", word: "Control", value: CONTROL_WORD[control] ?? control.toUpperCase() },
+      { key: "control", word: "Control", value: CONTROL_WORD[control] ?? control },
     ],
   };
 }

@@ -305,7 +305,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     await waitFor(() => expect(made).toHaveTextContent("Summary made"));
     const attempts = within(made).getByTestId("today-made-attempts");
     // The failed attempt with its outcome; the host only in its title.
-    expect(attempts.textContent).toBe("FAILED");
+    expect(attempts.textContent).toBe("Failed");
     expect(attempts.querySelector("[title]")?.getAttribute("title")).toBe("192.168.1.43 · LAN");
     expect(attempts.querySelector(".gadget-chip-egress")).toBeNull();
     expect(screen.queryByTestId("today-finish")).toBeNull();

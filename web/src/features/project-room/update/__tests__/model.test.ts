@@ -138,7 +138,7 @@ describe("decodeUpdate", () => {
 
 describe("generatorLabel", () => {
   it("labels deterministic", () => {
-    expect(generatorLabel("deterministic")).toBe("Deterministic");
+    expect(generatorLabel("deterministic")).toBe("From the Room's facts");
   });
 
   it("labels model with assignment", () => {
@@ -153,8 +153,8 @@ describe("generatorLabel", () => {
 });
 
 describe("provenancePhrase", () => {
-  it("labels deterministic as 'Deterministic draft'", () => {
-    expect(provenancePhrase("deterministic")).toBe("Deterministic draft");
+  it("labels deterministic as a draft from the Room's facts", () => {
+    expect(provenancePhrase("deterministic")).toBe("Draft from the Room's facts");
   });
   it("labels model as 'Model draft' (no assignment id)", () => {
     expect(provenancePhrase("model:gpt-4o")).toBe("Model draft");
@@ -265,22 +265,22 @@ describe("refChipLabel", () => {
 describe("humanFallbackReason", () => {
   it("humanizes model_unavailable", () => {
     expect(humanFallbackReason("model_unavailable")).toBe(
-      "Model unavailable -- drafted deterministically",
+      "Model unavailable · drafted from the Room's facts",
     );
   });
   it("humanizes no_output", () => {
     expect(humanFallbackReason("no_output")).toBe(
-      "Model produced no output -- drafted deterministically",
+      "Model produced no output · drafted from the Room's facts",
     );
   });
   it("humanizes unparseable_output", () => {
     expect(humanFallbackReason("unparseable_output")).toBe(
-      "Model output unusable -- drafted deterministically",
+      "Model output unusable · drafted from the Room's facts",
     );
   });
   it("handles unknown codes with generic phrasing", () => {
     const result = humanFallbackReason("some_new_code");
-    expect(result).toBe("Fallback: some new code -- drafted deterministically");
+    expect(result).toBe("Fallback: some new code · drafted from the Room's facts");
   });
   it("returns null for null input", () => {
     expect(humanFallbackReason(null)).toBeNull();

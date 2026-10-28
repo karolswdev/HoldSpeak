@@ -2229,14 +2229,15 @@ class TestRoomFaceGlass:
                 self._updates(page, pid)
                 facts = self._facts(page)
                 words = page.evaluate("""() => [...document.querySelectorAll('[data-testid=update-list-item] .update-list-row')]
-                    .map(r => ({lifecycle: r.dataset.lifecycle, tokens: [...r.querySelectorAll('.surface-token')].map(t => t.innerText.trim())}))""")
+                    .map(r => ({lifecycle: r.dataset.lifecycle, tokens: [...r.querySelectorAll('.kit-dotword')].map(t => t.innerText.trim())}))""")
                 pointer = self._pointer(page, width, ["[data-testid=update-list-item] .surface-ledger-line, [data-testid=update-list-item] [role=button]"])
                 _rf_record("update-list", width, {**facts, "row_tokens": words, "pointer": pointer})
                 _rf_shot(page, "update-list-words", width)
                 assert facts["update_list_head"] == "UPDATES 2", facts["update_list_head"]
                 by = {w["lifecycle"]: w["tokens"] for w in words}
-                assert by["published"][:2] == ["PUBLISHED", "REV 1"], by
-                assert by["draft"][:1] == ["DRAFT"], by
+                # W5-WORDS: the state is a dot and a word (`● Published · rev 1`).
+                assert by["published"][:1] == ["Published · rev 1"], by
+                assert by["draft"][0].startswith("Draft · rev "), by
                 assert set(facts["update_emblems"]) == {"▤"}, facts["update_emblems"]
                 assert facts["small_text_count"] == 0, facts["small_text"]
                 assert not errors, errors

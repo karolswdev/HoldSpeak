@@ -87,7 +87,8 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
     const agent = failedFor;
     return (
       <span className="drawer-receipt cw-receipt" data-tone="fail" role="status" data-testid="conductor-install-failed">
-        NOT CONNECTED · {failure}
+        <span className="kit-dot" data-tone="fail" aria-hidden="true" />
+        {plainReceipt(`Not connected · ${failure}`)}
         <Button dense variant="ghost" loading={installing === agent} onClick={() => void useConductor.getState().installHooks(agent)}>
           Retry
         </Button>
@@ -97,19 +98,21 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
   if (stop) {
     return (
       <span className="drawer-receipt cw-receipt" data-tone={stop.tone === "ok" ? undefined : "fail"} role="status" data-testid="conductor-stop-receipt">
-        {stop.word} · {stop.text}
+        <span className="kit-dot" data-tone={stop.tone === "ok" ? "ok" : "fail"} aria-hidden="true" />
+        {stopWords(stop.word, stop.text)}
       </span>
     );
   }
   if (member?.receipt) {
-    return <span className="drawer-receipt cw-receipt" data-testid="conductor-receipt">{member.receipt}</span>;
+    return <span className="drawer-receipt cw-receipt" data-testid="conductor-receipt">{plainReceipt(member.receipt)}</span>;
   }
   // PHILO-15 B35: the install's receipt, beside the agent it installed (or
   // with nothing selected, where the row verb was pressed).
   if (done && (!member || member.detect?.id === done.agent)) {
     return (
       <span className="drawer-receipt cw-receipt" role="status" data-testid="conductor-install-done">
-        CONNECTED · {AGENT_NAME[done.agent].toUpperCase()} · {done.at}
+        <span className="kit-dot" data-tone="ok" aria-hidden="true" />
+        {`Connected · ${AGENT_NAME[done.agent]} · ${done.at}`}
       </span>
     );
   }
@@ -290,6 +293,13 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
     pr: pr ? Number(pr[1]) : null,
     phase: label === "RESUMES" ? "resuming" : label === "STARTS" ? "starting" : null,
   });
+}
+
+/** W5-WORDS: a Stop's receipt in sentence case (`Stopped by you`,
+ *  `Not stopped · pane gone`); the lane's store keeps its own words. */
+export function stopWords(word: string, text: string): string {
+  if (word === "STOPPED" && text === "BY YOU") return "Stopped by you";
+  return plainReceipt([word, text].filter(Boolean).join(" · "));
 }
 
 /** `PR #413 MERGED · ITEM CLOSED` → `PR #413 merged · item closed`. */

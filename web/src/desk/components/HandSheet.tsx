@@ -21,6 +21,7 @@ import {
   SurfaceSection,
 } from "../surface";
 import { countToken } from "../surface/count";
+import { CONTROL_MODE_LABELS } from "../../lib/productLanguage";
 import { useDesk } from "../store";
 import { DeskWindowFrame } from "./DeskWindow";
 import {
@@ -162,10 +163,12 @@ const REVIEW_BY = [
   { value: "pi", label: "pi" },
 ] as const;
 
-/** The Control mode as the owner names it (Settings: Secure, Normal, YOLO). */
+/** The Control mode as the owner names it (Settings: Secure, Normal, Open
+ *  throttle — the registry's words, CONTROL_MODE_LABELS), in this sheet's caps. */
 export function modeWord(mode: string | null | undefined): string {
   const m = String(mode ?? "").toLowerCase();
-  return m === "safe" ? "SECURE" : m === "neutral" ? "NORMAL" : m === "yolo" ? "YOLO" : m.toUpperCase();
+  const label = (CONTROL_MODE_LABELS as Record<string, string>)[m];
+  return (label ?? m).toUpperCase();
 }
 
 /** The brief's size, as the canvas reads it (4.2 KB). */
