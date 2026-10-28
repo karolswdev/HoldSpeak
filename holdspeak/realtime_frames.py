@@ -106,6 +106,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
                                 # payload: {thread_id, message_id, receipt_id, outcome, egress, stats}
     "thread_turn_started",      # a thread turn began streaming
                                 # payload: {thread_id, message_id, user_message_id, model_id, egress}
+    "transcript_pass",          # the live meeting's engine writes or listens
+                                #   (Live slice 3): payload {meeting_id, state:
+                                #   writing|listening, saved_through, saved_at, every}
     "wake_armed",               # the wake word armed its capture window
     "wake_preview",             # a wake capture is held for preview
     "workbench.item_claimed",   # a run took an item

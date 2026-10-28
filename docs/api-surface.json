@@ -3833,6 +3833,16 @@
       ]
     },
     {
+      "path": "/api/meeting/mic-check",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.live",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meeting/start",
       "methods": [
         "POST"

@@ -9,9 +9,10 @@
  * (`meeting.mic_device`, `meeting.system_audio_device`; empty = the system
  * default / Auto), the speech model from the speech setup read
  * (`/api/setup/local-ai` `speech`), and the summary engine from
- * /api/settings/hub (`meetings.engine`, `engineSet`, `summariesOff`). The hub
- * sends no microphone level before a meeting, so the microphone row says
- * Ready (the canvas: "draw Ready until it does"). */
+ * /api/settings/hub (`meetings.engine`, `engineSet`, `summariesOff`).
+ * Live slice 3: the microphone row reads POST /api/meeting/mic-check (one short
+ * sample, the macOS grant read first): the level bars and Hearing, Quiet, or
+ * the refused grant with Allow. */
 import type { ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { openSurfaceOr } from "../../desk/shell";
@@ -19,6 +20,7 @@ import { DotWord, ToolGlyph } from "../../desk/surface/kit";
 import { StringGadget } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
 import { SpeechSetup, type SpeechSetupState } from "../../desk/firstrun/SpeechSetup";
+import { LevelBars, type MicCheck } from "./LiveLevel";
 
 type Tone = "ok" | "warn" | "fail" | "info" | "idle";
 
@@ -46,11 +48,13 @@ function Glyph({ kind }: { kind: "mic" | "speaker" | "transcript" | "summary" })
   );
 }
 
-function ReadyRow({ glyph, name, fact, state, verb, testId }: {
+function ReadyRow({ glyph, name, fact, state, level, verb, testId }: {
   glyph: "mic" | "speaker" | "transcript" | "summary";
   name: string;
   fact?: string;
-  state?: { tone: Tone; word: string } | null;
+  state?: { tone: Tone; word: string; title?: string } | null;
+  /** The heard level: the bars stand in the dot's place (the canvas's Hearing). */
+  level?: number | null;
   verb?: ReactNode;
   testId: string;
 }) {
@@ -59,15 +63,51 @@ function ReadyRow({ glyph, name, fact, state, verb, testId }: {
       <Glyph kind={glyph} />
       <span className="live-ready-name">{name}</span>
       <span className="live-ready-fact">{fact}</span>
-      <span className="live-ready-state">
-        {state ? <DotWord tone={state.tone} data-testid={`${testId}-state`}>{state.word}</DotWord> : null}
+      <span className="live-ready-state" title={state?.title}>
+        {state && typeof level === "number" ? (
+          <span className="kit-dotword live-ready-heard" data-testid={`${testId}-state`}>
+            <LevelBars level={level} label={`${name} level`} />
+            {state.word}
+          </span>
+        ) : state ? (
+          <DotWord tone={state.tone} data-testid={`${testId}-state`}>{state.word}</DotWord>
+        ) : null}
       </span>
       <span className="live-ready-verb">{verb}</span>
     </li>
   );
 }
 
-export function LiveReady({ settings, hub, speech, name, onName }: {
+/** The hub's mic-check answer → the Microphone row's word, its dot, the
+ *  level (only when it listened), and the one verb. */
+function micRow(mic: MicCheck | null): {
+  state: { tone: Tone; word: string; title?: string } | null;
+  level: number | null;
+  verb: "check" | "allow" | null;
+} {
+  if (!mic) return { state: null, level: null, verb: null };
+  const level = typeof mic.level === "number" ? mic.level : null;
+  switch (mic.state) {
+    case "hearing":
+      return { state: { tone: "ok", word: "Hearing" }, level, verb: null };
+    case "quiet":
+      return { state: { tone: "idle", word: "Quiet", title: "The microphone sends no sound. Speak, then check again." }, level, verb: "check" };
+    case "not_allowed":
+      return { state: { tone: "fail", word: "Not allowed", title: "macOS does not let HoldSpeak use the microphone." }, level: null, verb: "allow" };
+    case "not_asked":
+      return { state: { tone: "info", word: "Asks at start", title: "macOS asks for the microphone when the meeting starts." }, level: null, verb: null };
+    case "in_use":
+      return { state: { tone: "info", word: "In use" }, level: null, verb: null };
+    case "failed":
+      return { state: { tone: "fail", word: "No answer", title: mic.error || undefined }, level: null, verb: "check" };
+    default:
+      // `off` (a rig hub) and `unknown` (a grant that could not be read):
+      // nothing was heard, so nothing is claimed.
+      return { state: { tone: "idle", word: "Not checked" }, level: null, verb: null };
+  }
+}
+
+export function LiveReady({ settings, hub, speech, name, onName, mic = null, checkingMic = false, onCheckMic }: {
   /** GET /api/settings */
   settings: Record<string, unknown>;
   /** GET /api/settings/hub */
@@ -75,10 +115,27 @@ export function LiveReady({ settings, hub, speech, name, onName }: {
   speech: SpeechSetupState;
   name: string;
   onName(next: string): void;
+  /** POST /api/meeting/mic-check (Live slice 3); null until it answers. */
+  mic?: MicCheck | null;
+  checkingMic?: boolean;
+  onCheckMic?(): void;
 }) {
+  const micFace = micRow(mic);
+  const micVerb =
+    micFace.verb === "allow" && mic?.settings_url ? (
+      <Button dense variant="secondary" data-testid="live-mic-allow"
+        title="Opens System Settings ▸ Privacy & Security ▸ Microphone on the Mac that runs HoldSpeak"
+        onClick={() => window.location.assign(String(mic.settings_url))}>
+        Allow…
+      </Button>
+    ) : micFace.verb === "check" && onCheckMic ? (
+      <Button dense variant="secondary" data-testid="live-mic-check" loading={checkingMic} onClick={onCheckMic}>
+        Check again
+      </Button>
+    ) : null;
   const meeting = (settings.meeting ?? null) as Record<string, unknown> | null;
   const read = meeting !== null;
-  const mic = presentValue(meeting?.mic_device) || "System default";
+  const micName = presentValue(meeting?.mic_device) || "System default";
   const system = presentValue(meeting?.system_audio_device) || "Auto";
 
   const model = presentValue(speech.status?.speech?.model);
@@ -109,8 +166,8 @@ export function LiveReady({ settings, hub, speech, name, onName }: {
       </div>
       <h3 className="live-ready-cap">It will hear</h3>
       <ul className="live-ready-rows" aria-label="It will hear">
-        <ReadyRow glyph="mic" name="Microphone" fact={read ? mic : undefined}
-          state={read ? { tone: "ok", word: "Ready" } : null} testId="live-ready-mic" />
+        <ReadyRow glyph="mic" name="Microphone" fact={read ? micName : undefined}
+          state={micFace.state} level={micFace.level} verb={micVerb} testId="live-ready-mic" />
         <ReadyRow glyph="speaker" name="System audio" fact={read ? system : undefined}
           state={read ? { tone: "ok", word: "Ready" } : null} testId="live-ready-system" />
       </ul>
