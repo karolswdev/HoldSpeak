@@ -282,6 +282,8 @@ class AgentReviewLoop:
             "builder_commit": commit, "read_only": True,
             "builder": str(builder.get("agent") or builder.get("profile_id") or "builder"),
             "item": dict(item), "acceptance": list(pair.get("acceptance") or []),
+            # Programs: a pi reviewer's engine (the Program's reviewer Runs on).
+            **({"engine": str(pair["engine"])} if pair.get("engine") else {}),
         }
         from .agent_helpers import start_helper
 

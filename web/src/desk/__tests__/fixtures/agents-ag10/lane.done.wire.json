@@ -1,12 +1,12 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T02:01:46.503657Z",
+  "captured_at": "2026-10-28T18:05:36.864590Z",
   "wire": {
     "answers": [],
     "attempt_events": [
       {
         "from": null,
-        "occurred_at": "2026-10-28T02:01:46.482950Z",
+        "occurred_at": "2026-10-28T18:05:36.838614Z",
         "reason": "created:launch",
         "to": "working"
       }
@@ -29,7 +29,7 @@
         "id": 1,
         "text": null,
         "tool": null,
-        "ts": "2026-10-28T02:01:46.468650Z"
+        "ts": "2026-10-28T18:05:36.821323Z"
       },
       {
         "detail": {},
@@ -38,7 +38,7 @@
         "id": 2,
         "text": "the brief",
         "tool": null,
-        "ts": "2026-10-28T02:01:46.469411Z"
+        "ts": "2026-10-28T18:05:36.822461Z"
       },
       {
         "detail": {},
@@ -47,7 +47,7 @@
         "id": 3,
         "text": null,
         "tool": "Bash",
-        "ts": "2026-10-28T02:01:46.470074Z"
+        "ts": "2026-10-28T18:05:36.823420Z"
       },
       {
         "detail": {},
@@ -56,7 +56,7 @@
         "id": 4,
         "text": "Done. The rollback flag now lives in the place you chose, with a test. Branch is ready for review; I did not open a PR.",
         "tool": null,
-        "ts": "2026-10-28T02:01:46.470674Z"
+        "ts": "2026-10-28T18:05:36.824063Z"
       }
     ],
     "events_next_after": null,
@@ -72,7 +72,7 @@
     "last_words": "Done. The rollback flag now lives in the place you chose, with a test. Branch is ready for review; I did not open a PR.",
     "launch": {
       "agent": "claude",
-      "attempt_id": "att_abec8a4ace0e4229",
+      "attempt_id": "att_950ca70561cc4738",
       "branch": "hs/action-m-platform-a0",
       "brief_sent_at": null,
       "brief_text": null,
@@ -81,7 +81,7 @@
       "gate": "gated",
       "instruction_state": "sent",
       "launch_id": "launch_ag0_done",
-      "launched_at": "2026-10-28T01:51:46.482908Z",
+      "launched_at": "2026-10-28T17:55:36.838558Z",
       "origin_ref": {
         "id": "m-platform-a0",
         "kind": "action"
@@ -98,14 +98,14 @@
       "worktree_path": null
     },
     "session": {
-      "created_at": "2026-10-28T02:01:46.468650Z",
+      "created_at": "2026-10-28T18:05:36.821323Z",
       "event_count": 4,
       "last_assistant_text": null,
       "last_tool_name": "Bash",
       "lifecycle": "waiting",
       "model": null,
       "state": "waiting",
-      "updated_at": "2026-10-28T02:01:46.470674Z"
+      "updated_at": "2026-10-28T18:05:36.824063Z"
     },
     "usage": null,
     "used": {
@@ -113,7 +113,7 @@
         {
           "kind": "note",
           "label": "Platform sync notes",
-          "ref": "note:note_824993538a46"
+          "ref": "note:note_7092b1aa4ce5"
         }
       ],
       "prepared": [],
@@ -122,7 +122,7 @@
     "wait": null,
     "worktree": {
       "not_read": "the launch has no worktree",
-      "read_at": 1793152906.5022862
+      "read_at": 1793210736.862998
     }
   }
 }

@@ -6371,9 +6371,10 @@
               "note",
               "meeting",
               "artifact",
-              "issue"
+              "issue",
+              "program_step"
             ],
-            "description": "The item kind. An issue is a Room issue: id <watch_id>.<entity_id>."
+            "description": "The item kind. An issue is a Room issue: id <watch_id>.<entity_id>. A program_step is one step of a Program (the Programs engine hands it)."
           },
           "id": {
             "type": "string",

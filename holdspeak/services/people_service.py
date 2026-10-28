@@ -187,6 +187,8 @@ class PeopleService:
         notes = [self._record_view(item) for item in self._list("grounding_note", relationship_id=relationship_id)]
         view.update({"sessions": sessions, "requests": requests, "commitments": commitments, "owed_to_you": owed_to_you, "notes": notes})
         if db is not None:
+            # Programs (§9b): the person room's Programs line.
+            view["programs"] = self._brief_programs(db, relationship_id, None)
             calendar_context = self._brief_calendar_context(db, record)
             next_event = calendar_context["next_one_on_one"]
             view["next_one_on_one"] = next_event["starts_at"] if next_event else None
@@ -570,7 +572,21 @@ class PeopleService:
             "last_meeting": last_meeting,
             "last_time": last_time,
             "memory": self._brief_memory(db, calendar_context["projects"], owner_aliases),
+            # Programs (2026-10-28, §9b): "To show them" (a step merged since
+            # the last 1:1) and "To ask" (a finding or a review waits on them).
+            "programs": self._brief_programs(db, relationship_id, (last_time or {}).get("started_at")),
         }
+
+    @staticmethod
+    def _brief_programs(db: Any, relationship_id: str, since: Any) -> list[dict[str, Any]]:
+        if db is None:
+            return []
+        try:
+            from .program_service import ProgramService
+
+            return ProgramService(db).for_person(relationship_id, since=str(since) if since else None)
+        except Exception:
+            return []
 
     @staticmethod
     def _brief_memory(

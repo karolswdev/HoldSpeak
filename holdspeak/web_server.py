@@ -1798,6 +1798,10 @@ class MeetingWebServer:
         from .web.routes.calls import build_calls_router
 
         mount_router(app, build_calls_router(web_ctx))
+        # Programs (2026-10-28): a goal cut into steps, each handed to an agent.
+        from .web.routes.programs import build_programs_router
+
+        mount_router(app, build_programs_router(web_ctx))
         mount_router(app, build_project_reviews_router(web_ctx))
         mount_router(app, build_project_door_router(web_ctx))
         mount_router(app, build_project_setup_router(web_ctx))

@@ -262,6 +262,9 @@ def start_helper(
         hand_args["start_point"] = str(start_point)
     if isinstance(review, Mapping):
         hand_args["review"] = dict(review)
+        if review.get("engine"):
+            # Programs: a pi reviewer runs on the engine the Program names.
+            hand_args["engine"] = str(review["engine"])
     answer = hand_service.hand(
         Principal(PrincipalKind.AGENT, f"agent:launch:{caller}"),
         str(origin.get("kind") or ""), str(origin.get("id") or ""), **hand_args,
