@@ -577,11 +577,12 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     <WhoAreYou />
     {empty ? (
       <div className="people-empty" data-testid="people-empty-roster">
-        <SurfaceState empty emptyLabel="People you meet appear here." emptyImage={PEOPLE_SPRITE} />
+        <SurfaceState empty emptyLabel="People you meet appear here." emptyImage={PEOPLE_SPRITE} emptyKind="person"
+          onAction={openAdd} actionLabel="Add person" />
       </div>
     ) : projectFilter && !scoped.length ? (
       <div className="people-empty" data-testid="people-roster-none-linked">
-        <SurfaceState empty emptyLabel="No one linked yet" emptyImage={PEOPLE_SPRITE} />
+        <SurfaceState empty emptyLabel="No one linked yet" emptyImage={PEOPLE_SPRITE} emptyKind="person" />
       </div>
     ) : rows.length ? (
       <div className="people-list" data-testid="people-list">

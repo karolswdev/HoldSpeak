@@ -246,7 +246,8 @@ describe("PeopleCore encrypted local plane", () => {
   it("an unconfigured store is an empty roster: no Set up step, one line (Betterment D6)", async () => {
     stub({ "/api/people/readiness": () => json({ readiness: "unconfigured" }), "/api/people/suggestions": () => json({ suggestions: [] }) });
     render(<PeopleCore />);
-    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.");
+    // DELIGHT (2026-10-27): the one line, then the one verb (Add person).
+    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.Add person");
     expect(screen.queryByText("Set up People")).toBeNull();
     expect(screen.queryByTestId("people-joy-state")).toBeNull();
   });

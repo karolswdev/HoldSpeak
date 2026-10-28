@@ -34,6 +34,9 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   chain: { w: 560, h: 560 },
   workflow: { w: 560, h: 520 },
   kb: { w: 560, h: 420 },
+  // W3-ZONE (atlas 2026-10-27): a zone drawer opens wide enough that its
+  // list rows stay one line (Name · Kind · When).
+  directory: { w: 640, h: 440 },
   // Settings is hosted by SurfaceWindows, but stays in this table so the
   // first-open matrix has one source of truth for every desk room.
   settings: { w: 1040, h: 720 },

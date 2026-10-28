@@ -1430,6 +1430,61 @@
         "doc": "vivid Workbench blue for a selected list row (paper ink 5.3:1)"
       },
       {
+        "name": "--wb-link-ink",
+        "value": "#2f67c8",
+        "doc": "an object named in a note's text: a Project, a pull request, a Jira key, a decision (Note canvas A, 2026-10-27; paper ink 5.3:1)"
+      },
+      {
+        "name": "--wb-person-ink",
+        "value": "#1f7a6b",
+        "doc": "a person named in a note's text (Note canvas A, 2026-10-27; paper ink 5.6:1)"
+      },
+      {
+        "name": "--kind-project",
+        "value": "#3b62c4",
+        "doc": "DELIGHT 2026-10-27, the kind hue of a Project: the Workbench blue of its folder (5.4:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+      },
+      {
+        "name": "--kind-meeting",
+        "value": "#1c78a8",
+        "doc": "DELIGHT 2026-10-27, the kind hue of a meeting: the sky blue of the floor's meeting glow (4.7:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+      },
+      {
+        "name": "--kind-person",
+        "value": "#1f7a6b",
+        "doc": "DELIGHT 2026-10-27, the kind hue of a person: the teal of the person object and the note's person ink (5.0:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+      },
+      {
+        "name": "--kind-decision",
+        "value": "#6a4bc4",
+        "doc": "DELIGHT 2026-10-27, the kind hue of a decision: the violet of its check seal (5.9:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+      },
+      {
+        "name": "--kind-note",
+        "value": "#94620f",
+        "doc": "DELIGHT 2026-10-27, the kind hue of a note: the amber line on its paper (5.1:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+      },
+      {
+        "name": "--kind-pr",
+        "value": "#2b7a4a",
+        "doc": "DELIGHT 2026-10-27, the kind hue of a pull request: merge green (5.1:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+      },
+      {
+        "name": "--kind-action",
+        "value": "#8a5a3d",
+        "doc": "DELIGHT 2026-10-27, the kind hue of an action item: the ember ink (5.6:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+      },
+      {
+        "name": "--kind-agent",
+        "value": "#a84a1c",
+        "doc": "DELIGHT 2026-10-27, the kind hue of an agent: the coder orange (5.5:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+      },
+      {
+        "name": "--kind-other",
+        "value": "var(--wb-sel)",
+        "doc": "DELIGHT 2026-10-27: the kind hue of any other object (the Workbench blue)"
+      },
+      {
         "name": "--wb-row-hover",
         "value": "color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper))",
         "doc": "a list row lifted under the pointer"
@@ -1483,6 +1538,41 @@
         "name": "--desk-dock-active",
         "value": "color-mix(in srgb, var(--wb-sel-vivid) 14%, var(--wb-paper))",
         "doc": "the soft blue plate under the active app's dock label"
+      },
+      {
+        "name": "--desk-dock-glass",
+        "value": "rgba(30, 43, 58, 0.72)",
+        "doc": "the floating dock (2026-10-26): the floor's slate as glass, not paper"
+      },
+      {
+        "name": "--desk-dock-glass-solid",
+        "value": "#222f3e",
+        "doc": "the dock glass as one opaque tone, for the phone shelf's sticky gutter cover"
+      },
+      {
+        "name": "--desk-dock-glass-rule",
+        "value": "rgba(233, 238, 245, 0.16)",
+        "doc": "the dock plate's 1 px rim and the rule before the seated windows"
+      },
+      {
+        "name": "--desk-dock-glass-shade",
+        "value": "0 10px 30px rgba(8, 14, 22, 0.45), 0 2px 6px rgba(8, 14, 22, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+        "doc": "the dock plate's shadow on the floor and its top shine"
+      },
+      {
+        "name": "--desk-dock-glass-ink",
+        "value": "#e9eef5",
+        "doc": "paper ink on the dock glass (the running dot, the offline tag)"
+      },
+      {
+        "name": "--desk-dock-tile-plate",
+        "value": "rgba(233, 238, 245, 0.1)",
+        "doc": "the soft plate under the front app's tile and a tile under the pointer"
+      },
+      {
+        "name": "--desk-dock-tile-plate-strong",
+        "value": "rgba(233, 238, 245, 0.16)",
+        "doc": "the front app's tile under the pointer"
       },
       {
         "name": "--desk-chrome-badge-on",

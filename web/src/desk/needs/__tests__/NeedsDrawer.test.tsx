@@ -286,6 +286,25 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     });
   });
 
+  it("DELIGHT: Done settles the row out, then the list reads again; a row the hub still holds shows again", async () => {
+    const media = vi.fn((query: string) => ({ matches: query.includes("no-preference"), media: query,
+      addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }));
+    vi.stubGlobal("matchMedia", media);
+    try {
+      await mount();
+      const sam = row("Sam: send the status by Thursday");
+      const reads = () => vi.mocked(apiFetch).mock.calls.filter(([path]) => String(path).startsWith("/api/desk/needs-you")).length;
+      const before = reads();
+      fireEvent.click(within(sam).getByRole("button", { name: /^Done/ }));
+      await waitFor(() => expect(sam.getAttribute("data-settle")).toBe("done"));
+      expect(vi.mocked(apiFetch).mock.calls.some(([path]) => String(path).includes("follow-through"))).toBe(true);
+      await waitFor(() => expect(reads()).toBeGreaterThan(before));
+      await waitFor(() => expect(row("Sam: send the status by Thursday").hasAttribute("data-settle")).toBe(false));
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("an item an agent works names the agent and never reads UNASSIGNED", async () => {
     await mount();
     const worked = face(row("Write the rollback runbook"));
