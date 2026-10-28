@@ -835,7 +835,9 @@ describe("A7: home, New automation and starters", () => {
     expect(row).toHaveTextContent(/Every Friday at 15:00/i);
     expect(row).toHaveTextContent(/Claude Code/i);
     expect(row).toHaveTextContent(/Off/i);
-    expect(within(row).getByTestId("automation-home-result").textContent).toMatch(/^New/);
+    // W4 (the words): one state word from the result's status; a result not
+    // opened yet is the warm dot and the status bar's `1 new`.
+    expect(within(row).getByTestId("automation-home-result").textContent).toMatch(/^Done/);
     expect(row.textContent).not.toMatch(/0 NEW|ITEM|PENDING|RECENT RUNS/);
     // The status bar says the count and what is new, never a zero.
     expect(screen.getByTestId("automation-home-count")).toHaveTextContent("1 automation");

@@ -44,6 +44,9 @@ import {
   coverageGroupFace,
   needFace,
   needFaces,
+  foldMatches,
+  matchWords,
+  type NeedEntry,
   needsHead,
   nextWord,
   NO_CHIPS,
@@ -805,6 +808,42 @@ function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; pri
   );
 }
 
+/** Window Program W4 (the words): the meetings that say one Project's word
+ *  are one row (`13 mentions of cutover`); Show lists each meeting under it
+ *  by its own title, Hide folds them again. */
+function MatchRows({ entry, firstId, projects }: {
+  entry: Extract<NeedEntry, { kind: "match" }>;
+  firstId: string | null;
+  projects: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const name = matchWords(entry.faces.length, entry.word);
+  const project = projects && entry.project ? entry.project : null;
+  return (
+    <>
+      <NeedsRow
+        id={`match:${entry.key}`}
+        kind="meeting"
+        name={name}
+        lamp={{ label: "Not in the Project", tone: entry.faces[0]?.lamp.tone ?? "info" }}
+        sprite={needsRowSprite(entry.faces[0])}
+        glyphLabel="Meetings"
+        dotState
+        project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
+        verbs={(
+          <Button dense variant="secondary" aria-label={`${open ? "Hide" : "Show"}: ${name}`} aria-expanded={open}
+            data-testid="needs-match-toggle" onClick={() => setOpen((was) => !was)}>
+            {open ? "Hide ▴" : "Show ▾"}
+          </Button>
+        )}
+      />
+      {open ? entry.faces.map((face) => (
+        <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={projects} plates={false} />
+      )) : null}
+    </>
+  );
+}
+
 /** PHILO-15-09 (B12): every row says what it is. With the glyph leading
  *  (window grammar) the word is the glyph's name: its alt and its title. */
 const GLYPH_WORDS: Record<string, string> = {
@@ -1257,8 +1296,10 @@ export function NeedsDrawer() {
               ))}
               {rest.length > 0 ? (
                 <NeedsList label="Needs you">
-                  {rest.map((face) => (
-                    <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} plates={false} />
+                  {foldMatches(rest).map((entry) => entry.kind === "face" ? (
+                    <NeedRow key={entry.face.id} face={entry.face} primary={entry.face.id === firstId} projects={multipleProjects} plates={false} />
+                  ) : (
+                    <MatchRows key={entry.key} entry={entry} firstId={firstId} projects={multipleProjects} />
                   ))}
                 </NeedsList>
               ) : null}

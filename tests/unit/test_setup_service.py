@@ -251,3 +251,32 @@ def test_setup_status_is_readable_by_an_agent_but_use_stays_owner_press() -> Non
     assert registry.invoke(agent, "setup.status", {})["principal"] == "agent"
     with pytest.raises(OperationOwnerRequired):
         registry.invoke(agent, "setup.use", {"id": "all"})
+
+
+class _SavedConnections:
+    """Settings > Accounts' stored read: GitHub works, Jira was never checked."""
+
+    def list_tools(self, principal):
+        return {"tools": [
+            {"provider_id": "github", "state": "connected", "account": {"login": "karolswdev"},
+             "egress_host": "github.com"},
+            {"provider_id": "jira", "state": "never_checked", "account": None},
+        ]}
+
+
+def test_setup_says_what_accounts_says_for_a_saved_connection(tmp_path: Path):
+    """Window Program W4 (one truth): with no sign-in file on this Mac, a
+    GitHub connection that works in Accounts is a working row in Setup; a
+    provider that Accounts never checked stays not found."""
+    db = Database(tmp_path / "holdspeak.db")
+    service = SetupService(
+        db, home_provider=lambda: tmp_path, onboarding_service=_EmptyOnboarding(),
+        connections_service=_SavedConnections(),
+    )
+
+    rows = {row["id"]: row for row in service.found(OWNER)["rows"]}
+
+    assert "connection:github:not-found" not in rows
+    assert rows["connection:github:saved"]["state"] == "works"
+    assert rows["connection:github:saved"]["detail"] == "karolswdev"
+    assert rows["connection:jira:not-found"]["state"] == "does_not_work"

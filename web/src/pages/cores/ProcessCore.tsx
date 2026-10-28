@@ -42,11 +42,41 @@ export function shownTarget(row: Pick<ProcessRow, "kind" | "target">, items?: It
   if (rest === row.kind || target === row.kind) return "";
   const named = items ? objectByRef(items, target) : null;
   if (named?.title) return named.title;
+  if (kind === "connection" && PROVIDER_WORDS[rest.toLowerCase()]) return PROVIDER_WORDS[rest.toLowerCase()];
   if (looksLikeId(rest) || /^[0-9a-f]{10,}$/i.test(rest)) {
     const hex = rest.replace(/^[a-z]{1,12}_/i, "").replace(/-/g, "");
     return `${kindWord(kind) || "Record"} ${hex.slice(0, 6)}`;
   }
   return target;
+}
+
+/** Window Program W4 (the words): a provider's own name. */
+const PROVIDER_WORDS: Record<string, string> = {
+  github: "GitHub", gh: "GitHub", jira: "Jira", confluence: "Confluence", calendar: "Calendar",
+};
+
+/** Window Program W4: who ran a process, in words (the wire's id is the
+ *  hover title). The owner's session is `You`. */
+export function principalWords(principal: string): string {
+  const raw = principal.trim();
+  if (!raw) return "";
+  if (/^(owner|owner-session|local-owner)$/i.test(raw)) return "You";
+  const head = raw.replace(/^[a-z]+:/i, "").replace(/[-_]?[0-9a-f]{8,}$/i, "");
+  return humanizeWireValue(head.replace(/-/g, " ")) || "Agent";
+}
+
+/** Window Program W4: where a process ran, in words, never a machine id:
+ *  `node:local` is `This Mac`, `node:inference-d380f9fc…` is `Engine`. */
+export function placementWords(placement: string): string {
+  const raw = placement.trim().replace(/^node:/i, "");
+  if (!raw) return "";
+  if (/^(local|local-desktop|actuator-local|this-device)$/i.test(raw)) return "This Mac";
+  if (/^inference-[0-9a-f]{6,}$/i.test(raw)) return "Engine";
+  if (/^hub([-_].*)?$/i.test(raw)) return "Hub";
+  if (/^model-turn$/i.test(raw)) return "Engine";
+  if (/^thread-turn$/i.test(raw)) return "Thread";
+  const head = raw.replace(/[-_]?[0-9a-f]{8,}$/i, "");
+  return head ? humanizeWireValue(head.replace(/-/g, " ")) : "";
 }
 
 /** PHILO-17 (the desk sweep): an operation name is one long word
@@ -143,10 +173,13 @@ export function ProcessCore(_props: CoreProps) {
 
   const rows: ObjectListRow[] = flat.map(({ row, depth, group }, index) => {
     const target = shownTarget(row, items);
-    const where = [
-      row.principal ? humanizeWireValue(String(row.principal)) : "",
-      row.placement ? humanizeWireValue(String(row.placement)) : "",
-    ].filter(Boolean).join(" · ");
+    // Window Program W4 (the words): who and where in words; the wire's ids
+    // are the hover title, never the face.
+    const whereRaw = [row.principal, row.placement].map((v) => String(v ?? "").trim()).filter(Boolean).join(" · ");
+    const where = [...new Set([
+      principalWords(String(row.principal ?? "")),
+      placementWords(String(row.placement ?? "")),
+    ].filter(Boolean))].join(" · ");
     return {
       id: row.operationId,
       kind: "process",
@@ -156,7 +189,7 @@ export function ProcessCore(_props: CoreProps) {
       state: { ...rowState(row), testId: "process-state" },
       cells: {
         target: target ? <span className="process-target" data-testid="process-target">{target}</span> : "",
-        where: where ? <span className="process-where" title={where}>{where}</span> : "",
+        where: where ? <span className="process-where" title={whereRaw}>{where}</span> : "",
         started: <span className="process-clock">{clockToken(row.timestamp)}</span>,
       },
       sortValues: { order: index, started: String(row.timestamp), target, where },

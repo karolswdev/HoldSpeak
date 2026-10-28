@@ -63,13 +63,16 @@ describe("Trust app: a cloud summary route", () => {
     vi.unstubAllGlobals();
   });
 
-  it("the badge names api.openai.com; Trust opens from it and names the host and the external scope", async () => {
+  it("the HoldSpeak menu's first line names api.openai.com; Trust opens from it and names the host and the external scope", async () => {
     render(<MemoryRouter><DeskChrome /><TrustWindow /></MemoryRouter>);
-    const badge = screen.getByRole("button", { name: /Privacy and trust/ });
-    expect(badge.getAttribute("aria-label")).toContain("api.openai.com");
-    expect(badge.textContent?.toLowerCase()).toContain("api.openai.com");
+    // Window Program W4 (A.9 as amended 2026-10-25): no scope chip in the bar.
+    expect(document.querySelector(".desk-menubar .egress-badge")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "HoldSpeak" }), { detail: 0 });
+    const menu = screen.getByRole("menu", { name: "HoldSpeak" });
+    const first = within(menu).getAllByRole("menuitem")[0];
+    expect(first.textContent).toContain("Can send to api.openai.com");
 
-    fireEvent.click(badge);
+    fireEvent.click(first);
     const win = await waitFor(() => {
       const node = document.querySelector(".desk-trust-window");
       expect(node).toBeTruthy();

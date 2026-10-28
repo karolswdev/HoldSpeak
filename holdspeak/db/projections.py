@@ -326,7 +326,7 @@ class ProjectionRepository(BaseRepository):
             mode_label = {
                 "safe": "Secure",
                 "neutral": "Normal",
-                "yolo": "YOLO",
+                "yolo": "Open throttle",
             }.get(mode or "", mode or "Control posture")
             summary = (
                 f"{mode_label} refused this unregistered destination. "
@@ -467,7 +467,7 @@ class ProjectionRepository(BaseRepository):
             mode_label = {
                 "safe": "Secure",
                 "neutral": "Normal",
-                "yolo": "YOLO",
+                "yolo": "Open throttle",
             }.get(mode or "", mode or "Control posture")
             authority_basis = str(
                 policy.get("authority_basis") or "armed_pane_grant"

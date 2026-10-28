@@ -156,13 +156,16 @@ export function moduleForKey(key: string): string {
 
 // HS-139-01: THEME_OPTIONS deleted (dead — the theme setting has no
 // runtime consumer; the desk is dark by law).
+/** Window Program W4 (the words): a select shows a sentence-case word; the
+ *  stored value stays the wire token underneath (`normal` reads `Normal`). */
+const worded = (value: string) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) });
 export const WHISPER_MODEL_OPTIONS = [
   "tiny",
   "base",
   "small",
   "medium",
   "large",
-].map((value) => ({ value }));
+].map(worded);
 // HS-139-01: TRANSCRIBE_BACKEND_OPTIONS deleted (duplicate; the Models
 // module's Hub Default Engine keeps the backend cycle).
 export const EXPORT_FORMAT_OPTIONS = ["txt", "markdown", "json", "srt"].map(
@@ -235,15 +238,13 @@ export const MIR_PROFILE_OPTIONS = [
   "delivery",
   "product",
   "incident",
-].map((value) => ({ value }));
-export const WAKE_ACTION_OPTIONS = ["preview", "type"].map((value) => ({
-  value,
-}));
+].map(worded);
+export const WAKE_ACTION_OPTIONS = ["preview", "type"].map(worded);
 export const CADENCE_PRESSURE_OPTIONS = [
   "gentle",
   "normal",
   "aggressive",
-].map((value) => ({ value }));
+].map(worded);
 
 // The Whisper language registry (holdspeak/languages.py, vendored):
 // "auto" is the per-utterance detection sentinel.
@@ -276,7 +277,7 @@ const WHISPER_LANGUAGES: Array<[string, string]> = [
   ["jw", "Javanese"], ["su", "Sundanese"], ["yue", "Cantonese"],
 ];
 export const LANGUAGE_OPTIONS = [
-  { value: "auto", label: "auto" },
+  { value: "auto", label: "Automatic" },
   ...WHISPER_LANGUAGES.map(([code, name]) => ({
     value: code,
     label: `${name} (${code})`,
@@ -381,7 +382,7 @@ export function BuilderToolsModule({ checked, onChange }: {
   };
   return (
     <GadgetGroup label="Builder tools" material="inset">
-      <GadgetRow label="Builder tools" fact="GO ▸ BUILDER · SEARCH" controlWidth="short">
+      <GadgetRow label="Builder tools" fact="Adds Builder to Go and Search" controlWidth="short">
         <CheckGadget variant="state" label="Builder tools" checked={on} onChange={setOn} />
       </GadgetRow>
     </GadgetGroup>

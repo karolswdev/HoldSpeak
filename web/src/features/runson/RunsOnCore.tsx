@@ -7,6 +7,7 @@
 // engine used, Undo). A change applies on the drop; there is no Save.
 
 import { useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCompactViewport } from "../../desk/useCompactViewport";
 import {
   CheckGadget,
   EgressChip,
@@ -499,6 +500,7 @@ function AddByKind({
 }
 
 export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: string; onBack?: () => void }) {
+  const compact = useCompactViewport();
   const ctrl = useRunsOn(scope);
   // Betterment E5 (DECISIONS #8): the drag switchboard is parked behind
   // Builder tools; What runs where is the face.
@@ -927,17 +929,20 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       </Button>
     ) : speech.canSetUp ? (
       <>
-        {speechHost ? <EgressChip label={speechHost} scope="cloud" /> : null}
+        {/* Window Program W4: at phone width the bar keeps its first fact
+            whole; the host and the size move to the verb's hover title. */}
+        {speechHost && !compact ? <EgressChip label={speechHost} scope="cloud" /> : null}
         <Button
           dense
           variant="secondary"
           loading={speech.ai.busy}
           disabled={speech.ai.busy}
           data-testid="runson-speech-setup-verb"
+          title={compact ? [formatBytes(speech.bytes), speechHost ? `from ${speechHost}` : ""].filter(Boolean).join(" ") : undefined}
           onClick={() => void speech.ai.startSpeech().then(() => window.dispatchEvent(new Event(SPEECH_SETUP_EVENT)))}
         >
           <ToolGlyph kind="import" />
-          {`Set up speech · ${formatBytes(speech.bytes)}`}
+          {compact ? "Set up speech" : `Set up speech · ${formatBytes(speech.bytes)}`}
         </Button>
       </>
     ) : null
