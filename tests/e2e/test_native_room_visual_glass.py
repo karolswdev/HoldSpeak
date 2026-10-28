@@ -252,8 +252,11 @@ def test_room_files_before_compact_sources_and_real_note_return(
             sources_fold.locator(".gadget-fold > summary").first.click()
             expect(room.get_by_test_id("room-add-source")).to_be_visible()
 
-            # A real Room read-marker write announces desk_changed; the
-            # production Files hook then requests the real resource list.
+            # A real Room-kind write (the Project saved unchanged, kind
+            # ``project``) announces desk_changed; the production Files hook
+            # reads on Room kinds only (#1597) and then requests the real
+            # resource list. (The read marker is a QUIET route and announces
+            # nothing; before #1597 this test rode a frame storm, see #1600.)
             # Hold every such response after it reaches the server, until the
             # test releases them, to inspect the retained-loading face without
             # inventing a successful read. W6-J: holding only the first one let
@@ -279,7 +282,7 @@ def test_room_files_before_compact_sources_and_real_note_return(
                 return original(...args);
               };
             }""", PROJECT_A)
-            _api(page, "POST", f"/api/projects/{PROJECT_A}/room/read", {}, token=TOKEN)
+            _api(page, "PATCH", f"/api/projects/{PROJECT_A}", {"name": PROJECT_A_NAME}, token=TOKEN)
             page.wait_for_function("() => !!window.__roomVisualResourceHold?.release")
             assert page.evaluate("window.__roomVisualResourceHold.serverRead")
             chip = files.locator(".surface-section-head [role=status][aria-label='Reading files · Last read']")

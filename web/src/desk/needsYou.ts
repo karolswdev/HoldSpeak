@@ -1113,7 +1113,7 @@ export function useNeedsYou(
     getSnapshot,
   );
   useEffect(() => { void refreshNeedsYou(false); }, []);
-  return { ...value, refresh: () => refreshNeedsYou(true) };
+  return { ...value, refresh: () => refreshNeedsYou(false) };
 }
 
 export { refreshNeedsYou };

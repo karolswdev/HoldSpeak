@@ -388,6 +388,23 @@ export const VERBS: Verb[] = [
     run: () => void useDesk.getState().refresh(),
   },
   {
+    // Recordings (2026-10-28): record this desk (the browser's picker), or
+    // stop the recording that runs here or on another view.
+    id: "desk.screen-record",
+    label: "Record screen",
+    // No menu row: the dock tile is its door, ⌃⇧R and Search reach it.
+    scope: "floor",
+    group: "system",
+    key: "⌃⇧R",
+    glyph: "⏺",
+    keywords: ["record", "screen", "video", "session", "film", "phone"],
+    ghost: never,
+    run: async () => {
+      const { pressScreenRecord } = await import("./recordings/ScreenRecord");
+      pressScreenRecord();
+    },
+  },
+  {
     id: "desk.give-feedback",
     label: "Give feedback",
     menu: "desk",

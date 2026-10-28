@@ -9,7 +9,7 @@ import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import type { DeskProjection } from "../../desk/projections";
 import { openSurface } from "../../desk/shell";
-import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { ALL_DESK_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { SurfaceState } from "../../desk/surface/Surface";
 import { deSnake } from "../../desk/surface/format";
 import { ActionNotice } from "../../desk/surface/patterns/ActionNotice";
@@ -151,7 +151,7 @@ export function ActivityFinishedReceipts({ query, records = [] }: {
       activeRequest.current?.abort();
     };
   }, [read]);
-  useOnDeskChanged(() => void read(0, true));
+  useOnDeskChanged(() => void read(0, true), ALL_DESK_CHANGE_KINDS);
 
   const visible = rows.filter((row) => !needle || [row.subject_label, row.title, row.summary, row.reason_code, row.outcome].join(" ").toLowerCase().includes(needle.toLowerCase()));
   // Atlas pass 3 (defect 10): the hub writes a receipt's words in sentence

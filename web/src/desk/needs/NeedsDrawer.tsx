@@ -203,7 +203,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       await run();
       clearWriteFailure(key);
       const settled = label === "Done" ? await settleOut(origin) : null;
-      void Promise.resolve(refreshNeedsYou(true)).finally(() => settled?.removeAttribute("data-settle"));
+      void Promise.resolve(refreshNeedsYou(false)).finally(() => settled?.removeAttribute("data-settle"));
     } catch (error) {
       reportWriteFailure(label, error, () => void act(label, run, key, origin), key);
     } finally {
@@ -510,8 +510,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         return apiFetch(`/api/channels/sends?send_id=${encodeURIComponent(v.sendId)}`);
       };
       const run = v.state === "failed"
-        ? () => retryInline(v.documentRef, v.destinationId, s.payload_digest, () => {}, () => void refreshNeedsYou(true))
-        : () => sendPrepared(v.documentRef, v.sendId, () => {}, () => void refreshNeedsYou(true),
+        ? () => retryInline(v.documentRef, v.destinationId, s.payload_digest, () => {}, () => void refreshNeedsYou(false))
+        : () => sendPrepared(v.documentRef, v.sendId, () => {}, () => void refreshNeedsYou(false),
           v.state === "unknown" ? s.retry_command : undefined);
       // A settled UNKNOWN can be inspected without being replayable. The
       // hub withholds retry_command for legacy or foreign rows, so do not draw
@@ -593,7 +593,7 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
       });
       clearWriteFailure(`action-item:${cardId}`);
       onDone();
-      void refreshNeedsYou(true);
+      void refreshNeedsYou(false);
     } catch (error) {
       reportWriteFailure(label, error, () => void save(), `action-item:${cardId}`);
     } finally {
@@ -641,7 +641,7 @@ function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
       await apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/${path}`, { method: "POST", ...(json ? { json } : {}) });
       clearWriteFailure(key);
       onDone();
-      void refreshNeedsYou(true);
+      void refreshNeedsYou(false);
     } catch (error) {
       reportWriteFailure(label, error, () => void run(label, path, json), key);
       throw error;
@@ -679,7 +679,7 @@ function WhoseWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
       await apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST", json: { owner } });
       clearWriteFailure(key);
       onDone();
-      void refreshNeedsYou(true);
+      void refreshNeedsYou(false);
     } catch (error) {
       reportWriteFailure("Whose?", error, () => void keep(owner), key);
     } finally {
@@ -1118,7 +1118,7 @@ export function useNeedFaces() {
     ? !hubLists(liveArming.scheduleId)
     : Boolean(arming?.outcome && hubLists(arming.scheduleId));
   useEffect(() => {
-    if (armingStale) void refreshNeedsYou(true);
+    if (armingStale) void refreshNeedsYou(false);
   }, [armingStale]);
   // Board A-5: one list, no group heads. A recording that arms, then the
   // agents (one object, one row), then the rest in the hub's rank order.
@@ -1156,7 +1156,7 @@ export function NeedsDroppedReceipt() {
       <Button dense variant="secondary" aria-label={`Undo: ${dropped.name}`} data-testid="needs-undo"
         onClick={() => {
           useDropped.getState().set(null);
-          void dropped.undo().then(() => refreshNeedsYou(true)).catch((error) =>
+          void dropped.undo().then(() => refreshNeedsYou(false)).catch((error) =>
             reportWriteFailure("Undo", error, () => void dropped.undo()));
         }}>Undo</Button>
     </Token>

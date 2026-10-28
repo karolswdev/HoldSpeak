@@ -263,7 +263,7 @@ export function useProjectRoomController(
       // PHILO-17 (needsyou): a meeting decision's lifecycle write sends no
       // desk_changed frame, so Needs you is read again here: an accepted
       // decision leaves its TO REVIEW row at once.
-      void refreshNeedsYou(true);
+      void refreshNeedsYou(false);
     } catch (reason) {
       setError(plainWords("Could not change the decision"));
       setErrorTitle(failureTitle(reason));

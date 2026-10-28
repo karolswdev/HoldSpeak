@@ -47,4 +47,6 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   // six columns on one row; twenty steps fit 864 px with no scroll.
   program: { w: 1000, h: 660 },
   programs: { w: 960, h: 560 },
+  // Recordings (2026-10-28): the list, or one video with its two links.
+  recordings: { w: 720, h: 520 },
 };

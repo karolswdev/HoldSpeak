@@ -43,7 +43,61 @@ import { useRuntimeBus } from "../runtime/RuntimeBus";
 import { burstTimer } from "./burstTimer";
 import { isCoderFrame } from "./steering";
 import { useDesk } from "./store";
-import { isWindowsOnlyFrame } from "./compositor/windowFrames";
+import { frameNames } from "./components/window/dockState";
+
+/** Shared dependency groups for the desk's live readers. */
+export const ALL_DESK_CHANGE_KINDS = Object.freeze([
+  "action", "action_item", "agent", "artifact", "assignment", "automation", "door",
+  "brief", "calendar", "calendar_event", "chain", "channel", "coder",
+  "commitment", "decision", "decision_record", "destination", "directory",
+  "engine", "follow_through", "inference", "inference_assignment", "kb", "launch", "meeting",
+  "meeting_ready_read", "meeting_summary", "mode", "model", "model_profile",
+  "note", "person", "pipeline_event", "project", "project_item", "project_update", "relationship",
+  "proposal", "prompt", "recipe", "receipt", "repository", "resource",
+  "scheduled_recording", "send", "sequence", "setting", "settings", "skill", "source",
+  "thought", "thread", "watch", "workbench", "workbench_item", "workflow",
+]);
+
+/** The primitive store has no Thought collection; working-note saves do not
+ * change any of its list reads. Memory faces opt into `thought` separately. */
+export const DESK_STORE_CHANGE_KINDS = Object.freeze(
+  ALL_DESK_CHANGE_KINDS.filter((kind) => kind !== "thought"),
+);
+
+
+
+export const AGENT_CHANGE_KINDS = Object.freeze(["agent", "coder", "launch", "project"]);
+
+export const MEETING_CHANGE_KINDS = Object.freeze([
+  "action", "action_item", "decision", "decision_record", "meeting", "meeting_ready_read",
+  "meeting_summary", "proposal", "send", "thought", "follow_through",
+]);
+
+export const ROOM_CHANGE_KINDS = Object.freeze([
+  "action", "action_item", "artifact", "commitment", "decision", "decision_record",
+  "follow_through", "meeting", "note", "person", "project", "project_item", "project_update", "proposal",
+  "relationship", "resource", "watch", "workbench", "workbench_item",
+]);
+
+/** Needs you is the Door's cards, the Room rows, the meeting blockers, the
+ * failed summaries and the unfiled proposals (`ProjectService.needs_you`), so
+ * it reads on every Room kind and on the Door, calendar, summary and
+ * recording kinds as well. */
+export const NEEDS_YOU_CHANGE_KINDS = Object.freeze([...new Set([
+  ...ROOM_CHANGE_KINDS,
+  "agent", "coder", "door", "launch", "meeting_ready_read", "send",
+  "calendar", "calendar_event", "meeting_summary", "scheduled_recording",
+])]);
+
+export const WORKBENCH_CHANGE_KINDS = Object.freeze([
+  "artifact", "automation", "mode", "recipe", "skill", "workbench", "workbench_item", "workflow",
+]);
+
+export const PEOPLE_CHANGE_KINDS = Object.freeze([
+  "action_item", "calendar_event", "commitment", "meeting", "person", "project", "relationship",
+]);
+
+export const MEMORY_CHANGE_KINDS = ALL_DESK_CHANGE_KINDS;
 
 /** Trailing-edge debounce window for a `desk_changed` burst, in ms. */
 export const DESK_CHANGED_DEBOUNCE_MS = 300;
@@ -61,7 +115,7 @@ export function useDeskChangedRefresh(
     // PHILO-16 (16b): a window write changed no desk data; the hub's windows
     // follow it (`compositor/hubWindows.ts`), never a whole-desk re-read.
     const unsubscribe = subscribe("desk_changed", (frame) => {
-      if (!isWindowsOnlyFrame(frame?.data)) burst.bump();
+      if (frameNames(frame?.data, DESK_STORE_CHANGE_KINDS)) burst.bump();
     });
     return () => {
       burst.cancel();
@@ -83,23 +137,25 @@ export function DeskChangedRefresh(): null {
  * nothing. */
 export function useOnDeskChanged(
   reload: () => void,
+  kinds: readonly string[] = ALL_DESK_CHANGE_KINDS,
   debounceMs: number = DESK_CHANGED_DEBOUNCE_MS,
 ): void {
   const subscribe = useBusSubscribe();
   const latest = useRef(reload);
   latest.current = reload;
+  const kindsKey = kinds.join("\u0000");
 
   useEffect(() => {
     if (!subscribe) return;
     const burst = burstTimer(() => latest.current(), debounceMs);
     const unsubscribe = subscribe("desk_changed", (frame) => {
-      if (!isWindowsOnlyFrame(frame?.data)) burst.bump();
+      if (frameNames(frame?.data, kinds)) burst.bump();
     });
     return () => {
       burst.cancel();
       if (typeof unsubscribe === "function") unsubscribe();
     };
-  }, [subscribe, debounceMs]);
+  }, [subscribe, debounceMs, kindsKey]);
 }
 
 /** The bus's `subscribe`, or nothing when the window is drawn with no bus

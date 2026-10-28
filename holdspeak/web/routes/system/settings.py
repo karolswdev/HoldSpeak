@@ -98,7 +98,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/settings")
-    async def api_get_settings(request: Request) -> Any:
+    def api_get_settings(request: Request) -> Any:
         try:
             from ....plugins.dictation.runtime_counters import get_counters, get_session_status
 
@@ -114,7 +114,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to load settings")
 
     @router.put("/api/settings")
-    async def api_update_settings(payload: dict[str, Any], request: Request) -> Any:
+    def api_update_settings(payload: dict[str, Any], request: Request) -> Any:
         try:
             touches_sources = isinstance(payload.get("calendar"), dict) and "sources" in payload["calendar"]
             before = _calendar_sources_snapshot() if touches_sources else {}
@@ -385,7 +385,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to load heartbeat settings")
 
     @router.put("/api/settings/heartbeat")
-    async def api_heartbeat_put(payload: dict[str, Any], request: Request) -> Any:
+    def api_heartbeat_put(payload: dict[str, Any], request: Request) -> Any:
         """HS-171-02: update heartbeat sweep settings."""
         try:
             from ....db import get_database
@@ -400,7 +400,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update heartbeat settings")
 
     @router.post("/api/settings/heartbeat/run-now")
-    async def api_heartbeat_run_now(request: Request) -> Any:
+    def api_heartbeat_run_now(request: Request) -> Any:
         """HS-171-02: run one sweep out of band (owner only)."""
         try:
             from ....db import get_database, get_observer

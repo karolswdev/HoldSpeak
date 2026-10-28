@@ -34,14 +34,14 @@ def build_invocations_router(ctx: WebContext) -> APIRouter:
         )
 
     @router.get("/api/invocations")
-    async def api_list_invocations(request: Request, limit: int = 100) -> Any:
+    def api_list_invocations(request: Request, limit: int = 100) -> Any:
         try:
             return JSONResponse({"invocations": service.list(_principal(request), limit=limit)})
         except Exception as exc:
             return error_500(exc, log, "Failed to list capability invocations")
 
     @router.get("/api/invocations/{invocation_id}")
-    async def api_get_invocation(invocation_id: str, request: Request) -> Any:
+    def api_get_invocation(invocation_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"invocation": service.get(_principal(request), invocation_id)})
         except NotFound:
@@ -50,7 +50,7 @@ def build_invocations_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to get capability invocation")
 
     @router.post("/api/invocations/{invocation_id}/cancel")
-    async def api_cancel_invocation(invocation_id: str, request: Request) -> Any:
+    def api_cancel_invocation(invocation_id: str, request: Request) -> Any:
         """Submit, claim, and receipt an owner cancellation signal."""
         try:
             result = service.cancel(_principal(request), invocation_id)

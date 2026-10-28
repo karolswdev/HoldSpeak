@@ -37,7 +37,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         return JSONResponse({"error": exc.detail, **exc.context}, status_code=int(exc.context.get("status", statuses.get(exc.code, 500))))
 
     @router.get("/api/recipes")
-    async def api_list_recipes(request: Request) -> Any:
+    def api_list_recipes(request: Request) -> Any:
         try:
             kind = request.query_params.get("kind")
             if kind is not None:
@@ -64,7 +64,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create recipe")
 
     @router.get("/api/recipes/{recipe_id}")
-    async def api_get_recipe(recipe_id: str, request: Request) -> Any:
+    def api_get_recipe(recipe_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"recipe": _svc().get_recipe(_principal(request), recipe_id)})
         except NotFound:
@@ -87,7 +87,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update recipe")
 
     @router.delete("/api/recipes/{recipe_id}")
-    async def api_delete_recipe(recipe_id: str, request: Request) -> Any:
+    def api_delete_recipe(recipe_id: str, request: Request) -> Any:
         try:
             _svc().delete_recipe(_principal(request), recipe_id)
             return JSONResponse({"success": True})
@@ -162,7 +162,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to keep chat reply")
 
     @router.post("/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel")
-    async def api_cancel_recipe_invocation(recipe_id: str, invocation_id: str, request: Request) -> Any:
+    def api_cancel_recipe_invocation(recipe_id: str, invocation_id: str, request: Request) -> Any:
         try:
             return JSONResponse(_svc().cancel(_principal(request), invocation_id))
         except ServiceError as exc:

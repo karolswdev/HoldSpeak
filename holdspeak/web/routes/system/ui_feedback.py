@@ -34,7 +34,7 @@ def build_ui_feedback_router(ctx: Any) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/ui-feedback/status")
-    async def api_ui_feedback_status() -> dict[str, bool]:
+    def api_ui_feedback_status() -> dict[str, bool]:
         return {"enabled": feedback_enabled()}
 
     @router.post("/api/ui-feedback")

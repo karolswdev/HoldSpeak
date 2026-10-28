@@ -65,7 +65,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/projects/{project_id}/updates ─────────────────────
 
     @router.get("/api/projects/{project_id}/updates")
-    async def api_list_updates(
+    def api_list_updates(
         project_id: str, request: Request,
         lifecycle: str | None = None,
     ) -> Any:
@@ -173,14 +173,14 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             return _job_error(exc)
 
     @router.get("/api/update-jobs/{job_id}")
-    async def api_get_engine_pass(job_id: str, request: Request) -> Any:
+    def api_get_engine_pass(job_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"job": ctx.project_update_service.get_engine_pass(job_id)})
         except Exception as exc:
             return _job_error(exc)
 
     @router.post("/api/update-jobs/{job_id}/stop")
-    async def api_stop_engine_pass(job_id: str, request: Request) -> Any:
+    def api_stop_engine_pass(job_id: str, request: Request) -> Any:
         try:
             job = ctx.project_update_service.stop_engine_pass(principal(request), job_id)
             return JSONResponse({"success": True, "job": job})
@@ -201,7 +201,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     # ── PUT /api/updates/{update_id} ───────────────────────────────
 
     @router.put("/api/updates/{update_id}")
-    async def api_save_update(
+    def api_save_update(
         update_id: str, payload: dict[str, Any], request: Request,
     ) -> Any:
         try:
@@ -361,7 +361,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     # The owner's judgment; the service refuses any other principal.
 
     @router.post("/api/updates/{update_id}/claims/{span_id}/review")
-    async def api_review_claim(
+    def api_review_claim(
         update_id: str, span_id: str, payload: dict[str, Any], request: Request,
     ) -> Any:
         acceptance = str((payload or {}).get("acceptance") or "")
@@ -394,7 +394,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/updates/{update_id} ───────────────────────────────
 
     @router.get("/api/updates/{update_id}")
-    async def api_get_update(update_id: str, request: Request) -> Any:
+    def api_get_update(update_id: str, request: Request) -> Any:
         """One update by id (a steward receipt's `update:<id>` opens it; the
         Room's list is capped, so a lookup there could miss it)."""
         try:
@@ -408,7 +408,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/updates/{update_id}/markdown ──────────────────────
 
     @router.get("/api/updates/{update_id}/markdown")
-    async def api_update_markdown(update_id: str, request: Request) -> Any:
+    def api_update_markdown(update_id: str, request: Request) -> Any:
         try:
             update = ctx.project_update_service.get_update(
                 principal(request), update_id,

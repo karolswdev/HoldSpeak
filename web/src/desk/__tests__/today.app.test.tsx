@@ -201,12 +201,29 @@ import PEOPLE_LOCKED from "./fixtures/daily-week/needs-you-people-locked.json";
 
 describe("Today when People could not be read (Betterment D6)", () => {
   it("draws one line in Needs you with Try again; the day still draws", async () => {
-    replay({ ...GETS, "/api/desk/needs-you?fresh=1": (PEOPLE_LOCKED.gets as Gets)["/api/desk/needs-you?fresh=1"] });
+    const { reads } = replay({ ...GETS, "/api/desk/needs-you?fresh=1": (PEOPLE_LOCKED.gets as Gets)["/api/desk/needs-you?fresh=1"] });
     render(<TodayView />);
     const line = await screen.findByTestId("today-people-read-failed");
     expect(line.textContent).toContain("People could not be read");
     expect(within(line).getByRole("button", { name: "Try again" })).toBeTruthy();
     expect(screen.getByTestId("today-needs")).toBeTruthy();
+    fireEvent.click(within(line).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(reads.at(-1)).toBe("/api/desk/needs-you?fresh=1"));
+  });
+
+  it("the Needs you read failure Retry forces a fresh read", async () => {
+    const { reads } = replay();
+    const base = api.fetch.getMockImplementation()!;
+    let failed = true;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      if (failed && String(url).startsWith("/api/desk/needs-you")) throw new Error("read failed");
+      return base(url, init);
+    });
+    render(<TodayView />);
+    const failedLine = await screen.findByTestId("today-needs-failed");
+    failed = false;
+    fireEvent.click(within(failedLine).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(reads.at(-1)).toBe("/api/desk/needs-you?fresh=1"));
   });
 
   it("the recorded week (People readable) draws no such line", async () => {

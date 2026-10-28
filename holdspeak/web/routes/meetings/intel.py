@@ -1,6 +1,7 @@
 """Deferred-intelligence queue adapters."""
 from __future__ import annotations
 from typing import Any, Optional
+from threading import Lock
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from .... import operations
@@ -12,6 +13,7 @@ from ....web_requests import _IntelProcessRequest
 from ...context import WebContext
 from ...runtime_support import error_500
 log = get_logger("web.routes.meetings")
+_SERVICE_CACHE_LOCK = Lock()
 
 def _principal(request: Request): return getattr(request.state, "principal", UNAUTHENTICATED)
 def _svc(ctx: WebContext) -> MeetingIntelService:
@@ -22,10 +24,14 @@ def _svc(ctx: WebContext) -> MeetingIntelService:
     if isinstance(service, MeetingIntelService): return service
     factory = getattr(ctx, "meeting_intel_service_factory", None)
     if factory is not None: return factory()
-    from ....db import get_database, get_observer
-    service = MeetingIntelService(get_database(), notify=lambda topic, value: ctx.broadcast(topic, value) if ctx.broadcast else None, observer=get_observer())  # _svc composition
-    ctx.meeting_intel_service = service
-    return service
+    with _SERVICE_CACHE_LOCK:
+        service = getattr(ctx, "meeting_intel_service", None)
+        if isinstance(service, MeetingIntelService):
+            return service
+        from ....db import get_database, get_observer
+        service = MeetingIntelService(get_database(), notify=lambda topic, value: ctx.broadcast(topic, value) if ctx.broadcast else None, observer=get_observer())  # _svc composition
+        ctx.meeting_intel_service = service
+        return service
 
 async def _json_body(request: Request) -> dict[str, Any]:
     try:
@@ -65,15 +71,15 @@ def _conflict_response(service: MeetingIntelService, meeting_id: str, exc: Confl
 def build_intel_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     @router.get("/api/intel/jobs")
-    async def api_list_intel_jobs(request: Request, status: str = "all", limit: int = 20, history_limit: int = 5) -> Any:
+    def api_list_intel_jobs(request: Request, status: str = "all", limit: int = 20, history_limit: int = 5) -> Any:
         try: return JSONResponse(_svc(ctx).list_jobs(_principal(request), {"status": status, "limit": limit, "history_limit": history_limit}))
         except Exception as exc: return _error(exc, "Failed to list intel jobs")
     @router.get("/api/intel/summary")
-    async def api_intel_queue_summary(request: Request) -> Any:
+    def api_intel_queue_summary(request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).queue_summary(_principal(request)))
         except Exception as exc: return _error(exc, "Failed to load intel queue summary")
     @router.post("/api/intel/process")
-    async def api_process_intel_jobs(request: Request, payload: Optional[_IntelProcessRequest] = None) -> Any:
+    def api_process_intel_jobs(request: Request, payload: Optional[_IntelProcessRequest] = None) -> Any:
         try:
             body = payload.model_dump() if payload is not None else {}
             return JSONResponse(_svc(ctx).process_jobs(_principal(request), body))
@@ -122,7 +128,7 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
             return _error(exc, "Failed to run Meeting intelligence")
 
     @router.get("/api/meetings/{meeting_id}/intel-recovery")
-    async def api_get_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
+    def api_get_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).get_recovery(_principal(request), meeting_id))
         except Exception as exc: return _error(exc, "Failed to load Meeting intelligence recovery")
     @router.post("/api/meetings/{meeting_id}/intel-recovery/retry")
@@ -135,7 +141,7 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
                 return _conflict_response(_svc(ctx), meeting_id, exc)
             return _error(exc, "Failed to retry Meeting intelligence")
     @router.post("/api/meetings/{meeting_id}/intel-recovery/skip")
-    async def api_skip_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
+    def api_skip_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).skip_recovery(_principal(request), meeting_id))
         except Exception as exc: return _error(exc, "Failed to skip Meeting intelligence")
     return router

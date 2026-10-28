@@ -65,7 +65,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         return JSONResponse(body, status_code=404)
 
     @router.get("/api/projects/{project_id}/briefings")
-    async def api_list_project_briefings(project_id: str, request: Request, limit: int = 50) -> Any:
+    def api_list_project_briefings(project_id: str, request: Request, limit: int = 50) -> Any:
         try:
             return JSONResponse(service.list_briefings(principal(request), project_id, limit))
         except NotFound:
@@ -84,7 +84,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to get project room")
 
     @router.post("/api/projects/{project_id}/room/read")
-    async def api_mark_room_read(project_id: str, request: Request) -> Any:
+    def api_mark_room_read(project_id: str, request: Request) -> Any:
         """HS-169-04: set the per-project read marker to now."""
         try:
             return JSONResponse(service.mark_room_read(principal(request), project_id))
@@ -121,7 +121,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         return JSONResponse(body, status_code=status)
 
     @router.post("/api/projects/{project_id}/ask-tasks")
-    async def api_save_ask_task(project_id: str, payload: dict[str, Any], request: Request) -> Any:
+    def api_save_ask_task(project_id: str, payload: dict[str, Any], request: Request) -> Any:
         try:
             host_id, lease_epoch = host_identity()
             return JSONResponse(
@@ -139,7 +139,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to save ask")
 
     @router.get("/api/ask-tasks")
-    async def api_list_ask_tasks(
+    def api_list_ask_tasks(
         request: Request,
         state: str = "unfinished",
         limit: int = 20,
@@ -194,7 +194,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to resume ask")
 
     @router.post("/api/ask-tasks/{task_id}/stopped")
-    async def api_record_ask_stop(task_id: str, payload: dict[str, Any], request: Request) -> Any:
+    def api_record_ask_stop(task_id: str, payload: dict[str, Any], request: Request) -> Any:
         """Record why a saved ask stopped, from the refusal CODE alone.
 
         The body carries `code` and nothing else that reaches the store: the
@@ -216,7 +216,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to record ask stop")
 
     @router.post("/api/ask-tasks/{task_id}/discard")
-    async def api_discard_ask_task(task_id: str, request: Request) -> Any:
+    def api_discard_ask_task(task_id: str, request: Request) -> Any:
         try:
             host_id, _ = host_identity()
             return JSONResponse(service.discard_ask(
@@ -230,14 +230,14 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to discard ask")
 
     @router.get("/api/projects")
-    async def api_list_projects(request: Request, include_archived: bool = False) -> Any:
+    def api_list_projects(request: Request, include_archived: bool = False) -> Any:
         try:
             return JSONResponse({"projects": ops().invoke(principal(request), "project.list", {"include_archived": include_archived})})
         except Exception as exc:
             return error_500(exc, log, "Failed to list projects")
 
     @router.post("/api/projects")
-    async def api_create_project(payload: dict[str, Any], request: Request) -> Any:
+    def api_create_project(payload: dict[str, Any], request: Request) -> Any:
         try:
             return JSONResponse({"success": True, "project": ops().invoke(
                 principal(request), "project.create", payload,
@@ -254,7 +254,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.get("/api/projects/{project_id}")
-    async def api_get_project(project_id: str, request: Request) -> Any:
+    def api_get_project(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse(ops().invoke(principal(request), "project.get", {"project_id": project_id}))
         except NotFound as exc:
@@ -263,7 +263,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to get project")
 
     @router.patch("/api/projects/{project_id}")
-    async def api_update_project(project_id: str, payload: dict[str, Any], request: Request) -> Any:
+    def api_update_project(project_id: str, payload: dict[str, Any], request: Request) -> Any:
         try:
             expected_rev = payload.pop("expected_revision", None)
             cmd_id = payload.pop("command_id", None)
@@ -285,7 +285,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.delete("/api/projects/{project_id}")
-    async def api_archive_project(project_id: str, request: Request) -> Any:
+    def api_archive_project(project_id: str, request: Request) -> Any:
         # PHILO-9-02: admitted (story 01's row, enforced): one operation, one receipt.
         try:
             _archived, kernel = ops().invoke_receipted(principal(request), "project.archive", {"project_id": project_id})
@@ -302,7 +302,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.post("/api/projects/{project_id}/restore")
-    async def api_restore_project(project_id: str, request: Request,
+    def api_restore_project(project_id: str, request: Request,
                                   payload: dict[str, Any] | None = None) -> Any:
         try:
             body = payload or {}
@@ -324,7 +324,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.get("/api/projects/{project_id}/meetings")
-    async def api_project_meetings(project_id: str, request: Request, limit: int = 50, offset: int = 0) -> Any:
+    def api_project_meetings(project_id: str, request: Request, limit: int = 50, offset: int = 0) -> Any:
         try:
             return JSONResponse({"meetings": service.list_meetings(principal(request), project_id, limit=limit, offset=offset)})
         except NotFound as exc:
@@ -333,7 +333,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to get project meetings")
 
     @router.get("/api/projects/{project_id}/resources")
-    async def api_project_resources(project_id: str, request: Request) -> Any:
+    def api_project_resources(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"resources": ops().invoke(principal(request), "project.resource.list", {"project_id": project_id})})
         except NotFound:
@@ -396,7 +396,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to remove Project resource")
 
     @router.get("/api/desk/relationships/{resource_ref:path}")
-    async def api_resource_relationships(resource_ref: str, request: Request) -> Any:
+    def api_resource_relationships(resource_ref: str, request: Request) -> Any:
         try:
             return JSONResponse(service.list_resource_relationships(principal(request), resource_ref))
         except ValueError as exc:
@@ -405,7 +405,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to inspect Desk relationships")
 
     @router.post("/api/projects/{project_id}/meetings/{meeting_id}")
-    async def api_associate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
+    def api_associate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
             _done, kernel = ops().invoke_receipted(principal(request), "project.link", {"project_id": project_id, "meeting_id": meeting_id})
             return JSONResponse({"success": True, **kernel_fields(kernel)})
@@ -421,7 +421,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.delete("/api/projects/{project_id}/meetings/{meeting_id}")
-    async def api_disassociate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
+    def api_disassociate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
             _done, kernel = ops().invoke_receipted(principal(request), "project.unlink", {"project_id": project_id, "meeting_id": meeting_id})
             return JSONResponse({"success": True, **kernel_fields(kernel)})
@@ -437,7 +437,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}/projects")
-    async def api_meeting_projects(meeting_id: str, request: Request) -> Any:
+    def api_meeting_projects(meeting_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"projects": service.list_meeting_projects(principal(request), meeting_id)})
         except NotFound as exc:
@@ -446,7 +446,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to get meeting projects")
 
     @router.get("/api/projects/{project_id}/since-last-meeting")
-    async def api_project_since_last_meeting(project_id: str, request: Request) -> Any:
+    def api_project_since_last_meeting(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service.since_last_meeting(principal(request), project_id))
         except NotFound as exc:
@@ -455,7 +455,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to compare Project meetings")
 
     @router.get("/api/projects/{project_id}/summary")
-    async def api_project_summary(project_id: str, request: Request) -> Any:
+    def api_project_summary(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service.summary(principal(request), project_id))
         except NotFound as exc:
@@ -464,7 +464,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to get project summary")
 
     @router.get("/api/projects/{project_id}/action-items")
-    async def api_project_action_items(project_id: str, request: Request) -> Any:
+    def api_project_action_items(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"action_items": service.list_action_items(principal(request), project_id)})
         except NotFound as exc:
@@ -473,7 +473,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to get project action items")
 
     @router.get("/api/projects/{project_id}/artifacts")
-    async def api_project_artifacts(project_id: str, request: Request) -> Any:
+    def api_project_artifacts(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"artifacts": service.list_artifacts(principal(request), project_id)})
         except NotFound as exc:
@@ -484,7 +484,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     # ── Item routes (HS-158-03) ─────────────────────────────────────
 
     @router.get("/api/projects/{project_id}/items")
-    async def api_list_items(
+    def api_list_items(
         project_id: str, request: Request,
         item_type: str | None = None,
         limit: int = 200, offset: int = 0,
@@ -501,7 +501,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list project items")
 
     @router.post("/api/projects/{project_id}/items")
-    async def api_create_item(
+    def api_create_item(
         project_id: str, payload: dict[str, Any], request: Request,
     ) -> Any:
         try:
@@ -522,7 +522,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.patch("/api/projects/{project_id}/items/{item_id}")
-    async def api_update_item(
+    def api_update_item(
         project_id: str, item_id: str,
         payload: dict[str, Any], request: Request,
     ) -> Any:
@@ -548,7 +548,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.post("/api/projects/{project_id}/items/{item_id}/transition")
-    async def api_transition_item(
+    def api_transition_item(
         project_id: str, item_id: str,
         payload: dict[str, Any], request: Request,
     ) -> Any:
@@ -668,7 +668,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to build desk needs-you")
 
     @router.post("/api/desk/needs-you/seen")
-    async def api_desk_needs_you_seen(request: Request, body: dict[str, Any] = Body(default={})) -> Any:
+    def api_desk_needs_you_seen(request: Request, body: dict[str, Any] = Body(default={})) -> Any:
         """Betterment D3: he has seen these meetings' promises kept on
         arrival; they leave the NEW group (they stay in the list)."""
         try:
@@ -684,7 +684,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     # ── HS-172-06: suggested sources ────────────────────────────────
 
     @router.get("/api/projects/{project_id}/suggested-sources")
-    async def api_suggested_sources(project_id: str, request: Request) -> Any:
+    def api_suggested_sources(project_id: str, request: Request) -> Any:
         """List pending suggested sources for a Room (PHILO-9-02: the declared read)."""
         try:
             return JSONResponse({"suggestions": ops().invoke(
@@ -724,7 +724,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to add suggested source")
 
     @router.post("/api/projects/{project_id}/suggested-sources/{ref:path}/dismiss")
-    async def api_dismiss_suggested_source(project_id: str, ref: str, request: Request) -> Any:
+    def api_dismiss_suggested_source(project_id: str, ref: str, request: Request) -> Any:
         """Dismiss a suggested source -- never suggest again for this Room."""
         try:
             return JSONResponse(ops().invoke(principal(request), "project.dismiss_suggested_source",
@@ -739,7 +739,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     # ── HS-172-07: Room people ──────────────────────────────────────
 
     @router.get("/api/projects/{project_id}/people")
-    async def api_project_people(project_id: str, request: Request) -> Any:
+    def api_project_people(project_id: str, request: Request) -> Any:
         """The Room's PEOPLE projection (read-only).
 
         HS-200-14: linked people with their open commitments and observable

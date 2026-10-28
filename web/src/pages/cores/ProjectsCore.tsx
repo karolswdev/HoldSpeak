@@ -15,7 +15,7 @@ import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
-import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { ROOM_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { SurfaceState } from "../../desk/surface/Surface";
 import { Loading, StatusBar, ToolGlyph, Toolbar, countWords } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
@@ -126,7 +126,7 @@ export function ProjectsCore(_props: CoreProps) {
     load();
     return () => { round.current++; };
   }, [load]);
-  useOnDeskChanged(load);
+  useOnDeskChanged(load, ROOM_CHANGE_KINDS);
 
   const [selected, setSelected] = useState<string | null>(null);
   const [sort, setSort] = useState<ObjectListSort>({ key: "state", dir: "asc" });

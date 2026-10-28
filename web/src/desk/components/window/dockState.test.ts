@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   dockStateLabel,
   EMPTY_DOCK_LIVE,
+  frameNames,
   formatDockTime,
   latestSendOutcome,
   latestSendSettle,
@@ -10,7 +11,30 @@ import {
   reduceDockFrame,
 } from "./dockState";
 
+const noteChanged = {
+  type: "desk_changed",
+  data: {
+    kind: "note", id: "n1", op: "update", origin: "owner",
+    changes: [{ kind: "note", id: "n1", op: "update" }],
+  },
+};
+const windowsChanged = {
+  type: "desk_changed",
+  data: {
+    kind: "windows", id: "desk", op: "move", origin: "owner",
+    changes: [{ kind: "windows", id: "desk", op: "move" }],
+  },
+};
+
 describe("H-C3 Dock live reducer", () => {
+  it("filters readers from the hub's recorded desk_changed shape", () => {
+    expect(frameNames(noteChanged.data, ["note"])).toBe(true);
+    expect(frameNames(noteChanged.data, ["project"])).toBe(false);
+    expect(frameNames(windowsChanged.data, ["note"])).toBe(false);
+    expect(frameNames({ kind: "future_kind", id: "x", op: "update" }, ["note"])).toBe(true);
+    expect(frameNames({}, ["note"])).toBe(true);
+  });
+
   it("shows REC only after the hub confirms a meeting start", () => {
     const refused = reduceDockFrame(EMPTY_DOCK_LIVE, {
       type: "scheduled_recording.refused",

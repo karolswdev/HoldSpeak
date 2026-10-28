@@ -54,7 +54,7 @@ def build_memory_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(response if isinstance(response, dict) else {"error": exc.detail}, status_code=int(exc.context.get("status") or 400))
 
     @router.get("/recall")
-    async def recall_memory(
+    def recall_memory(
         request: Request, query: str = "", filter: Optional[str] = "all",
         limit: int = 50, recent: str = "",
     ) -> Any:

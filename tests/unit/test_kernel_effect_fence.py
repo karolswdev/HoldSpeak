@@ -182,6 +182,24 @@ _CALL_RULES = (
 # lands outside today's plugin/connector denominator.  Selectors are line-
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
+    # Recordings (2026-10-28): local processes on the owner's own files;
+    # nothing leaves the device and no desk object changes outside the
+    # recording's folder.
+    ("holdspeak/recordings/encoder.py", "encode", "Popen", 1): (
+        "Recordings: ffmpeg encodes the owner's own in.webm into out.mp4 in the "
+        "same local folder; no network, no desk write"
+    ),
+    ("holdspeak/recordings/encoder.py", "poster", "run", 1): (
+        "Recordings: ffmpeg writes one poster.jpg beside the local video"
+    ),
+    ("holdspeak/recordings/tailnet.py", "_serve_status", "run", 1): (
+        "setup/diagnostic network probe: `tailscale serve status --json`, a "
+        "read of the local daemon's Serve config (off in rig hubs)"
+    ),
+    ("holdspeak/web/routes/recordings.py", "_open_folder", "run", 1): (
+        "Recordings: `open <folder>` shows the local recordings folder in "
+        "Finder on the owner's press; it changes nothing"
+    ),
     (
         "holdspeak/agent_context/own_agents.py", "_runner", "run", 1,
     ): (

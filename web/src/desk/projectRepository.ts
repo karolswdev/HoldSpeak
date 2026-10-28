@@ -62,7 +62,7 @@ export function useProjectRepository(projectId: string) {
   const [state, setState] = useState<ProjectRepository | null>(null);
   const [failed, setFailed] = useState(false);
   const [tick, setTick] = useState(0);
-  useOnDeskChanged(() => setTick((n) => n + 1));
+  useOnDeskChanged(() => setTick((n) => n + 1), ["project", "repository", "watch"]);
   const read = useCallback(() => {
     let live = true;
     if (!projectId) return undefined;

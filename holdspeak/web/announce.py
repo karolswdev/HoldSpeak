@@ -34,6 +34,10 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/channels/preview"): "read-like: channel.preview is effect=read",
     ("POST", "/api/dictation/dry-run"): "read-like: runs the pipeline on text, stores nothing",
     ("POST", "/api/grounding/resolve"): "read-like: resolves references",
+    # 2026-10-28: the Runs on editor is a read the desk makes on every reload;
+    # announcing it made a frame storm (kind inference, eleven frames in four
+    # seconds) and each frame re-read twenty lists, which read the editor again.
+    ("POST", "/api/inference/assignments/editor"): "read-like: projects the assignment editor, writes nothing",
     ("POST", "/api/inference/assignments/preview-use-default"): "read-like: previews an assignment",
     ("POST", "/api/intents/preview"): "read-like: previews a route",
     ("POST", "/api/meeting/mic-check"): "read-like: one short microphone sample, stores nothing",
@@ -74,6 +78,9 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # Betterment daily D8: the desk says which window is in front (memory
     # only, once a minute); nothing is stored and no window shows it.
     ("POST", "/api/desk/presence"): "noise: the desk's front window, in memory",
+    # Recordings (2026-10-28): one chunk each 5 s while a recording runs; the
+    # service sends its own ``recording_state`` frame.
+    ("POST", "/api/recordings/{recording_id}/chunks"): "noise: one chunk each 5 s; the service frames it",
     ("POST", "/api/ui-feedback"): "local developer report; no desk object changes",
     ("POST", "/api/ui-feedback/{identifier}/transcribe"): "local report attachment; no desk object changes",
 }

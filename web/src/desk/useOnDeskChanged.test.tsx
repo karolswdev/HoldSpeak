@@ -26,12 +26,20 @@ vi.mock("../runtime/RuntimeBus", () => {
 
 import { DESK_CHANGED_DEBOUNCE_MS, useOnDeskChanged } from "./useDeskChangedRefresh";
 
-function Window({ reload }: { reload: () => void }) {
-  useOnDeskChanged(reload);
+function Window({ reload, kinds }: { reload: () => void; kinds?: readonly string[] }) {
+  useOnDeskChanged(reload, kinds);
   return null;
 }
 
 const frame = () => bus.handlers.forEach((handler) => handler({ type: "desk_changed", data: {} }));
+const namedFrame = (kind: string) => bus.handlers.forEach((handler) => handler({
+  type: "desk_changed",
+  data: { kind, id: `${kind}-1`, op: "update", origin: "owner", changes: [{ kind, id: `${kind}-1`, op: "update" }] },
+}));
+const windowsFrame = () => bus.handlers.forEach((handler) => handler({
+  type: "desk_changed",
+  data: { kind: "windows", id: "desk", op: "move", origin: "owner", changes: [{ kind: "windows", id: "desk", op: "move" }] },
+}));
 
 describe("useOnDeskChanged", () => {
   beforeEach(() => {
@@ -47,6 +55,16 @@ describe("useOnDeskChanged", () => {
     act(() => { frame(); frame(); frame(); });
     expect(reload).not.toHaveBeenCalled();
     act(() => { vi.advanceTimersByTime(DESK_CHANGED_DEBOUNCE_MS); });
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads for a dependency kind, but not an unrelated or windows-only frame", () => {
+    const reload = vi.fn();
+    render(<Window reload={reload} kinds={["note"]} />);
+    act(() => { namedFrame("project"); windowsFrame(); });
+    act(() => { vi.advanceTimersByTime(DESK_CHANGED_DEBOUNCE_MS); });
+    expect(reload).not.toHaveBeenCalled();
+    act(() => { namedFrame("note"); vi.advanceTimersByTime(DESK_CHANGED_DEBOUNCE_MS); });
     expect(reload).toHaveBeenCalledTimes(1);
   });
 

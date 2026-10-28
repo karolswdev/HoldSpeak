@@ -36,6 +36,7 @@ export const RUNTIME_FRAME_TYPES = [
   // Programs (2026-10-28): a Program changed (the Programs window, the
   // Program window, the Dock's Agents lamp re-read it).
   "program_changed",
+  "recording_state",
   "runtime_activity",
   "runtime_queue",
   "scheduled_recording.arming",

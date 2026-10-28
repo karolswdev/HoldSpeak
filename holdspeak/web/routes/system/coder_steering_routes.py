@@ -276,7 +276,7 @@ def build_coder_steering_router(
         return JSONResponse(result)
 
     @router.post("/api/coders/{key}/disarm")
-    async def api_coder_disarm(key: str) -> Any:
+    def api_coder_disarm(key: str) -> Any:
         """One tap, immediate, idempotent (HS-87-02)."""
         from .... import coder_steering
 
@@ -286,7 +286,7 @@ def build_coder_steering_router(
         return JSONResponse({"status": "disarmed", "key": key, "was_armed": was_armed})
 
     @router.get("/api/coders/steering/grants")
-    async def api_coder_grants() -> Any:
+    def api_coder_grants() -> Any:
         """Every live grant (HS-87-02) — the pins' armed state, one read.
         Expired grants sweep (and frame) on the way through."""
         from .... import coder_steering
@@ -295,7 +295,7 @@ def build_coder_steering_router(
         return JSONResponse({"grants": coder_steering.active_grants()})
 
     @router.get("/api/coders/steering/nodes")
-    async def api_coder_nodes() -> Any:
+    def api_coder_nodes() -> Any:
         """The configured steering nodes, NAMES ONLY (HS-90-02) — never the
         base URL or token. The desk's node chip lists these to target a
         machine; an empty list means "this Mac only"."""

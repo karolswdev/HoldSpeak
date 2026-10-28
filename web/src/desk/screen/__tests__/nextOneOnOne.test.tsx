@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("../../../lib/api", () => ({ apiFetch: mocks.apiFetch }));
 vi.mock("../../useDeskChangedRefresh", () => ({
+  PEOPLE_CHANGE_KINDS: ["person"],
   // The hub's desk_changed frame: the test calls the reload by hand.
   useOnDeskChanged: (reload: () => void) => {
     mocks.reloads.push(reload);

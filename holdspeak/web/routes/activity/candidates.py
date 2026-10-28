@@ -23,26 +23,26 @@ def _err(e:Exception)->JSONResponse:return JSONResponse({"error":"activity meeti
 def build_candidates_router(ctx:WebContext)->APIRouter:
  router=APIRouter()
  @router.get("/api/activity/meeting-candidates/preview")
- async def preview(request:Request,limit:int=50)->Any:
+ def preview(request:Request,limit:int=50)->Any:
   try:return JSONResponse(_svc().preview(_principal(request),limit))
   except Exception as e:return error_500(e,log,"Failed to preview activity meeting candidates")
  @router.get("/api/activity/meeting-candidates")
- async def list_candidates(request:Request,source_connector_id:Optional[str]=None,status:Optional[str]=None,limit:int=100)->Any:
+ def list_candidates(request:Request,source_connector_id:Optional[str]=None,status:Optional[str]=None,limit:int=100)->Any:
   try:return JSONResponse(_svc().list(_principal(request),source_connector_id,status,limit))
   except ValidationError as e:return _err(e)
   except Exception as e:return error_500(e,log,"Failed to list activity meeting candidates")
  @router.post("/api/activity/meeting-candidates")
- async def create(request:Request,payload:_ActivityMeetingCandidateRequest)->Any:
+ def create(request:Request,payload:_ActivityMeetingCandidateRequest)->Any:
   try:return JSONResponse(_svc().create(_principal(request),payload.model_dump()))
   except ValidationError as e:return _err(e)
   except Exception as e:return error_500(e,log,"Failed to create activity meeting candidate")
  @router.put("/api/activity/meeting-candidates/{candidate_id}/status")
- async def update(request:Request,candidate_id:str,payload:_ActivityMeetingCandidateStatusRequest)->Any:
+ def update(request:Request,candidate_id:str,payload:_ActivityMeetingCandidateStatusRequest)->Any:
   try:return JSONResponse(_svc().update_status(_principal(request),candidate_id,payload.status))
   except (NotFound,ValidationError) as e:return _err(e)
   except Exception as e:return error_500(e,log,"Failed to update activity meeting candidate")
  @router.post("/api/activity/meeting-candidates/{candidate_id}/start")
- async def start(request:Request,candidate_id:str)->Any:
+ def start(request:Request,candidate_id:str)->Any:
   if ctx.on_start is None:return JSONResponse({"success":False,"error":"Meeting start control not supported"},status_code=501)
   try:
    candidate=_svc().candidate_for_start(_principal(request),candidate_id)
@@ -59,7 +59,7 @@ def build_candidates_router(ctx:WebContext)->APIRouter:
   except ValidationError as e:return _err(e)
   except Exception as e:log.error(f"Failed to start activity meeting candidate: {e}");return JSONResponse({"success":False,"error":str(e)},status_code=500)
  @router.delete("/api/activity/meeting-candidates")
- async def delete(request:Request,source_connector_id:Optional[str]=None,status:Optional[str]=None)->Any:
+ def delete(request:Request,source_connector_id:Optional[str]=None,status:Optional[str]=None)->Any:
   try:return JSONResponse(_svc().delete(_principal(request),source_connector_id,status))
   except ValidationError as e:return _err(e)
   except Exception as e:return error_500(e,log,"Failed to delete activity meeting candidates")

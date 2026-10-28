@@ -15,6 +15,7 @@ import struct
 import time
 import urllib.request
 from pathlib import Path
+from threading import Lock
 from typing import Any, Iterator
 
 from fastapi import APIRouter, Request
@@ -42,30 +43,33 @@ _GITHUB_RELEASE_BASE = (
 _kokoro_instance: Any = None
 _kokoro_checked = False
 _kokoro_available: bool | None = None
+_KOKORO_STATE_LOCK = Lock()
 
 
 def _check_kokoro_available() -> bool:
     """Check whether kokoro-onnx is importable (cached after first probe)."""
     global _kokoro_available, _kokoro_checked
-    if _kokoro_checked:
-        return _kokoro_available is True
-    _kokoro_checked = True
-    try:
-        import kokoro_onnx  # noqa: F401
+    with _KOKORO_STATE_LOCK:
+        if _kokoro_checked:
+            return _kokoro_available is True
+        _kokoro_checked = True
+        try:
+            import kokoro_onnx  # noqa: F401
 
-        _kokoro_available = True
-        return True
-    except ImportError:
-        _kokoro_available = False
-        return False
+            _kokoro_available = True
+            return True
+        except ImportError:
+            _kokoro_available = False
+            return False
 
 
 def _reset_kokoro_state() -> None:
     """Reset lazy state (test seam only)."""
     global _kokoro_instance, _kokoro_checked, _kokoro_available
-    _kokoro_instance = None
-    _kokoro_checked = False
-    _kokoro_available = None
+    with _KOKORO_STATE_LOCK:
+        _kokoro_instance = None
+        _kokoro_checked = False
+        _kokoro_available = None
 
 
 def _model_weights_dir() -> Path:
@@ -96,18 +100,23 @@ def _get_kokoro() -> Any:
         return None
     if not _model_ready():
         return None
-    try:
-        import kokoro_onnx
+    with _KOKORO_STATE_LOCK:
+        if _kokoro_instance is not None:
+            return _kokoro_instance
+        if not _model_ready():
+            return None
+        try:
+            import kokoro_onnx
 
-        weights_dir = _model_weights_dir()
-        _kokoro_instance = kokoro_onnx.Kokoro(
-            str(weights_dir / _MODEL_FILENAME),
-            str(weights_dir / _VOICES_FILENAME),
-        )
-        return _kokoro_instance
-    except Exception:
-        log.warning("kokoro-onnx engine failed to initialize", exc_info=True)
-        return None
+            weights_dir = _model_weights_dir()
+            _kokoro_instance = kokoro_onnx.Kokoro(
+                str(weights_dir / _MODEL_FILENAME),
+                str(weights_dir / _VOICES_FILENAME),
+            )
+            return _kokoro_instance
+        except Exception:
+            log.warning("kokoro-onnx engine failed to initialize", exc_info=True)
+            return None
 
 
 def _wav_header(sample_rate: int, num_samples: int, channels: int = 1, bits: int = 16) -> bytes:
@@ -183,7 +192,7 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/tts/status")
-    async def tts_status(request: Request) -> Any:
+    def tts_status(request: Request) -> Any:
         """Report TTS availability: extra installed + model weights ready."""
         try:
             installed = _check_kokoro_available()
@@ -247,7 +256,7 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.post("/api/tts/download")
-    async def tts_download(request: Request) -> Any:
+    def tts_download(request: Request) -> Any:
         """Download kokoro-onnx model weights (egress-badged, receipted).
 
         Follows the Model Library download pattern: POST triggers the
@@ -286,8 +295,9 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
             ready = _model_ready()
 
             # Reset the singleton so it picks up new weights
-            global _kokoro_instance
-            _kokoro_instance = None
+            with _KOKORO_STATE_LOCK:
+                global _kokoro_instance
+                _kokoro_instance = None
 
             receipt = {
                 "downloaded": ready,

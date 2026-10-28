@@ -17,7 +17,7 @@ import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
 import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceRow, SurfaceRows, SurfaceState, SurfaceWell } from "../desk/surface/Surface";
-import { useOnDeskChanged } from "../desk/useDeskChangedRefresh";
+import { MEETING_CHANGE_KINDS, useOnDeskChanged } from "../desk/useDeskChangedRefresh";
 import {
   handleWorkbenchRunStart,
   handleWorkbenchRunComplete,
@@ -197,7 +197,7 @@ function AftercareNote() {
   );
   // PHILO-15 B56: the counts are live. Every write on the desk re-reads them
   // (a confirmed proposal is a write), and the card shown reads them once.
-  useOnDeskChanged(() => void refreshAftercare());
+  useOnDeskChanged(() => void refreshAftercare(), MEETING_CHANGE_KINDS);
   const signalKey = signal ? signal.meetingId : null;
   useEffect(() => {
     if (signalKey) void refreshAftercare();

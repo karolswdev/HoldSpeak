@@ -22,7 +22,7 @@ def build_calendar_events_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(prefix="/api/calendar/events", tags=["calendar-events"])
 
     @router.get("")
-    async def list_events(
+    def list_events(
         request: Request,
         start: str | None = Query(default=None),
         end: str | None = Query(default=None),
@@ -65,7 +65,7 @@ def build_calendar_events_router(ctx: WebContext) -> APIRouter:
         return JSONResponse({"events": items})
 
     @router.post("/{event_id}/link")
-    async def link_event(
+    def link_event(
         request: Request,
         event_id: str,
         body: dict[str, Any] = Body(default={}),
@@ -89,7 +89,7 @@ def build_calendar_events_router(ctx: WebContext) -> APIRouter:
         return JSONResponse({"linked": True, "event_id": event_id, "project_id": project_id})
 
     @router.delete("/{event_id}/link")
-    async def unlink_event(
+    def unlink_event(
         request: Request,
         event_id: str,
         body: dict[str, Any] = Body(default={}),

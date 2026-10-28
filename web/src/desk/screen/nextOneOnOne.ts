@@ -8,7 +8,7 @@
  *  next 1:1. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
-import { useOnDeskChanged } from "../useDeskChangedRefresh";
+import { PEOPLE_CHANGE_KINDS, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { formatDockTime, nextOneOnOneLabel, type DockRelationshipRead } from "../components/window/dockState";
 
 function wireRows<T>(body: unknown, key: string): T[] {
@@ -124,6 +124,6 @@ export function useNextOneOnOneRead(todayOnly = false): { label: string | null; 
       });
   }, [todayOnly]);
   useEffect(read, [read]);
-  useOnDeskChanged(read);
+  useOnDeskChanged(read, [...PEOPLE_CHANGE_KINDS, "meeting_summary"]);
   return { label, at, reading };
 }

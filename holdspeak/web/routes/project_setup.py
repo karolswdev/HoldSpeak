@@ -47,7 +47,7 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/project-setups ─────────────────────────────────
 
     @router.post("")
-    async def start_setup(request: Request) -> Any:
+    def start_setup(request: Request) -> Any:
         try:
             session = ctx.project_setup_service.start_setup(principal(request))
             return JSONResponse(session)
@@ -59,7 +59,7 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/project-setups/{session_id} ─────────────────────
 
     @router.get("/{session_id}")
-    async def get_setup(session_id: str, request: Request) -> Any:
+    def get_setup(session_id: str, request: Request) -> Any:
         try:
             return JSONResponse(
                 ctx.project_setup_service.get_setup(session_id),
@@ -104,7 +104,7 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/project-setups/{session_id}/suggest ────────────
 
     @router.post("/{session_id}/suggest")
-    async def suggest(session_id: str, request: Request) -> Any:
+    def suggest(session_id: str, request: Request) -> Any:
         try:
             proposals = ctx.project_setup_service.suggest(
                 principal(request), session_id,
@@ -123,7 +123,7 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/project-setups/{sid}/proposals/{pid}/select ────
 
     @router.post("/{session_id}/proposals/{proposal_id}/select")
-    async def select_proposal(
+    def select_proposal(
         session_id: str, proposal_id: str, request: Request,
     ) -> Any:
         try:
@@ -149,7 +149,7 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/project-setups/{sid}/proposals/{pid}/deselect ──
 
     @router.post("/{session_id}/proposals/{proposal_id}/deselect")
-    async def deselect_proposal(
+    def deselect_proposal(
         session_id: str, proposal_id: str, request: Request,
     ) -> Any:
         try:
@@ -270,7 +270,7 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/project-setups/{sid}/proposals/{pid}/test ──────
 
     @router.post("/{session_id}/proposals/{proposal_id}/test")
-    async def test_proposal(
+    def test_proposal(
         session_id: str, proposal_id: str, request: Request,
     ) -> Any:
         try:
@@ -317,7 +317,7 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/project-setups/{session_id}/abandon ────────────
 
     @router.post("/{session_id}/abandon")
-    async def abandon(session_id: str, request: Request) -> Any:
+    def abandon(session_id: str, request: Request) -> Any:
         try:
             result = ctx.project_setup_service.abandon(
                 principal(request), session_id,

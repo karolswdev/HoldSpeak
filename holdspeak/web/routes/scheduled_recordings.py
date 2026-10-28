@@ -56,7 +56,7 @@ def build_scheduled_recordings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(prefix="/api/scheduled-recordings", tags=["scheduled-recordings"])
 
     @router.get("")
-    async def list_schedules(request: Request) -> Any:
+    def list_schedules(request: Request) -> Any:
         try:
             schedules = _service().list_schedules(_principal(request))
             return JSONResponse({"success": True, "schedules": schedules})
@@ -64,7 +64,7 @@ def build_scheduled_recordings_router(ctx: WebContext) -> APIRouter:
             return _error_response(exc)
 
     @router.post("")
-    async def create_schedule(request: Request, body: dict = Body(default={})) -> Any:
+    def create_schedule(request: Request, body: dict = Body(default={})) -> Any:
         try:
             kwargs: dict[str, Any] = {}
             # HS-147-01: calendar_event_id triggers the event-linked arm path;
@@ -94,7 +94,7 @@ def build_scheduled_recordings_router(ctx: WebContext) -> APIRouter:
             return _error_response(exc)
 
     @router.get("/{schedule_id}")
-    async def get_schedule(request: Request, schedule_id: str) -> Any:
+    def get_schedule(request: Request, schedule_id: str) -> Any:
         try:
             result = _service().get_schedule(_principal(request), schedule_id)
             return JSONResponse({"success": True, "schedule": result})
@@ -104,7 +104,7 @@ def build_scheduled_recordings_router(ctx: WebContext) -> APIRouter:
             return _error_response(exc)
 
     @router.patch("/{schedule_id}")
-    async def update_schedule(request: Request, schedule_id: str, body: dict = Body(default={})) -> Any:
+    def update_schedule(request: Request, schedule_id: str, body: dict = Body(default={})) -> Any:
         try:
             kwargs: dict[str, Any] = {}
             if "title" in body:
@@ -134,7 +134,7 @@ def build_scheduled_recordings_router(ctx: WebContext) -> APIRouter:
             return _error_response(exc)
 
     @router.delete("/{schedule_id}")
-    async def delete_schedule(request: Request, schedule_id: str) -> Any:
+    def delete_schedule(request: Request, schedule_id: str) -> Any:
         try:
             result = _service().delete_schedule(_principal(request), schedule_id)
             return JSONResponse({"success": True, **result})
@@ -144,7 +144,7 @@ def build_scheduled_recordings_router(ctx: WebContext) -> APIRouter:
             return _error_response(exc)
 
     @router.post("/{schedule_id}/cancel")
-    async def cancel_armed(request: Request, schedule_id: str) -> Any:
+    def cancel_armed(request: Request, schedule_id: str) -> Any:
         try:
             result = _service().cancel_armed(_principal(request), schedule_id)
             return JSONResponse({"success": True, **result})

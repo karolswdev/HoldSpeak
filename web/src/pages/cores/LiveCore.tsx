@@ -47,6 +47,7 @@ import {
   SurfaceState,
 } from "../../desk/surface/Surface";
 import { useAction } from "./core-hooks";
+import { frameNames } from "../../desk/components/window/dockState";
 import {
   GadgetGroup,
   GadgetRow,
@@ -111,7 +112,12 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       void reloadSettingsHub();
     }, 300);
     const bump = burst.bump;
-    const offDeskChanged = subscribe("desk_changed", bump);
+    const offDeskChanged = subscribe("desk_changed", (frame) => {
+      if (frameNames(frame?.data, [
+        "assignment", "engine", "inference", "inference_assignment", "meeting", "meeting_summary",
+        "model", "model_profile", "setting", "settings",
+      ])) bump();
+    });
     const offReturn = onReturnToTask(() => void reloadRuntimeStatus());
     const onFocus = () => void reloadRuntimeStatus();
     window.addEventListener("focus", onFocus);

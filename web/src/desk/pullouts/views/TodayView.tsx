@@ -21,7 +21,7 @@ import { TodayNeeds } from "../../needs/TodayNeeds";
 import type { NeedFace } from "../../needs/needsFace";
 import { SinceYesterday, type MondayBrief } from "./BriefView";
 import { PreparedBlock, type PreparedRead } from "./PreparedBlock";
-import { useOnDeskChanged } from "../../useDeskChangedRefresh";
+import { MEETING_CHANGE_KINDS, NEEDS_YOU_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { newsWords, useAutomationNews } from "../../automationNews";
 import { Avatar, DotWord, StatusBar, Steps, TickNumber, ToolGlyph, Toolbar, countWords, meetingSteps, type StatusBarItem } from "../../surface/kit";
 import { openChairWindow } from "../../chair/chairWindows";
@@ -443,7 +443,11 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     }
   }, []);
   useEffect(() => { void load(); }, [load]);
-  useOnDeskChanged(() => void load());
+  useOnDeskChanged(() => void load(), [
+    ...MEETING_CHANGE_KINDS,
+    ...NEEDS_YOU_CHANGE_KINDS,
+    "brief", "calendar", "calendar_event", "project_update", "scheduled_recording", "workbench",
+  ]);
   // The countdown ticks; nothing moves (the words change in a fixed box).
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);

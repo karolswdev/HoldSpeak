@@ -58,7 +58,7 @@ def build_floor_router(ctx: WebContext) -> APIRouter:
         return min(float(requested), MAX_LEASE_SECONDS)
 
     @router.get("/api/dictation/floor")
-    async def api_audio_floor() -> Any:
+    def api_audio_floor() -> Any:
         """Who holds the audio floor right now."""
         session = _session()
         if session is None:
@@ -67,7 +67,7 @@ def build_floor_router(ctx: WebContext) -> APIRouter:
         return {"arbitrated": True, "held": owner is not None, "owner": owner}
 
     @router.post("/api/dictation/floor/claim")
-    async def api_audio_floor_claim(payload: FloorClaim | None = None) -> Any:
+    def api_audio_floor_claim(payload: FloorClaim | None = None) -> Any:
         """Claim the floor for the browser's open mic, on a lease."""
         session = _session()
         lease = _lease(payload.lease_seconds if payload else None)
@@ -96,7 +96,7 @@ def build_floor_router(ctx: WebContext) -> APIRouter:
         )
 
     @router.post("/api/dictation/floor/release")
-    async def api_audio_floor_release() -> Any:
+    def api_audio_floor_release() -> Any:
         """Drop the browser's claim. Safe to call when it holds nothing."""
         session = _session()
         if session is not None:

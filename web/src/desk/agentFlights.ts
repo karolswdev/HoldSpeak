@@ -13,7 +13,7 @@ import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../lib/api";
 import { reportWriteFailure } from "./hooks/useWriteReceipt";
-import { useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
+import { AGENT_CHANGE_KINDS, useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
 import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
 export type FlightState =
@@ -515,7 +515,7 @@ export function useAgentFlightsLive(): void {
   const reload = useCallback(() => { void useAgentFlights.getState().load(); }, []);
   useEffect(() => { reload(); }, [reload]);
   useOnCoderFrame(reload);
-  useOnDeskChanged(reload);
+  useOnDeskChanged(reload, AGENT_CHANGE_KINDS);
 }
 
 /** Conductor F2 (K6): the Room's receipt for a commitment an agent's PR

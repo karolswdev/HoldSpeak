@@ -13,7 +13,7 @@ def build_agent_capabilities_router() -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/agents/capabilities")
-    async def api_agent_capabilities() -> Any:
+    def api_agent_capabilities() -> Any:
         return JSONResponse(capabilities_payload())
 
     return router

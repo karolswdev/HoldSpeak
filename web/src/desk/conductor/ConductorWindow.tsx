@@ -32,7 +32,7 @@ import { reviewResult, useAgentFlights } from "../agentFlights";
 import { AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
-import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
+import { AGENT_CHANGE_KINDS, useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import {
   canRun,
   conductorHead,
@@ -72,7 +72,7 @@ function useConductorReads() {
     void useConductor.getState().readOwnAgents();
   };
   useOnCoderFrame(reread);
-  useOnDeskChanged(reread);
+  useOnDeskChanged(reread, AGENT_CHANGE_KINDS);
   return state;
 }
 

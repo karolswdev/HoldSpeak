@@ -22,10 +22,10 @@ import type { PanelRect } from "../store/types";
 import { onReturnToTask } from "../returnToTask";
 import { refreshNeedsYou } from "../needsYou";
 import { burstTimer } from "../burstTimer";
-import { onlyWindowChanges } from "../components/window/dockState";
+import { frameNames } from "../components/window/dockState";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { needYouWords } from "../surface";
-import { useOnCoderFrame } from "../useDeskChangedRefresh";
+import { NEEDS_YOU_CHANGE_KINDS, useOnCoderFrame } from "../useDeskChangedRefresh";
 import { useAgentFlightsLive } from "../agentFlights";
 import { ComingUp } from "../../pages/cores/history/ComingUp";
 
@@ -97,7 +97,7 @@ function Arrival() {
     // hub's cache dirty. A frame of window changes only reads nothing.
     const burst = burstTimer(() => { void refreshNeedsYou(false); }, 300);
     const unsubscribe = subscribeFrames("desk_changed", (frame) => {
-      if (!onlyWindowChanges(frame.data)) burst.bump();
+      if (frameNames(frame?.data, NEEDS_YOU_CHANGE_KINDS)) burst.bump();
     });
     const onFocus = () => { void readAssignments(); };
     window.addEventListener("focus", onFocus);

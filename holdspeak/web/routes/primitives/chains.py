@@ -24,7 +24,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         from ....db import get_database,get_observer
         return PrimitiveService(get_database(),observer=get_observer())
     @router.get("/api/chains")
-    async def list_(request:Request): return JSONResponse({"chains":_svc().list_chains(_principal(request))})
+    def list_(request:Request): return JSONResponse({"chains":_svc().list_chains(_principal(request))})
     @router.post("/api/chains")
     async def create(request:Request):
         body=await _json_body(request)
@@ -32,7 +32,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         try:return JSONResponse({"chain":_svc().create_chain(_principal(request),chain_id=str(body.get("id") or "") or None,name=str(body.get("name") or ""),steps=list(body.get("steps") or []))},status_code=201)
         except (ValidationError,ValueError) as exc:return JSONResponse({"error":str(exc)},status_code=400)
     @router.get("/api/chains/{chain_id}")
-    async def get_(chain_id:str,request:Request):
+    def get_(chain_id:str,request:Request):
         try:return JSONResponse({"chain":_svc().get_chain(_principal(request),chain_id)})
         except NotFound:return JSONResponse({"error":f"Unknown Sequence: {chain_id}"},status_code=404)
     @router.put("/api/chains/{chain_id}")
@@ -42,7 +42,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         try:return JSONResponse({"chain":_svc().update_chain(_principal(request),chain_id,name=body.get("name"),steps=body.get("steps"))})
         except NotFound:return JSONResponse({"error":f"Unknown Sequence: {chain_id}"},status_code=404)
     @router.delete("/api/chains/{chain_id}")
-    async def delete(chain_id:str,request:Request):
+    def delete(chain_id:str,request:Request):
         try:_svc().delete_chain(_principal(request),chain_id);return JSONResponse({"success":True})
         except NotFound:return JSONResponse({"error":f"Unknown Sequence: {chain_id}"},status_code=404)
     @router.post("/api/chains/{chain_id}/run")
@@ -66,7 +66,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:return JSONResponse({"error":str(exc),**dict(exc.context or {})},status_code=int((exc.context or {}).get("status",500)))
         except Exception as exc:return error_500(exc,log,"Failed to run chain")
     @router.post("/api/chains/runs/{parent_operation_id}/cancel")
-    async def cancel(parent_operation_id:str,request:Request):
+    def cancel(parent_operation_id:str,request:Request):
         principal=_principal(request)
         try:
             from ....db import get_database

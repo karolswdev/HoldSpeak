@@ -72,7 +72,7 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/api/thoughts")
-    async def list_unfinished(request: Request) -> Any:
+    def list_unfinished(request: Request) -> Any:
         try:
             state = request.query_params.get("state", "unfinished")
             if state != "unfinished":
@@ -88,7 +88,7 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
     # Static Note lookup must precede `/{thought_id}` so a Note id can never be
     # mistaken for a thought id by route matching.
     @router.get("/api/thoughts/for-note/{note_id}")
-    async def for_note(note_id: str, request: Request) -> Any:
+    def for_note(note_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service().for_note(principal(request), note_id))
         except ServiceError as exc:
@@ -128,7 +128,7 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/api/thoughts/default-context")
-    async def get_default_context(request: Request) -> Any:
+    def get_default_context(request: Request) -> Any:
         try:
             return JSONResponse(application().get_default_context(principal(request)))
         except ServiceError as exc:
@@ -151,14 +151,14 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/api/thoughts/{thought_id}")
-    async def get(thought_id: str, request: Request) -> Any:
+    def get(thought_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"thought": ops().invoke(principal(request), "thought.read", {"thought_id": thought_id})})
         except ServiceError as exc:
             return _error(exc)
 
     @router.get("/api/thoughts/{thought_id}/original")
-    async def original(thought_id: str, request: Request) -> Any:
+    def original(thought_id: str, request: Request) -> Any:
         try:
             return JSONResponse(application().get_original(
                 principal(request), thought_id=thought_id
@@ -167,14 +167,14 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/api/thoughts/{thought_id}/workbench")
-    async def workbench(thought_id: str, request: Request) -> Any:
+    def workbench(thought_id: str, request: Request) -> Any:
         try:
             return JSONResponse(ops().invoke(principal(request), "thought.workbench.read", {"thought_id": thought_id}))
         except ServiceError as exc:
             return _error(exc)
 
     @router.get("/api/thoughts/{thought_id}/context")
-    async def list_context(thought_id: str, request: Request) -> Any:
+    def list_context(thought_id: str, request: Request) -> Any:
         try:
             raw_limit = request.query_params.get("limit", "20")
             try: limit = int(raw_limit)
@@ -285,7 +285,7 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/api/thoughts/{thought_id}/reviews/{review_result_id}")
-    async def review(thought_id: str, review_result_id: str, request: Request) -> Any:
+    def review(thought_id: str, review_result_id: str, request: Request) -> Any:
         try:
             return JSONResponse(
                 application().review(

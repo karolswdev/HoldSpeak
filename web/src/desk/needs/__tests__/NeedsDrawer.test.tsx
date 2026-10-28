@@ -209,6 +209,28 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     });
   });
 
+  it("re-reads a failed setup path with fresh data when Try again is pressed", async () => {
+    const reads: string[] = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) {
+        reads.push(value);
+        return {
+          items: [],
+          blockers: [{ key: "unknown", label: "Could not read setup", verb: "Try again" }],
+          failedMeetings: [], coverage: [], complete: false,
+        } as never;
+      }
+      if (value === "/api/door") return { ...DOOR } as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    const button = await screen.findByRole("button", { name: "Try again: Could not read setup" });
+    expect(reads).toEqual(["/api/desk/needs-you"]);
+    fireEvent.click(button);
+    await waitFor(() => expect(reads.at(-1)).toBe("/api/desk/needs-you?fresh=1"));
+  });
+
   it("a Secure helper request has one Allow press with its exact request id", async () => {
     const allow = vi.fn();
     vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
@@ -303,6 +325,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       await waitFor(() => expect(sam.getAttribute("data-settle")).toBe("done"));
       expect(vi.mocked(apiFetch).mock.calls.some(([path]) => String(path).includes("follow-through"))).toBe(true);
       await waitFor(() => expect(reads()).toBeGreaterThan(before));
+      expect(vi.mocked(apiFetch).mock.calls
+        .filter(([path]) => String(path).startsWith("/api/desk/needs-you"))
+        .at(-1)?.[0]).toBe("/api/desk/needs-you");
       await waitFor(() => expect(row("Sam: send the status by Thursday").hasAttribute("data-settle")).toBe(false));
     } finally {
       vi.unstubAllGlobals();
@@ -371,6 +396,35 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     fireEvent.click(within(row("Pick the vendor")).getByText("Name an owner"));
     expect(screen.getByTestId("needs-well")).toBeTruthy();
     expect(screen.getByRole("region", { name: "Owner: Pick the vendor" })).toBeTruthy();
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Jordan" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save owner: Pick the vendor" }));
+    await waitFor(() => expect(vi.mocked(apiFetch).mock.calls
+      .filter(([path]) => String(path).startsWith("/api/desk/needs-you")).at(-1)?.[0])
+      .toBe("/api/desk/needs-you"));
+  });
+
+  it("Whose? confirms the chosen owner and follows with a plain read", async () => {
+    const reads: string[] = [];
+    const proposal = {
+      id: "proposal:prop-whose", ref: "Choose an owner", kind: "proposal", source: "proposal",
+      title: "Choose an owner", why: "PROPOSED · Cutover sync", severity: "info",
+      projectId: "", projectName: "", proposalId: "prop-whose", proposalKind: "action",
+      meetingId: "m-cutover", meetingTitle: "Cutover sync", whose: ["Mira", "Sam"],
+    };
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) {
+        reads.push(value);
+        return { count: 1, items: [proposal], blockers: [], failedMeetings: [], coverage: [], complete: true } as never;
+      }
+      if (value === "/api/door") return { ...DOOR } as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    const need = await screen.findByText("Choose an owner");
+    fireEvent.click(need.closest("li.needs-row")!.querySelector("[data-verb='whose']")!);
+    fireEvent.click(screen.getByRole("button", { name: "Mira: Choose an owner" }));
+    await waitFor(() => expect(reads.at(-1)).toBe("/api/desk/needs-you"));
   });
 
   it("says Nothing needs you only on a complete read", async () => {
@@ -429,6 +483,24 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await waitFor(() => expect(rows[0].querySelector("[data-testid=needs-row-state]")?.textContent).not.toBe(first), { timeout: 2500 });
     fireEvent.click(rows[0].querySelector("[data-verb='cancel']")!);
     expect(cancel).toHaveBeenCalledWith("sch-1");
+  });
+
+  it("reconciles an arming mismatch with a plain read", async () => {
+    const reads: string[] = [];
+    useDesk.setState({
+      scheduledArming: { scheduleId: "sch-stale", title: "Stale arming", countdownSeconds: 10, fireAt: Date.now() + 8_000, outcome: null },
+    } as never);
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        reads.push(String(path));
+        return { ...ANSWER, arming: [] } as never;
+      }
+      return { ...DOOR } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("8 need you");
+    await waitFor(() => expect(reads.length).toBeGreaterThan(0));
+    expect(reads.every((path) => path === "/api/desk/needs-you")).toBe(true);
   });
 
   it("a failed fire stays in Needs you and Record now starts its calendar meeting", async () => {
@@ -656,9 +728,11 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       },
     ];
     const posted: string[] = [];
+    const needsReads: string[] = [];
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       const value = String(path);
       if (value.startsWith("/api/desk/needs-you")) {
+        needsReads.push(value);
         return { count: 2, items: proposals, blockers: [], failedMeetings: [], coverage: [], complete: true } as never;
       }
       if (value.startsWith("/api/proposals/")) posted.push(value);
@@ -692,6 +766,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     fireEvent.click(within(row(sqlite)).getByRole("button", { name: `Decide: ${sqlite}` }));
     fireEvent.click(screen.getByRole("button", { name: `Drop: ${sqlite}` }));
     await waitFor(() => expect(posted).toContain("/api/proposals/prop-sqlite/dismiss"));
+    expect(needsReads.every((path) => path === "/api/desk/needs-you")).toBe(true);
   });
 });
 
@@ -869,12 +944,37 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
     await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toMatch(/^Checked Meetings at \d\d:\d\d$/));
     expect(evaluated).toEqual(["/api/watches/w-mtg/evaluate"]);
+    await waitFor(() => expect(vi.mocked(apiFetch).mock.calls
+      .filter(([path]) => String(path).startsWith("/api/desk/needs-you")).at(-1)?.[0])
+      .toBe("/api/desk/needs-you?fresh=1"));
     // A refused check says so in plain words; the hub's reason is the hover.
     refuse = true;
     fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
     await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toBe(
       "Could not check Meetings · Nothing changed · Try again"));
+    await waitFor(() => expect(vi.mocked(apiFetch).mock.calls
+      .filter(([path]) => String(path).startsWith("/api/desk/needs-you")).at(-1)?.[0])
+      .toBe("/api/desk/needs-you?fresh=1"));
     expect(screen.getByTestId("needs-source-receipt").querySelector("[title]")?.getAttribute("title")).toBe("gh is not signed in");
+  });
+
+  it("a coverage Retry without Watch ids forces the aggregate read", async () => {
+    const noWatch = {
+      ...MORNING,
+      coverage: [{ ...MORNING.coverage[1], watch_ids: [] }],
+    };
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) return noWatch as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("1 needs you");
+    const meetings = screen.getAllByTestId("needs-source-row").find((li) => li.textContent?.includes("Meetings"))!;
+    fireEvent.click(within(meetings).getByRole("button", { name: "Retry: Meetings" }));
+    await waitFor(() => expect(vi.mocked(apiFetch).mock.calls
+      .filter(([path]) => String(path).startsWith("/api/desk/needs-you")).at(-1)?.[0])
+      .toBe("/api/desk/needs-you?fresh=1"));
   });
 });
 

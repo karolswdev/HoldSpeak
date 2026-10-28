@@ -21,6 +21,7 @@ import { windowIcons } from "./seatIcons";
 import { VerbGlyph } from "./VerbGlyph";
 import { TickNumber } from "../../surface/kit";
 import { RecordClock } from "../RecordClock";
+import { ScreenRecordTile } from "../../recordings/ScreenRecord";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, PHONE_DOCK_APPLICATIONS } from "../../applications";
 import { useAgentsTile } from "../../conductor/fleetTile";
@@ -33,10 +34,11 @@ import {
   EMPTY_DOCK_LIVE,
   deskChanges,
   formatDockTime,
-  onlyWindowChanges,
+  frameNames,
   reduceDockFrame,
   type DockLiveState,
 } from "./dockState";
+import { NEEDS_YOU_CHANGE_KINDS } from "../../useDeskChangedRefresh";
 import { burstTimer } from "../../burstTimer";
 import { DOCK_HEIGHT_EVENT } from "./windowGeometry";
 
@@ -236,7 +238,7 @@ function useDockLiveReads(): {
       subscribe(type, (frame) => {
         setLive((previous) => reduceDockFrame(previous, frame));
         // A window open, close or move changes nothing the Dock reads.
-        if (frame.type === "desk_changed" && onlyWindowChanges(frame.data)) return;
+        if (frame.type === "desk_changed" && !frameNames(frame?.data, NEEDS_YOU_CHANGE_KINDS)) return;
         if (frame.type === "desk_changed") {
           for (const value of deskChanges(frame.data)) {
             if (value.kind !== "meeting_ready_read") continue;
@@ -642,6 +644,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           2026-10-10, "everything must become one desk"): the Chair/Floor
           toggle is gone; the Screen is the one desk. */}
       {!compact ? center : null}
+      {/* Recordings (2026-10-28): the screen-record tile follows the Record
+          key. On the phone it shows only while a recording runs (its Stop). */}
+      <ScreenRecordTile compact={compact} />
       {/* PHILO-16 (A1) §5: a seated window always has a seat. One whose
           application has no tile here gets its own, after a thin rule. */}
       {seatedWithoutTile.length > 0 ? (

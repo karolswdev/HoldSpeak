@@ -9,7 +9,10 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("../../lib/api", () => ({ apiFetch: mocks.apiFetch, readableError: String }));
 vi.mock("../../desk/shell", () => ({ openSurface: mocks.openSurface, openPrimitive: mocks.openPrimitive }));
-vi.mock("../../desk/useDeskChangedRefresh", () => ({ useOnDeskChanged: (reload: () => void) => { mocks.changed = reload; } }));
+vi.mock("../../desk/useDeskChangedRefresh", () => ({
+  ALL_DESK_CHANGE_KINDS: ["note"],
+  useOnDeskChanged: (reload: () => void) => { mocks.changed = reload; },
+}));
 
 import { ActivityFinishedReceipts } from "./ActivityFinishedReceipts";
 

@@ -34,7 +34,7 @@ def build_decision_records_router(ctx: Any) -> APIRouter:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
     @router.get("")
-    async def list_records(
+    def list_records(
         request: Request, limit: int = 50, offset: int = 0
     ) -> list[dict[str, Any]]:
         return service().list_records(principal(request), limit=limit, offset=offset)
@@ -42,17 +42,17 @@ def build_decision_records_router(ctx: Any) -> APIRouter:
     # Declare search before the parameterized path so FastAPI does not regard
     # "search" as a record ID.
     @router.get("/search")
-    async def search_records(
+    def search_records(
         request: Request, q: str = "", limit: int = 50
     ) -> list[dict[str, Any]]:
         return service().search(principal(request), q, limit=limit)
 
     @router.get("/review")
-    async def records_due_for_review(request: Request) -> list[dict[str, Any]]:
+    def records_due_for_review(request: Request) -> list[dict[str, Any]]:
         return service().due_for_review(principal(request))
 
     @router.post("/from-desk")
-    async def create_from_desk(request: Request, body: dict[str, Any] = Body(default={})) -> Any:
+    def create_from_desk(request: Request, body: dict[str, Any] = Body(default={})) -> Any:
         """Admit one Desk decision, then return its canonical record.
 
         The admitted ``decision.create`` operation owns the retained source
@@ -113,19 +113,19 @@ def build_decision_records_router(ctx: Any) -> APIRouter:
             return error_500(exc, log, "Failed to create canonical decision")
 
     @router.get("/source/{source_type}/{source_id}")
-    async def records_for_source(
+    def records_for_source(
         source_type: str, source_id: str, request: Request
     ) -> list[dict[str, Any]]:
         return service().records_for_source(principal(request), source_type, source_id)
 
     @router.get("/work/{work_type}/{work_ref}")
-    async def records_for_work(
+    def records_for_work(
         work_type: str, work_ref: str, request: Request
     ) -> list[dict[str, Any]]:
         return service().records_for_work(principal(request), work_type, work_ref)
 
     @router.get("/{record_id}")
-    async def get_record(record_id: str, request: Request) -> dict[str, Any]:
+    def get_record(record_id: str, request: Request) -> dict[str, Any]:
         record = service().get(principal(request), record_id)
         if record is None:
             raise HTTPException(status_code=404, detail="decision record not found")
@@ -134,7 +134,7 @@ def build_decision_records_router(ctx: Any) -> APIRouter:
     # ── HS-200-13: the lifecycle verbs the recall chain needs ──────────
 
     @router.post("/{record_id}/supersede")
-    async def supersede_record(
+    def supersede_record(
         record_id: str, request: Request, body: dict[str, Any] = Body(default={}),
     ) -> Any:
         """Seal ``record_id`` and name ``successor_id`` as what is current now."""
@@ -151,7 +151,7 @@ def build_decision_records_router(ctx: Any) -> APIRouter:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     @router.post("/{record_id}/dispute")
-    async def dispute_record(
+    def dispute_record(
         record_id: str, request: Request, body: dict[str, Any] = Body(default={}),
     ) -> Any:
         """Mark a record DISPUTED (discoverable, never presented as current)."""
@@ -165,7 +165,7 @@ def build_decision_records_router(ctx: Any) -> APIRouter:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     @router.post("/{record_id}/carry")
-    async def carry_record(
+    def carry_record(
         record_id: str, request: Request, body: dict[str, Any] = Body(default={}),
     ) -> Any:
         """`Carry into brief`: queue the record, by reference, for its Project's

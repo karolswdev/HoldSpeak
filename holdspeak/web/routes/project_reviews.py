@@ -41,7 +41,7 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/projects/{project_id}/reviews ─────────────────────
 
     @router.post("/{project_id}/reviews")
-    async def open_review(project_id: str, request: Request) -> Any:
+    def open_review(project_id: str, request: Request) -> Any:
         try:
             result = ops().invoke(principal(request), "project.open_review", {"project_id": project_id})
             return JSONResponse(result)
@@ -66,7 +66,7 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/projects/{project_id}/reviews/{review_id} ──────────
 
     @router.get("/{project_id}/reviews/{review_id}")
-    async def get_review(
+    def get_review(
         project_id: str, review_id: str, request: Request,
     ) -> Any:
         try:
@@ -92,7 +92,7 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/projects/{project_id}/delta ─────────────────────────
 
     @router.get("/{project_id}/delta")
-    async def get_delta(project_id: str, request: Request) -> Any:
+    def get_delta(project_id: str, request: Request) -> Any:
         try:
             # PHILO-9-01: the declared project.get_delta (the open window, or
             # the honest empty state, WEB-STA-004), the read MCP reaches too.

@@ -66,6 +66,8 @@ STATIC_WINDOWS: dict[str, str] = {
     "surface-calls": "open-calls",
     # Programs (2026-10-28): the Programs window (desk/programs/ProgramsWindow.tsx).
     "surface-programs": "open-programs",
+    # Recordings (2026-10-28): the Recordings window (desk/recordings/RecordingsWindow.tsx).
+    "surface-recordings": "open-recordings",
     "surface-people": "open-people",
     # Betterment P4 (projects): the Projects list and the Decisions window.
     "surface-projects": "open-projects",

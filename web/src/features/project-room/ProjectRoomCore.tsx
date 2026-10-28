@@ -49,7 +49,7 @@ import {
   getAssignmentEditor,
 } from "../../pages/cores/assignmentExperience";
 import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
-import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { ROOM_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { useEngine } from "../../desk/hooks/useEngine";
 import { useStandingPagesRead } from "../../desk/standingPages";
 import { apiFetch } from "../../lib/api";
@@ -2035,7 +2035,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   const loading = ctrl.loadStatus === "loading";
   // A write in another window (a meeting filed, an update published, an
   // agent's write) shows in this Room with no reload.
-  useOnDeskChanged(() => { void ctrl.load(true); });
+  useOnDeskChanged(() => { void ctrl.load(true); }, ROOM_CHANGE_KINDS);
 
   const reviewData: RoomReviewData | null =
     ctrl.room?.review.state === "ok"

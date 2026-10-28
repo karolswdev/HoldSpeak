@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../../lib/api";
-import { useOnDeskChanged } from "../useDeskChangedRefresh";
+import { PEOPLE_CHANGE_KINDS, ROOM_CHANGE_KINDS, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { normalizeRef, type ScreenPerson } from "./compose";
 
 export type MemberRead = "resources" | "meetings";
@@ -174,7 +174,7 @@ export function useScreenMembers(projects: readonly { id: string; updatedAt?: st
     for (const p of keyed) void loadProject(p.id, p.key);
     void loadPeople();
   }, [keyed]);
-  useOnDeskChanged(rereadAll);
+  useOnDeskChanged(rereadAll, [...ROOM_CHANGE_KINDS, ...PEOPLE_CHANGE_KINDS]);
 
   return useMemo(() => {
     const filed = new Set<string>();

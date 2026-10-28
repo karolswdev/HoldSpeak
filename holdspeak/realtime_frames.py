@@ -78,6 +78,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "program_changed",          # a Program or one of its steps moved (Programs
                                 #   2026-10-28): payload {program_id, step_id?,
                                 #   state, your_turn}
+    "recording_state",          # a screen recording changed (Recordings, 2026-10-28)
+                                # payload: {reason: started|chunk|stopped|encoding|
+                                #           progress|ready|failed|parked|shared, recording}
     "runtime_activity",         # the one activity line
     "runtime_queue",            # the deferred intel queue's real truth
     "scheduled_recording.arming",    # countdown before a scheduled capture fires

@@ -124,11 +124,11 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
         return operations.for_context(ctx, "project_service", bare_db=service._db).target("project.get")
 
     @router.get("/automations/practice-recipes")
-    async def list_practice_recipes() -> Any:
+    def list_practice_recipes() -> Any:
         return JSONResponse(recipe_catalog.catalog_payload())
 
     @router.get("/automations/practice-recipes/{recipe_id}")
-    async def get_practice_recipe(recipe_id: str) -> Any:
+    def get_practice_recipe(recipe_id: str) -> Any:
         try:
             return JSONResponse(recipe_catalog.get_descriptor(recipe_id).to_dict())
         except recipe_catalog.UnknownRecipe as exc:
@@ -137,7 +137,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.get("/automations/practice-recipes/{recipe_id}/plan")
-    async def compile_practice_recipe(
+    def compile_practice_recipe(
         request: Request,
         recipe_id: str,
         project_id: str = Query("", description="The Project the plan is scoped to."),
@@ -171,14 +171,14 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.get("/automations/watches")
-    async def list_watches(request: Request) -> Any:
+    def list_watches(request: Request) -> Any:
         try:
             return JSONResponse({"watches": service.list_watches(principal(request))})
         except ServiceError as exc:
             return _error(exc)
 
     @router.post("/automations/watches", status_code=201)
-    async def create_watch(request: Request, payload: _WatchCreateRequest) -> Any:
+    def create_watch(request: Request, payload: _WatchCreateRequest) -> Any:
         try:
             return JSONResponse(
                 {"watch": service.create_watch(principal(request), **payload.model_dump())},
@@ -188,7 +188,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.put("/automations/watches/{watch_id}/enabled")
-    async def set_watch_enabled(
+    def set_watch_enabled(
         watch_id: str, request: Request, payload: _WatchEnabledRequest
     ) -> Any:
         try:
@@ -199,21 +199,21 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.post("/automations/watches/{watch_id}/test")
-    async def test_watch(watch_id: str, request: Request) -> Any:
+    def test_watch(watch_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service.preview_watch(principal(request), watch_id))
         except ServiceError as exc:
             return _error(exc)
 
     @router.post("/automations/watches/{watch_id}/baseline")
-    async def baseline_watch(watch_id: str, request: Request) -> Any:
+    def baseline_watch(watch_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service.establish_baseline(principal(request), watch_id))
         except ServiceError as exc:
             return _error(exc)
 
     @router.get("/automations/events")
-    async def list_events(
+    def list_events(
         request: Request,
         event_type: str | None = None,
         producer: str | None = None,
@@ -227,21 +227,21 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/automations/presets")
-    async def list_presets(request: Request) -> Any:
+    def list_presets(request: Request) -> Any:
         try:
             return JSONResponse({"presets": service.list_presets(principal(request))})
         except ServiceError as exc:
             return _error(exc)
 
     @router.get("/automations/reactions")
-    async def list_reactions(request: Request) -> Any:
+    def list_reactions(request: Request) -> Any:
         try:
             return JSONResponse({"reactions": service.list_reactions(principal(request))})
         except ServiceError as exc:
             return _error(exc)
 
     @router.post("/automations/reactions", status_code=201)
-    async def create_reaction(request: Request, payload: _ReactionCreateRequest) -> Any:
+    def create_reaction(request: Request, payload: _ReactionCreateRequest) -> Any:
         try:
             return JSONResponse(
                 {"reaction": service.create_reaction(
@@ -253,7 +253,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.put("/automations/reactions/{reaction_id}/enabled")
-    async def set_reaction_enabled(
+    def set_reaction_enabled(
         reaction_id: str, request: Request, payload: _ReactionEnabledRequest
     ) -> Any:
         try:
@@ -276,7 +276,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/workbenches/{workbench_id}/automations")
-    async def list_workbench_automations(workbench_id: str, request: Request) -> Any:
+    def list_workbench_automations(workbench_id: str, request: Request) -> Any:
         try:
             values = service.list_workbench_automations(principal(request), workbench_id)
             return JSONResponse({"automations": [_automation_view(value) for value in values]})
@@ -284,7 +284,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.post("/workbenches/{workbench_id}/automations", status_code=201)
-    async def create_workbench_automation(
+    def create_workbench_automation(
         workbench_id: str, request: Request, payload: _WorkbenchAutomationCreateRequest,
     ) -> Any:
         try:
@@ -297,7 +297,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.patch("/workbenches/{workbench_id}/automations/{automation_id}")
-    async def set_workbench_automation_enabled(
+    def set_workbench_automation_enabled(
         workbench_id: str, automation_id: str, request: Request,
         payload: _ReactionEnabledRequest,
     ) -> Any:
@@ -311,7 +311,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.post("/workbenches/{workbench_id}/automations/{automation_id}/test")
-    async def test_workbench_automation(
+    def test_workbench_automation(
         workbench_id: str, automation_id: str, request: Request,
     ) -> Any:
         try:
@@ -322,7 +322,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/workbenches/{workbench_id}/automations/{automation_id}/history")
-    async def workbench_automation_history(
+    def workbench_automation_history(
         workbench_id: str, automation_id: str, request: Request,
         limit: int = Query(default=100, ge=1, le=500),
     ) -> Any:
@@ -336,7 +336,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/workbenches/{workbench_id}/resourceful")
-    async def get_resourceful_policy(workbench_id: str, request: Request) -> Any:
+    def get_resourceful_policy(workbench_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"policy": resourceful.get_policy(
                 principal(request), workbench_id,
@@ -345,7 +345,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.put("/workbenches/{workbench_id}/resourceful")
-    async def configure_resourceful_policy(
+    def configure_resourceful_policy(
         workbench_id: str, request: Request, payload: _ResourcefulPolicyRequest,
     ) -> Any:
         try:
@@ -356,7 +356,7 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/workbenches/{workbench_id}/resourceful/history")
-    async def resourceful_history(workbench_id: str, request: Request) -> Any:
+    def resourceful_history(workbench_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"history": resourceful.history(
                 principal(request), workbench_id,

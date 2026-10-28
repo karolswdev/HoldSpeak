@@ -14,7 +14,7 @@ import { PERSON_OPEN_EVENT, openPerson, refOpener, type PersonOpenRequest } from
 import { peekPersonLens, takePersonLens } from "../../desk/objectWindows";
 import { composePeoplePrep, readPeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
-import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { PEOPLE_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { keepPlace, keptPlace, keptDraft, useDeskDraft } from "../../desk/deskMemory";
 import { useDesk } from "../../desk/store";
 import { useDeskWriteReceipt } from "../../desk/hooks/useWriteReceipt";
@@ -744,7 +744,9 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   }, [relationshipId]);
   useEffect(() => { void read(); }, [read]);
   // A write in another window shows here with no reload.
-  useOnDeskChanged(() => { if (readiness && stateOf(readiness) === "ready") void read(); });
+  useOnDeskChanged(() => { if (readiness && stateOf(readiness) === "ready") void read(); }, [
+    ...PEOPLE_CHANGE_KINDS, "calendar", "calendar_event",
+  ]);
   const protectedFailure = (cause: unknown) => {
     if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
     setError("Could not do that · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));

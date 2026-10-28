@@ -105,7 +105,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/api/threads/{thread_id}/interview/promotions")
-    async def api_interview_promotions(thread_id: str, request: Request) -> Any:
+    def api_interview_promotions(thread_id: str, request: Request) -> Any:
         # HS-200-10 (AC4): the read half. `promotion_id` otherwise existed only
         # inside the single `promote` response, so nothing the owner could reach
         # named a promotion and `revoke_promotion` was unreachable. Owner-only,
@@ -139,7 +139,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create thread")
 
     @router.get("/api/threads")
-    async def api_list_threads(request: Request) -> Any:
+    def api_list_threads(request: Request) -> Any:
         try:
             limit = int(request.query_params.get("limit", 100))
             ref_id = str(request.query_params.get("ref_id", ""))
@@ -148,7 +148,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list threads")
 
     @router.get("/api/threads/{thread_id}")
-    async def api_get_thread(thread_id: str, request: Request) -> Any:
+    def api_get_thread(thread_id: str, request: Request) -> Any:
         try:
             return JSONResponse(_service().get(thread_id))
         except ServiceError as exc:
@@ -202,7 +202,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to patch thread")
 
     @router.delete("/api/threads/{thread_id}")
-    async def api_delete_thread(thread_id: str, request: Request) -> Any:
+    def api_delete_thread(thread_id: str, request: Request) -> Any:
         try:
             deleted = _service().soft_delete(thread_id)
             if not deleted:
@@ -237,7 +237,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
     # ── Abort ───────────────────────────────────────────────────────
 
     @router.post("/api/threads/{thread_id}/abort")
-    async def api_abort(thread_id: str, request: Request) -> Any:
+    def api_abort(thread_id: str, request: Request) -> Any:
         try:
             result = _service().abort(thread_id)
             return JSONResponse(result)
@@ -511,7 +511,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to hand to agent")
 
     @router.delete("/api/threads/{thread_id}/annotations/{part_id}")
-    async def api_delete_annotation(thread_id: str, part_id: str, request: Request) -> Any:
+    def api_delete_annotation(thread_id: str, part_id: str, request: Request) -> Any:
         """Delete a draft annotation part."""
         try:
             db = _database()

@@ -35,14 +35,14 @@ def build_speakers_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/speakers")
-    async def api_list_speakers(request: Request) -> Any:
+    def api_list_speakers(request: Request) -> Any:
         try:
             return JSONResponse(_service(ctx).list_speakers(_principal(request)))
         except Exception as exc:
             return error_500(exc, log, "Failed to list speakers")
 
     @router.get("/api/speakers/{speaker_id}")
-    async def api_get_speaker(speaker_id: str, request: Request, limit: int = 500) -> Any:
+    def api_get_speaker(speaker_id: str, request: Request, limit: int = 500) -> Any:
         try:
             return JSONResponse(_service(ctx).get_speaker(_principal(request), speaker_id, limit))
         except NotFound:
@@ -51,7 +51,7 @@ def build_speakers_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to get speaker")
 
     @router.patch("/api/speakers/{speaker_id}")
-    async def api_update_speaker(speaker_id: str, payload: _SpeakerUpdateRequest, request: Request) -> Any:
+    def api_update_speaker(speaker_id: str, payload: _SpeakerUpdateRequest, request: Request) -> Any:
         try:
             return JSONResponse(_service(ctx).update_speaker(_principal(request), speaker_id, payload.model_dump()))
         except ValidationError as exc:

@@ -25,7 +25,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/dictation/project-context")
-    async def api_dictation_project_context(project_root: Optional[str] = None) -> Any:
+    def api_dictation_project_context(project_root: Optional[str] = None) -> Any:
         """Validate and describe the active/manual dictation project root."""
         try:
             project = _resolve_project_context(project_root)
@@ -43,7 +43,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
         )
 
     @router.get("/api/dictation/agent-context")
-    async def api_dictation_agent_context(project_root: Optional[str] = None) -> Any:
+    def api_dictation_agent_context(project_root: Optional[str] = None) -> Any:
         """Return the latest captured agent question for the selected project."""
         from ....agent_context import get_recent_awaiting_agent_session
 
@@ -72,7 +72,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
         )
 
     @router.get("/api/dictation/agent-hooks")
-    async def api_dictation_agent_hooks(capture_messages: bool = True) -> Any:
+    def api_dictation_agent_hooks(capture_messages: bool = True) -> Any:
         """Return copy-ready Claude/Codex hook templates and recent status."""
         from ....agent_context import (
             AGENT_CONTEXT_FILE,
@@ -108,7 +108,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
         )
 
     @router.post("/api/dictation/agent-context/clear")
-    async def api_dictation_agent_context_clear(
+    def api_dictation_agent_context_clear(
         payload: Optional[dict[str, Any]] = None,
         project_root: Optional[str] = None,
     ) -> Any:
@@ -139,7 +139,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
         )
 
     @router.post("/api/dictation/agent-context/summarize")
-    async def api_dictation_agent_context_summarize(
+    def api_dictation_agent_context_summarize(
         payload: Optional[dict[str, Any]] = None,
         project_root: Optional[str] = None,
     ) -> Any:
