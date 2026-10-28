@@ -781,9 +781,12 @@ function WorkspaceReady({
         <div ref={sendScrollRef} className="thought-send-well" role="region" aria-label="Send note" tabIndex={-1} data-testid="thought-send" data-unsaved={unsaved || undefined}>
           {/* The writer stays mounted: only its saved revision can send. */}
           {unsaved ? <p className="thought-send-wait" role="status">
-            <span className="surface-token" data-chip data-tone={writer.failed || writer.conflicted ? "danger" : undefined}>
-              {writer.failed || writer.conflicted ? "NOT SAVED · SEND WAITS" : "SAVING… · SEND WAITS"}
-            </span>
+            {/* W6-G words: a dot and one sentence, never mono caps. */}
+            <DotWord tone={writer.failed || writer.conflicted ? "fail" : "idle"}>
+              {writer.failed || writer.conflicted
+                ? "Could not save the note · Your words stay here · Send waits until it saves"
+                : "Saving the note · Send waits until it saves"}
+            </DotWord>
           </p> : null}
           <div className="thought-send-body" inert={unsaved} aria-hidden={unsaved || undefined}>
             <NoteSendWells id={draftNoteId} title={writer.draft.title || documentThought.working_note.title}

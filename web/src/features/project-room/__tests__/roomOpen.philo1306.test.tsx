@@ -301,7 +301,7 @@ describe("PHILO-13-06: the Room's load failure in plain words", () => {
     });
     render(<WindowHarness scope="project:p1" />);
     const face = await screen.findByTestId("room-load-failed");
-    expect(face.textContent).toContain("ROOM DID NOT LOAD · HUB FAILED");
+    expect(face.textContent).toContain("Could not load the Project · Nothing changed");
     expect(document.body.textContent).not.toContain("sqlite3");
     fail = false;
     fireEvent.click(within(face).getByRole("button", { name: "Try again" }));

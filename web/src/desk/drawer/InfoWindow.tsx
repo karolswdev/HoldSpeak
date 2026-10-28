@@ -12,7 +12,7 @@ import { renameDeskObject } from "../components/InfoWindow";
 import { renameLock } from "../infoContract";
 import { useDesk } from "../store";
 import { EditInPlace, GetInfo, SurfaceFooter, objectSprite } from "../surface";
-import { plainFailure } from "../surface/plainFailure";
+import { plainFail, type PlainFail } from "../surface/plainFailure";
 import { windowName } from "../windowName";
 import { objectByRef } from "../world";
 import { memberOpens, openMember } from "./open";
@@ -22,7 +22,7 @@ import { registerProjectRepository, registrable, repositoryWords, useProjectRepo
 
 /** PHILO-15 16: the Project's own Info carries its REPOSITORY (read live) and,
  *  when the Room watches a repository nobody registered, the Register verb. */
-function useProjectFacts(member: OpenInfo["member"], setFailure: (text: string) => void) {
+function useProjectFacts(member: OpenInfo["member"], setFailure: (failure: PlainFail | null) => void) {
   const isProject = member.kind === "project";
   const repository = useProjectRepository(isProject ? member.id : "");
   const [busy, setBusy] = useState(false);
@@ -42,12 +42,12 @@ function useProjectFacts(member: OpenInfo["member"], setFailure: (text: string) 
   const register = async () => {
     if (!name) return;
     setBusy(true);
-    setFailure("");
+    setFailure(null);
     try {
       await registerProjectRepository(member.id, name);
       repository.reload();
     } catch (reason) {
-      setFailure(plainFailure("NOT REGISTERED", reason));
+      setFailure(plainFail("Could not register the repository", reason, undefined, "Try again"));
     } finally {
       setBusy(false);
     }
@@ -71,7 +71,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
   const canRename = Boolean(desk && !renameLock(desk.kind));
   const [renaming, setRenaming] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [failure, setFailure] = useState("");
+  const [failure, setFailure] = useState<PlainFail | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const project = useProjectFacts(member, setFailure);
   const name = desk?.title ?? member.name;
@@ -86,20 +86,20 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
   const rename = async (next: string) => {
     setRenaming(false);
     if (!desk) return;
-    setFailure("");
+    setFailure(null);
     try {
       await renameDeskObject(desk, next);
       useDrawers.getState().openInfo({ ...member, name: next }, info.projectId);
       useDrawers.getState().changed();
     } catch (reason) {
-      setFailure(plainFailure("NOT RENAMED", reason));
+      setFailure(plainFail("Could not rename it", reason, "The old name stays", "Try again"));
     }
   };
 
   const park = async () => {
     const id = member.ref.slice(member.ref.indexOf(":") + 1);
     setBusy(true);
-    setFailure("");
+    setFailure(null);
     try {
       await parkMeeting(id);
       // The receipt lands on the surviving face: the drawer, with Restore.
@@ -108,7 +108,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
       useDrawers.getState().changed();
       void useDesk.getState().refresh();
     } catch (reason) {
-      setFailure(plainFailure("NOT PARKED", reason));
+      setFailure(plainFail("Could not park it", reason, "It stays in the drawer", "Try again"));
     } finally {
       setBusy(false);
     }
@@ -149,7 +149,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
         </div>
       </div>
       <SurfaceFooter
-        receipt={failure ? <span className="drawer-receipt" data-tone="fail" role="status">{failure}</span> : null}
+        receipt={failure ? <span className="drawer-receipt" data-tone="fail" role="status" title={failure.title}>{failure.words}</span> : null}
         verbs={
           <>
             {project.verb}

@@ -619,8 +619,8 @@ describe("Meeting People read recovery", () => {
     fireEvent.change(screen.getByLabelText("Task"), { target: { value: "Ship the runbook draft" } });
     fireEvent.change(screen.getByLabelText("When?"), { target: { value: "2026-11-12" } });
     await act(async () => { failRead(new TypeError("offline")); });
-    expect(screen.getByRole("alert")).toHaveTextContent("PEOPLE DID NOT LOAD");
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Could not load people · Your edits stay here");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("option", { name: "Priya" })).toBeTruthy();
     expect(screen.getByLabelText("Task")).toHaveValue("Ship the runbook draft");
     expect(screen.getByLabelText("When?")).toHaveValue("2026-11-12");

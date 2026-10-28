@@ -6,14 +6,17 @@
  *  A pick writes the link the hub already has (`POST
  *  /api/projects/{id}/meetings/{mid}`, `project.link`, one receipt); the
  *  Project's drawer then lists the meeting as a member. The receipt is one
- *  token beside the Button: `IN <PROJECT>`, or `NOT ADDED · <reason>`.
+ *  token beside the Button: `IN <PROJECT>`, or (W6-G words) one plain
+ *  sentence, `Could not add it to <Project> · Nothing changed · Try again`,
+ *  with the reason in its hover title.
  */
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Button } from "../components/signal/Signal";
 import { apiFetch } from "../lib/api";
 import { WorkMenu, type WorkMenuEntry } from "./components/DeskMenu";
 import { useDesk } from "./store";
-import { plainFailure } from "./surface/plainFailure";
+import { DotWord } from "./surface/kit";
+import { plainFail } from "./surface/plainFailure";
 import "./addToProject.css";
 
 export const meetingProjectsPath = (meetingId: string) =>
@@ -35,15 +38,15 @@ export function AddToProject({
   autoOpen?: boolean;
   /** A face with a receipt slot (a footer) shows the receipt there; without
    *  it the token sits beside the Button. */
-  onReceipt?: (receipt: { text: string; tone: "ok" | "danger" }) => void;
+  onReceipt?: (receipt: { text: string; tone: "ok" | "danger"; title?: string }) => void;
 }) {
   const allProjects = useDesk((s) => s.projects);
   const projects = useMemo(() => allProjects.filter((p) => !p.is_archived), [allProjects]);
   const [at, setAt] = useState<{ x: number; y: number; keys: boolean } | null>(null);
   const [linked, setLinked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  const [receipt, setOwnReceipt] = useState<{ text: string; tone: "ok" | "danger" } | null>(null);
-  const setReceipt = (next: { text: string; tone: "ok" | "danger" } | null) => {
+  const [receipt, setOwnReceipt] = useState<{ text: string; tone: "ok" | "danger"; title?: string } | null>(null);
+  const setReceipt = (next: { text: string; tone: "ok" | "danger"; title?: string } | null) => {
     if (onReceipt && next) onReceipt(next);
     else setOwnReceipt(next);
   };
@@ -87,7 +90,8 @@ export function AddToProject({
       setReceipt({ text: `IN ${name.toUpperCase()}`, tone: "ok" });
       void useDesk.getState().refresh();
     } catch (reason) {
-      setReceipt({ text: plainFailure("NOT ADDED", reason), tone: "danger" });
+      const failure = plainFail(`Could not add it to ${name}`, reason, undefined, "Try again");
+      setReceipt({ text: failure.words, tone: "danger", title: failure.title });
     } finally {
       setBusy(false);
     }
@@ -123,7 +127,11 @@ export function AddToProject({
       >
         Add to Project ▸
       </Button>
-      {receipt ? (
+      {receipt?.tone === "danger" ? (
+        <span data-tone={receipt.tone} role="status" data-testid="add-to-project-receipt" title={receipt.title}>
+          <DotWord tone="fail">{receipt.text}</DotWord>
+        </span>
+      ) : receipt ? (
         <span className="surface-token" data-tone={receipt.tone} role="status" data-testid="add-to-project-receipt">
           {receipt.text}
         </span>

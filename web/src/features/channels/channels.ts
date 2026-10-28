@@ -118,9 +118,17 @@ export const SEND_WORDS = {
   storageUnavailable: "TAB STORAGE UNAVAILABLE",
   cannotRead: "CANNOT READ",
   noPreview: "NO PREVIEW",
-  keyNotSaved: "KEY NOT SAVED",
+  /** W6-G words: a refused key save, in sentence case; the reason is the
+   *  hover title (`keyNotSavedNext` says what to do). */
+  keyNotSaved: "Could not save the key · Nothing changed",
   nothingSent: "NOTHING SENT",
 } as const;
+
+/** W6-G words: what to do next after a refused key save. */
+export function keyNotSavedNext(code: string): string {
+  if (code === "slack_webhook_invalid") return "Check the webhook and paste it again";
+  return "Try again";
+}
 
 export const CHANNEL_WORD: Record<Channel, string> = {
   file: "FILE",

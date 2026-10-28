@@ -158,7 +158,7 @@ describe("Room proposal correction retains a refused write", () => {
     fireEvent.change(screen.getByLabelText("Text"), { target: { value: "Write the release rollback runbook" } });
     fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "Jordan" } });
     fireEvent.click(screen.getByTestId("proposal-save-confirm"));
-    expect(await screen.findByText("ROOM DID NOT LOAD · NOT AVAILABLE NOW")).toBeTruthy();
+    expect(await screen.findByText("Could not load the Project · Nothing changed")).toBeTruthy();
     expect(screen.getByTestId("proposal-accepted")).toHaveTextContent("Write the release rollback runbook");
     expect(screen.getByTestId("proposal-accepted")).toHaveTextContent("Confirmed");
     expect(screen.queryByTestId("proposal-edit-well")).toBeNull();
@@ -191,7 +191,7 @@ describe("Room proposal correction retains a refused write", () => {
     await waitFor(() => expect(screen.getByLabelText("Owner")).toBeDisabled());
     expect(screen.getByTestId("proposal-edit-well")).toBeTruthy();
     await act(async () => { refuse(new ApiError(409, "private hub text", {})); });
-    expect(await screen.findByText("NOT DONE · CHANGED ELSEWHERE")).toBeTruthy();
+    expect(await screen.findByText("Could not confirm it · Your edits stay here")).toBeTruthy();
     expect(screen.queryByText("private hub text")).toBeNull();
     expect(screen.getByLabelText("Text")).toHaveValue("Write the release rollback runbook");
     expect(screen.getByLabelText("Owner")).toHaveValue("Jordan");

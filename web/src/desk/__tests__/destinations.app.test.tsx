@@ -271,14 +271,14 @@ describe("the email destination setup", () => {
     fireEvent.keyDown(secret, { key: "Enter" });
   }
 
-  it("no safe key store: KEY NOT SAVED · NO SAFE KEY STORE, and the key never shows", async () => {
+  it("no safe key store: Could not save the key, the reason in the hover, and the key never shows", async () => {
     routes["PUT /api/channels/email-keys/.+"] = () => ({ status: 400, body: emailKeyRefused });
     await emailForm();
     typeKey("SG.glassKEY");
     const refused = await screen.findByTestId("dest-key-refused");
     expect(refused).toHaveAttribute("data-code", "email_key_store_not_native");
-    expect(refused.textContent).toContain("KEY NOT SAVED");
-    expect(refused.textContent).toContain("NO SAFE KEY STORE");
+    expect(refused.textContent).toBe("Could not save the key · Nothing changed · Try again");
+    expect(refused).toHaveAttribute("title", "NO SAFE KEY STORE");
     expect(document.body.innerHTML).not.toContain("glassKEY");
   });
 

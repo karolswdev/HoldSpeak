@@ -4,7 +4,7 @@
  * (its host named once typed). The macOS prompt shows only on his press. */
 import { useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { EgressChip, GadgetGroup, Receipt, StateChip, StringGadget, SurfaceLedgerRow, countToken } from "../surface";
+import { DotWord, EgressChip, GadgetGroup, Receipt, StateChip, StringGadget, SurfaceLedgerRow, countToken } from "../surface";
 import { egressFor } from "../surface/egress";
 import { Card } from "./Card";
 import { hostOf, meetingClock, stateCount, type CalendarCandidate, type CalendarStep } from "./calendarStep";
@@ -147,7 +147,7 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
             Check again
           </Button>
           <EgressChip label="THIS DEVICE" scope="local" />
-          {step.settingsFailed ? <StateChip state="failure" label="SETTINGS · NOT OPENED" /> : null}
+          {step.settingsFailed ? <DotWord tone="fail" data-testid="firstrun-calendar-settings-failed">Could not open System Settings · Nothing changed · Open it yourself, then press Check again</DotWord> : null}
         </div>
       ) : null}
       {rows.length ? (

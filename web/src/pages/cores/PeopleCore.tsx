@@ -6,7 +6,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNod
 import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
-import { plainFailure } from "../../desk/surface/plainFailure";
+import { failureTitle } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
 import { PERSON_OPEN_EVENT, openPerson, refOpener, type PersonOpenRequest } from "../../desk/openObject";
@@ -59,7 +59,7 @@ type Readiness = {
 };
 type CalendarLink = { uid: string; source_id: string; label: string; linked_at?: string };
 type UpcomingEvent = { id: string; uid: string; title: string; starts_at: string; ends_at: string; source_id: string; source_label?: string };
-type CalendarRead = { loading: boolean; error: string; retry(): void };
+type CalendarRead = { loading: boolean; error: string; title?: string; retry(): void };
 type Relationship = {
   id: string;
   display_name: string;
@@ -216,6 +216,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   // PHILO-17: a name already on the roster warns once; Add again adds it.
   const [duplicateWarned, setDuplicateWarned] = useState("");
   const [error, setError] = useState("");
+  const [errorTitle, setErrorTitle] = useState("");
   const [busy, setBusy] = useState(false);
   const requestedScope = scope?.startsWith("people:") ? scope.slice("people:".length) : null;
   // HS-200-14 (AC4): `people:project:<id>` scopes the roster to the people
@@ -272,7 +273,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     } catch (cause) {
       clearProtected();
       setReadiness(readinessForError(cause));
-      setError(plainFailure("PEOPLE DID NOT LOAD", cause));
+      setError("Could not load people · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
     } finally { setLoading(false); }
   }, [clearProtected, readSuggestions]);
   useEffect(() => { void load(); }, [load]);
@@ -415,16 +416,16 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   };
   function protectedFailure(cause: unknown) {
     if (isStoreOutage(cause) && (selectedId || relationships.length)) {
-      setError(plainFailure("PEOPLE STORE", cause));
+      setError("Could not read the people store · What is on screen stays · Try again"); setErrorTitle(failureTitle(cause));
       return;
     }
     if (!isProtectedFailure(cause)) {
-      setError(plainFailure("NOT DONE", cause));
+      setError("Could not do that · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
       return;
     }
     clearProtected();
     setReadiness(readinessForError(cause));
-    setError(plainFailure("PEOPLE STORE", cause));
+    setError("Could not read the people store · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
   }
   const selected = detail ?? relationships.find((row) => row.id === selectedId) ?? null;
   // Window grammar (2026-10-24): the roster is a list view and a person is
@@ -462,7 +463,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   // only when that read lands.
   const failureRow = error ? (
     <span className="people-failure" role="alert" data-testid="people-failure">
-      <span className="people-failure-label">{error}</span>
+      <span className="people-failure-label" title={errorTitle || undefined}>{error}</span>
       <Button dense variant="ghost" onClick={() => void (selectedId ? select(selectedId) : load())}>Try again</Button>
     </span>
   ) : null;
@@ -705,6 +706,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   const [detail, setDetail] = useState<RelationshipDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errorTitle, setErrorTitle] = useState("");
   const [lensRequest, setLensRequest] = useState<{ lens: Lens; seq: number } | null>(null);
   useWindowTitle(detail?.display_name ?? null, [detail?.display_name]);
   useWindowInterior("list");
@@ -732,7 +734,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
       setError("");
     } catch (cause) {
       if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
-      setError(plainFailure(detail ? "PEOPLE STORE" : "PERSON DID NOT LOAD", cause));
+      setError(detail ? "Could not read the people store · What is on screen stays · Try again" : "Could not load this person · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
     } finally {
       setLoading(false);
     }
@@ -743,7 +745,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   useOnDeskChanged(() => { if (readiness && stateOf(readiness) === "ready") void read(); });
   const protectedFailure = (cause: unknown) => {
     if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
-    setError(plainFailure("NOT DONE", cause));
+    setError("Could not do that · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
   };
   if (loading && !detail) return <SurfaceState loading />;
   if (readiness && stateOf(readiness) !== "ready") {
@@ -761,7 +763,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   return <div className="people-surface person-window" data-testid="person-window">
     {error ? (
       <span className="people-failure" role="alert" data-testid="people-failure">
-        <span className="people-failure-label">{error}</span>
+        <span className="people-failure-label" title={errorTitle || undefined}>{error}</span>
         <Button dense variant="ghost" onClick={() => void read()}>Try again</Button>
       </span>
     ) : null}
@@ -824,6 +826,7 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [calendarLoading, setCalendarLoading] = useState(lens === "context");
   const [calendarError, setCalendarError] = useState("");
+  const [calendarTitle, setCalendarTitle] = useState("");
   const [calendarAttempt, setCalendarAttempt] = useState(0);
   const [contextLinksOpen] = useState(false);
   const [prepRead, setPrepRead] = useState(false);
@@ -840,11 +843,11 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
           (item: Record<string, unknown>) => item.source === "calendar_event" && item.uid,
         ) as UpcomingEvent[]);
       })
-      .catch((cause) => { if (live) setCalendarError(plainFailure("CALENDAR DID NOT LOAD", cause)); })
+      .catch((cause) => { if (live) { setCalendarError("Could not load the calendar · Nothing changed · Try again"); setCalendarTitle(failureTitle(cause)); } })
       .finally(() => { if (live) setCalendarLoading(false); });
     return () => { live = false; };
   }, [relationship.id, wantsCalendar, calendarAttempt]);
-  const calendarRead: CalendarRead = { loading: calendarLoading, error: calendarError, retry: () => setCalendarAttempt((attempt) => attempt + 1) };
+  const calendarRead: CalendarRead = { loading: calendarLoading, error: calendarError, title: calendarTitle, retry: () => setCalendarAttempt((attempt) => attempt + 1) };
   const recordingState = useDesk((state) => state.recording);
   // The prep's read names the next 1:1 (the head's line, the toolbar's Record).
   const [next, setNext] = useState<PrepNext | null>(null);
@@ -1034,6 +1037,7 @@ function PrepNudge({ task, person, due }: { task: string; person: string; due: s
 function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onRead?(): void; onNext?(next: PrepNext): void }) {
   const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
   const [failure, setFailure] = useState("");
+  const [prepTitle, setPrepTitle] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [concern, setConcern] = useState<NowConcern>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -1058,7 +1062,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
         if (!live) return;
         if (isProtectedFailure(cause) && !isStoreOutage(cause)) { onProtectedFailure(cause); return; }
         failedAt.current = { attempt, id: relationship.id };
-        setFailure(plainFailure("PREP DID NOT LOAD", cause));
+        setFailure("Could not load the prep · Nothing changed · Try again"); setPrepTitle(failureTitle(cause));
       });
     return () => { live = false; };
   }, [relationship, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1194,7 +1198,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
   // edge, no plates; the window's facts in the status bar.
   return <div data-testid="people-prep-lens" className="people-prep">
     {failure ? <span className="people-failure" role="alert" data-testid="people-next-failure">
-      <span className="people-failure-label">{failure}</span>
+      <span className="people-failure-label" title={prepTitle || undefined}>{failure}</span>
       <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
     </span> : null}
 
@@ -1499,7 +1503,7 @@ function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upco
     />)}</SurfaceRows> : null}
     {pickerOpen ? (
       <div className="people-picker" data-testid="people-event-picker">
-        {calendarRead.loading ? <SurfaceState loading /> : calendarRead.error ? <SurfaceState error={calendarRead.error} onRetry={calendarRead.retry} /> : sorted.all.length ? <SurfaceRows>{sorted.all.map((ev) => {
+        {calendarRead.loading ? <SurfaceState loading /> : calendarRead.error ? <div className="people-failure-title" title={calendarRead.title || undefined}><SurfaceState error={calendarRead.error} onRetry={calendarRead.retry} /></div> : sorted.all.length ? <SurfaceRows>{sorted.all.map((ev) => {
           const isSuggested = sorted.suggested.includes(ev);
           return <SurfaceRow
             key={`${ev.uid}:${ev.source_id}:${ev.id}`}

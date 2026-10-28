@@ -104,7 +104,7 @@ describe("proposal confirmation result belongs to its write", () => {
       ? Promise.reject(new ApiError(409, "private server detail", {})) : Promise.resolve(response(url)));
     let outcome: unknown;
     await act(async () => { outcome = await result.current.handleConfirmProposal("prop1", { owner: "Jordan" }); });
-    expect(outcome).toEqual({ ok: false, error: "NOT DONE · CHANGED ELSEWHERE" });
+    expect(outcome).toEqual({ ok: false, error: "Could not confirm it · Your edits stay here" });
     expect(result.current.proposalBusy).toBe("");
   });
 
@@ -117,9 +117,9 @@ describe("proposal confirmation result belongs to its write", () => {
     await act(async () => { outcome = await result.current.handleConfirmProposal("prop1"); });
     expect(outcome).toEqual({ ok: true });
     await waitFor(() => expect(result.current.loadStatus).toBe("ready"));
-    expect(result.current.error).toBe("ROOM DID NOT LOAD · NOT AVAILABLE NOW");
-    expect(result.current.readError).toBe("ROOM DID NOT LOAD · NOT AVAILABLE NOW");
-    expect(result.current.error).not.toContain("NOT DONE");
+    expect(result.current.error).toBe("Could not load the Project · Nothing changed");
+    expect(result.current.readError).toBe("Could not load the Project · Nothing changed");
+    expect(result.current.error).not.toContain("Could not confirm");
     expect(result.current.room).not.toBeNull();
   });
 });
@@ -152,7 +152,7 @@ describe("useProjectRoomController — loadStatus discrimination", () => {
     const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
     await waitFor(() => expect(result.current.loadStatus).toBe("ready" satisfies LoadStatus));
     // PHILO-13-06 (B1, the A3 ledger): a plain failure name, never the hub's text.
-    expect(result.current.error).toBe("ROOM DID NOT LOAD · DID NOT WORK");
+    expect(result.current.error).toBe("Could not load the Project · Nothing changed");
     expect(result.current.error).not.toContain("Server down");
   });
 
@@ -252,7 +252,7 @@ describe("useProjectRoomController — /room first render (HS-158-05)", () => {
     // Detail failed but room data intact
     await waitFor(() => expect(result.current.detailStatus).toBe("ready"));
     // PHILO-13-06 (B1, the A3 ledger): a plain failure name, never the hub's text.
-    expect(result.current.error).toBe("ROOM DID NOT LOAD · DID NOT WORK");
+    expect(result.current.error).toBe("Could not load the Project · Nothing changed");
     expect(result.current.room?.project.name).toBe("Test project");
   });
 

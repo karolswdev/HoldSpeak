@@ -148,7 +148,7 @@ describe("merged Watch outcomes", () => {
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     await act(async () => { finishSibling({}); });
     await waitFor(() => expect(reads).toBe(before + 1));
-    expect(screen.getByRole("alert")).toHaveTextContent(`${label.toUpperCase()} FAILED`);
+    expect(screen.getByRole("alert")).toHaveTextContent(`Could not ${label.toLowerCase()} the watch on acme/merged · The other watches changed`);
     expect(accepted.has("w-sibling")).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(reads).toBe(before + 2));
@@ -167,7 +167,7 @@ describe("merged Watch outcomes", () => {
     render(<WindowHarness scope="project:p1" />);
     const verbs = await screen.findAllByRole("button", { name: "Resume" });
     fireEvent.click(verbs[0]);
-    expect(await screen.findByRole("alert")).toHaveTextContent("ROOM DID NOT LOAD");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load the Project");
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(apiFetch.mock.calls.filter(([url]) => url === "/api/projects/p1/room").length).toBe(3));
     expect(apiFetch.mock.calls.filter(([url]) => url === "/api/watches/w-gh/resume")).toHaveLength(1);
