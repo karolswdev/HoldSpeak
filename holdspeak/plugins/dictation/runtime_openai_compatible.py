@@ -74,10 +74,13 @@ class OpenAICompatibleRuntime:
             api_key = resolve_profile_key(self.api_key_env) if self.api_key_env else ""
         except ProfileKeyStoreError:
             api_key = ""
+        from ...net_bounds import engine_timeout
+
         kwargs: dict[str, Any] = {
             "api_key": api_key or "not-needed",
             "base_url": self.base_url,
-            "timeout": self.timeout_seconds, "max_retries": 0,
+            # Lane HUB TIMEOUTS: connect within 3 s, the read in its budget.
+            "timeout": engine_timeout(self.timeout_seconds), "max_retries": 0,
         }
         try:
             self._client = factory(**kwargs)

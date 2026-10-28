@@ -31,6 +31,9 @@ const viewportWidthMediaAllowlist = new Set([
   // the first-use pages) sit outside every named `surface` container, so
   // a container query cannot reach them. chair.css carries the same
   // exception for the same reason (chair.css:566).
+  // W3-A (#1526): the feedback sheet is a desk-level fixed sheet outside
+  // every named `surface` container, like the dock and the menu bar.
+  "/src/desk/feedback/feedback.css",
   "/src/styles/global.css",
 ]);
 

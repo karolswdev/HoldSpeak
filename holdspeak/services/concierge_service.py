@@ -713,8 +713,16 @@ def detect(
     principal: Any = None,
     scan_loopback: bool = False,
     loopback_scan: Optional[Callable[[], list[dict[str, Any]]]] = None,
+    fresh: bool = False,
 ) -> dict[str, Any]:
     """Every engine found: LAN endpoints, local files, cloud keys, presets.
+
+    Lane HUB TIMEOUTS (2026-10-27): the endpoints are checked side by side
+    through ``holdspeak.net_bounds.endpoint_checks``; one that does not answer
+    costs this read half a second and reads as its LAST check, while the check
+    goes on behind it. ``checkedAt`` is the oldest check used. ``fresh`` waits
+    for every check (the face's Check all). An injected ``http_get`` (a test)
+    checks inline.
 
     No network scan.  Reads known endpoints, local model dirs, runtimes,
     key presence, and catalog presets.  With ``scan_loopback`` it also asks
@@ -765,6 +773,33 @@ def detect(
 
     engines: list[dict[str, Any]] = []
     from ..setup_runtime import discover_endpoint_models
+
+    # The endpoint checks, side by side and from the last check: one endpoint
+    # that does not answer costs this read at most one check timeout, once.
+    check_times: list[str] = []
+    answers: dict[str, Any] = {}
+    if http_get is None:
+        from ..net_bounds import endpoint_checks
+
+        bases = {
+            str(p.base_url or "").strip()
+            for p in db.profiles.list()
+            if not p.deleted and str(p.base_url or "").strip()
+            and not str(p.base_url or "").strip().startswith("cli:")
+            and (_is_lan_host(_host_for_profile(p)) or not p.requires_key)
+        }
+        read = endpoint_checks.read_many(
+            {
+                f"models:{base}": (
+                    lambda base=base: discover_endpoint_models(base, timeout_seconds=1.5)
+                )
+                for base in bases
+            },
+            fresh=fresh,
+        )
+        for key, (answer, at) in read.items():
+            answers[key[len("models:"):]] = answer
+            check_times.append(at)
 
     # 1. LAN endpoints (known endpoints from profiles + model library defined endpoints)
     for profile in db.profiles.list():
@@ -820,8 +855,9 @@ def detect(
             # server is up and asks for a key).
             answering = False
             try:
-                discovered = discover_endpoint_models(
-                    base, timeout_seconds=1.5, http_get=http_get,
+                discovered = (
+                    discover_endpoint_models(base, timeout_seconds=1.5, http_get=http_get)
+                    if http_get is not None else (answers.get(base) or {})
                 )
                 if discovered.get("ok"):
                     served_models = list(discovered.get("models") or [])
@@ -1020,7 +1056,7 @@ def detect(
         if engine.get("kind") != KIND_PRESET and not engine.get("profileId"):
             engine["found"] = True
 
-    checked_at = datetime.now(timezone.utc).isoformat()
+    checked_at = min(check_times) if check_times else datetime.now(timezone.utc).isoformat()
 
     result = {
         "engines": engines,

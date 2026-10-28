@@ -868,6 +868,17 @@
   opacity: 0.7;
 }
 
+/* Lane HUB TIMEOUTS (2026-10-27): a first read with no answer after 8 s is
+   one row of the list grammar: `● Not answering` and its one verb. */
+.kit-not-answering {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+
 /* W1-KIT: the body's bottom reserve over the phone status bar: the last
    row's 44 px touch face ends inside the body, never on the bar. */
 .desk-next .desk-window-shell.is-sheet:has(> .desk-surface-foot > .kit-statusbar) > .desk-surface-body {

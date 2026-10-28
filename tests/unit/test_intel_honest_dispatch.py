@@ -237,7 +237,8 @@ class _HttpClient:
                 "completions": _HttpCompletions(
                     base_url=kwargs.get("base_url", ""),
                     api_key=kwargs.get("api_key", ""),
-                    timeout=kwargs.get("timeout", 10),
+                    # An httpx.Timeout (connect bound 3 s); the read budget.
+                    timeout=getattr(kwargs.get("timeout", 10), "read", kwargs.get("timeout", 10)),
                 )
             },
         )()

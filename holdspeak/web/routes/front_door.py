@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Request
+from starlette.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from ...principals import UNAUTHENTICATED, PrincipalKind
@@ -130,7 +131,7 @@ def build_front_door_router(ctx: WebContext) -> APIRouter:
                             has_cloud_credential = True
                             break
 
-            result = recommend(
+            result = await run_in_threadpool(recommend,
                 hardware=hardware,
                 catalog_entries=entries,
                 known_endpoints=known_endpoints,
@@ -257,7 +258,7 @@ def build_front_door_router(ctx: WebContext) -> APIRouter:
                         has_cloud_credential = True
                         break
 
-            recommendation = recommend(
+            recommendation = await run_in_threadpool(recommend,
                 hardware=hardware,
                 catalog_entries=entries,
                 known_endpoints=known_endpoints,

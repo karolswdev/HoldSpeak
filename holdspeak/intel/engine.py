@@ -194,6 +194,19 @@ def _whole_reply_deltas(reply: Any) -> "list[Any] | None":
     def field(obj: Any, name: str) -> Any:
         return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
 
+    # The OpenAI SDK wraps any reply to ``stream=True`` in a Stream, which
+    # reads only server-sent events: an endpoint that answered with its JSON
+    # completion instead would read as no answer at all.  Its body is the reply.
+    response = getattr(reply, "response", None)
+    headers = getattr(response, "headers", None)
+    if headers is not None and "application/json" in str(headers.get("content-type") or "").lower():
+        import json as _json
+
+        try:
+            reply = _json.loads(response.read())
+        except Exception:
+            return [Delta(kind="done")]
+
     is_stream = hasattr(reply, "__iter__") and not isinstance(reply, (dict, str, bytes))
     choices = field(reply, "choices")
     if not isinstance(choices, (list, tuple)) or not choices:
@@ -316,14 +329,19 @@ class MeetingIntel:
         kwargs: dict[str, object] = {"api_key": api_key, "max_retries": 0}
         if self.cloud_base_url:
             kwargs["base_url"] = self.cloud_base_url
-        kwargs["timeout"] = self.cloud_timeout_seconds
+        from ..net_bounds import engine_timeout
+
+        # Lane HUB TIMEOUTS: connect within 3 s; the summary keeps its own
+        # budget for the answer. One scalar made a host that never answers
+        # hold this job for the OS connect default (~75 s on macOS).
+        kwargs["timeout"] = engine_timeout(self.cloud_timeout_seconds)
         from ..loopback_http import is_loopback_url, loopback_httpx_client, pin_loopback_url
 
         if self.cloud_base_url and is_loopback_url(self.cloud_base_url):
             # Article III: an engine on this machine is reached at the pinned
             # 127.0.0.1 literal, never through a proxy or a redirect.
             kwargs["base_url"] = pin_loopback_url(self.cloud_base_url)
-            kwargs["http_client"] = loopback_httpx_client(self.cloud_timeout_seconds)
+            kwargs["http_client"] = loopback_httpx_client(kwargs["timeout"])
 
         try:
             self._openai_client = _intel_pkg.OpenAI(**kwargs)
