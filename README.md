@@ -125,6 +125,8 @@ Your Claude Code and Codex sessions report to the Desk through agent hooks.
 - **Ground the answer.** Attach a meeting or an Artifact, so the agent gets the context you have.
 - **Watch the pull requests.** **Go > Delivery board** shows open PRs and their CI status.
 
+**Programs** run a goal that is too big for one agent. A program cuts the goal into steps. An agent does each step in its own worktree. HoldSpeak checks each result from its log, starts a review, opens the pull request and merges it at your control level (Secure, Normal or YOLO). Each step runs on Claude Code, Codex, or pi on any of your engines, also only when your home engine is idle. Only a core question comes to you, in Needs you. Read [Programs](docs/programs.md).
+
 ## Extend everything
 
 HoldSpeak is built from parts you can add to. You do not need to fork it.

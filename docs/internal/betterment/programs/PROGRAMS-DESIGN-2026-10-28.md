@@ -632,3 +632,112 @@ PR's own steps so the engine's first run is the engine's own history.
   turn with a merge ask within one tick of the fake gate.
 - Astra's post-merge review finds no missing receipt: every state change
   in a Program has a kernel operation and a checkpoint line.
+
+## Built, 2026-10-28
+
+The engine lane (PG-HUB, with the hub half of PG-ECO) built §3 to §11 on
+`lane/programs-20261028` (merge `be286204b`). The design's intent stands;
+this section names where the build differs from the text above, and why.
+The faces lane (PG-FACES, merge `bad00fb76`) is in "The faces" below.
+
+### Where the build differs
+
+- **The checkpoint column is `by_kind`, not `by`.** `by` is an SQL keyword
+  (`ORDER BY`, `GROUP BY`); the column name keeps every query plain. The
+  wire key stays `by` (`agent`, `engine`, `owner`), so §8 and the faces read
+  as written.
+- **More columns than §11 lists.** `programs.closed_at` (when a Program was
+  closed, by him or by the engine), `programs.template`, `programs.created_by`;
+  on a step `held_reason` (the "waiting for qwen" and "waiting for a free
+  agent" words), `parked_by` (`owner`, `engine`, `race`: only an engine park
+  is his turn), `facts_json` (the facts the rules read: core questions he
+  cleared, a person's approval), `review_depth`, `head_commit` /
+  `checked_commit` (the receipt that the check ran on the agent's commit),
+  `report` (the agent's `program.step_done` text); on a checkpoint the
+  decision columns `operation_id`, `kind`, `choice`, `rule`, `overturnable`,
+  `overturned_at`, `undo_json`. A decision is a checkpoint row, so "Decided
+  for you" and the Checkpoints fold read one table and no fourth table was
+  needed.
+- **`gate_review` is text, not an integer:** `none`, `agent` (the Program's
+  reviewer) or `person` (§9b's human review gate). One column holds the
+  three values §9b needed.
+- **`gate_merge` is `level`, `owner` or `none`.** `level` (the default; `auto`
+  is accepted as its alias) means the Program's Control level decides the
+  merge; `owner` keeps his press for that one step at every level; `none` is
+  a step with no PR. "auto" read as "always merges", which is not what the
+  level does at Secure.
+- **YOLO's third round and the re-plan reuse the step's worktree and
+  agent.** §6 says "round 3 with a fresh worktree". The same worktree keeps
+  the agent's context and the branch the PR is open on; a fresh worktree
+  would lose both and open a second PR. The re-plan is a new, smaller brief
+  to the same launch.
+- **Spend is a core question only for pi on a hosted engine.** Claude Code
+  and Codex run on his own subscriptions, so the engine has no per-call
+  spend to compare with `spend_limit_usd`; a local or LAN engine costs
+  nothing. pi on a hosted (paid) engine with no spend limit set goes to him
+  before the step is handed (`program_runner._spend_core`).
+- **More routes and two more tools than §7 and §11 list.** Routes:
+  `GET /api/programs/templates`, `PATCH /api/programs/{id}` (the
+  `program.update` change), `POST /api/programs/{id}/from-desk` (the From
+  the desk template's steps), `POST /api/programs/{id}/close` (his Done at
+  Secure), `POST /api/programs/{id}/decisions/{decision_id}/overturn`. Tools:
+  `program.update` and `program.overturn`. The family is
+  `program.create`, `plan`, `update`, `start`, `park`, `resume`, `get`,
+  `list`, `checkpoint`, `step_done`, `decide`, `overturn`; `decide` and
+  `overturn` are AUTHORITY (his press). The registry is now 301 tools in 51
+  families.
+- **`program.decide` takes more kinds than §7 names:** `merge` (merge,
+  not_yet), `finding` (fix_now, later, skip), `parked` (resume, skip),
+  `ask_review` (prepare: a send is prepared, he presses Send), `core` (go_on,
+  park), `race` (pick), `add_step` (add, skip), `close` (close). Each is a
+  your-turn kind the §6 table can send to him.
+
+### What was left out, and why
+
+- **The runner does not tick at once on a coder frame.** It ticks every 30 s
+  from the workbench conductor and at once after a press (start, resume,
+  decide, overturn) and after the agent's `program.step_done`. A step can
+  wait up to 30 s after its agent's turn ends. A frame-driven tick needs a
+  hub-side listener on the coder frame; that is a later slice.
+- **The desk's answers follow the desk's Control mode, not the Program's
+  own level.** `AgentResponder` (a routine draft typed for the agent) and the
+  gate (a held tool call) read the desk's one Control mode. A Program at
+  YOLO on a desk at Secure still has its agent's routine questions and held
+  calls waiting for him. Making both read the Program's level is a change to
+  the gate's authority and is left for its own review.
+- **A new worktree needs `uv sync --extra dev` and `npm ci`** before
+  `scripts/quick_check.sh` can run in it. The engine does not run them; a
+  repository's `.holdspeak/program.json` can name a check command that
+  does. A gate that cannot build is red, and the log says why.
+- **The recorded fixtures carry temporary paths** (the rig's worktrees under
+  the test HOME). The faces read the paths as data; nothing depends on them.
+
+### The faces (PG-FACES)
+
+Built in `web/src/desk/programs/` from the recorded fixtures; the shots are
+in `docs/assets/programs/` (from the faces lane's
+`.tmp/evidence-shots/programs/`). Where the faces differ from §9 and the
+canvas:
+
+- **The picker reads "Agent: … ▾", not "Runs on ▾".** The user sees
+  "Engines" since betterment E6, and the Engines name guard
+  (`tests/unit/test_engines_name_guard.py`) refuses "Runs on" in any built
+  string and any user doc. Data and code keep `profile` and `engine`.
+- **The place line is plain words at 393; "No project" files the Program
+  only at 1440.** At 393 the status bar has no room for ghost Buttons, so
+  the line is words and the Token is not pressable there.
+- **"0 of 3 done" reads "3 steps".** The zero law (UX-CANON: no counters of
+  zero): a count starts to show done only from one.
+- **The Open verbs read "Open lane" (a step) and "Open program" (the Room
+  and person rows),** not a bare "Open": each names what it opens.
+- **Programs opens from Go ▸ Daily (after Agents) and ⌃7.** There is no Dock
+  tile of its own; the worst Program state joins the Agents lamp.
+- **No race shot.** The hub rig recorded no race fixture, so the race rows
+  are not drawn in a shot; the race is proven in the hub tier
+  (`test_a_race_of_two_parks_the_loser`).
+- **The person line, the Room fold and the Note's "Run as a program" are
+  pinned in `programs.app.test.tsx` (and the Note's in
+  `note.app.test.tsx`) only;** no browser shot shows them.
+- **The canvas's "Control: Owner / Delegate" words** are the ladder's
+  Secure · Normal · YOLO on the built window (§6 as amended).
+

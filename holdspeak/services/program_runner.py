@@ -25,8 +25,8 @@ step_done) ticks its Program at once. One tick, for each running Program:
    are his (Fix now / Later / Skip).
 5. **PR and merge**: the engine pushes the branch and opens the PR
    (``gh pr create``, the launch's own repository); the Heartbeat's
-   follow-through reads it. CI green: Owner control asks him (Merge?),
-   Delegate control merges (``gh pr merge --squash``). Merged is the
+   follow-through reads it. CI green: Secure asks him (Merge?); Normal and
+   YOLO merge (``gh pr merge --squash``) and log it under Decided for you. Merged is the
    follow-through's receipt, never the engine's claim.
 6. **Note** and frames when anything changed (``ProgramService.changed``).
 

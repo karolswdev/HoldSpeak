@@ -45,6 +45,7 @@ A line marked "(overlaps X)" repeats part of X. Read X first.
 | Guard coding agent tool calls | [Gate](GATE.md) |
 | Connect Claude Code or Codex sessions | [Agent hooks](AGENT_HOOK_INSTALL.md) |
 | Steer coder sessions from the Desk | [Coder integration](CODER_INTEGRATION.md) |
+| Run a goal as steps, each done by an agent | [Programs](programs.md) |
 | Connect an MCP client (301 tools across 51 families) | [MCP sidecar](MCP_SIDECAR.md) |
 | Run a remote sweep and steward | [Reach Runner](REACH_RUNNER.md) |
 | Set up connectors and actuators | [Integrations](INTEGRATIONS.md) |

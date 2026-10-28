@@ -55,7 +55,7 @@ def _schema(properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
 TOOLS: list[dict[str, Any]] = [
     {"name": "program.create",
      "description": "Make a Program: a goal cut into steps, each handed to an agent in its own worktree, checked by a "
-                    "verified log, reviewed, and merged on the owner's press (Owner control) or by delegation. Name a "
+                    "verified log, reviewed, and merged on his press at Secure or by the engine at Normal and YOLO (only core questions reach him). Name a "
                     "repository path or a project_id (its repository). It starts in Drafting.",
      "inputSchema": _schema({
          "title": {"type": "string", "minLength": 1, "maxLength": 200},
