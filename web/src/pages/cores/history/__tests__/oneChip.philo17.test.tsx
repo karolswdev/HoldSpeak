@@ -110,7 +110,7 @@ it("a failed leg stays on the open meeting as its outcome; no host chip anywhere
   await screen.findByTestId("meeting-summary-text");
   const slab = screen.getByTestId("summary-record-attempts").textContent ?? "";
   expect(slab).not.toContain("THIS DEVICE");
-  expect(slab).toContain("FAILED");
+  expect(slab).toContain("Failed");
   expect(slab).not.toContain("api.example.com");
   expect(chips()).toHaveLength(0);
   expect(document.body.textContent).not.toContain("api.example.com");
