@@ -39,6 +39,20 @@ frame, level + saved mark), #1558 agent window slice 3 (Done closes a launch,
 checked state, the step fold, honest test colours). Whole browser suite on
 main c0df24678: 419 passed. In flight: delight slice 5 (the depth scale, Today
 in the evening).
+Then the same day: #1560 delight slice 5 (every popover on the depth scale; a
+real CSS bug: a shadow list that begins with a token whose value is none draws
+nothing; Today's "Since this morning" after 17:00), #1561 atlas pass 3 (every
+window re-shot and rescored; 26 defects in the owner's words), #1562 the
+void-shadow guard, WAVE 6 from the atlas (#1563 People/Needs you/Calendar/
+Archive, #1564 Settings saved lamp + Calls pane words, #1565 palette and Ask
+references, #1566 Decision object and reader + Project drawer + Room Ask box,
+#1567 Processes/Mode/Activity/agent band, #1569 recipe.run follows Answers +
+Cadence words + Speak focus ring, #1570 every write-failure band in plain
+words, #1571 Saved per Settings window + two test pins), #1568 the wave 7
+canvas and #1572 its build (Mission control captions on a slate veil, the
+Record ring and clock, Context's pad). Whole browser suite on main after each
+batch: green modulo the Engines stillness flake. Open owner calls: the Note's
+first-line title; moving engine groups back from Codex when he is home.
 
 **The window grammar — 2026-10-24 (owner: "still look like pages inside OS-like
 containers"; "make it look nice and attractive, not boring"; then "that tilt…
