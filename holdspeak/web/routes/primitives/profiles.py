@@ -62,19 +62,19 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         )
 
     @router.post("/api/profiles")
-    async def api_create_profile(request: Request) -> Any:
+    def api_create_profile(request: Request) -> Any:
         return _profiles_read_only()
 
     @router.put("/api/profiles/{profile_id}")
-    async def api_update_profile(profile_id: str, request: Request) -> Any:
+    def api_update_profile(profile_id: str, request: Request) -> Any:
         return _profiles_read_only()
 
     @router.delete("/api/profiles/{profile_id}")
-    async def api_delete_profile(profile_id: str) -> Any:
+    def api_delete_profile(profile_id: str) -> Any:
         return _profiles_read_only()
 
     @router.get("/api/inference-targets")
-    async def api_list_inference_targets(request: Request) -> Any:
+    def api_list_inference_targets(request: Request) -> Any:
         try:
             return JSONResponse(_svc().list_inference_targets(_principal(request)))
         except ServiceError as exc:
@@ -83,7 +83,7 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list inference targets")
 
     @router.post("/api/inference-targets/{target_id}/probe")
-    async def api_probe_target(target_id: str, request: Request) -> Any:
+    def api_probe_target(target_id: str, request: Request) -> Any:
         """Test this legacy destination without persisting a connection result."""
         if private := _library_private_target(target_id):
             return private
@@ -116,7 +116,7 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create inference target")
 
     @router.get("/api/inference-targets/{target_id}")
-    async def api_get_inference_target(target_id: str, request: Request) -> Any:
+    def api_get_inference_target(target_id: str, request: Request) -> Any:
         if private := _library_private_target(target_id):
             return private
         try:
@@ -171,7 +171,7 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update destination key")
 
     @router.delete("/api/inference-targets/{target_id}/secret")
-    async def api_delete_inference_target_secret(target_id: str, request: Request) -> Any:
+    def api_delete_inference_target_secret(target_id: str, request: Request) -> Any:
         if private := _library_private_target(target_id):
             return private
         service = ctx.profile_key_service
@@ -189,7 +189,7 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to delete destination key")
 
     @router.delete("/api/inference-targets/{target_id}")
-    async def api_delete_inference_target(target_id: str, request: Request) -> Any:
+    def api_delete_inference_target(target_id: str, request: Request) -> Any:
         if private := _library_private_target(target_id):
             return private
         try:
