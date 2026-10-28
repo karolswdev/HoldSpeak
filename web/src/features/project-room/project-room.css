@@ -773,7 +773,7 @@
   padding: 8px;
   border: 1px solid var(--wb-ink);
   background: var(--wb-field-hi);
-  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  box-shadow: 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
 }
 .room-plate-cap {
   display: flex;
@@ -899,7 +899,7 @@
   height: 12px;
 }
 .room-plan-node:hover > .room-plan-bead {
-  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
 }
 .room-plan-row {
   display: flex;

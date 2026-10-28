@@ -299,7 +299,7 @@
 .desk-next .person-page .people-lenses > .btn[aria-selected="true"] {
   border-color: var(--wb-ink);
   background: var(--alive-paper, #f8f5ee);
-  box-shadow: var(--wb-raised), inset 0 -2px 0 var(--wb-sel);
+  box-shadow: inset 0 -2px 0 var(--wb-sel);
   color: var(--wb-text);
 }
 

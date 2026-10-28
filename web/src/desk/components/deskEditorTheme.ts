@@ -16,7 +16,7 @@ export const deskEditorTheme = EditorView.theme(
     },
     "&.cm-focused": {
       borderColor: "var(--field-focus-border)",
-      boxShadow: "var(--desk-window-etch), 0 0 0 2px var(--accent-tint)",
+      boxShadow: "0 0 0 2px var(--accent-tint)",
     },
     ".cm-scroller": {
       fontFamily: "inherit",
