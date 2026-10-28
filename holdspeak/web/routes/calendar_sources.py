@@ -177,7 +177,7 @@ def build_calendar_sources_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(prefix="/api/calendar/sources", tags=["calendar-sources"])
 
     @router.get("")
-    async def list_sources(request: Request) -> Any:
+    def list_sources(request: Request) -> Any:
         """Per-source facts for the Settings Meetings CALENDAR section."""
         try:
             config = Config.load()
