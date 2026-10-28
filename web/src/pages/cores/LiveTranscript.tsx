@@ -9,7 +9,7 @@
  * heads a run of lines when the speaker changes, a bookmarked line wears the
  * ember mark, and the newest line arrives at the foot. While the window sits
  * at the foot it follows the new lines; scrolled up, it stays where he reads. */
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 
 type Segment = Record<string, unknown>;
 
@@ -40,9 +40,13 @@ function scrollParent(node: HTMLElement | null): HTMLElement | null {
 export function LiveTranscript({
   segments,
   listening,
+  listen,
 }: {
   segments: Segment[];
   listening: boolean;
+  /** Live slice 3: the foot while it records (LiveListening: the level,
+   *  Listening or Writing, how far the saved transcript reaches). */
+  listen?: ReactNode;
 }) {
   const lines = useMemo(
     () =>
@@ -99,12 +103,14 @@ export function LiveTranscript({
       ))}
       <div className="live-doc-line live-doc-listening" ref={foot}>
         <span className="live-doc-when" />
-        {listening ? (
-          <span className="live-doc-listen" data-testid="live-listening">
-            <span className="live-doc-caret" aria-hidden="true" />
-            Listening
-          </span>
-        ) : null}
+        {listening
+          ? listen ?? (
+              <span className="live-doc-listen" data-testid="live-listening">
+                <span className="live-doc-caret" aria-hidden="true" />
+                Listening
+              </span>
+            )
+          : null}
       </div>
     </div>
   );

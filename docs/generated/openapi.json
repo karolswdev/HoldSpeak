@@ -16723,6 +16723,25 @@
         "summary": "Api Update Meeting"
       }
     },
+    "/api/meeting/mic-check": {
+      "post": {
+        "description": "Live slice 3: the ready sheet's Microphone row (a level and a word).",
+        "operationId": "api_meeting_mic_check_api_meeting_mic_check_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Meeting Mic Check Api Meeting Mic Check Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Meeting Mic Check"
+      }
+    },
     "/api/meeting/start": {
       "post": {
         "operationId": "api_meeting_start_api_meeting_start_post",

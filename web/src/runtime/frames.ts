@@ -52,6 +52,7 @@ export const RUNTIME_FRAME_TYPES = [
   "thread_tool_result",
   "thread_turn_done",
   "thread_turn_started",
+  "transcript_pass",
   "wake_armed",
   "wake_preview",
   "workbench.item_claimed",

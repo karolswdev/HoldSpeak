@@ -58,6 +58,7 @@ import { useWindowInterior } from "../../desk/surface/interior";
 import { countToken } from "../../desk/surface/count";
 import { LiveTranscript } from "./LiveTranscript";
 import { LiveReady } from "./LiveReady";
+import { LiveListening, type MicCheck, type TranscriptPass } from "./LiveLevel";
 import { useCompactViewport } from "../../desk/useCompactViewport";
 import "./liveTranscript.css";
 import { burstTimer } from "../../desk/burstTimer";
@@ -144,6 +145,12 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   } | null>(null);
   const [captureAlert, setCaptureAlert] = useState("");
   const bookmarkSeq = useRef(0);
+  /* Live slice 3: the engine's pass (`transcript_pass`: writing / listening,
+     how far the saved transcript reaches) and, before Start, the hub's
+     microphone check. */
+  const [pass, setPass] = useState<TranscriptPass | null>(null);
+  const [mic, setMic] = useState<MicCheck | null>(null);
+  const [checkingMic, setCheckingMic] = useState(false);
   /* W2-LIVE: no gear wing. Its parts (routing, try a phrase, background
      work, attached devices) are in Settings ▸ Meetings ▸ Live meeting; the
      toolbar verb Settings opens them. With no wing the head shows the
@@ -196,6 +203,14 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
             ? (frame.data as Record<string, unknown>)
             : null,
         );
+      }),
+    [subscribe],
+  );
+
+  useEffect(
+    () =>
+      subscribe("transcript_pass", (frame) => {
+        if (frame.data && typeof frame.data === "object") setPass(frame.data as TranscriptPass);
       }),
     [subscribe],
   );
@@ -264,6 +279,23 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   // face says so before he records, and while he records.
   const speech = useSpeechSetup();
   const audioOnly = active ? speechWasMissing(state) : speech.notSetUp;
+  const checkMic = async () => {
+    setCheckingMic(true);
+    try {
+      setMic(await apiFetch<MicCheck>("/api/meeting/mic-check", { method: "POST" }));
+    } catch (error) {
+      setMic({ state: "failed", level: null, error: error instanceof Error ? error.message : String(error) });
+    } finally {
+      setCheckingMic(false);
+    }
+  };
+  // Before a meeting: listen once when the ready sheet opens (one short
+  // sample on the hub; the grant is read first and never asked for).
+  const readySheet = !active && !meetingId;
+  useEffect(() => {
+    if (readySheet) void checkMic();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readySheet]);
   const perform = async (path: string, json: unknown = {}) => {
     await action.run(async () => {
       const value = await apiFetch<Record<string, unknown>>(path, { method: "POST", json });
@@ -556,6 +588,22 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       : { key: "link", lamp: linkTone, text: `Link ${link}`, testId: "live-link-state" },
   ].filter(Boolean) as StatusBarItem[];
 
+  /* Live slice 3: the transcript's foot. The saved reach is the newest
+     pass of THIS meeting, else the checkpoint /api/state carries. */
+  const meetingKey = String(meetingId || state.id || state.meeting_id || "");
+  const ownPass = pass && (!pass.meeting_id || !meetingKey || pass.meeting_id === meetingKey) ? pass : null;
+  const savedThrough = Number(ownPass?.saved_through ?? state.capture_checkpoint_seconds ?? 0) || 0;
+  const listening = (
+    <LiveListening
+      pass={ownPass}
+      savedThrough={savedThrough}
+      micLabel={String(state.mic_label || "Me")}
+      remoteLabel={String(state.remote_label || "Remote")}
+      quiet={audioOnly}
+      idleWord={segments.length ? "Listening" : "Listening for speech"}
+    />
+  );
+
   return (
     <>
       {hero ? (
@@ -660,16 +708,17 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       )}
       {intelFace}
       {segments.length ? (
-        <LiveTranscript segments={segments} listening={active} />
+        <LiveTranscript segments={segments} listening={active} listen={listening} />
       ) : active ? (
-        <p className="live-empty" role="status" data-testid="live-transcript-empty">
-          {audioOnly ? NO_TRANSCRIPT_SPEECH : "Listening for speech"}
-        </p>
+        <div className="live-empty" role="status" data-testid="live-transcript-empty">
+          {audioOnly ? NO_TRANSCRIPT_SPEECH : listening}
+        </div>
       ) : (
         /* W2-LIVE-2 (canvas A, Before): the ready sheet, not an empty
            Transcript head. */
         <LiveReady settings={settings.data} hub={settingsHub.data} speech={speech}
-          name={readyName} onName={setReadyName} />
+          name={readyName} onName={setReadyName}
+          mic={mic} checkingMic={checkingMic} onCheckMic={() => void checkMic()} />
       )}
       </div>
       <StatusBar items={statusItems} data-testid="live-statusbar" />

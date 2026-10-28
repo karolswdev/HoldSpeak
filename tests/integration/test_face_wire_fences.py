@@ -518,3 +518,53 @@ def test_live_segment_frames(hub: Any, tmp_path: Path) -> None:
     ]
     _fence("live.segments", frames, tmp_path, hub)
     assert all(isinstance(frame["start_time"], float) for frame in frames)
+
+
+def test_live_mic_check_and_pass_frames(hub: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """live.app.test.tsx (Live slice 3): the hub's microphone check before a
+    meeting (POST /api/meeting/mic-check, holdspeak/meeting_session/mic_check.py)
+    with a voice and with a refused grant, and the frames while it records: the
+    `transcript_pass` pair (transcribe_loop.py `_emit_transcript_pass`) and the
+    meeting's `audio_level` (web_runtime.py `_emit_audio_level`)."""
+    import threading
+    from datetime import datetime
+    from unittest.mock import MagicMock
+
+    import numpy as np
+
+    from holdspeak import desktop_permissions
+    from holdspeak.meeting_session import MeetingState, mic_check
+    from holdspeak.meeting_session.transcribe_loop import TranscribeLoopMixin
+    from holdspeak.web_runtime import WebRuntime
+
+    monkeypatch.delenv(mic_check.MIC_CHECK_ENV, raising=False)
+    monkeypatch.setattr(mic_check, "_record_sample",
+                        lambda device, seconds: np.full(int(seconds * 16000), 0.05, dtype=np.float32))
+    probes = desktop_permissions._PROBES
+    monkeypatch.setitem(probes, desktop_permissions.MICROPHONE, lambda: (desktop_permissions.GRANTED, "AVCaptureDevice"))
+    _fence("live.mic-check.hearing", _ok(hub.client.post("/api/meeting/mic-check")), tmp_path, hub)
+    monkeypatch.setitem(probes, desktop_permissions.MICROPHONE, lambda: (desktop_permissions.DENIED, "AVCaptureDevice"))
+    _fence("live.mic-check.not-allowed", _ok(hub.client.post("/api/meeting/mic-check")), tmp_path, hub)
+
+    session = TranscribeLoopMixin.__new__(TranscribeLoopMixin)
+    frames: list[Any] = []
+    session.transcriber = object()
+    session._lock = threading.Lock()
+    session.TRANSCRIBE_INTERVAL = 10.0
+    session._state = MeetingState(id="m-live", started_at=datetime(2026, 10, 28, 10, 0, 0))
+    session._emit_broadcast = lambda kind, data: frames.append({"type": kind, "data": data})
+    session._emit_transcript_pass("writing")
+    session._state.capture_checkpoint_seconds = 66.0
+    session._state.capture_checkpoint_at = datetime(2026, 10, 28, 10, 1, 7)
+    session._emit_transcript_pass("listening")
+    _fence("live.pass.frames", frames, tmp_path, hub)
+
+    runtime = WebRuntime.__new__(WebRuntime)
+    runtime.server = MagicMock()
+    levels: list[Any] = []
+    for level, source in ((0.62, "meeting_mic"), (0.31, "meeting_system")):
+        runtime._last_audio_level_ts = 0.0
+        runtime._emit_audio_level(level, source)
+        kind, data = runtime.server.broadcast.call_args[0]
+        levels.append({"type": kind, "data": data})
+    _fence("live.level.frames", levels, tmp_path, hub)

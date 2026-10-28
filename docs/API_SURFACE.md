@@ -593,6 +593,7 @@ Routes: 822 (plus static mounts). iOS-consumed: 89. Web-consumed: 651.
 |---|---|---|
 | POST | `/api/bookmark` | web |
 | PATCH | `/api/meeting` | web |
+| POST | `/api/meeting/mic-check` | web |
 | POST | `/api/meeting/start` | ios, web |
 | POST | `/api/meeting/stop` | ios, web |
 | POST | `/api/stop` | server only |

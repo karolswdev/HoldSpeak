@@ -36,6 +36,7 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/grounding/resolve"): "read-like: resolves references",
     ("POST", "/api/inference/assignments/preview-use-default"): "read-like: previews an assignment",
     ("POST", "/api/intents/preview"): "read-like: previews a route",
+    ("POST", "/api/meeting/mic-check"): "read-like: one short microphone sample, stores nothing",
     ("POST", "/api/providers/confluence/validate"): "read-like: asks the provider",
     ("POST", "/api/providers/github/validate-repo"): "read-like: asks the provider",
     ("POST", "/api/providers/jira/search"): "read-like: asks the provider",
