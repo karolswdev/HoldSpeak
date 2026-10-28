@@ -171,7 +171,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/setup/runtime-test")
     async def api_setup_runtime_test(request: Request) -> Any:
         try:
-            return service.test_runtime(request.state.principal)
+            return await run_in_threadpool(service.test_runtime, request.state.principal)
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:
@@ -264,7 +264,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     async def api_runtime_options() -> Any:
         try:
             from ...setup_runtime import discover_local_models
-            return discover_local_models()
+            return await run_in_threadpool(discover_local_models)
         except Exception as exc:
             return error_500(exc, log, "Failed to discover local runtime models")
 
@@ -371,7 +371,8 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
                 api_key = key
             else:
                 api_key = fallback_key
-            result = discover_endpoint_models(
+            result = await run_in_threadpool(
+                discover_endpoint_models,
                 str(body.get("base_url") or ""),
                 api_key=api_key,
             )
@@ -395,7 +396,8 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
                 except ValueError:
                     private = False
                 own_server = body.get("my_server") is True
-                result["tools"] = endpoint_tool_support(
+                result["tools"] = await run_in_threadpool(
+                    endpoint_tool_support,
                     base_url,
                     model=str(result["models"][0]),
                     api_key=api_key,

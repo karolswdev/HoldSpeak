@@ -574,7 +574,8 @@ def test_openai_compatible_runtime_classify_against_fake_chat_server(
                     "completions": _HttpCompletions(
                         base_url=kwargs["base_url"],
                         api_key=kwargs["api_key"],
-                        timeout=kwargs["timeout"],
+                        # An httpx.Timeout (connect bound 3 s); the read budget.
+                        timeout=getattr(kwargs["timeout"], "read", kwargs["timeout"]),
                     )
                 },
             )()
