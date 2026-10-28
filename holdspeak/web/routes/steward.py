@@ -97,7 +97,7 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/projects/{project_id}/steward/runs ────────────────
 
     @router.get("/api/projects/{project_id}/steward/runs")
-    async def api_list_steward_runs(
+    def api_list_steward_runs(
         project_id: str, request: Request,
         state: str | None = None,
         limit: int = 100,
@@ -115,7 +115,7 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
     # Pollable state: phase, steps, receipts, the run's operation and its receipt.
 
     @router.get("/api/steward/runs/{run_id}")
-    async def api_get_steward_run(run_id: str, request: Request) -> Any:
+    def api_get_steward_run(run_id: str, request: Request) -> Any:
         try:
             return JSONResponse(ops().invoke(principal(request), "project.get_steward_run", {"run_id": run_id}))
         except NotFound:
@@ -153,7 +153,7 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/projects/{project_id}/steward/policy ──────────────
 
     @router.get("/api/projects/{project_id}/steward/policy")
-    async def api_get_steward_policy(project_id: str, request: Request) -> Any:
+    def api_get_steward_policy(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse(ops().invoke(principal(request), "project.configure_steward",
                                              {"project_id": project_id}))
@@ -214,7 +214,7 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
     # ── HS-173-04: Nudge routes ──────────────────────────────────────
 
     @router.get("/api/projects/{project_id}/nudges")
-    async def api_list_nudges(project_id: str, request: Request, state: str | None = None) -> Any:
+    def api_list_nudges(project_id: str, request: Request, state: str | None = None) -> Any:
         try:
             nudges = ops().invoke(principal(request), "steward.nudges", {"project_id": project_id, "state": state})
             return JSONResponse({"nudges": nudges})
@@ -250,7 +250,7 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to send nudge")
 
     @router.post("/api/nudges/{step_id}/dismiss")
-    async def api_dismiss_nudge(step_id: str, request: Request) -> Any:
+    def api_dismiss_nudge(step_id: str, request: Request) -> Any:
         try:
             result = ops().invoke(principal(request), "nudge.dismiss", {"step_id": step_id})
             if "error" in result:

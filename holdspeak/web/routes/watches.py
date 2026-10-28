@@ -41,7 +41,7 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/watches ─────────────────────────────────────────
 
     @router.get("/api/watches")
-    async def list_watches(
+    def list_watches(
         request: Request,
         state: str | None = None,
         connector: str | None = None,
@@ -57,7 +57,7 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/projects/{project_id}/watches ───────────────────
 
     @router.get("/api/projects/{project_id}/watches")
-    async def list_project_watches(
+    def list_project_watches(
         project_id: str, request: Request,
         state: str | None = None,
     ) -> Any:
@@ -110,7 +110,7 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/watches/{watch_id} ──────────────────────────────
 
     @router.get("/api/watches/{watch_id}")
-    async def get_watch(watch_id: str, request: Request) -> Any:
+    def get_watch(watch_id: str, request: Request) -> Any:
         try:
             return JSONResponse(ops().invoke(principal(request), "project.watch.inspect",
                                              {"watch_id": watch_id}, held=_ALL_ROWS))
