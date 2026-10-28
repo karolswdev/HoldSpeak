@@ -333,7 +333,7 @@ describe("Decide in a meeting: Decide -> name -> receipt -> the decision window"
     }]);
 
     // The receipt is in the meeting, on the decision's row (read back from the hub).
-    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^✓ DECIDED \d\d:\d\d$/));
+    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d$/));
     expect(screen.queryByRole("textbox", { name: "Decision title" })).toBeNull();
 
     // The row opens the decision in its own window.

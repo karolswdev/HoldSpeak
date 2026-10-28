@@ -3,7 +3,7 @@
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../../desk/firstrun/speechTruth";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { plainFailure } from "../../../desk/surface/plainFailure";
+import { failureTitle, plainWords } from "../../../desk/surface/plainFailure";
 import { ActionNotice } from "../../../desk/surface/patterns/ActionNotice";
 import { SurfaceSection, SurfaceState } from "../../../desk/surface";
 import { MeetingRunVerb } from "../../../meetings/runSlot";
@@ -222,6 +222,7 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
   const [people, setPeople] = useState<Person[]>([]);
   const [peopleLoading, setPeopleLoading] = useState(true);
   const [peopleError, setPeopleError] = useState("");
+  const [peopleErrorTitle, setPeopleErrorTitle] = useState("");
   const [peopleAttempt, setPeopleAttempt] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [more, setMore] = useState<Record<string, MoreMenu>>({});
@@ -235,7 +236,7 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
     setPeopleError("");
     void apiFetch<{ relationships?: Person[] }>("/api/people/relationships")
       .then((body) => { if (live) setPeople(body.relationships ?? []); })
-      .catch((cause) => { if (live) setPeopleError(plainFailure("PEOPLE DID NOT LOAD", cause)); })
+      .catch((cause) => { if (live) { setPeopleError(plainWords("Could not load people", "Your edits stay here")); setPeopleErrorTitle(failureTitle(cause)); } })
       .finally(() => { if (live) setPeopleLoading(false); });
     return () => { live = false; };
   }, [peopleAttempt]);
@@ -480,8 +481,8 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
         {showOwner ? <CycleGadget label="Who?" value={draft.owner} options={ownerOptions} onChange={(value) => setDraft(row, "owner", value)} disabled={data.busy} /> : null}
         {showOwner && id === peopleReadRow && (peopleLoading || peopleError) ? <div data-testid="meeting-people-read" aria-busy={peopleLoading || undefined}>
           <ActionNotice tone={peopleError ? "warn" : "info"} role={peopleError ? "alert" : "status"}
-            action={peopleError ? { label: "Retry", onClick: () => setPeopleAttempt((attempt) => attempt + 1) } : undefined}>
-            {peopleLoading ? "PEOPLE LOADING" : peopleError}
+            action={peopleError ? { label: "Try again", onClick: () => setPeopleAttempt((attempt) => attempt + 1) } : undefined}>
+            {peopleLoading ? "Loading people" : <span title={peopleErrorTitle || undefined}>{peopleError}</span>}
           </ActionNotice>
         </div> : null}
         {showDue ? <StringGadget label="When?" type="date" value={draft.due} onChange={(value) => setDraft(row, "due", value)} disabled={data.busy} /> : null}

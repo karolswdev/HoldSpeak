@@ -989,7 +989,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       key: "receipt",
       lamp: ctrl.receipt.tone === "danger" ? "fail" : undefined,
       text: (
-        <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone}>
+        <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone} title={ctrl.receipt.title}>
           {ctrl.receipt.text}
         </span>
       ),
@@ -1006,7 +1006,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       key: "receipt",
       lamp: ctrl.receipt.tone === "danger" ? "fail" : undefined,
       text: (
-        <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone}>
+        <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone} title={ctrl.receipt.title}>
           {ctrl.receipt.text}
         </span>
       ),

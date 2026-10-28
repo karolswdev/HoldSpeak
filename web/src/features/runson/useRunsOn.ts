@@ -80,6 +80,8 @@ export interface JobResult {
 export interface Receipt {
   text: string;
   tone?: "danger";
+  /** W6-G words: the raw reason of a failure, for the hover title only. */
+  title?: string;
 }
 
 /** One Undo: the chain before the patch, and the revision the patch itself
@@ -844,7 +846,7 @@ export function useRunsOn(scope?: string) {
           setReceipt({ text: `ADDED ${clock()} · ${engine.name}` });
           await Promise.all([loadDetection(), loadRoster()]);
         } catch (err) {
-          setReceipt({ text: `NOT ADDED · ${codeToken(err)}`, tone: "danger" });
+          setReceipt({ text: `Could not add ${engine.name} · Nothing changed · Try again`, tone: "danger", title: codeToken(err) });
         } finally {
           if (mounted.current) setBusy(false);
         }
@@ -867,7 +869,7 @@ export function useRunsOn(scope?: string) {
         setReceipt({ text: `ADDED ${clock()} · ${engine.name}` });
         await Promise.all([loadDetection(), loadRoster()]);
       } catch (err) {
-        setReceipt({ text: `NOT ADDED · ${codeToken(err)}`, tone: "danger" });
+        setReceipt({ text: `Could not add ${engine.name} · Nothing changed · Try again`, tone: "danger", title: codeToken(err) });
       } finally {
         if (mounted.current) setBusy(false);
       }
@@ -921,7 +923,7 @@ export function useRunsOn(scope?: string) {
         });
         await loadDetection();
       } catch (err) {
-        setReceipt({ text: `NOT SAVED · ${codeToken(err)}`, tone: "danger" });
+        setReceipt({ text: "Could not save the spend limit · The old limit stays · Try again", tone: "danger", title: codeToken(err) });
       } finally {
         if (mounted.current) setBusy(false);
       }

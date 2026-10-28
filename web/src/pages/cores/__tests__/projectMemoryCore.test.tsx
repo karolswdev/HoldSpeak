@@ -327,7 +327,7 @@ describe("Project Memory", () => {
     render(<ProjectMemoryCore scope="project:p1" />);
 
     // PHILO-13-06 (B1, the A3 ledger): a plain failure name, never the hub's text.
-    expect(await screen.findByText("ROOM DID NOT LOAD · DID NOT WORK")).toBeTruthy();
+    expect(await screen.findByText("Could not load the Project · Nothing changed")).toBeTruthy();
     expect(document.body.textContent).not.toContain("Network failure");
   });
 

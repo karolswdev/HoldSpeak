@@ -22,6 +22,12 @@ import { decideFromMeeting, decisionsFromMeeting } from "../desk/decide";
 import { writeFailureReason } from "../desk/hooks/useWriteReceipt";
 import { forgetDraft, keepDraft, keptDraft } from "../desk/deskMemory";
 
+/** W6-G words: a decision's state in sentence case (`to_review` → `To review`). */
+const stateWords = (status: string) => {
+  const words = String(status ?? "").replace(/_/g, " ").trim().toLowerCase();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "";
+};
+
 const clock = (d: Date) =>
   `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
@@ -100,14 +106,14 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
   return (
     <div data-seat="meeting" data-testid="meeting-decide-well" role="group" aria-label={`Decide ${title}`}>
       {made.length ? (
-        <SurfaceSection label="DECISIONS">
+        <SurfaceSection label="Decisions">
           <SurfaceRows>
             {made.map((d) => (
               <SurfaceRow
                 key={d.id}
                 title={d.title}
-                detail={d.status.toUpperCase()}
-                meta={receipt?.id === d.id ? <span data-testid="decide-receipt">✓ DECIDED {receipt.at}</span> : undefined}
+                detail={stateWords(d.status)}
+                meta={receipt?.id === d.id ? <span data-testid="decide-receipt">Decided {receipt.at}</span> : undefined}
                 onOpen={refOpener(`decision:${d.id}`) ?? undefined}
               />
             ))}

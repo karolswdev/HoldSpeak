@@ -121,13 +121,13 @@ describe("Slack in the Destination form", () => {
       .toBe("Slack #ops");
   });
 
-  it("D2b: a webhook off hooks.slack.com is KEY NOT SAVED · WEBHOOK NOT VALID", async () => {
+  it("D2b: a webhook off hooks.slack.com is Could not save the key · Check the webhook, the reason in the hover", async () => {
     await slackForm();
     typeWebhook("https://example.com/hooks/abc");
     const refused = await screen.findByTestId("dest-key-refused");
     expect(refused).toHaveAttribute("data-code", "slack_webhook_invalid");
-    expect(refused.textContent).toContain("KEY NOT SAVED");
-    expect(refused.textContent).toContain("WEBHOOK NOT VALID");
+    expect(refused.textContent).toBe("Could not save the key · Nothing changed · Check the webhook and paste it again");
+    expect(refused).toHaveAttribute("title", "WEBHOOK NOT VALID");
     expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
     expect(document.body.textContent).not.toContain("example.com/hooks");
   });

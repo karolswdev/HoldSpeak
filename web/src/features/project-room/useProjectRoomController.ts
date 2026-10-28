@@ -7,7 +7,7 @@
 // blanks the rest.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { plainFailure } from "../../desk/surface/plainFailure";
+import { failureTitle, plainWords } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openRef } from "../../desk/openObject";
 import { refreshNeedsYou } from "../../desk/needsYou";
@@ -56,6 +56,8 @@ export function useProjectRoomController(
   const [extrasStatus, setExtrasStatus] = useState<"idle" | "loading" | "ready">("idle");
   const [error, setError] = useState("");
   const [readError, setReadError] = useState("");
+  /** W6-G words: the reason of `error` / `readError`, for the hover title only. */
+  const [errorTitle, setErrorTitle] = useState("");
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchHits, setSearchHits] = useState<Record<string, unknown>[]>([]);
   const [searched, setSearched] = useState(false);
@@ -150,9 +152,10 @@ export function useProjectRoomController(
       }
     } catch (reason) {
       if (quiet) return;
-      const failure = plainFailure("ROOM DID NOT LOAD", reason);
+      const failure = plainWords("Could not load the Project");
       setError(failure);
       setReadError(failure);
+      setErrorTitle(failureTitle(reason));
     } finally {
       if (!quiet) setLoadStatus("ready");
     }
@@ -176,9 +179,10 @@ export function useProjectRoomController(
     } catch (reason) {
       // Detail failure does not blank the room face (WEB-STA-002)
       if (!error && !quiet) {
-        const failure = plainFailure("ROOM DID NOT LOAD", reason);
+        const failure = plainWords("Could not load the Project");
         setError(failure);
         setReadError(failure);
+        setErrorTitle(failureTitle(reason));
       }
     } finally {
       if (!quiet) setDetailStatus("ready");
@@ -232,7 +236,8 @@ export function useProjectRoomController(
         );
       }
     } catch (reason) {
-      setError(plainFailure("NOT DONE", reason));
+      setError(plainWords("Could not open the moment"));
+      setErrorTitle(failureTitle(reason));
     }
   };
 
@@ -260,7 +265,8 @@ export function useProjectRoomController(
       // decision leaves its TO REVIEW row at once.
       void refreshNeedsYou(true);
     } catch (reason) {
-      setError(plainFailure("NOT DONE", reason));
+      setError(plainWords("Could not change the decision"));
+      setErrorTitle(failureTitle(reason));
     } finally {
       setDecisionBusy("");
     }
@@ -284,8 +290,9 @@ export function useProjectRoomController(
       void load();
       return { ok: true as const };
     } catch (reason) {
-      const failure = plainFailure("NOT DONE", reason);
+      const failure = plainWords("Could not confirm it", "Your edits stay here");
       setError(failure);
+      setErrorTitle(failureTitle(reason));
       return { ok: false as const, error: failure };
     } finally {
       setProposalBusy("");
@@ -299,7 +306,8 @@ export function useProjectRoomController(
       // Optimistic remove
       setProposals((prev) => prev.filter((p) => p.id !== proposalId));
     } catch (reason) {
-      setError(plainFailure("NOT DONE", reason));
+      setError(plainWords("Could not dismiss the proposal"));
+      setErrorTitle(failureTitle(reason));
     } finally {
       setProposalBusy("");
     }
@@ -313,7 +321,8 @@ export function useProjectRoomController(
       // Reload to pick up the new Watch source
       void load();
     } catch (reason) {
-      setError(plainFailure("NOT DONE", reason));
+      setError(plainWords("Could not add the source"));
+      setErrorTitle(failureTitle(reason));
     } finally {
       setSuggestionBusy("");
     }
@@ -326,7 +335,8 @@ export function useProjectRoomController(
       // Optimistic remove
       setSuggestedSources((prev) => prev.filter((s) => s.reference !== ref));
     } catch (reason) {
-      setError(plainFailure("NOT DONE", reason));
+      setError(plainWords("Could not dismiss the source"));
+      setErrorTitle(failureTitle(reason));
     } finally {
       setSuggestionBusy("");
     }
@@ -349,7 +359,8 @@ export function useProjectRoomController(
       setSearchHits(body.hits || []);
     } catch (reason) {
       setSearchHits([]);
-      setError(plainFailure("NOT DONE", reason));
+      setError(plainWords("Could not search the Project"));
+      setErrorTitle(failureTitle(reason));
     } finally {
       setSearching(false);
     }
@@ -362,6 +373,7 @@ export function useProjectRoomController(
     extrasStatus,
     error,
     readError,
+    errorTitle,
     // Data
     project,
     room,
