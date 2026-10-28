@@ -38,6 +38,9 @@ A flight is one launch, newest per item. Its ``state``:
 - Betterment AG12: a durable review pair result decides after hook and screen
   arbitration (``state_source`` ``review``), so a stale pane cannot undo a
   completed pair or hide a finding that needs the owner;
+- ``checked`` (W4 AGENT 3, slice 3): the owner pressed Done on a done
+  turn: the work is checked and the launch closes (``checked_at``, sticky);
+  it leaves the running agents for the history;
 - ``ended``: the bound session ended (SessionEnd, sticky);
 - ``expired``: the bound session is past the dead window or gone from the
   registry.
@@ -186,6 +189,8 @@ def _ended_at(record: Mapping[str, Any], state: str, session: Any, close: Any) -
     stopped = record.get("stopped") or {}
     if isinstance(stopped, Mapping) and stopped.get("at"):
         return str(stopped["at"])
+    if state == "checked":
+        return str(record.get("checked_at") or "") or None
     if state == "merged":
         if close == "awaiting_confirm":
             return None
@@ -217,6 +222,8 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
     session = by_key.get(session_key) if session_key else None
     if pr and pr_state == "merged":
         state = "merged"
+    elif record.get("checked_at"):
+        state = "checked"   # W4 AGENT 3: the owner checked the work (Done)
     elif pr and pr_state == "open":
         state = "pr_open"
     elif str(record.get("state") or "") == STOPPED_BY_RESTART:
@@ -225,7 +232,7 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         state = "starting"
     else:
         state = _session_state(session, clock)
-    if state not in ("merged", "pr_open"):
+    if state not in ("merged", "pr_open", "checked"):
         state = _resume_state(record, session, clock) or state
     review = record.get("review")
     responder_turn = _responder_turn(session_key, session) if state in ("waiting", "pr_open") else None
@@ -688,6 +695,27 @@ def remove_ended_launch(db: Any, launch_id: str, *, ledger: Any = None, now: Opt
     return {"launch_id": launch_id, "removed": True, "removed_at": stamp}
 
 
+def check_launch_done(db: Any, launch_id: str, *, ledger: Any = None, now: Optional[datetime] = None) -> dict[str, Any]:
+    """W4 AGENT 3 (slice 3, canvas direction A): Done: the owner checked the
+    work of a launch whose turn ended done. The launch closes
+    (``checked_at``, sticky; the record stays): its flight is ``checked``
+    and it moves to the history. A launch that works or asks is refused
+    (``not_done``); an unknown one is ``unknown``; a second press keeps the
+    first stamp. The agent's session is not stopped (Stop does that)."""
+    ledger, by_key, clock = _registry(db, None, ledger, now)
+    record = ledger.get(launch_id)
+    if not record or not _launched(record):
+        return {"launch_id": launch_id, "checked": False, "reason": "unknown"}
+    if record.get("checked_at"):
+        return {"launch_id": launch_id, "checked": True, "checked_at": str(record["checked_at"])}
+    flight = _flight(db, record, by_key, clock)
+    if not (flight["state"] == "done" or flight.get("turn_end") == "done"):
+        return {"launch_id": launch_id, "checked": False, "reason": "not_done", "state": flight["state"]}
+    stamp = clock.isoformat().replace("+00:00", "Z")
+    ledger.update(launch_id, checked_at=stamp)
+    return {"launch_id": launch_id, "checked": True, "checked_at": stamp}
+
+
 def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]) -> None:
     """Each session row that a flight names gets ``flight`` (its item)."""
     by_session = {f["session_key"]: f for f in flights if f.get("session_key")}
@@ -699,4 +727,4 @@ def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]
             row["flight"] = flight
 
 
-__all__ = ["STOPPED_BY_RESTART", "agent_flights", "remove_ended_launch", "annotate_sessions", "explain_agent", "flight_of_launch", "slot_holders"]
+__all__ = ["STOPPED_BY_RESTART", "agent_flights", "check_launch_done", "remove_ended_launch", "annotate_sessions", "explain_agent", "flight_of_launch", "slot_holders"]

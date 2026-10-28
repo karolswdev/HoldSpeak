@@ -306,12 +306,19 @@ function runResult(event: LaneEvent): string {
 
 /** One rail entry before its verbs are drawn: the face adds Brief,
  * Deny / Approve. `at` orders the entries; `heads` collapse repeated READs. */
+/** A run's counts name a failure (`1 failed`, `2 errors`). */
+export function runFailed(result: string): boolean {
+  return /\b[1-9]\d* (failed|errors?)\b/.test(result);
+}
+
 export interface LaneEntry extends Omit<TimelineEntry, "verbs"> {
   at: number | null;
   kind: "brief" | "read" | "says" | "write" | "run" | "call" | "answer" | "end" | "commit" | "pr" | "held" | "asks" | "merge" | "rebrief";
   /** HELD: the gate proposal; the face draws Deny / Approve while it is held. */
   gated?: LaneGated;
   heads?: string[];
+  /** RUN: the test run's counts (`6 passed`, `1 failed, 5 passed`), when the hub kept them. */
+  result?: string;
 }
 
 const MAX_READ_HEADS = 2;
@@ -381,9 +388,13 @@ export function eventEntries(events: readonly LaneEvent[]): LaneEntry[] {
       continue;
     }
     if (RUN_TOOLS.has(tool)) {
+      // W4 AGENT 3: the counts are the run's own fact (a dot and a word),
+      // red when a test failed; the command stays the code.
       const result = runResult(event);
-      const code = [short(event.head), result].filter(Boolean).join(" · ");
-      out.push({ id, at: when, time, kind: "run", word: "RUN", code: code || tool, tone: result ? "ok" : undefined });
+      out.push({
+        id, at: when, time, kind: "run", word: "RUN", code: short(event.head) || tool,
+        ...(result ? { result, tone: runFailed(result) ? ("fail" as const) : ("ok" as const) } : {}),
+      });
       continue;
     }
     // Any other call (a task, a fetch, an MCP tool): its name; repeats fold.

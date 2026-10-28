@@ -447,6 +447,16 @@
       "consumers": []
     },
     {
+      "path": "/api/agent/launches/{launch_id}/done",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}/explain",
       "methods": [
         "GET"
@@ -3826,6 +3836,16 @@
       "path": "/api/meeting",
       "methods": [
         "PATCH"
+      ],
+      "module": "web.routes.meetings.live",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meeting/mic-check",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.meetings.live",
       "consumers": [

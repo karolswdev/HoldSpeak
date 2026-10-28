@@ -281,6 +281,7 @@ export function closeReceipt(flight: AgentFlight): string {
   else if (flight.state === "expired") words.push("SESSION GONE");
   else if (flight.state === "stopped_by_restart") words.push("STOPPED BY RESTART");
   else if (flight.state === "resume_failed") words.push("COULD NOT RESUME");
+  else if (flight.state === "checked") words.push("DONE · CHECKED BY YOU");
   else words.push("ENDED");
   if (flight.close === "closed") words.push("ITEM CLOSED");
   else if (flight.close === "linked") words.push("ITEM LINKED");
@@ -463,7 +464,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     const when = wireDate(at);
     if (!when || now.getTime() - when.getTime() > STALE_WINDOW_MS) continue;
     const receipt = closeReceipt(flight);
-    const state = { tone: flight.state === "merged" ? ("ok" as const) : ("info" as const), label: receipt };
+    const state = { tone: flight.state === "merged" || flight.state === "checked" ? ("ok" as const) : ("info" as const), label: receipt };
     add({
       id: `launch:${flight.launchId}`,
       ref: `launch:${flight.launchId}`,

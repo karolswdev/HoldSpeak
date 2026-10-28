@@ -24,7 +24,10 @@ export type FlightState =
   | "resuming" | "resume_failed"
   /** Betterment AG7: an agent is there, but no hook and no screen rule told
    *  its state for ten minutes. */
-  | "no_signal";
+  | "no_signal"
+  /** W4 AGENT 3: the owner pressed Done on a done turn: the work is
+   *  checked and the launch closed (it moves to the history). */
+  | "checked";
 export type AgentName = "claude" | "codex" | "pi";
 
 export interface AgentReview {
@@ -104,6 +107,8 @@ export interface AgentFlight {
   turnEnd?: "asks" | "idle" | "done" | null;
   /** W4 AGENT 2: when a done turn ended (the hub's `done_at`). */
   doneAt?: string | null;
+  /** When the launch ended (the hub's `ended_at`; W4 AGENT 3: a Done press). */
+  endedAt?: string | null;
   /** Betterment AG0: the done turn's id, and whether the owner has not
    * opened the agent since (`POST /api/agent/launches/{id}/seen`). */
   turnId?: string | null;
@@ -250,7 +255,7 @@ export function agentWord(agent: string): string {
 
 const FLIGHT_STATES: readonly string[] = [
   "starting", "working", "waiting", "done", "pr_open", "merged", "ended", "expired", "stopped_by_restart", "queued",
-  "resuming", "resume_failed", "no_signal",
+  "resuming", "resume_failed", "no_signal", "checked",
 ];
 
 export function fromWireFlight(body: any): AgentFlight {
@@ -269,6 +274,7 @@ export function fromWireFlight(body: any): AgentFlight {
     turnEnd: ["asks", "idle", "done"].includes(body?.turn_end) ? body.turn_end : null,
     turnId: body?.turn_id ? String(body.turn_id) : null,
     doneAt: body?.done_at ? String(body.done_at) : null,
+    endedAt: body?.ended_at ? String(body.ended_at) : null,
     isNew: body?.new === true,
     close: body?.close ? String(body.close) : null,
     sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,
@@ -397,7 +403,7 @@ export function itemOriginRefs(item: {
 }
 
 /** The flights whose agent left: no row shows them as its agent. */
-export const GONE: ReadonlySet<FlightState> = new Set<FlightState>(["ended", "expired", "stopped_by_restart", "resume_failed"]);
+export const GONE: ReadonlySet<FlightState> = new Set<FlightState>(["ended", "expired", "stopped_by_restart", "resume_failed", "checked"]);
 
 export function flightForItem(flights: readonly AgentFlight[], item: Parameters<typeof itemOriginRefs>[0]): AgentFlight | null {
   const refs = itemOriginRefs(item);
@@ -422,7 +428,10 @@ const SESSION_LEFT = new Set(["killed", "session_gone", "no_session"]);
  * launch whose close waits for the owner (Secure) or whose cleanup is still
  * outstanding keeps its session listed. */
 export function liveAgentSessions(rows: readonly CoderSessionRow[]): CoderSessionRow[] {
-  return rows.filter((row) => row.state !== "ended" && !SESSION_LEFT.has(String(row.flight?.sessionCleanup ?? "")));
+  // W4 AGENT 3: a launch he checked (Done) is not a running agent, though
+  // its session can still be there.
+  return rows.filter((row) => row.state !== "ended" && row.flight?.state !== "checked"
+    && !SESSION_LEFT.has(String(row.flight?.sessionCleanup ?? "")));
 }
 
 interface AgentFlightsState {

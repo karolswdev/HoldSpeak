@@ -11,6 +11,7 @@
  *  lane with no hook events has no steps, and the window says so. */
 import type { ReactNode } from "react";
 import { AgentWords } from "../components/AgentWords";
+import { DotWord } from "../surface/kit";
 import type { LaneEntry } from "./laneWire";
 
 type StepKind = LaneEntry["kind"] | "asks";
@@ -108,6 +109,17 @@ function StepWords({ entry }: { entry: StepEntry }) {
       <span className="lw-step-line">
         {verb} <code className="lw-step-code">{sha}</code>
         {subject.length ? <span className="lw-step-muted"> {subject.join(" ")}</span> : null}
+      </span>
+    );
+  }
+  if (entry.kind === "run" && entry.result) {
+    // W4 AGENT 3: the run's counts as a dot and a word (red on a failure).
+    return (
+      <span className="lw-step-line">
+        {verb}{entry.code ? <> <code className="lw-step-code">{entry.code}</code></> : null}{" "}
+        <DotWord tone={entry.tone === "fail" ? "fail" : "ok"} className="lw-step-result" data-testid="lane-step-result">
+          {entry.result}
+        </DotWord>
       </span>
     );
   }

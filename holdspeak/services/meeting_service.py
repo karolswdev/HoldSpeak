@@ -823,6 +823,20 @@ class MeetingService:
         result = self._on_start(**kwargs)
         return self._callback_payload(result)
 
+    def check_microphone(
+        self, principal: Principal, *, meeting_active: bool = False
+    ) -> dict[str, Any]:
+        """Live slice 3: what the meeting microphone hears now, before Start.
+
+        One short sample from ``meeting.mic_device`` (the grant read first; a
+        check never prompts and never opens a device a meeting holds). See
+        ``meeting_session/mic_check.py``.
+        """
+        from ..meeting_session.mic_check import check_microphone
+
+        device = Config.load().meeting.mic_device
+        return check_microphone(device, meeting_active=meeting_active)
+
     def stop_capture(
         self, principal: Principal, meeting_id: str | None = None
     ) -> dict[str, Any] | Any:

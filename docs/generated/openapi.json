@@ -3620,6 +3620,46 @@
         "summary": "Api Agent Deliver"
       }
     },
+    "/api/agent/launches/{launch_id}/done": {
+      "post": {
+        "description": "W4 AGENT 3 (slice 3): Done: the owner checked the work of a launch\nwhose turn ended done; the launch closes (``checked_at``) and leaves\nthe running agents. Owner only. 200 when checked (again: the first\nstamp); 409 for a launch that works or asks; 404 for an unknown one.",
+        "operationId": "api_agent_launch_done_api_agent_launches__launch_id__done_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Done Api Agent Launches  Launch Id  Done Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Done"
+      }
+    },
     "/api/agent/launches/{launch_id}/explain": {
       "get": {
         "description": "Betterment AG7, \"Why this state\": which source decided the agent's\nstate (the hook or a screen rule), the rule, the evidence lines, the\nrule file and the age of the read (``agent_flights.explain_agent``).",
@@ -16681,6 +16721,25 @@
           }
         },
         "summary": "Api Update Meeting"
+      }
+    },
+    "/api/meeting/mic-check": {
+      "post": {
+        "description": "Live slice 3: the ready sheet's Microphone row (a level and a word).",
+        "operationId": "api_meeting_mic_check_api_meeting_mic_check_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Meeting Mic Check Api Meeting Mic Check Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Meeting Mic Check"
       }
     },
     "/api/meeting/start": {

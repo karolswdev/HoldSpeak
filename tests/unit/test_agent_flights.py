@@ -371,6 +371,45 @@ def test_a_turn_end_with_its_pr_open_is_done_on_the_flight_as_on_the_lane(db, tm
     assert (asks["state"], asks["turn_end"]) == ("pr_open", "asks")
 
 
+def test_done_checks_a_done_launch_and_moves_it_to_the_history(db, tmp_path, registry):
+    """W4 AGENT 3 (slice 3, canvas direction A): Done on a done turn closes
+    the launch (``checked_at``, sticky): its flight is ``checked``, it ends at
+    the press and it is in the history, where Remove can take it. A launch
+    that works is refused; an unknown one is said; a second press keeps the
+    first stamp. A done turn with its PR open is done work too."""
+    from holdspeak.services.agent_flights import check_launch_done, launch_history
+
+    now = datetime.now(timezone.utc)
+    _turn(registry, "s1", DONE)
+    hook(registry, "claude", "live", "PreToolUse", tool_name="Write")
+    _turn(registry, "s3", "The runbook is in docs/ledger-rollback.md. PR #413 is open.")
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    _launch(ledger, "l-done", ("action", "ai_1"), attempt_id=_attempt(db, "claude:s1", "action:ai_1"))
+    _launch(ledger, "l-live", ("decision", "d1"), attempt_id=_attempt(db, "claude:live", "decision:d1"))
+    _launch(ledger, "l-pr", ("action", "ai_3"), attempt_id=_attempt(db, "claude:s3", "action:ai_3"),
+            follow_through={"pr": {"number": 413, "url": "https://github.com/acme/ledger/pull/413", "state": "open"},
+                            "pr_state": "pr_open"})
+    assert launch_history(db, ledger=ledger, now=now) == []
+
+    assert check_launch_done(db, "l-live", ledger=ledger, now=now) == {
+        "launch_id": "l-live", "checked": False, "reason": "not_done", "state": "working"}
+    assert check_launch_done(db, "l-none", ledger=ledger, now=now)["reason"] == "unknown"
+    checked = check_launch_done(db, "l-done", ledger=ledger, now=now)
+    assert checked["checked"] is True and checked["checked_at"]
+    assert check_launch_done(db, "l-done", ledger=ledger, now=now + timedelta(minutes=5)) == checked
+    assert check_launch_done(db, "l-pr", ledger=ledger, now=now)["checked"] is True
+
+    flights = {f["launch_id"]: f for f in agent_flights(db, ledger=ledger, now=now)}
+    assert flights["l-done"]["state"] == "checked"
+    assert flights["l-done"]["ended_at"] == checked["checked_at"]
+    assert flights["l-pr"]["state"] == "checked"
+    assert flights["l-live"]["state"] == "working"
+    assert {f["launch_id"] for f in launch_history(db, ledger=ledger, now=now)} == {"l-done", "l-pr"}
+    # A later report of the session does not reopen a checked launch.
+    hook(registry, "claude", "s1", "UserPromptSubmit", prompt="one more thing")
+    assert {f["launch_id"]: f for f in agent_flights(db, ledger=ledger, now=now)}["l-done"]["state"] == "checked"
+
+
 def test_a_stop_with_a_question_asks(db, tmp_path, registry):
     _turn(registry, "s1", QUESTION)
     ledger = LaunchLedger(tmp_path / "launches.json")
@@ -431,6 +470,40 @@ def test_seen_makes_a_done_turn_quiet_and_the_next_turn_is_new_again(monkeypatch
     [second] = agent_flights(database, ledger=ledger)
     assert second["turn_id"] != first["turn_id"] and second["new"] is True
     assert client.post("/api/agent/launches/nope/seen", json={}).status_code == 404
+
+
+def test_the_done_route_checks_a_done_launch_once(monkeypatch, tmp_path, registry):
+    """W4 AGENT 3: `POST /api/agent/launches/{id}/done`: 409 while the agent
+    works, 200 with `checked_at` on a done turn, 404 for an unknown launch."""
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import holdspeak.db as dbmod
+    from holdspeak.delivery import factory_launch
+    from holdspeak.web.routes.agent_hand import build_agent_hand_router
+
+    database = Database(tmp_path / "hub.db")
+    _seed(database)
+    launches = tmp_path / "launches.json"
+    ledger = LaunchLedger(launches)
+    _launch(ledger, "l1", ("action", "ai_1"), attempt_id=_attempt(database, "claude:s1", "action:ai_1"))
+    monkeypatch.setattr(dbmod, "get_database", lambda: database)
+    monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", launches)
+    app = FastAPI()
+    app.include_router(build_agent_hand_router(SimpleNamespace()))
+    client = TestClient(app)
+
+    hook(registry, "claude", "s1", "PreToolUse", tool_name="Write")
+    refused = client.post("/api/agent/launches/l1/done", json={})
+    assert refused.status_code == 409 and refused.json()["reason"] == "not_done"
+    _turn(registry, "s1", DONE)
+    done = client.post("/api/agent/launches/l1/done", json={})
+    assert done.status_code == 200 and done.json()["checked_at"]
+    [flight] = agent_flights(database, ledger=LaunchLedger(launches))
+    assert (flight["state"], flight["ended_at"]) == ("checked", done.json()["checked_at"])
+    assert client.post("/api/agent/launches/nope/done", json={}).status_code == 404
 
 
 def test_a_missing_tmux_session_is_stopped_by_restart(db, tmp_path, registry):
