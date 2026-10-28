@@ -14,6 +14,10 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { useState, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import segmentsWire from "../../test/wire/live.segments.wire.json";
+import micHearingWire from "../../test/wire/live.mic-check.hearing.wire.json";
+import micRefusedWire from "../../test/wire/live.mic-check.not-allowed.wire.json";
+import passWire from "../../test/wire/live.pass.frames.wire.json";
+import levelWire from "../../test/wire/live.level.frames.wire.json";
 import hubNoEngine from "./fixtures/settings-wire/hub.json";
 import localAiCold from "../../test/wire/setup-local-ai.wire.json";
 import meetingsHubReady from "./fixtures/meetings-hub/p17t-ready.json";
@@ -67,6 +71,10 @@ import { LiveMeetingTools } from "../../pages/cores/LiveMeetingTools";
 const recorded = needsYouRecorded as any;
 const hubWithEngine = recorded.calendar.none.gets["/api/settings/hub"];
 const SEGMENTS = (segmentsWire as { wire: Record<string, unknown>[] }).wire;
+const MIC_HEARING = (micHearingWire as { wire: Record<string, unknown> }).wire;
+const MIC_REFUSED = (micRefusedWire as { wire: Record<string, unknown> }).wire;
+const PASS = (passWire as { wire: { type: string; data: unknown }[] }).wire;
+const LEVELS = (levelWire as { wire: { type: string; data: unknown }[] }).wire;
 
 function answer(gets: Gets) {
   mocks.apiFetch.mockImplementation(async (path: string) => {
@@ -180,12 +188,16 @@ describe("Live meeting: before, the ready sheet (W2-LIVE-2)", () => {
       "/api/settings/hub": hubNoEngine,
       "/api/settings": recorded.calendar.none.gets["/api/settings"],
       "/api/setup/local-ai": (localAiCold as { wire: unknown }).wire,
+      "/api/meeting/mic-check": MIC_HEARING,
     });
     await mount();
     const sheet = await screen.findByTestId("live-ready");
     expect(within(sheet).getByText("It will hear")).toBeInTheDocument();
     expect(within(sheet).getByText("It will write")).toBeInTheDocument();
-    expect(screen.getByTestId("live-ready-mic")).toHaveTextContent(/Microphone\s*System default\s*Ready/);
+    // Live slice 3: the hub's mic check (one short sample) — the bars and Hearing.
+    await waitFor(() => expect(screen.getByTestId("live-ready-mic")).toHaveTextContent(/Microphone\s*System default\s*Hearing/));
+    expect(within(screen.getByTestId("live-ready-mic")).getByRole("meter", { name: "Microphone level" })).toHaveAttribute("aria-valuenow", String(MIC_HEARING.level));
+    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/meeting/mic-check", { method: "POST" });
     expect(screen.getByTestId("live-ready-system")).toHaveTextContent(/System audio\s*Auto\s*Ready/);
     const transcript = screen.getByTestId("live-ready-transcript");
     await waitFor(() => expect(within(transcript).getByTestId("live-ready-transcript-state")).toHaveTextContent("Not set up"));
@@ -235,6 +247,85 @@ describe("Live meeting: before, the ready sheet (W2-LIVE-2)", () => {
     );
     const order = mocks.apiFetch.mock.calls.map(([path]) => path);
     expect(order.indexOf("/api/meeting/start")).toBeLessThan(order.indexOf("/api/meeting"));
+  });
+});
+
+describe("Live meeting: what the hub hears (Live slice 3)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.listeners.clear();
+  });
+
+  it("before: a refused grant says Not allowed with Allow, and no level", async () => {
+    useDesk.setState({ recording: "idle", liveMeetingId: null });
+    answer({
+      "/api/settings/hub": hubWithEngine,
+      "/api/settings": recorded.calendar.none.gets["/api/settings"],
+      "/api/meeting/mic-check": MIC_REFUSED,
+    });
+    await mount();
+    const row = await screen.findByTestId("live-ready-mic");
+    await waitFor(() => expect(within(row).getByTestId("live-ready-mic-state")).toHaveTextContent("Not allowed"));
+    expect(within(row).getByTestId("live-ready-mic-state").getAttribute("data-tone")).toBe("fail");
+    expect(within(row).queryByRole("meter")).toBeNull();
+    expect(within(row).getByRole("button", { name: "Allow…" })).toBeInTheDocument();
+  });
+
+  it("before: digital silence says Quiet and Check again listens once more", async () => {
+    useDesk.setState({ recording: "idle", liveMeetingId: null });
+    answer({
+      "/api/settings/hub": hubWithEngine,
+      "/api/settings": recorded.calendar.none.gets["/api/settings"],
+      "/api/meeting/mic-check": { ...MIC_HEARING, state: "quiet", level: 0 },
+    });
+    await mount();
+    const row = await screen.findByTestId("live-ready-mic");
+    await waitFor(() => expect(row).toHaveTextContent("Quiet"));
+    fireEvent.click(within(row).getByRole("button", { name: "Check again" }));
+    await waitFor(() =>
+      expect(mocks.apiFetch.mock.calls.filter(([path]) => path === "/api/meeting/mic-check")).toHaveLength(2),
+    );
+  });
+
+  it("during: the foot shows the level, who the hub hears, Writing while a pass runs, and the saved reach", async () => {
+    useDesk.setState({ recording: "recording", liveMeetingId: "m-live" });
+    answer({
+      "/api/settings/hub": hubWithEngine,
+      "/api/state": { active: true, meeting_active: true, id: "m-live", meeting_id: "m-live", title: "Ledger cutover sync",
+        mic_label: "Me", remote_label: "Remote" },
+    });
+    await mount("m-live");
+    for (const frame of SEGMENTS) emit("segment", frame);
+    const foot = await screen.findByTestId("live-listening");
+    expect(foot).toHaveTextContent("Listening");
+    expect(screen.queryByTestId("live-saved-through")).toBeNull();
+
+    // The meeting's own level frames: the microphone is the louder source.
+    for (const frame of LEVELS) emit(frame.type, frame.data);
+    await waitFor(() => expect(screen.getByTestId("live-listening-who")).toHaveTextContent("Me"));
+    expect(within(foot).getByRole("meter", { name: "Meeting level" })).toHaveAttribute("aria-valuenow", "0.62");
+
+    // A pass hands its audio to the engine, then the saved transcript reaches 1:06.
+    emit(PASS[0].type, PASS[0].data);
+    await waitFor(() => expect(screen.getByTestId("live-listening")).toHaveAttribute("data-state", "writing"));
+    expect(screen.getByTestId("live-listening")).toHaveTextContent("Writing");
+    emit(PASS[1].type, PASS[1].data);
+    await waitFor(() => expect(screen.getByTestId("live-listening")).toHaveAttribute("data-state", "listening"));
+    expect(screen.getByTestId("live-saved-through")).toHaveTextContent("Saved up to 1:06");
+    // Before Start only: no mic check while it records.
+    expect(mocks.apiFetch).not.toHaveBeenCalledWith("/api/meeting/mic-check", { method: "POST" });
+  });
+
+  it("during: another meeting's pass is not this one's", async () => {
+    useDesk.setState({ recording: "recording", liveMeetingId: "m-live" });
+    answer({
+      "/api/settings/hub": hubWithEngine,
+      "/api/state": { active: true, meeting_active: true, id: "m-live", meeting_id: "m-live" },
+    });
+    await mount("m-live");
+    for (const frame of SEGMENTS) emit("segment", frame);
+    emit("transcript_pass", { ...(PASS[0].data as Record<string, unknown>), meeting_id: "m-other" });
+    expect(screen.getByTestId("live-listening")).toHaveAttribute("data-state", "listening");
   });
 });
 

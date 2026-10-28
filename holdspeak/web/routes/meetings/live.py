@@ -146,6 +146,16 @@ def build_live_router(ctx: WebContext) -> APIRouter:
             ctx.broadcast("meeting_started", meeting)
         return JSONResponse({"success": True, "meeting": meeting})
 
+    @router.post("/api/meeting/mic-check")
+    async def api_meeting_mic_check(request: Request) -> Any:
+        """Live slice 3: the ready sheet's Microphone row (a level and a word)."""
+        state = ctx.get_state() or {}
+        active = bool(state.get("meeting_active") or state.get("active"))
+        result = await asyncio.to_thread(
+            _service(ctx).check_microphone, _principal(request), meeting_active=active
+        )
+        return JSONResponse(result)
+
     @router.post("/api/meeting/stop")
     async def api_meeting_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
         return await _stop(request)

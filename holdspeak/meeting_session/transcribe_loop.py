@@ -83,6 +83,31 @@ class TranscribeLoopMixin:
             return None
         return self.transcriber.transcribe(audio, admission=admission)
 
+    def _emit_transcript_pass(self, state: str) -> None:
+        """Live slice 3 (2026-10-28): one ``transcript_pass`` frame.
+
+        ``writing`` when a pass hands its audio to the engine, ``listening``
+        when it is done: ``saved_through`` is the meeting second the saved
+        transcript reaches (the checkpoint), ``saved_at`` its wall time, and
+        ``every`` the pass cadence in seconds. With no transcriber (speech not
+        set up) nothing is written, so nothing is said.
+        """
+        if self.transcriber is None:
+            return
+        with self._lock:
+            meeting = self._state
+            if meeting is None:
+                return
+            saved_at = meeting.capture_checkpoint_at
+            payload = {
+                "meeting_id": meeting.id,
+                "state": state,
+                "saved_through": float(meeting.capture_checkpoint_seconds or 0.0),
+                "saved_at": saved_at.isoformat() if saved_at else None,
+                "every": float(self.TRANSCRIBE_INTERVAL),
+            }
+        self._emit_broadcast("transcript_pass", payload)
+
     def _transcribe_loop(self) -> None:
         """Background thread that transcribes audio periodically."""
         log.debug("Transcription loop started")
@@ -105,9 +130,15 @@ class TranscribeLoopMixin:
                 device_chunks = self._recorder.get_pending_device_chunks()
 
             if mic_chunks or system_chunks or device_chunks:
-                self._transcribe_chunks(
-                    mic_chunks, system_chunks, device_chunks=device_chunks
-                )
+                # Live slice 3: the window says when the engine writes and
+                # how far the saved transcript reaches (`transcript_pass`).
+                self._emit_transcript_pass("writing")
+                try:
+                    self._transcribe_chunks(
+                        mic_chunks, system_chunks, device_chunks=device_chunks
+                    )
+                finally:
+                    self._emit_transcript_pass("listening")
 
         log.debug("Transcription loop ended")
 
