@@ -1067,6 +1067,56 @@
   color: var(--text);
 }
 
+/* W3 AGENT WINDOW: the soft plate (AskWell `plate`): a warm tint, no ink
+   frame; the head a dot and a word, the age quiet; the draft in sans. */
+.ask-well[data-plate="true"] {
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--lamp-warn) 8%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-warn) 30%, var(--wb-rule-soft));
+}
+.ask-well-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ask-well-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12.5px/1.3 var(--font-sans);
+  color: var(--wb-ink);
+}
+.ask-well-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--lamp-warn);
+}
+.ask-well-state[data-tone="ok"] .ask-well-dot { background: var(--lamp-ok); }
+.ask-well-state[data-tone="info"] .ask-well-dot { background: var(--lamp-info); }
+.ask-well-age {
+  margin-left: auto;
+  font: 12px/1.3 var(--font-sans);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.ask-well[data-plate="true"] .ask-well-question {
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+.ask-well[data-plate="true"] .ask-well-draft-word {
+  font: 12.5px/1.3 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
 /* PRCard facts stay on the same light neutral surface as the shell. */
 .pr-card {
   display: flex;

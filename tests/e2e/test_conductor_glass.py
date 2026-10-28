@@ -346,7 +346,14 @@ class TestSessionOpenGlass:
                 shot("lane-working", lane)
                 assert not lane.get_by_test_id("lane-track").is_visible()
                 assert "Your press in GitHub" not in lane.inner_text()
-                lane.get_by_test_id("lane-raw").click()
+                # W3 AGENT WINDOW: the terminal is the window's Terminal wing
+                # (a strip of tabs; at 393 the strip folds to one menu).
+                wing = lane.get_by_role("tab", name="Terminal", exact=True)
+                if wing.count():
+                    wing.click()
+                else:
+                    lane.locator(".desk-wings-menu").first.click()
+                    page.locator(".desk-menu-list [role='menuitemcheckbox']", has_text="Terminal").first.click()
                 shot("lane-terminal-unavailable", lane)
                 assert lane.get_by_test_id("lane-head").is_visible()
                 assert lane.get_by_test_id("lane-raw-pane").get_by_role("button", name="Retry", exact=True).is_visible()
