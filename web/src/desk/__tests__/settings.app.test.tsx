@@ -621,7 +621,7 @@ describe("Settings › System › Remote access", () => {
     await screen.findByText("other-glass-runner");
     expect(screen.getByText("test-glass-runner")).toBeInTheDocument();
     expect(screen.queryByTestId("token-value")).toBeNull();
-    expect(screen.getAllByText("NEVER USED").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Never used").length).toBeGreaterThanOrEqual(1);
 
     const target = screen.getByText("test-glass-runner").closest(".surface-ledger-row") as HTMLElement;
     fireEvent.click(within(target).getByRole("button", { name: /Revoke/ }));
@@ -642,7 +642,7 @@ describe("Settings › System › runtime identity", () => {
     const backend = await screen.findByTestId("runtime-backend");
     const fold = backend.closest("details.gadget-fold") as HTMLElement;
     expect(fold).not.toBeNull();
-    expect(screen.getByTestId("runtime-schema").textContent).toMatch(/^SCHEMA /);
+    expect(screen.getByTestId("runtime-schema").textContent).toMatch(/^Schema /);
     expect(fold.contains(screen.getByTestId("runtime-path"))).toBe(true);
     expect((identityWire as Json).repair).toEqual([]);
     expect(screen.queryByTestId("runtime-repair")).toBeNull();
@@ -755,8 +755,8 @@ describe("Settings › Sounds without the speech extra", () => {
 });
 
 describe("Settings › System › Remote access grants", () => {
-  const W = { allow: "Allow filing", stop: "Stop filing", live: "FILING ALLOWED", stopped: "FILING STOPPED" };
-  const P = { allow: "Allow run and publish", stop: "Stop run and publish", live: "RUN AND PUBLISH ALLOWED", stopped: "RUN AND PUBLISH STOPPED" };
+  const W = { allow: "Allow filing", stop: "Stop filing", live: "Filing allowed", stopped: "Filing stopped" };
+  const P = { allow: "Allow run and publish", stop: "Stop run and publish", live: "Run and publish allowed", stopped: "Run and publish stopped" };
   const wires = import.meta.glob("./fixtures/settings-wire/grant-*.json", { eager: true, import: "default" }) as Record<string, Json>;
   const grant = (name: string) => clone(wires[`./fixtures/settings-wire/grant-${name}.json`]);
 
@@ -816,14 +816,14 @@ describe("Settings › System › Remote access grants", () => {
     fireEvent.click(within(row("desk-agent")).getByTestId("grant-verb"));
     const refused = await within(row("desk-agent")).findByTestId("grant-refused");
     expect(refused).toHaveAttribute("data-code", "desk_delegation_required");
-    expect(refused.textContent).toContain("CANNOT STOP");
-    expect(refused.textContent).toContain("NO GRANT");
+    expect(refused.textContent).toContain("Cannot stop");
+    expect(refused.textContent).toContain("No grant");
     // After the reread the chip agrees with the hub: STOPPED.
     await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.stopped));
     await waitFor(() => expect(foot().textContent).toContain("REFUSED"));
     fireEvent.click(foot());
     const well = await screen.findByTestId("grant-receipt");
-    for (const word of ["REFUSED", "STOP FILING", "NO GRANT", "desk-agent", "BY OWNER"]) expect(well.textContent).toContain(word);
+    for (const word of ["Refused", "Stop filing", "No grant", "desk-agent", "By owner"]) expect(well.textContent).toContain(word);
     expect(well.getAttribute("data-operation-id")).toBe(foot().getAttribute("data-operation-id"));
     expect(well.getAttribute("data-operation-id")).toBe(grant("stop-refused").operation_id);
     expect(document.querySelector("[role=dialog], .modal")).toBeNull();
@@ -844,7 +844,7 @@ describe("Settings › System › Remote access grants", () => {
     await waitFor(() => expect(foot().textContent).toContain("STOPPED"));
     fireEvent.click(foot());
     const well = await screen.findByTestId("grant-receipt");
-    for (const word of ["SUCCEEDED", W.stopped, "desk-agent", "BY OWNER"]) expect(well.textContent).toContain(word);
+    for (const word of ["Succeeded", W.stopped, "desk-agent", "By owner"]) expect(well.textContent).toContain(word);
   });
 
   it("a LIVE grant with no credential shows with remote OFF, NO CREDENTIAL, and stops", async () => {
@@ -860,7 +860,7 @@ describe("Settings › System › Remote access grants", () => {
     await screen.findByText("orphan-agent");
     const orphan = document.querySelector('[data-testid^="delegation-row-"]') as HTMLElement;
     expect(orphan.textContent).toContain("orphan-agent");
-    expect(orphan.textContent).toContain("NO CREDENTIAL");
+    expect(orphan.textContent).toContain("No credential");
     expect(within(orphan).getByTestId("grant-chip").textContent).toContain(W.live);
     expect(within(orphan).getByTestId("grant-verb").textContent).toBe(W.stop);
     // Remote OFF hides a credential row with no LIVE grant, and offers no Issue credential.
@@ -908,8 +908,8 @@ describe("Settings › System › Remote access grants", () => {
     await screen.findByText("sweep-runner");
     const runner = row("sweep-runner");
     expect(within(runner).queryByTestId("grant-verb")).toBeNull();
-    expect(within(runner).getByTestId("palette-token").textContent).toBe("PROJECT");
-    expect(within(row("desk-agent")).getByTestId("palette-token").textContent).toBe("DESK");
+    expect(within(runner).getByTestId("palette-token").textContent).toBe("Project");
+    expect(within(row("desk-agent")).getByTestId("palette-token").textContent).toBe("Desk");
     expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.allow);
     fireEvent.click(within(runner).getByRole("button", { name: /Projects/ }));
     const line = async (id: string) => await screen.findByTestId(`project-line-${id}`);
@@ -924,7 +924,7 @@ describe("Settings › System › Remote access grants", () => {
     await waitFor(() => expect(foot().textContent).toContain("ALLOWED"));
     const summary = within(row("sweep-runner")).getByTestId("project-grant-summary");
     expect(summary.textContent).toContain(P.live);
-    expect(summary.textContent).toContain("PAYMENTS LEDGER CUTOVER");
+    expect(summary.textContent).toContain("Payments ledger cutover");
   });
 
   it("a refused project Stop is named CANNOT STOP · NO GRANT and the line reads STOPPED after the reread", async () => {
@@ -945,8 +945,8 @@ describe("Settings › System › Remote access grants", () => {
     fireEvent.click(within(line).getByTestId("project-grant-verb"));
     const refused = await within(line).findByTestId("grant-refused");
     expect(refused).toHaveAttribute("data-code", "project_delegation_required");
-    expect(refused.textContent).toContain("CANNOT STOP");
-    expect(refused.textContent).toContain("NO GRANT");
+    expect(refused.textContent).toContain("Cannot stop");
+    expect(refused.textContent).toContain("No grant");
     await waitFor(() => expect(within(screen.getByTestId(`project-line-${pay.id}`)).getByTestId("project-grant-chip").textContent).toContain(P.stopped));
     await waitFor(() => expect(foot().textContent).toContain("REFUSED"));
   });

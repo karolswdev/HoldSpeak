@@ -16,6 +16,7 @@ import { SurfaceWell } from "../desk/surface/Surface";
 import { ReadingDocument } from "../desk/surface/ReadingDocument";
 import { RunAttempts } from "./RouteDisclosure";
 import type { RunReceipt } from "./summaryRoute";
+import { Token } from "../desk/surface/Token";
 
 export interface MeetingIntel {
   summary?: string | null;
@@ -96,9 +97,9 @@ export function MeetingSummarySlab({
           {topics.map((topic) => (
             // PHILO-15 lane 12 (B28): a long topic wraps inside the window
             // (the chip species' wrap variant); it never runs past its edge.
-            <span key={topic} className="surface-token" data-chip data-wrap>
+            <Token key={topic} className="surface-token" data-chip data-wrap>
               {topic.toUpperCase()}
-            </span>
+            </Token>
           ))}
         </span>
       ) : null}

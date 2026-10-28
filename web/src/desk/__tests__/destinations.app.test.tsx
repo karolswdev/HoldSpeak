@@ -81,12 +81,12 @@ describe("the Destinations group", () => {
     listing({ destinations: [destination] });
     render(<Destinations />);
     const row = await screen.findByTestId("dest-parked-row");
-    fireEvent.click(screen.getByText("PARKED", { exact: true }));
+    fireEvent.click(screen.getByText("Parked", { exact: true }));
     const cells = row.querySelector(":scope > .surface-ledger-cells");
     expect(cells).not.toBeNull();
-    expect(cells).toContainElement(within(row).getByText("FILE", { exact: true }));
+    expect(cells).toContainElement(within(row).getByText("File", { exact: true }));
     expect(cells).toContainElement(row.querySelector(".send-target"));
-    expect(cells?.textContent).toContain("PARKED");
+    expect(cells?.textContent).toContain("Parked");
     expect(row.querySelector(".send-target")?.textContent).toContain("Quarterly-reports-and-owner-review");
     expect(within(row).queryByRole("button", { name: /Remove|Delete/ })).toBeNull();
   });
@@ -152,7 +152,7 @@ describe("the Destinations group", () => {
     fireEvent.click(await screen.findByTestId("dest-check"));
     const result = await screen.findByTestId("dest-check-result");
     expect(result).toHaveAttribute("data-code", "ready");
-    expect(result.textContent).toBe("✓CHECKED");
+    expect(result.textContent).toBe("✓Checked");
     expect(screen.getByTestId("dest-open").querySelector("dl")?.textContent).toContain("Checked");
   });
 
@@ -168,8 +168,8 @@ describe("the Destinations group", () => {
     expect(remove.textContent?.trim()).toBe("Remove?");
     fireEvent.click(remove);
     const failed = await screen.findByTestId("dest-remove-failed");
-    expect(failed.textContent).toContain("NOT REMOVED");
-    expect(failed.textContent).toContain("NO ANSWER");
+    expect(failed.textContent).toContain("Not removed");
+    expect(failed.textContent).toContain("No answer");
     expect(within(failed).getByTestId("dest-remove-retry")).toBeTruthy();
     expect(screen.getByTestId("dest-open")).toBeTruthy();
     expect(groupLabel()).toBe("Destinations 2");
@@ -179,7 +179,7 @@ describe("the Destinations group", () => {
     routes["GET /api/channels/destinations\\?include_parked=true"] = () => "no answer";
     render(<Destinations />);
     const unreadable = await screen.findByTestId("dest-unreadable");
-    expect(unreadable.textContent).toContain("CANNOT READ DESTINATIONS");
+    expect(unreadable.textContent).toContain("Cannot read destinations");
     expect(screen.queryByTestId("dest-form")).toBeNull();
   });
 });
@@ -226,8 +226,8 @@ describe("the remote destination forms", () => {
     fireEvent.click(screen.getByTestId("dest-save"));
     const refused = await screen.findByTestId("dest-refused");
     expect(refused).toHaveAttribute("data-code", "jira_key_not_single");
-    expect(refused.textContent).toContain("REFUSED");
-    expect(refused.textContent).toContain("ONE KEY ONLY");
+    expect(refused.textContent).toContain("Refused");
+    expect(refused.textContent).toContain("One key only");
     expect(screen.queryByTestId("dest-row")).toBeNull();
   });
 
@@ -367,7 +367,7 @@ describe("the email destination setup", () => {
     fireEvent.click(screen.getByTestId("dest-cancel"));
     await edit(resend.name);
     await waitFor(() => expect(calls.some((c) => c.url === resendCheck)).toBe(true));
-    await waitFor(() => expect(screen.getByTestId("dest-email-key-check").textContent).toContain("NO KEY"));
+    await waitFor(() => expect(screen.getByTestId("dest-email-key-check").textContent).toContain("No key"));
     expect(screen.getByTestId("dest-save")).toBeDisabled();
     expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
     fireEvent.click(screen.getByTestId("dest-cancel"));
@@ -378,10 +378,10 @@ describe("the email destination setup", () => {
   });
 
   it.each([
-    ["email_key_missing", "NO KEY"],
-    ["email_key_store_locked", "KEY STORE LOCKED"],
-    ["email_key_store_not_native", "NO SAFE KEY STORE"],
-    ["no_answer", "NO ANSWER"],
+    ["email_key_missing", "No key"],
+    ["email_key_store_locked", "Key store locked"],
+    ["email_key_store_not_native", "No safe key store"],
+    ["no_answer", "No answer"],
   ])("keeps an unreadable saved email key disabled with %s and retries its local read", async (code, label) => {
     routes["POST /api/channels/destinations/[^/]+/check"] = () => code === "no_answer"
       ? "no answer" : ok({ ...checkEmail, check: { ...checkEmail.check, state: code } });
@@ -433,16 +433,16 @@ describe("the email destination setup", () => {
       await waitFor(() => expect(screen.getByTestId("dest-check-result")).toHaveAttribute("data-code", expected));
       return screen.getByTestId("dest-check-result").textContent?.replace(/\s+/g, " ").trim() ?? "";
     };
-    expect(await check("ready")).toContain("SENDER NOT CHECKED");
+    expect(await check("ready")).toContain("Sender not checked");
     expect(screen.getByTestId("dest-open").querySelector("dl")?.textContent).toContain("SET");
     state = { state: "key_changed", answered_at: "2026-08-01T09:00:00+00:00" };
-    expect(await check("key_changed")).toBe("⚠NOT CHECKED SINCE KEY CHANGE");
+    expect(await check("key_changed")).toBe("⚠Not checked since key change");
     state = { state: "sender_accepted", answered_at: "2026-09-29T10:05:00+00:00" };
     const accepted = await check("sender_accepted");
-    expect(accepted).toMatch(/^✓SENDER ACCEPTED ?LAST SEND /);
-    expect(accepted).not.toContain("VERIFIED");
+    expect(accepted).toMatch(/^✓Sender accepted ?Last send /);
+    expect(accepted).not.toContain("Verified");
     state = { state: "sender_not_verified", answered_at: "2026-09-29T10:07:00+00:00" };
-    expect(await check("sender_not_verified")).toMatch(/^✗SENDER NOT VERIFIED ?LAST SEND /);
+    expect(await check("sender_not_verified")).toMatch(/^✗Sender not verified ?Last send /);
     await act(async () => {});
   });
 });

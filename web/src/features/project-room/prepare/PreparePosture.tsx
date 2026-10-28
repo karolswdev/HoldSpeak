@@ -55,6 +55,7 @@ import {
   type ManifestSource,
 } from "./model";
 import "./prepare-posture.css";
+import { Token as KitToken } from "../../../desk/surface/Token";
 
 export const RESULT_OPTIONS = [
   { value: "answer", label: "Answer" },
@@ -73,7 +74,7 @@ function ProjectButton({ name, onOpen }: { name: string; onOpen: () => void }) {
         onClick={onOpen}
         data-testid="prepare-project-button"
       >
-        {name.toUpperCase()}
+        {name}
       </Button>
     </span>
   );
@@ -81,9 +82,9 @@ function ProjectButton({ name, onOpen }: { name: string; onOpen: () => void }) {
 
 function Token({ children, testId, tone }: { children: string; testId?: string; tone?: string }) {
   return (
-    <span className="surface-token" data-chip data-tone={tone} data-testid={testId}>
+    <KitToken className="surface-token" data-chip data-tone={tone} data-testid={testId}>
       {children}
-    </span>
+    </KitToken>
   );
 }
 
@@ -693,9 +694,9 @@ export function PreparePosture({
       <SurfaceFooter
         className="prepare-footer"
         receipt={
-          <span className="surface-footer-receipt-line" role="status" data-testid="prepare-footer-receipt">
+          <KitToken className="surface-footer-receipt-line" role="status" data-testid="prepare-footer-receipt">
             {posture === "brief" ? receipt : posture === "refused" ? (refusalTruth?.line ?? "NOTHING SENT") : ctrl.kept.length ? countLabel("KEPT", ctrl.kept.length) : "NOTHING KEPT YET"}
-          </span>
+          </KitToken>
         }
         verbs={
           posture === "brief" && brief ? (

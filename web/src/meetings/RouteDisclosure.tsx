@@ -13,6 +13,7 @@ import { egressFor } from "../desk/surface/egress";
 import { DotWord } from "../desk/surface/kit";
 import type { PlannedRoute, RunReceipt, SummaryRefusal } from "./summaryRoute";
 import { refusalFact, routeOff, routeReasonToken, routeReady } from "./summaryRoute";
+import { Token } from "../desk/surface/Token";
 
 /** A refused run, said once and said short (UX-CANON A.3).
  *
@@ -57,7 +58,7 @@ export function RouteDisclosure({
   if (!route) return null;
   if (!routeReady(route)) {
     return (
-      <span
+      <Token
         className="surface-token"
         data-chip
         data-tone="warn"
@@ -68,7 +69,7 @@ export function RouteDisclosure({
         {/* PHILO-15 01 ruling: OFF is the owner's choice, not a missing route.
             PHILO-17 ALIVE: plain words; the wire reason rides the title. */}
         {routeOff(route) ? "Summaries off" : "No engine for summaries"}
-      </span>
+      </Token>
     );
   }
   // Ready: nothing on the row. The verb's hover title names the host.

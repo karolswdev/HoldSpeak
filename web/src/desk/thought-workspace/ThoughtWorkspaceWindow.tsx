@@ -41,6 +41,7 @@ import { openDecisionRecord, openProjectRoomAtResource, openRef } from "../openO
 import { openProjectRoom } from "../shell";
 import type { ProjectReturn } from "../store/types";
 import "./thought-workspace.css";
+import { Token } from "../surface/Token";
 
 /** `Oct 24`: the day of the meeting a note came from. */
 function shortDay(value: string): string {
@@ -796,7 +797,7 @@ function WorkspaceReady({
       </ScrollHint>
       <SurfaceFooter
         className="thought-send-foot"
-        receipt={message || writeLine?.danger ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone="danger" data-words="">{message || writeLine?.text}</span> : null}
+        receipt={message || writeLine?.danger ? <Token className="surface-footer-receipt-line" role="status" data-wrap="" data-tone="danger" data-words="">{message || writeLine?.text}</Token> : null}
         verbs={<>
           {writer.conflicted
             ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
@@ -874,11 +875,11 @@ export function ThoughtWorkspaceWindow({
     // Betterment Q8: Done in the title strip on the phone.
     actions={compact && !sending ? <Button dense variant="primary" className="thought-note-primary" onClick={() => void done()}>Done</Button> : undefined}
   >
-    {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening note…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><span className="surface-token">Could not open. Note unchanged.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
+    {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening note…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><Token className="surface-token">Could not open. Note unchanged.</Token><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
       <div className="thought-workspace-preserved" inert={controller.restartDetected} aria-hidden={controller.restartDetected || undefined}>
         <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} registerClose={registerClose} sending={sending} setSending={setSending} onDone={() => void done()} projectReturn={projectReturn} />
       </div>
-      {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><span className="surface-token">Hub restarted. Reload to continue.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Reload note</Button></div> : null}
+      {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><Token className="surface-token">Hub restarted. Reload to continue.</Token><Button variant="primary" onClick={() => void controller.reload(true)}>Reload note</Button></div> : null}
     </>}
   </DeskWindowFrame>;
 }

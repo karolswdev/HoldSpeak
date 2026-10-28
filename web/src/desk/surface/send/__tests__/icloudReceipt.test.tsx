@@ -63,7 +63,7 @@ describe("a prepared send to the iCloud HoldSpeak folder", () => {
     expect(fixture.after.send.proof.egress).toBe("icloud");
     const t = await pressPrepared(fixture);
     expect(t.before).toContain("ICLOUD");
-    expect(t.after).toContain("SAVED");
+    expect(t.after).toContain("Saved");
     expect(t.after).toContain("ICLOUD");
     expect(t.history).toContain("ICLOUD");
   });

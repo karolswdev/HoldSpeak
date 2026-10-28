@@ -2,6 +2,7 @@
  *  Seven states, each mapping to a tone and a default glyph.
  *  Consistent with the gadget-chip species. */
 import "./state-chip.css";
+import { stateWords } from "../words";
 
 export type ChipState =
   | "idle"
@@ -38,10 +39,10 @@ const DEFAULT_LABELS: Record<ChipState, string> = {
  *  already says the same word); its accessible name carries it always. */
 export const LAMP_WORDS: Partial<Record<ChipState, string>> = {
   success: "OK",
-  working: "WORKING",
-  warning: "WARN",
-  failure: "FAILED",
-  active: "ASKS",
+  working: "Working",
+  warning: "Warn",
+  failure: "Failed",
+  active: "Asks",
 };
 
 export function StateChip({
@@ -67,7 +68,9 @@ export function StateChip({
   "data-testid"?: string;
 }) {
   const lampWord = LAMP_WORDS[state];
-  const name = label || (label === "" ? lampWord ?? DEFAULT_LABELS[state] : DEFAULT_LABELS[state]);
+  // STATECHIP (2026-10-29): a state draws in sentence case; a caller's caps
+  // label (`NOT LAUNCHED`) reads `Not launched`, acronyms keep capitals.
+  const name = stateWords(label || (label === "" ? lampWord ?? DEFAULT_LABELS[state] : DEFAULT_LABELS[state]));
   const shown = label === "" ? (wordless || !lampWord ? "" : lampWord) : name;
   return (
     <span

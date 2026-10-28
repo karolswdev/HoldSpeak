@@ -19,9 +19,9 @@ describe("ReadyStrip", () => {
     );
     const strip = screen.getByRole("list", { name: "Ready" });
     const chips = within(strip).getAllByRole("status");
-    expect(chips.map((c) => c.getAttribute("aria-label"))).toEqual(["LOCAL AI · ON DEVICE", "HEARD · 8 WORDS"]);
+    expect(chips.map((c) => c.getAttribute("aria-label"))).toEqual(["Local AI · On device", "Heard · 8 words"]);
     expect(chips.every((c) => c.getAttribute("data-state") === "success")).toBe(true);
-    expect(chips[0].textContent).toBe("✓LOCAL AI · ON DEVICE");
+    expect(chips[0].textContent).toBe("✓Local AI · On device");
   });
 
   it("no items, no strip (no empty section)", () => {

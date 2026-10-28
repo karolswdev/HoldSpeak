@@ -12,6 +12,7 @@ import { useDesk } from "../store";
 import { DESK_APPLICATIONS } from "../applications";
 import { meetingClock, nextMeeting, type CalendarStep } from "./calendarStep";
 import { PROVIDER_NAME, type ConnectionsStep } from "./connectionsStep";
+import { Token } from "../surface/Token";
 
 /** The Ask composer's draft scope (AskPanel `useDurableDraft("desk-ask")`). */
 const ASK_SCOPE = "desk-ask";
@@ -137,9 +138,9 @@ export function Ready({
       {notArmed ? (
         <div className="firstrun-fail" role="alert">
           <StateChip state="failure" label="NOT ARMED" />
-          <span className="surface-token" data-tone="danger">
+          <Token className="surface-token" data-tone="danger">
             {next ? next.title.toUpperCase() : ""}
-          </span>
+          </Token>
         </div>
       ) : null}
     </div>

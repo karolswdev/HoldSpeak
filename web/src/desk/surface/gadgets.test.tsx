@@ -500,7 +500,7 @@ describe("gadget kit", () => {
         <p>body</p>
       </FoldGadget>,
     );
-    expect(screen.getByText("RAW · DIFF")).toBeInTheDocument();
+    expect(screen.getByText("Raw · Diff")).toBeInTheDocument();
     expect(screen.getByText("1.2k tok")).toBeInTheDocument();
     const details = container.querySelector("details.gadget-fold");
     expect(details).not.toBeNull();

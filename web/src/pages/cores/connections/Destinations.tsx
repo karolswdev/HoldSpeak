@@ -51,6 +51,7 @@ import {
   type SaveBody,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
+import { Token } from "../../../desk/surface/Token";
 
 const CHANNELS: { value: Channel; label: string }[] = [
   { value: "file", label: "Folder" },
@@ -267,7 +268,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
           {refused ? (
             <span className="send-line" data-testid="dest-refused" data-code={refused}>
               <StateChip state="failure" label="REFUSED" />
-              <span className="surface-token" data-chip>{refusedWord(refused)}</span>
+              <Token className="surface-token" data-chip>{refusedWord(refused)}</Token>
             </span>
           ) : null}
         </div>
@@ -284,7 +285,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
       {d.channel === "github" ? (<>
         <GadgetRow wide controlWidth="full" label="Account">
           <span className="send-line" data-testid="dest-github-account">
-            <span className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "READ FROM gh AT SAVE"}</span>
+            <Token className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "READ FROM gh AT SAVE"}</Token>
           </span>
         </GadgetRow>
         <GadgetRow wide controlWidth="full" label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
@@ -297,7 +298,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
             {accountsUnavailable ? accountReadState : jiraConns.length ? (
               <CycleGadget label="Jira account" value={jiraAcc} onChange={(v) => set({ jiraAccount: v })}
                 options={jiraConns.map((c) => ({ value: `${c.account.site}|${c.account.email}`, label: `${c.account.site} · ${c.account.email}` }))} />
-            ) : <><span className="surface-token" data-chip>No Jira account</span><Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button></>}
+            ) : <><Token className="surface-token" data-chip>No Jira account</Token><Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button></>}
             {!accountsUnavailable && acc && jiraConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
           </span>
         </GadgetRow>
@@ -309,7 +310,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
             {accountsUnavailable ? accountReadState : confConns.length ? (
               <CycleGadget label="Confluence account" value={confAcc} onChange={(v) => set({ confAccount: v })}
                 options={confConns.map((c) => ({ value: `${c.account.site}|${c.account.email}`, label: `${c.account.site} · ${c.account.email}` }))} />
-            ) : <><span className="surface-token" data-chip>No Confluence account</span><Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button></>}
+            ) : <><Token className="surface-token" data-chip>No Confluence account</Token><Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button></>}
             {!accountsUnavailable && acc && confConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
           </span>
         </GadgetRow>
@@ -332,7 +333,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
                 : emailCheck?.identity === emailIdentity && emailCheck.code ? <>
                   <StateChip state={emailCheck.code === "email_key_missing" ? "warning" : "failure"}
                     label={emailCheck.code === "email_key_missing" ? "NO KEY" : "CANNOT READ KEY"} />
-                  {emailCheck.code === "email_key_missing" ? null : <span className="surface-token" data-chip>{refusedWord(emailCheck.code)}</span>}
+                  {emailCheck.code === "email_key_missing" ? null : <Token className="surface-token" data-chip>{refusedWord(emailCheck.code)}</Token>}
                 </> : null}
               <Button dense variant="ghost" loading={emailCheck?.identity === emailIdentity && emailCheck.busy}
                 onClick={() => void checkEmailKey()}>{emailCheck?.identity === emailIdentity && emailCheck.code ? "Retry" : "Check"}</Button>
@@ -414,7 +415,7 @@ function CheckChip({ state, channel, answeredAt }: { state: string; channel: Cha
   // Email (B11): Check reports what the provider last answered for this sender, and when -- never a fresh
   // verification (Codex Astra r2 on #697), never the key alone.
   if (channel === "email") {
-    const when = answeredAt ? <span className="surface-token" data-chip>{`LAST SEND ${stamp(answeredAt)}`}</span> : null;
+    const when = answeredAt ? <Token className="surface-token" data-chip>{`LAST SEND ${stamp(answeredAt)}`}</Token> : null;
     if (state === "ready") return <StateChip state="idle" label="SENDER NOT CHECKED" />;
     if (state === "sender_accepted") return <><StateChip state="success" label="SENDER ACCEPTED" />{when}</>;
     if (state === "sender_not_verified") return <><StateChip state="failure" label="SENDER NOT VERIFIED" />{when}</>;
@@ -596,7 +597,7 @@ export function Destinations() {
                             {removeFailed[d.id] ? (
                               <span className="send-line" data-testid="dest-remove-failed" data-code={removeFailed[d.id]}>
                                 <StateChip state="failure" label="NOT REMOVED" />
-                                <span className="surface-token" data-chip>{refusedWord(removeFailed[d.id])}</span>
+                                <Token className="surface-token" data-chip>{refusedWord(removeFailed[d.id])}</Token>
                                 <Button dense variant="ghost" data-testid="dest-remove-retry" onClick={() => remove(d.id)}>{SEND_WORDS.retry}</Button>
                               </span>
                             ) : null}
@@ -625,9 +626,9 @@ export function Destinations() {
                     <SurfaceLedgerRow key={d.id} data-testid="dest-parked-row" wrap expands={false}
                       primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
                       cells={<span className="surface-ledger-cells connections-tool-chips">
-                        <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
-                        <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</span>
-                        <span className="surface-token" data-chip>{`PARKED ${stamp(d.parked_at)}`}</span>
+                        <Token className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</Token>
+                        <Token className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</Token>
+                        <Token className="surface-token" data-chip>{`PARKED ${stamp(d.parked_at)}`}</Token>
                       </span>} />
                   ))}
                 </ul>

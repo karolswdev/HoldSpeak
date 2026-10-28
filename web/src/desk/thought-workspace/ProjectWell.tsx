@@ -3,6 +3,7 @@ import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { CycleGadget } from "../surface/gadgets";
 import { useDesk } from "../store";
+import { Token } from "../surface/Token";
 
 export function ProjectWell({
   noteId,
@@ -47,7 +48,7 @@ export function ProjectWell({
         onChange={setProjectId}
         disabled={busy}
       />
-      {error ? <span className="surface-token" data-tone="danger" role="alert">{error}</span> : null}
+      {error ? <Token className="surface-token" data-tone="danger" role="alert">{error}</Token> : null}
       <span className="thought-action-well-verbs">
         <Button dense variant="primary" loading={busy} disabled={!project} onClick={() => void add()}>Add</Button>
         <Button dense variant="ghost" disabled={busy} onClick={onClose}>Close</Button>

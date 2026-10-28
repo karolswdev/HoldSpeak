@@ -302,7 +302,7 @@ describe("HS-173-02: inline claims with chips per sentence", () => {
 
     const badges = screen.getAllByTestId("update-claim-unverified");
     expect(badges.length).toBe(1);
-    expect(badges[0].textContent).toContain("UNVERIFIED");
+    expect(badges[0].textContent).toContain("Unverified");
 
     // The badge is inside the fourth claim row (the unverified one, s4)
     const claimRows = screen.getAllByTestId("update-inline-claim");

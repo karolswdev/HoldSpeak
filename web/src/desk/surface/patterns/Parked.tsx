@@ -13,6 +13,7 @@ import { Button } from "../../../components/signal/Signal";
 import { CheckGadget } from "../gadgets";
 import { SurfaceLedger, SurfaceLedgerRow } from "../Surface";
 import "./parked.css";
+import { Token } from "../Token";
 
 export type ParkOutcome = {
   kind: "parked" | "restored" | "restore-failed" | "refused";
@@ -67,10 +68,10 @@ export function ParkReceipt({
 }) {
   return (
     <span className="park-receipt" data-testid={testId} data-outcome={outcome.kind}>
-      <span className="surface-footer-receipt-line" role="status" data-tone={outcome.tone}
+      <Token className="surface-footer-receipt-line" role="status" data-tone={outcome.tone}
         data-words="" title={outcome.title || undefined}>
         {outcome.text}
-      </span>
+      </Token>
       {outcome.kind === "parked" ? (
         <Button dense variant="ghost" onClick={() => onRestore(outcome.ids)}>
           Restore

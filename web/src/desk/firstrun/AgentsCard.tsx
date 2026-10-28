@@ -16,6 +16,7 @@ import {
   type AgentRow,
   type AgentsStep,
 } from "./agentsStep";
+import { Token } from "../surface/Token";
 
 /** PHILO-17: what the hooks do, in one plain line. */
 export const AGENTS_LINE = "Hooks tell HoldSpeak when Claude Code or Codex works, waits or stops.";
@@ -70,14 +71,14 @@ function AgentLedgerRow({ row, onCopy }: { row: AgentRow; onCopy: (text: string)
         <span className="firstrun-agent-cells" data-testid="firstrun-agent-row" data-agent={row.id}>
           {row.installed ? (
             <>
-              <span className="surface-token" data-chip>{versionToken(row.id, row.version)}</span>
+              <Token className="surface-token" data-chip>{versionToken(row.id, row.version)}</Token>
               <Lamp on label="INSTALLED" />
               <SignedIn row={row} />
               <Hooks row={row} />
             </>
           ) : (
             <>
-              <span className="surface-token" data-chip>{row.id.toUpperCase()} NOT INSTALLED</span>
+              <Token className="surface-token" data-chip>{row.id.toUpperCase()} NOT INSTALLED</Token>
               <Button
                 dense
                 variant="secondary"
@@ -112,12 +113,12 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
       >
         <span className="firstrun-tokens" data-testid="firstrun-agents-receipt">
           {step.installed.map((row) => (
-            <span key={row.id} className="surface-token" data-chip>
+            <Token key={row.id} className="surface-token" data-chip>
               {AGENT_NAME[row.id].toUpperCase()} · HOOKS IN
-            </span>
+            </Token>
           ))}
           {tmux?.installed ? (
-            <span className="surface-token" data-chip>{versionToken("tmux", tmux.version)}</span>
+            <Token className="surface-token" data-chip>{versionToken("tmux", tmux.version)}</Token>
           ) : null}
         </span>
       </Card>
@@ -141,7 +142,7 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
       {step.unread ? (
         <div className="firstrun-fail" role="alert">
           <StateChip state="unreachable" label="CAN'T CHECK" />
-          <span className="surface-token" data-testid="firstrun-agents-unread">{step.unread}</span>
+          <Token className="surface-token" data-testid="firstrun-agents-unread">{step.unread}</Token>
           <Button dense variant="secondary" onClick={() => void step.read()}>
             Try again
           </Button>
@@ -158,14 +159,14 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
               primary={<span className="concierge-group-name">tmux</span>}
               cells={
                 <span className="firstrun-agent-cells" data-testid="firstrun-agent-row" data-agent="tmux">
-                  <span className="surface-token" data-chip data-testid="firstrun-tool-token">TOOL</span>
+                  <Token className="surface-token" data-chip data-testid="firstrun-tool-token">TOOL</Token>
                   {tmux.installed ? (
                     <>
-                      <span className="surface-token" data-chip>{versionToken("tmux", tmux.version)}</span>
+                      <Token className="surface-token" data-chip>{versionToken("tmux", tmux.version)}</Token>
                       <Lamp on label="INSTALLED" />
                     </>
                   ) : (
-                    <span className="surface-token" data-chip>TMUX NOT INSTALLED</span>
+                    <Token className="surface-token" data-chip>TMUX NOT INSTALLED</Token>
                   )}
                 </span>
               }
@@ -179,9 +180,9 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
         <div className="firstrun-fail" role="alert" data-testid="firstrun-agents-refused">
           <StateChip state="failure" label="HOOKS NOT IN" />
           {step.refused.map((r) => (
-            <span key={r.agent} className="surface-token" data-tone="danger">
+            <Token key={r.agent} className="surface-token" data-tone="danger">
               {AGENT_NAME[r.agent].toUpperCase()} · {codeWords(r.code ?? "failed")}
-            </span>
+            </Token>
           ))}
         </div>
       ) : null}

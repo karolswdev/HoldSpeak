@@ -230,11 +230,11 @@
   min-width: 0;
 }
 .desk-next .desk-mc-sessions .gadget-fold > summary {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
+  font-family: var(--font-sans); /* STATECHIP: a fold title is words, sentence case */
+  font-size: var(--desk-surface-label-size);
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-muted);
   cursor: pointer;
 }

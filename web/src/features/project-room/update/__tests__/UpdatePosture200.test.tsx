@@ -303,30 +303,30 @@ describe("HS-200-06: the three claim axes on the glass", () => {
       .getAllByTestId("update-claim-kind")
       .map((el) => el.textContent);
     expect(kinds).toEqual([
-      "OBSERVATION",
-      "DECISION",
-      "INFERENCE",
-      "INFERENCE",
-      "OBSERVATION",
-      "OBSERVATION",
+      "Observation",
+      "Decision",
+      "Inference",
+      "Inference",
+      "Observation",
+      "Observation",
     ]);
 
     expect(chipLabels("update-claim-support")).toEqual([
-      "SUPPORTED",
-      "SUPPORTED",
-      "LINKED",
-      "UNSUPPORTED",
-      "LINKED · MIGRATED",
-      "LINKED · EDITED",
+      "Supported",
+      "Supported",
+      "Linked",
+      "Unsupported",
+      "Linked · Migrated",
+      "Linked · Edited",
     ]);
 
     expect(chipLabels("update-claim-acceptance")).toEqual([
-      "UNREVIEWED",
-      "ACCEPTED",
-      "UNREVIEWED",
-      "UNREVIEWED",
-      "UNREVIEWED",
-      "UNREVIEWED",
+      "Unreviewed",
+      "Accepted",
+      "Unreviewed",
+      "Unreviewed",
+      "Unreviewed",
+      "Unreviewed",
     ]);
   });
 
@@ -356,8 +356,8 @@ describe("HS-200-06: the three claim axes on the glass", () => {
 
     const rows = screen.getAllByTestId("update-inline-claim");
     const inferred = rows[2];
-    expect(inferred.textContent).toContain("LINKED");
-    expect(inferred.textContent).not.toContain("SUPPORTED");
+    expect(inferred.textContent).toContain("Linked");
+    expect(inferred.textContent).not.toContain("Supported");
   });
 
   it("names the typed unknowns the cited source cannot carry", async () => {
@@ -368,9 +368,9 @@ describe("HS-200-06: the three claim axes on the glass", () => {
     // HS-200-11: the ratified word (design D1, verdict): the value is
     // printed AND typed unsupported -- `DEADLINE 2026-12-31 · NO SOURCE`.
     expect(chipLabels("update-claim-unknown")).toEqual([
-      "DEADLINE 2026-12-31 · NO SOURCE",
-      "NAME Priya · NO SOURCE",
-      "NUMBER 95% · NO SOURCE",
+      "Deadline 2026-12-31 · No source",
+      "Name Priya · No source",
+      "Number 95% · No source",
     ]);
   });
 
@@ -392,7 +392,7 @@ describe("HS-200-06: the three claim axes on the glass", () => {
 
     expect(screen.queryByTestId("update-claim-unverified")).toBeNull();
     const unsupported = chipLabels("update-claim-support").filter(
-      (label) => label === "UNSUPPORTED",
+      (label) => label === "Unsupported",
     );
     expect(unsupported.length).toBe(1);
   });

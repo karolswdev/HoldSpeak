@@ -8,6 +8,7 @@ import { Button } from "../components/signal/Signal";
 import { SurfaceState } from "../desk/surface/Surface";
 import { GadgetGroup } from "../desk/surface/gadgets";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
+import { Token } from "../desk/surface/Token";
 
 type MeetingConflict = {
   id: string;
@@ -47,10 +48,10 @@ function VersionSlip({
     return (
       <article className="meeting-conflict-slip">
         <div className="meeting-conflict-slip-head">
-          <span className="surface-token">{label}</span>
-          <span className="surface-token" data-tone="danger">
+          <Token className="surface-token">{label}</Token>
+          <Token className="surface-token" data-tone="danger">
             TOMBSTONE
-          </span>
+          </Token>
         </div>
         <dl className="meeting-conflict-slip-facts">
           <div>
@@ -70,7 +71,7 @@ function VersionSlip({
   return (
     <article className="meeting-conflict-slip">
       <div className="meeting-conflict-slip-head">
-        <span className="surface-token">{label}</span>
+        <Token className="surface-token">{label}</Token>
       </div>
       <dl className="meeting-conflict-slip-facts">
         <div>

@@ -21,6 +21,7 @@ import {
 } from "../grounding";
 import { CheckGadget, FoldGadget, LedMeter } from "../surface/gadgets";
 import { AboutPicker, type AboutCandidate } from "./about/AboutPicker";
+import { Token } from "../surface/Token";
 
 const fmt = (n: number): string =>
   n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
@@ -207,9 +208,9 @@ export function GroundingSection(props: {
         }
         token={
           !showBudget || groundingIsEmpty(selection) ? undefined : (
-            <span className="surface-token" data-tone={tone}>
+            <Token className="surface-token" data-tone={tone}>
               {fmt(used)} / {fmt(limitTokens)} tok
-            </span>
+            </Token>
           )
         }
         open={open}

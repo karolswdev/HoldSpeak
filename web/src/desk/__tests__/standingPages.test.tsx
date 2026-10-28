@@ -49,7 +49,7 @@ describe("StandingPage", () => {
     const page = screen.getByTestId("standing-page");
     expect(page.hasAttribute("data-stale")).toBe(false);
     expect(within(page).getByRole("heading", { level: 4 }).textContent).toBe("What did we decide");
-    expect(screen.getByTestId("standing-page-built").textContent).toBe("BUILT 09:12");
+    expect(screen.getByTestId("standing-page-built").textContent).toBe("Built 09:12");
     expect(screen.queryByTestId("standing-page-stale")).toBeNull();
     const items = screen.getAllByTestId("standing-sentence");
     expect(items.map((li) => li.tagName)).toEqual(["LI", "LI"]);
@@ -97,7 +97,7 @@ describe("StandingPagesSection", () => {
       ["What did we decide", "What changed this week"],
     );
     expect(screen.getAllByTestId("standing-page-built").map((b) => b.textContent)).toEqual(
-      ["BUILT 09:12", "BUILT 08:02"],
+      ["Built 09:12", "Built 08:02"],
     );
   });
 
@@ -112,7 +112,7 @@ describe("StandingPagesSection", () => {
     // Nothing draws the count: the only digits are the caption's page count,
     // the BUILT clock and the ref tokens.
     const drawn = (section.textContent ?? "")
-      .replace("Standing pages · 1", "").replace("qwen3.8-27b", "").replace(/BUILT \d\d:\d\d/, "")
+      .replace("Standing pages · 1", "").replace("qwen3.8-27b", "").replace(/Built \d\d:\d\d/, "")
       .replace(/Decision 10-01|Meeting 10-01 · 14:25|read-only for 14 days|17 October/g, "");
     expect(drawn).not.toMatch(/\d/);
     expect(section.querySelectorAll("li")).toHaveLength(2);

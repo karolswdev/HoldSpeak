@@ -285,7 +285,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     fireEvent.click(within(group).getByRole("button", { name: "Brief ▸" }));
     const brief = within(line).getByTestId("hand-confirm-brief");
     expect(brief.querySelector("pre")?.textContent).toBe(PREVIEW.text);
-    expect(within(brief).getByText("ACCEPTANCE · 1 CHECK")).toBeTruthy();
+    expect(within(brief).getByText("Acceptance · 1 check")).toBeTruthy();
     fireEvent.click(within(group).getByRole("button", { name: "Hand" }));
     expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("Launched · Brief sent");
     expect(posts("/api/agent/hand")[0].init?.json).toEqual({
@@ -329,7 +329,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent(
-      "NOT LAUNCHED · AGENT LIMIT REACHED",
+      "Not launched · Agent limit reached",
     );
     world.hand = () => ({ status: "launched", launch_id: "launch-2", instruction_state: "paste_failed" });
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
@@ -446,12 +446,12 @@ describe("PHILO-15 16 the sheet carries the clone through a launch refusal", () 
     act(() => useAgentHand.getState().open({ kind: "action", id: "a-comms", title: "Write the cutover comms", projectId: "p-ledger" }));
     const before = await screen.findByTestId("hand-clone");
     expect(before).toHaveAttribute("data-state", "to_clone");
-    expect(before).toHaveTextContent("CLONES acme/ledger");
+    expect(before).toHaveTextContent("Clones acme/ledger");
     fireEvent.click(await screen.findByTestId("hand-launch"));
-    expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
+    expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("Not launched · Agent limit reached");
     const after = screen.getByTestId("hand-clone");
     expect(after).toHaveAttribute("data-state", "cloned");
-    expect(after).toHaveTextContent("CLONED · acme/ledger · 09:05");
+    expect(after).toHaveTextContent("Cloned · acme/ledger · 09:05");
   });
 });
 
@@ -547,7 +547,7 @@ describe("pi spike #1020: pi is the third agent on the line", () => {
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
     await factIs(line, "PI · OPEN THROTTLE · hs/write-the-cutover-comms");
-    expect(await within(line).findByText("NO ASSIGNMENT")).toBeTruthy();
+    expect(await within(line).findByText("No assignment")).toBeTruthy();
     expect(within(line).getByRole("button", { name: "Hand" })).toBeDisabled();
   });
 });
@@ -563,7 +563,7 @@ describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", ()
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
-    expect(within(line).getByTestId("hand-confirm-skipped")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
+    expect(within(line).getByTestId("hand-confirm-skipped")).toHaveTextContent("Claude Code · Sign-in unknown");
   });
 
   it("a remembered flip keeps lane 18's warning for the agent it shows", async () => {
@@ -573,14 +573,14 @@ describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", ()
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
-    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CODEX · SIGN-IN UNKNOWN");
+    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("Codex · Sign-in unknown");
     // pi spike #1020: the flip turns through pi (no sign-in of its own: no warning).
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
     await factIs(line, "PI · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).queryByTestId("hand-confirm-selected-unknown")).toBeNull();
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
     await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
-    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
+    expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("Claude Code · Sign-in unknown");
     expect(localStorage.getItem("hs.hand.agent.p-ledger")).toBe("claude");
   });
 
@@ -619,11 +619,11 @@ describe("PHILO-15 16 B38: the first hand clones the Project's repository", () =
     const line = await within(drawer()).findByTestId("hand-confirm");
     expect(await within(line).findByTestId("hand-confirm-clone")).toHaveAttribute("data-state", "to_clone");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
-    expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
+    expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("Not launched · Agent limit reached");
     const clone = within(line).getByTestId("hand-confirm-clone");
     expect(clone).toHaveAttribute("data-state", "cloned");
-    expect(clone).toHaveTextContent("CLONED · karolswdev/holdspeak-dayone-rehearsal-1558 · 18:06");
-    expect(within(line).queryByText(/^CLONES /)).toBeNull();
+    expect(clone).toHaveTextContent("Cloned · karolswdev/holdspeak-dayone-rehearsal-1558 · 18:06");
+    expect(within(line).queryByText(/^Clones /)).toBeNull();
     // Where the clone lives, so the owner finds it after the refusal (Astra r2).
     expect(within(line).getByTestId("hand-confirm-clone-folder")).toHaveTextContent(
       "~/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558/holdspeak-dayone-rehearsal-1558",
@@ -645,14 +645,14 @@ describe("PHILO-15 16 B38: the first hand clones the Project's repository", () =
     const before = await within(line).findByTestId("hand-confirm-clone");
     expect(before).toHaveAttribute("data-state", "to_clone");
     expect(within(before).getByText("GITHUB.COM")).toBeTruthy();
-    expect(within(before).getByText("CLONES karolswdev/holdspeak-dayone-rehearsal-1558")).toBeTruthy();
-    expect(within(line).queryByText("NO REPOSITORY")).toBeNull();
+    expect(within(before).getByText("Clones karolswdev/holdspeak-dayone-rehearsal-1558")).toBeTruthy();
+    expect(within(line).queryByText("No repository")).toBeNull();
     expect(within(line).getByRole("button", { name: "Hand" })).toBeEnabled();
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     await within(line).findByTestId("hand-confirm-receipt");
     const after = within(line).getByTestId("hand-confirm-clone");
     expect(after).toHaveAttribute("data-state", "cloned");
-    expect(within(after).getByText("CLONED · karolswdev/holdspeak-dayone-rehearsal-1558")).toBeTruthy();
+    expect(within(after).getByText("Cloned · karolswdev/holdspeak-dayone-rehearsal-1558")).toBeTruthy();
   });
 });
 

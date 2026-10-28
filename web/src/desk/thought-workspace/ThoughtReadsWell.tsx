@@ -12,6 +12,7 @@ import {
   type ThoughtWorkspaceCursor,
   type ThoughtWorkspaceProjection,
 } from "../thoughts";
+import { Token } from "../surface/Token";
 
 export type ReadsResult = { thought: Thought; receipt: ThoughtContextReceipt; workbench?: ThoughtWorkspaceProjection };
 
@@ -142,7 +143,7 @@ export function ThoughtReadsWell({
         disabled={Boolean(disabled || pending)}
         onChange={(next) => void change(ref, next)}
       />
-      {token ? <span className="surface-token" data-chip>{token}</span> : null}
+      {token ? <Token className="surface-token" data-chip>{token}</Token> : null}
     </div>;
   };
 
@@ -154,7 +155,7 @@ export function ThoughtReadsWell({
       {attachments.map((item) => row(item.ref, item.title, item.leaf_count, true))}
       {candidates.map((item) => row(item.ref, item.title, item.leaf_count, false))}
       {loading && !attachments.length && !candidates.length ? <SurfaceState loading/> : null}
-      {!loading && !attachments.length && !candidates.length && !error ? <span className="surface-token">{query.trim() ? "No match" : "Nothing to read yet"}</span> : null}
+      {!loading && !attachments.length && !candidates.length && !error ? <Token className="surface-token">{query.trim() ? "No match" : "Nothing to read yet"}</Token> : null}
     </span>
     {error ? <SurfaceState error={error} onRetry={() => retryAction.current?.()}/> : null}
   </div>;

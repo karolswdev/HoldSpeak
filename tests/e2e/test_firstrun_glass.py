@@ -122,7 +122,7 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
             page.evaluate("window.__denyMic = true")
             face.get_by_role("button", name="Say one sentence", exact=True).click()
             failure = face.get_by_test_id("setup-take-failure")
-            expect(failure).to_contain_text("BROWSER GAVE NO DEVICE", timeout=15_000)
+            expect(failure).to_contain_text("Browser gave no device", timeout=15_000)
             expect(failure.get_by_role("button", name="Check the microphone", exact=True)).to_be_visible()
             expect(failure.get_by_role("button", name="Again", exact=True)).to_be_visible()
             with page.expect_response(lambda response: response.url.endswith("/api/setup/status")) as checked:

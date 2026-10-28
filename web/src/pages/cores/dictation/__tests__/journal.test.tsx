@@ -182,7 +182,7 @@ describe("the Journal row grammar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Replay" }));
     // Tokens, not the two sentences the old face carried (rule A.3).
     expect(await screen.findByText("REPLAY · PREVIEW")).toBeInTheDocument();
-    expect(screen.getByText("NO TEXT")).toBeInTheDocument();
+    expect(screen.getByText("No text")).toBeInTheDocument();
     expect(screen.queryByText(/preview only/)).toBeNull();
     expect(screen.queryByText(/completed without text/)).toBeNull();
   });

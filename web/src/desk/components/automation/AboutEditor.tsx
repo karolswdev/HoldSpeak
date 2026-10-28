@@ -16,6 +16,7 @@ import { StringGadget } from "../../surface/gadgets";
 import { Button } from "../../../components/signal/Signal";
 import { AboutPicker, aboutCandidates, type AboutCandidate } from "../about/AboutPicker";
 import type { AutomationSource } from "./model";
+import { Token } from "../../surface/Token";
 
 /** The People list's names (the palette reads the same route). */
 function usePeopleNames(): Array<{ id: string; name: string }> {
@@ -51,7 +52,7 @@ export function AboutChips({
         const name = source.missing ? "Missing source"
           : source.kind === "folder" ? `Folder ${source.label}` : source.label;
         return (
-          <span key={source.ref} className="surface-token" data-chip=""
+          <Token key={source.ref} className="surface-token" data-chip=""
             data-tone={source.missing ? "warn" : undefined}>
             {name}
             {onRemove ? (
@@ -60,7 +61,7 @@ export function AboutChips({
                 ✕
               </Button>
             ) : null}
-          </span>
+          </Token>
         );
       })}
     </span>

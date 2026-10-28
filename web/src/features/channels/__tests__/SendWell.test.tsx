@@ -77,14 +77,14 @@ describe("the SEND well", () => {
     routes["GET /api/channels/destinations"] = () => ({ destinations: [] });
     render(<Well />);
     const none = await screen.findByTestId("send-none");
-    expect(none.textContent).toContain("NO DESTINATION");
+    expect(none.textContent).toContain("No destination");
     expect(screen.getByTestId("send-add-destination").textContent).toBe("Add destination");
   });
 
   it("a destinations read with no answer is named, never the empty state", async () => {
     routes["GET /api/channels/destinations"] = () => { throw new TypeError("Failed to fetch"); };
     render(<Well />);
-    expect((await screen.findByTestId("destinations-unreadable")).textContent).toContain("CANNOT READ DESTINATIONS");
+    expect((await screen.findByTestId("destinations-unreadable")).textContent).toContain("Cannot read destinations");
     expect(screen.queryByTestId("send-none")).toBeNull();
   });
 
@@ -122,11 +122,11 @@ describe("the SEND well", () => {
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb); fireEvent.click(verb);
     const sent = await screen.findByTestId("send-sent");
-    expect(sent.textContent).toContain("SAVED");
+    expect(sent.textContent).toContain("Saved");
     // The receipt leads with the folder's short token; the stored proof stays exact.
     expect(within(sent).getByTestId("proof").textContent).toBe(`${SHOWN}/2026-09-28-payments-r1-abcd1234.md`);
     expect(calls).toBe(1);
-    expect(screen.getByTestId("send-last-sent").textContent).toContain("SAVED");
+    expect(screen.getByTestId("send-last-sent").textContent).toContain("Saved");
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
   });
 
@@ -140,9 +140,9 @@ describe("the SEND well", () => {
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb);
     const refused = await screen.findByTestId("send-refused");
-    expect(refused.textContent).toContain("REFUSED");
-    expect(refused.textContent).toContain("DESTINATION CHANGED");
-    expect(refused.textContent).toContain("NOTHING SENT");
+    expect(refused.textContent).toContain("Refused");
+    expect(refused.textContent).toContain("Destination changed");
+    expect(refused.textContent).toContain("Nothing sent");
   });
 
   it("G2: a preview refused by name shows its word and the size, never NO ANSWER (PHILO-11-04)", async () => {
@@ -154,10 +154,10 @@ describe("the SEND well", () => {
     render(<Well />);
     fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
     const refused = await screen.findByTestId("preview-refused");
-    expect(refused.textContent).toContain("TOO LARGE FOR SLACK");
-    expect(refused.textContent).toContain("41,099 / 39,000 CHARACTERS");
-    expect(refused.textContent).toContain("NOTHING SENT");
-    expect(screen.getByTestId("send-open").textContent).not.toContain("NO ANSWER");
+    expect(refused.textContent).toContain("Too large for Slack");
+    expect(refused.textContent).toContain("41,099 / 39,000 characters");
+    expect(refused.textContent).toContain("Nothing sent");
+    expect(screen.getByTestId("send-open").textContent).not.toContain("No answer");
   });
 
   it("a lost answer keeps the key: Retry sends the SAME command_id", async () => {
@@ -176,7 +176,7 @@ describe("the SEND well", () => {
     const verb = await screen.findByTestId("send-verb");
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb);
-    expect((await screen.findByTestId("send-lost")).textContent).toContain("NO ANSWER · RESULT UNKNOWN");
+    expect((await screen.findByTestId("send-lost")).textContent).toContain("No answer · Result unknown");
     fireEvent.click(screen.getByTestId("send-retry"));
     await screen.findByTestId("send-sent");
     expect(keys).toHaveLength(2);
@@ -195,9 +195,9 @@ describe("the SEND well", () => {
     const list = await screen.findByTestId("prepared-list");
     expect(within(list).getAllByTestId("prepared-row")).toHaveLength(2);
     expect(within(list).getAllByTestId("prepared-open")).toHaveLength(1);
-    expect(within(list).getAllByTestId("prepared-by").map((e) => e.textContent)).toEqual(["BY REMOTE-AGENT", "BY YOU", "BY YOU"]);
-    expect(within(list).getByTestId("prepared-result").textContent).toContain("DISCARDED");
-    expect(list.textContent).toContain("REV 3");
+    expect(within(list).getAllByTestId("prepared-by").map((e) => e.textContent)).toEqual(["By Remote-agent", "By you", "By you"]);
+    expect(within(list).getByTestId("prepared-result").textContent).toContain("Discarded");
+    expect(list.textContent).toContain("Rev 3");
     // The prepared well precedes the destinations.
     const well = screen.getByTestId("send-well");
     const order = [...well.querySelectorAll("[data-testid=prepared-list], [data-testid=destination-list]")].map((e) => e.getAttribute("data-testid"));
@@ -209,8 +209,8 @@ describe("the SEND well", () => {
       send({ id: "chs_r", state: "dispatching", prepare_operation_id: "op_r", settled_at: null, proof: null }),
     ] });
     render(<Well />);
-    expect((await screen.findByTestId("prepared-running")).textContent).toContain("SENDING");
-    expect(screen.getByTestId("send-last-running").textContent).toContain("SENDING");
+    expect((await screen.findByTestId("prepared-running")).textContent).toContain("Sending");
+    expect(screen.getByTestId("send-last-running").textContent).toContain("Sending");
     fireEvent.click(within(screen.getByTestId("destination-row")).getByText("Folder Payments"));
     const verb = await screen.findByTestId("send-verb");
     await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
@@ -246,9 +246,9 @@ describe("the update: the receipt survives the click that leaves the row (Astra 
     fireEvent.click(within(rowOf("Folder Payments")).getByText("Folder Payments"));
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
     const row = rowOf("Folder Payments");
-    expect(row.textContent).toContain("LAST SEND FAILED");
-    expect(row.textContent).toContain("NO PERMISSION");
-    expect(row.textContent).toContain("NOTHING SENT");
+    expect(row.textContent).toContain("Last send failed");
+    expect(row.textContent).toContain("No permission");
+    expect(row.textContent).toContain("Nothing sent");
   });
 
   it("REFUSED, then another row is picked: the refusal stays on the first row", async () => {
@@ -263,9 +263,9 @@ describe("the update: the receipt survives the click that leaves the row (Astra 
     fireEvent.click(within(rowOf("Folder Other")).getByText("Folder Other"));
     await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Folder Other"));
     const row = rowOf("Folder Payments");
-    expect(row.textContent).toContain("REFUSED");
-    expect(row.textContent).toContain("DESTINATION CHANGED");
-    expect(row.textContent).toContain("NOTHING SENT");
+    expect(row.textContent).toContain("Refused");
+    expect(row.textContent).toContain("Destination changed");
+    expect(row.textContent).toContain("Nothing sent");
   });
 });
 
@@ -325,28 +325,28 @@ describe("the one DELIVERY history (A2)", () => {
     render(<DeliveryHistory ctrl={ctrl()} update={update({ deliveries: rows })}
       sends={[send({ id: "chs_2", state: "unknown", reason: "create_enametoolong" })]} />);
     const section = screen.getByTestId("delivery-section");
-    expect(section.querySelector("h3")?.textContent).toBe("SENT 2");
+    expect(section.querySelector("h3")?.textContent).toBe("Sent 2");
     const r = screen.getAllByTestId("delivery-row");
-    expect(r[0].textContent).toContain("SAVED");
+    expect(r[0].textContent).toContain("Saved");
     expect(r[0].textContent).toContain(`${FOLDER}/a.md`);
     expect(r[1].textContent).toContain("RESULT UNKNOWN · CHECK Long path folder");
-    expect(r[2].textContent).toContain("SENT BY HAND");
-    expect(r[2].textContent).toContain("MANUAL");
-    expect(section.textContent).not.toContain("DELIVERED 2");
+    expect(r[2].textContent).toContain("Sent by hand");
+    expect(r[2].textContent).toContain("Manual");
+    expect(section.textContent).not.toContain("Delivered 2");
   });
 
   it("a history read with no answer is named with Retry", () => {
     render(<DeliveryHistory ctrl={ctrl({ deliveriesReadFailed: true })} update={update()} sends={[]} />);
-    expect(screen.getByTestId("history-unreadable").textContent).toContain("CANNOT READ HISTORY");
+    expect(screen.getByTestId("history-unreadable").textContent).toContain("Cannot read history");
   });
 
   it("list chips: PREPARED ×K, RESULT UNKNOWN ×M, SENT ×N; none at zero", async () => {
     routes["GET /api/channels/sends"] = () => ({ sends: [send({ state: "prepared", prepare_operation_id: "op" })] });
     const { container } = render(<ListChips update={update({ deliveries: rows })} />);
-    expect((await screen.findByTestId("update-prepared-chip")).textContent).toContain("PREPARED ×1");
-    expect(screen.getByTestId("update-unknown-chip").textContent).toContain("RESULT UNKNOWN ×1");
-    expect(screen.getByTestId("update-delivered-chip").textContent).toContain("SENT ×2");
-    expect(container.textContent).not.toContain("DELIVERED");
+    expect((await screen.findByTestId("update-prepared-chip")).textContent).toContain("Prepared ×1");
+    expect(screen.getByTestId("update-unknown-chip").textContent).toContain("Result unknown ×1");
+    expect(screen.getByTestId("update-delivered-chip").textContent).toContain("Sent ×2");
+    expect(container.textContent).not.toContain("Delivered");
   });
 
   it("no chip at zero", async () => {

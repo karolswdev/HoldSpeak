@@ -43,6 +43,7 @@ import {
   type RoomPersonItem,
   type RoomUnresolvedOwner,
 } from "./api";
+import { Token } from "../../desk/surface/Token";
 
 /* ── Monogram ── */
 
@@ -187,15 +188,15 @@ function PersonDetail({
             cells={
               <span className="room-people-cells">
                 {due ? (
-                  <span
+                  <Token
                     className={`surface-token room-people-tok${due === "OVERDUE" || due === "DUE TODAY" ? " room-people-warn" : ""}`}
                   >
                     {due}
-                  </span>
+                  </Token>
                 ) : null}
-                <span className="surface-token room-people-tok room-people-source" data-chip="">
+                <Token className="surface-token room-people-tok room-people-source" data-chip="">
                   {sourceToken(c.source)}
-                </span>
+                </Token>
               </span>
             }
             wrap
@@ -225,11 +226,11 @@ function PersonDetail({
             primary={<span className="surface-primary">{f.source.label}</span>}
             cells={
               <span className="room-people-cells">
-                <span
+                <Token
                   className={`surface-token room-people-tok${f.kind === "assignments_overdue" ? " room-people-warn" : ""}`}
                 >
                   {token}
-                </span>
+                </Token>
               </span>
             }
             wrap
@@ -245,9 +246,9 @@ function PersonDetail({
           primary={<span className="surface-primary">{o.label}</span>}
           cells={
             <span className="room-people-cells">
-              <span className="surface-token room-people-tok room-people-warn" data-testid="room-people-omitted-token">
+              <Token className="surface-token room-people-tok room-people-warn" data-testid="room-people-omitted-token">
                 {`${o.state.toUpperCase()} · OMITTED`}
-              </span>
+              </Token>
             </span>
           }
           wrap
@@ -408,17 +409,17 @@ export function RoomPeopleSection({
                   <span className="room-people-primary">
                     <span className="surface-primary">{person.display_name}</span>
                     {openCount ? (
-                      <span className="surface-token room-people-tok">{openCount}</span>
+                      <Token className="surface-token room-people-tok">{openCount}</Token>
                     ) : null}
                     {tokens.prsWaiting ? (
-                      <span className="surface-token room-people-tok">
+                      <Token className="surface-token room-people-tok">
                         {tokens.prsWaiting}
-                      </span>
+                      </Token>
                     ) : null}
                     {tokens.assignmentsOverdue ? (
-                      <span className="surface-token room-people-tok room-people-overdue" data-tone="warn">
+                      <Token className="surface-token room-people-tok room-people-overdue" data-tone="warn">
                         {tokens.assignmentsOverdue}
-                      </span>
+                      </Token>
                     ) : null}
                   </span>
                 }
@@ -467,7 +468,7 @@ export function RoomPeopleSection({
                       {token}
                     </DotWord>
                     {openCount ? (
-                      <span className="surface-token room-people-tok">{openCount}</span>
+                      <Token className="surface-token room-people-tok">{openCount}</Token>
                     ) : null}
                   </span>
                 }

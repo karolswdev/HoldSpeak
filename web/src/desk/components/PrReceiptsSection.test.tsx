@@ -126,6 +126,6 @@ describe("PR follow-through desk object", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Draft review" }));
     expect(await screen.findByText("Accepted")).toBeVisible();
     expect(screen.queryByText("Review ready")).toBeNull();
-    expect(container.querySelector(".desk-pr-result details summary")).toHaveTextContent("RAW · RECEIPT");
+    expect(container.querySelector(".desk-pr-result details summary")).toHaveTextContent("Raw · Receipt");
   });
 });

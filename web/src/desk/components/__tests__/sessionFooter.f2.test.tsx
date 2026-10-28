@@ -29,7 +29,7 @@ describe("the session footer never squeezes the policy facts (Conductor F2)", ()
     const policy = screen.getByTestId("session-policy");
     expect(policy.querySelector("dl, dt, dd")).toBeNull();
     const tokens = [...policy.querySelectorAll(".surface-token")].map((t) => t.textContent);
-    expect(tokens).toEqual([expect.stringMatching(/^AUTHORITY · .+ POSTURE$/), "RECEIPT · EVERY ATTEMPT"]);
+    expect(tokens).toEqual([expect.stringMatching(/^Authority · .+ posture$/), "Receipt · Every attempt"]);
     // The pane is said once: in the body's facts, never again in the footer.
     expect(policy.textContent).not.toMatch(/%0|pane/i);
     expect(document.body.textContent!.match(/%0/g)?.length).toBe(2); // the body fact and the arm verb's pane token

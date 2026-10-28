@@ -334,12 +334,12 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
     expect(cards.map((c) => c.getAttribute("data-state"))).toEqual(["current", "superseded"]);
     expect((screen.getByTestId("recall-display").textContent ?? "").trim()).toBe("5 remembered");
     expect(screen.getByTestId("recall-display").getAttribute("data-accent")).toBe("true");
-    expect(screen.getByTestId("recall-ref-token").textContent).toBe("REF · FREEZE WINDOW");
-    expect(screen.getByTestId("recall-searched-token").textContent ?? "").toMatch(/^SEARCHED /);
+    expect(screen.getByTestId("recall-ref-token").textContent).toBe("Ref · Freeze window");
+    expect(screen.getByTestId("recall-searched-token").textContent ?? "").toMatch(/^Searched /);
 
     const current = cards[0];
     expect(within(current).getByTestId("recall-card-title").textContent).toBe(NEW_TEXT);
-    expect(within(current).getAllByTestId("recall-axis").map((a) => a.textContent)).toEqual(["DECISION", "SUPPORTED", "ACCEPTED"]);
+    expect(within(current).getAllByTestId("recall-axis").map((a) => a.textContent)).toEqual(["Decision", "Supported", "Accepted"]);
     expect(within(current).getByTestId("recall-dec-token").textContent).toBe("DEC 09-07");
     expect(within(current).getByTestId("recall-rationale").textContent).toBe(NEW_WHY);
     expect(within(current).getByTestId("recall-source-token").textContent).toBe("MTG 09-07 · 11:31");
@@ -348,7 +348,7 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
 
     const superseded = cards[1];
     expect(within(superseded).getByTestId("recall-card-title").textContent).toBe(OLD_TEXT);
-    expect(within(superseded).getByTestId("recall-superseded-by").textContent).toBe("SUPERSEDED BY DEC 09-07");
+    expect(within(superseded).getByTestId("recall-superseded-by").textContent).toBe("Superseded by DEC 09-07");
     expect(within(superseded).getByTestId("recall-dec-token").textContent).toBe("DEC 09-02");
     expect(within(superseded).queryByRole("button", { name: "Carry into brief" })).toBeNull();
 
@@ -362,14 +362,14 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
     expect((within(owed).getByTestId("recall-owed-verb").textContent ?? "").trim()).toBe("Name an owner");
     expect(within(owed).queryByRole("button", { name: `Done: ${CMT_TEXT}` })).toBeNull();
     const body = screen.getByTestId("desk-memory-body").textContent ?? "";
-    for (const section of ["CURRENT 1", "SUPERSEDED 1", "OWED 1", "MEETINGS 2"]) expect(body).toContain(section);
+    for (const section of ["Current 1", "Superseded 1", "Owed 1", "Meetings 2"]) expect(body).toContain(section);
 
     // ── Carry into brief: the one primary; the hub's answer marks it CARRIED ──
     const carry = screen.getByRole("button", { name: "Carry into brief" });
     expect(carry.className).toContain("btn--primary");
     fireEvent.click(carry);
     await waitFor(() => expect(screen.getByTestId("recall-carry").hasAttribute("data-carried")).toBe(true));
-    expect((screen.getByTestId("recall-carry").textContent ?? "").trim()).toBe("CARRIED");
+    expect((screen.getByTestId("recall-carry").textContent ?? "").trim()).toBe("Carried");
     expect(presses[0]).toEqual({ path: RECALL.carry.path, body: RECALL.carry.body });
     expect(document.querySelectorAll(".desk-surface-body .btn--primary, .btn--primary").length).toBeLessThanOrEqual(1);
 

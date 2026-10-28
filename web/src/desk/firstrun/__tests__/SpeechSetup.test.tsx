@@ -112,7 +112,7 @@ describe("SpeechSetup — the one row", () => {
     });
     render(<Host />);
     expect((await screen.findByTestId("row-line")).textContent).toBe("Speech is not set up");
-    expect(screen.getByText("SPEECH LIBRARY MISSING")).toBeTruthy();
+    expect(screen.getByText("Speech library missing")).toBeTruthy();
     expect(screen.queryByTestId("row-verb")).toBeNull();
   });
 

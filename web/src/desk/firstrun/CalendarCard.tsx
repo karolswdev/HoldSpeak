@@ -8,6 +8,7 @@ import { DotWord, EgressChip, GadgetGroup, Receipt, StateChip, StringGadget, Sur
 import { egressFor } from "../surface/egress";
 import { Card } from "./Card";
 import { hostOf, meetingClock, stateCount, type CalendarCandidate, type CalendarStep } from "./calendarStep";
+import { Token } from "../surface/Token";
 
 function rowEgress(row: CalendarCandidate): { label: string; scope: "local" | "cloud" } {
   if (row.kind === "macos" || !row.egress_host) return { label: "THIS DEVICE", scope: "local" };
@@ -177,7 +178,7 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
                       ) : row.off ? (
                         /* Configured but turned off: "Use it" would add
                            nothing (the source is there), so no verb here. */
-                        <span className="surface-token">OFF IN SETTINGS</span>
+                        <Token className="surface-token">OFF IN SETTINGS</Token>
                       ) : row.verb ? (
                         <Button
                           dense
@@ -239,9 +240,9 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
       {failure?.kind === "cant_read" ? (
         <div className="firstrun-fail" role="alert" data-testid="firstrun-calendar-cant-read">
           <StateChip state="failure" label="CAN'T READ" />
-          <span className="surface-token" data-tone="danger">
+          <Token className="surface-token" data-tone="danger">
             {failure.reason}
-          </span>
+          </Token>
         </div>
       ) : failure?.kind === "refused" ? (
         <div className="firstrun-fail" role="alert">

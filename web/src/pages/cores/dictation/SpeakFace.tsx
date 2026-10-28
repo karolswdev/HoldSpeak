@@ -55,6 +55,7 @@ import { useSpeechSetup, type SpeechSetupState } from "../../../desk/firstrun/Sp
 import { openSurfaceOr } from "../../../desk/shell";
 import { useDesk } from "../../../desk/store";
 import type { VoiceCommandFired } from "../../../lib/micStreamSession";
+import { Token } from "../../../desk/surface/Token";
 
 /** Extract hostname from a URL string. */
 function hostnameOf(url: string): string {
@@ -682,9 +683,9 @@ function AppliedRule({
         <span className="speak-applied-said">{rule.label || rule.value}</span>
       </div>
       <div className="speak-applied-fact">
-        <span className="surface-token" data-chip="">
+        <Token className="surface-token" data-chip="">
           {(rule.kind || "rule").toUpperCase()}
-        </span>
+        </Token>
       </div>
     </div>
   );
@@ -813,13 +814,13 @@ function ResultRow({
       ) : null}
       {receipt ? (
         <div className="speak-receipt" role="status">
-          <span
+          <Token
             className="surface-token"
             data-chip=""
             data-tone={receipt.tone}
           >
             {receipt.token}
-          </span>
+          </Token>
           {receipt.tail ? (
             <span className="speak-receipt-tail">{receipt.tail}</span>
           ) : null}
@@ -911,9 +912,9 @@ function HotkeyRow({
             </>
           ) : null}
           {custody.reason ? (
-            <span className="surface-token" data-chip="" data-testid="speak-hotkey-reason">
+            <Token className="surface-token" data-chip="" data-testid="speak-hotkey-reason">
               {custody.reason}
-            </span>
+            </Token>
           ) : null}
         </span>
         <span className="speak-hotkey-tail">
@@ -937,7 +938,7 @@ function HotkeyRow({
           <span className="speak-hotkey-ident">
             <span className="speak-hotkey-name">{row.label}</span>
             {row.neededFor ? (
-              <span className="surface-token" data-chip="">{row.neededFor}</span>
+              <Token className="surface-token" data-chip="">{row.neededFor}</Token>
             ) : null}
           </span>
           <span className="speak-hotkey-tail">
@@ -951,7 +952,7 @@ function HotkeyRow({
                     {"\u203a"}
                   </span>
                 ) : null}
-                <span className="surface-token" data-chip="">{token}</span>
+                <Token className="surface-token" data-chip="">{token}</Token>
               </Fragment>
             ))}
           </span>

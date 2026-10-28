@@ -808,8 +808,8 @@ describe("Accounts recovery", () => {
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" />);
     const chooser = await screen.findByRole("region", { name: "Choose calendar" });
     expect(chooser).toHaveAttribute("data-material", "inset");
-    expect(within(chooser).getByRole("status", { name: "CHECKING CALENDARS" })).toBeVisible();
-    expect(within(chooser).queryByRole("status", { name: "NO CALENDARS FOUND" })).toBeNull();
+    expect(within(chooser).getByRole("status", { name: "Checking calendars" })).toBeVisible();
+    expect(within(chooser).queryByRole("status", { name: "No calendars found" })).toBeNull();
     expect(within(chooser).getByRole("textbox", { name: "Calendar URL" })).toBeVisible();
     finishRead(CALENDAR_WIRE.wire);
     await within(chooser).findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` });
@@ -817,8 +817,8 @@ describe("Accounts recovery", () => {
   });
 
   it.each([
-    { state: "unavailable", label: "CALENDARS UNAVAILABLE" },
-    { state: "full_access", label: "NO CALENDARS FOUND" },
+    { state: "unavailable", label: "Calendars unavailable" },
+    { state: "full_access", label: "No calendars found" },
   ])("Settings calendar chooser distinguishes $state from loading and reads again without a prompt", async ({ state, label }) => {
     let reads = 0;
     let finishRead!: (answer: typeof CALENDAR_WIRE.wire) => void;
@@ -836,7 +836,7 @@ describe("Accounts recovery", () => {
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" />);
     const chooser = await screen.findByTestId("firstrun-calendar");
     await within(chooser).findByRole("status", { name: label });
-    expect(within(chooser).getByRole("status", { name: "IN USE" })).toBeVisible();
+    expect(within(chooser).getByRole("status", { name: "In use" })).toBeVisible();
     expect(within(chooser).queryByRole("button", { name: "Allow calendar access" })).toBeNull();
     expect(within(chooser).queryByRole("button", { name: "Open System Settings" })).toBeNull();
     const field = within(chooser).getByRole("textbox", { name: "Calendar URL" });
@@ -870,7 +870,7 @@ describe("Accounts recovery", () => {
     mockFetchConnections.mockResolvedValue(fullResponse());
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" />);
     const chooser = await screen.findByTestId("firstrun-calendar");
-    await within(chooser).findByRole("status", { name: "CAN'T CHECK" });
+    await within(chooser).findByRole("status", { name: "Can't check" });
     expect(within(chooser).getByText("Error: Calendar read unavailable")).toBeVisible();
     fireEvent.click(within(chooser).getByRole("button", { name: "Retry" }));
     await within(chooser).findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` });

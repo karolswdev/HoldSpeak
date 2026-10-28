@@ -52,7 +52,7 @@ describe("the Anthropic provider row", () => {
 
     fireEvent.change(screen.getByLabelText("Hosted provider"), { target: { value: "anthropic" } });
     const row = screen.getByTestId("model-library-anthropic-not-supported");
-    expect(row.querySelector(".surface-token")?.textContent).toBe("NOT SUPPORTED YET");
+    expect(row.querySelector(".surface-token")?.textContent).toBe("Not supported yet");
     expect(screen.getByLabelText("Provider key")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Connect" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Connect" }));

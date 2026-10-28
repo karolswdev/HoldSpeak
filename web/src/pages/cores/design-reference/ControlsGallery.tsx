@@ -52,6 +52,7 @@ import {
 import { ObjectSpeciesGallery } from "../ObjectSpeciesGallery";
 import { DeskComposer } from "../../../desk/components/DeskComposer";
 import "../../../desk/components/delivery.css";
+import { Token } from "../../../desk/surface/Token";
 
 const ALL_CHIP_STATES: ChipState[] = [
   "idle", "active", "working", "success", "warning", "failure", "unreachable",
@@ -248,8 +249,8 @@ export function ControlsGallery({ hero }: CoreProps) {
           />
         </div>
         <FoldGadget title="RAW · SPECIMEN" token="2 LINES">
-          <span className="surface-token">Quiet row, caret, trailing token</span>
-          <span className="surface-token">details semantics, keyboard-free</span>
+          <Token className="surface-token">Quiet row, caret, trailing token</Token>
+          <Token className="surface-token">details semantics, keyboard-free</Token>
         </FoldGadget>
       </SurfaceSection>
       <SurfaceSection label="The table and the armed delete">
@@ -337,10 +338,10 @@ export function ControlsGallery({ hero }: CoreProps) {
       </SurfaceSection>
       <SurfaceSection label="Disclosure: controlled and uncontrolled">
         <Disclosure label="Uncontrolled fold (default closed)">
-          <span className="surface-token">In-flow content, Escape closes</span>
+          <Token className="surface-token">In-flow content, Escape closes</Token>
         </Disclosure>
         <Disclosure label="Uncontrolled fold (default open)" defaultOpen>
-          <span className="surface-token">Default open, caret rotates</span>
+          <Token className="surface-token">Default open, caret rotates</Token>
         </Disclosure>
         <Disclosure
           label="Controlled fold"
@@ -348,10 +349,10 @@ export function ControlsGallery({ hero }: CoreProps) {
           onOpenChange={setDisclosureOpen}
           token="CTRL"
         >
-          <span className="surface-token">Externally controlled, token slot</span>
+          <Token className="surface-token">Externally controlled, token slot</Token>
         </Disclosure>
         <Disclosure label="RAW variant" variant="raw" token="DEBUG">
-          <span className="surface-token">Advanced/debug panels</span>
+          <Token className="surface-token">Advanced/debug panels</Token>
         </Disclosure>
       </SurfaceSection>
       <SurfaceSection label="ProgressPlan: detailed and compact">

@@ -80,7 +80,7 @@ describe("B33: the Settings hub reads the summary route", () => {
     const engines = screen.getByTestId("settings-lead-engines");
     expect(within(engines).getByText("1 engine")).toBeInTheDocument();
     expect(engines.textContent).not.toContain("Default set");
-    expect(screen.getByText("SUMMARY SET ON · AFTER EVERY MEETING")).toBeInTheDocument();
+    expect(screen.getByText("Summary set on · After every meeting")).toBeInTheDocument();
     expect(screen.queryByText("No default model")).toBeNull();
     expect(screen.queryByText("SUMMARY · NO ENGINE")).toBeNull();
   });
@@ -92,12 +92,12 @@ describe("B33: the Settings hub reads the summary route", () => {
     expect(within(engines).getByText("1 engine")).toBeInTheDocument();
     expect(engines.textContent).not.toContain("Default set");
     expect(screen.queryByText("No engine yet")).toBeNull();
-    expect(screen.getByText("SUMMARY · NO ENGINE")).toHaveAttribute("data-state", "warning");
+    expect(screen.getByText("Summary · No engine")).toHaveAttribute("data-state", "warning");
     expect(screen.queryByText("SUMMARY SET ON · AFTER EVERY MEETING")).toBeNull();
   });
   it("the owner's OFF reads SUMMARIES OFF, not a missing engine", () => {
     face(hub({ meetings: { intelligence: true, engineSet: false, summariesOff: true, auto: "every" } }));
-    expect(screen.getByText("SUMMARIES OFF")).toBeTruthy();
+    expect(screen.getByText("Summaries off")).toBeTruthy();
     expect(screen.queryByText("SUMMARY · NO ENGINE")).toBeNull();
   });
 });

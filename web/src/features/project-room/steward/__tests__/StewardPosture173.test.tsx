@@ -295,7 +295,7 @@ describe("HS-173-04: sixth row (Reviewer nudge) in policy", () => {
     await openPolicy();
 
     const approvalToken = screen.getByTestId("steward-policy-nudge-approval");
-    expect(approvalToken.textContent).toContain("PER-NUDGE APPROVAL");
+    expect(approvalToken.textContent).toContain("Per-nudge approval");
   });
 });
 

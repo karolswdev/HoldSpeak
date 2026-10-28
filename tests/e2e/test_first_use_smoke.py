@@ -349,7 +349,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 note = kept.value.json()["note"]
                 assert db.notes.get(note["id"]).body_markdown == WORDS
                 expect(words_card.get_by_role("button", name="Keep as note", exact=True)).to_have_count(0)
-                expect(words_card.get_by_test_id("heard-quote").get_by_role("status", name="HEARD", exact=True)).to_be_visible()
+                expect(words_card.get_by_test_id("heard-quote").get_by_role("status", name="Heard", exact=True)).to_be_visible()
             finally:
                 whisper_models.speech_readiness = real_readiness
             shot("fixture-speech-kept")

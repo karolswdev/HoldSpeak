@@ -54,7 +54,7 @@ describe("Components editing specimen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Deliver local text" }));
 
     expect(view.state.doc.toString()).toBe(`${original} Newer draft.`);
-    expect(screen.getByText("NOT INSERTED")).toBeVisible();
+    expect(screen.getByText("Not inserted")).toBeVisible();
     expect(screen.getByText("Confirm the boundary before rollout.")).toBeVisible();
     act(() => view.dispatch({ selection: { anchor: view.state.doc.length } }));
     fireEvent.click(screen.getByRole("button", { name: "Insert at caret" }));
@@ -70,7 +70,7 @@ describe("Components editing specimen", () => {
     render(<EditingReference preset="read-only" />);
 
     expect(screen.getByText("Read only")).toBeVisible();
-    expect(screen.getByText("NOT INSERTED")).toBeVisible();
+    expect(screen.getByText("Not inserted")).toBeVisible();
     expect(screen.getByRole("button", { name: "Capture target" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Insert at caret" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));

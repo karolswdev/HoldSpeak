@@ -90,12 +90,12 @@ describe("RemoteAccessModule", () => {
 
     // N CREDENTIALS on the toggle row: total count = 3
     const totalToken = screen.getByTestId("remote-total-count");
-    expect(totalToken.textContent).toBe("3 CREDENTIALS");
+    expect(totalToken.textContent).toBe("3 credentials");
 
     // N ACTIVE CREDENTIALS in the ledger head (PHILO-7-02, the ratified
     // caption "AGENTS · N ACTIVE CREDENTIALS"): 2 active
     const activeToken = screen.getByTestId("remote-active-count");
-    expect(activeToken.textContent).toBe("2 ACTIVE CREDENTIALS");
+    expect(activeToken.textContent).toBe("2 active credentials");
   });
 
   it("token appears once after issue and is not re-rendered after refetch", async () => {
@@ -202,10 +202,10 @@ describe("RemoteAccessModule", () => {
     });
 
     // EXPIRED warning chip visible
-    expect(screen.getByText("EXPIRED")).toBeTruthy();
+    expect(screen.getByText("Expired")).toBeTruthy();
 
     // NEVER USED visible
-    expect(screen.getByText("NEVER USED")).toBeTruthy();
+    expect(screen.getByText("Never used")).toBeTruthy();
   });
 
   it("shows address token when ON with bind_host and port", async () => {

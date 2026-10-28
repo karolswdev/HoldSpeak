@@ -6,6 +6,7 @@ import type { WriteAttempt } from "../hooks/useWriteReceipt";
 import { ConfirmVerb, SurfaceState } from "../surface/Surface";
 import { CheckGadget, GadgetGroup, GadgetRow, StepperGadget } from "../surface/gadgets";
 import { humanTime } from "../surface/format";
+import { Token } from "../surface/Token";
 
 const ROUTINES = [
   {
@@ -85,8 +86,8 @@ export function WorkbenchResourceful({
   return (
     <div className="wb-resourceful">
       <div className="wb-resourceful-contract" role="status">
-        <span className="surface-token">LOCAL DATA</span>
-        <span className="surface-token">ONE ITEM / RUN</span>
+        <Token className="surface-token">LOCAL DATA</Token>
+        <Token className="surface-token">ONE ITEM / RUN</Token>
         <span className="desk-chip">{idleMin} MIN IDLE</span>
         <span className="desk-chip">{cdHours}H COOLDOWN</span>
         <span className="desk-chip">TARGET {nightlyTarget} / NIGHT</span>
@@ -182,17 +183,17 @@ export function WorkbenchResourceful({
                 ? [...current, routine.id]
                 : current.filter((value) => value !== routine.id))}
             />
-            <span className="surface-token wb-resourceful-routine-fact">{routine.detail}</span>
+            <Token className="surface-token wb-resourceful-routine-fact">{routine.detail}</Token>
           </div>
         ))}
         <div className="wb-resourceful-limits" aria-label="Execution limits">
-          <span className="surface-token">SELECTED MAINTENANCE ONLY</span>
-          <span className="surface-token">PENDING WORK UNTOUCHED</span>
-          <span className="surface-token">SOURCE DATA · REVIEW-ONLY</span>
+          <Token className="surface-token">SELECTED MAINTENANCE ONLY</Token>
+          <Token className="surface-token">PENDING WORK UNTOUCHED</Token>
+          <Token className="surface-token">SOURCE DATA · REVIEW-ONLY</Token>
         </div>
       </div>
       <div className="wb-automation-verbs">
-        <span className="surface-token">RUNS AS OWNER</span>
+        <Token className="surface-token">RUNS AS OWNER</Token>
         {policy.enabled ? (
           <>
             <Button
@@ -223,14 +224,14 @@ export function WorkbenchResourceful({
         )}
       </div>
       <div className="wb-resourceful-status" role="status">
-        <span className="surface-token">{policy.enabled ? "READY WHEN IDLE" : "PAUSED"}</span>
+        <Token className="surface-token">{policy.enabled ? "READY WHEN IDLE" : "PAUSED"}</Token>
         {policy.enabled && policy.nightly_count > 0 ? (
-          <span className="surface-token">{policy.nightly_count}/{policy.nightly_target} THIS NIGHT</span>
+          <Token className="surface-token">{policy.nightly_count}/{policy.nightly_target} THIS NIGHT</Token>
         ) : null}
-        {!policy.enabled ? <span className="surface-token">NO RESOURCEFUL WORK STARTS</span> : null}
+        {!policy.enabled ? <Token className="surface-token">NO RESOURCEFUL WORK STARTS</Token> : null}
       </div>
       {lastFiredAt ? (
-        <span className="wb-automation-last surface-token">LAST RUN {humanTime(lastFiredAt)}</span>
+        <Token className="wb-automation-last surface-token">LAST RUN {humanTime(lastFiredAt)}</Token>
       ) : null}
       {policy.last_error ? <SurfaceState error={policy.last_error} /> : null}
     </div>

@@ -145,7 +145,7 @@ describe("Workbench STARTS WHEN automations", () => {
     expect(screen.getByLabelText("GitHub repository")).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Schedule" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /GitHub · Review requested/i })).toBeDisabled();
-    expect(screen.getByText("REPOSITORY REQUIRED")).toBeInTheDocument();
+    expect(screen.getByText("Repository required")).toBeInTheDocument();
   });
 
   it("creates the GitHub review-requested preset with an explicit repository", async () => {
@@ -179,13 +179,13 @@ describe("Workbench STARTS WHEN automations", () => {
       .find((button) => !button.hasAttribute("disabled"));
     expect(automationButton).toBeDefined();
     await user.click(automationButton!);
-    expect(screen.getByText(/SILENT BASELINE/)).toBeInTheDocument();
+    expect(screen.getByText(/Silent baseline/)).toBeInTheDocument();
     expect(screen.queryByText(/auto-run/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Test match" }));
     await waitFor(() => expect(calls.mock.calls.some(([url]) => String(url).endsWith("/automations/auto-1/test"))).toBe(true));
     expect(calls.mock.calls.some(([url]) => /\/items(?:\/|$)/.test(String(url)))).toBe(false);
-    expect(screen.getByText(/TEST ·/)).toBeVisible();
+    expect(screen.getByText(/Test ·/)).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Enable" }));
     await waitFor(() => expect(calls.mock.calls.some(([url, init]) =>
@@ -223,12 +223,12 @@ describe("Workbench STARTS WHEN automations", () => {
 
     expect(screen.getByText("6H COOLDOWN")).toBeInTheDocument();
     expect(screen.getByText("TARGET 2 / NIGHT")).toBeInTheDocument();
-    const selectedOnly = screen.getByText("SELECTED MAINTENANCE ONLY");
+    const selectedOnly = screen.getByText("Selected maintenance only");
     expect(selectedOnly.closest(".wb-resourceful-routines")).not.toBeNull();
-    expect(screen.getByText("PENDING WORK UNTOUCHED")).toBeInTheDocument();
-    expect(screen.getByText("SOURCE DATA · REVIEW-ONLY")).toBeInTheDocument();
-    expect(screen.getByText("RUNS AS OWNER").closest(".wb-automation-verbs")).not.toBeNull();
-    expect(screen.getByText("PAUSED")).toBeInTheDocument();
+    expect(screen.getByText("Pending work untouched")).toBeInTheDocument();
+    expect(screen.getByText("Source data · Review-only")).toBeInTheDocument();
+    expect(screen.getByText("Runs as owner").closest(".wb-automation-verbs")).not.toBeNull();
+    expect(screen.getByText("Paused")).toBeInTheDocument();
     expect(screen.queryByText(/0\/\d+ THIS NIGHT/)).toBeNull();
     await user.click(screen.getByRole("button", { name: "Decrease Cooldown hours" }));
     await user.click(screen.getByRole("button", { name: "Decrease Cooldown hours" }));
@@ -253,14 +253,14 @@ describe("Workbench STARTS WHEN automations", () => {
   it.each([0, 1])("enabled policy with %s completed items keeps stored progress honest while editing", async (nightlyCount) => {
     await open([], {}, { enabled: true, nightly_count: nightlyCount });
     fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "idle" } });
-    expect(screen.getByText("READY WHEN IDLE")).toBeInTheDocument();
-    expect(screen.getByText("LOCAL DATA")).toBeInTheDocument();
-    expect(screen.getByText("ONE ITEM / RUN")).toBeInTheDocument();
-    if (nightlyCount) expect(screen.getByText("1/2 THIS NIGHT")).toBeInTheDocument();
-    else expect(screen.queryByText(/THIS NIGHT/)).toBeNull();
+    expect(screen.getByText("Ready when idle")).toBeInTheDocument();
+    expect(screen.getByText("Local data")).toBeInTheDocument();
+    expect(screen.getByText("One item / run")).toBeInTheDocument();
+    if (nightlyCount) expect(screen.getByText("1/2 this night")).toBeInTheDocument();
+    else expect(screen.queryByText(/this night/i)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Increase Nightly target" }));
     expect(screen.getByText("TARGET 3 / NIGHT")).toBeInTheDocument();
-    if (nightlyCount) expect(screen.getByText("1/2 THIS NIGHT")).toBeInTheDocument();
+    if (nightlyCount) expect(screen.getByText("1/2 this night")).toBeInTheDocument();
     expect(screen.queryByText(/0\/\d+ THIS NIGHT/)).toBeNull();
   });
 

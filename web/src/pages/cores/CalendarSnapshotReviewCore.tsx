@@ -22,6 +22,7 @@ import { SurfaceState } from "../../desk/surface/Surface";
 import { spriteUrl } from "../../desk/sprites";
 import type { CoreProps } from "./core-types";
 import "./calendar-snapshot-review.css";
+import { Token } from "../../desk/surface/Token";
 
 interface SnapshotEvent {
   title: string;
@@ -468,7 +469,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
           phase.saving ? (
             <DotWord tone="idle">Saving</DotWord>
           ) : phase.saveError ? (
-            <span
+            <Token
               className="surface-footer-receipt-line"
               data-wrap=""
               data-tone="danger"
@@ -479,7 +480,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
               <span className="calendar-snapshot-reason">
                 {refusalReason(phase.saveError)}
               </span>
-            </span>
+            </Token>
           ) : undefined
         }
         verbs={

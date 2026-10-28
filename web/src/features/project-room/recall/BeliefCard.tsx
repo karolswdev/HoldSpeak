@@ -18,6 +18,7 @@ import { Disclosure, RefTokens, countLabel, countToken } from "../../../desk/sur
 import { ProjectButton } from "../../../desk/surface/patterns";
 import type { BeliefCardData } from "./model";
 import { openProjectRoom } from "../../../desk/shell";
+import { Token } from "../../../desk/surface/Token";
 
 const STATE_TONE: Record<string, "ok" | "danger" | "warn"> = {
   current: "ok",
@@ -50,17 +51,17 @@ export function BeliefCard({
         </span>
       </div>
       <div className="recall-card-chips">
-        <span className="surface-token" data-chip>BELIEF</span>
-        <span className="surface-token" data-chip data-tone={STATE_TONE[belief.state]} data-testid="recall-belief-state">
+        <Token className="surface-token" data-chip>BELIEF</Token>
+        <Token className="surface-token" data-chip data-tone={STATE_TONE[belief.state]} data-testid="recall-belief-state">
           {belief.state.toUpperCase()}
-        </span>
+        </Token>
         {belief.state === "superseded" && belief.since ? (
-          <span className="surface-token recall-superseded-by" data-testid="recall-belief-since">
+          <Token className="surface-token recall-superseded-by" data-testid="recall-belief-since">
             SINCE {belief.since}
-          </span>
+          </Token>
         ) : null}
-        {sources ? <span className="surface-token" data-chip>{sources}</span> : null}
-        {belief.seen ? <span className="surface-token">SEEN {belief.seen}</span> : null}
+        {sources ? <Token className="surface-token" data-chip>{sources}</Token> : null}
+        {belief.seen ? <Token className="surface-token">SEEN {belief.seen}</Token> : null}
         {belief.project ? (
           <ProjectButton
             name={belief.project.name}
@@ -71,7 +72,7 @@ export function BeliefCard({
       </div>
       {belief.evidence.length ? (
         <div className="recall-source" data-testid="recall-belief-evidence">
-          <span className="surface-token">EVIDENCE</span>
+          <Token className="surface-token">EVIDENCE</Token>
           <RefTokens refs={belief.evidence} onOpen={onOpenRef} label="Evidence" />
         </div>
       ) : null}
@@ -85,12 +86,12 @@ export function BeliefCard({
           <ol className="recall-belief-history" data-testid="recall-belief-history">
             {belief.history.map((row, index) => (
               <li key={`${row.at}:${index}`}>
-                {row.at ? <span className="surface-token">{row.at}</span> : null}
+                {row.at ? <Token className="surface-token">{row.at}</Token> : null}
                 <s className="recall-belief-old" data-testid="recall-belief-old">{row.text}</s>
                 {row.word ? (
-                  <span className="surface-token" data-tone="warn">
+                  <Token className="surface-token" data-tone="warn">
                     {row.reason ? `${row.word} · ${row.reason.toUpperCase()}` : row.word}
-                  </span>
+                  </Token>
                 ) : null}
               </li>
             ))}

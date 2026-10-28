@@ -402,7 +402,7 @@ describe("Runs on — a stranger connects an engine and the face keeps his choic
     expect(reason.textContent).toBe("127.0.0.1:9");
     const row = screen.getByTestId("concierge-add-engine-row");
     expect(row.contains(reason)).toBe(true);
-    expect(row.textContent).toContain("UNREACHABLE");
+    expect(row.textContent).toContain("Unreachable");
     expect(row.textContent).not.toContain("Nothing answers"); // tokens, never the server's sentence
     expect(screen.queryByTestId("concierge-add-use")).toBeNull();
 
@@ -540,7 +540,7 @@ describe("Runs on — the engine tells the truth (recorded hub)", () => {
     const field = within(screen.getByTestId("concierge-add-engine-row")).getAllByRole("textbox")[0];
     fireEvent.change(field, { target: { value: ENGINE } });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
-    expect((await screen.findByTestId("concierge-add-tools")).textContent).toBe("TOOLS");
+    expect((await screen.findByTestId("concierge-add-tools")).textContent).toBe("Tools");
 
     fireEvent.click(screen.getByTestId("concierge-add-use"));
     await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Added at .* · stub-qwen · 127\.0\.0\.1:8099$/));

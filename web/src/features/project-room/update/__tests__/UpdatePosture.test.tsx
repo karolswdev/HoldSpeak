@@ -566,7 +566,7 @@ describe("Unverified claims: banner in document view", () => {
     // The unverified banner appears (the risks_blockers claim has verified:false + no refs)
     const badges = screen.getAllByTestId("update-claim-unverified");
     expect(badges.length).toBeGreaterThanOrEqual(1);
-    expect(badges[0].textContent).toContain("UNVERIFIED");
+    expect(badges[0].textContent).toContain("Unverified");
   });
 });
 
@@ -699,7 +699,7 @@ describe("Egress badge on model drafting", () => {
     // Betterment P1: the engine's draft replaces the records draft when ready.
     await waitFor(() => expect(screen.getByTestId("update-engine-pass").getAttribute("data-state")).toBe("success"),
       { timeout: 4000 });
-    expect(document.querySelector(".surface-footer-egress")?.textContent).toBe("QWEN");
+    expect(document.querySelector(".surface-footer-egress")?.textContent).toBe("Qwen");
     expect(document.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
     expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/api/inference/assignments"))).toBe(true);
   });

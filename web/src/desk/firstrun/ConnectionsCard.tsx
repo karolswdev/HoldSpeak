@@ -14,6 +14,7 @@ import {
   type ConnectionCandidate,
   type ConnectionsStep,
 } from "./connectionsStep";
+import { Token } from "../surface/Token";
 
 /** PHILO-17: the sign-in command for a tool that is installed but has no
  * sign-in (the same commands Settings › Connections shows). */
@@ -110,7 +111,7 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
                           Use it
                         </Button>
                       ) : token ? (
-                        <span className="surface-token">{token}</span>
+                        <Token className="surface-token">{token}</Token>
                       ) : null}
                     </span>
                     {row.egress_host ? (
@@ -142,7 +143,7 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
                 <CommandWell hint={SIGN_IN_COMMAND[tool]} />
               </span>
             ) : (
-              <span key={tool} className="surface-token">{`${tool.toUpperCase()} NOT INSTALLED`}</span>
+              <Token key={tool} className="surface-token">{`${tool.toUpperCase()} NOT INSTALLED`}</Token>
             ),
           )}
           {step.tools.gh?.installed || step.tools.acli?.installed ? (

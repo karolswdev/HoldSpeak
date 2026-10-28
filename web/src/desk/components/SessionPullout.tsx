@@ -53,6 +53,7 @@ import { spriteUrl } from "../sprites";
 import { AgentWords } from "./AgentWords";
 import { useLaneOwnsSteering } from "../lane/laneStore";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
+import { Token } from "../surface/Token";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -108,7 +109,7 @@ export function ArmStrip() {
         label="GRANT"
         value={totalRef.current > 0 ? remaining / totalRef.current : 0}
       />
-      <span className="surface-token">{mmss(remaining)}</span>
+      <Token className="surface-token">{mmss(remaining)}</Token>
     </>
   ) : null;
 
@@ -545,7 +546,7 @@ function SteerComposer({ listenSignal = 0, available = true, options, onOptionsC
             label="CTX"
             value={budgetTokens / STEER_LIMIT_TOKENS}
           />
-          <span className="surface-token">CAP 8 KB</span>
+          <Token className="surface-token">CAP 8 KB</Token>
         </span>
       )}
       </FoldGadget>
@@ -567,8 +568,8 @@ export function SteeringPolicyFacts() {
       : "ARMED PANE GRANT";
   return (
     <span className="desk-session-policy" data-testid="session-policy">
-      <span className="surface-token" data-chip>{`AUTHORITY · ${authority.toUpperCase()}`}</span>
-      <span className="surface-token" data-chip>RECEIPT · EVERY ATTEMPT</span>
+      <Token className="surface-token" data-chip>{`AUTHORITY · ${authority.toUpperCase()}`}</Token>
+      <Token className="surface-token" data-chip>RECEIPT · EVERY ATTEMPT</Token>
     </span>
   );
 }
@@ -882,7 +883,7 @@ export function SessionPullout() {
               {(armed || postureAuthorized) ? <>
                 <KeyPalette />
                 {armed ? <FactoryControls /> : <span className="desk-session-arm" data-testid="session-arm-control">
-                  <span className="surface-token" data-testid="session-arm-pane">{`PANE · ${paneId}`}</span>
+                  <Token className="surface-token" data-testid="session-arm-pane">{`PANE · ${paneId}`}</Token>
                   <Button dense variant="ghost" className="desk-chip quiet" aria-label={`Arm rename/kill: pane ${paneId}`} data-testid="session-arm-verb" onClick={() => void useSteering.getState().arm()}>Arm rename/kill</Button>
                 </span>}
               </> : null}

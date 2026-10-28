@@ -137,7 +137,7 @@ describe("Slack in the Destination form", () => {
     fireEvent.change(screen.getByTestId("dest-slack-label"), { target: { value: "#leads" } });
     fireEvent.click(screen.getByTestId("dest-save"));
     expect(screen.getByTestId("dest-save")).toBeDisabled();
-    expect(screen.getByTestId("dest-key-missing").textContent).toContain("NO WEBHOOK");
+    expect(screen.getByTestId("dest-key-missing").textContent).toContain("No webhook");
     expect(calls.some((c) => c.method === "POST")).toBe(false);
   });
 
@@ -157,7 +157,7 @@ describe("Slack in the Destination form", () => {
     expect(document.body.textContent).not.toContain("synthetic-secret");
     fireEvent.click(screen.getByTestId("dest-check"));
     const result = await screen.findByTestId("dest-check-result");
-    expect(result.textContent).toContain("WEBHOOK SET · HOST OK");
+    expect(result.textContent).toContain("Webhook set · Host OK");
     expect(screen.getByTestId("dest-open").textContent).toContain("SET · hooks.slack.com");
     // Betterment send S1: the row's chip is only for a failure; the Check result above says SET.
     expect(screen.getByTestId("dest-row").querySelector(".connections-tool-chips")?.textContent).not.toContain("WEBHOOK SET");
@@ -172,7 +172,7 @@ describe("Slack in the Destination form", () => {
     fireEvent.click(within(await screen.findByTestId("dest-row")).getByText("Slack #leads"));
     fireEvent.click(await screen.findByTestId("dest-check"));
     const result = await screen.findByTestId("dest-check-result");
-    expect(result.textContent).toContain("NO WEBHOOK");
+    expect(result.textContent).toContain("No webhook");
     expect(screen.getByTestId("dest-open").textContent).toContain("NOT SET");
   });
 
@@ -190,7 +190,7 @@ describe("Slack in the Destination form", () => {
     // The neutral state offers Check; a Check that finds no webhook says NO WEBHOOK, still no SET.
     fireEvent.click(within(keyRow).getByTestId("dest-key-check"));
     const missing = await screen.findByTestId("dest-key-missing");
-    expect(missing.textContent).toContain("NO WEBHOOK");
+    expect(missing.textContent).toContain("No webhook");
     expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
     // Save remains unavailable while its required webhook is missing.
     fireEvent.click(screen.getByTestId("dest-save"));

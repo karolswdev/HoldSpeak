@@ -72,9 +72,9 @@ describe("RuntimeIdentityModule", () => {
     expect(screen.getByTestId("runtime-backend").textContent).toBe("0.4.0 · d066a862aaaa");
     expect(screen.getByTestId("runtime-bundle").textContent).toBe("3228921edf30");
     expect(screen.getByTestId("runtime-document").textContent).toBe("3228921edf30");
-    expect(screen.getByTestId("runtime-schema").textContent).toBe("SCHEMA 76");
+    expect(screen.getByTestId("runtime-schema").textContent).toBe("Schema 76");
     expect(screen.getByTestId("runtime-database").textContent).toBe("01234567");
-    expect(screen.getByTestId("runtime-owns").textContent).toBe("OWNER");
+    expect(screen.getByTestId("runtime-owns").textContent).toBe("Owner");
   });
 
   it("a healthy runtime flies no chip at all — never a counter of zero", async () => {
@@ -101,9 +101,9 @@ describe("RuntimeIdentityModule", () => {
 
     await waitFor(() => { expect(screen.getByTestId("runtime-repair")).toBeTruthy(); });
     const chips = screen.getByTestId("runtime-repair");
-    expect(chips.textContent).toContain("STALE BUNDLE");
-    expect(chips.textContent).toContain("TWO RUNTIMES");
-    expect(screen.getByTestId("runtime-owns").textContent).toBe("TENANT");
+    expect(chips.textContent).toContain("Stale bundle");
+    expect(chips.textContent).toContain("Two runtimes");
+    expect(screen.getByTestId("runtime-owns").textContent).toBe("Tenant");
   });
 
   it("the loaded document disagreeing with the process is its own STALE BUNDLE", async () => {
@@ -112,7 +112,7 @@ describe("RuntimeIdentityModule", () => {
     render(<RuntimeIdentityModule />);
 
     await waitFor(() => { expect(screen.getByTestId("runtime-repair")).toBeTruthy(); });
-    expect(screen.getByTestId("runtime-repair").textContent).toContain("STALE BUNDLE");
+    expect(screen.getByTestId("runtime-repair").textContent).toContain("Stale bundle");
     expect(screen.getByTestId("runtime-document").textContent).toBe("ffffffffffff");
   });
 
@@ -134,8 +134,8 @@ describe("RuntimeIdentityModule", () => {
     render(<RuntimeIdentityModule />);
 
     await waitFor(() => { expect(screen.getByTestId("runtime-bundle")).toBeTruthy(); });
-    expect(screen.getByTestId("runtime-bundle").textContent).toBe("NONE");
-    expect(screen.getByTestId("runtime-document").textContent).toBe("NONE");
+    expect(screen.getByTestId("runtime-bundle").textContent).toBe("None");
+    expect(screen.getByTestId("runtime-document").textContent).toBe("None");
   });
 
   it("the database path lives inside the RAW fold only", async () => {

@@ -58,7 +58,7 @@ describe("Waiting on Nudge", () => {
     expect(apiFetch).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId("waiting-on-nudge"));
     expect(await screen.findByTestId("nudge-card")).toBeTruthy();
-    expect(screen.getByTestId("nudge-card").textContent).toContain("NUDGE READY");
+    expect(screen.getByTestId("nudge-card").textContent).toContain("Nudge ready");
     expect(screen.getByTestId("nudge-card").textContent).toContain("GITHUB.COM");
     expect(apiFetch).not.toHaveBeenCalled();
 
@@ -120,7 +120,7 @@ describe("Waiting on Nudge", () => {
     expect(calls).toEqual([]);
     fireEvent.click(screen.getByTestId("waiting-on-nudge"));
     expect(await screen.findByTestId("generic-nudge-card")).toBeTruthy();
-    expect(await screen.findByText("NUDGE READY")).toBeTruthy();
+    expect(await screen.findByText("Nudge ready")).toBeTruthy();
     await waitFor(() => expect(calls.some(([path]) => path === "/api/channels/preview")).toBe(true));
     expect(calls.some(([path, init]) => path === "/api/channels/send" && init?.method === "POST")).toBe(false);
     fireEvent.click(await screen.findByTestId("send-verb"));

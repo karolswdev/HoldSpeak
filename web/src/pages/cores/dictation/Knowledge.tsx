@@ -25,6 +25,7 @@ import {
   StringGadget,
 } from "../../../desk/surface/gadgets";
 import { clockNow, useAnnounce } from "./shared";
+import { Token } from "../../../desk/surface/Token";
 
 function ProjectInstructions({ root }: { root: string }) {
   const announce = useAnnounce();
@@ -192,7 +193,7 @@ export function Knowledge() {
         <SurfaceState loading={kb.loading} error={kb.error} onRetry={() => void kb.reload()} />
       ) : detectedRoot ? (
         <ProjectInstructions key={detectedRoot} root={detectedRoot} />
-      ) : <span className="surface-token">No project selected</span>}
+      ) : <Token className="surface-token">No project selected</Token>}
     </>
   );
 }

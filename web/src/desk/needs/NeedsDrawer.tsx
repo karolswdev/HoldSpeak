@@ -64,6 +64,7 @@ import { openHand } from "../agentHand";
 import { Disclosure } from "../surface/patterns/Disclosure";
 import { AddToProject } from "../AddToProject";
 import "./needs.css";
+import { Token } from "../surface/Token";
 
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
  *  the agent window and honors the hint; today the session opener opens the
@@ -808,7 +809,7 @@ function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; pri
         verbs={(
           <>
             {face.moreAsks ? (
-              <span className="surface-token" data-testid="needs-more-asks">{`+${face.moreAsks} MORE`}</span>
+              <Token className="surface-token" data-testid="needs-more-asks">{`+${face.moreAsks} MORE`}</Token>
             ) : null}
             <NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} />
           </>
@@ -1128,7 +1129,7 @@ export function NeedsDroppedReceipt() {
   const dropped = useDropped((st) => st.dropped);
   if (!dropped) return null;
   return (
-    <span className="surface-footer-receipt-line needs-dropped" role="status" data-testid="needs-dropped">
+    <Token className="surface-footer-receipt-line needs-dropped" role="status" data-testid="needs-dropped">
       {`Dropped · ${dropped.name}`}
       <Button dense variant="secondary" aria-label={`Undo: ${dropped.name}`} data-testid="needs-undo"
         onClick={() => {
@@ -1136,7 +1137,7 @@ export function NeedsDroppedReceipt() {
           void dropped.undo().then(() => refreshNeedsYou(true)).catch((error) =>
             reportWriteFailure("Undo", error, () => void dropped.undo()));
         }}>Undo</Button>
-    </span>
+    </Token>
   );
 }
 

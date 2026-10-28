@@ -20,6 +20,7 @@ import { createPortal } from "react-dom";
 import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 import { FootSlotContext } from "./foot";
+import { sentenceChildren } from "./words";
 import { Button } from "../../components/signal/Signal";
 import { WorkMenu } from "../components/DeskMenu";
 // kit.css is imported by surface.css (the kit restyles live beside it).
@@ -65,7 +66,7 @@ export function StatusStrip({
         ) : (
           <span key={item.key ?? index} className="kit-strip-token" data-testid={item.testId}>
             {item.lamp ? <span className="kit-sq" data-tone={item.lamp} aria-hidden="true" /> : null}
-            {item.text}
+            {sentenceChildren(item.text)}
             {item.value != null ? (
               <>
                 {item.text != null ? " " : null}
@@ -435,7 +436,7 @@ export function StatusBar({
         {shown.map((item, index) => (
           <span key={item.key ?? index} className="kit-statusbar-item" data-testid={item.testId}>
             {item.lamp ? <StatusLamp tone={item.lamp} pulse={item.pulse} live={item.live} /> : null}
-            {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : item.text}
+            {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : sentenceChildren(item.text)}
             {item.value != null ? (
               <>
                 {item.text != null ? " " : null}

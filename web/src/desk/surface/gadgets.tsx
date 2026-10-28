@@ -20,6 +20,7 @@ import { WorkbenchSelect } from "../../components/signal/WorkbenchSelect";
 import { MicButton } from "../components/MicButton";
 import { ConfirmVerb } from "./Surface";
 import { useRovingRows } from "./roving";
+import { sentenceChildren } from "./words";
 import "./gadgets.css";
 
 /* ── the sheet: two aligned columns, 26px rows, engraved groups ── */
@@ -511,9 +512,9 @@ export function FoldGadget({
             {glyph}
           </span>
         ) : null}
-        <span className="gadget-fold-title">{title}</span>
+        <span className="gadget-fold-title">{sentenceChildren(title)}</span>
         {token != null ? (
-          <span className="gadget-fold-token">{token}</span>
+          <span className="gadget-fold-token">{sentenceChildren(token)}</span>
         ) : null}
       </summary>
       <div className="gadget-fold-body">{children}</div>

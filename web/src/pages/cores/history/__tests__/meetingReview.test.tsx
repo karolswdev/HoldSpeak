@@ -98,14 +98,14 @@ describe("MeetingReview (HS-200-12)", () => {
     // The three axes.
     expect(screen.getAllByTestId("review-kind").map((n) => n.textContent)).toEqual(["PROPOSAL", "PROPOSAL", "PROPOSAL", "PROPOSAL", "PROPOSAL"]);
     const support = screen.getAllByTestId("review-support").map((n) => n.textContent?.replace(/^[^A-Z]*/, ""));
-    expect(support).toEqual(["SUPPORTED", "LINKED", "SUPPORTED", "LINKED", "UNSUPPORTED"]);
+    expect(support).toEqual(["Supported", "Linked", "Supported", "Linked", "Unsupported"]);
     expect(screen.getAllByTestId("review-acceptance")).toHaveLength(5);
     // The span, as MTG mm-dd · hh:mm–hh:mm from the meeting's own clock.
     expect(screen.getAllByTestId("review-span")[0].textContent).toBe("MTG 09-07 · 11:18–11:21");
     // No source, no source chip; the typed unknowns.
     expect(screen.getByTestId("review-no-source")).toBeInTheDocument();
     const unknowns = screen.getAllByTestId("review-unknown").map((n) => n.textContent?.replace(/^[^A-Z]*/, ""));
-    expect(unknowns).toEqual(["OWNER · UNKNOWN", "OWNER · UNKNOWN", "DUE · UNKNOWN"]);
+    expect(unknowns).toEqual(["Owner · Unknown", "Owner · Unknown", "Due · Unknown"]);
     // Never a counter of zero, never the head repeating the title.
     expect(screen.queryByText(/\b0 /)).toBeNull();
     expect(screen.queryByText("Architecture review")).toBeNull();
@@ -177,8 +177,8 @@ describe("MeetingReview (HS-200-12)", () => {
     fireEvent.click(disclosure);
     const rows = screen.getAllByTestId("review-prior-row");
     expect(rows).toHaveLength(2);
-    expect(rows[0].textContent).toContain("ACCEPTED");
-    expect(rows[1].textContent).toContain("DECLINED");
+    expect(rows[0].textContent).toContain("Accepted");
+    expect(rows[1].textContent).toContain("Declined");
     // The ledgers hold the CURRENT revision only: 1 decision, 1 commitment.
     expect(screen.getByText("DECISIONS 1")).toBeInTheDocument();
     expect(screen.getByText("COMMITMENTS 1")).toBeInTheDocument();
@@ -203,7 +203,7 @@ describe("MeetingReview (HS-200-12)", () => {
     await waitFor(() => expect(screen.getByText("4 to review")).toBeInTheDocument());
     const row = screen.getAllByTestId("review-row-decision")[0];
     expect(row.getAttribute("data-state")).toBe("confirmed");
-    expect(within(row).getByTestId("review-acceptance").textContent).toContain("ACCEPTED");
+    expect(within(row).getByTestId("review-acceptance").textContent).toContain("Accepted");
     expect(within(row).getByTestId("review-kept").textContent).toBe("DECISION RECORD · KEPT 12:10");
     expect(screen.getByText("ACCEPTED 1")).toBeInTheDocument();
     expect(screen.getByTestId("review-receipt").textContent).toMatch(/^CONFIRMED \d\d:\d\d$/);
@@ -264,7 +264,7 @@ describe("MeetingReview (HS-200-12)", () => {
       };
     });
     fireEvent.keyDown(editor, { key: "Enter" });
-    await waitFor(() => expect(within(row).getByTestId("review-support").textContent).toContain("LINKED · EDITED"));
+    await waitFor(() => expect(within(row).getByTestId("review-support").textContent).toContain("Linked · Edited"));
     expect(screen.getByTestId("review-receipt").textContent).toMatch(/^EDITED \d\d:\d\d$/);
     // The original stays as provenance, inside MORE.
     expect(within(row).getByTestId("review-was").textContent).toBe("WAS · Cut-over runs on the read replica first");
@@ -331,7 +331,7 @@ describe("MeetingReview (HS-200-12)", () => {
     expect(kept.textContent).toContain("2");
     expect(screen.getAllByTestId("review-kept-row")).toHaveLength(2);
     expect(screen.getAllByText("ATTEMPT 1")).toHaveLength(2);
-    expect(screen.getByText("NOT COMPLETE")).toBeInTheDocument();
+    expect(screen.getByText("Not complete")).toBeInTheDocument();
     // Every kept row can be opened (the board's Open; a dead end is a lie).
     expect(screen.getAllByTestId("review-kept-open")).toHaveLength(2);
     fireEvent.click(kept);

@@ -230,8 +230,8 @@ it("a tab-storage failure refuses before any dispatch", async () => {
   render(<NoteSendWells id={noteReturn.old_preview.document_ref.slice(5)} title={noteReturn.old_preview.title} version={2} />);
   await screen.findByTestId("send-preview-body");
   fireEvent.click(screen.getByTestId("send-verb"));
-  expect(await screen.findByTestId("send-refused")).toHaveTextContent("TAB STORAGE UNAVAILABLE");
-  expect(screen.getByTestId("send-refused")).toHaveTextContent("NOTHING SENT");
+  expect(await screen.findByTestId("send-refused")).toHaveTextContent("Tab storage unavailable");
+  expect(screen.getByTestId("send-refused")).toHaveTextContent("Nothing sent");
   expect(sendRequest).not.toHaveBeenCalled();
   vi.restoreAllMocks();
   fireEvent.click(screen.getByTestId("send-verb"));
@@ -300,7 +300,7 @@ describe("decision document hosts unfold Send only on request", () => {
     };
     render(<DeskDecisionSendWells id="decision_fold_read" title="Use the shared runners" />);
     const failure = await screen.findByTestId("sends-unreadable");
-    expect(failure.textContent).toContain("SENDS");
+    expect(failure.textContent).toContain("sends");
     fail = false;
     fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.queryByTestId("sends-unreadable")).toBeNull());
@@ -322,7 +322,7 @@ describe("decision document hosts unfold Send only on request", () => {
       return { payload_digest: `dig:${words}`, preview: { text: words } };
     };
     const view = render(<DeskDecisionSendWells id="decision_fold_prepared" title="Use the shared runners" version="saved-v1" />);
-    expect(await screen.findByText("PREPARED ×1")).toBeTruthy();
+    expect(await screen.findByText("Prepared ×1")).toBeTruthy();
     expect(screen.queryByTestId("send-well")).toBeNull();
     expect(previews).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: "Send…" }));
@@ -366,7 +366,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     routes["GET /api/channels/destinations"] = () => ({ destinations: [] });
     render(<SendWells doc={BRIEF} />);
     const none = await screen.findByTestId("send-none");
-    expect(none.textContent).toContain("NO DESTINATION");
+    expect(none.textContent).toContain("No destination");
     expect(screen.getByTestId("send-add-destination").textContent).toBe("Add destination");
     expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe(REF);
     expect(screen.queryByTestId("send-history")).toBeNull();
@@ -471,11 +471,11 @@ describe("the SEND well species on a brief (not an update)", () => {
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb);
     const sent = await screen.findByTestId("send-sent");
-    expect(sent.textContent).toContain("SAVED");
+    expect(sent.textContent).toContain("Saved");
     expect(within(sent).getByTestId("proof").textContent).toBe(`${FOLDER}/2026-09-29-brief.md`);
     const history = await screen.findByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("SENT 1");
-    expect(within(history).getByTestId("history-word").textContent).toBe("SAVED");
+    expect(history.querySelector("h3")?.textContent).toBe("Sent 1");
+    expect(within(history).getByTestId("history-word").textContent).toBe("Saved");
     noManualRow();
   });
 
@@ -490,13 +490,13 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(row.textContent).toContain("HOOKS.SLACK.COM");
     expect(row.textContent).not.toContain("WEBHOOK SET");   // betterment send S1: no chip beside a good send
     const sent = await screen.findByTestId("send-sent");
-    expect(sent.textContent).toContain("POSTED");
+    expect(sent.textContent).toContain("Posted");
     const proof = within(sent).getByTestId("proof");
     expect(proof.textContent).toBe("#leads");
     expect(proof.tagName).not.toBe("BUTTON");
     expect(proof.getAttribute("data-href")).toBeNull();
     const history = screen.getByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("SENT 1");
+    expect(history.querySelector("h3")?.textContent).toBe("Sent 1");
     expect(history.querySelector("[data-href]")).toBeNull();
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
   });
@@ -511,9 +511,9 @@ describe("the SEND well species on a brief (not an update)", () => {
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb);
     const refused = await screen.findByTestId("send-refused");
-    expect(refused.textContent).toContain("REFUSED");
-    expect(refused.textContent).toContain("DESTINATION CHANGED");
-    expect(refused.textContent).toContain("NOTHING SENT");
+    expect(refused.textContent).toContain("Refused");
+    expect(refused.textContent).toContain("Destination changed");
+    expect(refused.textContent).toContain("Nothing sent");
   });
 
   it("REFUSED preview over the Slack limit (G2, canvas T1): the named word and the size, never NO ANSWER, no Send", async () => {
@@ -527,12 +527,12 @@ describe("the SEND well species on a brief (not an update)", () => {
     await pick("Slack #leads");
     const refused = await screen.findByTestId("preview-refused");
     expect(refused.getAttribute("data-code")).toBe("payload_too_large:slack");
-    expect(refused.textContent).toContain("REFUSED");
-    expect(refused.textContent).toContain("TOO LARGE FOR SLACK");
-    expect(within(refused).getByTestId("preview-size").textContent).toBe("41,099 / 39,000 CHARACTERS");
-    expect(refused.textContent).toContain("NOTHING SENT");
+    expect(refused.textContent).toContain("Refused");
+    expect(refused.textContent).toContain("Too large for Slack");
+    expect(within(refused).getByTestId("preview-size").textContent).toBe("41,099 / 39,000 characters");
+    expect(refused.textContent).toContain("Nothing sent");
     expect(refused.textContent).toContain("HOOKS.SLACK.COM");
-    expect(screen.getByTestId("send-open").textContent).not.toContain("NO ANSWER");
+    expect(screen.getByTestId("send-open").textContent).not.toContain("No answer");
     expect(screen.queryByTestId("send-verb")).toBeNull();
     expect(screen.queryByTestId("preview-failed")).toBeNull();
   });
@@ -544,7 +544,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
     const refused = await screen.findByTestId("preview-refused");
-    expect(refused.textContent).toContain("DOCUMENT NOT FOUND");
+    expect(refused.textContent).toContain("Document not found");
     expect(screen.queryByTestId("preview-size")).toBeNull();
   });
 
@@ -553,7 +553,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
     const failed = await screen.findByTestId("preview-failed");
-    expect(failed.textContent).toContain("NO ANSWER");
+    expect(failed.textContent).toContain("No answer");
     expect(within(failed).getByTestId("preview-retry").textContent).toBe("Retry");
   });
 
@@ -562,10 +562,10 @@ describe("the SEND well species on a brief (not an update)", () => {
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
     const failed = await screen.findByTestId("send-failed");
-    expect(failed.textContent).toContain("FAILED");
-    expect(failed.textContent).toContain("NO PERMISSION");
-    expect(failed.textContent).toContain("NOTHING SENT");
-    expect(screen.getByTestId("send-last-failed").textContent).toContain("LAST SEND FAILED");
+    expect(failed.textContent).toContain("Failed");
+    expect(failed.textContent).toContain("No permission");
+    expect(failed.textContent).toContain("Nothing sent");
+    expect(screen.getByTestId("send-last-failed").textContent).toContain("Last send failed");
     expect(screen.queryByTestId("send-history")).toBeNull();
   });
 
@@ -574,10 +574,10 @@ describe("the SEND well species on a brief (not an update)", () => {
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
     const unknown = await screen.findByTestId("send-unknown");
-    expect(unknown.textContent).toContain("RESULT UNKNOWN");
-    expect(unknown.textContent).toContain("NO ANSWER");
+    expect(unknown.textContent).toContain("Result unknown");
+    expect(unknown.textContent).toContain("No answer");
     const history = screen.getByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("SENT");
+    expect(history.querySelector("h3")?.textContent).toBe("Sent");
     expect(within(history).getByTestId("history-row").textContent).toContain("RESULT UNKNOWN · CHECK Team folder");
   });
 
@@ -593,7 +593,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     fireEvent.click(await screen.findByTestId("prepared-send"));
     const chip = await screen.findByTestId("prepared-refused-chip");
     expect(chip.getAttribute("data-code")).toBe("preview_changed");
-    expect(chip.textContent).toContain("PREVIEW CHANGED");
+    expect(chip.textContent).toContain("Preview changed");
     expect(screen.queryByTestId("prepared-send")).toBeNull();
     expect(screen.getByTestId("prepared-discard").textContent).toBe("Discard");
   });
@@ -605,12 +605,12 @@ describe("the SEND well species on a brief (not an update)", () => {
     })] });
     render(<><PreparedChip docRef={REF} /><SendWells doc={BRIEF} /></>);
     const row = await screen.findByTestId("prepared-row");
-    expect(within(row).getByTestId("prepared-label").textContent).toBe("BRIEF SEP 29");
-    expect(within(row).getByTestId("prepared-by").textContent).toBe("BY STEWARD");
-    expect(row.textContent).not.toContain("REV");
+    expect(within(row).getByTestId("prepared-label").textContent).toBe("Brief Sep 29");
+    expect(within(row).getByTestId("prepared-by").textContent).toBe("By Steward");
+    expect(row.textContent).not.toContain("Rev");
     expect(screen.getByTestId("prepared-send").textContent).toBe("Send");
     expect(screen.getByTestId("prepared-discard").textContent).toBe("Discard");
-    expect((await screen.findByTestId("doc-prepared-chip")).textContent).toContain("PREPARED ×1");
+    expect((await screen.findByTestId("doc-prepared-chip")).textContent).toContain("Prepared ×1");
     expect(screen.getByTestId("doc-prepared-chip").hasAttribute("data-head-chip")).toBe(true);
     const well = screen.getByTestId("send-well");
     const order = [...well.querySelectorAll("[data-testid=prepared-list], [data-testid=destination-list]")].map((e) => e.getAttribute("data-testid"));
@@ -652,12 +652,12 @@ describe("the SEND well species on a brief (not an update)", () => {
     const verb = await screen.findByTestId("send-verb");
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb);
-    expect((await screen.findByTestId("send-refused")).textContent).toContain("PREVIEW CHANGED");
+    expect((await screen.findByTestId("send-refused")).textContent).toContain("Preview changed");
     await waitFor(() => expect(screen.getByTestId("send-preview-body").textContent).toContain("Brief v2"));
     const again = screen.getByTestId("send-verb");
     await waitFor(() => expect((again as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(again);
-    expect((await screen.findByTestId("send-sent")).textContent).toContain("SAVED");
+    expect((await screen.findByTestId("send-sent")).textContent).toContain("Saved");
     expect(digests).toEqual(["dig1", "dig2"]);
   });
 });
@@ -735,14 +735,14 @@ describe("the receipt survives the click that leaves the row (Astra r2 F1)", () 
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
     await pressSend();
-    expect((await screen.findByTestId("send-failed")).textContent).toContain("NO PERMISSION");
+    expect((await screen.findByTestId("send-failed")).textContent).toContain("No permission");
     fireEvent.click(within(rowOf("Team folder")).getByText("Team folder"));   // close it
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
     const row = rowOf("Team folder");
-    expect(row.textContent).toContain("FAILED");
-    expect(row.textContent).toContain("NO PERMISSION");
-    expect(row.textContent).toContain("NOTHING SENT");
-    expect(row.textContent).not.toContain("THIS DEVICE");
+    expect(row.textContent).toContain("failed");
+    expect(row.textContent).toContain("No permission");
+    expect(row.textContent).toContain("Nothing sent");
+    expect(row.textContent).not.toContain("This device");
   });
 
   it("REFUSED, then another row is picked: the refusal word and NOTHING SENT stay on the first row", async () => {
@@ -757,9 +757,9 @@ describe("the receipt survives the click that leaves the row (Astra r2 F1)", () 
     await pick("Other folder");
     await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Other folder"));
     const row = rowOf("Team folder");
-    expect(row.textContent).toContain("REFUSED");
-    expect(row.textContent).toContain("DESTINATION CHANGED");
-    expect(row.textContent).toContain("NOTHING SENT");
+    expect(row.textContent).toContain("Refused");
+    expect(row.textContent).toContain("Destination changed");
+    expect(row.textContent).toContain("Nothing sent");
   });
 });
 
@@ -829,7 +829,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({ document_ref: ref, destination_id: "chd_f", preview_digest: `dig:${ref}` });
     expect(within(saved).getByTestId("proof").textContent).toBe(`${FOLDER}/${ref.replace(":", "-")}.md`);
-    expect((await screen.findByTestId("send-history")).querySelector("h3")?.textContent).toBe("SENT 1");
+    expect((await screen.findByTestId("send-history")).querySelector("h3")?.textContent).toBe("Sent 1");
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
   });
 
@@ -854,13 +854,13 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     await pressSend();
     const refused = await screen.findByTestId("send-refused");
     expect(refused.getAttribute("data-code")).toBe("preview_changed");
-    expect(refused.textContent).toContain("REFUSED");
-    expect(refused.textContent).toContain("PREVIEW CHANGED");
-    expect(refused.textContent).toContain("NOTHING SENT");
+    expect(refused.textContent).toContain("Refused");
+    expect(refused.textContent).toContain("Preview changed");
+    expect(refused.textContent).toContain("Nothing sent");
     expect(stored["desk_decision:decision_7f3a"]).toBeUndefined();
     await waitFor(() => expect(screen.getByTestId("send-preview-body").textContent).toContain("Nov 6"));
     await pressSend();
-    expect((await screen.findByTestId("send-sent")).textContent).toContain("SAVED");
+    expect((await screen.findByTestId("send-sent")).textContent).toContain("Saved");
     expect(sent.map((s) => [s.document_ref, s.preview_digest])).toEqual([
       ["desk_decision:decision_7f3a", "dig:Freeze the old ledger on Nov 5."],
       ["desk_decision:decision_7f3a", "dig:Freeze the old ledger on Nov 6."],
@@ -885,7 +885,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     const row = await screen.findByTestId("prepared-row");
     expect(within(row).getByTestId("prepared-label").textContent).toBe("D-85F927");
-    expect(within(row).getByTestId("prepared-by").textContent).toBe("BY REMOTE-PROJECT-AGENT");
+    expect(within(row).getByTestId("prepared-by").textContent).toBe("By Remote-project-agent");
     fireEvent.click(screen.getByTestId("prepared-send"));
     await screen.findByTestId("prepared-result");
     expect(sent).toHaveLength(1);

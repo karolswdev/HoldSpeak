@@ -74,6 +74,7 @@ import {
   currentWriteFailure,
   reportWriteFailure,
 } from "../../desk/hooks/useWriteReceipt";
+import { Token } from "../../desk/surface/Token";
 
 type Segment = Record<string, unknown>;
 
@@ -526,9 +527,9 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           {intelTopics.length ? (
             <div className="surface-actions">
               {intelTopics.slice(0, 8).map((topic) => (
-                <span className="surface-token" key={topic}>
+                <Token className="surface-token" key={topic}>
                   {topic}
-                </span>
+                </Token>
               ))}
             </div>
           ) : null}

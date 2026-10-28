@@ -60,35 +60,9 @@ export interface NeedsRowProps {
   dotState?: boolean;
 }
 
-export const KEEP_CAPS = new Set(["PR", "CI", "AI", "ID", "OK", "LAN", "MCP", "API", "CLI", "URL", "PDF", "ADR", "UI"]);
-
-/** A wire state word in sentence case, per ` · ` part: the part's first
- *  word keeps a capital, every later ALL-CAPS word of three letters or
- *  more is lower case; mixed-case words (names), acronyms (`PR`, `CI`,
- *  `LAN`), numbers, times and ids stay as they are (`OVERDUE · 23 DAYS` →
- *  `Overdue · 23 days`, `PR OPEN` → `PR open`, `PROPOSED · Standup` →
- *  `Proposed · Standup`). */
-export function stateWords(label: string, keep: ReadonlySet<string> = KEEP_CAPS): string {
-  return label
-    .split(" · ")
-    .map((part) => {
-      let first = true;
-      let afterLink = false;
-      return part.replace(/[^\s]+/g, (word) => {
-        const lead = first;
-        const named = afterLink && !COMMON_AFTER_LINK.has(word);
-        first = false;
-        afterLink = LINK_WORDS.has(word);
-        if (!/^[A-Z][A-Z'’-]+$/.test(word) || keep.has(word)) return word;
-        // `WAITING ON PRIYA`: the word after a link word is a name; it keeps
-        // its capital (`Waiting on Priya`, `Waiting on your review`).
-        return lead || named ? word.charAt(0) + word.slice(1).toLowerCase() : word.toLowerCase();
-      });
-    })
-    .join(" · ");
-}
-const LINK_WORDS = new Set(["ON", "FOR", "WITH", "BY", "FROM"]);
-const COMMON_AFTER_LINK = new Set(["YOUR", "YOU", "THE", "A", "AN", "IT", "THIS", "THAT", "ME", "HIM", "HER", "THEM", "REVIEW", "TRACK", "HOLD", "TIME"]);
+export { KEEP_CAPS, stateWords } from "../words";
+import { stateWords } from "../words";
+import { Token } from "../Token";
 
 export function NeedsRow({ id, kind, name, fact, factTitle, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate, glyphLabel, dotState }: NeedsRowProps) {
   const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
@@ -113,7 +87,7 @@ export function NeedsRow({ id, kind, name, fact, factTitle, factCode, factWords,
           // word leads the line (PHILO-15-09).
           <span className="needs-row-factline">
             {kindWord ? (
-              <span className="surface-token needs-row-kind" data-testid="needs-row-kind">{kindWord}</span>
+              <Token className="surface-token needs-row-kind" data-testid="needs-row-kind">{kindWord}</Token>
             ) : null}
             {factNode}
             {project ? (

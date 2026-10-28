@@ -143,7 +143,7 @@ describe("Rails conditional action controls", () => {
     expect(openEvidence).toHaveBeenCalledOnce();
     expect(openEvidence).toHaveBeenCalledWith("architecture", "migration", "ARC-12-01");
     expect(screen.getByText("Exact checkpoint evidence")).toBeTruthy();
-    expect(screen.getByText("EVIDENCE ARC-12-01")).toBeTruthy();
+    expect(screen.getByText("Evidence ARC-12-01")).toBeTruthy();
     expect(parentClick).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "ARC-12-01" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.queryByText("FLIP ARC-12-01")).toBeNull();

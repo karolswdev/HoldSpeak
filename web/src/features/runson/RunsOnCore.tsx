@@ -69,6 +69,7 @@ import { formatBytes, sourceHost } from "../../desk/firstrun/localAi";
 // The Meaning search row draws with the Concierge's ledger cells.
 import "../concierge/concierge.css";
 import "./runson.css";
+import { Token } from "../../desk/surface/Token";
 
 function lampFor(engine: BoardEngine, busy: boolean): SwitchLamp {
   if (busy) return "busy";
@@ -147,9 +148,9 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
           <span className="runson-add-answer">
             <StateChip state="success" label="READY" icon="●" />
             {a.tools ? (
-              <span className="surface-token" data-testid="concierge-add-tools">
+              <Token className="surface-token" data-testid="concierge-add-tools">
                 {a.tools === "yes" ? "TOOLS" : a.tools === "no" ? "NO TOOLS" : "TOOLS UNKNOWN"}
-              </span>
+              </Token>
             ) : null}
           </span>
           <ModelPicker ctrl={ctrl} presets={service?.presets ?? []} />
@@ -163,7 +164,7 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
       {a.state === "KEY_INVALID" ? (
         <span className="runson-add-answer" role="alert" data-testid="concierge-add-key-answer">
           <StateChip state="failure" label="KEY INVALID" />
-          <span className="surface-token">BAD CHARACTERS</span>
+          <Token className="surface-token">BAD CHARACTERS</Token>
         </span>
       ) : null}
       {/* A.3: the answer is tokens (the word and the host), never the
@@ -171,13 +172,13 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
       {a.state === "UNREACHABLE" ? (
         <span className="runson-add-answer" role="alert" data-testid="concierge-add-unreachable">
           <StateChip state="failure" label="UNREACHABLE" />
-          <span className="surface-token" data-testid="concierge-add-reason">{host || "NO ADDRESS"}</span>
+          <Token code={Boolean(host)} className="surface-token" data-testid="concierge-add-reason">{host || "NO ADDRESS"}</Token>
         </span>
       ) : null}
       {a.state === "NOT_ADDED" ? (
         <span className="runson-add-answer" role="alert">
           <StateChip state="failure" label="NOT ADDED" />
-          <span className="surface-token" data-testid="concierge-add-reason">{a.reason}</span>
+          <Token className="surface-token" data-testid="concierge-add-reason">{a.reason}</Token>
         </span>
       ) : null}
     </div>
@@ -299,9 +300,9 @@ function ModelPicker({ ctrl, presets = [] }: { ctrl: RunsOnController; presets?:
             const preset = named.get(model);
             return (
               <li key={model} className="runson-picker-row" data-testid="concierge-add-pick" data-model={model} data-preset={preset ? "" : undefined}>
-                {preset ? <span className="surface-token runson-picker-preset">{preset}</span> : null}
-                <span className="surface-token runson-picker-model">{model}</span>
-                {context ? <span className="surface-token">{context.toLocaleString("en-US")} TOKENS</span> : null}
+                {preset ? <Token className="surface-token runson-picker-preset">{preset}</Token> : null}
+                <Token className="surface-token runson-picker-model">{model}</Token>
+                {context ? <Token className="surface-token">{context.toLocaleString("en-US")} TOKENS</Token> : null}
                 {used ? (
                   <StateChip state="success" label="ADDED" icon="●" />
                 ) : (
@@ -314,7 +315,7 @@ function ModelPicker({ ctrl, presets = [] }: { ctrl: RunsOnController; presets?:
           })}
         </ul>
       ) : (
-        <span className="surface-token" data-testid="concierge-add-no-match">NO MODEL MATCHES</span>
+        <Token className="surface-token" data-testid="concierge-add-no-match">NO MODEL MATCHES</Token>
       )}
     </div>
   );
@@ -490,7 +491,7 @@ function AddByKind({
             </span>
           ))}
           <span className="runson-kind-install">
-            <span className="surface-token">ON THE OTHER MAC, RUN</span>
+            <Token className="surface-token">ON THE OTHER MAC, RUN</Token>
             <code data-testid="runson-mesh-command">{`holdspeak mesh serve --hub ${typeof window === "undefined" ? "http://<this-mac>:8765" : window.location.origin}`}</code>
           </span>
         </div>
@@ -1138,7 +1139,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         />
         </div>
       ) : ctrl.error ? (
-        <span className="surface-token" data-tone="danger" role="alert">NOT READ</span>
+        <Token className="surface-token" data-tone="danger" role="alert">NOT READ</Token>
       ) : null}
 
       {(localDownloads.length || roster) && !localInKind ? (

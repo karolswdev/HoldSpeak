@@ -18,6 +18,7 @@ import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { CommandWell } from "./connections/ConnectionsPane";
 import { openFirstRun } from "../../desk/firstrun/reopen";
 import "./settings.css";
+import { Token } from "../../desk/surface/Token";
 
 const CHECK_RANK: Record<string, number> = { fail: 0, warn: 1 };
 
@@ -205,7 +206,7 @@ export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: C
       </div>
       <SurfaceFooter
         receipt={result ? (
-          <span className="surface-footer-receipt-line" role="status" data-tone={result.ok ? "ok" : "danger"}>{result.text}</span>
+          <Token className="surface-footer-receipt-line" role="status" data-tone={result.ok ? "ok" : "danger"}>{result.text}</Token>
         ) : undefined}
       />
     </>

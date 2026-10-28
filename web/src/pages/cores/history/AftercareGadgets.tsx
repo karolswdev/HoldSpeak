@@ -5,6 +5,7 @@ import {
   GadgetRow,
 } from "../../../desk/surface/gadgets";
 import { controlModeLabel } from "../../../lib/productLanguage";
+import { Token } from "../../../desk/surface/Token";
 
 export function AftercareGadgets({
   aftercare,
@@ -39,9 +40,9 @@ export function AftercareGadgets({
         </Button>
       </GadgetRow>
       <GadgetRow label="BASIS">
-        <span className="surface-token">
+        <Token className="surface-token">
           {controlModeLabel(String(authority.control_mode ?? "neutral"))}
-        </span>
+        </Token>
       </GadgetRow>
     </GadgetGroup>
   );

@@ -35,6 +35,7 @@ import { conductorMembers, fleetCounts } from "../../conductor/members";
 import { AGENT_NAME, type AgentId } from "../../firstrun/agentsStep";
 import { openAgentLane } from "../../shell";
 import "./today.css";
+import { Token } from "../../surface/Token";
 
 /** Betterment AG9: Today's Agents line, only what is there:
  *  `2 agents need you · 1 finished`; "" with nothing. */
@@ -745,7 +746,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     { key: "decide", lamp: "ask", text: countWords(decide, "decision to make", "decisions to make"), testId: "today-status-decide" },
     nextWords ? { key: "next", text: nextWords, testId: "today-status-next" } : null,
     summary.receipt
-      ? { key: "receipt", text: <span className="surface-footer-receipt-line">{summary.receipt.text}</span> }
+      ? { key: "receipt", text: <Token className="surface-footer-receipt-line">{summary.receipt.text}</Token> }
       : dropped ? { key: "dropped", text: <NeedsDroppedReceipt /> } : null,
   ];
   const needsCount = rows.needs.count;

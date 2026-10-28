@@ -103,6 +103,7 @@ import { Unreadable } from "../../desk/surface/send";
 import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
 import { flightForItem, isInFlight, mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/agentFlights";
 import { FlightChip, FlightVerbs } from "../../desk/components/AgentFlight";
+import { Token } from "../../desk/surface/Token";
 
 /* ── sub-components (kept for backward-compat re-exports) ── */
 
@@ -121,9 +122,9 @@ export function LifecycleChip({ row }: { row: Record<string, unknown> }) {
         ? "danger"
         : undefined;
   return (
-    <span className="surface-token" data-tone={tone}>
+    <Token className="surface-token" data-tone={tone}>
       {lifecycleLabel(row)}
-    </span>
+    </Token>
   );
 }
 
@@ -556,7 +557,7 @@ function ProposalRow({
   const cancelEdit = () => setEditing(false);
 
   // A successful write remains successful while its follow-up read recovers.
-  if (accepted) return <SurfaceLedgerRow data-testid="proposal-accepted" lead="MTG" wrap primary={accepted.text} cells={<>{accepted.owner ? <span className="surface-token">{accepted.owner}</span> : null}{accepted.due ? <span className="surface-token">BY {formatDueShort(accepted.due)}</span> : null}<StateChip state="success" label="Confirmed" /></>} />;
+  if (accepted) return <SurfaceLedgerRow data-testid="proposal-accepted" lead="MTG" wrap primary={accepted.text} cells={<>{accepted.owner ? <Token className="surface-token">{accepted.owner}</Token> : null}{accepted.due ? <Token className="surface-token">BY {formatDueShort(accepted.due)}</Token> : null}<StateChip state="success" label="Confirmed" /></>} />;
 
   if (editing) {
     // Board: RoomProposalEdit — text StringGadget + OWNER + DUE + was: caption + Save & confirm + Cancel
@@ -638,7 +639,7 @@ function ProposalRow({
           {speaker ? (
             <span className="room-proposal-caption room-proposal-speaker">{speaker.toUpperCase()}</span>
           ) : null}
-          {failure ? <span className="surface-token" role="alert">{failure}</span> : null}
+          {failure ? <Token className="surface-token" role="alert">{failure}</Token> : null}
         </>
       }
       trailing={
@@ -761,7 +762,7 @@ function NeedsYouSection({
                   primary={<span className="surface-primary">{item.title}</span>}
                   wrap
                   cells={item.meetingTitle ? (
-                    <span className="surface-token" data-testid="meeting-match-title">{item.meetingTitle}</span>
+                    <Token className="surface-token" data-testid="meeting-match-title">{item.meetingTitle}</Token>
                   ) : undefined}
                   trailing={
                     <Button
@@ -818,17 +819,17 @@ function NeedsYouSection({
                     primary={<span className="surface-primary">{item.title}</span>}
                     wrap
                     cells={
-                      <span
+                      <Token
                         className="surface-token room-why-token"
                         data-testid="bottleneck-why"
                       >
                         {whyFaceWords(whyText)}
-                      </span>
+                      </Token>
                     }
                     trailing={
                       <span className="room-bottleneck-verbs">
                         {cooldown ? (
-                          <span className="surface-token room-nudge-cooldown" data-testid="nudge-cooldown">{whyFaceWords(cooldown)}</span>
+                          <Token className="surface-token room-nudge-cooldown" data-testid="nudge-cooldown">{whyFaceWords(cooldown)}</Token>
                         ) : hasNudgeStep ? (
                           <Button dense variant="ghost" onClick={() => setOpenNudge(isNudgeOpen ? null : relId)} data-testid="nudge-verb">
                             Nudge
@@ -871,14 +872,14 @@ function NeedsYouSection({
                 wrap
                 cells={
                   <span className="room-why-cells">
-                    <span
+                    <Token
                       className="surface-token room-why-token"
                       style={{ color: severityColor(item.severity) }}
                       data-tone={severityTone(item.severity)}
                       data-testid="needs-you-why"
                     >
                       <WhyWords words={whyFaceWords(needsYouWhyWords(item))} alert={(item.source === "item" && item.kind === "milestone") || severityTone(item.severity) === "danger"} />
-                    </span>
+                    </Token>
                     <FlightChip flight={flight} />
                   </span>
                 }
@@ -1487,7 +1488,7 @@ function UpdateLine({ room, updateCtrl, onReload }: {
       <div className="room-update-line">
         <Button dense variant="ghost" onClick={openAutomation} data-testid="room-update-when">{when}</Button>
         <Button dense variant="ghost" onClick={openAutomation} data-testid="room-update-with">{withEngine}</Button>
-        {hasNew ? <span className="surface-token" data-tone="ok" data-testid="room-update-new">NEW</span> : null}
+        {hasNew ? <Token className="surface-token" data-tone="ok" data-testid="room-update-new">NEW</Token> : null}
         <Button dense variant="ghost" onClick={openResult} data-testid="room-update-open">
           {latestResult?.updateId ? "Open latest" : "Open automation"}
         </Button>

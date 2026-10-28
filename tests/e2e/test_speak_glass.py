@@ -274,7 +274,7 @@ def _assert_learned_board(page: Any) -> None:
     for wire in ("claude_code", "dry_run", "snake", "similar", "SIMILAR"):
         assert wire not in body, (wire, body)
     # `LEARNED` is said ONCE per face — the wing tab, never the body (A.7)
-    assert "LEARNED" not in body, body
+    assert "LEARNED" not in body.upper(), body
     # no caption count (ruling N5b): the tab is the name, the rows the count
     # Phase 16 kit: a Ledger with no count and no controls draws no head at
     # all (Surface.tsx SurfaceLedger), so the caption is absent or empty.
@@ -624,7 +624,7 @@ def _walk(page: Any, machine: _Platform, width: int) -> None:
         row = page.locator(f'[data-testid="speak-permission-{pid}"]')
         assert row.count() == 1, f"{pid} row missing"
         text = row.inner_text()
-        assert "SYSTEM SETTINGS" in text and "PRIVACY & SECURITY" in text, text
+        assert "System settings" in text and "Privacy & security" in text, text
         assert "DENIED" in text.upper(), text
     assert "UNAVAILABLE" in block.inner_text().upper()
     # never a modal, never a sentence
@@ -670,7 +670,7 @@ def _walk(page: Any, machine: _Platform, width: int) -> None:
     block = page.locator('[data-testid="speak-hotkey"]')
     block.wait_for(timeout=15000)
     reason = page.locator('[data-testid="speak-hotkey-reason"]')
-    assert reason.inner_text() == "PYNPUT MISSING", reason.inner_text()
+    assert reason.inner_text() == "pynput missing", reason.inner_text()
     # The raw exception never reaches the face (UX canon A10).
     assert "pynput is not available" not in block.inner_text()
     # A granted set draws no permission rows at all.
@@ -685,7 +685,7 @@ def _walk(page: Any, machine: _Platform, width: int) -> None:
     page.locator('[data-testid="speak-hotkey"]').wait_for(state="detached", timeout=15000)
     assert page.locator('[data-testid="speak-hotkey"]').count() == 0
     # ...and nothing green took its place.
-    assert "HOTKEY" not in page.locator(".speak-face").inner_text()
+    assert "HOTKEY" not in page.locator(".speak-face").inner_text().upper()
     _custody_shot(page, "all-granted", width)
 
 @pytest.mark.e2e

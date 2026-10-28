@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { StringGadget } from "../surface";
 import type { useOwnerName } from "./ownerName";
 import "./firstrun.css";
+import { Token } from "../surface/Token";
 
 export function OwnerAliasField({
   owner,
@@ -47,9 +48,9 @@ export function OwnerAliasField({
   return (
     <span className="firstrun-alias-row">
       {owner.aliases.map((name) => (
-        <span key={name} className="surface-token" data-chip>
+        <Token key={name} className="surface-token" data-chip>
           {name}
-        </span>
+        </Token>
       ))}
       <StringGadget
         label="Also called"

@@ -805,7 +805,7 @@ describe("Add an engine: the optional Key", () => {
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
     const answer = await screen.findByTestId("concierge-add-key-answer");
-    expect(answer.textContent).toContain("KEY REQUIRED");
+    expect(answer.textContent).toContain("Key required");
     expect(screen.queryByTestId("concierge-add-reason")).toBeNull();
     expect(screen.getByTestId("concierge-add-submit")).toBeDisabled();
   });
@@ -825,7 +825,7 @@ describe("Add an engine: the optional Key", () => {
     fireEvent.change(screen.getByLabelText("Key"), { target: { value: "a b" } });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
     const answer = await screen.findByTestId("concierge-add-key-answer");
-    expect(answer.textContent).toContain("KEY INVALID");
+    expect(answer.textContent).toContain("Key invalid");
     expect(screen.getByTestId("concierge-add-reason").textContent).toBe("BAD CHARACTERS");
     expect(answer.textContent).not.toContain("header");
     expect(answer.textContent).not.toContain("a b");

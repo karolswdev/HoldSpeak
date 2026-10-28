@@ -69,6 +69,7 @@ import { StringGadget } from "../../../desk/surface/gadgets";
 import { useWindowInterior } from "../../../desk/surface/interior";
 import { Toolbar } from "../../../desk/surface/kit";
 import { SYSTEM_48 } from "../../../desk/systemSprites";
+import { Token } from "../../../desk/surface/Token";
 
 type Row = Record<string, unknown>;
 
@@ -215,9 +216,9 @@ function JournalRow({
             {landed ? `Landed in ${landed}` : ""}
           </span>
           {badge ? (
-            <span className="surface-token journal-badge" data-chip>
+            <Token className="surface-token journal-badge" data-chip>
               {badge}
-            </span>
+            </Token>
           ) : null}
           <span className="surface-ledger-cell journal-ms">
             {took > 0 ? `${Math.round(took)} ms` : ""}
@@ -225,14 +226,14 @@ function JournalRow({
           {/* ONE slot, held open when the row carries neither token. */}
           <span className="journal-mark">
             {applied ? (
-              <span className="surface-token" data-chip data-tone="ok">
+              <Token className="surface-token" data-chip data-tone="ok">
                 Applied
-              </span>
+              </Token>
             ) : null}
             {taught ? (
-              <span className="surface-token" data-chip>
+              <Token className="surface-token" data-chip>
                 Taught
-              </span>
+              </Token>
             ) : null}
             {/* The search's mark shares the SAME fixed slot, which widens for
                 every row while a search runs (`[data-searching]`), so it
@@ -241,7 +242,7 @@ function JournalRow({
                 hit lives in `final_text` alone — the row's visible text is
                 the raw transcript, which then lacks the needle (C15). */}
             {matchedFinalOnly(row, needle) ? (
-              <span className="surface-token">In final</span>
+              <Token className="surface-token">In final</Token>
             ) : null}
           </span>
         </span>
@@ -296,9 +297,9 @@ function JournalRow({
           <span className="journal-preview-tokens">
             <span className="surface-preview-label">REPLAY · PREVIEW</span>
             {replayText ? null : (
-              <span className="surface-token" data-chip>
+              <Token className="surface-token" data-chip>
                 NO TEXT
-              </span>
+              </Token>
             )}
           </span>
           {replayText ? (

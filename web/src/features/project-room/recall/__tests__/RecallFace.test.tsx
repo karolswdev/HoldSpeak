@@ -114,7 +114,7 @@ describe("RecallFace (HS-200-13)", () => {
   it("empty: the well, the mic, the five filters and one token; no results region yet", () => {
     wire(result());
     render(<RecallFace />);
-    expect(screen.getByTestId("recall-empty-token").textContent).toBe("SEARCH THE DESK");
+    expect(screen.getByTestId("recall-empty-token").textContent).toBe("Search the desk");
     expect(screen.queryByTestId("recall-display")).toBeNull();
     expect(screen.queryByTestId("recall-results")).toBeNull();
     expect(screen.getByRole("button", { name: "Dictate into the search" })).toBeTruthy();
@@ -133,14 +133,14 @@ describe("RecallFace (HS-200-13)", () => {
 
     expect(screen.getByTestId("recall-display").textContent).toBe("3 remembered");
     expect(screen.getByTestId("recall-display").getAttribute("data-accent")).toBe("true");
-    expect(screen.getByTestId("recall-ref-token").textContent).toBe("REF · FREEZE WINDOW");
-    expect(screen.getByTestId("recall-searched-token").textContent).toBe("SEARCHED 09:20");
+    expect(screen.getByTestId("recall-ref-token").textContent).toBe("Ref · Freeze window");
+    expect(screen.getByTestId("recall-searched-token").textContent).toBe("Searched 09:20");
 
     const cards = screen.getAllByTestId("recall-card");
     expect(cards.map((c) => c.getAttribute("data-state"))).toEqual(["current", "superseded"]);
     const current = cards[0];
     expect(within(current).getByTestId("recall-card-title").textContent).toBe(CURRENT.text);
-    expect(within(current).getAllByTestId("recall-axis").map((c) => c.textContent)).toEqual(["DECISION", "SUPPORTED", "ACCEPTED"]);
+    expect(within(current).getAllByTestId("recall-axis").map((c) => c.textContent)).toEqual(["Decision", "Supported", "Accepted"]);
     expect(within(current).getByTestId("recall-rationale").textContent).toBe(CURRENT.rationale);
     expect(within(current).getByTestId("recall-source-token").textContent).toBe("MTG 09-07 · 11:31");
     expect(within(current).getByRole("button", { name: "Open the Project: Q4 platform" })).toBeTruthy();
@@ -155,8 +155,8 @@ describe("RecallFace (HS-200-13)", () => {
     expect(source.compareDocumentPosition(carry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     const superseded = cards[1];
-    expect(within(superseded).getByTestId("recall-superseded-by").textContent).toBe("SUPERSEDED BY DEC 09-07");
-    expect(within(superseded).getAllByTestId("recall-axis").map((c) => c.textContent)).toContain("SUPERSEDED");
+    expect(within(superseded).getByTestId("recall-superseded-by").textContent).toBe("Superseded by DEC 09-07");
+    expect(within(superseded).getAllByTestId("recall-axis").map((c) => c.textContent)).toContain("Superseded");
     expect(within(superseded).queryByRole("button", { name: "Carry into brief" })).toBeNull();
     expect(within(superseded).getByRole("button", { name: "Open source: MTG 09-02" })).toBeTruthy();
 
@@ -168,10 +168,10 @@ describe("RecallFace (HS-200-13)", () => {
     );
     expect(raw).toEqual([]);
     // Section captions carry their counts; no zero is drawn.
-    expect(screen.getByText("CURRENT 1")).toBeTruthy();
-    expect(screen.getByText("SUPERSEDED 1")).toBeTruthy();
-    expect(screen.getByText("OWED 1")).toBeTruthy();
-    expect(screen.queryByText(/DISPUTED 0|MEETINGS 0|ALSO 0/)).toBeNull();
+    expect(screen.getByText("Current 1")).toBeTruthy();
+    expect(screen.getByText("Superseded 1")).toBeTruthy();
+    expect(screen.getByText("Owed 1")).toBeTruthy();
+    expect(screen.queryByText(/DISPUTED 0|MEETINGS 0|ALSO 0/i)).toBeNull();
   });
 
   it("Open source opens the transcript at the moment; the Project button opens its Room", async () => {
@@ -197,11 +197,11 @@ describe("RecallFace (HS-200-13)", () => {
     await search();
     const card = screen.getAllByTestId("recall-card").find((c) => c.getAttribute("data-state") === "disputed")!;
     expect(card).toBeTruthy();
-    expect(within(card).getAllByTestId("recall-axis").map((c) => c.textContent)).toContain("DISPUTED");
+    expect(within(card).getAllByTestId("recall-axis").map((c) => c.textContent)).toContain("Disputed");
     expect(within(card).getByTestId("recall-dispute-reason").textContent).toBe("Priya disagrees with the window");
     expect(within(card).queryByRole("button", { name: "Carry into brief" })).toBeNull();
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(0);
-    expect(screen.getByText("DISPUTED 1")).toBeTruthy();
+    expect(screen.getByText("Disputed 1")).toBeTruthy();
   });
 
   it("Carry into brief posts the carry by reference, reads CARRIED and keeps focus", async () => {
@@ -211,7 +211,7 @@ describe("RecallFace (HS-200-13)", () => {
     const carry = screen.getByRole("button", { name: "Carry into brief" });
     carry.focus();
     fireEvent.click(carry);
-    await waitFor(() => expect(screen.getByTestId("recall-carry").textContent).toBe("CARRIED"));
+    await waitFor(() => expect(screen.getByTestId("recall-carry").textContent).toBe("Carried"));
     expect(apiFetch).toHaveBeenCalledWith("/api/decision-records/rec-new/carry", { method: "POST", json: { project_id: "p-q4" } });
     expect(document.activeElement).toBe(screen.getByTestId("recall-carry"));
     expect(screen.getByTestId("recall-carry").getAttribute("aria-pressed")).toBe("true");
@@ -308,7 +308,7 @@ describe("RecallFace (HS-200-13)", () => {
     render(<RecallFace />);
     fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: "freeze window" } });
     fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
-    expect((await screen.findByTestId("recall-failed-token")).textContent).toBe("CANT SEARCH · MEMORY INDEX LOCKED");
+    expect((await screen.findByTestId("recall-failed-token")).textContent).toBe("Cannot search · Memory index locked");
     expect((screen.getByRole("searchbox", { name: "Search the Desk" }) as HTMLInputElement).value).toBe("freeze window");
     wire(result());
     fireEvent.click(screen.getByRole("button", { name: "Retry the search" }));

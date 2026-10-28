@@ -18,16 +18,17 @@
   overflow-wrap: anywhere;
 }
 
-/* StatusStrip: tokens (lamp square + word), mono 12 upper; wraps. */
+/* StatusStrip: tokens (lamp square + word), sans 12 in sentence case
+   (STATECHIP 2026-10-29: the words go through `stateWords`); wraps. */
 .kit-strip {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 4px 14px;
   min-width: 0;
-  font: 500 12px / 1.4 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 500 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--wb-muted);
 }
 /* Inline (not flex), so the space between a word and its value stays. */

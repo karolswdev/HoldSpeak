@@ -603,7 +603,7 @@ class TestTheThoughtSends:
                 assert path.read_bytes() == sent[0]["payload"] and revised_body in path.read_text(), path
                 text = " ".join(receipt.inner_text().split())
                 # The built-in folder names its path from HOME (~).
-                assert text == f"✓ SAVED ~/Documents/HoldSpeak/Sent/{path.name}", text
+                assert text == f"✓ Saved ~/Documents/HoldSpeak/Sent/{path.name}", text
                 receipt.scroll_into_view_if_needed()
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-saved-{width}.png"))
 

@@ -14,6 +14,7 @@ import {
 } from "../../../desk/surface/Surface";
 import { useAction } from "../core-hooks";
 import { IMPORT_ACCEPT, startedAtMs, toDatetimeLocal, whenFromFile } from "./importWhen";
+import { Token } from "../../../desk/surface/Token";
 
 export function ImportSection({
   onDone,
@@ -123,7 +124,7 @@ export function ImportSection({
             {/* Rendered as mono tokens (CSS uppercases); the literal
                 lowercase suffixes and ffmpeg stay in source — they are
                 the wire truth. */}
-            <span className="surface-token">.WAV .MP3 .M4A .OGG .FLAC .VTT .SRT .TXT</span>
+            <Token code className="surface-token">.WAV .MP3 .M4A .OGG .FLAC .VTT .SRT .TXT</Token>
           </>
         )}
       </label>

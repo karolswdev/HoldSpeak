@@ -339,7 +339,7 @@ describe("a form change keeps the other form's result (Astra C5 check, condition
     await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_followup:m8"));
     const row = screen.getByTestId("history-row");
     expect(within(row).getByTestId("history-form").getAttribute("data-form")).toBe("meeting_summary");
-    expect(row.textContent).toContain("SAVED");
+    expect(row.textContent).toContain("Saved");
   });
 });
 

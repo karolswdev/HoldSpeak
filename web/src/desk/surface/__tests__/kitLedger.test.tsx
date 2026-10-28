@@ -40,7 +40,7 @@ describe("Ledger + LedgerRow (Phase 16 kit)", () => {
         </ul>
       </SurfaceLedger>,
     );
-    expect(container.querySelector(".surface-ledger-count")?.textContent).toBe("TODAY 2");
+    expect(container.querySelector(".surface-ledger-count")?.textContent).toBe("Today 2");
     expect(container.querySelector("[data-testid='kit-kind']")).toBeNull();
     expect(container.querySelector(".surface-ledger-lead")?.textContent).toBe("09:14");
   });

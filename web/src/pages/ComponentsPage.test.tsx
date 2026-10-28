@@ -69,9 +69,9 @@ describe("Signal component gallery", () => {
 
     const preset = screen.getByRole("combobox", { name: "Example state" });
     fireEvent.change(preset, { target: { value: "retained" } });
-    expect(within(screen.getByTestId("reference-editing")).getByText("NOT INSERTED")).toBeInTheDocument();
+    expect(within(screen.getByTestId("reference-editing")).getByText("Not inserted")).toBeInTheDocument();
     fireEvent.change(preset, { target: { value: "newer" } });
-    expect(within(screen.getByTestId("reference-editing")).getByText("NOT INSERTED")).toBeInTheDocument();
+    expect(within(screen.getByTestId("reference-editing")).getByText("Not inserted")).toBeInTheDocument();
     expect(screen.getByTestId("reference-editing")).toHaveTextContent("Newer local edit.");
     fireEvent.change(preset, { target: { value: "read-only" } });
     expect(within(screen.getByTestId("reference-editing")).getByRole("button", { name: "Insert at caret" })).toBeDisabled();

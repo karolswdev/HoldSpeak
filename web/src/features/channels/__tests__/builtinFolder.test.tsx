@@ -134,7 +134,7 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
     });
     const { unmount } = render(<Well />);
     const receipt = await screen.findByTestId("send-sent");
-    expect(receipt.textContent).toContain("SAVED");
+    expect(receipt.textContent).toContain("Saved");
     expect(receipt.textContent).toContain("ICLOUD");
     unmount();
     resetSendStore();

@@ -66,16 +66,16 @@ describe("the Agents card", () => {
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
     // PHILO-15 11 (B17): the count is of agents (two), not of rows (three).
-    await within(card).findByText("2 AGENTS FOUND");
+    await within(card).findByText("2 agents found");
     const claude = within(card).getAllByTestId("firstrun-agent-row").find((r) => r.dataset.agent === "claude")!;
-    expect(claude.textContent).toContain("CLAUDE 2.1.4");
-    expect(within(claude).getByRole("status", { name: "INSTALLED" })).toBeTruthy();
-    expect(within(claude).getByRole("status", { name: "SIGNED IN" })).toBeTruthy();
-    expect(within(claude).getByRole("status", { name: "HOOKS" }).getAttribute("data-state")).toBe("idle");
+    expect(claude.textContent).toContain("Claude 2.1.4");
+    expect(within(claude).getByRole("status", { name: "Installed" })).toBeTruthy();
+    expect(within(claude).getByRole("status", { name: "Signed in" })).toBeTruthy();
+    expect(within(claude).getByRole("status", { name: "Hooks" }).getAttribute("data-state")).toBe("idle");
     const tmux = within(card).getAllByTestId("firstrun-agent-row").find((r) => r.dataset.agent === "tmux")!;
-    expect(tmux.textContent).toContain("TMUX 3.5A");
-    expect(within(tmux).getByTestId("firstrun-tool-token").textContent).toBe("TOOL");
-    expect(within(card).queryByText("THIS DEVICE")).toBeNull();
+    expect(tmux.textContent).toContain("tmux 3.5A");
+    expect(within(tmux).getByTestId("firstrun-tool-token").textContent).toBe("Tool");
+    expect(within(card).queryByText("This device")).toBeNull();
     expect(within(card).getByRole("button", { name: "Install hooks: Claude Code and Codex" })).toBeTruthy();
     expect(within(card).queryByText("Check again")).toBeNull();
   });
@@ -84,7 +84,7 @@ describe("the Agents card", () => {
     state = detect([agent("claude"), agent("codex", { installed: false })]);
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
-    await within(card).findByText("1 AGENT FOUND");
+    await within(card).findByText("1 agent found");
     expect(within(card).queryByText("2 FOUND")).toBeNull();
   });
 
@@ -92,8 +92,8 @@ describe("the Agents card", () => {
     state = detect([agent("claude", { signed_in: "unknown", hooks: "broken" }), agent("codex", { hooks: "installed", ready: true })]);
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
-    await within(card).findByText("SIGN-IN UNKNOWN");
-    expect(within(card).getByRole("status", { name: "HOOKS BROKEN" }).getAttribute("data-state")).toBe("failure");
+    await within(card).findByText("Sign-in unknown");
+    expect(within(card).getByRole("status", { name: "Hooks broken" }).getAttribute("data-state")).toBe("failure");
     // Only the agent that lacks its hooks is installed by the press.
     expect(within(card).getByRole("button", { name: "Install hooks: Claude Code" })).toBeTruthy();
   });
@@ -106,11 +106,11 @@ describe("the Agents card", () => {
     await within(card).findByTestId("firstrun-agents-receipt");
     const posts = mocks.apiFetch.mock.calls.filter(([, init]) => init?.method === "POST").map(([, init]) => init.json.agent);
     expect(posts).toEqual(["claude", "codex"]);
-    expect(within(card).getByText("2 AGENTS READY")).toBeTruthy();
+    expect(within(card).getByText("2 agents ready")).toBeTruthy();
     const receipt = within(card).getByTestId("firstrun-agents-receipt").textContent ?? "";
-    expect(receipt).toContain("CLAUDE CODE · HOOKS IN");
-    expect(receipt).toContain("CODEX · HOOKS IN");
-    expect(receipt).toContain("TMUX 3.5A");
+    expect(receipt).toContain("Claude Code · Hooks in");
+    expect(receipt).toContain("Codex · Hooks in");
+    expect(receipt).toContain("tmux 3.5A");
     expect(within(card).queryByTestId("firstrun-agent-row")).toBeNull();
   });
 
@@ -125,8 +125,8 @@ describe("the Agents card", () => {
     const card = await screen.findByTestId("firstrun-agents");
     fireEvent.click(await within(card).findByRole("button", { name: /^Install hooks/ }));
     const refused = await within(card).findByTestId("firstrun-agents-refused");
-    expect(refused.textContent).toContain("HOOKS NOT IN");
-    expect(refused.textContent).toContain("CLAUDE CODE · AGENT SETTINGS UNREADABLE");
+    expect(refused.textContent).toContain("Hooks not in");
+    expect(refused.textContent).toContain("Claude Code · Agent settings unreadable");
     expect(refused.textContent).not.toContain("_");
   });
 
@@ -136,10 +136,10 @@ describe("the Agents card", () => {
     Object.assign(navigator, { clipboard: { writeText } });
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
-    await within(card).findByText("NO AGENT FOUND");
-    expect(within(card).getByText("CLAUDE NOT INSTALLED")).toBeTruthy();
-    expect(within(card).getByText("CODEX NOT INSTALLED")).toBeTruthy();
-    expect(within(card).getByText("TMUX NOT INSTALLED")).toBeTruthy();
+    await within(card).findByText("No agent found");
+    expect(within(card).getByText("Claude not installed")).toBeTruthy();
+    expect(within(card).getByText("Codex not installed")).toBeTruthy();
+    expect(within(card).getByText("tmux not installed")).toBeTruthy();
     expect(within(card).queryByText("Install hooks")).toBeNull();
     fireEvent.click(within(card).getByRole("button", { name: "Copy install: Claude Code" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("npm install -g @anthropic-ai/claude-code"));
@@ -163,7 +163,7 @@ describe("readiness stays honest (Astra #905)", () => {
     state = REAL_NO_TMUX;
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
-    await within(card).findByText("TMUX NOT INSTALLED");
+    await within(card).findByText("tmux not installed");
     expect(within(card).queryByTestId("firstrun-agents-receipt")).toBeNull();
     expect(card.textContent).not.toContain("AGENTS READY");
     expect(within(card).getByTestId("firstrun-agents-check")).toBeTruthy();
@@ -173,7 +173,7 @@ describe("readiness stays honest (Astra #905)", () => {
     mocks.apiFetch.mockRejectedValue(new ApiError(503, "HoldSpeak could not complete that request (HTTP 503).", {}));
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
-    await within(card).findByText("CAN'T CHECK");
+    await within(card).findByText("Can't check");
     expect(within(card).getByTestId("firstrun-agents-unread").textContent).toBe("HTTP 503");
     expect(card.textContent).not.toContain("HoldSpeak could not complete that request");
     expect(within(card).getByRole("button", { name: "Try again" })).toBeTruthy();
@@ -183,7 +183,7 @@ describe("readiness stays honest (Astra #905)", () => {
     mocks.apiFetch.mockRejectedValue(new TypeError("Failed to fetch"));
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
-    expect((await within(card).findByTestId("firstrun-agents-unread")).textContent).toBe("HUB OFFLINE");
+    expect((await within(card).findByTestId("firstrun-agents-unread")).textContent).toBe("Hub offline");
   });
 });
 
@@ -195,11 +195,11 @@ describe("a rig hub's not_read state (PHILO-16, Astra MAY b)", () => {
     ]);
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
-    await within(card).findByText("2 AGENTS FOUND");
-    expect(within(card).getAllByRole("status", { name: "HOOKS UNKNOWN" })).toHaveLength(2);
-    expect(within(card).getAllByText("SIGN-IN UNKNOWN")).toHaveLength(2);
-    expect(within(card).queryByRole("status", { name: "SIGNED IN" })).toBeNull();
-    expect(within(card).queryByRole("status", { name: "HOOKS" })).toBeNull();
+    await within(card).findByText("2 agents found");
+    expect(within(card).getAllByRole("status", { name: "Hooks unknown" })).toHaveLength(2);
+    expect(within(card).getAllByText("Sign-in unknown")).toHaveLength(2);
+    expect(within(card).queryByRole("status", { name: "Signed in" })).toBeNull();
+    expect(within(card).queryByRole("status", { name: "Hooks" })).toBeNull();
     expect(within(card).queryByRole("button", { name: /Install hooks/ })).toBeNull();
     expect(within(card).queryByTestId("firstrun-agents-receipt")).toBeNull();
   });

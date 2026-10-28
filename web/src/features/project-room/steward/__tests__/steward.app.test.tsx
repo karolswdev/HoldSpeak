@@ -196,7 +196,7 @@ describe("Watch sources: run once on the seeded room", () => {
     await waitFor(() => expect(screen.getByTestId("steward-posture").getAttribute("data-phase")).toBe("list"));
     expect(screen.getAllByTestId("steward-list-item")).toHaveLength(1);
     expect(screen.getByTestId("steward-list-summary").textContent).toBe("5 effects");
-    expect(screen.getByTestId("steward-footer-receipt").textContent).toBe("RUNS 1");
+    expect(screen.getByTestId("steward-footer-receipt").textContent).toBe("Runs 1");
     // Run once is on again for the re-run.
     expect(runButton().disabled).toBe(false);
     for (const word of visibleWords(screen.getByTestId("steward-posture"))) expect(word).not.toMatch(RAW_ID);
@@ -237,7 +237,7 @@ describe("Watch sources: a dead source", () => {
 
     await runOnceToState("Completed");
     const chip = screen.getByTestId("steward-coverage-degraded");
-    expect(chip.textContent).toBe("PARTIAL COVERAGE: 4 of 5 sources answered");
+    expect(chip.textContent).toBe("Partial coverage: 4 of 5 sources answered");
     expect(chip.getAttribute("data-tone")).toBe("warn");
   });
 });
@@ -253,7 +253,7 @@ describe("Watch sources: history and policy", () => {
     expect(screen.getAllByTestId("steward-list-chevron")).toHaveLength(2);
     const summaries = screen.getAllByTestId("steward-list-summary").map((s) => s.textContent);
     expect(summaries).toEqual(["5 effects", "4 effects"]);
-    expect(screen.getByTestId("steward-footer-receipt").textContent).toBe("RUNS 2");
+    expect(screen.getByTestId("steward-footer-receipt").textContent).toBe("Runs 2");
 
     fireEvent.click(screen.getByTestId("steward-verb-policy"));
     await screen.findByTestId("steward-policy");
@@ -395,7 +395,7 @@ describe("HS-173-04: the Reviewer nudge row, checked and saved", () => {
     const egress = Array.from(screen.getByTestId("steward-policy-effects").querySelectorAll(".gadget-chip-egress"))
       .map((c) => c.textContent ?? "");
     expect(egress.some((t) => t.includes("GITHUB.COM"))).toBe(true);
-    expect(screen.getByTestId("steward-policy-nudge-approval").textContent).toContain("PER-NUDGE APPROVAL");
+    expect(screen.getByTestId("steward-policy-nudge-approval").textContent).toContain("Per-nudge approval");
     expect(boxes().length).toBeGreaterThanOrEqual(6);
     expect(boxes()[5].checked).toBe(false);
     expect(screen.queryByTestId("steward-policy-nudge-template")).toBeNull();

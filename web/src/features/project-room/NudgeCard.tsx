@@ -12,6 +12,7 @@ import { SendWells, pickDestination, type DocRef } from "../../desk/surface/send
 import type { RoomHealthPerson, RoomNeedsYouItem, RoomNudgeDestination, NudgeLocal } from "./model";
 import { nudgeCardReducer, initialNudgeCard } from "./model";
 import * as api from "./api";
+import { Token } from "../../desk/surface/Token";
 
 function formatTimeShort(iso: string | null): string {
   if (!iso) return "";
@@ -117,13 +118,13 @@ export function NudgeCard({
           <>
             <span className="room-nudge-receipt-name">{displayName}</span>
             {prNumber ? (
-              <span className="surface-token">
+              <Token className="surface-token">
                 {prUrl ? (
                   <a href={prUrl} target="_blank" rel="noopener noreferrer" className="room-nudge-pr-link">#{prNumber}</a>
                 ) : `#${prNumber}`}
-              </span>
+              </Token>
             ) : null}
-            <span className="surface-token">{formatTimeShort(card.sentAt)}</span>
+            <Token className="surface-token">{formatTimeShort(card.sentAt)}</Token>
           </>
         }
       />
@@ -141,11 +142,11 @@ export function NudgeCard({
         cells={
           <>
             <span className="room-nudge-receipt-name">{displayName}</span>
-            <span className="surface-token">
+            <Token className="surface-token">
               {prUrl ? (
                 <a href={prUrl} target="_blank" rel="noopener noreferrer" className="room-nudge-pr-link">CHECK #{card.prNumber}</a>
               ) : `CHECK #${card.prNumber}`}
-            </span>
+            </Token>
           </>
         }
       />
@@ -187,7 +188,7 @@ export function NudgeCard({
           {card.phase === "failed" ? (
             <div className="room-nudge-card-error">
               <StateChip state="failure" label="FAILED" icon={"●"} />
-              <span className="surface-token">{card.reason}</span>
+              <Token className="surface-token">{card.reason}</Token>
             </div>
           ) : null}
           <div className="room-nudge-card-footer">

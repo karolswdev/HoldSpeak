@@ -22,6 +22,7 @@ import { DICTATION_FAILURES, needsMicrophoneDoctor, type DictationFailure } from
 import "./setupFace.css";
 import { useOwnerName } from "./ownerName";
 import { SetupMicrophoneCheck } from "./SetupMicrophoneCheck";
+import { Token } from "../surface/Token";
 
 export type SetupRowState = "found" | "pending" | "works" | "does_not_work";
 
@@ -650,7 +651,7 @@ export function SetupFace({ initial, standalone = false }: { initial: SetupInven
           ) : take.state === "failed" && takeFailure ? (
             <div className="setup-face-take-failure" role="alert" data-testid="setup-take-failure">
               <StateChip state="failure" label={takeFailure.chip} />
-              <span className="surface-token" data-tone="danger">{takeFailure.reason}</span>
+              <Token className="surface-token" data-tone="danger">{takeFailure.reason}</Token>
               {takeContract?.setup ? (
                 <Button
                   dense
