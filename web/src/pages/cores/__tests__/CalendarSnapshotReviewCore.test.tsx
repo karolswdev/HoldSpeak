@@ -89,7 +89,11 @@ describe("CalendarSnapshotReviewCore: the empty window (W1-TRUTH, atlas 2026-10-
   it("with no screenshot it says so, with Import image and Check sources in its toolbar, never a red Can't read", async () => {
     apiFetch.mockImplementation(async (url: string) => (url === "/api/calendar/sources" ? structuredClone(CALENDAR_SOURCES.wire) : undefined));
     render(<CalendarSnapshotReviewCore />);
-    expect(screen.getByTestId("calendar-snapshot-empty").textContent).toBe("No screenshot yet");
+    // Atlas pass 3 #21: the empty face is the object, one line, one verb.
+    const empty = screen.getByTestId("calendar-snapshot-empty");
+    expect(empty.querySelector('[data-object="meeting"] img.surface-state-sprite')).toBeTruthy();
+    expect(empty.querySelector(".surface-state-line")?.textContent).toBe("No screenshot yet");
+    expect(within(empty).getAllByRole("button").map((b) => b.textContent)).toEqual(["Import image"]);
     const toolbar = screen.getByTestId("calendar-snapshot-toolbar");
     expect(within(toolbar).getByRole("button", { name: "Import image" })).toBeTruthy();
     expect(within(toolbar).getByRole("button", { name: "Check sources" })).toBeTruthy();

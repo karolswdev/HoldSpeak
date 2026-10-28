@@ -646,6 +646,18 @@ describe("Settings › System › runtime identity", () => {
   });
 });
 
+describe("W6-A: the save lamp says only this window's writes (atlas pass 3, defect 1)", () => {
+  it("at open, with the settings file written just now by another writer, the bar says no Saved; a write here says Saved just now", async () => {
+    hub.state.hub.writtenAt = Date.now() / 1000;
+    render(<SettingsCore scope="rhythm" />);
+    await screen.findByRole("spinbutton", { name: "Quiet from" });
+    await waitFor(() => expect(hub.state.calls.some((c) => c.path === "/api/settings/hub")).toBe(true));
+    expect(document.querySelector(".pref-status-bar")?.textContent ?? "").not.toMatch(/Saved/);
+    fireEvent.click(screen.getByRole("button", { name: "Decrease Quiet from" }));
+    await waitFor(() => expect(document.querySelector(".pref-status-bar")?.textContent ?? "").toContain("Saved just now"));
+  });
+});
+
 describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () => {
   it("Notify and quiet hours read and write the heartbeat; no cadence.quiet_hours row; Saved in the foot", async () => {
     // The hub half: tests/integration/test_desk_settings.py::test_quiet_hours_set_in_settings_are_what_the_heartbeat_and_cadence_read

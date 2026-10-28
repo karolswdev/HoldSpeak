@@ -59,7 +59,6 @@ import { countToken } from "../../desk/surface/count";
 import { LiveTranscript } from "./LiveTranscript";
 import { LiveReady } from "./LiveReady";
 import { LiveListening, type MicCheck, type TranscriptPass } from "./LiveLevel";
-import { useCompactViewport } from "../../desk/useCompactViewport";
 import "./liveTranscript.css";
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
@@ -95,7 +94,6 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   /* W2-LIVE-2: the ready sheet's devices (`meeting.mic_device`,
      `meeting.system_audio_device`), the facts Settings ▸ Meetings shows. */
   const settings = useResource<Record<string, unknown>>("/api/settings", {});
-  const compact = useCompactViewport();
   /* The name he gives before Start; the hub's start takes no title, so it
      is sent with PATCH /api/meeting once the meeting is live. */
   const [readyName, setReadyName] = useState("");
@@ -580,12 +578,12 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         : { key: "capture", lamp: "ok" as const, text: "Ready", testId: "live-capture-state" },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,
     summaryItem,
-    /* W2-LIVE-2: no title here (the title bar names the meeting), so the
-       phone keeps one line; on the phone the link is said only when it is
-       not connected. */
-    compact && link === "connected"
+    /* W6-A (atlas pass 3, defect 17): this is the page's own link to the
+       hub, not a device of his. Connected is the normal case and says
+       nothing; a lost link names what is lost, at both widths. */
+    link === "connected" || link === "unknown"
       ? null
-      : { key: "link", lamp: linkTone, text: `Link ${link}`, testId: "live-link-state" },
+      : { key: "link", lamp: linkTone, text: link === "offline" ? "Hub not reached" : "Connecting to the hub", testId: "live-link-state" },
   ].filter(Boolean) as StatusBarItem[];
 
   /* Live slice 3: the transcript's foot. The saved reach is the newest
