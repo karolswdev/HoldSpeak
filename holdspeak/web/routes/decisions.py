@@ -48,7 +48,7 @@ def build_decisions_router(ctx: Any) -> APIRouter:
     # a second route-side model seam would be a second, unadmitted Decision path.
     def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), observer=get_observer())
     @router.get("")
-    async def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0,scope: Optional[str]=None,decision_id: Optional[str]=None,q: Optional[str]=None,current: bool=False) -> Any:
+    def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0,scope: Optional[str]=None,decision_id: Optional[str]=None,q: Optional[str]=None,current: bool=False) -> Any:
         if scope == "all":
             # PHILO-17: every decision on the desk, for Intelligence → Decisions
             # and a meeting's record; paged, with the total.
@@ -59,7 +59,7 @@ def build_decisions_router(ctx: Any) -> APIRouter:
         try: return JSONResponse(service().list_decisions(_principal(request),project_id=project_id,project_key=project_key,meeting_id=meeting_id,lifecycle=lifecycle,limit=limit,offset=offset))
         except ServiceError as exc: return _error(exc)
     @router.get("/{decision_id}")
-    async def get_decision(decision_id: str,request: Request) -> Any:
+    def get_decision(decision_id: str,request: Request) -> Any:
         # Probe the two durable owners before invoking either service.  The
         # probes are repository reads, so they do not create observer rows;
         # the selected service is then called exactly once.  A genuinely
@@ -78,19 +78,19 @@ def build_decisions_router(ctx: Any) -> APIRouter:
         except ServiceError as exc:
             return _error(exc)
     @router.get("/{decision_id}/moment")
-    async def get_decision_moment(decision_id: str,request: Request) -> Any:
+    def get_decision_moment(decision_id: str,request: Request) -> Any:
         try: return JSONResponse(service().get_moment(_principal(request),decision_id))
         except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/accept")
-    async def accept_decision(decision_id: str,request: Request) -> Any:
+    def accept_decision(decision_id: str,request: Request) -> Any:
         try: return JSONResponse(service().transition(_principal(request),decision_id,"accept",{}))
         except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/reject")
-    async def reject_decision(decision_id: str,request: Request) -> Any:
+    def reject_decision(decision_id: str,request: Request) -> Any:
         try: return JSONResponse(service().transition(_principal(request),decision_id,"reject",{}))
         except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/supersede")
-    async def supersede_decision(decision_id: str,request: Request,payload: Any=Body(default=None)) -> Any:
+    def supersede_decision(decision_id: str,request: Request,payload: Any=Body(default=None)) -> Any:
         # PHILO-7-02: this router answers the path in the hub (it is included
         # before the primitives router). A DESK decision's supersede is the
         # contract's admitted decision.supersede on the hub's one
@@ -126,7 +126,7 @@ def build_decisions_router(ctx: Any) -> APIRouter:
             return JSONResponse({k:v for k,v in result.items() if k != "_status"},status_code=result.get("_status",200))
         except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/promote/{artifact_type}")
-    async def promote_decision(decision_id: str,artifact_type: str,request: Request) -> Any:
+    def promote_decision(decision_id: str,artifact_type: str,request: Request) -> Any:
         try: return JSONResponse(service().promote(_principal(request),decision_id,artifact_type,{}))
         except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/promote/{artifact_type}/draft-with-model")
