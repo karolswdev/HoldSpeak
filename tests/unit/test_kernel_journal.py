@@ -5,11 +5,31 @@ import sqlite3
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from itertools import count
 
 import pytest
 
 from holdspeak.db import Database
 from holdspeak.kernel.journal import JournalStore
+
+
+def test_last_receipt_for_ref_uses_latest_admitted_operation_with_receipt(tmp_path) -> None:
+    db = Database(tmp_path / "journal.db")
+    timestamps = count(100)
+    store = JournalStore(db._connection, clock=lambda: next(timestamps))
+    try:
+        store.append("operation.admitted", "op-old", refs=("egress:slack",))
+        store.append("operation.receipt", "op-old")
+        store.append("operation.admitted", "op-no-receipt", refs=("egress:slack",))
+        store.append("operation.admitted", "op-new", refs=("egress:slack",))
+        store.append("operation.receipt", "op-new")
+        store.append("operation.admitted", "op-substring", refs=("egress:slack-other",))
+        store.append("operation.receipt", "op-substring")
+
+        assert store.last_receipt_for_ref("egress:slack") == "104.0"
+        assert store.last_receipt_for_ref("egress:missing") is None
+    finally:
+        db.close()
 
 
 def test_independent_stores_allocate_one_contiguous_hash_chain(tmp_path) -> None:

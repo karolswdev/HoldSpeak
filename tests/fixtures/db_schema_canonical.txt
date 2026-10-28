@@ -95,6 +95,7 @@ index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(st
 index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
 index idx_intent_windows_meeting: CREATE INDEX idx_intent_windows_meeting ON intent_windows(meeting_id, start_seconds, created_at)
 index idx_kbs_modified: CREATE INDEX idx_kbs_modified ON kbs(last_modified DESC)
+index idx_kernel_journal_event_hub: CREATE INDEX idx_kernel_journal_event_hub ON kernel_journal(event_type, hub_sequence)
 index idx_kernel_journal_operation: CREATE INDEX idx_kernel_journal_operation ON kernel_journal(operation_id, hub_sequence)
 index idx_kernel_operations_state: CREATE INDEX idx_kernel_operations_state ON kernel_operations(state, created_at)
 index idx_kernel_parent_checkpoints_parent: CREATE INDEX idx_kernel_parent_checkpoints_parent ON kernel_parent_checkpoints(parent_operation_id, execution_epoch)

@@ -2376,6 +2376,8 @@ CREATE TABLE IF NOT EXISTS kernel_journal (
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_journal_operation
 ON kernel_journal(operation_id, hub_sequence);
+CREATE INDEX IF NOT EXISTS idx_kernel_journal_event_hub
+ON kernel_journal(event_type, hub_sequence);
 
 -- HS-131-03: runner results stage before their terminal receipt and materialize
 -- only after that receipt is durable. Domain tables carry the corresponding

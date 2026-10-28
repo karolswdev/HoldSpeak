@@ -100,25 +100,20 @@ class JournalStore:
     def last_receipt_for_ref(self, ref: str) -> str | None:
         """Return the latest journal receipt time for an admitted effect ref."""
         with self._connection() as conn:
-            admitted = conn.execute(
-                "SELECT operation_id,refs_json FROM kernel_journal "
-                "WHERE event_type='operation.admitted' ORDER BY hub_sequence DESC"
-            ).fetchall()
-            operation_ids = [
-                str(row["operation_id"])
-                for row in admitted
-                if str(ref) in json.loads(row["refs_json"])
-            ]
-            for operation_id in operation_ids:
-                receipt = conn.execute(
-                    "SELECT timestamp FROM kernel_journal "
-                    "WHERE operation_id=? AND event_type='operation.receipt' "
-                    "ORDER BY hub_sequence DESC LIMIT 1",
-                    (operation_id,),
-                ).fetchone()
-                if receipt is not None:
-                    return str(receipt["timestamp"])
-        return None
+            receipt = conn.execute(
+                """SELECT receipt.timestamp
+                   FROM kernel_journal AS admitted
+                   JOIN json_each(admitted.refs_json) AS refs
+                     ON refs.value = ?
+                   JOIN kernel_journal AS receipt
+                     ON receipt.operation_id = admitted.operation_id
+                    AND receipt.event_type = 'operation.receipt'
+                  WHERE admitted.event_type = 'operation.admitted'
+                  ORDER BY admitted.hub_sequence DESC, receipt.hub_sequence DESC
+                  LIMIT 1""",
+                (str(ref),),
+            ).fetchone()
+        return str(receipt["timestamp"]) if receipt is not None else None
 
     def create_operation(self, values: Mapping[str, Any]) -> dict[str, Any]:
         return self._operation(_atomic.create_operation(self, values))
