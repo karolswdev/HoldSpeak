@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from threading import Lock
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
@@ -27,32 +28,36 @@ log = get_logger("web.routes.meetings")
 # rather than the type so this transport adapter need not import the runtime.
 _NO_ACTIVE_MEETING = "No active meeting"
 _STOP_IN_PROGRESS = "Meeting is already stopping"
+_SERVICE_CACHE_LOCK = Lock()
 
 
 def _service(ctx: WebContext) -> MeetingService:
     """Get the composition-bound service, retaining partial-context support."""
     if isinstance(ctx.meeting_service, MeetingService):
         return ctx.meeting_service
-    from ....db import get_database, get_observer
+    with _SERVICE_CACHE_LOCK:
+        if isinstance(ctx.meeting_service, MeetingService):
+            return ctx.meeting_service
+        from ....db import get_database, get_observer
 
-    def update_callback(*, title: str | None, tags: list[str] | None) -> Any:
-        if ctx.on_update_meeting is not None:
-            return ctx.on_update_meeting(title=title, tags=tags)
-        if title is not None and ctx.on_set_title is not None:
-            ctx.on_set_title(title)
-        if tags is not None and ctx.on_set_tags is not None:
-            ctx.on_set_tags(tags)
-        return ctx.get_state() or {}
+        def update_callback(*, title: str | None, tags: list[str] | None) -> Any:
+            if ctx.on_update_meeting is not None:
+                return ctx.on_update_meeting(title=title, tags=tags)
+            if title is not None and ctx.on_set_title is not None:
+                ctx.on_set_title(title)
+            if tags is not None and ctx.on_set_tags is not None:
+                ctx.on_set_tags(tags)
+            return ctx.get_state() or {}
 
-    service = MeetingService(get_database(), observer=get_observer())  # _service composition
-    service.bind_lifecycle(
-        on_start=ctx.on_start,
-        on_stop=ctx.on_meeting_stop or ctx.on_stop,
-        on_bookmark=ctx.on_bookmark,
-        on_update=update_callback,
-    )
-    ctx.meeting_service = service
-    return service
+        service = MeetingService(get_database(), observer=get_observer())  # _service composition
+        service.bind_lifecycle(
+            on_start=ctx.on_start,
+            on_stop=ctx.on_meeting_stop or ctx.on_stop,
+            on_bookmark=ctx.on_bookmark,
+            on_update=update_callback,
+        )
+        ctx.meeting_service = service
+        return service
 
 
 def _principal(request: Request):
@@ -63,7 +68,7 @@ def build_live_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.post("/api/bookmark")
-    async def api_bookmark(
+    def api_bookmark(
         request: Request, payload: Optional[_BookmarkRequest] = None
     ) -> Any:
         try:
@@ -120,7 +125,7 @@ def build_live_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=status)
 
     @router.post("/api/meeting/start")
-    async def api_meeting_start(
+    def api_meeting_start(
         request: Request, payload: Optional[_MeetingStartRequest] = None
     ) -> Any:
         try:
@@ -165,7 +170,7 @@ def build_live_router(ctx: WebContext) -> APIRouter:
         return await _stop(request)
 
     @router.patch("/api/meeting")
-    async def api_update_meeting(request: Request, payload: _UpdateMeetingRequest) -> Any:
+    def api_update_meeting(request: Request, payload: _UpdateMeetingRequest) -> Any:
         try:
             state = ctx.get_state() or {}
             meeting_id = str(state.get("id") or state.get("meeting_id") or "")
