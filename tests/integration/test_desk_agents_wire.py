@@ -660,6 +660,28 @@ def test_the_agents_read_says_done_new_quiet_and_stopped_by_restart(
     _keep("agents-ag0", "coders-sessions.seen", quiet, tmp_path, hub)
 
 
+def test_done_checks_a_done_agent_and_moves_it_to_ended_today(hub: str, tmp_path: Path) -> None:
+    """W4 AGENT 3 (slice 3, canvas direction A): Done on the agent that
+    finished its turn closes its launch (``checked``): it leaves the running
+    agents for the history; on the asking agent the hub refuses (409,
+    ``not_done``). Recorded for agents.app.test.tsx (fixtures/agents-ag0:
+    ``done``, ``done.refused``, ``coders-sessions.checked``)."""
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+
+    _ag0_seed(tmp_path / "home")
+    status, refused = _http(hub, "POST", "/api/agent/launches/launch_ag0_ghost/done", TOKEN, {})
+    refused = json.loads(refused) if isinstance(refused, str) else refused
+    assert status == 409 and refused["reason"] == "not_done", (status, refused)
+    _keep("agents-ag0", "done.refused", refused, tmp_path, hub)
+    status, done = _http(hub, "POST", "/api/agent/launches/launch_ag0_done/done", TOKEN, {})
+    assert status == 200 and done["checked"] is True and done["checked_at"], done
+    _keep("agents-ag0", "done", done, tmp_path, hub)
+    after = _get(hub, "/api/coders/sessions?include_ended=false")
+    assert [(f["launch_id"], f["state"]) for f in after["history"]] == [("launch_ag0_done", "checked")]
+    assert [f["ended_at"] for f in after["history"]] == [done["checked_at"]]
+    _keep("agents-ag0", "coders-sessions.checked", after, tmp_path, hub)
+
+
 AG2_HELD = "Claude needs your permission to use Bash"
 
 

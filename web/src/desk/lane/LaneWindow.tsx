@@ -23,6 +23,7 @@ import { handRefOf, openHand } from "../agentHand";
 import type { AgentId } from "../firstrun/agentsStep";
 import { useConductor } from "../conductor/store";
 import { launchLive, liveWord, type LiveState } from "../conductor/members";
+import { checkLaunchDone } from "../conductor/open";
 import { WhyThisState } from "../agents/WhyThisState";
 import { ResultBlock, filesWords } from "./ResultBlock";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
@@ -84,6 +85,8 @@ export function laneTitleSprite(agent: string | null | undefined, key: string): 
 /** The lane refreshes this often while its window is in front. */
 export const LANE_FRONT_POLL_MS = 5_000;
 export const LANE_WINDOW_ID = "lane";
+/** The done face shows this many of the newest steps (one press shows all). */
+export const STEPS_SHOWN_DONE = 3;
 /** The window's two faces: its steps, its terminal. */
 export const LANE_WINGS = [
   { id: "steps", label: "Steps" },
@@ -210,15 +213,18 @@ function LaneFrame({ launchId }: { launchId: string }) {
     >
       {lane ? <LaneToolbar lane={lane} agent={agent} gone={gone} shared={shared} /> : null}
       <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""}
-        gone={Boolean(gone)} shared={shared} screenSaid={flight?.screen?.said ?? null} />
+        gone={Boolean(gone)} shared={shared} screenSaid={flight?.screen?.said ?? null}
+        checkedAt={gone?.state === "checked" ? gone.endedAt ?? null : undefined} />
       {lane ? <LaneFooter lane={lane} agent={agent} gone={gone} shared={shared} /> : null}
     </DeskWindowFrame>
   );
 }
 
 function LaneBody({
-  lane, error, raw, agent, compact, itemTitle, screenSaid = null, gone = false, shared = null,
+  lane, error, raw, agent, compact, itemTitle, screenSaid = null, gone = false, shared = null, checkedAt,
 }: {
+  /** W4 AGENT 3: he pressed Done (when; `null` with no time): the result stays. */
+  checkedAt?: string | null;
   /** The launch's one state (the Agents row's word); null before a read. */
   shared?: LaneShared | null;
   /** The session is gone (the Agents list's truth): nothing is lit. */
@@ -236,6 +242,7 @@ function LaneBody({
   const eventsNotRead = useLane((s) => s.eventsNotRead);
   const rebrief = useLane((s) => s.rebrief);
   const [briefOpen, setBriefOpen] = useState(false);
+  const [allSteps, setAllSteps] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const onScroll = () => {
@@ -258,8 +265,14 @@ function LaneBody({
   const branch = branchFace(lane.launch.branch ?? (isNotRead(worktree) ? null : worktree.branch)) || undefined;
   const base = isNotRead(worktree) ? "" : baseWord(worktree.base);
   const doing = gone ? { word: "", tone: "idle" as const, key: "gone" as const } : laneDoing(lane, agent, shared);
-  // Betterment AG10: the turn is done; its Result leads the Story.
-  const done = doing.key === "done";
+  // Betterment AG10: the turn is done; its Result leads the Story. W4 AGENT
+  // 3: a launch he checked (Done) keeps its result.
+  const checked = checkedAt !== undefined;
+  const done = doing.key === "done" || checked;
+  const doneAt = wireDate(checked ? checkedAt ?? null : shared?.doneAt ?? null);
+  const doneHead = done
+    ? { word: checked ? "Done · checked by you" : "Done", age: doneAt ? spokeWord(doneAt) : null }
+    : null;
   // W3 AGENT WINDOW (canvas direction A): the objects the agent made, as
   // object rows: the PR, its branch, the files it changed.
   const objects = (
@@ -275,6 +288,10 @@ function LaneBody({
   const lit = doing.key === "work"
     ? [...steps].reverse().find((s) => s.at != null && s.kind !== "brief")?.id ?? null
     : steps.find((s) => s.kind === "asks")?.id ?? null;
+  // W4 AGENT 3 (canvas direction A, "It is done"): the result leads; the
+  // steps fold to the last three, one press shows them all.
+  const folds = done && !allSteps && steps.length > STEPS_SHOWN_DONE + 1;
+  const shownSteps = folds ? steps.slice(-STEPS_SHOWN_DONE) : steps;
   const rail = onlyBrief ? (
     <div className="lw-col">
       {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
@@ -288,7 +305,15 @@ function LaneBody({
     <div className="lw-col lw-steps-col">
       {eventsNotRead ? <NotReadLine part="TIMELINE" reason={eventsNotRead} testId="lane-events-not-read" /> : null}
       {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
-      <StepList data-testid="lane-rail" entries={steps} lit={lit} />
+      {done && steps.length > STEPS_SHOWN_DONE + 1 ? (
+        <div className="lw-steps-fold">
+          <span className="lw-steps-fold-cap">{folds ? `The last ${STEPS_SHOWN_DONE} steps` : "All steps"}</span>
+          <Button dense variant="ghost" aria-pressed={allSteps} data-testid="lane-all-steps" onClick={() => setAllSteps((v) => !v)}>
+            {allSteps ? "Show the last 3" : "Show all"}
+          </Button>
+        </div>
+      ) : null}
+      <StepList data-testid="lane-rail" entries={shownSteps} lit={lit} />
       {briefOpen && lane.launch.brief_text ? (
         <pre className="lw-brief" data-testid="lane-brief-text">{lane.launch.brief_text}</pre>
       ) : null}
@@ -307,10 +332,10 @@ function LaneBody({
       {lane.launch.stopped ? null : rebrief ? <RebriefWell /> : (
         <>
           {!raw ? <HeldPlate lane={lane} agent={agent} /> : null}
-          <WaitWell lane={lane} agent={agent} shared={shared?.key ?? null} />
+          <WaitWell lane={lane} agent={agent} shared={checked ? "done" : shared?.key ?? null} />
         </>
       )}
-      {!raw && (done || Boolean(reviewResult(lane.launch.review))) ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
+      {!raw && (done || Boolean(reviewResult(lane.launch.review))) ? <ResultBlock lane={lane} screenSaid={screenSaid} done={doneHead} /> : null}
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}
@@ -750,6 +775,7 @@ export function goneWord(flight: Pick<AgentFlight, "state">): string {
   if (flight.state === "expired") return "Session gone";
   if (flight.state === "stopped_by_restart") return "Stopped by restart";
   if (flight.state === "resume_failed") return "Could not resume";
+  if (flight.state === "checked") return "Done · checked by you";
   return "Ended";
 }
 
@@ -1097,8 +1123,9 @@ function LaneToolbar({ lane, agent, gone = null, shared = null }: { lane: LaneWi
   const prPrimary = finished && !approveShowing(lane);
   if (gone) {
     // The session is gone: the one verb that fits is Start again (a new
-    // agent on the same item); its PR stays one press away.
-    const again = Boolean(againRef(gone));
+    // agent on the same item); its PR stays one press away. W4 AGENT 3: a
+    // launch he checked (Done) is finished work: Open PR only.
+    const again = gone.state !== "checked" && Boolean(againRef(gone));
     if (!again && !prUrl) return null;
     return (
       <Toolbar label="Agent" className="lw-toolbar" data-testid="lane-toolbar">
@@ -1108,7 +1135,7 @@ function LaneToolbar({ lane, agent, gone = null, shared = null }: { lane: LaneWi
           </Button>
         ) : null}
         {prUrl ? (
-          <Button dense variant="secondary" data-testid="lane-open-pr" title={prUrl}
+          <Button dense variant={again ? "secondary" : "primary"} data-testid="lane-open-pr" title={prUrl}
             onClick={() => window.open(prUrl, "_blank", "noopener,noreferrer")}>
             <ToolGlyph kind="open" />Open PR
           </Button>
@@ -1116,7 +1143,11 @@ function LaneToolbar({ lane, agent, gone = null, shared = null }: { lane: LaneWi
       </Toolbar>
     );
   }
-  if (!sessionKey && !prUrl && !canStop) return null;
+  // W4 AGENT 3 (slice 3, canvas direction A): Done: he checked the work of
+  // a done turn; the launch closes and leaves Running (the hub's
+  // `POST /api/agent/launches/{id}/done`). The primary when no PR leads.
+  const doneVerb = state === "done" ? <DoneVerb launchId={lane.launch.launch_id} primary={!prUrl && !approveShowing(lane)} /> : null;
+  if (!sessionKey && !prUrl && !canStop && !doneVerb) return null;
   const openPr = prUrl ? (
     <Button
       dense
@@ -1153,8 +1184,33 @@ function LaneToolbar({ lane, agent, gone = null, shared = null }: { lane: LaneWi
         </span>
       ) : undefined}
     >
-      {prPrimary ? <>{openPr}{tellIt}</> : <>{tellIt}{openPr}</>}
+      {prPrimary || doneVerb ? <>{doneVerb && !prUrl ? doneVerb : null}{openPr}{tellIt}{doneVerb && prUrl ? doneVerb : null}</> : <>{tellIt}{openPr}</>}
     </Toolbar>
+  );
+}
+
+/** Done (W4 AGENT 3): one press; a refusal is said by the verb (the work
+ *  started again, the hub cannot be reached), with Retry. */
+function DoneVerb({ launchId, primary }: { launchId: string; primary: boolean }) {
+  const [busy, setBusy] = useState(false);
+  const [refused, setRefused] = useState<string | null>(null);
+  const press = async () => {
+    setBusy(true);
+    setRefused(null);
+    try {
+      setRefused(await checkLaunchDone(launchId));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <Button dense variant={primary ? "primary" : "secondary"} loading={busy} disabled={busy}
+        onClick={() => void press()} data-testid="lane-done" title="The work is checked: the agent moves to Ended today">
+        <ToolGlyph kind="done" />{refused ? "Try Done again" : "Done"}
+      </Button>
+      {refused ? <span className="lw-quiet" role="status" data-testid="lane-done-refused">{`Not done · ${refused}`}</span> : null}
+    </>
   );
 }
 
@@ -1164,7 +1220,9 @@ function LaneToolbar({ lane, agent, gone = null, shared = null }: { lane: LaneWi
 function LaneFooter({ lane, agent, gone = null, shared = null }: { lane: LaneWire; agent: string; gone?: AgentFlight | null; shared?: LaneShared | null }) {
   const events = useLane((s) => s.events);
   const spoke = lastStep(events);
-  const doing = gone ? { word: goneWord(gone), tone: "idle" as const } : laneDoing(lane, agent, shared);
+  const doing = gone
+    ? { word: goneWord(gone), tone: gone.state === "checked" ? ("ok" as const) : ("idle" as const) }
+    : laneDoing(lane, agent, shared);
   const steps = events.filter(isToolCall).length;
   const finished = !gone && shared?.key === "done" ? wireDate(shared.doneAt ?? null) : null;
   return (

@@ -463,6 +463,28 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(result)
         return JSONResponse(result, status_code=404 if result.get("reason") == "unknown" else 409)
 
+    @router.post("/api/agent/launches/{launch_id}/done")
+    async def api_agent_launch_done(launch_id: str, request: Request) -> Any:
+        """W4 AGENT 3 (slice 3): Done: the owner checked the work of a launch
+        whose turn ended done; the launch closes (``checked_at``) and leaves
+        the running agents. Owner only. 200 when checked (again: the first
+        stamp); 409 for a launch that works or asks; 404 for an unknown one."""
+        from ...db import get_database
+        from ...services.agent_flights import check_launch_done
+
+        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
+
+        try:
+            result = await asyncio.to_thread(check_launch_done, get_database(), launch_id)
+        except Exception as exc:
+            log.error(f"launch done failed: {exc}")
+            return JSONResponse({"error": "launch_done_failed"}, status_code=500)
+        if result.get("checked"):
+            return JSONResponse(result)
+        return JSONResponse(result, status_code=404 if result.get("reason") == "unknown" else 409)
+
     @router.post("/api/agent/launches/{launch_id}/resume")
     async def api_agent_resume(launch_id: str, request: Request) -> Any:
         """Betterment AG6: Resume an agent a restart stopped: a new terminal

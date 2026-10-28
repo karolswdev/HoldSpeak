@@ -29,8 +29,11 @@ function names(rows: readonly LaneUseRow[] | undefined): string[] {
   return (rows ?? []).map((row) => row.label || row.title || row.ref).filter(Boolean);
 }
 
-export function ResultBlock({ lane, screenSaid }: {
+export function ResultBlock({ lane, screenSaid, done = null }: {
   lane: LaneWire;
+  /** W4 AGENT 3 (canvas direction A): a done turn's head: `Done` and when
+   *  (`2 min ago`); `Done · checked by you` once he pressed Done. */
+  done?: { word: string; age?: string | null } | null;
   /** An agent with no hook: its last words as its screen showed them. */
   screenSaid?: string | null;
 }) {
@@ -51,7 +54,10 @@ export function ResultBlock({ lane, screenSaid }: {
   const facts = [filesWords(files ?? 0), branch, pr?.number != null ? `PR #${pr.number}` : ""].filter(Boolean);
   return (
     <section className="lw-result" data-testid="lane-result" aria-label="Result">
-      <h3 className="lw-result-cap">Result</h3>
+      <header className="lw-result-head">
+        <h3 className="lw-result-cap" data-testid="lane-result-cap">{done?.word ?? "Result"}</h3>
+        {done?.age ? <span className="lw-result-age" data-testid="lane-result-age">{done.age}</span> : null}
+      </header>
       <ReviewResult review={lane.launch.review} title={false} />
       {said ? <AgentWords className="lw-result-said" text={said} data-testid="lane-result-said" /> : null}
       {facts.length ? <span className="lw-result-facts" data-testid="lane-result-facts">{facts.join(" · ")}</span> : null}

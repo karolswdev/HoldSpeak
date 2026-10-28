@@ -19,6 +19,7 @@ vi.mock("../../components/MicButton", () => ({
 }));
 
 import { LaneWindow } from "../LaneWindow";
+import { StepList } from "../StepList";
 import { __resetLane, useLane } from "../laneStore";
 import { laneEntries, laneStations, eventEntries, type LaneWire } from "../laneWire";
 import { SessionPullout } from "../../components/SessionPullout";
@@ -269,9 +270,26 @@ describe("the timeline words", () => {
     expect(read.code).toBe("a.py · +1");
   });
 
-  it("a run shows its result only when the event carries it", () => {
+  it("a run shows its result only when the event carries it; a failure is its own tone (W4 AGENT 3)", () => {
     const [run] = eventEntries([{ id: 1, ts: T("09:48"), event: "PostToolUse", tool: "Bash", head: "pytest -q", detail: { result: "6 passed" } }]);
-    expect(run.code).toBe("pytest -q · 6 passed");
+    expect([run.code, run.result, run.tone]).toEqual(["pytest -q", "6 passed", "ok"]);
+    const [failed] = eventEntries([{ id: 2, ts: T("09:49"), event: "PostToolUse", tool: "Bash", head: "pytest -q", detail: { result: "1 failed, 5 passed" } }]);
+    expect([failed.result, failed.tone]).toEqual(["1 failed, 5 passed", "fail"]);
+    const [plain] = eventEntries([{ id: 3, ts: T("09:50"), event: "PostToolUse", tool: "Bash", head: "ls" }]);
+    expect([plain.code, plain.result, plain.tone]).toEqual(["ls", undefined, undefined]);
+  });
+
+  it("a run's counts draw as a dot and a word, red on a failure (W4 AGENT 3)", () => {
+    const entries = eventEntries([
+      { id: 1, ts: T("09:48"), event: "PostToolUse", tool: "Bash", head: "pytest -q", detail: { result: "6 passed" } },
+      { id: 2, ts: T("09:49"), event: "PostToolUse", tool: "Bash", head: "pytest -q", detail: { result: "1 failed, 5 passed" } },
+    ]);
+    render(<StepList entries={entries} />);
+    const results = screen.getAllByTestId("lane-step-result");
+    expect(results.map((el) => [el.textContent, el.getAttribute("data-tone")])).toEqual([
+      ["6 passed", "ok"], ["1 failed, 5 passed", "fail"],
+    ]);
+    expect(results[0].closest(".lw-step-line")?.querySelector("code")?.textContent).toBe("pytest -q");
   });
 
   it("orders only recorded activity; the current question is in its well and Merge requires a receipt", () => {

@@ -447,6 +447,16 @@
       "consumers": []
     },
     {
+      "path": "/api/agent/launches/{launch_id}/done",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}/explain",
       "methods": [
         "GET"
