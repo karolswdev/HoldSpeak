@@ -50,14 +50,14 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         return JSONResponse(body, status_code=statuses.get(exc.code, 500))
 
     @router.get("/api/workbenches")
-    async def api_list_workbenches(request: Request) -> Any:
+    def api_list_workbenches(request: Request) -> Any:
         try:
             return JSONResponse({"workbenches": _svc().list_workbenches(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list automations")
 
     @router.get("/api/automations/new")
-    async def api_new_results(request: Request) -> Any:
+    def api_new_results(request: Request) -> Any:
         """Betterment A6: one row per automation with a NEW result."""
         try:
             rows = _svc().new_results(_principal(request))
@@ -66,7 +66,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read new automation results")
 
     @router.get("/api/automations/prepared")
-    async def api_prepared_for_today(request: Request) -> Any:
+    def api_prepared_for_today(request: Request) -> Any:
         """Betterment daily D9: Today's Prepared block (the newest result of an
         automation whose Put it in is Today) and the automation Prepare now
         runs. Each is null when there is none."""
@@ -92,7 +92,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create automation")
 
     @router.get("/api/workbenches/{workbench_id}")
-    async def api_get_workbench(
+    def api_get_workbench(
         workbench_id: str, request: Request, parked: bool = False
     ) -> Any:
         try:
@@ -161,7 +161,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to choose the automation's engine")
 
     @router.delete("/api/workbenches/{workbench_id}")
-    async def api_delete_workbench(workbench_id: str, request: Request) -> Any:
+    def api_delete_workbench(workbench_id: str, request: Request) -> Any:
         try:
             _svc().delete_workbench(_principal(request), workbench_id)
             return JSONResponse({"success": True})
@@ -205,7 +205,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update item")
 
     @router.delete("/api/workbenches/{workbench_id}/items/{item_id}")
-    async def api_delete_item(workbench_id: str, item_id: str, request: Request) -> Any:
+    def api_delete_item(workbench_id: str, item_id: str, request: Request) -> Any:
         try:
             item = _svc().delete_item(_principal(request), workbench_id, item_id)
             return JSONResponse({"success": True, "parked": item_id, "item": item})
@@ -257,7 +257,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to restore Workbench items")
 
     @router.post("/api/workbenches/{workbench_id}/items/{item_id}/restore")
-    async def api_restore_item(workbench_id: str, item_id: str, request: Request) -> Any:
+    def api_restore_item(workbench_id: str, item_id: str, request: Request) -> Any:
         try:
             item = _svc().restore_item(_principal(request), workbench_id, item_id)
             return JSONResponse({"item": item})
@@ -271,7 +271,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to restore Workbench item")
 
     @router.post("/api/workbenches/{workbench_id}/items/{item_id}/retry-mint")
-    async def api_retry_mint(workbench_id: str, item_id: str, request: Request) -> Any:
+    def api_retry_mint(workbench_id: str, item_id: str, request: Request) -> Any:
         try:
             result = _svc().retry_mint(_principal(request), workbench_id, item_id)
             return JSONResponse({"artifact_id": result["artifact_id"]}, status_code=201 if result["created"] else 200)
@@ -303,7 +303,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to run automation")
 
     @router.post("/api/workbenches/{workbench_id}/results/{artifact_id}/open")
-    async def api_open_result(workbench_id: str, artifact_id: str, request: Request) -> Any:
+    def api_open_result(workbench_id: str, artifact_id: str, request: Request) -> Any:
         """Betterment A2: opening a result reads it (``new`` becomes ``read``)."""
         try:
             return JSONResponse({"result": _svc().open_result(_principal(request), workbench_id, artifact_id)})
@@ -313,7 +313,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to open the result")
 
     @router.post("/api/workbenches/{workbench_id}/make-one")
-    async def api_make_one_automation(workbench_id: str, request: Request) -> Any:
+    def api_make_one_automation(workbench_id: str, request: Request) -> Any:
         """Betterment A9: an old queue automation takes its agent's prompt as Do."""
         try:
             return JSONResponse({"workbench": _svc().make_one_automation(_principal(request), workbench_id)})
@@ -325,7 +325,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to make this one automation")
 
     @router.post("/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel")
-    async def api_cancel_workbench_run(workbench_id: str, parent_operation_id: str, request: Request) -> Any:
+    def api_cancel_workbench_run(workbench_id: str, parent_operation_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"disposition": _svc().cancel_run(_principal(request), parent_operation_id)})
         except ServiceError as exc:
@@ -354,21 +354,21 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to resolve voice references")
 
     @router.get("/api/workbenches/{workbench_id}/runs")
-    async def api_list_runs(workbench_id: str, request: Request) -> Any:
+    def api_list_runs(workbench_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"runs": _svc().list_runs(_principal(request), workbench_id)})
         except Exception as exc:
             return error_500(exc, log, "Failed to list runs")
 
     @router.get("/api/workbench-templates")
-    async def api_list_templates(request: Request) -> Any:
+    def api_list_templates(request: Request) -> Any:
         try:
             return JSONResponse({"templates": _svc().list_templates(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list templates")
 
     @router.get("/api/skills")
-    async def api_list_skills(request: Request, recipe_id: str | None = None) -> Any:
+    def api_list_skills(request: Request, recipe_id: str | None = None) -> Any:
         try:
             return JSONResponse({"skills": _svc().list_skills(_principal(request), recipe_id)})
         except Exception as exc:
@@ -405,7 +405,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update skill")
 
     @router.delete("/api/skills/{skill_id}")
-    async def api_delete_skill(skill_id: str, request: Request) -> Any:
+    def api_delete_skill(skill_id: str, request: Request) -> Any:
         try:
             _svc().delete_skill(_principal(request), skill_id)
             return JSONResponse({"success": True})
@@ -426,14 +426,14 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to instantiate template")
 
     @router.get("/api/workbenches/{workbench_id}/memory")
-    async def api_list_memory(workbench_id: str, request: Request) -> Any:
+    def api_list_memory(workbench_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"entries": _svc().list_memory(_principal(request), workbench_id)})
         except Exception as exc:
             return error_500(exc, log, "Failed to read memory")
 
     @router.delete("/api/workbenches/{workbench_id}/memory")
-    async def api_clear_memory(workbench_id: str, request: Request) -> Any:
+    def api_clear_memory(workbench_id: str, request: Request) -> Any:
         try:
             _svc().clear_memory(_principal(request), workbench_id)
             return JSONResponse({"success": True})
@@ -441,7 +441,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to clear memory")
 
     @router.delete("/api/workbenches/{workbench_id}/memory/{index}")
-    async def api_forget_memory(workbench_id: str, index: int, request: Request, at: str = "") -> Any:
+    def api_forget_memory(workbench_id: str, index: int, request: Request, at: str = "") -> Any:
         """Betterment A3: Forget one lesson; ``at`` is its timestamp."""
         try:
             _svc().forget_memory(_principal(request), workbench_id, index, at)
@@ -452,7 +452,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to forget the lesson")
 
     @router.post("/api/workbenches/{workbench_id}/memory/{index}/promote")
-    async def api_promote_memory(workbench_id: str, index: int, request: Request) -> Any:
+    def api_promote_memory(workbench_id: str, index: int, request: Request) -> Any:
         try:
             skill = _svc().promote_memory(_principal(request), workbench_id, index)
             return JSONResponse({"skill": skill}, status_code=201)

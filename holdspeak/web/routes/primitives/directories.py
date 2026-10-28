@@ -43,7 +43,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         return getattr(request.state, "principal", None)
 
     @router.get("/api/directories")
-    async def api_list_directories(request: Request) -> Any:
+    def api_list_directories(request: Request) -> Any:
         try:
             return JSONResponse({"directories": _ops().invoke(_principal(request), "zone.list", {})})
         except Exception as exc:
@@ -79,7 +79,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create directory")
 
     @router.get("/api/directories/{directory_id}")
-    async def api_get_directory(directory_id: str, request: Request) -> Any:
+    def api_get_directory(directory_id: str, request: Request) -> Any:
         try:
             return JSONResponse(_ops().invoke(_principal(request), "zone.read", {"directory_id": directory_id}))
         except NotFound:
@@ -117,7 +117,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update directory")
 
     @router.delete("/api/directories/{directory_id}")
-    async def api_delete_directory(directory_id: str, request: Request) -> Any:
+    def api_delete_directory(directory_id: str, request: Request) -> Any:
         try:
             _deleted, kernel = _ops().invoke_receipted(_principal(request), "zone.delete", {"directory_id": directory_id})
             return JSONResponse({"success": True, **_kernel_fields(kernel)})
@@ -129,7 +129,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to delete directory")
 
     @router.get("/api/directories/{directory_id}/members")
-    async def api_list_directory_members(directory_id: str, request: Request) -> Any:
+    def api_list_directory_members(directory_id: str, request: Request) -> Any:
         try:
             members = _ops().invoke(_principal(request), "zone.members", {"directory_id": directory_id})
             return JSONResponse({"directory_id": directory_id, "members": members})
@@ -139,7 +139,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list directory members")
 
     @router.put("/api/directories/{directory_id}/members/{primitive_id:path}")
-    async def api_file_member(directory_id: str, primitive_id: str, request: Request) -> Any:
+    def api_file_member(directory_id: str, primitive_id: str, request: Request) -> Any:
         try:
             membership, kernel = _ops().invoke_receipted(_principal(request), "zone.file", {
                 "directory_id": directory_id, "primitive_id": primitive_id})
@@ -158,7 +158,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to file directory member")
 
     @router.delete("/api/directories/{directory_id}/members/{primitive_id:path}")
-    async def api_unfile_member(directory_id: str, primitive_id: str, request: Request) -> Any:
+    def api_unfile_member(directory_id: str, primitive_id: str, request: Request) -> Any:
         try:
             _unfiled, kernel = _ops().invoke_receipted(_principal(request), "zone.unfile", {
                 "directory_id": directory_id, "primitive_id": primitive_id})

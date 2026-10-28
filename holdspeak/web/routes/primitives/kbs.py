@@ -43,7 +43,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
         return getattr(request.state, "principal", None)
 
     @router.get("/api/kbs")
-    async def api_list_kbs(request: Request) -> Any:
+    def api_list_kbs(request: Request) -> Any:
         try:
             return JSONResponse({"kbs": _ops().invoke(_principal(request), "kb.list", {})})
         except Exception as exc:
@@ -74,7 +74,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create kb")
 
     @router.get("/api/kbs/{kb_id}")
-    async def api_get_kb(kb_id: str, request: Request) -> Any:
+    def api_get_kb(kb_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"kb": _ops().invoke(_principal(request), "kb.read", {"kb_id": kb_id})})
         except NotFound:
@@ -105,7 +105,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update kb")
 
     @router.delete("/api/kbs/{kb_id}")
-    async def api_delete_kb(kb_id: str, request: Request) -> Any:
+    def api_delete_kb(kb_id: str, request: Request) -> Any:
         try:
             _ops().invoke(_principal(request), "kb.delete", {"kb_id": kb_id})
             return JSONResponse({"success": True})
@@ -115,7 +115,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to delete kb")
 
     @router.get("/api/kbs/{kb_id}/members")
-    async def api_list_kb_members(kb_id: str, request: Request) -> Any:
+    def api_list_kb_members(kb_id: str, request: Request) -> Any:
         try:
             members = _ops().invoke(_principal(request), "kb.members", {"kb_id": kb_id})
             return JSONResponse({"members": members})
@@ -125,7 +125,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list Knowledge members")
 
     @router.put("/api/kbs/{kb_id}/members/{resource_ref:path}")
-    async def api_add_kb_member(kb_id: str, resource_ref: str, request: Request) -> Any:
+    def api_add_kb_member(kb_id: str, resource_ref: str, request: Request) -> Any:
         try:
             member, kernel = _ops().invoke_receipted(_principal(request), "kb.member.add", {
                 "kb_id": kb_id, "resource_ref": resource_ref})
@@ -138,7 +138,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to add Knowledge member")
 
     @router.delete("/api/kbs/{kb_id}/members/{resource_ref:path}")
-    async def api_remove_kb_member(kb_id: str, resource_ref: str, request: Request) -> Any:
+    def api_remove_kb_member(kb_id: str, resource_ref: str, request: Request) -> Any:
         try:
             removed, kernel = _ops().invoke_receipted(_principal(request), "kb.member.remove", {
                 "kb_id": kb_id, "resource_ref": resource_ref})
