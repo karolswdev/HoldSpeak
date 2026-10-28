@@ -28,6 +28,18 @@ recommended for a real number), the phone Calls row. Left: the owner installs
 ai-phone and presses the line; a handset icon; recorded fixtures for the faces;
 channel 0 (the phone web app's call screen); HoldSpeak calling others.
 
+Merged after it the same night: #1551 the Calls faces, #1552 two midnight test
+reds (stale setups), #1553 + #1555 the Door's now and overdue columns name the
+day and another person's item waits on them (the Monday brief lists every
+waited-on item), #1554 Settings expects Calls and the phone Go fits 393
+(Archive under Drawers ▸), #1556 delight slice 4 (the Calls telephone icon, the
+live lamp species, the Yes/No settle, the Record breath, Activity empties),
+#1557 Live slice 3 (the microphone check before Start, the transcript_pass
+frame, level + saved mark), #1558 agent window slice 3 (Done closes a launch,
+checked state, the step fold, honest test colours). Whole browser suite on
+main c0df24678: 419 passed. In flight: delight slice 5 (the depth scale, Today
+in the evening).
+
 **The window grammar — 2026-10-24 (owner: "still look like pages inside OS-like
 containers"; "make it look nice and attractive, not boring"; then "that tilt…
 absolute cringe" → icon direction D picked: "Yes, I like D").** Design and
