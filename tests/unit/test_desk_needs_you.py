@@ -748,6 +748,65 @@ def test_the_overdue_door_item_ranks_first_and_an_active_thought_is_no_member(hu
     assert not any(str(m.get("ref") or "").startswith("thought") for m in answer["members"]), answer["members"]
 
 
+# ── DUE-LABEL: the Door's two-day "now" window says the day, and whose ────
+
+
+def test_the_now_window_says_the_day_and_theirs_waits(
+    hub: Hub, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Door's ``now`` column holds today, tomorrow and the day after
+    (``FollowThroughService._lane``). On the pinned Tuesday (2026-10-20) the
+    word says the day; Bea's items wait on Bea; the owner's own stay his and
+    count on their day (Betterment D1)."""
+    from tests.fixtures.daily_week import WIRE_DAY, pin_wire_day
+
+    pin_wire_day(hub, monkeypatch)
+    now = datetime(2026, 10, 20, 10, 0).astimezone()
+    rows = [
+        (f"due-{who}-{days}", f"{who} item due in {days} days", owner, WIRE_DAY + timedelta(days=days))
+        for who, owner in (("mine", "me"), ("theirs", "Bea"))
+        for days in (0, 1, 2)
+    ]
+    meeting_id = "due-label-meeting"
+    pushed = _ok(hub.client.post("/api/sync/push", json={"meetings": [{
+        "meta": {"id": meeting_id, "kind": "meeting", "last_modified": now.isoformat(), "deleted": False},
+        "value": {
+            "id": meeting_id, "started_at": (now - timedelta(minutes=30)).isoformat(),
+            "ended_at": now.isoformat(), "title": "Due label planning", "tags": [], "segments": [],
+            "bookmarks": [], "capture_status": "finalized", "transcription_status": "active",
+            "provenance": "native",
+            "intel": {
+                "timestamp": now.timestamp(), "topics": [], "summary": "Due words.",
+                "action_items": [
+                    {"id": item_id, "task": task, "owner": owner, "due": due.isoformat(),
+                     "status": "pending", "review_state": "accepted", "created_at": now.isoformat()}
+                    for item_id, task, owner, due in rows
+                ],
+            },
+        },
+    }]}))
+    assert pushed["received"]["meetings"] == 1
+    board = _ok(hub.client.get("/api/door"))["board"]
+    assert {str(card["id"]) for card in board["now"]} >= {row[0] for row in rows}, board["now"]
+
+    answer = _needs(hub)
+    got = {str(row.get("ref")): row for row in answer["items"] if str(row.get("ref") or "").startswith("due-")}
+    members = {m["ref"] for m in answer["members"]}
+    words = {"0": "DUE TODAY", "1": "DUE TOMORROW", "2": "DUE Thu"}
+    for days, word in words.items():
+        mine, theirs = got[f"due-mine-{days}"], got[f"due-theirs-{days}"]
+        # The owner's own: the due word alone, his, never waiting.
+        assert (mine["why"], mine["direction"], mine["waiting"]) == (word, "mine", False), mine
+        # Bea's: listed under Waiting on Bea with the due word beside it.
+        assert (theirs["why"], theirs["direction"], theirs["waiting"], theirs["counted"]) == (
+            f"WAITING ON BEA · {word}", "theirs", True, False), theirs
+        assert f"due-theirs-{days}" not in members
+    assert answer["waitingCount"] >= 3
+    # The one count rule: his item counts on its day, not before.
+    assert got["due-mine-0"]["counted"] is True and "due-mine-0" in members
+    assert got["due-mine-1"]["counted"] is False and got["due-mine-2"]["counted"] is False
+
+
 # ── HS-201-01: an unreadable roster is its own row, never a clear desk ────
 
 
