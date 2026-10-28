@@ -115,14 +115,22 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             _normal_chair(page)
             window = page.locator(".drawer-window").last
             window.wait_for(timeout=20_000)
-            window.get_by_role("button", name="History", exact=True).wait_for(timeout=20_000)
+            # W6-C2 (#1566): the foot's verbs live in the toolbar. Open shows
+            # only for a selection that opens (never a ghost; none here). The
+            # quiet verbs (History, Get Info) fold into More at a surface of
+            # 520 px or less (ToolbarFold, kit.css): the phone, not 1440.
+            folded = width != 1440
+            first = "More" if folded else "History"
+            window.get_by_role("button", name=first, exact=True).wait_for(timeout=20_000)
             _settle(page)
             verbs = window.evaluate(MEASURE)
             words = {v["word"] for v in verbs}
-            expected = {"Icons", "List", "Room", "History", "Watch sources", "Get Info"}
-            if width == 1440:
-                expected.add("Open")
+            expected = {"Icons", "List", "Room", "Watch sources"}
+            expected |= {"More"} if folded else {"History", "Get Info"}
             assert expected <= words, verbs
+            assert "Open" not in words, verbs
+            if folded:
+                assert not {"History", "Get Info"} & words, verbs
             if width == 1440:
                 # One plate height per band: the window grammar's 36 px
                 # toolbar holds 28 px verbs (kit.css `.kit-toolbar .btn`);
@@ -142,6 +150,13 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
                 # not drawn when it would hold nothing (SurfaceFooter.tsx).
                 assert not window.get_by_role("button", name="More actions", exact=True).count(), verbs
                 assert window.is_visible()
+                # The folded verbs say their words in the More menu.
+                window.get_by_role("button", name="More", exact=True).click()
+                menu = page.get_by_role("menu", name="More")
+                menu.wait_for(timeout=5_000)
+                items = [t.strip() for t in menu.get_by_role("menuitem").all_inner_texts()]
+                assert {"History", "Get Info"} <= set(items), items
+                page.keyboard.press("Escape")
             page.screenshot(path=str(SHOTS / f"kit-verb-{width}.png"))
             _assert_clean(page, errors)
             browser.close()

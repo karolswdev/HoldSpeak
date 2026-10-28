@@ -50,7 +50,10 @@ def _status(you: Any, field: str) -> str:
 
 
 def _bar(page: Any) -> str:
-    return page.locator("#surface-settings .pref-status-bar").inner_text()
+    # W6-A (#1564): Settings draws no status bar until a write is made in
+    # this window (it no longer says "Saved" from the file's mtime).
+    bar = page.locator("#surface-settings .pref-status-bar")
+    return bar.inner_text() if bar.count() else ""
 
 
 def _wait_saved(page: Any, field: str, scope: str = "") -> None:
@@ -114,6 +117,8 @@ def test_real_settings_you_edit_alias_and_section_return(
                 you.get_by_test_id("settings-owner-name").get_by_role("textbox").wait_for(timeout=15_000)
             name = you.get_by_test_id("settings-owner-name").get_by_role("textbox")
             aliases = you.get_by_test_id("settings-owner-aliases").get_by_role("textbox")
+            # No write in this window yet: no status bar, so no "Saved".
+            assert page.locator("#surface-settings .pref-status-bar").count() == 0, _bar(page)
             name.fill("Karol Architect")
             assert _status(you, "name") == "EDITED"
             _no_global_saved_for_you(page)
@@ -144,6 +149,8 @@ def test_real_settings_you_edit_alias_and_section_return(
             assert _status(you, "name") == "EDITED"
             _no_global_saved_for_you(page)
             _section(page, "speak")
+            # Saved counts per window (owner decision 2026-10-28): the You
+            # writes made here say Saved on Speak's bar too.
             assert "SAVED" in _bar(page).upper()
             _section(page, "you")
             name = you.get_by_test_id("settings-owner-name").get_by_role("textbox")

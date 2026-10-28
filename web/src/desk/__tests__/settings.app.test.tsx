@@ -656,6 +656,21 @@ describe("W6-A: the save lamp says only this window's writes (atlas pass 3, defe
     fireEvent.click(screen.getByRole("button", { name: "Decrease Quiet from" }));
     await waitFor(() => expect(document.querySelector(".pref-status-bar")?.textContent ?? "").toContain("Saved just now"));
   });
+
+  it("Saved counts per window: a You write says Saved just now on Speak too (owner decision 2026-10-28)", async () => {
+    hub.state.settings.owner = { name: "Karl", aliases: [] };
+    render(<SettingsCore />);
+    const name = within(await screen.findByTestId("settings-owner-name")).getByRole("textbox") as HTMLInputElement;
+    await waitFor(() => expect(name.value).toBe("Karl"));
+    // No write in this window yet: no bar says Saved.
+    expect(document.querySelector(".pref-status-bar")?.textContent ?? "").not.toMatch(/Saved/);
+    fireEvent.change(name, { target: { value: "Karol Sane" } });
+    fireEvent.blur(name);
+    await waitFor(() => expect(hub.state.settings.owner?.name).toBe("Karol Sane"), { timeout: 3000 });
+    await waitFor(() => expect(document.querySelector(".pref-status-bar")?.textContent ?? "").toContain("Saved just now"));
+    fireEvent.click(screen.getByTestId("settings-index-speak"));
+    await waitFor(() => expect(document.querySelector(".pref-status-bar")?.textContent ?? "").toContain("Saved just now"));
+  });
 });
 
 describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () => {
