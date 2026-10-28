@@ -64,6 +64,9 @@ def _find_free_port(host: str) -> int:
 #: and ``holdspeak-mcp`` read it (mcp.server.discover_hub).
 DEFAULT_WEB_PORT = 8765
 
+# Starlette's sync-handler pool needs enough room for the hub's many windows.
+HUB_THREAD_TOKENS = 64
+
 
 def _bind_listen_socket(host: str, preferred: int) -> socket.socket:
     """Bind ``preferred`` on ``host``; when it is busy, bind a free port.
@@ -1812,6 +1815,9 @@ class MeetingWebServer:
 
         @app.on_event("startup")
         async def _startup() -> None:
+            import anyio.to_thread
+
+            anyio.to_thread.current_default_thread_limiter().total_tokens = HUB_THREAD_TOKENS
             # PERF-HUB 2026-10-28: HOLDSPEAK_LOOP_WATCH=1 names any handler
             # that holds the event loop longer than 100 ms. Off by default.
             from .web import loop_watch
