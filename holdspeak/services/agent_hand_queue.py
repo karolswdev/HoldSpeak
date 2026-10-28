@@ -119,7 +119,7 @@ def queued_flights(db: Any, queue: Optional[HandQueue] = None) -> list[dict[str,
             "state": QUEUED,
             "queue_id": entry.get("queue_id"),
             "queued_at": entry.get("queued_at"),
-            "turn_end": None, "turn_id": None, "new": False, "session_key": None,
+            "turn_end": None, "turn_id": None, "done_at": None, "new": False, "session_key": None,
             "pr": None, "close": None, "session_cleanup": None, "merged_at": None,
             "launch_id": None, "launched_at": None, "ended_at": None,
         })

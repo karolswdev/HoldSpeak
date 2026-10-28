@@ -115,6 +115,27 @@ def tool_head(tool: str, tool_input: Any) -> Optional[str]:
     return None
 
 
+#: A test runner's summary count (pytest, vitest, jest): `6 passed`, `1 failed`.
+_RESULT_RE = re.compile(r"\b(\d+) (passed|failed|errors?|skipped)\b")
+
+
+def run_result(response: Any) -> Optional[str]:
+    """The counts of a test run from a command's output (its last line that
+    names passed or failed tests), e.g. ``1 failed, 5 passed``; ``None``
+    when the output names none. Only the counts are kept."""
+    if isinstance(response, Mapping):
+        text = "\n".join(str(response.get(k) or "") for k in ("stdout", "output", "stderr") if isinstance(response.get(k), str))
+    elif isinstance(response, str):
+        text = response
+    else:
+        return None
+    for line in reversed(text[-4000:].splitlines()):
+        if re.search(r"\b\d+ (passed|failed)\b", line):
+            found = _RESULT_RE.findall(line)
+            return ", ".join(f"{n} {word}" for n, word in found)[:80] or None
+    return None
+
+
 def event_row(payload: Mapping[str, Any], *, notification_type: Optional[str] = None) -> dict[str, Any]:
     """One hook payload as an event-log row (without ``session_key``/``ts``)."""
     event = str(payload.get("hook_event_name") or "").strip() or "unknown"
@@ -140,6 +161,12 @@ def event_row(payload: Mapping[str, Any], *, notification_type: Optional[str] = 
     response = payload.get("tool_response")
     if isinstance(response, Mapping) and isinstance(response.get("interrupted"), bool):
         detail["interrupted"] = response["interrupted"]
+    # W4 AGENT 2 (slice 3): a test run's result in its own words (`6 passed`,
+    # `1 failed, 5 passed`): the counts only, never the output.
+    if tool in _COMMAND_TOOLS:
+        result = run_result(response)
+        if result:
+            detail["result"] = result
     detail = {k: _redact(v) if isinstance(v, str) else v for k, v in detail.items()}
     return {"event": event, "tool": tool, "head": head, "text": text, "detail": detail}
 

@@ -102,6 +102,8 @@ export interface AgentFlight {
   /** PHILO-15 B48: how a waiting agent's turn ended (`asks`, `idle`, `done`);
    * PHILO-15 15: the responder's DONE / IDLE first (also with the PR open). */
   turnEnd?: "asks" | "idle" | "done" | null;
+  /** W4 AGENT 2: when a done turn ended (the hub's `done_at`). */
+  doneAt?: string | null;
   /** Betterment AG0: the done turn's id, and whether the owner has not
    * opened the agent since (`POST /api/agent/launches/{id}/seen`). */
   turnId?: string | null;
@@ -266,6 +268,7 @@ export function fromWireFlight(body: any): AgentFlight {
     pr: pr ? { number: pr.number == null ? null : Number(pr.number), url: String(pr.url ?? ""), state: String(pr.state ?? ""), title: String(pr.title ?? "") } : null,
     turnEnd: ["asks", "idle", "done"].includes(body?.turn_end) ? body.turn_end : null,
     turnId: body?.turn_id ? String(body.turn_id) : null,
+    doneAt: body?.done_at ? String(body.done_at) : null,
     isNew: body?.new === true,
     close: body?.close ? String(body.close) : null,
     sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,

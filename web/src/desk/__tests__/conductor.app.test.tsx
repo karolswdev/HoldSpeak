@@ -96,8 +96,9 @@ describe("the Conductor on the C4 seed", () => {
       expect(el!.textContent ?? "").toContain(lamp);
     }
     const head = screen.getByTestId("conductor-head");
-    // Betterment AG8: the status bar counts only what is there.
-    expect(statusWords()).toMatch(/^1 needs you · 2 working/);
+    // Betterment AG8: the status bar counts only what is there. W4 AGENT 2:
+    // "working" counts the rows that say Working (the PR row does not).
+    expect(statusWords()).toMatch(/^1 needs you · 1 working/);
     // The cap is the hub's count (no tmux session runs): no `N OF M`.
     expect(head.textContent).not.toContain(" OF ");
     expect(head.textContent).not.toContain("NOT READ");

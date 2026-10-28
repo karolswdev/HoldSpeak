@@ -364,3 +364,68 @@
 @container surface (max-width: 520px) {
   .desk-next .is-lane .lw-cols { grid-template-columns: 1fr; }
 }
+
+/* ── W4 AGENT 2 (slice 2): the held call and "HoldSpeak decides" on the
+   waiting card's soft plate; the receipts and the Details track as dots and
+   sentence-case words with quiet ages. No ink frames, no mono caps words. */
+.desk-next .is-lane .desk-pullout-body section.lw-soft-plate,
+.desk-next .is-lane .lw-soft-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--lamp-warn) 8%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-warn) 30%, var(--wb-rule-soft));
+}
+.desk-next .is-lane .lw-soft-plate[data-tone="info"] {
+  background: color-mix(in srgb, var(--lamp-info) 7%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-info) 28%, var(--wb-rule-soft));
+}
+.desk-next .is-lane .lw-soft-plate .lw-ask-q { font-size: 15px; line-height: 1.45; font-weight: 500; }
+.desk-next .is-lane .lw-plate-callbox { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.desk-next .is-lane .lw-soft-plate .lw-plate-why {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font: 12.5px / 1.4 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--wb-warn-ink, var(--wb-muted));
+}
+.desk-next .is-lane .lw-plate-target { font: 12px / 1.4 var(--font-mono); color: var(--wb-ink); overflow-wrap: anywhere; }
+.desk-next .is-lane .lw-soft-plate .lw-plate-call {
+  display: block;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--wb-ink) 5%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px var(--wb-rule-soft);
+  font: 12px / 1.45 var(--font-mono);
+  color: var(--wb-ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.desk-next .is-lane .lw-soft-plate .lw-plate-verbs { padding: 0; }
+
+.desk-next .is-lane .lw-receipt {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0;
+  font: 12px / 1.4 var(--font-sans);
+  letter-spacing: normal;
+  color: var(--wb-muted);
+}
+.desk-next .is-lane .lw-receipt-word { color: var(--wb-ink); }
+.desk-next .is-lane .lw-receipt[data-tone="fail"] .lw-receipt-word { color: var(--danger); }
+.desk-next .is-lane .lw-receipt-age,
+.desk-next .is-lane .lw-receipt-fact { white-space: pre; color: var(--wb-muted); }
+.desk-next .is-lane .lw-receipt-head { display: inline-flex; align-items: baseline; }
+
+.desk-next .is-lane .lw-track { list-style: none; margin: 0; padding: 4px 0 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.desk-next .is-lane .lw-track-step { font: 12px / 1.4 var(--font-sans); color: var(--wb-ink); }
+.desk-next .is-lane .lw-track-sub { color: var(--wb-muted); }

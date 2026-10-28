@@ -497,6 +497,16 @@
       ]
     },
     {
+      "path": "/api/agent/launches/{launch_id}/remove",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}/resume",
       "methods": [
         "POST"
