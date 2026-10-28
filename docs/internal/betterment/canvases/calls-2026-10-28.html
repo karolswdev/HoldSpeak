@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calls direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material: values copied from web/src/styles/tokens.css (2026-10-27),
+   the same set the Live, Note and Ask canvases use. */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-rec:#b3261e;
+  --ok:#34d399; --ok-strong:#10b981; --ember:#a86e4a; --ember-ink:#8a5a3d; --warn:#f59e0b; --danger:#dc2626;
+  --person-ink:#1f7a6b; --person-tint:rgba(52,211,153,.14); --link-ink:#2f67c8; --head-ink:#2b4a7a;
+  --lamp-ring:0 0 0 1.5px var(--wb-paper),0 1px 2px rgba(12,20,32,.4);
+  --win-shadow:0 18px 44px rgba(8,14,22,.40),0 3px 10px rgba(8,14,22,.24);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9eef4;color:var(--wb-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+p{margin:0 0 10px;max-width:1040px}
+section.block{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.qa{display:grid;grid-template-columns:220px 1fr 1fr 1fr;max-width:1300px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;font-size:13px}
+.qa > div{padding:9px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.qa > div:nth-child(4n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.qa > .h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.qa > .h.rec{background:var(--wb-blue);color:var(--head-ink)}
+.qa > .rec{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+.note{font-size:13.5px;color:var(--wb-muted);max-width:1200px}
+.note code{font:12.5px var(--font-mono)}
+
+/* a moment: the real desk crop (1000 x 900 of the 1440 desk) with the window at real size */
+.moment{display:grid;grid-template-columns:240px 1000px;gap:24px;align-items:start;margin:22px 0 0}
+.moment .say{font-size:13.5px}
+.moment .say b{display:block;font:600 15px var(--font-display);color:var(--head-ink);margin-bottom:4px}
+.stage{position:relative;width:1000px;height:680px;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);background:url(calls-2026-10-28/desk-1440.png) 0 0/1000px 900px no-repeat}
+.menubar-cover{display:none}
+
+/* the window */
+.win{position:absolute;left:200px;top:70px;width:720px;height:560px;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:20px;text-align:center;font-size:15px;opacity:.9}
+.tb .gl{width:18px;height:18px;border-radius:4px;background:#fff;display:grid;place-items:center}
+.tb .gl svg{width:14px;height:14px;stroke:var(--wb-sel);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tb .name{font:600 13.5px/1 var(--font-display);flex:1;white-space:nowrap}
+.tb .gad{display:flex;gap:2px}
+.tb .gad span{width:28px;height:22px;display:grid;place-items:center}
+.tb .gad svg{width:14px;height:14px;stroke:#f7f9fc;fill:none;stroke-width:1.6}
+.toolbar{flex:0 0 36px;display:flex;align-items:center;gap:2px;padding:0 6px;border-bottom:1px solid var(--wb-rule-soft)}
+.toolbar .grow{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc;padding:0 11px}
+.btn.danger{background:var(--wb-rec);color:#fff;padding:0 11px}
+.btn.secondary{background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.btn.sm{height:22px;font-size:12px;padding:0 8px}
+.body{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:8px;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .sep{opacity:.5}
+.sb b{color:var(--wb-ink);font-weight:500;font-variant-numeric:tabular-nums}
+.lamp{width:8px;height:8px;border-radius:50%;background:var(--ok-strong);box-shadow:var(--lamp-ring);display:inline-block}
+.lamp.idle{background:#9aa8b9}
+.lamp.warn{background:var(--warn)}
+.lamp.live{background:#e5483d;animation:breathe 1.4s ease-in-out infinite alternate}
+@keyframes breathe{from{opacity:1}to{opacity:.45}}
+
+/* the call as a document (LiveTranscript) */
+.doc{padding:10px 18px 0 0;font:14px/1.6 var(--font-ui)}
+.para{display:grid;grid-template-columns:62px 1fr;gap:0 10px;padding:2px 0}
+.para .when{text-align:right;color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;padding-top:3px}
+.para .who{font:600 12.5px var(--font-ui);color:var(--person-ink);margin:8px 0 0}
+.para .who.hs{color:var(--head-ink)}
+.para .said{color:var(--wb-ink)}
+.listen{display:grid;grid-template-columns:62px 1fr;gap:0 10px;color:var(--wb-faint);font-size:13px;padding:6px 0}
+.listen span:last-child{display:inline-flex;align-items:center;gap:8px}
+.caret{width:2px;height:15px;background:var(--wb-sel-vivid);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ask{margin:8px 18px 0 72px;padding:8px 10px;border-radius:7px;background:color-mix(in srgb,var(--wb-sel-vivid) 6%,var(--wb-paper));box-shadow:inset 3px 0 0 #8fb0e6,0 0 0 1px #d6e1f2;display:flex;align-items:center;gap:10px;font-size:13px}
+.ask .grow{flex:1}
+.cap{font:600 12px var(--font-ui);color:var(--wb-muted);margin:14px 18px 2px 72px;display:flex;align-items:center;gap:8px}
+.cap::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.orow{height:30px;display:flex;align-items:center;gap:10px;padding:0 8px;margin:0 18px 0 64px;border-bottom:1px solid #e9eef4;font-size:13px}
+.orow .k{width:18px;height:18px;border-radius:4px;display:grid;place-items:center;font:600 10px var(--font-ui);flex:0 0 18px}
+.orow .k.task{background:#e3f5ec;color:#167a55}
+.orow .k.send{background:#fbefe4;color:var(--ember-ink)}
+.orow .k.note{background:var(--wb-blue);color:var(--head-ink)}
+.orow .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orow .m{color:var(--wb-muted);font-size:12px;white-space:nowrap}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--wb-muted);font-size:13px}
+.empty .obj{width:84px;height:84px;margin:0 auto 10px;border-radius:22px;background:linear-gradient(160deg,#e6eef9,#cfdcf0);display:grid;place-items:center;box-shadow:0 6px 16px rgba(43,74,122,.18),inset 0 1px 0 #fff}
+.empty .obj svg{width:42px;height:42px;stroke:var(--wb-sel);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.empty .obj.waiting{animation:ring 2.4s ease-in-out infinite}
+@keyframes ring{0%,80%,100%{transform:none}84%{transform:rotate(-7deg)}88%{transform:rotate(7deg)}92%{transform:rotate(-4deg)}}
+.past{margin:0 0 0 0}
+.lrow{height:30px;display:grid;grid-template-columns:110px 1fr 90px;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid #e9eef4;font-size:13px}
+.lrow .m{color:var(--wb-muted);font-size:12px}
+.lrow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.lhead{height:26px;display:grid;grid-template-columns:110px 1fr 90px;gap:10px;padding:0 14px;align-items:center;font-size:12px;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+
+/* phones */
+.phones{display:flex;gap:56px;align-items:flex-start;margin:18px 0 0 10px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:url(calls-2026-10-28/phone-393.png) 0 0/393px 852px no-repeat;font-family:var(--font-ui)}
+.ph-win{position:absolute;left:0;right:0;top:44px;bottom:80px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{flex:0 0 44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 14px var(--font-display)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tb .n{flex:1;text-align:center;margin-right:44px}
+.ph-tool{flex:0 0 48px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.ph-tool .btn{height:36px;font-size:14px}
+.ph-tool .grow{flex:1}
+.ph-body{flex:1;overflow:hidden;position:relative}
+.ph-sb{flex:0 0 26px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.phone .para{grid-template-columns:44px 1fr}
+.phone .doc{padding:8px 14px 0 0;font-size:15px}
+.phone .ask{margin:8px 12px 0 54px;flex-wrap:wrap}
+.phone .ask .btn.sm{height:36px;font-size:14px;padding:0 14px}
+.phone .orow{height:44px;font-size:14px;margin:0 12px 0 46px}
+.phone .cap{margin:12px 12px 2px 54px}
+.tiles{position:absolute;left:0;right:0;top:44px;bottom:80px;background:radial-gradient(120% 80% at 70% 20%,#3a5677 0%,#1d2b3d 60%,#141e2b 100%);padding:28px 22px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px 10px;align-content:start}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font:500 12px var(--font-ui);text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.tile i{width:60px;height:60px;border-radius:16px;background:linear-gradient(160deg,#fafbfc,#dfe7f2);box-shadow:0 6px 14px rgba(0,0,0,.35),inset 0 1px 0 #fff;display:grid;place-items:center;font-style:normal;font-size:24px;color:var(--wb-sel)}
+.tile.call i{background:linear-gradient(160deg,#4bd39a,#1e9e6a)}
+.tile.call i svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tile.call{outline:2px dashed rgba(255,255,255,.75);outline-offset:6px;border-radius:12px}
+
+/* settings */
+.settings{display:grid;grid-template-columns:172px 1fr;height:100%}
+.side{background:#f1f4f8;border-right:1px solid var(--wb-rule-soft);padding:8px 6px;font-size:13px}
+.side div{height:30px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:6px}
+.side div.on{background:var(--wb-sel);color:#fff}
+.pane{padding:12px 22px;font-size:13px;overflow:hidden}
+.pane .g{font:600 13px var(--font-ui);margin:12px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--wb-rule-soft)}
+.pane .r{height:32px;display:grid;grid-template-columns:290px 1fr auto;align-items:center;gap:10px;border-bottom:1px solid #eef2f6}
+.pane .r .q{color:var(--wb-muted);font-size:12px}
+.pane .r code{font:12px var(--font-mono);color:var(--wb-muted)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="g-min" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5 10.5h6"/></symbol>
+  <symbol id="g-max" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><rect x="5" y="5" width="6" height="4"/></symbol>
+  <symbol id="g-depth" viewBox="0 0 16 16"><rect x="2" y="5" width="8" height="8" rx="1.2"/><path d="M6 5V3h8v8h-4"/></symbol>
+  <symbol id="g-phone" viewBox="0 0 16 16"><path d="M5.2 2.5l1.6 3-1.3 1.2c.7 1.5 1.8 2.6 3.3 3.3l1.2-1.3 3 1.6-.7 2.4c-5.2.2-9.6-4.2-9.4-9.4Z"/></symbol>
+  <symbol id="g-hang" viewBox="0 0 16 16"><path d="M2 9.2c3.6-3 8.4-3 12 0l-1.2 2-2.6-.8-.3-1.8c-1.3-.4-2.5-.4-3.8 0l-.3 1.8-2.6.8Z"/></symbol>
+  <symbol id="g-stop" viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1.5"/></symbol>
+  <symbol id="g-note" viewBox="0 0 16 16"><path d="M4 2.5h5.5L12 5v8.5H4Z M9.5 2.5V5H12 M6 8h4M6 10.5h4"/></symbol>
+</svg>
+<main>
+  <h1>Calls: call HoldSpeak <span class="tag">Direction for slice 1</span></h1>
+  <p>"I'm walking in Times Square. I call my HoldSpeak. I say <i>prepare the 1:1 with Priya and nudge Tomás about the runbook</i>. It does it, reads back what it did, asks before anything leaves the device." ai-phone holds the line (SIP, Parakeet, Phonon on the Mac); HoldSpeak holds each turn (relay mode) on the home engine with this desk's tools. Design: <code>docs/internal/betterment/calls/CALLS-DESIGN-2026-10-28.md</code>.</p>
+
+  <section class="block">
+    <h2>The channels</h2>
+    <div class="qa">
+      <div class="h"></div><div class="h rec">1 · SIP address on the tailnet (first)</div><div class="h">2 · A real number</div><div class="h">0 · Voice in the phone app</div>
+      <div>He does</div><div class="rec">Taps "HoldSpeak" in a softphone (or "Hey Siri, call HoldSpeak")</div><div>Dials a normal number</div><div>Opens the phone app, taps Call</div>
+      <div>Money</div><div class="rec">0</div><div>A number about $1 a month, calls cents a minute</div><div>0</div>
+      <div>His press</div><div class="rec">CONFIG: install ai-phone on the Mac</div><div>CONFIG + EGRESS: a carrier account and keys</div><div>none</div>
+      <div>What HoldSpeak builds</div><div class="rec">The relay runner + the Calls window (this spike)</div><div>Nothing more: a different ai-phone line</div><div>The same runner, the mic loop that exists</div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>The Calls window at 1440</h2>
+    <p class="note">Window grammar: title bar, a 36 px toolbar (the primary verb that makes the object: <b>Call me</b>), the call as a document (the Live transcript species), the results as dense rows, a 24 px status bar with a dot and a word. No host, number or engine chip (A.9).</p>
+
+    <div class="moment">
+      <div class="say"><b>Before</b>The hub listens by itself while Calls is on. One verb: Call me (HoldSpeak rings his phone). The status bar says the line's state in a word.</div>
+      <div class="stage">
+        <div class="win">
+          <div class="tb"><span class="x">✕</span><span class="gl"><svg><use href="#g-phone"/></svg></span><span class="name">Calls</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+          <div class="toolbar"><span class="btn primary"><svg><use href="#g-phone"/></svg>Call me</span><span class="grow"></span></div>
+          <div class="body">
+            <div class="lhead"><span>When</span><span>First words</span><span>Note</span></div>
+            <div class="lrow"><span class="m">Yesterday 18:40</span><span>"What is on my plate tomorrow?"</span><span class="m">Call · 18:40</span></div>
+            <div class="lrow"><span class="m">Mon 08:05</span><span>"Prepare the steering update and…"</span><span class="m">Call · 08:05</span></div>
+          </div>
+          <div class="sb"><span class="it"><span class="lamp"></span>Ready for calls</span><span class="sep">·</span><span class="it">2 calls</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="moment">
+      <div class="say"><b>On a call</b>The words arrive as he speaks and as HoldSpeak answers. When his desk holds a write, the question shows here too; his spoken yes or a tap answers it. What it did lands as rows under the call.</div>
+      <div class="stage">
+        <div class="win">
+          <div class="tb"><span class="x">✕</span><span class="gl"><svg><use href="#g-phone"/></svg></span><span class="name">Calls</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+          <div class="toolbar"><span class="btn danger"><svg><use href="#g-hang"/></svg>Hang up</span><span class="grow"></span></div>
+          <div class="body">
+            <div class="doc">
+              <div class="para"><span class="when">0:02</span><div><div class="who hs">HoldSpeak</div><div class="said">Hello. Say your passphrase.</div></div></div>
+              <div class="para"><span class="when">0:05</span><div><div class="who">You</div><div class="said">Blue heron.</div></div></div>
+              <div class="para"><span class="when">0:06</span><div><div class="who hs">HoldSpeak</div><div class="said">Hello Karol. What can I do?</div></div></div>
+              <div class="para"><span class="when">0:09</span><div><div class="who">You</div><div class="said">Prepare the 1:1 with Priya and nudge Tomás about the runbook.</div></div></div>
+              <div class="para"><span class="when">0:13</span><div><div class="who hs">HoldSpeak</div><div class="said">I added a task: Nudge Tomás. I want to send Runbook reminder to Platform channel. Say yes or no.</div></div></div>
+              <div class="listen"><span></span><span><span class="caret"></span>Listening</span></div>
+            </div>
+            <div class="ask"><span class="grow">Send Runbook reminder to Platform channel</span><span class="btn primary sm">Yes</span><span class="btn secondary sm">No</span></div>
+            <div class="cap">Done on this call</div>
+            <div class="orow"><span class="k note">N</span><span class="t">Priya 1:1 prep: agenda, open items, her promotion packet</span><span class="m">Note</span></div>
+          </div>
+          <div class="sb"><span class="it"><span class="lamp live"></span>On a call</span><span class="sep">·</span><b>2:14</b><span class="sep">·</span><span class="it">Waiting for your answer</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="moment">
+      <div class="say"><b>After</b>The call is a note; its row opens it. The read back he heard is the list of what was done. A send left only on his spoken yes; its row says so.</div>
+      <div class="stage">
+        <div class="win">
+          <div class="tb"><span class="x">✕</span><span class="gl"><svg><use href="#g-phone"/></svg></span><span class="name">Calls</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+          <div class="toolbar"><span class="btn primary"><svg><use href="#g-phone"/></svg>Call me</span><span class="btn"><svg><use href="#g-note"/></svg>Open note</span><span class="grow"></span></div>
+          <div class="body">
+            <div class="doc">
+              <div class="para"><span class="when">0:21</span><div><div class="who hs">HoldSpeak</div><div class="said">Done: wrote a note, Priya 1:1 prep. Added a task, Nudge Tomás about the runbook. Sent Runbook reminder to Platform channel.</div></div></div>
+              <div class="para"><span class="when">0:29</span><div><div class="who">You</div><div class="said">Thanks, that's all.</div></div></div>
+              <div class="para"><span class="when">0:30</span><div><div class="who hs">HoldSpeak</div><div class="said">Goodbye.</div></div></div>
+            </div>
+            <div class="cap">Done on this call</div>
+            <div class="orow"><span class="k note">N</span><span class="t">Priya 1:1 prep: agenda, open items, her promotion packet</span><span class="m">Note</span></div>
+            <div class="orow"><span class="k task">✓</span><span class="t">Nudge Tomás about the runbook</span><span class="m">Task</span></div>
+            <div class="orow"><span class="k send">➤</span><span class="t">Runbook reminder to Platform channel</span><span class="m">Sent on your yes</span></div>
+            <div class="orow"><span class="k note">N</span><span class="t">Call · 28 Oct 09:12</span><span class="m">Transcript</span></div>
+          </div>
+          <div class="sb"><span class="it"><span class="lamp idle"></span>Call ended</span><span class="sep">·</span><b>0:31</b><span class="sep">·</span><span class="it">3 calls</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>The phone at 393</h2>
+    <div class="phones">
+      <div>
+        <div class="phone">
+          <div class="tiles">
+            <div class="tile"><i>◈</i>Today</div><div class="tile"><i>●</i>Capture</div><div class="tile"><i>▣</i>Meetings</div><div class="tile"><i>◉</i>Agents</div>
+            <div class="tile call"><i><svg viewBox="0 0 16 16"><use href="#g-phone"/></svg></i>Calls</div>
+          </div>
+        </div>
+        <p class="note" style="max-width:393px;margin-top:14px">The door: a Calls tile on the phone home and a row in Go ▸ Work. On channel 1 he calls from the softphone; this window is the record.</p>
+      </div>
+      <div>
+        <div class="phone">
+          <div class="ph-win">
+            <div class="ph-tb"><span class="back">‹ Desk</span><span class="n">Calls</span></div>
+            <div class="ph-tool"><span class="btn danger"><svg><use href="#g-hang"/></svg>Hang up</span><span class="grow"></span></div>
+            <div class="ph-body">
+              <div class="doc">
+                <div class="para"><span class="when">0:09</span><div><div class="who">You</div><div class="said">Prepare the 1:1 with Priya and nudge Tomás about the runbook.</div></div></div>
+                <div class="para"><span class="when">0:13</span><div><div class="who hs">HoldSpeak</div><div class="said">I added a task: Nudge Tomás. I want to send Runbook reminder to Platform channel. Say yes or no.</div></div></div>
+              </div>
+              <div class="ask"><span class="grow">Send Runbook reminder to Platform channel</span><span class="btn primary sm">Yes</span><span class="btn secondary sm">No</span></div>
+              <div class="cap">Done on this call</div>
+              <div class="orow"><span class="k note">N</span><span class="t">Priya 1:1 prep</span><span class="m">Note</span></div>
+            </div>
+            <div class="ph-sb"><span class="lamp live"></span>On a call · <b style="color:var(--wb-ink);font-weight:500">2:14</b></div>
+          </div>
+        </div>
+        <p class="note" style="max-width:393px;margin-top:14px">On a call at 393: Hang up is the one verb; the held question keeps its Yes and No at thumb size.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Settings ▸ Calls</h2>
+    <div class="stage" style="height:560px;background-position:0 -60px">
+      <div class="win" style="left:140px;top:30px;width:780px;height:500px">
+        <div class="tb"><span class="x">✕</span><span class="gl"><svg><use href="#g-phone"/></svg></span><span class="name">Settings</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+        <div class="body"><div class="settings">
+          <div class="side"><div>Desk</div><div>Engines</div><div>Meetings</div><div class="on">Calls</div><div>This Mac</div><div>Accounts</div></div>
+          <div class="pane">
+            <div class="g">The line</div>
+            <div class="r"><span>ai-phone</span><span><span class="lamp"></span>&nbsp; Running · a SIP address</span><span class="btn secondary sm">Check</span></div>
+            <div class="r"><span>Checkout</span><span><code>~/dev/ai-phone</code></span><span class="btn sm">Change</span></div>
+            <div class="r"><span>The carrier</span><span class="q">None: calls stay on your tailnet</span><span class="btn sm">Add a number…</span></div>
+            <div class="g">Who may call</div>
+            <div class="r"><span>Passphrase</span><span>••••••••</span><span class="btn sm">Change</span></div>
+            <div class="r"><span>Your number</span><span>+1 ··· ··· 0142</span><span class="btn sm">Change</span></div>
+            <div class="g">On a call, HoldSpeak may</div>
+            <div class="r"><span>Read, write notes and tasks, prepare sends</span><span class="q">Yes</span><span></span></div>
+            <div class="r"><span>Send or nudge</span><span class="q">Only after you say yes</span><span></span></div>
+          </div>
+        </div></div>
+        <div class="sb"><span class="it"><span class="lamp"></span>Ready for calls</span></div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:10px">Egress is disclosed here, where the carrier is chosen ("Add a number…" names the carrier and what crosses it), never as a chip on the Calls window.</p>
+  </section>
+</main>
+</body>
+</html>
