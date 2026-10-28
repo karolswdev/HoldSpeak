@@ -57,7 +57,7 @@ describe("DeskOS application manifest", () => {
       DESK_APPLICATIONS.filter((application) => application.shortcut).map(
         (application) => application.shortcut,
       ),
-    ).toEqual(["⌃1", "⌃5", "⌃2", "⌃4", "⌃3"]); // PHILO-17 U27 / shell S3
+    ).toEqual(["⌃1", "⌃5", "⌃2", "⌃4", "⌃7", "⌃3"]); // PHILO-17 U27 / shell S3; Programs ⌃7 (2026-10-28)
   });
 
   it("keeps the PHILO-17 first-open size matrix declarative", () => {
@@ -103,7 +103,7 @@ describe("DeskOS application manifest", () => {
     const names = (group: (typeof GO_GROUPS)[number]) =>
       goRows(group).map((r) => (r.kind === "app" || r.kind === "launcher" ? r.label : r.kind === "verb" ? r.label ?? r.verbId : r.kind));
     expect(names("daily")).toEqual([
-      "Today", "Needs you", "Capture", "Meetings", "People", "projects", "Decisions", "Agents", "Ask AI", "Speak",
+      "Today", "Needs you", "Capture", "Meetings", "People", "projects", "Decisions", "Agents", "Programs", "Ask AI", "Speak",
     ]);
     expect(names("work")).toEqual(["Automations", "Memory", "Calls", "Voice commands", "drawers", "Archive", "desk.give-feedback"]);
     expect(names("builder")).toEqual([

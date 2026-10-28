@@ -191,6 +191,14 @@ export function refOpener(ref: string | null | undefined, navigation?: DeskNavig
     return key.includes(":") ? () => openCoderSession(key) : null;
   }
   // PHILO-14 C2: a launched agent is `launch:<launch_id>`; it opens its lane.
+  // Programs (2026-10-28): a Program is `program:<id>`; it opens the
+  // Program window `pullout:program:<id>`.
+  if (clean.startsWith("program:")) {
+    const id = clean.slice("program:".length).split(":", 1)[0];
+    return id ? () => {
+      void import("./store").then(({ useDesk }) => useDesk.getState().openPullout(`program:${id}`));
+    } : null;
+  }
   if (clean.startsWith("launch:")) {
     const id = clean.slice("launch:".length);
     return id ? () => openAgentLane(id) : null;

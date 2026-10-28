@@ -172,6 +172,11 @@ async function settleOut(origin?: Element | null): Promise<Element | null> {
   return row;
 }
 
+/** Programs (2026-10-28): the words of a your-turn choice. */
+const PROGRAM_CHOICE_WORDS: Record<string, string> = {
+  merge: "Merge", not_yet: "Not yet", fix_now: "Fix now", later: "Later", skip: "Skip", resume: "Resume", prepare: "Send…",
+};
+
 function NeedVerbsView({ face, primary, onWell, well }: {
   face: NeedFace;
   primary: boolean;
@@ -207,6 +212,23 @@ function NeedVerbsView({ face, primary, onWell, well }: {
   };
 
   switch (v.kind) {
+    case "program":
+      // Programs (2026-10-28): Merge / Not yet; Fix now / Later / Skip;
+      // Resume / Skip; Send… (prepares the ask; he presses Send there).
+      return (
+        <>
+          {v.choices.map((choice, index) => {
+            const word = PROGRAM_CHOICE_WORDS[choice] ?? choice;
+            return (
+              <Button key={choice} dense variant={index === 0 ? lead : "ghost"} loading={busy} disabled={busy}
+                aria-label={named(word)} data-testid="needs-row-verb" data-verb={`program-${choice.replace("_", "-")}`}
+                onClick={(event) => void act(index === 0 && choice !== "prepare" ? "Done" : word, () => apiFetch(v.decide, {
+                  method: "POST", json: { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}) },
+                }), face.id, (event.currentTarget as Element).closest("li"))}>{word}</Button>
+            );
+          })}
+        </>
+      );
     case "allow-helper":
       return <Button dense variant={lead} loading={busy} disabled={busy}
         aria-label={named("Allow helper")} data-testid="needs-row-verb" data-verb="allow-helper"

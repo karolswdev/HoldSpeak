@@ -277,6 +277,20 @@ TELEPHONE = (
        for r in range(2) for c in range(3)]
     + [S(D(HANDSET_D), "blue")]
 )
+# Three cards stacked front on, back to front, down to the left (Programs,
+# 2026-10-28, canvases/programs-2026-10-28.html): the front card is lit blue
+# and carries the track, two passed paper stations and the lit amber one.
+# The middle card's line and the track's line are trim that vanishes below 64.
+PROGRAM = [
+    S(R(22, 7, 33, 22, 4), "grey"),                                  # the back card
+    S(R(15, 17, 35, 23, 4), "paper"),                                # the middle card
+    S(R(21, 23, 17, 3.5, 1.75), "grey", nool=True, detail=True),     # its line (trim)
+    S(R(8, 29, 39, 27, 4), "blue"),                                  # the front card, lit
+    L([(16, 42.5), (39, 42.5)], "paper", 2, detail=True),            # the track's line (trim)
+    S(C(16, 42.5, 3.2), "paper", nool=True),                         # a passed station
+    S(C(27.5, 42.5, 3.2), "paper", nool=True),                       # a passed station
+    S(C(39, 42.5, 4.2), "amber", plain=True),                        # the lit station
+]
 CHAT = [
     S(D(bubble_d(20, 8, 36, 24, 8, "right")), "grey"),
     S(D(bubble_d(8, 20, 38, 26, 8, "left")), "blue"),
@@ -346,6 +360,7 @@ WORLD = {
         S(C(32, 21, 10), "teal"),
         S(T(13, 35, 38, 21, 17), "teal"),
     ],
+    "program": PROGRAM,
     "project-drawer": folder("blue", flag=True),
     "pull-request": [
         L([(20, 20), (20, 44)], "grey", 5, outlined=True),

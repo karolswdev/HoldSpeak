@@ -56,6 +56,9 @@ export type NeedVerbs =
   | { kind: "arming"; scheduleId: string; refused: boolean; failed?: boolean; calendarEventId?: string }
   | { kind: "calendar" }
   | { kind: "send"; sendId: string; documentRef: string; destinationId: string; state: "prepared" | "failed" | "unknown"; send: Record<string, unknown> }
+  /** Programs (2026-10-28): a your-turn item of a Program; each choice is
+   *  its `POST …/steps/{sid}/decide`. */
+  | { kind: "program"; programId: string; stepId: string; decide: string; itemKind: string; choices: string[]; findingId?: string | null }
   | { kind: "none" };
 
 type DoorCardLike = {
@@ -376,6 +379,28 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       verbs: { kind: "send", sendId: String(item.sendId), documentRef: String(item.documentRef),
         destinationId: String(item.destinationId), state, send: item.send },
       openRef: undefined,
+    };
+  }
+
+  // Programs (2026-10-28): a merge ask, a finding left, a step the engine
+  // parked, a person to ask for a review. The group is the Program's title.
+  const program = item.program as {
+    programId?: string; stepId?: string; ordinal?: number | null; kind?: string; choices?: string[];
+    findingId?: string | null; decide?: string;
+  } | undefined;
+  if (source === "program" && program?.programId && program.stepId && program.decide) {
+    const step = program.ordinal ? `Step ${program.ordinal}` : "";
+    return {
+      id, kind: "program", name: title,
+      fact: [String(item.group ?? ""), step].filter(Boolean).join(" · "),
+      lamp: { label: why || "TO DECIDE", tone: "ask" }, group: "rest", direction: "decide",
+      verbs: {
+        kind: "program", programId: program.programId, stepId: program.stepId, decide: program.decide,
+        itemKind: String(program.kind ?? ""), choices: [...(program.choices ?? [])], findingId: program.findingId ?? null,
+      },
+      openRef: `program:${program.programId}`,
+      kindWord: "PROGRAM",
+      ...(item.projectId ? { projectId: String(item.projectId) } : {}),
     };
   }
 

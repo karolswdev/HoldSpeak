@@ -188,6 +188,32 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     go: { group: "daily", order: 5 },
     shortcut: "⌃4",
   },
+  // Programs (PROGRAMS-DESIGN-2026-10-28 §9): a goal cut into steps, each
+  // handed to an agent. It sits beside Agents (Go ▸ Daily, after Agents;
+  // its worst state joins the Agents lamp on the Dock) and opens on ⌃7.
+  {
+    action: "open-programs",
+    windowId: "surface-programs",
+    label: "Programs",
+    description: "Goals cut into steps, each handed to an agent; what waits on you first.",
+    glyph: "▦",
+    href: "/",
+    group: "tool",
+    go: { group: "daily", order: 5.5 },
+    shortcut: "⌃7",
+    surface: {
+      eyebrow: "Orchestration",
+      sprite: "program",
+      minW: 420,
+      // pullouts/size.ts `programs`: the five columns on one row.
+      defaultW: 960,
+      defaultH: 560,
+      load: () =>
+        import("./programs/ProgramsWindow").then((module) => ({
+          default: module.ProgramsCore,
+        })),
+    },
+  },
   // Betterment AG1: the old Agents application (`/companion`, CompanionCore)
   // is unmapped: no manifest row, its address opens Agents. Its row is
   // parked in desk/_parked/agents/companionApplication.ts.

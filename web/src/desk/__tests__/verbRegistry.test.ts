@@ -159,6 +159,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.open-people": "⌃3",
       "go.open-conductor": "⌃4",
       "go.dictate": "⌃5",
+      "go.open-programs": "⌃7",
       "go.configure-settings": "⌃,",
       "chair.window.needs": "⌃J",
       "window.close": "⌃W",

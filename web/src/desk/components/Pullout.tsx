@@ -14,6 +14,7 @@ import { DeskWindowFrame } from "./DeskWindow";
 import { kindWord, primitiveName } from "../windowName";
 import { useThreadStore } from "../threads";
 import { PULLOUT_CONTENT } from "../pullouts";
+import { PULLOUT_FAMILIES } from "../pullouts/families";
 import { PULLOUT_SIZE } from "../pullouts/size";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { RegisterCloseGuard } from "../pullouts/types";
@@ -67,12 +68,15 @@ function PulloutFrame({
   // and a person are whole windows. Their body publishes its wings, its
   // title and its foot into the frame, as an application window does
   // (SurfaceWindowHost).
-  const hosted = o.kind === "meeting" || o.kind === "people";
+  // Programs (2026-10-28): a Program is a whole window too (its toolbar,
+  // its board, its status bar).
+  const hosted = o.kind === "meeting" || o.kind === "people" || (o.kind as string) === "program";
   const [wings, setWings] = useState<ReactNode>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [titleOverride, setTitleOverride] = useState<string | null>(null);
 
-  const Content = PULLOUT_CONTENT[o.kind];
+  // Programs (2026-10-28): a pullout family first (`pullout:program:<id>`).
+  const Content = PULLOUT_FAMILIES[o.kind] ?? PULLOUT_CONTENT[o.kind];
   // A thread with no title is named by the first words of its first message
   // (the open thread holds its messages; the Desk list does not).
   const firstMessage = useThreadStore((s) =>

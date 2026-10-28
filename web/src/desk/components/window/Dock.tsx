@@ -24,6 +24,7 @@ import { RecordClock } from "../RecordClock";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, PHONE_DOCK_APPLICATIONS } from "../../applications";
 import { useAgentsTile } from "../../conductor/fleetTile";
+import { useProgramsLamp, worseLamp } from "../../programs/lamp";
 import { handTargetProps } from "../../hand/drag";
 import { useDropHand } from "../../hand/store";
 import { useCompactViewport } from "../../useCompactViewport";
@@ -318,7 +319,14 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const { live, reads, offline, lastSuccessfulAt, needsYouCount } = useDockLiveReads();
   // Betterment AG8: the Agents tile carries the fleet's worst state, a mark
   // for New and the count that needs him (nothing with no live agent).
-  const agentsTile = useAgentsTile();
+  const fleetTile = useAgentsTile();
+  // Programs (2026-10-28): the worst Program state joins the Agents lamp.
+  const programsLamp = useProgramsLamp();
+  const agentsTile = {
+    ...fleetTile,
+    lamp: worseLamp(fleetTile.lamp, programsLamp.lamp),
+    words: [fleetTile.words, programsLamp.words].filter(Boolean).join(", "),
+  };
   const handOver = useDropHand((state) => state.drag?.over);
   // PHILO-17 (needsyou, walker TAXES): the one number is on the Needs-you
   // icon and the bell only; the Intelligence tile carries no copy of it.

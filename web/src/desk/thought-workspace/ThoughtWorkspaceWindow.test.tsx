@@ -220,7 +220,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     // Window grammar (2026-10-24): the verbs are the toolbar under the title
     // bar; the status bar holds no verb while the note saves.
     const toolbar = [...document.querySelectorAll(".thought-note-toolbar-verbs button")].map((button) => button.textContent);
-    expect(toolbar).toEqual(["Done", "Ask about this", "Find the tasks", "Send…"]);
+    expect(toolbar).toEqual(["Done", "Ask about this", "Find the tasks", "Send…", "Run as a program"]);
     expect(document.querySelectorAll(".thought-note-foot button")).toHaveLength(0);
     expect(screen.queryByText(/Reads:/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Attached/)).not.toBeInTheDocument();
@@ -796,7 +796,7 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
 
     const foot = await screen.findByRole("toolbar", { name: "Note actions" });
     await waitFor(() => expect([...foot.querySelectorAll(".thought-note-toolbar-verbs button")].map((b) => b.textContent))
-      .toEqual(["Ask about this", "Find the tasks", "Send…"]));
+      .toEqual(["Ask about this", "Find the tasks", "Send…", "Run as a program"]));
     expect(screen.queryByRole("button", { name: "More actions" })).toBeNull();
     const done = within(screen.getByTestId("frame-actions")).getByRole("button", { name: "Done" });
 

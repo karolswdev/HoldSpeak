@@ -101,7 +101,7 @@ describe("Betterment Q8: every note opens in the one note window", () => {
     // Window grammar (2026-10-24): the verbs are the toolbar's, Done first.
     const toolbar = container.querySelector(".thought-note-toolbar .kit-toolbar-verbs") as HTMLElement;
     const verbs = within(toolbar).getAllByRole("button").map((b) => b.textContent);
-    expect(verbs).toEqual(["Done", "Ask about this", "Find the tasks", "Send…"]);
+    expect(verbs).toEqual(["Done", "Ask about this", "Find the tasks", "Send…", "Run as a program"]);
     // The open wrote nothing but the open itself.
     expect(calls.filter((c) => c.method !== "GET").map((c) => `${c.method} ${c.url}`)).toEqual(["POST /api/thoughts/open-note"]);
   });
@@ -204,7 +204,7 @@ describe("Betterment Q9: Find the tasks on a note", () => {
     hubWithFind();
     const { container } = await openNote();
     expect(within(container.querySelector(".thought-note-toolbar .kit-toolbar-verbs") as HTMLElement).getAllByRole("button").map((b) => b.textContent))
-      .toEqual(["Done", "Ask about this", "Find the tasks", "Send…"]);
+      .toEqual(["Done", "Ask about this", "Find the tasks", "Send…", "Run as a program"]);
     // The rows stay with the note: the window reads them when it opens.
     expect(calls.some((c) => c.method === "GET" && c.url === `/api/notes/${NOTE.note_id}/outcomes`)).toBe(true);
     expect(screen.queryByTestId("note-outcomes")).toBeNull();
