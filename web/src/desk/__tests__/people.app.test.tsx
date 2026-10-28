@@ -472,7 +472,7 @@ describe("DELIGHT 2 small joy: a person's next 1:1 in their own teal", () => {
   /** The recorded People wire (fixtures/people-wire): four people, and the
    *  Door's upcoming 1:1 with Priya (`person_relationship_id`), at the time of
    *  the boot (2026-10-11 20:40Z, before the 21:27Z 1:1). */
-  it("the row with a next 1:1 marks its cell for the person ink; None stays quiet", async () => {
+  it("the row with a next 1:1 marks its cell for the person ink; no 1:1 is an empty cell", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-11T20:40:00Z"));
     try {
@@ -497,7 +497,7 @@ describe("DELIGHT 2 small joy: a person's next 1:1 in their own teal", () => {
       }, { timeout: 5000 });
       expect(priya).toHaveAttribute("data-next-one-on-one");
       const avery = screen.getAllByTestId("people-row").find((r) => r.textContent?.includes("Avery Chen"))!;
-      expect(avery.querySelector('[data-col="next"]')?.textContent).toBe("None");
+      expect(avery.querySelector('[data-col="next"]')?.textContent ?? "").toBe("");
       expect(avery).not.toHaveAttribute("data-next-one-on-one");
     } finally {
       vi.useRealTimers();
