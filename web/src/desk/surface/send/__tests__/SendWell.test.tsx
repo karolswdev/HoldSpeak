@@ -288,7 +288,7 @@ describe("decision document hosts unfold Send only on request", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     expect(await screen.findByTestId("send-preview")).toBeTruthy();
     expect(previews).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: /Back$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByTestId("send-well")).toBeNull();
   });
 
@@ -417,7 +417,9 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(screen.queryByTestId("send-verb")).toBeNull();
     await act(async () => { previewReady({ payload_digest: "frozen-digest", preview: { text: "Exact frozen words\nSecond line." } }); });
     const preview = await screen.findByTestId("send-preview");
-    expect(within(preview).getByRole("heading", { name: "Preview" })).toBeTruthy();
+    // W4-PHONE (2026-10-27): no PREVIEW caption; the frozen fields are the
+    // document's one quiet head line.
+    expect(within(preview).queryByRole("heading", { name: "Preview" })).toBeNull();
     expect(screen.queryByTestId("send-preview-loading")).toBeNull();
     const fields = within(preview).getAllByTestId("send-preview-field");
     expect(fields.map((field) => field.textContent)).toEqual(["Channel#leads", "Webhookhooks.slack.com"]);
@@ -427,13 +429,16 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(body.closest(".surface-well")).toBeTruthy();
     const verb = screen.getByTestId("send-verb");
     expect(verb.closest(".surface-well")).toBeNull();
-    expect(body.compareDocumentPosition(verb) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // W4-PHONE: Send is the sheet's toolbar verb (Send · Cancel).
+    expect(verb.closest("[data-testid=send-sheet-header]")).toBeTruthy();
     const row = screen.getByTestId("destination-row");
     expect(row.querySelector(".send-target")).toBeNull();
-    expect(row.querySelector(".send-cells")?.textContent).toContain("SLACK");
+    expect(row.querySelector(".send-cells")?.textContent).toContain("Slack");
     // Betterment send S1: an account chip only for a sign-in failure; a webhook that is set says nothing.
     expect(row.querySelector(".send-cells")?.textContent).not.toContain("WEBHOOK SET");
-    expect(within(screen.getByTestId("send-verbs")).getByText("HOOKS.SLACK.COM")).toBeTruthy();
+    // W4-PHONE: the egress is said on the destination row, and only there.
+    expect(within(row).getByText("HOOKS.SLACK.COM")).toBeTruthy();
+    expect(within(screen.getByTestId("send-verbs")).queryByText("HOOKS.SLACK.COM")).toBeNull();
     fireEvent.click(within(row).getByText("Slack #leads"));
     expect(row.querySelector(".send-target")?.textContent).toBe("#leads");
   });

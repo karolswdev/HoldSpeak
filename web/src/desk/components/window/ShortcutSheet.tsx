@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { VERBS, verbLabel } from "../../verbRegistry";
 import { useSettleState } from "../../settleState";
+import { KeycapWells } from "../DeskMenu";
 
 /** HS-101 B8 — the shortcut sheet, drawn (never a doc link).
  * HS-111-07 — rows DERIVE from the registry's key fields (doctrine
@@ -38,10 +39,11 @@ export function ShortcutSheet({ onClose }: { onClose: () => void }) {
       keys.sort((a, b) => a[0].localeCompare(b[0]));
     return [group.title, keys];
   });
-  rows[2][1].push([
-    "Esc",
-    settled ? "Back to Desk (keep work open)" : "Close / cancel",
-  ]);
+  // W4-PHONE (2026-10-27): Esc is ONE row. The registry's Esc verb (Back)
+  // takes the convention's words; the sheet never lists Esc twice.
+  const escWords = settled ? "Back to Desk (keep work open)" : "Back, close or cancel";
+  const windows = rows[2][1].filter(([cap]) => cap !== "Esc");
+  rows[2][1] = [...windows, ["Esc", escWords]];
   return createPortal(
     <div
       className="desk-shortcut-sheet"
@@ -57,8 +59,8 @@ export function ShortcutSheet({ onClose }: { onClose: () => void }) {
             <h4>{group}</h4>
             {keys.map(([cap, what]) => (
               <div className="desk-shortcut-row" key={cap}>
-                <kbd>{cap}</kbd>
-                <span>{what}</span>
+                <span className="desk-shortcut-what">{what}</span>
+                <KeycapWells keycap={cap} />
               </div>
             ))}
           </section>

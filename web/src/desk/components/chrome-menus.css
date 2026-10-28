@@ -936,9 +936,9 @@
 }
 .desk-shortcut-panel {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 8px 22px;
-  width: min(620px, calc(100vw - 32px));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px 32px;
+  width: min(640px, calc(100vw - 32px));
   padding: 18px 22px 20px;
   border: 1px solid var(--wb-rule-soft);
   border-radius: var(--desk-window-radius);
@@ -948,32 +948,55 @@
   -webkit-backdrop-filter: none;
   animation: none;
 }
+/* W4-PHONE (2026-10-27): the sheet on the window grammar — sans 13 px
+   rows (the words at the left, the keys at the right, as in the menus),
+   sentence-case group captions, and the menus' own key wells (⌃ ⌘ ⇧ ⌥,
+   one well per key). No mono, no caps. */
 .desk-shortcut-panel h4 {
-  margin: 0 0 4px;
-  font: 600 var(--font-size-xs) var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  margin: 0 0 2px;
+  padding: 0 0 4px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  font: 600 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+}
+.desk-shortcut-panel section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .desk-shortcut-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 3px 0;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-muted);
+  gap: 12px;
+  min-height: 28px;
+  font: 400 13px / 1.35 var(--font-sans);
+  color: var(--wb-ink);
 }
-.desk-shortcut-row kbd {
-  min-width: 34px;
-  text-align: center;
-  font: 600 var(--font-size-xs) var(--font-mono);
-  color: var(--text);
-  padding: 2px 7px;
+.desk-shortcut-what {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-shortcut-row .desk-menu-keycaps {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 2px;
+}
+.desk-shortcut-row .desk-menu-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
   border: 1px solid var(--wb-rule-soft);
   border-radius: var(--radius-sm);
   background: var(--wb-field);
-  box-shadow: none;
+  box-shadow: 0 1px 0 var(--wb-rule-soft);
+  color: var(--wb-ink);
+  font: 600 12px / 1 var(--font-sans);
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-shortcut-panel {
