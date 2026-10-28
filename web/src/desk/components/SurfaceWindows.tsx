@@ -36,6 +36,7 @@ import type { CoreProps } from "../../pages/cores/core-types";
 import { SurfaceState } from "../surface/Surface";
 import { ApplicationBoundary } from "./ApplicationBoundary";
 import { useSurfaceScrollPlace } from "../hooks/useSurfaceScrollPlace";
+import { watchChunk } from "../../runtime/freshBuild";
 
 export interface SurfaceRow {
   key: string;
@@ -72,7 +73,7 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS
   maximized: application.surface.maximized,
   sprite: application.surface.sprite,
   parked: application.parked,
-  Core: lazy(application.surface.load),
+  Core: lazy(watchChunk(application.surface.load)),
   }));
 
 /** Alias keys open an existing window with a default scope (e.g. the

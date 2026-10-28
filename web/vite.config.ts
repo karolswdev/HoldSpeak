@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
+import { recordBuild } from "./scripts/prune-builds.mjs";
+
 /**
  * HS-200-02 (contract C1): the build id this bundle was made from.
  *
@@ -64,9 +66,15 @@ const BUILD_ID = computeBuildId();
 function buildStamp() {
   return {
     name: "holdspeak-build-stamp",
-    writeBundle(options: { dir?: string }) {
+    writeBundle(options: { dir?: string }, bundle: Record<string, unknown>) {
       const dir = options.dir;
       if (!dir) return;
+      // 2026-10-28: keep the last three builds' assets, so a desk tab opened
+      // before this build still loads its own chunks (scripts/prune-builds.mjs).
+      const assets = Object.keys(bundle)
+        .filter((name) => name.startsWith("assets/"))
+        .map((name) => name.slice("assets/".length));
+      recordBuild(dir, assets, { buildId: BUILD_ID });
       writeFileSync(
         join(dir, "build-id.json"),
         `${JSON.stringify({ build_id: BUILD_ID, built_at: new Date().toISOString() }, null, 2)}\n`,
@@ -108,7 +116,8 @@ export default defineConfig({
   define: { __HOLDSPEAK_BUILD__: JSON.stringify(BUILD_ID) },
   build: {
     outDir: "../holdspeak/static/_built",
-    emptyOutDir: true,
+    // Never empty: an open desk tab still asks for the last builds' chunks.
+    emptyOutDir: false,
     assetsDir: "assets",
     sourcemap: process.env.HOLDSPEAK_WEB_SOURCEMAPS === "1",
     rollupOptions: {

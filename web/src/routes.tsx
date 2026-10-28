@@ -5,6 +5,7 @@
 // not own routes anymore — adding a surface means a SURFACES row in
 // SurfaceWindows plus (optionally) one demoted-path row here.
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
+import { watchChunk } from "./runtime/freshBuild";
 
 export interface ProductRoute {
   path: string;
@@ -13,9 +14,9 @@ export interface ProductRoute {
   immersive?: boolean;
 }
 
-const Desk = lazy(() => import("./desk/DeskApp"));
-const Welcome = lazy(() => import("./pages/WelcomePage"));
-const Presence = lazy(() => import("./pages/PresencePage"));
+const Desk = lazy(watchChunk(() => import("./desk/DeskApp")));
+const Welcome = lazy(watchChunk(() => import("./pages/WelcomePage")));
+const Presence = lazy(watchChunk(() => import("./pages/PresencePage")));
 
 export const PRODUCT_ROUTES: ProductRoute[] = [
   { path: "/", label: "Desk", component: Desk, immersive: true },

@@ -6,6 +6,7 @@ The eight 158..166 glass rigs import from here; every rig builds first
 """
 from __future__ import annotations
 
+import json
 import re
 
 import os
@@ -155,7 +156,16 @@ def _ensure_build() -> None:
             # midway leaves stale chunks behind it (seen live 2026-09-03:
             # a fresh marker over 13-minute-old chunks).
             assets_dir = built_marker.parent / "assets"
-            chunk_mtimes = [f.stat().st_mtime for f in assets_dir.glob("*.js")] if assets_dir.exists() else []
+            chunks = list(assets_dir.glob("*.js")) if assets_dir.exists() else []
+            # 2026-10-28: the build keeps the last three builds' assets
+            # (web/scripts/prune-builds.mjs); only the newest build's chunks
+            # say how fresh the bundle is.
+            try:
+                newest = json.loads((built_marker.parent / ".builds.json").read_text())[0]["assets"]
+                chunks = [f for f in chunks if f.name in set(newest)]
+            except Exception:
+                pass
+            chunk_mtimes = [f.stat().st_mtime for f in chunks]
             built_mtime = min(chunk_mtimes) if (chunk_mtimes and built_marker.exists()) else 0.0
             if built_mtime >= _newest_web_source_mtime():
                 _build_done = True
