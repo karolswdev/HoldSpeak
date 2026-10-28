@@ -263,6 +263,18 @@ def test_a_read_and_a_refused_write_send_no_frame(hub: Hub, seeded: dict[str, st
     assert frames == []
 
 
+def test_the_runs_on_editor_read_sends_no_frame(hub: Hub, seeded: dict[str, str]) -> None:
+    """2026-10-28: the editor is a POST the desk reads on every reload. It
+    announced, every frame re-read twenty lists, each reload read the editor
+    again: a frame storm (eleven frames in four seconds on a rig). Quiet."""
+    answer: list[tuple[int, Any]] = []
+    frames = hub.frames_from(
+        lambda: answer.append(hub.call("POST", "/api/inference/assignments/editor",
+                                       {"scope": "desk", "capability_id": "ask.answer"})), wait_s=0.8)
+    assert answer[0][0] < 500, answer[0]
+    assert frames == []
+
+
 def test_a_settings_write_is_not_silenced_by_its_last_path_word(hub: Hub, seeded: dict[str, str]) -> None:
     """Astra, #771 finding 1: ``PUT /api/settings/heartbeat`` wrote and sent nothing.
 
