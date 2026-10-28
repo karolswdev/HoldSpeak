@@ -104,11 +104,11 @@ describe("PHILO-15 10 — READY means ready", () => {
   it("draws LIMITED with the owner's work names, no sentence, and UNKNOWN · TRY", async () => {
     await open();
     const background = screen.getByTestId("concierge-set-background");
-    expect(within(background).getByText("LIMITED")).toBeTruthy();
+    expect(within(background).getByText("Limited")).toBeTruthy();
     const limit = screen.getByTestId("concierge-set-limit-background").textContent ?? "";
     expect(limit).toBe("WITHOUTCALENDAR");
     expect(background.textContent).not.toContain("structured result");
-    expect(within(screen.getByTestId("concierge-set-agents_tools")).getByText("UNKNOWN · TRY")).toBeTruthy();
+    expect(within(screen.getByTestId("concierge-set-agents_tools")).getByText("Unknown · Try")).toBeTruthy();
     expect(screen.getByTestId("concierge-receipt").textContent).toContain("1 LIMITED");
   });
 
@@ -118,7 +118,7 @@ describe("PHILO-15 10 — READY means ready", () => {
     fireEvent.click(screen.getByTestId("concierge-picker-agents_tools"));
     fireEvent.click(await screen.findByTestId("concierge-pick-agents_tools-lan:box"));
     const row = screen.getByTestId("concierge-set-agents_tools");
-    await waitFor(() => expect(within(row).getByText("LIMITED")).toBeTruthy());
+    await waitFor(() => expect(within(row).getByText("Limited")).toBeTruthy());
     expect(screen.getByTestId("concierge-set-limit-agents_tools").textContent).toContain("AGENTS");
     await waitFor(() => expect(mocks.probe).toHaveBeenCalled());
     await new Promise((r) => setTimeout(r, 20));
@@ -130,7 +130,7 @@ describe("PHILO-15 10 — READY means ready", () => {
     fireEvent.click(screen.getByTestId("concierge-picker-thoughts_notes"));
     fireEvent.click(await screen.findByTestId("concierge-pick-thoughts_notes-lan:other"));
     const row = screen.getByTestId("concierge-set-thoughts_notes");
-    await waitFor(() => expect(within(row).getByText("UNKNOWN · TRY")).toBeTruthy());
+    await waitFor(() => expect(within(row).getByText("Unknown · Try")).toBeTruthy());
   });
 
   it("an unreachable engine reads FAILED after the probe", async () => {
@@ -139,7 +139,7 @@ describe("PHILO-15 10 — READY means ready", () => {
     fireEvent.click(screen.getByTestId("concierge-picker-agents_tools"));
     fireEvent.click(await screen.findByTestId("concierge-pick-agents_tools-lan:box"));
     const row = screen.getByTestId("concierge-set-agents_tools");
-    await waitFor(() => expect(within(row).getByText("FAILED")).toBeTruthy());
+    await waitFor(() => expect(within(row).getByText("Failed")).toBeTruthy());
   });
 
   it("the saved summary engine reads the authority's answer, UNKNOWN without one", () => {

@@ -42,6 +42,7 @@ import { branchFace } from "../lane/laneWire";
 import { CycleGadget, GadgetRow, StringGadget } from "../surface/gadgets";
 import { useConductor } from "../conductor/store";
 import "./hand-sheet.css";
+import { Token } from "../surface/Token";
 
 export interface HandPreview {
   text: string;
@@ -292,10 +293,10 @@ function AgentSummary({ agent, detect }: { agent: AgentId; detect: AgentsDetect 
     : [row.hooks === "installed" ? "HOOKS IN" : row.hooks === "not_read" ? "HOOKS UNKNOWN" : "NO HOOKS", row.version].filter(Boolean).join(" · ");
   return (
     <>
-      <span className="surface-token" data-chip>{words}</span>
+      <Token className="surface-token" data-chip>{words}</Token>
       {/* PHILO-15 B36: the reason the default passed this agent over. */}
       {row.installed && row.signed_in !== "yes" ? (
-        <span className="surface-token" data-chip data-tone="warn" data-testid="hand-signin-unknown">SIGN-IN UNKNOWN</span>
+        <Token className="surface-token" data-chip data-tone="warn" data-testid="hand-signin-unknown">SIGN-IN UNKNOWN</Token>
       ) : null}
     </>
   );
@@ -524,7 +525,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         {previewError ? (
           <div className="desk-hand-refused" role="alert" data-testid="hand-preview-refused">
             <StateChip state="failure" label="NO BRIEF" />
-            <span className="surface-token" data-tone="danger">{refusalToken(previewError, agent)}</span>
+            <Token className="surface-token" data-tone="danger">{refusalToken(previewError, agent)}</Token>
           </div>
         ) : null}
         {preview ? (
@@ -540,7 +541,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                       key={`${s.kind}:${s.ref}`}
                       lead={<span className="desk-hand-lead">{LEAD[s.kind] ?? "SRC"}</span>}
                       primary={s.title}
-                      cells={fact ? <span className="surface-token" data-chip>{fact}</span> : undefined}
+                      cells={fact ? <Token className="surface-token" data-chip>{fact}</Token> : undefined}
                       expands={false}
                       wrap
                     />
@@ -549,10 +550,10 @@ function Sheet({ origin }: { origin: HandOrigin }) {
               </SurfaceLedger>
               <span className="desk-hand-tokens" data-testid="hand-brief-tokens">
                 {preview.people_cut > 0 ? (
-                  <span className="surface-token" data-chip>PEOPLE CUT · {countToken(preview.people_cut, "PART")}</span>
+                  <Token className="surface-token" data-chip>PEOPLE CUT · {countToken(preview.people_cut, "PART")}</Token>
                 ) : null}
                 {preview.acceptance.length ? (
-                  <span className="surface-token" data-chip>ACCEPTANCE · {countToken(preview.acceptance.length, "CHECK")}</span>
+                  <Token className="surface-token" data-chip>ACCEPTANCE · {countToken(preview.acceptance.length, "CHECK")}</Token>
                 ) : null}
               </span>
               <Disclosure label="BRIEF TEXT" open={briefOpen} onOpenChange={setBriefOpen}>
@@ -575,16 +576,16 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                 {clone ? (
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="cloned">
                     <EgressChip label={clone.host.toUpperCase()} scope="cloud" />
-                    <span className="surface-token" data-tone="ok" data-chip data-wrap>{cloneWords(clone)}</span>
+                    <Token className="surface-token" data-tone="ok" data-chip data-wrap>{cloneWords(clone)}</Token>
                     {clone.folder ? (
-                      <span className="surface-token" data-chip data-wrap data-testid="hand-clone-folder">{clone.folder}</span>
+                      <Token className="surface-token" data-chip data-wrap data-testid="hand-clone-folder">{clone.folder}</Token>
                     ) : null}
                   </span>
                 ) : preview.clone ? (
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="to_clone">
                     <EgressChip label={preview.clone.host.toUpperCase()} scope="cloud" />
-                    <span className="surface-token" data-chip data-wrap>CLONES {preview.clone.repository}</span>
-                    <span className="surface-token" data-chip>{branchFace(preview.branch).toUpperCase()}</span>
+                    <Token className="surface-token" data-chip data-wrap>CLONES {preview.clone.repository}</Token>
+                    <Token className="surface-token" data-chip>{branchFace(preview.branch).toUpperCase()}</Token>
                   </span>
                 ) : null}
                 {preview.repo ? (
@@ -597,20 +598,20 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                       )}
                     </span>
                     {preview.resume ? (
-                      <span className="surface-token" data-chip data-testid="hand-resume">
+                      <Token className="surface-token" data-chip data-testid="hand-resume">
                         RESUMES · BRIEF {codeWords(preview.resume.instruction_state || "pending")}
-                      </span>
+                      </Token>
                     ) : null}
                   </>
                 ) : null}
-                <span className="surface-token" data-chip data-testid="hand-control">CONTROL · {mode}</span>
+                <Token className="surface-token" data-chip data-testid="hand-control">CONTROL · {mode}</Token>
               </span>
               {blocked.length ? (
                 <span className="desk-hand-refused" role="alert" data-testid="hand-refused">
                   {blocked.map((code) => (
-                    <span key={code} className="surface-token" data-tone="danger">
+                    <Token key={code} className="surface-token" data-tone="danger">
                       {refusalToken(code, code === "launch_profile_mismatch" ? actual : agent)}
-                    </span>
+                    </Token>
                   ))}
                 </span>
               ) : null}
@@ -623,18 +624,18 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         egress={<EgressChip {...engineEgress(actual, preview)} />}
         receipt={
           delivery ? (
-            <span className="surface-footer-receipt-line" data-tone={delivery.tone} role="status" data-testid="hand-launch-receipt"
+            <Token className="surface-footer-receipt-line" data-tone={delivery.tone} role="status" data-testid="hand-launch-receipt"
               data-words="" title={delivery.title}>
               {delivery.label}
-            </span>
+            </Token>
           ) : launchError ? (
-            <span className="surface-footer-receipt-line" data-tone="danger" role="alert" data-testid="hand-launch-refused">
+            <Token className="surface-footer-receipt-line" data-tone="danger" role="alert" data-testid="hand-launch-refused">
               NOT LAUNCHED · {refusalToken(launchError, agent)}
-            </span>
+            </Token>
           ) : (
-            <span className="surface-footer-receipt-line">
+            <Token className="surface-footer-receipt-line">
               {AGENT_NAME[actual].toUpperCase()}{preview ? ` · ${mode}` : ""}
-            </span>
+            </Token>
           )
         }
         verbs={

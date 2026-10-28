@@ -104,10 +104,10 @@ describe("DeliveryDossierWindow captured runs", () => {
     };
     useDeliveryDossier.setState({ dossier, loading: false, refusal: null });
     render(<DeliveryDossierWindow />);
-    expect(screen.getByText("NO COMMAND RECORDED")).toBeTruthy();
+    expect(screen.getByText("No command recorded")).toBeTruthy();
     expect(screen.getByText("uv run pytest -q")).toBeTruthy();
-    expect(screen.getByText("EXIT 1")).toBeTruthy();
-    expect(screen.getByText("RUNS 1 PASS 1 FAIL")).toBeTruthy();
+    expect(screen.getByText("Exit 1")).toBeTruthy();
+    expect(screen.getByText("Runs 1 pass 1 fail")).toBeTruthy();
     useDeliveryDossier.setState({ dossier: null });
   });
 
@@ -178,7 +178,7 @@ describe("Delivery phase Story control", () => {
       expect(openStory).toHaveBeenCalledOnce();
       expect(openStory).toHaveBeenCalledWith("holdspeak", "HS-94-05");
       expect(screen.queryByRole("button", { name: "HS-94-05 · Evidence dossiers and safe assets" })).toBeNull();
-      expect(screen.getByText("RUNS 1 PASS 1 FAIL")).toBeTruthy();
+      expect(screen.getByText("Runs 1 pass 1 fail")).toBeTruthy();
     } finally {
       cleanup();
       useDeliveryDossier.setState(saved, true);

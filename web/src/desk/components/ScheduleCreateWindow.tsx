@@ -20,6 +20,7 @@ import {
 } from "../surface/gadgets";
 import { Button } from "../../components/signal/Signal";
 import { SurfaceFooter } from "../surface";
+import { Token } from "../surface/Token";
 
 /** Build a cron expression from a JS Date for one-shot mode. */
 function dateToCron(d: Date): string {
@@ -111,8 +112,8 @@ function ScheduleCreateForm({
         {form.fields}
       </div>
       <SurfaceFooter
-        receipt={form.error ? <span className="surface-footer-receipt-line" data-tone="danger" role="alert">{form.error}</span>
-          : form.submitting ? <span className="surface-footer-receipt-line" role="status">Saving</span> : undefined}
+        receipt={form.error ? <Token className="surface-footer-receipt-line" data-tone="danger" role="alert">{form.error}</Token>
+          : form.submitting ? <Token className="surface-footer-receipt-line" role="status">Saving</Token> : undefined}
         verbs={<>
           <Button variant="ghost" onClick={onClose} dense>
             Cancel

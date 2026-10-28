@@ -57,7 +57,7 @@ describe("FOUND", () => {
   it("renders each proposal with the egress chip on its row", async () => {
     render(<Harness />);
     const list = await screen.findByTestId("firstrun-found");
-    expect(screen.getByRole("heading", { name: "FOUND" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Found" })).toBeTruthy();
     const rows = list.querySelectorAll("[data-testid='firstrun-proposal']");
     expect(rows.length).toBe(2);
     expect(rows[0].textContent).toContain("LAN SERVER");
@@ -75,7 +75,7 @@ describe("FOUND", () => {
       fireEvent.click(use);
     });
     expect(posts).toEqual([{ proposal_id: "lan:lan-main" }]);
-    await waitFor(() => expect(screen.getByRole("status", { name: "IN USE · DEFAULT" })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("status", { name: "In use · Default" })).toBeTruthy());
     expect(screen.queryByRole("button", { name: "Use qwen3.8-27b" })).toBeNull();
     // The other row is still a choice.
     expect(screen.getByRole("button", { name: "Use OpenAI" })).toBeTruthy();
@@ -89,13 +89,13 @@ describe("FOUND", () => {
     await act(async () => {
       fireEvent.click(first);
     });
-    await waitFor(() => expect(screen.getAllByRole("status", { name: "IN USE · DEFAULT" }).length).toBe(1));
+    await waitFor(() => expect(screen.getAllByRole("status", { name: "In use · Default" }).length).toBe(1));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Use engine-b" }));
     });
     expect(posts).toEqual([{ proposal_id: "lan:lan-main" }, { proposal_id: "lan:lan-b" }]);
     await waitFor(() => {
-      const inUse = screen.getAllByRole("status", { name: "IN USE · DEFAULT" });
+      const inUse = screen.getAllByRole("status", { name: "In use · Default" });
       expect(inUse.length).toBe(1);
       expect(inUse[0].closest("li")?.textContent).toContain("engine-b");
     });
@@ -114,7 +114,7 @@ describe("FOUND", () => {
     await act(async () => {
       fireEvent.click(use);
     });
-    expect(await screen.findByRole("status", { name: "NOT IN USE" })).toBeTruthy();
+    expect(await screen.findByRole("status", { name: "Not in use" })).toBeTruthy();
     expect(screen.getByText("This engine has no model profile revision.")).toBeTruthy();
   });
 
@@ -123,7 +123,7 @@ describe("FOUND", () => {
     const { container } = render(<Harness />);
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
     await act(async () => undefined);
-    expect(screen.queryByRole("heading", { name: "FOUND" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: /^found$/i })).toBeNull();
     expect(container.textContent).toBe("");
   });
 });

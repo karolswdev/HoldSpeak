@@ -48,7 +48,7 @@ describe("the hub headline is a plain state of what he gets", () => {
       />,
     );
     expect(screen.getByText("1 engine")).toBeTruthy();
-    expect(screen.getByText("SUMMARY · NO ENGINE")).toBeTruthy();
+    expect(screen.getByText("Summary · No engine")).toBeTruthy();
     expect(screen.queryByText("No default model")).toBeNull();
     fireEvent.click(screen.getByTestId("settings-hub-choose"));
     expect(onOpen).toHaveBeenCalledWith("models");

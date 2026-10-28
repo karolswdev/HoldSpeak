@@ -59,6 +59,7 @@ import {
   summaryReasonLabel,
 } from "./model";
 import "./steward-posture.css";
+import { Token } from "../../../desk/surface/Token";
 
 /* ── Grant vocabulary (coordinator's uppercase tokens) ── */
 
@@ -274,30 +275,30 @@ function RunDetail({
     <div className="steward-detail" data-testid="steward-detail">
       {/* State band */}
       <div className="steward-detail-band" data-testid="steward-detail-band">
-        <span className="surface-token" data-tone={tone} data-testid="steward-run-state">
+        <Token className="surface-token" data-tone={tone} data-testid="steward-run-state">
           {runStateLabel(run.state)}
-        </span>
-        <span
+        </Token>
+        <Token
           className="surface-token"
           data-tone={provenanceTone(run)}
           data-testid="steward-run-provenance"
         >
           {provenanceLabel(run)}
-        </span>
+        </Token>
         {run.phase ? (
           <span className="steward-phase-label" data-testid="steward-phase-label">
             {phaseLabel(run.phase)}
           </span>
         ) : null}
         {reason ? (
-          <span className="surface-token" data-tone="warn" data-testid="steward-run-reason">
+          <Token className="surface-token" data-tone="warn" data-testid="steward-run-reason">
             {reason}
-          </span>
+          </Token>
         ) : null}
         {degraded ? (
-          <span className="surface-token" data-tone="warn" data-testid="steward-coverage-degraded">
+          <Token className="surface-token" data-tone="warn" data-testid="steward-coverage-degraded">
             {`PARTIAL COVERAGE: ${degraded}`}
-          </span>
+          </Token>
         ) : null}
       </div>
 
@@ -311,18 +312,18 @@ function RunDetail({
 
       {/* Partial marker for glass compat */}
       {hasPartial ? (
-        <span className="surface-token" data-tone="warn" data-testid="steward-step-partial" hidden>
+        <Token className="surface-token" data-tone="warn" data-testid="steward-step-partial" hidden>
           PARTIAL
-        </span>
+        </Token>
       ) : null}
 
       {/* R4: effect-kind labels as tokens + receipt refs as openable chips */}
       {(effectChips.length > 0 || allRefs.length > 0) ? (
         <div className="steward-receipt-refs" data-testid="steward-receipt-refs">
           {effectChips.map((chip, i) => (
-            <span key={`ek-${i}`} className="surface-token" data-chip>
+            <Token key={`ek-${i}`} className="surface-token" data-chip>
               {chip.label}
-            </span>
+            </Token>
           ))}
           {allRefs.map((ref) => (
             <Button
@@ -358,7 +359,7 @@ function RunDetail({
             <span className="steward-run-review" data-testid="steward-run-review" data-review-id={counts.reviewId}>
               <StateChip state="success" label="REVIEW OPENED" />
               {counts.proposals ? (
-                <span className="surface-token" data-chip>{pluralize(counts.proposals, "PROPOSAL")}</span>
+                <Token className="surface-token" data-chip>{pluralize(counts.proposals, "PROPOSAL")}</Token>
               ) : null}
               {onOpenReview ? (
                 <Button dense variant="ghost" onClick={() => onOpenReview(counts.reviewId)} data-testid="steward-open-review">
@@ -416,9 +417,9 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
                 expands={false}
                 wrap
                 lead={
-                  <span className="surface-token" data-tone={tone}>
+                  <Token className="surface-token" data-tone={tone}>
                     {runStateLabel(run.state)}
-                  </span>
+                  </Token>
                 }
                 primary={
                   <span
@@ -427,16 +428,16 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
                     title={run.id}
                   >
                     <span className="steward-list-primary">
-                      <span className="surface-token" data-tone={tone}>
+                      <Token className="surface-token" data-tone={tone}>
                         {runStateLabel(run.state)}
-                      </span>
-                      <span
+                      </Token>
+                      <Token
                         className="surface-token steward-provenance-chip"
                         data-tone={provenanceTone(run)}
                         data-testid="steward-run-provenance"
                       >
                         {provenanceLabel(run)}
-                      </span>
+                      </Token>
                       <span className="steward-list-time">
                         {humanTime(run.createdAt)}
                       </span>
@@ -504,9 +505,9 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
       {circuitWatches.length > 0 ? (
         <>
           <ActionNotice tone="warn" icon="!">
-            <span className="surface-token" data-chip>CIRCUIT OPEN</span>
+            <Token className="surface-token" data-chip>CIRCUIT OPEN</Token>
             {" "}
-            <span className="surface-token" data-chip>{pluralize(circuitWatches.length, "SOURCE")}</span>
+            <Token className="surface-token" data-chip>{pluralize(circuitWatches.length, "SOURCE")}</Token>
           </ActionNotice>
           <SurfaceLedger count={countLabel("CIRCUITS", circuitWatches.length)} cols="room">
             <ul className="surface-ledger-rows">
@@ -523,17 +524,17 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
                   primary={w.name || w.connectorId}
                   cells={
                     <>
-                      <span
+                      <Token
                         className="surface-token"
                         data-tone={circuitStateTone(w.circuitState)}
                         data-testid="steward-circuit-state"
                       >
                         {circuitStateLabel(w.circuitState)}
-                      </span>
+                      </Token>
                       {w.circuitFailureStreak > 0 ? (
-                        <span className="surface-token" data-testid="steward-circuit-streak">
+                        <Token className="surface-token" data-testid="steward-circuit-streak">
                           {pluralize(w.circuitFailureStreak, "failure")}
-                        </span>
+                        </Token>
                       ) : null}
                     </>
                   }
@@ -602,18 +603,18 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
           >
             {draft.unattended_enabled ? (
               <>
-                <span className="surface-token" data-chip>WHILE ENABLED</span>
-                <span className="surface-token" data-chip>EVERY {draft.evaluation_cadence_minutes ?? cadence} MIN</span>
+                <Token className="surface-token" data-chip>WHILE ENABLED</Token>
+                <Token className="surface-token" data-chip>EVERY {draft.evaluation_cadence_minutes ?? cadence} MIN</Token>
                 {draft.eligible_effect_kinds.length > 0
                   ? draft.eligible_effect_kinds.map((kind: string) => (
-                      <span key={kind} className="surface-token" data-chip>{grantToken(kind)}</span>
+                      <Token key={kind} className="surface-token" data-chip>{grantToken(kind)}</Token>
                     ))
-                  : <span className="surface-token" data-chip>NO EFFECTS</span>
+                  : <Token className="surface-token" data-chip>NO EFFECTS</Token>
                 }
-                <span className="surface-token" data-chip>MAX {draft.max_actions_per_run} / RUN</span>
+                <Token className="surface-token" data-chip>MAX {draft.max_actions_per_run} / RUN</Token>
               </>
             ) : (
-              <span className="surface-token" data-chip>UNATTENDED OFF</span>
+              <Token className="surface-token" data-chip>UNATTENDED OFF</Token>
             )}
           </div>
         </div>
@@ -665,7 +666,7 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
             })}
             {/* HS-173-04: the double gate -- per-nudge approval token */}
             <div className="steward-policy-nudge-approval" data-testid="steward-policy-nudge-approval">
-              <span className="surface-token" data-chip>PER-NUDGE APPROVAL</span>
+              <Token className="surface-token" data-chip>PER-NUDGE APPROVAL</Token>
             </div>
             {/* HS-173-04: nudge template -- visible when github_comment is checked */}
             {draft.eligible_effect_kinds.includes("github_comment") ? (
@@ -812,9 +813,9 @@ export function StewardPosture({
             Run once
           </Button>
           {ctrl.runDisabledReason ? (
-            <span className="surface-token" data-tone="warn" data-testid="steward-run-disabled-reason">
+            <Token className="surface-token" data-tone="warn" data-testid="steward-run-disabled-reason">
               {ctrl.runDisabledReason}
-            </span>
+            </Token>
           ) : null}
           <Button
             dense
@@ -829,9 +830,9 @@ export function StewardPosture({
         {ctrl.runRefusal ? (
           <span className="steward-run-refused" data-testid="steward-run-refused" data-code={ctrl.runRefusal}>
             <StateChip state="failure" label="REFUSED" />
-            <span className="surface-token" data-chip>
+            <Token className="surface-token" data-chip>
               {refusalWord(ctrl.runRefusal)}
-            </span>
+            </Token>
           </span>
         ) : null}
 
@@ -854,9 +855,9 @@ export function StewardPosture({
 
         <SurfaceFooter
           receipt={
-            <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
+            <Token className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
               {countLabel("RUNS", ctrl.runs.length)}
-            </span>
+            </Token>
           }
         />
       </div>
@@ -878,11 +879,11 @@ export function StewardPosture({
           opening={opening} openFailure={openFailure} />
         <SurfaceFooter
           receipt={
-            <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
+            <Token className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
               {run
                 ? `RUN ${runNumber} · ${runStateLabel(run.state).toUpperCase()} · ${phaseCount} PHASE${phaseCount === 1 ? "" : "S"}`
                 : "WATCH SOURCES"}
-            </span>
+            </Token>
           }
         />
       </div>
@@ -896,9 +897,9 @@ export function StewardPosture({
         <PolicyEditor ctrl={ctrl} />
         <SurfaceFooter
           receipt={
-            <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
+            <Token className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
               {`WATCH SOURCES · ${presetWord(ctrl.policyDraft)}`}
-            </span>
+            </Token>
           }
         />
       </div>

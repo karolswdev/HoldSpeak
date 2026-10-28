@@ -38,6 +38,7 @@ import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import { useDropHand, type HandPending } from "./store";
 import { branchFace } from "../lane/laneWire";
 import "./hand.css";
+import { Token } from "../surface/Token";
 
 const DELIVERY_POLL_MS = 2000;
 /** Astra P1 on #946: after Hand, the flights are re-read until the launch's
@@ -226,31 +227,31 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
   const status = (
     <>
       {passedOver ? (
-        <span className="surface-token" data-chip data-testid="hand-confirm-skipped">
+        <Token className="surface-token" data-chip data-testid="hand-confirm-skipped">
           {AGENT_NAME[passedOver].toUpperCase()} · SIGN-IN UNKNOWN
-        </span>
+        </Token>
       ) : null}
       {selectedUnknown ? (
-        <span className="surface-token" data-chip data-tone="warn" data-testid="hand-confirm-selected-unknown">
+        <Token className="surface-token" data-chip data-tone="warn" data-testid="hand-confirm-selected-unknown">
           {AGENT_NAME[selectedUnknown].toUpperCase()} · SIGN-IN UNKNOWN
-        </span>
+        </Token>
       ) : null}
       {toClone ? (
         <span className="desk-hand-tokens" data-testid="hand-confirm-clone" data-state="to_clone">
           <EgressChip label={toClone.host.toUpperCase()} scope="cloud" />
-          <span className="surface-token" data-chip data-wrap>CLONES {toClone.repository}</span>
+          <Token className="surface-token" data-chip data-wrap>CLONES {toClone.repository}</Token>
         </span>
       ) : null}
       {clone ? (
         <span className="desk-hand-tokens" data-testid="hand-confirm-clone" data-state="cloned">
           <EgressChip label={clone.host.toUpperCase()} scope="cloud" />
-          <span className="surface-token" data-tone="ok" data-chip data-wrap>
+          <Token className="surface-token" data-tone="ok" data-chip data-wrap>
             {cloneWords(clone)}
-          </span>
+          </Token>
           {clone.folder ? (
-            <span className="surface-token" data-chip data-wrap data-testid="hand-confirm-clone-folder">
+            <Token className="surface-token" data-chip data-wrap data-testid="hand-confirm-clone-folder">
               {clone.folder}
-            </span>
+            </Token>
           ) : null}
         </span>
       ) : null}
@@ -263,17 +264,17 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       {previewError ? (
         <span className="desk-hand-tokens" role="alert" data-testid="hand-confirm-no-brief">
           <StateChip state="failure" label="NO BRIEF" />
-          <span className="surface-token" data-tone="danger">
+          <Token className="surface-token" data-tone="danger">
             {refusalToken(previewError, agent)}
-          </span>
+          </Token>
         </span>
       ) : null}
       {refused.length && !launched ? (
         <span className="desk-hand-tokens" role="alert" data-testid="hand-confirm-refused">
           {refused.map((code) => (
-            <span key={code} className="surface-token" data-tone="danger">
+            <Token key={code} className="surface-token" data-tone="danger">
               {refusalToken(code, code === "launch_profile_mismatch" ? actual : agent)}
-            </span>
+            </Token>
           ))}
         </span>
       ) : null}
@@ -283,9 +284,9 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
           <DotWord tone={delivery.tone === "danger" ? "fail" : delivery.tone === "warning" ? "warn" : delivery.tone === "ok" ? "ok" : "info"}>{delivery.label}</DotWord>
         </span>
       ) : launchError ? (
-        <span className="surface-token" data-tone="danger" role="alert" data-testid="hand-confirm-launch-refused">
+        <Token className="surface-token" data-tone="danger" role="alert" data-testid="hand-confirm-launch-refused">
           NOT LAUNCHED · {refusalToken(launchError, agent)}
-        </span>
+        </Token>
       ) : null}
     </>
   );
@@ -350,19 +351,19 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
         <div className="hand-confirm-brief bevel-sunken" data-testid="hand-confirm-brief">
           <span className="desk-hand-tokens">
             {preview.sources.length ? (
-              <span className="surface-token" data-chip>
+              <Token className="surface-token" data-chip>
                 {countToken(preview.sources.length, "SOURCE")}
-              </span>
+              </Token>
             ) : null}
             {preview.people_cut > 0 ? (
-              <span className="surface-token" data-chip>
+              <Token className="surface-token" data-chip>
                 PEOPLE CUT · {countToken(preview.people_cut, "PART")}
-              </span>
+              </Token>
             ) : null}
             {preview.acceptance.length ? (
-              <span className="surface-token" data-chip>
+              <Token className="surface-token" data-chip>
                 ACCEPTANCE · {countToken(preview.acceptance.length, "CHECK")}
-              </span>
+              </Token>
             ) : null}
           </span>
           <pre className="desk-pullout-md desk-hand-text">{preview.text}</pre>

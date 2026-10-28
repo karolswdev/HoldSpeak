@@ -64,7 +64,7 @@ describe("active Thought voice recovery", () => {
 
     render(<ThoughtDocumentPane noteId="note-1" draft={draft("first newer")} onEdit={vi.fn()}
       disabled={false} voiceDraftIO={io} mic={false} />);
-    expect(screen.getByText("NOT INSERTED")).toBeVisible();
+    expect(screen.getByText("Not inserted")).toBeVisible();
     expect(screen.getByText(/late one\s+late two/)).toBeVisible();
     expect(screen.queryByText("AUDIO KEPT")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Insert at caret" }));
@@ -99,7 +99,7 @@ describe("active Thought voice recovery", () => {
     act(() => { editor().dispatch({ changes: { from: 5, insert: " edited" } }); });
     act(() => { deliver!("retained sample"); });
     expect(io.get(thoughtVoiceKey("sample"))).toBe("retained sample");
-    expect(screen.getByText("NOT INSERTED")).toBeVisible();
+    expect(screen.getByText("Not inserted")).toBeVisible();
   });
 
   it("retains late words when the same Thought becomes read-only", () => {

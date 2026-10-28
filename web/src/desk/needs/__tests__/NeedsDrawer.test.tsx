@@ -631,7 +631,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await screen.findByText("6 need you");
     const item = row("Write the rollback runbook");
     expect(face(item)).toMatchObject({ lamps: ["Held call"], verbs: ["Deny", "Approve"] });
-    expect(within(item).getByTestId("needs-more-asks").textContent).toBe("+1 MORE");
+    expect(within(item).getByTestId("needs-more-asks").textContent).toBe("+1 more");
     expect(document.querySelectorAll("[data-testid='needs-row'][data-counted='true']")).toHaveLength(6);
     expect(document.querySelectorAll(".needs-row[data-kind='agent']")).toHaveLength(0);
     // The row body opens the agent's lane, where every ask is answered.

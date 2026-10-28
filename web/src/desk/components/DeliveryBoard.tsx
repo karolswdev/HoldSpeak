@@ -52,6 +52,7 @@ import {
 } from "./DeskWindow";
 import { MicButton } from "./MicButton";
 import { keptWindow, rememberWindow } from "../deskMemory";
+import { Token } from "../surface/Token";
 
 // Glyph constants — keep dingbat codepoints off JSX source lines.
 const GLYPH_WARN = String.fromCodePoint(0x26A0);
@@ -85,7 +86,7 @@ function FreshnessChip({ source }: { source: DeliverySource }) {
       <span className={"desk-dlv-fresh is-" + recovery.state}>
         {recovery.state}
       </span>
-      <span className="quiet surface-token">{recovery.state.toUpperCase()}</span>
+      <Token className="quiet surface-token">{recovery.state.toUpperCase()}</Token>
       <Button
         dense
         variant="ghost"
@@ -121,9 +122,9 @@ function AttemptLedgerRow({
       cells={
         <>
           <span className="surface-ledger-cell">
-            <span className="surface-token" data-tone={stateTone(attempt.state)}>
+            <Token className="surface-token" data-tone={stateTone(attempt.state)}>
               {attempt.state.toUpperCase()}
-            </span>
+            </Token>
           </span>
           <span className="surface-ledger-cell">
             {[
@@ -138,15 +139,15 @@ function AttemptLedgerRow({
           </span>
           {target ? (
             <span className="surface-ledger-cell">
-              <span className="surface-token">
+              <Token className="surface-token">
                 {target.gate === "gated" ? "GATED" : "UNGATED"}
-              </span>
+              </Token>
             </span>
           ) : attempt.targetId ? (
             <span className="surface-ledger-cell">
-              <span className="surface-token">
+              <Token className="surface-token">
                 {`TARGET ${attempt.targetId.slice(0, 10)} · OFFLINE`}
-              </span>
+              </Token>
             </span>
           ) : null}
         </>
@@ -155,7 +156,7 @@ function AttemptLedgerRow({
       {attempt.sessionId ? (
         <ReceiptLine sessionKey={`claude:${attempt.sessionId}`} />
       ) : (
-        <span className="surface-token">NO SESSION BOUND</span>
+        <Token className="surface-token">NO SESSION BOUND</Token>
       )}
     </SurfaceLedgerRow>
   );
@@ -193,7 +194,7 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
   if (!site) {
     return (
       <div>
-        <span className="surface-token" data-tone="danger"><span aria-hidden="true">{GLYPH_CLOSE}</span> NO LIVE SOURCE</span>
+        <Token className="surface-token" data-tone="danger"><span aria-hidden="true">{GLYPH_CLOSE}</span> NO LIVE SOURCE</Token>
       </div>
     );
   }
@@ -251,11 +252,11 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
         </GadgetRow>
       </GadgetGroup>
       <p className="desk-dlv-consequence">
-        <span className="surface-token">{`→ SRC ${site.source.label}`}</span>
-        <span className="surface-token">{`WT ${site.worktree.branch}`}</span>
-        <span className="surface-token">{`NODE ${site.source.nodeId || "local"}`}</span>
-        <span className="surface-token">SPAWNS SESSION</span>
-        <span className="surface-token">BINDS ATTEMPT</span>
+        <Token className="surface-token">{`→ SRC ${site.source.label}`}</Token>
+        <Token className="surface-token">{`WT ${site.worktree.branch}`}</Token>
+        <Token className="surface-token">{`NODE ${site.source.nodeId || "local"}`}</Token>
+        <Token className="surface-token">SPAWNS SESSION</Token>
+        <Token className="surface-token">BINDS ATTEMPT</Token>
       </p>
       {launchState === "failed" ? (
         <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {launchDetail}</span>
@@ -530,18 +531,18 @@ export function DeliveryBoard() {
                       </span>
                       {t.attemptState ? (
                         <span className="surface-ledger-cell">
-                          <span
+                          <Token
                             className="surface-token"
                             data-tone={stateTone(t.attemptState)}
                           >
                             {t.attemptState.toUpperCase()}
-                          </span>
+                          </Token>
                         </span>
                       ) : null}
                       <span className="surface-ledger-cell">
-                        <span className="surface-token">
+                        <Token className="surface-token">
                           {t.gate === "gated" ? "GATED" : "UNGATED"}
-                        </span>
+                        </Token>
                       </span>
                     </>
                   }
@@ -559,10 +560,10 @@ export function DeliveryBoard() {
       {/* HS-129-05 — Delivery publishes its fact through the shared receipt slot. */}
       <SurfaceFooter
         receipt={
-          <span className="surface-footer-receipt-line" role="status">
+          <Token className="surface-footer-receipt-line" role="status">
             {`${countLabel("SOURCES", sources.length)} · ${countLabel("WORK", active.length)}` +
               (updatedAt ? ` · READ ${clockToken(updatedAt)}` : "")}
-          </span>
+          </Token>
         }
       />
     </DeskWindowFrame>

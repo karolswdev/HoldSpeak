@@ -361,7 +361,7 @@ describe("Workbench required source recovery", () => {
     fireEvent.click(screen.getByRole("button", { name: "Re-run" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Re-run" })).toBeNull());
     expect(screen.getByRole("textbox", { name: "Item body" })).toHaveValue(original.body);
-    expect(screen.getByText("NEEDS REVIEW")).toBeInTheDocument();
+    expect(screen.getByText("Needs review")).toBeInTheDocument();
     expect(snapshot.items[0].id).toBe(original.id);
     expect(snapshot.items[0].grounding).toEqual(original.grounding);
     expect(snapshot.items[0].context).toEqual(original.context);

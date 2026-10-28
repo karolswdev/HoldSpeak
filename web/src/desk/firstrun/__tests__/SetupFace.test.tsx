@@ -284,7 +284,7 @@ describe("Setup ST3–ST5", () => {
     render(<SetupFace initial={inventory({ rows: [{ id: "speech", kind: "speech", label: "Speech", state: "works" }] })} />);
 
     expect(screen.getByRole("button", { name: "Stop listening" })).toBeTruthy();
-    expect(screen.getByRole("status", { name: "LISTENING" })).toBeTruthy();
+    expect(screen.getByRole("status", { name: "Listening" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Listening" })).toBeNull();
   });
 
@@ -296,7 +296,7 @@ describe("Setup ST3–ST5", () => {
     mocks.take.failure = "no_microphone";
     render(<SetupFace initial={inventory({ rows: [{ id: "speech", kind: "speech", label: "Speech", state: "works" }] })} />);
 
-    expect(screen.getByTestId("setup-take-failure").textContent).toContain("BROWSER GAVE NO DEVICE");
+    expect(screen.getByTestId("setup-take-failure").textContent).toContain("Browser gave no device");
     expect(screen.getByRole("button", { name: "Check the microphone" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Open my desk" })).toBeTruthy();

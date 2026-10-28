@@ -11,6 +11,7 @@ import { StateChip } from "./StateChip";
 import { LampGadget } from "../gadgets";
 import { countToken } from "../count";
 import "./heard-quote.css";
+import { Token } from "../Token";
 
 /** Words in a take: whitespace-separated runs. */
 export function heardWordCount(text: string): number {
@@ -79,7 +80,7 @@ export function HeardQuote({
       </blockquote>
       <figcaption className="surface-heard-facts">
         <StateChip state="success" label="HEARD" icon="●" />
-        {facts ? <span className="surface-token surface-heard-token">{facts}</span> : null}
+        {facts ? <Token className="surface-token surface-heard-token">{facts}</Token> : null}
         {local ? <LampGadget label="ON DEVICE" on /> : null}
       </figcaption>
       {verbs ? <div className="surface-heard-verbs">{verbs}</div> : null}

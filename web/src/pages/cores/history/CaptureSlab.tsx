@@ -4,6 +4,7 @@ import {
   GadgetGroup,
   GadgetRow,
 } from "../../../desk/surface/gadgets";
+import { Token } from "../../../desk/surface/Token";
 
 export function CaptureSlab({
   detail,
@@ -19,12 +20,12 @@ export function CaptureSlab({
     <GadgetGroup label="Capture">
       <GadgetRow
         label={
-          <span
+          <Token
             className="surface-token"
             data-tone={stateToken(detail ?? meeting).tone ?? "warn"}
           >
             {String(detail?.capture_status ?? "").replace(/_/g, " ").toUpperCase()}
-          </span>
+          </Token>
         }
         fact={
           detail?.capture_failure

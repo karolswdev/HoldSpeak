@@ -53,6 +53,7 @@ import { clearPendingCommand, keepPendingCommand, pendingCommands, resetPendingC
 import { apiFetch } from "../../../lib/api";
 import { openRef } from "../../openObject";
 import { SEND_OPEN } from "../../windowSend";
+import { Token } from "../Token";
 
 // Settings owns the admitted destination form. It is loaded only when the
 // sheet asks for Add destination, which keeps the shared Send species free of
@@ -295,8 +296,8 @@ function OutcomeLine({ o }: { o: Outcome }) {
     return (
       <span className="send-line" data-testid="send-refused" data-code={o.code}>
         <StateChip state="failure" label="REFUSED" />
-        <span className="surface-token" data-chip>{refusedWord(o.code)}</span>
-        <span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span>
+        <Token className="surface-token" data-chip>{refusedWord(o.code)}</Token>
+        <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
       </span>
     );
   }
@@ -304,7 +305,7 @@ function OutcomeLine({ o }: { o: Outcome }) {
     return (
       <span className="send-line" data-testid="send-lost">
         <StateChip state="warning" label={SEND_WORDS.lost} />
-        {o.storageFailed ? <span className="surface-token" data-chip>{SEND_WORDS.storageUnavailable}</span> : null}
+        {o.storageFailed ? <Token className="surface-token" data-chip>{SEND_WORDS.storageUnavailable}</Token> : null}
       </span>
     );
   }
@@ -333,8 +334,8 @@ function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
     return (
       <span className="send-line" data-testid="send-last-refused" data-code={o.code}>
         <StateChip state="failure" label="REFUSED" />
-        <span className="surface-token" data-chip>{refusedWord(o.code)}</span>
-        <span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span>
+        <Token className="surface-token" data-chip>{refusedWord(o.code)}</Token>
+        <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
       </span>
     );
   }
@@ -342,8 +343,8 @@ function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
     return (
       <span className="send-line" data-testid="send-last-failed" data-code={last.reason ?? ""}>
         <StateChip state="failure" label={SEND_WORDS.lastFailed} />
-        <span className="surface-token" data-chip>{failedWord(last.reason ?? "")}</span>
-        <span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span>
+        <Token className="surface-token" data-chip>{failedWord(last.reason ?? "")}</Token>
+        <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
       </span>
     );
   }
@@ -351,7 +352,7 @@ function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
     return (
       <span className="send-line" data-testid="send-last-unknown">
         <StateChip state="warning" label={SEND_WORDS.lastUnknown} />
-        <span className="surface-token" data-chip>{last.reason ? unknownWord(last.reason) : "NO ANSWER"}</span>
+        <Token className="surface-token" data-chip>{last.reason ? unknownWord(last.reason) : "NO ANSWER"}</Token>
       </span>
     );
   }
@@ -379,14 +380,14 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
   if (s.state === "failed") return (
     <span className="send-line" data-testid="send-failed" data-receipt="latest" data-state="failed" data-code={s.reason ?? ""}>
       <StateChip state="failure" label="FAILED" />
-      <span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span>
-      <span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span>
+      <Token className="surface-token" data-chip>{failedWord(s.reason ?? "")}</Token>
+      <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
     </span>
   );
   if (s.state === "unknown") return (
     <span className="send-line" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
       <StateChip state="warning" label={SEND_WORDS.unknownChip} />
-      <span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span>
+      <Token className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</Token>
       <ReceiptEgress s={s} />
     </span>
   );
@@ -430,10 +431,10 @@ export function ProofCell({ channel, proof, target, account }: {
   account?: Record<string, string | boolean>;
 }) {
   const p = proof ?? {};
-  if (channel === "file") return <span className="surface-token send-literal send-wrap" data-chip data-testid="proof">{shownPath(String(p.path ?? ""), target)}</span>;
-  if (channel === "email") return <span className="surface-token send-literal" data-chip data-testid="proof">{`ID ${String(p.message_id ?? "")}`}</span>;
+  if (channel === "file") return <Token code className="surface-token send-literal send-wrap" data-chip data-testid="proof">{shownPath(String(p.path ?? ""), target)}</Token>;
+  if (channel === "email") return <Token code className="surface-token send-literal" data-chip data-testid="proof">{`ID ${String(p.message_id ?? "")}`}</Token>;
   // Slack by webhook answers only `ok`: the proof is the channel, never a link (design section 5).
-  if (channel === "slack") return <span className="surface-token send-literal" data-chip data-testid="proof">{String(target?.channel_label ?? "")}</span>;
+  if (channel === "slack") return <Token code className="surface-token send-literal" data-chip data-testid="proof">{String(target?.channel_label ?? "")}</Token>;
   const url = proofLink(channel, p, target, account);
   const label = target ? targetToken(channel as Channel, target) : url.replace(/^https:\/\//, "");
   return url ? (
@@ -441,7 +442,7 @@ export function ProofCell({ channel, proof, target, account }: {
       onClick={() => openFar(url)}>
       {label}
     </Button>
-  ) : <span className="surface-token send-literal" data-chip data-testid="proof">{label}</span>;
+  ) : <Token code className="surface-token send-literal" data-chip data-testid="proof">{label}</Token>;
 }
 
 /* ── the press ─────────────────────────────────────────────────────── */
@@ -561,13 +562,13 @@ function PreviewFailed({ pv, eg, onRetry }: {
     return (
       <div className="send-verbs" data-testid="preview-refused" data-code={pv.code}>
         <StateChip state="failure" label="REFUSED" />
-        <span className="surface-token" data-chip>{refusedWord(pv.code)}</span>
+        <Token className="surface-token" data-chip>{refusedWord(pv.code)}</Token>
         {pv.size ? (
-          <span className="surface-token" data-chip data-testid="preview-size">
+          <Token className="surface-token" data-chip data-testid="preview-size">
             {`${pv.size.size.toLocaleString("en-US")} / ${pv.size.limit.toLocaleString("en-US")} CHARACTERS`}
-          </span>
+          </Token>
         ) : null}
-        <span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span>
+        <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
         <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
       </div>
     );
@@ -575,7 +576,7 @@ function PreviewFailed({ pv, eg, onRetry }: {
   return (
     <div className="send-verbs" data-testid="preview-failed">
       <StateChip state="failure" label={SEND_WORDS.noPreview} />
-      <span className="surface-token" data-chip>NO ANSWER</span>
+      <Token className="surface-token" data-chip>NO ANSWER</Token>
       <Button dense variant="ghost" data-testid="preview-retry" onClick={onRetry}>{SEND_WORDS.retry}</Button>
     </div>
   );
@@ -833,7 +834,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
             ) : null}
             {orderedDestinations === null ? null : orderedDestinations.length === 0 ? (
               <div className="send-line" data-testid="send-none">
-                <span className="surface-token" data-chip>{SEND_WORDS.noDestination}</span>
+                <Token className="surface-token" data-chip>{SEND_WORDS.noDestination}</Token>
               </div>
             ) : (
             <SurfaceLedger count="" cols="room">
@@ -919,8 +920,8 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                       <span className="send-pick" aria-hidden="true">{open ? "●" : "○"}</span>
                       <span className="surface-primary" data-destination={d.name} title={targetToken(d.channel, d.target)}>{d.name}</span>
                       <span className="send-cells">
-                        <span className="surface-token send-channel" data-chip>{CHANNEL_NAME[d.channel] ?? CHANNEL_WORD[d.channel] ?? d.channel}</span>
-                        {!open ? <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span> : null}
+                        <Token className="surface-token send-channel" data-chip>{CHANNEL_NAME[d.channel] ?? CHANNEL_WORD[d.channel] ?? d.channel}</Token>
+                        {!open ? <Token code className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</Token> : null}
                         {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
                         {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
                         <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
@@ -995,8 +996,8 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
   const result = waiting ? null
     : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
     : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /><ReceiptEgress s={s} /></>
-    : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span><span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span></>
-    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span><ReceiptEgress s={s} /></>
+    : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><Token className="surface-token" data-chip>{failedWord(s.reason ?? "")}</Token><Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token></>
+    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><Token className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</Token><ReceiptEgress s={s} /></>
     : <StateChip state="idle" label={SEND_WORDS.discarded} />;
 
   return (
@@ -1013,12 +1014,12 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
         {waiting
           ? <StateChip state="active" icon="◆" label={SEND_WORDS.prepared} />
           : <span className="send-line" data-testid="prepared-result-word" data-state={s.state} data-code={s.reason ?? ""}>{result}</span>}
-        <span className="surface-token" data-chip data-testid="prepared-by">{byWord(s)}</span>
-        <span className="surface-token" data-chip data-testid="prepared-label">{label}</span>
+        <Token className="surface-token" data-chip data-testid="prepared-by">{byWord(s)}</Token>
+        <Token className="surface-token" data-chip data-testid="prepared-label">{label}</Token>
         {waiting && o.kind === "refused" ? (
           <span data-testid="prepared-refused-chip" data-code={o.code}><StateChip state="failure" label={refusedWord(o.code)} /></span>
         ) : null}
-        <span className="surface-token" data-chip>{stamp(s.settled_at ?? s.created_at)}</span>
+        <Token className="surface-token" data-chip>{stamp(s.settled_at ?? s.created_at)}</Token>
         {waiting && acc ? <StateChip state={acc.state} label={acc.label} /> : null}
         {waiting ? <EgressChip label={eg.label} scope={eg.scope} title={eg.title} /> : null}
       </span>}
@@ -1047,7 +1048,7 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
               {discardOutcome ? (
                 <span className="send-line" data-testid="discard-refused" data-code={discardOutcome}>
                   <StateChip state="failure" label="REFUSED" />
-                  <span className="surface-token" data-chip>{refusedWord(discardOutcome)}</span>
+                  <Token className="surface-token" data-chip>{refusedWord(discardOutcome)}</Token>
                 </span>
               ) : null}
             </div>
@@ -1080,7 +1081,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
             {rows.map((r) => {
               const name = r.destination_name ?? "—";
               const t = tag?.(r) ?? null;
-              const formChip = t ? <span className="surface-token" data-chip data-form={t.form} data-testid="history-form">{t.word}</span> : null;
+              const formChip = t ? <Token className="surface-token" data-chip data-form={t.form} data-testid="history-form">{t.word}</Token> : null;
               if (r.state === "unknown") {
                 const far = farSide(r.channel, r.target, r.account);
                 return (
@@ -1089,10 +1090,10 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                     primary={<span className="surface-primary" data-to={name}>{`${SEND_WORDS.unknownChip} · CHECK ${name}`}</span>}
                     cells={<span className="send-cells">
                       {formChip}
-                      {r.reason ? <span className="surface-token" data-chip>{unknownWord(r.reason)}</span> : null}
+                      {r.reason ? <Token className="surface-token" data-chip>{unknownWord(r.reason)}</Token> : null}
                       <ReceiptEgress s={r} />
                       {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
-                      <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
+                      <Token className="surface-token" data-chip>{stamp(r.settled_at)}</Token>
                     </span>} />
                 );
               }
@@ -1102,10 +1103,10 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                   primary={<span className="surface-primary" data-to={name}>{name}</span>}
                   cells={<span className="send-cells">
                     {formChip}
-                    <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">{sentWord(r.channel, r.proof, r.account)}</span>
+                    <Token className="surface-token" data-chip data-tone="ok" data-testid="history-word">{sentWord(r.channel, r.proof, r.account)}</Token>
                     <ProofCell channel={r.channel} proof={r.proof} target={r.target} account={r.account} />
                     <ReceiptEgress s={r} />
-                    <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
+                    <Token className="surface-token" data-chip>{stamp(r.settled_at)}</Token>
                   </span>} />
               );
             })}

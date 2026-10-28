@@ -50,6 +50,7 @@ import {
 } from "./helpers";
 import { MeetingDetail, MEETING_TRANSCRIPT_OPEN } from "./MeetingDetail";
 import { useSummaryRun } from "./useSummaryRun";
+import { Token } from "../../../desk/surface/Token";
 
 /** The meeting window's one wing (DESIGN §4: "One wing: Outcomes").
  *  Betterment capture C5 parked the Artifacts wing; its Results show under
@@ -339,7 +340,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     parkOutcome
       ? { key: "receipt", text: <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restore(ids)} data-testid="meeting-park-receipt" /> }
       : receipt
-        ? { key: "receipt", text: <span className="surface-footer-receipt-line" data-words="" data-tone={receipt.tone} data-testid="meetings-run-receipt" title={receipt.title || undefined}>{receipt.text}</span> }
+        ? { key: "receipt", text: <Token className="surface-footer-receipt-line" data-words="" data-tone={receipt.tone} data-testid="meetings-run-receipt" title={receipt.title || undefined}>{receipt.text}</Token> }
         : null,
   ].filter(Boolean) as StatusBarItem[];
   const exportEntries: WorkMenuEntry[] = [

@@ -85,7 +85,7 @@ it("refuses an unsupported repository selection without opening whole Desk Ask o
   useDesk.setState({ selectedIds: ["repository:repo-1"], askOpen: false });
   render(<AskBar />);
   fireEvent.click(screen.getByRole("button", { name: "Ask" }));
-  expect(screen.getByRole("status")).toHaveTextContent("SOURCE UNSUPPORTED");
+  expect(screen.getByRole("status")).toHaveTextContent("Source unsupported");
   expect(useDesk.getState().askOpen).toBe(false);
   expect(useDesk.getState().selectedIds).toEqual(["repository:repo-1"]);
 });
@@ -473,7 +473,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     fireEvent.click(screen.getByRole("button", { name: "Back to note" }));
     window.removeEventListener(ASK_RETURN_EVENT, onReturn);
     expect(observed).toEqual([false]);
-    expect(screen.getByText("SOURCE WINDOW CLOSED")).toBeInTheDocument();
+    expect(screen.getByText("Source window closed")).toBeInTheDocument();
     await waitFor(() => expect(useDesk.getState().pullouts.some((entry) => entry.id === "note:n-mira")).toBe(true));
     expect(takeAskReturn(source.windowId, source.noteRef)).toEqual(source);
     expect(takeAskReturn(source.windowId, source.noteRef)).toBeNull();

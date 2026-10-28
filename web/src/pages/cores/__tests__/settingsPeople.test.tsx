@@ -106,7 +106,7 @@ describe("Settings › People", () => {
     await waitFor(() => expect(screen.queryByTestId("people-access-agents")).toBeNull());
     expect(screen.getByTestId("people-access-receipt").textContent).toContain("Set by environment");
     const failed = screen.getByTestId("people-access-read-failed");
-    expect(failed.textContent).toContain("READ FAILED");
+    expect(failed.textContent).toContain("Read failed");
     expect(failed.getAttribute("data-code")).toBe("unavailable");
   });
 
@@ -114,8 +114,8 @@ describe("Settings › People", () => {
     getAnswer = () => ({ status: 503, body: { code: "unavailable" } });
     render(<PeopleAccessModule />);
     const failed = await screen.findByTestId("people-access-read-failed");
-    expect(failed.textContent).toContain("READ FAILED");
-    expect(failed.textContent).toContain("UNAVAILABLE");
+    expect(failed.textContent).toContain("Read failed");
+    expect(failed.textContent).toContain("Unavailable");
     expect(screen.queryByRole("group", { name: "Agent access" })).toBeNull();
     getAnswer = () => ({ status: 200, body: { mode: "write", effective: "write", source: "config", env_var: null, agents: "read" } });
     fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));

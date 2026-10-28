@@ -71,8 +71,8 @@ describe("a brief: UNKNOWN and no answer survive the click that leaves the row (
     fireEvent.click(within(rowOf("Team folder")).getByText("Team folder"));
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
     const row = rowOf("Team folder");
-    expect(row.textContent).toContain("LAST SEND UNKNOWN");
-    expect(row.textContent).toContain("NO ANSWER");
+    expect(row.textContent).toContain("Last send unknown");
+    expect(row.textContent).toContain("No answer");
     expect(row.textContent).not.toContain("THIS DEVICE");
   });
 
@@ -87,7 +87,7 @@ describe("a brief: UNKNOWN and no answer survive the click that leaves the row (
     await pick("Other folder");
     await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Other folder"));
     const row = rowOf("Team folder");
-    expect(row.textContent).toContain("NO ANSWER · RESULT UNKNOWN");
+    expect(row.textContent).toContain("No answer · Result unknown");
     expect(row.textContent).not.toContain("THIS DEVICE");
   });
 });

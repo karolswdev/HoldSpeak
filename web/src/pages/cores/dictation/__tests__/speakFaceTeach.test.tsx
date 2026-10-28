@@ -240,7 +240,7 @@ describe("the APPLIED chip", () => {
     expect(within(body).getByText("queue for")).toBeTruthy();
     expect(within(body).getByText("SAID")).toBeTruthy();
     expect(within(body).getByText("Q4")).toBeTruthy();
-    expect(within(body).getByText("TEXT")).toBeTruthy();
+    expect(within(body).getByText("Text")).toBeTruthy();
   });
 
   it("names a routing rule by its LABEL, never its id — WHEN / ROUTE / INTENT", async () => {
@@ -253,7 +253,7 @@ describe("the APPLIED chip", () => {
     expect(within(body).getByText("WHEN")).toBeTruthy();
     expect(within(body).getByText("ROUTE")).toBeTruthy();
     expect(within(body).getByText("Delivery")).toBeTruthy();
-    expect(within(body).getByText("INTENT")).toBeTruthy();
+    expect(within(body).getByText("Intent")).toBeTruthy();
     expect(body.textContent).not.toContain("delivery,");
   });
 });

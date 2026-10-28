@@ -20,6 +20,7 @@ import { countToken } from "../count";
 import { DotWord } from "../kit";
 import { stateWords } from "../objects/NeedsRow";
 import "./standing-page.css";
+import { Token } from "../Token";
 
 export interface MemoryRefToken {
   ref: string;
@@ -144,7 +145,7 @@ export function StandingPage({
             // W6-J words: the state is a dot and a word (`Stale · 3 new sources`).
             <DotWord tone="warn" data-testid="standing-page-stale">{stateWords(more ? `STALE · ${more}` : "STALE")}</DotWord>
           ) : null}
-          <span className="surface-token" data-testid="standing-page-built">{built}</span>
+          <Token className="surface-token" data-testid="standing-page-built">{built}</Token>
         </span>
       </header>
       <ol className="standing-page-sentences">

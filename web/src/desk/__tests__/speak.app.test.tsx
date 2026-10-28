@@ -478,7 +478,7 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
       expect(el).toBeTruthy();
       return el!.textContent ?? "";
     });
-    for (const word of ["HEARD", "queue for", "SAID", "Q4", "TEXT"]) expect(disclosed).toContain(word);
+    for (const word of ["HEARD", "queue for", "SAID", "Q4", "Text"]) expect(disclosed).toContain(word);
 
     // ── 7. the Journal wing: every landing, newest first; APPLIED, then TAUGHT ──
     await userEvent.click(screen.getByRole("tab", { name: "Journal" }));
@@ -591,8 +591,8 @@ describe("the HOTKEY custody block, from the hub's readiness answers", () => {
     const block = await custodyBlock();
     for (const pid of ["microphone", "input_monitoring", "accessibility"]) {
       const row = await screen.findByTestId(`speak-permission-${pid}`);
-      expect(row.textContent).toContain("SYSTEM SETTINGS");
-      expect(row.textContent).toContain("PRIVACY & SECURITY");
+      expect(row.textContent).toContain("System settings");
+      expect(row.textContent).toContain("Privacy & security");
       expect(row.textContent).toContain("Denied");
     }
     expect(block.textContent).toContain("Unavailable");
@@ -620,7 +620,7 @@ describe("the HOTKEY custody block, from the hub's readiness answers", () => {
   it("the listener failed with every grant held: the reason token, never the exception, and no permission rows", async () => {
     replayCustody("listener_failed");
     const block = await custodyBlock();
-    expect((await screen.findByTestId("speak-hotkey-reason")).textContent).toBe("PYNPUT MISSING");
+    expect((await screen.findByTestId("speak-hotkey-reason")).textContent).toBe("pynput missing");
     expect(block.textContent).not.toContain("pynput is not available");
     expect(document.querySelectorAll('[data-testid^="speak-permission-"]')).toHaveLength(0);
   });

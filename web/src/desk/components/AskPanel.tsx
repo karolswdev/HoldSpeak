@@ -95,6 +95,7 @@ import { humanTime } from "../surface/format";
 import { countWords } from "../surface/kit";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
 import { useCompactViewport } from "../useCompactViewport";
+import { Token } from "../surface/Token";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -1435,7 +1436,7 @@ export function AskBar() {
       }}>
         <span aria-hidden="true">✦</span> Ask
       </Button>
-      {refusal ? <span className="surface-token" data-chip data-tone="danger" role="status">{refusal}</span> : null}
+      {refusal ? <Token className="surface-token" data-chip data-tone="danger" role="status">{refusal}</Token> : null}
       <Button dense variant="ghost" onClick={clearSelection} aria-label="Clear selection">
         <span aria-hidden="true">✕</span>
       </Button>

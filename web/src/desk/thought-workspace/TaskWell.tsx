@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { CycleGadget, StringGadget } from "../surface/gadgets";
+import { Token } from "../surface/Token";
 
 type Person = { id?: string; display_name?: string };
 
@@ -69,7 +70,7 @@ export function TaskWell({
         <CycleGadget label="Who" value={owner} options={options} onChange={setOwner} disabled={busy} />
         <StringGadget label="When" type="date" value={due} onChange={setDue} disabled={busy} />
       </div>
-      {error ? <span className="surface-token" data-tone="danger" role="alert">{error}</span> : null}
+      {error ? <Token className="surface-token" data-tone="danger" role="alert">{error}</Token> : null}
       <span className="thought-action-well-verbs">
         <Button dense variant="primary" loading={busy} disabled={!task.trim()} onClick={() => void add()}>Add</Button>
         <Button dense variant="ghost" disabled={busy} onClick={onClose}>Close</Button>

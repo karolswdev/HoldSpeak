@@ -41,6 +41,7 @@ import { useAction } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import { deSnake, humanTime, wireClock } from "../../desk/surface/format";
 import "./rhythm.css";
+import { Token } from "../../desk/surface/Token";
 
 /* ── Wire shapes ────────────────────────────────────────────────── */
 
@@ -497,18 +498,18 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
                   brief.  PHILO-15 05: the hour is the Brief job's own
                   (cadence.brief_hour, 06:00 by default), OFF when the job is
                   off; an older hub without it keeps the quiet-hours end. */}
-              <span className="surface-token rhythm-fact" data-testid="rhythm-brief-cadence">
+              <Token className="surface-token rhythm-fact" data-testid="rhythm-brief-cadence">
                 {briefJob
                   ? briefJob.enabled ? `Daily ${fmtHour(briefJob.hour)}` : "Off"
                   : `Daily ${fmtHour(settings.quiet_hours.end)}`}
-              </span>
-              <span className="surface-token rhythm-fact" data-testid="rhythm-brief-last">
+              </Token>
+              <Token className="surface-token rhythm-fact" data-testid="rhythm-brief-last">
                 {briefDate ? (
                   <DotWord tone="ok">{`Last ${briefDate}`}</DotWord>
                 ) : (
                   <DotWord>Never made</DotWord>
                 )}
-              </span>
+              </Token>
             </>
           }
         />
@@ -679,9 +680,9 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       {/* ── Footer ─────────────────────────────────────────────── */}
       {embedded ? null : <SurfaceFooter
         receipt={saving || saveError || writtenAt ? (
-          <span className="surface-footer-receipt-line" data-tone={saveError ? "fail" : undefined} role="status">
+          <Token className="surface-footer-receipt-line" data-tone={saveError ? "fail" : undefined} role="status">
             {saving ? "Saving" : saveError ? "Not confirmed" : `Saved ${fmtEpoch(writtenAt)}`}
-          </span>
+          </Token>
         ) : null}
       />}
     </>

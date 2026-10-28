@@ -42,6 +42,6 @@ describe("AppHead + StatusStrip (Phase 16 kit)", () => {
   it("the lamp square is aria-hidden: the word carries the meaning", () => {
     const { container } = render(<StatusStrip items={[{ lamp: "fail", text: "ROOM · NOT READ" }]} />);
     expect(container.querySelector(".kit-sq")?.getAttribute("aria-hidden")).toBe("true");
-    expect(container.textContent).toBe("ROOM · NOT READ");
+    expect(container.textContent).toBe("Room · Not read");
   });
 });

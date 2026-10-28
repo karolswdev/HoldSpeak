@@ -40,6 +40,7 @@ import {
 } from "../surface/Surface";
 import { FoldGadget, GadgetRow, MxRadio } from "../surface/gadgets";
 import { countLabel } from "../surface";
+import { Token } from "../surface/Token";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
@@ -278,11 +279,11 @@ function RepoBlock({
     return (
       <div className="desk-mc-honest">
         <span className="desk-mc-slug">{repo.name}</span>
-        <span className="surface-token" data-tone="danger">
+        <Token className="surface-token" data-tone="danger">
           <span aria-hidden="true">{GLYPH_CLOSE}</span> {repoStateToken(repo.status)}
-        </span>
+        </Token>
         {repo.detail && (
-          <span className="surface-token">{repo.detail}</span>
+          <Token className="surface-token">{repo.detail}</Token>
         )}
       </div>
     );
@@ -330,7 +331,7 @@ function EvidencePanel() {
       <SurfaceWell
         head={
           <>
-            <span className="surface-token">{`EVIDENCE ${evidence.storyId}`}</span>
+            <Token className="surface-token">{`EVIDENCE ${evidence.storyId}`}</Token>
             <span className="desk-mc-evidence-path">{evidence.path}</span>
             <Button dense variant="ghost" onClick={closeEvidence}>
               Close
@@ -367,9 +368,9 @@ function ProposalCard() {
   if (proposal.status === "proposed") {
     return (
       <div className="desk-mc-proposal">
-        <span className="surface-token" data-tone="warn">
+        <Token className="surface-token" data-tone="warn">
           PROPOSED
-        </span>
+        </Token>
         <span className="desk-mc-preview">{proposal.preview}</span>
         <Button dense onClick={() => void decide("approved")}>
           Approve
@@ -394,11 +395,11 @@ function ProposalCard() {
   }
   return (
     <div className="desk-mc-proposal">
-      <span className="surface-token" data-tone="ok">
+      <Token className="surface-token" data-tone="ok">
         {proposal.status === "executed"
           ? "EXECUTED"
           : proposal.status.toUpperCase()}
-      </span>
+      </Token>
       <Button dense variant="ghost" onClick={dismissProposal}>
         Dismiss
       </Button>
@@ -505,11 +506,11 @@ function OffBeltPanel({ sessions }: { sessions: McSession[] }) {
                   primary={s.key}
                   cells={
                     <span className="surface-ledger-cell">
-                      <span className="surface-token">
+                      <Token className="surface-token">
                         {s.stale
                           ? "IDLE"
                           : s.correlation.replace(/_/g, " ").toUpperCase()}
-                      </span>
+                      </Token>
                     </span>
                   }
                   onToggle={() => useSteering.getState().openSession(s.key)}
@@ -548,13 +549,13 @@ function EventLedger({ events }: { events: McEvent[] }) {
               key={e.ts + e.event + i}
               time={time}
               primary={
-                <span
+                <Token
                   className="surface-token"
                   data-tone={refusal ? "danger" : undefined}
                 >
                   {refusal ? <><span aria-hidden="true">{GLYPH_CLOSE}</span>{" "}</> : ""}
                   {e.event.replace(/_/g, " ").toUpperCase()}
-                </span>
+                </Token>
               }
               cells={
                 <span className="surface-ledger-cell">
@@ -619,16 +620,16 @@ export function MissionControlConveyor() {
   if (!open) {
     return (
       <Button className="desk-mc-tab" onClick={toggle} title="Rails panel">
-        <span className="surface-token">RAILS</span>
+        <Token className="surface-token">RAILS</Token>
         {awaitingCount > 0 ? (
-          <span className="surface-token" data-tone="warn">
+          <Token className="surface-token" data-tone="warn">
             {/* PHILO-13-03: runs that wait for an answer, not "needs you". */}
             {countLabel("WAITING", awaitingCount)}
-          </span>
+          </Token>
         ) : null}
-        {sessions.length > 0 ? <span className="surface-token">{countLabel("RUNS", sessions.length)}</span> : null}
+        {sessions.length > 0 ? <Token className="surface-token">{countLabel("RUNS", sessions.length)}</Token> : null}
         {attentionCount > 0 ? (
-          <span className="surface-token">{countLabel("ATTN", attentionCount)}</span>
+          <Token className="surface-token">{countLabel("ATTN", attentionCount)}</Token>
         ) : null}
       </Button>
     );
@@ -641,13 +642,13 @@ export function MissionControlConveyor() {
     <div className="desk-mc">
       <div className="desk-mc-head">
         <span className="desk-mc-title">
-          <span className="surface-token">RAILS</span>
+          <Token className="surface-token">RAILS</Token>
           {awaitingCount > 0 ? (
-            <span className="surface-token" data-tone="warn">
+            <Token className="surface-token" data-tone="warn">
               {`WAITING ${awaitingCount}`}
-            </span>
+            </Token>
           ) : null}
-          {sessions.length > 0 ? <span className="surface-token">{countLabel("RUNS", sessions.length)}</span> : null}
+          {sessions.length > 0 ? <Token className="surface-token">{countLabel("RUNS", sessions.length)}</Token> : null}
         </span>
         {attentionCount > 0 ? (
           <Button

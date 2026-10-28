@@ -122,6 +122,6 @@ describe("AudioOnlyVerb — the rendered verb", () => {
     ready = true;
     const failed = { ...AUDIO_ONLY, transcription_status_detail: { ...AUDIO_ONLY.transcription_status_detail, last_error: "NO SPEECH FOUND" } };
     render(<AudioOnlyVerb row={failed} onTranscribe={vi.fn()} setUpSpeech testId="t" />);
-    expect((await screen.findByTestId("t-last-error")).textContent).toContain("LAST ERROR · NO SPEECH FOUND");
+    expect((await screen.findByTestId("t-last-error")).textContent).toContain("Last error · No speech found");
   });
 });

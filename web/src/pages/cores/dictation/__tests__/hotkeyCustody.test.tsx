@@ -185,11 +185,11 @@ describe("the HOTKEY block on the Speak face", () => {
     render(<SpeakFace />);
     const row = await screen.findByTestId("speak-permission-input_monitoring");
     expect(within(row).getByText("INPUT MONITORING")).toBeTruthy();
-    expect(within(row).getByText("HOTKEY")).toBeTruthy();
+    expect(within(row).getByText("Hotkey")).toBeTruthy();
     expect(within(row).getByText("Denied")).toBeTruthy();
     // The walk, as tokens rather than a sentence.
-    expect(within(row).getByText("SYSTEM SETTINGS")).toBeTruthy();
-    expect(within(row).getByText("PRIVACY & SECURITY")).toBeTruthy();
+    expect(within(row).getByText("System settings")).toBeTruthy();
+    expect(within(row).getByText("Privacy & security")).toBeTruthy();
     // The two grants that ARE in hand stay silent.
     expect(screen.queryByTestId("speak-permission-microphone")).toBeNull();
     expect(screen.queryByTestId("speak-permission-accessibility")).toBeNull();
@@ -205,7 +205,7 @@ describe("the HOTKEY block on the Speak face", () => {
     const block = await screen.findByTestId("speak-hotkey");
     expect(within(block).getByText("Unavailable")).toBeTruthy();
     expect(within(block).getByTestId("speak-hotkey-reason").textContent).toBe(
-      "PYNPUT MISSING",
+      "pynput missing",
     );
     // The raw exception text never reaches the face.
     expect(block.textContent).not.toContain("pynput is not available");

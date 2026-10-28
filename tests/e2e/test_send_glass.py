@@ -983,7 +983,7 @@ class TestSendGlass:
         reloaded_rows = reloaded_history.locator("[data-testid=history-row]")
         assert reloaded_rows.count() == 1
         reloaded_text = reloaded_rows.first.inner_text()
-        assert "Team updates" in reloaded_text and "SAVED" in reloaded_text, reloaded_text
+        assert "Team updates" in reloaded_text and "Saved" in reloaded_text, reloaded_text
         assert meeting.locator("[data-testid=send-history] [data-testid=history-word]").count() == 1
         page.screenshot(path=str(SHOTS / f"S5-history-reloaded-{width}.png"))
         facts = {
@@ -1053,7 +1053,7 @@ class TestSendGlass:
         self._pick("Team updates")
         fail = page.locator(f"[id='{ROOM}'] [data-testid=room-latest-unreadable]")
         fail.wait_for(timeout=T)
-        assert "CANNOT READ LATEST UPDATE" in fail.inner_text(), fail.inner_text()
+        assert "Cannot read latest update" in fail.inner_text(), fail.inner_text()
         assert page.locator(f"[id='{ROOM}'] [data-testid=send-well][data-doc^='project_update:']").count() == 0
         self._wait(600)
         for sel in ("[data-testid=room-latest-unreadable]", "[data-testid=room-latest-unreadable-retry]"):

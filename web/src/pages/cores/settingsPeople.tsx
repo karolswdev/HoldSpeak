@@ -15,6 +15,7 @@ import { FilterTokens, FoldGadget, GadgetGroup, GadgetRow, StateChip, StringGadg
 import { useOwnerName, type OwnerFieldStatus, type OwnerNameAdapter } from "../../desk/firstrun/ownerName";
 import { OwnerAliasField } from "../../desk/firstrun/OwnerAliasField";
 import type { PrefSaveState } from "./settingsWindow";
+import { Token } from "../../desk/surface/Token";
 
 export type PeopleAccess = {
   mode: string;
@@ -196,7 +197,7 @@ export function PeopleAccessModule({ highlight }: { highlight?: string | null } 
         <GadgetRow label="Access">
           <span data-testid="people-access-read-failed" data-code={readError}>
             <StateChip state="failure" label="READ FAILED" />{" "}
-            <span className="surface-token" data-chip>{readError.toUpperCase()}</span>{" "}
+            <Token className="surface-token" data-chip>{readError.toUpperCase()}</Token>{" "}
             <Button variant="secondary" dense onClick={() => void reload()}>Retry</Button>
           </span>
         </GadgetRow>
@@ -244,5 +245,5 @@ export function PeopleHubCells() {
   if (!access) return null;
   // `agents` is what a started agent gets: read unless access is off.
   const text = access.agents === "off" ? "Agents: off" : "Agents can read People";
-  return <span className="surface-token" data-chip data-testid="people-hub-access">{text}</span>;
+  return <Token className="surface-token" data-chip data-testid="people-hub-access">{text}</Token>;
 }

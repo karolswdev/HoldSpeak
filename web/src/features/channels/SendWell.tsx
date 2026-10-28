@@ -16,6 +16,7 @@ import type { UpdateController } from "../project-room/update/useUpdateControlle
 import { isDelivered, type Delivery, type ProjectUpdate } from "../project-room/update/model";
 import { SENT_WORD, SEND_WORDS, farSide, refusedWord, sentWord, stamp, unknownWord, type Send } from "./channels";
 import "./channels.css";
+import { Token } from "../../desk/surface/Token";
 
 /** The update as a document reference (B1-B5). */
 export const updateDoc = (update: ProjectUpdate): DocRef => ({
@@ -48,7 +49,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
         {ctrl.deliverOutcome.kind === "refused" ? (
           <span className="send-line" data-testid="deliver-refused" data-code={ctrl.deliverOutcome.code}>
             <StateChip state="failure" label="REFUSED" />
-            <span className="surface-token" data-chip>{refusedWord(ctrl.deliverOutcome.code)}</span>
+            <Token className="surface-token" data-chip>{refusedWord(ctrl.deliverOutcome.code)}</Token>
           </span>
         ) : ctrl.deliverOutcome.kind === "uncertain" ? (
           <span className="send-line" data-testid="deliver-uncertain"><StateChip state="warning" label={SEND_WORDS.lost} /></span>
@@ -70,10 +71,10 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                       lead={<span data-outcome={r.outcome}><StateChip state="warning" label="" wordless /></span>}
                       primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{`${SEND_WORDS.unknownChip} · CHECK ${r.deliveredTo ?? "—"}`}</span>}
                       cells={<>
-                        {reason ? <span className="surface-token" data-chip data-code={reason}>{unknownWord(reason)}</span> : null}
+                        {reason ? <Token className="surface-token" data-chip data-code={reason}>{unknownWord(reason)}</Token> : null}
                         {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
                         <ReceiptEgress s={{ proof: r.proof ?? null, egress: send?.egress }} />
-                        <span className="surface-token" data-chip>{stamp(r.deliveredAt)}</span>
+                        <Token className="surface-token" data-chip>{stamp(r.deliveredAt)}</Token>
                       </>} />
                   );
                 }
@@ -83,14 +84,14 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                     lead={<span data-outcome={r.outcome}><StateChip state="success" label="" wordless /></span>}
                     primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{r.deliveredTo ?? "—"}</span>}
                     cells={<>
-                      <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">
+                      <Token className="surface-token" data-chip data-tone="ok" data-testid="history-word">
                         {manual ? SENT_WORD.manual : sentWord(r.channel, r.proof, send?.account)}
-                      </span>
+                      </Token>
                       {manual
-                        ? <span className="surface-token" data-chip>MANUAL</span>
+                        ? <Token className="surface-token" data-chip>MANUAL</Token>
                         : <ProofCell channel={r.channel} proof={r.proof ?? null} target={send?.target} account={send?.account} />}
                       <ReceiptEgress s={{ proof: r.proof ?? null, egress: send?.egress }} />
-                      <span className="surface-token" data-chip>{stamp(r.deliveredAt)}</span>
+                      <Token className="surface-token" data-chip>{stamp(r.deliveredAt)}</Token>
                     </>} />
                 );
               })}

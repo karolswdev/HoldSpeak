@@ -49,7 +49,7 @@ describe("the gear door's Runs fact (A.8)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Choose engine" }));
     expect(mocks.open).toHaveBeenCalledWith("open-concierge", "/models", "writing_dictation");
     expect(screen.queryByText(raw)).toBeNull();
-    const rawFold = screen.getByText("RAW · READINESS").closest("details")!;
+    const rawFold = screen.getByText("Raw · Readiness").closest("details")!;
     expect(rawFold.open).toBe(false);
     fireEvent.click(rawFold.querySelector("summary")!);
     expect(rawFold.textContent).toContain(raw);
@@ -87,6 +87,6 @@ describe("the gear door's Runs fact (A.8)", () => {
     mocks.apiFetch.mockResolvedValue(readiness(0));
     render(<Readiness />);
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
-    expect(await screen.findByText("RAW · READINESS")).toBeInTheDocument();
+    expect(await screen.findByText("Raw · Readiness")).toBeInTheDocument();
   });
 });

@@ -80,12 +80,12 @@ describe("the Concierge Anthropic row", () => {
   it("reads NOT SUPPORTED YET with no Check; the runnable cloud row keeps READY and Check", async () => {
     render(<ConciergeCore scope="" />);
     const anthropic = await screen.findByTestId("concierge-found-cloud:anthropic");
-    expect(anthropic.textContent).toContain("NOT SUPPORTED YET");
+    expect(anthropic.textContent).toContain("Not supported yet");
     expect(anthropic.textContent).not.toContain("READY");
     expect(screen.queryByTestId("concierge-check-cloud:anthropic")).toBeNull();
 
     const openrouter = screen.getByTestId("concierge-found-cloud:openrouter");
-    expect(openrouter.textContent).toContain("READY");
+    expect(openrouter.textContent).toContain("Ready");
     expect(screen.getByTestId("concierge-check-cloud:openrouter")).toBeTruthy();
   });
 

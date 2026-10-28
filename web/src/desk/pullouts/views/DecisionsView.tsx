@@ -27,6 +27,7 @@ import { useCompactViewport } from "../../useCompactViewport";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../surface/objects/ObjectList";
 import type { ObjectTone } from "../../surface/objects/kinds";
 import "../attention-records.css";
+import { Token } from "../../surface/Token";
 
 type ReceiptSource = {
   source_type: string;
@@ -638,7 +639,7 @@ export function DecisionsView({
                       </span>
                       {word ? (
                         <span className="surface-ledger-cell">
-                          <span className="surface-token" data-tone="muted">{word}</span>
+                          <Token className="surface-token" data-tone="muted">{word}</Token>
                         </span>
                       ) : null}
                     </>

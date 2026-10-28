@@ -17,6 +17,7 @@ import { EgressChip, StateChip } from "../surface";
 import { DotWord } from "../surface/kit";
 import { formatBytes, groupsOf, planSteps, sourceHost, speechReady, useLocalAi } from "./localAi";
 import "./speechSetup.css";
+import { Token } from "../surface/Token";
 
 /** One window's speech setup started or finished: every face reads again. */
 export const SPEECH_SETUP_EVENT = "hs:speech-setup";
@@ -163,16 +164,16 @@ export function SpeechSetup({
       )}
       {failed ? <StateChip state="failure" label="CAN'T DOWNLOAD" /> : null}
       {!canSetUp && !running ? (
-        <span className="surface-token" data-chip="">
+        <Token className="surface-token" data-chip="">
           {status.speech?.state === "backend_unavailable" ? "SPEECH LIBRARY MISSING" : "MODEL NOT IN SETUP"}
-        </span>
+        </Token>
       ) : null}
       <span className="speech-setup-verbs">
         {running ? (
           <>
-            <span className="surface-token" data-chip="" data-testid={`${testId}-progress`}>
+            <Token className="surface-token" data-chip="" data-testid={`${testId}-progress`}>
               {step?.rate ?? "SETTING UP"}
-            </span>
+            </Token>
             <Button dense variant="ghost" disabled={ai.busy} onClick={() => void ai.cancel()}>
               Stop
             </Button>

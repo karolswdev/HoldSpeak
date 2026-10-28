@@ -215,7 +215,7 @@ it('a known failed Send keeps the edited comment for retry', async () => {
   fireEvent.click(await screen.findByTestId('nudge-verb'));
   fireEvent.change(screen.getByLabelText('Comment'), {target: {value: 'Please review the rollback plan before 15:00.'}});
   fireEvent.click(screen.getByTestId('nudge-send'));
-  await screen.findByText('FAILED');
+  await screen.findByText('Failed');
   expect(screen.getByLabelText('Comment')).toHaveValue('Please review the rollback plan before 15:00.');
 });
 
@@ -231,10 +231,10 @@ it('retry sends the edited comment after the real API reports a known failure', 
     fireEvent.click(await screen.findByTestId('nudge-verb'));
     fireEvent.change(screen.getByLabelText('Comment'), {target: {value: 'Please review the rollback plan before 15:00.'}});
     fireEvent.click(screen.getByTestId('nudge-send'));
-    await screen.findByText('FAILED');
+    await screen.findByText('Failed');
     expect(JSON.parse(String(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/send'))[0][1]?.body)).text).toBe('Please review the rollback plan before 15:00.');
     fireEvent.click(screen.getByTestId('nudge-send'));
-    await screen.findByText('FAILED');
+    await screen.findByText('Failed');
     expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/send'))).toHaveLength(2);
     expect(JSON.parse(String(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/send'))[1][1]?.body)).text).toBe('Please review the rollback plan before 15:00.');
   } finally { fetchMock.mockRestore(); }

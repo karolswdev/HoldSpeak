@@ -10,6 +10,7 @@
  */
 import { wireDate } from "../format";
 import "./found-by.css";
+import { Token } from "../Token";
 
 export const FOUND_BY_WORD: Readonly<Record<string, string>> = {
   lexical: "KEYWORD",
@@ -40,12 +41,12 @@ export function FoundBy({ origin, className }: { origin: unknown; className?: st
   const word = foundByWord(origin);
   if (!word) return null;
   return (
-    <span
+    <Token
       className={"surface-token surface-foundby" + (className ? ` ${className}` : "")}
       data-chip
       data-by={word}
     >
       {word}
-    </span>
+    </Token>
   );
 }

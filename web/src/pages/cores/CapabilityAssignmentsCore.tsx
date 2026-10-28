@@ -13,6 +13,7 @@ import {
   type AssignmentSummary as AssignmentSummaryProjection,
   type AssignmentSummaryRow,
 } from "./assignmentExperience";
+import { Token } from "../../desk/surface/Token";
 
 type AssignmentTaskOverride = AssignmentSummaryProjection["task_overrides"][number];
 
@@ -98,7 +99,7 @@ export function CapabilityAssignmentsCore() {
         <details className="assignment-overrides" open={showOverrides} onToggle={(event) => setShowOverrides((event.currentTarget as HTMLDetailsElement).open)}>
           <summary>Show task overrides</summary>
           <div className="assignment-override-filter"><Button dense variant={!allTasks ? "primary" : "ghost"} aria-pressed={!allTasks} onClick={() => setAllTasks(false)}>Overrides & issues</Button><Button dense variant={allTasks ? "primary" : "ghost"} aria-pressed={allTasks} onClick={() => setAllTasks(true)}>All tasks</Button></div>
-          {taskRows.length ? <div className="assignment-task-rows">{taskRows.map((task: AssignmentTaskOverride) => <article key={task.id}><span>{task.group.label}</span><strong>{task.label}</strong><span className="surface-token">{task.effective.assignment ? chain(task.effective.assignment.entries) : "No default model"}</span>{decisionsUnproven(task) ? <span className="surface-token" data-tone="warn" data-testid="assignment-decisions-unproven">DECISIONS NOT PROVEN</span> : null}</article>)}</div> : <SurfaceState empty emptyContent={<span>No task overrides</span>} />}
+          {taskRows.length ? <div className="assignment-task-rows">{taskRows.map((task: AssignmentTaskOverride) => <article key={task.id}><span>{task.group.label}</span><strong>{task.label}</strong><Token className="surface-token">{task.effective.assignment ? chain(task.effective.assignment.entries) : "No default model"}</Token>{decisionsUnproven(task) ? <Token className="surface-token" data-tone="warn" data-testid="assignment-decisions-unproven">DECISIONS NOT PROVEN</Token> : null}</article>)}</div> : <SurfaceState empty emptyContent={<span>No task overrides</span>} />}
         </details>
       </div>
       {selected && editor ? <AssignmentEditor

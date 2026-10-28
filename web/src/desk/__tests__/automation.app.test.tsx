@@ -361,7 +361,7 @@ describe("Run now and the results", () => {
     expect(reading.textContent).not.toMatch(/##|\*\*/);
     // NEW, the model by name (no scope word: owner ruling 2026-10-25), and
     // its verbs.
-    expect(within(newest()).getByTestId("automation-new")).toHaveTextContent("NEW");
+    expect(within(newest()).getByTestId("automation-new")).toHaveTextContent("New");
     expect(newest()).toHaveTextContent("stub-model-7b");
     expect(newest()).not.toHaveTextContent("CLOUD");
     expect(within(newest()).getByTestId("automation-open-note")).toBeInTheDocument();
@@ -377,7 +377,7 @@ describe("Run now and the results", () => {
     await open(failed as Step);
     const failure = within(newest()).getByTestId("automation-failure");
     expect(failure).toHaveTextContent("The stub refuses: no source is attached");
-    expect(within(newest()).getByText("FAILED")).toBeInTheDocument();
+    expect(within(newest()).getByText("Failed")).toBeInTheDocument();
     hub.afterRun = [populated as Step];
     fireEvent.click(within(failure).getByRole("button", { name: "Run again" }));
     await waitFor(() => expect(within(newest()).queryByTestId("automation-failure")).toBeNull());
@@ -601,7 +601,7 @@ describe("Looked at, Wrote, Prepared", () => {
     const prepared = within(slot).getByTestId("automation-prepared");
     const [send] = result().used.prepared;
     expect(prepared).toHaveTextContent(`${send.label} to ${send.destination}`);
-    expect(await within(prepared).findByText("PREPARED ×1")).toBeInTheDocument();
+    expect(await within(prepared).findByText("Prepared ×1")).toBeInTheDocument();
     expect(within(prepared).getByRole("button", { name: "Send…" })).toBeInTheDocument();
     // The run's reported cost is in the head line.
     expect(newest()).toHaveTextContent(`$${result().cost_usd.toFixed(2)}`);

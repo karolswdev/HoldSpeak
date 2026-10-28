@@ -163,7 +163,7 @@ describe("Intelligence → Decisions (PHILO-17: every decision, its date and its
   it("the hub searches; Current only asks the hub for standing decisions", async () => {
     render(<DecisionsView />);
     await screen.findByText("Keep the old ledger");
-    expect(screen.getByText("REPLACED")).toBeInTheDocument();
+    expect(screen.getByText("Replaced")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Current only" }));
     await waitFor(() => expect(screen.queryByText("Keep the old ledger")).toBeNull());
@@ -211,7 +211,7 @@ describe("Intelligence → Decisions (PHILO-17: every decision, its date and its
     expect(screen.getByRole("button", { name: "Previous decision" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Next decision" })).toBeInTheDocument();
     expect(screen.getByText(/Old rationale/)).toBeInTheDocument();
-    expect(screen.getByText("CURRENT")).toBeInTheDocument();
+    expect(screen.getByText("Current")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Results" }));
     expect(screen.getByText(receipt.decision_text)).toBeInTheDocument();

@@ -58,8 +58,8 @@ describe("HS-93-06 Meeting conflict recovery", () => {
     expect(
       await screen.findByText("Sync conflict · both retained"),
     ).toBeInTheDocument();
-    expect(screen.getByText("CURRENT")).toBeInTheDocument();
-    expect(screen.getByText("INCOMING")).toBeInTheDocument();
+    expect(screen.getByText("Current")).toBeInTheDocument();
+    expect(screen.getByText("Incoming")).toBeInTheDocument();
     expect(screen.getByText(/Desktop transcript/)).toBeInTheDocument();
     expect(screen.getByText(/Device decision/)).toBeInTheDocument();
 
@@ -90,7 +90,7 @@ describe("HS-93-06 Meeting conflict recovery", () => {
 
     render(<MeetingConflictRecovery meetingId="meeting-1" />);
 
-    expect(await screen.findByText("TOMBSTONE")).toBeInTheDocument();
+    expect(await screen.findByText("Tombstone")).toBeInTheDocument();
     expect(
       screen.getByText("Deleted, with its retained projections"),
     ).toBeInTheDocument();

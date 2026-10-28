@@ -289,22 +289,22 @@ describe("Engines — the model picker (Betterment E3)", () => {
       "alpha-7b", "beta-13b", "gamma-3b",
     ]);
     expect(within(picker).getAllByRole("button", { name: "Use" })).toHaveLength(3);
-    expect(within(picker).queryByText("ADDED")).toBeNull();
+    expect(within(picker).queryByText("Added")).toBeNull();
     expect(defined).toEqual([]);
     // The context the server said it runs; a model that did not say shows none.
-    expect(row("alpha-7b").textContent).toContain("49,152 TOKENS");
-    expect(row("gamma-3b").textContent).not.toContain("TOKENS");
+    expect(row("alpha-7b").textContent).toContain("49,152 tokens");
+    expect(row("gamma-3b").textContent).not.toContain("Tokens");
     // Three models need no search field.
     expect(screen.queryByTestId("concierge-add-search")).toBeNull();
 
     await act(async () => {
       fireEvent.click(within(row("alpha-7b")).getByRole("button", { name: "Use" }));
     });
-    await waitFor(() => expect(within(row("alpha-7b")).getByText("ADDED")).toBeTruthy());
+    await waitFor(() => expect(within(row("alpha-7b")).getByText("Added")).toBeTruthy());
     await act(async () => {
       fireEvent.click(within(row("gamma-3b")).getByRole("button", { name: "Use" }));
     });
-    await waitFor(() => expect(within(row("gamma-3b")).getByText("ADDED")).toBeTruthy());
+    await waitFor(() => expect(within(row("gamma-3b")).getByText("Added")).toBeTruthy());
 
     // One engine for each model: the id is host + model, and the context goes with it.
     expect(defined).toEqual([
@@ -332,7 +332,7 @@ describe("Engines — the model picker (Betterment E3)", () => {
     ]);
     fireEvent.change(search, { target: { value: "nothing-like-this" } });
     expect(screen.queryAllByTestId("concierge-add-pick")).toHaveLength(0);
-    expect(screen.getByTestId("concierge-add-no-match").textContent).toBe("NO MODEL MATCHES");
+    expect(screen.getByTestId("concierge-add-no-match").textContent).toBe("No model matches");
   });
 });
 
@@ -402,12 +402,12 @@ describe("Engines — Add an engine, by kind (Betterment E4)", () => {
     expect(rows.map((r) => r.getAttribute("data-model"))).toEqual(["qwen/qwen3-8b", CHOSEN, "anthropic/claude-x"]);
     expect(rows.map((r) => r.hasAttribute("data-preset"))).toEqual([true, true, false]);
     expect(rows[1].textContent).toContain("Balanced Qwen");
-    expect(within(picker).queryByText("ADDED")).toBeNull();
+    expect(within(picker).queryByText("Added")).toBeNull();
 
     await act(async () => {
       press(presses, within(rows[1]).getByRole("button", { name: "Use" }));
     });
-    await waitFor(() => expect(within(row(CHOSEN)).getByText("ADDED")).toBeTruthy());
+    await waitFor(() => expect(within(row(CHOSEN)).getByText("Added")).toBeTruthy());
     expect(presses.n).toBe(5);
     expect(sent[1].path).toBe("/api/inference/model-library/define-endpoint");
     expect(sent[1].json).toEqual({

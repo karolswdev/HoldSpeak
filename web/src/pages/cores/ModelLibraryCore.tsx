@@ -33,6 +33,7 @@ import {
   type ModelLibraryReceipt,
   type ModelLibraryRow,
 } from "./modelLibrary";
+import { Token } from "../../desk/surface/Token";
 
 const SUCCESS_COPY = "Added to the Model Library. Assignments are unchanged.";
 const SOURCES = [
@@ -395,7 +396,7 @@ export function ModelLibraryCore() {
             nothing. The row says so and offers the two routes that run. */}
         {anthropicPicked ? (
           <span className="model-library-not-supported" data-testid="model-library-anthropic-not-supported">
-            <span className="surface-token" data-tone="warn">{NOT_SUPPORTED_YET}</span>
+            <Token className="surface-token" data-tone="warn">{NOT_SUPPORTED_YET}</Token>
             <Button dense variant="ghost" onClick={() => setHosted((current) => ({ ...current, family: "openrouter" }))}>Use OpenRouter</Button>
             <Button dense variant="ghost" onClick={chooseOpenAICompatible}>Use OpenAI-compatible</Button>
           </span>

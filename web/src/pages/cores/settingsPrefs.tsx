@@ -32,6 +32,7 @@ import "./settings.css";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
 import { resolveAtmosphere } from "../../desk/gl/atmosphereRegistry";
 import { useBuilderTools } from "../../desk/builderTools";
+import { Token } from "../../desk/surface/Token";
 
 /* ── the roster (owner-named destinations, including the Models/Assignments pair) ── */
 
@@ -694,7 +695,7 @@ export function PrefsFace({
 export function OtherDevicesChip({ on }: { on: boolean }) {
   return on
     ? <StateChip state="success" label="Other devices: on" />
-    : <span className="surface-token" data-chip>Other devices: off</span>;
+    : <Token className="surface-token" data-chip>Other devices: off</Token>;
 }
 
 /* ── the status bar (window grammar 2026-10-24): save state · facts ── */

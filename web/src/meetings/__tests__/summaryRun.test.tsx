@@ -388,7 +388,7 @@ describe("HS-201-04 the summary on the record", () => {
       "The team reviewed the budget.",
     );
     expect(screen.getByTestId("meeting-summary-topics").textContent).toContain(
-      "BUDGET",
+      "Budget",
     );
     // A failed attempt rides the well's head; the host is in its title.
     expect(screen.getByTestId("summary-record-attempts").textContent).toBe("Failed");

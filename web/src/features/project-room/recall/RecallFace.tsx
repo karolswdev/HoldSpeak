@@ -66,6 +66,7 @@ import { BeliefCard } from "./BeliefCard";
 import { useMemoryChanges } from "../../../desk/memoryChanges";
 import "./recall.css";
 import { openProjectRoom } from "../../../desk/shell";
+import { Token } from "../../../desk/surface/Token";
 
 /** Render the trusted FTS marker grammar without injecting result HTML. */
 export function MemorySnippet({ value }: { value: string }) {
@@ -91,9 +92,9 @@ function openProject(projectId: string) {
 
 function Chip({ label, tone, testid }: { label: string; tone?: string; testid?: string }) {
   return (
-    <span className="surface-token" data-chip data-tone={tone} data-testid={testid}>
+    <Token className="surface-token" data-chip data-tone={tone} data-testid={testid}>
       {label}
-    </span>
+    </Token>
   );
 }
 
@@ -143,9 +144,9 @@ function DecisionCardView({
           <Chip key={axis} label={axis} tone={axisTone(axis)} testid="recall-axis" />
         ))}
         {card.state === "superseded" && card.successor ? (
-          <span className="surface-token recall-superseded-by" data-testid="recall-superseded-by">
+          <Token className="surface-token recall-superseded-by" data-testid="recall-superseded-by">
             SUPERSEDED BY {card.successor.dec_token}
-          </span>
+          </Token>
         ) : null}
         {card.project ? (
           <ProjectButton
@@ -157,7 +158,7 @@ function DecisionCardView({
       </div>
       {card.source ? (
         <div className="recall-source">
-          <span className="surface-token">SOURCE</span>
+          <Token className="surface-token">SOURCE</Token>
           <Chip label={card.source.token} testid="recall-source-token" />
           <Button
             dense
@@ -184,7 +185,7 @@ function DecisionCardView({
               if (!card.carried) void ctrl.carry(card.id, card.project?.id ?? null);
             }}
           >
-            {card.carried ? "CARRIED" : "Carry into brief"}
+            {card.carried ? "Carried" : "Carry into brief"}
           </Button>
         ) : null}
       </div>
@@ -299,11 +300,11 @@ function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
           detail={hit.snippet ? <MemorySnippet value={hit.snippet} /> : undefined}
           meta={
             <span className="project-memory-meta" data-testid={testid}>
-              <span className="surface-token">{(hit.section || hit.kind).replaceAll("_", " ")}</span>
+              <Token className="surface-token">{(hit.section || hit.kind).replaceAll("_", " ")}</Token>
               {hit.retrieval_origin === "relationship" ? (
-                <span className="surface-token">
+                <Token className="surface-token">
                   Related · {String(hit.relationship || "linked source").replaceAll("_", " ")}
-                </span>
+                </Token>
               ) : null}
             </span>
           }
@@ -392,25 +393,25 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
           ) : null}
           <div className="recall-head-tokens">
             {status === "empty" ? (
-              <span className="surface-token" data-testid="recall-empty-token">SEARCH THE DESK</span>
+              <Token className="surface-token" data-testid="recall-empty-token">SEARCH THE DESK</Token>
             ) : null}
             {searched ? (
               <>
                 {result.query.trim() ? <>
-                  <span className="surface-token" data-testid="recall-ref-token">REF · {result.query.toUpperCase()}</span>
-                  <span className="surface-token recall-dot" aria-hidden="true">·</span>
+                  <Token className="surface-token" data-testid="recall-ref-token">REF · {result.query.toUpperCase()}</Token>
+                  <Token className="surface-token recall-dot" aria-hidden="true">·</Token>
                 </> : null}
-                <span className="surface-token" data-testid="recall-searched-token">{searchedToken(result.searched_at)}</span>
+                <Token className="surface-token" data-testid="recall-searched-token">{searchedToken(result.searched_at)}</Token>
               </>
             ) : null}
             {status === "searching" ? (
-              <span className="surface-token" data-testid="recall-searching-token">SEARCHING</span>
+              <Token className="surface-token" data-testid="recall-searching-token">SEARCHING</Token>
             ) : null}
             {status === "failed" ? (
               <>
-                <span className="surface-token" data-tone="danger" data-testid="recall-failed-token">
+                <Token className="surface-token" data-tone="danger" data-testid="recall-failed-token">
                   CANT SEARCH · {ctrl.error.toUpperCase()}
-                </span>
+                </Token>
                 <Button dense variant="ghost" onClick={() => void ctrl.search()} aria-label="Retry the search">
                   Retry
                 </Button>

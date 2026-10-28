@@ -44,6 +44,7 @@ import { PeopleNotHere, PeopleReadFailed } from "../../desk/people/PeopleReadFai
 import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
 import { openProjectRoom } from "../../desk/shell";
+import { Token } from "../../desk/surface/Token";
 
 type ReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "no_key_store" | "ready";
 type Visibility = "shared_intent" | "leader_private";
@@ -1598,7 +1599,7 @@ function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEven
   const linkedProjects = projects.filter((project) => relationship.project_refs?.includes(project.id));
   return <>
     <SurfaceSection label="Notes" actions={!addingNote && !noteVerbOutside ? <Button dense onClick={() => setAddingNote(true)}>Add note</Button> : undefined}>
-      {!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No notes" /> : <SurfaceLedger cols="room"><ul className="surface-ledger-rows">{(relationship.notes ?? []).map((note) => <SurfaceLedgerRow key={note.id} wrap primary={<span className="people-context-note">{note.topic ? <span className="people-context-note-topic">{note.topic}</span> : null}<span className="people-context-note-body">{note.body}</span></span>} cells={<span className="surface-token">{note.visibility === "leader_private" ? "Leader private" : "Shared"}</span>} />)}</ul></SurfaceLedger>}
+      {!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No notes" /> : <SurfaceLedger cols="room"><ul className="surface-ledger-rows">{(relationship.notes ?? []).map((note) => <SurfaceLedgerRow key={note.id} wrap primary={<span className="people-context-note">{note.topic ? <span className="people-context-note-topic">{note.topic}</span> : null}<span className="people-context-note-body">{note.body}</span></span>} cells={<Token className="surface-token">{note.visibility === "leader_private" ? "Leader private" : "Shared"}</Token>} />)}</ul></SurfaceLedger>}
       {addingNote ? <SurfaceWell head="Add note"><div className="people-context-add"><StringGadget label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget label="Note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={setVisibility} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense variant="ghost" onClick={() => setAddingNote(false)}>Close</Button><Button dense variant="primary" disabled={!body.trim() || busy} loading={busy} onClick={() => void add()}>Add note</Button></div></SurfaceWell> : null}
     </SurfaceSection>
     <SurfaceSection label="Projects">{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} detail={project.description} onOpen={() => openProjectRoom(project.id)} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked projects" />}</SurfaceSection>

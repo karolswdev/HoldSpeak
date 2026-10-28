@@ -9,6 +9,7 @@
  *  for the same fact. */
 import { StateChip, type ChipState } from "./StateChip";
 import "./claim-axes.css";
+import { Token } from "../Token";
 
 export type ClaimAxisToken = { label: string; state: ChipState };
 export type ClaimUnknownValue = { type: string; value: string };
@@ -88,9 +89,9 @@ export function ClaimAxes({
       className={className ? `surface-claim-axes ${className}` : "surface-claim-axes"}
       data-testid={`${testIdPrefix}-axes`}
     >
-      <span className="surface-token" data-chip data-testid={`${testIdPrefix}-kind`} data-kind={kind}>
+      <Token className="surface-token" data-chip data-testid={`${testIdPrefix}-kind`} data-kind={kind}>
         {claimKindToken(kind)}
-      </span>
+      </Token>
       <span data-testid={`${testIdPrefix}-support`} data-support={support}>
         <StateChip state={supportToken.state} label={supportToken.label} />
       </span>

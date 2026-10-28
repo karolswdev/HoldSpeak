@@ -62,11 +62,11 @@ describe("BeliefCard", () => {
     const card = screen.getByTestId("recall-belief");
     expect(card.className).toContain("recall-card");
     expect(card.getAttribute("data-state")).toBe("current");
-    expect(screen.getByTestId("recall-belief-state").textContent).toBe("CURRENT");
+    expect(screen.getByTestId("recall-belief-state").textContent).toBe("Current");
     expect(screen.getByTestId("recall-belief-state").getAttribute("data-tone")).toBe("ok");
-    expect(screen.getByText("BELIEF")).toBeTruthy();
-    expect(screen.getByText("3 SOURCES")).toBeTruthy();
-    expect(screen.getByText("SEEN 10-01")).toBeTruthy();
+    expect(screen.getByText("Belief")).toBeTruthy();
+    expect(screen.getByText("3 sources")).toBeTruthy();
+    expect(screen.getByText("Seen 10-01")).toBeTruthy();
     const refs = within(screen.getByTestId("recall-belief-evidence")).getAllByTestId("memory-ref");
     expect(refs.map((r) => r.textContent)).toEqual(["Meeting 10-01 · 14:20", "Decision 10-01", "Note 09-30"]);
     for (const r of refs) expect(r.tagName).toBe("BUTTON");
@@ -76,20 +76,20 @@ describe("BeliefCard", () => {
     const old = screen.getByTestId("recall-belief-old");
     expect(old.tagName).toBe("S");
     expect(old.textContent).toBe("The Atlas cutover is on 10 October.");
-    expect(screen.getByText("SUPERSEDED · FREEZE MOVED")).toBeTruthy();
+    expect(screen.getByText("Superseded · Freeze moved")).toBeTruthy();
     expect(screen.queryByTestId("recall-belief-since")).toBeNull();
   });
 
   it("disputed: the contradicting ref reads AGAINST in the danger ink and still opens", () => {
     const opened: string[] = [];
     render(<BeliefCard belief={DISPUTED} onOpenRef={(r) => opened.push(r)} />);
-    expect(screen.getByTestId("recall-belief-state").textContent).toBe("DISPUTED");
+    expect(screen.getByTestId("recall-belief-state").textContent).toBe("Disputed");
     expect(screen.getByTestId("recall-belief-state").getAttribute("data-tone")).toBe("danger");
     const against = screen.getByRole("button", { name: "Open the source: Against · Meeting 09-29 · 10:05" });
     expect(against.getAttribute("data-tone")).toBe("danger");
     fireEvent.click(against);
     expect(opened).toEqual(["meeting:m-0929"]);
-    expect(screen.getByText("1 SOURCE")).toBeTruthy();
+    expect(screen.getByText("1 source")).toBeTruthy();
     expect(screen.queryByTestId("recall-belief-history")).toBeNull();
   });
 
@@ -97,7 +97,7 @@ describe("BeliefCard", () => {
     render(<BeliefCard belief={{ ...SUPERSEDED, evidence: [
       ...SUPERSEDED.evidence, { ref: "send:s-1", token: "SEND", opens: false, against: false },
     ] }} />);
-    expect(screen.getByTestId("recall-belief-since").textContent).toBe("SINCE 10-01");
+    expect(screen.getByTestId("recall-belief-since").textContent).toBe("Since 10-01");
     expect(screen.getByTestId("recall-belief-state").getAttribute("data-tone")).toBe("warn");
     expect(screen.getByTestId("memory-ref-plain").tagName).toBe("SPAN");
     expect(screen.getAllByTestId("memory-ref")).toHaveLength(1);
@@ -106,7 +106,7 @@ describe("BeliefCard", () => {
   it("SOURCES counts distinct sources, never facts: one note with two facts is 1 SOURCE", () => {
     render(<BeliefCard belief={{ ...CURRENT, proof_count: 2, source_count: 1,
       evidence: [{ ref: "note:n1", token: "NOTE 10-05", opens: true, against: false }] }} />);
-    expect(screen.getByText("1 SOURCE")).toBeTruthy();
+    expect(screen.getByText("1 source")).toBeTruthy();
     expect(screen.queryByText("2 SOURCES")).toBeNull();
   });
 
@@ -141,7 +141,7 @@ describe("Desk memory draws beliefs as one more kind of card", () => {
     render(<RecallFace initialQuery="cutover" />);
     await screen.findByTestId("recall-results");
     const heads = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
-    expect(heads).toEqual(["CURRENT 1", "DISPUTED 2", "SUPERSEDED 1"]);
+    expect(heads).toEqual(["Current 1", "Disputed 2", "Superseded 1"]);
     expect(screen.getAllByTestId("recall-belief").map((c) => c.getAttribute("data-state"))).toEqual(
       ["current", "disputed", "disputed", "superseded"],
     );
@@ -152,7 +152,7 @@ describe("Desk memory draws beliefs as one more kind of card", () => {
     wire([DISPUTED]);
     render(<RecallFace initialQuery="rollback" />);
     await screen.findByTestId("recall-results");
-    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(["DISPUTED 1"]);
+    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(["Disputed 1"]);
   });
 
   it("a wire with no beliefs key draws the face as before", async () => {

@@ -24,6 +24,7 @@ import {
   authorityBasisLabel,
   proposalStatusLabel,
 } from "../../../lib/productLanguage";
+import { Token } from "../../../desk/surface/Token";
 
 /** HS-172: a follow-through proposal from the wire. */
 export interface FollowThroughProposal {
@@ -617,14 +618,14 @@ export function useMeetingData(
               </Button>
             </>
           ) : (
-            <span
+            <Token
               className="surface-token"
               data-tone={refused ? "danger" : undefined}
             >
               {refused
                 ? "REFUSED"
                 : proposalStatusLabel(String(row.status ?? "")).toUpperCase()}
-            </span>
+            </Token>
           ),
       };
     }),

@@ -154,8 +154,8 @@ describe("PaneWell xterm interior (HS-111-11)", () => {
       <PaneWell live lines={[]} raw={COLORED} changedAt={Date.now() - 3000} />,
     );
     await mountedTerminal();
-    expect(screen.getByText("RAW")).toBeInTheDocument();
-    expect(screen.getByText("LINES 2")).toBeInTheDocument();
+    expect(screen.getByText("Raw")).toBeInTheDocument();
+    expect(screen.getByText("Lines 2")).toBeInTheDocument();
     expect(screen.getByText(/^Δ \dS$/)).toBeInTheDocument();
   });
 
@@ -163,7 +163,7 @@ describe("PaneWell xterm interior (HS-111-11)", () => {
     const { container } = render(
       <PaneWell live lines={["$ ls", "README.md"]} raw={null} />,
     );
-    expect(screen.getByText("STRIPPED · RAW UNAVAILABLE")).toBeInTheDocument();
+    expect(screen.getByText("Stripped · Raw unavailable")).toBeInTheDocument();
     const pre = container.querySelector("pre.desk-session-pane");
     expect(pre?.textContent).toBe("$ ls\nREADME.md");
     expect(FakeTerminal.instances.length).toBe(0); // never a blank, never xterm

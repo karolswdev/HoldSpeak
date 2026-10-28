@@ -32,6 +32,7 @@ import { ConfirmVerb } from "../Surface";
 import { Disclosure } from "./Disclosure";
 import { StateChip, type ChipState } from "./StateChip";
 import "./task-resume.css";
+import { Token } from "../Token";
 
 /** The closed work-state vocabulary. */
 export type TaskResumeState =
@@ -202,14 +203,14 @@ export function TaskResume({
       <div className="surface-task-resume-tokens">
         <StateChip state={grammar.chip} label={chipLabel} />
         {tokens.map((token) => (
-          <span
+          <Token
             key={token.key}
             className="surface-token"
             data-chip=""
             data-task-resume-token={token.key}
           >
             {token.text}
-          </span>
+          </Token>
         ))}
         {projectName && onOpenProject ? (
           <Button

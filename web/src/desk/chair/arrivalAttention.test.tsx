@@ -178,7 +178,7 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(gap.querySelector(".needs-row-name")?.textContent).toBe("jira KAN");
     // PHILO-15 B74: a time from another day carries its day.
     expect(factOf(gap)).toBe(`Jira rejected the query · observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);
-    expect(lampOf(gap)).toBe("Cant check");
+    expect(lampOf(gap)).toBe("Cannot check");
     const verb = within(gap).getByRole("button", { name: "Reconnect: jira KAN" });
     expect(verb.className).toContain("btn");
     expect(verb.className).not.toContain("btn--primary");

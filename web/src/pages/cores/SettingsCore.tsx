@@ -86,6 +86,7 @@ import {
   WAKE_ACTION_OPTIONS,
   type SettingsHubWire,
 } from "./settingsPrefs";
+import { Token } from "../../desk/surface/Token";
 
 const SECRET_LABELS: Record<string, string> = {
   web_token: "Web pairing token",
@@ -501,9 +502,9 @@ function ProjectGrantSummary({ grants }: { grants: ProjectDelegation[] }) {
   return (
     <span data-testid="project-grant-summary">
       <StateChip state="success" label={PROJECT_GRANT_WORDS.live} />{" "}
-      <span className="surface-token" data-chip>
+      <Token className="surface-token" data-chip>
         {live.length === 1 ? live[0].project_name.toUpperCase() : countToken(live.length, "PROJECT", "PROJECTS")}
-      </span>
+      </Token>
     </span>
   );
 }
@@ -520,7 +521,7 @@ function GrantRefusalChip({ refusal }: { refusal?: GrantRefusal }) {
   return (
     <span data-testid="grant-refused" data-code={refusal.code}>
       <StateChip state="failure" label={refusal.verb === "allow" ? GRANT_WORDS.cannotAllow : GRANT_WORDS.cannotStop} />{" "}
-      <span className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[refusal.code] ?? refusal.code}</span>
+      <Token className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[refusal.code] ?? refusal.code}</Token>
     </span>
   );
 }
@@ -539,19 +540,19 @@ export function GrantReceiptWell({ act }: { act: GrantAct }) {
         data-code={act.code}
       >
         {ok ? <StateChip state="success" label="SUCCEEDED" /> : <StateChip state="failure" label="REFUSED" />}
-        <span className="surface-token" data-chip>
+        <Token className="surface-token" data-chip>
           {ok
             ? (act.verb === "stop" ? words.stopped : words.live)
             : (act.verb === "stop" ? words.actStop : words.actAllow)}
-        </span>
+        </Token>
         {!ok && act.code ? (
-          <span className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[act.code] ?? act.code}</span>
+          <Token className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[act.code] ?? act.code}</Token>
         ) : null}
-        {act.reason ? <span className="surface-token" data-chip>{act.reason}</span> : null}
+        {act.reason ? <Token className="surface-token" data-chip>{act.reason}</Token> : null}
         {act.project ? <span className="gadget-fact">{act.project}</span> : null}
         <span className="gadget-fact">{act.identity}</span>
-        <span className="surface-token" data-chip>BY OWNER</span>
-        <span className="surface-token" data-chip data-muted>{act.date} {act.time}</span>
+        <Token className="surface-token" data-chip>BY OWNER</Token>
+        <Token className="surface-token" data-chip data-muted>{act.date} {act.time}</Token>
       </div>
     </SurfaceWell>
   );
@@ -687,34 +688,34 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
       <FoldGadget title="More">
         <GadgetGroup material="inset" label="Diagnostics">
           <GadgetRow label="Backend">
-            <span className="surface-token" data-chip data-testid="runtime-backend">
+            <Token code className="surface-token" data-chip data-testid="runtime-backend">
               {`${id.backend_version ?? "unknown"} · ${shortToken(id.backend_revision ?? "unknown")}`}
-            </span>
+            </Token>
           </GadgetRow>
           <GadgetRow label="Bundle">
-            <span className="surface-token" data-chip data-testid="runtime-bundle">
+            <Token code={Boolean(served)} className="surface-token" data-chip data-testid="runtime-bundle">
               {served ? shortToken(served) : "NONE"}
-            </span>
+            </Token>
           </GadgetRow>
           <GadgetRow label="Document">
-            <span className="surface-token" data-chip data-testid="runtime-document">
+            <Token code={Boolean(document_)} className="surface-token" data-chip data-testid="runtime-document">
               {document_ ? shortToken(document_) : "NONE"}
-            </span>
+            </Token>
           </GadgetRow>
           <GadgetRow label="Schema">
-            <span className="surface-token" data-chip data-testid="runtime-schema">
+            <Token className="surface-token" data-chip data-testid="runtime-schema">
               {schema == null ? "NONE" : `SCHEMA ${schema}`}
-            </span>
+            </Token>
           </GadgetRow>
           <GadgetRow label="Database">
-            <span className="surface-token" data-chip data-testid="runtime-database">
+            <Token code className="surface-token" data-chip data-testid="runtime-database">
               {shortToken(id.database_id ?? "unknown", 8)}
-            </span>
+            </Token>
           </GadgetRow>
           <GadgetRow label="Started">
-            <span className="surface-token" data-chip data-testid="runtime-started">
+            <Token className="surface-token" data-chip data-testid="runtime-started">
               {humanTime(id.process_start ?? "")}
-            </span>
+            </Token>
           </GadgetRow>
           <GadgetRow label="Identity">
             <Button variant="secondary" dense onClick={() => setNonce((n) => n + 1)}>
@@ -722,24 +723,24 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
             </Button>
           </GadgetRow>
           <GadgetRow label="Config">
-            <span className="surface-token" data-chip>{shortToken(id.config_revision ?? "unknown", 8)}</span>
+            <Token code className="surface-token" data-chip>{shortToken(id.config_revision ?? "unknown", 8)}</Token>
           </GadgetRow>
           <GadgetRow label="Process">
-            <span className="surface-token" data-chip>{`PID ${id.pid ?? "—"}`}</span>
+            <Token className="surface-token" data-chip>{`PID ${id.pid ?? "—"}`}</Token>
           </GadgetRow>
           <GadgetRow label="Owns database">
-            <span className="surface-token" data-chip data-testid="runtime-owns">
+            <Token className="surface-token" data-chip data-testid="runtime-owns">
               {wire.owns_database === true ? "OWNER" : wire.owns_database === false ? "TENANT" : "UNKNOWN"}
-            </span>
+            </Token>
           </GadgetRow>
           {id.database_path ? (
             <GadgetRow label="Path" wide>
-              <span className="surface-token" data-chip data-testid="runtime-path">{id.database_path}</span>
+              <Token code className="surface-token" data-chip data-testid="runtime-path">{id.database_path}</Token>
             </GadgetRow>
           ) : null}
           {(wire.diagnoses ?? []).map((finding) => (
             <GadgetRow key={finding.id} label={finding.token} wide>
-              <span className="surface-token" data-chip>{finding.detail}</span>
+              <Token className="surface-token" data-chip>{finding.detail}</Token>
             </GadgetRow>
           ))}
         </GadgetGroup>
@@ -1083,9 +1084,9 @@ export function RemoteAccessModule({
           <span className="gadget-fact" data-testid="remote-address">{addressToken}</span>
         ) : null}
         {enabled && totalCount > 0 ? (
-          <span className="surface-token" data-chip data-testid="remote-total-count">
+          <Token className="surface-token" data-chip data-testid="remote-total-count">
             {countToken(totalCount, "CREDENTIAL", "CREDENTIALS")}
-          </span>
+          </Token>
         ) : null}
       </GadgetRow>
 
@@ -1096,9 +1097,9 @@ export function RemoteAccessModule({
           count={<>
             {GRANT_WORDS.agents}
             {activeCount > 0 ? (
-              <> · <span className="surface-token" data-chip data-testid="remote-active-count">
+              <> · <Token className="surface-token" data-chip data-testid="remote-active-count">
                 {countToken(activeCount, "ACTIVE CREDENTIAL", "ACTIVE CREDENTIALS")}
-              </span></>
+              </Token></>
             ) : null}
           </>}
           cols="room"
@@ -1123,17 +1124,17 @@ export function RemoteAccessModule({
                   {deskCapable ? <GrantChip grant={cred.delegation} /> : null}
                   <GrantRefusalChip refusal={refusals[cred.identity]} />
                   <ProjectGrantSummary grants={projectGrants} />
-                  <span className="surface-token" data-chip data-testid="palette-token">{paletteLabel(cred.palette)}</span>
+                  <Token className="surface-token" data-chip data-testid="palette-token">{paletteLabel(cred.palette)}</Token>
                   {cred.active ? (
-                    <span className="surface-token" data-chip>
+                    <Token className="surface-token" data-chip>
                       EXPIRES {formatExpiry(cred.expires_at)}
-                    </span>
+                    </Token>
                   ) : (
                     <StateChip state="warning" label="EXPIRED" />
                   )}
-                  <span className="surface-token" data-chip data-muted>
+                  <Token className="surface-token" data-chip data-muted>
                     {cred.last_used_at ? `LAST USED ${relativeAge(cred.last_used_at)}` : "NEVER USED"}
-                  </span>
+                  </Token>
                 </>}
                 trailing={<>
                   {projectCapable ? (
@@ -1189,9 +1190,9 @@ export function RemoteAccessModule({
                         <GadgetRow key={p.id} label={p.name} wide controlWidth="full">
                           <span className="prefs-project-line" data-testid={`project-line-${p.id}`}>
                             {p.archived ? (
-                              <span className="surface-token" data-chip data-testid="project-archived">
+                              <Token className="surface-token" data-chip data-testid="project-archived">
                                 {PROJECT_GRANT_WORDS.archived}
-                              </span>
+                              </Token>
                             ) : null}
                             <ProjectGrantChip grant={grant} />
                             <GrantRefusalChip refusal={refusals[key]} />
@@ -1225,7 +1226,7 @@ export function RemoteAccessModule({
               cells={<>
                 <GrantChip grant={grant} />
                 <GrantRefusalChip refusal={refusals[grant.identity]} />
-                <span className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</span>
+                <Token className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</Token>
               </>}
               trailing={grant.state === "LIVE" ? (
                 <Button
@@ -1254,11 +1255,11 @@ export function RemoteAccessModule({
                 cells={<>
                   <ProjectGrantChip grant={grant} />
                   <GrantRefusalChip refusal={refusals[key]} />
-                  <span className="surface-token" data-chip>{grant.project_name.toUpperCase()}</span>
+                  <Token className="surface-token" data-chip>{grant.project_name.toUpperCase()}</Token>
                   {grant.project_archived ? (
-                    <span className="surface-token" data-chip data-testid="project-archived">{PROJECT_GRANT_WORDS.archived}</span>
+                    <Token className="surface-token" data-chip data-testid="project-archived">{PROJECT_GRANT_WORDS.archived}</Token>
                   ) : null}
-                  <span className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</span>
+                  <Token className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</Token>
                 </>}
                 trailing={grant.state === "LIVE" ? (
                   <Button

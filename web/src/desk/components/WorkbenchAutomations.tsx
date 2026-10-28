@@ -13,6 +13,7 @@ import { countLabel } from "../surface";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../surface/Surface";
 import { humanTime } from "../surface/format";
 import { StringGadget } from "../surface/gadgets";
+import { Token } from "../surface/Token";
 
 const PRESETS = [
   {
@@ -114,10 +115,10 @@ function AutomationRow({
         <span className="desk-chip" data-tone={statusTone(automation.status)}>{automation.status.toUpperCase()}</span>
         <span aria-hidden="true">{open ? "▴" : "▾"}</span>
       </Button>
-      <span className="wb-automation-summary surface-token">{`WHEN ${eventKind} · ADD ITEM ONLY`}</span>
+      <Token className="wb-automation-summary surface-token">{`WHEN ${eventKind} · ADD ITEM ONLY`}</Token>
       {open ? (
         <div className="wb-automation-detail">
-          <span className="wb-automation-safety surface-token">SILENT BASELINE · MATCH ADDS ONE ITEM</span>
+          <Token className="wb-automation-safety surface-token">SILENT BASELINE · MATCH ADDS ONE ITEM</Token>
           <div className="wb-automation-verbs">
             <Button
               dense
@@ -145,11 +146,11 @@ function AutomationRow({
               {automation.enabled ? "Pause" : "Enable"}
             </Button>
           </div>
-          {testResult ? <span className="wb-automation-test surface-token" role="status">{`TEST · ${wouldAdd} MATCH${wouldAdd === 1 ? "" : "ES"} / ${entityCt} OBSERVED`}</span> : null}
+          {testResult ? <Token className="wb-automation-test surface-token" role="status">{`TEST · ${wouldAdd} MATCH${wouldAdd === 1 ? "" : "ES"} / ${entityCt} OBSERVED`}</Token> : null}
           {baselineMessage ? <p className="wb-automation-test" role="status">{baselineMessage}</p> : null}
           {automation.last_error ? <SurfaceState error={automation.last_error} /> : null}
-          {lastGoodAt ? <span className="wb-automation-last surface-token">{`LAST GOOD ${humanTime(lastGoodAt)}`}</span> : null}
-          {!adapterReady ? <span className="wb-automation-adapter surface-token" data-tone="warn">{`ADAPTER ${(adapterStatus || "").replace("_", " ").toUpperCase()}`}</span> : null}
+          {lastGoodAt ? <Token className="wb-automation-last surface-token">{`LAST GOOD ${humanTime(lastGoodAt)}`}</Token> : null}
+          {!adapterReady ? <Token className="wb-automation-adapter surface-token" data-tone="warn">{`ADAPTER ${(adapterStatus || "").replace("_", " ").toUpperCase()}`}</Token> : null}
           <AutomationHistory workbenchId={workbenchId} automationId={automation.id} />
         </div>
       ) : null}
@@ -182,7 +183,7 @@ export function WorkbenchAutomations({ workbenchId, write, onChanged }: { workbe
 
   return (
     <>
-      <span className="wb-automation-safety surface-token">EVENT TRIGGER · READ-ONLY · 35 MIN REFRESH</span>
+      <Token className="wb-automation-safety surface-token">EVENT TRIGGER · READ-ONLY · 35 MIN REFRESH</Token>
       <div className="wb-automation-repository">
         <StringGadget
           label="GitHub repository"
@@ -209,7 +210,7 @@ export function WorkbenchAutomations({ workbenchId, write, onChanged }: { workbe
           </Button>
         ))}
       </div>
-      {!repository.trim() ? <span className="wb-automation-requirement surface-token">REPOSITORY REQUIRED</span> : null}
+      {!repository.trim() ? <Token className="wb-automation-requirement surface-token">REPOSITORY REQUIRED</Token> : null}
       {loading ? <SurfaceState loading /> : null}
       {error ? <SurfaceState error={error} onRetry={refresh} /> : null}
       {!loading && !error && !automations.length ? <SurfaceState empty emptyGlyph="◇" emptyLabel="No event triggers yet" /> : null}

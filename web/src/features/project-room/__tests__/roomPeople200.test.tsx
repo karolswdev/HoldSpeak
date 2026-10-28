@@ -109,7 +109,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     render(<RoomPeopleSection projectId="p1" />);
     const token = await screen.findByText("Owner not clear · 2 matches");
     expect(token).toBeTruthy();
-    expect(screen.getByText("PEOPLE 1 OF 3")).toBeTruthy();
+    expect(screen.getByText("People 1 of 3")).toBeTruthy();
     expect(screen.getByTestId("room-people-gaps")).toHaveTextContent("1 AMBIGUOUS · 1 NOT LINKED");
     // Nothing attributed: the commitment sits under the OWNER row, not a person.
     const priyaRow = screen.getByText("Priya").closest("li")!;
@@ -132,7 +132,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
       expect.objectContaining({ method: "POST", json: { alias: "Priya" } }),
     ));
     expect(await screen.findByText("Priya Sharma")).toBeTruthy();
-    expect(screen.getByText("PEOPLE 2 OF 3")).toBeTruthy();
+    expect(screen.getByText("People 2 of 3")).toBeTruthy();
     expect(rawButtons()).toEqual([]);
   });
 
@@ -140,9 +140,9 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     apiFetch.mockResolvedValueOnce(ready());
     render(<RoomPeopleSection projectId="p1" />);
     const row = (await screen.findByText("Marek Kubiak")).closest("li")!;
-    expect(within(row).getByText("1 OPEN COMMITMENT")).toBeTruthy();
+    expect(within(row).getByText("1 open commitment")).toBeTruthy();
     // The count is drawn ONCE, on the fact row that names its source.
-    expect(within(row).getAllByText("2 PRS WAITING")).toHaveLength(1);
+    expect(within(row).getAllByText("2 PRs waiting")).toHaveLength(1);
     const commitmentRow = within(row).getByTestId("room-people-commitment");
     expect(within(commitmentRow).getByText("Own the PostgreSQL migration")).toBeTruthy();
     /* HS-202-04 (F21) re-points this rig, which pinned the OLD token.
@@ -151,12 +151,12 @@ describe("RoomPeopleSection (HS-200-14)", () => {
      * (`RoomPeopleSection.tsx` sourceToken). The assertion still proves
      * the commitment carries its source — in plain words. */
     expect(within(commitmentRow).getByText("Meeting · Architecture review · Segment 4")).toBeTruthy();
-    expect(within(commitmentRow).getByText(/^DUE /)).toBeTruthy();
+    expect(within(commitmentRow).getByText(/^Due /)).toBeTruthy();
     fireEvent.click(within(commitmentRow).getByRole("button", { name: "Open source: Architecture review" }));
     expect(openPrimitive).toHaveBeenCalledWith("meeting:m1");
     const fact = within(row).getByTestId("room-people-fact");
     expect(within(fact).getByText("karolswdev/HoldSpeak")).toBeTruthy();
-    expect(within(fact).getByText("2 PRS WAITING")).toBeTruthy();
+    expect(within(fact).getByText("2 PRs waiting")).toBeTruthy();
     // No inferred field, no score, no zero.
     expect(row.textContent).not.toMatch(/\b0 /);
     expect(row.textContent).not.toMatch(/score|rank|sentiment/i);
@@ -171,7 +171,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     const row = (await screen.findByText("Marek Kubiak")).closest("li")!;
     const omitted = within(row).getByTestId("room-people-omitted");
     expect(within(omitted).getByText("karolswdev/HoldSpeak")).toBeTruthy();
-    expect(within(omitted).getByTestId("room-people-omitted-token")).toHaveTextContent("PAUSED · OMITTED");
+    expect(within(omitted).getByTestId("room-people-omitted-token")).toHaveTextContent("Paused · Omitted");
     expect(within(row).queryByText(/PRS WAITING/)).toBeNull();
   });
 
@@ -192,7 +192,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
       { relationship_id: "rel-z", display_name: "Zbigniew Nowak", link: "linked", commitments: [], facts: [] },
     ] }));
     announceTaskReturn();
-    expect(await screen.findByText("PEOPLE 3")).toBeTruthy();
+    expect(await screen.findByText("People 3")).toBeTruthy();
     await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId("room-people-head-verb")));
   });
 
@@ -202,7 +202,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
       { owner: "Marek", link: "locked", commitments: [], candidates: [] },
     ] }));
     const first = render(<RoomPeopleSection projectId="p1" />);
-    expect(await screen.findByText("PEOPLE 0 OF 2")).toBeTruthy();
+    expect(await screen.findByText("People 0 of 2")).toBeTruthy();
     expect(screen.getByTestId("room-people-gaps")).toHaveTextContent("LOCKED");
     expect(screen.getAllByText("Owner locked")).toHaveLength(2);
     const unlock = screen.getByTestId("room-people-head-verb");

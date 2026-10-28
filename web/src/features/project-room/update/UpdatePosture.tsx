@@ -43,6 +43,7 @@ import { ListChips, PublishedWells } from "../../channels/SendWell";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useEngine, refreshEngine } from "../../../desk/hooks/useEngine";
 import { spriteUrl } from "../../../desk/sprites";
+import { Token } from "../../../desk/surface/Token";
 
 /** The capability that drafts a project update (`project_update_service`). */
 const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
@@ -205,7 +206,7 @@ function InlineClaimsView({
           <ClaimAxes claim={claim} />
           {/* PHILO-15 B64: what leaves the desk: an unsent claim reads OMITTED. */}
           {claimSends(claim) ? null : (
-            <span className="surface-token" data-tone="warn" data-testid="update-claim-omitted">OMITTED</span>
+            <Token className="surface-token" data-tone="warn" data-testid="update-claim-omitted">OMITTED</Token>
           )}
           {review ? (
             <span className="update-inline-claim-verbs">
@@ -622,9 +623,9 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
 
         <SurfaceFooter
           receipt={
-            <span className="surface-footer-receipt-line update-footer-words" data-testid="update-footer-receipt" role="status">
+            <Token className="surface-footer-receipt-line update-footer-words" data-testid="update-footer-receipt" role="status">
               {`${ctrl.updates.length} ${ctrl.updates.length === 1 ? "update" : "updates"}`}
-            </span>
+            </Token>
           }
         />
       </div>
@@ -675,18 +676,18 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
           egress={
             ctrl.current && ctrl.current.generator !== "deterministic" && ctrl.current.generatorModel
               ? (
-                  <span className="surface-token" data-chip data-testid="update-footer-model">
+                  <Token className="surface-token" data-chip data-testid="update-footer-model">
                     {ctrl.current.generatorModel.toUpperCase()}
-                  </span>
+                  </Token>
                 )
               : undefined
           }
           receipt={
-            <span className="surface-footer-receipt-line update-footer-words" data-testid="update-footer-receipt" role="status">
+            <Token className="surface-footer-receipt-line update-footer-words" data-testid="update-footer-receipt" role="status">
               {ctrl.current
                 ? `${lifecycleLabel(ctrl.current.lifecycle)} · rev ${ctrl.current.draftRevision}${ctrl.dirty ? " · Not saved" : ""}`
                 : "Update"}
-            </span>
+            </Token>
           }
           verbs={
             <>

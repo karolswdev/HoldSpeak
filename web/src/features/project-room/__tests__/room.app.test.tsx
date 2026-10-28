@@ -432,24 +432,24 @@ describe("PHILO-10-01: an UNKNOWN send is not counted as a delivery", () => {
     const list = render(<ListChips update={update} />);
     const unknown = await screen.findByTestId("update-unknown-chip");
     const chip = (el: Element) => el.querySelector(".surface-state-chip")!;
-    expect(chip(unknown).getAttribute("aria-label")).toBe("RESULT UNKNOWN ×1");
+    expect(chip(unknown).getAttribute("aria-label")).toBe("Result unknown ×1");
     expect(chip(unknown).getAttribute("data-state")).toBe("warning");
-    expect(chip(screen.getByTestId("update-delivered-chip")).getAttribute("aria-label")).toBe("SENT ×1");
+    expect(chip(screen.getByTestId("update-delivered-chip")).getAttribute("aria-label")).toBe("Sent ×1");
     list.unmount();
 
     render(<DeliveryHistory ctrl={ctrl} update={update} sends={clone(SENDS.sends) as never} />);
     const section = screen.getByTestId("delivery-section");
-    expect(section.querySelector("h3")?.textContent).toBe("SENT 1");
+    expect(section.querySelector("h3")?.textContent).toBe("Sent 1");
     const rows = screen.getAllByTestId("delivery-row");
     expect(rows.map((r) => r.querySelector("[data-outcome]")?.getAttribute("data-outcome"))).toEqual(["sent", "unknown"]);
     expect(rows.map((r) => r.querySelector("[data-outcome] .surface-state-chip")?.getAttribute("data-state")))
       .toEqual(["success", "warning"]);
     expect(rows[0].textContent).toContain("Team folder");
-    expect(rows[0].textContent).toContain("SAVED");
+    expect(rows[0].textContent).toContain("Saved");
     expect(rows[0].textContent).toContain("/tmp/rig/out/2026-10-11-payments-ledger-cutover-rev-1-a7c54e99.md");
     expect(rows[1].textContent).toContain("RESULT UNKNOWN · CHECK Long path folder");
-    expect(rows[1].textContent).toContain("FILE NOT CONFIRMED");
-    expect(rows[1].textContent).not.toContain("SAVED");
+    expect(rows[1].textContent).toContain("File not confirmed");
+    expect(rows[1].textContent).not.toContain("Saved");
     expect(rawButtons(section)).toEqual([]);
   });
 });
@@ -475,26 +475,26 @@ describe("HS-200-11: the Prepare face states coverage, sources and the route bef
     const posture = screen.getByTestId("prepare-posture");
     const words = (el: Element) => el.querySelector(".surface-state-chip")?.getAttribute("aria-label");
     expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Prepare a brief");
-    expect(words(coverage)).toBe("COVERAGE · 2 OF 4");
+    expect(words(coverage)).toBe("Coverage · 2 of 4");
     expect(coverage.getAttribute("data-complete")).toBe("false");
-    expect(screen.getByTestId("prepare-purpose-by-hand").textContent?.trim()).toBe("PURPOSE SET BY HAND");
-    expect(screen.getByTestId("prepare-no-calendar").textContent?.trim()).toBe("NO CALENDAR");
+    expect(screen.getByTestId("prepare-purpose-by-hand").textContent?.trim()).toBe("Purpose set by hand");
+    expect(screen.getByTestId("prepare-no-calendar").textContent?.trim()).toBe("No calendar");
     const route = await screen.findByTestId("prepare-route");
     expect(route.getAttribute("data-state")).toBe("ready");
     expect(screen.getByTestId("prepare-route-model").textContent?.trim()).toBe("QWEN3 35B");
     // Same-device work has no passive egress badge on the face.
-    expect(route.textContent).not.toContain("THIS DEVICE");
+    expect(route.textContent).not.toContain("This device");
 
     const captions = Array.from(posture.querySelectorAll(".surface-section-head h3")).map((h) => h.textContent?.trim());
-    expect(captions[0]).toBe("SOURCES 4");
-    expect(captions).toContain("CARRIED FORWARD 1");
+    expect(captions[0]).toBe("Sources 4");
+    expect(captions).toContain("Carried forward 1");
     const states = screen.getAllByTestId("prepare-source-state");
     expect(states.map((s) => s.getAttribute("data-state")).sort()).toEqual(["available", "available", "failed", "stale"]);
-    expect(states.map(words)).toContain("CREDENTIAL EXPIRED · CONFLUENCE");
+    expect(states.map(words)).toContain("Credential expired · Confluence");
     expect(screen.getAllByTestId("prepare-source-repair").map((b) => b.textContent?.trim()).sort()).toEqual(["Reconnect", "Retry"]);
     const observed = screen.getAllByTestId("prepare-source-observed").map((o) => o.textContent?.trim() ?? "");
     expect(observed).toHaveLength(4);
-    expect(observed.every((t) => t.startsWith("OBSERVED "))).toBe(true);
+    expect(observed.every((t) => t.startsWith("Observed "))).toBe(true);
 
     // An empty purpose: Prepare is refused; the purpose is a textarea that persists.
     expect((screen.getByTestId("prepare-verb") as HTMLButtonElement).disabled).toBe(true);
@@ -786,7 +786,7 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
     await screen.findByTestId("prepare-document");
     expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Brief ready");
     const lifecycle = () => screen.getByTestId("prepare-lifecycle").querySelector(".surface-state-chip")?.getAttribute("aria-label");
-    expect(lifecycle()).toBe("DRAFT");
+    expect(lifecycle()).toBe("Draft");
     expect(screen.queryByTestId("prepare-footer-egress")).toBeNull();
     const receipt = screen.getByTestId("prepare-footer-receipt").textContent?.trim() ?? "";
     expect(receipt.startsWith("QWEN3 35B")).toBe(true);
@@ -795,7 +795,7 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
 
     const keep = screen.getByTestId("prepare-keep");
     fireEvent.click(keep);
-    await waitFor(() => expect(lifecycle()).toBe("KEPT"));
+    await waitFor(() => expect(lifecycle()).toBe("Kept"));
     expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Brief ready");
     expect(screen.getByTestId("prepare-keep").getAttribute("aria-disabled")).toBe("true");
     expect(screen.queryByTestId("prepare-discard")).toBeNull();
@@ -811,13 +811,13 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
     wire(table(() => { throw error; }));
     await pressPrepare();
     const sent = await screen.findByTestId("prepare-sent-token");
-    expect(screen.getByTestId("prepare-head").textContent).not.toContain("NOTHING SENT");
+    expect(screen.getByTestId("prepare-head").textContent).not.toContain("Nothing sent");
     // Owner ruling 2026-10-25: the engine by name; never its address.
-    expect(sent.textContent?.trim()).toBe("SENT · QWEN3 35B · NOTHING USABLE RECEIVED");
+    expect(sent.textContent?.trim()).toBe("Sent · QWEN3 35B · Nothing usable received");
     expect(screen.queryByTestId("prepare-footer-egress")).toBeNull();
-    expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe("SENT · QWEN3 35B · NOTHING USABLE RECEIVED");
-    expect(screen.getByTestId("prepare-route").querySelector(".surface-state-chip")?.getAttribute("aria-label")).toBe("OUTPUT UNUSABLE");
-    expect(screen.getByTestId("prepare-purpose-kept").textContent?.trim()).toBe("PURPOSE KEPT");
+    expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe("Sent · QWEN3 35B · Nothing usable received");
+    expect(screen.getByTestId("prepare-route").querySelector(".surface-state-chip")?.getAttribute("aria-label")).toBe("Output unusable");
+    expect(screen.getByTestId("prepare-purpose-kept").textContent?.trim()).toBe("Purpose kept");
     expect((screen.getByRole("textbox", { name: "Purpose" }) as HTMLTextAreaElement).value).toBe(PURPOSE);
     expect(screen.queryByTestId("prepare-document")).toBeNull();
   });
@@ -832,7 +832,7 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     await waitFor(() => expect(screen.getByTestId("prepare-posture").getAttribute("data-posture")).toBe("prepare"));
     const stopped = await screen.findByTestId("prepare-stopped");
-    expect(stopped.textContent?.trim().startsWith("STOPPED · REQUEST HAD LEFT")).toBe(true);
+    expect(stopped.textContent?.trim().startsWith("Stopped · Request had left")).toBe(true);
     const stopCall = calls.find((c) => c.key.endsWith("/briefs/stop"));
     expect(stopCall?.json?.attempt_id).toBe(calls.find((c) => c.key === prepareKey)?.json?.attempt_id);
     await act(async () => { answer(); await Promise.resolve(); });
@@ -880,11 +880,11 @@ describe("HS-200-16: a meeting from an earlier day, its decision and its commitm
     const carried = await screen.findByTestId("prepare-carried");
     const posture = screen.getByTestId("prepare-posture");
     const captions = Array.from(posture.querySelectorAll(".surface-section-head h3")).map((h) => h.textContent?.trim());
-    expect(captions.filter((c) => c?.startsWith("CARRIED FORWARD"))).toEqual(["CARRIED FORWARD 2"]);
+    expect(captions.filter((c) => c?.startsWith("Carried forward"))).toEqual(["Carried forward 2"]);
     const due = LOOP_MANIFEST.manifest.commitments[0].due_at; // "YYYY-MM-DD"
     const dueTokens = Array.from(carried.querySelectorAll(".surface-token")).map((t) => t.textContent?.trim() ?? "")
-      .filter((t) => t.startsWith("DUE"));
-    expect(dueTokens).toEqual([`DUE ${due.slice(5)}`]);
+      .filter((t) => t.startsWith("Due"));
+    expect(dueTokens).toEqual([`Due ${due.slice(5)}`]);
     expect(dueTokens.join(" ")).not.toMatch(/\d\d:\d\d/);
     const rows = Array.from(carried.querySelectorAll("li")).map((li) => ({
       emblem: li.querySelector(".prepare-emblem")?.textContent?.trim(),
@@ -895,7 +895,7 @@ describe("HS-200-16: a meeting from an earlier day, its decision and its commitm
     const commitment = rows.find((r) => r.text === LOOP_MANIFEST.manifest.commitments[0].text)!;
     expect(decision.emblem).toBe("DEC");
     expect(commitment.emblem).toBe("CMT");
-    expect(commitment.chips).not.toContain("CURRENT");
+    expect(commitment.chips).not.toContain("Current");
   });
 });
 
@@ -982,8 +982,8 @@ describe("HS-173-02: the Update editor names who drafted it", () => {
     expect(screen.getByTestId("update-footer-model").textContent).toContain("QWEN3 32B Q6");
     expect(Array.from(document.querySelectorAll(".gadget-chip-egress")).some((c) => (c.textContent ?? "").includes("192.168.1.43"))).toBe(false);
     const support = chipLabels("update-claim-support");
-    expect(support.filter((s) => s === "UNSUPPORTED")).toHaveLength(1);
-    expect(support.filter((s) => s === "LINKED · MIGRATED")).toHaveLength(3);
+    expect(support.filter((s) => s === "Unsupported")).toHaveLength(1);
+    expect(support.filter((s) => s === "Linked · Migrated")).toHaveLength(3);
     expect(screen.queryAllByTestId("update-claim-unverified")).toHaveLength(0);
     const refs = tokenTexts("update-claim-ref");
     for (const label of ["PR #612", "KAN-7", "MTG 09-05"]) expect(refs).toContain(label);
@@ -998,7 +998,7 @@ describe("HS-173-02: the Update editor names who drafted it", () => {
     await openFirstUpdate();
     expect(screen.queryByTestId("update-footer-model")).toBeNull();
     expect(screen.queryAllByTestId("update-claim-unverified")).toHaveLength(0);
-    expect(chipLabels("update-claim-support")).toEqual(["LINKED · MIGRATED"]);
+    expect(chipLabels("update-claim-support")).toEqual(["Linked · Migrated"]);
     expect(misses).toEqual([]);
   });
 });
@@ -1016,11 +1016,11 @@ describe("HS-200-06: the three claim axes on the Update face", () => {
     await openFirstUpdate();
     const kinds = tokenTexts("update-claim-kind");
     expect(kinds.length).toBeGreaterThan(0);
-    expect(new Set(kinds)).toEqual(new Set(["OBSERVATION"]));
+    expect(new Set(kinds)).toEqual(new Set(["Observation"]));
     const support = chipLabels("update-claim-support");
-    expect(support.filter((s) => s === "LINKED · EDITED")).toHaveLength(edited);
-    expect(support.filter((s) => s === "SUPPORTED")).toHaveLength(claims.length - edited);
-    expect(chipLabels("update-claim-acceptance")).toEqual([...Array(claims.length).fill("UNREVIEWED"), "ACCEPTED"]);
+    expect(support.filter((s) => s === "Linked · Edited")).toHaveLength(edited);
+    expect(support.filter((s) => s === "Supported")).toHaveLength(claims.length - edited);
+    expect(chipLabels("update-claim-acceptance")).toEqual([...Array(claims.length).fill("Unreviewed"), "Accepted"]);
     expect(misses).toEqual([]);
   });
 
@@ -1031,11 +1031,11 @@ describe("HS-200-06: the three claim axes on the Update face", () => {
     replay(gets);
     render(<WindowHarness scope={`project:${pid}`} />);
     await openFirstUpdate();
-    expect(tokenTexts("update-claim-kind")).toEqual(["OBSERVATION", "INFERENCE", "INFERENCE", "DECISION", "INFERENCE"]);
-    expect(chipLabels("update-claim-support")).toEqual(["SUPPORTED", "LINKED", "UNSUPPORTED", "SUPPORTED", "LINKED · MIGRATED"]);
-    expect(chipLabels("update-claim-acceptance")).toEqual(["UNREVIEWED", "UNREVIEWED", "UNREVIEWED", "ACCEPTED", "UNREVIEWED"]);
+    expect(tokenTexts("update-claim-kind")).toEqual(["Observation", "Inference", "Inference", "Decision", "Inference"]);
+    expect(chipLabels("update-claim-support")).toEqual(["Supported", "Linked", "Unsupported", "Supported", "Linked · Migrated"]);
+    expect(chipLabels("update-claim-acceptance")).toEqual(["Unreviewed", "Unreviewed", "Unreviewed", "Accepted", "Unreviewed"]);
     expect(chipLabels("update-claim-unknown")).toEqual([
-      "DEADLINE 2026-12-31 · NO SOURCE", "NAME Priya · NO SOURCE", "NUMBER 95% · NO SOURCE",
+      "Deadline 2026-12-31 · No source", "Name Priya · No source", "Number 95% · No source",
     ]);
     expect(misses).toEqual([]);
   });
@@ -1653,7 +1653,7 @@ describe("P7: the project update automation line", () => {
     });
     render(<WindowHarness scope={`project:${pid}`} />);
     const line = await screen.findByTestId("room-update-line");
-    expect(within(line).getByTestId("room-update-new")).toHaveTextContent("NEW");
+    expect(within(line).getByTestId("room-update-new")).toHaveTextContent("New");
     fireEvent.click(within(line).getByTestId("room-update-open"));
     await screen.findByTestId("update-editor");
     expect(screen.getByLabelText("Update body")).toHaveValue(plainUpdateText(P7.delivered.update.body_md));

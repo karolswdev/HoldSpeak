@@ -36,6 +36,7 @@ import {
   materialityTone,
 } from "./model";
 import "./review-posture.css";
+import { Token } from "../../../desk/surface/Token";
 
 /* ── Severity: emblem + chip state ── */
 
@@ -331,24 +332,24 @@ function DispositionSummary({ ctrl }: { ctrl: ReviewController }) {
       <SurfaceSection label="Review complete">
         <div className="review-summary-counts">
           {counts.accept ? (
-            <span className="surface-token" data-tone="ok" data-testid="summary-accepted">
+            <Token className="surface-token" data-tone="ok" data-testid="summary-accepted">
               {counts.accept} accepted
-            </span>
+            </Token>
           ) : null}
           {counts.edit_accept ? (
-            <span className="surface-token" data-tone="ok" data-testid="summary-edited">
+            <Token className="surface-token" data-tone="ok" data-testid="summary-edited">
               {counts.edit_accept} edited
-            </span>
+            </Token>
           ) : null}
           {counts.defer ? (
-            <span className="surface-token" data-testid="summary-deferred">
+            <Token className="surface-token" data-testid="summary-deferred">
               {counts.defer} deferred
-            </span>
+            </Token>
           ) : null}
           {counts.dismiss ? (
-            <span className="surface-token" data-testid="summary-dismissed">
+            <Token className="surface-token" data-testid="summary-dismissed">
               {counts.dismiss} dismissed
-            </span>
+            </Token>
           ) : null}
         </div>
         {ctrl.checkpointed ? (
@@ -646,9 +647,9 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
                 <header className="surface-section-head">
                   <h3 data-testid="review-kind-label">{kindLabel(group.kind)}</h3>
                   {openInGroup.length > 0 ? (
-                    <span data-testid="review-kind-count" className="surface-token">
+                    <Token data-testid="review-kind-count" className="surface-token">
                       {openInGroup.length}
-                    </span>
+                    </Token>
                   ) : null}
                 </header>
                 <ul className="surface-ledger-rows">
@@ -688,13 +689,13 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
                         }
                         cells={
                           <>
-                            <span
+                            <Token
                               className="surface-token review-queue-materiality"
                               data-tone={matTone}
                               data-materiality={proposal.materiality}
                             >
                               {matLevel}
-                            </span>
+                            </Token>
                             {sourceLabel(proposal) ? (
                               <ProvenanceChip source={sourceLabel(proposal)!} />
                             ) : null}
@@ -742,9 +743,9 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
           </Button>
         }
         receipt={
-          <span className="surface-footer-receipt-line" data-testid="review-footer-tally" role="status">
+          <Token className="surface-footer-receipt-line" data-testid="review-footer-tally" role="status">
             {dispositionTally()}
-          </span>
+          </Token>
         }
       />
     </div>

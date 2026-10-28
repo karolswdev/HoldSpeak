@@ -21,6 +21,7 @@ import { useDeliveryTerminal, type TerminalStatus } from "../deliveryTerminal";
 import { PaneWell } from "../surface/Surface";
 import { TransportKey, TransportRow } from "../surface/gadgets";
 import { DeskWindowFrame } from "./DeskWindow";
+import { Token } from "../surface/Token";
 
 const ABSENCE_LABEL: Record<string, string> = {
   stream_unavailable: "stream unavailable",
@@ -127,12 +128,12 @@ function SteerComposer() {
       </div>
       {target ? (
         <div className="desk-dlv-consequence" role="status">
-          <span className="surface-token">TARGET · {target.label}</span>
-          <span className="surface-token">NODE · {target.nodeId}</span>
-          <span className="surface-token">
+          <Token className="surface-token">TARGET · {target.label}</Token>
+          <Token className="surface-token">NODE · {target.nodeId}</Token>
+          <Token className="surface-token">
             {submitOn ? "SEND · TEXT+ENTER" : "SEND · TEXT ONLY"}
-          </span>
-          <span className="surface-token">RECEIPT · PER SEND</span>
+          </Token>
+          <Token className="surface-token">RECEIPT · PER SEND</Token>
         </div>
       ) : null}
       {recovered ? (
@@ -215,7 +216,7 @@ export function DeliveryTerminalWindow() {
 
       <div className="desk-pullout-body">
         <p className="desk-dlv-target-line">
-          <span className="surface-token">{target.targetId.slice(0, 12)}</span>
+          <Token className="surface-token">{target.targetId.slice(0, 12)}</Token>
         </p>
         <PaneWell
           live={live || status === "resyncing"}

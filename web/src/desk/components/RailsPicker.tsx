@@ -10,6 +10,7 @@ import { useMemo, useState } from "react";
 import { useMissionControl } from "../missioncontrol";
 import { fetchRailsSizes, railsTokens, type RailsPick } from "../grounding";
 import { CheckGadget, FoldGadget, LedMeter } from "../surface/gadgets";
+import { Token } from "../surface/Token";
 
 const fmt = (n: number): string =>
   n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
@@ -119,9 +120,9 @@ export function RailsPicker(props: {
         }
         token={
           showBudget && picks.length > 0 ? (
-            <span className="surface-token" data-tone={tone}>
+            <Token className="surface-token" data-tone={tone}>
               {fmt(used)} / {fmt(limitTokens)} tok
-            </span>
+            </Token>
           ) : undefined
         }
         open={open}

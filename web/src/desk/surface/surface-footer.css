@@ -149,11 +149,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  /* STATECHIP (2026-10-29): a receipt is words, sans in sentence case (the
+     line is the Token species: its words go through `stateWords`). */
+  font-family: var(--font-sans);
   /* PHILO-3-04: the 12 px floor (type-scale ruling 2026-09-21); was 10px. */
   font-size: var(--desk-surface-label-size);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 .desk-next .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"],
 .desk-next .surface-footer-receipt > .park-receipt > .surface-footer-receipt-line[data-tone="danger"] {

@@ -366,7 +366,7 @@ describe("ProjectRoomCore: a failed health read is named", () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
 
-    expect(screen.getByTestId("health-not-read").textContent).toContain("HEALTH NOT READ");
+    expect(screen.getByTestId("health-not-read").textContent).toContain("Health not read");
     expect(screen.getByTestId("room-headline").textContent).toBe("Not all read");
     expect(screen.queryByText("On track")).toBeNull();
     expect(screen.queryByText("Clear here")).toBeNull();
@@ -437,7 +437,7 @@ describe("ProjectRoomCore — no-scope states", () => {
     render(<ProjectRoomCore />);
     expect(screen.getByRole("searchbox", { name: "Search the Desk" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Search memory" })).toBeTruthy();
-    expect(screen.getByText("SEARCH THE DESK")).toBeTruthy();
+    expect(screen.getByText("Search the desk")).toBeTruthy();
     expect(screen.queryByText("THIS DEVICE")).toBeNull();
     expect(screen.getByTestId("desk-memory-body")).toBeTruthy();
     expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining("recent=1"));

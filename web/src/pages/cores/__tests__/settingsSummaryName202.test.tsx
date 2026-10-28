@@ -47,7 +47,7 @@ describe("the Settings hub's Meetings row (F06)", () => {
   it("says SUMMARY SET ON, never INTELLIGENCE ON", () => {
     face(true);
     expect(
-      screen.getByText("SUMMARY SET ON · AFTER ROOM MEETINGS"),
+      screen.getByText("Summary set on · After room meetings"),
     ).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/INTELLIGENCE/);
   });
@@ -61,7 +61,7 @@ describe("the Settings hub's Meetings row (F06)", () => {
 
   it("says SUMMARY SET OFF, never INTELLIGENCE OFF", () => {
     face(false);
-    expect(screen.getByText("SUMMARY SET OFF")).toBeInTheDocument();
+    expect(screen.getByText("Summary set off")).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/INTELLIGENCE/);
   });
 });
@@ -85,7 +85,7 @@ describe("the Settings hub names a missing engine", () => {
 
   it("Meetings: SUMMARY · NO ENGINE when the switch is on and no engine is set", () => {
     faceWith({ meetings: { intelligence: true, engineSet: false, auto: "room_linked" } });
-    expect(screen.getByText("SUMMARY · NO ENGINE")).toBeInTheDocument();
+    expect(screen.getByText("Summary · No engine")).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/SUMMARY SET ON/);
   });
 

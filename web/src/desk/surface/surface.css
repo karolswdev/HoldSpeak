@@ -644,18 +644,25 @@
   color: var(--text-faint);
 }
 
-/* HS-111-03 — the honest state token: mono, axis-named, tone as color
-   (never color alone: the token IS the words). */
+/* HS-111-03 — the honest state token: axis-named, tone as color
+   (never color alone: the token IS the words).
+   STATECHIP (2026-10-29): a token's words are sans in sentence case (the
+   Token species sends them through `stateWords`); a code token
+   (`[data-literal]`: an id, a hash, a port, a host, a path) stays mono and
+   exact. */
 .surface-token {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   /* PHILO-9-03 (the ratified Room canvases): the 12 px readable floor (was
      11 px: the Room's head chips, the NEEDS YOU why token, the update band). */
   font-size: var(--desk-surface-label-size);
   font-weight: 600;
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-muted);
   white-space: nowrap;
+}
+.surface-token[data-literal] {
+  font-family: var(--font-mono);
 }
 .surface-token[data-tone="warn"] {
   color: var(--warn);
@@ -684,11 +691,12 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  font: 600 var(--desk-surface-label-size)/1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-label-size)/1 var(--font-sans); /* PHILO-7-02: the 12 px floor (was 10px) */
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-muted, #9ba2b0);
 }
+.surface-token[data-chip][data-literal] { font-family: var(--font-mono); }
 .surface-token[data-chip][data-tone="warn"] { color: var(--warn); }
 .surface-token[data-chip][data-tone="danger"] { color: var(--danger); }
 .surface-token[data-chip][data-tone="ok"] { color: var(--ok); }
@@ -1496,11 +1504,12 @@ button.surface-edit-in-place:hover {
   border-bottom: 1px solid var(--wb-rule-soft);
 }
 .surface-ledger-count {
-  font-family: var(--font-mono);
+  /* STATECHIP (2026-10-29): the ledger's count says words in sentence case. */
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--wb-muted);
   white-space: nowrap;
 }
@@ -4778,7 +4787,7 @@ button.surface-edit-in-place:hover {
   padding: 1px 9px;
   border-radius: 0;
   background: var(--chip-tint);
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 .desk-next .surface-token[data-chip][data-tone="ok"],

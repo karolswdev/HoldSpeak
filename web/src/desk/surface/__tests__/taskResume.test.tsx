@@ -32,7 +32,7 @@ describe("TaskResume — the states a Room ask can actually reach", () => {
   // wider vocabulary for story 15; these are the ones this story ships.
   it("saved draws SAVED HH:MM and Resume", () => {
     render(row());
-    expect(screen.getByRole("status", { name: "SAVED 09:04" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Saved 09:04" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
         name: "Resume: the architecture review brief",
@@ -50,7 +50,7 @@ describe("TaskResume — the states a Room ask can actually reach", () => {
     // F3: the chip says FAILED and nothing else. `StateChip` neither wraps
     // nor truncates, and a quoted engine reason is routinely a filesystem
     // path — it ran off-glass mid-token at 393.
-    expect(screen.getByRole("status", { name: "FAILED" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Failed" })).toBeInTheDocument();
     // Ruling B5: the reason is QUOTED, never composed by the face — and it
     // lives on a row that can wrap.
     const reason = document.querySelector("[data-task-resume-reason]");
@@ -75,7 +75,7 @@ describe("TaskResume — the states a Room ask can actually reach", () => {
     const reason = document.querySelector("[data-task-resume-reason]");
     expect(reason).toHaveTextContent(PATH);
     // No chip carries it, so no chip can clip it.
-    expect(screen.getByRole("status", { name: "FAILED" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Failed" })).toBeInTheDocument();
   });
 
   it("falls back to the refusal CODE when the store had no words to quote", () => {
@@ -105,7 +105,7 @@ describe("TaskResume — the states a Room ask can actually reach", () => {
 
   it("draws no reason at all when the store holds neither (A.8)", () => {
     render(row({ state: "failed" }));
-    expect(screen.getByRole("status", { name: "FAILED" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Failed" })).toBeInTheDocument();
     expect(document.querySelector("[data-task-resume-reason]")).toBeNull();
     expect(
       document.querySelectorAll('[data-task-resume-token="stopped"]'),
@@ -120,13 +120,13 @@ describe("TaskResume — the states a Room ask can actually reach", () => {
 
   it("accepted draws ACCEPTED MM-DD and Open", () => {
     render(row({ state: "accepted", settledAt: "2026-09-02T11:20:00" }));
-    expect(screen.getByRole("status", { name: "ACCEPTED 09-02" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Accepted 09-02" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Open: / })).toBeInTheDocument();
   });
 
   it("discarded draws its chip and NO verb — discard is a state, not a door", () => {
     render(row({ state: "discarded" }));
-    expect(screen.getByRole("status", { name: "DISCARDED" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Discarded" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Resume/ })).toBeNull();
   });
 
@@ -135,18 +135,18 @@ describe("TaskResume — the states a Room ask can actually reach", () => {
     // must never be handed a running clock; the species must still draw one
     // when the owner of that state has one.
     const { unmount } = render(row({ state: "running", detail: "00:52" }));
-    expect(screen.getByRole("status", { name: "RUNNING · 00:52" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Running · 00:52" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Stop: / })).toBeInTheDocument();
     unmount();
 
     const waiting = render(row({ state: "waiting" }));
-    expect(screen.getByRole("status", { name: "WAITING ON YOU" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Waiting on you" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Answer: / })).toBeInTheDocument();
     waiting.unmount();
 
     render(row({ state: "incomplete", detail: "3 OF 4 SOURCES" }));
     expect(
-      screen.getByRole("status", { name: "INCOMPLETE · 3 OF 4 SOURCES" }),
+      screen.getByRole("status", { name: "Incomplete · 3 of 4 sources" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Re-read: / })).toBeInTheDocument();
   });
@@ -163,7 +163,7 @@ describe("TaskResume — no token for an absent fact (UX-CANON A.8)", () => {
 
   it("a recipe, when there IS one, rides its own token", () => {
     render(row({ recipe: "Preparation brief" }));
-    expect(screen.getByText("RECIPE · Preparation brief")).toBeInTheDocument();
+    expect(screen.getByText("Recipe · Preparation brief")).toBeInTheDocument();
   });
 
   it("no custody fact draws no custody token", () => {
@@ -192,7 +192,7 @@ describe("TaskResume — no token for an absent fact (UX-CANON A.8)", () => {
 describe("TaskResume — custody is SAVED HERE, never THIS DEVICE (ruling B7)", () => {
   it("the host that holds the row says SAVED HERE", () => {
     render(row({ custody: "here" }));
-    expect(screen.getByText("SAVED HERE")).toBeInTheDocument();
+    expect(screen.getByText("Saved here")).toBeInTheDocument();
     // THIS DEVICE is the EGRESS vocabulary (desk/surface/egress.ts:16,25).
     // Two different facts must not wear one token.
     expect(screen.queryByText(/THIS DEVICE/)).toBeNull();
@@ -204,7 +204,7 @@ describe("TaskResume — custody is SAVED HERE, never THIS DEVICE (ruling B7)", 
     // a token row breaks the `raw-ids` canon rule, and the species has no
     // host prop at all now, so no caller can put one there.
     render(row({ custody: "elsewhere" }));
-    expect(screen.getByText("SAVED ON ANOTHER DESK")).toBeInTheDocument();
+    expect(screen.getByText("Saved on Another desk")).toBeInTheDocument();
     expect(screen.queryByText(/THIS DEVICE/)).toBeNull();
     // Nothing that looks like an opaque id is anywhere on the row.
     expect(document.body.textContent).not.toMatch(/[0-9a-f]{16,}/i);

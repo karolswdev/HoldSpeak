@@ -208,7 +208,7 @@ describe("PHILO-15 21: Accept / Reject on each claim", () => {
     render(<WindowHarness scope="project:p1" />);
     await openEditor();
     expect(row("s0").getAttribute("data-sends")).toBe("false");
-    expect(row("s0").querySelector("[data-testid='update-claim-omitted']")?.textContent).toBe("OMITTED");
+    expect(row("s0").querySelector("[data-testid='update-claim-omitted']")?.textContent).toBe("Omitted");
     expect(row("s0").querySelectorAll("button.signal-button, button").length).toBeGreaterThanOrEqual(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Accept: The ledger moved to staging." }));
@@ -224,6 +224,6 @@ describe("PHILO-15 21: Accept / Reject on each claim", () => {
     expect(reviews[1].url).toBe("/api/updates/pupd-21/claims/s1/review");
     await waitFor(() => expect(
       (screen.getByRole("button", { name: "Reject: We ship Friday." }) as HTMLButtonElement).disabled).toBe(true));
-    expect(row("s1").querySelector("[data-testid='update-claim-omitted']")?.textContent).toBe("OMITTED");
+    expect(row("s1").querySelector("[data-testid='update-claim-omitted']")?.textContent).toBe("Omitted");
   });
 });

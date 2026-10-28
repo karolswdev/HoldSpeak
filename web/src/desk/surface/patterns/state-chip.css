@@ -22,9 +22,11 @@
   border-radius: 0;
   background: var(--chip-tint);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 6%, transparent);
-  font: 600 var(--desk-surface-label-size) / 1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  /* STATECHIP (2026-10-29): a state is a dot and a sentence-case word,
+     sans (the grammar: mono only for code and ids). The 12 px floor. */
+  font: 600 var(--desk-surface-label-size) / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   vertical-align: middle;

@@ -10,6 +10,7 @@
 // never cut by a mark.
 import { Fragment } from "react";
 import { foundByDay } from "../surface/patterns/FoundBy";
+import { Token } from "../surface/Token";
 
 export const REDACTED = "[redacted]";
 
@@ -175,7 +176,7 @@ export function PaletteHitLine({ hit }: { hit: PaletteHit }) {
       {found || day ? (
         <span className="desk-deck-hit-meta">
           {found ? <span className="desk-deck-found" data-found={found}>{found}</span> : null}
-          {day ? <span className="surface-token desk-deck-day">{day}</span> : null}
+          {day ? <Token className="surface-token desk-deck-day">{day}</Token> : null}
         </span>
       ) : null}
     </span>

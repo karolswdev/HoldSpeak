@@ -23,6 +23,8 @@ import { KindPlate, NotAnswering, useNotAnswered } from "./kit";
 import { useRovingRows } from "./roving";
 import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface.css";
+import { Token } from "./Token";
+import { sentenceChildren, stateWords } from "./words";
 
 /** The one verb bar, sticky at the surface top. Primary verbs live
  * here; everything else is a row verb. */
@@ -103,7 +105,7 @@ export function SurfaceIdentity({
 
 /** A group on the window material: the caption + hairline, never a
  * nested card. Phase 16 (the interior kit, §11 "Section"): the caption
- * (mono 11 upper) reads `Name · count`, then the optional verbs, then the
+ * (sentence case, STATECHIP 2026-10-29) reads `Name · count`, then the optional verbs, then the
  * hairline to the right edge. A zero count is never said (UX-CANON A.8):
  * the caption is the name alone. */
 export function SurfaceSection({
@@ -130,7 +132,7 @@ export function SurfaceSection({
     <section className={className ? `surface-section ${className}` : "surface-section"} data-testid={testId}>
       {caption || actions ? (
         <header className="surface-section-head">
-          {caption ? <h3>{caption}</h3> : <span />}
+          {caption ? <h3>{stateWords(caption)}</h3> : <span />}
           {actions}
         </header>
       ) : null}
@@ -517,7 +519,7 @@ function AgeToken({ changedAt }: { changedAt: number }) {
     seconds < 60
       ? `${seconds}S`
       : `${Math.floor(seconds / 60)}M ${String(seconds % 60).padStart(2, "0")}S`;
-  return <span className="surface-token">Δ {face}</span>;
+  return <Token className="surface-token">Δ {face}</Token>;
 }
 
 export function PaneWell({
@@ -558,10 +560,10 @@ export function PaneWell({
   return (
     <div className="terminal-well">
       <div className="terminal-well-head">
-        <span className="surface-token">
+        <Token className="surface-token">
           {hasRaw ? "RAW" : "STRIPPED · RAW UNAVAILABLE"}
-        </span>
-        <span className="surface-token">LINES {lineCount}</span>
+        </Token>
+        <Token className="surface-token">LINES {lineCount}</Token>
         {changedAt ? <AgeToken changedAt={changedAt} /> : null}
         {hasRaw ? (
           <span className="terminal-well-find">
@@ -848,7 +850,7 @@ export function SurfaceLedger({
       role={label ? "group" : undefined} aria-label={label}>
       {(count != null && count !== "" && count !== false) || controls ? (
         <div className="surface-ledger-head">
-          <span className="surface-ledger-count">{count}</span>
+          <span className="surface-ledger-count">{sentenceChildren(count)}</span>
           {controls ? (
             <span className="surface-ledger-controls">{controls}</span>
           ) : null}

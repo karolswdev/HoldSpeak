@@ -147,7 +147,7 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       const words = line(row);
       expect(words).toContain(NAME);
       expect(words).toContain("Folder");
-      expect(words).not.toContain("THIS DEVICE");
+      expect(words).not.toContain("This device");
       expect(words.includes("ICLOUD")).toBe(icloud);
       // The open destination leaves its target to the exact preview field.
       expect(pv.textContent).toContain("HoldSpeak/Sent");
@@ -158,7 +158,7 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       const receipt = await press(NAME);
       expect(posted).toEqual([expect.objectContaining({ document_ref: REF, destination_id: "holdspeak-folder", preview_digest: DIGEST })]);
       const said = line(receipt);
-      expect(said).toContain("SAVED");
+      expect(said).toContain("Saved");
       expect(said.includes("ICLOUD")).toBe(icloud);
     },
   );
@@ -183,7 +183,7 @@ describe("a Phase 11 brief send to a saved folder with the built-in present", ()
 
     fireEvent.click(within(await rowOf(NAME)).getByText(NAME));
     const receipt = await press(NAME);
-    expect(line(receipt)).toContain("SAVED");
+    expect(line(receipt)).toContain("Saved");
     expect(posted.map((p) => p.destination_id)).toEqual(["chd_team", "holdspeak-folder"]);
   });
 });
@@ -240,9 +240,9 @@ describe("betterment send S1: the account chip says only a sign-in failure, and 
   it("the Accounts check could not reach GitHub: the GitHub row says so; after a recorded POSTED it says nothing", async () => {
     replay(BEFORE as Recorded);
     const first = render(<SendWells doc={docOf(BEFORE as Recorded)} />);
-    expect(line(await rowOf("acme/payments #42"))).toContain("COULD NOT CHECK");
+    expect(line(await rowOf("acme/payments #42"))).toContain("Could not check");
     // Jira was never checked: no NEVER CHECKED chip (nothing failed).
-    expect(line(await rowOf("PAY-12 ticket"))).not.toMatch(/NEVER CHECKED|NOT CHECKED/);
+    expect(line(await rowOf("PAY-12 ticket"))).not.toMatch(/NEVER CHECKED|NOT CHECKED/i);
     first.unmount();
 
     resetSendStore();
@@ -251,10 +251,10 @@ describe("betterment send S1: the account chip says only a sign-in failure, and 
     for (const name of ["acme/payments #42", "PAY-12 ticket"]) {
       const words = line(await waitFor(async () => {
         const r = await rowOf(name);
-        expect(line(r)).toMatch(/POSTED|COMMENTED/);
+        expect(line(r)).toMatch(/POSTED|COMMENTED/i);
         return r;
       }));
-      expect(words).not.toMatch(/COULD NOT CHECK|UNREACHABLE|NOT CHECKED|NEVER CHECKED|CONNECTED|WORKS/);
+      expect(words).not.toMatch(/COULD NOT CHECK|UNREACHABLE|NOT CHECKED|NEVER CHECKED|CONNECTED|WORKS/i);
     }
     // After a send that worked, the verb stays "Send again".
     const open = await openRow("acme/payments #42");
@@ -300,8 +300,8 @@ describe("betterment send S1: a failed send says Try again; a send with no answe
       const verb = within(sheetOf(open)).getByTestId("send-verb") as HTMLButtonElement;
       expect(verb.textContent).toBe("Try again");
       expect(verb.disabled).toBe(false);
-      expect(line(open)).not.toContain("SENDING");
-      expect(line(await rowOf("PAY-12 ticket"))).not.toContain("SENDING");
+      expect(line(open)).not.toContain("Sending");
+      expect(line(await rowOf("PAY-12 ticket"))).not.toContain("Sending");
     },
   );
 });

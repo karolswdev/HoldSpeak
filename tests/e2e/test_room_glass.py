@@ -1090,7 +1090,7 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             _people_open_room(page, project_id)
             _scroll_people_into_view(page)
             section = _people_section(page)
-            assert section.locator("h3").inner_text().strip() == "PEOPLE 1 OF 2"
+            assert section.locator("h3").inner_text().strip() == "People 1 of 2"
             assert page.get_by_test_id("room-people-gaps").inner_text().strip() == "1 AMBIGUOUS"
             owner_tokens = [t.strip() for t in page.get_by_test_id("room-people-owner-token").all_inner_texts()]
             assert owner_tokens == ["Owner not clear · 2 matches"], owner_tokens
@@ -1100,14 +1100,14 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             assert "Marek Kubiak" in body
             marek_row = page.get_by_test_id("room-people-row").filter(has_text="Marek Kubiak").first
             marek_li = marek_row.locator("xpath=ancestor::li[1]")
-            assert "1 OPEN COMMITMENT" in marek_li.inner_text()
+            assert "1 OPEN COMMITMENT" in marek_li.inner_text().upper()
             commitment = marek_li.get_by_test_id("room-people-commitment").first
             assert "Own the PostgreSQL migration" in commitment.inner_text()
-            # Tokens are CSS-uppercased on the face; compare the rendered case.
+            # Tokens draw in sentence case (STATECHIP); compare case-blind.
             assert "MEETING · ARCHITECTURE REVIEW · SEGMENT 4" in commitment.inner_text().upper()
             assert commitment.get_by_test_id("room-people-open-source").count() == 1
             fact = marek_li.get_by_test_id("room-people-fact").first
-            assert "karolswdev/HoldSpeak" in fact.inner_text() and "2 PRS WAITING" in fact.inner_text()
+            assert "karolswdev/HoldSpeak" in fact.inner_text() and "2 PRS WAITING" in fact.inner_text().upper()
             assert marek_li.get_by_test_id("room-people-fact").count() == 1, "a paused Watch contributed a count"
             omitted = marek_li.get_by_test_id("room-people-omitted").first
             assert "karolswdev/Paused" in omitted.inner_text()
@@ -1178,7 +1178,7 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             _people_open_room(page, project_id)
             _scroll_people_into_view(page)
             section = _people_section(page)
-            assert section.locator("h3").inner_text().strip() == "PEOPLE 0 OF 2"
+            assert section.locator("h3").inner_text().strip() == "People 0 of 2"
             assert page.get_by_test_id("room-people-gaps").inner_text().strip() == "LOCKED"
             assert page.get_by_test_id("room-people-head-verb").inner_text().strip() == "Unlock"
             owner_tokens = sorted(t.strip() for t in page.get_by_test_id("room-people-owner-token").all_inner_texts())
@@ -1444,7 +1444,7 @@ def _rf_shot(page: Any, name: str, width: int) -> None:
 
 def _delivery_time(iso: str) -> str:
     d = datetime.fromisoformat(iso).astimezone()
-    return f"{MONTHS[d.month - 1]} {d.day} {d.hour:02d}:{d.minute:02d}"
+    return f"{MONTHS[d.month - 1].title()} {d.day} {d.hour:02d}:{d.minute:02d}"
 
 
 
@@ -1790,7 +1790,7 @@ class TestRoomFaceGlass:
                 after_copy = self._facts(page)
                 _rf_shot(page, "deliver-1-after-copy", width)
                 assert after_copy["deliver_verb"] == "Mark delivered", after_copy
-                assert after_copy["delivery_head"] == "SENT"
+                assert after_copy["delivery_head"] == "Sent"
                 # He leaves and returns (R4-3): Copy's 2 s feedback is gone and
                 # no clipboard state is stored; Mark delivered is still offered.
                 # The Desk remembers (PHILO-13-07 B2): the Room returns on the
@@ -1824,7 +1824,7 @@ class TestRoomFaceGlass:
                 _rf_shot(page, "deliver-4-delivered-once", width)
                 assert len(calls) == 1, calls  # one press, one call
                 assert len(hub1) == 1 and hub1[0]["delivered_to"] == "Priya", hub1
-                assert once["delivery_rows"] == [f"✓ Priya SENT BY HAND MANUAL {_delivery_time(hub1[0]['delivered_at'])}"], once["delivery_rows"]
+                assert once["delivery_rows"] == [f"✓ Priya Sent by hand Manual {_delivery_time(hub1[0]['delivered_at'])}"], once["delivery_rows"]
                 assert once["deliver_to"] == {"value": "", "disabled": False}
                 # Priya was the wrong person: "Tomas" too. Both rows stay.
                 page.locator("[data-testid=deliver-to]").fill("Tomas")
@@ -1846,11 +1846,11 @@ class TestRoomFaceGlass:
                 _rf_shot(page, "deliver-5-mistake-kept", width)
                 assert calls[0]["command_id"] != calls[1]["command_id"], calls  # a new press, a new key
                 assert [d["delivered_to"] for d in hub2] == ["Priya", "Tomas"], hub2
-                assert both["delivery_rows"] == [f"✓ {d['delivered_to']} SENT BY HAND MANUAL {_delivery_time(d['delivered_at'])}" for d in hub2]
+                assert both["delivery_rows"] == [f"✓ {d['delivered_to']} Sent by hand Manual {_delivery_time(d['delivered_at'])}" for d in hub2]
                 # PHILO-10-04 (the owner's A2): SENT N, the same count. The SEND
                 # well now sits above (the ratified Send face); the manual history
                 # itself still carries no egress badge.
-                assert both["delivery_head"] == "SENT 2", both["delivery_head"]
+                assert both["delivery_head"] == "Sent 2", both["delivery_head"]
                 assert both["delivery_egress"] == 0 and both["words_send"] and not both["modal"]
                 assert both["small_text_count"] == 0, both["small_text"]
                 assert both["raw_buttons"] == [], both["raw_buttons"]
@@ -1860,7 +1860,7 @@ class TestRoomFaceGlass:
                 self._back(page)
                 listed = self._facts(page)
                 _rf_shot(page, "deliver-6-list-chip", width)
-                assert listed["delivered_chips"] == ["✓ SENT ×2"], listed["delivered_chips"]
+                assert listed["delivered_chips"] == ["✓ Sent ×2"], listed["delivered_chips"]
                 # A draft offers no Mark delivered.
                 page.get_by_test_id("update-verb-draft").click()
                 page.locator("[data-testid=update-editor][data-lifecycle=draft]").wait_for(timeout=T)
@@ -1900,12 +1900,12 @@ class TestRoomFaceGlass:
                 word = refused.inner_text().replace("\n", " ")
                 f_refused = self._facts(page)
                 _rf_shot(page, "deliver-8-refused", width)
-                assert code == "update_not_published" and "REFUSED" in word and "NOT PUBLISHED" in word, word
+                assert code == "update_not_published" and "REFUSED" in word.upper() and "NOT PUBLISHED" in word.upper(), word
                 assert f_refused["deliver_to"] == {"value": "Priya", "disabled": False}
                 page.evaluate("window.__mode = {refuse: 'idempotency_conflict'}")
                 page.locator("[data-testid=deliver-verb]").click()
                 page.wait_for_function("document.querySelector('[data-testid=deliver-refused]')?.dataset.code === 'idempotency_conflict'")
-                assert "ALREADY USED" in page.locator("[data-testid=deliver-refused]").inner_text()
+                assert "Already used" in page.locator("[data-testid=deliver-refused]").inner_text()
                 assert self._deliveries(page, pid, a) == []
                 # The answer is lost AFTER the row committed: result unknown.
                 page.locator("[data-testid=deliver-to]").fill("Lena")
@@ -1914,7 +1914,7 @@ class TestRoomFaceGlass:
                 page.locator("[data-testid=deliver-uncertain]").wait_for(timeout=10_000)
                 unknown = self._facts(page)
                 _rf_shot(page, "deliver-9-result-unknown", width)
-                assert "NO ANSWER · RESULT UNKNOWN" in page.locator("[data-testid=deliver-uncertain]").inner_text()
+                assert "No answer · Result unknown" in page.locator("[data-testid=deliver-uncertain]").inner_text()
                 assert unknown["deliver_to"] == {"value": "Lena", "disabled": True}
                 assert unknown["deliver_verb"] == "Retry"
                 # Back -> B: clean. Back -> A: still unknown, Lena locked, Retry.
@@ -1944,7 +1944,7 @@ class TestRoomFaceGlass:
                 assert retry["command_id"] == lost["command_id"] and retry["delivered_to"] == lost["delivered_to"] == "Lena"
                 assert [d["delivered_to"] for d in hub_a] == ["Lena"], hub_a
                 assert hub_b == [] and not any(c["update_id"] == b for c in calls)
-                assert retried["delivery_rows"] == [f"✓ Lena SENT BY HAND MANUAL {_delivery_time(hub_a[0]['delivered_at'])}"]
+                assert retried["delivery_rows"] == [f"✓ Lena Sent by hand Manual {_delivery_time(hub_a[0]['delivered_at'])}"]
                 assert all(not p["not_owned"] for p in pointer), pointer
                 assert not errors, errors
             finally:
@@ -1985,7 +1985,7 @@ class TestRoomFaceGlass:
                 assert f"{sources} source" in plan, plan
                 assert "1 effect" not in plan and "no effect allowed" in plan, plan
                 assert "review opened" in plan and pr["compare"]["review_id"], plan
-                assert "REVIEW OPENED" in facts["steward_outcome"] and "NO EFFECT ALLOWED" in facts["steward_outcome"]
+                assert "REVIEW OPENED" in facts["steward_outcome"].upper() and "NO EFFECT ALLOWED" in facts["steward_outcome"].upper()
                 assert facts["raw_buttons"] == [], facts["raw_buttons"]
                 assert facts["small_text_count"] == 0, facts["small_text"]
                 assert all(not p["not_owned"] for p in pointer), pointer
@@ -2233,7 +2233,7 @@ class TestRoomFaceGlass:
                 pointer = self._pointer(page, width, ["[data-testid=update-list-item] .surface-ledger-line, [data-testid=update-list-item] [role=button]"])
                 _rf_record("update-list", width, {**facts, "row_tokens": words, "pointer": pointer})
                 _rf_shot(page, "update-list-words", width)
-                assert facts["update_list_head"] == "UPDATES 2", facts["update_list_head"]
+                assert facts["update_list_head"] == "Updates 2", facts["update_list_head"]
                 by = {w["lifecycle"]: w["tokens"] for w in words}
                 # W5-WORDS: the state is a dot and a word (`● Published · rev 1`).
                 assert by["published"][:1] == ["Published · rev 1"], by

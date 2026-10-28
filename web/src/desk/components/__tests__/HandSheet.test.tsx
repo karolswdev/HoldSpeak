@@ -112,22 +112,22 @@ describe("the launch sheet", () => {
     await within(sheet).findByText("Ledger cutover sync");
     const first = calls.find((c) => c.url.endsWith("/api/agent/hand/preview"))!;
     expect(first.body).toMatchObject({ kind: "action", id: "ai_1", profile: "claude-default", project_id: "p-ledger" });
-    expect(screen.getByText("BRIEF · 4 SOURCES · 4.2 KB")).toBeTruthy();
-    expect(within(sheet).getByTestId("hand-brief-tokens").textContent).toBe("ACCEPTANCE · 6 CHECKS");
-    expect(within(sheet).queryByText(/PEOPLE CUT/)).toBeNull();
-    expect(within(sheet).getByText("3 OPEN")).toBeTruthy();
+    expect(screen.getByText("Brief · 4 sources · 4.2 KB")).toBeTruthy();
+    expect(within(sheet).getByTestId("hand-brief-tokens").textContent).toBe("Acceptance · 6 checks");
+    expect(within(sheet).queryByText(/People cut/)).toBeNull();
+    expect(within(sheet).getByText("3 open")).toBeTruthy();
     const where = within(sheet).getByTestId("hand-where").textContent ?? "";
     expect(where).toContain("~/dev/payments-ledger");
     expect(where).toContain("new branch"); // Betterment AG1: never the item id (AG4: words)
     expect(where).not.toContain("ai_1");
-    expect(where).toContain("CONTROL · OPEN THROTTLE");
+    expect(where).toContain("Control · Open throttle");
     const footer = document.querySelector(".desk-hand-footer")!;
     expect(footer.querySelector(".gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
-    expect(footer.textContent).toContain("CLAUDE CODE · OPEN THROTTLE");
+    expect(footer.textContent).toContain("Claude Code · Open throttle");
     expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(false);
     // The agent cards carry the hub's facts.
-    expect(within(sheet).getByText("HOOKS IN · 2.1.4")).toBeTruthy();
-    expect(within(sheet).getByText("NO HOOKS · 0.46.0")).toBeTruthy();
+    expect(within(sheet).getByText("Hooks in · 2.1.4")).toBeTruthy();
+    expect(within(sheet).getByText("No hooks · 0.46.0")).toBeTruthy();
   });
 
   it("K3b: picking Codex reads the preview again for codex-default; the egress chip follows the pick", async () => {
@@ -138,15 +138,15 @@ describe("the launch sheet", () => {
     await waitFor(() => expect(calls.some((c) => c.body?.profile === "codex-default")).toBe(true));
     const footer = document.querySelector(".desk-hand-footer")!;
     await waitFor(() => expect(footer.querySelector(".gadget-chip-egress")!.textContent).toContain("API.OPENAI.COM"));
-    expect(footer.textContent).toContain("CODEX");
+    expect(footer.textContent).toContain("Codex");
   });
 
   it("a refusal the launch would meet is a named token, and Launch is withheld from the press", async () => {
     previewAnswer = () => ({ status: 200, body: preview({ repo: null, refused: ["no_repository", "executable_absent"] }) });
     openSheet();
     const refused = await screen.findByTestId("hand-refused");
-    expect(refused.textContent).toContain("NO REPOSITORY");
-    expect(refused.textContent).toContain("CLAUDE CODE NOT INSTALLED");
+    expect(refused.textContent).toContain("No repository");
+    expect(refused.textContent).toContain("Claude Code not installed");
     expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -154,7 +154,7 @@ describe("the launch sheet", () => {
     previewAnswer = () => ({ status: 404, body: { error: "item_unknown", code: "item_unknown" } });
     openSheet();
     const refused = await screen.findByTestId("hand-preview-refused");
-    expect(refused.textContent).toContain("ITEM NOT FOUND");
+    expect(refused.textContent).toContain("Item not found");
   });
 
   it("Launch posts the hand-off with the picked profile and his sentence; Agents opens on the new agent; the sheet closes once the brief is sent", async () => {
@@ -199,7 +199,7 @@ describe("the launch sheet", () => {
     await within(sheet).findByText("Ledger cutover sync");
     fireEvent.click(screen.getByTestId("hand-launch"));
     const line = await screen.findByTestId("hand-launch-refused");
-    expect(line.textContent).toBe("NOT LAUNCHED · WORKTREE EXISTS");
+    expect(line.textContent).toBe("Not launched · Worktree exists");
     expect(useAgentHand.getState().origin).not.toBeNull();
   });
 
@@ -351,7 +351,7 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
     await screen.findByText("Ledger cutover sync");
     fireEvent.click(screen.getByTestId("hand-launch"));
     const line = await screen.findByTestId("hand-launch-refused");
-    expect(line.textContent).toBe("NOT LAUNCHED · WORKTREE EXISTS");
+    expect(line.textContent).toBe("Not launched · Worktree exists");
   });
 
   it("HUB UNREACHABLE only when no answer came", async () => {
@@ -361,7 +361,7 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
     openSheet();
     await screen.findByText("Ledger cutover sync");
     fireEvent.click(screen.getByTestId("hand-launch"));
-    expect((await screen.findByTestId("hand-launch-refused")).textContent).toBe("NOT LAUNCHED · HUB UNREACHABLE");
+    expect((await screen.findByTestId("hand-launch-refused")).textContent).toBe("Not launched · Hub unreachable");
   });
 
   it("a pick whose preview has not come back keeps Launch withheld (a late answer never arms it)", async () => {
@@ -397,9 +397,9 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
     });
     openSheet();
     await screen.findByText("Ledger cutover sync");
-    expect(screen.getByTestId("hand-resume").textContent).toBe("RESUMES · BRIEF PENDING");
+    expect(screen.getByTestId("hand-resume").textContent).toBe("Resumes · Brief pending");
     fireEvent.click(screen.getByRole("radio", { name: /Codex/ }));
-    await waitFor(() => expect(screen.getByTestId("hand-refused").textContent).toContain("HELD FOR CLAUDE CODE"));
+    await waitFor(() => expect(screen.getByTestId("hand-refused").textContent).toContain("Held for Claude Code"));
     expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(true);
     // The egress is the agent that really runs: Anthropic, not OpenAI.
     expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
@@ -523,12 +523,12 @@ describe("R4 (Astra #912): the issue body read is egress, named at the fetch", (
     const line = await screen.findByTestId("hand-tracker");
     expect(line.getAttribute("data-state")).toBe("working");
     expect(line.textContent).toContain("ACME.ATLASSIAN.NET");
-    expect(line.textContent).toContain("READING");
+    expect(line.textContent).toContain("Reading");
     await act(async () => release({ status: 200, body: preview({
       kind: "issue", id: ISSUE.id, tracker: { host: "acme.atlassian.net", state: "read" },
     }) }));
     await waitFor(() => expect(screen.getByTestId("hand-tracker").getAttribute("data-state")).toBe("success"));
-    expect(screen.getByTestId("hand-tracker").textContent).toContain("READ");
+    expect(screen.getByTestId("hand-tracker").textContent).toContain("Read");
     expect(screen.getByTestId("hand-tracker").querySelector(".gadget-chip-egress")?.textContent).toBe("ACME.ATLASSIAN.NET");
   });
 
@@ -541,7 +541,7 @@ describe("R4 (Astra #912): the issue body read is egress, named at the fetch", (
     act(() => useAgentHand.getState().open({ ...ISSUE, trackerHost: null }));
     await waitFor(() => expect(screen.getByTestId("hand-tracker").getAttribute("data-state")).toBe("failure"));
     expect(screen.getByTestId("hand-tracker").textContent).toContain("GITHUB.COM");
-    expect(screen.getByTestId("hand-tracker").textContent).toContain("NOT READ");
+    expect(screen.getByTestId("hand-tracker").textContent).toContain("Not read");
   });
 
   it("no tracker line for an item that is not an issue", async () => {

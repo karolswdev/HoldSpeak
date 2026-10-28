@@ -26,6 +26,7 @@ import {
   SurfaceWell,
 } from "../surface/Surface";
 import { DeskWindowFrame } from "./DeskWindow";
+import { Token } from "../surface/Token";
 
 const REFUSAL_RECOVERY: Record<
   DossierRefusalCode,
@@ -107,14 +108,14 @@ export function DeliveryDossierWindow() {
         {dossier?.kind === "story" ? (
           <>
             <p className="desk-dlv-facts-line">
-              <span className="surface-token">{humanizeWireValue(String(dossier.status || "unknown"))}</span>
-              <span className="surface-token">{humanizeWireValue(String(dossier.freshness || "unknown"))}</span>
-              <span className="surface-token">
+              <Token className="surface-token">{humanizeWireValue(String(dossier.status || "unknown"))}</Token>
+              <Token className="surface-token">{humanizeWireValue(String(dossier.freshness || "unknown"))}</Token>
+              <Token className="surface-token">
                 {`HEAD ${dossier.headSha.slice(0, 12) || "uncommitted"}`}
-              </span>
-              <span className="surface-token">
+              </Token>
+              <Token className="surface-token">
                 {`RUNS ${dossier.summary.passing} PASS ${dossier.summary.failing} FAIL`}
-              </span>
+              </Token>
             </p>
             {dossier.bundleChanged ? (
               <p className="desk-arm-refusal" role="status">
@@ -134,26 +135,26 @@ export function DeliveryDossierWindow() {
                         key={`${r.timestamp}:${i}`}
                         primary={
                           <>
-                            <span
+                            <Token
                               className="surface-token"
                               data-tone={r.passed ? "ok" : "danger"}
                             >
                               {r.passed ? "PASS" : "FAIL"}
-                            </span>{" "}
+                            </Token>{" "}
                             {r.command ? (
                               <code>{r.command}</code>
                             ) : (
-                              <span className="surface-token">
+                              <Token className="surface-token">
                                 NO COMMAND RECORDED
-                              </span>
+                              </Token>
                             )}
                           </>
                         }
                         cells={
                           <span className="surface-ledger-cell">
-                            <span className="surface-token">
+                            <Token className="surface-token">
                               {`EXIT ${r.exitCode ?? "?"}`}
-                            </span>
+                            </Token>
                           </span>
                         }
                       />
@@ -198,7 +199,7 @@ export function DeliveryDossierWindow() {
             {dossier.storyMarkdown ? (
               <FoldGadget title="RAW · STORY">
                 <SurfaceWell
-                  head={<span className="surface-token">{`STORY ${dossier.storyId}`}</span>}
+                  head={<Token className="surface-token">{`STORY ${dossier.storyId}`}</Token>}
                 >
                   <pre className="desk-pullout-md">{dossier.storyMarkdown}</pre>
                 </SurfaceWell>
@@ -207,7 +208,7 @@ export function DeliveryDossierWindow() {
             {dossier.evidenceMarkdown ? (
               <FoldGadget title="RAW · EVIDENCE LOG">
                 <SurfaceWell
-                  head={<span className="surface-token">{`EVIDENCE ${dossier.storyId}`}</span>}
+                  head={<Token className="surface-token">{`EVIDENCE ${dossier.storyId}`}</Token>}
                 >
                   <pre className="desk-pullout-md">
                     {dossier.evidenceMarkdown}
@@ -221,15 +222,15 @@ export function DeliveryDossierWindow() {
         {dossier?.kind === "phase" ? (
           <>
             <p className="desk-dlv-facts-line">
-              <span className="surface-token">
+              <Token className="surface-token">
                 {dossier.title || `Phase ${dossier.phase}`}
-              </span>
-              <span className="surface-token">
+              </Token>
+              <Token className="surface-token">
                 {(dossier.status || "open").toUpperCase()}
-              </span>
-              <span className="surface-token">
+              </Token>
+              <Token className="surface-token">
                 {`${dossier.storiesDone ?? "?"}/${dossier.storiesTotal ?? "?"}`}
-              </span>
+              </Token>
             </p>
             <ul className="desk-dlv-phase-stories">
               {dossier.stories.map((s) => (

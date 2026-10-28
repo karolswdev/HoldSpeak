@@ -41,7 +41,7 @@ describe("the session footer's arm verb (Conductor R6)", () => {
     expect(verb.classList.contains("btn--ghost")).toBe(true);
     expect(verb.classList.contains("btn--sm")).toBe(true);
     expect(verb.textContent).toBe("Arm rename/kill");
-    expect(screen.getByTestId("session-arm-pane").textContent).toBe("PANE · %0");
+    expect(screen.getByTestId("session-arm-pane").textContent).toBe("Pane · %0");
     expect(screen.getByTestId("session-arm-pane").classList.contains("surface-token")).toBe(true);
   });
 

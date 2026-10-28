@@ -21,8 +21,8 @@ describe("HeardQuote", () => {
       "“Send the cutover plan to Priya before Friday.”",
     );
     expect(quote.getAttribute("data-size")).toBe("display");
-    expect(screen.getByRole("status", { name: "HEARD" })).toBeTruthy();
-    expect(screen.getByText("8 WORDS · 0:04 · 14:03")).toBeTruthy();
+    expect(screen.getByRole("status", { name: "Heard" })).toBeTruthy();
+    expect(screen.getByText("8 words · 0:04 · 14:03")).toBeTruthy();
     expect(screen.getByText("ON DEVICE")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
   });

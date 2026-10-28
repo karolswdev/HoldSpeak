@@ -1001,7 +1001,7 @@ describe("Policy: visible labels on toggles", () => {
     expect(radios.map((r) => r.value)).toEqual(["off", "tell", "do"]);
     // The detail is folded under RAW.
     const raw = screen.getByTestId("steward-policy-enabled-row").closest("details");
-    expect(raw?.querySelector("summary")?.textContent).toContain("RAW");
+    expect(raw?.querySelector("summary")?.textContent).toContain("Raw");
     expect(raw?.hasAttribute("open")).toBe(false);
 
     // Astra r1 (#1084): every preset's SAVED fields, pressed one by one.
@@ -1011,18 +1011,18 @@ describe("Policy: visible labels on toggles", () => {
     const press = async (index: number, word: string) => {
       const before = puts().length;
       fireEvent.click(within(screen.getByRole("radiogroup", { name: "Watch sources" })).getAllByRole("radio")[index]);
-      expect(screen.getByTestId("steward-footer-receipt").textContent).toBe(`WATCH SOURCES · ${word}`);
+      expect(screen.getByTestId("steward-footer-receipt").textContent).toBe(`Watch sources · ${word}`);
       fireEvent.click(screen.getByTestId("steward-verb-save-policy"));
       await waitFor(() => expect(puts().length).toBe(before + 1));
       return lastBody();
     };
 
-    const tell = await press(1, "TELL ME");
+    const tell = await press(1, "Tell me");
     expect(tell.enabled).toBe(true);
     expect(tell.unattended_enabled).toBe(true);
     expect([...tell.eligible_effect_kinds].sort()).toEqual(["create_door_item", "create_proposals", "refresh_sources"]);
 
-    const doIt = await press(2, "DO IT");
+    const doIt = await press(2, "Do it");
     expect(doIt.enabled).toBe(true);
     expect(doIt.unattended_enabled).toBe(true);
     expect([...doIt.eligible_effect_kinds].sort()).toEqual(
@@ -1030,7 +1030,7 @@ describe("Policy: visible labels on toggles", () => {
     );
     expect(doIt.eligible_effect_kinds).not.toContain("github_comment");
 
-    const off = await press(0, "OFF");
+    const off = await press(0, "Off");
     expect(off.unattended_enabled).toBe(false);
     expect(off.enabled).toBe(true); // Run once still works
     expect([...off.eligible_effect_kinds].sort()).toEqual([...doIt.eligible_effect_kinds].sort());
@@ -1134,7 +1134,7 @@ describe("Degraded coverage: visible warning", () => {
     // The PARTIAL COVERAGE marker is visible in the detail band
     const degradedChip = screen.getByTestId("steward-coverage-degraded");
     expect(degradedChip).toBeTruthy();
-    expect(degradedChip.textContent).toContain("PARTIAL COVERAGE");
+    expect(degradedChip.textContent).toContain("Partial coverage");
     expect(degradedChip.textContent).toContain("4 of 5 sources answered");
     expect(degradedChip.getAttribute("data-tone")).toBe("warn");
   });
@@ -1162,7 +1162,7 @@ describe("Degraded coverage: visible warning", () => {
     await waitFor(() => screen.getByTestId("steward-detail"));
 
     const partialChip = screen.getByTestId("steward-step-partial");
-    expect(partialChip.textContent).toBe("PARTIAL");
+    expect(partialChip.textContent).toBe("Partial");
     expect(partialChip.getAttribute("data-tone")).toBe("warn");
   });
 
@@ -1210,8 +1210,8 @@ describe("Footer: honest pluralization", () => {
     await waitFor(() => screen.getByTestId("steward-detail"));
 
     const footer = screen.getByTestId("steward-footer-receipt");
-    expect(footer.textContent).toContain("COMPLETED");
-    expect(footer.textContent).toContain("PHASE");
+    expect(footer.textContent).toContain("Completed");
+    expect(footer.textContent).toContain("phase");
   });
 
   it("completed run with all 6 phases shows '6 PHASES'", async () => {
@@ -1227,7 +1227,7 @@ describe("Footer: honest pluralization", () => {
     await waitFor(() => screen.getByTestId("steward-detail"));
 
     const footer = screen.getByTestId("steward-footer-receipt");
-    expect(footer.textContent).toContain("6 PHASES");
+    expect(footer.textContent).toContain("6 phases");
   });
 });
 
@@ -1332,7 +1332,7 @@ describe("Unattended toggle and grant text assembly", () => {
 
     // HS-167-05 R4: grant tokens — "UNATTENDED OFF" when disabled
     const grantText = screen.getByTestId("steward-grant-text");
-    expect(grantText.textContent).toContain("UNATTENDED OFF");
+    expect(grantText.textContent).toContain("Unattended off");
   });
 
   it("enabling unattended shows grant tokens with real values", async () => {
@@ -1356,11 +1356,11 @@ describe("Unattended toggle and grant text assembly", () => {
 
     // HS-167-05 R4: separate uppercase tokens
     const grantText = screen.getByTestId("steward-grant-text");
-    expect(grantText.textContent).toContain("EVERY");
-    expect(grantText.textContent).toContain("MIN");
-    expect(grantText.textContent).toContain("REFRESH SOURCES");
-    expect(grantText.textContent).toContain("DRAFT UPDATE");
-    expect(grantText.textContent).toContain("MAX 20 / RUN");
+    expect(grantText.textContent).toContain("Every");
+    expect(grantText.textContent).toContain("min");
+    expect(grantText.textContent).toContain("Refresh sources");
+    expect(grantText.textContent).toContain("Draft update");
+    expect(grantText.textContent).toContain("Max 20 / run");
   });
 
   it("toggle round-trips through PUT with unattended_enabled", async () => {
@@ -1416,7 +1416,7 @@ describe("Unattended toggle and grant text assembly", () => {
 
     // HS-167-05 R4: "NO EFFECTS" token when empty
     const grantText = screen.getByTestId("steward-grant-text");
-    expect(grantText.textContent).toContain("NO EFFECTS");
+    expect(grantText.textContent).toContain("No effects");
   });
 });
 
@@ -1608,7 +1608,7 @@ describe("PHILO-9-03 F3: the steward face tells what the run did", () => {
     expect(plan).toContain("no effect allowed");
     expect(plan).not.toMatch(/1 effect/);
     expect(screen.getByTestId("steward-run-review").getAttribute("data-review-id")).toBe("prev_1");
-    expect(screen.getByTestId("steward-no-effect-allowed").textContent).toContain("NO EFFECT ALLOWED");
+    expect(screen.getByTestId("steward-no-effect-allowed").textContent).toContain("No effect allowed");
   });
 
   it("a refused start is named by its code (steward_policy_required)", async () => {
@@ -1625,8 +1625,8 @@ describe("PHILO-9-03 F3: the steward face tells what the run did", () => {
     fireEvent.click(await screen.findByTestId("steward-verb-run"));
     const refused = await screen.findByTestId("steward-run-refused");
     expect(refused.getAttribute("data-code")).toBe("steward_policy_required");
-    expect(refused.textContent).toContain("REFUSED");
-    expect(refused.textContent).toContain("NO SAVED POLICY");
+    expect(refused.textContent).toContain("Refused");
+    expect(refused.textContent).toContain("No saved policy");
   });
 });
 

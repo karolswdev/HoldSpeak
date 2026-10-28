@@ -79,8 +79,8 @@ describe("the update: UNKNOWN and no answer survive the click that leaves the ro
     fireEvent.click(within(rowOf("Folder Payments")).getByText("Folder Payments"));
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
     const row = rowOf("Folder Payments");
-    expect(row.textContent).toContain("LAST SEND UNKNOWN");
-    expect(row.textContent).toContain("NO ANSWER");
+    expect(row.textContent).toContain("Last send unknown");
+    expect(row.textContent).toContain("No answer");
     expect(row.textContent).not.toContain("THIS DEVICE");
   });
 
@@ -95,7 +95,7 @@ describe("the update: UNKNOWN and no answer survive the click that leaves the ro
     await pick("Folder Other");
     await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Folder Other"));
     const row = rowOf("Folder Payments");
-    expect(row.textContent).toContain("NO ANSWER · RESULT UNKNOWN");
+    expect(row.textContent).toContain("No answer · Result unknown");
     expect(row.textContent).not.toContain("THIS DEVICE");
   });
 });

@@ -45,6 +45,7 @@ import { useWindowInterior } from "../../desk/surface/interior";
 import "./history/meetings-list.css";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
 import { objectWindowStandIn } from "../../desk/objectWindows";
+import { Token } from "../../desk/surface/Token";
 
 /** PHILO-17: the list window's faces: the list, and Record (capture C7: the
  *  one home for recording; a chosen file opens the import form). Chrome lane
@@ -434,9 +435,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         ? {
             key: "receipt",
             text: (
-              <span className="surface-footer-receipt-line" data-words="" data-tone={receipt.tone} data-testid={receipt.run ? "meetings-run-receipt" : undefined} title={receipt.title || undefined}>
+              <Token className="surface-footer-receipt-line" data-words="" data-tone={receipt.tone} data-testid={receipt.run ? "meetings-run-receipt" : undefined} title={receipt.title || undefined}>
                 {receipt.text}
-              </span>
+              </Token>
             ),
           }
         : null,
