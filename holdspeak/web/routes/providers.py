@@ -50,7 +50,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/providers ──────────────────────────────────────────
 
     @router.get("/api/providers")
-    async def list_providers(request: Request) -> Any:
+    def list_providers(request: Request) -> Any:
         """The manifest list: native + github + jira providers."""
         try:
             providers = collect_provider_manifests(
@@ -186,7 +186,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
         return enriched
 
     @router.get("/api/providers/jira/connections")
-    async def jira_connections(request: Request) -> Any:
+    def jira_connections(request: Request) -> Any:
         """List all Jira connections + known acli accounts."""
         try:
             adapter = ctx.jira_provider
@@ -241,7 +241,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
     # row again).  It removes HoldSpeak's row only, never acli's profile.
 
     @router.delete("/api/providers/{provider}/connections/{ref}")
-    async def atlassian_remove_connection(provider: str, ref: str, request: Request) -> Any:
+    def atlassian_remove_connection(provider: str, ref: str, request: Request) -> Any:
         """Remove one Jira or Confluence connection row."""
         try:
             adapter = {"jira": ctx.jira_provider, "confluence": ctx.confluence_provider}.get(provider)
@@ -263,7 +263,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/providers/jira/connections/{ref}/recheck ────────────
 
     @router.post("/api/providers/jira/connections/{ref}/recheck")
-    async def jira_connection_recheck(ref: str, request: Request) -> Any:
+    def jira_connection_recheck(ref: str, request: Request) -> Any:
         """Recheck one Jira connection (switch + status probe)."""
         try:
             adapter = ctx.jira_provider
@@ -286,7 +286,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/providers/jira/discover ────────────────────────────
 
     @router.get("/api/providers/jira/discover")
-    async def jira_discover(
+    def jira_discover(
         request: Request,
         connection_ref: str = "",
         kind: str = "projects",
@@ -428,7 +428,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
         return enriched
 
     @router.get("/api/providers/confluence/connections")
-    async def confluence_connections(request: Request) -> Any:
+    def confluence_connections(request: Request) -> Any:
         """List all Confluence connections."""
         try:
             adapter = ctx.confluence_provider
@@ -481,7 +481,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/providers/confluence/connections/{ref}/recheck ────────
 
     @router.post("/api/providers/confluence/connections/{ref}/recheck")
-    async def confluence_connection_recheck(ref: str, request: Request) -> Any:
+    def confluence_connection_recheck(ref: str, request: Request) -> Any:
         """Recheck one Confluence connection (switch + status probe)."""
         try:
             adapter = ctx.confluence_provider
@@ -504,7 +504,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
     # ── GET /api/providers/confluence/discover ────────────────────────
 
     @router.get("/api/providers/confluence/discover")
-    async def confluence_discover(
+    def confluence_discover(
         request: Request,
         connection_ref: str = "",
         kind: str = "spaces",
@@ -583,7 +583,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/watches/{watch_id}/evaluate ────────────────────────
 
     @router.post("/api/watches/{watch_id}/evaluate")
-    async def evaluate_watch(watch_id: str, request: Request) -> Any:
+    def evaluate_watch(watch_id: str, request: Request) -> Any:
         """Manual evaluate_once (WatchService.evaluate_once).
 
         Manual only; scheduling is P5's.

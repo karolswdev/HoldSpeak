@@ -26,7 +26,7 @@ def build_health_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/devices/health")
-    async def api_devices_health() -> Any:
+    def api_devices_health() -> Any:
         from ....meeting_session import _device_descriptor_to_dict
 
         devices = [
@@ -36,7 +36,7 @@ def build_health_router(ctx: WebContext) -> APIRouter:
         return JSONResponse({"devices": devices})
 
     @router.get("/api/runtime/status")
-    async def api_runtime_status() -> Any:
+    def api_runtime_status() -> Any:
         try:
             state = ctx.get_state() or {}
         except Exception as e:
@@ -56,7 +56,7 @@ def build_health_router(ctx: WebContext) -> APIRouter:
         return JSONResponse(_normalize_runtime_status_payload({}, state))
 
     @router.get("/api/system/identity")
-    async def api_system_identity() -> Any:
+    def api_system_identity() -> Any:
         """The loaded runtime identity and its repair diagnoses (HS-200-02, C1).
 
         The diagnostics view: it carries the database path, the pid and the

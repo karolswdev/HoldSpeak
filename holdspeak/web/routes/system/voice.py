@@ -42,7 +42,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.post("/api/dictation/wake/type")
-    async def api_wake_type(payload: dict[str, Any]) -> Any:
+    def api_wake_type(payload: dict[str, Any]) -> Any:
         """HS-60: type a stored wake preview, exactly once.
 
         The token was minted server-side when the preview was created; the
@@ -69,7 +69,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         return {"success": True, "typed": typed}
 
     @router.post("/api/dictation/mic/open")
-    async def api_mic_open(request: Request) -> Any:
+    def api_mic_open(request: Request) -> Any:
         """Open ONE admitted open-mic interval for this authenticated identity.
 
         HS-131-09: the click-to-toggle mic is one authority lifetime, so it admits
@@ -96,7 +96,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         }
 
     @router.post("/api/dictation/mic/close")
-    async def api_mic_close(request: Request) -> Any:
+    def api_mic_close(request: Request) -> Any:
         """Close the interval: the parent is cancelled and closed, not left live."""
         closed = browser_mic_sessions().close(
             _route_principal(request), reason="browser_mic_stopped"
@@ -289,7 +289,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         }
 
     @router.post("/api/dictation/preview/type")
-    async def api_preview_type(payload: dict[str, Any]) -> Any:
+    def api_preview_type(payload: dict[str, Any]) -> Any:
         """HS-75-01: type a stored hold-key preview, exactly once.
 
         The token was minted server-side when the preview armed; the
@@ -316,7 +316,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         return {"success": True, "typed": typed}
 
     @router.post("/api/dictation/preview/discard")
-    async def api_preview_discard(payload: dict[str, Any]) -> Any:
+    def api_preview_discard(payload: dict[str, Any]) -> Any:
         """HS-75-01: burn a stored preview without typing."""
         if ctx.on_preview_discard is None:
             return JSONResponse(
@@ -337,7 +337,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         return {"success": True}
 
     @router.post("/api/commands/test")
-    async def api_test_voice_command(payload: dict[str, Any]) -> Any:
+    def api_test_voice_command(payload: dict[str, Any]) -> Any:
         """HS-52-05: fire one voice command action from the board, to verify it.
 
         Egress kinds (open_url / launch_app / shell) run on the host through the same
