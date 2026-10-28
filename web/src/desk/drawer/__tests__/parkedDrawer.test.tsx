@@ -170,6 +170,8 @@ describe("the Parked drawer", () => {
     expect(screen.queryByRole("toolbar")).toBeNull();
     expect(screen.queryByTestId("parked-restore")).toBeNull();
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
+    // Atlas pass 3 #22: no fact, no status bar (no empty grey foot).
+    expect(document.querySelector(".surface-footer")).toBeNull();
   });
 
   it("a kind read part way shows its rows and says NOT READ · PARTIAL", async () => {

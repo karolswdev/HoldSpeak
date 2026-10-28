@@ -831,12 +831,14 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     expect(cell(maya, "owe")).toBe("1");
     expect(cell(maya, "role")).toBe("Direct report");
     const sam = screen.getByRole("button", { name: /Sam Ortiz/ }).closest("[role=row]")!;
-    await waitFor(() => expect(cell(sam, "next")).toBe("None"));
+    // No 1:1 planned: the cell is empty, never "None" (atlas pass 3 #19).
+    expect(cell(sam, "next")).toBe("");
     expect(cell(sam, "owe")).toBe("");
+    expect(document.body.textContent).not.toContain("None");
     // Plan is the selected row's verb, in the status bar.
     expect(screen.queryByRole("button", { name: "Plan" })).toBeNull();
     fireEvent.click(within(sam as HTMLElement).getByRole("button", { name: /Sam Ortiz/ }));
-    expect(within(screen.getByTestId("people-status")).getByRole("button", { name: "Plan" })).toBeTruthy();
+    await waitFor(() => expect(within(screen.getByTestId("people-status")).getByRole("button", { name: "Plan" })).toBeTruthy());
     expect(fetchSpy.mock.calls.some(([url]) => /\/api\/people\/relationships\/r\d$/.test(String(url)))).toBe(false);
     // The soonest 1:1 this week is the status bar's warm words; Open prep
     // joins them only within a day (this one is two days out).

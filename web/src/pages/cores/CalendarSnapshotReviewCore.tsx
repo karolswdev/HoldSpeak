@@ -18,6 +18,8 @@ import {
   SurfaceSection,
 } from "../../desk/surface/Surface";
 import { Button } from "../../components/signal/Signal";
+import { SurfaceState } from "../../desk/surface/Surface";
+import { spriteUrl } from "../../desk/sprites";
 import type { CoreProps } from "./core-types";
 import "./calendar-snapshot-review.css";
 
@@ -277,9 +279,13 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
 
   if (phase.step === "empty") {
     return shell(
-      <p className="calendar-snapshot-empty" data-testid="calendar-snapshot-empty">
-        <DotWord>No screenshot yet</DotWord>
-      </p>,
+      <div className="calendar-snapshot-empty" data-testid="calendar-snapshot-empty">
+        {/* Atlas pass 3 #21: the empty face is the calendar object, one line,
+            one verb, as the other empty faces are (SurfaceState's object). */}
+        <SurfaceState empty emptyLabel="No screenshot yet" emptyImage={spriteUrl("meeting", "calendar-snapshot")}
+          emptyKind="meeting" onAction={() => { setImportRefusal(""); importCalendarImage(setImportRefusal); }}
+          actionLabel="Import image" />
+      </div>,
     );
   }
 

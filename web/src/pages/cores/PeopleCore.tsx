@@ -493,12 +493,16 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     .sort((a, b) => (wireDate(a.next.startsAt)?.getTime() ?? 0) - (wireDate(b.next.startsAt)?.getTime() ?? 0))[0] ?? null;
   const soonestAt = soonest ? wireDate(soonest.next.startsAt)?.getTime() ?? Infinity : Infinity;
   const prepDue = Boolean(soonest) && soonestAt - Date.now() <= 86_400_000;
+  // A report with no 1:1 planned: the cell stays empty (never "None"); the
+  // row still offers Plan when it is chosen.
+  const planless = new Set<string>();
   const personRows: ObjectListRow[] = shownPeople.map((relationship) => {
     const fact = rowFacts[relationship.id];
     const report = (relationship.relationship_kind ?? "direct_report") === "direct_report";
     const next = fact?.next ?? relationship.next_one_on_one ?? null;
     const at = next ? wireDate(next)?.getTime() ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
     const noOneOnOne = Boolean(fact?.known) && !next && report;
+    if (noOneOnOne) planless.add(relationship.id);
     return {
       id: relationship.id,
       kind: "person",
@@ -507,7 +511,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       nameTestId: "people-row-name",
       cells: {
         role: relationshipLabel(relationship.relationship_kind),
-        next: next ? `1:1 ${oneOnOneWhen(next)}` : noOneOnOne ? "None" : "",
+        next: next ? `1:1 ${oneOnOneWhen(next)}` : "",
         owe: fact?.youOwe ? String(fact.youOwe) : "",
       },
       sortValues: { next: at, owe: fact ? fact.youOwe : 0, role: relationshipLabel(relationship.relationship_kind) },
@@ -529,7 +533,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const chosen = rowSelected && (byPerson.has(rowSelected) || bySuggestion.has(rowSelected)) ? rowSelected : null;
   const chosenPerson = chosen ? byPerson.get(chosen) ?? null : null;
   const chosenSuggestion = chosen ? bySuggestion.get(chosen) ?? null : null;
-  const chosenNoOneOnOne = chosenPerson ? personRows.find((r) => r.id === chosenPerson.id)?.cells?.next === "None" : false;
+  const chosenNoOneOnOne = chosenPerson ? planless.has(chosenPerson.id) : false;
   const selectionVerbs = chosenSuggestion ? <>
     <Button dense variant="secondary" loading={suggestionBusy === chosenSuggestion.key} disabled={Boolean(suggestionBusy)} onClick={() => void addSuggestion(chosenSuggestion)} aria-label={`Add ${chosenSuggestion.name}`} data-testid="people-suggestion-add"><ToolGlyph kind="new" />Add</Button>
     <Button dense variant="secondary" disabled={Boolean(suggestionBusy)} onClick={() => void hideSuggestion(chosenSuggestion)} aria-label={`${chosenSuggestion.name} is not a person`} data-testid="people-suggestion-hide">Not a person</Button>
@@ -600,7 +604,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
             "data-testid": row.group ? "people-suggestion" : "people-row",
             "data-suggested": row.group ? "" : undefined,
             // DELIGHT 2 (small joys): a person's next 1:1 is in their own
-            // teal (people.css), not grey; "None" and suggestions stay quiet.
+            // teal (people.css), not grey; suggestions stay quiet.
             "data-next-one-on-one": !row.group && String(row.cells?.next ?? "").startsWith("1:1 ") ? "" : undefined,
           })}
         />
