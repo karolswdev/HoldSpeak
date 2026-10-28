@@ -34,6 +34,10 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/channels/preview"): "read-like: channel.preview is effect=read",
     ("POST", "/api/dictation/dry-run"): "read-like: runs the pipeline on text, stores nothing",
     ("POST", "/api/grounding/resolve"): "read-like: resolves references",
+    # 2026-10-28: the Runs on editor is a read the desk makes on every reload;
+    # announcing it made a frame storm (kind inference, eleven frames in four
+    # seconds) and each frame re-read twenty lists, which read the editor again.
+    ("POST", "/api/inference/assignments/editor"): "read-like: projects the assignment editor, writes nothing",
     ("POST", "/api/inference/assignments/preview-use-default"): "read-like: previews an assignment",
     ("POST", "/api/intents/preview"): "read-like: previews a route",
     ("POST", "/api/meeting/mic-check"): "read-like: one short microphone sample, stores nothing",
