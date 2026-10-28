@@ -42,6 +42,7 @@ from .memory import build_memory_router
 from .model_library import build_model_library_router
 from .inference_assignments import build_inference_assignments_router
 from .monday_brief import build_monday_brief_router
+from .today import build_today_router
 from .mesh import build_mesh_router
 from .missioncontrol import build_missioncontrol_router
 from .pages import build_pages_router
@@ -104,6 +105,7 @@ __all__ = [
     "build_model_library_router",
     "build_inference_assignments_router",
     "build_monday_brief_router",
+    "build_today_router",
     "build_mesh_router",
     "build_missioncontrol_router",
     "build_pages_router",

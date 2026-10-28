@@ -748,10 +748,10 @@
     }
   ],
   "measurements": {
-    "residual_identities": 264,
+    "residual_identities": 265,
     "residual_mcp": 209,
-    "residual_http": 55,
-    "http_constructions": 56,
+    "residual_http": 56,
+    "http_constructions": 57,
     "public_tools": 289
   },
   "entries": [
@@ -2338,6 +2338,12 @@
       "entry_point": "holdspeak/web/routes/threads.py::build_threads_router.api_interview_promotions",
       "discriminator": "InterviewService",
       "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/today.py::build_today_router.service",
+      "discriminator": "TodayService",
+      "reason": "route builds its own service instance instead of the hub's bound one (only when the context has none: a route test); a read-only desk reader (Since this morning)"
     }
   ]
 }

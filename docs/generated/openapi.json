@@ -30049,6 +30049,27 @@
         "summary": "Api Start Turn"
       }
     },
+    "/api/today/since-morning": {
+      "get": {
+        "operationId": "since_morning_api_today_since_morning_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Since Morning Api Today Since Morning Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Since Morning",
+        "tags": [
+          "today"
+        ]
+      }
+    },
     "/api/tts": {
       "post": {
         "description": "Synthesize text to streaming WAV audio.\n\n404 when the kokoro-onnx extra is absent.",

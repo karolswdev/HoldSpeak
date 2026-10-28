@@ -8,7 +8,7 @@
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--desk-inlet-radius);
-  box-shadow: var(--desk-window-bevel);
+  box-shadow: var(--depth-menu); /* DELIGHT slice 5: an autocomplete list is the menu step (was var(--desk-window-bevel), which is none: no depth) */
   max-height: 240px;
   overflow-y: auto;
   margin-bottom: 4px;

@@ -34,7 +34,7 @@
   border: 1px solid var(--surface-3);
   border-radius: 2px;
   background: color-mix(in srgb, var(--surface-1) 92%, transparent);
-  box-shadow: 0 24px 80px var(--shadow-ink-1);
+  box-shadow: var(--depth-paper); /* DELIGHT slice 5: a sheet on the floor is the paper step (was 0 24px 80px var(--shadow-ink-1)) */
 }
 .desk-next .desk-first-words h1,
 .desk-next .desk-first-words h2,
@@ -178,7 +178,7 @@
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  box-shadow: var(--desk-window-etch), var(--desk-window-shadow);
+  box-shadow: var(--depth-menu); /* DELIGHT slice 5 (the old list led with var(--desk-window-etch), which is none, and voided the whole value): a floating verb bar is the menu step (was --desk-window-shadow, the front window's) */
   font-family: var(--font-mono);
 }
 .desk-editor-ai-bar-verbs {

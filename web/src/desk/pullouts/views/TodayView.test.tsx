@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PERSON_OPEN_EVENT } from "../../objectWindows";
-import { DAY_SAID_KEY, TodayView, countdown, currentStep, dayGreeting, dayLight, dayPart, toFinish } from "./TodayView";
+import { useDesk } from "../../store";
+import sinceMorning from "../../__tests__/fixtures/today-hub/since-morning.json";
+import { DAY_SAID_KEY, EVENING_SAID_KEY, TodayView, countdown, currentStep, dayGreeting, dayLight, dayPart, toFinish } from "./TodayView";
 
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
 vi.mock("../../shell", async () => {
@@ -356,4 +358,82 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     }
   });
 
+});
+
+// DELIGHT slice 5 (2026-10-28): Today in the evening. The hub's own answer,
+// recorded by tests/unit/test_desk_today.py (HOLDSPEAK_WIRE_WRITE=1).
+describe("DELIGHT slice 5: Since this morning", () => {
+  const recorded = (sinceMorning as Record<string, unknown>)["/api/today/since-morning"] as {
+    items: Array<{ kind: string; ref: string; title: string; word: string }>;
+  };
+  const day = (since: () => Response) => hub({
+    "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+    "/api/meetings?limit=40": () => json({ meetings: [] }),
+    "/api/desk/needs-you": () => json({ items: [] }),
+    "/api/today/since-morning": since,
+  });
+
+  it("at 18:00 lists what got done today, newest first, each row opens its object", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 18, 0, 0));
+    const calls = day(() => json(recorded));
+    const openSurfaceWindow = vi.fn();
+    useDesk.setState({ openSurfaceWindow } as never);
+    render(<TodayView />);
+    const rows = await screen.findAllByTestId("today-done-row");
+    expect(calls.some(([url]) => url === "/api/today/since-morning")).toBe(true);
+    expect(rows.map((row) => row.textContent)).toEqual(
+      recorded.items.map((item) => expect.stringContaining(`${item.title}${item.word}`)));
+    expect(rows.map((row) => row.getAttribute("data-kind"))).toEqual(recorded.items.map((item) => item.kind));
+    // Every row is a library Button; the list says no count of zero.
+    for (const row of rows) expect(row.classList.contains("btn--chrome")).toBe(true);
+    expect(screen.getByTestId("today-done-counts").textContent).toBe(`${recorded.items.length} done`);
+    expect(screen.getByTestId("today-done-toggle").getAttribute("aria-expanded")).toBe("true");
+    // A decision row opens its record in the Decisions reader.
+    const decision = recorded.items.findIndex((item) => item.kind === "decision");
+    fireEvent.click(rows[decision]);
+    expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions",
+      `record:${recorded.items[decision].ref.slice("decision_record:".length)}`);
+    // Said once per day: the flag is the local date.
+    expect(window.localStorage.getItem(EVENING_SAID_KEY)).toBe("2026-10-28");
+  });
+
+  it("is said once per day: a later open the same evening folds it to one line", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 20, 15, 0));
+    window.localStorage.setItem(EVENING_SAID_KEY, "2026-10-28");
+    day(() => json(recorded));
+    render(<TodayView />);
+    const toggle = await screen.findByTestId("today-done-toggle");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByTestId("today-done-counts").textContent).toBe(`${recorded.items.length} done`);
+    expect(screen.queryByTestId("today-done-row")).toBeNull();
+    fireEvent.click(toggle);
+    expect(screen.getAllByTestId("today-done-row")).toHaveLength(recorded.items.length);
+  });
+
+  it("an empty evening is one line, never a zero", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 18, 0, 0));
+    day(() => json({ since: "2026-10-28T04:00:00Z", items: [] }));
+    render(<TodayView />);
+    expect((await screen.findByTestId("today-done-counts")).textContent).toBe("Nothing done yet");
+    expect(screen.getByTestId("today-done").textContent).not.toMatch(/\b0\b/);
+    expect(screen.queryByTestId("today-done-row")).toBeNull();
+  });
+
+  it("a read that fails says so with Retry", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 18, 0, 0));
+    day(() => json({ error: "boom" }, 500));
+    render(<TodayView />);
+    const failed = await screen.findAllByTestId("today-done-failed");
+    expect(failed).toHaveLength(1);
+    expect(failed[0].textContent).toContain("Could not read today's work");
+  });
+
+  it("at 09:00 there is no evening list and no read for it", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 9, 0, 0));
+    const calls = day(() => json(recorded));
+    render(<TodayView />);
+    await waitFor(() => expect(screen.getByTestId("today-body").getAttribute("aria-busy")).toBeNull());
+    expect(screen.queryByTestId("today-done")).toBeNull();
+    expect(calls.some(([url]) => url === "/api/today/since-morning")).toBe(false);
+  });
 });

@@ -1180,6 +1180,7 @@ class MeetingWebServer:
             build_model_library_router,
             build_inference_assignments_router,
             build_monday_brief_router,
+            build_today_router,
             build_mesh_router,
             build_missioncontrol_router,
             build_constitutional_router,
@@ -1705,6 +1706,7 @@ class MeetingWebServer:
         mount_router(app, build_model_library_router(web_ctx))
         mount_router(app, build_inference_assignments_router(web_ctx))
         mount_router(app, build_monday_brief_router(web_ctx))
+        mount_router(app, build_today_router(web_ctx))
         mount_router(app, build_meetings_router(web_ctx))
         mount_router(app, build_desk_actuators_router(web_ctx))
         mount_router(app, build_desk_seed_router(web_ctx))

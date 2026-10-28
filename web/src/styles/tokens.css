@@ -295,7 +295,7 @@
   --desk-transient-radius: 5px; /* modern control radius for transient surfaces */
   --desk-inlet-radius: 6px; /* HS-129-10: compact reference picker remains distinguishable from OS chrome */
   --desk-sheet-top-radius: 18px; /* HS-129-10: reviewed phone-sheet exception; preserve the existing grip silhouette */
-  --desk-transient-shadow: none; /* HS-110-01: no shadow on menus — border only */
+  --desk-transient-shadow: var(--depth-menu); /* DELIGHT slice 5 (2026-10-28): a transient (the window switcher, the pane picker) takes the depth scale's menu step; was none (HS-110-01, border only), parked when the menus took --depth-menu */
   --desk-window-pad-x: 14px; /* window body horizontal padding */
   --desk-window-pad-y: 12px; /* window body vertical padding */
   --desk-surface-row-h: 40px; /* HS-98: dense surface row min height (OS density, not page density) */

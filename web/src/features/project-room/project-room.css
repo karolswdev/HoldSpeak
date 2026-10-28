@@ -962,12 +962,12 @@
   padding: 0 0 8px;
   border: 1px solid var(--wb-ink);
   background: var(--wb-paper);
-  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  box-shadow: var(--depth-row); /* DELIGHT slice 5 (the old list led with var(--wb-raised), which is none, and voided the whole value): a plate in its column is the row step (was 3px 4px 0 ink 18 % + 4px 10px 22px ink 14 %) */
   transition: box-shadow 160ms ease;
   min-width: 0;
 }
 .room-focus:hover {
-  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent), 6px 14px 28px color-mix(in srgb, var(--wb-ink) 20%, transparent);
+  box-shadow: var(--depth-card); /* DELIGHT slice 5 (as above, the old list was void): the plate lifts to the card step under the pointer (was 3px 4px 0 ink 22 % + 6px 14px 28px ink 20 %) */
 }
 .room-focus-bar {
   display: flex;
