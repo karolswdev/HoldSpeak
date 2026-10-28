@@ -298,12 +298,15 @@ class TestScreenDeleteGlass:
                 door.tap()
                 drawer = page.locator(f'[id="pullout:zone:{directory_id}"]')
                 drawer.wait_for()
-                body = drawer.locator('.desk-pullout-body')
+                # #1534 (Wave 3 ZONE): the drawer's toolbar and status bar stay;
+                # its ObjectList's rows scroll (`.object-list-rows`), not the
+                # pullout body, and a member is a list row (one press opens it).
+                body = drawer.locator('.zone-drawer-scroll .object-list-rows')
                 body.evaluate("s => { s.scrollTop = s.scrollHeight; }")
                 page.wait_for_timeout(200)
                 scroll = body.evaluate("s => ({top:s.scrollTop, h:s.scrollHeight, vh:s.clientHeight})")
                 assert scroll["h"] > scroll["vh"] and scroll["top"] > 0, f"the drawer does not scroll: {scroll}"
-                last = drawer.locator('.surface-row-open').filter(has=page.locator(f'[data-member-ref="decision:{ids[-1]}"]'))
+                last = drawer.locator(f'.object-list-row[data-object-id="decision:{ids[-1]}"] .object-list-open')
                 last.tap()
                 window = page.locator(f'[id="pullout:decision:{ids[-1]}"]')
                 window.wait_for()
@@ -316,7 +319,7 @@ class TestScreenDeleteGlass:
                 # original removal deadline while that scrolled host stays open.
                 body.evaluate("s => { s.scrollTop = 0; }")
                 page.wait_for_timeout(200)
-                first = drawer.locator('.surface-row-open').filter(has=page.locator(f'[data-member-ref="decision:{ids[0]}"]'))
+                first = drawer.locator(f'.object-list-row[data-object-id="decision:{ids[0]}"] .object-list-open')
                 first.tap()
                 window = page.locator(f'[id="pullout:decision:{ids[0]}"]')
                 window.wait_for()

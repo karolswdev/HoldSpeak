@@ -517,7 +517,9 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     await waitFor(() => expect(container.querySelector('.speak-learned .surface-state[data-kind="empty"]')).toBeTruthy());
     const quiet = container.querySelector(".speak-learned") as HTMLElement;
     expect(quiet.querySelectorAll(".surface-ledger-row")).toHaveLength(0);
-    expect(quiet.textContent).toContain("Press Wrong on a phrase to teach a fix");
+    // W4-REDS-C: the honest pair — what will appear, then how to make it.
+    expect(quiet.querySelector(".surface-state-line")?.textContent).toBe("Nothing learned yet");
+    expect(quiet.querySelector(".surface-state-hint")?.textContent).toBe("Press Wrong on a phrase to teach a fix");
     expect(quiet.querySelector('.surface-state[data-object="dictation"] .surface-state-sprite')).toBeTruthy();
     expect(quiet.textContent).not.toMatch(/applied/i);
     expect(quiet.textContent).not.toContain("0");
