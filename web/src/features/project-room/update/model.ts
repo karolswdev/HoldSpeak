@@ -289,12 +289,12 @@ export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
 
 /* ── Generator provenance label ── */
 
-/** Human label for the generator provenance: "deterministic" stays as
- *  "Deterministic"; "model:<assignment>" shows "Model · <model name>" (or
+/** Human label for the generator provenance: "deterministic" reads
+ *  "From the Room's facts" (W5-WORDS: no jargon); "model:<assignment>" shows "Model · <model name>" (or
  *  "Model" when the name is not known), never the assignment id (PHILO-15
  *  B53: names, never ids); unknown generators show verbatim. */
 export function generatorLabel(generator: string, model?: string | null): string {
-  if (generator === "deterministic") return "Deterministic";
+  if (generator === "deterministic") return "From the Room's facts";
   if (generator.startsWith("model:")) {
     const name = String(model ?? "").trim();
     return name ? `Model · ${name}` : "Model";
@@ -305,7 +305,7 @@ export function generatorLabel(generator: string, model?: string | null): string
 /** Plain-words provenance for the list row — no assignment id (it goes
  *  to title/aria and the editor band where there's room). */
 export function provenancePhrase(generator: string): string {
-  if (generator === "deterministic") return "Deterministic draft";
+  if (generator === "deterministic") return "Draft from the Room's facts";
   if (generator.startsWith("model:")) return "Model draft";
   return `${generator} draft`;
 }
@@ -468,9 +468,9 @@ const FALLBACK_REASON_LABELS: Record<string, string> = {
 export function humanFallbackReason(code: string | null): string | null {
   if (!code) return null;
   const label = FALLBACK_REASON_LABELS[code];
-  if (label) return `${label} -- drafted deterministically`;
+  if (label) return `${label} · drafted from the Room's facts`;
   // Unknown code: generic phrasing
-  return `Fallback: ${code.replace(/_/g, " ")} -- drafted deterministically`;
+  return `Fallback: ${code.replace(/_/g, " ")} · drafted from the Room's facts`;
 }
 
 /* ── Betterment P1: the update as plain text, edited in place ──

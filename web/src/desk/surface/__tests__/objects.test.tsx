@@ -601,14 +601,14 @@ describe("ConfirmLine", () => {
         from={{ kind: "action", id: "act-comms" }}
         to={{ kind: "agent", id: "claude:launcher" }}
         title="Write the cutover comms"
-        fact="CLAUDE CODE · YOLO · hs/write-the-cutover-comms"
+        fact="CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms"
         onBrief={onBrief}
         onCancel={onCancel}
         onHand={onHand}
       />,
     );
     const group = screen.getByRole("group", { name: "Hand: Write the cutover comms" });
-    expect(within(group).getByText("CLAUDE CODE · YOLO · hs/write-the-cutover-comms")).toBeInTheDocument();
+    expect(within(group).getByText("CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms")).toBeInTheDocument();
     const verbs = within(group).getAllByRole("button").map((b) => b.textContent);
     expect(verbs).toEqual(["Brief ▸", "Cancel", "Hand"]);
     expect(container.querySelectorAll(".btn--primary")).toHaveLength(1);
@@ -695,7 +695,7 @@ describe("PHILO-14 C3: the drag props", () => {
         from={{ kind: "action", id: "a" }}
         to={{ kind: "coder", id: "claude" }}
         title="Write the cutover comms"
-        fact="CLAUDE CODE · YOLO"
+        fact="CLAUDE CODE · OPEN THROTTLE"
         onCancel={() => undefined}
         onHand={() => undefined}
         disabled
@@ -716,7 +716,7 @@ describe("PHILO-14 C3: the drag props", () => {
         from={{ kind: "action", id: "a" }}
         to={{ kind: "coder", id: "claude" }}
         title="Write the cutover comms"
-        fact="CLAUDE CODE · YOLO"
+        fact="CLAUDE CODE · OPEN THROTTLE"
         onCancel={() => undefined}
         onHand={() => undefined}
         verbs={<Button dense variant="ghost">Close</Button>}

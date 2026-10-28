@@ -334,7 +334,9 @@ describe("PHILO-14 A2 the drawer", () => {
     );
     useDesk.setState({ items: EMPTY_ITEMS });
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
-    await screen.findByText("Nothing filed here");
+    const line = await screen.findByText("Nothing filed here");
+    // DELIGHT slice 3: the empty drawer wears the Project's object.
+    expect(line.closest('.surface-state[data-object="project"]')?.querySelector("img")).toBeTruthy();
     expect(screen.getByTestId("drawer-facts")).not.toHaveTextContent(/need you|object/i);
     // W3-B: the foot holds the head facts; it counts nothing and says no zero.
     expect(footer()).not.toMatch(/object|selected|\b0\b/i);

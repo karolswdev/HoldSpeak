@@ -236,7 +236,7 @@ export function ObjectSpeciesGallery() {
           from={{ kind: "action", id: "act-cutover-comms" }}
           to={{ kind: "agent", id: "claude:launcher" }}
           title="Write the cutover comms"
-          fact="CLAUDE CODE · YOLO · hs/write-the-cutover-comms"
+          fact="CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms"
           onBrief={() => setBriefOpen((o) => !o)}
           briefOpen={briefOpen}
           onCancel={() => setBriefOpen(false)}

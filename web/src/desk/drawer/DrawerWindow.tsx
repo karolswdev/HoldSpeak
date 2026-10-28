@@ -41,6 +41,7 @@ import { restoreMeeting } from "../api";
 import { openProjectRoom } from "../shell";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
+import { spriteUrl } from "../sprites";
 import { windowName } from "../windowName";
 import { memberOpens, openMember } from "./open";
 import { drawerWindowId, useDrawers, type OpenDrawer } from "./store";
@@ -319,7 +320,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
           {data.loading ? (
             <SurfaceState loading />
           ) : !members.length && data.failed.length ? null : !members.length ? (
-            <SurfaceState empty emptyLabel="Nothing filed here" />
+            <SurfaceState empty emptyLabel="Nothing filed here" emptyImage={spriteUrl("project", projectId)} emptyKind="project" />
           ) : view === "icons" ? (
             <IconGrid well label={name} onClear={() => setSelectedId(null)}>
               {members.map((m) => {

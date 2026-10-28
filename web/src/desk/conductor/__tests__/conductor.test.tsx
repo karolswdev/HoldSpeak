@@ -342,7 +342,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(screen.getByTestId("conductor-stop")).toBeTruthy();
     // A stale launch shows its receipt and opens its lane; no Stop.
     fireEvent.click(icon("Write the cutover checklist"));
-    expect(screen.getByTestId("conductor-receipt").textContent).toBe("PR #413 MERGED · ITEM CLOSED · SESSION STOPPED");
+    expect(screen.getByTestId("conductor-receipt").textContent).toBe("PR #413 merged · item closed · session stopped");
     expect(screen.queryByTestId("conductor-stop")).toBeNull();
   });
 
@@ -378,11 +378,11 @@ describe("PHILO-14 C4 the Conductor window", () => {
     await waitFor(() => expect(useConductor.getState().stops["launch:l-runbook"]?.word).toBe("STOPPED"));
     expect(useLane.getState().receipt).toBeNull();
     // Rendered: A (still selected) wears STOPPED · BY YOU; B wears none.
-    expect((await screen.findByTestId("conductor-stop-receipt")).textContent).toBe("STOPPED · BY YOU");
+    expect((await screen.findByTestId("conductor-stop-receipt")).textContent).toBe("Stopped by you");
     fireEvent.click(icon("Shard the reconciliation job"));
     expect(screen.queryByTestId("conductor-stop-receipt")).toBeNull();
     fireEvent.click(icon("Write the rollback runbook"));
-    expect(screen.getByTestId("conductor-stop-receipt").textContent).toBe("STOPPED · BY YOU");
+    expect(screen.getByTestId("conductor-stop-receipt").textContent).toBe("Stopped by you");
   });
 
   it("the asking agent comes first, then the working ones, and the stopped ones", async () => {
@@ -412,7 +412,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
       fireEvent.click(screen.getByRole("button", { name: "Connect Claude Code" }));
     });
     const failed = await screen.findByTestId("conductor-install-failed");
-    expect(failed.textContent).toContain("NOT CONNECTED · HUB OFFLINE");
+    expect(failed.textContent).toContain("Not connected · hub offline");
     apiFetch.mockImplementation(base);
     detectReply = () => DETECT;
     await act(async () => {
@@ -473,7 +473,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     });
     expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
     const done = await screen.findByTestId("conductor-install-done");
-    expect(done.textContent).toMatch(/^CONNECTED · CLAUDE CODE · \d\d:\d\d$/);
+    expect(done.textContent).toMatch(/^Connected · Claude Code · \d\d:\d\d$/);
     await waitFor(() => expect(screen.queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
     fireEvent.click(row("agent:codex").querySelector(".object-list-open")!);
     expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
@@ -567,7 +567,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     const runbook = fixtureMembers().find((m) => m.ref === "launch:l-runbook")!;
     render(<ConductorInfoWindow member={runbook} />);
     const info = await screen.findByTestId("conductor-info");
-    await waitFor(() => expect(within(info).getByText("Control").nextSibling?.textContent).toBe("NORMAL"));
+    await waitFor(() => expect(within(info).getByText("Control").nextSibling?.textContent).toBe("Normal"));
     expect(within(info).getByText("Branch").nextSibling?.textContent).toBe("hs/write-the-rollback-runbook");
     expect(within(info).getByText("From").nextSibling?.textContent).toBe("Write the rollback runbook");
     expect(within(info).getByText("Where").nextSibling?.textContent).toBe("Payments ledger cutover");

@@ -267,7 +267,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
     const group = within(line).getByRole("group", { name: "Hand: Write the cutover comms" });
-    await factIs(group, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(group, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     // The line sits under the drawer head, before the icons. Phase 16 A3
     // (the interior kit): the head is AppHead then the FilterBar, so the
     // line follows the FilterBar.
@@ -301,7 +301,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     expect(screen.queryByRole("button", { name: /^Codex: reconciliation job, AGENT/ })).toBeNull();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
   });
 
   it("at the working-at-once limit the verb reads Start when one is free and queues the hand (Betterment AG5)", async () => {
@@ -326,7 +326,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent(
       "NOT LAUNCHED · AGENT LIMIT REACHED",
@@ -353,7 +353,7 @@ describe("PHILO-14 C3 Astra r1 on #946", () => {
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     // The session registers on the second read after the launch: the poll
     // waits for it. Betterment AG8: it is drawn in the Agents fleet (the
@@ -472,7 +472,7 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
     fireEvent.click(within(drawer()).getByRole("button", { name: "More actions" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Hand to agent" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     // Over the list (the line comes before it).
     expect(line.compareDocumentPosition(drawer().querySelector("table, [role='grid'], .object-list")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -483,12 +483,12 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     const token = within(line).getByTestId("hand-confirm-agent");
     expect(token).toHaveAttribute("data-agent", "claude");
     expect(token).toHaveAccessibleName("Agent: Claude Code. Press to hand to Codex");
     fireEvent.click(token);
-    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).getByTestId("hand-confirm-agent")).toHaveAttribute("data-agent", "codex");
     expect(within(line).getByText("API.OPENAI.COM")).toBeTruthy();
     const previews = posts("/api/agent/hand/preview").map((c) => (c.init?.json as { profile: string }).profile);
@@ -509,9 +509,9 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
     fireEvent.click(within(drawer()).getByRole("button", { name: "More actions" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Hand to agent" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
-    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     await within(line).findByTestId("hand-confirm-receipt");
     expect((posts("/api/agent/hand")[0].init?.json as { profile: string }).profile).toBe("codex-default");
@@ -524,12 +524,12 @@ describe("pi spike #1020: pi is the third agent on the line", () => {
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
-    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).getByTestId("hand-confirm-agent")).toHaveAccessibleName("Agent: Codex. Press to hand to pi");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
-    await factIs(line, "PI · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "PI · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).getByTestId("hand-confirm-agent")).toHaveAttribute("data-agent", "pi");
     expect(within(line).getByText("LAN · 192.168.1.43:8080")).toBeTruthy();
     const previews = posts("/api/agent/hand/preview").map((c) => (c.init?.json as { profile: string }).profile);
@@ -546,7 +546,7 @@ describe("pi spike #1020: pi is the third agent on the line", () => {
     const line = await within(drawer()).findByTestId("hand-confirm");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
-    await factIs(line, "PI · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "PI · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(await within(line).findByText("NO ASSIGNMENT")).toBeTruthy();
     expect(within(line).getByRole("button", { name: "Hand" })).toBeDisabled();
   });
@@ -562,7 +562,7 @@ describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", ()
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).getByTestId("hand-confirm-skipped")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
   });
 
@@ -572,14 +572,14 @@ describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", ()
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CODEX · SIGN-IN UNKNOWN");
     // pi spike #1020: the flip turns through pi (no sign-in of its own: no warning).
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
-    await factIs(line, "PI · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "PI · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).queryByTestId("hand-confirm-selected-unknown")).toBeNull();
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).getByTestId("hand-confirm-selected-unknown")).toHaveTextContent("CLAUDE CODE · SIGN-IN UNKNOWN");
     expect(localStorage.getItem("hs.hand.agent.p-ledger")).toBe("claude");
   });
@@ -588,14 +588,14 @@ describe("PHILO-15 16 (Astra r1 on #1000): the default and the owner's flip", ()
     await renderDesk();
     dragOnto(comms(), conductor());
     let line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CLAUDE CODE · OPEN THROTTLE · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
-    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByRole("button", { name: "Cancel" }));
     expect(screen.queryByTestId("hand-confirm")).toBeNull();
     dragOnto(comms(), conductor());
     line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
+    await factIs(line, "CODEX · OPEN THROTTLE · hs/write-the-cutover-comms");
     expect(within(line).queryByTestId("hand-confirm-skipped")).toBeNull();
   });
 });

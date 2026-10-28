@@ -944,8 +944,8 @@
       },
       {
         "name": "--desk-snap-bottom",
-        "value": "60px",
-        "doc": "snap tiles clear the dock band"
+        "value": "84px",
+        "doc": "snap tiles clear the floating dock: its 64 px plate, 10 px above the edge, 10 px of air (2026-10-26, #1497)"
       },
       {
         "name": "--desk-work-top",

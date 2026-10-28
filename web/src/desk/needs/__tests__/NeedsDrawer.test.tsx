@@ -907,9 +907,8 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     await screen.findByText("8 need you");
     // Window grammar: the toolbar carries the offer; the status bar the facts.
     const toolbar = screen.getByRole("toolbar", { name: "Needs you" });
-    const coverage = screen.getByRole("button", { name: "Coverage" });
-    expect(coverage).toHaveTextContent("1 of 1 available");
-    expect(coverage).toHaveAttribute("aria-expanded", "false");
+    // W5-WORDS: every source read draws no coverage row (no `1 of 1 available`).
+    expect(screen.queryByRole("button", { name: "Coverage" })).toBeNull();
     await waitFor(() => expect(toolbar.textContent).toContain("No calendar"));
     expect(within(toolbar).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
     expect(screen.getByTestId("needs-checked").textContent).toMatch(/^Checked \d{2}:\d{2}$/);

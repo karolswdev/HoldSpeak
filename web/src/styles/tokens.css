@@ -259,7 +259,7 @@
   --desk-window-grab: 72px; /* minimum grabbable head strip (HS-93 contract) */
   --desk-window-cascade: 26px; /* default-corner cascade step */
   --desk-snap-top: 28px; /* fallback screen bar boundary; live geometry reads --desk-work-top */
-  --desk-snap-bottom: 84px; /* snap tiles clear the floating dock: its 64 px plate, 10 px above the edge, 10 px of air (2026-10-26) */
+  --desk-snap-bottom: 84px; /* snap tiles clear the floating dock: its 64 px plate, 10 px above the edge, 10 px of air (2026-10-26, #1497) */
   --desk-work-top: var(--wb-screen-h); /* the working band begins below the system bar */
   --desk-work-bottom: var(--desk-snap-bottom); /* the working band ends above the dock */
   --glow-meeting: #56C7F5;

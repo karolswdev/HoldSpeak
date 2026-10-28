@@ -44,6 +44,8 @@ export interface ProcessRow {
   kind: string;
   target: string;
   placement: string;
+  /** W5-WORDS: the engine's name the hub resolved for an inference placement. */
+  placementLabel?: string;
   state: string;
   domainState: string;
   timestamp: string | number | "";
@@ -242,6 +244,7 @@ export function foldProcessWindow(
       kind: text(process.kind) || text(operation.name),
       target: text(process.target_ref) || text(operation.target_ref),
       placement: text(operation.placement),
+      placementLabel: text(process.placement_label),
       state,
       domainState: text(process.domain_state),
       timestamp:
@@ -274,6 +277,7 @@ export function foldProcessWindow(
       kind: text(process.kind) || text(operation.name),
       target: text(process.target_ref) || text(operation.target_ref),
       placement: text(operation.placement),
+      placementLabel: text(process.placement_label),
       state: projectedState(operation, process).toLowerCase(),
       domainState: text(process.domain_state),
       timestamp: text(operation.created_at),

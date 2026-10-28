@@ -120,10 +120,10 @@ describe("the launch sheet", () => {
     expect(where).toContain("~/dev/payments-ledger");
     expect(where).toContain("new branch"); // Betterment AG1: never the item id (AG4: words)
     expect(where).not.toContain("ai_1");
-    expect(where).toContain("CONTROL · YOLO");
+    expect(where).toContain("CONTROL · OPEN THROTTLE");
     const footer = document.querySelector(".desk-hand-footer")!;
     expect(footer.querySelector(".gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
-    expect(footer.textContent).toContain("CLAUDE CODE · YOLO");
+    expect(footer.textContent).toContain("CLAUDE CODE · OPEN THROTTLE");
     expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(false);
     // The agent cards carry the hub's facts.
     expect(within(sheet).getByText("HOOKS IN · 2.1.4")).toBeTruthy();
@@ -213,7 +213,7 @@ describe("the launch sheet", () => {
 
 describe("the words", () => {
   it("modes, sizes, facts and refusals are tokens", () => {
-    expect([modeWord("safe"), modeWord("neutral"), modeWord("yolo")]).toEqual(["SECURE", "NORMAL", "YOLO"]);
+    expect([modeWord("safe"), modeWord("neutral"), modeWord("yolo")]).toEqual(["SECURE", "NORMAL", "OPEN THROTTLE"]);
     expect(kb(4300)).toBe("4.2 KB");
     expect(sourceFact({ kind: "decision", ref: "d", title: "", lines: null })).toBe("DECISION");
     expect(sourceFact({ kind: "project_decisions", ref: "p", title: "", lines: 1 })).toBe("1 DECISION");

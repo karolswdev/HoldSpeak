@@ -4,7 +4,7 @@
 // unverified banner, generator provenance, fallback_reason.
 // Proves the mount: from the real Room, open the Update posture by real clicks.
 
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleSlotContext } from "../../../../desk/surface/title";
@@ -626,7 +626,7 @@ describe("Five verbs as separate controls", () => {
 
     await draftFromRoom();
     expect(screen.getByTestId("engine-line").textContent).toContain("No engine");
-    expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
+    expect(screen.getByTestId("update-generator-label").textContent).toBe("From the Room's facts");
     // Betterment P1: no engine, no engine pass.
     expect(screen.queryByTestId("update-engine-pass")).toBeNull();
     expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/engine-pass"))).toBe(false);
@@ -730,7 +730,7 @@ describe("Draft update picks its generator from the engine read", () => {
     render(<WindowHarness scope="project:p1" />);
     await draftFromRoom();
     expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
-    expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
+    expect(screen.getByTestId("update-generator-label").textContent).toBe("From the Room's facts");
   });
 
   it("an engine set: Write update saves the records draft, then the engine's draft replaces it", async () => {
@@ -739,7 +739,7 @@ describe("Draft update picks its generator from the engine read", () => {
     render(<WindowHarness scope="project:p1" />);
     await draftFromRoom();
     expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
-    expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
+    expect(screen.getByTestId("update-generator-label").textContent).toBe("From the Room's facts");
     expect(screen.getByTestId("update-engine-pass").getAttribute("data-state")).toBe("running");
     await waitFor(() => expect(screen.getByTestId("update-generator-label").textContent).toMatch(/^Model/),
       { timeout: 4000 });
@@ -754,6 +754,24 @@ describe("Draft update picks its generator from the engine read", () => {
     await waitFor(() => expect(verb).not.toBeDisabled());
     await draftFromRoom();
     expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
+  });
+});
+
+// ── DELIGHT slice 3: the empty list is the object, one line, the making verb ──
+
+describe("Empty update list", () => {
+  it("shows the object and No updates yet; Draft the first one drafts", async () => {
+    setupUpdatePosture({ listUpdates: [] });
+    render(<WindowHarness scope="project:p1" />);
+    await openUpdateList();
+    const line = screen.getByText("No updates yet");
+    const empty = line.closest('.surface-state[data-object="project"]') as HTMLElement;
+    expect(empty.querySelector("img.surface-state-sprite")).toBeTruthy();
+    const drafts = () => apiFetch.mock.calls.filter(([u, init]) =>
+      String(u).includes("/updates/draft") && (init as { method?: string } | undefined)?.method === "POST").length;
+    const before = drafts();
+    fireEvent.click(within(empty).getByRole("button", { name: "Draft the first one" }));
+    await waitFor(() => expect(drafts()).toBe(before + 1));
   });
 });
 
@@ -772,7 +790,7 @@ describe("Generator provenance", () => {
     await waitFor(() => screen.getByTestId("update-editor"));
 
     const label = screen.getByTestId("update-generator-label");
-    expect(label.textContent).toBe("Deterministic");
+    expect(label.textContent).toBe("From the Room's facts");
   });
 
   it("shows model assignment on a model draft", async () => {
@@ -809,7 +827,7 @@ describe("Generator provenance", () => {
     await waitFor(() => screen.getByTestId("update-editor"));
 
     const fallback = screen.getByTestId("update-fallback-reason");
-    expect(fallback.textContent).toBe("Model unavailable -- drafted deterministically");
+    expect(fallback.textContent).toBe("Model unavailable · drafted from the Room's facts");
   });
 });
 
@@ -872,9 +890,8 @@ describe("Draft list: lifecycle-honest", () => {
     const items = screen.getAllByTestId("update-list-item");
     const row = items[0].querySelector(".update-list-row");
     expect(row).toBeTruthy();
-    const tokens = [...row!.querySelectorAll(".surface-token")].map((t) => t.textContent);
-    expect(tokens[0]).toBe("Draft");
-    expect(tokens[1]).toBe("REV 1");
+    // W5-WORDS: the state is a dot and a word, the revision in sentence case.
+    expect(row!.querySelector(".kit-dotword")?.textContent).toBe("Draft · rev 1");
     expect(items[0].querySelector(".update-lead-emblem")?.textContent).toBe("▤");
   });
 

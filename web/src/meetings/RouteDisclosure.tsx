@@ -10,6 +10,7 @@
  */
 import { Fragment } from "react";
 import { egressFor } from "../desk/surface/egress";
+import { DotWord } from "../desk/surface/kit";
 import type { PlannedRoute, RunReceipt, SummaryRefusal } from "./summaryRoute";
 import { refusalFact, routeOff, routeReasonToken, routeReady } from "./summaryRoute";
 
@@ -87,6 +88,14 @@ export function routeTitle(route: PlannedRoute | null | undefined): string | und
   ].join(", ");
 }
 
+/** W5-WORDS: an attempt's outcome as a sentence-case word (`Failed`,
+ *  `Timed out`), never a caps token. */
+export function outcomeWord(outcome: string): string {
+  const words = String(outcome ?? "").replace(/_/g, " ").trim().toLowerCase();
+  if (words === "timeout") return "Timed out";
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "Failed";
+}
+
 /** A run's failed attempts, in order: the outcome token, the host in its
  *  hover title. A succeeded attempt says nothing (owner ruling 2026-10-25). */
 export function RunAttempts({
@@ -103,8 +112,8 @@ export function RunAttempts({
     <span className="summary-route" data-testid={testId}>
       {failed.map((attempt, index) => (
         <Fragment key={`${attempt.leg_ordinal}-${index}`}>
-          <span className="surface-token" data-chip data-tone="danger" title={egressFor(attempt.host).label || undefined}>
-            {attempt.outcome.toUpperCase()}
+          <span className="summary-attempt" title={egressFor(attempt.host).label || undefined}>
+            <DotWord tone="fail">{outcomeWord(attempt.outcome)}</DotWord>
           </span>
         </Fragment>
       ))}

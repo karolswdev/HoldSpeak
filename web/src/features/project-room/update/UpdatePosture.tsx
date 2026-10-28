@@ -15,7 +15,7 @@ import {
   MicButton,
   Material,
   StateChip,
-  ProvenanceChip,
+  DotWord,
   ActionNotice,
   CitationChips,
   ClaimAxes as LibraryClaimAxes,
@@ -23,7 +23,6 @@ import {
   RunLine,
   countLabel,
   humanTime,
-  type ChipState,
 } from "../../../desk/surface";
 import { openRef } from "../../../desk/openObject";
 import type { EnginePass, UpdateController } from "./useUpdateController";
@@ -34,7 +33,6 @@ import {
   generatorLabel,
   humanFallbackReason,
   lifecycleLabel,
-  lifecycleTone,
   provenancePhrase,
   refChipLabel,
   refIdentityLabel,
@@ -44,6 +42,7 @@ import "./update-posture.css";
 import { ListChips, PublishedWells } from "../../channels/SendWell";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useEngine, refreshEngine } from "../../../desk/hooks/useEngine";
+import { spriteUrl } from "../../../desk/sprites";
 
 /** The capability that drafts a project update (`project_update_service`). */
 const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
@@ -53,21 +52,14 @@ const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
    one DELIVERY history live in features/channels/SendWell.tsx; the record
    word is DELIVERY ×N / DELIVERY N (the same counts, `isDelivered`). */
 
-/* ── Lifecycle to StateChip state mapping ── */
-
-function lifecycleChipState(lifecycle: string): ChipState {
-  if (lifecycle === "published") return "success";
-  if (lifecycle === "superseded") return "failure";
+/** W5-WORDS: the lifecycle's dot (published green, superseded red). */
+function lifecycleDotTone(lifecycle: string): "ok" | "fail" | "idle" {
+  if (lifecycle === "published") return "ok";
+  if (lifecycle === "superseded") return "fail";
   return "idle";
 }
 
-/* ── Provenance chip props from generator string ── */
 
-function generatorChipSource(generator: string): string {
-  if (generator === "deterministic") return "deterministic";
-  if (generator.startsWith("model:")) return "model";
-  return generator;
-}
 
 /** PHILO-15 B72: a model draft names its model; never the assignment id.
  *  Owner ruling 2026-10-25: by name only, no host and no place word on a
@@ -292,7 +284,6 @@ function UpdateList({
       <SurfaceLedger count={countLabel("UPDATES", ctrl.updates.length)} cols="room">
         <ul className="surface-ledger-rows">
           {ctrl.updates.map((update) => {
-            const tone = lifecycleTone(update.lifecycle);
             return (
               <SurfaceLedgerRow
                 key={update.id}
@@ -312,13 +303,13 @@ function UpdateList({
                     data-lifecycle={update.lifecycle}
                     data-generator={update.generator}
                   >
-                    <span className="surface-token" data-chip data-tone={tone}>
-                      {lifecycleLabel(update.lifecycle)}
-                    </span>
-                    <span className="surface-token" data-chip>REV {update.draftRevision}</span>
+                    {/* W5-WORDS: a state is a dot and a word (`● Draft · rev 1`). */}
+                    <DotWord tone={lifecycleDotTone(update.lifecycle)}>
+                      {`${lifecycleLabel(update.lifecycle)} · rev ${update.draftRevision}`}
+                    </DotWord>
                     {update.fallbackReason ? (
                       <span
-                        className="surface-token"
+                        className="update-quiet"
                         data-tone="warn"
                         data-testid="update-fallback-reason"
                       >
@@ -330,10 +321,10 @@ function UpdateList({
                 cells={
                   <>
                     <ListChips update={update} />
-                    <ProvenanceChip
-                      source={generatorChipSource(update.generator)}
-                      boundary={generatorChipBoundary(update)}
-                    />
+                    {/* W5-WORDS: where the text came from, in quiet words. */}
+                    <span className="update-quiet" data-testid="update-row-provenance">
+                      {generatorLabel(update.generator, update.generatorModel)}
+                    </span>
                   </>
                 }
                 time={humanTime(update.publishedAt ?? update.updatedAt)}
@@ -358,12 +349,12 @@ function ProvenanceLabel({ update }: { update: ProjectUpdate }) {
   const fallbackLabel = humanFallbackReason(update.fallbackReason);
   return (
     <span className="update-provenance" data-testid="update-provenance">
-      <span className="surface-token" data-testid="update-generator-label">
+      <span className="update-quiet" data-testid="update-generator-label">
         {generatorLabel(update.generator, update.generatorModel)}
       </span>
       {fallbackLabel ? (
         <span
-          className="surface-token"
+          className="update-quiet"
           data-tone="warn"
           data-testid="update-fallback-reason"
         >
@@ -431,12 +422,11 @@ function UpdateEditor({
       </SurfaceVerbs>
       {/* Provenance + lifecycle band */}
       <div className="update-editor-band" data-testid="update-editor-band">
-        <StateChip
-          state={lifecycleChipState(update.lifecycle)}
-          label={lifecycleLabel(update.lifecycle)}
-        />
+        {/* W5-WORDS: `● Published · rev 1`, then where the text came from. */}
+        <DotWord tone={lifecycleDotTone(update.lifecycle)} data-testid="update-lifecycle">
+          {`${lifecycleLabel(update.lifecycle)} · rev ${update.draftRevision}`}
+        </DotWord>
         <ProvenanceLabel update={update} />
-        <span className="surface-token">Rev {update.draftRevision}</span>
       </div>
 
       {/* Betterment P1: a draft reads as text and is edited in place (no
@@ -468,16 +458,13 @@ function UpdateEditor({
           {/* PHILO-10-04: SEND first, then the one DELIVERY history (every
               channel + the manual Mark delivered, kept). A draft has no Send. */}
           {update.lifecycle === "published" ? <PublishedWells ctrl={ctrl} update={update} /> : null}
-          <SurfaceSection
-            label="Update"
-            actions={
-              <span className="surface-token" data-testid="update-readonly-reason">
-                {update.lifecycle === "superseded"
-                  ? "Superseded drafts are read-only"
-                  : "Published updates are read-only"}
-              </span>
-            }
-          >
+          <SurfaceSection label="Update">
+            {/* W5-WORDS: one quiet line, never a caps token. */}
+            <p className="update-quiet update-readonly-line" data-testid="update-readonly-reason">
+              {update.lifecycle === "superseded"
+                ? "Superseded drafts are read-only"
+                : "Published updates are read-only"}
+            </p>
             <RenderedUpdateDocument update={update} onOpenRef={onOpenRef} />
           </SurfaceSection>
         </div>
@@ -620,10 +607,14 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
         ) : null}
 
         {ctrl.updates.length === 0 && !ctrl.loading ? (
+          /* DELIGHT slice 3: the object, one line, the making verb. */
           <SurfaceState
             empty
-            emptyLabel="No updates yet. Draft the first one."
-            emptyGlyph={"▤"}
+            emptyLabel="No updates yet"
+            emptyImage={spriteUrl("artifact", "update")}
+            emptyKind="project"
+            actionLabel="Draft the first one"
+            onAction={() => void ctrl.write(engine.state === "set")}
           />
         ) : (
           <UpdateList ctrl={ctrl} />
@@ -631,8 +622,8 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
 
         <SurfaceFooter
           receipt={
-            <span className="surface-footer-receipt-line" data-testid="update-footer-receipt" role="status">
-              {countLabel("UPDATES", ctrl.updates.length)}
+            <span className="surface-footer-receipt-line update-footer-words" data-testid="update-footer-receipt" role="status">
+              {`${ctrl.updates.length} ${ctrl.updates.length === 1 ? "update" : "updates"}`}
             </span>
           }
         />
@@ -691,10 +682,10 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
               : undefined
           }
           receipt={
-            <span className="surface-footer-receipt-line" data-testid="update-footer-receipt" role="status">
+            <span className="surface-footer-receipt-line update-footer-words" data-testid="update-footer-receipt" role="status">
               {ctrl.current
-                ? `UPDATE ${lifecycleLabel(ctrl.current.lifecycle)} · ${generatorLabel(ctrl.current.generator, ctrl.current.generatorModel)}${ctrl.dirty ? " · UNSAVED" : ""}`
-                : "UPDATE"}
+                ? `${lifecycleLabel(ctrl.current.lifecycle)} · rev ${ctrl.current.draftRevision}${ctrl.dirty ? " · Not saved" : ""}`
+                : "Update"}
             </span>
           }
           verbs={
