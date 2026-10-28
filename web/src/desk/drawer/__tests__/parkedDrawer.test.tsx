@@ -97,16 +97,16 @@ describe("the Parked drawer", () => {
     render(<ParkedDrawer origin={null} />);
     const list = await screen.findByRole("grid", { name: "Archive" });
     expect(within(list).getAllByRole("row")).toHaveLength(4); // the head + three rows
-    expect(rowOf(/^Vendor call, MEETING/)).toBeTruthy();
-    expect(rowOf(/^Draft the runbook, AUTOMATION ITEM/)).toBeTruthy();
-    expect(rowOf(/^Old migration, PROJECT/)).toBeTruthy();
+    expect(rowOf(/^Vendor call, Meeting/)).toBeTruthy();
+    expect(rowOf(/^Draft the runbook, Automation item/)).toBeTruthy();
+    expect(rowOf(/^Old migration, Project/)).toBeTruthy();
     expect(screen.getByText("3 objects")).toBeTruthy();
   });
 
   it("Restore uses each kind's own route and shows the park receipt", async () => {
     const refresh = vi.spyOn(useDesk.getState(), "refresh").mockResolvedValue(undefined as never);
     render(<ParkedDrawer origin={null} />);
-    fireEvent.click(await screen.findByRole("button", { name: /^Old migration, PROJECT/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Old migration, Project/ }));
     await act(async () => {
       fireEvent.click(screen.getByTestId("parked-restore"));
     });
@@ -156,26 +156,29 @@ describe("the Parked drawer", () => {
     parked = [];
     notRead = ["workbench_item"];
     const { unmount } = render(<ParkedDrawer origin={null} />);
-    expect((await screen.findByTestId("parked-not-read")).textContent).toBe("AUTOMATION ITEMS · NOT READ");
+    expect((await screen.findByTestId("parked-not-read")).textContent).toBe("Automation items not read");
     unmount();
     notRead = [];
     render(<ParkedDrawer origin={null} />);
     expect(await screen.findByText("Nothing parked")).toBeTruthy();
-    // no counter of zero
+    // no counter of zero, and no dead verbs on an empty Archive (W3-ZONE)
     expect(screen.queryByText(/0 objects/i)).toBeNull();
+    expect(screen.queryByRole("toolbar")).toBeNull();
+    expect(screen.queryByTestId("parked-restore")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
   });
 
   it("a kind read part way shows its rows and says NOT READ · PARTIAL", async () => {
     notRead = ["meeting"];
     partial = ["meeting"];
     render(<ParkedDrawer origin={null} />);
-    expect((await screen.findByTestId("parked-not-read")).textContent).toBe("MEETINGS · NOT READ · PARTIAL");
-    expect(rowOf(/^Vendor call, MEETING/)).toBeTruthy();
+    expect((await screen.findByTestId("parked-not-read")).textContent).toBe("Meetings not read · partial");
+    expect(rowOf(/^Vendor call, Meeting/)).toBeTruthy();
   });
 
   it("a workbench item row wears its own kind word and the workbench sprite", () => {
     const row = parkedRow(ITEMS[1], new Date("2026-10-07T10:00:00"));
-    expect(row.kindWord).toBe("AUTOMATION ITEM");
+    expect(row.kindWord).toBe("Automation item");
     expect(row.sprite).toMatch(/cartridge|workbench/);
   });
 });

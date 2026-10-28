@@ -566,6 +566,64 @@
   vertical-align: middle;
   accent-color: var(--wb-sel);
   cursor: pointer;
+  /* DELIGHT (2026-10-27): our box, so the check can draw in. */
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  padding: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--wb-well);
+}
+.desk-next .thought-note-body .cm-lp-checkbox:checked {
+  border-color: var(--wb-sel-vivid);
+  background: var(--wb-sel-vivid);
+}
+.desk-next .thought-note-body .cm-lp-checkbox:focus-visible {
+  outline: 2px solid var(--wb-sel);
+  outline-offset: 1px;
+}
+.desk-next .thought-note-body .cm-lp-task {
+  position: relative;
+}
+.desk-next .thought-note-body .cm-lp-check {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  margin-top: -6.5px;
+  fill: none;
+  stroke: var(--wb-paper);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 14;
+  stroke-dashoffset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.desk-next .thought-note-body .cm-lp-checkbox:checked + .cm-lp-check {
+  opacity: 1;
+}
+/* DELIGHT — the task tick: the box just pressed fills (120 ms) and its
+   check draws in with its stroke (160 ms). Once, on the press only; never
+   on load; nothing under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .desk-next .thought-note-body .cm-lp-task[data-tick] .cm-lp-checkbox {
+    animation: cm-lp-box-fill 120ms var(--ease-standard) both;
+  }
+  .desk-next .thought-note-body .cm-lp-task[data-tick] .cm-lp-check path {
+    animation: cm-lp-tick 160ms var(--ease-standard) 40ms both;
+  }
+}
+@keyframes cm-lp-box-fill {
+  from { background: var(--wb-well); border-color: var(--border-strong); }
+  to { background: var(--wb-sel-vivid); border-color: var(--wb-sel-vivid); }
+}
+@keyframes cm-lp-tick {
+  from { stroke-dashoffset: 14; }
+  to { stroke-dashoffset: 0; }
 }
 
 /* An open task reads in the note's ink (the list tag's faint ink is for
@@ -1148,8 +1206,22 @@
 .desk-next .note-margin-answer {
   max-height: 16em;
   overflow-y: auto;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* The margin is narrow: the answer's document reads at the card's size. */
+.desk-next .note-margin-answer .surface-material {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.desk-next .note-margin-answer .surface-material > :first-child {
+  margin-top: 0;
+}
+
+.desk-next .note-margin-answer .surface-material :is(h1, h2, h3, h4) {
+  font-size: 13px;
+  margin: 8px 0 2px;
 }
 
 .desk-next .note-margin-verbs {

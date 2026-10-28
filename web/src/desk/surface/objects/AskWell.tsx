@@ -51,9 +51,17 @@ export interface AskWellProps {
   /** PHILO-17: `false` when the window's one filled primary is another
    *  verb (a held call's Approve): Answer is then the quieter steel verb. */
   primary?: boolean;
+  /** W3 AGENT WINDOW (canvas agent-window-2026-10-27): the soft plate: the
+   *  head is a dot and a sentence-case word (`Asks you`) with the age quiet
+   *  at the right (`Asked 6 min ago`), never a mono caps caption. */
+  plate?: boolean;
   /** Pass-through data-testid for the root `section`. */
   "data-testid"?: string;
 }
+
+/** The plate's head word and dot tone by the caption word. */
+const PLATE_WORD: Record<string, string> = { ASKS: "Asks you", IDLE: "Idle", DONE: "Done" };
+const PLATE_TONE: Record<string, string> = { ASKS: "warn", IDLE: "info", DONE: "ok" };
 
 export function AskWell({
   agent,
@@ -74,6 +82,7 @@ export function AskWell({
   inputRef,
   arm,
   primary = true,
+  plate = false,
   "data-testid": testId,
 }: AskWellProps) {
   const caption = [`${agent.toUpperCase()} ${word}`, age?.toUpperCase()].filter(Boolean).join(" · ");
@@ -85,8 +94,18 @@ export function AskWell({
     else field.current?.focus();
   };
   return (
-    <section className="ask-well" aria-label={`${agent} asks`} data-testid={testId}>
-      <p className="ask-well-caption">{caption}</p>
+    <section className="ask-well" aria-label={`${agent} asks`} data-testid={testId} data-plate={plate ? "true" : undefined}>
+      {plate ? (
+        <header className="ask-well-head">
+          <span className="ask-well-state" data-tone={PLATE_TONE[word] ?? "warn"}>
+            <span className="ask-well-dot" aria-hidden="true" />
+            {PLATE_WORD[word] ?? word.charAt(0) + word.slice(1).toLowerCase()}
+          </span>
+          {age ? <span className="ask-well-age">{word === "ASKS" ? `Asked ${age} ago` : `${age} ago`}</span> : null}
+        </header>
+      ) : (
+        <p className="ask-well-caption">{caption}</p>
+      )}
       {/* Phase 16: the agent's words, rendered (AgentWords). */}
       <AgentWords className="ask-well-question" text={question} />
       <div className="ask-well-answer">

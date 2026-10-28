@@ -17,6 +17,7 @@ import {
 import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
 import { countWords, DotWord, PadGadget, ScrollHint, StatusBar, SurfaceFooter, ToolGlyph } from "../surface";
+import { Material } from "../surface/Material";
 import { useNoteOutcomes } from "./NoteOutcomesWell";
 import { MarginNote, NoteMargin, type MarginCard } from "./NoteMargin";
 import { dropMarginAsk, useMarginAsks, type MarginAsk } from "./marginAsks";
@@ -624,7 +625,8 @@ function WorkspaceReady({
         </>}>
         {ask.state === "working" ? <DotWord tone="info" className="note-margin-working">Working</DotWord>
           : ask.state === "failed" ? <DotWord tone="fail">No answer</DotWord>
-          : <div className="note-margin-answer">{ask.answer}</div>}
+          // The answer reads as the note reads (Ask's answer document): no raw Markdown.
+          : <div className="note-margin-answer" data-testid="note-margin-answer"><Material>{ask.answer}</Material></div>}
       </MarginNote>,
     });
   }
@@ -740,6 +742,8 @@ function WorkspaceReady({
         statusWords ? {
           key: "save",
           lamp: statusWords.tone === "danger" ? "fail" : statusWords.tone === "busy" ? "info" : "ok",
+          /* DELIGHT: each save pulses the lamp once (the kept time changes). */
+          pulse: statusWords.tone === "ok" ? writer.keptAt ?? null : null,
           text: <span className="thought-note-status" data-tone={statusWords.tone === "danger" ? "danger" : undefined} data-lamp={statusWords.tone}>{statusWords.text}</span>,
         } : null,
         working ? { key: "working", lamp: "info", text: "Working" } : null,

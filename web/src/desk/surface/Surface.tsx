@@ -218,6 +218,7 @@ export function SurfaceState({
   emptyLabel = "Nothing yet",
   emptyGlyph = "○",
   emptyImage,
+  emptyKind,
   emptyContent,
   onRetry,
   retryLabel = "Try again",
@@ -233,6 +234,12 @@ export function SurfaceState({
   /** A pixel-sprite URL — the world's own objects carry the empty
    * state (wins over the glyph). */
   emptyImage?: string;
+  /** DELIGHT (2026-10-27): the object kind of the empty list (`meeting`,
+   *  `decision`, `person` …). With `emptyImage` the empty state is an
+   *  object: the 64 px D object on an 88 px halo in the kind's hue, the one
+   *  line in the display face, and the action (the window's making verb)
+   *  as a quiet secondary Button. */
+  emptyKind?: string;
   /** Compact custom content inside the shared in-flow empty-state material. */
   emptyContent?: ReactNode;
   onRetry?: () => void;
@@ -266,6 +273,20 @@ export function SurfaceState({
         {onRetry ? (
           <Button dense variant="ghost" onClick={onRetry}>
             {retryLabel}
+          </Button>
+        ) : null}
+      </div>
+    );
+  if (empty && emptyKind && emptyImage && !emptyContent)
+    return (
+      <div className="surface-state" data-kind="empty" data-object={emptyKind}>
+        <span className="surface-state-object" data-kind={emptyKind} aria-hidden="true">
+          <img className="surface-state-sprite" src={emptyImage} alt="" draggable={false} />
+        </span>
+        <span className="surface-state-line">{emptyLabel}</span>
+        {onAction && actionLabel ? (
+          <Button dense variant="secondary" className="surface-state-verb" onClick={onAction}>
+            {actionLabel}
           </Button>
         ) : null}
       </div>

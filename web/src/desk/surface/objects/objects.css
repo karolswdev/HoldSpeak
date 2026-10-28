@@ -469,6 +469,27 @@
   .object-list[data-compact-columns="true"] .object-list-fold { display: none; }
 }
 
+/* DELIGHT (2026-10-27, canvas canvases/delight-2026-10-27.html) — THE KIND
+   HUE. Each object kind owns ONE hue (`--kind-*`, design-tokens.json), taken
+   from the D object it already wears: a person teal, a Project the
+   Workbench blue, a meeting sky blue, a decision violet, a note amber, a
+   pull request green, an action ember, an agent orange. The hue is used in
+   four places only: the 20 px glyph's seat (a 13 % wash drawn as a
+   box-shadow spread, so no row moves), the row's hover wash (8 %), the
+   selection wash of a list that does not hold focus (14 % and a 3 px kind
+   rule), and the 3 px rule of a peek or margin card. Never on a Button,
+   never as a text block. A focused list's selection stays the selection
+   blue. A row names its kind on `data-kind`. */
+:is(.object-list-row, .needs-row, .surface-state-object) { --row-kind: var(--kind-other); }
+:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="project"], [data-kind="room"]) { --row-kind: var(--kind-project); }
+:is(.object-list-row, .needs-row, .surface-state-object)[data-kind="meeting"] { --row-kind: var(--kind-meeting); }
+:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="person"], [data-kind="people"]) { --row-kind: var(--kind-person); }
+:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="decision"], [data-kind="decision_record"]) { --row-kind: var(--kind-decision); }
+:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="note"], [data-kind="thought"]) { --row-kind: var(--kind-note); }
+:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="pr"], [data-kind="pull-request"]) { --row-kind: var(--kind-pr); }
+:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="action"], [data-kind="action-item"], [data-kind="commitment"]) { --row-kind: var(--kind-action); }
+:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="agent"], [data-kind="coder"]) { --row-kind: var(--kind-agent); }
+
 /* ── ObjectList density="dense": the native list view (window grammar,
    2026-10-24). 30 px rows on the desktop, 44 px in a surface of 520 px or
    less; sans headers in sentence case; sans 13 cells; a state is a dot and
@@ -527,10 +548,18 @@
 }
 /* A row lifts under the pointer: a blue tint and a 1 px ink rule. */
 .object-list[data-density="dense"] .object-list-row:hover {
-  background: var(--wb-row-hover);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 28%, transparent);
+  background: color-mix(in srgb, var(--row-kind) 8%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--row-kind) 30%, transparent);
 }
-.object-list[data-density="dense"] .object-list-row[data-selected="true"] {
+/* DELIGHT (2026-10-27): the selection of a list that does not hold focus
+   (another window is in front, or the press went elsewhere) is the row's
+   kind wash with a 3 px rule in the kind hue, the Finder's quiet
+   selection in our colours. A focused list keeps the selection blue. */
+.object-list[data-density="dense"]:not(:focus-within) .object-list-row[data-selected="true"] {
+  background: color-mix(in srgb, var(--row-kind) 14%, var(--wb-paper));
+  box-shadow: inset 3px 0 0 var(--row-kind);
+}
+.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] {
   background: var(--wb-sel-vivid);
   box-shadow: none;
   color: var(--wb-paper);
@@ -547,20 +576,32 @@
   outline: 2px solid var(--wb-sel);
   outline-offset: -2px;
 }
-.object-list[data-density="dense"] .object-list-row[data-selected="true"] .object-list-open:focus-visible {
+.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] .object-list-open:focus-visible {
   outline-color: var(--wb-paper);
 }
 /* Every row leads with its 20 px illustrated object glyph. */
 .object-list[data-density="dense"] .object-list-open img {
   width: 20px;
   height: 20px;
-  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent));
+}
+/* DELIGHT: the glyph seat (below). */
+.object-list[data-density="dense"] .object-list-open img,
+:is(.needs-drawer, .today-needs) .needs-row > img {
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--row-kind) 13%, var(--wb-paper));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--row-kind) 13%, var(--wb-paper)),
+    0 0 0 3px color-mix(in srgb, var(--row-kind) 22%, transparent);
+}
+.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] .object-list-open img {
+  background: color-mix(in srgb, var(--wb-paper) 92%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-paper) 92%, transparent);
 }
 .object-list[data-density="dense"] .object-list-name-word {
   font: 600 13px / 1.35 var(--font-sans);
   color: var(--wb-text);
 }
-.object-list[data-density="dense"] .object-list-row[data-selected="true"] .object-list-name-word {
+.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] .object-list-name-word {
   color: var(--wb-paper);
 }
 .object-list[data-density="dense"] .object-list-cell {
@@ -619,10 +660,10 @@
 .object-list-row[data-selected="true"] .object-list-avatar {
   box-shadow: 0 0 0 2px var(--wb-paper);
 }
-.object-list[data-density="dense"] .object-list-row[data-selected="true"] :is(.object-list-cell, .object-list-dot-word) {
+.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] :is(.object-list-cell, .object-list-dot-word) {
   color: var(--wb-paper);
 }
-.object-list[data-density="dense"] .object-list-row[data-selected="true"] .kit-dot {
+.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] .kit-dot {
   box-shadow: 0 0 0 1px var(--wb-paper);
 }
 /* W1-KIT (2026-10-27): the narrow sort verb (a dense "Sort" Button in the
@@ -1024,6 +1065,56 @@
 .ask-well-draft-text {
   font: var(--font-size-sm) / 1.4 var(--font-sans);
   color: var(--text);
+}
+
+/* W3 AGENT WINDOW: the soft plate (AskWell `plate`): a warm tint, no ink
+   frame; the head a dot and a word, the age quiet; the draft in sans. */
+.ask-well[data-plate="true"] {
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--lamp-warn) 8%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-warn) 30%, var(--wb-rule-soft));
+}
+.ask-well-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ask-well-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12.5px/1.3 var(--font-sans);
+  color: var(--wb-ink);
+}
+.ask-well-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--lamp-warn);
+}
+.ask-well-state[data-tone="ok"] .ask-well-dot { background: var(--lamp-ok); }
+.ask-well-state[data-tone="info"] .ask-well-dot { background: var(--lamp-info); }
+.ask-well-age {
+  margin-left: auto;
+  font: 12px/1.3 var(--font-sans);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.ask-well[data-plate="true"] .ask-well-question {
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+.ask-well[data-plate="true"] .ask-well-draft-word {
+  font: 12.5px/1.3 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-muted);
 }
 
 /* PRCard facts stay on the same light neutral surface as the shell. */

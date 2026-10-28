@@ -440,3 +440,17 @@
     grid-column: 2 / 4;
   }
 }
+
+/* DELIGHT (2026-10-27) — Done settles the row out: a green wash that fades
+   with the row, 180 ms, opacity and colour only (NeedsDrawer `settleOut`).
+   Nothing under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  :is(.needs-drawer, .today-needs) .needs-row[data-settle="done"] {
+    pointer-events: none;
+    animation: needs-row-settle 180ms var(--ease-standard) both;
+  }
+}
+@keyframes needs-row-settle {
+  from { background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper)); opacity: 1; }
+  to { background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper)); opacity: 0; }
+}

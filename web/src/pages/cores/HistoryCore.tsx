@@ -42,7 +42,6 @@ import { MeetingSelectionVerbs } from "./history/CatalogRail";
 import { RecordHome } from "./history/RecordHome";
 import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
-import { SYSTEM } from "../../desk/systemSprites";
 import "./history/meetings-list.css";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
 import { objectWindowStandIn } from "../../desk/objectWindows";
@@ -453,7 +452,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       runningId={runningId}
       drainerAbsent={drainerAbsent}
       runRefusal={runRefusal}
-      emptyImage={SYSTEM.dockMeetings}
+      emptyImage={`${import.meta.env.BASE_URL || "/_built/"}desk/sprites/meeting.png`}
+      onEmptyAction={() => importPicker.current?.click()}
     />
   );
 

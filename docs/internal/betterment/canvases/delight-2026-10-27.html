@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Delight system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material: the values are copied from web/src/styles/tokens.css (2026-10-27),
+   plus the kind hues this canvas proposes (marked NEW). */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-backdrop:#293847; --wb-rec:#b3261e;
+  --wb-row-hover:color-mix(in srgb,#3b5d93 8%,#fafbfc);
+  --ok:#34d399; --ok-strong:#10b981; --ok-ink:#17714a; --ember:#a86e4a; --ember-ink:#8a5a3d; --warn:#f59e0b; --danger:#dc2626; --info:#3b82c4;
+  /* NEW — the kind hues (each ≥ 4.5:1 on the paper, so the hue may carry a word) */
+  --kind-project:#3b62c4; --kind-meeting:#1c78a8; --kind-person:#1f7a6b; --kind-decision:#6a4bc4;
+  --kind-note:#94620f; --kind-pr:#2b7a4a; --kind-action:#8a5a3d; --kind-agent:#a84a1c;
+  /* NEW — the depth scale, one name per step */
+  --depth-0:none;
+  --depth-1:0 1px 0 rgba(22,40,62,.10),0 0 0 1px var(--wb-rule-soft);
+  --depth-2:0 4px 12px rgba(22,40,62,.14),0 0 0 1px var(--wb-rule-soft);
+  --depth-3:0 10px 28px rgba(8,14,22,.22),0 0 0 1px var(--wb-rule);
+  --depth-4:0 22px 48px rgba(22,40,62,.24),0 4px 12px rgba(22,40,62,.12);
+  --lamp-ring:0 0 0 1.5px var(--wb-paper),0 1px 2px rgba(12,20,32,.4);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9eef4;color:var(--wb-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 14px/1.3 var(--font-ui);margin:22px 0 8px;color:var(--wb-muted)}
+p{margin:0 0 10px;max-width:1000px}
+code{font:12.5px var(--font-mono);color:var(--wb-muted)}
+section.block{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#fff;color:var(--wb-muted);box-shadow:0 0 0 1px var(--wb-rule)}
+.tag.ship{background:var(--ok-ink)}
+
+/* the recommendation */
+.rec{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1440px;margin-top:14px}
+.rec > div{background:#fff;border-radius:8px;box-shadow:var(--depth-1);padding:14px 16px}
+.rec > div.now{box-shadow:inset 0 3px 0 var(--wb-sel-vivid),var(--depth-1)}
+.rec h4{font:600 14px var(--font-display);margin:0 0 6px;color:#2b4a7a}
+.rec ol,.rec ul{margin:0;padding-left:18px;font-size:13.5px}
+.rec li{margin:0 0 5px}
+.rec .cost{margin-top:8px;font-size:12.5px;color:var(--wb-muted)}
+
+/* audit */
+.audit{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:1440px}
+.audit .col{background:#fff;border-radius:8px;box-shadow:var(--depth-1);padding:12px 14px}
+.audit h4{font:600 14px var(--font-display);margin:0 0 8px}
+.audit .lives h4{color:var(--ok-ink)} .audit .grey h4{color:var(--wb-muted)}
+.audit ul{margin:0;padding:0;list-style:none;font-size:13.5px}
+.audit li{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start;padding:6px 0;border-top:1px solid #edf1f6}
+.audit li:first-child{border-top:0}
+.audit li img{width:20px;height:20px;margin-top:1px}
+.audit li .x{width:20px;height:20px;border-radius:5px;background:var(--wb-steel);display:grid;place-items:center;color:var(--wb-faint);font-size:12px;margin-top:1px}
+.audit li b{font-weight:600}
+.audit li span.w{color:var(--wb-muted)}
+.thumbs{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+.thumbs figure{margin:0}
+.thumbs img{display:block;height:200px;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule)}
+figcaption{font-size:12px;color:var(--wb-muted);margin-top:4px}
+
+/* ---------- the desk + window material (window grammar 2026-10-24) ---------- */
+.desk{position:relative;width:1440px;height:620px;overflow:hidden;background:radial-gradient(120% 90% at 30% 0%,#3a4f66 0%,#2c3d50 55%,#243344 100%);border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);margin-top:8px}
+.desk.tall{height:760px}
+.win{position:absolute;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--depth-4);overflow:hidden;display:flex;flex-direction:column;font-family:var(--font-ui)}
+.win.rest{border-color:var(--wb-rule);box-shadow:0 5px 14px rgba(22,40,62,.10),0 0 0 1px var(--wb-rule-soft)}
+.win.rest .tb{background:var(--wb-steel);color:var(--wb-ink);box-shadow:none}
+.win.rest .tb .gad svg{stroke:var(--wb-muted)}
+.tb{flex:0 0 30px;height:30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:20px;text-align:center;font-size:15px;opacity:.9}
+.tb .gl{width:18px;height:18px;border-radius:4px;background:#fff;display:grid;place-items:center}
+.tb .gl img{width:14px;height:14px}
+.tb .name{font:600 13.5px/1 var(--font-display);white-space:nowrap;flex:1;display:flex;align-items:center;gap:6px;min-width:0}
+.tb .gad{display:flex;gap:2px}
+.tb .gad span{width:28px;height:22px;display:grid;place-items:center}
+.tb .gad svg{width:14px;height:14px;stroke:#f7f9fc;fill:none;stroke-width:1.6}
+.toolbar{flex:0 0 36px;height:36px;display:flex;align-items:center;gap:4px;padding:0 6px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper)}
+.toolbar .grow{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc;padding:0 11px}
+.btn.secondary{background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.btn.sm{height:22px;font-size:12px;padding:0 8px}
+.search{height:26px;width:200px;border-radius:13px;background:var(--wb-steel-2);box-shadow:inset 0 0 0 1px var(--wb-rule-soft);font-size:13px;color:var(--wb-faint);display:flex;align-items:center;padding:0 12px}
+.date{font-size:12.5px;color:var(--wb-muted);padding:0 8px}
+.body{flex:1;min-height:0;position:relative;overflow:hidden}
+.sb{flex:0 0 24px;height:24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:14px;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .grow{flex:1}
+.lamp{width:8px;height:8px;border-radius:50%;background:var(--wb-faint);box-shadow:var(--lamp-ring);display:inline-block;flex:none}
+.lamp.ok{background:var(--ok-strong)} .lamp.fail{background:var(--danger)} .lamp.warn{background:var(--warn)} .lamp.ask{background:var(--ember)} .lamp.info{background:var(--info)}
+/* a live lamp glows */
+.lamp.live.ok{box-shadow:var(--lamp-ring),0 0 0 3px rgba(16,185,129,.20)}
+.lamp.live.info{box-shadow:var(--lamp-ring),0 0 0 3px rgba(59,130,196,.20)}
+.lamp.live.ask{box-shadow:var(--lamp-ring),0 0 0 3px rgba(168,110,74,.22)}
+
+/* list view (dense ObjectList) */
+.lv{font-size:13px}
+.lv .hdr,.lv .r{display:grid;grid-template-columns:1fr 104px 90px 160px;align-items:center;height:30px;padding:0 10px}
+.lv .hdr{height:26px;font:600 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.lv .r{border-bottom:1px solid #edf1f6;color:var(--wb-muted)}
+.lv .r .n{display:flex;align-items:center;gap:9px;font-weight:600;color:var(--wb-ink);min-width:0}
+.lv .r .n span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* NEW — the glyph seat: the 20 px D object on a 24 px tile in its kind's wash */
+.seat{flex:0 0 24px;width:24px;height:24px;border-radius:6px;display:grid;place-items:center;background:color-mix(in srgb,var(--k) 13%,var(--wb-paper));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--k) 22%,transparent)}
+.seat img{width:20px;height:20px}
+.seat.plain{background:none;box-shadow:none}
+.k-meeting{--k:var(--kind-meeting)} .k-project{--k:var(--kind-project)} .k-person{--k:var(--kind-person)}
+.k-decision{--k:var(--kind-decision)} .k-note{--k:var(--kind-note)} .k-pr{--k:var(--kind-pr)}
+.k-action{--k:var(--kind-action)} .k-agent{--k:var(--kind-agent)}
+/* NEW — hover wash in the kind hue; selection blue when the list holds focus;
+   the kind wash + a 3 px kind rule when it does not */
+.lv .r.hov{background:color-mix(in srgb,var(--k) 8%,var(--wb-paper));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--k) 30%,transparent)}
+.lv .r.sel{background:var(--wb-sel-vivid);color:#fff}
+.lv .r.sel .n{color:#fff}
+.lv .r.sel .seat{background:rgba(255,255,255,.92);box-shadow:none}
+.lv .r.selq{background:color-mix(in srgb,var(--k) 14%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--k)}
+.dw{display:inline-flex;align-items:center;gap:6px;color:var(--ok-ink)}
+.dw.fail{color:#b42318} .dw.warn{color:#8a5a00}
+.lv .r.sel .dw{color:#fff}
+
+/* empty states (NEW form) */
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.empty .obj{width:88px;height:88px;border-radius:22px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--k) 16%,#fff) 0%,color-mix(in srgb,var(--k) 7%,var(--wb-paper)) 70%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--k) 20%,transparent),0 6px 16px color-mix(in srgb,var(--k) 14%,transparent)}
+.empty .obj img{width:64px;height:64px;filter:drop-shadow(0 2px 3px rgba(22,40,62,.22))}
+.empty .line{font:600 15px/1.3 var(--font-display);color:var(--wb-ink)}
+.empty .btn{margin-top:2px}
+
+/* motion demos (the canvas loops them; the product runs each once) */
+.stage{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1440px}
+.stage > div{background:#fff;border-radius:8px;box-shadow:var(--depth-1);padding:12px 14px 14px;position:relative;min-height:190px}
+.stage h4{font:600 14px var(--font-display);margin:0 0 2px}
+.stage .spec{font-size:12.5px;color:var(--wb-muted);margin:0 0 12px}
+.mini{border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule-soft);overflow:hidden;background:var(--wb-paper)}
+.mini .sb{border-top:1px solid var(--wb-rule-soft)}
+@keyframes savepulse{0%,30%{box-shadow:var(--lamp-ring)}38%{box-shadow:var(--lamp-ring),0 0 0 6px rgba(16,185,129,.30)}52%,100%{box-shadow:var(--lamp-ring),0 0 0 3px rgba(16,185,129,.0)}}
+.pulse{animation:savepulse 3s ease-out infinite}
+@keyframes saveword{0%,30%{opacity:.35}36%,100%{opacity:1}}
+.saveword{animation:saveword 3s ease-out infinite}
+.task{display:flex;align-items:center;gap:9px;height:30px;padding:0 12px;font-size:14px}
+.box{flex:0 0 15px;width:15px;height:15px;border-radius:4px;border:1.5px solid #8fa4bd;background:#fff;display:grid;place-items:center}
+.box svg{width:11px;height:11px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:14;stroke-dashoffset:14}
+@keyframes boxfill{0%,25%{background:#fff;border-color:#8fa4bd}31%,100%{background:var(--wb-sel-vivid);border-color:var(--wb-sel-vivid)}}
+@keyframes tickdraw{0%,28%{stroke-dashoffset:14}34%,100%{stroke-dashoffset:0}}
+@keyframes taskword{0%,30%{color:var(--wb-ink)}36%,100%{color:var(--wb-faint)}}
+.tick .box{animation:boxfill 3s ease-out infinite}
+.tick .box svg{animation:tickdraw 3s ease-out infinite}
+.tick .t{animation:taskword 3s ease-out infinite}
+@keyframes firstpaint{0%,20%{opacity:0}26%,100%{opacity:1}}
+.fp .lv{animation:firstpaint 3s ease-out infinite}
+@keyframes arrive{0%,20%{opacity:0;background:color-mix(in srgb,var(--kind-action) 16%,#fff)}26%{opacity:1}50%,100%{opacity:1;background:transparent}}
+.found .r{animation:arrive 3.2s ease-out infinite}
+.found .r:nth-child(2){animation-delay:.06s} .found .r:nth-child(3){animation-delay:.12s}
+@keyframes settle{0%,28%{opacity:1;background:transparent}32%{background:color-mix(in srgb,var(--ok-strong) 16%,#fff)}40%{opacity:0;background:color-mix(in srgb,var(--ok-strong) 16%,#fff)}41%,100%{opacity:0}}
+@keyframes collapse{0%,40%{height:30px}41%,100%{height:0}}
+.settle .gone{animation:settle 3.4s ease-out infinite, collapse 3.4s steps(1) infinite;overflow:hidden}
+@keyframes countdown{0%,40%{content:"4 need you"}41%,100%{content:"3 need you"}}
+.cnt::after{content:"4 need you";animation:countdown 3.4s steps(1) infinite}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(179,38,30,.0)}50%{box-shadow:0 0 0 6px rgba(179,38,30,.22)}}
+.rectile{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#fbfcfe,#eef2f7);box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.rectile img{width:48px;height:48px;border-radius:50%;animation:breathe 2.4s ease-in-out infinite}
+
+/* the day's light on Today */
+.daylight{position:absolute;left:0;right:0;top:66px;height:120px;pointer-events:none}
+.morning .daylight{background:linear-gradient(180deg,rgba(255,196,120,.16),rgba(255,196,120,0))}
+.evening .daylight{background:linear-gradient(180deg,rgba(90,120,200,.13),rgba(90,120,200,0))}
+.greet{font:600 13.5px var(--font-display);color:var(--wb-ink);padding:0 8px}
+.greet span{font:400 12.5px var(--font-ui);color:var(--wb-muted);margin-left:6px}
+.cap{font:600 12px var(--font-ui);color:var(--wb-ink);padding:10px 16px 4px;border-bottom:1px solid var(--wb-rule-soft);margin:0 0 0}
+.nrow{display:flex;align-items:center;gap:9px;height:32px;padding:0 10px 0 16px;border-bottom:1px solid #edf1f6;font-size:13.5px}
+.nrow .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nrow .m{font-size:12px;color:var(--wb-muted)}
+
+/* depth scale */
+.depths{display:flex;gap:28px;align-items:flex-end;margin-top:12px}
+.depths div{width:200px;height:110px;border-radius:8px;background:var(--wb-paper);display:flex;flex-direction:column;justify-content:flex-end;padding:10px 12px;font-size:12.5px}
+.depths b{font:600 13px var(--font-display);display:block}
+.depths span{color:var(--wb-muted)}
+.floor{background:linear-gradient(180deg,#2f4155,#2a3a4d);padding:30px;border-radius:8px;max-width:1200px}
+
+/* swatches */
+.kinds{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;max-width:1440px;margin-top:8px}
+.kinds > div{background:#fff;border-radius:8px;box-shadow:var(--depth-1);padding:10px 12px;font-size:12.5px}
+.kinds .sw{height:34px;border-radius:6px;background:var(--k);margin-bottom:8px;display:flex;align-items:center;justify-content:flex-end;padding:0 8px;color:#fff;font:500 12px var(--font-mono)}
+.kinds .row{display:flex;align-items:center;gap:8px;margin:4px 0}
+.kinds .word{color:var(--k);font-weight:600}
+.kinds .wash{height:22px;border-radius:4px;background:color-mix(in srgb,var(--k) 13%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--k);padding:0 8px;display:flex;align-items:center;color:var(--wb-ink)}
+
+/* joys */
+.joys{counter-reset:j;list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;max-width:1440px}
+.joys li{counter-increment:j;display:grid;grid-template-columns:30px 1fr;gap:6px;font-size:14px;background:#fff;border-radius:8px;box-shadow:var(--depth-1);padding:9px 12px}
+.joys li::before{content:counter(j);font:600 13px/22px var(--font-display);color:#fff;background:var(--wb-sel-vivid);border-radius:50%;width:22px;height:22px;text-align:center}
+.joys .w{color:var(--wb-muted);font-size:13px}
+.joys .s{font-size:12px;color:var(--ok-ink);font-weight:600;margin-left:6px}
+pre{background:#1d2633;color:#dbe4f0;border-radius:8px;padding:14px 16px;font:12.5px/1.55 var(--font-mono);max-width:1200px;overflow:auto}
+.pair{display:flex;gap:22px;align-items:flex-start}
+.pair figure{margin:0}
+.pair img{display:block;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule)}
+</style>
+</head>
+<body>
+<main>
+<h1>Delight, as a system</h1>
+<p>Owner 2026-10-27: “the windows are absolutely delightful, offer minimal friction.” Waves 1–3 put every window on the grammar; the atlas still scores Delight 1–2 almost everywhere. This canvas makes delight ONE system, so one kit change heals many windows: <b>colour</b> (each object kind owns a hue), <b>motion</b> (six named moments, each under 200 ms, opacity and colour only), <b>objects</b> (empty states and live lamps), <b>depth</b> (one named shadow scale) and ten <b>small joys</b>. Everything is in our material: the D objects, the Workbench blue, paper, the slate floor.</p>
+
+<section class="block" style="margin-top:20px">
+  <h2>Recommendation <span class="tag">Ship this week</span></h2>
+  <div class="rec">
+    <div class="now">
+      <h4>Slice 1 — this lane, today</h4>
+      <ol>
+        <li>Kind hue tokens (<code>--kind-*</code>) in <code>design-tokens.json</code>.</li>
+        <li>The glyph seat: every dense list row and Needs-you row puts its 20 px D object on a 24 px tile in its kind's wash; hover washes in the kind hue.</li>
+        <li>A live lamp glows (status bars, DotWord); the save lamp pulses once on each save.</li>
+        <li>The task box ticks: the check draws in (Note, CheckGadget).</li>
+        <li>A window's body fades up under its toolbar on first paint.</li>
+        <li>Done on a Needs-you row: the row settles out in green, then the list reads again.</li>
+        <li>Empty states with objects: Meetings, Decisions, People (object on a kind halo, one line, one verb).</li>
+      </ol>
+      <div class="cost">Cost: tokens + <code>kit.css</code>, <code>objects.css</code>, <code>surface.css</code>, <code>gadgets.css</code>, <code>pullout.css</code>; ObjectList <code>data-kind</code>; SurfaceState empty halo; StatusBar <code>pulse</code>; NeedsDrawer Done; the Note's checkbox widget. No new species.</div>
+    </div>
+    <div>
+      <h4>Slice 2 — next</h4>
+      <ol>
+        <li>The day's light on Today (warm wash at morning, cool at evening) and the greeting by the hour.</li>
+        <li>The count ticks down (status bar, title, dock badge) when a Done lands.</li>
+        <li>Found tasks arrive in their kind's wash (the stagger exists; add the wash).</li>
+        <li>The depth scale as tokens (<code>--depth-0…4</code>); margin card, peek card and popovers move onto it.</li>
+        <li>The peek card and the margin card carry a 3 px rule in the kind hue.</li>
+      </ol>
+      <div class="cost">Cost: Today core, the kit count, tokens, pullout + note margin CSS.</div>
+    </div>
+    <div>
+      <h4>Slice 3 — the small joys</h4>
+      <ul>
+        <li>The ten one-liners below, one PR each where a hub fact is needed (⌘K's last-opened, the Note's first-line title, “Accepted · 3 open”).</li>
+        <li>Empty states for every other collection (Projects, Automations, Agents, Activity, Memory) on the same form.</li>
+      </ul>
+      <div class="cost">Cost: per joy, one consumer file and its app test.</div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Audit: where delight lives, where the desk is grey</h2>
+  <div class="audit">
+    <div class="col lives">
+      <h4>Delight lives here today</h4>
+      <ul>
+        <li><img src="delight-2026-10-27/glyphs/dock-meetings.png" alt=""><div><b>The D objects</b> <span class="w">on the floor and in the dock: flat, front-on, a 2 px bevel, real colour.</span></div></li>
+        <li><img src="delight-2026-10-27/glyphs/dock-speak.png" alt=""><div><b>The dock glass</b> <span class="w">a centred slate plate with 48 px objects, running dots, labels on hover.</span></div></li>
+        <li><span class="x" style="background:#a86e4a;color:#fff">▍</span><div><b>The ember bookmark</b> <span class="w">and the front window's deep blue title bar with its faint shine.</span></div></li>
+        <li><span class="x"><span class="lamp ok"></span></span><div><b>The status lamp</b> <span class="w">a dot and a word, saturated state colours (green, ember, red).</span></div></li>
+        <li><img src="delight-2026-10-27/glyphs/person-20.png" alt=""><div><b>People's initials discs</b> <span class="w">eight soft hues, the same for the same name.</span></div></li>
+      </ul>
+    </div>
+    <div class="col grey">
+      <h4>The desk goes grey here</h4>
+      <ul>
+        <li><span class="x">○</span><div><b>Empty states are a 32 px icon and a sentence</b> <span class="w">Meetings, Decisions, People: grey line, no verb, no colour.</span></div></li>
+        <li><span class="x">≡</span><div><b>Lists have no object colour</b> <span class="w">14 meeting rows, 14 identical blue glyphs; the hover is the same blue in every window.</span></div></li>
+        <li><span class="x">✓</span><div><b>A save just says Saved</b> <span class="w">the lamp is lit before and after; nothing marks the moment.</span></div></li>
+        <li><span class="x">☐</span><div><b>A task box is the browser's checkbox</b> <span class="w">it flips; nothing draws.</span></div></li>
+        <li><span class="x">↓</span><div><b>Found tasks arrive flat</b> <span class="w">rows appear; no sign they are new.</span></div></li>
+        <li><span class="x">✕</span><div><b>Nothing celebrates a Done</b> <span class="w">the row vanishes on the next read; the count jumps.</span></div></li>
+        <li><span class="x">☀</span><div><b>Today at 7 a.m. looks like Today at 7 p.m.</b> <span class="w">a date, “Tue 27 Oct”, and the same paper.</span></div></li>
+      </ul>
+    </div>
+  </div>
+  <div class="thumbs">
+    <figure><img src="delight-2026-10-27/now/meetings-empty-1440.png" alt=""><figcaption>Meetings, empty (atlas)</figcaption></figure>
+    <figure><img src="delight-2026-10-27/now/decisions-empty-1440.png" alt=""><figcaption>Decisions, empty</figcaption></figure>
+    <figure><img src="delight-2026-10-27/now/people-empty-1440.png" alt=""><figcaption>People, empty</figcaption></figure>
+    <figure><img src="delight-2026-10-27/now/meetings-1440.png" alt=""><figcaption>Meetings, 14 rows</figcaption></figure>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Colour: each object kind owns one hue</h2>
+  <p>The hue comes from the D object the kind already wears, so the list, the icon and the token agree. Each hue reads 4.5:1 or more on the paper, so it may carry a word (a person named in a note is already this teal: <code>--wb-person-ink</code>, Note canvas A). The hue is used in exactly four places: the glyph's seat, the row's hover wash, the selection wash when the list is not focused, and the 3 px rule of a peek or margin card. Never on a Button, never as a text block.</p>
+  <div class="kinds">
+    <div class="k-person"><div class="sw">#1f7a6b</div><div class="row"><span class="seat"><img src="delight-2026-10-27/glyphs/person-20.png" alt=""></span><span class="word">Person</span></div><div class="wash">Priya Nair</div></div>
+    <div class="k-project"><div class="sw">#3b62c4</div><div class="row"><span class="seat"><img src="delight-2026-10-27/glyphs/project-drawer-20.png" alt=""></span><span class="word">Project</span></div><div class="wash">Payments ledger</div></div>
+    <div class="k-meeting"><div class="sw">#1c78a8</div><div class="row"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="word">Meeting</span></div><div class="wash">Vendor sync</div></div>
+    <div class="k-decision"><div class="sw">#6a4bc4</div><div class="row"><span class="seat"><img src="delight-2026-10-27/glyphs/decision-20.png" alt=""></span><span class="word">Decision</span></div><div class="wash">Freeze on Nov 12</div></div>
+    <div class="k-note"><div class="sw">#94620f</div><div class="row"><span class="seat"><img src="delight-2026-10-27/glyphs/note-20.png" alt=""></span><span class="word">Note</span></div><div class="wash">Cutover checklist</div></div>
+    <div class="k-pr"><div class="sw">#2b7a4a</div><div class="row"><span class="seat"><img src="delight-2026-10-27/glyphs/pull-request-20.png" alt=""></span><span class="word">Pull request</span></div><div class="wash">#412 Freeze flag</div></div>
+    <div class="k-action"><div class="sw">#8a5a3d</div><div class="row"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span class="word">Action</span></div><div class="wash">Write the runbook</div></div>
+    <div class="k-agent"><div class="sw">#a84a1c</div><div class="row"><span class="seat"><img src="delight-2026-10-27/glyphs/agent-claude-code-20.png" alt=""></span><span class="word">Agent</span></div><div class="wash">Claude Code</div></div>
+  </div>
+  <p style="margin-top:10px;font-size:13px;color:var(--wb-muted)">A change from the brief, on purpose: the brief named people violet, meetings teal, decisions amber. The D objects already draw people teal, decisions violet and meetings blue, and the Note's person ink is teal. A hue that fights its own icon reads as a bug, so the hues follow the icons. Meetings take the sky blue of the floor's meeting glow, so they stay apart from Projects' Workbench blue.</p>
+
+  <h3>Over a real window: Meetings, 1440, the seats, a hover, a selection</h3>
+  <div class="desk">
+    <div class="win" style="left:60px;top:40px;width:760px;height:540px">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="name">Meetings</span><span class="gad"><span><svg viewBox="0 0 16 16"><rect x="2.5" y="9.5" width="11" height="4"/></svg></span><span><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11"/></svg></span></span></div>
+      <div class="toolbar"><span class="btn primary"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.75"/></svg>Record meeting</span><span class="btn"><svg viewBox="0 0 16 16"><path d="M8 2.5v7M5 6.5l3 3 3-3M2.75 10.5v2.25h10.5V10.5"/></svg>Import</span><span class="grow"></span><span class="search">Search meetings</span></div>
+      <div class="body"><div class="lv">
+        <div class="hdr"><span>Name</span><span>When</span><span>Length</span><span>Summary</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Ledger cutover sync</span></span><span>Oct 27</span><span>30 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting hov"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Vendor sync</span></span><span>Oct 26</span><span>30 min</span><span class="dw fail"><span class="lamp fail"></span>Failed</span></div>
+        <div class="r k-meeting sel"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Payments weekly</span></span><span>Oct 26</span><span>40 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Architecture review: tracing</span></span><span>Oct 26</span><span>30 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Incident review: settlement lag</span></span><span>Oct 25</span><span>40 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>1:1 Avery</span></span><span>Oct 25</span><span>30 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Hiring sync</span></span><span>Oct 24</span><span>40 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Tracing pilot demo</span></span><span>Oct 23</span><span>40 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Quarterly planning</span></span><span>Oct 22</span><span>40 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Vendor call: gateway</span></span><span>Oct 21</span><span>40 min</span><span class="dw fail"><span class="lamp fail"></span>Failed</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>1:1 Sam</span></span><span>Oct 20</span><span>40 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Architecture review: queues</span></span><span>Oct 18</span><span>40 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Payments weekly</span></span><span>Oct 18</span><span>40 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+        <div class="r k-meeting"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Ledger kickoff</span></span><span>Oct 17</span><span>30 min</span><span class="dw"><span class="lamp ok"></span>Summary stored</span></div>
+      </div></div>
+      <div class="sb"><span class="it">14 meetings</span><span class="it"><span class="lamp ask live"></span>1 to review</span><span class="it"><span class="lamp fail"></span>2 failed</span><span class="grow"></span></div>
+    </div>
+    <div class="win rest" style="left:860px;top:110px;width:520px;height:300px">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="name">Needs you</span></div>
+      <div class="body"><div class="lv">
+        <div class="r k-pr" style="grid-template-columns:1fr 120px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/pull-request-20.png" alt=""></span><span>#412 Add the ledger freeze flag</span></span><span class="dw"><span class="lamp ok"></span>PR open</span></div>
+        <div class="r k-decision selq" style="grid-template-columns:1fr 120px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/decision-20.png" alt=""></span><span>Freeze the ledger on Nov 12</span></span><span class="dw warn"><span class="lamp warn"></span>To review</span></div>
+        <div class="r k-action" style="grid-template-columns:1fr 120px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span>Write the rollback runbook</span></span><span class="dw warn"><span class="lamp warn"></span>Unassigned</span></div>
+        <div class="r k-meeting" style="grid-template-columns:1fr 120px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span>Vendor sync</span></span><span class="dw fail"><span class="lamp fail"></span>No summary</span></div>
+        <div class="r k-note" style="grid-template-columns:1fr 120px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/note-20.png" alt=""></span><span>Cutover checklist</span></span><span class="dw"><span class="lamp ok"></span>2 tasks found</span></div>
+        <div class="r k-person" style="grid-template-columns:1fr 120px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/person-20.png" alt=""></span><span>Priya Nair</span></span><span class="dw"><span class="lamp info live"></span>1:1 in 47 min</span></div>
+      </div></div>
+    </div>
+    <div style="position:absolute;left:860px;top:440px;width:520px;color:#e8eef6;font-size:13px;line-height:1.5">Left: the front window. Row 2 is under the pointer (the meeting's sky wash), row 3 is selected in a focused list (the selection blue; the seat turns paper). Right: a resting window; its selected row keeps the kind wash and a 3 px kind rule. A mixed list reads by colour before a word is read.</div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Motion: six moments, each once, each under 200 ms</h2>
+  <p>Rules: opacity and colour only on a measured element (the still fence); a box-shadow glow on a lamp is allowed (the lamp is not a control); no bounce, no overshoot, no transform on hover. Under reduced motion every moment is instant. Four moments per face at most (UX-CANON). The canvas loops each one; the product runs it once.</p>
+  <div class="stage">
+    <div>
+      <h4>1. The save lamp pulses</h4>
+      <p class="spec">On each save: the ok lamp's ring opens to 6 px and fades, 600 ms total glow, the word steps in. The first paint does not pulse. <code>kit StatusBar · pulse</code></p>
+      <div class="mini"><div style="height:60px"></div><div class="sb"><span class="it"><span class="lamp ok pulse"></span><span class="saveword">Saved just now</span></span></div></div>
+    </div>
+    <div>
+      <h4>2. The task box ticks</h4>
+      <p class="spec">The box fills blue (120 ms), the check draws in with its stroke (160 ms), the words go quiet. Only on a press, never on load. <code>Note · CheckGadget</code></p>
+      <div class="mini"><div class="task tick"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.5 5 9l4.5-6"/></svg></span><span class="t">Drain the queue</span></div><div class="task"><span class="box" style="background:var(--wb-sel-vivid);border-color:var(--wb-sel-vivid)"><svg viewBox="0 0 12 12" style="stroke-dashoffset:0"><path d="M2.5 6.5 5 9l4.5-6"/></svg></span><span class="t" style="color:var(--wb-faint)">Snapshot the ledger</span></div></div>
+    </div>
+    <div>
+      <h4>3. A window's first paint</h4>
+      <p class="spec">The title bar and toolbar draw at once; the body fades up under them, 160 ms. Sections already rise in; this is the body. <code>pullout.css · .desk-pullout-body</code></p>
+      <div class="mini fp"><div class="toolbar"><span class="btn primary sm">New decision</span></div><div class="lv"><div class="r k-decision" style="grid-template-columns:1fr 90px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/decision-20.png" alt=""></span><span>Freeze on Nov 12</span></span><span>Accepted</span></div><div class="r k-decision" style="grid-template-columns:1fr 90px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/decision-20.png" alt=""></span><span>Adopt OpenTelemetry</span></span><span>To review</span></div></div></div>
+    </div>
+    <div>
+      <h4>4. Found tasks arrive</h4>
+      <p class="spec">The stagger exists (60 ms a row). New: each found row lands in the action's wash and the wash fades over 400 ms. <span class="tag alt" style="vertical-align:0">Slice 2</span></p>
+      <div class="mini found lv"><div class="r k-action" style="grid-template-columns:1fr"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span>Freeze writes</span></span></div><div class="r k-action" style="grid-template-columns:1fr"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span>Drain the queue</span></span></div><div class="r k-action" style="grid-template-columns:1fr"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span>Snapshot the ledger</span></span></div></div>
+    </div>
+    <div>
+      <h4>5. Done on a Needs-you row</h4>
+      <p class="spec">The hub says done; the row washes green and fades out, 180 ms; then the list reads again and the row is gone. The count ticks down (slice 2). <code>NeedsDrawer · data-settle</code></p>
+      <div class="mini lv settle"><div class="r k-action" style="grid-template-columns:1fr 70px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span>Write the rollback runbook</span></span><span class="btn secondary sm">Done</span></div><div class="r k-action gone" style="grid-template-columns:1fr 70px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span>Pilot OTel in billing</span></span><span class="btn secondary sm">Done</span></div><div class="r k-pr" style="grid-template-columns:1fr 70px"><span class="n"><span class="seat"><img src="delight-2026-10-27/glyphs/pull-request-20.png" alt=""></span><span>#412 Freeze flag</span></span><span class="btn secondary sm">Open PR</span></div><div class="sb"><span class="it"><span class="lamp ask"></span><span class="cnt"></span></span></div></div>
+    </div>
+    <div>
+      <h4>6. The Record tile breathes</h4>
+      <p class="spec">While a meeting records, the dock's Record tile breathes a red ring, 2.4 s a breath; it stops the moment recording stops. This is the one endless motion, and it says a true state. <span class="tag alt" style="vertical-align:0">Exists: verify</span></p>
+      <div style="display:flex;gap:16px;align-items:center;padding:8px 4px"><div class="rectile"><img src="delight-2026-10-27/glyphs/record-orb.png" alt=""></div><span style="font-size:13px;color:var(--wb-muted)">REC · 12:04</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Objects: an empty state is an object, one line, one verb</h2>
+  <p>The D object at 64 px on an 88 px halo in its kind's hue; the line in the display face; the verb that makes the first one. The verb is the toolbar's primary verb again, in the quiet secondary form, because the eye is in the middle of the window. Live lamps glow (a 3 px ring in their tone); an idle lamp does not.</p>
+  <div class="desk" style="height:420px">
+    <div class="win" style="left:30px;top:30px;width:440px;height:340px">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="name">Meetings</span></div>
+      <div class="toolbar"><span class="btn primary"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.75"/></svg>Record meeting</span><span class="btn"><svg viewBox="0 0 16 16"><path d="M8 2.5v7M5 6.5l3 3 3-3M2.75 10.5v2.25h10.5V10.5"/></svg>Import</span></div>
+      <div class="body"><div class="empty k-meeting"><span class="obj"><img src="delight-2026-10-27/glyphs/meeting-64.png" alt=""></span><span class="line">Record or import a meeting</span><span class="btn secondary">Import a recording</span></div></div>
+    </div>
+    <div class="win rest" style="left:500px;top:30px;width:440px;height:340px">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="delight-2026-10-27/glyphs/decision-20.png" alt=""></span><span class="name">Decisions</span></div>
+      <div class="toolbar"><span class="btn primary"><svg viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9"/></svg>New decision</span></div>
+      <div class="body"><div class="empty k-decision"><span class="obj"><img src="delight-2026-10-27/glyphs/decision-64.png" alt=""></span><span class="line">No decisions yet</span><span class="btn secondary">New decision</span></div></div>
+    </div>
+    <div class="win rest" style="left:970px;top:30px;width:440px;height:340px">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="delight-2026-10-27/glyphs/people-ledger-20.png" alt=""></span><span class="name">People</span></div>
+      <div class="toolbar"><span class="btn primary"><svg viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9"/></svg>Add person</span></div>
+      <div class="body"><div class="empty k-person"><span class="obj"><img src="delight-2026-10-27/glyphs/people-ledger-64.png" alt=""></span><span class="line">People you meet appear here</span><span class="btn secondary">Add person</span></div></div>
+      <div class="sb"><span class="it"><span class="lamp ok live"></span>Encrypted</span></div>
+    </div>
+  </div>
+  <div class="pair" style="margin-top:12px">
+    <figure><img src="delight-2026-10-27/now/meetings-empty-1440.png" alt="" style="height:170px"><figcaption>Now: a 32 px icon and a grey line</figcaption></figure>
+    <figure><img src="delight-2026-10-27/now/decisions-empty-1440.png" alt="" style="height:170px"><figcaption>Now</figcaption></figure>
+    <figure><img src="delight-2026-10-27/now/people-empty-1440.png" alt="" style="height:170px"><figcaption>Now</figcaption></figure>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Today knows the hour <span class="tag alt">Slice 2</span></h2>
+  <p>The clock already drives Today. A warm wash falls from the toolbar before noon, a cool one after six; between, nothing. The date becomes a greeting: <b>Tuesday morning</b> · 27 Oct. Subtle: 16 % at the top, gone by 120 px.</p>
+  <div class="desk" style="height:360px">
+    <div class="win morning" style="left:40px;top:30px;width:640px;height:300px">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="delight-2026-10-27/glyphs/note-20.png" alt=""></span><span class="name">Today</span></div>
+      <div class="toolbar"><span class="btn"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.75"/></svg>Record now</span><span class="btn">Needs you</span><span class="grow"></span><span class="greet">Tuesday morning<span>27 Oct</span></span></div>
+      <div class="daylight"></div>
+      <div class="body"><div class="cap">Needs you</div>
+        <div class="nrow k-pr"><span class="seat"><img src="delight-2026-10-27/glyphs/pull-request-20.png" alt=""></span><span class="t">#412 Add the ledger freeze flag</span><span class="m">PR open</span></div>
+        <div class="nrow k-action"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span class="t">Production cutover</span><span class="m" style="color:#b42318">Overdue · 26 days</span></div>
+        <div class="nrow k-meeting"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="t">1:1 Priya / Karol</span><span class="m">Next in 47 min</span></div>
+      </div>
+      <div class="sb"><span class="it"><span class="lamp info live"></span>2 meetings ahead</span><span class="it"><span class="lamp warn"></span>2 to finish</span></div>
+    </div>
+    <div class="win rest evening" style="left:720px;top:30px;width:640px;height:300px">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="delight-2026-10-27/glyphs/note-20.png" alt=""></span><span class="name">Today</span></div>
+      <div class="toolbar"><span class="btn"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.75"/></svg>Record now</span><span class="btn">Needs you</span><span class="grow"></span><span class="greet">Tuesday evening<span>27 Oct</span></span></div>
+      <div class="daylight"></div>
+      <div class="body"><div class="cap">Since this morning</div>
+        <div class="nrow k-meeting"><span class="seat"><img src="delight-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="t">Payments weekly</span><span class="m">Summary stored</span></div>
+        <div class="nrow k-decision"><span class="seat"><img src="delight-2026-10-27/glyphs/decision-20.png" alt=""></span><span class="t">Freeze the ledger on Nov 12</span><span class="m">Accepted</span></div>
+        <div class="nrow k-action"><span class="seat"><img src="delight-2026-10-27/glyphs/action-item-20.png" alt=""></span><span class="t">3 actions done</span><span class="m">Done</span></div>
+      </div>
+      <div class="sb"><span class="it">Nothing ahead today</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Depth: one shadow scale, named</h2>
+  <p>Five steps; every surface takes one. Today the desk has eleven shadow values for the same four jobs.</p>
+  <div class="floor"><div class="depths">
+    <div style="box-shadow:none;outline:1px solid var(--wb-rule-soft)"><b>depth-0</b><span>paper in a window: rows, wells</span></div>
+    <div style="box-shadow:var(--depth-1)"><b>depth-1</b><span>a card at rest, a seat, a field</span></div>
+    <div style="box-shadow:var(--depth-2)"><b>depth-2</b><span>the margin card, the peek card</span></div>
+    <div style="box-shadow:var(--depth-3)"><b>depth-3</b><span>popovers, menus, the dock glass</span></div>
+    <div style="box-shadow:var(--depth-4)"><b>depth-4</b><span>the front window</span></div>
+  </div></div>
+</section>
+
+<section class="block">
+  <h2>The small joys</h2>
+  <ol class="joys">
+    <li><div>⌘K's first result is the thing you opened last. <span class="w">The palette already ranks; add the last-opened object as the first row when the field is empty.</span></div></li>
+    <li><div>The Note's title offers its first line. <span class="w">A new note with no title takes its first line as the title, in grey, until you type one.</span></div></li>
+    <li><div>Today greets by the hour: “Tuesday morning”. <span class="w">The date at the toolbar's right becomes the greeting.</span></div></li>
+    <li><div>A decision's Accept says “Accepted · 3 open” in the status bar. <span class="w">The receipt counts what is left, not what happened.</span></div></li>
+    <li><div>Done settles the row in green, then the count ticks down. <span class="s">Slice 1</span></div></li>
+    <li><div>A save pulses the lamp once. <span class="s">Slice 1</span></div></li>
+    <li><div>The task box draws its check. <span class="s">Slice 1</span></div></li>
+    <li><div>A failed summary's Try again turns the red dot blue while it runs, then green. <span class="w">The dot tells the whole story; no toast.</span></div></li>
+    <li><div>The last meeting of the day ends with “That is the day”. <span class="w">Today's status bar, after the last meeting, once.</span></div></li>
+    <li><div>A person's row shows their next 1:1 in their own teal. <span class="w">“1:1 in 2 days” in the person ink, not grey.</span></div></li>
+  </ol>
+</section>
+
+<section class="block">
+  <h2>The rules, as kit doc comments</h2>
+<pre>/** DELIGHT (2026-10-27) — the kind hue. Each object kind owns ONE hue
+ *  (--kind-meeting, --kind-project, --kind-person, --kind-decision,
+ *  --kind-note, --kind-pr, --kind-action, --kind-agent), taken from its
+ *  D object. The hue is used in four places only: the 20 px glyph's 24 px
+ *  seat (13 % wash, 22 % rule), the row's hover wash (8 %), the selection
+ *  wash of a list that does not hold focus (14 % + a 3 px kind rule), and
+ *  the 3 px rule of a peek or margin card. Never on a Button, never as a
+ *  text block. A focused list's selection stays the selection blue. */
+
+/** DELIGHT — motion. Six named moments: the save pulse, the task tick,
+ *  the body's first paint, found rows arriving, the Done settle, the
+ *  Record breath. Each runs once (the breath runs while recording), is at
+ *  most 200 ms (the pulse's glow 600 ms on a lamp, not a control), moves
+ *  opacity, colour or a lamp's box-shadow only, never a measured box, and
+ *  is instant under prefers-reduced-motion. No bounce, no overshoot. */
+
+/** DELIGHT — an empty state is an object: the kind's 64 px D object on
+ *  an 88 px halo, one line in the display face, one verb (the window's
+ *  making verb, secondary form). SurfaceState empty with emptyImage +
+ *  emptyKind. */
+
+/** DELIGHT — a live lamp glows: a lit dot (ok, info, ask) in a status bar
+ *  or a DotWord wears a 3 px ring in its tone. Idle and fail do not glow. */</pre>
+</section>
+</main>
+</body>
+</html>

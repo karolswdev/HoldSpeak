@@ -321,7 +321,7 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
             page.screenshot(path=str(shots / f"project-answer-saved-{width}.png"))
 
             # The old Note was opened from B; A's captured Ask rebinds it.
-            ask.get_by_role("button", name="Back to Thought").click()
+            ask.get_by_role("button", name="Back to note").click()
             expect(note).to_be_visible()
             page.wait_for_function("() => window.getSelection()?.toString() === 'Mira owns the Friday review.'")
             assert note.locator(".thought-note-body .cm-scroller").evaluate("e => e.scrollTop") == captured_scroll
@@ -332,7 +332,7 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
                 note.locator(".desk-gadget-close").click()
                 note.wait_for(state="detached")
                 _front(page, ask)
-                ask.get_by_role("button", name="Back to Thought").click()
+                ask.get_by_role("button", name="Back to note").click()
                 note = page.locator(f"[id='pullout:{NOTE_REF}']")
                 note.locator(".thought-note-body .cm-content").wait_for()
                 page.wait_for_function("() => window.getSelection()?.toString() === 'Mira owns the Friday review.'")
