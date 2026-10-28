@@ -1080,7 +1080,8 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
               {ctrl.error ? (
                 <SurfaceState error="Engines not read" onRetry={ctrl.readAgain} />
               ) : (
-                <SurfaceState empty emptyImage={spriteUrl("model", "engines", "rest", null, 64)} emptyLabel="No engine yet" />
+                <SurfaceState empty emptyImage={spriteUrl("model", "engines", "rest", null, 64)} emptyKind="engine" emptyLabel="No engine yet"
+                  onAction={ctrl.add.open ? undefined : () => ctrl.add.openRow()} actionLabel="Add an engine" />
               )}
             </div>
           ) : null}

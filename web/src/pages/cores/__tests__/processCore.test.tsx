@@ -98,6 +98,10 @@ describe("ProcessCore", () => {
     render(<ProcessCore />);
 
     expect(screen.getByText("No runs yet")).toBeTruthy();
+    // DELIGHT 2: the Processes object and one line; nothing to make here.
+    const object = document.querySelector('.surface-state[data-object="process"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/cartridge\.png$/);
+    expect(object.querySelector("button")).toBeNull();
     expect(screen.queryByTestId("process-row")).toBeNull();
     expect(screen.getByTestId("process-status").textContent).toBe("Watching");
     expect(screen.queryByText(/CURSOR/)).toBeNull();

@@ -242,6 +242,10 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(drawer.querySelectorAll(".kit-disp").length).toBe(0);
     expect(screen.getByTestId("arrival-display").closest(".kit-statusbar")).toBeTruthy();
     expect(screen.getAllByText("8 need you")).toHaveLength(1);
+    // DELIGHT slice 2: the number wears the tick (it fades only on a change, never on the first paint).
+    const tick = screen.getByTestId("arrival-display").querySelector(".kit-tick");
+    expect(tick?.textContent).toBe("8 need you");
+    expect(tick?.hasAttribute("data-tick")).toBe(false);
   });
 
   it("draws every member as its object: icon, name, fact, one lamp, its verbs", async () => {

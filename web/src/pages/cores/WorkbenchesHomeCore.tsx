@@ -182,7 +182,8 @@ export function WorkbenchesHomeCore(_props: CoreProps) {
       {loadError ? <SurfaceState error={loadError} onRetry={loading ? undefined : () => void load()} /> : null}
       {loaded && automations.length === 0 ? (
         <div className="automation-home-empty" data-testid="automation-home-empty">
-          <SurfaceState empty emptyLabel="An automation does one job for you, again and again." emptyImage={AUTOMATION_SPRITE} />
+          <SurfaceState empty emptyLabel="An automation does one job for you, again and again." emptyImage={AUTOMATION_SPRITE}
+            emptyKind="automation" onAction={newAutomation} actionLabel="New automation" />
           <WorkbenchTemplatePicker />
         </div>
       ) : automations.length ? (

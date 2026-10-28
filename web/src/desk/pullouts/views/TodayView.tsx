@@ -22,7 +22,7 @@ import { SinceYesterday, type MondayBrief } from "./BriefView";
 import { PreparedBlock, type PreparedRead } from "./PreparedBlock";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { newsWords, useAutomationNews } from "../../automationNews";
-import { Avatar, DotWord, StatusBar, Steps, ToolGlyph, Toolbar, countWords, meetingSteps, type StatusBarItem } from "../../surface/kit";
+import { Avatar, DotWord, StatusBar, Steps, TickNumber, ToolGlyph, Toolbar, countWords, meetingSteps, type StatusBarItem } from "../../surface/kit";
 import { openChairWindow } from "../../chair/chairWindows";
 import { agentSpriteName } from "../../sprites";
 import { meetingRowState } from "../../../pages/cores/history/helpers";
@@ -94,6 +94,35 @@ const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDat
 function when(value: unknown): Date | null {
   const d = new Date(String(value ?? ""));
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+const LONG_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** DELIGHT slice 2 (2026-10-27, canvases/delight-2026-10-27.html "Today
+ *  knows the hour"): the part of the day, from the clock. Night is before
+ *  05:00 and from 22:00. */
+export type DayPart = "morning" | "afternoon" | "evening" | "night";
+export function dayPart(d: Date): DayPart {
+  const h = d.getHours();
+  if (h < 5 || h >= 22) return "night";
+  if (h < 12) return "morning";
+  if (h < 18) return "afternoon";
+  return "evening";
+}
+
+/** The day line greets by the hour: `Tuesday morning`. */
+export function dayGreeting(d: Date): string {
+  return `${LONG_DAYS[d.getDay()]} ${dayPart(d)}`;
+}
+
+/** The day's light on Today's paper: a warm wash in the morning, none in
+ *  the afternoon, a cool wash in the evening and at night (static colour,
+ *  at most 6 % tint; today.css). */
+export function dayLight(d: Date): "warm" | "cool" | undefined {
+  const part = dayPart(d);
+  if (part === "morning") return "warm";
+  if (part === "afternoon") return undefined;
+  return "cool";
 }
 
 /** `in 68 min`, `in 2 h 05 min`, `now`. */
@@ -590,8 +619,18 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     : null;
   // Window grammar: the status bar says the day in warm words with a lamp,
   // never a zero; the receipt of the last run beside them.
+  // DELIGHT slice 2 (a small joy): after the day's last meeting, with a
+  // meeting held today and nothing left on today's calendar, the status bar
+  // says so in place of the count ahead.
+  const metToday = meetings.some((row) => {
+    const at = when(row.started_at ?? row.created_at);
+    return at !== null && startOfDay(at) === today;
+  });
+  const dayDone = loaded && !failed.door && ahead === 0 && metToday && now.getHours() >= 12;
   const statusItems: Array<StatusBarItem | null> = [
-    { key: "ahead", lamp: "info", text: countWords(ahead, "meeting ahead", "meetings ahead"), testId: "today-status-ahead" },
+    dayDone
+      ? { key: "day", lamp: "ok", text: "That is the day", testId: "today-status-day" }
+      : { key: "ahead", lamp: "info", text: countWords(ahead, "meeting ahead", "meetings ahead"), testId: "today-status-ahead" },
     { key: "finish", lamp: "warn", text: countWords(finish.length, "to finish", "to finish"), testId: "today-status-finish" },
     { key: "decide", lamp: "ask", text: countWords(decide, "decision to make", "decisions to make"), testId: "today-status-decide" },
     nextWords ? { key: "next", text: nextWords, testId: "today-status-next" } : null,
@@ -604,7 +643,8 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     <>
       {/* Busy until the first load ends: the day's rows land after it and
           move what is drawn (the desk sweep's still fence, under load). */}
-      <div className="desk-pullout-body desk-surface-body intelligence-pullout today" aria-busy={loaded ? undefined : true}>
+      <div className="desk-pullout-body desk-surface-body intelligence-pullout today" aria-busy={loaded ? undefined : true}
+        data-light={dayLight(now)} data-testid="today-body">
         {/* Window grammar: no headline (Today is the title bar). The verbs
             sit on the toolbar; the date is a quiet fact at its end. */}
         <Toolbar
@@ -612,7 +652,13 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           className="today-toolbar"
           data-testid="today-toolbar"
           trailingStays
-          trailing={<span className="today-date" data-testid="today-day">{`${SHORT_DAYS[now.getDay()]} ${now.getDate()} ${SHORT_MONTHS[now.getMonth()]}`}</span>}
+          trailing={(
+            /* DELIGHT slice 2: the day line greets by the hour, then the date. */
+            <span className="today-date" data-testid="today-day" title={`${SHORT_DAYS[now.getDay()]} ${now.getDate()} ${SHORT_MONTHS[now.getMonth()]}`}>
+              <span className="today-greeting" data-testid="today-greeting">{dayGreeting(now)}</span>
+              <span className="today-date-day">{` · ${now.getDate()} ${SHORT_MONTHS[now.getMonth()]}`}</span>
+            </span>
+          )}
         >
           <Button dense variant={lead === "record" ? "primary" : "secondary"} onClick={recordNow} data-testid="today-record-now">
             <ToolGlyph kind="record" />
@@ -633,7 +679,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           <Button dense variant="secondary" className="today-needs-toggle" data-testid="today-needs-all"
             onClick={() => openChairWindow("chair:needs")}>
             <ToolGlyph kind="tasks" />
-            Needs you{needsCount > 0 ? <b className="today-needs-count" data-testid="today-needs-count">{needsCount}</b> : null}
+            Needs you{needsCount > 0 ? <b className="today-needs-count" data-testid="today-needs-count"><TickNumber value={needsCount} /></b> : null}
           </Button>
           {actError?.key === "prepare" ? <span role="status"><DotWord tone="fail">{actError.text}</DotWord></span> : null}
         </Toolbar>

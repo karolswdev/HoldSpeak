@@ -143,7 +143,7 @@ function OutcomeMarginRow({
     if (await edit(row, fields)) setEditing(null);
   };
   return <li className="note-margin-row" data-testid={testId} data-state={made ? "done" : "proposed"}
-    data-tied={line ? "" : undefined} style={{ ["--arrive" as string]: `${index * 120}ms` }}
+    data-kind={task ? "action" : "decision"} data-tied={line ? "" : undefined} style={{ ["--arrive" as string]: `${index * 120}ms` }}
     onMouseEnter={() => onLight(line)} onMouseLeave={() => onLight(null)}>
     <div className="note-margin-row-line">
       <Button variant="chrome" className="note-margin-row-go" title={meta} disabled={!line}
@@ -237,7 +237,7 @@ export function NoteMargin({
         {hubDecisions.length || extraLines.length ? <ul className="note-margin-list note-margin-decisions" data-testid="note-decisions">
           {hubDecisions.map((row, index) => <OutcomeMarginRow key={row.id} row={row} index={tasks.length + index}
             line={findLine(body, row.text)} outcomes={outcomes} onLight={light} onGo={go} testId="note-decisions-row" />)}
-          {extraLines.map((line, index) => <li key={`line-${line.from}`} className="note-margin-row" data-testid="note-decision-line"
+          {extraLines.map((line, index) => <li key={`line-${line.from}`} className="note-margin-row" data-kind="decision" data-testid="note-decision-line"
             style={{ ["--arrive" as string]: `${(tasks.length + hubDecisions.length + index) * 120}ms` }}
             onMouseEnter={() => light(line)} onMouseLeave={() => light(null)}>
             <div className="note-margin-row-line">
@@ -257,15 +257,19 @@ export function NoteMargin({
 
 /** The card frame of the margin: the question line, then what came back,
  *  then its verbs. */
-export function MarginNote({ question, children, verbs, testId, label, className }: {
+export function MarginNote({ question, children, verbs, testId, label, className, kind = "note" }: {
   question: ReactNode;
+  /** DELIGHT slice 2: the kind of the object the card is about (its 3 px
+   *  rule and its lead take the kind's hue); a card about the note is a note. */
+  kind?: string;
   children?: ReactNode;
   verbs?: ReactNode;
   testId?: string;
   label?: string;
   className?: string;
 }) {
-  return <section className={className ? `note-margin-card ${className}` : "note-margin-card"} aria-label={label} data-testid={testId}>
+  return <section className={className ? `note-margin-card ${className}` : "note-margin-card"} aria-label={label} data-testid={testId}
+    data-kind={kind}>
     <div className="note-margin-q"><ToolGlyph kind="ask" /><span>{question}</span></div>
     {children}
     {verbs ? <div className="note-margin-verbs">{verbs}</div> : null}

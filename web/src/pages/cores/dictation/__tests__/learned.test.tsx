@@ -188,7 +188,7 @@ describe("Forget", () => {
     expect(screen.queryByRole("button", { name: "×" })).toBeNull();
     await waitFor(() => expect(deleted).toEqual(["/api/dictation/corrections/3"]));
     // the wing re-read and now stands quiet
-    await waitFor(() => expect(screen.getByText("Nothing learned")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Press Wrong on a phrase to teach a fix")).toBeTruthy());
   });
 });
 
@@ -196,7 +196,7 @@ describe("the quiet wing", () => {
   it("says ONE token and no zero: NOTHING LEARNED", async () => {
     items = [];
     render(<Learned />);
-    await waitFor(() => expect(screen.getByText("Nothing learned")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Press Wrong on a phrase to teach a fix")).toBeTruthy());
     expect(rows()).toHaveLength(0);
     const body = document.querySelector(".speak-learned")!.textContent ?? "";
     expect(body).not.toContain("0 ");
@@ -208,7 +208,7 @@ describe("the live refresh", () => {
   it("re-reads on a `learning_event` frame", async () => {
     items = [];
     render(<Learned />);
-    await waitFor(() => expect(screen.getByText("Nothing learned")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Press Wrong on a phrase to teach a fix")).toBeTruthy());
 
     items = [{ id: 9, kind: "text", key: "queue for", value: "Q4", applied: 0 }];
     const listener = mocks.listeners.get("learning_event");
@@ -270,7 +270,7 @@ describe("the Learned toolbar", () => {
   it("is absent on an empty wing", async () => {
     items = [];
     render(<Learned />);
-    await waitFor(() => expect(screen.getByText("Nothing learned")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Press Wrong on a phrase to teach a fix")).toBeTruthy());
     expect(screen.queryByTestId("learned-toolbar")).toBeNull();
   });
 

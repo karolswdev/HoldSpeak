@@ -86,6 +86,10 @@ describe("Directory contents", () => {
     useDesk.setState({ items: { ...EMPTY_ITEMS, directory: [child] } });
     render(<DirectoryPullout object={object(child)} onClose={vi.fn()} />);
     expect(screen.getByText("Nothing filed here")).toBeInTheDocument();
+    // DELIGHT 2: the zone's own folder object and one line; filing has no verb here.
+    const zone = document.querySelector('.surface-state[data-object="directory"]') as HTMLElement;
+    expect(zone.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/zone-drawer[a-z-]*\.png$/);
+    expect(zone.querySelector("button")).toBeNull();
     expect(screen.queryByRole("heading")).toBeNull();
     expect(screen.queryByText(/0 members/)).toBeNull();
     expect(screen.queryByText(/0 objects/)).toBeNull();

@@ -1829,13 +1829,15 @@
     white-space: nowrap;
   }
 }
-.desk-next .surface-state:has(> .speak-empty) {
+.desk-next .surface-state:has(> .speak-empty),
+.desk-next .surface-state[data-object="dictation"] {
   justify-content: center;
   align-items: center;
   width: 100%;
 }
 .desk-next .surface-ledger:has(.speak-empty),
-.desk-next .surface-section:has(.speak-empty) {
+.desk-next .surface-section:has(.speak-empty),
+.desk-next .surface-ledger:has(> .surface-state[data-object="dictation"]) {
   align-self: stretch;
   width: 100%;
 }

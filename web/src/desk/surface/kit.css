@@ -737,6 +737,26 @@
       0 0 0 3px color-mix(in srgb, var(--dot-tone, var(--lamp-ok)) 18%, transparent);
   }
 }
+/* DELIGHT slice 2 (2026-10-27) — THE DEPTH SCALE. Five named steps
+   (design-tokens.json), and every surface takes one: --depth-paper (the
+   front window over the floor), --depth-row (a lifted row, a card that sits
+   in its column: the Note's margin card), --depth-card (a card that floats
+   over text: the peek card, the completion list, the feedback strip),
+   --depth-menu (a menu, a popover, a sheet; --wb-drop reads it) and
+   --depth-dock (the dock glass). A new shadow names its step; it never
+   adds a value. A card about an object carries a 3 px rule in the kind's
+   hue (inset, so nothing moves). */
+/* DELIGHT slice 2 — the count ticks (TickNumber): a changed number fades
+   in once, 160 ms, opacity only. */
+@media (prefers-reduced-motion: no-preference) {
+  .kit-tick[data-tick] {
+    animation: kit-tick-in 160ms var(--ease-standard) 1;
+  }
+}
+@keyframes kit-tick-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 /* Idle: nothing is happening; a quiet grey, legible on paper. */
 .kit-dot[data-tone="idle"] { background: color-mix(in srgb, var(--wb-muted) 55%, var(--wb-paper)); }
 

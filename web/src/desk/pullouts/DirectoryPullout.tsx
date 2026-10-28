@@ -141,7 +141,7 @@ export function DirectoryPullout({ object: o }: PulloutContentProps) {
         </Toolbar>
         <div className="zone-drawer-scroll">
           {!rows.length ? (
-            <SurfaceState empty emptyLabel="Nothing filed here" emptyGlyph="○" />
+            <SurfaceState empty emptyLabel="Nothing filed here" emptyImage={objectSprite("directory", o.id)} emptyKind="directory" />
           ) : view === "icons" ? (
             <IconGrid well label={name} onClear={() => setSelectedId(null)}>
               {rows.map((row) => (

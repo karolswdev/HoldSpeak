@@ -161,6 +161,10 @@ describe("the Parked drawer", () => {
     notRead = [];
     render(<ParkedDrawer origin={null} />);
     expect(await screen.findByText("Nothing parked")).toBeTruthy();
+    // DELIGHT 2: the empty Archive is its own object and one line, no verb.
+    const archive = document.querySelector('.surface-state[data-object="parked"]') as HTMLElement;
+    expect(archive.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/parked-drawer\.png$/);
+    expect(archive.querySelector("button")).toBeNull();
     // no counter of zero, and no dead verbs on an empty Archive (W3-ZONE)
     expect(screen.queryByText(/0 objects/i)).toBeNull();
     expect(screen.queryByRole("toolbar")).toBeNull();
