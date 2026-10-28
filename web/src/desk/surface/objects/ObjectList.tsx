@@ -298,6 +298,7 @@ export function ObjectList({
               aria-selected={selected ? "true" : "false"}
               data-selected={selected ? "true" : undefined}
               data-object-id={row.id}
+              data-kind={row.kind}
               data-avatar={row.avatar ? "" : undefined}
               {...(rowProps ? rowProps(row) : {})}
             >

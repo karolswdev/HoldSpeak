@@ -408,8 +408,14 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
       throw new Error(`no recorded hub answer for GET ${path}`);
     }));
     render(<PeopleCore />);
-    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.");
+    const empty = await screen.findByTestId("people-empty-roster");
+    // DELIGHT (2026-10-27): the empty roster is an object, one line, one verb.
+    expect(empty.querySelector(".surface-state-line")?.textContent).toBe("People you meet appear here.");
+    expect(empty.querySelector(".surface-state-object")?.getAttribute("data-kind")).toBe("person");
     expect(screen.queryByTestId("people-suggestions")).toBeNull();
+    // The verb is Add person: the press opens the add row (the rendered outcome).
+    fireEvent.click(within(empty).getByRole("button", { name: "Add person" }));
+    expect(await screen.findByTestId("people-add-row")).toBeTruthy();
   });
 
   it("a People read that fails is one line in place: People could not be read · Try again", async () => {

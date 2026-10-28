@@ -123,6 +123,20 @@ describe("the Note in live preview", () => {
     expect(view().state.doc.toString()).toBe(NOTE);
   });
 
+  it("DELIGHT: the box just pressed draws its check in; a box that opens done draws still", async () => {
+    const { ref, container } = mount(NOTE);
+    ref.current!.restoreSelection(END, END, { focus: false });
+    await waitFor(() => expect(container.querySelectorAll('[data-testid="note-task-box"]').length).toBe(2));
+    const tasks = () => Array.from(container.querySelectorAll<HTMLElement>(".cm-lp-task"));
+    // Each box carries its drawn check; the box that opened done does not tick.
+    expect(tasks().every((task) => task.querySelector("svg.cm-lp-check path"))).toBe(true);
+    expect(tasks().some((task) => task.hasAttribute("data-tick"))).toBe(false);
+    fireEvent.click(container.querySelectorAll<HTMLInputElement>('[data-testid="note-task-box"]')[0]);
+    await waitFor(() => expect(container.querySelectorAll<HTMLInputElement>('[data-testid="note-task-box"]')[0].checked).toBe(true));
+    expect(tasks()[0].hasAttribute("data-tick")).toBe(true);
+    expect(tasks()[1].hasAttribute("data-tick")).toBe(false);
+  });
+
   it("a table renders as a table outside the caret and as source inside it", async () => {
     const { ref, container, text } = mount(NOTE);
     ref.current!.restoreSelection(END, END, { focus: false });

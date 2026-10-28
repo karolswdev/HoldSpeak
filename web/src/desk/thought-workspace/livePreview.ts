@@ -107,8 +107,16 @@ class BulletWidget extends WidgetType {
   }
 }
 
+/* DELIGHT (2026-10-27): the box that was just pressed draws its check in.
+   The press rebuilds the widget (the marker text changed), so the press
+   stamps the time and the new widget ticks only within that moment; a note
+   that opens with done tasks draws them still. */
+let tickedAt = -Infinity;
+let tickedFrom = -1;
+const SVG_NS = "http://www.w3.org/2000/svg";
+
 class CheckboxWidget extends WidgetType {
-  constructor(readonly checked: boolean) {
+  constructor(readonly checked: boolean, readonly from = -1) {
     super();
   }
 
@@ -131,9 +139,21 @@ class CheckboxWidget extends WidgetType {
     box.addEventListener("click", (event) => {
       event.preventDefault();
       if (!view.state.facet(EditorView.editable)) return;
-      toggleTaskAt(view, view.posAtDOM(wrap));
+      tickedAt = Date.now();
+      tickedFrom = view.posAtDOM(wrap);
+      toggleTaskAt(view, tickedFrom);
     });
     wrap.appendChild(box);
+    // The check is drawn, not the browser's: a stroke that can draw in.
+    const check = document.createElementNS(SVG_NS, "svg");
+    check.setAttribute("class", "cm-lp-check");
+    check.setAttribute("viewBox", "0 0 12 12");
+    check.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", "M2.5 6.5 5 9l4.5-6");
+    check.appendChild(path);
+    wrap.appendChild(check);
+    if (this.checked && this.from === tickedFrom && Date.now() - tickedAt < 400) wrap.setAttribute("data-tick", "");
     return wrap;
   }
 
@@ -471,7 +491,7 @@ function buildInline(view: EditorView, ctx: Context): DecorationSet {
         if (lineTouched(state, ref.from)) return;
         if (task && marker) {
           const end = doc.sliceString(marker.to, marker.to + 1) === " " ? marker.to + 1 : marker.to;
-          out.push(Decoration.replace({ widget: new CheckboxWidget(checked) }).range(listMark.from, end));
+          out.push(Decoration.replace({ widget: new CheckboxWidget(checked, listMark.from) }).range(listMark.from, end));
         } else {
           const ordered = node.parent?.name === "OrderedList";
           const end = doc.sliceString(listMark.to, listMark.to + 1) === " " ? listMark.to + 1 : listMark.to;
