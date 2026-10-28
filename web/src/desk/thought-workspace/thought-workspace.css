@@ -1206,8 +1206,22 @@
 .desk-next .note-margin-answer {
   max-height: 16em;
   overflow-y: auto;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* The margin is narrow: the answer's document reads at the card's size. */
+.desk-next .note-margin-answer .surface-material {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.desk-next .note-margin-answer .surface-material > :first-child {
+  margin-top: 0;
+}
+
+.desk-next .note-margin-answer .surface-material :is(h1, h2, h3, h4) {
+  font-size: 13px;
+  margin: 8px 0 2px;
 }
 
 .desk-next .note-margin-verbs {

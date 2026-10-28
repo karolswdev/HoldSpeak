@@ -145,7 +145,7 @@ export function ConstitutionalContextCore() {
 
   return (
     <div className="constitutional-context-core">
-      <Toolbar label="Context" data-testid="context-toolbar">
+      <Toolbar label="Engine context" data-testid="context-toolbar">
         {history.length > 0 ? (
           <CycleGadget
             label="Version history"

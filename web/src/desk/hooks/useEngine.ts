@@ -9,7 +9,12 @@ export type EngineFact = {
   /** The engine's own name. No place word and no address on a working
    *  window (owner ruling 2026-10-25); Settings ▸ Engines says where it runs. */
   model: string;
+  /** The engine's last check did not reach it (Engines says "Not answering"). */
+  down?: boolean;
 };
+
+/** Readiness words of an engine whose server did not answer its check. */
+const DOWN_READINESS = new Set(["unreachable", "unavailable", "not_reachable", "down"]);
 
 type SummaryStore = {
   body: any | null;
@@ -44,6 +49,7 @@ function factFromSummary(capabilityId: string): EngineFact {
     state: status === "assigned" ? "set" : "none",
     // A profile id is an implementation key and is not useful on the Desk.
     model: String(entry.label || "Selected engine"),
+    ...(DOWN_READINESS.has(String(entry.readiness || "").toLowerCase()) ? { down: true } : {}),
   };
 }
 

@@ -1348,7 +1348,7 @@ pattern so opening Tools keeps the answer verbs in reach.
 ## AskSourceFrame — captured source and return (2026-10-23)
 
 Ask owns the Note handoff and its thread/draft. AskSourceFrame is the controlled
-view for quote, fold state, Clear quote and Back to Thought. Back remains
+view for quote, fold state, Clear quote and Back to note. Back remains
 outside the fold and reachable at narrow width while a run is pending. The
 view holds no source, window, model or writer authority. Components Conversation
 uses the exact view with local callbacks and a disabled composer mic.

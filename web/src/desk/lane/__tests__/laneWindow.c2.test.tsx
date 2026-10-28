@@ -28,6 +28,8 @@ import { wireClock } from "../../surface/format";
 import { BRIEF_HEAD, OWNER_TEXT, noLiteralMarks } from "../../components/__tests__/fixtures.agentWords";
 import { ApiError } from "../../../lib/api";
 import { useGate } from "../../gate";
+import { useConductor } from "../../conductor/store";
+import * as agentHand from "../../agentHand";
 
 const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
 const KEY = "claude:c1a0de00-runbook";
@@ -342,24 +344,55 @@ describe("the agent's window", () => {
     expect(screen.queryByTestId("lane-held-call")).toBeNull();
   });
 
+  it("atlas pass 2: a launch whose session is gone says Session gone, as Agents does, with Start again", async () => {
+    // The Agents list reads this launch from the hub's history (expired):
+    // the window reads the same truth, never "is working".
+    useAgentFlights.setState({ flights: [] });
+    useConductor.setState({ flightsState: "ok", history: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook",
+      agent: "claude", state: "expired", session_key: KEY, launch_id: "launch_f2_runbook" })] });
+    const hand = vi.spyOn(agentHand, "openHand").mockImplementation(() => undefined);
+    try {
+      await openLane(fixture({ wait: null, gated: [] }));
+      expect(screen.getByTestId("lane-head").textContent).toBe("Session gone");
+      expect(document.body.textContent).not.toContain("is working");
+      expect(screen.queryByTestId("lane-stop")).toBeNull();
+      expect(screen.queryByTestId("lane-rebrief")).toBeNull();
+      expect(document.querySelector(".lw-step[aria-current='step']")).toBeNull();
+      fireEvent.click(screen.getByTestId("lane-start-again"));
+      expect(hand).toHaveBeenCalledWith(expect.objectContaining({ kind: "action", id: "a1", title: "Write the rollback runbook" }));
+    } finally {
+      hand.mockRestore();
+      useConductor.setState({ flightsState: "idle", history: [] });
+    }
+  });
+
+  it("atlas pass 2: the flight's turn end leads, so the window and the Agents list say the same word", async () => {
+    useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude",
+      state: "waiting", turn_end: "idle", session_key: KEY, launch_id: "launch_f2_runbook" })] });
+    await openLane(fixture({ gated: [], wait: { ...(fixture().wait as object), kind: "DONE", turn_end: "done", question: "Tests pass." } as never }));
+    expect(screen.getByTestId("lane-head").textContent).toBe("Claude Code is idle");
+    expect(screen.getByTestId("lane-turn-end").textContent).toContain("Idle");
+  });
+
   it("renders the title, the track, the ask well, the rail, the PR card, the files and the footer", async () => {
     useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude", state: "waiting", session_key: KEY, launch_id: "launch_f2_runbook" })] });
     await openLane(fixture());
     expect(screen.getAllByText("Claude Code: Write the rollback runbook").length).toBeGreaterThan(0);
     expect(screen.getByTestId("lane-ask").querySelector(".ask-well-question")?.textContent).toBe(QUESTION);
-    expect(screen.getByText("CLAUDE CODE ASKS · 6 MIN")).toBeTruthy();
+    // W3 AGENT WINDOW: the ask's head is a dot and a word, the age quiet.
+    expect(within(screen.getByTestId("lane-ask")).getByText("Asks you")).toBeTruthy();
+    expect(within(screen.getByTestId("lane-ask")).getByText("Asked 6 min ago")).toBeTruthy();
     const rail = screen.getByTestId("lane-rail");
-    expect(within(rail).getByText("COMMIT")).toBeTruthy();
-    expect(within(rail).getByText("a1c9e02 Draft the ledger rollback runbook")).toBeTruthy();
+    expect(rail.textContent).toContain("Committed a1c9e02 Draft the ledger rollback runbook");
     expect(within(rail).queryByText("Your press in GitHub")).toBeNull();
     expect(within(rail).queryByText(QUESTION)).toBeNull();
     expect(screen.getByTestId("lane-track").closest("details")?.open).toBe(false);
     const pr = screen.getByTestId("lane-pr");
     expect(pr.textContent).toContain("#413 Write the rollback runbook");
-    expect(pr.textContent).toContain("CHECKS 6 OF 7");
-    expect(pr.textContent).toContain("1 RUNNING");
-    expect(pr.textContent).toContain("NONE YET");
-    expect(pr.textContent).toContain("hs/write-the-rollback-runbook → main");
+    expect(pr.textContent).toContain("Checks 6 of 7");
+    expect(screen.getByTestId("lane-pr-checks").getAttribute("data-tone")).toBe("warn");
+    expect(pr.textContent).toContain("No review yet");
+    expect(screen.getByTestId("lane-branch").parentElement?.textContent).toBe("hs/write-the-rollback-runbookinto main");
     expect(screen.getByTestId("lane-files").textContent).toContain("ledger/freeze.py");
     // Owner ruling 2026-10-25: no host chip in the footer.
     expect(screen.queryByText("GITHUB.COM")).toBeNull();
@@ -606,13 +639,14 @@ describe("the agent's window", () => {
 
   it("terminal opens beside the session's work, and returns without losing the question", async () => {
     await openLane(fixture());
-    const raw = screen.getByTestId("lane-raw");
+    // W3 AGENT WINDOW: Terminal is a wing (a tab of the title bar's strip).
+    const raw = screen.getByRole("tab", { name: "Terminal" });
     fireEvent.click(raw);
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
     expect(screen.getByTestId("lane-rail")).toBeTruthy();
     expect(screen.getByTestId("lane-ask")).toBeTruthy();
-    expect(raw.getAttribute("aria-pressed")).toBe("true");
-    fireEvent.click(raw);
+    expect(screen.getByRole("tab", { name: "Terminal" }).getAttribute("aria-selected")).toBe("true");
+    fireEvent.click(screen.getByRole("tab", { name: "Steps" }));
     expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
     expect(screen.getByTestId("lane-rail")).toBeTruthy();
   });
@@ -694,8 +728,9 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
 
   it("B48: the well of an idle turn end says IDLE, not ASKS", async () => {
     await openLane(fixture({ wait: { ...(fixture().wait as object), turn_end: "idle", question: "Understood — stopping here." } as never }));
-    expect(screen.getByText(/^CLAUDE CODE IDLE/)).toBeTruthy();
-    expect(screen.queryByText(/^CLAUDE CODE ASKS/)).toBeNull();
+    // W3 AGENT WINDOW: the plate's head is a dot and a word.
+    expect(within(screen.getByTestId("lane-ask")).getByText("Idle")).toBeTruthy();
+    expect(within(screen.getByTestId("lane-ask")).queryByText("Asks you")).toBeNull();
     expect(within(screen.getByTestId("lane-track")).getByText("IDLE")).toBeTruthy();
   });
 
@@ -704,14 +739,14 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     const base = fixture();
     await openLane(fixture({ follow_through: { ...base.follow_through, pr: { ...base.follow_through.pr!, title: "Add the ledger rollback runbook" } } }));
     const pr = screen.getByTestId("lane-pr");
-    expect(pr.querySelector(".pr-card-title")?.textContent).toBe("#413 Add the ledger rollback runbook");
+    expect(pr.querySelector(".lw-obj-title")?.textContent).toBe("#413 Add the ledger rollback runbook");
     expect(screen.getByTestId("lane-pr-item").textContent).toBe("Write the rollback runbook");
   });
 
   it("B50: with no PR title read yet, the card keeps the item and draws no second line", async () => {
     useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude", state: "pr_open", session_key: KEY, launch_id: "launch_f2_runbook" })] });
     await openLane(fixture());
-    expect(screen.getByTestId("lane-pr").querySelector(".pr-card-title")?.textContent).toBe("#413 Write the rollback runbook");
+    expect(screen.getByTestId("lane-pr").querySelector(".lw-obj-title")?.textContent).toBe("#413 Write the rollback runbook");
     expect(screen.queryByTestId("lane-pr-item")).toBeNull();
   });
 
