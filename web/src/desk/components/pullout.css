@@ -770,3 +770,20 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     justify-content: flex-start;
   }
 }
+
+/* DELIGHT (2026-10-27, canvases/delight-2026-10-27.html) — a window's first
+   paint: the title bar and the toolbar draw at once; what is under the
+   toolbar fades up, 160 ms, opacity only (no box moves: the still fence).
+   A body with no toolbar fades whole. Content that arrives later (a list
+   after its first read) fades up the same way. Nothing under reduced
+   motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .desk-next :is(.desk-pullout-body, .desk-surface-body):not(:is(.desk-pullout-body, .desk-surface-body) *):not(:has(.kit-toolbar)),
+  .desk-next :is(.desk-pullout-body, .desk-surface-body) .kit-toolbar ~ * {
+    animation: desk-body-first-paint 160ms var(--ease-standard) both;
+  }
+}
+@keyframes desk-body-first-paint {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

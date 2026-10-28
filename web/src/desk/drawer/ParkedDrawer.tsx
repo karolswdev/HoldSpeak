@@ -15,8 +15,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import {
+  DotWord,
   ObjectList,
   ParkReceipt,
+  Toolbar,
+  ToolGlyph,
   SurfaceFooter,
   SurfaceState,
   objectSprite,
@@ -56,12 +59,25 @@ export interface ParkedRead {
   partial?: ParkedKind[];
 }
 
-/** The NOT READ word of a kind the hub could not read. */
+/** The word of a kind the hub could not read (sentence case, W3-ZONE). */
 export const PARKED_KIND_WORD: Record<ParkedKind, string> = {
-  meeting: "MEETINGS",
-  workbench_item: "AUTOMATION ITEMS",
-  project: "PROJECTS",
+  meeting: "Meetings",
+  workbench_item: "Automation items",
+  project: "Projects",
 };
+
+/** A parked row's kind word, sentence case (W3-ZONE: no caps in a list). */
+export const PARKED_ROW_KIND: Record<ParkedKind, string> = {
+  meeting: "Meeting",
+  workbench_item: "Automation item",
+  project: "Project",
+};
+
+/** `TODAY` → `Today`, `OCT 5` → `Oct 5`. */
+function sentence(word: string): string {
+  const lower = word.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
 
 /** The list row of one parked object. */
 export function parkedRow(item: ParkedItem, now: Date = new Date()): ObjectListRow {
@@ -70,11 +86,12 @@ export function parkedRow(item: ParkedItem, now: Date = new Date()): ObjectListR
   const base = {
     id: item.ref,
     name: item.name,
-    when: valid ? whenWord(valid, now) : undefined,
+    kindWord: PARKED_ROW_KIND[item.kind] ?? sentence(String(item.kind)),
+    when: valid ? sentence(whenWord(valid, now)) : undefined,
     whenSort: valid ? valid.getTime() : undefined,
   };
   if (item.kind === "workbench_item") {
-    return { ...base, kind: "workbench", kindWord: "AUTOMATION ITEM", sprite: objectSprite("workbench", item.id) };
+    return { ...base, kind: "workbench", sprite: objectSprite("workbench", item.id) };
   }
   return { ...base, kind: item.kind };
 }
@@ -172,25 +189,38 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
       unmountOnMinimize
       onClose={() => useDrawers.getState().closeParked()}
     >
-      <div className="desk-pullout-body drawer-body" data-testid="parked-drawer">
-        <div className="drawer-scroll">
-          {notRead.length ? (
-            <div className="drawer-head">
-              <div className="drawer-facts">
-                {notRead.map((kind) => (
-                  <span key={kind} className="drawer-fact" data-tone="fail" data-testid="parked-not-read">
-                    {PARKED_KIND_WORD[kind]} · <b>NOT READ</b>
-                    {partial.includes(kind) ? <> · <b>PARTIAL</b></> : null}
-                  </span>
-                ))}
-              </div>
-              <span className="drawer-head-verbs">
-                <Button dense variant="ghost" onClick={reread}>
-                  Retry
+      {/* W3-ZONE (atlas 2026-10-27): the Archive shares the drawer grammar —
+          the title bar is the title, a toolbar holds the verbs (only when
+          there is a row to act on: no dead verbs), the list edge to edge,
+          the facts in the status bar. */}
+      <div className="desk-pullout-body drawer-body" data-interior="list" data-testid="parked-drawer">
+        {rows.length || notRead.length ? (
+          <Toolbar label="Archive">
+            {rows.length ? (
+              <>
+                <Button dense variant="secondary" disabled={!selected} onClick={() => selected && openParkedHome(selected)}>
+                  <ToolGlyph kind="open" />Open
                 </Button>
-              </span>
-            </div>
-          ) : null}
+                <Button
+                  dense
+                  variant="ghost"
+                  disabled={!selected || busy}
+                  loading={busy}
+                  onClick={() => selected && void restore([selected.ref])}
+                  data-testid="parked-restore"
+                >
+                  <ToolGlyph kind="retry" />Restore
+                </Button>
+              </>
+            ) : null}
+            {notRead.length ? (
+              <Button dense variant="ghost" onClick={reread}>
+                <ToolGlyph kind="retry" />Retry
+              </Button>
+            ) : null}
+          </Toolbar>
+        ) : null}
+        <div className="drawer-scroll parked-scroll">
           {!read && !failed ? (
             <SurfaceState loading />
           ) : !rows.length && notRead.length ? null : !rows.length ? (
@@ -199,6 +229,11 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
             <ObjectList
               label="Archive"
               rows={rows}
+              density="dense"
+              visibleColumns={["name", "kind", "when"]}
+              // Restore is the Archive's act: a press selects, a double press
+              // or Enter opens where the object lives.
+              pressOpens={false}
               sort={sort}
               onSort={onSort}
               selectedId={selectedId}
@@ -216,25 +251,15 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
           receipt ? (
             <ParkReceipt outcome={receipt} onRestore={(refs) => void restore(refs)} data-testid="parked-receipt" />
           ) : (
-            <span className="drawer-receipt">{drawerReceipt(rows.length, selected ? 1 : 0)}</span>
+            <span className="drawer-receipt">
+              {notRead.map((kind) => (
+                <DotWord key={kind} tone="fail" data-testid="parked-not-read">
+                  {PARKED_KIND_WORD[kind]} not read{partial.includes(kind) ? " · partial" : ""}
+                </DotWord>
+              ))}
+              {drawerReceipt(rows.length, selected ? 1 : 0) || null}
+            </span>
           )
-        }
-        verbs={
-          <>
-            <Button
-              dense
-              variant="ghost"
-              disabled={!selected || busy}
-              loading={busy}
-              onClick={() => selected && void restore([selected.ref])}
-              data-testid="parked-restore"
-            >
-              Restore
-            </Button>
-            <Button dense variant="secondary" disabled={!selected} onClick={() => selected && openParkedHome(selected)}>
-              Open
-            </Button>
-          </>
         }
       />
     </DeskWindowFrame>

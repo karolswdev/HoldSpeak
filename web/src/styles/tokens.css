@@ -361,6 +361,15 @@
   --wb-sel-vivid: #2f67c8; /* vivid Workbench blue for a selected list row (paper ink 5.3:1) */
   --wb-link-ink: #2f67c8; /* an object named in a note's text: a Project, a pull request, a Jira key, a decision (Note canvas A, 2026-10-27; paper ink 5.3:1) */
   --wb-person-ink: #1f7a6b; /* a person named in a note's text (Note canvas A, 2026-10-27; paper ink 5.6:1) */
+  --kind-project: #3b62c4; /* DELIGHT 2026-10-27, the kind hue of a Project: the Workbench blue of its folder (5.4:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-meeting: #1c78a8; /* DELIGHT 2026-10-27, the kind hue of a meeting: the sky blue of the floor's meeting glow (4.7:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-person: #1f7a6b; /* DELIGHT 2026-10-27, the kind hue of a person: the teal of the person object and the note's person ink (5.0:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-decision: #6a4bc4; /* DELIGHT 2026-10-27, the kind hue of a decision: the violet of its check seal (5.9:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-note: #94620f; /* DELIGHT 2026-10-27, the kind hue of a note: the amber line on its paper (5.1:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-pr: #2b7a4a; /* DELIGHT 2026-10-27, the kind hue of a pull request: merge green (5.1:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-action: #8a5a3d; /* DELIGHT 2026-10-27, the kind hue of an action item: the ember ink (5.6:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-agent: #a84a1c; /* DELIGHT 2026-10-27, the kind hue of an agent: the coder orange (5.5:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-other: var(--wb-sel); /* DELIGHT 2026-10-27: the kind hue of any other object (the Workbench blue) */
   --wb-row-hover: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper)); /* a list row lifted under the pointer */
   --wb-row-dense: 30px; /* dense list view row on the desktop; narrow rows stay 44px */
   --desk-floor-label-halo: 0 1px 2px rgba(12, 20, 32, 0.9), 0 0 1px rgba(12, 20, 32, 0.95), 0 0 8px rgba(12, 20, 32, 0.55); /* a floor label's soft dark halo: paper ink reads on the slate floor and on a wallpaper, with no plate */

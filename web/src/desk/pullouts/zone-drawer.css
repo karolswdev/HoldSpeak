@@ -1,0 +1,30 @@
+/* W3-ZONE (Window Program, atlas 2026-10-27): the zone drawer on the window
+   grammar, as the Project drawer: toolbar, contents edge to edge, the
+   status bar. The list scrolls inside the window. */
+.zone-drawer-body {
+  display: flex;
+  flex-direction: column;
+  min-height: min(320px, 50vh);
+  overflow: hidden;
+}
+.zone-drawer-body > .kit-toolbar { flex: 0 0 auto; }
+.zone-drawer-scroll {
+  container: surface / inline-size;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.zone-drawer-scroll > .object-list { flex: 1 1 auto; }
+.zone-drawer-scroll > .surface-state,
+.zone-drawer-scroll > .desk-icon-grid { margin: 12px 14px; }
+.zone-drawer-filed {
+  flex: 0 0 auto;
+  padding: 4px 14px 6px;
+  border-top: 1px solid var(--wb-rule, var(--border));
+}
+.zone-drawer-body .drawer-view { display: inline-flex; align-items: center; gap: 2px; }
+.zone-drawer-body .desk-icon-name { -webkit-line-clamp: 2; }
+/* The status bar's count reads from the left, as the Project drawer's. */
+.desk-next .desk-pullout:has(.zone-drawer-body) .surface-footer-receipt { justify-content: flex-start; }

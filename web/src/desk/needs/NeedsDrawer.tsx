@@ -160,6 +160,16 @@ export async function recheckSource(name: string, watchIds: readonly string[]): 
   }
 }
 
+/** DELIGHT: mark the pressed verb's row to settle out, and wait the 180 ms
+ *  it takes. Nothing under reduced motion (or with no media query). */
+async function settleOut(origin?: Element | null): Promise<Element | null> {
+  const row = origin?.closest(".needs-row") ?? null;
+  if (!row || !window.matchMedia?.("(prefers-reduced-motion: no-preference)")?.matches) return null;
+  row.setAttribute("data-settle", "done");
+  await new Promise((resolve) => window.setTimeout(resolve, 180));
+  return row;
+}
+
 function NeedVerbsView({ face, primary, onWell, well }: {
   face: NeedFace;
   primary: boolean;
@@ -175,15 +185,20 @@ function NeedVerbsView({ face, primary, onWell, well }: {
   const v = face.verbs;
   const named = (verb: string) => `${verb}: ${face.name}`;
 
-  const act = async (label: string, run: () => Promise<unknown>, key: string) => {
+  /* DELIGHT (2026-10-27): `origin` is the pressed verb. When the hub says a
+     Done is done, the row settles out (a green wash that fades, 180 ms,
+     opacity and colour only), then the list reads again and the row is
+     gone. If the row is still there after the read, it shows again. */
+  const act = async (label: string, run: () => Promise<unknown>, key: string, origin?: Element | null) => {
     if (busy) return;
     setBusy(true);
     try {
       await run();
       clearWriteFailure(key);
-      void refreshNeedsYou(true);
+      const settled = label === "Done" ? await settleOut(origin) : null;
+      void Promise.resolve(refreshNeedsYou(true)).finally(() => settled?.removeAttribute("data-settle"));
     } catch (error) {
-      reportWriteFailure(label, error, () => void act(label, run, key), key);
+      reportWriteFailure(label, error, () => void act(label, run, key, origin), key);
     } finally {
       setBusy(false);
     }
@@ -267,7 +282,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
         ...(v.direction === "theirs"
           ? [{ type: "item" as const, id: "done", label: "Done", ghost: busy ? "Busy" : undefined,
-            onSelect: () => void act("Done", () => followThrough(v.cardId, "done"), key) }]
+            onSelect: () => void act("Done", () => followThrough(v.cardId, "done"), key, moreRef.current) }]
           : []),
         ...(v.next === "set_date"
           ? [{ type: "item" as const, id: "date", label: "Set a date", onSelect: () => onWell("date") }]
@@ -287,7 +302,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             onClick={() => onWell(well === "nudge" ? null : "nudge")}>Nudge</Button>
         ) : (
           <Button dense variant={lead} disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
-            onClick={() => void act("Done", () => followThrough(v.cardId, "done"), key)}>Done</Button>
+            onClick={(event) => void act("Done", () => followThrough(v.cardId, "done"), key, event.currentTarget)}>Done</Button>
         )}
         {face.arrival ? (
           <Button dense variant="ghost" disabled={busy} aria-label={named("Drop")} data-testid="needs-row-verb" data-verb="drop"
@@ -325,9 +340,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       if (v.next === "mark_done") {
         return (
           <Button dense variant={lead} disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
-            onClick={() => void act("Done", () => apiFetch("/api/follow-through/complete", {
+            onClick={(event) => void act("Done", () => apiFetch("/api/follow-through/complete", {
               method: "POST", json: { card_id: v.cardId, verb: "done", payload: {} },
-            }), `action-item:${v.cardId}`)}>Done</Button>
+            }), `action-item:${v.cardId}`, event.currentTarget)}>Done</Button>
         );
       }
       const which: Well = v.next === "name_owner" ? "owner" : "date";
