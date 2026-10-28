@@ -234,6 +234,23 @@ function asBoard(
   return (door as Partial<Record<DoorColumn | "active", NeedsYouDoorCard[]>> | undefined) ?? {};
 }
 
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** The reason of a Door card in the `now` window, by its due day: `DUE TODAY`,
+ *  `DUE TOMORROW`, `DUE Thu`, `OVERDUE` when past. The twin of `door_due_word`. */
+export function doorDueWord(due: unknown, now: Date): string {
+  const day = localDayOf(due);
+  if (!day) return "DUE TODAY";
+  const [y, m, d] = day.split("-").map(Number);
+  const [ty, tm, td] = dayOf(now).split("-").map(Number);
+  const delta = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000);
+  if (delta < 0) return "OVERDUE";
+  if (delta === 0) return "DUE TODAY";
+  if (delta === 1) return "DUE TOMORROW";
+  if (delta < 7) return `DUE ${WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}`;
+  return `DUE ${day}`;
+}
+
 function doorItems(
   board: Partial<Record<DoorColumn | "active", NeedsYouDoorCard[]>>,
   coveredActionItems: ReadonlySet<string>,
@@ -248,6 +265,7 @@ function doorItems(
       const owner = card.owner ?? null;
       const hasOwner = String(owner ?? "").trim() !== "";
       let why = "";
+      let dueWord = "";
       let severity = "info";
       if (column === "overdue") {
         const due = dueAt ? new Date(dueAt).getTime() : Number.NaN;
@@ -257,7 +275,10 @@ function doorItems(
         why = days > 0 ? `OVERDUE · ${days}D` : "OVERDUE";
         severity = "danger";
       } else if (column === "now") {
-        why = "DUE TODAY";
+        // The two-day window: the word says the day (the twin of
+        // `door_items`); computeNeedsYou makes another person's a wait.
+        dueWord = doorDueWord(dueAt, now);
+        why = dueWord;
         severity = "warning";
       } else if (column === "waiting") {
         why = owner ? `WAITING ON ${String(owner).toUpperCase()}` : "WAITING";
@@ -293,6 +314,7 @@ function doorItems(
         _isDoor: true,
         _isUnassigned: column === "unassigned" && !hasOwner,
         _toReview: column === "unassigned" && hasOwner,
+        ...(dueWord ? { _dueWord: dueWord } : {}),
       });
     }
   }
@@ -488,7 +510,9 @@ function isSelf(owner: unknown, selfNames: readonly string[]): boolean {
 
 function waitingOn(row: { owner?: unknown; why?: unknown }): boolean {
   const owner = String(row.owner ?? "").trim();
-  return owner !== "" && String(row.why ?? "").trim().toUpperCase() === `WAITING ON ${owner.toUpperCase()}`;
+  // The head part decides: `WAITING ON BEA · DUE TOMORROW` waits on Bea.
+  const head = String(row.why ?? "").split(" · ", 1)[0].trim().toUpperCase();
+  return owner !== "" && head === `WAITING ON ${owner.toUpperCase()}`;
 }
 
 /** True when the owner waits on SOMEONE ELSE for this row: it names an owner
@@ -653,7 +677,14 @@ export function computeNeedsYou(
   const selfNames = input.selfNames ?? SELF_OWNER_NAMES;
   // An item the owner himself holds is his: it reads `YOURS`, never
   // `WAITING ON ME`, and it is counted.
-  const combined = [...doorItems(asBoard(input), covered, now), ...room].map((row) =>
+  // The Door's two-day window: another person's item there is a wait on
+  // that person, with its due word beside it; his own keeps the word.
+  const windowed = [...doorItems(asBoard(input), covered, now), ...room].map((row) => {
+    const word = String((row as { _dueWord?: unknown })._dueWord ?? "");
+    const owner = String(row.owner ?? "").trim();
+    return word && owner && !isSelf(owner, selfNames) ? { ...row, why: `WAITING ON ${owner.toUpperCase()} · ${word}` } : row;
+  });
+  const combined = windowed.map((row) =>
     waitingOn(row) && isSelf(row.owner, selfNames) ? { ...row, why: YOURS } : row,
   );
   // A People commitment never merges with another row: a merge would put its

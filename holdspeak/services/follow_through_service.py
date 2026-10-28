@@ -880,6 +880,16 @@ class FollowThroughService:
         *,
         review_state: Any = None,
     ) -> str:
+        """The Door column of one action item.
+
+        The ``now`` column is a two-day window: an owned item due today,
+        tomorrow or the day after. Inside it the word says the day (Needs
+        you ``door_due_word``: Due today, Due tomorrow, Due Thu), and whose
+        item it is decides its row: another person's item is listed under
+        Waiting on <name> with its due word (``waiting``, *theirs*, not
+        counted); the owner's own item stays his (*mine*) and counts on its
+        day (the one count rule, ``counts_in_number``).
+        """
         if str(review_state or "").lower() == "pending":
             return "unassigned"
         if not owner or not str(owner).strip():

@@ -15,6 +15,7 @@ import {
   type NeedsYouRoomItem,
 } from "./needsYou";
 import { asHub } from "../test/hubNeedsYou";
+import { stateWords } from "./surface/objects/NeedsRow";
 
 vi.mock("../lib/api", async (original) => ({
   ...await original<typeof import("../lib/api")>(),
@@ -150,6 +151,28 @@ describe("the one needs-you membership", () => {
     expect(result.waitingItems.map((item) => item.ref)).toEqual(["priya"]);
     const why = Object.fromEntries(result.unmutedItems.map((item) => [item.ref, item.why]));
     expect(why).toEqual({ mine: "YOURS", label: "YOURS", "room-mine": "YOURS", priya: "WAITING ON PRIYA" });
+  });
+
+  it("says the day of the two-day now window, and lists another person's item under Waiting", () => {
+    // NOW is Thursday 2026-10-01 (local day); the window ends on Saturday.
+    const now: Partial<Record<string, ReturnType<typeof doorCard>[]>> = { now: [] };
+    for (const [days, due] of [["0", "2026-10-01"], ["1", "2026-10-02"], ["2", "2026-10-03"]]) {
+      now.now!.push(doorCard(`mine-${days}`, { owner: "Me", due }), doorCard(`bea-${days}`, { owner: "Bea", due }));
+    }
+    const result = computeNeedsYou({ door: { board: now }, selfNames: ["me", "you", "manager"], now: NOW });
+    const rows = Object.fromEntries(result.unmutedItems.map((item) => [item.ref, item]));
+    const words = ["DUE TODAY", "DUE TOMORROW", "DUE Sat"];
+    words.forEach((word, days) => {
+      expect(rows[`mine-${days}`]).toMatchObject({ why: word, waiting: false, direction: "mine" });
+      expect(rows[`bea-${days}`]).toMatchObject({ why: `WAITING ON BEA · ${word}`, waiting: true, direction: "theirs" });
+    });
+    expect(result.waitingItems.map((item) => item.ref).sort()).toEqual(["bea-0", "bea-1", "bea-2"]);
+    // His own counts on its day; Bea's never counts.
+    expect(result.members.map(({ ref }) => ref)).toEqual(["mine-0"]);
+    // The row says it in sentence case (NeedsRow `stateWords`).
+    expect(stateWords("WAITING ON BEA · DUE TOMORROW")).toBe("Waiting on Bea · Due tomorrow");
+    expect(stateWords("DUE Sat")).toBe("Due Sat");
+    expect(stateWords("DUE TODAY")).toBe("Due today");
   });
 
   it("counts a merged row when one of its projections is the owner's own", () => {
