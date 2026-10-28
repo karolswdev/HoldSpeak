@@ -227,7 +227,8 @@ export function Learned() {
           loading={loading}
           error={error}
           empty={!rows.length}
-          emptyLabel="Press Wrong on a phrase to teach a fix"
+          emptyLabel="Nothing learned yet"
+          emptyHint="Press Wrong on a phrase to teach a fix"
           emptyImage={SYSTEM_48.dockSpeak}
           emptyKind="dictation"
           onRetry={() => void load()}

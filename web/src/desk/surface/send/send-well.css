@@ -493,7 +493,14 @@
 [data-send="well"] .send-receipt-line:empty { display: none; }
 /* Nothing to say (no receipt yet): the status line folds away; no dead
    band under the document. */
-.desk-next .surface-footer:has(> [data-send="actions"].send-sheet-footer):not(:has(.send-receipt-line:not(:empty), [data-testid="send-edit-failed"])) {
+/* W4-REDS-C (2026-10-27): the host's foot is shared — the Room update's
+   own footer (Regenerate · Copy · its receipt) portals into the same slot.
+   Fold only the Send status line; fold the whole foot only when nothing else
+   is in it, so the host's verbs stay reachable. */
+.desk-next [data-send="actions"].send-sheet-footer:not(:has(.send-receipt-line:not(:empty), [data-testid="send-edit-failed"])) {
+  display: none;
+}
+.desk-next .surface-footer:has(> [data-send="actions"].send-sheet-footer):not(:has(> :not([data-send="actions"]))):not(:has(.send-receipt-line:not(:empty), [data-testid="send-edit-failed"])) {
   display: none;
 }
 @container surface (max-width: 559.9px) {

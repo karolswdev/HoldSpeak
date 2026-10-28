@@ -587,7 +587,10 @@ class TestTheThoughtSends:
                 self._send_geometry(page, win, width)
 
                 # His press: the file is saved, the receipt names the path.
-                verb = opened.locator("[data-testid=send-verb]")
+                # #1539 (W4-PHONE) portaled the picked row's Send into the
+                # sheet's toolbar; the preview above proves the picked row is
+                # the HoldSpeak folder, the receipt below stays on that row.
+                verb = well.locator("[data-testid=send-sheet-header] [data-testid=send-verb]")
                 page.wait_for_function("(e) => e && !e.disabled", arg=verb.element_handle(), timeout=T)
                 self._tap(page, verb)
                 receipt = opened.locator("[data-receipt=latest][data-state=sent]")
