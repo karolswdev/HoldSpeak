@@ -285,6 +285,12 @@ export type StatusBarItem = {
   /** DELIGHT slice 2: the item's number. A change after the first paint
    *  fades the item's words in once (TickNumber), with the dock's badge. */
   tick?: number | null;
+  /** DELIGHT slice 4 (2026-10-28): the lamp says a LIVE state (on a call,
+   *  recording). It glows in its own tone, red too, and breathes while the
+   *  state lasts (2.4 s a breath, a box-shadow on a lamp; a still ring
+   *  under reduced motion). The one endless motion; it stops when the
+   *  state stops. */
+  live?: boolean;
   testId?: string;
 };
 
@@ -315,7 +321,7 @@ export function TickNumber({ value, className, children }: {
 
 /** The status bar's lamp: lit dots (ok, info, ask) glow (kit.css); a change
  *  of `pulse` after the first paint replays the pulse (a new key). */
-function StatusLamp({ tone, pulse }: { tone: ObjectTone; pulse?: string | number | null }) {
+function StatusLamp({ tone, pulse, live }: { tone: ObjectTone; pulse?: string | number | null; live?: boolean }) {
   const seen = useRef(pulse);
   const [beat, setBeat] = useState(0);
   useEffect(() => {
@@ -323,7 +329,7 @@ function StatusLamp({ tone, pulse }: { tone: ObjectTone; pulse?: string | number
     seen.current = pulse;
     setBeat((count) => count + 1);
   }, [pulse]);
-  return <span key={beat} className="kit-dot" data-tone={tone} data-pulse={beat ? "" : undefined} aria-hidden="true" />;
+  return <span key={beat} className="kit-dot" data-tone={tone} data-pulse={beat ? "" : undefined} data-live={live ? "" : undefined} aria-hidden="true" />;
 }
 
 /** Window grammar (2026-10-24) — the status bar: a 24 px band at the
@@ -361,7 +367,7 @@ export function StatusBar({
       <span className="kit-statusbar-items" role="status">
         {shown.map((item, index) => (
           <span key={item.key ?? index} className="kit-statusbar-item" data-testid={item.testId}>
-            {item.lamp ? <StatusLamp tone={item.lamp} pulse={item.pulse} /> : null}
+            {item.lamp ? <StatusLamp tone={item.lamp} pulse={item.pulse} live={item.live} /> : null}
             {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : item.text}
             {item.value != null ? (
               <>

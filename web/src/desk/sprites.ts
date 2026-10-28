@@ -23,6 +23,8 @@ export function stableHash(value: string): bigint {
 // forward un-parked. memory stays the chip until it is redrawn.
 export const VARIANTS: Record<string, string[]> = {
   meeting: ["meeting"],
+  // Calls (2026-10-28): a desk telephone, the blue handset on its cradle.
+  call: ["call"],
   note: ["note"],
   decision: ["decision"],
   artifact: ["artifact"],
