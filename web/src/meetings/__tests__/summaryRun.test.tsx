@@ -178,7 +178,7 @@ describe("HS-201-04 the disclosure beside the verb", () => {
   it("shows only a failed attempt, as its outcome, with the host in its title", () => {
     render(<RunAttempts receipt={readRunReceipt({ run_receipt: SUCCEEDED_RECEIPT })} />);
     const attempts = screen.getByTestId("summary-attempts");
-    expect(attempts.textContent).toBe("FAILED");
+    expect(attempts.textContent).toBe("Failed");
     expect(attempts.querySelector("[title]")?.getAttribute("title")).toBe("192.168.1.43 · LAN");
     expect(attempts.textContent).not.toContain("api.example.com");
     expect(attempts.querySelector(".gadget-chip-egress")).toBeNull();
@@ -223,7 +223,7 @@ describe("HS-201-04 the record's Retry", () => {
     // Owner ruling 2026-10-25: the route rides the verb's hover title.
     expect(screen.queryByTestId("recovery-route")).toBeNull();
     expect(retry.getAttribute("title")).toContain("192.168.1.43");
-    expect(screen.getByTestId("recovery-attempts").textContent).toBe("FAILED");
+    expect(screen.getByTestId("recovery-attempts").textContent).toBe("Failed");
   });
 
   it("shows a 409 as a refusal and keeps the EXECUTED receipt", async () => {
@@ -246,7 +246,7 @@ describe("HS-201-04 the record's Retry", () => {
       "The summary route changed. Check it, then try again.",
     );
     // The receipt of the earlier executed run is NOT erased by the refusal.
-    expect(screen.getByTestId("recovery-attempts").textContent).toBe("FAILED");
+    expect(screen.getByTestId("recovery-attempts").textContent).toBe("Failed");
     // …and the refusal carries the FRESH route the hub disclosed with it.
     expect(screen.getByRole("button", { name: "Retry" }).getAttribute("title")).toContain(
       "192.168.1.43",
@@ -268,7 +268,7 @@ describe("HS-201-04 the record's Retry", () => {
     // No 409 in hand: the token says the state and invents no cause.
     expect(refusal.textContent).toBe("REFUSED");
     expect(refusal.getAttribute("title")).toContain("before any model was contacted");
-    expect(screen.getByTestId("recovery-attempts").textContent).toBe("FAILED");
+    expect(screen.getByTestId("recovery-attempts").textContent).toBe("Failed");
   });
 
   it("withholds Retry and says why when no route resolves", async () => {
@@ -340,7 +340,7 @@ describe("HS-201-04 the ledger's Retry", () => {
 
   it("shows the destinations contacted after the run", () => {
     rail({ ...FAILED_ROW, run_receipt: SUCCEEDED_RECEIPT });
-    expect(screen.getByTestId("row-attempts").textContent).toBe("FAILED");
+    expect(screen.getByTestId("row-attempts").textContent).toBe("Failed");
   });
 });
 
@@ -391,7 +391,7 @@ describe("HS-201-04 the summary on the record", () => {
       "BUDGET",
     );
     // A failed attempt rides the well's head; the host is in its title.
-    expect(screen.getByTestId("summary-record-attempts").textContent).toBe("FAILED");
+    expect(screen.getByTestId("summary-record-attempts").textContent).toBe("Failed");
   });
 
   it("draws nothing at all when no summary was produced", () => {

@@ -96,4 +96,4 @@ def test_yolo_answers_a_routine_question_on_the_default_alone(launched, tmp_path
     # The receipt: the answer is in the session's steering record.
     rows = launched.db.steering.list(session_key=KEY, limit=10)
     [row] = [r for r in rows if r.outcome == "auto_answered"]
-    assert row.detail == "YOLO: routine: The brief says to run the tests first."
+    assert row.detail == "Open throttle: routine: The brief says to run the tests first."

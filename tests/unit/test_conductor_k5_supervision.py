@@ -111,7 +111,7 @@ def test_the_gate_decides_a_launched_agents_call_by_yolo(launched, tmp_path, mon
     assert call.proposal.policy_snapshot["mode"] == "yolo"
     assert call.proposal.policy_snapshot["reason_code"] == "yolo_inside_own_worktree"
     assert call.proposal.operation["tool_call"]["launch_id"] == launched.launch_id
-    assert call.proposal.reason == "YOLO: yolo_inside_own_worktree; rule in_worktree"
+    assert call.proposal.reason == "Open throttle: yolo_inside_own_worktree; rule in_worktree"
 
 
 @pytest.mark.parametrize("mode, command, allowed, reason", [
@@ -364,7 +364,7 @@ def test_yolo_answers_a_routine_question_and_no_needs_you_row_appears(launched, 
     rows = launched.db.steering.list(session_key=KEY, limit=10)
     [row] = [r for r in rows if r.outcome == "auto_answered"]
     assert row.text_head.startswith("The desk: Yes. The brief says")
-    assert row.detail == "YOLO: routine: The brief says to run the tests first."
+    assert row.detail == "Open throttle: routine: The brief says to run the tests first."
     from holdspeak.session_receipts import build_receipt
 
     receipt = build_receipt(KEY, db=launched.db)

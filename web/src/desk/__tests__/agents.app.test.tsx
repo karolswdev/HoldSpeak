@@ -449,7 +449,7 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     const well = await screen.findByTestId("lane-ask");
     // Normal mode, not armed: no ARM on the face.
     expect(screen.queryByTestId("lane-arm")).toBeNull();
-    expect(document.body.textContent).not.toContain("ARM FIRST");
+    expect(document.body.textContent).not.toMatch(/arm first/i);
     fireEvent.change(within(well).getByRole("textbox", { name: "Answer" }), { target: { value: "1" } });
     await act(async () => {
       fireEvent.click(within(well).getByRole("button", { name: "Answer" }));
@@ -971,7 +971,7 @@ describe("Resume after a restart (Betterment AG6)", () => {
     selectRow("launch:launch_ag0_ghost");
     fireEvent.click(screen.getByRole("button", { name: "Resume" }));
     const receipt = await screen.findByTestId("conductor-stop-receipt");
-    expect(receipt.textContent).toBe(`NOT RESUMED · ${String(AG6_REFUSED.wire.code).replace(/_/g, " ")}`);
+    expect(receipt.textContent).toBe(`Not resumed · ${String(AG6_REFUSED.wire.code).replace(/_/g, " ").toLowerCase()}`);
     const posts = api.fetch.mock.calls.filter(([u, i]) => String(u).endsWith("/resume") && (i as { method?: string })?.method === "POST");
     expect(posts.map(([u]) => u)).toEqual(["/api/agent/launches/launch_ag0_ghost/resume"]);
   });

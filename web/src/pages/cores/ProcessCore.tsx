@@ -178,7 +178,7 @@ export function ProcessCore(_props: CoreProps) {
     const whereRaw = [row.principal, row.placement].map((v) => String(v ?? "").trim()).filter(Boolean).join(" · ");
     const where = [...new Set([
       principalWords(String(row.principal ?? "")),
-      placementWords(String(row.placement ?? "")),
+      String(row.placementLabel ?? "").trim() || placementWords(String(row.placement ?? "")),
     ].filter(Boolean))].join(" · ");
     return {
       id: row.operationId,

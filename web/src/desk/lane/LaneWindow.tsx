@@ -247,7 +247,7 @@ function LaneBody({
   if (!lane) {
     return (
       <div className="desk-pullout-body lw-body" data-testid="lane-body">
-        {error ? <NotReadLine part="LANE" reason={error} /> : <p className="lw-notread">LANE · READING</p>}
+        {error ? <NotReadLine part="LANE" reason={error} /> : <p className="lw-notread">Reading the agent</p>}
       </div>
     );
   }
@@ -399,7 +399,7 @@ function LaneObjects({ lane, itemTitle, branch, base }: { lane: LaneWire; itemTi
         </div>
       ) : null}
       {isNotRead(worktree) ? (
-        <NotReadLine part="FILES" reason={worktree.not_read} testId="lane-files-not-read" />
+        <div className="lw-files-notread"><NotReadLine part="FILES" reason={worktree.not_read} testId="lane-files-not-read" /></div>
       ) : files && files.length ? (
         <div className="lw-files" data-testid="lane-files">
           <span className="lw-files-cap">{filesWords(files.length)}</span>
@@ -513,12 +513,13 @@ function DecideVerbs({ call }: { call: LaneGated }) {
   );
 }
 
-/** A part of the lane that could not be read: `PART · NOT READ · <reason>`
- * (UX-CANON A.10), never an empty list. */
+/** A part of the lane that could not be read: `Files not read · <reason>`
+ * (UX-CANON A.10), never an empty list; quiet sans in sentence case (W5-WORDS). */
 function NotReadLine({ part, reason, testId }: { part: string; reason: string; testId?: string }) {
+  const word = part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
   return (
     <p className="lw-notread" role="status" data-testid={testId}>
-      {part} · NOT READ · {reason}
+      {`${word} not read · ${reason}`}
     </p>
   );
 }
@@ -623,7 +624,7 @@ function ArmLine({ lane, compact = false }: { lane: LaneWire; compact?: boolean 
   if (!control || isNotRead(control) || control.pane === false || control.direct || control.armed || !laneSessionKey(lane)) return null;
   return (
     <span className="lw-arm" data-testid={compact ? "lane-arm-footer" : "lane-arm"}>
-      <span className="lw-fact">{`${controlModeLabel(control.mode).toUpperCase()} · ARM FIRST`}</span>
+      <span className="lw-fact">{`${controlModeLabel(control.mode)} · arm first`}</span>
       <TransportKey compact label="ARM" glyph="⏻" title="Arm this pane" onClick={() => void useLane.getState().arm()} />
     </span>
   );
@@ -1002,11 +1003,11 @@ function RawHeldCall({ call }: { call: LaneGated }) {
     <section className="lw-ask lw-raw-held" aria-label="Held call" data-testid="lane-raw-held">
       <p className="lw-caption">{caption}</p>
       {notRead ? (
-        <p className="lw-notread" role="status">{`CALL · NOT READ · ${notRead}`}</p>
+        <p className="lw-notread" role="status">{`Call not read · ${notRead}`}</p>
       ) : full ? (
         <pre className="lw-raw-command" data-testid="lane-raw-command">{full.command}</pre>
       ) : (
-        <p className="lw-notread">CALL · READING</p>
+        <p className="lw-notread">Reading the call</p>
       )}
       <div className="lw-verbs">
         <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="lane-raw-deny">
