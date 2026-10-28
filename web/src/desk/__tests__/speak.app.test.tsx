@@ -11,6 +11,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Journal } from "../../pages/cores/dictation/Journal";
+import { Blocks } from "../../pages/cores/dictation/Blocks";
 import { inventedFields, recorded } from "../../test/wireShape";
 import JOURNAL_WIRE from "../../test/wire/dictation-journal.wire.json";
 import READINESS_WIRE from "../../test/wire/dictation-readiness.target.wire.json";
@@ -184,6 +185,31 @@ describe("Speak Journal: the stream board", () => {
         && !b.classList.contains("surface-ledger-line") && !b.classList.contains("desk-mic"),
     );
     expect(raw.map((b) => b.className || b.textContent)).toEqual([]);
+  });
+});
+
+describe("Speak's wings when empty (DELIGHT 2): the Speak object, one line, one verb where one makes the first", () => {
+  it("the Journal: the object and What you say shows here, no verb and no zero", async () => {
+    wire(() => []);
+    const { container } = render(<Journal />);
+    await screen.findByText("What you say shows here");
+    const object = container.querySelector('.surface-state[data-object="dictation"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/48\/dock-speak\.png$/);
+    expect(object.querySelector("button")).toBeNull();
+    expect(object.textContent).not.toMatch(/\b0\b/);
+  });
+
+  it("Blocks: the object, No blocks yet and New block, which opens the draft in place", async () => {
+    mocks.apiFetch.mockImplementation(() => Promise.resolve({ document: { blocks: [] } }));
+    const { container } = render(<Blocks />);
+    await screen.findByText("No blocks yet");
+    const object = container.querySelector('.surface-state[data-object="dictation"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/48\/dock-speak\.png$/);
+    const verbs = Array.from(object.querySelectorAll("button"));
+    expect(verbs.map((b) => b.textContent?.trim())).toEqual(["New block"]);
+    fireEvent.click(verbs[0]);
+    expect(await screen.findByRole("group", { name: "New block" })).toBeTruthy();
+    expect(container.querySelector('.surface-state[data-object="dictation"]')).toBeNull();
   });
 });
 
@@ -491,7 +517,8 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     await waitFor(() => expect(container.querySelector('.speak-learned .surface-state[data-kind="empty"]')).toBeTruthy());
     const quiet = container.querySelector(".speak-learned") as HTMLElement;
     expect(quiet.querySelectorAll(".surface-ledger-row")).toHaveLength(0);
-    expect(quiet.textContent).toContain("Nothing learned");
+    expect(quiet.textContent).toContain("Press Wrong on a phrase to teach a fix");
+    expect(quiet.querySelector('.surface-state[data-object="dictation"] .surface-state-sprite')).toBeTruthy();
     expect(quiet.textContent).not.toMatch(/applied/i);
     expect(quiet.textContent).not.toContain("0");
     expect(quiet.textContent).not.toContain(".");

@@ -5,6 +5,8 @@ import { openPerson } from "../../../desk/openObject";
 import { __resetSurfaces, openProjectRoom, openSurfaceOr } from "../../../desk/shell";
 import { useDesk } from "../../../desk/store";
 import { MemoryCore } from "../MemoryCore";
+import { clearEngineCache } from "../../../desk/hooks/useEngine";
+import TOOLS from "../../../test/wire/ask.tools.wire.json";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...await original<typeof import("../../../lib/api")>(),
@@ -190,10 +192,36 @@ describe("Q12 Memory", () => {
     expect(empty.textContent).toBe("Desk pages not written yet");
     expect(screen.getAllByText("Desk pages not written yet")).toHaveLength(1);
     expect(screen.getByTestId("memory-pages-line").textContent).toContain("No engine writes the desk pages");
+    // DELIGHT 2: no project and no person yet is the memory object and one line.
+    const nothing = screen.getByTestId("memory-nothing");
+    expect(nothing.querySelector('.surface-state[data-object="memory"] .surface-state-sprite')?.getAttribute("src")).toMatch(/memory\.png$/);
+    expect(nothing.textContent).toBe("No projects or people yet");
     // No RAW fold on this face (debug hides behind RAW on the desk floor).
     expect(screen.queryByRole("button", { name: /^RAW$/ })).toBeNull();
     fireEvent.click(within(screen.getByTestId("memory-pages-line")).getByRole("button", { name: "Choose engine" }));
     await waitFor(() => expect(vi.mocked(openSurfaceOr)).toHaveBeenCalledWith("open-concierge", "/models", "background"));
+  });
+
+  it("pass 2: one engine truth — Ask has an engine, nothing writes the pages: the toolbar and the line both say no engine", async () => {
+    // The recorded summary has ask.answer assigned and memory.page not:
+    // the atlas's "● Studio engine" over "No engine writes the desk pages".
+    clearEngineCache();
+    vi.mocked(apiFetch).mockImplementation(async (url) => {
+      if (String(url).startsWith("/api/memory/pages")) return { pages: [] };
+      if (String(url).startsWith("/api/memory/recall")) return { beliefs: [] };
+      if (url === "/api/inference/assignments") return TOOLS.assignments;
+      return {};
+    });
+    render(<MemoryCore />);
+    const line = await screen.findByTestId("memory-pages-line");
+    expect(line.textContent).toContain("No engine writes the desk pages");
+    const engine = within(screen.getByTestId("memory-toolbar")).getByTestId("engine-line");
+    await waitFor(() => expect(engine).toHaveAttribute("data-state", "none"));
+    expect(engine).toHaveTextContent("No engine");
+    expect(engine).not.toHaveTextContent("Glass Lan");
+    fireEvent.click(engine);
+    await waitFor(() => expect(vi.mocked(openSurfaceOr)).toHaveBeenCalledWith("open-concierge", "/models", "background"));
+    clearEngineCache();
   });
 
   it("W2: the composer field finds as it is typed: names, then what the desk remembers, as name · kind · date rows", async () => {

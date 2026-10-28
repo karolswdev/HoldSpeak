@@ -511,6 +511,19 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
   });
 
+  it("DELIGHT 2: no agent at all is the agent object, one line and Start an agent, which opens the start form", async () => {
+    sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
+    detectReply = () => ({ agents: [], tmux: DETECT.tmux });
+    render(<ConductorWindow />);
+    const empty = await screen.findByTestId("conductor-empty");
+    const object = empty.querySelector('.surface-state[data-object="agent"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/conductor-drawer\.png$/);
+    expect(object.querySelector(".surface-state-line")?.textContent).toBe("An agent works on one item for you, in its own branch.");
+    fireEvent.click(within(object).getByRole("button", { name: "Start an agent" }));
+    expect(await screen.findByTestId("conductor-start-form")).toBeInTheDocument();
+    expect(screen.queryByTestId("conductor-empty")).toBeNull();
+  });
+
   it("a failed sessions read is NOT READ with Retry, never an empty drawer", async () => {
     sessionsReply = () => new Error("hub down");
     render(<ConductorWindow />);

@@ -250,7 +250,7 @@ def test_selected_note_ask_save_and_return(
             expect(source).to_contain_text(QUOTE)
             expect(ask.get_by_test_id("ask-context")).to_contain_text(NOTE_TITLE)
             assert "My whole desk" not in ask.get_by_test_id("ask-context").inner_text()
-            _visible_before_scroll(ask, "Back to Thought")
+            _visible_before_scroll(ask, "Back to note")
             if width == 393:
                 _target_check(page, "[id='ask']")
             page.screenshot(path=str(shots / f"note-source-ask-{width}.png"))
@@ -258,12 +258,12 @@ def test_selected_note_ask_save_and_return(
             # The source control remains outside the folded quote and an
             # answer's long-running state. Back returns the exact CM range.
             source.locator("summary").click()
-            expect(source.get_by_role("button", name="Back to Thought")).to_be_visible()
+            expect(source.get_by_role("button", name="Back to note")).to_be_visible()
             source.locator("summary").click()
             source.get_by_role("button", name="Clear quote").click()
             expect(source).not_to_contain_text(QUOTE)
-            _visible_before_scroll(ask, "Back to Thought")
-            source.get_by_role("button", name="Back to Thought").click()
+            _visible_before_scroll(ask, "Back to note")
+            source.get_by_role("button", name="Back to note").click()
             expect(note).to_be_visible()
             page.wait_for_function("""() => window.getSelection()?.toString() === 'Confirm the handoff before Friday.'""")
             returned = _selection_and_scroll(note)
@@ -280,7 +280,7 @@ def test_selected_note_ask_save_and_return(
                 expect(ask.get_by_role("button", name="Stop", exact=True)).to_be_visible()
                 expect(ask.get_by_test_id("run-line")).to_have_attribute("data-state", "running")
                 assert started.wait(5), "The isolated model did not receive the Ask"
-                _visible_before_scroll(ask, "Back to Thought")
+                _visible_before_scroll(ask, "Back to note")
                 _visible_before_scroll(ask, "Stop")
                 expect(page.locator(".ambient-theater")).to_have_count(0)
                 if width == 393:
@@ -317,8 +317,8 @@ def test_selected_note_ask_save_and_return(
             ask.locator(".desk-gadget-depth").first.click()
             note.locator(".desk-gadget-close").first.click()
             note.wait_for(state="detached")
-            _visible_before_scroll(ask, "Back to Thought")
-            ask.get_by_role("button", name="Back to Thought").click()
+            _visible_before_scroll(ask, "Back to note")
+            ask.get_by_role("button", name="Back to note").click()
             note = page.locator(THOUGHT).first
             note.locator(".thought-note-body .cm-content").wait_for()
             page.wait_for_function("""() => window.getSelection()?.toString() === 'Confirm the handoff before Friday.'""")
@@ -333,8 +333,8 @@ def test_selected_note_ask_save_and_return(
             page.keyboard.type(changed)
             assert _visible_tail(note) == QUOTE + changed
             _raise_ask(page)
-            _visible_before_scroll(ask, "Back to Thought")
-            ask.get_by_role("button", name="Back to Thought").click()
+            _visible_before_scroll(ask, "Back to note")
+            ask.get_by_role("button", name="Back to note").click()
             expect(note).to_contain_text("SOURCE CHANGED")
             assert _selection_and_scroll(note)["text"] != QUOTE
             assert _visible_tail(note) == QUOTE + changed
@@ -366,7 +366,7 @@ def test_selected_note_ask_save_and_return(
             assert old_result.status == 409 and old_result.json()["reason"] == "source_changed", old_result.json()
             assert old_result.request.post_data_json["source_snapshot"] == sent["source_snapshot"]
             expect(ask.get_by_test_id("ask-not-answered")).to_contain_text("Source changed. Select it again")
-            expect(ask.get_by_role("button", name="Back to Thought")).to_be_visible()
+            expect(ask.get_by_role("button", name="Back to note")).to_be_visible()
             assert ask.get_by_role("button", name="Try again").count() == 0
             assert len(Model.requests) == 1, Model.requests
             page.screenshot(path=str(shots / f"note-source-refused-{width}.png"))
@@ -441,7 +441,7 @@ def test_selected_note_ask_save_and_return(
             assert not whole["text"] and whole["scroll"] > 0, whole
             note.get_by_role("button", name="Ask about this", exact=True).click()
             expect(ask.get_by_test_id("ask-selected-passage")).to_contain_text("Source")
-            ask.get_by_role("button", name="Back to Thought").click()
+            ask.get_by_role("button", name="Back to note").click()
             returned_whole = _settled_selection_and_scroll(note)
             expected_scroll = min(whole["scroll"], returned_whole["maxScroll"])
             assert not returned_whole["text"] and abs(returned_whole["scroll"] - expected_scroll) <= 1, (whole, returned_whole)
@@ -541,9 +541,9 @@ def test_reference_source_frame_keeps_back_during_busy_and_quote_closed(
             expect(source).to_contain_text("The source stays beside the decision.")
             page.get_by_role("combobox", name="Example state").select_option("busy")
             source.locator("summary").click()
-            expect(source.get_by_role("button", name="Back to Thought")).to_be_visible()
-            _visible_before_scroll(specimen, "Back to Thought")
-            source.get_by_role("button", name="Back to Thought").click()
+            expect(source.get_by_role("button", name="Back to note")).to_be_visible()
+            _visible_before_scroll(specimen, "Back to note")
+            source.get_by_role("button", name="Back to note").click()
             expect(specimen.get_by_text("Back to the Note, locally", exact=True)).to_be_visible()
             if width == 393:
                 _target_check(page, "[data-testid='reference-conversation']")

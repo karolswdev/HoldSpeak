@@ -784,6 +784,10 @@ describe("A7: home, New automation and starters", () => {
     // The empty home: the one line, and the starters as large cards.
     expect(await screen.findByText("An automation does one job for you, again and again.")).toBeInTheDocument();
     expect(await within(screen.getByTestId("automation-home-empty")).findByTestId("automation-starter-friday-team-update")).toBeInTheDocument();
+    // DELIGHT 2: the line sits under the automation object with its making verb.
+    const object = screen.getByTestId("automation-home-empty").querySelector('.surface-state[data-object="automation"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/cartridge\.png$/);
+    expect(within(object).getByRole("button", { name: "New automation" })).toBeInTheDocument();
     let presses = 0;
 
     fireEvent.click(screen.getByTestId("automation-new")); presses += 1;
@@ -835,7 +839,9 @@ describe("A7: home, New automation and starters", () => {
     expect(row).toHaveTextContent(/Every Friday at 15:00/i);
     expect(row).toHaveTextContent(/Claude Code/i);
     expect(row).toHaveTextContent(/Off/i);
-    expect(within(row).getByTestId("automation-home-result").textContent).toMatch(/^New/);
+    // W4 (the words): one state word from the result's status; a result not
+    // opened yet is the warm dot and the status bar's `1 new`.
+    expect(within(row).getByTestId("automation-home-result").textContent).toMatch(/^Done/);
     expect(row.textContent).not.toMatch(/0 NEW|ITEM|PENDING|RECENT RUNS/);
     // The status bar says the count and what is new, never a zero.
     expect(screen.getByTestId("automation-home-count")).toHaveTextContent("1 automation");

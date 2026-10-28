@@ -1,8 +1,10 @@
+/* PARKED 2026-10-27 (DELIGHT 2): the Speak wings now use the SurfaceState
+   object form (emptyKind="dictation"). Kept, not deleted. */
 /** Window Program W1 (2026-10-27): the Speak wings' empty state — the D
  *  mic drawing, small, the true word ("Nothing said yet") and one quiet
  *  line of what will appear here. Drawn inside SurfaceState's empty
  *  material (`emptyContent`), so every wing keeps one empty grammar. */
-import { SYSTEM_48 } from "../../../desk/systemSprites";
+import { SYSTEM_48 } from "../../../../desk/systemSprites";
 
 export function SpeakEmpty({ label, hint }: { label: string; hint: string }) {
   return (

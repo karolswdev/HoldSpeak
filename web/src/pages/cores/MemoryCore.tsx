@@ -19,7 +19,8 @@ import { useDesk } from "../../desk/store";
 import { openPerson, openRef } from "../../desk/openObject";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { apiFetch } from "../../lib/api";
-import { Disclosure, MicButton, RefTokens, StandingPage, StringGadget } from "../../desk/surface";
+import { Disclosure, MicButton, RefTokens, StandingPage, StringGadget, SurfaceState } from "../../desk/surface";
+import { spriteUrl } from "../../desk/sprites";
 import { DotWord, StatusBar, ToolGlyph, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
 import { AskComposer, AskEngineWord, AskSendButton } from "../../desk/components/askFace";
 import { useWindowInterior } from "../../desk/surface/interior";
@@ -160,10 +161,17 @@ function useFound(query: string) {
   return state;
 }
 
+/** The engine that writes the desk pages: one door for the toolbar's slot
+ *  and the body's line (pass 2: one truth). */
+const MEMORY_ENGINE = "memory.page";
+const chooseMemoryEngine = () => openSurfaceOr("open-concierge", "/models", "background");
+
 /** Memory's toolbar: the Ask composer row over the whole desk. The field
- *  finds as it is typed; Ask ⏎ asks the Ask window. */
+ *  finds as it is typed; Ask ⏎ asks the Ask window (which names its own
+ *  engine). The engine slot is Memory's own: the one that writes the desk
+ *  pages, so it and the line under it say the same thing. */
 function MemoryComposer({ value, onChange }: { value: string; onChange: (next: string) => void }) {
-  const engine = useEngine("ask.answer");
+  const engine = useEngine(MEMORY_ENGINE);
   const ask = () => {
     const text = value.trim();
     if (!text) return;
@@ -204,7 +212,9 @@ function MemoryComposer({ value, onChange }: { value: string; onChange: (next: s
         <AskEngineWord
           state={engine.state}
           name={engine.model}
-          onPress={engine.state === "failed" ? () => void refreshEngine("ask.answer") : () => openSurfaceOr("configure-runs-on", "/settings", "models")}
+          down={Boolean(engine.down)}
+          title={engine.state === "set" ? "Writes the desk pages" : undefined}
+          onPress={engine.state === "failed" ? () => void refreshEngine(MEMORY_ENGINE) : chooseMemoryEngine}
         />
       )}
       action={<AskSendButton disabled={!value.trim()} onClick={ask} />}
@@ -255,7 +265,7 @@ function MemoryHome() {
   useWindowInterior("list");
   const { loaded, pages } = useStandingPagesRead("desk");
   const { projects, people, loaded: linksLoaded } = useDeskLinks();
-  const pageEngine = useEngine("memory.page");
+  const pageEngine = useEngine(MEMORY_ENGINE);
   const needs = useNeedsYou({ poll: false });
   const [beliefs, setBeliefs] = useState<BeliefCardData[]>([]);
   const [beliefsLoaded, setBeliefsLoaded] = useState(false);
@@ -357,14 +367,16 @@ function MemoryHome() {
             <p className="memory-line" data-testid="memory-pages-line">
               <DotWord tone="idle">No engine writes the desk pages</DotWord>
               <Button dense variant="ghost" data-testid="memory-choose-engine"
-                onClick={() => openSurfaceOr("open-concierge", "/models", "background")}>
+                onClick={chooseMemoryEngine}>
                 <ToolGlyph kind="engine" />
                 Choose engine
               </Button>
             </p>
           ) : null}
           {nothingYet ? (
-            <p className="memory-line" data-testid="memory-nothing">No projects or people yet</p>
+            <div data-testid="memory-nothing">
+              <SurfaceState empty emptyLabel="No projects or people yet" emptyImage={spriteUrl("memory", "memory")} emptyKind="memory" />
+            </div>
           ) : null}
           <LinkGroup label="Projects" rows={projectRows} selected={chosen} onSelect={setSelected} onOpen={openLink} />
           <LinkGroup label="People" rows={personRows} selected={chosen} onSelect={setSelected} onOpen={openLink} />

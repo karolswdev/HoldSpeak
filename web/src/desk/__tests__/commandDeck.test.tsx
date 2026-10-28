@@ -88,6 +88,20 @@ describe("the deck", () => {
     expect(useDesk.getState().recentOpened).toContain("note:n1");
   });
 
+  // DELIGHT 2 (small joys): ⌘K's first result is the thing he opened last.
+  it("with the field empty, the first row is the last thing opened, and Enter opens it again", async () => {
+    useDesk.getState().recordRecentOpen("note:n2");
+    useDesk.getState().recordRecentOpen("meeting:m1");
+    useDesk.getState().recordRecentOpen("note:n1");
+    const deck = open();
+    await drawn();
+    const options = screen.getAllByRole("option");
+    expect(options[0].textContent).toContain("Meet the team");
+    expect(options[0].className).toContain("is-selected");
+    fireEvent.keyDown(deck, { key: "Enter" });
+    expect(useDesk.getState().openPullout).toHaveBeenCalledWith("note:n1");
+  });
+
   it("ArrowDown moves the selection index; Enter runs the moved hit", async () => {
     const deck = open();
     fireEvent.change(deck, { target: { value: "met" } });

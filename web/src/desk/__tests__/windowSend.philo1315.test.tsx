@@ -354,6 +354,9 @@ describe("the artifact window (canvas P5)", () => {
 
   it("its own SEND well on artifact:<id>; a pick opens its preview in place", async () => {
     render(<ArtifactPullout object={art} onClose={() => {}} />);
+    // W4-PHONE (2026-10-27): the toolbar's Send… opens the one Send sheet.
+    expect(screen.queryByTestId("send-well")).toBeNull();
+    fireEvent.click(screen.getByTestId("artifact-send"));
     const well = await screen.findByTestId("send-well");
     expect(well.getAttribute("data-doc")).toBe("artifact:art-1");
     await screen.findAllByTestId("destination-row");
@@ -361,9 +364,9 @@ describe("the artifact window (canvas P5)", () => {
     expect((await screen.findByTestId("send-open")).getAttribute("data-destination")).toBe("Team updates");
   });
 
-  it("Copy and Dictate about this are library Buttons", () => {
+  it("the toolbar verbs (Copy, Send…, Reveal) are library Buttons", () => {
     render(<ArtifactPullout object={art} onClose={() => {}} />);
-    for (const name of ["Copy", "Dictate about this"]) {
+    for (const name of ["Copy", "Send…", "Reveal"]) {
       const b = screen.getByText(name).closest("button")!;
       expect(b.className).not.toContain("desk-chip");
     }

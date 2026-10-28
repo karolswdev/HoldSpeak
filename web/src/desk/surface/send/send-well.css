@@ -60,21 +60,15 @@
   font-family: var(--font-ui);
   color: var(--text);
 }
-:is([data-send="sheet"], [data-send="well"]) .send-sheet-header {
-  display: flex;
+/* W4-PHONE (2026-10-27): the sheet's head is the kit Toolbar (Send ·
+   Cancel … Add destination); the slot that receives the picked row's Send
+   draws no box of its own. */
+[data-send="well"] .send-toolbar-slot { display: contents; }
+[data-send="well"] .send-toolbar-slot > .send-verbs {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 2px 0 4px;
-  border-bottom: 1px solid var(--border);
-}
-:is([data-send="sheet"], [data-send="well"]) .send-sheet-header .surface-primary {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-[data-send="well"] .send-sheet-header .send-add-destination {
-  margin-left: auto;
+  gap: 6px;
+  margin: 0;
 }
 
 /* The section: a plain block (not a pullout's grid + hairline). */
@@ -384,4 +378,137 @@
    whatever the host. */
 [data-send="well"] {
   container: surface / inline-size;
+}
+
+
+/* W4-PHONE (2026-10-27) — ONE sheet on the window grammar (atlas pass 2,
+   "card in card in card"): the destination is a list row (pick · name ·
+   where it goes, in sans 12 and sentence case; the egress is said HERE),
+   the picked row's preview is the document under it on the paper (no
+   frame, no PREVIEW caption, no mono FOLDER), Send sits on the toolbar,
+   the receipt in the status line. */
+[data-send="well"] ul.send-destination-list {
+  gap: 0;
+  padding: 0;
+}
+.desk-next [data-send="well"] li.send-destination-item > .send-destination-chip,
+[data-send="well"] li.send-destination-item > .send-destination-chip {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: transparent;
+  box-shadow: none;
+}
+[data-send="well"] .send-destination-chip .send-pick {
+  font-family: var(--font-sans);
+}
+[data-send="well"] .send-destination-chip .surface-primary {
+  font: 500 13px / 1.35 var(--font-sans);
+}
+[data-send="well"] .send-destination-chip .send-cells .surface-token[data-chip],
+[data-send="well"] .send-destination-chip .send-cells .gadget-chip-egress {
+  min-height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: 400 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+}
+/* The egress words are hosts and places: lower case reads them as words
+   (`hooks.slack.com`, `this device`), never shouted. */
+[data-send="well"] .send-destination-chip .send-cells .gadget-chip-egress {
+  text-transform: lowercase;
+}
+[data-send="well"] .send-destination-chip .send-cells > * + *::before {
+  content: "·";
+  margin-inline-end: 6px;
+  color: var(--wb-muted);
+}
+[data-send="well"] .send-open {
+  padding: 0 10px 8px 36px;
+  border: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: transparent;
+}
+[data-send="well"] .send-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 4px 0;
+}
+[data-send="well"] .send-preview-head .send-fields {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  min-width: 0;
+  margin: 0;
+}
+[data-send="well"] .send-preview-head .send-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+[data-send="well"] .send-preview-head .send-field :is(dt, dd) {
+  margin: 0;
+  font: 400 12px / 1.35 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+[data-send="well"] .send-preview-head .send-field dt { color: var(--wb-muted); }
+[data-send="well"] .send-preview-head .send-field dd { color: var(--wb-ink); overflow-wrap: anywhere; }
+.desk-next [data-send="well"] .send-open .send-preview .surface-well,
+[data-send="well"] .send-open .send-preview .surface-well {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.desk-next [data-send="well"] .send-open .send-preview .surface-well-body,
+[data-send="well"] .send-open .send-preview .surface-well-body {
+  padding: 6px 0 10px;
+}
+/* The picked row reads as the selection: the Workbench blue under its
+   words, the row's own height. */
+.desk-next [data-send="well"] li.send-destination-item[data-open] > .send-destination-chip,
+[data-send="well"] li.send-destination-item[data-open] > .send-destination-chip {
+  border-bottom-color: transparent;
+  background: var(--wb-blue);
+}
+[data-send="well"] .send-receipt-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  font: 400 12px / 1.35 var(--font-sans);
+  color: var(--wb-muted);
+}
+[data-send="well"] .send-receipt-line:empty { display: none; }
+/* Nothing to say (no receipt yet): the status line folds away; no dead
+   band under the document. */
+.desk-next .surface-footer:has(> [data-send="actions"].send-sheet-footer):not(:has(.send-receipt-line:not(:empty), [data-testid="send-edit-failed"])) {
+  display: none;
+}
+@container surface (max-width: 559.9px) {
+  [data-send="well"] .send-open { padding-left: 10px; }
+}
+/* The Note's own foot while its Send sheet is open says nothing (the sheet
+   carries Send and its receipt): no dead band at the window's foot. */
+.desk-next .surface-footer:has(> .thought-send-foot):not(:has(:is(.surface-footer-verbs, .surface-footer-receipt, .surface-footer-egress) > *)) {
+  display: none;
+}
+/* On the phone the sheet's toolbar verbs (Send, Cancel, Add destination)
+   keep the device's 44 px target (global.css), over the kit's 28 px desk
+   toolbar face. */
+@media (max-width: 420px) {
+  .desk-next [data-send="well"] .kit-toolbar .btn {
+    min-height: var(--desk-button-hit-size);
+  }
 }

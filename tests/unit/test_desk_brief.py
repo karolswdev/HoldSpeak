@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -307,7 +307,12 @@ def _calendar_today(hub: Hub, mira: str) -> None:
 
     from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
 
-    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    # The wire day's clock (pin_wire_day: Tue 2026-10-20 10:00), never the
+    # real one: anchored on the real clock, the day's events left the pinned
+    # brief week once the real date passed Sunday 2026-10-25 and the stored
+    # answers lost their three calendar rows (a clock red, not a product one).
+    wire_now = datetime(2026, 10, 20, 10, 0).astimezone()
+    now = wire_now.astimezone(timezone.utc)
     events = (
         ("daily-mira-1on1", "1:1 with Mira", now + timedelta(minutes=90), 30),
         ("daily-platform-sync", "Payments platform sync", now + timedelta(hours=3), 30),
@@ -323,7 +328,7 @@ def _calendar_today(hub: Hub, mira: str) -> None:
     put = hub.client.put("/api/settings", json={"calendar": {"sources": [
         {"id": "daily-work", "label": "Work", "url": str(ics), "enabled": True}]}})
     assert put.status_code == 200, put.text
-    assert CalendarIngestConductor().refresh() is True
+    assert CalendarIngestConductor(clock=wire_now.timestamp).refresh() is True
     linked = hub.client.post(f"/api/people/relationships/{mira}/calendar-links",
                              json={"uid": "daily-mira-1on1", "source_id": "daily-work", "label": "1:1 with Mira"})
     assert linked.status_code == 200, linked.text
@@ -341,9 +346,21 @@ def test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterda
     from tests.unit.test_desk_speak import _record
 
     pin_wire_day(hub, monkeypatch, brief=True)
+    # The Door reads the same wire clock as the brief (its next 1:1).
+    hub.root.door_service._clock = lambda: datetime(2026, 10, 20, 10, 0).astimezone()
+    # ... and so does a person's next linked 1:1 (person_overlay).
+    from holdspeak.services import person_overlay
+    monkeypatch.setattr(person_overlay, "utc_now_iso",
+                        lambda: datetime(2026, 10, 20, 10, 0).astimezone().astimezone(timezone.utc).isoformat())
     seeded = seed(hub, monday=WIRE_DAY, engine=True)
     _calendar_today(hub, seeded["Mira"])
     normalize_wire_change_stamps(hub, seeded["project"])
+    # The decision records the seed's confirms wrote carry the real clock;
+    # on the wire day they were made on Tuesday (the brief's "new decisions
+    # from meetings" reads them against the pinned week).
+    with hub.db._connection() as conn:
+        conn.execute("UPDATE decision_records SET created_at=?", ("2026-10-20T07:40:00+00:00",))
+        conn.commit()
     needs = hub.client.get("/api/desk/needs-you?fresh=1").json()
     assert needs["count"] == 4, needs["count"]
     door = hub.client.get("/api/door").json()

@@ -836,7 +836,9 @@ export function ConductorWindow() {
           {loading ? <SurfaceState loading /> : null}
           {nothing ? (
             <div className="cw-empty" data-testid="conductor-empty">
-              <SurfaceState empty emptyImage={objectSprite("conductor", "conductor")} emptyLabel="An agent works on one item for you, in its own branch." />
+              <SurfaceState empty emptyImage={objectSprite("conductor", "conductor")} emptyKind="agent"
+                emptyLabel="An agent works on one item for you, in its own branch."
+                onAction={() => setStarting(true)} actionLabel="Start an agent" />
             </div>
           ) : null}
 

@@ -1,5 +1,6 @@
 // HS-111-03 — re-pointed to the one-row attention slab (audit §3.5):
-// state token, KEPT fact, NOT DONE token, RETRY/SKIP verbs on the row.
+// state as a dot and a word, one quiet sentence (kept · not done), RETRY/SKIP verbs on the row
+// (Window Program W4, the words: no caps tokens).
 // HS-201-06 — the words are plain ones now (Constitution tenet 4,
 // ASD-STE100); the wire contract under test is unchanged.
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -61,16 +62,31 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
 
     render(<MeetingIntelRecovery meetingId="meeting-1" />);
 
-    expect(await screen.findByText("PARTIAL")).toBeInTheDocument();
+    expect(await screen.findByText("Partial")).toBeInTheDocument();
     // HS-201-06: whole words, no clipped jargon (was RETAINED 3 SEG / 2 ART).
-    expect(screen.getByText("KEPT 3 SEGMENTS · 2 ARTIFACTS")).toBeInTheDocument();
-    const remaining = screen.getByText("NOT DONE: ARTIFACTS");
+    // W4 (the words): one sentence pair in sentence case, never caps tokens.
+    const remaining = screen.getByText("Kept 3 segments and 2 artifacts. The artifacts did not finish.");
     expect(remaining).toBeInTheDocument();
     // The failure reason stays on the token, not as body prose.
     expect(remaining).toHaveAttribute("title", "Decision extraction timed out.");
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Skip" })).toBeInTheDocument();
     expect(screen.queryByText("Ready")).not.toBeInTheDocument();
+  });
+
+  it("W4 (the words): a failed summary is a dot and a word and one quiet sentence", async () => {
+    mockedApiFetch.mockResolvedValueOnce({
+      ...failedRecovery,
+      state: "error",
+      completed: [{ label: "Transcript", detail: "2 saved segments" }],
+      remaining: { label: "Summary, topics, action items", detail: "The engine did not answer." },
+    });
+    render(<MeetingIntelRecovery meetingId="meeting-1" />);
+    expect((await screen.findByTestId("recovery-state")).textContent).toBe("Failed");
+    expect(screen.getByTestId("recovery-sentence").textContent).toBe(
+      "Kept 2 segments. The summary, topics and action items did not finish.",
+    );
+    expect(document.body.textContent ?? "").not.toMatch(/ERROR|KEPT|NOT DONE/);
   });
 
   it("skips only remaining work and keeps Retry available", async () => {
@@ -102,7 +118,7 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
         { method: "POST" },
       ),
     );
-    expect(await screen.findByText("SKIPPED")).toBeInTheDocument();
+    expect(await screen.findByText("Skipped")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Skip" }),
     ).not.toBeInTheDocument();
@@ -141,7 +157,7 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
     mockedApiFetch.mockResolvedValueOnce(pending);
     rerender(<MeetingIntelRecovery meetingId="meeting-1" revision={1} />);
     const retry = await screen.findByRole("button", { name: "Retry" });
-    expect(screen.getByText("NOT DONE: DECISIONS AND ACTION ITEMS")).toBeInTheDocument();
+    expect(screen.getByText("Kept 3 segments and 2 artifacts. The decisions and action items did not finish.")).toBeInTheDocument();
     expect(screen.queryByTestId("recovery-route")).not.toBeInTheDocument();
     mockedApiFetch.mockResolvedValueOnce({ success: true, recovery: { ...pending, visible: false, state: "ready" } });
     fireEvent.click(retry);

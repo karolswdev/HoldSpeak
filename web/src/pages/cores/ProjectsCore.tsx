@@ -197,7 +197,8 @@ export function ProjectsCore(_props: CoreProps) {
     return (
       <>
         {toolbar}
-        <SurfaceState empty emptyLabel="No projects" emptyImage={PROJECT_SPRITE} />
+        <SurfaceState empty emptyLabel="No projects yet" emptyImage={PROJECT_SPRITE} emptyKind="project"
+          onAction={() => openSurfaceOr("project-setup", "/")} actionLabel="New Project" />
       </>
     );
   }

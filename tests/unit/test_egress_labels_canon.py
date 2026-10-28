@@ -66,6 +66,9 @@ WORKING_FACES = (
     "desk/components/DeliveryDossierWindow.tsx",
     "pages/cores/CadenceCore.tsx",
     "desk/components/DeskToolInspector.tsx",
+    # Window Program W4 (2026-10-27): the menu bar is the frame of every
+    # screen; it keeps the hub's lamp and no scope chip ("⌂ This device").
+    "desk/components/DeskChrome.tsx",
 )
 
 # The chip species, the route lamp, and a scope word or LAN suffix built into

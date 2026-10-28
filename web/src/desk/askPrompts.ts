@@ -37,10 +37,16 @@ export function namesWords(names: readonly string[]): string {
   return `${first[0]}, ${first[1]} and ${first.length - 2} more`;
 }
 
-/** The newest decision's topic: its first tag, else its own title. */
+/** A ref, a key or an id (`project:proj-6d2a…`, `KAN-12`), not words. */
+function isRefLike(text: string): boolean {
+  return /^[\w-]+:\S/.test(text) || /^[a-z]+-\d+$/i.test(text) || /[0-9a-f]{8,}/i.test(text) || !/[a-z]{3,}/i.test(text);
+}
+
+/** The newest decision's topic: its first tag that is plain words, else its
+ *  own title. A ref or an id never reaches the prompt (pass 2, Ask). */
 function decisionTopic(decision: AskPromptInputs["decisions"][number]): string {
-  const tag = decision.tags?.find((t) => t.trim());
-  return tag ? tag.trim() : `“${decision.title.trim()}”`;
+  const tag = decision.tags?.map((t) => t.trim()).find((t) => t && !isRefLike(t));
+  return tag ? tag : `“${decision.title.trim()}”`;
 }
 
 const STATUS_WORD: Record<string, string> = {
@@ -60,7 +66,7 @@ export function deskPrompts(inputs: AskPromptInputs): AskPrompt[] {
     kind: "action",
   }];
   const newest = [...inputs.decisions]
-    .filter((d) => d.title?.trim())
+    .filter((d) => d.title?.trim() && !isRefLike(d.title.trim()))
     .sort((a, b) => String(b.decidedAt || b.createdAt || "").localeCompare(String(a.decidedAt || a.createdAt || "")))[0];
   if (newest) {
     const when = newest.decidedAt || newest.createdAt;

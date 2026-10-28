@@ -315,6 +315,8 @@ describe("Direction A: the note's margin", () => {
     expect(within(margin).getByText("In the margin")).toBeInTheDocument();
     expect(container.querySelector(".thought-note-document")).toHaveClass("has-margin");
     expect(card).toHaveTextContent("Ask: What should I do about Jun?");
+    // DELIGHT slice 2: the card is about the note; its rule and lead take the note's hue.
+    expect(card).toHaveAttribute("data-kind", "note");
     await waitFor(() => expect(card).toHaveTextContent(THREAD.first.output.slice(0, 40)));
     expect(within(card).getAllByRole("button").map((b) => b.textContent)).toEqual(["Add to note", "Dismiss"]);
     // No band under the toolbar: the old question band left the flow.
@@ -323,6 +325,21 @@ describe("Direction A: the note's margin", () => {
     fireEvent.click(within(card).getByRole("button", { name: "Dismiss" }));
     await waitFor(() => expect(screen.queryByTestId("note-margin-ask")).toBeNull());
     expect(screen.queryByTestId("note-margin")).toBeNull();
+  });
+
+  it("pass 2: the margin's Ask card reads as the note reads: no raw Markdown", async () => {
+    const { putMarginAsk } = await import("../../thought-workspace/marginAsks");
+    const { container } = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /></MemoryRouter>);
+    await waitFor(() => expect(container.textContent).toContain("Theo could own the handbook."));
+    // The answer as the W4-ASK rig's engine wrote it (the atlas's margin shot).
+    const answer = "The cutover holds on **Nov 14**.\n\n- Shadow traffic at 50 percent is planned for Nov 11.\n\n### Next step\n\nConfirm the freeze date.";
+    act(() => putMarginAsk({ key: "ask_md", noteId: NOTE_REF.slice("note:".length), question: "What must happen before the freeze?", answer, state: "answered", range: null, body: "" }));
+    const card = await screen.findByTestId("note-margin-ask");
+    const shown = within(card).getByTestId("note-margin-answer");
+    expect(shown.textContent).not.toMatch(/\*\*|###|^- /m);
+    expect(shown.querySelector("strong")?.textContent).toBe("Nov 14");
+    expect(shown.querySelector("li")?.textContent).toContain("Shadow traffic");
+    expect(within(shown).getByRole("heading", { name: "Next step" })).toBeInTheDocument();
   });
 
   it("Add to note in the margin appends the answer through the note's own writer", async () => {
@@ -361,6 +378,9 @@ describe("Direction A: the note's margin", () => {
     expect(within(margin).getByText("Found in this note")).toBeInTheDocument();
     // The delight: a 120 ms stagger, opacity only (CSS reads --arrive).
     expect(rows.map((row) => row.style.getPropertyValue("--arrive"))).toEqual(["0ms", "120ms"]);
+    // DELIGHT slice 2: each found row lands in its kind's wash (a task is an action, a decision a decision).
+    expect(rows.map((row) => row.getAttribute("data-kind"))).toEqual(["action", "action"]);
+    expect(screen.getAllByTestId("note-decisions-row").map((row) => row.getAttribute("data-kind"))).toEqual(["decision"]);
     // One verb at rest; More (Edit, Dismiss) is the row's quiet second key.
     expect(within(rows[0]).getByRole("button", { name: `Confirm: ${FIND.found.rows[0].text}` })).toBeInTheDocument();
     // A row whose words are on a line of the note is tied to it (press goes there).

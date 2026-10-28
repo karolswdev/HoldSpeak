@@ -31,7 +31,7 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { ConfirmVerb, ScrollHint, StatusBar, StatusStrip, StringGadget, SurfaceSection, SurfaceState, Toolbar, type StatusBarItem } from "../surface";
+import { ConfirmVerb, ScrollHint, StatusBar, StatusStrip, StringGadget, SurfaceSection, SurfaceState, TickNumber, Toolbar, type StatusBarItem } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -44,6 +44,9 @@ import {
   coverageGroupFace,
   needFace,
   needFaces,
+  foldMatches,
+  matchWords,
+  type NeedEntry,
   needsHead,
   nextWord,
   NO_CHIPS,
@@ -820,6 +823,42 @@ function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; pri
   );
 }
 
+/** Window Program W4 (the words): the meetings that say one Project's word
+ *  are one row (`13 mentions of cutover`); Show lists each meeting under it
+ *  by its own title, Hide folds them again. */
+function MatchRows({ entry, firstId, projects }: {
+  entry: Extract<NeedEntry, { kind: "match" }>;
+  firstId: string | null;
+  projects: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const name = matchWords(entry.faces.length, entry.word);
+  const project = projects && entry.project ? entry.project : null;
+  return (
+    <>
+      <NeedsRow
+        id={`match:${entry.key}`}
+        kind="meeting"
+        name={name}
+        lamp={{ label: "Not in the Project", tone: entry.faces[0]?.lamp.tone ?? "info" }}
+        sprite={needsRowSprite(entry.faces[0])}
+        glyphLabel="Meetings"
+        dotState
+        project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
+        verbs={(
+          <Button dense variant="secondary" aria-label={`${open ? "Hide" : "Show"}: ${name}`} aria-expanded={open}
+            data-testid="needs-match-toggle" onClick={() => setOpen((was) => !was)}>
+            {open ? "Hide ▴" : "Show ▾"}
+          </Button>
+        )}
+      />
+      {open ? entry.faces.map((face) => (
+        <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={projects} plates={false} />
+      )) : null}
+    </>
+  );
+}
+
 /** PHILO-15-09 (B12): every row says what it is. With the glyph leading
  *  (window grammar) the word is the glyph's name: its alt and its title. */
 const GLYPH_WORDS: Record<string, string> = {
@@ -890,7 +929,7 @@ function Chip({ label, count, on, onPress, menu, testId }: {
       aria-haspopup={menu ? "menu" : undefined} data-testid={testId}
       aria-label={count != null ? `${label} · ${count}` : label}
       onClick={onPress}>
-      {label}{count != null ? <span className="needs-chip-count">{count}</span> : null}{menu && !on ? " ▾" : ""}
+      {label}{count != null ? <TickNumber className="needs-chip-count" value={count} /> : null}{menu && !on ? " ▾" : ""}
     </Button>
   );
 }
@@ -1223,8 +1262,12 @@ export function NeedsDrawer() {
       muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
   ) : null;
   const counted = Number(needs.count ?? 0) > 0;
+  // DELIGHT slice 2: the head's number ticks (with the dock's badge and the
+  // chips' counts) when a Done lands. Before the hub's first answer there is
+  // no number yet, so its arrival is not a tick.
   const statusItems: StatusBarItem[] = [
-    { key: "head", lamp: counted ? "ask" : coverage.complete ? "ok" : "warn", text: head, testId: "arrival-display" },
+    { key: "head", lamp: counted ? "ask" : coverage.complete ? "ok" : "warn", text: head,
+      tick: needsRead ? Number(needs.count ?? 0) : null, testId: "arrival-display" },
     next ? { key: "next", text: next, testId: "needs-next" } : null,
     outcome.receipt ? { key: "receipt", text: outcome.receipt, testId: "needs-receipt" } : null,
     !outcome.receipt && sourceReceipt
@@ -1272,8 +1315,10 @@ export function NeedsDrawer() {
               ))}
               {rest.length > 0 ? (
                 <NeedsList label="Needs you">
-                  {rest.map((face) => (
-                    <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} plates={false} />
+                  {foldMatches(rest).map((entry) => entry.kind === "face" ? (
+                    <NeedRow key={entry.face.id} face={entry.face} primary={entry.face.id === firstId} projects={multipleProjects} plates={false} />
+                  ) : (
+                    <MatchRows key={entry.key} entry={entry} firstId={firstId} projects={multipleProjects} />
                   ))}
                 </NeedsList>
               ) : null}

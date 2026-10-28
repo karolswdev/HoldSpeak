@@ -233,7 +233,7 @@ function clampStyle(x: number, y: number): CSSProperties {
 
 /** HS-148-01: render a keycap string as drawn keycap wells.
  * Each modifier/key character gets its own well. */
-function KeycapWells({ keycap }: { keycap: string }) {
+export function KeycapWells({ keycap }: { keycap: string }) {
   // The keycap is already in symbol notation (e.g. "⌘N", "⌃⇧`", "F2").
   // Split into individual keys: each modifier symbol (⌘⇧⌃⌥) is one key,
   // remaining characters form the final key (handles "F2", "Delete", etc.).

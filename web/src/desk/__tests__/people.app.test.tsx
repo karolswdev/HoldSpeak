@@ -467,3 +467,40 @@ function cleanupAndOpen(id: string) {
   document.body.innerHTML = "";
   render(<PeopleCore scope={`people:${id}:prep`} />);
 }
+
+describe("DELIGHT 2 small joy: a person's next 1:1 in their own teal", () => {
+  /** The recorded People wire (fixtures/people-wire): four people, and the
+   *  Door's upcoming 1:1 with Priya (`person_relationship_id`), at the time of
+   *  the boot (2026-10-11 20:40Z, before the 21:27Z 1:1). */
+  it("the row with a next 1:1 marks its cell for the person ink; None stays quiet", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-11T20:40:00Z"));
+    try {
+      const reads: Record<string, () => unknown> = {
+        "/api/people/readiness": () => recorded("readiness"),
+        "/api/people/relationships": () => recorded("relationships"),
+        "/api/door": () => recorded("door"),
+        "/api/projects": () => recorded("projects"),
+        "/api/people/suggestions": () => ({ suggestions: [] }),
+      };
+      vi.stubGlobal("fetch", vi.fn(async (input: string, opts?: { method?: string }) => {
+        const path = String(input).replace("?counts=1", "");
+        const read = reads[path];
+        if (!read || (opts?.method && opts.method !== "GET")) throw new Error(`no recorded hub answer for ${opts?.method ?? "GET"} ${path}`);
+        return json(read());
+      }));
+      render(<PeopleCore />);
+      const priya = await waitFor(() => {
+        const row = screen.getAllByTestId("people-row").find((r) => r.textContent?.includes("Priya Nair"));
+        expect(row?.querySelector('[data-col="next"]')?.textContent).toMatch(/^1:1 /);
+        return row!;
+      }, { timeout: 5000 });
+      expect(priya).toHaveAttribute("data-next-one-on-one");
+      const avery = screen.getAllByTestId("people-row").find((r) => r.textContent?.includes("Avery Chen"))!;
+      expect(avery.querySelector('[data-col="next"]')?.textContent).toBe("None");
+      expect(avery).not.toHaveAttribute("data-next-one-on-one");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

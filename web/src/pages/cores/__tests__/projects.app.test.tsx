@@ -54,6 +54,17 @@ afterEach(() => {
 const rows = () => screen.getAllByTestId("projects-row");
 
 describe("P4: the Projects window", () => {
+  it("DELIGHT 2: an empty desk shows the project object, one line and New Project", () => {
+    useDesk.setState({ projects: [] } as never);
+    const { container } = render(<ProjectsCore />);
+    const empty = container.querySelector('.surface-state[data-object="project"]') as HTMLElement;
+    expect(empty.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/project-drawer\.png$/);
+    expect(within(empty).getByText("No projects yet")).toBeInTheDocument();
+    expect(empty.textContent).not.toMatch(/\b0\b/);
+    fireEvent.click(within(empty).getByRole("button", { name: "New Project" }));
+    expect(opened.surfaces).toEqual(["project-setup"]);
+  });
+
   it("lists each project with its state and reason, its next date and its newest update", async () => {
     useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
     render(<ProjectsCore />);
