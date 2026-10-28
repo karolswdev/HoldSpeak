@@ -737,6 +737,43 @@
       0 0 0 3px color-mix(in srgb, var(--dot-tone, var(--lamp-ok)) 18%, transparent);
   }
 }
+/* DELIGHT slice 4 (2026-10-28) — a LIVE lamp (StatusBar item `live`: on a
+   call, recording) glows in its own tone, red too, and breathes while the
+   state lasts: the ring opens to 5 px and closes, 2.4 s a breath, the
+   Record tile's rhythm. A box-shadow on a lamp; nothing moves; a still
+   ring under reduced motion. */
+.kit-statusbar-item > .kit-dot[data-live] {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-fail)) 45%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--dot-tone, var(--lamp-fail)) 22%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kit-statusbar-item > .kit-dot[data-live] {
+    animation: kit-lamp-live 2.4s ease-in-out infinite;
+  }
+}
+@keyframes kit-lamp-live {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-fail)) 45%, transparent),
+      0 0 0 2px color-mix(in srgb, var(--dot-tone, var(--lamp-fail)) 16%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-fail)) 60%, transparent),
+      0 0 0 5px color-mix(in srgb, var(--dot-tone, var(--lamp-fail)) 26%, transparent);
+  }
+}
+/* DELIGHT slice 4 — a state dot turns: inside a `data-turns` container (a
+   checklist that the owner works through: Settings ▸ Calls), a DotWord whose
+   state changes (a step goes Done) takes its new tone in 160 ms, the task
+   tick's settle. The container sets the switch after its first read, so
+   nothing turns on load; instant under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-turns] .kit-dotword > .kit-dot {
+    transition: background-color 160ms var(--ease-standard), box-shadow 160ms var(--ease-standard);
+  }
+}
 /* DELIGHT slice 2 (2026-10-27) — THE DEPTH SCALE. Five named steps
    (design-tokens.json), and every surface takes one: --depth-paper (the
    front window over the floor), --depth-row (a lifted row, a card that sits

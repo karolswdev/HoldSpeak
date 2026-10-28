@@ -434,8 +434,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   },
   // Calls (CALLS-DESIGN-2026-10-28 §6): call HoldSpeak, and HoldSpeak calls
   // you. Go ▸ Work ▸ Calls; on the phone its Go row is the door on the home.
-  // Icon gap: no handset object in the D family yet, so the window wears the
-  // meeting object (the Live window's sprite) until one is drawn.
+  // DELIGHT slice 4 (2026-10-28): it wears its own D object, the desk
+  // telephone (`call`, web/scripts/gen-icons-d.py), in the meeting hue.
   {
     action: "open-calls",
     windowId: "surface-calls",
@@ -447,7 +447,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     surface: {
       eyebrow: "Phone",
-      sprite: "meeting",
+      sprite: "call",
       minW: 420,
       // pullouts/size.ts `calls` (the first-open matrix): 720 x 520.
       defaultW: 720,
