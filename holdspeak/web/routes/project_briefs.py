@@ -51,7 +51,7 @@ def build_project_briefs_router(ctx: WebContext) -> APIRouter:
         return JSONResponse(body, status_code=status)
 
     @router.get("/api/projects/{project_id}/briefs/route")
-    async def api_brief_route(project_id: str, request: Request) -> Any:
+    def api_brief_route(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"route": service().route(principal(request), project_id)})
         except NotFound as exc:
@@ -60,7 +60,7 @@ def build_project_briefs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read the brief route")
 
     @router.get("/api/projects/{project_id}/briefs/manifest")
-    async def api_brief_manifest(project_id: str, request: Request) -> Any:
+    def api_brief_manifest(project_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"manifest": service().preview_manifest(principal(request), project_id)})
         except NotFound as exc:
@@ -111,7 +111,7 @@ def build_project_briefs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to prepare the brief")
 
     @router.post("/api/projects/{project_id}/briefs/stop")
-    async def api_stop_brief(project_id: str, payload: dict[str, Any], request: Request) -> Any:
+    def api_stop_brief(project_id: str, payload: dict[str, Any], request: Request) -> Any:
         del project_id
         try:
             return JSONResponse(service().stop(str(payload.get("attempt_id") or "")))
@@ -121,7 +121,7 @@ def build_project_briefs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to stop the brief")
 
     @router.get("/api/projects/{project_id}/briefs")
-    async def api_list_briefs(
+    def api_list_briefs(
         project_id: str, request: Request, lifecycle: str | None = None, limit: int = 20,
     ) -> Any:
         try:
@@ -135,7 +135,7 @@ def build_project_briefs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list briefs")
 
     @router.get("/api/briefs/{brief_id}")
-    async def api_get_brief(brief_id: str, request: Request) -> Any:
+    def api_get_brief(brief_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"brief": service().get_brief(principal(request), brief_id)})
         except NotFound as exc:
@@ -144,7 +144,7 @@ def build_project_briefs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read the brief")
 
     @router.post("/api/briefs/{brief_id}/keep")
-    async def api_keep_brief(brief_id: str, request: Request) -> Any:
+    def api_keep_brief(brief_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"success": True, "brief": service().keep(principal(request), brief_id)})
         except NotFound as exc:
@@ -155,7 +155,7 @@ def build_project_briefs_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to keep the brief")
 
     @router.post("/api/briefs/{brief_id}/discard")
-    async def api_discard_brief(brief_id: str, request: Request) -> Any:
+    def api_discard_brief(brief_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"success": True, "brief": service().discard(principal(request), brief_id)})
         except NotFound as exc:
