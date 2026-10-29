@@ -407,3 +407,66 @@ baresip libre` removes them). On karol, `/home/karol/holdspeak-line/` only
 (the 4.12.0 build in `opt/`, the venv, the models in `hf/`, the spike
 scripts); no sudo, no apt, no system file, and `llama-qwen.service` was not
 touched (`rm -rf /home/karol/holdspeak-line` removes it all).
+
+## Built, 2026-10-29
+
+LINE-2, the node, merged as #1608; the canvas as #1607; the faces and the
+docs in the LINE-4b PR. The recipe is `RECIPE.md` in this folder. Where the
+build differs from this design:
+
+- **`aupipe` is BSD-3-Clause, not Apache-2.0** (§2): `hs/line/aupipe/aupipe.c`
+  carries a BSD-3 header, the licence of the baresip modules it sits beside.
+- **The wire has three routes, and the faces two more** (§4):
+  `POST /api/calls/line/hello`, `/events`, `/next` (the long poll), and for
+  Settings `GET /api/calls/line/status` (node, state, words, address, and
+  where each secret is: `keystore`, `environment` or `missing`, never a value)
+  and `POST /api/calls/line/test` (the Line calls him, says one sentence,
+  hangs up; its answer is the result word: `answered`, `no_answer`, `busy`,
+  `rejected`, `not_running`; a 409 says `no_number`, `no_line` or `busy`).
+  The `line` block of `GET /api/calls/status` is `{node, state, words, address,
+  secrets}`; with the Line as the phone the `aiphone` block says `off`.
+- **The node uses the hub token until LINE-3** (§4): `HubClient` is the one
+  class the node credential changes.
+- **The secrets** (§8): `calls.line.sip_password` and
+  `calls.line.telnyx_api_key` in the hub's keystore, written through
+  `PUT /api/settings` (`calls.line.account.password`, `calls.line.telnyx_api_key`;
+  write only, `null` forgets). `TELNYX_API_KEY` and
+  `HOLDSPEAK_LINE_SIP_PASSWORD` in the hub's environment are a dev fallback,
+  said once in the log. A key in the owner's `~/.zshrc` is not in the hub's
+  environment (his hub on 2026-10-29 answers `missing` for both), so the face
+  offers the write field.
+- **`holdspeak line models` fetches the two models from Hugging Face**
+  (`snapshot_download`) until the concierge rows land (LINE-6). The Engines
+  catalog is a signed envelope of LLM presets (`gguf`, `mlx_safetensors`), so
+  the two speech rows of §7 are not a row edit.
+- **The Line runs in its own Python 3.13** (§9): the hub's venv is CPython
+  3.14 and onnxruntime 1.23.2 has wheels up to cp313 only, so
+  `uv sync --extra line` cannot install Parakeet into the hub's venv on the
+  Mac. `docs/calls.md` gives the steps (`uv python install 3.13`,
+  `uv venv ~/.holdspeak/line/venv --python 3.13`, `uv pip install` of
+  `holdspeak[line]` from the checkout, `holdspeak line models`, then
+  `holdspeak line`); LINE-3's `holdspeak line install` does them.
+- **The fixed jitter buffer is the default** (§6): `audio_jitter_buffer_type
+  fixed`, `audio_jitter_buffer_ms 40-80` (`hs/line/supervisor.py`).
+- **Two census edits**: the model census (`tests/unit/test_one_path_census.py`
+  `ADAPTER_ALLOWLIST`) names the Line's Parakeet leaf in the node's own
+  process; the effect fence (`tests/unit/test_kernel_effect_fence.py`
+  `_EXCLUDED_CALLS`) names the node's link to its hub, `baresip -h` and the
+  `make` of `aupipe`.
+- **The adapter pick** (§4): `calls.line.adapter` empty means the Line when
+  baresip is found (or `where` names a node), else ai-phone when it is
+  found; `HOLDSPEAK_AI_PHONE` (a rig naming ai-phone whole) and
+  `HOLDSPEAK_LINE=off` keep ai-phone.
+- **The faces** (§10, canvas direction A): Settings ▸ Calls ▸ Line is
+  `desk/calls/LineSettings.tsx` (Where it runs with the measured cost per
+  place, The line, Test call, From Calls, Adapter, the egress sentence once).
+  Where it runs offers This Mac and the place in `calls.line.where`; the hub
+  does not yet list its linked Line nodes (LINE-3). On This Mac, Not
+  installed and Not running show the own-venv commands with Copy; the hub
+  does not start the Line. The Calls window says Ready for calls, Line
+  starting (a live lamp), Line not running, or No line: set one in Settings
+  ▸ Calls ▸ Line; no machine is named there (A.9). Left from the canvas:
+  Cancel on a ringing Test call (no hub verb), "Answered · m:ss" (the test
+  answer has no length), the Number row (no settings key; LINE-3b), the
+  primary empty-state verb (the kit's `SurfaceState` draws it secondary),
+  and the Engines rows (LINE-6).

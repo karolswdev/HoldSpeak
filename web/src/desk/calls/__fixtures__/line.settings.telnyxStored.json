@@ -1,0 +1,34 @@
+{
+  "enabled": true,
+  "aiphone_dir": "",
+  "greeting": "Hello. What can I do?",
+  "allowed_numbers": [
+    "sip:karol@karol-iphone",
+    "+12125550142"
+  ],
+  "phone_reach": {},
+  "phone_urgent_dnd": false,
+  "daily_limit": 20,
+  "line": {
+    "adapter": "line",
+    "where": "this_mac",
+    "account": {
+      "kind": "telnyx",
+      "user": "hsline",
+      "domain": "sip.telnyx.com",
+      "outbound": "sip:sip.telnyx.com;transport=tcp",
+      "password_ref": "calls.line.sip_password",
+      "codecs": [
+        "PCMU",
+        "PCMA",
+        "opus"
+      ]
+    },
+    "secrets": {
+      "sip_password": "keystore",
+      "telnyx_api_key": "keystore"
+    }
+  },
+  "passphrase_set": true,
+  "phone_on": true
+}

@@ -807,3 +807,219 @@ describe("Phone in Needs you (the recorded phone_items)", () => {
     expect(f.fact).toBe("An agent asks to call you · now");
   });
 });
+
+/* ── The Line (LINE-4, 2026-10-29): every answer below is RECORDED from the
+   hub's own routes with the Line node on the fake baresip
+   (scripts/record_line_fixtures.py → calls/__fixtures__/line.*.json). ── */
+import lineSettings from "../calls/__fixtures__/line.settings.json";
+import lineSettingsTelnyx from "../calls/__fixtures__/line.settings.telnyxMissing.json";
+import lineSettingsStored from "../calls/__fixtures__/line.settings.telnyxStored.json";
+import linePut from "../calls/__fixtures__/line.put.password.json";
+import lineNotInstalled from "../calls/__fixtures__/line.status.notInstalled.json";
+import lineNotRunning from "../calls/__fixtures__/line.status.notRunning.json";
+import lineReady from "../calls/__fixtures__/line.status.ready.json";
+import lineTelnyxMissing from "../calls/__fixtures__/line.status.telnyxMissing.json";
+import lineTelnyxStored from "../calls/__fixtures__/line.status.telnyxStored.json";
+import lineCallsReady from "../calls/__fixtures__/line.calls.ready.json";
+import lineCallsStarting from "../calls/__fixtures__/line.calls.starting.json";
+import lineCallsNotRunning from "../calls/__fixtures__/line.calls.notRunning.json";
+import lineCallsNotInstalled from "../calls/__fixtures__/line.calls.notInstalled.json";
+import lineTestAnswered from "../calls/__fixtures__/line.test.answered.json";
+import lineTestNoAnswer from "../calls/__fixtures__/line.test.noAnswer.json";
+import lineTestBusy from "../calls/__fixtures__/line.test.busy.json";
+import lineTestRejected from "../calls/__fixtures__/line.test.rejected.json";
+import lineTestNotRunning from "../calls/__fixtures__/line.test.notRunning.json";
+import lineTestNoNumber from "../calls/__fixtures__/line.test.noNumber.json";
+import { LINE_BREW_COMMAND, LINE_RUN_COMMAND, LINE_VENV_COMMAND } from "../calls/LineSettings";
+
+function lineHub(extra: Record<string, Answer> = {}) {
+  hub({
+    "GET /api/settings": { calls: lineSettings },
+    "GET /api/calls/status": lineCallsReady,
+    "GET /api/calls/line/status": lineReady,
+    ...extra,
+  });
+}
+const lineText = () => screen.getByTestId("line-settings").textContent ?? "";
+
+describe("Settings ▸ Calls ▸ Line", () => {
+  it("not running on This Mac (his hub today): the place word, its cost, and the install in its own Python 3.13 with Copy", async () => {
+    lineHub({ "GET /api/calls/status": lineCallsNotRunning, "GET /api/calls/line/status": lineNotRunning });
+    render(<CallsSettingsPane />);
+    const state = await screen.findByTestId("line-place-state");
+    await waitFor(() => expect(state.textContent).toBe("Not running"));
+    const place = screen.getByTestId("line-place");
+    expect(place.textContent).toContain("This Mac");
+    expect(place.textContent).toContain("About 0.13 core per call minute");
+    const install = screen.getByTestId("line-install");
+    expect(install.textContent).toContain(LINE_VENV_COMMAND);
+    expect(install.textContent).toContain(LINE_RUN_COMMAND);
+    expect(install.textContent).toContain("Python 3.13");
+    expect(install.textContent).not.toContain(LINE_BREW_COMMAND);
+    expect(within(install).getAllByRole("button", { name: "Copy" })).toHaveLength(2);
+    // The checklist's first steps are the Line's, not ai-phone's.
+    expect(screen.getByTestId("calls-step-install").textContent).toContain("Install the Line");
+    expect(screen.queryByText(INSTALL_COMMAND)).toBeNull();
+    expect(screen.getByTestId("calls-step-daemon").textContent).toContain(LINE_RUN_COMMAND);
+    expect(screen.getAllByTestId("line-egress")).toHaveLength(1);
+  });
+
+  it("not installed: brew install baresip comes first", async () => {
+    lineHub({ "GET /api/calls/status": lineCallsNotInstalled, "GET /api/calls/line/status": lineNotInstalled });
+    render(<CallsSettingsPane />);
+    await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Not installed"));
+    const install = screen.getByTestId("line-install");
+    expect(install.textContent).toContain(LINE_BREW_COMMAND);
+    expect(install.textContent).toContain(LINE_VENV_COMMAND);
+  });
+
+  it("ready: the free SIP address with Copy; From Calls read only; the Line in use", async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    lineHub();
+    render(<CallsSettingsPane />);
+    await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Ready"));
+    expect(screen.queryByTestId("line-install")).toBeNull();
+    expect(screen.getByTestId("line-address").textContent).toContain(lineReady.address);
+    fireEvent.click(screen.getByTestId("line-address-copy"));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(lineReady.address));
+    expect(screen.getByTestId("line-address-copy").textContent).toBe("Copied");
+    expect(screen.getByTestId("line-codecs").textContent).toBe("Codecs: opus, PCMU, PCMA");
+    const from = screen.getByTestId("line-from-calls").textContent ?? "";
+    expect(from).toContain(`${lineSettings.daily_limit} placed calls a day`);
+    expect(from).toContain("This is HoldSpeak, an AI assistant");
+    expect(from).toContain("911, 112, 999, 000");
+    const adapter = screen.getByTestId("line-adapter");
+    expect(adapter.textContent).toContain("The LineIn use");
+    expect(adapter.textContent).toContain("Optional, AGPL, runs as a separate program");
+  });
+
+  it("Test call: Ringing while the hub dials, then the recorded result word", async () => {
+    let answer: () => void = () => undefined;
+    lineHub({ "POST /api/calls/line/test": lineTestAnswered });
+    // The hub holds the answer while the line rings (the table clones each
+    // answer, so the wait wraps it).
+    const table = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation((path: string, init?: { method?: string; json?: unknown }) => path === "/api/calls/line/test"
+      ? new Promise((resolve) => { answer = () => resolve(table(path, init)); })
+      : table(path, init));
+    render(<CallsSettingsPane />);
+    const press = await screen.findByTestId("line-test-call");
+    await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Ready"));
+    expect(screen.getByTestId("line-test").textContent).toContain(`Calls ${lineSettings.allowed_numbers[0]}`);
+    expect(press.getAttribute("title")).toBe("From the Line on This Mac");
+    fireEvent.click(press);
+    const ringing = await screen.findByTestId("line-test-state");
+    expect(ringing.textContent).toBe("Ringing");
+    expect(ringing.closest(".line-live")).not.toBeNull();
+    await act(async () => { answer(); });
+    await waitFor(() => expect(screen.getByTestId("line-test-state").textContent).toBe("Answered"));
+    expect(calls).toContain("POST /api/calls/line/test {}");
+  });
+
+  for (const [recorded, word] of [
+    [lineTestNoAnswer, "No answer"], [lineTestBusy, "Busy"], [lineTestRejected, "Rejected"],
+    [lineTestNotRunning.body, "Line not running"],
+  ] as const) {
+    it(`Test call: the recorded ${recorded.result} reads ${word}`, async () => {
+      lineHub({ "POST /api/calls/line/test": recorded });
+      render(<CallsSettingsPane />);
+      fireEvent.click(await screen.findByTestId("line-test-call"));
+      await waitFor(() => expect(screen.getByTestId("line-test-state").textContent).toBe(word));
+    });
+  }
+
+  it("Test call: the hub's 409 no_number reads No number; no number at all turns the verb off", async () => {
+    lineHub({ "POST /api/calls/line/test": () => { throw new ApiError(lineTestNoNumber.status, "Conflict", lineTestNoNumber.body); } });
+    render(<CallsSettingsPane />);
+    fireEvent.click(await screen.findByTestId("line-test-call"));
+    await waitFor(() => expect(screen.getByTestId("line-test-state").textContent).toBe("No number"));
+    cleanup();
+    lineHub({ "GET /api/settings": { calls: { ...lineSettings, allowed_numbers: [] } } });
+    render(<CallsSettingsPane />);
+    const press = await screen.findByTestId("line-test-call");
+    expect(press).toBeDisabled();
+    expect(screen.getByTestId("line-test").textContent).toContain("No number");
+  });
+
+  it("a Telnyx number: the password Missing, the key from the environment; Save writes the keystore and the row says so", async () => {
+    let stored = false;
+    hub({
+      "GET /api/settings": () => ({ calls: stored ? lineSettingsStored : lineSettingsTelnyx }),
+      "GET /api/calls/status": lineCallsReady,
+      "GET /api/calls/line/status": () => (stored ? lineTelnyxStored : lineTelnyxMissing),
+      "PUT /api/settings": () => { stored = true; return linePut; },
+    });
+    render(<CallsSettingsPane />);
+    await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Not set up"));
+    expect(screen.getByTestId("line-account").getAttribute("data-kind")).toBe("telnyx");
+    expect(screen.getByTestId("line-password-place").textContent).toBe("Missing");
+    expect(screen.getByTestId("line-telnyx-key-place").textContent).toBe("From the environment: move it to the keystore");
+    // The key that is only in his shell: the write field is the way in.
+    const keyField = within(screen.getByTestId("line-telnyx-key")).getByLabelText("Telnyx API key");
+    expect(keyField).toHaveAttribute("type", "password");
+    const field = within(screen.getByTestId("line-password")).getByLabelText("SIP password");
+    fireEvent.change(field, { target: { value: "sip-secret" } });
+    fireEvent.click(screen.getByTestId("line-password-save"));
+    await waitFor(() => expect(screen.getByTestId("line-password-place").textContent).toBe("Stored in your keystore"));
+    expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { account: { password: "sip-secret" } } } })}`);
+    expect(screen.getByTestId("line-telnyx-key-place").textContent).toBe("Stored in your keystore");
+    expect(screen.getByTestId("line-password-change")).toBeInTheDocument();
+    expect(screen.queryByLabelText("SIP password")).toBeNull();
+    expect(lineText()).not.toContain("sip-secret");
+    expect(screen.getByTestId("line-place-state").textContent).toBe("Starting");
+  });
+
+  it("the adapter: a press on ai-phone writes calls.line.adapter", async () => {
+    lineHub({ "PUT /api/settings": linePut });
+    render(<CallsSettingsPane />);
+    const adapter = await screen.findByTestId("line-adapter");
+    fireEvent.click(within(adapter).getByRole("radio", { name: /ai-phone/ }));
+    await waitFor(() => expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { adapter: "ai-phone" } } })}`));
+  });
+
+  it("a hub without the Line draws no Line section", async () => {
+    const { line: _line, ...withoutLine } = lineSettings;
+    hub({ "GET /api/settings": { calls: withoutLine }, "GET /api/calls/status": statusReady });
+    render(<CallsSettingsPane />);
+    await screen.findByTestId("calls-steps");
+    await waitFor(() => expect(screen.queryByTestId("calls-line-section")).toBeNull());
+    expect(calls).not.toContain("GET /api/calls/line/status");
+  });
+});
+
+describe("the Calls window on the Line", () => {
+  const bar = async (status: unknown) => {
+    hub({ "GET /api/settings": { calls: lineSettings }, "GET /api/calls/status": status, "GET /api/calls": callsEmpty });
+    render(<CallsCore />);
+    await screen.findByTestId("calls-status");
+    await waitFor(() => expect(screen.queryByTestId("calls-status")?.textContent).not.toBe(""));
+  };
+
+  it("ready: Ready for calls, Call me on, no machine named", async () => {
+    await bar(lineCallsReady);
+    await waitFor(() => expect(status()).toContain("Ready for calls"));
+    expect(screen.getByTestId("calls-call-me")).not.toBeDisabled();
+    expect(screen.getByTestId("calls-window").textContent).not.toMatch(/this mac|karol|127\.0|sip:/i);
+  });
+
+  it("starting: Line starting on a live lamp", async () => {
+    await bar(lineCallsStarting);
+    await waitFor(() => expect(status()).toContain("Line starting"));
+    expect(screen.getByTestId("calls-status").querySelector(".kit-dot[data-live]")).not.toBeNull();
+  });
+
+  it("not running: Line not running; the empty state is No line yet with Set up the Line › to Settings ▸ Calls ▸ Line", async () => {
+    await bar(lineCallsNotRunning);
+    await waitFor(() => expect(status()).toContain("Line not running"));
+    expect(await screen.findByText("No line yet")).toBeInTheDocument();
+    expect(screen.getByTestId("calls-call-me")).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Set up the Line ›" }));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "calls::line");
+  });
+
+  it("not installed: No line: set one in Settings ▸ Calls ▸ Line", async () => {
+    await bar(lineCallsNotInstalled);
+    await waitFor(() => expect(status()).toContain("No line: set one in Settings ▸ Calls ▸ Line"));
+  });
+});

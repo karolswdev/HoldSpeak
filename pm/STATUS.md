@@ -10,6 +10,20 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+**The Line — 2026-10-29 (owner: "I'm choosing the second").** HoldSpeak's
+own phone line for Calls: baresip 4.12 (BSD-3) as a supervised child, our
+`aupipe` module, Parakeet in and Pocket TTS out, the hub driving it over a
+text-only wire. Design `docs/internal/betterment/line/LINE-DESIGN-2026-10-29.md`
+(with "Built") #1606, canvas #1607 (direction A), the node #1608, the faces and
+docs in the LINE-4b PR (Settings ▸ Calls ▸ Line, the Calls window's Line words,
+`docs/calls.md` "The Line", `NOTICE`), recipe `line/RECIPE.md`. His hub today:
+Not running; the Line needs its own Python 3.13 venv (onnxruntime has no cp314
+wheel). Left (open work): LINE-3 the home box (node credential, units, build
+script, `holdspeak line install`), LINE-3b Telnyx (his account), LINE-5
+barge-in measured, LINE-6 the Engines speech rows, the LICENCE slice (Kokoro and
+faster-whisper's PyAV pull GPL into the hub; his ruling); his word on the SIP
+password custody (CONFIG); his live verdict on the faces.
+
 **Phone — 2026-10-28 (owner: "Do it. And definitely swallow the paradigm and
 'vendor' it… we literally absorb and rewrite and refactor it into HoldSpeak").**
 agentring (Apache-2.0, 10b0e55) absorbed and rewritten on the hub: one PR from

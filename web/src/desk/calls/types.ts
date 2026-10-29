@@ -19,6 +19,45 @@ export interface CallsStatus {
   listening: boolean;
   active: CallSummary | null;
   steps: CallStep[];
+  /** The Line (2026-10-29): HoldSpeak's own phone line; `state: "off"`
+   *  when ai-phone is the phone (or `HOLDSPEAK_LINE=off`). */
+  line?: LineStatus;
+}
+
+/** The Line's place word (the Engines vocabulary; `calls/service.py` LINE_WORDS). */
+export type LineState = "ready" | "starting" | "not_running" | "not_installed" | "not_set_up" | "offline" | "off";
+/** Where a secret is: never its value (`holdspeak/line/secrets.py`). */
+export type SecretPlace = "keystore" | "environment" | "missing";
+
+/** `GET /api/calls/line/status` and the `line` block of `/api/calls/status`. */
+export interface LineStatus {
+  node: string;
+  state: LineState;
+  words: string;
+  address: string;
+  secrets: { sip_password?: SecretPlace; telnyx_api_key?: SecretPlace };
+}
+
+/** `POST /api/calls/line/test` (200): the result word, and who was called. */
+export interface LineTestResult {
+  result: string;
+  to: string;
+}
+
+/** `calls.line` of GET /api/settings: the secrets are write only (the
+ *  read says where each one is). */
+export interface LineSettings {
+  adapter: "" | "line" | "ai-phone";
+  where: string;
+  account: {
+    kind: "sip" | "telnyx";
+    user: string;
+    domain: string;
+    outbound: string;
+    password_ref: string;
+    codecs: string[];
+  };
+  secrets?: { sip_password?: SecretPlace; telnyx_api_key?: SecretPlace };
 }
 
 export interface CallResult {
@@ -72,4 +111,7 @@ export interface CallsSettings {
   passphrase_set: boolean;
   /** Phone (2026-10-28): the hub's phone is on (`HOLDSPEAK_PHONE`); read only. */
   phone_on?: boolean;
+  /** The Line (2026-10-29): the most calls HoldSpeak places in a day (0: no limit). */
+  daily_limit?: number;
+  line?: LineSettings;
 }
