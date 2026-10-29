@@ -35,7 +35,7 @@ separate Thread window is not the current navigation path.
 
 Select an object, then press Enter or use its open verb. The **Object** menu
 shows verbs for the selected record. Use **Ask about this** on a Note, Meeting,
-Artifact, Decision, Recipe, Project, directory, knowledge base, or person.
+Artifact, Decision, Mode, Project, Zone, Drawer, or person.
 People itself is not an Ask target. A person uses **Ask about <first-name>**.
 
 The selected object appears in Ask's scope control (accessible label
