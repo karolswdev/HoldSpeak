@@ -1,6 +1,6 @@
 # README panel: decisions and result
 
-Owner request: three judges assess modernity, verbosity, attractiveness, and potential, then apply the findings and merge a PR. Base: `09cbe18c2`. Branch: `docs/readme-panel`.
+Owner request: three judges assess modernity, verbosity, attractiveness, and potential, then apply the findings and merge a PR. Base: `09cbe18c2`. Branch: `docs/readme-panel`. Delivery: [PR #1613](https://github.com/karolswdev/HoldSpeak/pull/1613).
 
 ## Method and scores
 
