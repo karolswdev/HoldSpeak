@@ -1,7 +1,7 @@
 # Agents-lane accuracy report
 
-Date: 2026-10-29  
-Base: `4dce2796d`  
+Date: 2026-10-29
+Base: `4dce2796d`
 Scope: the 16 agents-owned extended guides, plus the agents audit artifacts.
 
 ## Result

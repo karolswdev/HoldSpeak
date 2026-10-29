@@ -1,8 +1,8 @@
 # Capture lane accuracy report
 
-Audit date: 2026-10-29  
-Lane: capture  
-Source base: `4dce2796d`  
+Audit date: 2026-10-29
+Lane: capture
+Source base: `4dce2796d`
 Scope: the 18 capture documents listed in `lanes.json`; no product source,
 defaults, tests, generated files, canon, or historical records were changed.
 

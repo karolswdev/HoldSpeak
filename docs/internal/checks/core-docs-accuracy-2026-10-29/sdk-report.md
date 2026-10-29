@@ -1,7 +1,7 @@
 # SDK documentation accuracy report
 
-Date: 2026-10-29  
-Base: `4dce2796d`  
+Date: 2026-10-29
+Base: `4dce2796d`
 Scope: the three SDK-owned guides and this lane's audit artifacts. Product
 source, tests, defaults, packages and generated regions were not edited.
 

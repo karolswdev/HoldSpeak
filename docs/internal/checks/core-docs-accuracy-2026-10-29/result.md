@@ -1,6 +1,6 @@
 # Extended documentation accuracy audit, 2026-10-29
 
-Source base: `4dce2796d`. Branch: `docs/core-docs-accuracy`.
+Source base: `4dce2796d`. Branch: `docs/core-docs-accuracy`. Delivery: [PR #1614](https://github.com/karolswdev/HoldSpeak/pull/1614).
 
 ## Result
 
@@ -53,7 +53,7 @@ Two read-only Claude CLI advisory passes were invoked by Astra. The first found 
 
 ## Coverage
 
-Each row points to its lane audit JSON. `integration-addenda.json` records corrections made after the independent advisory. Generator-owned documents retain their generation and snapshot semantics.
+Per-lane files are the initial audit inputs; integration addenda and final corrected guide wording supersede preliminary conclusions. Each row points to its lane audit JSON. `integration-addenda.json` records corrections made after the independent advisory. Generator-owned documents retain their generation and snapshot semantics.
 
 | Document | Disposition | Evidence |
 | --- | --- | --- |

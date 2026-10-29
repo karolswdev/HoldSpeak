@@ -1,7 +1,7 @@
 # Architecture lane accuracy report
 
-Date: 2026-10-29  
-Base: `4dce2796d`  
+Date: 2026-10-29
+Base: `4dce2796d`
 Scope: the seven architecture-owned guides and the architecture audit artifacts.
 
 ## Result
