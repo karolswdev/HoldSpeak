@@ -8,7 +8,8 @@
  * its exact command with Copy. Egress is said here, once, in one plain
  * sentence (UX-CANON A.9): never as a chip on the Calls window. The fields
  * write the `calls` section of /api/settings; the passphrase is write only
- * (the read says `passphrase_set`, never the value). */
+ * (the read says `passphrase_set`, never the value). Phone (PHONE-DESIGN
+ * §9) follows: Your phone, Reach you, Quiet hours, The number. */
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { readableError } from "../../lib/api";
@@ -18,6 +19,7 @@ import { DotWord } from "../surface/kit";
 import { CheckGadget, GadgetGroup, StringGadget } from "../surface/gadgets";
 import { ABSENT_STATUS, OPEN_STEPS, readCallsSettings, readCallsStatus, writeCallsSetting } from "./api";
 import type { CallStep, CallStepId, CallsSettings, CallsStatus } from "./types";
+import { PhoneSettingsPane } from "./PhoneSettings";
 import "./calls.css";
 
 export const INSTALL_COMMAND =
@@ -316,6 +318,12 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
         </div>
       </GadgetGroup>
       <p className="calls-egress" data-testid="calls-egress">{EGRESS_SENTENCE}</p>
+      {/* Phone (PHONE-DESIGN §9): Settings ▸ Calls ▸ Phone. A hub without
+          the Calls slice has no Phone either: nothing more is read. */}
+      {absent ? null : <section className="calls-phone" aria-label="Phone" data-testid="calls-phone-section" data-highlight={highlight === "phone" || undefined}>
+        <h3 className="calls-phone-title">Phone</h3>
+        <PhoneSettingsPane />
+      </section>}
     </div>
   );
 }

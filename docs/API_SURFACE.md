@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 867 (plus static mounts). iOS-consumed: 89. Web-consumed: 674.
+Routes: 867 (plus static mounts). iOS-consumed: 89. Web-consumed: 677.
 
 ## device_audio_ws
 
@@ -752,14 +752,14 @@ Routes: 867 (plus static mounts). iOS-consumed: 89. Web-consumed: 674.
 | GET | `/api/phone/calls` | web |
 | POST | `/api/phone/calls` | web |
 | GET | `/api/phone/calls/{call_id}` | server only |
-| POST | `/api/phone/calls/{call_id}/{verb}` | server only |
+| POST | `/api/phone/calls/{call_id}/{verb}` | web |
 | GET | `/api/phone/devices` | web |
 | POST | `/api/phone/devices` | web |
-| DELETE | `/api/phone/devices/{device_id}` | server only |
+| DELETE | `/api/phone/devices/{device_id}` | web |
 | GET | `/api/phone/events` | web |
 | GET | `/api/phone/messages` | web |
 | POST | `/api/phone/messages` | web |
-| POST | `/api/phone/messages/{message_id}/read` | server only |
+| POST | `/api/phone/messages/{message_id}/read` | web |
 | POST | `/api/phone/messages/{message_id}/wait` | server only |
 | POST | `/api/phone/pair` | web |
 | GET | `/api/phone/status` | web |

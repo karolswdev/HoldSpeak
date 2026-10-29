@@ -381,3 +381,34 @@ describe("the seams", () => {
     expect(mocks.openPullout).toHaveBeenCalledWith(`program:${drafting.id}`);
   });
 });
+
+describe("Phone: the Reach line under Decided for you (PHONE-DESIGN §9)", () => {
+  it("draws the newest reach row (its line and rule); Open thread asks for the Phone wing", async () => {
+    // The recorded Program with one more Decided for you row in the shape
+    // ProgramService.engine_decision writes for a reach (kind "reach", the
+    // phone's line "Reached you: a call", the rule).
+    const reached = clone(running);
+    reached.may_call = true;
+    reached.decided_for_you = [...(running.decided_for_you ?? []), {
+      id: 9001, at: "2026-10-28T12:12:00+00:00", step_id: null, kind: "reach", choice: "call",
+      line: "Reached you: a call", rule: "YOLO: a core question calls at once when the program may call",
+      overturnable: false, overturned_at: null,
+    }];
+    hub({ [`GET /api/programs/${running.id}`]: reached });
+    const { usePhoneFocus } = await import("../../calls/phoneFocus");
+    render(<ProgramBody programId={running.id} />);
+    const line = await screen.findByTestId("programs-reach");
+    expect(line.textContent).toContain("Reached you: a call · YOLO: a core question calls at once when the program may call · it may call you");
+    expect(line.getAttribute("data-channel")).toBe("call");
+    fireEvent.click(within(line).getByTestId("programs-reach-open"));
+    expect(usePhoneFocus.getState().pending).toBe(true);
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("open-calls", "/");
+  });
+
+  it("no reach, no line", async () => {
+    hub({ [`GET /api/programs/${running.id}`]: running });
+    render(<ProgramBody programId={running.id} />);
+    await screen.findByTestId("programs-decided");
+    expect(screen.queryByTestId("programs-reach")).toBeNull();
+  });
+});

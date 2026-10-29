@@ -57,6 +57,7 @@
     "mermaid": "12.2.0",
     "motion": "^12.42.2",
     "pixi.js": "^8.19.0",
+    "qrcode-generator": "2.0.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",

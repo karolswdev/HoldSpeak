@@ -214,6 +214,8 @@ export interface Program extends ProgramSummary {
   checkpoints: ProgramCheckpoint[];
   your_turn_items: YourTurnItem[];
   decided_for_you?: DecidedRow[];
+  /** Phone (PHONE-DESIGN §6): the engine may call him for this Program. */
+  may_call?: boolean;
   spend_limit_usd?: number | null;
   /** He closed it (Secure). */
   closed_at?: string | null;
@@ -268,3 +270,4 @@ export interface PersonProgramRow extends ProgramRoomRow {
   to_show: { step_id: string; title: string; pr_number: number | null; pr_url: string | null; merged_at: string | null }[];
   to_ask: { step_id: string; title: string; kind: string }[];
 }
+

@@ -1348,3 +1348,46 @@ describe("W4 (the words): the meetings that say one Project's word are one row",
     expect(within(list).getByTestId("needs-match-toggle").getAttribute("aria-expanded")).toBe("true");
   });
 });
+
+// Phone (PHONE-DESIGN §9): the recorded phone_items (needs_you.phone.json,
+// recorded by PH-HUB through the real routes). Each verb is the hub's own.
+import needsPhone from "../../calls/__fixtures__/needs_you.phone.json";
+import { usePhoneFocus } from "../../calls/phoneFocus";
+
+describe("Phone: asked on your phone, a missed call, a held call", () => {
+  it("draws the hub's line and verbs; Call now presses its href; the row leaves on the next read; Answer here opens the Phone wing", async () => {
+    let answered = false;
+    const pressed: Array<{ path: string; json: unknown }> = [];
+    const phoneItems = (needsPhone as { items: Array<Record<string, unknown>> }).items;
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) {
+        const items = answered ? phoneItems.filter((item) => (item.phone as { kind: string }).kind !== "asked") : phoneItems;
+        return { ...ANSWER, count: items.length, items } as never;
+      }
+      if (value.startsWith("/api/phone/")) {
+        pressed.push({ path: value, json: (init as { json?: unknown })?.json });
+        answered = true;
+        return { call_id: "pcall_new", state: "ringing" } as never;
+      }
+      if (value === "/api/door") return DOOR as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    const asked = phoneItems.find((item) => (item.phone as { kind: string }).kind === "asked")!;
+    const callNow = await screen.findByRole("button", { name: `Call now: ${asked.title}` });
+    expect(screen.getByText("Asked on your phone · now · no reply")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: `Let it wait: ${asked.title}` })).toBeInTheDocument();
+    fireEvent.click(callNow);
+    await waitFor(() => expect(pressed[0]).toEqual({
+      path: "/api/phone/calls", json: (asked.phone as { verbs: Array<{ body: unknown }> }).verbs[0].body,
+    }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: `Call now: ${asked.title}` })).toBeNull());
+    // The missed call's Answer here needs his words: it opens the Phone wing to reply.
+    const missed = phoneItems.find((item) => (item.phone as { kind: string }).kind === "missed_call")!;
+    fireEvent.click(screen.getByRole("button", { name: `Answer here: ${missed.title}` }));
+    expect(usePhoneFocus.getState()).toMatchObject({ pending: true, replyTo: (missed.phone as { msgId: string }).msgId });
+    expect(openSurfaceOr).toHaveBeenCalledWith("open-calls", "/");
+    expect(pressed).toHaveLength(1);
+  });
+});

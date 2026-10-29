@@ -36,6 +36,8 @@ import { conductorMembers, fleetCounts } from "../../conductor/members";
 import { AGENT_NAME, type AgentId } from "../../firstrun/agentsStep";
 import { openAgentLane } from "../../shell";
 import "./today.css";
+import { usePhoneToday } from "../../calls/phoneApi";
+import { openPhoneWing } from "../../calls/phoneFocus";
 import { Token } from "../../surface/Token";
 
 /** Betterment AG9: Today's Agents line, only what is there:
@@ -169,10 +171,12 @@ export function openDone(ref: string): void {
   else openRef(ref);
 }
 
-function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs = "" }: {
+function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs = "", phone = "" }: {
   rows: readonly DoneRow[]; failed: boolean; open: boolean; onToggle: () => void; onRetry: () => void; now: Date;
   /** Programs (2026-10-28): `Programs: 1 running, 1 waits on you`, or "". */
   programs?: string;
+  /** Phone (2026-10-28): `Reached you 2 times: 1 answered`, or "". */
+  phone?: string;
 }) {
   if (failed) {
     return (
@@ -197,6 +201,13 @@ function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs
           onClick={() => openSurfaceOr("open-programs", "/")}>
           <img src={`${GLYPHS}program.png`} alt="" width={20} height={20} draggable={false} />
           <span className="today-done-title">{programs}</span>
+        </Button>
+      ) : null}
+      {phone ? (
+        <Button variant="chrome" className="today-done-row today-phone" data-kind="phone" data-testid="today-phone"
+          onClick={() => openPhoneWing()}>
+          <img src={`${GLYPHS}call.png`} alt="" width={20} height={20} draggable={false} />
+          <span className="today-done-title">{phone}</span>
         </Button>
       ) : null}
       {shown ? (
@@ -386,6 +397,8 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const agentsWords = agentsLine(agentCounts.needYou, finishedAgents.length);
   // Programs (2026-10-28): one Since this morning line when any moved today.
   const programsToday = useProgramsToday(now);
+  // Phone (2026-10-28): one Since this morning line when the desk reached him.
+  const phoneToday = usePhoneToday(now.getHours() >= EVENING_HOUR);
   // Betterment A6: an automation's NEW result ("<name> has a new result").
   const news = useAutomationNews();
   const [loaded, setLoaded] = useState(false);
@@ -812,7 +825,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         </Toolbar>
         <div className="today-scroll">
           {evening && done ? (
-            <SinceThisMorning rows={done.rows} failed={done.failed} open={sinceShown} now={now} programs={programsToday}
+            <SinceThisMorning rows={done.rows} failed={done.failed} open={sinceShown} now={now} programs={programsToday} phone={phoneToday}
               onToggle={() => setSinceOpen(!sinceShown)} onRetry={retry} />
           ) : null}
           <PreparedBlock read={prepared} events={door?.upcoming ?? []} />

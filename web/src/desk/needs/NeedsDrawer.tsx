@@ -64,6 +64,7 @@ import { openHand } from "../agentHand";
 import { Disclosure } from "../surface/patterns/Disclosure";
 import { AddToProject } from "../AddToProject";
 import "./needs.css";
+import { openPhoneWing } from "../calls/phoneFocus";
 import { Token } from "../surface/Token";
 
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
@@ -212,6 +213,25 @@ function NeedVerbsView({ face, primary, onWell, well }: {
   };
 
   switch (v.kind) {
+    case "phone":
+      // Phone (2026-10-28): the hub's verbs, the first the lead. Call now /
+      // Call again ring his phone (his press is the egress); Answer here
+      // needs his words, so it opens the Phone wing set to reply.
+      return (
+        <>
+          {v.verbs.map((verb, index) => (
+            <Button key={verb.id} dense variant={index === 0 ? lead : "ghost"} loading={busy && index === 0} disabled={busy}
+              aria-label={named(verb.label)} data-testid="needs-row-verb" data-verb={`phone-${verb.id.replace(/_/g, "-")}`}
+              onClick={(event) => verb.needs_text
+                ? openPhoneWing(String((verb.body as { reply_to?: unknown } | undefined)?.reply_to ?? v.msgId ?? "") || null)
+                : void act(index === 0 ? "Done" : verb.label, () => apiFetch(verb.href, {
+                  method: verb.method || "POST", json: verb.body ?? {},
+                }), face.id, (event.currentTarget as Element).closest("li"))}>
+              {verb.label}
+            </Button>
+          ))}
+        </>
+      );
     case "program":
       // Programs (2026-10-28): Merge / Not yet; Fix now / Later / Skip;
       // Resume / Skip; Send… (prepares the ask; he presses Send there).
