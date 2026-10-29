@@ -21749,6 +21749,366 @@
         ]
       }
     },
+    "/api/phone/calls": {
+      "get": {
+        "operationId": "api_phone_calls_api_phone_calls_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Calls Api Phone Calls Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Calls"
+      },
+      "post": {
+        "operationId": "api_phone_call_api_phone_calls_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Call Api Phone Calls Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Call"
+      }
+    },
+    "/api/phone/calls/{call_id}": {
+      "get": {
+        "operationId": "api_phone_call_get_api_phone_calls__call_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "title": "Call Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Call Get Api Phone Calls  Call Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Phone Call Get"
+      }
+    },
+    "/api/phone/calls/{call_id}/{verb}": {
+      "post": {
+        "operationId": "api_phone_call_verb_api_phone_calls__call_id___verb__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "title": "Call Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "verb",
+            "required": true,
+            "schema": {
+              "title": "Verb",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Call Verb Api Phone Calls  Call Id   Verb  Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Phone Call Verb"
+      }
+    },
+    "/api/phone/devices": {
+      "get": {
+        "operationId": "api_phone_devices_api_phone_devices_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Devices Api Phone Devices Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Devices"
+      },
+      "post": {
+        "operationId": "api_phone_devices_pair_api_phone_devices_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Devices Pair Api Phone Devices Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Devices Pair"
+      }
+    },
+    "/api/phone/devices/{device_id}": {
+      "delete": {
+        "operationId": "api_phone_device_revoke_api_phone_devices__device_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "title": "Device Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Device Revoke Api Phone Devices  Device Id  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Phone Device Revoke"
+      }
+    },
+    "/api/phone/events": {
+      "get": {
+        "operationId": "api_phone_events_api_phone_events_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Events Api Phone Events Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Events"
+      }
+    },
+    "/api/phone/messages": {
+      "get": {
+        "operationId": "api_phone_messages_api_phone_messages_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Messages Api Phone Messages Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Messages"
+      },
+      "post": {
+        "operationId": "api_phone_message_send_api_phone_messages_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Message Send Api Phone Messages Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Message Send"
+      }
+    },
+    "/api/phone/messages/{message_id}/read": {
+      "post": {
+        "operationId": "api_phone_message_read_api_phone_messages__message_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Message Read Api Phone Messages  Message Id  Read Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Phone Message Read"
+      }
+    },
+    "/api/phone/messages/{message_id}/wait": {
+      "post": {
+        "operationId": "api_phone_message_wait_api_phone_messages__message_id__wait_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Message Wait Api Phone Messages  Message Id  Wait Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Phone Message Wait"
+      }
+    },
+    "/api/phone/pair": {
+      "post": {
+        "operationId": "api_phone_pair_api_phone_pair_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Pair Api Phone Pair Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Pair"
+      }
+    },
+    "/api/phone/status": {
+      "get": {
+        "operationId": "api_phone_status_api_phone_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Status Api Phone Status Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Status"
+      }
+    },
     "/api/plugin-jobs": {
       "get": {
         "operationId": "list_jobs_api_plugin_jobs_get",

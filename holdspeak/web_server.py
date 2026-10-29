@@ -1805,6 +1805,14 @@ class MeetingWebServer:
         from .web.routes.programs import build_programs_router
 
         mount_router(app, build_programs_router(web_ctx))
+        # Phone (2026-10-28): the desk reaches him on his phone and he reaches
+        # it. HOLDSPEAK_PHONE=off (every rig) mounts nothing.
+        from .phone import phone_on
+
+        if phone_on():
+            from .web.routes.phone import build_phone_router
+
+            mount_router(app, build_phone_router(web_ctx))
         # Recordings (2026-10-28): a desk session as a video for the iPhone.
         from .web.routes.recordings import build_recordings_router
 
@@ -1840,6 +1848,16 @@ class MeetingWebServer:
                 CALLS.ensure_listening()
             except Exception as e:
                 log.error(f"calls listener startup failed: {e}")
+            # Phone: the follow-up sweep (a call after an unanswered message).
+            try:
+                from .phone import phone_on
+
+                if phone_on():
+                    from .phone.service import default_phone_service
+
+                    await asyncio.to_thread(lambda: default_phone_service().start())
+            except Exception as e:
+                log.error(f"phone startup failed: {e}")
             # Recordings: park old ones, finish a cut encode, watch for stale.
             try:
                 from .recordings.service import RECORDINGS
@@ -2071,6 +2089,13 @@ class MeetingWebServer:
                 RECORDINGS.shutdown()
             except Exception as e:
                 log.error(f"recordings stop failed: {e}")
+            try:
+                from .phone import service as phone_service
+
+                if phone_service._DEFAULT is not None:
+                    phone_service._DEFAULT.stop()
+            except Exception as e:
+                log.error(f"phone stop failed: {e}")
             # HS-200-03: EVERY conductor this lifespan started is stopped here.
             # Only the calendar one was, so the workbench and scheduled-recording
             # conductors (started at the two `startup` sites above) outlived the

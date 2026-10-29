@@ -74,12 +74,23 @@ class DeskTurns:
         self._db = db
         self._factory = thread_factory
         self._override = profile_override
+        self._context = ""
+
+    def set_context(self, context: str) -> None:
+        """Phone (2026-10-28): the desk called him; the turn knows why."""
+        self._context = str(context or "").strip()
 
     def _service(self) -> Any:
         from ..mcp.palettes import CALL, CALL_HELD_EGRESS, resolve_palette
 
+        prompt = CALL_PROMPT
+        if self._context:
+            prompt += (
+                "\n\nYou called him. What to tell him, what to ask, and what not to decide is below. "
+                "Say the reason first, then ask; take his answer as his decision.\n\n" + self._context[:4000]
+            )
         return self._factory(
-            system_prompt=CALL_PROMPT, palette=resolve_palette(CALL),
+            system_prompt=prompt, palette=resolve_palette(CALL),
             capability_id=CAPABILITY, held_egress=CALL_HELD_EGRESS,
         )
 
@@ -168,6 +179,8 @@ class CallsService:
         self._phone_fn: Callable[[], Optional[AiPhone]] = lambda: AiPhone.from_settings(_settings().aiphone_dir)
         self._turns_fn: Optional[Callable[[], Optional[Turns]]] = None
         self._lock = threading.Lock()
+        #: Phone (2026-10-28): a slow hand's answer after the hang-up.
+        self._later_fn: Optional[Callable[[CallRecord, str], None]] = None
 
     # ── wiring ────────────────────────────────────────────────────────
 
@@ -175,6 +188,7 @@ class CallsService:
         self, *, broadcast: Optional[Callable[[str, Any], None]] = None,
         thread_factory: Optional[Callable[..., Any]] = None, db: Optional[Callable[[], Any]] = None,
         phone: Optional[Callable[[], Optional[AiPhone]]] = None, turns: Optional[Callable[[], Optional[Turns]]] = None,
+        later: Optional[Callable[[CallRecord, str], None]] = None,
     ) -> None:
         if broadcast is not None:
             self._broadcast = broadcast
@@ -186,6 +200,8 @@ class CallsService:
             self._phone_fn = phone
         if turns is not None:
             self._turns_fn = turns
+        if later is not None:
+            self._later_fn = later
 
     def reset(self) -> None:
         """Forget every call (a test's fresh hub)."""
@@ -395,7 +411,31 @@ class CallsService:
             return "timeout"  # a relay call that ended while nobody listened
         return reply.reason or "failed"
 
-    async def _run_call(self, phone: AiPhone, record: CallRecord, *, reason: str) -> CallRecord:
+    def _answer_later(self, record: CallRecord, words: str) -> None:
+        """A hand slower than 20 s finished after the hang-up: the answer goes
+        to his phone as a message (Phone), else it stays in the call's note."""
+        later = self._later_fn
+        if later is None:
+            try:
+                from ..phone import phone_on
+                from ..phone.service import default_phone_service
+
+                if not phone_on():
+                    return
+
+                def later(rec: CallRecord, text: str) -> None:
+                    default_phone_service().send_from_desk(text, origin_ref=f"call:{rec.id}")
+            except Exception as exc:
+                log.info(f"the later answer has no phone: {exc}")
+                return
+        loop = self._loop
+        if loop is not None and loop.is_running():
+            loop.run_in_executor(None, later, record, words)
+        else:
+            later(record, words)
+
+    async def _run_call(self, phone: AiPhone, record: CallRecord, *, reason: str,
+                        greeting: Optional[str] = None) -> CallRecord:
         cfg = _settings()
         turns = self._turns()
         engine_ready = True
@@ -405,7 +445,8 @@ class CallsService:
         self._keep(record)
         runner = CallRunner(
             phone, record, turns=turns, passphrase=cfg.passphrase, allowed_numbers=cfg.allowed_numbers,
-            greeting=cfg.greeting, emit=self._emit, save_note=self._save_note, engine_ready=engine_ready,
+            greeting=greeting or cfg.greeting, emit=self._emit, save_note=self._save_note,
+            engine_ready=engine_ready, later=self._answer_later,
         )
         self._runners[record.id] = runner
         self._emit(reason, record)
@@ -417,9 +458,15 @@ class CallsService:
 
     # ── the verbs ─────────────────────────────────────────────────────
 
-    async def place(self, to: str = "") -> dict[str, Any]:
+    async def place(
+        self, to: str = "", *, greeting: Optional[str] = None, context: str = "", reason: str = "",
+        on_end: Optional[Callable[[CallRecord], None]] = None,
+    ) -> dict[str, Any]:
         """``call <to> --relay``; the call runs like an incoming one. ``to``
-        defaults to his number (``calls.allowed_numbers[0]``)."""
+        defaults to his number (``calls.allowed_numbers[0]``). Phone
+        (2026-10-28): ``greeting`` is said after the passphrase (the reason
+        the desk called), ``context`` briefs the call's turn, ``on_end``
+        gets the record when the call is over."""
         from ..services.errors import ServiceError
 
         cfg = _settings()
@@ -442,14 +489,20 @@ class CallsService:
                 reason = "no_line"
             raise ServiceError("calls_place_failed", reply.error or f"The call did not connect ({reason}).",
                                context={"status": 409, "reason": reason})
-        record = CallRecord(phone_call_id=str(reply.data.get("call_id") or ""), direction="out", remote=target)
+        record = CallRecord(phone_call_id=str(reply.data.get("call_id") or ""), direction="out", remote=target,
+                            context=str(context or ""), reason=str(reason or ""))
         self._keep(record)
 
         async def run_then_listen() -> None:
             try:
-                await self._run_call(phone, record, reason="status")
+                await self._run_call(phone, record, reason="status", greeting=greeting)
             finally:
                 self.ensure_listening()
+                if on_end is not None:
+                    try:
+                        on_end(record)
+                    except Exception as exc:
+                        log.warning(f"call end hook failed: {exc}")
 
         asyncio.ensure_future(run_then_listen())
         return record.summary()

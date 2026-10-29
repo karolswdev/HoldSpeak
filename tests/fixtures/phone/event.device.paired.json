@@ -1,0 +1,17 @@
+{
+  "seq": 1,
+  "type": "device.paired",
+  "ts": "2026-10-28T23:39:29.382548+00:00",
+  "data": {
+    "device": {
+      "id": "dev_de01be4674d945b9",
+      "name": "Karol's iPhone",
+      "platform": "ios",
+      "state": "paired",
+      "has_push": true,
+      "push_kind": "apns",
+      "paired_at": "2026-10-28T23:39:29.382393+00:00",
+      "last_seen_at": "2026-10-28T23:39:29.382393+00:00"
+    }
+  }
+}

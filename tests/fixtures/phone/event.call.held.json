@@ -1,0 +1,17 @@
+{
+  "seq": 15,
+  "type": "call.held",
+  "ts": "2026-10-28T23:39:29.993105+00:00",
+  "data": {
+    "call": {
+      "id": "pcall_58d5cc89a544a536",
+      "seq": 15,
+      "direction": "to_phone",
+      "reason": "The schema step wants to drop a column",
+      "urgent": false,
+      "state": "held",
+      "transport": "app",
+      "created_at": "2026-10-28T23:39:29.993021+00:00"
+    }
+  }
+}

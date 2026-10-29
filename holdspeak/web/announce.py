@@ -81,6 +81,9 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # Recordings (2026-10-28): one chunk each 5 s while a recording runs; the
     # service sends its own ``recording_state`` frame.
     ("POST", "/api/recordings/{recording_id}/chunks"): "noise: one chunk each 5 s; the service frames it",
+    # Phone (2026-10-28): a read receipt from his phone or the desk; no row a
+    # window shows changes, and the service sends its own ``phone_changed``.
+    ("POST", "/api/phone/messages/{message_id}/read"): "read-like: a read receipt; the phone service frames it",
     ("POST", "/api/ui-feedback"): "local developer report; no desk object changes",
     ("POST", "/api/ui-feedback/{identifier}/transcribe"): "local report attachment; no desk object changes",
 }

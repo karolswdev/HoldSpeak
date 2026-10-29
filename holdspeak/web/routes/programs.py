@@ -38,13 +38,13 @@ log = get_logger("web.routes.programs")
 _CREATE_FIELDS = (
     "title", "goal", "repository", "project_id", "base_branch", "control", "check_command", "template",
     "default_profile", "default_engine", "reviewer_profile", "reviewer_engine", "prefer_idle", "origin_ref",
-    "for_person_id", "spend_limit_usd",
+    "for_person_id", "spend_limit_usd", "may_call",
 )
 
 
 _UPDATE_FIELDS = (
     "title", "goal", "control", "prefer_idle", "project_id", "spend_limit_usd", "default_profile", "default_engine",
-    "reviewer_profile", "reviewer_engine",
+    "reviewer_profile", "reviewer_engine", "may_call",
 )
 
 

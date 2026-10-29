@@ -11,21 +11,21 @@ from __future__ import annotations
 import json
 from typing import Any, Mapping, Optional
 
-PROGRAM_COLUMNS = ('id', 'title', 'goal_markdown', 'project_id', 'repo_root', 'base_branch', 'control', 'spend_limit_usd', 'check_command', 'reviewer_profile', 'reviewer_engine', 'default_profile', 'default_engine', 'prefer_idle', 'template', 'origin_ref', 'for_person_id', 'created_by', 'state', 'note_id', 'closed_at', 'revision', 'created_at', 'updated_at')
+PROGRAM_COLUMNS = ('id', 'title', 'goal_markdown', 'project_id', 'repo_root', 'base_branch', 'control', 'spend_limit_usd', 'check_command', 'reviewer_profile', 'reviewer_engine', 'default_profile', 'default_engine', 'prefer_idle', 'template', 'origin_ref', 'for_person_id', 'created_by', 'state', 'note_id', 'closed_at', 'revision', 'created_at', 'updated_at', 'may_call')
 
-STEP_COLUMNS = ('id', 'program_id', 'ordinal', 'title', 'brief_markdown', 'owns_json', 'after_json', 'profile', 'engine', 'prefer_idle', 'effort', 'race', 'race_of', 'gate_check', 'gate_review', 'review_depth', 'gate_merge', 'state', 'held_reason', 'launch_id', 'worktree', 'branch', 'head_commit', 'checked_commit', 'pr_url', 'pr_number', 'check_log', 'check_verdict', 'facts_json', 'review_verdict', 'findings_json', 'report', 'rounds', 'parked_reason', 'parked_by', 'origin_ref', 'for_person_id', 'started_at', 'ended_at', 'updated_at')
+STEP_COLUMNS = ('id', 'program_id', 'ordinal', 'title', 'brief_markdown', 'owns_json', 'after_json', 'profile', 'engine', 'prefer_idle', 'effort', 'race', 'race_of', 'gate_check', 'gate_review', 'review_depth', 'gate_merge', 'state', 'held_reason', 'launch_id', 'worktree', 'branch', 'head_commit', 'checked_commit', 'pr_url', 'pr_number', 'check_log', 'check_verdict', 'facts_json', 'review_verdict', 'findings_json', 'report', 'rounds', 'parked_reason', 'parked_by', 'origin_ref', 'for_person_id', 'started_at', 'ended_at', 'updated_at', 'may_call')
 
 #: The JSON columns and their wire keys.
 _JSON_FIELDS = {"owns_json": "owns", "after_json": "after", "findings_json": "findings", "facts_json": "facts"}
 _DICT_FIELDS = frozenset({"facts_json"})
-_FLAGS = ("prefer_idle", "gate_check")
+_FLAGS = ("prefer_idle", "gate_check", "may_call")
 
 _PROGRAM_UPSERT = (
     "INSERT INTO programs (id, title, goal_markdown, project_id, repo_root, base_branch, "
     "control, spend_limit_usd, check_command, reviewer_profile, reviewer_engine, "
     "default_profile, default_engine, prefer_idle, template, origin_ref, for_person_id, "
-    "created_by, state, note_id, closed_at, revision, created_at, updated_at) VALUES (?, ?, ?, "
-    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE "
+    "created_by, state, note_id, closed_at, revision, created_at, updated_at, may_call) VALUES (?, ?, ?, "
+    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE "
     "SET title=excluded.title, goal_markdown=excluded.goal_markdown, "
     "project_id=excluded.project_id, repo_root=excluded.repo_root, "
     "base_branch=excluded.base_branch, control=excluded.control, "
@@ -35,7 +35,8 @@ _PROGRAM_UPSERT = (
     "prefer_idle=excluded.prefer_idle, template=excluded.template, "
     "origin_ref=excluded.origin_ref, for_person_id=excluded.for_person_id, "
     "created_by=excluded.created_by, state=excluded.state, note_id=excluded.note_id, "
-    "closed_at=excluded.closed_at, revision=excluded.revision, updated_at=excluded.updated_at"
+    "closed_at=excluded.closed_at, revision=excluded.revision, updated_at=excluded.updated_at, "
+    "may_call=excluded.may_call"
 )
 
 _STEP_UPSERT = (
@@ -44,8 +45,8 @@ _STEP_UPSERT = (
     "review_depth, gate_merge, state, held_reason, launch_id, worktree, branch, head_commit, "
     "checked_commit, pr_url, pr_number, check_log, check_verdict, facts_json, review_verdict, "
     "findings_json, report, rounds, parked_reason, parked_by, origin_ref, for_person_id, "
-    "started_at, ended_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
-    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO "
+    "started_at, ended_at, updated_at, may_call) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO "
     "UPDATE SET ordinal=excluded.ordinal, title=excluded.title, "
     "brief_markdown=excluded.brief_markdown, owns_json=excluded.owns_json, "
     "after_json=excluded.after_json, profile=excluded.profile, engine=excluded.engine, "
@@ -61,13 +62,14 @@ _STEP_UPSERT = (
     "report=excluded.report, rounds=excluded.rounds, parked_reason=excluded.parked_reason, "
     "parked_by=excluded.parked_by, origin_ref=excluded.origin_ref, "
     "for_person_id=excluded.for_person_id, started_at=excluded.started_at, "
-    "ended_at=excluded.ended_at, updated_at=excluded.updated_at"
+    "ended_at=excluded.ended_at, updated_at=excluded.updated_at, may_call=excluded.may_call"
 )
 
 
 def _program(row: Any) -> dict[str, Any]:
     out = {key: row[key] for key in PROGRAM_COLUMNS}
     out["prefer_idle"] = bool(out["prefer_idle"])
+    out["may_call"] = bool(out["may_call"])
     return out
 
 
@@ -99,6 +101,7 @@ class ProgramStore:
     def save_program(self, program: Mapping[str, Any]) -> None:
         values = [program.get(key) for key in PROGRAM_COLUMNS]
         values[PROGRAM_COLUMNS.index("prefer_idle")] = 1 if program.get("prefer_idle") else 0
+        values[PROGRAM_COLUMNS.index("may_call")] = 1 if program.get("may_call") else 0
         with self._db._connection() as conn:
             conn.execute(_PROGRAM_UPSERT, values)
 

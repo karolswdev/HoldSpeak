@@ -36,13 +36,16 @@ def test_the_five_calls_keys_round_trip_and_the_passphrase_is_write_only(home) -
     service = SettingsService(get_database())
     fresh = service.get_settings(OWNER)["calls"]
     assert fresh == {"enabled": False, "aiphone_dir": "", "greeting": "Hello. What can I do?",
-                     "allowed_numbers": [], "passphrase_set": False}
+                     "allowed_numbers": [], "passphrase_set": False,
+                     # Phone (2026-10-28): Settings ▸ Calls ▸ Phone.
+                     "phone_reach": {}, "phone_urgent_dnd": False}
     service.update_settings(OWNER, {"calls": {
         "enabled": True, "aiphone_dir": " ~/dev/ai-phone ", "greeting": "Hi Karol.",
         "allowed_numbers": "+1 212 555 0142, sip:agent@mac", "passphrase": "blue heron"}})
     read = service.get_settings(OWNER)["calls"]
     assert read == {"enabled": True, "aiphone_dir": "~/dev/ai-phone", "greeting": "Hi Karol.",
-                    "allowed_numbers": ["+1 212 555 0142", "sip:agent@mac"], "passphrase_set": True}
+                    "allowed_numbers": ["+1 212 555 0142", "sip:agent@mac"], "passphrase_set": True,
+                    "phone_reach": {}, "phone_urgent_dnd": False}
     # The face sends its read back: the passphrase stays, passphrase_set is no field.
     service.update_settings(OWNER, {"calls": {**read, "greeting": ""}})
     stored = Config.load().calls

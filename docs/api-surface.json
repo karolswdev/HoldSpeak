@@ -5019,6 +5019,146 @@
       ]
     },
     {
+      "path": "/api/phone/calls",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/calls",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/calls/{call_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.phone",
+      "consumers": []
+    },
+    {
+      "path": "/api/phone/calls/{call_id}/{verb}",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": []
+    },
+    {
+      "path": "/api/phone/devices",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/devices",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/devices/{device_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.phone",
+      "consumers": []
+    },
+    {
+      "path": "/api/phone/events",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/messages",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/messages",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/messages/{message_id}/read",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": []
+    },
+    {
+      "path": "/api/phone/messages/{message_id}/wait",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": []
+    },
+    {
+      "path": "/api/phone/pair",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/status",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/ws",
+      "methods": [
+        "WS"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/plugin-jobs",
       "methods": [
         "GET"

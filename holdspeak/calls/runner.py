@@ -34,6 +34,10 @@ LISTEN_SECONDS = 60.0
 SPOKEN_CHARS = 600
 #: Passphrase tries before the call ends.
 PASSPHRASE_TRIES = 2
+#: A hand slower than this says "working on it" and answers later: as a later
+#: turn on the call, or after the hang-up as a message to his phone (Phone,
+#: 2026-10-28; agentring's answer-later, ``daemon/.../voice/tools.py``).
+ANSWER_LATER_SECONDS = 20.0
 
 SAY_PASSPHRASE = "Hello. Say your passphrase."
 PASSPHRASE_AGAIN = "That is not correct. Say your passphrase again."
@@ -44,6 +48,8 @@ GOODBYE = "Goodbye."
 NO_ENGINE = "My engine cannot use your desk now. I will keep this call as a note."
 DID_NOT_ANSWER = "My engine did not answer. Say it again, or call later."
 YES_OR_NO = "Say yes or no."
+WORKING_ON_IT = "I am working on it. I will tell you when it is done."
+LATER_PREFIX = "About what you asked: "
 
 _YES = re.compile(r"\b(yes|yeah|yep|yup|sure|ok(ay)?|do it|go ahead|send it|allow( it)?|approved?|correct)\b", re.I)
 _NO = re.compile(r"\b(no|nope|don'?t|do not|stop|cancel|deny|wait|not now)\b", re.I)
@@ -93,6 +99,10 @@ class CallRecord:
     thread_id: str = ""
     outcome: str = ""
     ended_by: str = ""
+    #: Phone (2026-10-28): what the desk called him about (the turn's brief;
+    #: never in the summary).
+    context: str = ""
+    reason: str = ""
 
     def add(self, who: str, text: str, *, interrupted: bool = False) -> None:
         text = str(text or "").strip()
@@ -243,6 +253,7 @@ class CallRunner:
         emit: Callable[[str, CallRecord], None],
         save_note: Callable[[CallRecord], Awaitable[None]],
         engine_ready: bool = True,
+        later: Optional[Callable[[CallRecord, str], None]] = None,
     ) -> None:
         self._phone = phone
         self.record = record
@@ -254,6 +265,9 @@ class CallRunner:
         self._save_note = save_note
         self._engine_ready = engine_ready and turns is not None
         self._hangup_asked = asyncio.Event()
+        self._later = later
+        #: Turns slower than ANSWER_LATER_SECONDS: (task, holds queue, decided).
+        self._late: list[tuple["asyncio.Future[dict[str, Any]]", "asyncio.Queue[list[dict[str, Any]]]", set[str]]] = []
 
     # ── the phone, with the transcript and the frame ─────────────────
 
@@ -327,8 +341,10 @@ class CallRunner:
                 return record
             if self._turns is not None:
                 record.thread_id = self._turns.new_thread(f"Call · {local_now():%d %b %H:%M}")
+                if record.context and hasattr(self._turns, "set_context"):
+                    self._turns.set_context(record.context)
             while record.state != "ended":
-                heard = await self.listen()
+                heard = await self._listen_or_late()
                 if heard is None:
                     break
                 if is_goodbye(heard):
@@ -350,7 +366,80 @@ class CallRunner:
             log.exception(f"call {record.id} failed: {exc}")
             if record.state != "ended":
                 await self.hang_up("Something went wrong on my side. Goodbye.")
+        finally:
+            self._after_hangup()
         return record
+
+    # ── answer later ──────────────────────────────────────────────────
+
+    async def _listen_or_late(self) -> Optional[str]:
+        """His next words; while a slow turn runs, its answer is said as soon
+        as it is ready (the listen is stopped and started again)."""
+        while True:
+            await self._say_late()
+            if self.record.state == "ended":
+                return None
+            pending = [task for task, _q, _d in self._late if not task.done()]
+            if not pending:
+                return await self.listen()
+            listening = asyncio.ensure_future(self.listen())
+            done, _ = await asyncio.wait({listening, *pending}, return_when=asyncio.FIRST_COMPLETED)
+            if listening in done:
+                return listening.result()
+            listening.cancel()
+            try:
+                await listening
+            except (asyncio.CancelledError, Exception):
+                pass
+
+    async def _say_late(self) -> None:
+        """Ask a slow turn's held calls, and say each finished one's answer."""
+        for task, holds, decided in list(self._late):
+            while not holds.empty():
+                for row in holds.get_nowait():
+                    call_id = str(row.get("call_id") or "")
+                    if call_id and call_id not in decided:
+                        decided.add(call_id)
+                        if not await self._ask(call_id, str(row.get("tool") or "")):
+                            return
+            if task.done():
+                self._late.remove((task, holds, decided))
+                words = self._answer_words(task)
+                if words and not await self.say(LATER_PREFIX + words):
+                    return
+
+    def _answer_words(self, task: "asyncio.Future[dict[str, Any]]") -> str:
+        try:
+            result = task.result()
+        except (asyncio.CancelledError, Exception) as exc:
+            log.info(f"a slow call turn did not answer: {exc}")
+            return ""
+        text = speakable(str(result.get("text") or ""))
+        back, rows = read_back(result.get("used") or {})
+        for row in rows:
+            if row not in self.record.results:
+                self.record.results.append(row)
+        if rows:
+            self._emit("result", self.record)
+        return " ".join(part for part in (text, back) if part)
+
+    def _after_hangup(self) -> None:
+        """A slow turn still running when the call ended answers as a message."""
+        for task, _holds, _decided in list(self._late):
+            self._late.remove((task, _holds, _decided))
+
+            def done(finished: "asyncio.Future[dict[str, Any]]") -> None:
+                words = self._answer_words(finished)
+                if words and self._later is not None:
+                    try:
+                        self._later(self.record, words)
+                    except Exception as exc:
+                        log.warning(f"the later answer was not sent: {exc}")
+
+            if task.done():
+                done(task)
+            else:
+                task.add_done_callback(done)
 
     async def _gate(self) -> bool:
         record = self.record
@@ -393,10 +482,17 @@ class CallRunner:
 
         task = asyncio.ensure_future(self._turns.run(self.record.thread_id, heard, holds=on_holds))
         decided: set[str] = set()
+        started = time.monotonic()
         try:
             while not task.done():
+                if time.monotonic() - started >= ANSWER_LATER_SECONDS and self.record.hold is None:
+                    # A slow hand: say so and listen on; the answer comes later.
+                    self._late.append((task, holds, decided))
+                    await self.say(WORKING_ON_IT)
+                    return
                 getter = asyncio.ensure_future(holds.get())
-                done, _ = await asyncio.wait({task, getter}, timeout=KEEPALIVE_SECONDS, return_when=asyncio.FIRST_COMPLETED)
+                wait = min(KEEPALIVE_SECONDS, max(0.05, ANSWER_LATER_SECONDS - (time.monotonic() - started)))
+                done, _ = await asyncio.wait({task, getter}, timeout=wait, return_when=asyncio.FIRST_COMPLETED)
                 if getter not in done:
                     getter.cancel()
                 if task in done:
@@ -410,6 +506,8 @@ class CallRunner:
                                 task.cancel()
                                 return
                     continue
+                if time.monotonic() - started >= ANSWER_LATER_SECONDS:
+                    continue  # the top of the loop moves it to later
                 if not await self.say(STILL_WORKING):
                     task.cancel()
                     return
@@ -489,6 +587,6 @@ def _project_refs(used: dict[str, Any]) -> list[str]:
 
 
 __all__ = [
-    "CallRecord", "CallRunner", "Line", "Turns", "is_goodbye", "number_allowed", "passphrase_heard",
+    "ANSWER_LATER_SECONDS", "CallRecord", "CallRunner", "Line", "Turns", "is_goodbye", "number_allowed", "passphrase_heard",
     "read_back", "speakable", "yes_or_no",
 ]

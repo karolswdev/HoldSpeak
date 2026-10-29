@@ -45,6 +45,17 @@ def front_window(*, now: Optional[float] = None) -> Optional[str]:
     return str(front) if front else None
 
 
+def seconds_since_seen(*, now: Optional[float] = None) -> Optional[float]:
+    """Seconds since a view last said it was in front of him (Phone: "away"
+    is no desk for 30 minutes); None when no view ever said so."""
+    clock = time.time() if now is None else now
+    with _lock:
+        at = float(_state["at"] or 0.0)
+    if not at:
+        return None
+    return max(0.0, clock - at)
+
+
 def clear() -> None:
     """Forget the report (tests)."""
     report(None, False, now=0.0)

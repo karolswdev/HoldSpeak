@@ -1,0 +1,9 @@
+{
+  "push_secret": "DLoXhULCpE3l5mbXFN9PvX-bHXi_JLul4DKEu-S_xeQ",
+  "data": {
+    "v": "1",
+    "hub_id": "hub_bad233c78fb3b749",
+    "event": "{\"seq\":2,\"type\":\"message.new\",\"ts\":\"2026-10-28T23:39:29.385437+00:00\",\"data\":{\"message\":{\"id\":\"msg_5398bca4fd6fe1f3\",\"seq\":2,\"direction\":\"to_phone\",\"text\":\"The nightly build is red. Retry it now?\",\"created_at\":\"2026-10-28T23:39:29.385328+00:00\",\"origin_ref\":\"program_step:step-1:core_question\"}}}",
+    "sig": "aohNDFr_J7k3f8Ev6_rns5dBdsELvgvSR6aZOY7Mwzw"
+  }
+}

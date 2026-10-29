@@ -1,0 +1,6 @@
+{
+  "device_id": "dev_de01be4674d945b9",
+  "device_jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImtfOGJmNTQ4M2NmY2MyNGMxMjdiYjI3YWE5In0.eyJpc3MiOiJob2xkc3BlYWstaHViIiwiYXVkIjoicGhvbmUiLCJzdWIiOiJkZXZfZGUwMWJlNDY3NGQ5NDViOSIsImlhdCI6MTc5MzIzMDc2OX0.Xy65fAYx8lkJOmNQVO1qtJDuPfA9usBZ-87pPw7YvxM",
+  "push_secret": "DLoXhULCpE3l5mbXFN9PvX-bHXi_JLul4DKEu-S_xeQ",
+  "hub_id": "hub_bad233c78fb3b749"
+}

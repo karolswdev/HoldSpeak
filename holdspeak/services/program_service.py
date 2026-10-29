@@ -365,8 +365,10 @@ class ProgramService:
         engines: Optional[Callable[[str], Any]] = None,
         people: Optional[Callable[[], Any]] = None,
         runner: Optional[Callable[[], Any]] = None,
+        phone: Optional[Callable[[], Any]] = None,
     ) -> None:
         self.db = db
+        self._phone = phone
         self.store = store or ProgramStore(db)
         self._clock = clock
         self._bus = broadcast
@@ -612,6 +614,7 @@ class ProgramService:
             "after": list(step.get("after") or []), "effort": step.get("effort"),
             "profile": profile, "agent": agent_label(profile), "engine": self._engine_wire(profile, engine_id),
             "prefer_idle": bool(step.get("prefer_idle") or program.get("prefer_idle")),
+            "may_call": bool(step.get("may_call") or program.get("may_call")),
             "held_reason": step.get("held_reason"), "race": int(step.get("race") or 0),
             "race_of": step.get("race_of"), "gate": {
                 "check": bool(step.get("gate_check")), "review": step.get("gate_review") or "none",
@@ -685,6 +688,7 @@ class ProgramService:
                          "agent": agent_label(program.get("reviewer_profile")) if program.get("reviewer_profile") else None,
                          "engine": self._engine_wire(program.get("reviewer_profile"), program.get("reviewer_engine"))},
             "prefer_idle": bool(program.get("prefer_idle")), "template": program.get("template") or None,
+            "may_call": bool(program.get("may_call")),
             "origin_ref": program.get("origin_ref"), "for_person_id": program.get("for_person_id"),
             "note_id": program.get("note_id"), "note_window": f"pullout:note:{program['note_id']}" if program.get("note_id") else None,
             "place": self._place(program),
@@ -828,6 +832,7 @@ class ProgramService:
         reviewer_profile: Optional[str] = None, reviewer_engine: Optional[str] = None,
         prefer_idle: Optional[bool] = None, origin_ref: Optional[str] = None,
         for_person_id: Optional[str] = None, spend_limit_usd: Optional[float] = None,
+        may_call: Optional[bool] = None,
     ) -> dict[str, Any]:
         from ..program_templates import get_template
         from .program_rules import DESK_MODES
@@ -873,6 +878,9 @@ class ProgramService:
             "template": (shape or {}).get("id") or "", "origin_ref": origin_ref or None,
             "for_person_id": for_person_id or None, "created_by": _creator(principal),
             "state": "drafting", "note_id": None, "closed_at": None, "revision": 0, "created_at": now, "updated_at": now,
+            # Phone (2026-10-28): the engine may call him (not only message him)
+            # where the Reach rules allow it; default off, on in Overnight.
+            "may_call": bool(may_call if may_call is not None else defaults.get("may_call")),
         }
         with _LOCK:
             self.store.save_program(program)
@@ -908,6 +916,9 @@ class ProgramService:
         if fields.get("prefer_idle") is not None:
             program["prefer_idle"] = bool(fields["prefer_idle"])
             changed.append("when idle")
+        if fields.get("may_call") is not None:
+            program["may_call"] = bool(fields["may_call"])
+            changed.append("may call you" if program["may_call"] else "may not call you")
         if fields.get("project_id"):
             project_id = str(fields["project_id"])
             with self.db._connection() as conn:
@@ -1007,7 +1018,8 @@ class ProgramService:
             made.append({
                 "id": _new_id("step"), "program_id": program["id"], "ordinal": ordinal, "title": title,
                 "brief_markdown": brief, "owns": owns, "after": after, "profile": profile, "engine": engine,
-                "prefer_idle": bool(raw.get("prefer_idle")), "effort": effort, "race": race, "race_of": None,
+                "prefer_idle": bool(raw.get("prefer_idle")), "may_call": bool(raw.get("may_call")),
+                "effort": effort, "race": race, "race_of": None,
                 "gate_check": bool(raw.get("gate_check", shape.get("gate_check", True))),
                 "gate_review": gate_review, "review_depth": depth, "gate_merge": merge,
                 "state": "planned", "held_reason": None, "launch_id": None, "worktree": None, "branch": None,
@@ -1283,6 +1295,49 @@ class ProgramService:
         self._checkpoint(program, step, "owner", f"Did not add: {proposal['title']}")
         return {}
 
+    # ── Phone: the engine reaches him (Phone design §6) ──────────────
+
+    def reach_phone(
+        self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], kind: str, text: str, *,
+        reason: Optional[str] = None,
+    ) -> Optional[dict[str, Any]]:
+        """Where the engine writes a core question, a red step after its
+        rounds or a finished Program, it asks ``phone_rules.reach`` and acts:
+        a message to his phone, a call (when the Program may call and the
+        level allows), or nothing. Each reach is one line of Decided for you
+        ("Reached you: a message") with its rule. Once per thing: the phone's
+        own sweep asks again later (a call after 10 minutes with no reply)."""
+        try:
+            from ..phone import phone_on
+
+            if not phone_on():
+                return None
+            if self._phone is not None:
+                phone = self._phone()
+            else:
+                from ..phone.service import default_phone_service
+
+                phone = default_phone_service(self.db)
+            origin = (f"program_step:{step['id']}:{kind}" if step else f"program:{program['id']}:{kind}")
+            if phone._reaches(origin):
+                return None
+            result = phone.reach(
+                kind, level=program.get("control"), text=text, reason=reason or text, context=text,
+                origin_ref=origin, may_call=bool((step or {}).get("may_call") or program.get("may_call")),
+                program_step_id=(step or {}).get("id"),
+                facts={"night_program": program.get("template") == "overnight"},
+            )
+        except Exception as exc:
+            log.warning(f"the program did not reach the phone: {exc}")
+            return None
+        if result.get("held") and not result.get("queued"):
+            return result
+        from types import SimpleNamespace
+
+        outcome = SimpleNamespace(choice=result.get("channel"), rule=result.get("rule"), overturnable=False)
+        self.engine_decision(program, step, "reach", outcome, str(result.get("line") or "Reached you"))
+        return result
+
     # ── Decided for you (design §6, §8) ──────────────────────────────
 
     def engine_decision(
@@ -1542,6 +1597,9 @@ class ProgramService:
         state = program_state(program, steps)
         if state == "done" and not program.get("closed_at"):
             from .program_rules import decide
+
+            self.reach_phone(program, None, "program_done",
+                             f"{program['title']} is finished: every step is done.")
 
             outcome = decide(program.get("control"), "program_done", {})
             if not outcome.to_owner:

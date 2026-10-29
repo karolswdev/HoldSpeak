@@ -74,6 +74,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "learning_event",           # the pipeline learned something
     "meeting_started",          # a meeting began
     "meeting_updated",          # title/tags changed mid-meeting
+    "phone_changed",            # a phone message, call or device moved (Phone
+                                #   2026-10-28): payload {kind: message|call|device,
+                                #   id, state}
     "plugin_jobs_processed",    # the deferred plugin queue was drained
     "program_changed",          # a Program or one of its steps moved (Programs
                                 #   2026-10-28): payload {program_id, step_id?,
@@ -127,6 +130,11 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
+    "phone_changed": (
+        "Phone (2026-10-28): the hub side lands first; the Calls window's Phone "
+        "tab, Settings ▸ Calls ▸ Phone and the Needs you rows consume it "
+        "(lane PH-FACES)."
+    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

@@ -95,6 +95,9 @@ def _target(name: str, args: Mapping[str, Any]) -> str:
         if args.get("step_id"):
             return target_ref("program_step", args.get("step_id"))
         return target_ref("program", args.get("program_id"))
+    if name == "phone.reach":
+        # Phone: the message or call the Reach made (its origin when none).
+        return target_ref("phone", args.get("ref"))
     return target_ref("desk", name)
 
 
