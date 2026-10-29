@@ -354,6 +354,90 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
+# ── Phone (2026-10-28): what waits on him from his phone ─────────────
+
+
+PHONE_SOURCE = "phone"
+
+
+def _minutes_words(minutes: Any) -> str:
+    try:
+        value = int(minutes or 0)
+    except (TypeError, ValueError):
+        value = 0
+    if value < 1:
+        return "now"
+    if value < 60:
+        return f"{value} min"
+    return f"{value // 60} h"
+
+
+def phone_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The Phone's waiting items as attention rows (design §9):
+
+    - ``asked``: "Asked on your phone · 12 min · no reply" (Call now, Let it wait);
+    - ``missed_call``: "Missed call: <reason>" (Call again, Answer here);
+    - ``held_call``: an agent's call that waits for his press (Call now, Let it wait);
+    - ``waiting``: a message no phone got (no phone is paired; Let it wait).
+
+    Each verb is a REST call on ``/api/phone``; ``Answer here`` is a reply
+    he writes at the desk (``POST /api/phone/messages {text, reply_to}``)."""
+    rows: list[dict[str, Any]] = []
+    for item in items:
+        kind = str(item.get("kind") or "")
+        ident = str(item.get("id") or "")
+        if not ident or kind not in {"asked", "missed_call", "held_call", "waiting"}:
+            continue
+        minutes = _minutes_words(item.get("minutes"))
+        text = " ".join(str(item.get("text") or item.get("reason") or "").split())
+        msg_id, call_id = item.get("msg_id"), item.get("call_id")
+        if kind == "asked":
+            title, why = text[:160], "NO REPLY"
+            line = f"Asked on your phone · {minutes} · no reply"
+            verbs = [
+                {"id": "call_now", "label": "Call now", "method": "POST", "href": "/api/phone/calls",
+                 "body": {"reason": text[:200], "context": text}},
+                {"id": "let_wait", "label": "Let it wait", "method": "POST",
+                 "href": f"/api/phone/messages/{msg_id}/wait"},
+            ]
+        elif kind == "missed_call":
+            title, why = f"Missed call: {text}"[:160], "MISSED"
+            line = f"Your desk called · {minutes} · no answer"
+            verbs = [
+                {"id": "call_again", "label": "Call again", "method": "POST",
+                 "href": f"/api/phone/calls/{call_id}/again"},
+                {"id": "answer_here", "label": "Answer here", "method": "POST", "href": "/api/phone/messages",
+                 "body": {"reply_to": msg_id}, "needs_text": True},
+            ]
+        elif kind == "held_call":
+            about = text.rstrip(".?")
+            if len(about) > 1 and about[0].isupper() and about[1].islower():
+                about = about[0].lower() + about[1:]  # "Call you about the schema step?"; "CI" stays
+            title, why = f"Call you about {about}?"[:160], "TO DECIDE"
+            line = f"An agent asks to call you · {minutes}"
+            verbs = [
+                {"id": "call_now", "label": "Call now", "method": "POST", "href": f"/api/phone/calls/{call_id}/ring"},
+                {"id": "let_wait", "label": "Let it wait", "method": "POST",
+                 "href": f"/api/phone/calls/{call_id}/decline"},
+            ]
+        else:
+            title, why = text[:160], "NOT SENT"
+            line = f"No phone is paired · {minutes}"
+            verbs = [{"id": "let_wait", "label": "Let it wait", "method": "POST",
+                      "href": f"/api/phone/messages/{msg_id}/wait"}]
+        ref = f"{PHONE_SOURCE}:{kind}:{ident}"
+        since = str(item.get("since") or "")
+        rows.append({
+            "id": ref, "ref": ref, "projectId": "", "projectName": "", "title": title, "why": why,
+            "ageToken": since, "since": since, "dueAt": None, "dueWord": "now", "kind": PHONE_SOURCE,
+            "source": PHONE_SOURCE, "verbHref": None, "openRef": "calls", "severity": "warning",
+            "group": "Your phone",
+            "phone": {"kind": kind, "line": line, "msgId": msg_id, "callId": call_id, "verbs": verbs},
+            "personId": None,
+        })
+    return rows
+
+
 # ── R5: the coding agents that wait for the owner's answer ──────────
 
 
@@ -1087,7 +1171,7 @@ def fold_asks(items: list[dict[str, Any]], flights: Iterable[dict[str, Any]]) ->
 #: engine or a connection is missing (the blockers, a failed summary).
 DIRECTIONS: tuple[str, ...] = ("mine", "theirs", "decide", "setup")
 
-_DECIDE_SOURCES = frozenset({DECISION_SOURCE, CODER_SOURCE, GATE_SOURCE, PROGRAM_SOURCE})
+_DECIDE_SOURCES = frozenset({DECISION_SOURCE, CODER_SOURCE, GATE_SOURCE, PROGRAM_SOURCE, PHONE_SOURCE})
 
 
 def row_direction(row: dict[str, Any], is_me: Callable[[dict[str, Any]], bool]) -> str:
@@ -1160,6 +1244,7 @@ def compute_needs_you(
     flights: Iterable[dict[str, Any]] = (),
     send_items: Iterable[dict[str, Any]] = (),
     programs: Iterable[dict[str, Any]] = (),
+    phones: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     known_people: Iterable[str] | None = None,
@@ -1255,7 +1340,8 @@ def compute_needs_you(
         coder_items(coders, clock), gate_items(holds, clock), holds, clock,
     )
     helper_rows = helper_request_items(flights, clock)
-    singles = people + decision_items(decisions) + coder_rows + gate_rows + helper_rows + program_items(programs)
+    singles = (people + decision_items(decisions) + coder_rows + gate_rows + helper_rows + program_items(programs)
+               + phone_items(phones))
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -2026,6 +2112,19 @@ def compose(
         log.warning("needs-you: the program read failed: %s", exc)
         errors["programs"] = _reason(exc)
 
+    # Phone (2026-10-28): asks with no reply, missed and held calls.
+    phones: list[dict[str, Any]] = []
+    try:
+        from ..phone import phone_on
+
+        if phone_on():
+            from ..phone.service import default_phone_service
+
+            phones = default_phone_service(db).needs_you_items()
+    except Exception as exc:
+        log.warning("needs-you: the phone read failed: %s", exc)
+        errors["phone"] = _reason(exc)
+
     result = compute_needs_you(
         door=door,
         room_items=room_items,
@@ -2040,6 +2139,7 @@ def compose(
         flights=flights,
         send_items=send_items,
         programs=programs,
+        phones=phones,
         self_names=names,
         personal_names=personal,
         known_people=known_people,

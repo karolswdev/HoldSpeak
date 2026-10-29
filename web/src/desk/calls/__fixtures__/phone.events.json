@@ -1,0 +1,257 @@
+{
+  "events": [
+    {
+      "seq": 1,
+      "type": "device.paired",
+      "ts": "2026-10-28T23:40:23.922991+00:00",
+      "data": {
+        "device": {
+          "id": "dev_80f62fa66da831a2",
+          "name": "Karol's iPhone",
+          "platform": "ios",
+          "state": "paired",
+          "has_push": true,
+          "push_kind": "null",
+          "paired_at": "2026-10-28T23:40:23.922903+00:00",
+          "last_seen_at": "2026-10-28T23:40:23.922903+00:00"
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "type": "message.new",
+      "ts": "2026-10-28T23:40:23.926381+00:00",
+      "data": {
+        "message": {
+          "id": "msg_e6252c4379a94c7e",
+          "seq": 2,
+          "direction": "to_phone",
+          "text": "The nightly build is red. Retry it now?",
+          "created_at": "2026-10-28T23:40:23.926299+00:00"
+        }
+      }
+    },
+    {
+      "seq": 3,
+      "type": "message.delivered",
+      "ts": "2026-10-28T23:40:23.927256+00:00",
+      "data": {
+        "msg_id": "msg_e6252c4379a94c7e",
+        "at": "2026-10-28T23:40:23.927205+00:00"
+      }
+    },
+    {
+      "seq": 4,
+      "type": "message.read",
+      "ts": "2026-10-28T23:40:23.929729+00:00",
+      "data": {
+        "msg_id": "msg_e6252c4379a94c7e",
+        "at": "2026-10-28T23:40:23.929680+00:00",
+        "by": "phone"
+      }
+    },
+    {
+      "seq": 5,
+      "type": "message.new",
+      "ts": "2026-10-28T23:40:23.930959+00:00",
+      "data": {
+        "message": {
+          "id": "msg_8dc85bd423d17df6",
+          "seq": 5,
+          "direction": "from_phone",
+          "text": "Yes, retry it.",
+          "reply_to": "msg_e6252c4379a94c7e",
+          "created_at": "2026-10-28T23:40:23.930914+00:00"
+        }
+      }
+    },
+    {
+      "seq": 6,
+      "type": "message.read",
+      "ts": "2026-10-28T23:40:23.931769+00:00",
+      "data": {
+        "msg_id": "msg_8dc85bd423d17df6",
+        "at": "2026-10-28T23:40:23.931696+00:00",
+        "by": "desk"
+      }
+    },
+    {
+      "seq": 7,
+      "type": "message.new",
+      "ts": "2026-10-28T23:40:23.932775+00:00",
+      "data": {
+        "message": {
+          "id": "msg_3cb69bff4b330a30",
+          "seq": 7,
+          "direction": "to_phone",
+          "text": "Which branch is the release: main or release/1.4?",
+          "created_at": "2026-10-28T23:40:23.932730+00:00",
+          "origin_ref": "agent:lane-runbook:1"
+        }
+      }
+    },
+    {
+      "seq": 8,
+      "type": "message.delivered",
+      "ts": "2026-10-28T23:40:23.932971+00:00",
+      "data": {
+        "msg_id": "msg_3cb69bff4b330a30",
+        "at": "2026-10-28T23:40:23.932934+00:00"
+      }
+    },
+    {
+      "seq": 9,
+      "type": "reach",
+      "ts": "2026-10-28T23:40:23.933049+00:00",
+      "data": {
+        "kind": "agent_question",
+        "channel": "message",
+        "rule": "Normal: an agent's question is a message first",
+        "level": "normal",
+        "may_call": false,
+        "reason": "Which branch is the release: main or release/1.4?",
+        "origin_ref": "agent:lane-runbook:1",
+        "msg_id": "msg_3cb69bff4b330a30",
+        "urgent": false,
+        "queued": false
+      }
+    },
+    {
+      "seq": 10,
+      "type": "message.new",
+      "ts": "2026-10-28T23:40:23.956899+00:00",
+      "data": {
+        "message": {
+          "id": "msg_06aee6ffac74abc4",
+          "seq": 10,
+          "direction": "to_phone",
+          "text": "Phone: the iPhone rings is finished: every step is done.",
+          "created_at": "2026-10-28T23:40:23.956848+00:00",
+          "origin_ref": "program:program-demo:program_done"
+        }
+      }
+    },
+    {
+      "seq": 11,
+      "type": "message.delivered",
+      "ts": "2026-10-28T23:40:23.957110+00:00",
+      "data": {
+        "msg_id": "msg_06aee6ffac74abc4",
+        "at": "2026-10-28T23:40:23.957065+00:00"
+      }
+    },
+    {
+      "seq": 12,
+      "type": "call.invite",
+      "ts": "2026-10-28T23:40:23.959127+00:00",
+      "data": {
+        "call": {
+          "id": "pcall_129e3ca6afa86cb5",
+          "seq": 12,
+          "direction": "to_phone",
+          "reason": "The runbook step waits to merge",
+          "urgent": false,
+          "state": "ringing",
+          "transport": "app",
+          "created_at": "2026-10-28T23:40:23.959036+00:00"
+        },
+        "expires_at": "2026-10-28T23:40:24.259122+00:00"
+      }
+    },
+    {
+      "seq": 13,
+      "type": "call.answered",
+      "ts": "2026-10-28T23:40:23.960668+00:00",
+      "data": {
+        "call_id": "pcall_129e3ca6afa86cb5",
+        "at": "2026-10-28T23:40:23.960665+00:00",
+        "by": "phone"
+      }
+    },
+    {
+      "seq": 14,
+      "type": "call.ended",
+      "ts": "2026-10-28T23:40:23.961865+00:00",
+      "data": {
+        "call_id": "pcall_129e3ca6afa86cb5",
+        "at": "2026-10-28T23:40:23.961850+00:00",
+        "by": "phone",
+        "end_reason": "hung_up",
+        "duration_s": 0.0
+      }
+    },
+    {
+      "seq": 15,
+      "type": "call.invite",
+      "ts": "2026-10-28T23:40:23.963115+00:00",
+      "data": {
+        "call": {
+          "id": "pcall_986aee7d31e0cc5f",
+          "seq": 15,
+          "direction": "to_phone",
+          "reason": "The deploy waits for your go",
+          "urgent": false,
+          "state": "ringing",
+          "transport": "app",
+          "created_at": "2026-10-28T23:40:23.963051+00:00"
+        },
+        "expires_at": "2026-10-28T23:40:24.263111+00:00"
+      }
+    },
+    {
+      "seq": 16,
+      "type": "call.missed",
+      "ts": "2026-10-28T23:40:24.272000+00:00",
+      "data": {
+        "call_id": "pcall_986aee7d31e0cc5f",
+        "at": "2026-10-28T23:40:24.271992+00:00",
+        "by": "timeout",
+        "rings": 1
+      }
+    },
+    {
+      "seq": 17,
+      "type": "message.new",
+      "ts": "2026-10-28T23:40:24.273286+00:00",
+      "data": {
+        "message": {
+          "id": "msg_85fe7f6b254cfa9f",
+          "seq": 17,
+          "direction": "to_phone",
+          "text": "Missed call: The deploy waits for your go. Reply here, or call the desk.",
+          "created_at": "2026-10-28T23:40:24.273179+00:00",
+          "origin_ref": "phone_call:pcall_986aee7d31e0cc5f"
+        }
+      }
+    },
+    {
+      "seq": 18,
+      "type": "message.delivered",
+      "ts": "2026-10-28T23:40:24.273574+00:00",
+      "data": {
+        "msg_id": "msg_85fe7f6b254cfa9f",
+        "at": "2026-10-28T23:40:24.273503+00:00"
+      }
+    },
+    {
+      "seq": 19,
+      "type": "call.held",
+      "ts": "2026-10-28T23:40:24.279386+00:00",
+      "data": {
+        "call": {
+          "id": "pcall_6322e449972bc12d",
+          "seq": 19,
+          "direction": "to_phone",
+          "reason": "The schema step wants to drop a column",
+          "urgent": false,
+          "state": "held",
+          "transport": "app",
+          "created_at": "2026-10-28T23:40:24.279251+00:00"
+        }
+      }
+    }
+  ],
+  "last_seq": 19,
+  "has_more": false,
+  "next_after_seq": 19
+}

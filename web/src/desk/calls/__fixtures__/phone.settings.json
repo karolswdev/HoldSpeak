@@ -1,0 +1,82 @@
+{
+  "on": true,
+  "devices": [
+    {
+      "id": "dev_80f62fa66da831a2",
+      "name": "Karol's iPhone",
+      "platform": "ios",
+      "state": "paired",
+      "has_push": true,
+      "push_kind": "null",
+      "paired_at": "2026-10-28T23:40:23.922903+00:00",
+      "last_seen_at": "2026-10-28T23:40:23.922903+00:00"
+    }
+  ],
+  "line": {
+    "number_set": false,
+    "ready": false,
+    "words": "Your number is not set in Settings ▸ Calls"
+  },
+  "quiet_hours": {
+    "start": 22,
+    "end": 8,
+    "now": false
+  },
+  "urgent_dnd": false,
+  "level": "yolo",
+  "reach": {
+    "core_question": {
+      "word": "call",
+      "own": false,
+      "level_word": "call"
+    },
+    "step_red": {
+      "word": "message",
+      "own": false,
+      "level_word": "message"
+    },
+    "program_done": {
+      "word": "message",
+      "own": false,
+      "level_word": "message"
+    },
+    "heartbeat_security": {
+      "word": "call",
+      "own": false,
+      "level_word": "call"
+    },
+    "aftercare": {
+      "word": "message",
+      "own": false,
+      "level_word": "message"
+    },
+    "agent_question": {
+      "word": "call",
+      "own": false,
+      "level_word": "call"
+    }
+  },
+  "last_reach": {
+    "seq": 9,
+    "type": "reach",
+    "ts": "2026-10-28T23:40:23.933049+00:00",
+    "data": {
+      "kind": "agent_question",
+      "channel": "message",
+      "rule": "Normal: an agent's question is a message first",
+      "level": "normal",
+      "may_call": false,
+      "reason": "Which branch is the release: main or release/1.4?",
+      "origin_ref": "agent:lane-runbook:1",
+      "msg_id": "msg_3cb69bff4b330a30",
+      "urgent": false,
+      "queued": false
+    }
+  },
+  "today": {
+    "reaches": 1,
+    "calls": 3,
+    "answered": 1
+  },
+  "last_seq": 19
+}

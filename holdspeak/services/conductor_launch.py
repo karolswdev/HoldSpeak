@@ -433,6 +433,13 @@ LAUNCH_RULES.update({
         "program.checkpoint", "program.step_done",
     )
 })
+# Phone (2026-10-28): a launch reads the owner's replies, and writes one line
+# to his phone, held in PhoneService (500 characters, a step's 3 an hour, no
+# secret); a call is EGRESS and never offered.
+LAUNCH_RULES.update({
+    "phone.get_replies": (READ, "", ""),
+    "phone.send_message": (CREATE, "phone_message", "id"),
+})
 # Betterment AG11: the helper a launch starts is recorded as its own
 # (``launch:<id>``); every other helper tool names it.
 LAUNCH_RULES.update({

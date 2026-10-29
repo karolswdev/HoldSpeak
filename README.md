@@ -8,7 +8,7 @@
   <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-3776ab">
   <img alt="macOS Apple Silicon and Linux" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey">
-  <img alt="MCP: 302 tools" src="https://img.shields.io/badge/MCP-302%20tools-8a63d2">
+  <img alt="MCP: 306 tools" src="https://img.shields.io/badge/MCP-306%20tools-8a63d2">
   <img alt="Version 0.4, pre-alpha" src="https://img.shields.io/badge/status-0.4%20pre--alpha-orange">
 </p>
 
@@ -25,7 +25,7 @@
 You lead a team. Your work lives in your voice, your meetings, your projects, your people, and a growing fleet of coding agents.
 HoldSpeak is one local workbench for all of it.
 
-**Speak** into any app. **Record** a meeting and confirm what was decided. **Ask** your model about any meeting, note, or project, with sources. **Send** the result to GitHub, Jira, Slack, or email. **Steer** your Claude Code and Codex sessions by voice. **Extend** every part with plugins, connectors, and 302 MCP tools.
+**Speak** into any app. **Record** a meeting and confirm what was decided. **Ask** your model about any meeting, note, or project, with sources. **Send** the result to GitHub, Jira, Slack, or email. **Steer** your Claude Code and Codex sessions by voice. **Extend** every part with plugins, connectors, and 306 MCP tools.
 
 Whisper runs on your machine. The language model is yours: a local GGUF or MLX model, or any OpenAI-compatible endpoint you choose. There is no account and no HoldSpeak cloud.
 
@@ -127,6 +127,8 @@ Your Claude Code and Codex sessions report to the Desk through agent hooks.
 
 **Programs** run a goal that is too big for one agent. A program cuts the goal into steps. An agent does each step in its own worktree. HoldSpeak checks each result from its log, starts a review, opens the pull request and merges it at your control level (Secure, Normal or YOLO). Each step runs on Claude Code, Codex, or pi on any of your engines, also only when your home engine is idle. Only a core question comes to you, in Needs you. Read [Programs](docs/programs.md).
 
+**Phone** reaches you when you are away from the desk. The desk sends a message to your phone, or calls it, by your control level and your quiet hours. A voice says why it calls and takes your answer back to the desk. Your agents can message you, wait for your reply and ask to call you; a call waits for your press. Today a call goes to your real number through [Calls](docs/calls.md); the HoldSpeak app for iPhone is next. Read [Phone](docs/phone.md).
+
 ## Extend everything
 
 HoldSpeak is built from parts you can add to. You do not need to fork it.
@@ -144,7 +146,7 @@ HoldSpeak is built from parts you can add to. You do not need to fork it.
 
 **MCP, first-class.** One service layer declares every operation. The web app, the MCP server, and the tests all reach the same operation, with the same authority checks.
 
-- **The MCP sidecar** gives Claude Code, Cursor, or any MCP client 302 tools across 51 families. It acts with your owner authority on this machine.
+- **The MCP sidecar** gives Claude Code, Cursor, or any MCP client 306 tools across 52 families. It acts with your owner authority on this machine.
 - **Reach** lets a remote agent connect over Streamable HTTP with a scoped credential: a tool palette and a time limit, shown once.
 - **Every consequential write leaves a Receipt.** Control modes (**Secure**, **Normal**, **YOLO**) set how much runs without asking you.
 

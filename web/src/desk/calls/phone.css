@@ -1,0 +1,346 @@
+/* Phone (PHONE-DESIGN-2026-10-28 §9; canvas betterment/phone/canvases/phone-2026-10-28.html).
+   The Phone wing: the thread (time · who · words) with the composer at its
+   foot, the rail (From the desk, Your phone); Settings ▸ Calls ▸ Phone.
+   Sans 13 lines, 12 muted facts, a state is a dot and a word. Nothing moves
+   on hover. */
+.desk-next .phone-wing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.desk-next .phone-thread {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border-right: 1px solid var(--wb-rule-soft);
+}
+.desk-next .phone-lines {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+  padding: 6px 0 4px;
+  list-style: none;
+}
+.desk-next .phone-day {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 26px;
+  padding: 0 14px;
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .phone-day::after { content: ""; flex: 1; border-top: 1px solid var(--wb-rule-soft); }
+.desk-next .phone-at {
+  font: 400 12px / 1.45 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-faint);
+  text-align: right;
+}
+
+/* One line of the thread. */
+.desk-next .phone-msg {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 10px;
+  padding: 5px 14px 5px 10px;
+  font: 400 13px / 1.45 var(--font-sans);
+}
+.desk-next .phone-msg-body { display: flex; flex-direction: column; min-width: 0; }
+.desk-next .phone-who {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font: 600 12px / 1.45 var(--font-sans);
+  color: var(--wb-info-ink);
+}
+.desk-next .phone-who[data-who="you"] { color: var(--wb-ink); }
+.desk-next .phone-from { font-weight: 400; color: var(--wb-muted); white-space: pre; }
+.desk-next .phone-from-link.btn {
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-info-ink);
+  font: 400 12px / 1.45 var(--font-sans);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--wb-info-ink) 35%, transparent);
+  text-underline-offset: 2px;
+}
+.desk-next .phone-text { color: var(--wb-ink); overflow-wrap: anywhere; }
+.desk-next .phone-msg-end { display: inline-flex; align-items: center; gap: 6px; padding-top: 1px; }
+/* A reply sits under the line it answers, with the elbow rule. */
+.desk-next .phone-msg[data-reply] { padding-left: 34px; }
+.desk-next .phone-msg[data-reply] .phone-who::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 12px;
+  margin: -8px -2px 0 -9px;
+  /* The elbow: a bottom rule and an inset left edge (never a rail). */
+  border-bottom: 1.5px solid var(--wb-rule);
+  box-shadow: inset 1.5px 0 0 var(--wb-rule);
+  border-bottom-left-radius: 4px;
+}
+/* A line the desk waits on: the ember rule (the AskWell family). */
+.desk-next .phone-msg[data-waits] {
+  background: color-mix(in srgb, var(--lamp-ask, #da9868) 6%, var(--wb-paper));
+  box-shadow: inset 3px 0 0 var(--lamp-ask, #da9868);
+}
+.desk-next .phone-msg[data-replying] { background: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper)); }
+
+/* A desk call in the thread: one line. */
+.desk-next .phone-call {
+  display: grid;
+  grid-template-columns: 44px 20px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 32px;
+  padding: 4px 14px 4px 10px;
+  font: 400 13px / 1.4 var(--font-sans);
+}
+.desk-next .phone-call[data-state="missed"],
+.desk-next .phone-call[data-state="declined"] { background: color-mix(in srgb, var(--wb-danger-ink) 5%, var(--wb-paper)); }
+.desk-next .phone-call-what { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 2px; min-width: 0; }
+.desk-next .phone-call-words { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wb-ink); }
+.desk-next .phone-call-words b { font-weight: 600; }
+.desk-next .phone-call-verb { display: inline-flex; }
+
+/* The composer at the thread's foot. */
+.desk-next .phone-compose { padding: 10px 14px 12px; gap: 6px; }
+.desk-next .phone-compose-to { font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .phone-replying {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 400 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .phone-replying b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; color: var(--wb-ink); }
+
+/* The rail: From the desk, Your phone. */
+.desk-next .phone-rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  background: color-mix(in srgb, var(--wb-field) 35%, var(--wb-paper));
+}
+.desk-next .phone-rail-cap {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  margin: 0;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .phone-rail-list { margin: 0 0 10px; padding: 0; list-style: none; }
+.desk-next .phone-rail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: 1px;
+  column-gap: 8px;
+  align-items: center;
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+}
+.desk-next .phone-rail-row:hover:not(:disabled) { background: var(--wb-hover); }
+.desk-next .phone-rail-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 13px / 1.35 var(--font-sans); color: var(--wb-ink); }
+.desk-next .phone-rail-fact { grid-column: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px / 1.35 var(--font-sans); color: var(--wb-muted); }
+.desk-next .phone-rail-row .kit-dotword { grid-row: 1 / 3; grid-column: 2; }
+.desk-next .phone-device {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  padding: 8px 12px;
+}
+.desk-next .phone-device-words { display: flex; flex-direction: column; min-width: 0; }
+.desk-next .phone-device-name { font: 600 13px / 1.35 var(--font-sans); color: var(--wb-ink); }
+.desk-next .phone-device-fact { font: 400 12px / 1.35 var(--font-sans); color: var(--wb-muted); }
+/* The handset object (a phone on its plate, the desk's object material). */
+.desk-next .phone-handset {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #eef3fa, #d6e1f0);
+  box-shadow: var(--depth-row, 0 1px 3px rgba(22, 40, 62, .12)), inset 0 1px 0 #fff;
+}
+.desk-next .phone-handset i { width: 13px; height: 21px; border-radius: 3px; background: #2c3e55; box-shadow: inset 0 0 0 1.5px #4d6a8c; }
+
+/* ── Settings ▸ Calls ▸ Phone ── */
+.desk-next .phone-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.desk-next .phone-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px 140px;
+  align-items: center;
+  gap: 0 12px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.desk-next .phone-row-name { display: flex; align-items: center; gap: 10px; min-width: 0; font: 500 13px / 1.3 var(--font-sans); color: var(--wb-ink); }
+.desk-next .phone-row-name .phone-handset { width: 24px; height: 24px; border-radius: 6px; }
+.desk-next .phone-row-name .phone-handset i { width: 10px; height: 16px; }
+.desk-next .phone-row-fact { font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .phone-row-verb { display: flex; justify-content: flex-end; gap: 6px; }
+.desk-next .phone-pair {
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: color-mix(in srgb, var(--wb-blue, #e6eef9) 30%, var(--wb-well));
+}
+.desk-next .phone-qr {
+  position: relative;
+  display: block;
+  width: 172px;
+  height: 172px;
+  padding: 6px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--wb-rule), var(--depth-row, 0 1px 3px rgba(22, 40, 62, .12));
+}
+.desk-next .phone-qr svg { display: block; width: 100%; height: 100%; }
+.desk-next .phone-qr-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 0 0 3px #fff;
+}
+.desk-next .phone-pair-say { display: flex; flex-direction: column; gap: 6px; min-width: 0; font: 400 13px / 1.5 var(--font-sans); color: var(--wb-ink); }
+.desk-next .phone-pair-say b { font: 600 14px / 1.3 var(--font-sans); }
+.desk-next .phone-pair-say ol { margin: 0; padding-left: 18px; }
+.desk-next .phone-pair-left { display: flex; align-items: center; gap: 6px; font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .phone-reach { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 74px); }
+.desk-next .phone-reach > :is(.phone-reach-head),
+.desk-next .phone-reach-kind {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  font: 400 13px / 1.3 var(--font-sans);
+}
+.desk-next .phone-reach-head { min-height: 26px; justify-content: center; font: 600 12px / 1 var(--font-sans); color: var(--wb-muted); background: var(--wb-steel-2); }
+.desk-next .phone-reach-head:first-child { justify-content: flex-start; }
+.desk-next .phone-reach-kind { font-weight: 500; color: var(--wb-ink); flex-wrap: wrap; column-gap: 6px; }
+.desk-next .phone-reach-kind span { font-weight: 400; font-size: 12px; color: var(--wb-muted); }
+/* One kind is one row of the grid: its MxRadio's three options are the
+   three cells (the radiogroup keeps the kind as its name; each option's
+   word is said, not shown — the column head shows it). */
+.desk-next .phone-reach-line,
+.desk-next .phone-reach-line > .gadget-mx { display: contents; }
+.desk-next .phone-reach-line .gadget-mx-option { display: flex; justify-content: center; align-items: center; min-height: 30px; border-bottom: 1px solid var(--wb-rule-soft); }
+.desk-next .phone-reach-line .gadget-mx-row { justify-content: center; width: 100%; min-height: 30px; padding: 0; }
+.desk-next .phone-reach-line .gadget-mx-option[data-selected] > .gadget-mx-row { background: transparent; }
+.desk-next .phone-reach-line .gadget-mx-box { width: 16px; height: 16px; border-radius: 50%; }
+.desk-next .phone-reach-line .gadget-mx-box::after { width: 8px; height: 8px; border-radius: 50%; }
+.desk-next .phone-reach-word {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.desk-next .phone-reach-foot { display: flex; align-items: center; gap: 10px; padding: 6px 8px; font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .phone-reach-foot > :first-child { flex: 1; }
+.desk-next .phone-time { display: inline-flex; align-items: center; gap: 8px; }
+.desk-next .phone-time input {
+  width: 84px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--wb-rule);
+  border-radius: 5px;
+  background: var(--wb-well);
+  color: var(--wb-ink);
+  font: 400 13px / 1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .phone-egress { margin: 0; padding: 0 8px; font: 400 13px / 1.5 var(--font-sans); color: var(--wb-text); }
+.desk-next .phone-refusal { margin: 0; padding: 0 8px; font: 500 13px / 1.4 var(--font-sans); color: var(--wb-danger-ink); }
+
+/* Phone and narrow windows: the rail folds away (a desk call is a line in
+   the thread; the phone lives in Settings); every verb is a 44 px target. */
+@container surface (max-width: 560px) {
+  .desk-next .phone-wing { grid-template-columns: minmax(0, 1fr); }
+  .desk-next .phone-rail { display: none; }
+  .desk-next .phone-thread { border-right: 0; }
+  .desk-next .phone-msg { grid-template-columns: 40px minmax(0, 1fr); font-size: 14px; }
+  .desk-next .phone-msg-end { grid-column: 2; }
+  .desk-next .phone-msg[data-reply] { padding-left: 24px; }
+  .desk-next .phone-call { grid-template-columns: 20px minmax(0, 1fr) auto; min-height: 44px; padding: 4px 12px; }
+  .desk-next .phone-call .phone-at { display: none; }
+  .desk-next .phone-call-words { white-space: normal; }
+  .desk-next .phone-compose { padding: 8px 10px 10px; }
+  .desk-next .phone-wing .btn,
+  .desk-next .phone-settings .btn { min-height: 44px; }
+  .desk-next .phone-wing .phone-who .phone-from-link.btn {
+    min-height: 0;
+    min-width: 0;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    border: 0;
+  }
+  .desk-next .phone-compose .surface-compose-context { display: none; }
+  .desk-next .phone-row {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: "name verb" "fact fact";
+    gap: 2px 8px;
+    padding: 6px 8px;
+    min-height: 44px;
+  }
+  .desk-next .phone-row-name { grid-area: name; }
+  .desk-next .phone-row-fact { grid-area: fact; }
+  .desk-next .phone-row-verb { grid-area: verb; }
+  .desk-next .phone-pair { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .desk-next .phone-pair-say { width: 100%; }
+  .desk-next .phone-reach { grid-template-columns: minmax(0, 1fr) repeat(3, 56px); }
+  .desk-next .phone-reach > :is(.phone-reach-head),
+.desk-next .phone-reach-kind { min-height: 44px; padding: 0 6px; }
+  .desk-next .phone-reach-line .gadget-mx-option,
+  .desk-next .phone-reach-line .gadget-mx-row { min-height: 44px; }
+  .desk-next .phone-reach-line .gadget-mx-box { width: 20px; height: 20px; }
+}
+
+/* Settings ▸ Calls ▸ Phone: the Phone part under the Calls checklist. */
+.desk-next .calls-phone { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.desk-next .calls-phone-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 0;
+  font: 600 13px / 1.3 var(--font-sans);
+  color: var(--wb-ink);
+}
+.desk-next .calls-phone-title::after { content: ""; flex: 1; border-top: 1px solid var(--wb-rule-soft); }

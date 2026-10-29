@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phone direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material. Copied from the Programs canvas, which copies web/src/styles/tokens.css and the
+   kit (web/src/desk/surface/kit.css, patterns/state-chip.css,
+   objects/list-view.css) on lane/programs-20261028 (a902e091a). */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-hover:rgba(37,52,73,.06); --wb-rec:#b3261e;
+  --wb-ok-ink:#1d5c2e; --wb-warn-ink:#6b4a00; --wb-danger-ink:#9b2219; --wb-info-ink:#2f4f86; --wb-ember-ink:#7a4a2c;
+  --lamp-ok:#34d399; --lamp-warn:#fbbf24; --lamp-fail:#f87171; --lamp-info:#3b5d93; --lamp-ask:#da9868;
+  --pill-neutral:#edf1f6; --pill-ok:#e3f3ea; --pill-warn:#fff2cf; --pill-danger:#fde6e4; --pill-info:#e6eef9; --pill-accent:#fff0df;
+  --kind-pr:#2b7a4a; --kind-agent:#a84a1c; --kind-project:#3b62c4;
+  --depth-paper:0 22px 48px rgba(22,40,62,.24),0 4px 12px rgba(22,40,62,.12);
+  --depth-row:0 1px 3px rgba(22,40,62,.12);
+  --depth-card:0 10px 28px rgba(8,14,22,.22);
+  --depth-menu:0 8px 22px rgba(22,40,62,.12);
+  --depth-dock:0 10px 30px rgba(8,14,22,.45),0 2px 6px rgba(8,14,22,.3);
+  --wb-toolbar-h:36px;
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  --page:#e9eef4; --page-ink:#253449; --page-card:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+}
+:root[data-theme="dark"]{ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font:15px/1.5 var(--font-ui);min-width:1440px}
+main{padding:32px 24px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 15px/1.3 var(--font-display);margin:22px 0 8px}
+p{margin:0 0 10px;max-width:1100px}
+code{font:12.5px var(--font-mono)}
+section.part{margin:44px 0 0;padding:24px 0 0;border-top:2px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#7b8aa0}
+.rec{border-left:4px solid var(--wb-sel-vivid);padding:12px 18px;background:color-mix(in srgb,var(--wb-sel-vivid) 8%,transparent);border-radius:0 8px 8px 0;max-width:1180px;margin:14px 0}
+.rec p{max-width:none}
+.note{font-size:13.5px;opacity:.85;max-width:1200px}
+.cmp{display:grid;grid-template-columns:240px repeat(3,1fr);max-width:1180px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;color:var(--wb-ink);font-size:13px;margin:12px 0}
+.cmp>div{padding:8px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.cmp>div:nth-child(4n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.cmp>.h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.cmp>.h.r{background:var(--wb-blue);color:#2b4a7a}
+.cmp>.r{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+.moment{display:grid;grid-template-columns:250px auto;gap:24px;align-items:start;margin:22px 0 0}
+.moment .say{font-size:13.5px}
+.moment .say b{display:block;font:600 15px var(--font-display);margin-bottom:4px}
+
+/* ── the sprites (Icons D): the levels of gen-illustrated-icons.py LEVELS ── */
+.spr{display:inline-block;flex:none;line-height:0;vertical-align:middle}
+.spr svg{width:100%;height:100%;display:block;overflow:visible}
+.spr .ol{stroke-width:var(--ow)}
+.spr .bv{transform:translate(var(--u),var(--u))}
+.spr .bvn{transform:translate(var(--nu),var(--nu))}
+.s64{width:64px;height:64px;--ow:1.5px;--u:3.25px;--nu:-3.25px;--lw:1}
+.s48{width:48px;height:48px;--ow:1.8px;--u:3.55px;--nu:-3.55px;--lw:1}
+.s32{width:32px;height:32px;--ow:2.2px;--u:3.1px;--nu:-3.1px;--lw:1}
+.s20,.s16{width:20px;height:20px;--ow:3px;--u:0px;--nu:0px;--lw:1.35}
+.s16{width:16px;height:16px}
+.s32 .detail,.s20 .detail,.s16 .detail{display:none}
+.s20 [fill="#9fb3c8"],.s16 [fill="#9fb3c8"]{fill:#c9d7e6}
+
+/* ── the desk (the floor, the menu bar, the dock) ── */
+.desk{position:relative;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);
+  background:radial-gradient(120% 90% at 20% 0%,#45607f 0%,#2f435b 45%,#233244 100%);font-family:var(--font-ui);color:var(--wb-ink)}
+.menubar{position:absolute;left:0;right:0;top:0;height:36px;background:#fbfcfe;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13.5px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.menubar b{font-weight:600}
+.menubar .grow{flex:1}
+.menubar .bell{display:inline-flex;align-items:center;gap:6px}
+.menubar .badge{background:#2f67c8;color:#fff;font:600 11.5px/1 var(--font-ui);padding:3px 6px;border-radius:9px}
+
+/* the window frame (window-chrome: 30 px blue title bar, a title chip) */
+.win{position:absolute;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--depth-paper);overflow:hidden;display:flex;flex-direction:column;container:surface/inline-size}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:18px;text-align:center;font-size:14px;opacity:.9}
+.tb .chip{width:22px;height:22px;border-radius:5px;background:var(--wb-paper);display:grid;place-items:center;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.tb .name{font:600 13.5px/1 var(--font-ui);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .name.edit span{border-bottom:1px dashed rgba(247,249,252,.7);padding-bottom:1px}
+.tb .gad{display:flex;gap:4px}
+.tb .gad i{width:26px;height:20px;display:grid;place-items:center}
+.tb .gad i::before{content:"";width:11px;height:10px;border:1.5px solid #f7f9fc;border-radius:2px}
+.toolbar{flex:0 0 var(--wb-toolbar-h);display:flex;align-items:center;gap:4px;padding:3px 8px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper);position:relative}
+.toolbar .grow{flex:1}
+.body{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .it+.it::before{content:"·";margin:0 7px 0 1px;opacity:.7}
+.sb b{color:var(--wb-ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* library Button (the plated and the quiet toolbar forms) */
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap;border:1px solid transparent;background:transparent}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc}
+.btn.plate{background:var(--wb-steel-2);border-color:var(--wb-rule);box-shadow:inset 0 1px 0 #fff}
+.btn.sm{height:24px;font-size:12.5px;padding:0 9px}
+.btn.off{color:#8d9aab}
+.btn .caret{font-size:10px;color:var(--wb-muted);margin-left:2px}
+.btn.primary .caret{color:#dbe4f2}
+.btn.open{background:var(--wb-blue);border-color:var(--wb-sel)}
+
+/* DotWord + the lamp dot (kit.css) */
+.dw{display:inline-flex;align-items:center;gap:6px;font:500 12px/1.35 var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:color-mix(in srgb,var(--wb-muted) 55%,var(--wb-paper));box-shadow:0 0 0 1px var(--wb-rule-soft)}
+[data-tone=ok]>.dot,.dot[data-tone=ok]{background:var(--lamp-ok)}
+[data-tone=warn]>.dot,.dot[data-tone=warn]{background:var(--lamp-warn)}
+[data-tone=fail]>.dot,.dot[data-tone=fail]{background:var(--lamp-fail)}
+[data-tone=info]>.dot,.dot[data-tone=info]{background:var(--lamp-info)}
+[data-tone=ask]>.dot,.dot[data-tone=ask]{background:var(--lamp-ask)}
+.dw[data-tone=ok]{color:var(--wb-ok-ink)} .dw[data-tone=warn]{color:var(--wb-warn-ink)}
+.dw[data-tone=fail]{color:var(--wb-danger-ink)} .dw[data-tone=info]{color:var(--wb-info-ink)} .dw[data-tone=ask]{color:var(--wb-ember-ink)}
+.sb .dot[data-tone=ok],.sb .dot[data-tone=info],.sb .dot[data-tone=ask]{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 40%,transparent),0 0 0 3px color-mix(in srgb,var(--t) 18%,transparent)}
+.dot[data-tone=ok]{--t:var(--lamp-ok)} .dot[data-tone=info]{--t:var(--lamp-info)} .dot[data-tone=ask]{--t:var(--lamp-ask)} .dot[data-tone=fail]{--t:var(--lamp-fail)}
+/* THE BREATH: the Record tile's rhythm (kit-lamp-live): a ring on the lamp opens to 5 px and closes, 2.4 s. A box-shadow, never a transform. */
+@keyframes live{0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 45%,transparent),0 0 0 2px color-mix(in srgb,var(--t) 16%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 60%,transparent),0 0 0 5px color-mix(in srgb,var(--t) 26%,transparent)}}
+@media (prefers-reduced-motion: no-preference){ .live{animation:live 2.4s ease-in-out infinite} }
+
+/* StateChip (patterns/state-chip.css): a tinted square pill, dot + word */
+.sc{display:inline-flex;align-items:center;gap:6px;min-height:20px;padding:1px 9px 1px 7px;background:var(--pill-neutral);box-shadow:inset 0 0 0 1px rgba(37,52,73,.06);font:600 12px/1 var(--font-ui);white-space:nowrap;color:var(--wb-muted)}
+.sc i{width:8px;height:8px;border-radius:50%;background:rgba(37,52,73,.05);box-shadow:0 0 0 1px rgba(37,52,73,.55)}
+.sc[data-s=success]{background:var(--pill-ok);color:var(--wb-ok-ink)} .sc[data-s=success] i{background:var(--lamp-ok)}
+.sc[data-s=working]{background:var(--pill-info);color:var(--wb-info-ink)} .sc[data-s=working] i{background:var(--lamp-info)}
+.sc[data-s=active]{background:var(--pill-accent);color:var(--wb-ember-ink)} .sc[data-s=active] i{background:var(--lamp-ask)}
+.sc[data-s=failure]{background:var(--pill-danger);color:var(--wb-danger-ink)} .sc[data-s=failure] i{background:var(--lamp-fail)}
+.sc[data-s=warning]{background:var(--pill-warn);color:var(--wb-warn-ink)} .sc[data-s=warning] i{background:var(--lamp-warn)}
+
+/* ListView (objects/list-view.css): a column head 26 px, rows 32 px */
+.lhead{height:26px;display:grid;align-items:center;gap:10px;padding:0 12px;font-size:12px;font-weight:600;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+.band{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-paper);border-bottom:1px solid var(--wb-rule-soft)}
+.band b{font-weight:500;color:var(--wb-faint)}
+.lrow{height:32px;display:grid;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.lrow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lrow .t{font-weight:600;display:flex;align-items:center;gap:8px}
+.lrow .m{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.lrow .q{color:var(--wb-muted);font-size:12px}
+.lrow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.lrow .done-in{color:var(--wb-ok-ink);font-weight:500}
+
+/* the Your turn well: an ember rule, the verbs inline */
+.well{margin:10px 12px 4px;border-radius:7px;background:color-mix(in srgb,var(--lamp-ask) 7%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-ask),0 0 0 1px color-mix(in srgb,var(--lamp-ask) 35%,var(--wb-rule-soft))}
+.well .cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;font:600 12px var(--font-ui);color:var(--wb-ember-ink)}
+.well .wr{min-height:32px;display:flex;align-items:center;gap:10px;padding:3px 10px 3px 14px;border-top:1px solid color-mix(in srgb,var(--lamp-ask) 22%,var(--wb-rule-soft));font-size:13px}
+.well .wr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.well .wr .t b{font-weight:600}
+.well .wr .m{color:var(--wb-muted);font-size:12px;white-space:nowrap}
+.well .wr .vb{display:flex;gap:6px}
+
+/* the board, direction C: the ledger (32 px rows, the track as six dots) */
+.board-cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;margin-top:6px;font:600 12px var(--font-ui);color:var(--wb-muted)}
+.crow{height:32px;display:grid;grid-template-columns:22px minmax(0,210px) 262px var(--agw,122px) 58px minmax(0,1fr) 62px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.crow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow .n{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.crow .ti{font-weight:600}
+.crow .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.crow .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.crow .el{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.crow .cp{color:var(--wb-muted);font-size:12px}
+.crow .op{text-align:right;overflow:visible}
+.crow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.crow.kid{background:color-mix(in srgb,var(--wb-field) 45%,var(--wb-paper))}
+.crow.kid .ti{font-weight:500;display:flex;align-items:center;gap:6px;padding-left:16px;position:relative}
+.crow.kid .ti::before{content:"";position:absolute;left:4px;top:-6px;width:8px;height:14px;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.crow.dim{color:var(--wb-muted)}
+.crow.dim .ti{font-weight:500}
+.dots{display:inline-flex;align-items:center;gap:0;margin-right:10px;vertical-align:middle}
+.dots .d{width:8px;height:8px;border-radius:50%;flex:none;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.dots .d.passed{background:#8ea0b6;box-shadow:none}
+.dots .d.skip{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6;width:6px;height:6px;margin:1px}
+.dots .d.cur{box-shadow:none;width:10px;height:10px}
+.dots .d.cur[data-tone=info]{background:var(--lamp-info);--t:var(--lamp-info)}
+.dots .d.cur[data-tone=ask]{background:var(--lamp-ask);--t:var(--lamp-ask)}
+.dots .d.cur[data-tone=fail]{background:var(--lamp-fail);--t:var(--lamp-fail)}
+.dots .d.cur[data-tone=ok],.dots .d.ok{background:var(--lamp-ok);box-shadow:none;--t:var(--lamp-ok)}
+.dots .d.cur[data-tone=idle]{background:#a9b6c6}
+.dots .ln{width:10px;height:1.5px;background:#cbd5e1;flex:none}
+.dots .ln.passed{background:#8ea0b6}
+.trk{display:flex;align-items:center}
+.trk .pr{font:500 12px var(--font-ui);color:var(--kind-pr)}
+
+/* direction A: the track is the row */
+.arow{display:grid;grid-template-columns:22px 1fr;column-gap:10px;padding:5px 12px 6px;border-bottom:1px solid #e9eef4;font-size:13px}
+.arow .n{grid-row:1/3;color:var(--wb-faint);font-size:12px;text-align:right;padding-top:4px}
+.arow .l1{display:flex;align-items:center;gap:10px;height:24px;white-space:nowrap}
+.arow .l1 .ti{font-weight:600}
+.arow .l1 .af{color:var(--wb-muted);font-size:12px}
+.arow .l1 .grow{flex:1}
+.arow .l1 .m{color:var(--wb-muted);font-size:12px}
+.arow .l1 .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.arow .l2{display:flex;align-items:center;gap:0;height:22px}
+.arow .l2 .cp{margin-left:auto;color:var(--wb-muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:12px}
+.st{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--font-ui);color:#8d9aab;white-space:nowrap}
+.st .dot{width:8px;height:8px}
+.st.passed{color:var(--wb-muted)} .st.passed .dot{background:#8ea0b6;box-shadow:none}
+.st.ahead .dot{background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.st.skip{color:#a9b4c2;text-decoration:line-through}
+.st.skip .dot{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6}
+.st.cur{font-weight:600}
+.st.cur[data-tone=info]{color:var(--wb-info-ink)} .st.cur[data-tone=ask]{color:var(--wb-ember-ink)} .st.cur[data-tone=fail]{color:var(--wb-danger-ink)} .st.cur[data-tone=ok],.st.ok{color:var(--wb-ok-ink)}
+.st.ok .dot{background:var(--lamp-ok);box-shadow:none}
+.st .sub{font-weight:400;color:var(--wb-muted)}
+.st.ok .sub,.st.cur[data-tone=ok] .sub{color:var(--kind-pr);font-weight:600}
+.seg{width:26px;height:1.5px;background:#cbd5e1;margin:0 8px;flex:none}
+.seg.passed{background:#8ea0b6}
+
+/* direction B: the card */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 12px}
+.card{background:var(--wb-well);border-radius:7px;box-shadow:var(--depth-row),0 0 0 1px var(--wb-rule-soft);display:flex;flex-direction:column;font-size:13px;overflow:hidden}
+.card .hd{display:flex;align-items:center;gap:8px;padding:8px 10px 2px}
+.card .hd .n{color:var(--wb-faint);font-size:12px}
+.card .hd .ti{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .mid{padding:2px 10px 8px;color:var(--wb-muted);font-size:12px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.card .mid .cp{overflow:hidden;text-overflow:ellipsis}
+.card .ft{border-top:1px solid #edf1f6;background:var(--wb-steel-2);padding:6px 10px;display:flex;align-items:center;gap:8px}
+.card.sel{box-shadow:var(--depth-row),0 0 0 2px var(--wb-sel-vivid)}
+
+/* CheckGadget (the kit's switch species: the sliding toggle is dead, HS-111-01) */
+.ck{display:inline-flex;align-items:center;gap:7px;font-size:13px;white-space:nowrap}
+.ck i{width:16px;height:16px;border:1px solid #bbc7d6;background:var(--wb-well);border-radius:3px;display:grid;place-items:center}
+.ck.on i::after{content:"";width:8px;height:4.5px;border-left:2px solid var(--wb-sel);border-bottom:2px solid var(--wb-sel);transform:translateY(-1px) rotate(-45deg)}
+/* the token form in a toolbar: a quiet pill toggle; on, the selection blue */
+.tokt{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;border:1px solid var(--wb-rule-soft);color:var(--wb-muted);font:500 13px var(--font-ui);white-space:nowrap}
+.tokt.on{border-color:var(--wb-sel);background:var(--wb-blue);color:var(--wb-sel)}
+/* the Runs on picker (a menu, the Engines window's list and words) */
+.menu .grp{font:600 12px var(--font-ui);color:var(--wb-muted);padding:6px 9px 2px}
+.menu .ro{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;height:32px;padding:0 9px;border-radius:5px;font-size:13px}
+.menu .ro.in{padding-left:24px;grid-template-columns:20px 1fr auto}
+.menu .ro.hot{background:var(--wb-blue)}
+.menu .ro .chk{color:var(--wb-sel);font-weight:700;margin-left:6px}
+.menu .ft{border-top:1px solid var(--wb-rule-soft);margin-top:4px;padding:8px 9px 4px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--wb-muted)}
+/* folds (FoldGadget) */
+.fold{border-top:1px solid var(--wb-rule-soft);margin-top:8px}
+.fold .fh{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12.5px var(--font-ui);color:var(--wb-ink)}
+.fold .fh .chev{width:12px;color:var(--wb-muted);font-size:10px}
+.fold .fh .q{font-weight:400;color:var(--wb-muted);font-size:12px}
+.gate{padding:2px 12px 10px 32px;display:grid;grid-template-columns:110px 1fr;row-gap:7px;font-size:13px;align-items:center}
+.gate .k{color:var(--wb-muted);font-size:12px}
+.gate .sections{display:flex;gap:14px;flex-wrap:wrap}
+.gate code{font:12.5px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);padding:2px 6px;border-radius:4px}
+.cpl{padding:0 12px 8px 32px}
+.cpl .c{height:28px;display:grid;grid-template-columns:20px 140px 1fr 56px;align-items:center;gap:8px;font-size:13px;border-bottom:1px solid #eef2f6}
+.cpl .c .who{font-size:12px;color:var(--wb-muted)}
+.cpl .c .m{font-size:12px;color:var(--wb-faint);text-align:right;font-variant-numeric:tabular-nums}
+.av{width:20px;height:20px;border-radius:50%;background:#1f7a6b;color:#fff;display:grid;place-items:center;font:600 9.5px var(--font-ui)}
+
+/* fields in Drafting: StringGadget + MicButton, CycleGadget, PadGadget */
+.fld{display:flex;align-items:center;height:26px;background:var(--wb-well);border:1px solid var(--wb-rule);border-radius:5px;overflow:hidden;min-width:0}
+.fld span{flex:1;padding:0 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld .mic{flex:0 0 26px;height:100%;border-left:1px solid var(--wb-rule-soft);display:grid;place-items:center;background:var(--wb-steel-2)}
+.mic svg{width:12px;height:12px;stroke:var(--wb-muted);fill:none;stroke-width:1.6;stroke-linecap:round}
+.cyc{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:26px;padding:0 8px;border-radius:5px;background:var(--wb-steel-2);border:1px solid var(--wb-rule);font-size:12.5px;white-space:nowrap;box-shadow:inset 0 1px 0 #fff}
+.cyc::after{content:"▾";font-size:10px;color:var(--wb-muted)}
+.drow{height:36px;display:grid;grid-template-columns:22px minmax(0,1fr) 150px 200px 84px 84px 96px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.drow .n{color:var(--wb-faint);font-size:12px;text-align:right}
+.drow .tok{display:inline-flex;gap:4px;overflow:hidden}
+.tokn{font:12px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.drow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.pad{margin:6px 12px 8px 44px;border:1px solid var(--wb-rule);border-radius:6px;background:var(--wb-well);display:grid;grid-template-columns:1fr 30px;min-height:84px}
+.pad .tx{padding:8px 10px;font-size:13px;line-height:1.5}
+.pad .mic{border-left:1px solid var(--wb-rule-soft);display:grid;place-items:start center;padding-top:8px;background:var(--wb-steel-2)}
+
+/* the Templates menu (depth-menu) */
+.menu{position:absolute;z-index:5;background:var(--wb-paper);border-radius:8px;box-shadow:var(--depth-menu),0 0 0 1px var(--wb-rule-soft);padding:5px;width:330px}
+.menu .mi{display:grid;grid-template-columns:20px 1fr;gap:2px 10px;padding:7px 9px;border-radius:5px}
+.menu .mi.hot{background:var(--wb-blue)}
+.menu .mi b{font:600 13px var(--font-ui)}
+.menu .mi span{grid-column:2;font-size:12px;color:var(--wb-muted)}
+
+/* empty state: the object, one line, one Button */
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-size:13px;color:var(--wb-muted)}
+.empty .obj{width:96px;height:96px;margin:0 auto 12px;border-radius:24px;background:linear-gradient(160deg,#eef3fa,#d9e4f3);display:grid;place-items:center;box-shadow:var(--depth-row),inset 0 1px 0 #fff}
+.empty b{display:block;font:600 15px var(--font-ui);color:var(--wb-ink);margin-bottom:4px}
+.empty p{max-width:420px;margin:0 auto 14px}
+
+/* the dock glass */
+.dock{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:12px;padding:8px 14px;border-radius:16px;background:rgba(30,43,58,.72);box-shadow:var(--depth-dock),inset 0 0 0 1px rgba(233,238,245,.16)}
+.dock .tile{position:relative;width:48px;height:48px;display:grid;place-items:center;border-radius:10px}
+.dock .tile.on{background:rgba(233,238,245,.12)}
+.dock .lampd{position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--lamp-ask);--t:var(--lamp-ask);box-shadow:0 0 0 1.5px #1e2b3a}
+.dock .badge{position:absolute;right:-6px;top:-4px;background:#2f67c8;color:#fff;font:600 11px/1 var(--font-ui);padding:3px 5px;border-radius:9px}
+
+/* phones (393) */
+.phones{display:flex;gap:48px;align-items:flex-start;margin:18px 0 0 10px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:#223142;font-family:var(--font-ui);color:var(--wb-ink);container:surface/inline-size}
+.ph-menu{position:absolute;left:0;right:0;top:0;height:44px;background:#fbfcfe;display:flex;align-items:center;gap:14px;padding:0 14px;font-size:14px}
+.ph-win{position:absolute;left:0;right:0;top:44px;bottom:84px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{flex:0 0 44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 14px var(--font-ui)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tool{flex:0 0 52px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.ph-tool .btn{height:44px;font-size:14px;padding:0 14px}
+.ph-tool .grow{flex:1}
+.ph-body{flex:1;overflow:hidden;position:relative}
+.ph-sb{flex:0 0 26px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.ph-dock{position:absolute;left:8px;right:8px;bottom:10px;height:64px;border-radius:16px;background:rgba(30,43,58,.85);display:flex;align-items:center;justify-content:space-around;box-shadow:inset 0 0 0 1px rgba(233,238,245,.16)}
+.prow{padding:8px 12px 8px 12px;border-bottom:1px solid #e9eef4;display:grid;grid-template-columns:auto 1fr auto;column-gap:10px;row-gap:3px;align-items:center;min-height:60px}
+.prow .t{font:600 14px var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .m{grid-column:2/4;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .n{color:var(--wb-faint);font-size:12px;width:16px;text-align:right}
+.ph-band{height:28px;display:flex;align-items:center;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.phone .well{margin:10px 10px 6px}
+.phone .well .wr{flex-wrap:wrap;padding:8px 10px 10px 14px;row-gap:8px}
+.phone .well .wr .t{white-space:normal;flex:1 1 100%}
+.phone .well .wr .vb{flex:1 1 100%}
+.phone .well .wr .btn{height:44px;font-size:14px;padding:0 16px}
+.measure{position:absolute;right:-2px;border-left:1.5px solid #e5483d;font:600 10px var(--font-ui);color:#e5483d;padding-left:3px}
+
+/* seams */
+.seams{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1440px}
+.seam{background:var(--page-card);border-radius:8px;padding:14px 16px;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.seam h3{margin:0 0 10px}
+.crop{background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;overflow:hidden;box-shadow:var(--depth-row);color:var(--wb-ink)}
+.nrow{height:31px;display:flex;align-items:center;gap:10px;padding:0 10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.nrow .t{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.nrow .m{color:var(--wb-muted);font-size:12px}
+.grp{height:24px;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.agrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.agrow .tx{flex:1;min-width:0}
+.agrow .tx b{display:block;font-weight:600}
+.agrow .tx span{font-size:12px;color:var(--wb-muted)}
+.agrow .tx a{color:var(--wb-info-ink);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--wb-info-ink) 35%,transparent)}
+.today{padding:10px 14px;font-size:14px;line-height:1.7}
+.today .cap{font:600 12px var(--font-ui);color:var(--wb-muted);margin-bottom:2px}
+.today .ln{display:flex;align-items:center;gap:8px}
+.today .ln.new{background:color-mix(in srgb,var(--lamp-ask) 8%,transparent);margin:0 -14px;padding:0 14px}
+
+/* the ecosystem (§9b) */
+.eco{display:grid;grid-template-columns:1fr;gap:26px;margin-top:20px;max-width:1440px}
+.eco h3{margin:0 0 8px}
+.place{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 6px;border-radius:4px;color:var(--wb-ink);font:500 12px var(--font-ui)}
+.place .spr{width:14px;height:14px}
+.place .av{width:14px;height:14px;font-size:7px}
+.tokn.press{font:500 12px var(--font-ui);background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule);border-radius:10px;padding:2px 9px;color:var(--wb-muted)}
+.sec{padding:10px 16px 4px}
+.sec .h{display:flex;align-items:center;gap:10px;font:600 13px var(--font-ui);margin-bottom:4px}
+.sec .h::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.rrow{height:32px;display:grid;grid-template-columns:24px 1fr 110px 70px 120px 60px;align-items:center;gap:10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.rrow .m{color:var(--wb-muted);font-size:12px}
+.rrow .t{font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.brief{padding:10px 16px;font-size:13.5px;line-height:1.6}
+.brief .h{font:600 12px var(--font-ui);color:var(--wb-muted);margin:8px 0 2px}
+.brief ul{margin:0;padding-left:18px}
+.av.alice{background:#8870cb}
+.st.person .av{width:16px;height:16px;font-size:8px}
+/* the sprite sheet */
+.sheet{display:flex;gap:36px;align-items:flex-end;flex-wrap:wrap}
+.sheet figure{margin:0;text-align:center;font-size:12px;opacity:.9}
+.sheet figure>div{display:grid;place-items:center;min-height:72px}
+.zoom{position:relative;line-height:0;background:#fff;box-shadow:0 0 0 1px var(--wb-rule)}
+.zoom canvas{image-rendering:pixelated;display:block}
+.zoom::after{content:"";position:absolute;inset:0;background-image:linear-gradient(to right,rgba(38,59,83,.14) 1px,transparent 1px),linear-gradient(to bottom,rgba(38,59,83,.14) 1px,transparent 1px);background-size:var(--cell) var(--cell);pointer-events:none}
+.onbar{background:var(--wb-sel);padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:8px;color:#f7f9fc;font:600 13px var(--font-ui)}
+pre.parts{font:12px/1.5 var(--font-mono);background:var(--page-card);padding:12px 14px;border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);max-width:900px;overflow:auto}
+.trackbig{background:var(--wb-paper);color:var(--wb-ink);border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);padding:12px 16px;display:grid;grid-template-columns:150px 1fr 230px;gap:16px;align-items:center;max-width:1180px;margin:10px 0}
+.trackbig .lbl{font:600 13px var(--font-ui)}
+.trackbig .lbl span{display:block;font-weight:400;font-size:12px;color:var(--wb-muted)}
+
+/* ── Phone additions (this canvas). Same tokens; the kit species named in CANVAS-NOTES. ── */
+img.s20{width:20px;height:20px;display:inline-block;vertical-align:middle;flex:none}
+img.s32{width:32px;height:32px;flex:none}
+img.s64{width:64px;height:64px}
+/* the wings (surface/wings.tsx): tabs in the title bar, the selected one on paper */
+.tb .wing{font:500 12.5px/1 var(--font-ui);color:#dbe4f2;height:22px;padding:0 10px;display:inline-flex;align-items:center;border-radius:5px 5px 0 0;margin-top:8px}
+.tb .wing.on{background:var(--wb-paper);color:var(--wb-ink);height:22px}
+.tb .wing .n{display:inline-block;margin-left:6px;background:var(--lamp-ask);color:#3a2412;font:600 11px/1 var(--font-ui);padding:2px 5px;border-radius:8px}
+.ph-tb .wing{font:500 13px/1 var(--font-ui);color:#dbe4f2;height:32px;padding:0 12px;display:inline-flex;align-items:center;border-radius:6px 6px 0 0;margin-top:12px}
+.ph-tb .wing.on{background:var(--wb-paper);color:var(--wb-ink)}
+.btn.secondary{background:var(--wb-steel-2);border-color:var(--wb-rule);box-shadow:inset 0 1px 0 #fff}
+.btn.ghost{color:var(--wb-info-ink)}
+.btn svg.g{width:15px;height:15px}
+/* the Phone body: the thread and the rail */
+.pbody{display:grid;grid-template-columns:minmax(0,1fr) 300px;height:100%}
+.thread{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--wb-rule-soft)}
+.thread .scroll{flex:1;min-height:0;overflow:hidden;padding:6px 0 4px}
+.day{height:26px;display:flex;align-items:center;gap:10px;padding:0 14px;font:600 12px var(--font-ui);color:var(--wb-muted)}
+.day::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.msg{display:grid;grid-template-columns:44px minmax(0,1fr) auto;column-gap:10px;padding:5px 14px 5px 10px;font-size:13px;line-height:1.45;align-items:start}
+.msg .at{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right;padding-top:1px}
+.msg .who{font:600 12px var(--font-ui);color:var(--wb-info-ink);display:flex;align-items:center;gap:8px}
+.msg .who.you{color:var(--wb-ink)}
+.msg .who .from{font-weight:400;color:var(--wb-muted)}
+.msg .who .from a{color:var(--wb-info-ink);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--wb-info-ink) 35%,transparent)}
+.msg .tx{color:var(--wb-ink)}
+.msg .rcpt{font-size:12px;padding-top:1px}
+.msg.reply{padding-left:34px}
+.msg.reply .who::before{content:"";width:7px;height:12px;margin-left:-9px;margin-right:-6px;margin-top:-8px;flex:none;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.msg.wait{background:color-mix(in srgb,var(--lamp-ask) 6%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-ask)}
+.callline{display:grid;grid-template-columns:44px 20px minmax(0,1fr) auto auto;column-gap:10px;align-items:center;min-height:32px;padding:0 14px 0 10px;font-size:13px}
+.callline .at{color:var(--wb-faint);font-size:12px;text-align:right}
+.callline .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.callline .t b{font-weight:600}
+.callline.missed{background:color-mix(in srgb,var(--lamp-fail) 6%,var(--wb-paper))}
+/* the composer (ComposerWell + PadGadget with its mic) */
+.compose{margin:6px 12px 10px;border:1px solid var(--wb-rule);border-radius:8px;background:var(--wb-well);box-shadow:var(--depth-row)}
+.compose .rep{display:flex;align-items:center;gap:8px;padding:6px 10px 0;font-size:12px;color:var(--wb-muted)}
+.compose .rep b{font-weight:500;color:var(--wb-ink)}
+.compose .ed{padding:7px 10px 4px;font-size:13px;color:var(--wb-faint);min-height:26px}
+.compose .acts{display:flex;align-items:center;gap:6px;padding:4px 6px 6px 10px}
+.compose .acts .grow{flex:1}
+.compose .micb{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;background:var(--wb-steel-2);border:1px solid var(--wb-rule)}
+.compose .micb svg{width:14px;height:14px;stroke:var(--wb-muted);fill:none;stroke-width:1.6;stroke-linecap:round}
+.compose .q{font-size:12px;color:var(--wb-muted)}
+.rail{display:flex;flex-direction:column;min-height:0;background:color-mix(in srgb,var(--wb-field) 35%,var(--wb-paper))}
+.rail .cap{height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.rail .cap .grow{flex:1}
+.rrow2{display:grid;grid-template-columns:minmax(0,1fr) auto;row-gap:1px;column-gap:8px;padding:6px 12px;border-bottom:1px solid #e9eef4;font-size:13px;align-items:center}
+.rrow2 .t{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow2 .m{font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow2 .v{grid-row:1/3;grid-column:2}
+.dev{display:grid;grid-template-columns:32px minmax(0,1fr) auto;column-gap:10px;align-items:center;padding:8px 12px;font-size:13px}
+.dev .t{font-weight:600}
+.dev .m{font-size:12px;color:var(--wb-muted)}
+.handset{width:32px;height:32px;border-radius:8px;background:linear-gradient(160deg,#eef3fa,#d6e1f0);box-shadow:var(--depth-row),inset 0 1px 0 #fff;display:grid;place-items:center}
+.handset i{width:13px;height:21px;border-radius:3px;background:#2c3e55;box-shadow:inset 0 0 0 1.5px #4d6a8c}
+/* Settings */
+.settings{display:grid;grid-template-columns:170px minmax(0,1fr);height:100%}
+.side{border-right:1px solid var(--wb-rule-soft);padding:8px 6px;background:var(--wb-steel-2);font-size:13px}
+.side div{height:28px;display:flex;align-items:center;padding:0 10px;border-radius:5px}
+.side div.on{background:var(--wb-blue);color:var(--wb-sel);font-weight:600}
+.side div.sub{padding-left:24px;font-size:12.5px}
+.pane{padding:10px 16px;overflow:hidden}
+.grp-h{display:flex;align-items:center;gap:10px;font:600 13px var(--font-ui);margin:12px 0 4px}
+.grp-h::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.grp-h:first-child{margin-top:2px}
+.inset{border:1px solid var(--wb-rule-soft);border-radius:7px;background:var(--wb-well);overflow:hidden}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) 230px 130px;align-items:center;gap:0 12px;min-height:32px;padding:0 10px;border-bottom:1px solid var(--wb-rule-soft);font-size:13px}
+.srow:last-child{border-bottom:0}
+.srow .n{font-weight:500}
+.srow .n span{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.srow .v{display:flex;justify-content:flex-end;gap:6px}
+.pair{display:grid;grid-template-columns:172px minmax(0,1fr);gap:16px;padding:12px 12px 12px 12px;border-bottom:1px solid var(--wb-rule-soft);background:color-mix(in srgb,var(--wb-blue) 30%,var(--wb-well))}
+.qr{width:172px;height:172px;border-radius:8px;background:#fff;box-shadow:0 0 0 1px var(--wb-rule),var(--depth-row);padding:6px;position:relative}
+.qr svg{width:100%;height:100%;display:block}
+.qr .mark{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:7px;background:#fff;box-shadow:0 0 0 3px #fff;display:grid;place-items:center}
+.pair .say b{display:block;font:600 14px var(--font-ui);margin-bottom:4px}
+.pair .say p{font-size:13px;margin:0 0 6px;max-width:420px}
+.pair .say ol{margin:0 0 8px;padding-left:18px;font-size:13px;line-height:1.6}
+.pair .say .left{font-size:12px;color:var(--wb-muted)}
+.reach{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,74px);font-size:13px}
+.reach>div{min-height:30px;display:flex;align-items:center;padding:0 10px;border-bottom:1px solid var(--wb-rule-soft)}
+.reach>.h{min-height:26px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-steel-2);justify-content:center}
+.reach>.h:first-child{justify-content:flex-start}
+.reach>.c{justify-content:center}
+.reach .k{font-weight:500}
+.reach .k span{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.rad{width:16px;height:16px;border-radius:50%;border:1px solid #bbc7d6;background:var(--wb-well);display:grid;place-items:center}
+.rad.on{border-color:var(--wb-sel)}
+.rad.on::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--wb-sel)}
+.reachfoot{display:flex;align-items:center;gap:10px;padding:6px 10px;font-size:12px;color:var(--wb-muted)}
+.reachfoot .grow{flex:1}
+.time{display:inline-flex;align-items:center;height:26px;padding:0 8px;border:1px solid var(--wb-rule);border-radius:5px;background:var(--wb-well);font-size:13px;font-variant-numeric:tabular-nums}
+.egress{font-size:13px;color:var(--wb-ink);margin:10px 0 0}
+/* the Program's Reach line */
+.reachline{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;min-height:30px;padding:0 12px 0 32px;font-size:13px;border-top:1px solid #eef2f6}
+.reachline .at{font-size:12px;color:var(--wb-faint);font-variant-numeric:tabular-nums}
+.reachline b{font-weight:600}
+/* comparison of the three directions */
+.dirs{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:1440px;margin-top:16px}
+.dir{background:var(--page-card);border-radius:8px;padding:12px 14px 14px;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.dir.pick{box-shadow:0 0 0 2px var(--wb-sel-vivid)}
+.dir h3{margin:0 0 8px}
+.mini{position:relative;height:300px;border-radius:6px;overflow:hidden;background:radial-gradient(120% 90% at 20% 0%,#45607f 0%,#2f435b 45%,#233244 100%)}
+.mini .mb{position:absolute;left:0;right:0;top:0;height:22px;background:#fbfcfe;font-size:11px;display:flex;align-items:center;gap:10px;padding:0 10px;color:var(--wb-ink)}
+.mini .mb .grow{flex:1}
+.mini .w{position:absolute;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:6px;overflow:hidden;box-shadow:var(--depth-card)}
+.mini .w .t{height:18px;background:var(--wb-sel);color:#f7f9fc;font:600 10.5px/18px var(--font-ui);padding:0 8px;display:flex;gap:8px}
+.mini .w .t span.on{background:var(--wb-paper);color:var(--wb-ink);border-radius:3px 3px 0 0;padding:0 6px;margin-top:3px;line-height:15px}
+.mini .l{height:9px;margin:7px 9px;border-radius:3px;background:#dde4ee}
+.mini .l.s{width:55%}
+.mini .l.a{background:color-mix(in srgb,var(--lamp-ask) 40%,#fff)}
+.mini .l.b{background:#c6d5ec}
+.mini .cw{height:22px;margin:8px 9px;border:1px solid var(--wb-rule);border-radius:5px;background:#fff}
+.mini .drawer{position:absolute;right:0;top:22px;bottom:0;width:44%;background:var(--wb-paper);box-shadow:-10px 0 24px rgba(8,14,22,.3);border-left:1px solid var(--wb-rule)}
+.mini .drawer .t{height:22px;font:600 11px/22px var(--font-ui);padding:0 9px;border-bottom:1px solid var(--wb-rule-soft)}
+.cmp.three{grid-template-columns:220px repeat(3,1fr)}
+/* empty */
+.empty .obj img{width:64px;height:64px}
+.phone .empty b{font-size:15px}
+/* 393 specifics */
+.phone .msg{grid-template-columns:40px minmax(0,1fr);font-size:14px}
+.phone .msg .rcpt{grid-column:2;padding-top:2px}
+.phone .msg.reply{padding-left:24px}
+.phone .callline{grid-template-columns:20px minmax(0,1fr) auto;min-height:44px;padding:4px 12px;row-gap:2px}
+.phone .callline .at{display:none}
+.phone .compose .micb{width:44px;height:44px;border-radius:22px}
+.phone .compose .btn{height:44px;font-size:14px;padding:0 16px}
+.phone .compose .ed{font-size:14px}
+.phone .srow{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n v" "s s";min-height:44px;padding:6px 10px;row-gap:2px}
+.phone .srow .n{grid-area:n}.phone .srow .st2{grid-area:s}.phone .srow .v{grid-area:v}
+.phone .srow .btn{height:44px;font-size:14px}
+.phone .reach{grid-template-columns:minmax(0,1fr) repeat(3,56px)}
+.phone .reach>div{min-height:44px;padding:0 6px}
+.phone .reach .k{white-space:normal;line-height:1.3;padding:4px 8px}
+.phone .pair{grid-template-columns:1fr;justify-items:center;text-align:left}
+.phone .pair .say{width:100%}
+.phone .nrow2{min-height:44px}
+.nr{display:grid;grid-template-columns:20px minmax(0,1fr) auto;column-gap:10px;row-gap:3px;align-items:center;padding:6px 10px;border-bottom:1px solid #e9eef4;font-size:13px}
+.nr .t{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nr .f{font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nr .vb{display:flex;gap:6px;justify-content:flex-end}
+.phone .nr{grid-template-columns:20px minmax(0,1fr)}
+.phone .nr .vb{grid-column:1/3;justify-content:flex-start}
+.phone .nr .vb .btn{height:44px;font-size:14px;padding:0 16px}
+.phone .nr .t{white-space:normal;font-size:14px}
+.ph-tool .btn.primary{height:44px}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="g-phone" viewBox="0 0 16 16"><path d="M5.2 2.75 3.4 3.6c-.6.3-.9 1-.7 1.6 1.3 3.8 4.2 6.8 8.1 8.1.6.2 1.3-.1 1.6-.7l.85-1.8-2.6-1.5-1.2 1.1c-1.5-.7-2.7-1.9-3.4-3.4l1.1-1.2Z"/></symbol>
+  <symbol id="g-mic" viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></symbol>
+  <symbol id="g-send" viewBox="0 0 16 16"><path d="M2.5 8 13.5 3l-4 10.5-2-4.5Z"/></symbol>
+  <symbol id="g-qr" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="4" height="4"/><rect x="9.5" y="2.5" width="4" height="4"/><rect x="2.5" y="9.5" width="4" height="4"/><path d="M9.5 9.5h1.5v1.5M13.5 9.5v4h-4"/></symbol>
+</svg>
+<main>
+  <h1>Phone: the desk reaches you, and you reach it <span class="tag">Direction for PH-FACES</span></h1>
+  <p>Design: <code>PHONE-DESIGN-2026-10-28.md</code> §9. Every part is drawn in the desk's material (tokens and kit values copied from <code>web/src/styles/tokens.css</code> and <code>web/src/desk/surface/</code>). The data is one morning: the Program <i>The hub stops stalling</i> ran overnight, asked him on his phone at 08:02, called him at 08:12, and he said yes on the call.</p>
+
+  <!-- ─────────────────────────── 1. The open question ─────────────────────────── -->
+  <section class="part" id="directions">
+    <h2>The open question: where the thread lives</h2>
+    <p class="note">The thread is the messages between the desk and his phone, the calls the desk made, and the paired phone. Three places for it, drawn with the same data.</p>
+    <div class="dirs">
+      <div class="dir pick">
+        <h3>A · A wing of the Calls window <span class="tag">Recommended</span></h3>
+        <div class="mini">
+          <div class="mb"><b>HoldSpeak</b><span>Desk</span><span>Go</span><span class="grow"></span><span>Needs you 2</span></div>
+          <div class="w" style="left:24px;top:40px;width:330px;height:236px">
+            <div class="t"><span>Calls</span><span class="on">Phone</span></div>
+            <div style="display:grid;grid-template-columns:1fr 92px;height:calc(100% - 18px)">
+              <div><div class="l s"></div><div class="l"></div><div class="l a"></div><div class="l"></div><div class="l b s"></div><div class="l"></div><div class="cw"></div></div>
+              <div style="background:#eef2f7;border-left:1px solid #d9e1eb"><div class="l b"></div><div class="l"></div><div class="l s"></div><div class="l"></div></div>
+            </div>
+          </div>
+        </div>
+        <p class="note" style="margin-top:10px">Calls already is the desk on the phone. Phone is its second wing: the thread, the calls the desk made, the paired phone. One window for voice and phone.</p>
+      </div>
+      <div class="dir">
+        <h3>B · Its own Phone window</h3>
+        <div class="mini">
+          <div class="mb"><b>HoldSpeak</b><span>Desk</span><span>Go</span><span class="grow"></span><span>Needs you 2</span></div>
+          <div class="w" style="left:16px;top:40px;width:200px;height:170px"><div class="t">Calls</div><div class="l"></div><div class="l s"></div><div class="l"></div></div>
+          <div class="w" style="left:150px;top:80px;width:210px;height:200px"><div class="t">Phone</div><div class="l s"></div><div class="l"></div><div class="l a"></div><div class="l"></div><div class="cw"></div></div>
+        </div>
+        <p class="note" style="margin-top:10px">A new app in Go and on the dock. A call the desk places by number is a Calls call too, so the same call shows in two windows.</p>
+      </div>
+      <div class="dir">
+        <h3>C · A drawer, like Needs you</h3>
+        <div class="mini">
+          <div class="mb"><b>HoldSpeak</b><span>Desk</span><span>Go</span><span class="grow"></span><span>Phone 1</span><span>Needs you 2</span></div>
+          <div class="w" style="left:16px;top:40px;width:220px;height:200px"><div class="t">The hub stops stalling</div><div class="l"></div><div class="l s"></div><div class="l"></div></div>
+          <div class="drawer"><div class="t">Phone</div><div class="l s"></div><div class="l"></div><div class="l a"></div><div class="l"></div><div class="cw"></div></div>
+        </div>
+        <p class="note" style="margin-top:10px">Over every window, a second badge in the menu bar. A reply that needs his press already is a Needs you row; the drawer says it twice.</p>
+      </div>
+    </div>
+    <div class="cmp three" style="margin-top:18px">
+      <div class="h"></div><div class="h r">A · Calls wing</div><div class="h">B · Phone window</div><div class="h">C · Drawer</div>
+      <div>New things he must learn</div><div class="r">One wing on a window he has</div><div>One more app</div><div>One more drawer and badge</div>
+      <div>A call by number</div><div class="r">One call, one place (a Calls call with its transcript)</div><div>The same call in two windows</div><div>In the drawer and in Calls</div>
+      <div>What needs his press</div><div class="r">Needs you (once); the thread shows the same line in ember</div><div>Needs you and the window</div><div>Needs you and the drawer</div>
+      <div>At 393</div><div class="r">The Calls tile opens on the wing that has news</div><div>A new tile</div><div>A full-screen drawer</div>
+      <div>Build</div><div class="r">Phone*.tsx inside <code>web/src/desk/calls/</code>, the wing of SurfaceWings</div><div>A new app entry, frame, sweep case</div><div>A new drawer species</div>
+    </div>
+    <div class="rec">
+      <p><b>Recommendation: A, a wing of the Calls window.</b> A Senior Architect on a Tuesday thinks "the desk called me" and opens Calls. The number transport makes every desk call a Calls call already (<code>phone_calls.calls_turn_id</code>), so B shows each call twice, and C makes a second Needs you. A adds no app, no drawer, no badge (Tenet 3: never a million interfaces). The Calls window takes the wings species (<code>surface/wings.tsx</code>: Calls · Phone); the Phone wing's tab carries the ember count only when a message waits for his reply (no counter of zero).</p>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────── 2. The Calls window, Phone wing, 1440 ─────────────────────────── -->
+  <section class="part" id="calls-phone">
+    <h2>The Calls window, the Phone wing, at 1440</h2>
+    <p class="note">Window grammar: title bar with the wings, a 36 px toolbar (Message is the verb that makes the object; Call me stays), the thread edge to edge with the composer at its foot, a 300 px rail (Calls from the desk, Your phone), a 24 px status bar with a dot and a word. No host, number or engine chip (A.9 as amended).</p>
+    <div class="desk" style="height:760px">
+      <div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><span>Window</span><span class="grow"></span><span class="bell">Needs you <span class="badge">2</span></span><span>Wed 28 Oct <b>09:20</b></span></div>
+      <div class="win" style="left:150px;top:62px;width:1000px;height:640px">
+        <div class="tb"><span class="x">✕</span><span class="chip"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""></span><span class="wing">Calls</span><span class="wing on">Phone <span class="n">1</span></span><span class="name"></span><span class="gad"><i></i><i></i></span></div>
+        <div class="toolbar">
+          <span class="btn primary"><svg class="g"><use href="#g-send"/></svg>Message</span>
+          <span class="btn secondary"><svg class="g"><use href="#g-phone"/></svg>Call me</span>
+          <span class="grow"></span>
+        </div>
+        <div class="body">
+          <div class="pbody">
+            <div class="thread">
+              <div class="scroll">
+                <div class="day">Last night</div>
+                <div class="msg"><span class="at">23:48</span><div><div class="who">HoldSpeak <span class="from">· from <a>The hub stops stalling</a></span></div><div class="tx">Step 2 merged (#1587). Steps 3 and 4 run tonight. Nothing needs you before morning.</div></div><span class="rcpt dw" data-tone="ok"><span class="dot"></span>Read</span></div>
+                <div class="day">Today</div>
+                <div class="msg wait"><span class="at">08:02</span><div><div class="who">HoldSpeak <span class="from">· from <a>The hub stops stalling</a></span></div><div class="tx">Step 3 is checked green and reviewed. Merge it? Reply yes or no. I will not merge on silence.</div></div><span class="rcpt dw"><span class="dot"></span>Delivered</span></div>
+                <div class="callline"><span class="at">08:12</span><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""><span class="t"><b>Called you:</b> Merge step 3 of The hub stops stalling?</span><span class="dw" data-tone="ok"><span class="dot"></span>Answered · 1:12</span><span class="btn sm secondary">Open transcript</span></div>
+                <div class="msg reply"><span class="at">08:13</span><div><div class="who you">You <span class="from">· on the call</span></div><div class="tx">Yes, merge it. Hold step 5 until I look at the residual set.</div></div><span></span></div>
+                <div class="msg reply"><span class="at">08:14</span><div><div class="who">HoldSpeak</div><div class="tx">Merged #1591. Step 5 waits for you.</div></div><span class="rcpt dw" data-tone="ok"><span class="dot"></span>Read</span></div>
+                <div class="callline missed"><span class="at">08:40</span><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""><span class="t"><b>Missed call:</b> a heartbeat finding: the backup did not run</span><span class="dw" data-tone="fail"><span class="dot"></span>Missed · urgent</span><span class="btn sm primary">Call again</span></div>
+                <div class="msg"><span class="at">08:41</span><div><div class="who">HoldSpeak <span class="from">· after the missed call</span></div><div class="tx">I called about the backup: it did not run last night. Run it now? Reply yes or no.</div></div><span class="rcpt dw"><span class="dot"></span>Delivered</span></div>
+                <div class="msg reply"><span class="at">08:55</span><div><div class="who you">You <span class="from">· from your phone</span></div><div class="tx">Run it now, then tell me the size.</div></div><span></span></div>
+              </div>
+              <div class="compose">
+                <div class="ed">Message your phone</div>
+                <div class="acts"><span class="q">Goes to iPhone 16 Pro</span><span class="grow"></span><span class="micb"><svg><use href="#g-mic"/></svg></span><span class="btn primary sm"><svg class="g"><use href="#g-send"/></svg>Send</span></div>
+              </div>
+            </div>
+            <div class="rail">
+              <div class="cap">From the desk<span class="grow"></span></div>
+              <div class="rrow2"><span class="t">Merge step 3 of The hub stops stalling?</span><span class="v dw" data-tone="ok"><span class="dot"></span>Answered</span><span class="m">Call · Today 08:12 · 1:12</span></div>
+              <div class="rrow2"><span class="t">The backup did not run</span><span class="v dw" data-tone="fail"><span class="dot"></span>Missed</span><span class="m">Call · Today 08:40 · urgent</span></div>
+              <div class="rrow2"><span class="t">Step 4 failed after two rounds</span><span class="v dw" data-tone="ok"><span class="dot"></span>Answered</span><span class="m">Call · Yesterday 22:10 · 0:48</span></div>
+              <div class="cap" style="margin-top:10px">Your phone</div>
+              <div class="dev"><span class="handset"><i></i></span><div><div class="t">iPhone 16 Pro</div><div class="m">Paired 21 Oct · seen 2 min ago</div></div><span class="dw" data-tone="ok"><span class="dot"></span>Paired</span></div>
+              <div style="padding:2px 12px"><span class="btn sm ghost">Settings ▸ Calls ▸ Phone</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="sb"><span class="it"><span class="dot" data-tone="ask"></span>A reply is waiting on you</span><span class="it">3 calls from the desk</span><span class="it">Quiet from 23:00</span></div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:10px">The thread is the Live transcript's grammar (time · who · words), not chat bubbles: a reply sits under the line it answers with the elbow rule. A message that waits for him wears the ember rule; its Needs you row carries the verbs. A desk call is one line in the thread and one row in the rail; Open transcript opens its Calls call. The status bar says the one thing that matters in a dot and a word.</p>
+  </section>
+
+  <!-- ─────────────────────────── 3. Settings ▸ Calls ▸ Phone ─────────────────────────── -->
+  <section class="part" id="settings">
+    <h2>Settings ▸ Calls ▸ Phone, at 1440</h2>
+    <p class="note">The Accounts grammar (one paper, one grid, name · state · verb). Pairing opens a sheet in place under its row, never a modal. Egress is said here once, in one sentence.</p>
+    <div class="moment">
+      <div class="say"><b>Pairing</b>He presses Pair a phone. The QR opens in place with three plain steps and the minutes it is good for. The sheet closes by itself when the phone pairs, and the row reads Paired.</div>
+      <div class="desk" style="height:640px;width:1060px">
+        <div class="win" style="left:20px;top:20px;width:1020px;height:600px">
+          <div class="tb"><span class="x">✕</span><span class="chip"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACrElEQVR4nOyWW0gUURjH/2fONLvKKrWWVCuaeIk1KTGsVtunICofLA16Duwp6rUHIaICX6W3gqACCayUXooCu0BqEr5UKl7ykmmyu5mOO+vu7MycZoVg1XF3cFb2ZX8wDN+5/r9vvjnf4ZFmeKSZjIANAspqG+9wlDYzTduLFEI4bp6p6v3R3s5ba9rjjfK6xks5Dse9B2138/fsdiKV+AMLuHK9JSBKwebx3q6X/9vXRIAxVHtqqvjY5l1vejA0PIJoNAorCIKAysoKLCyKyMvPdwanpON6s7EAAsLn5uY4v49O43F7B5BdAj4rD1ZQwgF8GXiKhoZ63UNwGoMQ32+YhPP+BQTFRRRWN4HyNlhBU8KY/tACWTaOpKm/oLrEjtJ9gmGfrDC8+ypBDGnYCqYEXD3nxE4Ht2m/wBN0fBKxbQISbW6VzEloKraDPyOb9kWiDGNzMraKqQjcbPdju8jkgGEO8JSPlS9osgSrqFEpVglBqXG6GUaA8hQVbjeGP7dCL8uwAtEdcVccgrgsmRBAWODb4Mifw0eq8mqOHUXssYqqalhcEhGJyAhJQVWv/741W8YbZScuuAnlhooKXUG6w+5AClkWl1Sfz8+pKjk40f9izFBAjHLPxVMgmjfRYgw4XeDa7ykuLl61Jycn8Wt2tk8v528TzdPd//ijp/N9fNuGHBjte96tv7oTLVRe25TjKnB5vN66VVuWZczMzvWOrbtumYEkG1B4sn6XjdkeEnBndd/tMAUJM7BXTAldHu9/nbBMJj0HBGZrLD1QVNfW2mLPyjK3/8pK2H7txm3v1NTMed18AisCCGMaTykN62GO3RNnfvuSTYGiKAiGIk5wXNIIm/oE2Vz2I6ayM3pYBZiAEKIIdqFH+httmBh4tpRwLNJMphilXcA/AAAA//9/GENJAAAABklEQVQDAF0h6/nPYfBZAAAAAElFTkSuQmCC" alt=""></span><span class="name">Settings</span><span class="gad"><i></i><i></i></span></div>
+          <div class="body"><div class="settings">
+            <div class="side"><div>Desk</div><div>Engines</div><div>Meetings</div><div class="on">Calls</div><div class="sub">Set up calls</div><div class="sub" style="color:var(--wb-sel);font-weight:600">Phone</div><div>This Mac</div><div>Accounts</div></div>
+            <div class="pane">
+              <div class="grp-h">Your phone</div>
+              <div class="inset">
+                <div class="srow"><span class="n">No phone paired</span><span class="dw"><span class="dot"></span>Pairing</span><span class="v"><span class="btn sm secondary">Cancel</span></span></div>
+                <div class="pair">
+                  <div class="qr"><svg viewBox="0 0 45 45" shape-rendering="crispEdges"><rect width="45" height="45" fill="#fff"/><path d="M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM13 4h1v1h-1zM18 4h1v1h-1zM19 4h1v1h-1zM21 4h1v1h-1zM22 4h1v1h-1zM25 4h1v1h-1zM30 4h1v1h-1zM34 4h1v1h-1zM35 4h1v1h-1zM36 4h1v1h-1zM37 4h1v1h-1zM38 4h1v1h-1zM39 4h1v1h-1zM40 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM14 5h1v1h-1zM19 5h1v1h-1zM20 5h1v1h-1zM24 5h1v1h-1zM25 5h1v1h-1zM29 5h1v1h-1zM31 5h1v1h-1zM32 5h1v1h-1zM34 5h1v1h-1zM40 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM19 6h1v1h-1zM22 6h1v1h-1zM23 6h1v1h-1zM25 6h1v1h-1zM27 6h1v1h-1zM32 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM37 6h1v1h-1zM38 6h1v1h-1zM40 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM13 7h1v1h-1zM15 7h1v1h-1zM19 7h1v1h-1zM20 7h1v1h-1zM21 7h1v1h-1zM26 7h1v1h-1zM29 7h1v1h-1zM31 7h1v1h-1zM32 7h1v1h-1zM34 7h1v1h-1zM36 7h1v1h-1zM37 7h1v1h-1zM38 7h1v1h-1zM40 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM17 8h1v1h-1zM21 8h1v1h-1zM23 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM27 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM34 8h1v1h-1zM36 8h1v1h-1zM37 8h1v1h-1zM38 8h1v1h-1zM40 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM15 9h1v1h-1zM16 9h1v1h-1zM18 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM24 9h1v1h-1zM25 9h1v1h-1zM28 9h1v1h-1zM29 9h1v1h-1zM30 9h1v1h-1zM31 9h1v1h-1zM32 9h1v1h-1zM34 9h1v1h-1zM40 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM32 10h1v1h-1zM34 10h1v1h-1zM35 10h1v1h-1zM36 10h1v1h-1zM37 10h1v1h-1zM38 10h1v1h-1zM39 10h1v1h-1zM40 10h1v1h-1zM12 11h1v1h-1zM17 11h1v1h-1zM18 11h1v1h-1zM19 11h1v1h-1zM20 11h1v1h-1zM21 11h1v1h-1zM22 11h1v1h-1zM23 11h1v1h-1zM24 11h1v1h-1zM25 11h1v1h-1zM31 11h1v1h-1zM4 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1zM8 12h1v1h-1zM9 12h1v1h-1zM10 12h1v1h-1zM15 12h1v1h-1zM17 12h1v1h-1zM20 12h1v1h-1zM23 12h1v1h-1zM26 12h1v1h-1zM29 12h1v1h-1zM32 12h1v1h-1zM34 12h1v1h-1zM35 12h1v1h-1zM36 12h1v1h-1zM37 12h1v1h-1zM38 12h1v1h-1zM4 13h1v1h-1zM5 13h1v1h-1zM8 13h1v1h-1zM9 13h1v1h-1zM15 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM22 13h1v1h-1zM23 13h1v1h-1zM24 13h1v1h-1zM25 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM28 13h1v1h-1zM29 13h1v1h-1zM30 13h1v1h-1zM37 13h1v1h-1zM9 14h1v1h-1zM10 14h1v1h-1zM11 14h1v1h-1zM13 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM21 14h1v1h-1zM22 14h1v1h-1zM24 14h1v1h-1zM29 14h1v1h-1zM30 14h1v1h-1zM31 14h1v1h-1zM35 14h1v1h-1zM36 14h1v1h-1zM39 14h1v1h-1zM40 14h1v1h-1zM4 15h1v1h-1zM5 15h1v1h-1zM6 15h1v1h-1zM7 15h1v1h-1zM9 15h1v1h-1zM12 15h1v1h-1zM15 15h1v1h-1zM16 15h1v1h-1zM17 15h1v1h-1zM19 15h1v1h-1zM23 15h1v1h-1zM25 15h1v1h-1zM26 15h1v1h-1zM27 15h1v1h-1zM30 15h1v1h-1zM31 15h1v1h-1zM33 15h1v1h-1zM39 15h1v1h-1zM4 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM11 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM15 16h1v1h-1zM18 16h1v1h-1zM19 16h1v1h-1zM21 16h1v1h-1zM22 16h1v1h-1zM23 16h1v1h-1zM27 16h1v1h-1zM29 16h1v1h-1zM30 16h1v1h-1zM34 16h1v1h-1zM36 16h1v1h-1zM37 16h1v1h-1zM38 16h1v1h-1zM39 16h1v1h-1zM7 17h1v1h-1zM9 17h1v1h-1zM12 17h1v1h-1zM14 17h1v1h-1zM17 17h1v1h-1zM20 17h1v1h-1zM22 17h1v1h-1zM23 17h1v1h-1zM24 17h1v1h-1zM25 17h1v1h-1zM26 17h1v1h-1zM27 17h1v1h-1zM32 17h1v1h-1zM33 17h1v1h-1zM35 17h1v1h-1zM38 17h1v1h-1zM39 17h1v1h-1zM5 18h1v1h-1zM7 18h1v1h-1zM8 18h1v1h-1zM9 18h1v1h-1zM10 18h1v1h-1zM11 18h1v1h-1zM12 18h1v1h-1zM15 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM25 18h1v1h-1zM28 18h1v1h-1zM30 18h1v1h-1zM31 18h1v1h-1zM32 18h1v1h-1zM33 18h1v1h-1zM35 18h1v1h-1zM37 18h1v1h-1zM40 18h1v1h-1zM6 19h1v1h-1zM7 19h1v1h-1zM11 19h1v1h-1zM12 19h1v1h-1zM13 19h1v1h-1zM19 19h1v1h-1zM20 19h1v1h-1zM23 19h1v1h-1zM25 19h1v1h-1zM26 19h1v1h-1zM30 19h1v1h-1zM31 19h1v1h-1zM40 19h1v1h-1zM5 20h1v1h-1zM6 20h1v1h-1zM9 20h1v1h-1zM10 20h1v1h-1zM11 20h1v1h-1zM13 20h1v1h-1zM14 20h1v1h-1zM15 20h1v1h-1zM17 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM22 20h1v1h-1zM29 20h1v1h-1zM31 20h1v1h-1zM32 20h1v1h-1zM33 20h1v1h-1zM34 20h1v1h-1zM35 20h1v1h-1zM36 20h1v1h-1zM37 20h1v1h-1zM38 20h1v1h-1zM39 20h1v1h-1zM5 21h1v1h-1zM6 21h1v1h-1zM9 21h1v1h-1zM13 21h1v1h-1zM14 21h1v1h-1zM16 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM21 21h1v1h-1zM24 21h1v1h-1zM26 21h1v1h-1zM29 21h1v1h-1zM35 21h1v1h-1zM6 22h1v1h-1zM8 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM12 22h1v1h-1zM13 22h1v1h-1zM14 22h1v1h-1zM15 22h1v1h-1zM16 22h1v1h-1zM28 22h1v1h-1zM31 22h1v1h-1zM37 22h1v1h-1zM38 22h1v1h-1zM39 22h1v1h-1zM40 22h1v1h-1zM4 23h1v1h-1zM6 23h1v1h-1zM9 23h1v1h-1zM11 23h1v1h-1zM13 23h1v1h-1zM14 23h1v1h-1zM15 23h1v1h-1zM17 23h1v1h-1zM20 23h1v1h-1zM25 23h1v1h-1zM35 23h1v1h-1zM37 23h1v1h-1zM40 23h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM8 24h1v1h-1zM9 24h1v1h-1zM10 24h1v1h-1zM11 24h1v1h-1zM13 24h1v1h-1zM14 24h1v1h-1zM15 24h1v1h-1zM18 24h1v1h-1zM20 24h1v1h-1zM21 24h1v1h-1zM23 24h1v1h-1zM24 24h1v1h-1zM29 24h1v1h-1zM30 24h1v1h-1zM34 24h1v1h-1zM36 24h1v1h-1zM38 24h1v1h-1zM4 25h1v1h-1zM7 25h1v1h-1zM14 25h1v1h-1zM16 25h1v1h-1zM17 25h1v1h-1zM20 25h1v1h-1zM21 25h1v1h-1zM22 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM25 25h1v1h-1zM27 25h1v1h-1zM30 25h1v1h-1zM32 25h1v1h-1zM35 25h1v1h-1zM4 26h1v1h-1zM6 26h1v1h-1zM7 26h1v1h-1zM8 26h1v1h-1zM10 26h1v1h-1zM12 26h1v1h-1zM13 26h1v1h-1zM15 26h1v1h-1zM16 26h1v1h-1zM17 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM24 26h1v1h-1zM28 26h1v1h-1zM29 26h1v1h-1zM30 26h1v1h-1zM31 26h1v1h-1zM33 26h1v1h-1zM35 26h1v1h-1zM37 26h1v1h-1zM39 26h1v1h-1zM40 26h1v1h-1zM4 27h1v1h-1zM6 27h1v1h-1zM7 27h1v1h-1zM8 27h1v1h-1zM11 27h1v1h-1zM12 27h1v1h-1zM13 27h1v1h-1zM15 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM20 27h1v1h-1zM21 27h1v1h-1zM22 27h1v1h-1zM25 27h1v1h-1zM28 27h1v1h-1zM31 27h1v1h-1zM35 27h1v1h-1zM39 27h1v1h-1zM40 27h1v1h-1zM8 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM11 28h1v1h-1zM15 28h1v1h-1zM16 28h1v1h-1zM18 28h1v1h-1zM20 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1zM26 28h1v1h-1zM27 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM31 28h1v1h-1zM32 28h1v1h-1zM33 28h1v1h-1zM34 28h1v1h-1zM35 28h1v1h-1zM36 28h1v1h-1zM38 28h1v1h-1zM4 29h1v1h-1zM7 29h1v1h-1zM8 29h1v1h-1zM9 29h1v1h-1zM11 29h1v1h-1zM12 29h1v1h-1zM15 29h1v1h-1zM16 29h1v1h-1zM19 29h1v1h-1zM21 29h1v1h-1zM22 29h1v1h-1zM23 29h1v1h-1zM24 29h1v1h-1zM27 29h1v1h-1zM30 29h1v1h-1zM35 29h1v1h-1zM37 29h1v1h-1zM4 30h1v1h-1zM10 30h1v1h-1zM11 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM16 30h1v1h-1zM19 30h1v1h-1zM20 30h1v1h-1zM24 30h1v1h-1zM26 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM31 30h1v1h-1zM33 30h1v1h-1zM36 30h1v1h-1zM37 30h1v1h-1zM38 30h1v1h-1zM39 30h1v1h-1zM40 30h1v1h-1zM4 31h1v1h-1zM8 31h1v1h-1zM9 31h1v1h-1zM12 31h1v1h-1zM15 31h1v1h-1zM17 31h1v1h-1zM18 31h1v1h-1zM19 31h1v1h-1zM25 31h1v1h-1zM26 31h1v1h-1zM28 31h1v1h-1zM30 31h1v1h-1zM31 31h1v1h-1zM32 31h1v1h-1zM33 31h1v1h-1zM35 31h1v1h-1zM36 31h1v1h-1zM40 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM11 32h1v1h-1zM15 32h1v1h-1zM16 32h1v1h-1zM17 32h1v1h-1zM19 32h1v1h-1zM21 32h1v1h-1zM23 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM30 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1zM33 32h1v1h-1zM34 32h1v1h-1zM35 32h1v1h-1zM36 32h1v1h-1zM37 32h1v1h-1zM38 32h1v1h-1zM39 32h1v1h-1zM12 33h1v1h-1zM13 33h1v1h-1zM16 33h1v1h-1zM17 33h1v1h-1zM22 33h1v1h-1zM23 33h1v1h-1zM24 33h1v1h-1zM27 33h1v1h-1zM32 33h1v1h-1zM36 33h1v1h-1zM37 33h1v1h-1zM4 34h1v1h-1zM5 34h1v1h-1zM6 34h1v1h-1zM7 34h1v1h-1zM8 34h1v1h-1zM9 34h1v1h-1zM10 34h1v1h-1zM14 34h1v1h-1zM18 34h1v1h-1zM19 34h1v1h-1zM20 34h1v1h-1zM22 34h1v1h-1zM24 34h1v1h-1zM25 34h1v1h-1zM26 34h1v1h-1zM30 34h1v1h-1zM32 34h1v1h-1zM34 34h1v1h-1zM36 34h1v1h-1zM38 34h1v1h-1zM39 34h1v1h-1zM40 34h1v1h-1zM4 35h1v1h-1zM10 35h1v1h-1zM12 35h1v1h-1zM13 35h1v1h-1zM15 35h1v1h-1zM16 35h1v1h-1zM18 35h1v1h-1zM23 35h1v1h-1zM25 35h1v1h-1zM32 35h1v1h-1zM36 35h1v1h-1zM39 35h1v1h-1zM40 35h1v1h-1zM4 36h1v1h-1zM6 36h1v1h-1zM7 36h1v1h-1zM8 36h1v1h-1zM10 36h1v1h-1zM12 36h1v1h-1zM13 36h1v1h-1zM14 36h1v1h-1zM16 36h1v1h-1zM17 36h1v1h-1zM18 36h1v1h-1zM19 36h1v1h-1zM22 36h1v1h-1zM23 36h1v1h-1zM24 36h1v1h-1zM26 36h1v1h-1zM27 36h1v1h-1zM29 36h1v1h-1zM31 36h1v1h-1zM32 36h1v1h-1zM33 36h1v1h-1zM34 36h1v1h-1zM35 36h1v1h-1zM36 36h1v1h-1zM38 36h1v1h-1zM40 36h1v1h-1zM4 37h1v1h-1zM6 37h1v1h-1zM7 37h1v1h-1zM8 37h1v1h-1zM10 37h1v1h-1zM12 37h1v1h-1zM18 37h1v1h-1zM19 37h1v1h-1zM20 37h1v1h-1zM23 37h1v1h-1zM26 37h1v1h-1zM27 37h1v1h-1zM30 37h1v1h-1zM32 37h1v1h-1zM34 37h1v1h-1zM36 37h1v1h-1zM37 37h1v1h-1zM40 37h1v1h-1zM4 38h1v1h-1zM6 38h1v1h-1zM7 38h1v1h-1zM8 38h1v1h-1zM10 38h1v1h-1zM12 38h1v1h-1zM13 38h1v1h-1zM14 38h1v1h-1zM16 38h1v1h-1zM17 38h1v1h-1zM22 38h1v1h-1zM24 38h1v1h-1zM26 38h1v1h-1zM29 38h1v1h-1zM32 38h1v1h-1zM35 38h1v1h-1zM38 38h1v1h-1zM39 38h1v1h-1zM40 38h1v1h-1zM4 39h1v1h-1zM10 39h1v1h-1zM13 39h1v1h-1zM15 39h1v1h-1zM16 39h1v1h-1zM17 39h1v1h-1zM20 39h1v1h-1zM23 39h1v1h-1zM24 39h1v1h-1zM25 39h1v1h-1zM26 39h1v1h-1zM32 39h1v1h-1zM33 39h1v1h-1zM34 39h1v1h-1zM37 39h1v1h-1zM40 39h1v1h-1zM4 40h1v1h-1zM5 40h1v1h-1zM6 40h1v1h-1zM7 40h1v1h-1zM8 40h1v1h-1zM9 40h1v1h-1zM10 40h1v1h-1zM12 40h1v1h-1zM21 40h1v1h-1zM26 40h1v1h-1zM27 40h1v1h-1zM29 40h1v1h-1zM33 40h1v1h-1zM34 40h1v1h-1zM37 40h1v1h-1zM38 40h1v1h-1zM39 40h1v1h-1zM40 40h1v1h-1z" fill="#253449"/></svg><span class="mark"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""></span></div>
+                  <div class="say">
+                    <b>Scan this with the HoldSpeak app</b>
+                    <ol><li>Open HoldSpeak on your phone.</li><li>Tap Pair with a desk.</li><li>Point the camera at this code.</li></ol>
+                    <p>The phone gets its own key. You can remove it here at any time.</p>
+                    <span class="left">Good for 9 more minutes · <span class="btn sm ghost" style="height:20px;padding:0 4px">New code</span></span>
+                  </div>
+                </div>
+              </div>
+              <div class="grp-h">The number</div>
+              <div class="inset">
+                <div class="srow"><span class="n">+1 ··· 0142 <span>Call me rings this number</span></span><span class="dw" data-tone="ok"><span class="dot"></span>From Calls</span><span class="v"><span class="btn sm secondary">Set up calls ›</span></span></div>
+              </div>
+              <p class="egress">A message goes to your phone through Apple's push service. A call on the number goes through your line's carrier. The words of a call stay on your home engine.</p>
+            </div>
+          </div></div>
+          <div class="sb"><span class="it"><span class="dot"></span>Waiting for your phone</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="moment">
+      <div class="say"><b>Paired</b>The device row with Last seen and Remove. Reach you is set by the Control level (Normal here) and every row can change. Quiet hours hold messages; only urgent rings. Urgent through Do Not Disturb stays off until Apple allows it, and says what happens until then.</div>
+      <div class="desk" style="height:760px;width:1060px">
+        <div class="win" style="left:20px;top:20px;width:1020px;height:720px">
+          <div class="tb"><span class="x">✕</span><span class="chip"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACrElEQVR4nOyWW0gUURjH/2fONLvKKrWWVCuaeIk1KTGsVtunICofLA16Duwp6rUHIaICX6W3gqACCayUXooCu0BqEr5UKl7ykmmyu5mOO+vu7MycZoVg1XF3cFb2ZX8wDN+5/r9vvjnf4ZFmeKSZjIANAspqG+9wlDYzTduLFEI4bp6p6v3R3s5ba9rjjfK6xks5Dse9B2138/fsdiKV+AMLuHK9JSBKwebx3q6X/9vXRIAxVHtqqvjY5l1vejA0PIJoNAorCIKAysoKLCyKyMvPdwanpON6s7EAAsLn5uY4v49O43F7B5BdAj4rD1ZQwgF8GXiKhoZ63UNwGoMQ32+YhPP+BQTFRRRWN4HyNlhBU8KY/tACWTaOpKm/oLrEjtJ9gmGfrDC8+ypBDGnYCqYEXD3nxE4Ht2m/wBN0fBKxbQISbW6VzEloKraDPyOb9kWiDGNzMraKqQjcbPdju8jkgGEO8JSPlS9osgSrqFEpVglBqXG6GUaA8hQVbjeGP7dCL8uwAtEdcVccgrgsmRBAWODb4Mifw0eq8mqOHUXssYqqalhcEhGJyAhJQVWv/741W8YbZScuuAnlhooKXUG6w+5AClkWl1Sfz8+pKjk40f9izFBAjHLPxVMgmjfRYgw4XeDa7ykuLl61Jycn8Wt2tk8v528TzdPd//ijp/N9fNuGHBjte96tv7oTLVRe25TjKnB5vN66VVuWZczMzvWOrbtumYEkG1B4sn6XjdkeEnBndd/tMAUJM7BXTAldHu9/nbBMJj0HBGZrLD1QVNfW2mLPyjK3/8pK2H7txm3v1NTMed18AisCCGMaTykN62GO3RNnfvuSTYGiKAiGIk5wXNIIm/oE2Vz2I6ayM3pYBZiAEKIIdqFH+httmBh4tpRwLNJMphilXcA/AAAA//9/GENJAAAABklEQVQDAF0h6/nPYfBZAAAAAElFTkSuQmCC" alt=""></span><span class="name">Settings</span><span class="gad"><i></i><i></i></span></div>
+          <div class="body"><div class="settings">
+            <div class="side"><div>Desk</div><div>Engines</div><div>Meetings</div><div class="on">Calls</div><div class="sub">Set up calls</div><div class="sub" style="color:var(--wb-sel);font-weight:600">Phone</div><div>This Mac</div><div>Accounts</div></div>
+            <div class="pane">
+              <div class="grp-h">Your phone</div>
+              <div class="inset">
+                <div class="srow"><span class="n" style="display:flex;align-items:center;gap:10px"><span class="handset" style="width:24px;height:24px;border-radius:6px"><i style="width:10px;height:16px"></i></span>iPhone 16 Pro <span>Paired 21 Oct · seen 2 min ago</span></span><span class="dw" data-tone="ok"><span class="dot"></span>Paired</span><span class="v"><span class="btn sm secondary">Remove</span></span></div>
+                <div class="srow"><span class="n" style="color:var(--wb-muted);font-weight:400">Another phone</span><span></span><span class="v"><span class="btn sm secondary"><svg class="g"><use href="#g-qr"/></svg>Pair a phone</span></span></div>
+              </div>
+              <div class="grp-h">Reach you</div>
+              <div class="inset">
+                <div class="reach">
+                  <div class="h">When</div><div class="h">Message</div><div class="h">Call</div><div class="h">Nothing</div>
+                  <div class="k">A program asks you <span>call after 10 min with no reply</span></div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">A program step fails</div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">A program is done</div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">A security or data-loss finding</div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">A meeting's follow-up asks</div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">An agent asks and the desk cannot answer <span>call after 10 min when you are away</span></div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                </div>
+                <div class="reachfoot"><span>Set by Control: Normal</span><span class="grow"></span><span class="btn sm ghost">Use the Normal set</span></div>
+              </div>
+              <div class="grp-h">Quiet hours</div>
+              <div class="inset">
+                <div class="srow"><span class="n" style="display:flex;align-items:center;gap:8px">From <span class="time">23:00</span> to <span class="time">07:00</span></span><span class="q" style="font-size:12px;color:var(--wb-muted)">Messages wait. Only urgent calls ring.</span><span class="v"><span class="ck on"><i></i>On</span></span></div>
+                <div class="srow"><span class="n">Urgent calls ring through Do Not Disturb</span><span class="q" style="font-size:12px;color:var(--wb-muted)">Until Apple allows it, an urgent call rings once more after 1 min</span><span class="v"><span class="ck" style="opacity:.55"><i></i>Off</span></span></div>
+              </div>
+              <div class="grp-h">The number</div>
+              <div class="inset">
+                <div class="srow"><span class="n">+1 ··· 0142 <span>a call rings the app first, then this number after 30 s</span></span><span class="dw" data-tone="ok"><span class="dot"></span>From Calls</span><span class="v"><span class="btn sm secondary">Set up calls ›</span></span></div>
+              </div>
+              <p class="egress">A message goes to your phone through Apple's push service. A call on the number goes through your line's carrier. The words of a call stay on your home engine.</p>
+            </div>
+          </div></div>
+          <div class="sb"><span class="it"><span class="dot" data-tone="ok"></span>Your phone is paired</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────── 4. The seams ─────────────────────────── -->
+  <section class="part" id="seams">
+    <h2>The seams</h2>
+    <div class="seams">
+      <div class="seam">
+        <h3>Needs you: asked on the phone, and a missed call</h3>
+        <div class="crop">
+          <div class="grp"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt="" style="width:14px;height:14px">Phone</div>
+          <div class="nr"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACb0lEQVR4nKyUXUhTYRjH/2fnnH3WcaJNF8imEZpkDKKLFUiYF12EF4pQN0XRjXZTF10YQXVVN11IEEQGQYRQEBTRhUaQEUaalrpFEsuaO27O2b50H+85e9scrn3Pi/3hhfd9nuf8zv89z3teDlUWVy5ptvRbWDU5xbLsTLG8RAlDGMw6P74St2NMKVjTsZ69e7T6OaWKF4zGBlLUjYKlf5bFmHd97bhj8uV8WYdqyg1cOHe67shhS2rJl6qz2X7ohu+PDCanAyWB5o6+NtCExe3xwukSi4J4lkNjowFElpKD1Gdc5xc2H+016VT8vH7XbnZhwQab3V4UWFsjwGQyb0GzVQA06IW7925f49pbW1BJl4buQKfT5sQU+UUkLrfwPIudyO32QqFI1TKhog73W3sfRGKxhrH3n/DVtlgSpNOo0N1phSTLGH83IZNY/PV2LnNs2rsu3kgkpJtaw0GwvAZlRRm01K5jRXTGnW7v4K/JF49yHbb3KzlONWi0XsdO9dv+BKn2Mgp2PDue/ob25/FYxCdUgkT9SwiJn9MmiR9KFSdj5W8gu6agy2c609zRiSDqBBbnT+jxZjqMmTk76j0PYaohmF1cQCQaT/iCq0MOx9tAocMsdR3SbY2Umg08rG0aHGhSQRv+gu59QZxsDcG9nDyblG4mqPwh//kCh1cfr2bm0z+juDzigegjkIw9GP3uSm51A2brWbi+PUMxFQD9YTln7fSm7wUFp4am4wqoTJBgS/7a/7esVApuKRpAJTFJGKUUye7SqBTxo5TD4MZaH50afkrIprkSlFcLS/Fo+JY4NeYseCGqLA5V1j8AAAD//56qW5UAAAAGSURBVAMA4Ajj2JNVgScAAAAASUVORK5CYII=" alt=""><div><div class="t">Merge step 3 of The hub stops stalling?</div><div class="f">Asked on your phone · 12 min · no reply</div></div><div class="vb"><span class="btn sm primary">Call now</span><span class="btn sm secondary">Let it wait</span></div></div>
+          <div class="nr"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""><div><div class="t">Missed call: the backup did not run</div><div class="f">Today 08:40 · urgent</div></div><div class="vb"><span class="btn sm primary">Call again</span><span class="btn sm secondary">Answer here</span></div></div>
+        </div>
+        <p class="note" style="margin-top:10px"><code>phone_items</code> in the membership: the group is Phone; Call now asks the desk to ring (his press is the egress); Let it wait keeps the message and hides the row until a reply or the next reach. Answer here opens the Phone wing on that line with the composer set to reply.</p>
+      </div>
+      <div class="seam">
+        <h3>Today: one line in Since this morning</h3>
+        <div class="crop today">
+          <div class="cap">Since this morning</div>
+          <div class="ln"><span class="dot" data-tone="ok"></span>3 meetings summarised</div>
+          <div class="ln"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACb0lEQVR4nKyUXUhTYRjH/2fnnH3WcaJNF8imEZpkDKKLFUiYF12EF4pQN0XRjXZTF10YQXVVN11IEEQGQYRQEBTRhUaQEUaalrpFEsuaO27O2b50H+85e9scrn3Pi/3hhfd9nuf8zv89z3teDlUWVy5ptvRbWDU5xbLsTLG8RAlDGMw6P74St2NMKVjTsZ69e7T6OaWKF4zGBlLUjYKlf5bFmHd97bhj8uV8WYdqyg1cOHe67shhS2rJl6qz2X7ohu+PDCanAyWB5o6+NtCExe3xwukSi4J4lkNjowFElpKD1Gdc5xc2H+016VT8vH7XbnZhwQab3V4UWFsjwGQyb0GzVQA06IW7925f49pbW1BJl4buQKfT5sQU+UUkLrfwPIudyO32QqFI1TKhog73W3sfRGKxhrH3n/DVtlgSpNOo0N1phSTLGH83IZNY/PV2LnNs2rsu3kgkpJtaw0GwvAZlRRm01K5jRXTGnW7v4K/JF49yHbb3KzlONWi0XsdO9dv+BKn2Mgp2PDue/ob25/FYxCdUgkT9SwiJn9MmiR9KFSdj5W8gu6agy2c609zRiSDqBBbnT+jxZjqMmTk76j0PYaohmF1cQCQaT/iCq0MOx9tAocMsdR3SbY2Umg08rG0aHGhSQRv+gu59QZxsDcG9nDyblG4mqPwh//kCh1cfr2bm0z+juDzigegjkIw9GP3uSm51A2brWbi+PUMxFQD9YTln7fSm7wUFp4am4wqoTJBgS/7a/7esVApuKRpAJTFJGKUUye7SqBTxo5TD4MZaH50afkrIprkSlFcLS/Fo+JY4NeYseCGqLA5V1j8AAAD//56qW5UAAAAGSURBVAMA4Ajj2JNVgScAAAAASUVORK5CYII=" alt="">Programs: 1 running, 1 waits on you</div>
+          <div class="ln new"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt="">Reached you 2 times: 1 answered</div>
+        </div>
+        <p class="note" style="margin-top:10px">Only when the desk reached him today; never "0 times". The line opens the Calls window on the Phone wing.</p>
+      </div>
+      <div class="seam" style="grid-column:1/3">
+        <h3>The Program window: the Reach line under Decided for you</h3>
+        <div class="crop" style="max-width:1000px">
+          <div class="fold"><div class="fh"><span class="chev">▾</span>Decided for you <span class="tokn">2</span></div>
+            <div class="cpl">
+              <div class="c" style="grid-template-columns:44px 1fr 90px"><span class="m" style="text-align:left">07:58</span><span><b>Step 4 · </b>Ran a third round after the check failed <span class="q" style="color:var(--wb-muted);font-size:12px">· Normal: one more round when the log names one test</span></span><span class="btn sm secondary">Overturn</span></div>
+              <div class="c" style="grid-template-columns:44px 1fr 90px"><span class="m" style="text-align:left">08:02</span><span><b>Step 3 · </b>Asked you on your phone <span class="q" style="color:var(--wb-muted);font-size:12px">· Normal: a core question is a message</span></span><span></span></div>
+            </div>
+          </div>
+          <div class="reachline"><span class="at">08:12</span><span><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt="" style="width:16px;height:16px;margin-right:6px">Reached you: <b>called</b> about Merge step 3 · answered · you said yes</span><span class="btn sm secondary">Open transcript</span></div>
+        </div>
+        <p class="note" style="margin-top:10px">One line, only when the engine messaged or called him for this Program; the newest reach. The rule sits on its Decided for you row like every engine decision.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────── 5. Empty states ─────────────────────────── -->
+  <section class="part" id="empty">
+    <h2>The empty states</h2>
+    <div class="moment">
+      <div class="say"><b>No phone, no number</b>The Phone wing is the object, one line, one primary verb. With a number but no phone, the wing works by number and the rail's Your phone says "No phone paired" with Pair a phone.</div>
+      <div class="win" style="position:relative;width:820px;height:420px">
+        <div class="tb"><span class="x">✕</span><span class="chip"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""></span><span class="wing">Calls</span><span class="wing on">Phone</span><span class="name"></span><span class="gad"><i></i><i></i></span></div>
+        <div class="toolbar"><span class="btn primary off" style="opacity:.55"><svg class="g"><use href="#g-send"/></svg>Message</span><span class="grow"></span></div>
+        <div class="body">
+          <div class="empty"><div><div class="obj"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAGgElEQVR4nOyaX0xbVRzHv+f2FmhpYfwJsI3BFhib23Tg2MxgcyQzi5q4ZZAYH9THPZjM+DCT+aTGaPwTEzOjiY/+ib64+f/FqDHGsTA3BxNhMNhGN7aWFZBCaW97/3hOS/lTbsu5hdKS9pO09/bc3+0999vz+3POrYgMR0SGkxUAGU5WAGQ4WQGQ4WQFQIaTFQAZjiEBtjUftSuquYkI2j6ioUoD1tNmG1LLFAG5qxHttqaSiyYh2N53/vtJ3pMJj1Fd8/ED0IRT1PpYpM0kmqXS0vWw5NtykUJ83inJ7b4HRQ7O9UPDt4pG3hu88HX7UucvKUBdc+sr1Owttv/o4Tbsqt+P4pIK5ObmIZ2QJD/GRp3o7ryAP349G2pTNfX0QPs378Q7L64AW5vbXqYG71bX7Ai2Pv2Cubi0AmuBMbcTZ7/6UHbc6hOhaaf628+9H8s2pgC1Tcf3C0Ro37R5G06cfFPXxun2wuHywDXmw8RUEAGFfZ2GVCHQy+eIBHaLCZWleej4+SMM3+6HDOy9cf7sJb1zYgZBAuE1utGOtp1YJFL3oBsdPWMgYsTtTOGXCSlFpS8/ffN7gYFbQ/AEamhLv0aHwRt05wm9cwS9xi1NrdWE4MjepiOkYkP1bPvIqBef/tSHi/3eeTefnpjEHJCcIhBbLf0ByePsnvTsdAUwa9ohtt398KEF7T+2D0MR0iv4xcJkzgltBcuW8GeQg3p2+i4gCA+wTcm8oHeha5hap/evPh8izPy2YrhMocNgu56drgCappWbTKJqsxfOjpBuh4/l/kW2iiIjKPmQLATBhJw8KxJFEC1QiInWSUqZ3vFYQbCstHyjghkXudzr1L15Brt5N420ySLHYkdZVR2WAxHtRA2Ol+sdE2KcY7NabbN3PDrhx1pGE3JYdi7UO8Y1F/B4aSaFeUk7ZXIAqu8WVhKFusDdkTkXsFU0oKByP1YKLgGmJeoNJIYA8+oedvOaf2SCNnZihWB+qExHPpF6+lbIJQBnPcYlgKySmEWOIgeir9x5vf1cC5LA1qbW3+nmEI/t4n7ps+z1AO/EaHRT/UxHk0E9r6FOv3ThEoCoEnzSQkXlgIRpzxgCvoVTb1u+tbBmSzXXr2SUwZtDsFgENNaGi7GO7hEEVcLVr1joC0Awdt85LNN6QCS0JhYC43Dfccf7HlY7gMiTqG/YgddPv4hk8OrbZ3C1ZxAP1paB9etKVx/ucfXLo2n0nvSO66ZBusLS5/VOiD3/dIAXddoBTfFh08b1SBbsuyc9/8F4v/yE3ZPecd3pcN2ep0q1XPMVqnJlvm2drAj5ol8KIiZBD72SHzabHc8/+wws1sQrt3j4pqfx2RdfYmrKC3tBEYKwIn6/aEKi7qsRcof4pIb+yz8sGi4x1wPY+p8K8SW626hTRDSvKywQqzdtDH2wWi0Qabm6r3EPXSlK7nxBkiT8dekynE4nFWIaPr8f3qkpBIIBhfbzzwXGhIyyrCRA/iDWOiHXmuB8apvbdlK/6T554jkce/KxUFtX7024J7xYbWQ6D+m82ovbQw5cu9YDVZZ3DnR812PkOwQYRFDRwra7d81NrtzjHqQC0STSrJCHopKicIPJ1AKDGBaATqtarJZceXNV5WxbQFGRKgrstlDsMZvNGl0Sa4FBDAtAw+nhxoaHZtPnpNfHLo5UYcvPD22LiovZys8RGMRQJcj8n11r/vC/4XAuCCRbq8qxs2YDzGK4dg7KCv4dvIvrDteK2zDs9nDGKS4qwYjLVVj7yLEdRuKAoRHA4//bN1fMdprB9llbMmwYy40DhgTg8f+83MXuEN22UjYRlhMHDAnA4/+Dw/ehqHNzUbbP2pJhE2E5cYC7Dkin/B/NcuoB7hGQTvk/muXEAW4B0i3/R5NoHOBOg7z5f7XTYAQWB1xwh+IATYfccYBrBITzP4mb/yOsdhqMML8eoITqAXDAJYAR/09FGmQkGge4BDDi/6lIgxESiQN8a4IG6v+/e4ZCr3islE00icSBJUeAEf9PNYnEgSUFSOf8H00icWBJAdI9/0djNA4sGQMW+T9dmPT7Jbo2x/fkZbURZv4XwBsH4gqgN/+/5xpD/8BNpDu86wNxXUDP/x3DLqwFeONAfBcg2kE2YTzzyeezTc77o3QJWsZagT4QOUA3H8c6HlcA+lTpN/pe0dXdi7UKfSb2S7zj6ZjOV5Xs3+WR4WQFQIaTFQAZzv8AAAD///UchPwAAAAGSURBVAMATpX1kza86X0AAAAASUVORK5CYII=" alt=""></div><b>No phone yet</b><p>Pair a phone, or add a number in Calls, and the desk can reach you.</p><span class="btn primary"><svg class="g"><use href="#g-qr"/></svg>Pair a phone</span></div></div>
+        </div>
+        <div class="sb"><span class="it"><span class="dot"></span>No phone paired</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────── 6. At 393 ─────────────────────────── -->
+  <section class="part" id="phone">
+    <h2>At 393</h2>
+    <div class="phones">
+      <div>
+        <div class="phone">
+          <div class="ph-menu"><b>HoldSpeak</b><span style="flex:1"></span><span>Needs you <span class="badge" style="background:#2f67c8;color:#fff;font:600 11.5px/1 var(--font-ui);padding:3px 6px;border-radius:9px">2</span></span></div>
+          <div class="ph-win">
+            <div class="ph-tb" style="align-items:flex-end;padding-bottom:0"><span class="back" style="align-self:center">‹ Desk</span><span class="wing">Calls</span><span class="wing on">Phone <span class="n" style="display:inline-block;margin-left:6px;background:var(--lamp-ask);color:#3a2412;font:600 11px/1 var(--font-ui);padding:2px 5px;border-radius:8px">1</span></span></div>
+            <div class="ph-tool"><span class="btn primary"><svg class="g"><use href="#g-send"/></svg>Message</span><span class="btn secondary" style="height:44px;font-size:14px"><svg class="g"><use href="#g-phone"/></svg>Call me</span><span class="grow"></span></div>
+            <div class="ph-body" style="display:flex;flex-direction:column">
+              <div style="flex:1;overflow:hidden">
+                <div class="day">Today</div>
+                <div class="msg wait"><span class="at">08:02</span><div><div class="who">HoldSpeak</div><div class="tx">Step 3 is checked green and reviewed. Merge it? Reply yes or no.</div></div><span class="rcpt dw"><span class="dot"></span>Delivered</span></div>
+                <div class="callline"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""><span class="t"><b>Called you</b> · 08:12</span><span class="dw" data-tone="ok"><span class="dot"></span>Answered</span></div>
+                <div class="msg reply"><span class="at">08:13</span><div><div class="who you">You</div><div class="tx">Yes, merge it. Hold step 5.</div></div></div>
+                <div class="callline missed"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""><span class="t"><b>Missed call</b> · the backup</span><span class="btn primary" style="height:44px;font-size:14px">Call again</span></div>
+                <div class="msg reply"><span class="at">08:55</span><div><div class="who you">You</div><div class="tx">Run it now, then tell me the size.</div></div></div>
+              </div>
+              <div class="compose" style="margin:6px 8px 8px">
+                <div class="ed">Message your phone</div>
+                <div class="acts"><span class="grow"></span><span class="micb"><svg><use href="#g-mic"/></svg></span><span class="btn primary"><svg class="g"><use href="#g-send"/></svg>Send</span></div>
+              </div>
+            </div>
+            <div class="ph-sb"><span class="dot" data-tone="ask"></span>A reply is waiting on you</div>
+          </div>
+          <div class="ph-dock"></div>
+        </div>
+        <p class="note" style="max-width:393px;margin-top:14px">The Phone wing at 393: the rail folds away (Calls from the desk are lines in the thread; Your phone lives in Settings). Every verb owns 44 px; the mic is 44 × 44.</p>
+      </div>
+      <div>
+        <div class="phone">
+          <div class="ph-menu"><b>HoldSpeak</b></div>
+          <div class="ph-win">
+            <div class="ph-tb"><span class="back">‹ Calls</span><span>Phone</span></div>
+            <div class="ph-body" style="padding:6px 10px;overflow:hidden">
+              <div class="grp-h">Your phone</div>
+              <div class="inset">
+                <div class="srow"><span class="n">iPhone 16 Pro</span><span class="st2 dw" data-tone="ok"><span class="dot"></span>Paired · seen 2 min ago</span><span class="v"><span class="btn secondary">Remove</span></span></div>
+              </div>
+              <div class="grp-h">Reach you</div>
+              <div class="inset">
+                <div class="reach">
+                  <div class="h">When</div><div class="h">Message</div><div class="h">Call</div><div class="h">Nothing</div>
+                  <div class="k">A program asks you</div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">A step fails</div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">A program is done</div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">Security or data loss</div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">Meeting follow-up</div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                  <div class="k">An agent asks</div><div class="c"><i class="rad on"></i></div><div class="c"><i class="rad"></i></div><div class="c"><i class="rad"></i></div>
+                </div>
+                <div class="reachfoot"><span>Set by Control: Normal</span></div>
+              </div>
+              <div class="grp-h">Quiet hours</div>
+              <div class="inset"><div class="srow"><span class="n">23:00 to 07:00</span><span class="st2" style="font-size:12px;color:var(--wb-muted)">Messages wait. Only urgent calls ring.</span><span class="v"><span class="ck on"><i></i>On</span></span></div></div>
+            </div>
+            <div class="ph-sb"><span class="dot" data-tone="ok"></span>Your phone is paired</div>
+          </div>
+          <div class="ph-dock"></div>
+        </div>
+        <p class="note" style="max-width:393px;margin-top:14px">Settings ▸ Calls ▸ Phone at 393: the rows fold to two lines; the Reach you radios own 56 × 44 cells.</p>
+      </div>
+      <div>
+        <div class="phone">
+          <div class="ph-menu"><b>HoldSpeak</b></div>
+          <div class="ph-win">
+            <div class="ph-tb"><span class="back">‹ Desk</span><span>Needs you</span></div>
+            <div class="ph-body">
+              <div class="ph-band"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt="" style="width:14px;height:14px;margin-right:6px">Phone</div>
+              <div class="nr"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACb0lEQVR4nKyUXUhTYRjH/2fnnH3WcaJNF8imEZpkDKKLFUiYF12EF4pQN0XRjXZTF10YQXVVN11IEEQGQYRQEBTRhUaQEUaalrpFEsuaO27O2b50H+85e9scrn3Pi/3hhfd9nuf8zv89z3teDlUWVy5ptvRbWDU5xbLsTLG8RAlDGMw6P74St2NMKVjTsZ69e7T6OaWKF4zGBlLUjYKlf5bFmHd97bhj8uV8WYdqyg1cOHe67shhS2rJl6qz2X7ohu+PDCanAyWB5o6+NtCExe3xwukSi4J4lkNjowFElpKD1Gdc5xc2H+016VT8vH7XbnZhwQab3V4UWFsjwGQyb0GzVQA06IW7925f49pbW1BJl4buQKfT5sQU+UUkLrfwPIudyO32QqFI1TKhog73W3sfRGKxhrH3n/DVtlgSpNOo0N1phSTLGH83IZNY/PV2LnNs2rsu3kgkpJtaw0GwvAZlRRm01K5jRXTGnW7v4K/JF49yHbb3KzlONWi0XsdO9dv+BKn2Mgp2PDue/ob25/FYxCdUgkT9SwiJn9MmiR9KFSdj5W8gu6agy2c609zRiSDqBBbnT+jxZjqMmTk76j0PYaohmF1cQCQaT/iCq0MOx9tAocMsdR3SbY2Umg08rG0aHGhSQRv+gu59QZxsDcG9nDyblG4mqPwh//kCh1cfr2bm0z+juDzigegjkIw9GP3uSm51A2brWbi+PUMxFQD9YTln7fSm7wUFp4am4wqoTJBgS/7a/7esVApuKRpAJTFJGKUUye7SqBTxo5TD4MZaH50afkrIprkSlFcLS/Fo+JY4NeYseCGqLA5V1j8AAAD//56qW5UAAAAGSURBVAMA4Ajj2JNVgScAAAAASUVORK5CYII=" alt=""><div><div class="t">Merge step 3 of The hub stops stalling?</div><div class="f">Asked on your phone · 12 min · no reply</div></div><div class="vb"><span class="btn primary">Call now</span><span class="btn secondary">Let it wait</span></div></div>
+              <div class="nr"><img class="s20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAB/klEQVR4nLSUyU8TURzHf2/ptBRECCnGuDVNGYU2ak1r6SKLBz2YGBcOenG5ePXowYNH/wmvnoxEol6MhCXs25UtEAgEQiAsbYEu896jMzBDCQ10SPlc5r1f3nzm976Z9ygUGQpF5vyFcvB5VFDshQLgICZnels7cmtIH7gj7+ptJZZ2UuKwS+VXCvFBOr4s0rGFtFCUlome739yhfjmg9eZq+FPmNoqwAxcScJi31eWiu1UzY7+2MJqUa5veWx3eEzLtE6oDUov+Qi18GfqXMuQIxawOw5jY0oKNibb0iITV/JJkHSBVspPJZKVqVgrXCBQl8cQCiEsCBHjhUx8CRIrI7uCKVN52yJULrvsl0il62DfLPsVXGYICYLOxNLQ58zOqpZpKrECDxsjF0OBe4F8vv7hMegfH4Dk5pw2T8bmGOeiS+teX1QTfvEEAfrirbvlue/32Zsbw3ASHd290Pb7n7K2tv4NBPs/Pfjrp1rH+oLpvta/2Uf5+zevTpWpNDdEoKkhRBGCeV12ROgKvqyxUJqqdlRBodTVyiBZrY9ya8ZJIYRHnc5ru2AC2e0CLlgot2Z0iBCO+O7edoNJnDeua8f1mBAERIN+X+H7PeCOt9YGGB8VqvlhjLfN5Kej5ogpadLn+/8hYaWMieq3Hz4m4AwIxo0xgiJT9At2DwAA//+v26cLAAAABklEQVQDAMCfmrEBqJsvAAAAAElFTkSuQmCC" alt=""><div><div class="t">Missed call: the backup did not run</div><div class="f">Today 08:40 · urgent</div></div><div class="vb"><span class="btn primary">Call again</span><span class="btn secondary">Answer here</span></div></div>
+            </div>
+          </div>
+          <div class="ph-dock"></div>
+        </div>
+        <p class="note" style="max-width:393px;margin-top:14px">Needs you at 393: the verbs go under the words, 44 px high.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="part">
+    <h2>What this canvas could not establish</h2>
+    <ul class="note">
+      <li>The app does not exist yet, so the scan is not proven end to end; the QR encodes a pairing link of the shape <code>holdspeak://pair?hub=…&amp;t=…</code> made with <code>qrcode-generator</code> 2.0.4 (MIT), the encoder PH-FACES takes.</li>
+      <li>Whether "Let it wait" should hide the row until the next reach or until the reply; the canvas says until either.</li>
+      <li>The desk floor is CSS, not a recorded hub shot. No product guard reads <code>docs/</code> canvases, so the copy here is proven by reading.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

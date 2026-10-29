@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 86  # informational; 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
+SCHEMA_VERSION = 87  # informational; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -5214,7 +5214,8 @@ CREATE TABLE IF NOT EXISTS programs (
     default_runs_on_json TEXT NOT NULL DEFAULT '[]',
     allowed_profiles_json TEXT NOT NULL DEFAULT '[]',
     may_handoff INTEGER NOT NULL DEFAULT 0,
-    usage_warning_share REAL
+    usage_warning_share REAL,
+    may_call INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS program_steps (
     id TEXT PRIMARY KEY,
@@ -5258,7 +5259,8 @@ CREATE TABLE IF NOT EXISTS program_steps (
     ended_at TEXT,
     updated_at TEXT NOT NULL,
     runs_on_json TEXT NOT NULL DEFAULT '[]',
-    handoffs_json TEXT NOT NULL DEFAULT '[]'
+    handoffs_json TEXT NOT NULL DEFAULT '[]',
+    may_call INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_program_steps_program ON program_steps(program_id, ordinal);
 CREATE TABLE IF NOT EXISTS program_checkpoints (
@@ -5276,4 +5278,59 @@ CREATE TABLE IF NOT EXISTS program_checkpoints (
     overturned_at TEXT,
     undo_json TEXT NOT NULL DEFAULT '{}'
 );
+-- Phone (2026-10-28, docs/internal/betterment/phone/): the desk reaches the
+-- owner on his phone and he reaches the desk. A paired device, the messages
+-- both ways, the calls (ringing, answered, missed, declined, ended) and the
+-- one sequence-numbered event log the phone and the desk replay from
+-- (holdspeak/phone/). A device row in state 'pairing' is a QR not yet
+-- scanned (jwt_kid holds the pairing token's hash until it is redeemed).
+CREATE TABLE IF NOT EXISTS phone_devices (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    platform TEXT NOT NULL DEFAULT '',
+    push_token TEXT,
+    push_kind TEXT,
+    sip_identity TEXT,
+    jwt_kid TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'pairing',
+    paired_at TEXT NOT NULL,
+    last_seen_at TEXT,
+    revoked_at TEXT
+);
+CREATE TABLE IF NOT EXISTS phone_messages (
+    id TEXT PRIMARY KEY,
+    seq INTEGER NOT NULL DEFAULT 0,
+    direction TEXT NOT NULL,
+    text TEXT NOT NULL,
+    reply_to TEXT,
+    created_at TEXT NOT NULL,
+    delivered_at TEXT,
+    read_at TEXT,
+    origin_ref TEXT,
+    program_step_id TEXT
+);
+CREATE TABLE IF NOT EXISTS phone_calls (
+    id TEXT PRIMARY KEY,
+    seq INTEGER NOT NULL DEFAULT 0,
+    direction TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    context_digest TEXT NOT NULL DEFAULT '',
+    urgent INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    answered_at TEXT,
+    ended_at TEXT,
+    end_reason TEXT,
+    transcript_ref TEXT,
+    decision_json TEXT,
+    transport TEXT NOT NULL DEFAULT 'number',
+    calls_turn_id TEXT
+);
+CREATE TABLE IF NOT EXISTS phone_events (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    ts TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_phone_events_ts ON phone_events(ts);
 """

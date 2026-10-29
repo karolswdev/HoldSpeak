@@ -790,6 +790,34 @@ def room_agent_submit(method: str, path: str) -> bool:
     return any(verb == want and pattern.match(path) for want, pattern in _ROOM_AGENT_SUBMIT)
 
 
+# Phone (2026-10-28): the routes a paired phone calls with its own device
+# token (a JWT, not the hub token), and the pairing redeem (its token is in
+# the body). The edge lets them through; each handler in
+# ``web/routes/phone.py`` admits the owner, an agent or a paired device by
+# name and answers 401 to anyone else. Every other phone route keeps its
+# OWNER edge right.
+_PHONE_DEVICE_ROUTES: tuple[tuple[str, Any], ...] = tuple(
+    (verb, re.compile("^" + pattern + "$"))
+    for verb, pattern in (
+        ("POST", r"/api/phone/devices"),
+        ("POST", r"/api/phone/messages"),
+        ("GET", r"/api/phone/messages"),
+        ("POST", r"/api/phone/messages/[^/]+/read"),
+        ("POST", r"/api/phone/calls"),
+        ("GET", r"/api/phone/calls/[^/]+"),
+        ("POST", r"/api/phone/calls/[^/]+/(accept|decline|end)"),
+        ("GET", r"/api/phone/events"),
+        ("GET", r"/api/phone/ws"),
+    )
+)
+
+
+def phone_device_route(method: str, path: str) -> bool:
+    """True for exactly the Phone routes a paired device may call."""
+    verb = str(method or "").upper()
+    return any(verb == want and pattern.match(path) for want, pattern in _PHONE_DEVICE_ROUTES)
+
+
 def required_right(method: str, path: str) -> Optional[PrincipalRight]:
     """Return the centralized edge right for one HTTP route.
 
@@ -806,6 +834,8 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return PrincipalRight.AGENT_SUBMIT
     if path.startswith("/_built") or not path.startswith("/api/"):
         return None
+    if phone_device_route(verb, path):
+        return None  # the handler admits the owner, an agent or a paired phone
     if (
         path == "/api/decisions"
         or path.startswith("/api/decisions/")

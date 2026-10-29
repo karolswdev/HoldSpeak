@@ -506,3 +506,304 @@ describe("DELIGHT slice 4: the Calls window", () => {
     expect(within(pane).getByTestId("calls-step-state-install").classList.contains("kit-dotword")).toBe(true);
   });
 });
+
+/* ── Phone (PHONE-DESIGN-2026-10-28 §9, canvas betterment/phone/canvases/
+   phone-2026-10-28.html, direction A: the Phone wing of the Calls window).
+   Every answer is a RECORDED hub answer (desk/calls/__fixtures__/phone.*.json,
+   recorded through the real routes by PH-HUB); the answer to a press is the
+   recorded state with the hub's change applied. ── */
+import phoneStatus from "../calls/__fixtures__/phone.settings.json";
+import phoneThread from "../calls/__fixtures__/phone.thread.json";
+import phoneCalls from "../calls/__fixtures__/phone.calls.json";
+import phonePair from "../calls/__fixtures__/phone.pair.json";
+import needsPhone from "../calls/__fixtures__/needs_you.phone.json";
+import { WingSlotContext } from "../surface/wings";
+import { PhoneSettingsPane } from "../calls/PhoneSettings";
+import { usePhoneFocus } from "../calls/phoneFocus";
+import { phoneTodayLine } from "../calls/phoneApi";
+import type { PhoneMessage, PhoneStatus } from "../calls/phoneTypes";
+import { needFace } from "../needs/needsFace";
+import { useState, type ReactNode } from "react";
+
+const P = {
+  status: phoneStatus as unknown as PhoneStatus,
+  messages: (phoneThread as { messages: PhoneMessage[] }).messages,
+  calls: phoneCalls.calls,
+};
+const lastSeq = Math.max(...P.messages.map((m) => m.seq));
+
+/** The window head: the wings a core publishes, drawn above it. */
+function Hosted({ children }: { children: ReactNode }) {
+  const [head, setHead] = useState<ReactNode>(null);
+  return (
+    <WingSlotContext.Provider value={setHead}>
+      <div data-testid="head">{head}</div>
+      {children}
+    </WingSlotContext.Provider>
+  );
+}
+
+/** The calls section of a hub whose phone is on (`phone_on`, read only). */
+const phoneOn = { calls: { ...settingsCalls, phone_on: true } };
+
+function phoneHub(extra: Record<string, Answer> = {}) {
+  hub({
+    "GET /api/settings": phoneOn,
+    "GET /api/calls/status": statusReady,
+    "GET /api/calls": callsList,
+    "GET /api/phone/status": P.status,
+    "GET /api/phone/messages?after_seq=0": phoneThread,
+    "GET /api/phone/calls": phoneCalls,
+    [`GET /api/phone/messages?after_seq=${lastSeq}`]: { messages: [], last_seq: lastSeq },
+    ...extra,
+  });
+}
+
+async function openPhone() {
+  render(<Hosted><CallsCore /></Hosted>);
+  await screen.findAllByTestId("calls-row");
+  fireEvent.click(within(screen.getByTestId("head")).getByRole("tab", { name: "Phone" }));
+  return screen.findByTestId("phone-wing");
+}
+const line = (id: string) => screen.getAllByTestId("phone-message").find((row) => row.getAttribute("data-message") === id)!;
+const callLine = (id: string) => screen.getAllByTestId("phone-call").find((row) => row.getAttribute("data-call") === id)!;
+
+describe("Phone: the wing of the Calls window", () => {
+  beforeEach(() => usePhoneFocus.setState({ pending: false, replyTo: null, callId: null }));
+
+  it("the head carries Calls · Phone; Phone draws the recorded thread, the desk calls and the paired phone", async () => {
+    phoneHub();
+    await openPhone();
+    expect(screen.getAllByTestId("phone-message")).toHaveLength(P.messages.length);
+    // His reply sits under the line it answers.
+    const reply = P.messages.find((m) => m.reply_to)!;
+    expect(line(reply.id).hasAttribute("data-reply")).toBe(true);
+    const order = screen.getAllByTestId("phone-message").map((row) => row.getAttribute("data-message"));
+    expect(order.indexOf(reply.id)).toBe(order.indexOf(reply.reply_to!) + 1);
+    // The read line says Read; the agent's ask and the missed call's line wait (ember).
+    expect(within(line(reply.reply_to!)).getByTestId("phone-receipt").textContent).toBe("Read");
+    const agentAsk = P.messages.find((m) => String(m.origin_ref).startsWith("agent:"))!;
+    expect(line(agentAsk.id).hasAttribute("data-waits")).toBe(true);
+    expect(within(line(agentAsk.id)).getByTestId("phone-receipt").textContent).toBe("Delivered");
+    expect(within(line(agentAsk.id)).getByTestId("phone-message-origin").textContent).toBe("an agent");
+    // The three desk calls, each its state in a word.
+    const words = Object.fromEntries(P.calls.map((call) => [call.state, within(callLine(call.id)).getByTestId("phone-call-state").textContent]));
+    expect(words).toMatchObject({ held: "Waits for your yes", missed: "Missed", ended: "Answered · 0:00" });
+    expect(screen.getByTestId("phone-device").textContent).toContain(P.status.devices[0].name);
+    expect(status()).toContain("2 replies are waiting on you");
+    expect(status()).toContain("3 calls from the desk");
+    // No host, number or engine chip on the window (A.9).
+    expect(screen.getByTestId("calls-window").textContent).not.toMatch(/tail\d|ts\.net|hub_/i);
+  });
+
+  it("Send writes the line to the phone and the thread reads on from the last seq", async () => {
+    const sent = { id: "msg_new", seq: lastSeq + 1, direction: "to_phone", text: "Back at 10.", created_at: new Date().toISOString() };
+    phoneHub({
+      "POST /api/phone/messages": { msg_id: "msg_new" },
+      [`GET /api/phone/messages?after_seq=${lastSeq}`]: { messages: [sent], last_seq: lastSeq + 1 },
+    });
+    await openPhone();
+    fireEvent.change(screen.getByLabelText("Message your phone"), { target: { value: "Back at 10." } });
+    fireEvent.click(screen.getByTestId("phone-send"));
+    await waitFor(() => expect(calls).toContain('POST /api/phone/messages {"text":"Back at 10."}'));
+    await waitFor(() => expect(line("msg_new")).toBeTruthy());
+    expect(within(line("msg_new")).getByTestId("phone-receipt").textContent).toBe("Sent");
+    expect((screen.getByLabelText("Message your phone") as HTMLTextAreaElement).value).toBe("");
+  });
+
+  it("Reply on his line threads the answer under it (reply_to)", async () => {
+    phoneHub({ "POST /api/phone/messages": { msg_id: "msg_r" } });
+    await openPhone();
+    const his = P.messages.find((m) => m.direction === "from_phone")!;
+    fireEvent.click(within(line(his.id)).getByTestId("phone-reply"));
+    expect(screen.getByTestId("phone-replying").textContent).toContain(his.text);
+    fireEvent.change(screen.getByLabelText("Message your phone"), { target: { value: "Done." } });
+    fireEvent.click(screen.getByTestId("phone-send"));
+    await waitFor(() => expect(calls).toContain(`POST /api/phone/messages {"text":"Done.","reply_to":"${his.id}"}`));
+    await waitFor(() => expect(screen.queryByTestId("phone-replying")).toBeNull());
+  });
+
+  it("a missed call: Call again presses the hub's again verb and the line reads Ringing", async () => {
+    const missed = P.calls.find((call) => call.state === "missed")!;
+    let pressed = false;
+    phoneHub({
+      [`POST /api/phone/calls/${missed.id}/again`]: () => { pressed = true; return { call_id: missed.id, state: "ringing" }; },
+      "GET /api/phone/calls": () => ({ calls: P.calls.map((call) => call.id === missed.id && pressed ? { ...call, state: "ringing" } : call) }),
+    });
+    await openPhone();
+    fireEvent.click(within(callLine(missed.id)).getByTestId("phone-call-again"));
+    await waitFor(() => expect(calls).toContain(`POST /api/phone/calls/${missed.id}/again {}`));
+    await waitFor(() => expect(within(callLine(missed.id)).getByTestId("phone-call-state").textContent).toBe("Ringing"));
+  });
+
+  it("a held call (an agent asks to call you): Call now rings it through the hub", async () => {
+    const held = P.calls.find((call) => call.state === "held")!;
+    phoneHub({ [`POST /api/phone/calls/${held.id}/ring`]: { call_id: held.id, state: "ringing" } });
+    await openPhone();
+    expect(within(callLine(held.id)).getByTestId("phone-call-state").closest("[data-tone]")?.getAttribute("data-tone")).toBe("ask");
+    fireEvent.click(within(callLine(held.id)).getByTestId("phone-call-ring"));
+    await waitFor(() => expect(calls).toContain(`POST /api/phone/calls/${held.id}/ring {}`));
+  });
+
+  it("a desk call by number opens its Calls call as a document (Open transcript)", async () => {
+    const ended = { ...P.calls.find((call) => call.state === "ended")!, transport: "number", transcript_ref: "call:c7a2f1" };
+    phoneHub({
+      "GET /api/phone/calls": { calls: P.calls.map((call) => call.id === ended.id ? ended : call) },
+      "GET /api/calls/c7a2f1": callEnded,
+    });
+    await openPhone();
+    fireEvent.click(within(callLine(ended.id)).getByTestId("phone-open-transcript"));
+    expect(await screen.findByTestId("calls-document")).toBeInTheDocument();
+  });
+
+  it("a phone_changed frame reads the thread on from the last seq: his reply arrives and is marked read", async () => {
+    const reply = { id: "msg_frame", seq: lastSeq + 1, direction: "from_phone", text: "main.", reply_to: P.messages.find((m) => String(m.origin_ref).startsWith("agent:"))!.id,
+      created_at: new Date().toISOString() };
+    phoneHub({
+      [`GET /api/phone/messages?after_seq=${lastSeq}`]: { messages: [reply], last_seq: lastSeq + 1 },
+      "POST /api/phone/messages/msg_frame/read": { ok: true },
+    });
+    await openPhone();
+    emit("phone_changed", { kind: "message", id: "msg_frame", state: "new" });
+    await waitFor(() => expect(line("msg_frame")).toBeTruthy());
+    expect(line("msg_frame").hasAttribute("data-reply")).toBe(true);
+    await waitFor(() => expect(calls).toContain("POST /api/phone/messages/msg_frame/read {}"));
+    // The agent's ask has its reply now: one line still waits.
+    await waitFor(() => expect(status()).toContain("A reply is waiting on you"));
+  });
+
+  it("no phone and no number: one object, one line, Pair a phone opens Settings ▸ Calls", async () => {
+    phoneHub({
+      "GET /api/phone/status": { ...P.status, devices: [] },
+      "GET /api/phone/messages?after_seq=0": { messages: [], last_seq: 0 },
+      "GET /api/phone/calls": { calls: [] },
+    });
+    render(<Hosted><CallsCore /></Hosted>);
+    await screen.findAllByTestId("calls-row");
+    fireEvent.click(within(screen.getByTestId("head")).getByRole("tab", { name: "Phone" }));
+    expect(await screen.findByText("No phone yet")).toBeInTheDocument();
+    expect(screen.getByText("Pair a phone, or add a number in Calls, and the desk can reach you.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Pair a phone/ }));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "calls");
+    expect(status()).not.toMatch(/\b0\b/);
+  });
+
+  it("a hub without the Phone slice draws No phone yet and reads nothing more", async () => {
+    hub({ "GET /api/settings": { calls: settingsCalls }, "GET /api/calls/status": statusReady, "GET /api/calls": callsList });
+    render(<Hosted><CallsCore /></Hosted>);
+    await screen.findAllByTestId("calls-row");
+    fireEvent.click(within(screen.getByTestId("head")).getByRole("tab", { name: "Phone" }));
+    expect(await screen.findByText("No phone yet")).toBeInTheDocument();
+    // phone_on is not in the calls section: no /api/phone route is read.
+    expect(calls.filter((call) => call.includes("/api/phone/"))).toEqual([]);
+  });
+
+  it("Answer here (the one-shot ask) opens the window on the Phone wing with the reply set", async () => {
+    phoneHub();
+    const ask = P.messages.find((m) => String(m.origin_ref).startsWith("phone_call:"))!;
+    usePhoneFocus.getState().open(ask.id);
+    render(<Hosted><CallsCore /></Hosted>);
+    await screen.findByTestId("phone-wing");
+    expect(screen.getByTestId("phone-replying").textContent).toContain(ask.text);
+    expect(usePhoneFocus.getState().pending).toBe(false);
+  });
+});
+
+describe("Settings ▸ Calls ▸ Phone", () => {
+  it("the recorded status: the paired phone with Remove, Reach you by the level, Rhythm's quiet hours, the line, egress once", async () => {
+    hub({ "GET /api/settings": phoneOn, "GET /api/phone/status": P.status, [`DELETE /api/phone/devices/${P.status.devices[0].id}`]: { ok: true } });
+    render(<PhoneSettingsPane />);
+    const row = await screen.findByTestId("phone-device-row");
+    expect(row.textContent).toContain(P.status.devices[0].name);
+    expect(row.textContent).toMatch(/Paired \d+ Oct/);
+    const reach = screen.getAllByTestId("phone-reach-row");
+    expect(reach.map((r) => r.getAttribute("data-kind"))).toEqual(Object.keys(P.status.reach));
+    for (const r of reach) expect(r.getAttribute("data-channel")).toBe(P.status.reach[r.getAttribute("data-kind")!].level_word);
+    expect(screen.getByTestId("phone-reach-level").textContent).toBe("Set by Control: YOLO");
+    expect(screen.queryByTestId("phone-reach-reset")).toBeNull();
+    expect(screen.getByTestId("phone-quiet").textContent).toContain("22:00 to 08:00");
+    fireEvent.click(screen.getByTestId("phone-quiet-rhythm"));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "rhythm");
+    expect(screen.getByTestId("phone-number").textContent).toContain(P.status.line.words);
+    expect(screen.getAllByTestId("phone-egress")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("phone-device-remove"));
+    await waitFor(() => expect(calls).toContain(`DELETE /api/phone/devices/${P.status.devices[0].id}`));
+  });
+
+  it("Pair a phone draws the QR from the recorded pair payload in place; a device frame that pairs it closes the sheet", async () => {
+    let paired = false;
+    hub({
+      "GET /api/settings": phoneOn,
+      "GET /api/phone/status": () => (paired ? P.status : { ...P.status, devices: [] }),
+      "POST /api/phone/pair": phonePair,
+    });
+    render(<PhoneSettingsPane />);
+    fireEvent.click(await screen.findByTestId("phone-pair"));
+    const sheet = await screen.findByTestId("phone-pair-sheet");
+    expect(phonePair.qr_png_base64).toBeNull();
+    const qr = within(sheet).getByTestId("phone-qr");
+    expect(qr.getAttribute("data-qr")).toBe(phonePair.qr_payload);
+    expect(qr.querySelector("path")?.getAttribute("d")?.length ?? 0).toBeGreaterThan(500);
+    expect(within(sheet).getByTestId("phone-pair-left").textContent).toMatch(/Good for \d+ more minutes?|This code is too old/);
+    paired = true;
+    emit("phone_changed", { kind: "device", id: P.status.devices[0].id, state: "paired" });
+    await waitFor(() => expect(screen.queryByTestId("phone-pair-sheet")).toBeNull());
+    expect(screen.getByTestId("phone-device-row")).toBeInTheDocument();
+  });
+
+  it("a Reach you choice writes his own word over the level; Use the YOLO set clears it", async () => {
+    let own: Record<string, string> = {};
+    const withOwn = () => ({ ...P.status, reach: Object.fromEntries(Object.entries(P.status.reach).map(([kind, choice]) =>
+      [kind, own[kind] ? { ...choice, word: own[kind], own: true } : choice])) });
+    hub({
+      "GET /api/settings": phoneOn,
+      "GET /api/phone/status": withOwn,
+      "PUT /api/settings": (init?: { json?: unknown }) => { own = (init?.json as { calls: { phone_reach: Record<string, string> } }).calls.phone_reach; return {}; },
+    });
+    render(<PhoneSettingsPane />);
+    const row = (await screen.findAllByTestId("phone-reach-row")).find((r) => r.getAttribute("data-kind") === "program_done")!;
+    fireEvent.click(within(row).getByLabelText("Nothing"));
+    await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"phone_reach":{"program_done":"nothing"}}}'));
+    await waitFor(() => expect(row.getAttribute("data-channel")).toBe("nothing"));
+    expect(screen.getByTestId("phone-reach-level").textContent).toBe("Your choices over Control: YOLO");
+    fireEvent.click(screen.getByTestId("phone-reach-reset"));
+    await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"phone_reach":{}}}'));
+    await waitFor(() => expect(row.getAttribute("data-channel")).toBe("message"));
+  });
+});
+
+describe("Phone on Today", () => {
+  it("the recorded day reads Reached you 3 times: 1 answered; a day without a reach says nothing", () => {
+    expect(phoneTodayLine(P.status)).toBe("Reached you 3 times: 1 answered");
+    expect(phoneTodayLine({ ...P.status, today: { reaches: 0, calls: 0, answered: 0 } })).toBe("");
+    expect(phoneTodayLine(null)).toBe("");
+  });
+});
+
+describe("Phone in Needs you (the recorded phone_items)", () => {
+  const items = (needsPhone as { items: Array<Record<string, unknown>> }).items;
+  const face = (kind: string) => {
+    const item = items.find((entry) => (entry.phone as { kind: string }).kind === kind)!;
+    return { item, face: needFace({ ref: String(item.ref), kind: "attention", item } as never, { now: new Date(), sessions: [], flights: [] } as never) };
+  };
+  it("asked: the hub's line, Call now / Let it wait", () => {
+    const { item, face: f } = face("asked");
+    expect(f.name).toBe(item.title);
+    expect(f.fact).toBe("Asked on your phone · now · no reply");
+    expect(f.verbs).toMatchObject({ kind: "phone", item: "asked" });
+    expect((f.verbs as { verbs: Array<{ label: string }> }).verbs.map((v) => v.label)).toEqual(["Call now", "Let it wait"]);
+  });
+  it("a missed call: Call again / Answer here (needs his words)", () => {
+    const { face: f } = face("missed_call");
+    expect(f.name).toBe("Missed call: The deploy waits for your go");
+    expect(f.lamp.tone).toBe("fail");
+    const verbs = (f.verbs as { verbs: Array<{ label: string; needs_text?: boolean }>; msgId: string }).verbs;
+    expect(verbs.map((v) => v.label)).toEqual(["Call again", "Answer here"]);
+    expect(verbs[1].needs_text).toBe(true);
+  });
+  it("a held call: Call you about …? with Call now / Let it wait", () => {
+    const { face: f } = face("held_call");
+    expect(f.name).toMatch(/^Call you about .+\?$/);
+    expect(f.fact).toBe("An agent asks to call you · now");
+  });
+});

@@ -41,6 +41,7 @@ import type {
   Control, DecidedRow, DecideBody, PlanStep, Program, ProgramCheckpoint, ProgramStep, RunsOnEntry, StepHandoff, YourTurnItem,
 } from "./types";
 import "./programs.css";
+import { openPhoneWing } from "../calls/phoneFocus";
 
 /** The verbs of one your-turn item, in the canvas order. */
 const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[]> = {
@@ -268,6 +269,29 @@ function ControlPicker({ value, onPick, disabled }: { value: Control | string; o
           }))} />
       ) : null}
     </>
+  );
+}
+
+/** Phone (PHONE-DESIGN §9): one line under Decided for you when the engine
+ *  messaged or called him for this Program — the newest reach (a Decided
+ *  for you row of kind `reach`: its line and its rule). Open thread opens
+ *  the Calls window on its Phone wing. */
+export function ReachLine({ program }: { program: Program }) {
+  const reaches = (program.decided_for_you ?? []).filter((row) => row.kind === "reach");
+  const reach = reaches[reaches.length - 1];
+  if (!reach) return null;
+  return (
+    <div className="pg-reach" data-testid="programs-reach" data-channel={reach.choice ?? undefined}>
+      <span className="pg-reach-at">{clock(reach.at)}</span>
+      <span className="pg-reach-line">
+        {reach.line}
+        {reach.rule ? <span className="pg-decided-rule"> · {reach.rule}</span> : null}
+        {program.may_call ? <span className="pg-decided-rule"> · it may call you</span> : null}
+      </span>
+      <span className="pg-reach-verb">
+        <Button dense variant="secondary" onClick={() => openPhoneWing()} data-testid="programs-reach-open">Open thread</Button>
+      </span>
+    </div>
   );
 }
 
@@ -586,6 +610,7 @@ export function ProgramBody({ programId }: { programId: string }) {
           <GateFold step={chosen} open={gateOpen} onToggle={setGateOpen} />
         ) : null}
         {!drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
+        {!drafting ? <ReachLine program={program} /> : null}
         {!drafting ? <Checkpoints program={program} open={checksOpen} onToggle={setChecksOpen} /> : null}
       </div>
       <StatusBar data-testid="program-status" items={status} />

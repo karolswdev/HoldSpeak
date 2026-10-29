@@ -907,6 +907,12 @@ class ProgramRunner:
         if not outcome.to_owner:
             self.service.engine_decision(program, step, "step_failed", outcome,
                                          f"Parked step {step['ordinal']} and carried on: {reason}")
+        self.service.reach_phone(
+            program, step, "step_red",
+            f"{program['title']}, step {step['ordinal']} is red after its rounds: {reason}. "
+            + ("It waits for you on the desk." if outcome.to_owner else "It is parked; the rest carries on."),
+            reason=f"{program['title']}, step {step['ordinal']} is red",
+        )
 
     def diff_facts(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> dict[str, Any]:
         """The core-question facts a step's diff raises (design §6): files no
@@ -945,6 +951,12 @@ class ProgramRunner:
         step["facts"] = facts
         self.service.save_step(step)
         self.service._checkpoint(program, step, "engine", f"A core question for you: {reason}")
+        self.service.reach_phone(
+            program, step, "core_question",
+            f"{program['title']}, step {step['ordinal']}: a question for you. {reason[:1].upper() + reason[1:]}. "
+            "Open the program on your desk to decide.",
+            reason=f"{program['title']} has a question for you: {reason}",
+        )
 
     def _core_hold(self, step: Mapping[str, Any]) -> bool:
         core = (step.get("facts") or {}).get("core")

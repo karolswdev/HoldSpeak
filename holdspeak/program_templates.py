@@ -62,6 +62,9 @@ TEMPLATES: list[dict[str, Any]] = [
         "program": {
             "control": "yolo", "reviewer_profile": "claude-default", "reviewer_engine": None,
             "default_profile": "pi-default", "default_engine": HOME_ENGINE_PROFILE, "prefer_idle": True,
+            # Phone (2026-10-28): overnight, the engine may call him where the
+            # Reach rules allow it (a core question at YOLO rings at once).
+            "may_call": True,
         },
         "step": {"gate_check": True, "gate_review": True, "review_depth": "delta", "gate_merge": "level", "race": 0},
     },

@@ -1027,6 +1027,30 @@
     },
     {
       "transport": "mcp",
+      "entry_point": "phone.call",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/phone.py) over the one PhoneService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "phone.get_replies",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/phone.py) over the one PhoneService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "phone.send_message",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/phone.py) over the one PhoneService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "phone.status",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/phone.py) over the one PhoneService"
+    },
+    {
+      "transport": "mcp",
       "entry_point": "coder.audit",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py)"

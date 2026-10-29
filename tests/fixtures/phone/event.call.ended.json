@@ -1,0 +1,12 @@
+{
+  "seq": 14,
+  "type": "call.ended",
+  "ts": "2026-10-28T23:39:29.992803+00:00",
+  "data": {
+    "call_id": "pcall_e9b51a6125313e34",
+    "at": "2026-10-28T23:39:29.992788+00:00",
+    "by": "phone",
+    "end_reason": "hung_up",
+    "duration_s": 0.0
+  }
+}

@@ -17,3 +17,61 @@ Copyright the herdr authors, licensed under the Apache License, Version 2.0.
 
 Nothing is copied from herdr releases before 0.8.0 or from any fork of it
 that carries the AGPL.
+
+This product includes ideas and schema shapes from agentring
+(https://github.com/mutonby/agentring, read at commit 10b0e55),
+Copyright the agentring authors, licensed under the Apache License,
+Version 2.0. agentring has no NOTICE file of its own.
+
+- No agentring file is copied and no agentring code runs. holdspeak/phone/
+  (the event log with seq and replay, the call state machine, pairing by a
+  QR token and a device JWT, the signed push payload, the PushProvider
+  answers), holdspeak/mcp/families/phone.py (the send_message, get_replies,
+  call and status tools) and agent/skills/holdspeak-phone/SKILL.md (the
+  etiquette) are fresh code and text written after agentring's relay,
+  daemon and skill. Our changes: the hub is the relay (no VPS, no LiveKit,
+  no Firebase), APNs in place of FCM, the voice is HoldSpeak's Calls turn
+  loop, and the rules to reach the owner are code by control level.
+- What each part took, file by file:
+  docs/internal/betterment/phone/ABSORBED-FROM-AGENTRING.md.
+
+This product includes ideas from Moonfold
+(https://github.com/Mr-Dark-debug/Moonfold), Copyright (c) 2026 T3 Tools Inc.
+and Copyright (c) 2026 Moonfold contributors, licensed under the MIT License.
+
+- No Moonfold code is copied. The idea of the provider handoff (an ordered
+  fallback list of agents, a limit notice that offers "Continue in ...", a
+  deterministic handoff brief built from the thread's history without a
+  model, redaction counted by kind, never twice for the same stopped turn,
+  allowed providers per project, an optional usage warning) is fresh code in
+  holdspeak/services/program_handoff.py, holdspeak/agent_context/usage_limit.py
+  and the PG19 parts of holdspeak/services/program_runner.py and
+  program_rules.py (docs/internal/betterment/programs/PROGRAMS-DESIGN-2026-10-28.md,
+  "PG19 Handoff").
+
+This product includes qrcode-generator 2.0.4
+(https://github.com/kazuhikoarase/qrcode-generator),
+Copyright (c) 2016 Kazuhiko Arase, licensed under the MIT License.
+
+- It is an npm dependency of the web desk (web/package.json); the phone
+  pairing screen draws its QR with it. It is bundled unchanged.
+
+The MIT License text, for Moonfold and qrcode-generator:
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.

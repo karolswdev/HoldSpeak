@@ -1,0 +1,129 @@
+{
+  "items": [
+    {
+      "id": "phone:held_call:pcall_6322e449972bc12d",
+      "ref": "phone:held_call:pcall_6322e449972bc12d",
+      "projectId": "",
+      "projectName": "",
+      "title": "Call you about the schema step wants to drop a column?",
+      "why": "TO DECIDE",
+      "ageToken": "2026-10-28T23:40:24.279251+00:00",
+      "since": "2026-10-28T23:40:24.279251+00:00",
+      "dueAt": null,
+      "dueWord": "now",
+      "kind": "phone",
+      "source": "phone",
+      "verbHref": null,
+      "openRef": "calls",
+      "severity": "warning",
+      "group": "Your phone",
+      "phone": {
+        "kind": "held_call",
+        "line": "An agent asks to call you · now",
+        "msgId": null,
+        "callId": "pcall_6322e449972bc12d",
+        "verbs": [
+          {
+            "id": "call_now",
+            "label": "Call now",
+            "method": "POST",
+            "href": "/api/phone/calls/pcall_6322e449972bc12d/ring"
+          },
+          {
+            "id": "let_wait",
+            "label": "Let it wait",
+            "method": "POST",
+            "href": "/api/phone/calls/pcall_6322e449972bc12d/decline"
+          }
+        ]
+      },
+      "personId": null
+    },
+    {
+      "id": "phone:missed_call:pcall_986aee7d31e0cc5f",
+      "ref": "phone:missed_call:pcall_986aee7d31e0cc5f",
+      "projectId": "",
+      "projectName": "",
+      "title": "Missed call: The deploy waits for your go",
+      "why": "MISSED",
+      "ageToken": "2026-10-28T23:40:24.273179+00:00",
+      "since": "2026-10-28T23:40:24.273179+00:00",
+      "dueAt": null,
+      "dueWord": "now",
+      "kind": "phone",
+      "source": "phone",
+      "verbHref": null,
+      "openRef": "calls",
+      "severity": "warning",
+      "group": "Your phone",
+      "phone": {
+        "kind": "missed_call",
+        "line": "Your desk called · now · no answer",
+        "msgId": "msg_85fe7f6b254cfa9f",
+        "callId": "pcall_986aee7d31e0cc5f",
+        "verbs": [
+          {
+            "id": "call_again",
+            "label": "Call again",
+            "method": "POST",
+            "href": "/api/phone/calls/pcall_986aee7d31e0cc5f/again"
+          },
+          {
+            "id": "answer_here",
+            "label": "Answer here",
+            "method": "POST",
+            "href": "/api/phone/messages",
+            "body": {
+              "reply_to": "msg_85fe7f6b254cfa9f"
+            },
+            "needs_text": true
+          }
+        ]
+      },
+      "personId": null
+    },
+    {
+      "id": "phone:asked:msg_3cb69bff4b330a30",
+      "ref": "phone:asked:msg_3cb69bff4b330a30",
+      "projectId": "",
+      "projectName": "",
+      "title": "Which branch is the release: main or release/1.4?",
+      "why": "NO REPLY",
+      "ageToken": "2026-10-28T23:40:23.932730+00:00",
+      "since": "2026-10-28T23:40:23.932730+00:00",
+      "dueAt": null,
+      "dueWord": "now",
+      "kind": "phone",
+      "source": "phone",
+      "verbHref": null,
+      "openRef": "calls",
+      "severity": "warning",
+      "group": "Your phone",
+      "phone": {
+        "kind": "asked",
+        "line": "Asked on your phone · now · no reply",
+        "msgId": "msg_3cb69bff4b330a30",
+        "callId": null,
+        "verbs": [
+          {
+            "id": "call_now",
+            "label": "Call now",
+            "method": "POST",
+            "href": "/api/phone/calls",
+            "body": {
+              "reason": "Which branch is the release: main or release/1.4?",
+              "context": "Which branch is the release: main or release/1.4?"
+            }
+          },
+          {
+            "id": "let_wait",
+            "label": "Let it wait",
+            "method": "POST",
+            "href": "/api/phone/messages/msg_3cb69bff4b330a30/wait"
+          }
+        ]
+      },
+      "personId": null
+    }
+  ]
+}

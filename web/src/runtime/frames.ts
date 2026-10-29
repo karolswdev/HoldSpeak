@@ -32,6 +32,7 @@ export const RUNTIME_FRAME_TYPES = [
   "learning_event",
   "meeting_started",
   "meeting_updated",
+  "phone_changed",
   "plugin_jobs_processed",
   // Programs (2026-10-28): a Program changed (the Programs window, the
   // Program window, the Dock's Agents lamp re-read it).

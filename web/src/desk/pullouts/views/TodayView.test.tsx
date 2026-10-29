@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PERSON_OPEN_EVENT } from "../../objectWindows";
 import { useDesk } from "../../store";
 import sinceMorning from "../../__tests__/fixtures/today-hub/since-morning.json";
+import phoneStatus from "../../calls/__fixtures__/phone.settings.json";
+import { usePhoneFocus } from "../../calls/phoneFocus";
 import { DAY_SAID_KEY, EVENING_SAID_KEY, TodayView, countdown, currentStep, dayGreeting, dayLight, dayPart, toFinish } from "./TodayView";
 
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
@@ -408,6 +410,32 @@ describe("DELIGHT slice 5: Since this morning", () => {
     expect(screen.queryByTestId("today-done-row")).toBeNull();
     fireEvent.click(toggle);
     expect(screen.getAllByTestId("today-done-row")).toHaveLength(recorded.items.length);
+  });
+
+  it("Phone: the recorded day adds one line, Reached you 3 times: 1 answered; it opens the Phone wing", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 18, 0, 0));
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+      "/api/today/since-morning": () => json(recorded),
+      "/api/settings": () => json({ calls: { phone_on: true } }),
+      "/api/phone/status": () => json(phoneStatus),
+    });
+    render(<TodayView />);
+    const row = await screen.findByTestId("today-phone");
+    expect(row.textContent).toBe("Reached you 3 times: 1 answered");
+    fireEvent.click(row);
+    expect(usePhoneFocus.getState().pending).toBe(true);
+    usePhoneFocus.setState({ pending: false, replyTo: null, callId: null });
+  });
+
+  it("Phone: a hub without the Phone slice adds no line", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 18, 0, 0));
+    day(() => json(recorded));
+    render(<TodayView />);
+    await screen.findAllByTestId("today-done-row");
+    expect(screen.queryByTestId("today-phone")).toBeNull();
   });
 
   it("an empty evening is one line, never a zero", async () => {

@@ -1,0 +1,17 @@
+{
+  "seq": 21,
+  "type": "reach",
+  "ts": "2026-10-28T23:39:30.002930+00:00",
+  "data": {
+    "kind": "agent_question",
+    "channel": "message",
+    "rule": "Normal: an agent's question is a message first",
+    "level": "normal",
+    "may_call": false,
+    "reason": "Which branch is the release?",
+    "origin_ref": "agent:lane:1",
+    "msg_id": "msg_39eec16debf73116",
+    "urgent": false,
+    "queued": false
+  }
+}
