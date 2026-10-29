@@ -192,6 +192,11 @@ def redacted_settings(
     calls_payload = payload.get("calls")
     if isinstance(calls_payload, dict):
         calls_payload["passphrase_set"] = bool(calls_payload.pop("passphrase", ""))
+        # Phone (2026-10-28): the faces ask the hub's phone only when it is
+        # on (HOLDSPEAK_PHONE=off mounts no /api/phone route: no 404 read).
+        from ..phone import phone_on
+
+        calls_payload["phone_on"] = phone_on()
     return payload
 
 
@@ -1056,6 +1061,7 @@ class SettingsService:
             # Calls (2026-10-28): the read's passphrase_set is not a field.
             calls_data = dict(merged.get("calls") or {})
             calls_data.pop("passphrase_set", None)
+            calls_data.pop("phone_on", None)
             calls_cfg = CallsConfig(**calls_data)
         except (TypeError, ValueError) as exc:
             return {"success": False, "error": f"Invalid preference: {exc}"}

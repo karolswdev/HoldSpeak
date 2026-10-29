@@ -5052,7 +5052,9 @@
         "POST"
       ],
       "module": "web.routes.phone",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/phone/devices",
@@ -5080,7 +5082,9 @@
         "DELETE"
       ],
       "module": "web.routes.phone",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/phone/events",
@@ -5118,7 +5122,9 @@
         "POST"
       ],
       "module": "web.routes.phone",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/phone/messages/{message_id}/wait",

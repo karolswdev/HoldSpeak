@@ -59,7 +59,13 @@ export type NeedVerbs =
   /** Programs (2026-10-28): a your-turn item of a Program; each choice is
    *  its `POST …/steps/{sid}/decide`. */
   | { kind: "program"; programId: string; stepId: string; decide: string; itemKind: string; choices: string[]; findingId?: string | null }
+  /** Phone (2026-10-28): the hub's own verbs for a phone item (Call now /
+   *  Let it wait, Call again / Answer here, Call / Not now); a verb that
+   *  needs words (Answer here) opens the Phone wing to reply. */
+  | { kind: "phone"; item: string; verbs: PhoneVerb[]; msgId: string | null }
   | { kind: "none" };
+
+export type PhoneVerb = { id: string; label: string; method: string; href: string; body?: Record<string, unknown>; needs_text?: boolean };
 
 type DoorCardLike = {
   target_ref?: string;
@@ -379,6 +385,23 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       verbs: { kind: "send", sendId: String(item.sendId), documentRef: String(item.documentRef),
         destinationId: String(item.destinationId), state, send: item.send },
       openRef: undefined,
+    };
+  }
+
+  // Phone (PHONE-DESIGN §9): an ask with no reply, a missed call, a call
+  // an agent holds for his yes, a line no phone got. The hub says the line
+  // ("Asked on your phone · 12 min · no reply") and the verbs.
+  const phone = item.phone as { kind?: string; line?: string; msgId?: string | null; verbs?: PhoneVerb[] } | undefined;
+  if (source === "phone" && phone?.kind) {
+    const missed = phone.kind === "missed_call";
+    return {
+      id, kind: "call", name: title,
+      fact: String(phone.line ?? ""),
+      lamp: { label: why || "TO DECIDE", tone: missed ? "fail" : "ask" },
+      group: "rest", direction: "decide",
+      verbs: { kind: "phone", item: phone.kind, verbs: [...(phone.verbs ?? [])], msgId: phone.msgId ? String(phone.msgId) : null },
+      openRef: undefined,
+      kindWord: "PHONE",
     };
   }
 

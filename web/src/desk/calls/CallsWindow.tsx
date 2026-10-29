@@ -26,6 +26,10 @@ import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem, type Too
 import { ObjectList, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../surface/objects/ObjectList";
 import { SurfaceState } from "../surface/Surface";
 import { decide, hangUp, placeCall, readCall, refusalWords, useCalls, withTranscript } from "./api";
+import { useCoreWings } from "../../pages/cores/core-hooks";
+import { usePhone } from "./phoneApi";
+import { PhoneWing } from "./PhoneWing";
+import { usePhoneFocus } from "./phoneFocus";
 import type { Call, CallResult, CallSummary, CallsSettings, CallsStatus } from "./types";
 import "./calls.css";
 
@@ -207,8 +211,21 @@ function openCallsSettings() {
   openSurfaceOr("configure-settings", "/settings", "calls");
 }
 
-export function CallsCore(_props: CoreProps) {
+/** The Calls window's two faces (PHONE-DESIGN §9, direction A): the calls
+ *  HoldSpeak took or placed, and the Phone thread. */
+export const CALLS_WINGS = [
+  { id: "calls", label: "Calls" },
+  { id: "phone", label: "Phone" },
+];
+
+export function CallsCore({ scope }: CoreProps) {
   const calls = useCalls();
+  const asks = usePhoneFocus.getState();
+  const { view, setView } = useCoreWings(CALLS_WINGS, scope === "phone" || (asks.pending && !asks.callId) ? "phone" : "calls");
+  const phone = usePhone(view === "phone");
+  /* Answer here (Needs you) and the Today line ask for the Phone wing. */
+  const asked = usePhoneFocus((st) => st.pending);
+  const askedCall = usePhoneFocus((st) => st.callId);
   const [viewing, setViewing] = useState<Call | null>(null);
   const [busy, setBusy] = useState<"" | "place" | "hangup" | "decide" | "open">("");
   const [refusal, setRefusal] = useState("");
@@ -246,6 +263,14 @@ export function CallsCore(_props: CoreProps) {
     });
   };
   const open = (id: string) => void run("open", async () => { setViewing(await readCall(id)); });
+  const openFromPhone = (id: string) => { setView("calls"); open(id); };
+  useEffect(() => {
+    if (!asked) return;
+    if (askedCall) openFromPhone(askedCall);
+    else setView("phone");
+    usePhoneFocus.getState().take();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asked, askedCall]);
   const back = () => { setViewing(null); calls.clearEnded(); };
 
   const rows: ObjectListRow[] = calls.calls.filter((row) => row.state === "ended").map((call) => {
@@ -292,6 +317,10 @@ export function CallsCore(_props: CoreProps) {
     { key: "ready", lamp: "ok", text: "Ready for calls", testId: "calls-status-ready" },
   ];
   if (!active) statusItems.push({ key: "count", text: countWords(ended, "call") });
+
+  if (view === "phone") {
+    return <PhoneWing phone={phone} canCall={canCall && !active} calling={busy === "place"} onCallMe={() => void callMe()} onOpenCall={openFromPhone} />;
+  }
 
   let body: ReactNode;
   /* The body's phase keys it, so what arrives after the first read (the

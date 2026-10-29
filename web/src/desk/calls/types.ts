@@ -70,4 +70,6 @@ export interface CallsSettings {
   greeting: string;
   allowed_numbers: string[];
   passphrase_set: boolean;
+  /** Phone (2026-10-28): the hub's phone is on (`HOLDSPEAK_PHONE`); read only. */
+  phone_on?: boolean;
 }

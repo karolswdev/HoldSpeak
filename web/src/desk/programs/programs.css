@@ -448,6 +448,30 @@
   .desk-next .pg-decided-verb .btn { min-height: 44px; }
 }
 
+/* ── Phone (2026-10-28): the Reach line under Decided for you ── */
+.pg-reach {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  margin: 0 12px;
+  padding: 0 0 0 20px;
+  border-top: 1px solid var(--wb-rule-soft);
+  font: 400 13px / 1.4 var(--font-sans);
+  color: var(--wb-ink);
+}
+.pg-reach-at { font-size: 12px; color: var(--wb-faint); font-variant-numeric: tabular-nums; }
+.pg-reach-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-reach-line b { font-weight: 600; }
+.pg-reach-verb { display: inline-flex; }
+@container surface (max-width: 520px) {
+  .pg-reach { grid-template-columns: minmax(0, 1fr) auto; padding-left: 0; }
+  .pg-reach-at { display: none; }
+  .pg-reach-line { white-space: normal; }
+  .desk-next .pg-reach-verb .btn { min-height: 44px; }
+}
+
 /* ── the Room's Programs fold (§9b) ── */
 .pg-room { margin: 8px 12px 0; }
 .desk-next .kit-listrow.pg-room-row .kit-listrow-main { padding-left: 4px; }

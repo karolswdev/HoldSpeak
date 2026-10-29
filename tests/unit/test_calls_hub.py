@@ -33,20 +33,24 @@ def test_the_five_calls_keys_round_trip_and_the_passphrase_is_write_only(home) -
     from holdspeak.db import get_database
     from holdspeak.services.settings_service import SettingsService
 
+    from holdspeak.phone import phone_on
+
     service = SettingsService(get_database())
     fresh = service.get_settings(OWNER)["calls"]
     assert fresh == {"enabled": False, "aiphone_dir": "", "greeting": "Hello. What can I do?",
                      "allowed_numbers": [], "passphrase_set": False,
-                     # Phone (2026-10-28): Settings ▸ Calls ▸ Phone.
-                     "phone_reach": {}, "phone_urgent_dnd": False}
+                     # Phone (2026-10-28): Settings ▸ Calls ▸ Phone; phone_on
+                     # is read only (HOLDSPEAK_PHONE), so the faces read no 404.
+                     "phone_reach": {}, "phone_urgent_dnd": False, "phone_on": phone_on()}
     service.update_settings(OWNER, {"calls": {
         "enabled": True, "aiphone_dir": " ~/dev/ai-phone ", "greeting": "Hi Karol.",
         "allowed_numbers": "+1 212 555 0142, sip:agent@mac", "passphrase": "blue heron"}})
     read = service.get_settings(OWNER)["calls"]
     assert read == {"enabled": True, "aiphone_dir": "~/dev/ai-phone", "greeting": "Hi Karol.",
                     "allowed_numbers": ["+1 212 555 0142", "sip:agent@mac"], "passphrase_set": True,
-                    "phone_reach": {}, "phone_urgent_dnd": False}
-    # The face sends its read back: the passphrase stays, passphrase_set is no field.
+                    "phone_reach": {}, "phone_urgent_dnd": False, "phone_on": phone_on()}
+    # The face sends its read back: the passphrase stays, passphrase_set and
+    # phone_on are no fields.
     service.update_settings(OWNER, {"calls": {**read, "greeting": ""}})
     stored = Config.load().calls
     assert stored.passphrase == "blue heron" and stored.greeting == "Hello. What can I do?"
