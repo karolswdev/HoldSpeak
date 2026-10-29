@@ -40,7 +40,7 @@ check control. A key belongs to the owner-only secret field and is not copied
 into Notes, Threads, Receipts, or model payloads.
 
 The environment fallback `HOLDSPEAK_PROFILE_<ID>_KEY` is for headless setup of a
-known profile. It does not replace the owner secret boundary.
+known engine. It does not replace the owner secret boundary.
 
 ## Agent CLI engines
 
@@ -49,7 +49,7 @@ engine is an inference destination that starts one process for a prompt. It is
 not a coding handoff and does not receive a repository task unless that is the
 separate Coder flow.
 
-The profile stores `base_url=cli:<preset>` and a `model` value. `default`
+The engine settings store `base_url=cli:<preset>` and a `model` value. `default`
 means the CLI's own default. The CLI uses its own sign-in; HoldSpeak does not
 read or copy that sign-in. `HOLDSPEAK_CLI_ENGINES=off` disables all CLI-engine
 discovery and runs.

@@ -212,7 +212,7 @@ See [Security](SECURITY.md) for what HoldSpeak stores.
 
 The intent router scores saved transcript text against the configured intents.
 It can select several plugins. The `balanced`, `architect`, `delivery`,
-`product`, and `incident` profiles are routing presets, not model identities.
+`product`, and `incident` options are routing presets, not model identities.
 
 Use **Preview route** or the CLI dry run to inspect routing without writing the
 meeting:

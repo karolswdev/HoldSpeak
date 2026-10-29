@@ -383,8 +383,7 @@ owner keeps the decisions that affect scope, authority, and delivery.
 1. Open **Programs** from **Go** or Search.
 2. Select **New program** or choose **Templates**.
 3. Define the goal and steps, then review the plan.
-4. Select **Start** when the steps, **Runs on** host, and control level are
-   correct.
+4. Select **Start** when the steps, agent, and control level are correct.
 5. Read each checkpoint and answer the **Your turn** item when the Program
    asks.
 
@@ -430,7 +429,7 @@ receipt. People access has its own restriction.
 
 An overnight run needs a configured trigger, engine or agent, source scope,
 authority, and a running execution host. Read its receipt after the run. A
-credential or saved recipe alone does not prove that it ran.
+credential or saved procedure plan alone does not prove that it ran.
 
 <a id="rhythms-where-it-runs-row"></a>
 <a id="rhythm-s-where-it-runs-row"></a>
@@ -547,7 +546,7 @@ engine to each capability that you use. Check its host and egress.
 
 An installed CLI can answer a Desk request through its provider. That does not
 make it a coding agent. A coding-agent handoff launches a separate session in
-a repository worktree. A persona supplies instructions. It does not execute
+a repository worktree. A Mode supplies instructions. It does not execute
 by itself.
 
 Select **Test** to send a real request. Read the result and receipt. A cloud
@@ -658,7 +657,7 @@ Thread branch and keep operations remain available through the API.
 Ask and its tools follow the applicable People read policy.
 Use the protected People surface for confidential relationship editing.
 Interview's People section is a separate service handoff.
-A saved Thread or persona cannot grant itself People write or owner authority.
+A saved Thread or Mode cannot grant itself People write or owner authority.
 
 <a id="the-thread-has-hands"></a>
 ### Ask has hands
@@ -668,7 +667,7 @@ The answer shows **References**. The retained trace can also expose
 source references, writes, and prepared actions fields.
 A prepared send waits for your **Send** press.
 A held tool call offers **Allow once** or **Deny**.
-A persona supplies instructions and does not grant a tool permission.
+A Mode supplies instructions and does not grant a tool permission.
 
 <a id="thread-modes-slash-commands-and-the-call"></a>
 ### Modes

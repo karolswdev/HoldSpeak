@@ -231,7 +231,7 @@ does not make unknown secrets safe.
 | Path | Data that can leave | Control |
 | --- | --- | --- |
 | Remote model endpoint | Prompt and selected context for an admitted inference attempt. Raw audio and embeddings are not sent by this path. | Frozen deployment revision, assigned host, child attempt, and Receipt. A fallback is a new attempt. |
-| Supported CLI inference engine | Prompt and selected context through the installed CLI and its provider. | The CLI profile and provider account are the boundary. It is not a coding-agent launch. |
+| Supported CLI inference engine | Prompt and selected context through the installed CLI and its provider. | The CLI settings and provider account are the boundary. It is not a coding-agent launch. |
 | Coding-agent handoff | Brief, selected Desk context, repository facts, and any People data carried by the brief. | Owner handoff, launch scope, worktree, process receipt, secret redaction, and 32 KB brief cap. |
 | Calendar ICS source | One bounded HTTPS fetch per source refresh. No credentials, cookies, or redirect follow-up. | HTTPS-only source, timeout and size cap, redirect refusal, and host disclosure. File sources cause no network egress. |
 | Calendar snapshot | Calendar screenshot to the vision route assigned to `calendar.snapshot_extract`. | Egress is resolved before upload. No assignment gives a named refusal. Confirmed events become a local source. |
@@ -250,7 +250,7 @@ does not make unknown secrets safe.
 | Device audio link | Audio frames in and device status out. | Paired-device PSK, same-LAN deployment expectation, and device route checks. |
 | Browser mic capture | WAV to the hub's transcribe route. The local transcriber does not retain raw audio after the request. | Authenticated route, bounded body, and browser recovery copy deleted after confirmed transcription. |
 | Paired dictation delivery | Final text and opaque delivery id to the named desktop. Raw audio does not cross. | Token gate, delivery claim, same-id replay, destination binding, and terminal Receipt. |
-| Desktop notification and optional operations alerts | Local notification body, or configured failure-alert statistics to the webhook above. | Desktop notification is local and opt-in. Alert webhook is separately configured and does not carry transcript text. |
+| Host notification and optional operations alerts | Notification body for this host, or configured failure-alert statistics to the webhook above. | Host notification is opt-in. The alert webhook is separately configured and does not carry transcript text. |
 
 Meeting speech transcription and ordinary browser dictation use the local
 Whisper backend. Model assignments route later summary, rewrite, intent,
@@ -264,13 +264,13 @@ fixture. Write model and connector keys through their owner-only settings.
 Receipts store secret-safe destination identities and redacted previews.
 
 Web authentication uses the configured owner token. Model keys stay in the
-profile key store or owner-only local custody. People keys stay in native key
+engine key store or owner-only local custody. People keys stay in native key
 custody. A process that can already read the account can still read local
 credentials; use OS isolation for that threat.
 
 - Model keys are written through the owner-only Model Library secret route. A
   model resource reports presence, not the key. A deleted key writes a tombstone
-  that suppresses a headless environment fallback for that profile.
+  that suppresses a headless environment fallback for that engine.
 - The device audio PSK is created for pairing and compared in constant time.
   An empty PSK refuses the device route.
 - Slack, email, and other channel keys stay in native or owner-only key storage.
