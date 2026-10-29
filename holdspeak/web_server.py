@@ -1070,7 +1070,14 @@ class MeetingWebServer:
                 # from the request body.
                 snapshot = node_store.identify(node_token) if node_store else None
                 if snapshot is not None and snapshot.node_id:
-                    principal = Principal(PrincipalKind.NODE, snapshot.node_id)
+                    # LINE-3: a line-scoped credential is a line node, whose one
+                    # right is the Line's wire; it is never a link node.
+                    kind = (
+                        PrincipalKind.LINE_NODE
+                        if snapshot.scope == "calls.line"
+                        else PrincipalKind.NODE
+                    )
+                    principal = Principal(kind, snapshot.node_id)
                     credential = snapshot
             principal = principal or UNAUTHENTICATED
             request.state.principal = principal

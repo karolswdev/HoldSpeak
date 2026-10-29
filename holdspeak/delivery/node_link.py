@@ -219,7 +219,7 @@ class NodeTokenStore:
             or generation < 1
         ):
             raise self._refuse_custody()
-        for name in ("key_id", "offer_public_key", "offer_private_key"):
+        for name in ("key_id", "offer_public_key", "offer_private_key", "scope"):
             if name in checked and not isinstance(checked[name], str):
                 raise self._refuse_custody()
         return checked
@@ -281,11 +281,13 @@ class NodeTokenStore:
         (rotate instead — pairing is deliberate)."""
         return self.pair(name)[0:2]
 
-    def pair(self, name: str) -> tuple[str, str, "NodeCredentialSnapshot"]:
+    def pair(self, name: str, *, scope: str = "") -> tuple[str, str, "NodeCredentialSnapshot"]:
         """``create`` with the worker's pin: ``(node_id, token, snapshot)``.
 
         The snapshot is the PUBLIC view — node id, generation, key id, and the
         offer public key — which is exactly what a worker pins and nothing more.
+        ``scope`` narrows what the credential reaches (``"calls.line"``: the
+        Line's wire only); empty is the node link as before.
         """
         from .node_credentials import NodeCredentialSnapshot, mint_offer_keypair
 
@@ -310,12 +312,15 @@ class NodeTokenStore:
                 "revoked": False,
                 "created_at": _utc_now_iso(),
             }
+            if scope:
+                nodes[name]["scope"] = str(scope)
         return node_id, token, NodeCredentialSnapshot(
             name=name,
             node_id=node_id,
             generation=generation,
             key_id=key_id,
             offer_public_key=public_key,
+            scope=str(scope or ""),
         )
 
     def rotate(self, name: str) -> str:
@@ -414,6 +419,7 @@ class NodeTokenStore:
             key_id=str(entry.get("key_id") or ""),
             offer_public_key=str(entry.get("offer_public_key") or ""),
             token=expected,
+            scope=str(entry.get("scope") or ""),
         )
 
     def pairing(self, name: str) -> Optional["NodeCredentialSnapshot"]:
@@ -537,6 +543,7 @@ class NodeTokenStore:
                     key_id=str(entry.get("key_id") or ""),
                     offer_public_key=str(entry.get("offer_public_key") or ""),
                     token=expected,
+                    scope=str(entry.get("scope") or ""),
                 )
         return None
 
@@ -555,6 +562,7 @@ class NodeTokenStore:
                     "key_id": str(entry.get("key_id") or ""),
                     "revoked": bool(entry.get("revoked")),
                     "created_at": str(entry.get("created_at") or ""),
+                    "scope": str(entry.get("scope") or ""),
                 }
             )
         return rows

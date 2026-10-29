@@ -172,7 +172,8 @@ def test_the_wire_routes_carry_hello_events_and_the_long_poll(home, monkeypatch)
         assert client.post("/api/calls/line/hello", json={}).status_code == 400
         status = client.get("/api/calls/line/status").json()
         assert status == {"node": "this-mac", "state": "ready", "words": "Ready", "address": "sip:hsline@sip.telnyx.com",
-                          "secrets": {"sip_password": "keystore", "telnyx_api_key": "missing"}}, status
+                          "secrets": {"sip_password": "keystore", "telnyx_api_key": "missing"},
+                          "machine": {}}, status
         monkeypatch.setenv("HOLDSPEAK_LINE", "off")
         assert client.post("/api/calls/line/hello", json={"node": "x"}).status_code == 409
         assert client.get("/api/calls/line/status").json()["state"] == "off"

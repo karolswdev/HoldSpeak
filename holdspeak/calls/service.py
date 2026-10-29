@@ -713,13 +713,20 @@ def line_status(phone: Any, cfg: Any) -> dict[str, Any]:
     wire = phone.hub.node_state(node)
     snap = phone.state()
     row = next(iter((snap.get("lines") or {}).values()), {}) if snap else {}
-    if wire in {"never", "offline"}:
+    from ..line.hub import HELLO_STALE_SECONDS
+
+    age = phone.hub.hello_age(node)
+    if node != "this-mac" and (age is None or age > HELLO_STALE_SECONDS):
+        # LINE-3: another machine's word is its last hello's; after 2 minutes
+        # with none, the Line there is not running.
+        state = "not_running"
+    elif node == "this-mac" and wire in {"never", "offline"}:
         from ..line.supervisor import find_baresip
 
         if node == "this-mac" and not find_baresip():
             state = "not_installed"
         else:
-            state = "offline" if node != "this-mac" and wire == "offline" else "not_running"
+            state = "not_running"
     elif account.get("kind") == "telnyx" and presence.get("sip_password") == "missing":
         state = "not_set_up"
     elif row.get("state") in {"registered", "listening"}:
@@ -729,7 +736,7 @@ def line_status(phone: Any, cfg: Any) -> dict[str, Any]:
     else:
         state = "starting"
     return {"node": node, "state": state, "words": LINE_WORDS[state], "address": str(row.get("address") or ""),
-            "secrets": presence}
+            "secrets": presence, "machine": dict(phone.hub.snapshot(node).get("machine") or {})}
 
 
 def _lines(state: dict[str, Any]) -> list[dict[str, Any]]:
