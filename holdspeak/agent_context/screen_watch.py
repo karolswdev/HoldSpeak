@@ -33,6 +33,7 @@ from typing import Any, Callable, Iterable, Mapping, Optional
 
 from ..logging_config import get_logger
 from .screen_rules import Verdict, read_screen, last_message, load_manifest, prompt_reading
+from .usage_limit import LimitReading, read_limit
 
 log = get_logger("agent_context.screen_watch")
 
@@ -88,6 +89,9 @@ class ScreenRecord:
     said: str = ""
     title: str = ""
     aliases: tuple[str, ...] = ()
+    #: Programs PG19: the harness's usage-limit notice (or a reported share
+    #: of its window) on this screen; ``None``: none shown.
+    limit: Optional[LimitReading] = None
 
 
 class ScreenStore:
@@ -147,6 +151,10 @@ class ScreenStore:
                 turn_id=old.turn_id if old is not None else None,
                 title=title, aliases=aliases,
             )
+            # PG19: a limit notice is read whatever the rule said (the
+            # harness stops at a prompt that looks idle); a working screen
+            # has moved past it.
+            row.limit = None if state == "working" else read_limit(agent, screen, now)
             if state == "working":
                 row.worked, row.turn_id = True, None
             elif state == "idle" and row.worked:
@@ -166,8 +174,8 @@ class ScreenStore:
                 self._alias[alias] = key
             if old is None:
                 return True
-            return (old.state, old.turn_id, old.wait, old.command, old.choices) != (
-                row.state, row.turn_id, row.wait, row.command, row.choices
+            return (old.state, old.turn_id, old.wait, old.command, old.choices, old.limit) != (
+                row.state, row.turn_id, row.wait, row.command, row.choices, row.limit
             )
 
 
@@ -214,6 +222,8 @@ def screen_wire(row: Optional[ScreenRecord], now: datetime) -> Optional[dict[str
         # The prompt's token: when this state began. An answer names it, and
         # a press on a prompt that changed meanwhile sends nothing.
         "since": _iso(row.since),
+        # Programs PG19: the usage-limit notice (``until``, ``words``, the rule).
+        "limit": row.limit.wire(now) if row.limit is not None else None,
     }
 
 

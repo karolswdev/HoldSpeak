@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Programs handoff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material. Every value is copied from web/src/styles/tokens.css and the
+   kit (web/src/desk/surface/kit.css, patterns/state-chip.css,
+   objects/list-view.css) on lane/programs-20261028 (a902e091a). */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-hover:rgba(37,52,73,.06); --wb-rec:#b3261e;
+  --wb-ok-ink:#1d5c2e; --wb-warn-ink:#6b4a00; --wb-danger-ink:#9b2219; --wb-info-ink:#2f4f86; --wb-ember-ink:#7a4a2c;
+  --lamp-ok:#34d399; --lamp-warn:#fbbf24; --lamp-fail:#f87171; --lamp-info:#3b5d93; --lamp-ask:#da9868;
+  --pill-neutral:#edf1f6; --pill-ok:#e3f3ea; --pill-warn:#fff2cf; --pill-danger:#fde6e4; --pill-info:#e6eef9; --pill-accent:#fff0df;
+  --kind-pr:#2b7a4a; --kind-agent:#a84a1c; --kind-project:#3b62c4;
+  --depth-paper:0 22px 48px rgba(22,40,62,.24),0 4px 12px rgba(22,40,62,.12);
+  --depth-row:0 1px 3px rgba(22,40,62,.12);
+  --depth-card:0 10px 28px rgba(8,14,22,.22);
+  --depth-menu:0 8px 22px rgba(22,40,62,.12);
+  --depth-dock:0 10px 30px rgba(8,14,22,.45),0 2px 6px rgba(8,14,22,.3);
+  --wb-toolbar-h:36px;
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  --page:#e9eef4; --page-ink:#253449; --page-card:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+}
+:root[data-theme="dark"]{ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font:15px/1.5 var(--font-ui);min-width:1440px}
+main{padding:32px 24px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 15px/1.3 var(--font-display);margin:22px 0 8px}
+p{margin:0 0 10px;max-width:1100px}
+code{font:12.5px var(--font-mono)}
+section.part{margin:44px 0 0;padding:24px 0 0;border-top:2px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#7b8aa0}
+.rec{border-left:4px solid var(--wb-sel-vivid);padding:12px 18px;background:color-mix(in srgb,var(--wb-sel-vivid) 8%,transparent);border-radius:0 8px 8px 0;max-width:1180px;margin:14px 0}
+.rec p{max-width:none}
+.note{font-size:13.5px;opacity:.85;max-width:1200px}
+.cmp{display:grid;grid-template-columns:240px repeat(3,1fr);max-width:1180px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;color:var(--wb-ink);font-size:13px;margin:12px 0}
+.cmp>div{padding:8px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.cmp>div:nth-child(4n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.cmp>.h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.cmp>.h.r{background:var(--wb-blue);color:#2b4a7a}
+.cmp>.r{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+.moment{display:grid;grid-template-columns:250px auto;gap:24px;align-items:start;margin:22px 0 0}
+.moment .say{font-size:13.5px}
+.moment .say b{display:block;font:600 15px var(--font-display);margin-bottom:4px}
+
+/* ── the sprites (Icons D): the levels of gen-illustrated-icons.py LEVELS ── */
+.spr{display:inline-block;flex:none;line-height:0;vertical-align:middle}
+.spr svg{width:100%;height:100%;display:block;overflow:visible}
+.spr .ol{stroke-width:var(--ow)}
+.spr .bv{transform:translate(var(--u),var(--u))}
+.spr .bvn{transform:translate(var(--nu),var(--nu))}
+.s64{width:64px;height:64px;--ow:1.5px;--u:3.25px;--nu:-3.25px;--lw:1}
+.s48{width:48px;height:48px;--ow:1.8px;--u:3.55px;--nu:-3.55px;--lw:1}
+.s32{width:32px;height:32px;--ow:2.2px;--u:3.1px;--nu:-3.1px;--lw:1}
+.s20,.s16{width:20px;height:20px;--ow:3px;--u:0px;--nu:0px;--lw:1.35}
+.s16{width:16px;height:16px}
+.s32 .detail,.s20 .detail,.s16 .detail{display:none}
+.s20 [fill="#9fb3c8"],.s16 [fill="#9fb3c8"]{fill:#c9d7e6}
+
+/* ── the desk (the floor, the menu bar, the dock) ── */
+.desk{position:relative;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);
+  background:radial-gradient(120% 90% at 20% 0%,#45607f 0%,#2f435b 45%,#233244 100%);font-family:var(--font-ui);color:var(--wb-ink)}
+.menubar{position:absolute;left:0;right:0;top:0;height:36px;background:#fbfcfe;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13.5px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.menubar b{font-weight:600}
+.menubar .grow{flex:1}
+.menubar .bell{display:inline-flex;align-items:center;gap:6px}
+.menubar .badge{background:#2f67c8;color:#fff;font:600 11.5px/1 var(--font-ui);padding:3px 6px;border-radius:9px}
+
+/* the window frame (window-chrome: 30 px blue title bar, a title chip) */
+.win{position:absolute;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--depth-paper);overflow:hidden;display:flex;flex-direction:column;container:surface/inline-size}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:18px;text-align:center;font-size:14px;opacity:.9}
+.tb .chip{width:22px;height:22px;border-radius:5px;background:var(--wb-paper);display:grid;place-items:center;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.tb .name{font:600 13.5px/1 var(--font-ui);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .name.edit span{border-bottom:1px dashed rgba(247,249,252,.7);padding-bottom:1px}
+.tb .gad{display:flex;gap:4px}
+.tb .gad i{width:26px;height:20px;display:grid;place-items:center}
+.tb .gad i::before{content:"";width:11px;height:10px;border:1.5px solid #f7f9fc;border-radius:2px}
+.toolbar{flex:0 0 var(--wb-toolbar-h);display:flex;align-items:center;gap:4px;padding:3px 8px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper);position:relative}
+.toolbar .grow{flex:1}
+.body{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .it+.it::before{content:"·";margin:0 7px 0 1px;opacity:.7}
+.sb b{color:var(--wb-ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* library Button (the plated and the quiet toolbar forms) */
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap;border:1px solid transparent;background:transparent}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc}
+.btn.plate{background:var(--wb-steel-2);border-color:var(--wb-rule);box-shadow:inset 0 1px 0 #fff}
+.btn.sm{height:24px;font-size:12.5px;padding:0 9px}
+.btn.off{color:#8d9aab}
+.btn .caret{font-size:10px;color:var(--wb-muted);margin-left:2px}
+.btn.primary .caret{color:#dbe4f2}
+.btn.open{background:var(--wb-blue);border-color:var(--wb-sel)}
+
+/* DotWord + the lamp dot (kit.css) */
+.dw{display:inline-flex;align-items:center;gap:6px;font:500 12px/1.35 var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:color-mix(in srgb,var(--wb-muted) 55%,var(--wb-paper));box-shadow:0 0 0 1px var(--wb-rule-soft)}
+[data-tone=ok]>.dot,.dot[data-tone=ok]{background:var(--lamp-ok)}
+[data-tone=warn]>.dot,.dot[data-tone=warn]{background:var(--lamp-warn)}
+[data-tone=fail]>.dot,.dot[data-tone=fail]{background:var(--lamp-fail)}
+[data-tone=info]>.dot,.dot[data-tone=info]{background:var(--lamp-info)}
+[data-tone=ask]>.dot,.dot[data-tone=ask]{background:var(--lamp-ask)}
+.dw[data-tone=ok]{color:var(--wb-ok-ink)} .dw[data-tone=warn]{color:var(--wb-warn-ink)}
+.dw[data-tone=fail]{color:var(--wb-danger-ink)} .dw[data-tone=info]{color:var(--wb-info-ink)} .dw[data-tone=ask]{color:var(--wb-ember-ink)}
+.sb .dot[data-tone=ok],.sb .dot[data-tone=info],.sb .dot[data-tone=ask]{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 40%,transparent),0 0 0 3px color-mix(in srgb,var(--t) 18%,transparent)}
+.dot[data-tone=ok]{--t:var(--lamp-ok)} .dot[data-tone=info]{--t:var(--lamp-info)} .dot[data-tone=ask]{--t:var(--lamp-ask)} .dot[data-tone=fail]{--t:var(--lamp-fail)}
+/* THE BREATH: the Record tile's rhythm (kit-lamp-live): a ring on the lamp opens to 5 px and closes, 2.4 s. A box-shadow, never a transform. */
+@keyframes live{0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 45%,transparent),0 0 0 2px color-mix(in srgb,var(--t) 16%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 60%,transparent),0 0 0 5px color-mix(in srgb,var(--t) 26%,transparent)}}
+@media (prefers-reduced-motion: no-preference){ .live{animation:live 2.4s ease-in-out infinite} }
+
+/* StateChip (patterns/state-chip.css): a tinted square pill, dot + word */
+.sc{display:inline-flex;align-items:center;gap:6px;min-height:20px;padding:1px 9px 1px 7px;background:var(--pill-neutral);box-shadow:inset 0 0 0 1px rgba(37,52,73,.06);font:600 12px/1 var(--font-ui);white-space:nowrap;color:var(--wb-muted)}
+.sc i{width:8px;height:8px;border-radius:50%;background:rgba(37,52,73,.05);box-shadow:0 0 0 1px rgba(37,52,73,.55)}
+.sc[data-s=success]{background:var(--pill-ok);color:var(--wb-ok-ink)} .sc[data-s=success] i{background:var(--lamp-ok)}
+.sc[data-s=working]{background:var(--pill-info);color:var(--wb-info-ink)} .sc[data-s=working] i{background:var(--lamp-info)}
+.sc[data-s=active]{background:var(--pill-accent);color:var(--wb-ember-ink)} .sc[data-s=active] i{background:var(--lamp-ask)}
+.sc[data-s=failure]{background:var(--pill-danger);color:var(--wb-danger-ink)} .sc[data-s=failure] i{background:var(--lamp-fail)}
+.sc[data-s=warning]{background:var(--pill-warn);color:var(--wb-warn-ink)} .sc[data-s=warning] i{background:var(--lamp-warn)}
+
+/* ListView (objects/list-view.css): a column head 26 px, rows 32 px */
+.lhead{height:26px;display:grid;align-items:center;gap:10px;padding:0 12px;font-size:12px;font-weight:600;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+.band{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-paper);border-bottom:1px solid var(--wb-rule-soft)}
+.band b{font-weight:500;color:var(--wb-faint)}
+.lrow{height:32px;display:grid;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.lrow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lrow .t{font-weight:600;display:flex;align-items:center;gap:8px}
+.lrow .m{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.lrow .q{color:var(--wb-muted);font-size:12px}
+.lrow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.lrow .done-in{color:var(--wb-ok-ink);font-weight:500}
+
+/* the Your turn well: an ember rule, the verbs inline */
+.well{margin:10px 12px 4px;border-radius:7px;background:color-mix(in srgb,var(--lamp-ask) 7%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-ask),0 0 0 1px color-mix(in srgb,var(--lamp-ask) 35%,var(--wb-rule-soft))}
+.well .cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;font:600 12px var(--font-ui);color:var(--wb-ember-ink)}
+.well .wr{min-height:32px;display:flex;align-items:center;gap:10px;padding:3px 10px 3px 14px;border-top:1px solid color-mix(in srgb,var(--lamp-ask) 22%,var(--wb-rule-soft));font-size:13px}
+.well .wr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.well .wr .t b{font-weight:600}
+.well .wr .m{color:var(--wb-muted);font-size:12px;white-space:nowrap}
+.well .wr .vb{display:flex;gap:6px}
+
+/* the board, direction C: the ledger (32 px rows, the track as six dots) */
+.board-cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;margin-top:6px;font:600 12px var(--font-ui);color:var(--wb-muted)}
+.crow{height:32px;display:grid;grid-template-columns:22px minmax(0,210px) 262px var(--agw,122px) 58px minmax(0,1fr) 62px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.crow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow .n{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.crow .ti{font-weight:600}
+.crow .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.crow .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.crow .el{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.crow .cp{color:var(--wb-muted);font-size:12px}
+.crow .op{text-align:right;overflow:visible}
+.crow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.crow.kid{background:color-mix(in srgb,var(--wb-field) 45%,var(--wb-paper))}
+.crow.kid .ti{font-weight:500;display:flex;align-items:center;gap:6px;padding-left:16px;position:relative}
+.crow.kid .ti::before{content:"";position:absolute;left:4px;top:-6px;width:8px;height:14px;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.crow.dim{color:var(--wb-muted)}
+.crow.dim .ti{font-weight:500}
+.dots{display:inline-flex;align-items:center;gap:0;margin-right:10px;vertical-align:middle}
+.dots .d{width:8px;height:8px;border-radius:50%;flex:none;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.dots .d.passed{background:#8ea0b6;box-shadow:none}
+.dots .d.skip{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6;width:6px;height:6px;margin:1px}
+.dots .d.cur{box-shadow:none;width:10px;height:10px}
+.dots .d.cur[data-tone=info]{background:var(--lamp-info);--t:var(--lamp-info)}
+.dots .d.cur[data-tone=ask]{background:var(--lamp-ask);--t:var(--lamp-ask)}
+.dots .d.cur[data-tone=fail]{background:var(--lamp-fail);--t:var(--lamp-fail)}
+.dots .d.cur[data-tone=ok],.dots .d.ok{background:var(--lamp-ok);box-shadow:none;--t:var(--lamp-ok)}
+.dots .d.cur[data-tone=idle]{background:#a9b6c6}
+.dots .ln{width:10px;height:1.5px;background:#cbd5e1;flex:none}
+.dots .ln.passed{background:#8ea0b6}
+.trk{display:flex;align-items:center}
+.trk .pr{font:500 12px var(--font-ui);color:var(--kind-pr)}
+
+/* direction A: the track is the row */
+.arow{display:grid;grid-template-columns:22px 1fr;column-gap:10px;padding:5px 12px 6px;border-bottom:1px solid #e9eef4;font-size:13px}
+.arow .n{grid-row:1/3;color:var(--wb-faint);font-size:12px;text-align:right;padding-top:4px}
+.arow .l1{display:flex;align-items:center;gap:10px;height:24px;white-space:nowrap}
+.arow .l1 .ti{font-weight:600}
+.arow .l1 .af{color:var(--wb-muted);font-size:12px}
+.arow .l1 .grow{flex:1}
+.arow .l1 .m{color:var(--wb-muted);font-size:12px}
+.arow .l1 .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.arow .l2{display:flex;align-items:center;gap:0;height:22px}
+.arow .l2 .cp{margin-left:auto;color:var(--wb-muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:12px}
+.st{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--font-ui);color:#8d9aab;white-space:nowrap}
+.st .dot{width:8px;height:8px}
+.st.passed{color:var(--wb-muted)} .st.passed .dot{background:#8ea0b6;box-shadow:none}
+.st.ahead .dot{background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.st.skip{color:#a9b4c2;text-decoration:line-through}
+.st.skip .dot{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6}
+.st.cur{font-weight:600}
+.st.cur[data-tone=info]{color:var(--wb-info-ink)} .st.cur[data-tone=ask]{color:var(--wb-ember-ink)} .st.cur[data-tone=fail]{color:var(--wb-danger-ink)} .st.cur[data-tone=ok],.st.ok{color:var(--wb-ok-ink)}
+.st.ok .dot{background:var(--lamp-ok);box-shadow:none}
+.st .sub{font-weight:400;color:var(--wb-muted)}
+.st.ok .sub,.st.cur[data-tone=ok] .sub{color:var(--kind-pr);font-weight:600}
+.seg{width:26px;height:1.5px;background:#cbd5e1;margin:0 8px;flex:none}
+.seg.passed{background:#8ea0b6}
+
+/* direction B: the card */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 12px}
+.card{background:var(--wb-well);border-radius:7px;box-shadow:var(--depth-row),0 0 0 1px var(--wb-rule-soft);display:flex;flex-direction:column;font-size:13px;overflow:hidden}
+.card .hd{display:flex;align-items:center;gap:8px;padding:8px 10px 2px}
+.card .hd .n{color:var(--wb-faint);font-size:12px}
+.card .hd .ti{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .mid{padding:2px 10px 8px;color:var(--wb-muted);font-size:12px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.card .mid .cp{overflow:hidden;text-overflow:ellipsis}
+.card .ft{border-top:1px solid #edf1f6;background:var(--wb-steel-2);padding:6px 10px;display:flex;align-items:center;gap:8px}
+.card.sel{box-shadow:var(--depth-row),0 0 0 2px var(--wb-sel-vivid)}
+
+/* CheckGadget (the kit's switch species: the sliding toggle is dead, HS-111-01) */
+.ck{display:inline-flex;align-items:center;gap:7px;font-size:13px;white-space:nowrap}
+.ck i{width:16px;height:16px;border:1px solid #bbc7d6;background:var(--wb-well);border-radius:3px;display:grid;place-items:center}
+.ck.on i::after{content:"";width:8px;height:4.5px;border-left:2px solid var(--wb-sel);border-bottom:2px solid var(--wb-sel);transform:translateY(-1px) rotate(-45deg)}
+/* the token form in a toolbar: a quiet pill toggle; on, the selection blue */
+.tokt{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;border:1px solid var(--wb-rule-soft);color:var(--wb-muted);font:500 13px var(--font-ui);white-space:nowrap}
+.tokt.on{border-color:var(--wb-sel);background:var(--wb-blue);color:var(--wb-sel)}
+/* the Runs on picker (a menu, the Engines window's list and words) */
+.menu .grp{font:600 12px var(--font-ui);color:var(--wb-muted);padding:6px 9px 2px}
+.menu .ro{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;height:32px;padding:0 9px;border-radius:5px;font-size:13px}
+.menu .ro.in{padding-left:24px;grid-template-columns:20px 1fr auto}
+.menu .ro.hot{background:var(--wb-blue)}
+.menu .ro .chk{color:var(--wb-sel);font-weight:700;margin-left:6px}
+.menu .ft{border-top:1px solid var(--wb-rule-soft);margin-top:4px;padding:8px 9px 4px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--wb-muted)}
+/* folds (FoldGadget) */
+.fold{border-top:1px solid var(--wb-rule-soft);margin-top:8px}
+.fold .fh{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12.5px var(--font-ui);color:var(--wb-ink)}
+.fold .fh .chev{width:12px;color:var(--wb-muted);font-size:10px}
+.fold .fh .q{font-weight:400;color:var(--wb-muted);font-size:12px}
+.gate{padding:2px 12px 10px 32px;display:grid;grid-template-columns:110px 1fr;row-gap:7px;font-size:13px;align-items:center}
+.gate .k{color:var(--wb-muted);font-size:12px}
+.gate .sections{display:flex;gap:14px;flex-wrap:wrap}
+.gate code{font:12.5px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);padding:2px 6px;border-radius:4px}
+.cpl{padding:0 12px 8px 32px}
+.cpl .c{height:28px;display:grid;grid-template-columns:20px 140px 1fr 56px;align-items:center;gap:8px;font-size:13px;border-bottom:1px solid #eef2f6}
+.cpl .c .who{font-size:12px;color:var(--wb-muted)}
+.cpl .c .m{font-size:12px;color:var(--wb-faint);text-align:right;font-variant-numeric:tabular-nums}
+.av{width:20px;height:20px;border-radius:50%;background:#1f7a6b;color:#fff;display:grid;place-items:center;font:600 9.5px var(--font-ui)}
+
+/* fields in Drafting: StringGadget + MicButton, CycleGadget, PadGadget */
+.fld{display:flex;align-items:center;height:26px;background:var(--wb-well);border:1px solid var(--wb-rule);border-radius:5px;overflow:hidden;min-width:0}
+.fld span{flex:1;padding:0 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld .mic{flex:0 0 26px;height:100%;border-left:1px solid var(--wb-rule-soft);display:grid;place-items:center;background:var(--wb-steel-2)}
+.mic svg{width:12px;height:12px;stroke:var(--wb-muted);fill:none;stroke-width:1.6;stroke-linecap:round}
+.cyc{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:26px;padding:0 8px;border-radius:5px;background:var(--wb-steel-2);border:1px solid var(--wb-rule);font-size:12.5px;white-space:nowrap;box-shadow:inset 0 1px 0 #fff}
+.cyc::after{content:"▾";font-size:10px;color:var(--wb-muted)}
+.drow{height:36px;display:grid;grid-template-columns:22px minmax(0,1fr) 150px 200px 84px 84px 96px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.drow .n{color:var(--wb-faint);font-size:12px;text-align:right}
+.drow .tok{display:inline-flex;gap:4px;overflow:hidden}
+.tokn{font:12px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.drow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.pad{margin:6px 12px 8px 44px;border:1px solid var(--wb-rule);border-radius:6px;background:var(--wb-well);display:grid;grid-template-columns:1fr 30px;min-height:84px}
+.pad .tx{padding:8px 10px;font-size:13px;line-height:1.5}
+.pad .mic{border-left:1px solid var(--wb-rule-soft);display:grid;place-items:start center;padding-top:8px;background:var(--wb-steel-2)}
+
+/* the Templates menu (depth-menu) */
+.menu{position:absolute;z-index:5;background:var(--wb-paper);border-radius:8px;box-shadow:var(--depth-menu),0 0 0 1px var(--wb-rule-soft);padding:5px;width:330px}
+.menu .mi{display:grid;grid-template-columns:20px 1fr;gap:2px 10px;padding:7px 9px;border-radius:5px}
+.menu .mi.hot{background:var(--wb-blue)}
+.menu .mi b{font:600 13px var(--font-ui)}
+.menu .mi span{grid-column:2;font-size:12px;color:var(--wb-muted)}
+
+/* empty state: the object, one line, one Button */
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-size:13px;color:var(--wb-muted)}
+.empty .obj{width:96px;height:96px;margin:0 auto 12px;border-radius:24px;background:linear-gradient(160deg,#eef3fa,#d9e4f3);display:grid;place-items:center;box-shadow:var(--depth-row),inset 0 1px 0 #fff}
+.empty b{display:block;font:600 15px var(--font-ui);color:var(--wb-ink);margin-bottom:4px}
+.empty p{max-width:420px;margin:0 auto 14px}
+
+/* the dock glass */
+.dock{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:12px;padding:8px 14px;border-radius:16px;background:rgba(30,43,58,.72);box-shadow:var(--depth-dock),inset 0 0 0 1px rgba(233,238,245,.16)}
+.dock .tile{position:relative;width:48px;height:48px;display:grid;place-items:center;border-radius:10px}
+.dock .tile.on{background:rgba(233,238,245,.12)}
+.dock .lampd{position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--lamp-ask);--t:var(--lamp-ask);box-shadow:0 0 0 1.5px #1e2b3a}
+.dock .badge{position:absolute;right:-6px;top:-4px;background:#2f67c8;color:#fff;font:600 11px/1 var(--font-ui);padding:3px 5px;border-radius:9px}
+
+/* phones (393) */
+.phones{display:flex;gap:48px;align-items:flex-start;margin:18px 0 0 10px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:#223142;font-family:var(--font-ui);color:var(--wb-ink);container:surface/inline-size}
+.ph-menu{position:absolute;left:0;right:0;top:0;height:44px;background:#fbfcfe;display:flex;align-items:center;gap:14px;padding:0 14px;font-size:14px}
+.ph-win{position:absolute;left:0;right:0;top:44px;bottom:84px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{flex:0 0 44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 14px var(--font-ui)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tool{flex:0 0 52px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.ph-tool .btn{height:44px;font-size:14px;padding:0 14px}
+.ph-tool .grow{flex:1}
+.ph-body{flex:1;overflow:hidden;position:relative}
+.ph-sb{flex:0 0 26px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.ph-dock{position:absolute;left:8px;right:8px;bottom:10px;height:64px;border-radius:16px;background:rgba(30,43,58,.85);display:flex;align-items:center;justify-content:space-around;box-shadow:inset 0 0 0 1px rgba(233,238,245,.16)}
+.prow{padding:8px 12px 8px 12px;border-bottom:1px solid #e9eef4;display:grid;grid-template-columns:auto 1fr auto;column-gap:10px;row-gap:3px;align-items:center;min-height:60px}
+.prow .t{font:600 14px var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .m{grid-column:2/4;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .n{color:var(--wb-faint);font-size:12px;width:16px;text-align:right}
+.ph-band{height:28px;display:flex;align-items:center;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.phone .well{margin:10px 10px 6px}
+.phone .well .wr{flex-wrap:wrap;padding:8px 10px 10px 14px;row-gap:8px}
+.phone .well .wr .t{white-space:normal;flex:1 1 100%}
+.phone .well .wr .vb{flex:1 1 100%}
+.phone .well .wr .btn{height:44px;font-size:14px;padding:0 16px}
+.measure{position:absolute;right:-2px;border-left:1.5px solid #e5483d;font:600 10px var(--font-ui);color:#e5483d;padding-left:3px}
+
+/* seams */
+.seams{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1440px}
+.seam{background:var(--page-card);border-radius:8px;padding:14px 16px;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.seam h3{margin:0 0 10px}
+.crop{background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;overflow:hidden;box-shadow:var(--depth-row);color:var(--wb-ink)}
+.nrow{height:31px;display:flex;align-items:center;gap:10px;padding:0 10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.nrow .t{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.nrow .m{color:var(--wb-muted);font-size:12px}
+.grp{height:24px;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.agrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.agrow .tx{flex:1;min-width:0}
+.agrow .tx b{display:block;font-weight:600}
+.agrow .tx span{font-size:12px;color:var(--wb-muted)}
+.agrow .tx a{color:var(--wb-info-ink);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--wb-info-ink) 35%,transparent)}
+.today{padding:10px 14px;font-size:14px;line-height:1.7}
+.today .cap{font:600 12px var(--font-ui);color:var(--wb-muted);margin-bottom:2px}
+.today .ln{display:flex;align-items:center;gap:8px}
+.today .ln.new{background:color-mix(in srgb,var(--lamp-ask) 8%,transparent);margin:0 -14px;padding:0 14px}
+
+/* the ecosystem (§9b) */
+.eco{display:grid;grid-template-columns:1fr;gap:26px;margin-top:20px;max-width:1440px}
+.eco h3{margin:0 0 8px}
+.place{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 6px;border-radius:4px;color:var(--wb-ink);font:500 12px var(--font-ui)}
+.place .spr{width:14px;height:14px}
+.place .av{width:14px;height:14px;font-size:7px}
+.tokn.press{font:500 12px var(--font-ui);background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule);border-radius:10px;padding:2px 9px;color:var(--wb-muted)}
+.sec{padding:10px 16px 4px}
+.sec .h{display:flex;align-items:center;gap:10px;font:600 13px var(--font-ui);margin-bottom:4px}
+.sec .h::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.rrow{height:32px;display:grid;grid-template-columns:24px 1fr 110px 70px 120px 60px;align-items:center;gap:10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.rrow .m{color:var(--wb-muted);font-size:12px}
+.rrow .t{font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.brief{padding:10px 16px;font-size:13.5px;line-height:1.6}
+.brief .h{font:600 12px var(--font-ui);color:var(--wb-muted);margin:8px 0 2px}
+.brief ul{margin:0;padding-left:18px}
+.av.alice{background:#8870cb}
+.st.person .av{width:16px;height:16px;font-size:8px}
+/* the sprite sheet */
+.sheet{display:flex;gap:36px;align-items:flex-end;flex-wrap:wrap}
+.sheet figure{margin:0;text-align:center;font-size:12px;opacity:.9}
+.sheet figure>div{display:grid;place-items:center;min-height:72px}
+.zoom{position:relative;line-height:0;background:#fff;box-shadow:0 0 0 1px var(--wb-rule)}
+.zoom canvas{image-rendering:pixelated;display:block}
+.zoom::after{content:"";position:absolute;inset:0;background-image:linear-gradient(to right,rgba(38,59,83,.14) 1px,transparent 1px),linear-gradient(to bottom,rgba(38,59,83,.14) 1px,transparent 1px);background-size:var(--cell) var(--cell);pointer-events:none}
+.onbar{background:var(--wb-sel);padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:8px;color:#f7f9fc;font:600 13px var(--font-ui)}
+pre.parts{font:12px/1.5 var(--font-mono);background:var(--page-card);padding:12px 14px;border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);max-width:900px;overflow:auto}
+.trackbig{background:var(--wb-paper);color:var(--wb-ink);border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);padding:12px 16px;display:grid;grid-template-columns:150px 1fr 230px;gap:16px;align-items:center;max-width:1180px;margin:10px 0}
+.trackbig .lbl{font:600 13px var(--font-ui)}
+.trackbig .lbl span{display:block;font-weight:400;font-size:12px;color:var(--wb-muted)}
+/* ── PG19 handoff (this sheet) ── */
+.menu.ro-menu{width:300px}
+.menu .ro .then{color:var(--wb-muted);font-size:12px;margin-right:4px}
+.menu .ro .k{font-size:12px;color:var(--wb-muted)}
+.hand{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;height:30px;margin:4px 12px;padding:0 10px;border-radius:6px;font-size:12.5px;color:var(--wb-warn-ink);background:color-mix(in srgb,var(--lamp-warn) 12%,var(--wb-paper));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lamp-warn) 40%,var(--wb-rule-soft))}
+.hand b{font-weight:600}
+.sheetwell{margin:6px 12px 10px 32px;border-radius:7px;background:var(--wb-well);box-shadow:inset 0 1px 2px rgba(22,40,62,.12),0 0 0 1px var(--wb-rule-soft)}
+.sheetwell .hd{display:flex;align-items:center;gap:12px;height:30px;padding:0 10px;border-bottom:1px solid var(--wb-rule-soft);font-size:12px;color:var(--wb-muted)}
+.sheetwell .hd b{color:var(--wb-ink);font-weight:600}
+.sheetwell pre{margin:0;padding:10px 12px;font:12px/1.5 var(--font-mono);color:var(--wb-ink);white-space:pre-wrap;max-height:260px;overflow:hidden}
+.allowed{padding:4px 12px 10px 32px;display:flex;gap:22px;align-items:center;flex-wrap:wrap;font-size:13px}
+.allowed .q{color:var(--wb-muted);font-size:12px}
+.phone .hand{height:auto;min-height:44px;grid-template-columns:20px 1fr;row-gap:4px;padding:6px 10px}
+.phone .hand .btn{grid-column:1/3;height:44px;justify-self:start}
+</style>
+</head>
+<body>
+<main>
+<h1>When an agent runs out <span class="tag">PG19</span></h1>
+<p>A step's agent stops at its usage limit. The step continues in the next agent of its list, in the same worktree, on the same branch, with a brief that HoldSpeak builds from what it already holds. Owner, 2026-10-28, on Moonfold: "how could it enhance our Programs and other pipelines?"</p>
+
+<div class="rec">
+<p><b>Recommendation (built):</b> the list lives in the Agent picker you already use: under the first choice, "then Codex" rows set the order. The limit is a step state of its own, <b>Limited until 14:00</b>. A handoff is one divider line in Checkpoints with <b>View brief</b>, which opens the brief in a sunken well with what was redacted. At Normal the Your turn row puts <b>Continue in Codex</b> first; at YOLO it happens at once and lands in Decided for you.</p>
+</div>
+
+<div class="cmp">
+<div class="h">Facts</div><div class="h">Secure</div><div class="h r">Normal</div><div class="h">YOLO</div>
+<div>A next agent is free</div><div>Your turn: Continue in Codex · Wait</div><div class="r">Your turn, Continue first; on its own after 10 min when the program may hand off</div><div>Continues at once</div>
+<div>No next agent is left</div><div>Waits until the reset and says so</div><div class="r">Same</div><div>Same</div>
+<div>Handed off before for this turn</div><div>Nothing</div><div class="r">Nothing</div><div>Nothing</div>
+</div>
+
+<section class="part">
+<h2>1440 · the program at Normal</h2>
+<p class="note">The picker is open on the toolbar's Agent button: Claude Code is the first choice, Codex is the first "then". Step 4 is limited; the Your turn row asks him; Checkpoints shows an earlier handoff with its brief open.</p>
+<div class="desk" style="height:980px;width:1392px">
+ <div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><span class="grow"></span><span class="bell">Needs you <span class="badge">1</span></span></div>
+ <div class="win" style="left:40px;top:60px;width:1000px;height:900px">
+  <div class="tb"><span class="chip"></span><span class="name">The hub stops stalling</span><span class="gad"><i></i><i></i></span></div>
+  <div class="toolbar">
+   <span class="btn plate">Park</span><span class="btn">Add step</span><span class="grow"></span>
+   <span class="btn open">Agent: Claude Code, then Codex <span class="caret">▾</span></span>
+   <span class="tokt">When idle</span><span class="btn">Control: Normal <span class="caret">▾</span></span>
+   <div class="menu ro-menu" style="right:150px;top:36px">
+    <div class="grp">First</div>
+    <div class="ro hot"><span class="spr s20"></span><span>Claude Code · Ready</span><span class="chk">✓</span></div>
+    <div class="ro"><span class="spr s20"></span><span>Codex · Ready</span><span></span></div>
+    <div class="ro"><span class="spr s20"></span><span>pi · qwen3.8-27b on karol · Ready</span><span></span></div>
+    <div class="grp">Then, at a limit</div>
+    <div class="ro in"><span class="spr s20"></span><span><span class="then">then</span>Codex</span><span class="chk">✓</span></div>
+    <div class="ro in"><span class="spr s20"></span><span><span class="then">then</span>pi · qwen3.8-27b on karol</span><span></span></div>
+    <div class="ft"><span>When idle, for every pi step</span><span>Engines…</span></div>
+   </div>
+  </div>
+  <div class="body">
+   <div class="well">
+    <div class="cap"><span class="dot" data-tone="ask"></span>Your turn</div>
+    <div class="wr"><span class="t"><b>Step 4 · People routes:</b> Claude Code is at its limit until 14:00: continue in Codex now, or wait?</span><span class="m">Limited</span><span class="vb"><span class="btn primary sm">Continue in Codex</span><span class="btn plate sm">Wait</span></span></div>
+   </div>
+   <div class="board-cap">Steps</div>
+   <div class="crow"><span class="n">1</span><span class="ti">Indexes</span><span class="trk"><span class="dots"><i class="d passed"></i><i class="ln passed"></i><i class="d passed"></i><i class="ln passed"></i><i class="d passed"></i><i class="ln passed"></i><i class="d skip"></i><i class="ln passed"></i><i class="d passed"></i><i class="ln passed"></i><i class="d ok"></i></span><span class="dw" data-tone="ok"><i class="dot" data-tone="ok"></i>Merged #1585</span></span><span class="ag">Claude Code</span><span class="el">41 min</span><span class="cp"></span><span class="op"></span></div>
+   <div class="crow"><span class="n">2</span><span class="ti">Retention</span><span class="trk"><span class="dots"><i class="d passed"></i><i class="ln passed"></i><i class="d passed"></i><i class="ln passed"></i><i class="d passed"></i><i class="ln passed"></i><i class="d skip"></i><i class="ln passed"></i><i class="d cur live" data-tone="info"></i><i class="ln"></i><i class="d"></i></span><span class="dw" data-tone="info"><i class="dot" data-tone="info"></i>PR open</span></span><span class="ag">Codex</span><span class="el">23 min</span><span class="cp">“handed over at 13:02”</span><span class="op"><span class="btn plate sm">Open lane</span></span></div>
+   <div class="crow sel"><span class="n">4</span><span class="ti">People routes</span><span class="trk"><span class="dots"><i class="d passed"></i><i class="ln passed"></i><i class="d cur" data-tone="warn" style="background:var(--lamp-warn)"></i><i class="ln"></i><i class="d"></i><i class="ln"></i><i class="d skip"></i><i class="ln"></i><i class="d"></i><i class="ln"></i><i class="d"></i></span><span class="dw" data-tone="warn"><i class="dot" data-tone="warn"></i>Limited until 14:00 · continuing in Codex</span></span><span class="ag">Claude Code</span><span class="el">12 min</span><span class="cp">“31 handlers, 20 done”</span><span class="op"><span class="btn plate sm">Open lane</span></span></div>
+   <div class="crow dim"><span class="n">5</span><span class="ti">Projects routes</span><span class="trk"><span class="dots"><i class="d"></i><i class="ln"></i><i class="d"></i><i class="ln"></i><i class="d"></i><i class="ln"></i><i class="d skip"></i><i class="ln"></i><i class="d"></i><i class="ln"></i><i class="d"></i></span><span class="dw">Ready</span></span><span class="ag"></span><span class="el"></span><span class="cp"></span><span class="op"></span></div>
+   <div class="fold"><div class="fh"><span class="chev">▾</span>Checkpoints <span class="q">newest first</span></div>
+    <div class="hand"><span class="dot" data-tone="warn"></span><span><b>Step 2 · Handed to Codex</b> · usage limit · 13:02</span><span class="btn plate sm">View brief</span></div>
+    <div class="sheetwell">
+     <div class="hd"><b>Handoff brief</b><span>Claude Code to Codex</span><span>Redacted: 2 keys, 1 token</span><span>12 earlier turns, not included</span></div>
+<pre># Handoff brief
+Claude Code reached its usage limit on step 2 of 6 of the program “The hub stops stalling”.
+HoldSpeak moved the step to you, Codex. Same worktree, same branch.
+
+## The goal
+Make the hub stop stalling.
+
+## This step
+Prune read receipts after 14 days.
+
+## The plan and progress
+- [x] 1 Indexes (merged)
+- [~] 2 Retention (this step)
+- [ ] 3 Projections off the loop
+…</pre>
+    </div>
+    <div class="cpl"><div class="c"><span class="av">K</span><span class="who">You</span><span>Keep the 14-day rule</span><span class="m">12:51</span></div></div>
+   </div>
+  </div>
+  <div class="sb"><span class="it"><i class="dot live" data-tone="info"></i><b>Running</b></span><span class="it">1 of 6 done</span><span class="it">1 waits on you</span><span class="it">control Normal</span></div>
+ </div>
+</div>
+</section>
+
+<section class="part">
+<h2>1440 · Drafting: Allowed agents</h2>
+<p class="note">A fold in Drafting says which agents may read this repository, and whether the program may hand off on its own at Normal.</p>
+<div class="crop" style="width:1000px">
+ <div class="fold" style="margin-top:0;border-top:0"><div class="fh"><span class="chev">▾</span>Allowed agents <span class="q">who may read this repository</span></div>
+  <div class="allowed"><span class="ck on"><i></i>Claude Code</span><span class="ck on"><i></i>Codex</span><span class="ck"><i></i>pi</span><span class="ck on"><i></i>May hand off on its own</span><span class="q">At Normal, after 10 min at a limit</span></div>
+ </div>
+</div>
+</section>
+
+<section class="part">
+<h2>393 · the same program</h2>
+<div class="phones">
+ <div class="phone">
+  <div class="ph-menu"><b>HoldSpeak</b></div>
+  <div class="ph-win">
+   <div class="ph-tb"><span class="back">‹ Programs</span><span>The hub stops stalling</span></div>
+   <div class="ph-tool"><span class="btn plate">Park</span><span class="grow"></span><span class="btn">Agent ▾</span></div>
+   <div class="ph-body">
+    <div class="well"><div class="cap"><span class="dot" data-tone="ask"></span>Your turn</div>
+     <div class="wr"><span class="t"><b>Step 4 · People routes:</b> Claude Code is at its limit until 14:00: continue in Codex now, or wait?</span><span class="vb"><span class="btn primary">Continue in Codex</span> <span class="btn plate">Wait</span></span></div></div>
+    <div class="prow"><span class="n">4</span><span class="t">People routes</span><span class="sc" data-s="warning"><i></i>Limited until 14:00</span><span class="m">Claude Code · 12 min · “31 handlers, 20 done”</span></div>
+    <div class="prow"><span class="n">2</span><span class="t">Retention</span><span class="sc" data-s="working"><i></i>PR open</span><span class="m">Codex · 23 min</span></div>
+    <div class="hand"><span class="dot" data-tone="warn"></span><span><b>Step 2 · Handed to Codex</b> · usage limit</span><span class="btn plate">View brief</span></div>
+   </div>
+   <div class="ph-sb">Running · 1 of 6 done · 1 waits on you</div>
+  </div>
+  <div class="ph-dock"></div>
+ </div>
+</div>
+</section>
+</main>
+</body>
+</html>

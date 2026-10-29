@@ -222,6 +222,7 @@
 .pg-step-word[data-tone="ok"] { color: var(--wb-ok-ink); }
 .pg-step-word[data-tone="fail"] { color: var(--wb-danger-ink); }
 .pg-step-word[data-tone="ask"] { color: var(--wb-ember-ink); }
+.pg-step-word[data-tone="warn"] { color: var(--wb-warn-ink); }
 .pg-step-verbs { display: inline-flex; justify-content: flex-end; }
 .desk-next .pg-step-verbs .btn { white-space: nowrap; }
 .pg-step-chip,
@@ -296,6 +297,7 @@
 .pg-station[data-tone="ok"][data-state="current"] .pg-station-word { color: var(--wb-ok-ink); }
 .pg-station[data-tone="fail"][data-state="current"] .pg-station-word { color: var(--wb-danger-ink); }
 .pg-station[data-tone="ask"][data-state="current"] .pg-station-word { color: var(--wb-ember-ink); }
+.pg-station[data-tone="warn"][data-state="current"] .pg-station-word { color: var(--wb-warn-ink); }
 .pg-station-sub { color: var(--wb-muted); font-weight: 400; }
 .pg-station-person { display: inline-flex; }
 .pg-station-person .kit-avatar { width: 18px; height: 18px; }
@@ -466,3 +468,41 @@
 
 /* A fold's quiet words after its name (sans 12 muted, never mono). */
 .pg-fold-sub { color: var(--wb-muted); font-weight: 400; font-size: 12px; }
+
+/* PG19 Handoff (canvas handoffs-2026-10-28): the divider line in the
+   Checkpoints fold, the brief's sunken well, the Allowed agents fold. */
+.pg-handoff {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  margin: 4px 0;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--wb-warn-ink);
+  background: color-mix(in srgb, var(--lamp-warn) 12%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-warn) 40%, var(--wb-rule-soft));
+}
+.pg-handoff-words { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-handoff-words b { font-weight: 600; }
+.pg-handoff-row { display: block; list-style: none; }
+.pg-handoff-sheet { margin: 2px 0 8px; min-width: 0; }
+.pg-handoff-head { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 2px 6px; font: 500 12px/1.4 var(--font-sans); color: var(--wb-muted); }
+.pg-handoff-head b { color: var(--wb-ink); font-weight: 600; }
+.pg-handoff-brief {
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  font: 12px/1.5 var(--font-mono);
+  white-space: pre-wrap;
+  color: var(--wb-ink);
+}
+.pg-allowed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; padding: 4px 12px 10px; font-size: 13px; }
+.pg-allowed-note { color: var(--wb-muted); font-size: 12px; }
+@container surface (max-width: 520px) {
+  .pg-handoff { grid-template-columns: auto minmax(0, 1fr); row-gap: 4px; padding: 6px 10px; }
+  .pg-handoff-words { white-space: normal; }
+  .pg-handoff > :last-child { grid-column: 1 / -1; justify-self: start; }
+}

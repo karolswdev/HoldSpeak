@@ -50,6 +50,7 @@ from .project_repository import (
     watched_repositories,
 )
 from .agent_brief import (
+    AGENT_BRIEF_CAP_BYTES,
     AgentBriefRefused,
     compose_agent_brief,
     parse_item_ref,
@@ -395,6 +396,7 @@ class AgentHandService:
         review: Optional[Mapping[str, Any]] = None,
         review_by: Optional[str] = None,
         engine: Optional[str] = None,
+        handoff_brief: Optional[str] = None,
     ) -> dict[str, Any]:
         """Hand the item. A clone this hand made is named on the answer AND on
         a later refusal (the launch can still fail after it): the face shows
@@ -409,7 +411,7 @@ class AgentHandService:
                 principal, kind, item_id, made,
                 instruction=instruction, profile=profile, project_id=project_id,
                 queue=queue, helper_of=helper_of, helper_round=helper_round, review=review, review_by=review_by,
-                start_point=start_point, engine=engine,
+                start_point=start_point, engine=engine, handoff_brief=handoff_brief,
             )
         except ServiceError as exc:
             if made.get("clone"):
@@ -436,6 +438,7 @@ class AgentHandService:
         review: Optional[Mapping[str, Any]] = None,
         review_by: Optional[str] = None,
         engine: Optional[str] = None,
+        handoff_brief: Optional[str] = None,
     ) -> dict[str, Any]:
         try:
             kind, item_id = parse_item_ref({"kind": kind, "id": item_id})
@@ -588,6 +591,14 @@ class AgentHandService:
                 )
         except AgentBriefRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
+        if handoff_brief and kind == "program_step":
+            # Programs PG19: the next agent of a step that was handed off
+            # starts on the handoff brief (the record of where the step
+            # stands), in the same worktree on the same branch.
+            size = len(handoff_brief.encode("utf-8"))
+            if size > AGENT_BRIEF_CAP_BYTES:
+                raise AgentHandRefused("brief_over_cap", f"the handoff brief is {size} bytes; the limit is {AGENT_BRIEF_CAP_BYTES}")
+            brief = {**brief, "text": handoff_brief, "bytes": size}
         if isinstance(review, Mapping):
             from ..delivery.factory_launch import agent_of_profile
 
@@ -1011,6 +1022,8 @@ def codex_hooks_installed(path: Optional[Path] = None) -> bool:
 _STOPPED_LAUNCH_STATES = frozenset({
     "stopped_by_restart", "stopped_by_owner", "resume_failed", "complete", "ended_undelivered",
     "failed_to_register",
+    # Programs PG19: a step's agent at its usage limit, handed to the next.
+    "handed_off",
 })
 
 

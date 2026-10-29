@@ -17,6 +17,7 @@ import yourTurnFixture from "../__fixtures__/program.your_turn.json";
 import doneFixture from "../__fixtures__/program.done.json";
 import parkedFixture from "../__fixtures__/program.parked.json";
 import draftingFixture from "../__fixtures__/program.drafting.json";
+import limitedFixture from "../__fixtures__/program.limited.json";
 import needsFixture from "../__fixtures__/needs_you.program.json";
 import roomFixture from "../__fixtures__/room.programs.json";
 import personFixture from "../__fixtures__/person.programs.json";
@@ -86,6 +87,7 @@ const yourTurn = yourTurnFixture as unknown as Program;
 const done = doneFixture as unknown as Program;
 const parked = parkedFixture as unknown as Program;
 const drafting = draftingFixture as unknown as Program;
+const limited = limitedFixture as unknown as Program;
 let calls: string[];
 
 function hub(table: Record<string, Answer>) {
@@ -320,6 +322,71 @@ describe("the Program window (direction C, the ledger)", () => {
     expect(within(rows[0]).getByRole("button", { name: /Speak Step 1 title/ })).toBeTruthy();
     expect((screen.getByRole("textbox", { name: "Goal" }) as HTMLTextAreaElement).value).toBe(drafting.goal);
     expect(screen.getByTestId("program-start").className).toMatch(/primary/);
+  });
+});
+
+describe("PG19: when an agent runs out (canvas handoff-2026-10-28)", () => {
+  it("the limited step reads Limited until … · continuing in Codex, and Continue in Codex presses through", async () => {
+    const item = limited.your_turn_items.find((row) => row.kind === "limited")!;
+    const after = clone(limited);
+    after.your_turn_items = after.your_turn_items.filter((row) => row.id !== item.id);
+    after.your_turn = 0;
+    hub({
+      [`GET /api/programs/${limited.id}`]: limited,
+      [`POST /api/programs/${limited.id}/steps/${item.step_id}/decide`]: { program: after },
+    });
+    render(<ProgramBody programId={limited.id} />);
+    const well = await screen.findByTestId("programs-your-turn");
+    const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "limited")!;
+    expect(row.textContent).toContain(`Claude Code is at its limit until ${item.until_words}: continue in Codex now, or wait?`);
+    expect(within(row).getByTestId("programs-turn-continue").textContent).toBe("Continue in Codex");
+    expect(within(row).getByTestId("programs-turn-continue").className).toMatch(/primary/);
+    expect(within(row).getByTestId("programs-turn-wait").textContent).toBe("Wait");
+    const word = within(stepRow(2)).getByTestId("programs-step-word");
+    expect(word.textContent).toBe(`Limited until ${item.until_words}`);
+    expect(word.getAttribute("title")).toBe(`Limited until ${item.until_words} · continuing in Codex`);
+    expect(word.getAttribute("data-tone")).toBe("warn");
+    // The toolbar names the order.
+    expect(screen.getByTestId("program-runs-on").textContent).toContain("Agent: Claude Code, then Codex");
+    fireEvent.click(within(row).getByTestId("programs-turn-continue"));
+    await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
+    expect(calls).toContain(`POST /api/programs/${limited.id}/steps/${item.step_id}/decide ${JSON.stringify({ kind: "limited", choice: "continue" })}`);
+  });
+
+  it("the Checkpoints fold: the handoff divider, and View brief shows the brief, what was redacted and the earlier turns", async () => {
+    hub({ [`GET /api/programs/${limited.id}`]: limited });
+    render(<ProgramBody programId={limited.id} />);
+    const [line] = await screen.findAllByTestId("programs-handoff");
+    expect(line.textContent).toContain("Step 1 · Handed to Codex · usage limit");
+    expect(screen.queryByTestId("programs-handoff-brief")).toBeNull();
+    fireEvent.click(within(line).getByTestId("programs-view-brief"));
+    const sheet = within(line).getByTestId("programs-handoff-brief");
+    const entry = limited.steps[0].handoffs![0];
+    expect(sheet.textContent).toContain("Claude Code to Codex");
+    expect(within(sheet).getByTestId("programs-handoff-redacted").textContent).toBe(`Redacted: ${entry.redacted_words}`);
+    expect(entry.redacted_words).toBe("1 key, 1 token");
+    expect(sheet.textContent).toContain("1 earlier turn, not included");
+    expect(sheet.querySelector("pre")!.textContent).toBe(entry.brief);
+    expect(entry.brief).not.toMatch(/sk-demo|ghp_demo/);
+    expect(within(line).getByTestId("programs-view-brief").textContent).toBe("Hide brief");
+  });
+
+  it("Drafting: Allowed agents and the then rows of the Agent picker write the Program", async () => {
+    const patched = clone(drafting);
+    hub({
+      [`GET /api/programs/${drafting.id}`]: drafting,
+      [`PATCH /api/programs/${drafting.id}`]: { program: patched },
+    });
+    render(<ProgramBody programId={drafting.id} />);
+    const allowed = await screen.findByTestId("programs-allowed");
+    fireEvent.click(within(allowed).getByLabelText("Codex"));
+    await waitFor(() => expect(calls).toContain(
+      `PATCH /api/programs/${drafting.id} ${JSON.stringify({ allowed_profiles: ["claude-default", "pi-default"] })}`));
+    fireEvent.click(screen.getByTestId("program-runs-on"));
+    fireEvent.click(await screen.findByRole("menuitemcheckbox", { name: /then Codex/ }));
+    const first = { profile: drafting.default.profile, engine: drafting.default.engine?.id ?? null };
+    await waitFor(() => expect(calls).toContain(
+      `PATCH /api/programs/${drafting.id} ${JSON.stringify({ runs_on: [first, { profile: "codex-default", engine: null }] })}`));
   });
 });
 

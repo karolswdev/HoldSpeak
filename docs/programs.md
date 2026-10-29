@@ -68,6 +68,34 @@ The default pair: Codex reviews the work of Claude Code, and Claude Code reviews
 
 **When idle.** A pi step with **When idle** starts only when its engine is idle. Until then the step says **Ready · waiting for qwen**. Your own use (dictation, Ask) always gets the engine first. The step starts on the next pass after the engine is idle again.
 
+## When an agent runs out
+
+Claude Code and Codex stop when their plan's usage window is used up. A program can continue the step in another agent.
+
+**The order of agents.** Open **Agent: … ▾** in the toolbar. The first choice runs the step. Under **Then, at a limit**, press each agent that can take over, in order. The button then reads, for example, **Agent: Claude Code, then Codex**.
+
+**What the step says.** When an agent shows its limit notice, the step says **Limited until 14:00**. HoldSpeak reads the notice on the agent's own screen.
+
+**What happens next** depends on the control level:
+
+| Control | What HoldSpeak does |
+|---|---|
+| **Secure** | A Your turn row asks you: **Continue in Codex** or **Wait**. |
+| **Normal** | The same row. If the program **may hand off on its own**, HoldSpeak continues after 10 minutes. |
+| **YOLO** | HoldSpeak continues at once in the next agent and writes it under Decided for you. |
+
+HoldSpeak skips an agent that the desk does not have, an agent that the program does not allow, and an agent that is at its own limit. If no agent is left, the step waits until the reset time. When the limit resets, HoldSpeak tells the agent to continue.
+
+HoldSpeak moves a stopped turn one time only. It never moves the same turn two times.
+
+**The handoff brief.** The next agent works in the same worktree, on the same branch. It does not get the conversation of the earlier agent. It gets a brief that HoldSpeak makes from the step's record, without a model: the goal, the step's brief, the plan and its progress, what you said, the files that changed, `git status`, `git diff --stat`, the end of the last red check, the open questions, and the repository's CLAUDE.md or AGENTS.md. HoldSpeak removes keys, tokens, passwords and private keys from the brief before it sends it.
+
+In the Checkpoints fold, a handoff is one line: **Step 1 · Handed to Codex · usage limit**. Press **View brief** to read the brief that was sent, what was removed (for example "Redacted: 2 keys, 1 token") and how many earlier turns it does not include.
+
+**Allowed agents.** In Drafting, the **Allowed agents** fold sets which agents may read the repository. By default every agent may. Turn one off for a repository whose code must stay with one company.
+
+**By hand.** A tool or the API can move a running step to another agent (`program.handoff`, or `POST /api/programs/{id}/steps/{sid}/handoff` with `preview: true` to read the brief first). Only you can do this; an agent cannot.
+
 ## The steps and their states
 
 A step goes through six stations: BRIEF · WORK · CHECK · REVIEW · PR · MERGE. The board shows the stations as dots. The lit dot is the current station.
@@ -78,6 +106,7 @@ A step goes through six stations: BRIEF · WORK · CHECK · REVIEW · PR · MERG
 | **Ready** | It can start. It waits for a free agent. |
 | **Working** | The agent works on it. |
 | **Asks you** | The agent waits for you. The row is in Needs you. |
+| **Limited until 14:00** | The agent stopped at its usage limit. See "When an agent runs out". |
 | **Checking** | The agent made a commit. The check runs in the worktree. |
 | **Check failed** | The check log is not green. The agent gets the end of the log and tries again. |
 | **In review** | A reviewer reads the change. |
@@ -201,6 +230,7 @@ The MCP tools are in the `program` family:
 | `program.step_done` | The step's agent says that it is done, with its report. HoldSpeak still waits for the commit. | The step's own agent |
 | `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. | You only |
 | `program.overturn` | Undo a decision of HoldSpeak. | You only |
+| `program.handoff` | Move a running step to another agent, with the handoff brief. `preview: true` shows the brief and sends nothing. | You only |
 
 An agent can make and start a program, but it cannot decide for you, and it does not prompt a step's agent: HoldSpeak does that. The skill `agent/skills/holdspeak-programs/SKILL.md` tells an agent how to drive a program.
 

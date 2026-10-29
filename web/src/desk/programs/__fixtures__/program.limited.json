@@ -1,0 +1,535 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "check_command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-28T23:53:35.744340+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 13,
+      "kind": null,
+      "line": "The program waits on you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.743770+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 12,
+      "kind": null,
+      "line": "Claude Code stopped at its usage limit until 21:23",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-d4ce85279cff",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.740229+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 11,
+      "kind": null,
+      "line": "The program runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.739838+00:00",
+      "by": "owner",
+      "choice": "1",
+      "id": 10,
+      "kind": "handoff",
+      "line": "Handed to Codex · usage limit",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-52d26172b84e",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.638483+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 9,
+      "kind": null,
+      "line": "The program waits on you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.637965+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 8,
+      "kind": null,
+      "line": "Claude Code stopped at its usage limit until 21:23",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-52d26172b84e",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.636041+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 7,
+      "kind": null,
+      "line": "The turn ended with no commit; asked the agent to commit",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-52d26172b84e",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.624542+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 6,
+      "kind": null,
+      "line": "Keep the 14-day rule",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-52d26172b84e",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.621920+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 5,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-d4ce85279cff",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-d4ce85279cff",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.566716+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 4,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-52d26172b84e",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-52d26172b84e",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.509768+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.508579+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 2 steps",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T23:53:35.506867+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "normal",
+  "control_word": "Normal",
+  "created_at": "2026-10-28T23:53:35.506604+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      },
+      {
+        "agent": "Codex",
+        "engine": null,
+        "label": "Codex",
+        "profile": "codex-default"
+      }
+    ]
+  },
+  "done": 0,
+  "for_person_id": null,
+  "goal": "People routes overnight.",
+  "id": "program-2a822144f52e",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-10-28T23:53:35.744340+00:00",
+    "by": "engine",
+    "choice": null,
+    "id": 13,
+    "kind": null,
+    "line": "The program waits on you",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "may_handoff": false,
+  "note_id": "program-program-2a822144f52e",
+  "note_window": "pullout:note:program-program-2a822144f52e",
+  "origin_ref": null,
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "prefer_idle": false,
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig-limited/app"
+  },
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 6,
+  "spend_limit_usd": null,
+  "state": "waiting",
+  "state_word": "Your turn",
+  "status_line": "Your turn · 0 of 2 done · 1 waits on you · check: fake_program_check.sh · control Normal",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Codex",
+      "branch": "program/people-routes-overnight/1-people-routes",
+      "brief": "31 handlers through run_in_threadpool.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "low",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [
+        {
+          "at": "2026-10-28T23:53:35.739391Z",
+          "brief": "# Handoff brief\nHoldSpeak on step 1 of 2 of the program “People routes overnight”. Claude Code reached its usage limit, so HoldSpeak moved the step to you, Codex.\nThis brief is HoldSpeak's, built from the step's record without a model; the owner's words are quoted as his. You do not get the earlier agent's conversation.\n\n## Where\n- Step 1: People routes\n- Worktree: hs-program-step-52d26172b84e (the same one; continue here)\n- Branch: program/people-routes-overnight/1-people-routes (from main; do not make a new branch)\n- Earlier turns on this step: 1 (not included)\n\n## The goal\nThe goal of the program, in the owner's words:\n```\nPeople routes overnight.\n```\n\n## This step\n```\n31 handlers through run_in_threadpool.\n```\n\n## The plan and progress\n`[x]` done, `[~]` this step or running, `[ ]` not started.\n- [~] 1 People routes (this step)\n- [~] 2 Projects routes (Working)\n\n## Checkpoints on this step\nOldest first.\n- Handed to Claude Code in hs-program-step-52d26172b84e\n- The turn ended with no commit; asked the agent to commit\n- Claude Code stopped at its usage limit until 21:23\n\n## What the owner said since\nNewest first. These still apply.\n- Keep the 14-day rule\n\n## The worktree now\n`git status --porcelain`:\n```\n?? CLAUDE.md\n?? holdspeak/\n```\n`git diff --stat` against the step's base:\n```\n(no change)\n```\n\n## Open problems\n- The earlier agent stopped with: You've hit your limit · resets 2pm\n\n## Repository instructions (CLAUDE.md)\n```\nRun one test at a time.\n[redacted]\n[redacted]\n```\n\n## How to continue\nCheck the worktree against this brief before you change anything. Do not redo finished work. Continue with what is left of this step, commit on this branch, and end your turn. HoldSpeak runs `sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh` on your last commit. Write one line with program.checkpoint to say where you pick up, and call program.step_done with your report when you are done.\n",
+          "brief_ref": "program_step:step-52d26172b84e/handoff/1",
+          "by": "owner",
+          "earlier_turns": 1,
+          "from": "Claude Code",
+          "from_engine": null,
+          "from_profile": "claude-default",
+          "launch_from": "L1",
+          "launch_to": "L3",
+          "reason": "usage_limit",
+          "redacted": {
+            "key": 1,
+            "token": 1
+          },
+          "redacted_words": "1 key, 1 token",
+          "to": "Codex",
+          "to_engine": null,
+          "to_profile": "codex-default",
+          "until": "2026-10-29T01:23:00Z"
+        }
+      ],
+      "held_reason": null,
+      "id": "step-52d26172b84e",
+      "last_checkpoint": {
+        "at": "2026-10-28T23:53:35.739838+00:00",
+        "by": "owner",
+        "choice": "1",
+        "id": 10,
+        "kind": "handoff",
+        "line": "Handed to Codex · usage limit",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "rule": null,
+        "step_id": "step-52d26172b84e",
+        "undo": {}
+      },
+      "launch_id": "L3",
+      "limit": null,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [
+        "holdspeak/web/routes/people.py"
+      ],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "codex-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        },
+        {
+          "agent": "Codex",
+          "engine": null,
+          "label": "Codex",
+          "profile": "codex-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:35.566435+00:00",
+      "state": "working",
+      "state_word": "Working",
+      "station": 1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "People routes",
+      "updated_at": "2026-10-28T23:53:35.741553+00:00",
+      "worktree": "hs-program-step-52d26172b84e"
+    },
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/people-routes-overnight/2-projects-routes",
+      "brief": "20 handlers through run_in_threadpool.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "low",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "id": "step-d4ce85279cff",
+      "last_checkpoint": {
+        "at": "2026-10-28T23:53:35.743770+00:00",
+        "by": "engine",
+        "choice": null,
+        "id": 12,
+        "kind": null,
+        "line": "Claude Code stopped at its usage limit until 21:23",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "rule": null,
+        "step_id": "step-d4ce85279cff",
+        "undo": {}
+      },
+      "launch_id": "L2",
+      "limit": {
+        "auto_at": null,
+        "line": "You've hit your limit · resets 2pm",
+        "next": {
+          "agent": "Codex",
+          "engine": null,
+          "label": "Codex",
+          "profile": "codex-default"
+        },
+        "profile": "claude-default",
+        "rule": "claude.usage_limit",
+        "seen_at": "2026-10-28T23:53:35.743675Z",
+        "share": null,
+        "until": "2026-10-29T01:23:00Z",
+        "waiting": false,
+        "words": "21:23"
+      },
+      "ordinal": 2,
+      "origin_ref": null,
+      "owns": [
+        "holdspeak/web/routes/projects.py"
+      ],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        },
+        {
+          "agent": "Codex",
+          "engine": null,
+          "label": "Codex",
+          "profile": "codex-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:35.621677+00:00",
+      "state": "limited",
+      "state_word": "Limited until 21:23 · continuing in Codex",
+      "station": 1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Projects routes",
+      "updated_at": "2026-10-28T23:53:35.743684+00:00",
+      "worktree": "hs-program-step-d4ce85279cff"
+    }
+  ],
+  "template": "fast-cycle",
+  "title": "People routes overnight",
+  "total": 2,
+  "updated_at": "2026-10-28T23:53:35.744281+00:00",
+  "usage_warning_share": null,
+  "your_turn": 1,
+  "your_turn_items": [
+    {
+      "agent": "Claude Code",
+      "choices": [
+        "continue",
+        "wait"
+      ],
+      "for_person_id": null,
+      "id": "step-d4ce85279cff:limited",
+      "kind": "limited",
+      "launch_id": "L2",
+      "next": {
+        "agent": "Codex",
+        "engine": null,
+        "label": "Codex",
+        "profile": "codex-default"
+      },
+      "ordinal": 2,
+      "pr": null,
+      "program_id": "program-2a822144f52e",
+      "program_title": "People routes overnight",
+      "project_id": "proj-holdspeak",
+      "since": "2026-10-28T23:53:35.743684+00:00",
+      "step_id": "step-d4ce85279cff",
+      "step_title": "Projects routes",
+      "title": "Claude Code is at its limit until 21:23: continue in Codex now, or wait?",
+      "until": "2026-10-29T01:23:00Z",
+      "until_words": "21:23",
+      "warning": false
+    }
+  ]
+}

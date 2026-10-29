@@ -90,6 +90,12 @@ export async function race(programId: string, stepId: string, n: number): Promis
     `${base(programId)}/steps/${encodeURIComponent(stepId)}/race`, { method: "POST", json: { n } }));
 }
 
+/** PG19: hand a running step to another agent (owner only). */
+export async function handoff(programId: string, stepId: string, to: { profile: string; engine: string | null }): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/steps/${encodeURIComponent(stepId)}/handoff`, { method: "POST", json: { to } }));
+}
+
 /** The Room's Programs fold and the person's room line (§9b). */
 export async function readProjectPrograms(projectId: string): Promise<ProgramRoomRow[]> {
   try {
@@ -203,6 +209,10 @@ export interface UpdateBody {
   default_engine?: string | null;
   prefer_idle?: boolean;
   project_id?: string | null;
+  /** PG19: the ordered agents, who may read the repository, hand off on its own. */
+  runs_on?: { profile: string; engine: string | null }[];
+  allowed_profiles?: string[];
+  may_handoff?: boolean;
 }
 
 export async function updateProgram(id: string, body: UpdateBody): Promise<Program | null> {

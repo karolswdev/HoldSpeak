@@ -29,8 +29,12 @@ ROUNDS = {"secure": 2, "normal": 2, "yolo": 3}
 
 KINDS = (
     "routine", "open_pr", "merge", "finding_required", "finding_should", "finding_note", "agent_question",
-    "gate_approval", "check_failed", "step_failed", "race_winner", "add_step", "program_done",
+    "gate_approval", "check_failed", "step_failed", "race_winner", "add_step", "program_done", "limited",
 )
+
+#: PG19: the minutes Normal waits on his press before a Program that may
+#: hand off continues in the next agent on its own.
+HANDOFF_AFTER_MINUTES = 10
 
 _SECURITY = re.compile(r"\b(security|secur\w*|vulnerab\w*|injection|xss|csrf|secret|credential|token leak)\b", re.I)
 _DATA_LOSS = re.compile(r"\b(data[- ]loss|loses? data|drops? (?:rows|data|the table)|deletes? (?:rows|user data)|corrupt\w*)\b", re.I)
@@ -191,6 +195,23 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
         if level == "yolo":
             return Decision("add", "YOLO: the engine adds a missing step and says so", overturnable=True)
         return CoreQuestion(f"{level.capitalize()}: he adds a step the plan lacked", f"{level.capitalize()}: the plan is his")
+    if kind == "limited":
+        # PG19 (Moonfold's provider handoff): the agent stopped at its usage
+        # limit. Facts: ``next`` (a next agent is free), ``handed`` (this
+        # stopped turn was handed off before), ``waiting`` (he chose to
+        # wait), ``may_handoff``, ``minutes`` since the stop.
+        if facts.get("handed"):
+            return Decision("none", "a stopped turn is handed off once, never twice")
+        if not facts.get("next"):
+            return Decision("wait", "no other agent may take the step: it waits until the reset")
+        if facts.get("waiting"):
+            return Decision("wait", "he chose to wait for the reset")
+        if level == "yolo":
+            return Decision("handoff", "YOLO: a limited step continues at once in the next agent")
+        if level == "normal" and facts.get("may_handoff") and float(facts.get("minutes") or 0) >= HANDOFF_AFTER_MINUTES:
+            return Decision("handoff", f"Normal: the program may hand off; {HANDOFF_AFTER_MINUTES} minutes passed")
+        return CoreQuestion("continue in the next agent now, or wait for the reset?",
+                            f"{level.capitalize()}: a limited step waits for his press")
     if kind == "program_done":
         if level == "secure":
             return CoreQuestion("Secure: he closes the program", "Secure: Done is his")
@@ -198,4 +219,4 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
     return CoreQuestion("the engine has no rule for this choice", "no rule", core=True)  # pragma: no cover
 
 
-__all__ = ["CoreQuestion", "DESK_MODES", "Decision", "KINDS", "LEVELS", "ROUNDS", "decide", "is_core", "level_of"]
+__all__ = ["CoreQuestion", "DESK_MODES", "Decision", "HANDOFF_AFTER_MINUTES", "KINDS", "LEVELS", "ROUNDS", "decide", "is_core", "level_of"]

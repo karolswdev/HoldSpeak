@@ -1,9 +1,10 @@
 {
+  "allowed_profiles": [],
   "asks": 0,
-  "check_command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+  "check_command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-10-28T17:50:11.177680+00:00",
+      "at": "2026-10-28T23:53:34.719615+00:00",
       "by": "engine",
       "choice": null,
       "id": 50,
@@ -13,11 +14,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e650b8b2deb1",
+      "step_id": "step-860cbd036065",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:11.170602+00:00",
+      "at": "2026-10-28T23:53:34.713834+00:00",
       "by": "engine",
       "choice": null,
       "id": 49,
@@ -27,11 +28,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e650b8b2deb1",
+      "step_id": "step-860cbd036065",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.935929+00:00",
+      "at": "2026-10-28T23:53:34.604933+00:00",
       "by": "engine",
       "choice": null,
       "id": 48,
@@ -41,11 +42,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-9eb4521d06dc",
+      "step_id": "step-b85198b3ca73",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.909078+00:00",
+      "at": "2026-10-28T23:53:34.589800+00:00",
       "by": "engine",
       "choice": "fix",
       "id": 47,
@@ -55,11 +56,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": "a REQUIRED finding goes back to the builder (round 1 of 2)",
-      "step_id": "step-e650b8b2deb1",
+      "step_id": "step-860cbd036065",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.908590+00:00",
+      "at": "2026-10-28T23:53:34.589448+00:00",
       "by": "engine",
       "choice": null,
       "id": 46,
@@ -69,11 +70,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-9eb4521d06dc",
+      "step_id": "step-b85198b3ca73",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.804414+00:00",
+      "at": "2026-10-28T23:53:34.536922+00:00",
       "by": "engine",
       "choice": null,
       "id": 45,
@@ -83,11 +84,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-9eb4521d06dc",
+      "step_id": "step-b85198b3ca73",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.370163+00:00",
+      "at": "2026-10-28T23:53:34.351577+00:00",
       "by": "engine",
       "choice": null,
       "id": 43,
@@ -101,7 +102,7 @@
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.369317+00:00",
+      "at": "2026-10-28T23:53:34.350909+00:00",
       "by": "engine",
       "choice": null,
       "id": 42,
@@ -111,53 +112,53 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-2909f8dbb559",
+      "step_id": "step-cfa7e7f5a510",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.311551+00:00",
+      "at": "2026-10-28T23:53:34.326695+00:00",
       "by": "engine",
       "choice": null,
       "id": 41,
       "kind": null,
-      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-2909f8dbb559/.tmp/program-check/step-2909f8dbb559/20261028T175010Z.log",
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-cfa7e7f5a510/.tmp/program-check/step-cfa7e7f5a510/20261028T235334Z.log",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-2909f8dbb559",
+      "step_id": "step-cfa7e7f5a510",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.228840+00:00",
+      "at": "2026-10-28T23:53:34.288535+00:00",
       "by": "engine",
       "choice": null,
       "id": 40,
       "kind": null,
-      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-2909f8dbb559",
+      "step_id": "step-cfa7e7f5a510",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.228372+00:00",
+      "at": "2026-10-28T23:53:34.288294+00:00",
       "by": "engine",
       "choice": null,
       "id": 39,
       "kind": null,
-      "line": "New commit 3eb6b0e3; the check runs",
+      "line": "New commit 516c98f0; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-2909f8dbb559",
+      "step_id": "step-cfa7e7f5a510",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.205455+00:00",
+      "at": "2026-10-28T23:53:34.277749+00:00",
       "by": "engine",
       "choice": null,
       "id": 38,
@@ -167,53 +168,53 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e650b8b2deb1",
+      "step_id": "step-860cbd036065",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.145161+00:00",
+      "at": "2026-10-28T23:53:34.255028+00:00",
       "by": "engine",
       "choice": null,
       "id": 37,
       "kind": null,
-      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-e650b8b2deb1/.tmp/program-check/step-e650b8b2deb1/20261028T175010Z.log",
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-860cbd036065/.tmp/program-check/step-860cbd036065/20261028T235334Z.log",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e650b8b2deb1",
+      "step_id": "step-860cbd036065",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.058055+00:00",
+      "at": "2026-10-28T23:53:34.219316+00:00",
       "by": "engine",
       "choice": null,
       "id": 36,
       "kind": null,
-      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e650b8b2deb1",
+      "step_id": "step-860cbd036065",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.057586+00:00",
+      "at": "2026-10-28T23:53:34.219090+00:00",
       "by": "engine",
       "choice": null,
       "id": 35,
       "kind": null,
-      "line": "New commit 8dc0b18b; the check runs",
+      "line": "New commit fce063a6; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e650b8b2deb1",
+      "step_id": "step-860cbd036065",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:10.016616+00:00",
+      "at": "2026-10-28T23:53:34.208422+00:00",
       "by": "engine",
       "choice": null,
       "id": 34,
@@ -223,95 +224,95 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-9eb4521d06dc",
+      "step_id": "step-b85198b3ca73",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.933169+00:00",
+      "at": "2026-10-28T23:53:34.185734+00:00",
       "by": "engine",
       "choice": null,
       "id": 33,
       "kind": null,
-      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-9eb4521d06dc/.tmp/program-check/step-9eb4521d06dc/20261028T175009Z.log",
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-b85198b3ca73/.tmp/program-check/step-b85198b3ca73/20261028T235334Z.log",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-9eb4521d06dc",
+      "step_id": "step-b85198b3ca73",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.835579+00:00",
+      "at": "2026-10-28T23:53:34.150016+00:00",
       "by": "engine",
       "choice": null,
       "id": 32,
       "kind": null,
-      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-9eb4521d06dc",
+      "step_id": "step-b85198b3ca73",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.835182+00:00",
+      "at": "2026-10-28T23:53:34.149775+00:00",
       "by": "engine",
       "choice": null,
       "id": 31,
       "kind": null,
-      "line": "New commit 2fb106cd; the check runs",
+      "line": "New commit 2c153703; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-9eb4521d06dc",
+      "step_id": "step-b85198b3ca73",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.491063+00:00",
+      "at": "2026-10-28T23:53:34.008379+00:00",
       "by": "engine",
       "choice": null,
       "id": 30,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-2909f8dbb559",
+      "line": "Handed to Claude Code in hs-program-step-cfa7e7f5a510",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-2909f8dbb559",
+      "step_id": "step-cfa7e7f5a510",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.359448+00:00",
+      "at": "2026-10-28T23:53:33.951119+00:00",
       "by": "engine",
       "choice": null,
       "id": 29,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-e650b8b2deb1",
+      "line": "Handed to Claude Code in hs-program-step-860cbd036065",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e650b8b2deb1",
+      "step_id": "step-860cbd036065",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.171783+00:00",
+      "at": "2026-10-28T23:53:33.894025+00:00",
       "by": "engine",
       "choice": null,
       "id": 28,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-9eb4521d06dc",
+      "line": "Handed to Claude Code in hs-program-step-b85198b3ca73",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-9eb4521d06dc",
+      "step_id": "step-b85198b3ca73",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.023409+00:00",
+      "at": "2026-10-28T23:53:33.835760+00:00",
       "by": "owner",
       "choice": null,
       "id": 27,
@@ -325,7 +326,7 @@
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.022105+00:00",
+      "at": "2026-10-28T23:53:33.834625+00:00",
       "by": "owner",
       "choice": null,
       "id": 26,
@@ -339,7 +340,7 @@
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.020213+00:00",
+      "at": "2026-10-28T23:53:33.833616+00:00",
       "by": "owner",
       "choice": null,
       "id": 25,
@@ -356,10 +357,10 @@
   "closed_at": null,
   "control": "secure",
   "control_word": "Secure",
-  "created_at": "2026-10-28T17:50:09.020086+00:00",
+  "created_at": "2026-10-28T23:53:33.833534+00:00",
   "decided_for_you": [
     {
-      "at": "2026-10-28T17:50:10.909078+00:00",
+      "at": "2026-10-28T23:53:34.589800+00:00",
       "choice": "fix",
       "id": 47,
       "kind": "finding_required",
@@ -368,21 +369,29 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": "a REQUIRED finding goes back to the builder (round 1 of 2)",
-      "step_id": "step-e650b8b2deb1"
+      "step_id": "step-860cbd036065"
     }
   ],
   "default": {
     "agent": "Claude Code",
     "engine": null,
-    "profile": "claude-default"
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
   },
   "done": 0,
   "for_person_id": null,
   "goal": "The words wave.",
-  "id": "program-2d8660fe0960",
-  "in_state_seconds": 2,
+  "id": "program-c31169a08cfb",
+  "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-10-28T17:50:11.177680+00:00",
+    "at": "2026-10-28T23:53:34.719615+00:00",
     "by": "engine",
     "choice": null,
     "id": 50,
@@ -392,11 +401,12 @@
     "overturnable": false,
     "overturned_at": null,
     "rule": null,
-    "step_id": "step-e650b8b2deb1",
+    "step_id": "step-860cbd036065",
     "undo": {}
   },
-  "note_id": "program-program-2d8660fe0960",
-  "note_window": "pullout:note:program-program-2d8660fe0960",
+  "may_handoff": false,
+  "note_id": "program-program-c31169a08cfb",
+  "note_window": "pullout:note:program-program-c31169a08cfb",
   "origin_ref": null,
   "place": {
     "origin": null,
@@ -411,7 +421,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/app"
   },
   "reviewer": {
     "agent": "Codex",
@@ -430,9 +440,9 @@
       "branch": "program/the-words-wave/1-settings-words",
       "brief": "Plain words in Settings.",
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
-        "commit": "2fb106cd4b859be40ee90f3fd9302a2260b4ab92",
-        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-9eb4521d06dc/.tmp/program-check/step-9eb4521d06dc/20261028T175009Z.log",
+        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": "2c153703d415c524aee2d392c1446c5779dde1e3",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-b85198b3ca73/.tmp/program-check/step-b85198b3ca73/20261028T235334Z.log",
         "minutes": 0.0,
         "reasons": [],
         "running": false,
@@ -467,7 +477,7 @@
       "contenders": [],
       "effort": "low",
       "elapsed": "under a minute",
-      "elapsed_seconds": 3,
+      "elapsed_seconds": 1,
       "ended_at": null,
       "engine": null,
       "findings": [],
@@ -479,10 +489,11 @@
         "review": "agent",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-9eb4521d06dc",
+      "id": "step-b85198b3ca73",
       "last_checkpoint": {
-        "at": "2026-10-28T17:50:10.935929+00:00",
+        "at": "2026-10-28T23:53:34.604933+00:00",
         "by": "engine",
         "choice": null,
         "id": 48,
@@ -492,10 +503,11 @@
         "overturnable": false,
         "overturned_at": null,
         "rule": null,
-        "step_id": "step-9eb4521d06dc",
+        "step_id": "step-b85198b3ca73",
         "undo": {}
       },
       "launch_id": "L5",
+      "limit": null,
       "ordinal": 1,
       "origin_ref": null,
       "owns": [
@@ -518,7 +530,15 @@
         "verdict": "pass"
       },
       "rounds": 0,
-      "started_at": "2026-10-28T17:50:09.171416+00:00",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:33.893783+00:00",
       "state": "merge_ask",
       "state_word": "Merge?",
       "station": 5,
@@ -531,8 +551,8 @@
         "merge"
       ],
       "title": "Settings words",
-      "updated_at": "2026-10-28T17:50:10.935737+00:00",
-      "worktree": "hs-program-step-9eb4521d06dc"
+      "updated_at": "2026-10-28T23:53:34.604815+00:00",
+      "worktree": "hs-program-step-b85198b3ca73"
     },
     {
       "after": [],
@@ -540,9 +560,9 @@
       "branch": "program/the-words-wave/2-dock-words",
       "brief": "Plain words on the Dock.",
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
-        "commit": "8dc0b18b71b4cc1d9d0b8f8b265868b07b977780",
-        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-e650b8b2deb1/.tmp/program-check/step-e650b8b2deb1/20261028T175010Z.log",
+        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": "fce063a66fcde091bd573fbbe7fa6c22cfe440c0",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-860cbd036065/.tmp/program-check/step-860cbd036065/20261028T235334Z.log",
         "minutes": 0.0,
         "reasons": [],
         "running": false,
@@ -577,7 +597,7 @@
       "contenders": [],
       "effort": "low",
       "elapsed": "under a minute",
-      "elapsed_seconds": 3,
+      "elapsed_seconds": 1,
       "ended_at": null,
       "engine": null,
       "findings": [
@@ -606,10 +626,11 @@
         "review": "agent",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-e650b8b2deb1",
+      "id": "step-860cbd036065",
       "last_checkpoint": {
-        "at": "2026-10-28T17:50:11.177680+00:00",
+        "at": "2026-10-28T23:53:34.719615+00:00",
         "by": "engine",
         "choice": null,
         "id": 50,
@@ -619,10 +640,11 @@
         "overturnable": false,
         "overturned_at": null,
         "rule": null,
-        "step_id": "step-e650b8b2deb1",
+        "step_id": "step-860cbd036065",
         "undo": {}
       },
       "launch_id": "L6",
+      "limit": null,
       "ordinal": 2,
       "origin_ref": null,
       "owns": [
@@ -642,7 +664,15 @@
         "verdict": "fail"
       },
       "rounds": 0,
-      "started_at": "2026-10-28T17:50:09.358728+00:00",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:33.950777+00:00",
       "state": "findings",
       "state_word": "Findings",
       "station": 3,
@@ -655,8 +685,8 @@
         "merge"
       ],
       "title": "Dock words",
-      "updated_at": "2026-10-28T17:50:11.177444+00:00",
-      "worktree": "hs-program-step-e650b8b2deb1"
+      "updated_at": "2026-10-28T23:53:34.719535+00:00",
+      "worktree": "hs-program-step-860cbd036065"
     },
     {
       "after": [],
@@ -664,9 +694,9 @@
       "branch": "program/the-words-wave/3-door-words",
       "brief": "Plain words on the Door.",
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
-        "commit": "3eb6b0e38b6926d5e18a2746a00e61a3d2dbacc1",
-        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-2909f8dbb559/.tmp/program-check/step-2909f8dbb559/20261028T175010Z.log",
+        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": "516c98f07a930b8e3dee7d972e4814a002b08943",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-cfa7e7f5a510/.tmp/program-check/step-cfa7e7f5a510/20261028T235334Z.log",
         "minutes": 0.0,
         "reasons": [],
         "running": false,
@@ -701,7 +731,7 @@
       "contenders": [],
       "effort": "low",
       "elapsed": "under a minute",
-      "elapsed_seconds": 2,
+      "elapsed_seconds": 1,
       "ended_at": null,
       "engine": null,
       "findings": [],
@@ -713,10 +743,11 @@
         "review": "agent",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-2909f8dbb559",
+      "id": "step-cfa7e7f5a510",
       "last_checkpoint": {
-        "at": "2026-10-28T17:50:10.369317+00:00",
+        "at": "2026-10-28T23:53:34.350909+00:00",
         "by": "engine",
         "choice": null,
         "id": 42,
@@ -726,10 +757,11 @@
         "overturnable": false,
         "overturned_at": null,
         "rule": null,
-        "step_id": "step-2909f8dbb559",
+        "step_id": "step-cfa7e7f5a510",
         "undo": {}
       },
       "launch_id": "L7",
+      "limit": null,
       "ordinal": 3,
       "origin_ref": null,
       "owns": [
@@ -749,7 +781,15 @@
         "verdict": null
       },
       "rounds": 0,
-      "started_at": "2026-10-28T17:50:09.490667+00:00",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:34.008107+00:00",
       "state": "checking",
       "state_word": "Checking",
       "station": 2,
@@ -762,14 +802,15 @@
         "merge"
       ],
       "title": "Door words",
-      "updated_at": "2026-10-28T17:50:10.368729+00:00",
-      "worktree": "hs-program-step-2909f8dbb559"
+      "updated_at": "2026-10-28T23:53:34.350613+00:00",
+      "worktree": "hs-program-step-cfa7e7f5a510"
     }
   ],
   "template": "build-and-review",
   "title": "The words wave",
   "total": 3,
-  "updated_at": "2026-10-28T17:50:10.370067+00:00",
+  "updated_at": "2026-10-28T23:53:34.351500+00:00",
+  "usage_warning_share": null,
   "your_turn": 4,
   "your_turn_items": [
     {
@@ -778,7 +819,7 @@
         "not_yet"
       ],
       "for_person_id": null,
-      "id": "step-9eb4521d06dc:merge",
+      "id": "step-b85198b3ca73:merge",
       "kind": "merge",
       "launch_id": "L5",
       "ordinal": 1,
@@ -786,11 +827,11 @@
         "number": 103,
         "url": "https://github.com/acme/app/pull/103"
       },
-      "program_id": "program-2d8660fe0960",
+      "program_id": "program-c31169a08cfb",
       "program_title": "The words wave",
       "project_id": "proj-holdspeak",
-      "since": "2026-10-28T17:50:10.935737+00:00",
-      "step_id": "step-9eb4521d06dc",
+      "since": "2026-10-28T23:53:34.604815+00:00",
+      "step_id": "step-b85198b3ca73",
       "step_title": "Settings words",
       "title": "Merge step 1 “Settings words”? (PR #103, check green, review passed)"
     },
@@ -803,17 +844,17 @@
       "core": false,
       "finding_id": "f1",
       "for_person_id": null,
-      "id": "step-e650b8b2deb1:finding:f1",
+      "id": "step-860cbd036065:finding:f1",
       "kind": "finding",
       "launch_id": "L6",
       "level": "REQUIRED",
       "ordinal": 2,
       "pr": null,
-      "program_id": "program-2d8660fe0960",
+      "program_id": "program-c31169a08cfb",
       "program_title": "The words wave",
       "project_id": "proj-holdspeak",
-      "since": "2026-10-28T17:50:11.177444+00:00",
-      "step_id": "step-e650b8b2deb1",
+      "since": "2026-10-28T23:53:34.719535+00:00",
+      "step_id": "step-860cbd036065",
       "step_title": "Dock words",
       "title": "Finding on step 2 “Dock words”: the empty state still says nothing"
     },
@@ -826,17 +867,17 @@
       "core": false,
       "finding_id": "s1",
       "for_person_id": null,
-      "id": "step-e650b8b2deb1:finding:s1",
+      "id": "step-860cbd036065:finding:s1",
       "kind": "finding",
       "launch_id": "L6",
       "level": "SHOULD",
       "ordinal": 2,
       "pr": null,
-      "program_id": "program-2d8660fe0960",
+      "program_id": "program-c31169a08cfb",
       "program_title": "The words wave",
       "project_id": "proj-holdspeak",
-      "since": "2026-10-28T17:50:11.177444+00:00",
-      "step_id": "step-e650b8b2deb1",
+      "since": "2026-10-28T23:53:34.719535+00:00",
+      "step_id": "step-860cbd036065",
       "step_title": "Dock words",
       "title": "Finding on step 2 “Dock words”: sentence case the title"
     },
@@ -847,17 +888,17 @@
       ],
       "core": true,
       "for_person_id": null,
-      "id": "step-2909f8dbb559:core",
+      "id": "step-cfa7e7f5a510:core",
       "kind": "core",
       "launch_id": "L7",
       "ordinal": 3,
       "pr": null,
-      "program_id": "program-2d8660fe0960",
+      "program_id": "program-c31169a08cfb",
       "program_title": "The words wave",
       "project_id": "proj-holdspeak",
       "reason": "it touches files no step owns (other/thing.py)",
-      "since": "2026-10-28T17:50:10.368729+00:00",
-      "step_id": "step-2909f8dbb559",
+      "since": "2026-10-28T23:53:34.350613+00:00",
+      "step_id": "step-cfa7e7f5a510",
       "step_title": "Door words",
       "title": "Step 3 “door words”: it touches files no step owns (other/thing.py)"
     }

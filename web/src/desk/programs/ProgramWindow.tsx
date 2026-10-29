@@ -24,7 +24,7 @@ import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import {
-  CheckGadget, DotWord, FoldGadget, ListView, PadGadget, StatusBar, SurfaceState, Toolbar, countWords,
+  CheckGadget, DotWord, FoldGadget, ListView, PadGadget, StatusBar, SurfaceState, SurfaceWell, Toolbar, countWords,
   type StatusBarItem,
 } from "../surface";
 import { useWindowInterior } from "../surface/interior";
@@ -37,7 +37,9 @@ import { GateFold } from "./GateFold";
 import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
 import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
-import type { Control, DecidedRow, DecideBody, PlanStep, Program, ProgramCheckpoint, ProgramStep, YourTurnItem } from "./types";
+import type {
+  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramCheckpoint, ProgramStep, RunsOnEntry, StepHandoff, YourTurnItem,
+} from "./types";
 import "./programs.css";
 
 /** The verbs of one your-turn item, in the canvas order. */
@@ -50,7 +52,15 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   race: [{ choice: "pick", word: "Pick", primary: true }],
   add_step: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
   close: [{ choice: "close", word: "Close", primary: true }],
+  // PG19: the agent is at its usage limit (the first word names the next agent).
+  limited: [{ choice: "continue", word: "Continue", primary: true }, { choice: "wait", word: "Wait" }],
 };
+
+/** A verb's words on one item (`Continue in Codex`). */
+function verbWord(item: YourTurnItem, verb: { choice: string; word: string }): string {
+  if (item.kind === "limited" && verb.choice === "continue") return `Continue in ${item.next?.label ?? "the next agent"}`;
+  return verb.word;
+}
 
 /** The quiet fact beside an item's verbs (`Check green · review passed`). */
 function itemFact(item: YourTurnItem, step: ProgramStep | undefined): string {
@@ -59,6 +69,7 @@ function itemFact(item: YourTurnItem, step: ProgramStep | undefined): string {
   if (item.kind === "answer") return "Asks you";
   if (item.kind === "parked") return step?.parked_reason ? "Parked" : "";
   if (item.kind === "core") return "A core question";
+  if (item.kind === "limited") return item.warning ? "Near its limit" : "Limited";
   return "";
 }
 
@@ -71,6 +82,7 @@ function itemWords(item: YourTurnItem, step: ProgramStep | undefined): ReactNode
   else if (item.kind === "parked") tail = step?.parked_reason ?? "it stopped";
   else if (item.kind === "answer") tail = `${step?.agent ?? "the agent"} asks you`;
   else if (item.kind === "core") tail = item.reason ?? item.title;
+  else if (item.kind === "limited") tail = item.title;
   else return item.title;
   return <><b>{head}:</b> {tail}</>;
 }
@@ -114,7 +126,7 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
                   <Button key={verb.choice} dense variant={verb.primary ? "primary" : "secondary"}
                     loading={busy === `${item.id}:${verb.choice}`} disabled={Boolean(busy)}
                     onClick={() => void press(item, verb.choice)} data-testid={`programs-turn-${verb.choice.replace("_", "-")}`}>
-                    {verb.word}
+                    {verbWord(item, verb)}
                   </Button>
                 ))}
               </span>
@@ -153,13 +165,66 @@ function clock(at: string): string {
   return new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
+/** PG19: each handoff checkpoint's entry on its step (the nth handoff line
+ *  of a step is its nth handoff). */
+function handoffsOf(program: Program): Map<string, { step: ProgramStep; entry: StepHandoff }> {
+  const out = new Map<string, { step: ProgramStep; entry: StepHandoff }>();
+  const seen = new Map<string, number>();
+  for (const row of [...program.checkpoints].reverse()) {
+    if (row.kind !== "handoff") continue;
+    const step = program.steps.find((candidate) => candidate.id === row.step_id);
+    const index = seen.get(row.step_id) ?? 0;
+    seen.set(row.step_id, index + 1);
+    const entry = step?.handoffs?.[index];
+    if (step && entry) out.set(String(row.id), { step, entry });
+  }
+  return out;
+}
+
+const REASON_WORDS: Record<string, string> = { usage_limit: "usage limit", usage_warning: "usage warning", by_hand: "by hand" };
+
+/** The divider line of one handoff, and its brief in a sunken well under
+ *  View brief (what was sent, what was redacted, the earlier turns). */
+function HandoffLine({ row, step, entry }: { row: ProgramCheckpoint; step: ProgramStep; entry: StepHandoff }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="pg-handoff-row" data-testid="programs-handoff" data-checkpoint={row.id}>
+      <div className="pg-handoff">
+        <span className="kit-dot" data-tone="warn" aria-hidden="true" />
+        <span className="pg-handoff-words">
+          <b>Step {step.ordinal} · Handed to {entry.to}</b> · {REASON_WORDS[entry.reason] ?? entry.reason} · {clock(entry.at)}
+        </span>
+        <Button dense variant="secondary" aria-expanded={open} onClick={() => setOpen((now) => !now)} data-testid="programs-view-brief">
+          {open ? "Hide brief" : "View brief"}
+        </Button>
+      </div>
+      {open ? (
+        <div className="pg-handoff-sheet" data-testid="programs-handoff-brief">
+          <p className="pg-handoff-head">
+            <b>Handoff brief</b>
+            <span>{entry.from} to {entry.to}</span>
+            <span data-testid="programs-handoff-redacted">{entry.redacted_words ? `Redacted: ${entry.redacted_words}` : "Nothing redacted"}</span>
+            {entry.earlier_turns ? <span>{`${entry.earlier_turns} earlier ${entry.earlier_turns === 1 ? "turn" : "turns"}, not included`}</span> : null}
+          </p>
+          <SurfaceWell>
+            <pre className="pg-handoff-brief">{entry.brief}</pre>
+          </SurfaceWell>
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
 function Checkpoints({ program, open, onToggle }: { program: Program; open: boolean; onToggle(open: boolean): void }) {
   const rows = program.checkpoints;
+  const handoffs = useMemo(() => handoffsOf(program), [program]);
   if (!rows.length) return null;
   return (
     <FoldGadget className="pg-checkpoints" title="Checkpoints" token={open ? "newest first" : String(rows.length)} open={open} onToggle={onToggle}>
       <ul className="pg-ledger" data-testid="programs-checkpoints">
         {rows.slice(0, 50).map((row) => {
+          const handed = handoffs.get(String(row.id));
+          if (handed) return <HandoffLine key={row.id} row={row} step={handed.step} entry={handed.entry} />;
           const by = byWords(row, program);
           return (
             <li key={row.id} className="pg-ledger-row">
@@ -259,6 +324,47 @@ function DecidedFold({ program, open, onToggle, onOverturned }: {
   );
 }
 
+const AGENTS: readonly { profile: string; word: string }[] = [
+  { profile: "claude-default", word: "Claude Code" },
+  { profile: "codex-default", word: "Codex" },
+  { profile: "pi-default", word: "pi" },
+];
+
+/** PG19, Drafting: which agents may read this repository, and whether the
+ *  program hands off on its own at Normal. */
+function AllowedFold({ program, open, onToggle, onChange, busy }: {
+  program: Program; open: boolean; onToggle(open: boolean): void; busy: boolean;
+  onChange(body: { allowed_profiles?: string[]; may_handoff?: boolean }): void;
+}) {
+  const allowed = program.allowed_profiles ?? [];
+  const on = (profile: string) => !allowed.length || allowed.includes(profile);
+  const toggle = (profile: string, next: boolean) => {
+    const now = AGENTS.map((row) => row.profile).filter((candidate) => (candidate === profile ? next : on(candidate)));
+    if (!now.length) return;
+    onChange({ allowed_profiles: now.length === AGENTS.length ? [] : now });
+  };
+  const count = AGENTS.filter((row) => on(row.profile)).length;
+  return (
+    <FoldGadget className="pg-allowed-fold" title="Allowed agents" token={count === AGENTS.length ? "every agent" : `${count} of ${AGENTS.length}`}
+      open={open} onToggle={onToggle}>
+      <div className="pg-allowed" data-testid="programs-allowed">
+        {AGENTS.map((row) => (
+          <CheckGadget key={row.profile} variant="token" label={row.word} checked={on(row.profile)} disabled={busy}
+            onChange={(next) => toggle(row.profile, next)} />
+        ))}
+        <CheckGadget variant="token" label="May hand off on its own" checked={Boolean(program.may_handoff)} disabled={busy}
+          onChange={(next) => onChange({ may_handoff: next })} />
+        <span className="pg-allowed-note">At Normal, after 10 minutes at a limit</span>
+      </div>
+    </FoldGadget>
+  );
+}
+
+/** `Claude Code, then Codex` (the toolbar's Agent words). */
+function listWords(first: string, then: readonly RunsOnEntry[]): string {
+  return [first, ...then.map((row) => `then ${row.label}`)].join(", ");
+}
+
 function toPlan(step: ProgramStep): PlanStep {
   return {
     id: step.id, title: step.title, brief: step.brief, owns: step.owns, after: step.after,
@@ -323,6 +429,7 @@ export function ProgramBody({ programId }: { programId: string }) {
   const [gateOpen, setGateOpen] = useState(true);
   const [checksOpen, setChecksOpen] = useState(false);
   const [decidedOpen, setDecidedOpen] = useState(true);
+  const [allowedOpen, setAllowedOpen] = useState(false);
   const [busy, setBusy] = useState("");
   const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
   const [draft, setDraft] = useState<PlanStep[] | null>(null);
@@ -388,14 +495,18 @@ export function ProgramBody({ programId }: { programId: string }) {
   ].filter(Boolean) as StatusBarItem[];
 
   const idle = program.prefer_idle;
-  const defaultLabel = `Agent: ${runsOnLabel(program.default.profile, program.default.engine)}`;
+  const thenRows = (program.default.runs_on ?? []).slice(1);
+  const defaultLabel = `Agent: ${listWords(runsOnLabel(program.default.profile, program.default.engine), thenRows)}`;
+  const firstChoice = { profile: program.default.profile ?? "claude-default", engine: program.default.engine?.id ?? null };
 
   return (
     <div className="pg-window" data-testid="program-window" data-state={program.state} data-program={program.id}>
       <Toolbar label="Program" data-testid="program-toolbar" trailing={
         <span className="pg-toolbar-trailing">
-          <RunsOnPicker label={defaultLabel} value={{ profile: program.default.profile ?? "claude-default", engine: program.default.engine?.id ?? null }}
+          <RunsOnPicker label={defaultLabel} value={firstChoice}
             idle={idle} idleLabel="When idle, for every pi step" disabled={!drafting}
+            then={thenRows.map((row) => ({ profile: row.profile, engine: row.engine }))}
+            onThen={(next) => void run("agents", () => updateProgram(program.id, { runs_on: [firstChoice, ...next] }), "The agents were not saved")}
             onPick={(choice) => drafting && savePlan((draft ?? []).map((step) => ({ ...step, profile: choice.profile, engine: choice.engine })))}
             onIdle={(next) => void run("idle", () => updateProgram(program.id, { prefer_idle: next }), "When idle was not changed")}
             data-testid="program-runs-on" />
@@ -455,6 +566,8 @@ export function ProgramBody({ programId }: { programId: string }) {
                 </div>
               ) : null}
             </ListView>
+            <AllowedFold program={program} open={allowedOpen} onToggle={setAllowedOpen} busy={Boolean(busy)}
+              onChange={(body) => void run("allowed", () => updateProgram(program.id, body), "The allowed agents were not saved")} />
           </>
         ) : steps.length ? (
           <ListView label="Steps" className="pg-board" data-testid="programs-board">
