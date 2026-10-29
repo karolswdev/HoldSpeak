@@ -1,106 +1,158 @@
 # Phone
 
-Phone lets your desk reach you when you are away from it. The desk sends a message to your phone, or it calls your phone. A voice tells you why it calls, takes your answer and gives the answer back to the desk as your decision. You can also call the desk from your phone and ask it questions.
+Phone is the Desk service for reaching the owner away from the Desk. It can
+send a message, ask for a call, and receive a reply or decision. It can use a
+configured Calls phone-number transport.
 
-Phone uses [Calls](calls.md) for the voice. Set up Calls first.
+The repository includes the Phone service and its pairing routes. It does not
+include a delivered iPhone or other paired-phone application. Treat pairing as
+a future client path until a client is delivered, enrolled, and visible in
+**Settings > Calls > Phone**. A pairing code or QR payload alone is not proof
+that a phone is connected.
 
 ## Two ways to reach your phone
 
-| Way | What it needs | Works today |
-|---|---|---|
-| **Your number** | A real phone line in ai-phone (we recommend Telnyx; see [Get a real phone number](calls.md#get-a-real-phone-number)) | Yes. Calls only. Any phone, also when it is locked, on cellular, with no app. |
-| **The HoldSpeak app** | The HoldSpeak app for iPhone, paired with your hub | Not yet. The app is a program on your desk: "Phone: the iPhone rings". |
+| Way | What it needs | Current status |
+| --- | --- | --- |
+| **Configured number** | Calls enabled, an available Line or ai-phone adapter, and a configured phone number | Supported phone-number transport when those dependencies are ready |
+| **Paired Phone app** | A delivered client, an owner-issued pair token, and a reachable hub | Pairing service contract exists; the client is not delivered in this repository |
 
-When a phone is paired, a call rings the app first. If you do not answer in 30 seconds, the call goes to your number, if you have a line.
+The Phone service prefers a paired app when one is enrolled. Without one, it
+falls back to the configured Calls number transport. The number path is for
+voice calls; it does not provide SMS.
 
-The number has no text messages (ai-phone cannot send SMS). Until a phone is paired, a message stays on the desk. **Needs you** shows it as "No phone is paired", with **Let it wait**.
+If neither transport is available, Phone reports an unavailable state such as
+**No phone paired**. It does not claim that a message or call was delivered.
 
 ## Pair a phone
 
-Do this when the HoldSpeak app is on your phone.
+This is the service contract for a future Phone client; no app installation is
+provided here.
 
-1. Turn on Tailscale on your phone.
-2. Open **Settings ▸ Calls ▸ Phone** on the desk. Press **Pair a phone**. The desk shows a QR code for 10 minutes.
-3. Scan the QR code with the app. The app is now paired.
+1. Open **Settings > Calls > Phone**.
+2. Select **Pair a phone**. The hub creates an owner-only pair token and QR
+   payload that expire after 10 minutes.
+3. A compatible client would scan or redeem the one-time token, then receive a
+   device credential.
+4. Select **Revoke** on the device row to close the device credential and its
+   live connection.
 
-The QR code holds the address of the hub that you pressed **Pair** on, and a code that works one time. To stop a phone, press **Revoke** on its row. The phone is disconnected at once.
+The pair endpoint is owner-authorized. The QR payload names the hub that
+issued it. Keep it on the intended private network and do not paste the token
+into a general client setting.
 
 ## Reach you: when the desk sends a message or calls
 
-The desk decides by your control level (Secure, Normal or YOLO). A message comes first. A call comes only when the message gets no reply, or when the thing is urgent.
+Phone applies the control level **Secure**, **Normal**, or **YOLO**, the
+configured **Reach you** words, quiet hours, and the operation's own
+authority. In **Settings > Calls > Phone > Reach you**, each kind can be set
+to **Message**, **Call**, or **Nothing**. The explicit row setting wins over
+the level when the service supports that kind.
 
-| What happens | Secure | Normal | YOLO |
-|---|---|---|---|
-| A program has a core question | Message | Message. A call after 10 minutes with no reply, if the program may call | A call at once, if the program may call. Else a message |
-| A program step stays red | Message | Message | Message. A call, if the program may call and it is the night's program |
-| A program is done | Nothing | Message | Message |
+The source rules include these defaults:
 
-The desk has rules for three more things, but it does not use them yet: a security or data-loss problem from the heartbeat (Secure: message, Normal: call, YOLO: urgent call), the follow-up asks of a meeting (Secure: nothing, else a message), and an agent's question that the desk cannot answer (Secure: message, Normal: a message and a call after 10 minutes when you are away, YOLO: call).
+| Situation | Secure | Normal | YOLO |
+| --- | --- | --- | --- |
+| Program core question | Message | Message, then a call after 10 minutes when the Program may call | Call at once when the Program may call; otherwise Message |
+| Program step is red | Message | Message | Message; a call only when the Program may call under its rule |
+| Program is done | Nothing | Message | Message |
 
-In **Settings ▸ Calls ▸ Phone ▸ Reach you**, you can set each row to **Message**, **Call** or **Nothing**. Your word wins over the level.
+Other kinds, such as heartbeat security, Meeting follow-up, and agent
+questions, use their own configured reach row and the same authority checks.
+Do not infer a call from a control level alone.
 
-These rules are always true:
+These rules still apply:
 
-- When you reply to a message, the desk stops. It does not call you about it.
-- The desk does not reach you two times in 5 minutes about the same thing.
-- The desk does not call you while a call is on. It sends a message.
-- A program may call you only when **May call** is on for it. The **Overnight** template turns it on.
-- An urgent call that you miss rings one more time after 60 seconds. Then it is a message.
+- A reply can close the reach item; the service does not repeat the same
+  reach within its repeat window.
+- The service does not start a new call while another call is active.
+- A Program needs its **May call** permission for an agent-initiated call.
+- An agent call can wait in **Needs you** for your decision.
+- Quiet hours queue ordinary messages. Only an urgent call may ring when its
+  authority permits it.
+- A missed urgent call follows the service's retry and message policy. Read the
+  resulting receipt rather than assuming a delivery.
 
-Each time the desk reaches you, it writes the rule it used. A program shows it under **Decided for you**.
+Each reach stores the rule and route used. A pending reach is not a sent
+message, and a ringing call is not an answered call.
 
 ## Quiet hours
 
-Phone uses the quiet hours of **Settings ▸ Rhythm** (default 22:00 to 08:00). In quiet hours:
+Phone reads quiet hours from the active quiet-hours setting in **Settings >
+Notices**. The Phone row can still expose the compatibility label **Change in
+Rhythm**. The service queues ordinary messages during quiet hours. An urgent
+call can bypass the quiet period only when the configured policy and transport
+allow it.
 
-- A message is kept. Your phone gets it when it connects again. No push comes in the morning.
-- Only an urgent call rings.
+The default and exact time zone are configuration, not a universal promise.
+Read the current Settings value and the reach receipt.
 
 ## Message your phone from the desk
 
-Open **Calls ▸ Phone**. Type or speak a line, and send it. Your replies from the phone show in the same thread.
+Open **Calls** and select its **Phone** wing. Type a message and send it when a
+transport is available. A paired client would receive the message through its
+push or socket path; a number transport cannot send SMS.
 
-In **Needs you**:
+In **Needs you**, inspect the row before acting:
 
-- "Asked on your phone · 12 min · no reply": press **Call now**, or **Let it wait**.
-- "Missed call: …": press **Call again**, or **Answer here** to reply from the desk.
-- "Call you about …?": an agent asks to call you. Press **Call now**, or **Let it wait**.
+- A waiting phone message can be sent again or left waiting when the active
+  control offers those verbs.
+- A missed call can offer **Call again** or **Answer here**.
+- A held request to call can offer **Call now** or **Let it wait**.
+
+The exact row depends on the reach kind and its current state. Read the source,
+transport, and receipt before retrying.
 
 ## What an agent can do
 
-| An agent can | The limits |
-|---|---|
-| Send you a message (`phone.send_message`) | 500 characters or less. No secrets. A program step can send 3 in an hour. |
-| Wait for your reply (`phone.get_replies`) | It waits up to one hour. It gets each reply one time. No reply is not a yes. |
-| Ask to call you (`phone.call`) | The call waits for your press in **Needs you**. It rings at once only if the agent's program may call and your level is not Secure. An agent that the desk started cannot call you. |
-| Read the status (`phone.status`) | The paired phones, the line, quiet hours and the last time the desk reached you. |
+| Tool | Limits |
+| --- | --- |
+| `phone.send_message` | Text is limited to 500 characters; secrets are redacted. A Program step is limited to three messages per hour. |
+| `phone.get_replies` | It waits up to one hour and returns each reply once. No reply is not consent. |
+| `phone.call` | Reason is limited to 200 characters and context to 4,000. An agent request can wait in **Needs you**; it rings automatically only under Program and control rules. |
+| `phone.status` | Reads paired-device state, line availability, quiet hours, and recent reach state. |
 
-The voice on a call reads only what the agent gives it: one reason, and the context. When the call ends, the agent gets the words of the call, why it ended, its length and your decision.
+The service also limits one call's wait and retry behavior. It redacts
+secrets from message and call content. A phone reply is a decision input, not
+a grant of general Desk authority.
 
 ## Privacy
 
-Your messages and your calls stay on your tailnet and your hub, with these exceptions:
+A configured number call goes through the selected provider or SIP route.
+A future paired client may use the hub's socket and Apple push path. A hosted
+Calls engine receives the text needed for its turn. Read **Settings > Calls**,
+the transport state, and the receipt to identify the actual egress.
 
-- A call on your number goes through your carrier.
-- A push to the app goes through Apple's push service. The push is signed, and a long message is cut.
-- A hosted engine, if you set one for **Phone calls** in Settings ▸ Engines, gets the words of the call.
+Phone has no SMS transport in this repository. Pairing credentials, provider
+credentials, and engine credentials have separate stores and lifetimes.
+Revoking a paired device does not delete Desk records.
 
 ## For tools and agents
 
 | Route | What it does |
-|---|---|
-| `GET /api/phone/status` | The paired phones, the line, quiet hours, the rules and the last reach |
-| `POST /api/phone/pair` | A pairing code for 10 minutes, and what the QR code says |
-| `GET /api/phone/devices` | The paired phones |
-| `DELETE /api/phone/devices/{id}` | Revoke a phone |
-| `POST /api/phone/messages` | Send a message (`{"text": "…", "reply_to": "…"}`) |
-| `GET /api/phone/messages?after_seq=` | The messages after a sequence number |
-| `POST /api/phone/calls` | Ask for a call (`{"reason": "…", "context": "…", "urgent": false}`) |
-| `GET /api/phone/calls` | The calls |
-| `GET /api/phone/events?after_seq=` | The event log, from a sequence number |
+| --- | --- |
+| `GET /api/phone/status` | Paired-device state, line availability, rules, quiet hours, and recent reach. |
+| `POST /api/phone/pair` | Create an owner-authorized pair token and QR payload. |
+| `POST /api/phone/devices` | Redeem a pair token for a device credential. |
+| `GET /api/phone/devices` | List paired devices. |
+| `DELETE /api/phone/devices/{id}` | Revoke a paired device. |
+| `POST /api/phone/messages` | Send a Phone message. |
+| `GET /api/phone/messages?after_seq=` | Read messages after a sequence. |
+| `POST /api/phone/messages/{id}/read` | Mark one message read. |
+| `POST /api/phone/messages/{id}/wait` | Let one message wait without changing its source record. |
+| `POST /api/phone/calls` | Ask the service to reach the owner by call. |
+| `GET /api/phone/calls` | List Phone call records. |
+| `POST /api/phone/calls/{id}/accept|decline|end` | Accept, decline, or end a phone call. |
+| `POST /api/phone/calls/{id}/ring` | Ring an eligible held call. |
+| `POST /api/phone/calls/{id}/again` | Ask for the permitted retry after a missed call. |
+| `GET /api/phone/events?after_seq=` | Read Phone event frames. |
+| WebSocket `/api/phone/ws?after_seq=` | Paired-client event and message channel. |
 
-The MCP tools are `phone.send_message`, `phone.get_replies`, `phone.call` and `phone.status`. Each change is a `phone_changed` frame. `HOLDSPEAK_PHONE=off` turns Phone off on a hub.
+MCP Phone tools have their own principal and authority checks. Route existence
+does not grant an agent permission to reach the owner. `HOLDSPEAK_PHONE=off`
+turns the Phone service off on a hub.
 
 ## Where the idea comes from
 
-Phone takes its model from agentring (Apache-2.0). HoldSpeak does not include agentring. The `NOTICE` file names what we took.
+Phone takes its model from agentring (Apache-2.0). HoldSpeak does not include
+agentring. The [NOTICE](../NOTICE) file names the reused material.

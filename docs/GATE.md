@@ -1,144 +1,111 @@
 # Coder Gate
 
-The Gate holds a matched Claude Code tool call until you decide on it. A call that
-the Gate does not match runs as normal.
+The Gate holds a matched Claude Code, Codex, or pi tool call until the owner
+decides. An unarmed or unmatched call is inert to the Gate and follows the
+agent's own policy.
 
 ## Turn the Gate on
 
-The Gate needs two opt-ins. Both must be on for a call to be held.
+The Gate has two user opt-ins. Both are required for ordinary repository
+matches:
 
-1. Print the hook block and add it to `~/.claude/settings.json` yourself:
+1. Print the hook block and add it to the agent configuration yourself:
 
-   ```console
+   ```sh
    holdspeak gate install
    ```
 
-   HoldSpeak never edits another application's config.
+   HoldSpeak never edits another application's settings.
 
 2. Turn on the master switch:
 
-   ```console
+   ```sh
    holdspeak gate arm
    ```
 
-3. Choose the repos to hold. The default tool is `Bash`. Repeat `--tool` for more:
+3. Choose the repository and tools to hold. Bash is the default:
 
-   ```console
+   ```sh
    holdspeak gate allow --repo /path/to/repo
    holdspeak gate allow --repo /path/to/repo --tool Bash --tool Edit
    ```
 
-Other commands:
+Claude Code and Codex use their configured hook file. pi uses its HoldSpeak
+extension. A Hand to agent launch can arm its new worktree for the launch
+without changing the global master switch.
 
 | Command | Effect |
 | --- | --- |
-| `holdspeak gate status` | Shows both opt-ins. Add `--json` for JSON. |
-| `holdspeak gate revoke --repo PATH` | Stops holding that repo. |
-| `holdspeak gate disarm` | Turns the master switch off. Every hook call is inert. |
+| `holdspeak gate status` | Show the master switch and repository matches |
+| `holdspeak gate revoke --repo PATH` | Stop holding that repository |
+| `holdspeak gate disarm` | Make every hook arrival inert |
 
-The settings are in `~/.holdspeak/gate.json` (`gate_schema: 1`, the `armed` flag,
-and a repo-to-tools map). A missing or malformed file means the Gate is off.
+The file is `~/.holdspeak/gate.json` with `gate_schema: 1`. A missing or
+malformed file means the Gate is off.
 
 ## What happens to a call
 
-When the Gate is not armed for the current `cwd` and tool, the hook returns at
-once. It creates no proposal, no audit row, and no network request. This is the
-normal case.
+When no configured match covers the current agent, repository, and tool, the
+hook returns without a proposal, audit row, or hub request.
 
-When both opt-ins match, the hook does these steps:
+When a match is armed:
 
-1. It takes the proposal ID from the Claude Code `tool_use_id`, or makes a UUID.
-2. It computes the SHA-256 of the arguments and keeps the first 120 characters.
-   When the redacted call is longer than 120 characters (a CUT call), it also
-   keeps the whole redacted call.
-3. It sends that data to `POST /api/gate/proposals`. The hub keeps the whole
-   redacted call only while the call is held, and only for your Raw read
-   (`GET /api/gate/proposals/{proposal_id}/command`). It never sends it to an
-   agent. It removes it when the call is decided, expires or is invalidated.
-4. It polls `GET /api/gate/proposals/{proposal_id}` until the proposal is
-   approved, denied, expired, or invalidated.
+1. The hook uses the agent's tool-use id, or creates an idempotency id.
+2. It hashes the redacted arguments and sends a 120-character redacted head.
+3. A longer redacted call is marked CUT. The hub keeps its full redacted form
+   only while the hold is live and only for the owner's Raw view.
+4. The hook waits for **Approve** or **Deny** from the Desk.
 
-You decide on the Desk. The decision goes to
+The proposal route is `POST /api/gate/proposals`. The Desk decides with
 `POST /api/gate/proposals/{proposal_id}/decide`.
 
-```mermaid
-sequenceDiagram
-    participant A as Claude PreToolUse hook
-    participant H as Hub Gate routes
-    participant O as Owner Desk
-    A->>A: match armed repo and tool
-    alt no match
-        A-->>A: inert, tool proceeds under agent policy
-    else match
-        A->>A: hash args, keep 120-char head
-        A->>H: POST /api/gate/proposals
-        H-->>A: held, or standing terminal state
-        H-->>O: held proposal and bounded preview
-        O->>H: POST /api/gate/proposals/{id}/decide
-        A->>H: GET /api/gate/proposals/{id}
-        H-->>A: approved, or named deny
-    end
-```
-
-The default hold time (TTL) is 240 seconds. `HOLDSPEAK_GATE_TTL` overrides it.
-The hook timeout is 300 seconds. The hook reaches the hub at `HOLDSPEAK_HUB_URL`
-(default `http://127.0.0.1:8765`).
+The default hold time is 240 seconds. `HOLDSPEAK_GATE_TTL` can change it. The
+hook waits at most 300 seconds. Its hub URL is `HOLDSPEAK_HUB_URL`, defaulting
+to `http://127.0.0.1:8765`.
 
 ## States
 
-A proposal is `held`, `approved`, `denied`, `expired`, or `invalidated`. Only
-`held` is not final.
+The final states are `approved`, `denied`, `expired`, and `invalidated`.
+Only `held` is not final.
 
-- A proposal with the same ID and the same hash returns the standing row. The
-  same ID with a different hash invalidates the held original and raises
-  `GateArgsMismatchError` (`holdspeak/db/gate.py`).
-- Every change goes through one transition method, guarded on `state = held`. The
-  first decision wins. Each change writes a `gate_audit` row.
-- Expiry is a deny.
-- A hub restart invalidates every held proposal. HoldSpeak never resumes an old
-  hold.
-- The hook names each failure: no authentication, hub unreachable, HTTP refusal,
-  silence while held, decision refusal, or expiry. There is no auto-allow on
-  timeout.
+- The same proposal id and hash returns the existing row.
+- A different hash for the same id invalidates the held row.
+- The first decision wins through a state-guarded transition.
+- Every transition writes a `gate_audit` row.
+- Expiry is deny. There is no timeout auto-allow.
+- A hub restart invalidates every held proposal.
+
+The hook fails closed after an armed match. Authentication failure, hub
+failure, HTTP refusal, decision refusal, and timeout all deny the tool call.
 
 ## Preview and credentials
 
-The preview is truncation. Redaction removes known secret shapes only.
-A CUT call is kept whole, redacted, while it is held (see above). A short tool input can fit in
-the first 120 characters. A credential in that prefix reaches the hub and the
-stored Gate record. The hash does not hide the prefix. Treat the preview as
-sensitive tool content. Provider keys that the hub holds are a different
-boundary.
+The preview is redacted and truncated. A credential in the visible prefix can
+still reach the hub, so treat the preview as sensitive tool content. Provider
+keys held by the hub are a different boundary.
 
-The hook credential is issued per `claude:{session_id}`, cached with mode `0600`,
-and revoked when the session ends (`holdspeak/coder_gate.py`). The Stop hook
-reports token totals and the model name to the loopback hub. It sends no message
-text.
-
-A Gate row is a record, not authority. Only the waiting hook can proceed after
-approval.
+The hook obtains an agent credential for one session and stores it with local
+file permissions. Session end revokes it. A Gate row is a record of the hold,
+not authority by itself. Only the waiting hook can continue after approval.
 
 ## Routes
 
-`holdspeak/web/routes/system/gate_routes.py` serves these routes.
+`holdspeak/web/routes/system/gate_routes.py` serves:
 
 | Operation | Route |
-|---|---|
-| Propose, read, list | `POST /api/gate/proposals`, `GET /api/gate/proposals/{proposal_id}`, `GET /api/gate/proposals` |
-| Decide, receipt | `POST /api/gate/proposals/{proposal_id}/decide`, `POST /api/gate/proposals/{proposal_id}/receipt` |
-| Whole held call (owner only) | `GET /api/gate/proposals/{proposal_id}/command` |
+| --- | --- |
+| Create, read, list proposals | `POST /api/gate/proposals`, `GET /api/gate/proposals/{proposal_id}`, `GET /api/gate/proposals` |
+| Decide and record receipt | `POST /api/gate/proposals/{proposal_id}/decide`, `POST /api/gate/proposals/{proposal_id}/receipt` |
+| Read full held call | `GET /api/gate/proposals/{proposal_id}/command` (owner only) |
 | Usage, audit, config | `POST /api/gate/usage`, `GET /api/sessions/{session_key}/receipt`, `GET /api/gate/audit`, `GET /api/gate/config` |
 | Agent principal | `POST /api/principals/agents`, `DELETE /api/principals/agents/{identity}`, `DELETE /api/principals/self` |
 
-[`api-surface.json`](api-surface.json) pins the route list under
-`web.routes.system.gate_routes`.
-
 ## Changing the Gate
 
-A change to the Gate must define its preview data limit, one idempotency key,
-first-write-wins transitions, named final states, restart invalidation, and
-fail-closed behavior. A new tool matcher is a reviewed policy change. A passing
-unit test does not show that you armed the Gate or approved a real call. These
-tests cover the Gate: `tests/unit/test_coder_gate.py`,
-`tests/integration/test_gate_threat_model.py`, and
-`tests/unit/test_gate_chokepoint.py`.
+A matcher change is a policy change. Review its tool scope, redacted preview
+limit, idempotency key, terminal states, restart behavior, and fail-closed
+path. A passing unit test does not show that a repository is armed or that a
+real call was approved.
+
+See [Agent hook install](AGENT_HOOK_INSTALL.md) for hook setup and
+[Coder integration](CODER_INTEGRATION.md) for launch-time Gate behavior.

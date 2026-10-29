@@ -1,1347 +1,827 @@
 # HoldSpeak User Guide
 
-Use this guide for daily work on the Desk.
-It says how to do each task and names the control that does it.
-For installation and your first capture, read [Getting Started](GETTING_STARTED.md).
-The [documentation index](README.md) groups all guides by task.
-These documents describe `main`, which can differ from your installed release.
+HoldSpeak is an agentic-first, web-based AI operating system for work. The
+Desk stores Notes, Meetings, Projects, People, and results. Ask and Threads
+can read those records and use permitted tools. Coding-agent handoffs and
+automations use their own prerequisites, scope, host, and receipts.
 
-Models, connectors, remote clients, and outbound actions each have their own data boundary.
-See [Security & Privacy](SECURITY.md).
-The default Control mode is **YOLO**.
-Read [Control modes](AUTHORITY.md) before you configure external effects.
+HoldSpeak is pre-alpha. A model answer or successful tool call does not establish that the result is correct.
+A saved configuration does not establish that a later job will run. Inspect the source records, result, and receipt.
 
 ## Start here
 
-| Task | Guide |
+1. Start the local hub and open its printed URL.
+2. Open **Settings > Engines** and check the engine for the task.
+3. Keep one Note by typing or using **Speak**.
+4. Select **Ask about this** on the Note, or open **Ask** for a whole-Desk question.
+5. Inspect **References** and any **Wrote** or **Prepared** result.
+
+Ask and Thread share one window. **Go > Ask AI** opens the window labelled
+**Ask**. To start a new conversation, select the first row in **Recent** or
+press **⌘N**. The first question is kept as a Thread. Follow-up questions
+continue it. A separate Thread window is parked in the current Desk
+navigation.
+
+Use [Getting Started](GETTING_STARTED.md) for installation and [The
+Desk](WEB_DESK.md) for navigation.
+
+| Task | Start here |
 | --- | --- |
-| Install and capture a sentence | [Getting Started](GETTING_STARTED.md) |
+| Install and keep a sentence | [Getting Started](GETTING_STARTED.md) |
 | Describe goals and receive suggestions | [Interview](INTERVIEW.md) |
-| Prepare a decision review or an agent brief | [Architecture work](ARCHITECTURE_WORK.md) |
+| Prepare a decision review or agent brief | [Architecture work](ARCHITECTURE_WORK.md) |
 | Choose an automation path | [Automation](AUTOMATION.md) |
-| Configure model engines | [Models](MODELS.md) |
-| Record or review a meeting | [Meeting mode](MEETING_MODE_GUIDE.md) |
+| Choose model engines | [Models](MODELS.md) |
+| Record or review a Meeting | [Meeting mode](MEETING_MODE_GUIDE.md) |
 | Configure coding dictation | [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
 | Use Desk windows and objects | [The Desk](WEB_DESK.md) |
-| Select an environment | [Places](ENVIRONMENTS.md) |
-| Work in a project | [Project Rooms](PROJECT_ROOMS.md) |
+| Select an atmosphere | [Places](ENVIRONMENTS.md) |
+| Work in a Project | [Project Rooms](PROJECT_ROOMS.md) |
+| Run a multi-step goal | [Programs](#programs) |
+| Make or receive a phone-number call | [Calls](calls.md) |
+| Understand the paired-phone path | [Phone](phone.md) |
 | Fix a problem | [Troubleshooting](TROUBLESHOOTING.md) |
 
 ## Develop a thought
 
-Keep a rough sentence as a Note.
-Then select **Develop this thought**.
-HoldSpeak keeps the original text and opens the Thought Workbench.
-The Note is editable Markdown, and it saves as you type.
-On a desktop, the Note and the Interview pane sit side by side.
-On a phone, they are two full-width panes.
+The product calls the editable record a **Note**. **Thought** is an older
+domain term for the same refinement path. Open a Note and select **Develop
+this thought** to open the Workbench. The Workbench displays the Note and
+preserves the original text while you refine it.
 
-The Workbench never starts a model by itself.
-Select **Ask AI** for one model turn.
-When a question returns, select **Add & ask next** to add your answer and start one more turn.
-Select **Add to note** to add the answer without a new turn.
-Select **Finish Thought** to finish at once.
-If you edit the Note during a turn, the edit replaces that question.
-A late result cannot overwrite your text.
+The Note and Workbench can show these paths:
 
-If no model can run, Interview shows **Set up AI**.
-It opens **HoldSpeak > Engines**.
-After you save a model, the Workbench checks readiness again and shows **Ask AI**.
-Before each turn, Interview shows where the turn will run.
-After the turn, it shows the receipt.
-**Info** shows the preserved original.
+- **Ask AI** starts refinement for the Note when the local model is ready.
+- **Add to note** adds your answer or a draft to the working Note.
+- **Finish Thought** completes the refinement and keeps the working Note.
+- **Resume refining** reopens a completed refinement.
+- **Original kept** shows the captured source text. **Get Info** shows record details.
+
+Read the answer before you add it. A reply is not a Note until you use the
+save control. A Note stays editable after refinement.
 
 ### AI context
 
-AI context is empty by default.
-In the Thought body, select **Attach** beside **AI context**.
-The picker lists pinned **Everyday context** first, then recent choices and search.
-**Browse all notes** shows the full list.
-The hub loads the chosen Notes and freezes their versions for the turn.
-The result names what it used, for example `Used 1 context item · 5 notes`.
+Attach context when the question needs more than the Note. The context can
+include selected Notes, Meetings, Projects, decisions, or an **Everyday
+context** prompt. Check the attached references before you send.
 
-If a Note changes after you attach it, HoldSpeak does not swap in the new text.
-It names the stale context and offers **Update context** or **Remove it**.
+The Ask scope control (accessible label **About**) is a retrieval starting
+point. It is not a blanket access boundary. An engine with permitted tools can
+read other allowed Desk records when the request needs them. Project service
+operations use the Project's narrower source scope.
 
-The picker has two groups: **On this Thought** and **For new Thoughts**.
-**Use these by default** saves the current set as the default for later Thoughts.
-**Remove from this Thought** detaches one item from this Thought only.
-**Stop using by default** clears the default set and leaves existing Thoughts unchanged.
-If a default item is stale, missing, or too large, HoldSpeak applies none of them.
-The Thought is still created with no AI context, and **Default context not applied** says why.
-
-The separate [Interview Thread mode](INTERVIEW.md) develops working context across repeatable sections.
+Do not put credentials in a Note, Thread, or prompt. Select the named Settings
+connection instead.
 
 ## Voice typing
 
-Use voice typing to insert text into the active app.
+Voice typing sends speech to the focused application.
 
-1. Start HoldSpeak with `holdspeak`.
-2. Focus the target text field.
-3. Hold the hotkey and speak.
-4. Release the hotkey.
+1. Put the cursor in a text field.
+2. Hold Right Option on macOS or Right Alt on Linux.
+3. Speak.
+4. Release the key.
 
-The default hotkey is Right Option on macOS and Right Alt on Linux.
-If the system blocks global hotkeys or synthetic typing, keep HoldSpeak focused and use its hold-to-talk control.
+These are the default keys. The **Control mode**, preview setting, and speech
+engine decide whether text is delivered directly or shown for review. The
+dictation journal records the transcript, delivery route, and result. It does
+not prove that the target application accepted the text.
 
 ### When voice typing does nothing
 
-On macOS, three permissions carry three parts of voice typing.
-The symptom tells you which permission is missing.
+Check the three macOS permissions in **System Settings > Privacy & Security**:
 
-| Symptom | Missing permission | Pane |
-| --- | --- | --- |
-| Nothing is heard | Microphone | **System Settings > Privacy & Security > Microphone** |
-| The hotkey does nothing | Input Monitoring | **System Settings > Privacy & Security > Input Monitoring** |
-| Words are transcribed but never arrive | Accessibility | **System Settings > Privacy & Security > Accessibility** |
+| Permission | Covers |
+| --- | --- |
+| Microphone | Audio capture |
+| Input Monitoring | Global hotkey detection |
+| Accessibility | Insertion into the focused application |
 
-Speak shows a row for each missing permission, with the pane to open and a `Re-check` verb.
-The row reads `DENIED`, `NOT ASKED`, or `UNKNOWN`.
-`NOT ASKED` means the launching application never requested the permission.
-`UNKNOWN` means HoldSpeak could not read the state.
-
-The permission belongs to the application you launched from.
-If you start the hub in a terminal, enable Terminal or iTerm in those panes.
-macOS applies some grants only to a new process.
-Quit and reopen the launching application, then select `Re-check`.
-
-The hotkey line shows the state of the whole path.
-`ACTIVE` means the key is up and every grant is held.
-`BLOCKED` means a grant is missing.
-`UNAVAILABLE` means the listener did not install.
-When the listener fails, Speak names the reason:
-`PYNPUT MISSING`, `NO GUI SESSION`, `PERMISSION REFUSED`, or `LISTENER FAILED`.
+Grant permissions to the application that launches the hub. Restart that
+launcher. Select **Re-check** in Speak. Linux needs an active GUI session and
+can require clipboard paste when Wayland blocks direct insertion.
 
 ### Spoken language
 
-Whisper transcribes about 99 languages.
-Open **Settings > Speak** and use the **Language** control.
-The default, Auto-detect, picks the language for each utterance.
-Short utterances can be detected as a neighboring language.
-If that happens, pin your language.
-One setting covers dictation, live meetings, and imported recordings.
+Choose the speech language in **Settings** when the speech control offers it.
+Use the language that matches the recording. A language mismatch can produce a
+transcript even when its words are wrong.
 
 ### The wake word
 
-The wake word starts dictation with your voice and no key.
-It is off by default.
-Say the wake phrase (the default model listens for "hey jarvis").
-HoldSpeak enters the armed window, a short countdown.
-Your next sentence goes through the normal dictation pipeline.
-Detection runs on your machine.
-The only network use is a one-time download of the detection models.
-
-Enable it in **Settings > Speak**, in the **Wake word** group.
-The **Action** control has two values:
-
-- **preview** (default): nothing is typed.
-  A card shows the transcript and the pipeline output with a **Type it** button.
-  The server types only the exact previewed text.
-- **type**: HoldSpeak types at once.
-  A false detection types into the focused app.
-
-The wake word pauses while another source holds the microphone.
-The setting `dictation.preview_before_type` applies the same preview card to hold-key dictation.
-It is off by default.
-**Threshold** and **Armed window** tune detection.
+The local wake-word extra is optional. Install it and configure the wake word
+before you use it. A wake word can start capture. It does not grant permission
+to insert text into another application.
 
 ### Punctuation and symbols
 
-Say a punctuation word and HoldSpeak inserts the symbol.
-
-| Say | Inserts |
-| --- | --- |
-| `period` or `full stop` | `.` |
-| `comma` | `,` |
-| `question mark` | `?` |
-| `exclamation mark` | `!` |
-| `colon` | `:` |
-| `semicolon` | `;` |
-| `new line` | line break |
-| `new paragraph` | blank line |
-
-For example, "hello comma can you review this question mark" becomes `Hello, can you review this?`.
-
-To add your own, open **Settings > Speak** and use the **Spoken symbols** dictionary.
-Map a spoken phrase to a symbol or snippet.
-Your entries win over the built-in words.
-The attach mode sets spacing: `none`, `left`, `right`, or `both`.
-With `both`, "std double colon vector" types `std::vector`.
+Speak punctuation words that the selected speech engine supports. Check the
+preview before delivery when the sentence contains code, paths, or symbols.
+Use the editor for exact source code. Dictation is an input path, not a code
+parser.
 
 ### Clipboard token
 
-Say `clipboard` in a phrase to insert the clipboard text at that place.
-HoldSpeak removes the word and inserts the clipboard contents.
+When direct insertion is unavailable, use the clipboard route shown by Speak.
+HoldSpeak can place the result on the clipboard for you to paste. A clipboard
+result is not delivery into the target application. Check the target after you
+paste.
 
 ## Speak
 
-Speak is the voice-typing window on the Desk.
-It shows one loop: talk, see the result, judge it, teach it once, and watch the teaching apply.
-It has four wings: **Speak**, **Journal**, **Blocks**, and **Learned**.
-The gear opens **Configure dictation**.
+Speak is the voice-typing window. It shows capture state, speech readiness,
+permission state, preview behavior, and the journal link.
 
 ### The Speak wing
 
-The window has one toolbar and one status bar.
-**Talk** in the toolbar is the one microphone control on this face.
-Select it once to start and once to stop.
-With Builder tools on (**Settings > This Mac**), an **Open mic** latch also shows.
+The current Speak face is the **Talk** plate. Select **Talk** to start or stop
+capture. The **Utterance** well also accepts typed text. **Types into** names
+the target and **Try it here** runs a preview without typing into another app.
+**Details** shows the diagnostic rows when builder tools are enabled.
 
-You can also type in the utterance well and press **Ctrl+Enter** or **Cmd+Enter**.
-**Types into** picks the target app and shows the last latency.
-**Try it here** runs the words in the box through clean-up and shows the result here. It types nothing into any app.
+Read the status before you speak. **ACTIVE** means the key listener is ready.
+**BLOCKED** means a required permission is missing. **UNAVAILABLE** means the
+listener did not start.
 
-A finished run shows the result with **OK** and **Wrong**.
-**OK** acknowledges the result and writes nothing.
-**Wrong** opens the teach row.
-The status bar shows the audio level, whether clean-up is ready and which engine it uses, and the elapsed time.
-If no clean-up engine is set, it reads `Clean-up off` with a **Choose engine** verb that opens **Engines**.
-**Copy** copies the words. **Review** opens the Journal wing, and **Export** downloads the journal as Markdown.
-With Builder tools on, **Details** shows the pipeline state, the latency budget, and the raw trace.
+After a result, select **OK** or **Wrong**. **APPLIED** opens the corrections
+that fired. **Wrong** opens **FIELD** with **TEXT**, **INTENT**, or **TARGET**.
+Enter the correction and select **Teach**. A **TEXT** correction changes
+words. **INTENT** and **TARGET** change routing.
 
 ### Teach a correction
 
-Select **Wrong** to open the teach row.
-The **FIELD** control picks one of three kinds.
+1. Open a dictation journal row.
+2. Select the correction control.
+3. Enter the phrase and the desired text or route.
+4. Save the correction.
+5. Replay the earlier utterance when you want to check it.
 
-| FIELD | What you teach | What it changes |
-| --- | --- | --- |
-| **TEXT** | A phrase as heard, and as you said it | The words of later dictations that contain the heard phrase |
-| **INTENT** | The block this kind of utterance belongs to | The routing of later similar utterances |
-| **TARGET** | The delivery target this kind of utterance belongs to | The routing of later similar utterances |
-
-For **TEXT**, correct the wrong words in **What you said**, then select **Teach**.
-**INTENT** and **TARGET** offer a fixed list.
-The target list has **Claude Code**, **Codex CLI**, **Terminal shell**, **Browser**, **Editor**, and **Chat**.
-The intent list shows your loaded blocks.
-
-A receipt replaces the teach row for five seconds.
-
-| Receipt | Meaning |
-| --- | --- |
-| `TAUGHT` | HoldSpeak stored the correction. |
-| `NO CHANGE` | You edited nothing. |
-| `REFUSED · SECRET` | The text looks like a key or a token. HoldSpeak wrote nothing. |
-| `REFUSED · ONE WORD` | One word cannot route an utterance. This applies to **INTENT** and **TARGET**. |
-| `REFUSED · EMPTY`, `REFUSED · KIND` | The request had no phrase, or an unknown kind. |
-
-A text correction is exact.
-It ignores case, repeated spaces, and edge punctuation.
-It does not fire inside a longer word.
-Longer rules apply first, and each rule sees the text the previous rules left.
-A routing correction is approximate.
-It matches a later utterance by token overlap above 0.5.
-
-When a stored rule changed a run, the **RESULT** line shows **APPLIED**.
-Select it to see each rule that fired.
+A stored correction and a correction that fired are different results. Read the
+next journal row to check whether it applied.
 
 ### The Journal wing
 
-The Journal wing streams every dictation this device ran.
-**Search** filters the loaded rows.
-The tokens **ALL**, **DICTATION**, **BROWSER**, and **HOTKEY** filter by source.
-**Clear** deletes the whole journal.
-Open a row to edit its transcript and to use **Replay**, **Copy**, and **Delete**.
-**Replay** runs the stored transcript through the current pipeline.
-It shows a preview, types nothing, and writes no row.
-The stream loads 50 rows at a time.
+The Journal lists dictation runs on this device. **Search** and the source
+filters narrow the rows. **Clear** removes the journal. A row can show what
+HoldSpeak heard, what it delivered, the route, latency, and corrections.
+**Replay** uses the stored transcript and returns **REPLAY · PREVIEW**. It does
+not send text to another app. **Copy** copies the transcript or replay result.
+**Delete** removes a row.
 
 ### The Learned wing
 
-The Learned wing lists every correction with its kind, key, and value.
-`N APPLIED` counts the journal rows where the rule fired.
-**Forget** removes one correction after one confirmation.
-**Configure dictation** has a **Learning digest** for the week.
+Learned lists stored corrections and their applied counts. Remove a correction
+when it produces unwanted changes. A count is evidence of a recorded match,
+not a quality score.
 
 ### Storage and privacy
 
-Corrections are on by default (`dictation.pipeline.corrections_enabled`).
-Corrections and journal rows live in the HoldSpeak database on this device.
-The journal keeps the latest 500 entries.
-HoldSpeak redacts a transcript that looks like a key or a token before it stores the row.
-Both stay after a restart.
+Dictation storage and model routes have separate boundaries. A local speech
+engine keeps input on its host. A configured endpoint or CLI can transfer its
+prompt to that provider. Read the route and receipt for each run.
 
 ### Who owns the microphone
 
-One machine has one microphone floor with one owner.
-The hotkey, a meeting recording, the wake listener, and the browser microphone all claim it.
-Open **Details** to see the `Mic` row: `CLOSED`, `SUSPENDED`, `OPEN`, `SEGMENTING`, or `HELD`.
-If another source holds the floor, Speak names it, for example `FLOOR HELD MEETING`.
-If you lose the floor while you speak, capture stops with `AUDIO FLOOR LOST`.
+Only one active capture path should own the microphone. A meeting recorder,
+browser capture, and voice typing can have different owners. Stop the other
+capture when Speak reports that the device is busy.
 
 ### When capture goes wrong
 
-Speak names every capture that does not finish.
-Your typed words stay in the well.
-
-| What happened | What you see |
+| Symptom | Action |
 | --- | --- |
-| Microphone access is blocked | `PERMISSION DENIED` |
-| You said nothing | No speech was detected. HoldSpeak writes no row. |
-| The speech engine failed | `TRANSCRIPTION FAILED` |
-| Another source took the microphone | `AUDIO FLOOR LOST`. HoldSpeak discards the half sentence. |
-| The session closed | `MIC INTERVAL CLOSED`. Select the microphone to continue. |
-| The tab closed after you spoke | HoldSpeak still transcribes the words. Find them in **JOURNAL**. |
-
-Typing into another app is a real effect.
-If the typing adapter fails after the text may have landed, HoldSpeak parks the delivery as `OUTCOME UNKNOWN`.
-A retry reads that outcome and never types a second time.
+| No key state | Check Input Monitoring or the GUI session. |
+| No audio | Check Microphone permission and the selected device. |
+| Words appear but do not arrive | Check Accessibility, preview mode, or clipboard paste. |
+| Transcript quality is poor | Check language, speech engine, and background noise. |
+| A correction did not apply | Read the journal row and compare the exact phrase. |
 
 ## The dictation pipeline for coding assistants
 
-The dictation pipeline turns a spoken thought into a prompt for Claude, Codex, a terminal, or a browser.
-It can add project context, keep project vocabulary, and detect that an assistant waits for your answer.
+The pipeline can deliver a short spoken request to a coding assistant. It can
+use project facts or an optional project context rewrite before delivery.
 
 ### Set up the pipeline
 
-The pipeline is on by default.
-Open the **Speak** window and select the gear to open **Configure dictation**.
+1. Open **Settings > Engines** and choose the speech and rewrite engines.
+2. Set project facts in the project configuration when the template needs exact values.
+3. Set optional project context files when a rewrite needs them.
+4. Speak into the focused coding tool.
+5. Check the journal and the target application.
 
-1. Read the **Pipeline** group to see what is missing.
-2. In the **Dictation runtime** group, select **Open Engines**.
-3. Under **What runs where**, select the engine for dictation clean-up.
-
-The backend is `auto`, `mlx`, `llama_cpp`, or `openai_compatible`.
-`auto` picks MLX on Apple Silicon and llama.cpp elsewhere.
-
-To check the setup from the CLI:
-
-```bash
-holdspeak dictation runtime status
-holdspeak dictation dry-run "ask codex to inspect the failing test"
-```
-
-For the full setup, read [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md).
+Project facts are exact values from the configured `kb:` map. Project context
+is separate optional material. Neither setting proves that a target coding
+tool accepted the delivered text.
 
 ### OpenAI-compatible endpoints
 
-Use `openai_compatible` when another host serves the model.
-Examples are llama.cpp server, LM Studio, the Ollama OpenAI bridge, vLLM, LiteLLM, and hosted APIs.
-
-1. Add the endpoint in **HoldSpeak > Engines**.
-2. Select it for **Dictation clean-up** in **HoldSpeak > Engines**.
-3. Select **Use these**.
-
-Assigning the model also sets the dictation backend.
-For keyed providers, see [Models](MODELS.md).
-The `HOLDSPEAK_PROFILE_<ID>_KEY` environment variable is a headless fallback.
-HoldSpeak never writes the key to config or project context files.
-If the endpoint fails, HoldSpeak keeps the original transcript and reports the failure in dry-run and readiness output.
-
-The old `dictation.runtime.openai_compatible_*` fields no longer configure anything.
-An upgrade converts a configured endpoint once into a model entry named `legacy-dictation`.
-It does not carry over the key.
-`dictation.runtime.openai_compatible_timeout_seconds` still applies.
+An OpenAI-compatible endpoint is an inference route. Configure its URL, model,
+and credentials in the supported Settings control. Check what data the
+endpoint receives. Compatibility does not mean that the endpoint is local or
+that it can use Desk tools.
 
 ### Project facts
 
-Project facts are a `kb:` map in `.holdspeak/project.yaml`.
-HoldSpeak stamps the exact values into dictation with no model.
-Edit them in **Configure dictation**, in the **Knowledge** group.
+Project facts supply exact template values. Keep them short and review them
+when the repository or branch changes. A fact is not a source document and is
+not a permission grant.
 
 ### Project context
 
-Project context is a `.hs/` directory at the repository root.
-The files are plain text and safe to commit if your team agrees.
-
-| File | Purpose |
-| --- | --- |
-| `instructions.md` | How to rewrite or inject prompts for this repository |
-| `context.md` | Architecture, paths, setup notes, constraints |
-| `memory.md` | Durable facts you approved |
-| `workflows.md` | Test, build, review, and deploy commands |
-| `issues.md` | A scratchpad for active problems |
-| `terms.md` | Project vocabulary and preferred spellings |
-| `targets.md` | Style notes for Codex, Claude, terminal, browser, editor, chat |
-| `ignore` | Paths, topics, or data HoldSpeak must not inject |
-
-Edit these files in your editor.
-Rules:
-
-- `.hs/` files are the canonical format.
-- Flat files such as `.hs_context` are read-only compatibility inputs.
-- If both exist, `.hs/<name>.md` wins.
-- HoldSpeak never writes project context during dictation.
-- HoldSpeak skips binary files, very large files, and files that look like secrets.
-- Do not put secrets in `.hs/`.
+Project context files can guide an optional rewrite. The rewrite engine and
+its host can receive the context. Read the receipt before you treat the
+rewritten text as delivered.
 
 ### Automation hooks for Claude and Codex
 
-The operating system does not expose a terminal's working directory.
-Hooks let Claude Code and Codex report their own `cwd`, session id, and tool state.
-Open **Configure dictation** and read the **Automation hooks** group to see hook status.
-For the full flow, read [Claude/Codex automation hook install](AGENT_HOOK_INSTALL.md).
-
-```bash
-holdspeak agent-hook templates --agent claude
-holdspeak agent-hook templates --agent codex --capture-messages
-```
-
-Assistant-message capture is opt-in.
-When it is on, HoldSpeak keeps at most 4 KB of the latest assistant message from a Stop hook.
-It marks likely questions as `awaiting_response`.
-The next submitted prompt clears the text.
+Hooks report an existing Claude Code or Codex session to HoldSpeak. They do
+not turn a CLI inference engine into a coding-agent session. A coding-agent
+handoff needs its own repository, branch, worktree, agent CLI, and authority.
+Use [Coder integration](CODER_INTEGRATION.md) for launch and steering.
 
 ## Meeting mode
 
-Use meeting mode for a searchable record of a conversation.
+Meeting mode records or imports a Meeting, then runs configured intelligence.
+Audio capture, transcription, model intelligence, and follow-up are separate
+steps.
 
-```bash
-holdspeak meeting --setup
-holdspeak meeting --list-devices
-holdspeak
-```
+1. Open **Meetings**.
+2. Select **Record** for a new capture, or **Import** for a supported file.
+3. Select the meeting and check its transcript.
+4. Choose an assigned intelligence job.
+5. Read the result, source references, and job receipt.
 
-`--setup` checks system audio.
-`--list-devices` lists audio devices.
-Open **Meetings** to start and stop a meeting.
-During a meeting, HoldSpeak shows the live transcript with speaker labels, bookmarks, topics, action items, and summaries.
+The Meetings window accepts a file drop and opens its import form. The active
+Desk does not provide a general file drop. See [Meeting mode](MEETING_MODE_GUIDE.md)
+for audio and provider details.
 
-After a meeting, its row in the Meetings stream shows one state.
-
-| State | Meaning | Verb |
-| --- | --- | --- |
-| **SAVED** | Intelligence ran and results are stored. | **Open** |
-| **OFF** | A transcript exists and no summary ran. | **Run summary** |
-| **RAN** | Auto-run finished. The row shows duration and model host. | **Open** |
-| **RUNNING** | Intelligence is running. | |
-| **NEEDS YOU** | Open items need you. | **Open** |
-| **NO TRANSCRIPT** | No transcript exists yet. | |
-| **FAILED** | Intelligence failed. The row names the reason. | **Retry** |
-| **REC** | The meeting is recording. | |
-
-**Run summary** writes the summary, topics, and action items.
-It also runs the routed plugins whose model assignments can be frozen. Their results can produce proposals.
-For meeting details, read [Meeting mode](MEETING_MODE_GUIDE.md) and [Meeting intelligence](MEETING_INTELLIGENCE.md).
+Read the state before you choose an action. **REC**, **IMPORTING**, and
+**TRANSCRIBING** mean capture work is active. **QUEUED** and **RUNNING** mean
+intelligence work is pending or active. **RAN** means the run completed.
+**OFF** means no summary ran. **FAILED** and **IMPORT FAILED** name a failure.
+**NO TRANSCRIPT** means speech setup or capture is still missing. **Run
+summary**, **Retry**, and **Open** appear only when their state supports them.
 
 ### The auto-run setting
 
-Open **Settings > Meetings**.
-The **Make summary** control has three positions. The engine row shows the chosen engine.
-
-| Position | Behavior |
-| --- | --- |
-| **Manual** | Nothing runs by itself. Use **Run summary**. |
-| **After room meetings** | A summary runs after each meeting linked to a Room. |
-| **After every meeting** (default) | A summary runs after every meeting with a transcript. |
-
-If no model is assigned, the chip reads **NO MODEL** and auto-run jobs queue with a named failure.
+Auto-run is a recording preference. It can start configured work after a
+recording when its prerequisites are ready. Read the selected engine, job,
+source scope, and receipt. A setting does not prove that a run completed.
 
 ### Where the model runs
 
-Meeting intelligence runs locally or on an OpenAI-compatible endpoint.
-Transcripts, artifacts, and queues stay on this device.
-No external system receives a write unless a connector or export does it.
-Meeting text can go to the primary or fallback hosts in its capability assignments.
-Add the endpoint in **HoldSpeak > Engines**.
-Select it for **Meetings** and apply **Use these**.
-The `intel_cloud_*` fields only migrate old settings.
-`holdspeak doctor` checks the endpoint and names the model each pipeline uses.
+The engine assignment names the model route and host. A local model, network
+endpoint, cloud API, and CLI can have different data boundaries. Check the
+receipt and egress indicator before you share a transcript.
 
 ### Named owners
 
-Intelligence puts names it hears into the `owner` field of each action item.
-**Me** (the speaker) and **Remote** (the counterpart) are reserved.
-An unclear owner is `null`.
-To map an owner string to a person, add it under **Owner aliases** in the relationship's **Context** lens.
-Add each name variant as its own alias.
+Review named owners in the Meeting result. An extracted owner string is not a
+People relationship. Use an explicit People alias when you want a known
+relationship link. Meeting participants are not automatically linked.
 
 ## Proposals and review
 
-Intelligence extracts decisions and action items.
-Nothing fires by itself.
-Each item arrives as a proposal, and **Confirm** commits it.
+HoldSpeak can prepare proposals from a Meeting or Project. A proposal is a
+candidate result. It needs review before confirmation or an external effect.
 
 ### Proposals in the Room, Needs you and Today
 
-Proposals appear in the Room's **Needs you** section, in the Needs you window, and on Today.
-Each row shows `Decide:` for a decision or `Confirm:` for an action item.
-It also shows the meeting and segment time, and the speaker when known.
-
-| Verb | What it does |
-| --- | --- |
-| **Confirm** | Writes the decision record and the commitment. |
-| **Edit** | Opens the text, owner, and due date. **Save & confirm** commits your version. The original stays as provenance. |
-| **Dismiss** | Declines the proposal with a receipt. HoldSpeak creates no record. |
-
-On Today, a proposal row has one verb, such as **Confirm** or **Decide**.
+The arrival and Project Room can show pending proposals. Select **Review N** or
+the proposal row. Read its source, target, and requested action. Confirm only
+when the proposal matches your intent.
 
 ### Review a meeting's outcomes
 
-Open a meeting and select the **Review** wing.
-The head shows how many proposals wait, the linked Project, and the extraction time.
-**COVERAGE** shows how much of the transcript the read covered.
-Proposals sit in two ledgers, **DECISIONS** and **COMMITMENTS**.
-Each row has three separate chips:
-
-- The kind, `PROPOSAL`.
-- What the transcript shows: `SUPPORTED` (a quote of its span), `LINKED` (the span exists but the wording differs), or `UNSUPPORTED` (no source).
-- Your judgment, `UNREVIEWED` until you act.
-
-A missing owner or due date shows as `OWNER · UNKNOWN` or `DUE · UNKNOWN`.
-HoldSpeak never guesses them.
-**MORE** on a row holds **Edit**, **Dismiss**, and **Open evidence**.
-**Accept reviewed** in the footer confirms every `SUPPORTED` or `LINKED` row with no unknown.
-The receipt names what it left and why.
-A retry or a repeated **Confirm** never creates a second record while the transcript is unchanged.
-If the transcript changes, a new read proposes again.
-A **PRIOR REVISION** disclosure lists the earlier rows.
+Read the transcript and the evidence links first. Check decisions, risks,
+requirements, commitments, and action owners. A saved outcome is not proof of
+organizational acceptance. Follow the authority process for the work.
 
 ### Suggested sources
 
-When a transcript names a repository or issue key that matches a connected provider, the Room's **SOURCES** section shows a suggested source.
-**Add** creates a Watch source.
-**Dismiss** hides it for this Room.
+Project Rooms can show suggested sources. A suggested source is not watched.
+Select **Add** only after checking the provider, account, and source scope.
+Select **Dismiss** when it does not belong to the Project.
 
 ## The steward's hand
 
-The steward drafts a weekly project update and can propose a reviewer nudge.
-Both are opt-in, receipted, and visible before they act.
+The Steward evaluates observed Project work under a Project policy. Its scope
+is narrower than whole-Desk Ask.
 
 ### The drafted update
 
-When the steward runs, it collects every change since the last published update.
-If you assigned a model to the project update capability, the model rewrites the inventory as prose.
-Each factual sentence carries its claim reference as a chip.
-Sentences the model added beyond the inventory read **UNVERIFIED**.
-The footer names the model and its host.
-Without a model, or if the model fails, the update uses the plain deterministic body.
+1. Open a Project Room.
+2. Select **Write update**.
+3. Check the model chip and source references.
+4. Correct unsupported facts.
+5. Save or prepare the update only after review.
 
-The update has four verbs.
-**Save** keeps your edit.
-**Regenerate** rebuilds the draft.
-**Copy** copies the Markdown.
-**Publish** publishes it through the project revision law.
+**Write update** prepares text. It does not send the update. A project-update
+run has the Project service scope, source watches, policy, and run receipt.
 
 ### What a claim state means
 
-Each claim has three independent tokens.
-
-**What the sentence asserts:** `OBSERVATION`, `INFERENCE`, `PROPOSAL`, `DECISION`, `EXECUTION RESULT`, or `OUTCOME MEASURE`.
-
-**What the evidence shows:**
-
-| Token | Meaning |
-| --- | --- |
-| `SUPPORTED` | A field mapping read the value from the named source version, or a person attested it. |
-| `LINKED` | The sentence cites a real source and nothing more. |
-| `LINKED · MIGRATED` | An older record. Nobody reviewed its citation. |
-| `LINKED · EDITED` | You edited the sentence, so its support was withdrawn. |
-| `UNSUPPORTED` | No source. |
-| `DISPUTED` | Someone disagrees. |
-
-**Who judged it:** `UNREVIEWED`, `ACCEPTED`, `REJECTED`, or `SUPERSEDED`.
-Only you move this token.
-A name, date, or number that the source does not carry shows as its own token, for example `NAME · Priya`.
+A claim can be supported by a live source, changed since the last check, or
+missing evidence. Read the source and time before you act. A model phrase such
+as “confirmed” is not an authority decision.
 
 ### The health rows
 
-The Room's **HEALTH** section appears when at least one source has entities.
-It shows `CHECKED <age>`.
-Each row is one signal, with a green, amber, or red lead chip.
-
-| Row | Shows |
-| --- | --- |
-| **REVIEW WAIT** | Median and count of open PRs that wait for review. Days count from PR creation, because GitHub does not give the request time. |
-| **ISSUE AGING** | Jira issues older than the threshold (default 14 days). |
-| **CI** | Flaky branches and PRs that pass CI but are not merged. |
-| **RELEASE** | The combined state, `READY` or the worst signal. |
-
-An absent row means HoldSpeak has no data for it.
+Health rows summarize the Project's current observed state. Read the source
+rows, last check, and failure reason. A blank or stale row does not prove that
+the provider has no work.
 
 ### The reviewer nudge
 
-A reviewer nudge is a proposed GitHub comment on a PR whose review wait exceeds the threshold.
-It is the first external write the steward can make.
-
-1. Open the steward policy on the project.
-2. Check **Reviewer nudge**.
-   The row shows the `GITHUB.COM` egress badge.
-   It is unchecked by default.
-3. When the steward proposes a nudge, a **NEEDS YOU** row appears with a **Nudge** verb.
-4. Select **Nudge**.
-   The card shows the reviewer, the PR, and the comment text.
-   You can edit the text.
-5. Select **Send** to post the comment from your own `gh` identity.
-   Select **Dismiss** to close the card with no write.
-
-After you send, the card becomes a receipt, for example `SENT, Ania Kowalska, #612, 18:02, GITHUB.COM`.
-HoldSpeak cannot retract a posted comment.
-After a send or a dismiss, the steward waits 7 days before it proposes the same nudge again.
+The reviewer nudge identifies work that needs your review. It does not approve,
+send, or schedule the work. Use the linked source and proposal controls.
 
 ## Prepared work: preparation, review, and the weekly update
 
-Three prepared procedures ship: **meeting preparation**, **decision and commitment review**, and the **weekly project update**.
-Each is a versioned descriptor in the product tree, bound to the service that already does the work.
-You do not author them.
-
-A descriptor declares its inputs, sources, produced record, executing service, effects, and triggers.
-Compiling one against a project binds those declarations to that project.
-
+Three prepared procedures ship: meeting preparation, decision and commitment review, and the weekly project update.
+They are versioned descriptors in `holdspeak/services/recipe_catalog.py` that bind existing services.
 A descriptor declares a limit only where one is real.
-Where the executing service enforces a cap, the descriptor points at that service's own value and reads it rather than repeating the number.
-Where no cap exists, it declares none.
-The same rule covers inputs: none of the three offers a setting no step can act on.
+It reads a cap from the executing service rather than duplicating an unenforced number.
 
-A blocker comes back as a typed gap with a coverage state: `available`, `stale`, `failed`, `forbidden`, or `unavailable`.
-A plan with a gap is not ready.
-A source you did not connect reports `unavailable`.
-It never reports an all-clear it did not observe.
+**None of the three fires on a schedule yet.**
+This limitation applies to those prepared-procedure descriptors.
+Ordinary Automations and scheduled recordings have their own supported triggers.
+Read [Automation](AUTOMATION.md) for those paths.
+
+A prepared result names its output, target, route, and next owner action.
+It does not establish completed external work.
 
 ### Running one
 
-All three run manually, through the surface each already had.
-Run preparation from the Room, the review from the follow-through board, and the update from the steward.
-Compiling a plan is a read.
-It writes nothing and runs nothing.
+The prepared-procedure catalogue is read-only.
+Its APIs describe a procedure and compile a plan. They do not execute that plan.
+Use the current feature that owns the result:
 
-**None of the three fires on a schedule yet.**
-A schedule needs an owner path that really recurs: a connector watch swept by the Heartbeat, whose due evaluation mints an effect the steward drains.
-No effect kind names one of these three yet.
-Each descriptor reports its scheduled trigger as an unavailable prerequisite.
+| Result | Current path |
+| --- | --- |
+| Meeting or 1:1 preparation | Open the person's preparation view in People and inspect the available brief. |
+| Decision review | Open Ask, select decision evidence through the scope menu, and request a review. This is ordinary Ask. |
+| Weekly Project update | Open the Project Room and select **Write update**. |
+
+Inspect the sources and result before keeping or using the output.
+Review any **Wrote** changes and **Prepared** actions.
+Select **Send** only when the destination and exact content are correct.
 
 ### Finding them
 
-Over MCP, `practice_recipe.list` reads the catalog, `practice_recipe.get` reads one descriptor, and `practice_recipe.compile` compiles a plan.
-Do not confuse these with `recipe.list` and `recipe.run`, which are for Agents you author.
+Use **Today**, **Needs you**, Project Room **HISTORY**, Memory, or the source
+record's receipt. Search can find a kept Note, Artifact, Thread, or Meeting.
+A prepared item can remain pending until you send it or discard it through its
+own control.
 
-Over HTTP:
+## Programs
 
-- `GET /api/automations/practice-recipes`
-- `GET /api/automations/practice-recipes/{recipe_id}`
-- `GET /api/automations/practice-recipes/{recipe_id}/plan`
+A **Program** is a goal cut into steps. An agent can do each step, while the
+owner keeps the decisions that affect scope, authority, and delivery.
+
+1. Open **Programs** from **Go** or Search.
+2. Select **New program** or choose **Templates**.
+3. Define the goal and steps, then review the plan.
+4. Select **Start** when the steps, **Runs on** host, and control level are
+   correct.
+5. Read each checkpoint and answer the **Your turn** item when the Program
+   asks.
+
+The Program window can **Park** a run, **Resume** it, add a step, and show
+handoff notes and decisions. **Race** is available only where the service
+allows parallel work. **Secure**, **Normal**, and **YOLO** are control
+presets for the Program. Its step gates and Control level govern routine decisions and merge.
+Core questions, held owner operations, and security or data-loss findings still return to you.
+Read [Programs](programs.md) for the exact ladder and merge-gate choices.
+
+Programs are different from the prepared-procedure catalogue above. The
+catalogue contains read-only procedure descriptors; it is not an executable
+Program list or a schedule.
 
 ## Reach
 
-Reach lets a second machine on your tailnet call the hub remotely.
-It can run the Heartbeat sweep and the steward's drafter while you are away.
-The hub uses Streamable HTTP.
-A scoped credential limits the caller, and every remote call leaves a receipt.
-There is no relay and no cloud proxy.
+Reach exposes remote MCP access through a scoped credential. It is not the
+same as opening the Desk in a browser.
 
 ### Turn remote access on
 
-1. Stop the hub. Start it with `HOLDSPEAK_WEB_HOST=0.0.0.0 holdspeak web --no-open`.
-   This binds all IPv4 interfaces, including loopback.
-2. Open **Settings > This Mac** and switch remote access on.
-3. Connect the runner to the hub's tailnet IP and actual listening port.
-
-Remote access is off by default. Its switch controls MCP admission.
-The stored `bind_host` value does not change the listener.
+Open the Reach settings and read the bind address, transport, and expiry. Turn
+it on only when a remote client needs it. Check the scope before you pair a
+client.
 
 ### Issue a credential
 
-With remote access on, a `CREDENTIALS` section appears.
-
-1. Select **Issue credential**.
-2. Enter a **Name**.
-3. Pick a **Palette**: `PROJECT` (default), `SWEEP`, `DESK`, or `ALL`.
-4. Pick a **TTL**: `12 H` (default), `24 H`, `7 D`, or `30 D`.
-5. Select **Issue**.
-6. Copy the token.
-   The page shows it once.
-   The hub stores only a hash.
-
-The palette limits which tool families the credential can call.
-`PROJECT` allows project tools only.
-`ALL` allows every non-owner tool.
-**Revoke** on a row ends the credential at once.
-Credentials are in memory, so a hub restart clears them.
+Create a credential with the smallest required scope and expiry. Copy it only
+to the intended client. HoldSpeak does not recover a secret that you lose.
 
 ### What a remote caller can do
 
-A remote credential acts as an `AGENT`, never as `OWNER`.
 `POST /api/mcp` refuses the owner's web token on a non-loopback request.
-No other route applies that refusal.
-A call outside the palette returns a capability error.
-HoldSpeak never reads `X-Forwarded-For` to find the principal.
-Every remote tool call writes a receipt with `origin: remote` and the credential name.
-Receipt rows show a `REMOTE` badge with the caller's address.
+Remote MCP uses the scoped agent credential path.
+Other HTTP routes have their own guards; the MCP refusal is not a universal network fence.
+
+
+The credential and MCP policy decide which tools and records the caller can
+use. A remote caller does not gain all Desk authority. Read the tool result and
+receipt. People access has its own restriction.
 
 ### The overnight runner
 
-A headless machine runs a client script that connects with a scoped credential.
-It calls `heartbeat.run_now` for one sweep, then `project.run_steward` for each active Room.
-The receipts arrive on your desk.
-The hub does not prevent sleep.
-Keep the hub machine awake, for example with `caffeinate -s`.
-See [Reach Runner](REACH_RUNNER.md) for the install steps.
+An overnight run needs a configured trigger, engine or agent, source scope,
+authority, and a running execution host. Read its receipt after the run. A
+credential or saved recipe alone does not prove that it ran.
 
-### Rhythm's Where it runs row
+<a id="rhythms-where-it-runs-row"></a>
+<a id="rhythm-s-where-it-runs-row"></a>
+### Notices' Where it runs row
 
-In **Settings > Notices**, the `Where it runs` row picks `THIS DEVICE` or a configured remote host.
-For a remote host, the caption reads `WHILE THIS MAC IS AWAKE`.
+The **Where it runs** row names the host for a Heartbeat path. Check it against
+the selected engine and destination. A saved host is not evidence of a
+completed run.
 
+<a id="the-arrival"></a>
 ## Today
 
-Today is the Desk home window. It is the first icon in the dock (**⌃1**).
-Its toolbar has **Record now**, **Refresh** and **Needs you** with the live count.
-
-**Needs you** shows the first rows of the Needs you window, ranked so the first row is where to start.
-Each row shows its kind, the item, its state as a dot and a word, and one verb (**Open PR**, **Decide**, **Confirm**, **Open item**).
-**Needs you** in the toolbar, **Go > Needs you** or **⌃J** opens the whole list.
-One item from several sources shows as one row.
-
-**The day** is a timeline of today's events.
-The next 1:1 shows its steps (Prep, Record, Summary, Send follow-up) with **Prep** and **Record when it starts**.
-The status bar sums up the day, for example `1 to finish · 1 decision to make · next 1:1 in 50 min`.
-A section with nothing to show is absent.
+The arrival shows current work, **Needs you**, unfinished Notes, a brief, and
+recent Meetings. Select an item to open its owning surface. A badge tells you
+that a source has state to inspect. It does not explain the state by itself.
 
 ### When a source was not observed
 
-The Needs you window says that nothing needs you only when every expected source answered.
-Otherwise each source that was not read shows its own row with the reason, when HoldSpeak last read it, and a repair verb such as **Retry** or **Reconnect**.
-Items from a failing source stay in the list, marked as still true at their last read.
-The hub keeps this memory only while it runs.
+Read the source status and last check. “Not observed” can mean that the source
+was not in scope, the provider was unavailable, or the run did not complete.
+Do not treat it as proof that nothing changed.
 
 ## The clock
 
-The clock is the calendar on the Desk.
-Your calendar can use the Mac Calendar app, ICS files or HTTPS feeds.
-HoldSpeak reads the next 14 days from every enabled source.
-The hub refreshes each source at boot and every 15 minutes.
-A source that fails keeps its last good events and leaves a named receipt.
+The clock contains calendar and recording controls. It does not replace the
+Meeting record or a calendar provider.
 
 ### Connect a calendar
 
-1. Open **Settings > Meetings** and select **Add calendar**.
-2. In Accounts, select **Choose calendar**.
-3. Allow access if asked, then select the calendar to use.
-
-To add an ICS URL or a local file, select **Add feed** in Meetings.
-Enter the name and feed location, then select **Save**.
-
-Each calendar keeps its name, source type and enabled state. **Edit** changes
-its name; a feed also has an editable URL or file path. Native calendar IDs
-stay internal. Use **Disable** to pause a source.
-
-If an older Settings save erased a native calendar's name, open **Choose
-calendar** and select **Refresh name**. This uses the detected calendar title
-and preserves its saved identity and enabled state. A name you entered is kept.
-
-An HTTPS source shows its host beside the fetch action. A local source has no
-external host chip. If two feeds hold the same event, it appears with each
-source's label.
+Use the Calendar settings flow and grant only the requested provider access.
+Check the selected account and calendar. A linked calendar event can support a
+People association only after your explicit link.
 
 ### Import from a screenshot
 
-Use a screenshot when your calendar has no ICS feed.
-
-1. Take a screenshot of the week view.
-   PNG, JPEG, and WebP work.
-   You can merge up to three screenshots of one week.
-2. In **Settings > Meetings**, select **Import image** in the **Calendar** section.
-   You can also drop the image on the Desk.
-3. The hub sends the image to the vision model assigned to `calendar.snapshot_extract`.
-   If none is assigned, the import is refused with a receipt.
-4. Review the events in the window.
-   Set the **Week anchor** (the Monday, `YYYY-MM-DD`).
-   HoldSpeak never guesses the anchor.
-5. Select **CONFIRM** to write the events.
-   Close the window to cancel.
-
-HoldSpeak writes a local `.ics` file under `~/.local/share/holdspeak/calendar-snapshots/`.
-It registers the file as a source labeled **O365 SNAPSHOT**.
-The normal bounded ICS parser reads it.
-A new screenshot of the same week replaces that source's events.
+The current active Desk does not mount a general screenshot import. Use a
+supported Calendar or Meetings import control when the current build offers
+one. Do not treat a screenshot on the clipboard as an imported event.
 
 ### Armed recordings
 
-An armed recording is linked to a calendar event.
-The title, start, and duration come from the event.
-The recording starts 60 seconds before the event.
-If the event is already running, it starts at once.
-Duration is at most 480 minutes.
-Today shows the armed event in **The day** with a countdown and a **Cancel** verb.
-
-When the recording runs, it uses the same capture path as a manual recording.
-The finished meeting shows **FROM <SOURCE>** with the event title.
-Calendar changes follow an idle armed recording:
-
-- A longer event or a new title updates the recording.
-- A moved event rebinds the recording to the nearest occurrence of the series.
-- A removed event cancels the recording.
-
-A recording that already started is never changed.
-You can arm an imported snapshot event the same way.
+An armed recording stores a schedule or event link for a future capture. Check
+the time zone, source event, device, and recorder state. Armed does not mean
+recorded.
 
 ### Auto-record
 
-Open **Settings > Meetings**.
-The **Auto-record** row has three states.
-
-| State | What it does |
-| --- | --- |
-| `OFF` (default) | Creates no event recordings. |
-| **Room meetings** | Arms events that match a Room. |
-| **All calendar meetings** | Arms every event with a meeting URL. |
-
-An armed recording starts five minutes before the event.
-The setting is your standing consent to record.
-**Cancel** stops one recording for good.
-A later refresh never re-arms it.
+Auto-record can use a configured calendar mode. Check whether it is **Off** or
+configured for calendar meetings. Read the recording receipt and Meeting
+record after the event.
 
 ### The week and the brief
 
-When a calendar is connected, Today's **The day** timeline shows the events and the next 1:1.
-The daily brief makes itself once a day. Set its hour in **Settings > Notices > Daily brief**.
+The weekly view gathers current records and configured pages. It can show
+source references and missing inputs. A brief is preparation. It is not a
+decision, a People score, or a sent message.
 
 ## Connect your tools
 
-Open **Settings > Accounts**.
-It is one page with four groups: **Services**, **Calendar**, **Calendar feeds** and **Destinations**.
-Each row shows the account, its state as a dot and a word (for example `Works · checked just now`), and one verb.
+Open **Settings > Connections** to configure GitHub, Jira, Confluence, a
+calendar, or another supported provider. Check the account and source scope.
+The provider's credentials remain under its configured boundary.
 
-| Group | Rows | Verbs |
-| --- | --- | --- |
-| **Services** | GitHub, each Jira account, Confluence | **Check**, **Add Jira account**, **Add account** |
-| **Calendar** | The connected calendar and its source count | **Choose calendar** |
-| **Calendar feeds** | Each ICS feed and the Mac calendar | **Add feed**, **Import image**, **Edit** |
-| **Destinations** | Each saved Send destination | **Add destination**, **Details** |
-
-**Credentials** and **More** fold the secrets and the rarer settings.
-The status bar shows when the page was saved and checked.
-Engines and their jobs are in **HoldSpeak > Engines**.
-
-`gh` and `acli` hold the credentials on this machine.
-HoldSpeak stores no token and uses no relay.
-**Check** runs the CLI's own probe from this device.
-Each Jira connection is one (site, email) pair.
-Confluence uses the same `acli` identity.
-
-The API is `GET /api/connections` and `POST /api/connections/{provider}/recheck`.
-The MCP tools are `connection.list` and `connection.recheck`.
+Connectors read only the data their service supports. A successful connection
+does not add every provider record to a Project. Use [Project Rooms](PROJECT_ROOMS.md)
+to select sources and Watches.
 
 ## New Project
 
-Select **Desk > New Project**.
-Type what you deliver in the outcome line.
-This text becomes the project name (first 80 characters) and its outcome.
-A microphone button accepts voice.
+1. Select **Desk > New Project**.
+2. Enter an outcome in **Project name**.
+3. Paste repository, Jira, or Confluence links in **Paste source links**.
+4. Select **Check sources**.
+5. Review the source rows and select **Create Project**.
 
-Each connected tool (GitHub, Jira) has a row in **SOURCES**.
-
-1. Select the scope trigger and pick a repository or project.
-   The picker has search and **Show more**.
-2. Set the default Watch toggles.
-   GitHub has `OPEN PRS` and `CI`, both on.
-   Jira has `OVERDUE` and `DUE 7 DAYS` on, and `BLOCKED` off.
-3. Read the live count.
-   The row reads `CHECKING`, then the count, or `CAN'T CHECK` with the reason.
-4. Select `Adjust` for more settings.
-   GitHub has `BASE BRANCH`, `LABELS`, and `DRAFTS`.
-   Jira has `ISSUE TYPES` and `JQL`.
-5. Select `Create Project`.
-
-A tool that is not connected shows `Connect`, which opens **Settings > Accounts**.
-You can create a project with no sources.
-Create builds the project and its Watches, then opens the Room.
+The Door can create a blank Project. It shows **NO SOURCES · BLANK PROJECT**
+when no source is selected. A source check is not a Watch. The Project Room
+creates Watches only for the selected source and templates.
 
 ## Project Room
 
-A project opens as a Room with two wings, **ROOM** and **HISTORY**.
-The **ROOM** wing answers four questions in order.
-What needs me now?
-What am I watching?
-What changed since I last looked?
-What did we decide, and what do I owe?
-An ask well sits at the foot.
-For the full model, read [Project Rooms](PROJECT_ROOMS.md).
+The Project Room has **ROOM** and **HISTORY** wings. Read **NEEDS YOU**,
+**PLAN**, **SOURCES**, **SINCE YOU LOOKED**, and **DECISIONS & COMMITMENTS**.
+Use **Add source**, **Pause**, **Resume**, **Remove**, and suggested-source
+**Add** or **Dismiss** according to the source scope.
 
-- **The head** shows `3 need you` or `Nothing needs you`.
-  Chips show `ON TRACK` or `AT RISK`, the target date, the check time, and the **Draft update** button.
-  `AT RISK` means overdue Jira entities, failing CI on the base branch, or a review that waits more than 3 days.
-- **NEEDS YOU** lists items with a reason and age, and `Open` or `Decide`.
-  It draws on review requests, base-branch CI, overdue Jira entities, and pending proposals.
-- **SOURCES** has one row per Watch with counts, the check time, the egress host, and `Pause` or `Resume`.
-  A failing Watch offers `Remove`.
-  A `SUGGESTED` row offers `Add`.
-  The `Steward` button opens the steward settings.
-- **SINCE YOU LOOKED** groups changes by source since your last read.
-  Opening the Room moves the read marker.
-- **DECISIONS & COMMITMENTS** comes from linked meetings.
-  The section is hidden when empty.
-- **UNFINISHED** holds asks you started and did not finish.
-  HoldSpeak saves an ask before it sends it, so it survives a closed tab, a restart, or a trip to set up a model.
-  `Resume` never runs the question twice.
-  `Discard` is under `MORE`.
-- **The ask well** takes `Ask this project…` with a microphone.
-  The model chip shows `MODEL · <host>` or `MODEL · NOT SET`.
-  Answers carry citations.
-- **HISTORY** is a dated stream.
-  Filter by `ALL`, `GITHUB`, `JIRA`, or `ROOM`, or search by text.
+The Ask field is **Ask this project**. Choose an answer or brief result and
+check the model chip. **Write update** prepares a Project update. A Project
+Room run is narrower than whole-Desk Ask. See [Project Rooms](PROJECT_ROOMS.md).
 
 ## Settings
 
-Settings is the one preferences window (**HoldSpeak > Settings**, or **⌃,**).
-The rail on the left lists the sections. The right side is a label and control grid.
-At phone width the rail is the first view, and **Back** returns to it.
-Use Search in Settings to find one row.
+Use Settings to choose **Engines**, **Accounts**, **Wallpaper**, **Meetings**,
+**Notices**, **Calls**, **Agents**, and other configured options. Search for a
+setting by its current label. Read the state after you save it.
 
-| Section | Rows |
-| --- | --- |
-| **You** | Your name, Also called |
-| **Speak** | Push-to-talk key, Language, Preview before type, Voice commands, Wake word, Spoken symbols |
-| **Meetings** | Make summary, Auto-record, Microphone, Export |
-| **Notices** | Notify, Quiet hours, Daily brief, Max nudges; the Heartbeat sweep under **More** |
-| **Accounts** | Connections, Calendar, Destinations, Secrets |
-| **Agents** | Agents, Agents act (the Control mode: `YOLO`, `Normal`, or `Secure`), People access |
-| **Desk** | Wallpaper, Desk sounds, Motion, Presence |
-| **This Mac** | Engines, Setup, Other devices, Name of this Mac, Reset the desk |
+The browser keeps local atmosphere preferences. The hub owns Desk window state
+and records. Do not describe a browser cache as the shared Desk store.
 
+<a id="rhythm"></a>
 ## Notices and the Heartbeat
 
-Open **Settings > Notices**.
-Notices controls the Heartbeat.
-The Heartbeat is the unattended sweep that evaluates project Watches and refreshes **Needs you**.
+**Notices** hosts the Heartbeat controls. A Heartbeat sweep needs a trigger,
+source scope, executor, authority, and running host. Check **Where it runs**,
+its policy, and its receipt. Cadence and Heartbeat are different paths.
 
-- **Notify** sets when a sweep notifies you.
-  The default notifies when a new item joins the set that needs you.
-  The same items again stay silent.
-  A known item that becomes due today or overdue notifies again.
-- **Quiet from** and **Quiet until** set quiet hours.
-  Quiet hours hold notifications. The first sweep after quiet hours delivers once.
-- **Daily brief** sets the hour of the daily brief. The brief uses no model and sends nothing, so quiet hours do not stop it.
-- **More > Sweep and loops** holds the sweep interval (every 15 minutes by default), **Run now**, the row for where the sweep runs, and the Room mutes.
-
-A restart notifies nothing again.
-A muted Room is out of the notification count and the dock badge.
-In Search (**⌘K**), type a project name to open its Room.
+Do a manual trial before you enable a recurring path. A saved schedule does not
+prove that the next sweep will run.
 
 ## Engines
 
-Open **HoldSpeak > Engines**, or select **Engines** in **Settings > This Mac**.
-Engines is a list view of the engines you have and a grid of the jobs they do.
-The full reference is [Models](MODELS.md).
+Engines lists model runtimes, endpoints, and supported CLI routes. Assign an
+engine to each capability that you use. Check its host and egress.
 
-The toolbar has **Add an engine**, **Find on LAN** and **Check all**.
-The list shows each **Engine**, **Where** it runs (this Mac, your network, or a cloud), what it is **Used for**, and its **State**.
-Select a row to see its verbs in the status bar.
+An installed CLI can answer a Desk request through its provider. That does not
+make it a coding agent. A coding-agent handoff launches a separate session in
+a repository worktree. A persona supplies instructions. It does not execute
+by itself.
 
-**What runs where** has one row for each job, such as **Meeting summaries**, **Answers (Ask)** and **Automations**.
-Select the engine for a job from its menu. **More jobs** shows the rest.
-**Download a local model** lists the catalog models that are not on disk, with their size.
-Speech recognition uses a local Whisper engine only.
-
-Engines is one of the places that shows where your data goes: each engine row names its place, and a cloud engine says so before you pick it.
-A cloud check can make a paid request.
-When you open Engines from a Note, an Interview step, or Speak, it opens over that work.
-After you choose an engine, the window you came from checks readiness again.
+Select **Test** to send a real request. Read the result and receipt. A cloud
+check can incur cost.
 
 ## People
 
-People is an encrypted, local-only surface for managers who run recurring 1:1s.
-HoldSpeak encrypts every record with a key in your OS credential store (macOS Keychain or Linux Secret Service).
-See [People security](PEOPLE_SECURITY.md) for the boundary.
+People is a protected surface for relationship context. It does not rank
+people, infer relationship health, or link meeting participants automatically.
 
-1. Open People from the Desk or the Go menu.
-2. Select **Set up People** on the first visit.
-3. Select **New relationship**.
-   Enter a name, pick a kind (Direct report, Peer, or Extended), and select **Add**.
+Select **Add person** to create the local store on first use. Choose **Direct
+report**, **Peer**, or **Extended relationship**. Use the **Context** lens for
+Notes, linked Projects, links, calendar series, and **Names in meeting notes**.
+
+People can show **Leader private** and **Shared** note visibility. A locked or
+missing store reports its state. It does not silently become an empty roster.
 
 ### Link the 1:1 series
 
-1. Open a relationship and select the **Context** lens.
-2. Select **Link calendar event** in the Calendar series section.
-3. Pick an event.
-   Events with the person's name sort first, marked **SUGGESTED**.
+1. Open a relationship and select **Context**.
+2. Select **Link calendar event**.
+3. Choose the series and check the label.
 
-One link covers every past and future occurrence of the series.
-A series links to one person at a time.
-Select **Unlink**, then **Unlink?**, to remove a link.
+Select **Unlink** to remove it. A title match can show **SUGGESTED**. A
+suggestion is not a link. One series can belong to one relationship.
 
 ### The Prep brief
 
-The Prep lens is computed when you read it and is never stored.
-It shows open assignments, overdue commitments, the last meeting, the agenda, what you wait on from the person, and shared Projects.
-
-The `people.one_on_one.brief` MCP tool returns only `shared_intent` material.
-It never returns leader-private items.
-The People MCP capability defaults to write for the local owner.
-Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `=off` in the hub's environment before the hub starts to reduce it.
+The 1:1 preparation view can read open commitments, agenda backlog, grounding
+notes, linked Meetings, decisions, and unlinked Meetings in the chosen window.
+It stores no generated brief. It does not make an employment decision.
 
 ### The 1:1 card
 
-Before a 1:1, the person's card shows what waits on them from your project Watches.
-**PRS WAITING** lists PRs where they are a requested reviewer.
-The Prep lens counts their open Jira assignments.
-**LAST MEETING** shows the open items.
-A name never leaves the encrypted store.
-Only opaque references cross into the Watch projection.
+Read the relationship's Notes, open commitments, linked Projects, and source
+links. Use **Mark satisfied** only with completion evidence. Counts in History
+describe follow-through records. They are not performance scores.
 
 ### Map an owner string to a person
 
-A meeting gives each action item an owner string.
-Open the relationship, select the **Context** lens, and add the string under **Owner aliases**.
-One person holds one alias.
-The reserved strings `me`, `remote`, and `you` cannot be mapped.
+1. Open **Context**.
+2. In **Names in meeting notes**, enter the owner string.
+3. Select **Add**.
+
+Comparison ignores case. Remove an alias when it is wrong. HoldSpeak rejects
+empty, reserved, or duplicate aliases. It does not guess a person from a voice
+or meeting participant.
 
 ### People in the Room
 
-A Room's **PEOPLE** section lists every person the Project names.
-The caption is `PEOPLE 2 OF 3` when someone is not linked yet.
-A row shows the person's open commitments with **Open source**, and observable facts such as `2 PRS WAITING`.
-HoldSpeak never scores, ranks, or infers.
-An owner that could mean two people reads `OWNER · AMBIGUOUS` with **Resolve**.
-An unknown owner reads `OWNER · NOT LINKED` with **Link**.
-HoldSpeak never attributes an ambiguous owner by itself.
-A locked or missing ledger shows `LOCKED`, `NOT SET UP`, or `UNAVAILABLE` on the section.
+A Project can link an existing relationship or show a People reference. The
+Room does not copy confidential People notes into Project sources. Open People
+to read protected context.
 
 ### The chief-of-staff brief
 
-The Monday brief gains a People section when you map relationships with open signals.
-Each row shows **They owe N**, **You owe N**, **N agenda**, and **Next: title**.
-Expand a row for **Add to 1:1 agenda** and **Open person**.
-HoldSpeak computes this section when you read the brief and stores nothing about people in it.
-If the sidecar is down, the brief shows **PEOPLE · UNAVAILABLE**.
+The brief can combine permitted Project work and People shared intent. Check
+the source and access policy. People content remains in its protected store.
 
 ### The dev keystore
 
-Set `HOLDSPEAK_PEOPLE_KEYSTORE_FILE` to a file path to replace the OS credential store.
-Use it for development and tests only.
-`holdspeak doctor` reports the keystore mode and warns when the dev keystore is active.
+People MCP access is controlled by `HOLDSPEAK_MCP_PEOPLE_ACCESS`. Use `read` or
+`off` when the client does not need default write access. Agents launched by HoldSpeak do not write People records. Only shared intent crosses MCP.
 
+<a id="threads"></a>
 ## Ask
 
-Ask is the one window for questions about your work.
-Open it with **⌘I** or **Go > Ask AI**. It keeps saved conversations (Threads) on the hub.
+Ask and Thread share one active window.
+When the first answer lands, the exchange is saved as a Thread.
+Follow-up questions continue it in place.
+The hub retains turns, references, message parts, and tool results under the applicable execution path.
 
+<a id="start-a-thread"></a>
 ### Start a question
 
-1. Select **+** beside **About** to pick a meeting, a Note, a drawer, a Project or a person.
-   With nothing picked, Ask is about your whole desk.
-2. Enter your question, then press **Ask**.
+1. Open **Ask AI** from **Go** (the window label is **Ask**).
+2. Select sources through the scope control (accessible label **About**) when
+   needed.
+3. Enter your question.
+4. Select the send control.
+5. Ask a follow-up after the answer returns.
 
-On any record, **Object > Ask about this** opens Ask with that record in About.
-On a person it reads **Ask about <name>**.
-The toolbar has **New ask**, **Recent** (the saved conversations) and, on an open conversation, **Forget**.
-**Forget** deletes the conversation after a short Undo.
+Use **Recent** to reopen a retained conversation. Select its first row or press
+**⌘N** to start another conversation.
+The current Ask window does not offer the older Thread mode tabs.
 
+<a id="the-composer"></a>
 ### The answer
 
-The answer shows **Looked at** with each record it read, as links you can open.
-On an engine that can use tools, it also shows **Wrote** and **Prepared**.
-A prepared send waits for your **Send** press.
-**Save as note** keeps the answer as a Note. **Copy** copies it. **Send...** opens the Send preview.
-When Ask was opened from a Note, **Add to note** keeps the answer in that Note.
-**Ask a follow-up** continues the same conversation.
-The status bar names the engine. With no engine, **Choose engine** opens Engines.
+Enter text in the follow-up box or use its microphone.
+Use the scope control (accessible label **About**) to choose starting
+context, rather than the parked Thread composer's at-sign attachment
+interface.
+Speech input and speech output are separate capabilities.
+Check the engine and any named refusal before repeating a failed request.
 
-Desk search includes saved conversations.
-A recall in the Memory window returns the current decision first, with its rationale and source.
-See [Relationship-aware memory](RELATIONSHIP_AWARE_MEMORY.md).
+### Branch, keep, and search
+
+The active answer controls include **Make it a task**, **Save as note**, **Copy**, and **Send…** where applicable.
+Ask opened from a Note can offer **Add to note**.
+These create or change a record in addition to the saved conversation.
+Search and **Recent** can return to retained work.
+The current window does not expose **Fork from here** or a **Keep**/**Bin** exchange decision.
+Thread branch and keep operations remain available through the API.
 
 ### People boundary
 
-People source parts carry a sensitive classification.
-The context assembler redacts them before a cloud model turn.
+Ask and its tools follow the applicable People read policy.
+Use the protected People surface for confidential relationship editing.
+Interview's People section is a separate service handoff.
+A saved Thread or persona cannot grant itself People write or owner authority.
 
+<a id="the-thread-has-hands"></a>
 ### Ask has hands
 
-A model can request the tools that its engine and the Control mode allow.
-The tool gate checks the tool class, the Control mode, and any recorded tool policy.
-The called service also applies its own rules.
+A compatible engine can read permitted records, write Desk work, and prepare a send.
+The answer shows **References**. The retained trace can also expose
+source references, writes, and prepared actions fields.
+A prepared send waits for your **Send** press.
+A held tool call offers **Allow once** or **Deny**.
+A persona supplies instructions and does not grant a tool permission.
 
-| Control mode | Tool admission without a per-tool policy |
-| --- | --- |
-| **Secure** | Evidence reads proceed. Candidate builders and effect proposals wait for you. |
-| **Normal** | Evidence reads and candidate builders proceed. Effect proposals wait. |
-| **YOLO** | Classified, offered tools proceed. Service authority checks still apply. |
+<a id="thread-modes-slash-commands-and-the-call"></a>
+### Modes
 
-A held call waits in the answer with **Allow once** and **Deny**.
-A recorded policy wins at the gate.
-It does not bypass destination, credential, or permission checks.
-See [Control modes](AUTHORITY.md).
+The retained Thread API supports modes such as Draft, Plan, Project, and Interview.
+Their prompts and tool palettes shape that service's turns.
+The active Ask window does not expose a mode picker.
+Read [Agents and Threads](AGENTS_AND_THREADS.md) and [Interview](INTERVIEW.md) for the service contracts.
 
-### Thread modes, slash commands and the Call
+### Saved prompts, guardrails, annotations
 
-The hub still keeps Thread modes (Desk, Chase, Draft, Plan, Project, Interview), saved prompts, guardrails, slash commands and the Call.
-The Desk has no face for them at present: the Thread window was parked when Ask and Thread became one window (2026-10-18).
-Agents reach them through the hub API and MCP. See [Agents and Threads](AGENTS_AND_THREADS.md).
+The Thread services retain prompt, guardrail, and annotation capabilities.
+The older controls live in the parked Thread interface.
+The current Ask uses its question, source selection, and permitted tools.
+Instructions and annotations do not grant execution authority.
+
+### Slash commands
+
+Slash-command controls belong to the parked Thread composer.
+The current Ask does not present its `/mode`, `/todo`, `/keep`, `/fork`, or `/compact` menu.
+Use active answer controls for tasks and saved Notes.
+Programmatic clients can use the corresponding Thread API operations when authorized.
+
+### The Call
+
+The repository retains Thread call-mode services and the parked Thread interface.
+The current Ask does not provide a **The Call** control.
+Use its microphone for a spoken question.
+That input path does not establish a two-way spoken call.
 
 ## Schedule a recording
 
-A scheduled recording uses the hub's microphone and the same capture path as a manual recording.
-No browser needs to be open.
-
-Create one in either of two ways (the Desk has no Schedule control at present; on Today, **Record when it starts** arms one calendar event instead):
-
-1. Call `POST /api/scheduled-recordings` with `title`, `cron_expr`, `duration_minutes`, and `enabled`.
-2. Use the `scheduled_recording.*` MCP tools.
-
-A one-shot schedule fires once and disables itself.
-A recurring schedule moves to its next time after each outcome.
-
-At the scheduled time, the hub starts an arming countdown.
-Cancel it with `POST /api/scheduled-recordings/{id}/cancel`.
-Otherwise capture starts and stops at the set duration.
-If another source holds the microphone, the schedule refuses with a receipt.
-If the hub was down, it leaves a missed receipt after restart.
+Use Meetings **Coming up** or the schedule control when Calendar is configured.
+Choose the event, time zone, and recording mode. An armed schedule is not a
+recording. Read the resulting Meeting and receipt after the event.
 
 ## Project memory
 
-Open **Memory** from the **Go** menu to search connected evidence across the Desk or within a Project.
-Intelligence turns each decision from a meeting into a durable record.
-A decision moves through `proposed`, `accepted`, `superseded`, and `deprecated`.
-A decision that replaces another names the one it supersedes.
+Open **Memory** for **What I owe**, **What changed this week**, **Ask your
+desk**, and **RAW** recall. Open a Project scope to read its standing pages.
+Standing pages are read-only at the time of display and show only sentences
+whose cited inputs remain live.
 
-To rebuild the local search indexes, run:
-
-```bash
-holdspeak memory rebuild-index
-```
-
-The search index is not a backup.
-Back up the database separately.
+Meaning search is separate. Turn it on in Settings before it can index. People
+content does not enter normal Project or Desk memory.
 
 ## Companions
 
-A companion on another device drives the hub through the same local HTTP API as your browser.
-It uses your LAN or Tailscale, with the hub's bearer token and no hosted relay.
+A paired companion uses the hub's services from another device. Pairing does
+not grant all authority. Check its credential, scope, and receipt. A companion
+can see the same records only where the hub permits it.
 
-**The iPad app** is a client for both modes.
-You can dictate into your desk through the full dictation pipeline.
-You can read a meeting back with its artifacts, sources, and aftercare, and browse the archive by speaker, tag, or text.
-In Secure and Normal, proposals need your approval.
-In YOLO, an eligible action to a configured destination runs with its receipt.
-See [iPad](IPAD.md).
-
-**AIPI-Lite** is an optional portable device for meeting controls, status, and spoken replies to a waiting Claude or Codex session.
-See the [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md).
+For phone-number calls and the paired-phone service, read [Calls](calls.md)
+and [Phone](phone.md). A configured Calls line can work without a delivered
+Phone app. The pairing service is a future client path until an app is
+delivered and enrolled; do not treat a pairing QR or token as proof that a
+phone client is connected.
 
 ## Using the Desk
 
-Every object on the Desk is a working icon.
-See [The Desk](WEB_DESK.md) for the full grammar.
+Open **Today**, **Needs you**, **Memory**, Projects, or People from **Go**.
+Select an object to open its window. Use **Object** for object-specific verbs.
+Use **Window** to close, arrange, zoom, raise, cycle, or send back.
 
-- **Badges show live facts only.**
-  A member count sits bottom-right on a drawer or Knowledge.
-  A green tick means edited in the last two days.
-  An amber dot means it needs you.
-- **Select and open.**
-  One click selects.
-  A double-click opens.
-  On touch, a tap opens.
-  Right-click shows the object menu.
-- **Drawers are directories.**
-  A double-click opens a drawer as a window with an Icons view and a List view.
-  It remembers its view, sort, size, and position.
-  **Take out** returns a member to the Desk.
-- **Drop to compose.**
-  Drag an object over another.
-  A tag names what release does.
-  A drop never runs a model.
-  Dropping a Note on an Agent opens its card with the Note as run material.
-  You select **Ask**.
-- **Info.**
-  Right-click and choose **Info** to see identity, where it is filed, where it came from, and, for Agents, **Engine**.
-- **The menu bar** has HoldSpeak, Desk, Object, Go, and Window.
-  The Object menu takes the name of the kind in front, such as Note.
-  A verb that cannot run stays visible with its reason.
-  Go reaches every application, the same list as the Cmd+K search.
-- **The dock** floats at the bottom: Today, Meetings, People, Agents, Speak and the record button, then one tile for each iconified window.
-  A count badge sits on the icon's corner. A zero is never shown.
-- **The Archive** holds the records that you put away. Open it with **Go > Archive** or Search.
-
-The written rules are in [`web/ICON-DISCIPLINE.md`](../web/ICON-DISCIPLINE.md) and [`docs/internal/DESK_GRAMMAR.md`](internal/DESK_GRAMMAR.md).
+The hub owns state for hub-backed Desk windows. The browser has a local
+first-paint cache. Some transient views, including Ask, are view-specific. A
+second browser can change the same hub-backed window and cause a stale revision
+response. Read the receipt before you retry a window action.
 
 ## Mission Control on the Desk
 
-Open it with **Go > Delivery board**.
-If you plan work with [Delivery Workbench](https://github.com/karolswdev/delivery-workbench), the Desk shows your repositories as a conveyor.
-Each project has a belt, each phase is a segment, and live Coder sessions pin to their story.
-HoldSpeak keeps registered repositories in `~/.holdspeak/delivery_sources.json`.
-A project map in `~/.holdspeak/delivery_workbench.json` imports once on first run.
-
-The belt reads receipts.
-Roadmap state comes from each repository's `dw` command, and PRs and CI results come from your own `gh`.
-The ticker comes from the repository's rail log.
-If a repository cannot answer, its lane says so.
-The belt never writes.
-The one action is the story-flip proposal, which uses the normal propose, approve, and execute flow.
+Mission Control collects sessions, deliveries, and receipts that need review.
+Open a row to inspect the owning surface. It does not replace the agent
+session, Project Room, or external provider.
 
 ### Pull request receipts
 
-A registered repository shows its pull requests as rows in the list view.
-Each row has the number, title, state, CI conclusion, author, and observation time.
-Open PRs with failing CI sort first.
-**Refresh** runs one batched `gh` call for each source.
-It is the only network use.
-To poll, set `pr_refresh_seconds` on the source's registry entry.
-A failed refresh keeps the last good rows and marks them stale.
-
-Each row says how it matched your work.
-**exact** means the head commit or branch belongs to a registered worktree.
-**name match** means a branch name resembles a story id.
-Everything else is unattributed.
+Read the repository, branch, revision, checks, and destination in a pull
+request receipt. A green check is not a code review. Open the agent or
+repository result before you merge.
 
 ### Follow a pull request through
 
-- **Diff** reads the local checkout.
-- **Send agent** starts a Coder session in the matched worktree with your instruction and the PR diff.
-- **Draft review** runs your model and keeps the answer as an Artifact.
-- **Post comment**: edit the text, then select **Propose**.
-  The row shows the full text with a GitHub badge.
-  **Approve** posts exactly that text.
-  **Deny** leaves GitHub unchanged.
-
-**Merge**, **Close**, and **Force push** are not offered.
-A result appears as a Receipt below the row.
+1. Open the Project or agent row.
+2. Read the source pull request and current check state.
+3. Open the coding-agent session when it needs input.
+4. Review the delivered work and receipt.
+5. Use the repository's normal review and merge process.
 
 ## Steer a session from the Desk
 
-Watching is free.
-Every steer resolves authority and is audited.
-Local steering does not leave your machine.
-
-Select a session pin on the belt, or **Watch live** on a Coder card.
-The session pull-out shows the terminal pane live and read-only.
-It marks itself stale when the session goes quiet.
-
-The pull-out names the exact pane and the Control mode.
-
-- In **Secure**, select **Arm pane** for a five-minute grant on that pane.
-- In **Normal**, the same action grants fifteen minutes.
-  The chip becomes a countdown, and one click disarms it.
-- In **YOLO**, an eligible registered session reads **YOLO · DIRECT** and needs no arm step.
-  HoldSpeak still re-checks the pane identity before every key.
-  A missing or replaced pane refuses.
-
-A posture change or a hub restart clears pane grants.
-
-After the grant, the composer appears.
-Hold the microphone or type.
-The paper-plane toggle sets whether HoldSpeak presses return after the text.
-You can attach a meeting or an artifact with the grounding picker.
-HoldSpeak caps it, shows the exact text before it sends, and refuses a context that is too large.
-
-From the pull-out you can also keep the session's question as a Note, pin an off-rails session to a story, and flip a correlated story through the proposal flow.
-Every reply and refusal goes to the steering audit.
-Read it at `GET /api/coders/steering/audit`.
+The Desk can show a coding-agent session and its terminal output. A session
+needs a configured agent CLI, repository, worktree, and authority.
 
 ### Send keys, any pane, any machine
 
-You can send real keys, such as `C-c`, `Escape`, the arrows, and `Enter`.
-Keys use the same path and audit as text.
-HoldSpeak refuses a name that is not a terminal key (`POST /api/coders/{key}/keys`).
-
-`GET /api/coders/steering/panes` lists every tmux pane, including shells you opened by hand.
-Secure and Normal ask you to arm the exact pane id (`pane:%N`).
-HoldSpeak re-verifies the pane before delivery.
-
-With nodes configured in `HOLDSPEAK_STEER_NODES`, the Desk relays steering to another machine.
-The far node decides authority and records the audit.
-A node that does not answer refuses at once.
-The **Panes** list at the bottom of the Desk shows every pane and attaches to one.
-A header chip names the machine you steer.
-The Panes list can spawn a session by name.
-Rename and Kill live in a separate session-control window.
-Kill needs an arm and a confirmation.
+Use the supported session control to send text or a key. Check the target pane,
+host, and session before you send. A steering action is not a code review and
+does not confirm that the agent followed it.
 
 ## The gate
 
-The gate lets a Claude Code session stop before a risky tool call and ask the Desk.
-The agent's PreToolUse hook posts a proposal and waits.
-The call runs only after you approve.
-
-The gate fails closed.
-If the hub is down or errors while the gate is armed, HoldSpeak denies the matched call and names the reason.
-The gate is off by default, and the hook does nothing while it is off.
-
-To arm it:
-
-1. Run `holdspeak gate install`.
-   Add the printed hook block to `~/.claude/settings.json` yourself.
-   HoldSpeak never edits another application's configuration.
-2. Run `holdspeak gate arm`.
-3. Run `holdspeak gate allow --repo <path>` to name the repository whose calls are held.
-   This release holds Bash only.
-
-`holdspeak gate status` and `holdspeak doctor` show the state.
-See [Gate](GATE.md).
-
-A held call appears in the shade's **Needs you** group.
-The card names the session, the tool, a redacted argument preview, and the wait time.
-**Approve** lets the call run.
-**Deny** takes a one-line reason that goes to the agent.
-An undecided hold expires as a deny.
-A hub restart invalidates every held proposal.
-Read the audit at `GET /api/gate/audit`.
+The Gate shows a held operation that needs a decision. Read the operation,
+scope, target, and expiry. Select **Allow once** or **Deny** for that request.
+Gate armed is a policy state. Gate installed but idle is not a held request.
 
 ## Session receipts
 
-A steered session's pull-out shows one receipt line.
-Each number has a stated source.
-
-- Elapsed time, steers, and holds come from hub records.
-- Token figures appear only when the adapter reports them.
-  A gated Claude Code session reports its transcript totals when it ends.
-  A bare tmux pane reports none.
-- Cost appears only with reported tokens and a price row for the model in `~/.holdspeak/pricing.json`.
-  It reads `≈ $X.XX (price table, date)`.
-  With no price row, HoldSpeak shows no cost.
+A receipt identifies the operation, route, host, source scope, authority basis,
+attempt, outcome, and time. Use it to tell a prepared action from a sent
+action, and a started agent from a finished agent.
 
 ## Ground a run on the rails
 
-In the grounding picker, a rails group lists the belt's live projects, with the roadmap, phase, and stories.
-Pick one, and its content joins your ask or steer, labeled with its source.
-The hub reads the exact file the `dw` command names.
-It refuses a reference it cannot resolve.
-
-The optional ambient observer keeps a journal of rails activity.
-It is off by default.
-Turn it on in your configuration and name a model.
-It reads your pipeline events and writes a Note for each batch.
-It never changes the rails.
-Read the journal at `GET /api/missioncontrol/rails/journal`.
+Attach the source records that matter. Ask, Thread, Project update, and agent
+briefs can have different source scopes. Read the references in the result.
+Grounding shows what the model received. It does not guarantee that the model
+used each source correctly.
 
 ## Privacy
 
-HoldSpeak is local-first.
-These stay on the machine by default:
+HoldSpeak runs its hub on your machine by default. Data can still leave the
+machine through a configured endpoint, cloud API, CLI provider, connector,
+remote client, or outbound destination. Check the engine, host, egress, and
+receipt for the operation.
 
-- Audio capture and Whisper transcription.
-- Meeting history.
-- Dictation block configuration.
-- `.hs/` project context.
-- The Coder session registry.
-- Captured assistant-message text, if you enable it.
-
-Data leaves the machine only when you configure it:
-
-- Cloud meeting intelligence.
-- An OpenAI-compatible runtime outside localhost.
-- Connector integrations.
-- Manual exports and uploads.
-
-Set model keys in the credential controls, or use environment variables for a headless hub.
-See [Security & Privacy](SECURITY.md).
+People uses a separate encrypted local store and has separate MCP policy.
+Project sources use provider credentials and selected scope. A local browser
+cache is not the shared record store. Read [Security & Privacy](SECURITY.md)
+and [People security](PEOPLE_SECURITY.md) for the full contracts.
 
 ## Troubleshooting
 
-Run diagnostics first:
-
-```bash
-holdspeak doctor
-```
-
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| The hotkey does nothing | An OS permission or hook restriction | Check the permissions above. Use the hold-to-talk control. |
-| Text does not type | Synthetic typing is blocked | Paste from the clipboard. |
-| System audio is missing | No BlackHole or Pulse monitor | Run `holdspeak meeting --setup`. |
-| The dictation model is unavailable | Missing backend or model | Open **Configure dictation** and read **Pipeline**. |
-| Project context is not found | Wrong working directory | Set **Project root** in **Configure dictation**. |
-| Claude or Codex context is missing | Hooks are not installed | Open **Configure dictation** and read **Automation hooks**. |
-
-For more, read [Troubleshooting](TROUBLESHOOTING.md).
+| Problem | Action |
+| --- | --- |
+| The Desk does not load | Check the hub URL and read the setup state. Select **Retry** when it is offered. |
+| Voice typing does nothing | Check microphone, Input Monitoring, Accessibility, the hotkey, and the GUI session. |
+| Ask has no answer | Check the engine, assignment, source permission, and held tool request. |
+| Ask looked at the wrong scope | Check **About** and Project scope separately. About is only the retrieval start. |
+| A Thread lost its draft | Check the same browser tab. An unsent draft is not a saved Thread turn. |
+| People is empty or unavailable | Read the People state. A locked store is not an empty roster. Select **Try again** when offered. |
+| A Project Room has no source work | Check provider account, source scope, Watch state, and last check. |
+| A model result is not useful | Check its source references, assumptions, engine host, and prompt. |
+| A prepared send did not leave | Review the target, then select **Send**. |
+| A recurring job did not run | Check trigger, scheduler, host, policy, engine, and receipt. |
+| A coding agent did not start | Check repository, branch, worktree, agent CLI, and authority. |
 
 ## See also
 
-- [README](../README.md): install, platform notes, configuration.
-- [Getting Started](GETTING_STARTED.md): first capture.
-- [Interview](INTERVIEW.md): saved context and suggestions.
-- [Automation](AUTOMATION.md): triggers, tools, and limits.
-- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): the pipeline, project context, and hooks.
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting setup and troubleshooting.
-- [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md): the companion extension.
+- [Getting Started](GETTING_STARTED.md): installation and first value.
+- [The Desk](WEB_DESK.md): navigation and active controls.
+- [Use cases](USE_CASES.md): jobs, results, and failure boundaries.
+- [Interview](INTERVIEW.md): context and suggestion flow.
+- [Project Rooms](PROJECT_ROOMS.md): sources and Project-scoped runs.
+- [People integration](PEOPLE_INTEGRATION.md): relationship boundaries.
+- [Glossary](GLOSSARY.md): product terms.

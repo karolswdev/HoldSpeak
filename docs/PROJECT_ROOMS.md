@@ -1,148 +1,145 @@
 # Project Rooms
 
-Use a Project Room to review one Project, its sources, and the work that needs you.
-Add Watches when you want HoldSpeak to observe changes in the sources of a Project.
+Use a Project Room to review one Project, its configured sources, and work
+that needs you. A Project Room has a narrower service scope than whole-Desk
+Ask. Add a Watch only when you want the Project service to observe a source.
 
 ## Before you start
 
-You can create a blank Project with no external source.
-A connected Project needs a configured provider and access to its source scope.
+You can create a blank Project with no external source. A connected Project
+needs a configured provider and access to the selected source scope.
 
 | Provider | Requirement | Data boundary |
 | --- | --- | --- |
-| GitHub | The `gh` CLI and a signed-in account. | The hub calls GitHub. |
-| Jira | The `acli` CLI and the intended site and account. | The hub calls the Atlassian site. Jira access is read-only. |
-| Confluence | The `acli` CLI and the intended site and account. | The hub calls the Atlassian site. Confluence access is read-only. |
+| GitHub | The `gh` CLI and a signed-in account | The hub calls GitHub with that account. |
+| Jira | The `acli` CLI, intended site, and account | Jira access is read-only. |
+| Confluence | The `acli` CLI, intended site, and account | Confluence access is read-only. |
 
-Open **Settings > Accounts** to check each provider.
-Use **Recheck** after you change a provider setup.
-The provider CLIs keep their credentials.
-Do not put a token in a Project description or a Thread.
+Open **Settings > Connections** to check a provider. Select **Recheck** after
+you change its setup. The provider CLI keeps its credentials. Do not put a
+token in a Project description or Thread.
 
-A Jira connection names both a site and an account.
-When you have more than one account, check the selected account before you choose a source.
+A Jira connection names both a site and account. Check the selected account
+before you choose a source.
 
 ## Create a Project
 
 1. Select **Desk > New Project**.
-2. Enter the outcome in the **What are you delivering?** field.
-3. Select a source for each provider that the Project needs.
-4. Check the Watch switches and their counts.
+2. Enter the outcome in **Project name**.
+3. Paste source links in **Paste source links** when needed.
+4. Select **Check sources**.
 5. Select **Create Project**.
 
-The outcome becomes the Project name, cut to 80 characters, and the outcome text.
-With no source selected, the footer shows **NO SOURCES · BLANK PROJECT**. This is a valid Project.
+The Project name is the delivery outcome. A blank Project is valid. The Door
+shows **NO SOURCES · BLANK PROJECT** when you create it without a source.
 Select **Cancel** to leave without a Project.
 
-The **SOURCES** section has one row for each provider.
-A connected row has a picker for a repository, project, or space.
-A row that is not connected has **Connect**, which opens the connection controls.
-The row checks the connection again when you return.
-
-When you select a source, HoldSpeak counts the matches for each enabled Watch.
-The row shows **CHECKING** while it counts.
-A failed count shows **CAN'T CHECK** and the reason.
+After a source check, review each source row and its scope before creation.
+The Project Room creates source watches only for sources and watch templates
+that you choose. A connected provider does not mean that every source in that
+provider is in the Project.
 
 ## Adjust the source
 
-Select **Adjust** on a connected row to change what it watches.
+Open a connected source and select **Adjust** when the row offers it. The
+available fields depend on the provider.
 
-- GitHub: base branch, labels, and drafts.
-- Jira: issue types and an optional JQL filter.
-- Confluence: space key.
+- GitHub can use a base branch, labels, and draft settings.
+- Jira can use issue types and an optional JQL filter.
+- Confluence can use a space key.
 
-The first switches are:
+The initial Watch choices include these provider templates:
 
-| Provider | On | Off |
-| --- | --- | --- |
-| GitHub | **OPEN PRS**, **CI** | none |
-| Jira | **OVERDUE**, **DUE 7 DAYS** | **BLOCKED** |
-| Confluence | **RECENT BLOGS** | **PAGES BY ID** |
-
-Your switches decide which Watches HoldSpeak creates with the Project.
-The picker shows when another Project already uses a source.
-To set up a Project in conversation, see [Interview](INTERVIEW.md).
-
-## Review the Room
-
-Open a Project to enter its Room.
-The Room has two wings: **ROOM** for current work and **HISTORY** for dated events.
-
-| Section | Content |
-| --- | --- |
-| Head | The health, the target date, the last check, and **Draft update**. |
-| **OPEN HERE** | Review requests, failing CI, overdue work, and pending proposals. **Review** appears when proposals wait. |
-| **SOURCES** | Each Watch, its counts, its last check, its host, **Pause** or **Resume**, and **Steward**. |
-| **SINCE YOU LOOKED** | Source changes since you last opened the Room. |
-| **DECISIONS & COMMITMENTS** | Decisions and commitments from linked work. |
-| Ask field | A question about the Project. A chip shows where the model runs. |
-
-Open a source item to read the original record.
-Read a proposal before you decide it.
-Opening the Room updates the read marker.
-
-**HISTORY** groups events by date.
-Filter by source or search the text.
-See the [User Guide](USER_GUIDE.md#project-room) for each control.
-
-## Control Watches
-
-A Watch observes one population of items and checks its conditions on a schedule.
-Select **Pause** or **Resume** on its row in **SOURCES**.
-A failed check shows its reason.
-A suggested source stays a suggestion until you add it.
-
-The Watch compares the current items with the last baseline.
-A condition can describe a change or a current state, such as overdue work.
-The service uses an operation identity to prevent a repeat effect for the same event.
-This does not make a retry from any outside client safe.
-
-Built-in Watch templates:
-
-| Provider | Templates |
+| Provider | Examples |
 | --- | --- |
 | GitHub | `watch.github.review_queue`, `watch.github.branch_ci`, `watch.github.ci_health`, `watch.github.merge_flow`, `watch.github.delivery_drift`, `watch.github.release_readiness` |
 | Jira | `watch.jira.blockers`, `watch.jira.delivery_flow`, `watch.jira.due_risk`, `watch.jira.scope_intake`, `watch.jira.transformation` |
 | Confluence | `watch.confluence.recent_blogs`, `watch.confluence.pages_by_id` |
 
+The source picker can show that another Project already uses a source. A
+source count is a check for the selected scope. It is not a proof that the
+provider contains no other matching work.
+
+## Review the Room
+
+Open a Project to enter its Room. The Room has **ROOM** and **HISTORY** wings.
+
+| Section | Content |
+| --- | --- |
+| Head | Health, state, target, last check, and **Write update**. |
+| **NEEDS YOU** | Review requests, failing checks, overdue work, and pending proposals. **Review N** appears when proposals wait. |
+| **PLAN** | Current planned work and Project follow-through. |
+| **SOURCES** | Sources, Watch state, counts, last check, host, and source controls. |
+| **SINCE YOU LOOKED** | Source changes since the last Room read marker. |
+| **DECISIONS & COMMITMENTS** | Decisions and commitments from linked Project work. |
+| Ask field | **Ask this project**, with an answer or brief result and a model chip. |
+
+Open a source item to read its original record. Read a proposal before you
+decide it. Opening the Room updates the read marker.
+
+**HISTORY** groups dated Project events. Filter by source or search the text.
+The Room can show a missing result, a failed check, or a pending proposal.
+None of these states proves that the underlying provider has no work.
+
+## Control Watches
+
+A Watch observes one configured population and checks its conditions on the
+Project service schedule. Select **Pause** or **Resume** on its row in
+**SOURCES**. Select **Remove** when the Room offers it. A failed check shows
+its reason. A suggested source stays a suggestion until you select **Add**.
+
+The Watch compares current items with its last baseline. A condition can
+describe a change or a current state, such as overdue work. The service uses
+an operation identity to reduce repeat effects for the same event. This does
+not make a retry from an outside client safe.
+
+Use **Add source** to add an allowed source. Source controls change the
+Project configuration. They do not change an unrelated Project or grant
+whole-Desk access.
+
 ## Use the Steward
 
-Select **Steward** in the **SOURCES** section to see the automation policy of the Project.
-Configure unattended work only for the Project and scope that need it.
-Run it by hand first, and read the result, before you rely on unattended runs.
+Select **Steward** in **SOURCES** to see the Project automation policy. It
+controls unattended work for this Project and its configured scope. Run it by
+hand first and read its result before you rely on a scheduled run.
 
-A run records its steps and results.
-Read its state and its Receipts to see what finished.
-The service can refuse a run when the work is disabled, in cooldown, or when no scheduler is available.
-A saved policy does not prove that the scheduler ran.
+A run records steps and results. Read its state and Receipts to see what
+finished. The service can refuse a run when work is disabled, cooldown applies,
+or no scheduler is available. A saved policy does not prove that a scheduler
+ran.
 
-Select **Draft update** in the head to prepare an update from the evidence of the Project.
-Check the citations and any unsupported claims before you save or publish.
-The model chip shows where the model ran.
-See [the drafted update](USER_GUIDE.md#the-drafted-update).
+Select **Write update** in the head to prepare an update from Project
+evidence. Check citations and unsupported claims before you save or publish.
+The model chip shows the model route. A project-update run has the Project's
+service scope. It is narrower than a whole-Desk Ask about the same Project.
 
 ## Use MCP or HTTP
 
-The Project services also give setup, observation, review, and Steward operations through MCP and HTTP.
-The setup by conversation and the Door share the same services.
-Use [MCP sidecar](MCP_SIDECAR.md) and [API surface](API_SURFACE.md) for exact operations.
-A call still needs the caller's permission and the operation prerequisites.
-A scheduler trigger can return `scheduler_not_wired` when no scheduler is available.
+Project services provide setup, observation, review, source, and Steward
+operations through MCP and HTTP. The setup conversation and Project Door use
+the same Project services. A call still needs caller permission and operation
+prerequisites.
+
+Use [MCP sidecar](MCP_SIDECAR.md) and [API surface](API_SURFACE.md) for exact
+operations. A scheduler trigger can return `scheduler_not_wired` when no
+scheduler is available. Read the response and receipt. Do not treat a
+successful request as proof that a provider source changed.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| A provider does not connect | Follow its recovery command in **Settings > Accounts**. Select **Recheck**. |
-| The count check fails | Check the source scope, the account, and your access. Read the reason. |
-| The Room shows no decisions | Link the work, or keep a brief by hand. An empty section does not prove that no decision exists elsewhere. |
-| A Watch creates too much work | Adjust its source, or pause it. Check the effect before you resume. |
-| Unattended work does not run | Check the policy, the runtime, the scheduler, and the refusal. |
-| A draft has unsupported facts | Correct the draft and check its sources before you publish. |
+| A provider does not connect | Follow its recovery command in **Settings > Connections**. Select **Recheck**. |
+| A count check fails | Check source scope, account, provider access, and the reason in the row. |
+| The Room shows no decisions | Check linked work and source scope. An empty section does not prove that no decision exists elsewhere. |
+| A Watch creates too much work | Adjust its source or select **Pause**. Check the effect before you resume it. |
+| A suggested source is not active | Select **Add**. A suggestion does not create a Watch. |
+| Unattended work does not run | Check policy, runtime, scheduler, and the refusal or receipt. |
+| An update has unsupported facts | Correct the draft and check its sources before you publish. |
 
 ## See also
 
-- [Interview](INTERVIEW.md): repeatable context and Project discovery.
+- [Interview](INTERVIEW.md): Project discovery and context.
 - [Architecture work recipes](ARCHITECTURE_WORK.md): decision and agent briefs.
 - [Automation](AUTOMATION.md): triggers and execution paths.
 - [Control modes](AUTHORITY.md): authority for effects.

@@ -1,163 +1,159 @@
 # Interview
 
-Status 2026-10-27: the Desk has no Interview face at present. The Thread window that carried the Interview mode was parked when Ask and Thread became one window (2026-10-18). The hub and the `interview.*` MCP tools still run it. The Thought Workbench's Interview pane is live.
+Use questions to develop working context and prepare a useful next step.
+The current Desk supports this through ordinary Ask follow-ups and the Note-refinement Interview pane.
+The separate structured Interview mode remains a retained Thread service with sectioned facts and suggestions.
 
-Interview helps you describe your work and find useful ways to use HoldSpeak.
-It runs in a normal Thread. You can return to each topic as your goals and Projects change.
-
-The model asks questions and proposes ideas. The controller checks tool access and saves structured context.
-The conversation can vary. The state and the tool checks follow fixed rules.
+The older Thread window's mode tabs, Section picker, and Context controls are parked.
+The active Ask does not expose those controls.
+This guide distinguishes the current user path from the retained programmatic contract.
 
 ## Before you start
 
-Set up a model in [Models](MODELS.md). Tool use depends on the model, its assignment, and the current permissions.
-Existing Projects give Interview context. You can also start with one outcome and no Project.
+Assign an engine for the job in [Models](MODELS.md).
+Tool use depends on the engine and the allowed palette.
+You can begin with a Note or a blank Project.
+A Project with connected evidence gives the model more context.
 
-HoldSpeak has two question-based surfaces:
+| Path | Purpose | Current access |
+| --- | --- | --- |
+| Ask follow-ups | Explore a goal, reason over sources, and prepare work | Active Ask window |
+| Note-refinement Interview pane | Refine one editable Note while preserving its original text | **Develop this thought** on the Note |
+| Interview Thread mode | Retain sectioned facts, suggestions, choices, and promotions | Thread HTTP and Interview MCP services |
 
-| Surface | Purpose |
-| --- | --- |
-| **Interview** mode in a Thread | Build working context and suggestions across sections. This guide covers it. |
-| **Interview** pane in the Thought Workbench | Refine one Note with focused questions. See [Develop a thought](USER_GUIDE.md#develop-a-thought). |
+The Note-refinement pane and Interview Thread mode use different state contracts.
+A question-based conversation does not automatically create structured Interview facts.
 
 ## Start a conversation
 
-1. Select **New Thread**.
-2. Select **Interview** in the mode tabs above the composer.
-3. Describe one outcome that would help your work.
-4. Select **Send**.
+For the current Desk:
 
-Example: "I lead an architecture transformation. Help me prepare a decision review from my Projects."
+1. Open Ask, or use **Ask about this** on a Note or Project.
+2. Select starting records through the toolbar scope menu when needed.
+3. Describe one outcome and ask for one useful question at a time.
+4. Send your answer as a follow-up.
+5. Use **Save as note** when you want a separate working brief.
 
-The model can read permitted records, save context, or ask a question.
-Routine tool calls stay inside **Actions**. Open **Actions** to see them.
-Decision requests, tool questions, and failures stay visible.
+Example: “Help me prepare an architecture decision review from this Project. Identify the evidence gaps before drafting.”
+Ask saves its exchanges as a Thread.
+Its tools can retrieve additional permitted records beyond the starting About selection.
+This flow does not activate the structured Interview mode.
+
+A programmatic client can create that mode through `POST /api/threads`:
+
+```json
+{
+  "title": "Architecture review context",
+  "recipe_id": "hs-seed-mode-interview"
+}
+```
+
+Send turns through `POST /api/threads/{thread_id}/turns` with a `text` field.
+Read the returned Thread and Interview state before issuing revision-sensitive commands.
+Use the authenticated hub API described in [API reference](API_REFERENCE.md).
+The examples name API payloads and do not bypass authentication or model setup.
 
 ## Choose a section
 
-Use **Section** to change the topic. You can return to an earlier section in the same Thread.
-A new section changes the available tools. It does not send a model request.
+The Interview service declares these sections in `holdspeak/services/interview_contracts.py`.
+A section determines its purpose and tool palette.
+Changing the section is a state command and does not itself run a model.
 
-| Section | Topic | What the model can do |
+| Section | Purpose | Supported service work |
 | --- | --- | --- |
-| **Goals** | Outcomes and signs of progress | Read Projects. Save context. |
-| **Projects** | Scope, outcomes, and source gaps | Read Projects. Use the Project setup tools. |
-| **What matters** | Changes that deserve attention | Read Project and decision records. |
-| **Cadences** | Repeated preparation and reviews | Read Cadence status and loops. |
-| **People** | Confidential relationship work | None. Select **Open People**. This section has no composer. |
-| **Decision log** | Rationale and open decisions | Read decision records. |
-| **Delegation** | Agent briefs and constraints | Read Workbench records. |
-| **Sources & models** | Missing connections and model readiness | Read connections and providers. |
+| Goals | Define useful outcomes | Read Projects and save context |
+| Projects | Inspect scope and source gaps | Read Projects and prepare supported Project setup |
+| What matters | Identify meaningful changes | Read Project and decision evidence |
+| Cadences | Explore repeated work | Read Cadence state and record a desired frequency |
+| People | Continue confidential relationship work | Handoff to the protected People surface |
+| Decision log | Recover rationale and review conditions | Read decision evidence |
+| Delegation | Develop manual agent briefs | Read Project and Workbench context |
+| Sources & models | Identify missing prerequisites | Read connection and provider state |
 
-Never enter credentials in an Interview answer. Use the setup control for the connection.
+The service exposes section changes through `interview.change_section` and owner HTTP commands.
+The active Ask window does not supply a Section picker.
+Never put credentials in conversation text.
 
 ## Review saved context
 
-1. Select **Context**.
-2. Open **Known context**.
-3. Read the fact. **Your answer** means you stated it. **Inferred** means the model interpreted it.
-4. Open **Source** to see the quoted answer.
+`interview.get` returns the structured state for an Interview Thread.
+A fact retains its source message, quote, classification, and current revision.
+A user-stated fact differs from an inferred fact.
+An inference is a model interpretation and needs review against its evidence.
 
-The source helps you check a fact. It does not prove that an inference is correct.
-
-To correct a fact, state the correction in the conversation. Then check **Known context**.
-A statement from the model that it remembered something is not proof. Look for the saved fact.
-
-To remove a fact, select **Remove**. The controller also removes suggestions that depend on that fact.
-Removal does not erase earlier Thread messages, kept outputs, or promoted Notes.
+Read the source before accepting the fact as working context.
+Fact removal invalidates dependent suggestions.
+A stale expected revision is refused rather than overwriting newer state.
 
 ## Review a suggestion
 
-**Context** lists the suggestions for the current section.
-Open **Reason & prerequisites** to see the basis and the missing requirements.
-Select **All suggestions** to see ideas from other sections.
+A suggestion records its basis, scope, prerequisites, feasibility, and uncertainty.
+A model can suggest work beyond the currently installed adapters.
+Such a suggestion remains an idea or manual recipe until a supported execution path exists.
 
-| Label | Meaning |
-| --- | --- |
-| **Manual draft** | The model can prepare a draft in this conversation. |
-| **Needs input** | The idea needs more information. |
-| **Needs connection** | The idea needs a source or service connection. |
-| **Idea · unavailable** | HoldSpeak cannot do this today. |
+Owner HTTP commands record dispositions such as keeping, deferring, or dismissing an idea.
+They require a command id, expected revision, and supported event.
+MCP model tools do not receive the owner's promotion or disposition authority.
 
-A label describes feasibility. It does not mean a task ran or an automation exists.
-
-| Control | Result |
-| --- | --- |
-| **Try draft** | Records your choice and sends a request for a manual draft. It does not schedule work. |
-| **Keep idea** | Records that you want to keep the idea. |
-| **Later** | Defers the idea. |
-| **Dismiss** | Records that you declined the idea. |
-| **Explore** | Returns from drafting to exploring. |
+A kept idea does not create an Automation, start an agent, or grant a permission.
+Use the owning feature's configured operation for those actions.
 
 ## Keep a useful result
 
-1. Read the draft in the Thread.
-2. Check the source claims and assumptions.
-3. Correct unsupported details in the conversation.
-4. Use the Keep control on the reply to save a Note or Artifact.
-5. Open the saved record and check it.
+In ordinary Ask, the exchange is retained automatically.
+Use **Save as note** for an editable output or **Add to note** when Ask originated from that Note.
+Use **Make it a task** for a supported task result.
+These writes are separate from structured Interview facts and suggestions.
 
-**Keep idea** records a suggestion choice. Keep on a reply creates a separate output record.
+The Thread API also offers its own keep operation.
+Read [Agents and Threads](AGENTS_AND_THREADS.md) for the retained conversation contract.
 
 ## Promote a fact into a Note
 
-A saved fact belongs to one Thread. Promotion copies the fact into a canonical Note that other work can reference.
+The Interview service supports owner-controlled promotion through its HTTP command endpoint.
+Promotion creates a linked canonical record from the source fact.
+A client must supply the current revision and a new command identity.
+Read promotion results through `GET /api/threads/{thread_id}/interview/promotions`.
 
-Promotion has no button. It runs through the browser API, for the owner only. No model tool can promote or revoke.
+The command endpoint accepts section, fact-removal, disposition, status, promotion, and promotion-revocation events.
+The active Ask does not expose the older promotion panel.
+The Interview MCP family does not add owner promotion tools.
 
-Only a fact marked **Your answer** can be promoted. The **People** section refuses promotion.
-
-1. `POST` to `/api/threads/{thread_id}/interview` with `command_id`, `expected_revision`, and an `event`.
-   The `event` has `kind` set to `promote` and a `fact_id`.
-2. Read the promotion identifier and target reference in the response.
-3. `GET /api/threads/{thread_id}/interview/promotions` to list the promotions of a Thread.
-4. `POST` an `event` with `kind` set to `revoke_promotion` to withdraw one.
-
-The promotion record stores a source locator and a content hash. It does not store a second copy of the words.
-Revoking a promotion does not delete the Note.
-
-A promoted record is reachable by reference, not by relevance.
-Attach it to a Thought or name it in a Thread, and the model can read it.
-An automatic relevance search over your Notes does not return it.
-
-A model in an ordinary Thread can still read the Note through the desk listing tools.
-Promote only facts that you accept in a Thread with a model.
+Revoking a promotion link is distinct from deleting its source message or independently editing a kept Note.
+Read the service's returned state before retrying a failed command.
 
 ## Resume
 
-Reopen the Thread to resume its sections, facts, and suggestion choices.
-Start a new Thread for a different purpose. Interview context belongs to its Thread. It is not a global record about you.
-
-An unsent draft survives a reload. It lives in the browser tab and ends when you close the tab.
-If a send fails, the composer keeps your text. Read the error before you send again.
+Use Ask's **Recent** list to resume an ordinary retained conversation.
+A programmatic Interview client reads the existing Thread and `interview.get` state.
+It should continue that Thread rather than create a duplicate for every turn.
+A saved section, fact, or suggestion is not evidence that background work ran while the client was closed.
 
 ## Project setup limits
 
-In **Projects**, Interview can use the Project setup flow to select, test, and finalize the scope you choose.
-Finalizing changes Project configuration under the current [control mode](AUTHORITY.md).
-Check the Project and its sources afterward. A proposal does not prove that a change succeeded.
+Interview's Projects section can prepare supported setup and inspect proposals.
+Final configuration remains subject to the owner's configuration authority.
+A tested proposal is distinct from a finalized Project.
+Read [Project Rooms](PROJECT_ROOMS.md) for the current Desk setup path.
 
-Interview does not install arbitrary schedules, agent assignments, or unsupported integrations.
-A finished Interview does not authorize recurring work. For scheduled paths, see [Automation](AUTOMATION.md).
-
-Review every model answer. A successful tool call proves that the call ran. It does not prove that the advice is good.
+Cadences describes wanted recurring work.
+Delegation develops a brief.
+Neither section installs an arbitrary schedule or starts a coding agent by itself.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| **Interview** is not in the mode tabs | Update HoldSpeak. |
-| The model says it saved a fact, but none appears | Check **Actions** for the write result. Ask for the save again. |
-| A context update fails | Let the Thread reload. Apply your change again. |
-| The model repeats an answered question | Point to your earlier answer. Ask for the next open question. |
-| A draft invents a date, owner, or decision ID | Correct it. Ask for a placeholder where the record has no value. |
-| The composer is missing in **People** | Select **Open People**, or select another section. |
-| The conversation is too long for the model | Use the Thread compaction control, or assign a model with more context. |
-| A suggestion needs a missing service | Open **Sources & models**. Set it up in the named control. |
+| There is no Interview tab | Use ordinary Ask or Note refinement. The older Thread mode UI is parked. |
+| No structured facts appear after an Ask | Ordinary Ask is not automatically an Interview-mode turn. |
+| A command is stale | Read the current Thread revision and review the intended change. |
+| A suggestion never runs | Configure the supported Automation or handoff separately. |
+| Project setup is incomplete | Continue through the current Project setup controls and inspect the resulting Project. |
+| People is unavailable | Repair its key and access state in the protected People surface. |
 
 ## See also
 
-- [Architecture work](ARCHITECTURE_WORK.md)
-- [Threads](USER_GUIDE.md#ask)
-- [Automation](AUTOMATION.md)
-- [Control modes](AUTHORITY.md)
+- [Ask on the Desk](WEB_DESK.md#ask-about-your-work): current conversation controls.
+- [Develop a thought](USER_GUIDE.md#develop-a-thought): the Note-refinement pane.
+- [Architecture work](ARCHITECTURE_WORK.md): useful requests and completion checks.
+- [Agents and Threads](AGENTS_AND_THREADS.md): retained service operations.

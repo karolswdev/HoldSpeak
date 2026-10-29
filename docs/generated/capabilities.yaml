@@ -2592,7 +2592,7 @@
         },
         {
           "claim": "Arrival provides the aftercare slot immediately before the capture bar.",
-          "line": 1451,
+          "line": 129,
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "data-testid=\"arrival-aftercare-slot\""
         },
@@ -2869,10 +2869,10 @@
           "symbol": "ConciergeCore"
         },
         {
-          "claim": "The arrival draws a SETUP row while the meeting path has no summary engine; its verb opens Models.",
-          "line": 953,
-          "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "Arrival"
+          "claim": "Needs-you membership includes meeting-path setup blockers from the assignment projection.",
+          "line": 792,
+          "path": "web/src/desk/needsYou.ts",
+          "symbol": "meetingPathBlockers"
         },
         {
           "claim": "The SETUP row states \"No engine for summaries\" when the summary capability has no assignment.",
@@ -6550,7 +6550,7 @@
         {
           "claim": "Thread has bounded source/details controls and a separate composer; completed answers keep one routine action and expose the remaining actions through More.",
           "line": 1111,
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "symbol": "export function ThreadPullout"
         },
         {
@@ -6624,13 +6624,13 @@
           "assertion": "Changed prompt, selected quote, grounding and rail edits do not alter the retried request or kept answer lineage.",
           "execution": "passed",
           "node": "Retry and Keep use the complete sent snapshot while a newer draft and selection survive",
-          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx"
+          "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx"
         },
         {
           "assertion": "Local close aborts/invalidates the pending view and preserves the newer durable draft on reopen.",
           "execution": "passed",
           "node": "%s abandons a pending view; a late answer cannot change the reopened Ask",
-          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx"
+          "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx"
         },
         {
           "assertion": "Real Ask Keep preserves original quoted question, canonical sources and relationship snapshot across database reopen without model execution.",
@@ -6660,7 +6660,7 @@
           "assertion": "Editing the next question labels its new sources separately; Keep preserves the prior answer and exact original note.",
           "execution": "passed",
           "node": "keeps the answer's sent sources distinct when the next question selects different material",
-          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx"
+          "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx"
         },
         {
           "assertion": "Initial focus is in Decision; closing/reopening supporting folds retains their draft text.",
@@ -6670,15 +6670,15 @@
         },
         {
           "assertion": "Real seed reference shape resolves a readable title, frozen names win and unavailable material retains identity.",
-          "execution": "passed",
-          "node": "names seeded material from the live desk, prefers frozen titles and keeps an honest unavailable ref",
-          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx"
+          "execution": "not_run",
+          "node": "names seeded material from the live desk, prefers frozen titles and says a gone source was deleted",
+          "path": "web/src/desk/pullouts/_parked/__tests__/ThreadPullout.test.tsx"
         },
         {
           "assertion": "An explicit saved source and optional passage survive collection refresh and floor selection loss; answer sources retain the submitted identity.",
           "execution": "passed",
           "node": "retains an explicit saved Note handoff when the floor drops its selection (quote: %s)",
-          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx"
+          "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx"
         }
       ],
       "trust_boundary": "Browser route enters the Desk shell; no native host is required."
@@ -6908,7 +6908,7 @@
         },
         {
           "claim": "Visited views preserve state and scroll through source return; inactive view footer targets hide their portaled actions.",
-          "line": 86,
+          "line": 20,
           "path": "web/src/desk/pullouts/IntelligencePullout.tsx",
           "symbol": "RetainedView"
         }
@@ -7000,7 +7000,7 @@
             "status": "passed"
           },
           "node": "keeps Brief draft and scroll through source inspection while hiding inactive footer actions",
-          "path": "web/src/desk/pullouts/IntelligencePullout.test.tsx"
+          "path": "web/src/desk/pullouts/_parked/IntelligencePullout.wings.test.tsx"
         }
       ],
       "trust_boundary": "Exact source reads use the existing authenticated hub transport. A held open task may bypass only its ordinary snooze/defer list suppression; an artifact read by canonical ID does not approve or publish it. Missing source shells remain local to their window and are not persisted artifacts or collection entries."
@@ -8402,8 +8402,8 @@
         },
         {
           "claim": "Existing authorities are rendered as populated ledgers, named controls, guarded writes and exact Retry.",
-          "line": 130,
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "line": 141,
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "symbol": "FollowThroughView"
         },
         {
@@ -8414,8 +8414,8 @@
         },
         {
           "claim": "Focused task reads expand the exact row, show hold dates and local unavailable/read Retry while preserving row drafts and failed writer requests.",
-          "line": 133,
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "line": 312,
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "symbol": "FollowThroughView"
         }
       ],
@@ -8489,7 +8489,7 @@
             "status": "passed"
           },
           "node": "reads and expands the exact held source despite the ordinary overdue filter without a lifecycle write",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.test.tsx"
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.test.tsx"
         },
         {
           "assertion": "Missing and refused focused reads expose Retry read and repeat the same encoded canonical focus ID.",
@@ -8500,7 +8500,7 @@
             "status": "passed"
           },
           "node": "missing focus and refused focus reads each retry the same canonical source",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.test.tsx"
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.test.tsx"
         }
       ],
       "trust_boundary": "Owner-only local action writers retain canonical action/loop identity. People text is not saved in the browser Done receipt."
@@ -8617,7 +8617,7 @@
         {
           "claim": "The Workbench conversation uses shared paper traffic and editors, real close/load retry, failed-turn retry and passive branch position while preserving runtime reconciliation and message anchors.",
           "line": 1094,
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "symbol": "ThreadPullout"
         },
         {
@@ -8672,13 +8672,13 @@
           "assertion": "The real Thread face exposes load retry and passes its existing close callback.",
           "execution": "passed",
           "node": "retries loading and closes an absent thread with the real callback",
-          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx"
+          "path": "web/src/desk/pullouts/_parked/__tests__/ThreadPullout.test.tsx"
         },
         {
           "assertion": "A failed answer offers the canonical regenerate writer for that message.",
           "execution": "passed",
           "node": "retries the failed message through the existing regenerate writer",
-          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx"
+          "path": "web/src/desk/pullouts/_parked/__tests__/ThreadPullout.test.tsx"
         },
         {
           "assertion": "A new deliberate Send is possible after unknown; pending blocks another dispatch.",
@@ -9260,7 +9260,7 @@
           "assertion": "Failed Projects refresh and exact Retry preserve known choices and selected Note/passage/question.",
           "execution": "passed",
           "node": "a failed Projects refresh retains known choices, the question, selected passage and Note context",
-          "path": "web/src/desk/__tests__/askPanelExperience.test.tsx"
+          "path": "web/src/desk/_parked/ask/askPanelProjectsRead.test.tsx"
         },
         {
           "assertion": "Missing Note, Meeting, artifact and over-limit attachments fail only their item; a valid sibling completes, with no blocked-item call or artifact.",

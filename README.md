@@ -1,228 +1,355 @@
-<p align="center">
-  <img src="docs/assets/pixellab/social-card.png" alt="HoldSpeak: hold a key, speak, release" width="760">
-</p>
+# HoldSpeak
 
-<h3 align="center">Hold a key, speak, it types. Record a meeting, it closes the loop. Ask anything about your work. All local.</h3>
+**An agentic-first, web-based AI operating system for your work.**
 
-<p align="center">
-  <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue"></a>
-  <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-3776ab">
-  <img alt="macOS Apple Silicon and Linux" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey">
-  <img alt="MCP: 306 tools" src="https://img.shields.io/badge/MCP-306%20tools-8a63d2">
-  <img alt="Version 0.4, pre-alpha" src="https://img.shields.io/badge/status-0.4%20pre--alpha-orange">
-</p>
+Bring your notes, meetings, projects, people, and coding agents onto one Desk.
+Ask it to find context, prepare work, and take action through tools.
+Hand a task to a coding agent, run a multi-step Program, or set up an Automation to do it again.
+Keep the sources, results, and execution records together.
+Use Calls to work with the Desk by phone when its line and access are configured.
 
-<p align="center">
-  <a href="#quick-start">Quick start</a> ·
-  <a href="#whats-inside">What's inside</a> ·
-  <a href="#extend-everything">Extend it</a> ·
-  <a href="#how-it-compares-mid-2026">Compare</a> ·
-  <a href="docs/README.md">Docs</a>
-</p>
+HoldSpeak runs on your machine. You use it in a browser.
+Its Desk takes its cues from Amiga Workbench.
+It has objects, drawers, movable windows, menus, and a dock.
+A local hub stores your work and runs the services behind that surface.
+You choose the engines: local models, endpoints on your network, cloud APIs, or supported agent CLIs.
 
----
+Built first for a software architect who leads people and projects.
+Open source under [Apache 2.0](LICENSE). Version 0.4, pre-alpha.
 
-You lead a team. Your work lives in your voice, your meetings, your projects, your people, and a growing fleet of coding agents.
-HoldSpeak is one local workbench for all of it.
+[Start here](#quick-start) · [Work flows](#what-you-can-do) · [Agents](#hand-work-to-a-coding-agent) · [Automations](#make-useful-work-repeat) · [Documentation](docs/README.md)
 
-**Speak** into any app. **Record** a meeting and confirm what was decided. **Ask** your model about any meeting, note, or project, with sources. **Send** the result to GitHub, Jira, Slack, or email. **Steer** your Claude Code and Codex sessions by voice. **Extend** every part with plugins, connectors, and 306 MCP tools.
+## One Desk, shared context, tools that act
 
-Whisper runs on your machine. The language model is yours: a local GGUF or MLX model, or any OpenAI-compatible endpoint you choose. There is no account and no HoldSpeak cloud.
+The Desk gives you a place to keep work and a place to run it.
+Open tools beside each other, arrange their windows, and file records in drawers.
+On a phone, work moves through full-width windows with a Back control.
+Open a Note, Meeting, Project, or person, then ask about that object.
+The same records can supply context for a conversation, a project update, an automation, or an agent brief.
 
-<p align="center">
-  <img src="docs/assets/readme/desk-meeting-review.jpg" alt="The HoldSpeak Desk with Today open: what needs you (a pull request, an overdue milestone, decisions to confirm), the day as a timeline with the next 1:1, and the meetings still to finish" width="100%">
-</p>
+**Agentic-first** means the AI can use tools to work with those records.
+With a suitable engine, a request can search memory, read sources, create a Note, find tasks, or prepare a send.
+The result shows source references, writes, and prepared actions, so you can inspect what happened.
+A prepared send waits for your **Send** press.
 
-## What's inside
-
-| | You get | Read more |
-| --- | --- | --- |
-| 🎙️ | [**Voice typing that learns**](#speak-anywhere): hold a key, speak, the text lands in any app and improves with each correction | [Speak](docs/USER_GUIDE.md#speak) |
-| 🗂️ | [**Meetings that close the loop**](#meetings-that-close-the-loop): live or imported, read by 14 built-in plugins, confirmed by you | [Meeting mode](docs/MEETING_MODE_GUIDE.md) |
-| ✦ | [**Ask AI on everything**](#ask-anything-about-your-work): any meeting, note, project, or person, grounded and cited | [Ask](docs/USER_GUIDE.md#ask) |
-| 🧠 | [**Memory with receipts**](#memory-that-cites-its-sources): facts, beliefs, and standing pages where every sentence cites a source | [Memory](docs/RELATIONSHIP_AWARE_MEMORY.md) |
-| 🧭 | [**A Desk for the work you lead**](#a-desk-for-the-work-you-lead): Today, what needs you, Project Rooms, people | [The Desk](docs/WEB_DESK.md) |
-| 📤 | [**Send it anywhere**](#send-it-anywhere): a folder, GitHub, Jira, Confluence, email, or Slack, previewed first | [Integrations](docs/INTEGRATIONS.md) |
-| 🤖 | [**Command your coding agents**](#command-your-coding-agents): watch and answer Claude Code and Codex sessions from the Desk | [Coders](docs/CODER_INTEGRATION.md) |
-| 🧩 | [**Extend everything**](#extend-everything): plugins, connectors, actuators, agents, Workflows, voice commands, MCP | [Plugin authoring](docs/PLUGIN_AUTHORING.md) |
-
-## Speak anywhere
-
-Hold the hotkey (Right Option by default), speak, and release. The text goes into the app you are in: your editor, your terminal, a chat box.
-
-- **The dictation pipeline** adds your project's facts and context, and can rewrite a rough prompt with your model before it types. Automation hooks connect it to Claude Code and Codex.
-- **Teach it once.** Select **Wrong** on a result, correct it, and select **Teach**. The next matching dictation comes out right.
-- **See the receipts.** The dictation journal records what you said, what it typed, and how long it took. The learning digest shows each rule it learned and when it fired. Replay runs an old utterance through the updated pipeline, so you see the improvement.
-- **Voice commands** and a wake word run actions you define.
-
-## Meetings that close the loop
-
-Record your microphone and system audio, or import a recording or a transcript file.
-
-- **14 built-in plugins** read the transcript on your model: decisions, requirements, action owners, risks, dependencies, milestones, an incident timeline, an ADR draft, an architecture diagram, a stakeholder update, and more.
-- **You stay in charge.** Meeting intelligence saves the summary and the extracted action items. Decisions arrive as proposals: select **Confirm** to create the linked decisions and commitments.
-- **Meeting aftercare** shows what is open, what was decided, and what changed since the last meeting.
-- **The clock.** Connect a calendar to see your week. **Auto-record** is off by default. Turn it on for calendar events with meeting links: all of them, or only those linked to a Room. A recording arms five minutes before the event by default, then starts after a countdown.
-
-## Ask anything about your work
-
-Every piece of your work is something you can talk to.
-
-- **Ask AI** (`⌘I`, or **Go > Ask AI**) is one window. Select **+** beside **About** to pick a meeting, a Note, a drawer, a Project, or a person. With nothing picked, Ask is about your whole desk.
-- **Ask about this** sits on every record in the **Object** menu. On a person it reads **Ask about <name>**.
-- **The answer shows its sources.** **Looked at** lists what the answer read, with links you can open. **Save as note** keeps the answer, **Copy** copies it, and **Send...** opens the Send preview.
-- **Recent** reopens a saved conversation. **Forget** deletes it, with a short Undo.
-- **Ask has hands.** On an engine that can use tools, the model can call real tools. A held call waits for **Allow once** or **Deny**.
-- **Ask this project** sits in every Project Room. Ask what is blocked, who owes what, or what changed, and get an answer from that project's records.
-- **Develop a thought.** Keep a rough sentence as a Note and select **Develop this thought**. Each **Ask AI** turn asks you one question, until the idea is clear. Your original text is always kept.
-
-## Memory that cites its sources
-
-You never save to memory. Your normal work is the write path.
-
-- **Search by meaning** across Notes, Meetings, Decisions, and Threads.
-- **Recall** returns the current decision first, with its rationale and source, then the versions it superseded.
-- **Facts become beliefs.** Background jobs extract facts from your records and fold them into beliefs that keep their evidence. A later fact can refine, supersede, or contradict one.
-- **Standing pages** answer the recurring questions. For each Project: what we decided, what is open and who owes it, risks and disputes, and what changed this week. Every sentence cites its sources. A sentence with no source is cut. When you delete a source, the sentence that cites it disappears.
-
-Fact extraction, belief consolidation, and page generation need an assigned model. Search indexing and evidence cleanup run without one.
-
-## A Desk for the work you lead
-
-<p align="center">
-  <img src="docs/assets/readme/desk-project-room.jpg" alt="A note beside Ask: the note links a person, a Project, a pull request and a Jira key; Ask answers about it with its references, and the answer also lands in the note's margin" width="100%">
-</p>
-
-- **Needs you** ranks what waits on you across every project: overdue actions, decisions to review, people to answer.
-- **Project Rooms** hold one project each: its sources (GitHub, Jira, Confluence, meetings), its health, and its people. **Draft update** writes the weekly status from those records. You review it before it goes out.
-- **The steward** works for each Room. It drafts the update and proposes a reviewer nudge on a pull request that waits too long.
-- **People** keeps your reports and peers. Before a 1:1, the 1:1 card collects what is open between you. The Monday brief adds what each person owes you and what you owe them.
-- **The Heartbeat** sweeps your Watches on a schedule and keeps **Needs you** current, so the Desk is ready when you arrive.
-- **Today** (the first icon in the dock) shows what needs you, the day ahead, and the next 1:1 with its Prep.
-- **Search** (`⌘K`) finds your records and runs any Desk verb.
-
-## Send it anywhere
-
-Select **Send to** on a summary, an update, or an Artifact, and pick a saved destination:
-
-| Destination | Uses |
-| --- | --- |
-| A folder | Your file system, or a synced folder |
-| GitHub | Your local `gh` sign-in |
-| Jira and Confluence | Your local `acli` sign-in, across many accounts and sites |
-| Email | Your Resend sender (the default), or SendGrid |
-| Slack | A Slack incoming webhook |
-
-HoldSpeak shows the exact text before it sends, freezes the target, and keeps a receipt of every send.
-
-## Command your coding agents
-
-Your Claude Code and Codex sessions report to the Desk through agent hooks.
-
-- **See who needs you.** Blocked sessions come first, with the question they are asking.
-- **Watch live.** Open a session to see its terminal pane, read-only.
-- **Answer by voice.** Select **Arm this pane** when the Control mode asks for it. Click the microphone, speak, and click it again to stop. Review your reply and select **SEND** to type it into that pane, on this machine or a configured remote machine.
-- **Ground the answer.** Attach a meeting or an Artifact, so the agent gets the context you have.
-- **Watch the pull requests.** **Go > Delivery board** shows open PRs and their CI status.
-
-**Programs** run a goal that is too big for one agent. A program cuts the goal into steps. An agent does each step in its own worktree. HoldSpeak checks each result from its log, starts a review, opens the pull request and merges it at your control level (Secure, Normal or YOLO). Each step runs on Claude Code, Codex, or pi on any of your engines, also only when your home engine is idle. Only a core question comes to you, in Needs you. Read [Programs](docs/programs.md).
-
-**Phone** reaches you when you are away from the desk. The desk sends a message to your phone, or calls it, by your control level and your quiet hours. A voice says why it calls and takes your answer back to the desk. Your agents can message you, wait for your reply and ask to call you; a call waits for your press. Today a call goes to your real number through [Calls](docs/calls.md); the HoldSpeak app for iPhone is next. Read [Phone](docs/phone.md).
-
-**The Line** is HoldSpeak's own phone line for Calls. baresip holds the call as a separate program; Parakeet hears you and Pocket TTS speaks, on your Mac or on a machine on your tailnet. A SIP address on your tailnet is free; a Telnyx number is a real one, and its password goes into your keystore. **Settings ▸ Calls ▸ Line** shows where it runs, its state and a **Test call**. All its parts have a permissive licence. Read [The Line](docs/calls.md#the-line).
-
-## Extend everything
-
-HoldSpeak is built from parts you can add to. You do not need to fork it.
-
-| Add a... | It does | Guide |
-| --- | --- | --- |
-| **Meeting plugin** | Turns a transcript into a typed artifact. Drop a Python file in `~/.holdspeak/plugin_packs/`. | [Plugin authoring](docs/PLUGIN_AUTHORING.md) |
-| **Connector** | Reads activity from any tool into HoldSpeak. Drop a pack in `~/.holdspeak/connector_packs/`. | [Connector development](docs/CONNECTOR_DEVELOPMENT.md) |
-| **Actuator** | Proposes an effect outside HoldSpeak, such as an issue or a webhook post. It executes a fixed proposal. In YOLO mode, configured destinations can run without asking. | [Actuator development](docs/ACTUATOR_DEVELOPMENT.md) |
-| **Agent** | A role you author, with its own instructions. | [Agents and Threads](docs/AGENTS_AND_THREADS.md) |
-| **Workflow** | A sequence of steps that runs with a receipt for each step. | [Automation](docs/AUTOMATION.md) |
-| **Voice command** | Maps a spoken phrase to a registered action. | [Voice commands](docs/VOICE_COMMANDS.md) |
-| **Saved prompt or guardrail** | A Note tagged `prompt` or `guardrail`, used by a Thread through the hub API and MCP. | [Agents and Threads](docs/AGENTS_AND_THREADS.md) |
-| **Model** | Any local GGUF or MLX model, or any OpenAI-compatible endpoint, assigned per job. | [Models](docs/MODELS.md) |
-
-**MCP, first-class.** One service layer declares every operation. The web app, the MCP server, and the tests all reach the same operation, with the same authority checks.
-
-- **The MCP sidecar** gives Claude Code, Cursor, or any MCP client 306 tools across 52 families. It acts with your owner authority on this machine.
-- **Reach** lets a remote agent connect over Streamable HTTP with a scoped credential: a tool palette and a time limit, shown once.
-- **Every consequential write leaves a Receipt.** Control modes (**Secure**, **Normal**, **YOLO**) set how much runs without asking you.
-
-## How it works
+The browser and MCP clients reach the same product services.
+A coding agent can use HoldSpeak as its working context through MCP.
+HoldSpeak can also launch that agent on a task, keep track of its work, and bring its questions back to you.
 
 ```mermaid
-flowchart LR
-    K["Hotkey or browser mic"] --> W["Whisper<br/>on your machine"]
-    M["Meeting audio<br/>or import"] --> W
-    W --> T["Typed text<br/>in your app"]
-    W --> L["Your model<br/>local or your endpoint"]
-    L --> P["Proposals"]
-    P -->|Confirm| D["The Desk<br/>decisions, actions, people"]
-    D --> Q["Ask AI and Threads<br/>grounded, cited"]
-    D --> S["Send to<br/>GitHub, Jira, Slack, email"]
-    D --> A["Agents over MCP<br/>local owner or scoped Reach"]
+flowchart TB
+    Input["Voice · Notes · Meetings · Connected sources"] --> Desk["The Desk<br/>Projects · People · Decisions · Memory"]
+    Desk --> Ask["Ask and Threads<br/>read, reason, use tools"]
+    Desk --> Agent["Coding agents<br/>brief, worktree, session"]
+    Desk --> Auto["Automations<br/>sources, trigger, engine, output"]
+    Ask --> Result["Saved work · Tasks · Drafts · Prepared sends"]
+    Agent --> Result
+    Auto --> Result
+    Result --> Review["Inspect sources and results<br/>review, continue, send"]
+    Review --> Desk
 ```
 
-Transcription is always local. Model work goes to the engine you assign in **Engines**. Engines and the Send preview show where the data goes; a working window does not repeat it on every row. See [Security & Privacy](docs/SECURITY.md) for every data boundary.
+## What you can do
+
+| Start with | Work through it | Get |
+| --- | --- | --- |
+| A rough idea | Write or speak a Note, ask questions, refine the text | A useful Note, tasks, or a brief |
+| A meeting | Record or import, run intelligence, review outcomes | A transcript, summary, decisions, and actions |
+| A project question | Ask about its meetings, decisions, issues, and pull requests | An answer or update grounded in project records |
+| A task to build | Hand a Desk item to Claude Code, Codex, or pi | An agent working in its own Git worktree |
+| A goal with several implementation steps | Plan a Program, choose agents and checks, review what needs you | Step results, reviews, pull requests, and a handover Note |
+| A phone conversation | Call the configured line and authenticate | Desk work and a retained call Note |
+| A recurring job | Choose sources, a trigger, an engine or agent, and an output | Retained results and a run history |
+| A person you lead | Review shared work and prepare for a 1:1 | A brief with open commitments on both sides |
+| Words for another app | Hold the hotkey, speak, release | Text in your editor, terminal, or message field |
+
+### Turn a thought into work
+
+Keep an idea as a Note. Edit it as Markdown, or select **Develop this thought** to work through it with AI.
+Attach other Notes as context and ask one question at a time.
+HoldSpeak preserves the original text and keeps the working Note editable.
+
+Use **Ask about this** to reason over the Note.
+Use **Find the tasks** to extract work, associate it with a Project, or prepare it for an agent.
+Keep a useful answer as a Note or Artifact so you can return to it.
+
+For example: start with “We need to move this service off the shared database.”
+Develop the constraints, compare options, record a decision, and prepare the implementation task from the same material.
+
+[Notes and thought development](docs/USER_GUIDE.md#develop-a-thought) · [Architecture work recipes](docs/ARCHITECTURE_WORK.md)
+
+### Take a meeting through to follow-up
+
+Record microphone and system audio, or import an existing recording or transcript.
+Read the saved transcript, then run meeting intelligence on an assigned engine.
+
+HoldSpeak includes **14 built-in plugins** for decisions, requirements, action owners, risks, dependencies, milestones, architecture drafts, and other meeting outputs.
+Review proposed decisions and commitments before you confirm them.
+Meeting aftercare brings open work and changes back into view.
+
+Link the meeting to its Project.
+Ask about the outcome, prepare an update, or hand an action to a coding agent.
+The transcript and saved outputs remain available as context for later work.
+Calendar integration and scheduled recording are available when configured.
+
+[Meeting mode](docs/MEETING_MODE_GUIDE.md) · [Meeting intelligence](docs/MEETING_INTELLIGENCE.md) · [Aftercare](docs/MEETING_AFTERCARE.md)
+
+### Ask your work, then do something with the answer
+
+Open **Ask**, or select **Ask about this** on a record.
+Choose starting context through its scope control: a Note, Meeting, drawer, Project, or person.
+Ask a question such as “What is blocking this project?” or “Draft an update from this week's meetings.”
+
+An engine with tool support can retrieve more evidence and perform permitted Desk work during the turn.
+Open the sources and inspect the writes or prepared actions shown with the result.
+Ask saves the exchange as a Thread from the first answer.
+Ask a follow-up in the same window, or reopen the conversation from **Recent**.
+Use **Save as note** for a separate editable result, or **Add to note** when Ask came from a Note.
+
+The answer offers **Make it a task**, **Save as note**, **Copy**, and **Send…** where applicable.
+Start another conversation from the first row of **Recent**, or press `⌘N` while Ask has focus.
+Stored Threads retain their turns, references, and tool results.
+The separate Thread service also supports modes and branching through its APIs.
+
+[Ask on the Desk](docs/WEB_DESK.md#ask-about-your-work) · [Threads](docs/AGENTS_AND_THREADS.md) · [Interview](docs/INTERVIEW.md)
+
+### Hand work to a coding agent
+
+Choose a task, Note, decision, Meeting, Artifact, or Project item and select **Hand to agent**.
+GitHub and Jira issues read by a Project Watch can also become handoffs.
+Choose an installed Claude Code, Codex, or pi profile.
+
+HoldSpeak prepares a brief from the item and relevant project context.
+You can inspect the brief, repository, branch, and worktree before launch.
+It then starts the agent in a separate Git worktree, with the brief as its starting instruction.
+This path needs a configured project repository, the selected agent CLI, and tmux.
+
+Use the agent surfaces to see progress and find sessions that need you.
+Read the terminal output, answer a question by text or voice, and inspect the session's delivery work.
+Existing Claude Code and Codex sessions can also report to the Desk through hooks.
+An installed reviewer can provide a separate review where the launch controls offer it.
+Set how many agents can work at once.
+At the limit, **Start when one is free** queues a handoff.
+
+The handoff starts the work. Read the result and review the changes before you treat the task as finished.
+
+[Coder integration](docs/CODER_INTEGRATION.md) · [Agent hook setup](docs/AGENT_HOOK_INSTALL.md)
+
+### Run a goal as a Program
+
+Use a Program when a goal needs several bounded implementation steps.
+Choose the repository, describe the steps and their dependencies, and select the agents and review choices.
+Each step runs in its own worktree and moves through work, check, review, pull request, and merge.
+
+Programs use check results and repository evidence to advance a step.
+The selected Control level determines routine decisions and merge behavior.
+Core questions, security findings, and other owner decisions return through **Your turn** and **Needs you**.
+The Program keeps a handover Note with its state and decisions.
+
+You can configure an ordered list of agents for usage-limit handoffs.
+A continuation receives a redacted brief and stays on the step's branch and worktree.
+An overnight template can use an idle engine when the required agents and repository checks are available.
+
+[Programs](docs/programs.md) · [Coding-agent integration](docs/CODER_INTEGRATION.md)
+
+### Make useful work repeat
+
+An Automation describes a job in a sentence:
+
+| Part | You choose |
+| --- | --- |
+| **When** | A schedule, supported event, or manual start |
+| **Do** | An instruction, or a handoff to an agent |
+| **About** | The Notes, Meetings, Projects, drawers, or other supported sources to use |
+| **With** | The engine or installed agent that does the work |
+| **Review by** | An installed reviewer for an agent handoff, when needed |
+| **Put it in** | Where the result belongs |
+
+For example, configure a Friday draft from the week's meetings and put it in your Inbox.
+Or configure an agent handoff for eligible source items, with a reviewer.
+Run the job once, inspect the output, then enable its supported trigger.
+
+Results retain what the run looked at, wrote, and prepared.
+With memory enabled, Automations can retain their own working memory between runs.
+A configured schedule needs the hub running when it is due.
+A destination output prepares the send for your review.
+
+Project Watches observe connected sources.
+The Project Steward can prepare updates and supported follow-up work under the policy you set.
+Heartbeat and Cadence provide other recurring checks for work that needs attention.
+
+[Automation paths and limits](docs/AUTOMATION.md) · [Project Watches and Steward](docs/PROJECT_ROOMS.md#use-the-steward) · [Cadence](docs/CADENCE.md)
+
+### Lead projects and people from the same place
+
+Open **Today** for current work and **Needs you** for items that require your action.
+Enter a Project Room to inspect its open work, decisions, commitments, and recent changes.
+Connect GitHub, Jira, or Confluence sources when the Project needs them.
+
+Ask about the Project or use **Write update** to prepare a status report from its records.
+Review the draft and its sources, then send it to a saved destination.
+
+People holds the context for your reports and peers.
+Use preparation briefs to collect open commitments before a 1:1.
+Confidential People material has a separate encrypted store and specific access rules.
+
+[Project Rooms](docs/PROJECT_ROOMS.md) · [People](docs/USER_GUIDE.md#people) · [People security](docs/PEOPLE_SECURITY.md)
+
+### Speak into the tools you already use
+
+Hold Right Option on macOS or Right Alt on Linux, speak, and release.
+Voice typing puts the text into the focused app.
+The dictation pipeline can add project context and rewrite the text through your selected engine.
+
+Correct a result and teach the correction.
+The dictation journal keeps what you said, what was typed, and the route used.
+Replay lets you try an earlier utterance against the updated pipeline.
+Voice commands and a local wake word are available when configured.
+
+[Voice typing](docs/USER_GUIDE.md#voice-typing) · [Dictation pipeline](docs/DICTATION_PIPELINE_GUIDE.md) · [Voice commands](docs/VOICE_COMMANDS.md)
+
+### Work with your Desk by phone
+
+Calls lets you speak to HoldSpeak through a configured phone line.
+Authenticate with the call passphrase, then ask about work, add a task, write a Note, or prepare an update.
+A proposed send asks for your spoken confirmation.
+The completed conversation becomes a Note.
+
+The Line is HoldSpeak's SIP adapter and can run on the Mac or a configured node.
+The optional ai-phone adapter has its own installation and platform requirements.
+Both need the applicable speech, model, and line setup.
+Carrier calls can incur charges.
+
+Phone adds rules for contacting you about work that needs attention.
+Configured number calls are available. The iPhone-app transport remains incomplete, as described in the Phone guide.
+Messages can wait on the Desk until a supported phone transport is available.
+
+[Calls and The Line](docs/calls.md) · [Phone and reach-you rules](docs/phone.md)
+
+## Memory that stays connected to its sources
+
+Normal work supplies memory: saved Notes, Meetings, decisions, Artifacts, Threads, and other retained records become searchable.
+Search by keyword, time, name, and saved relationships.
+Enable meaning search to add local embeddings.
+
+Recall separates current, superseded, and disputed decisions.
+With the required model assignments, background jobs can extract facts, consolidate beliefs, and write standing project pages.
+Those pages cover decisions, open commitments, risks, and recent changes, with citations for each sentence.
+Source edits or removals invalidate the affected page text.
+
+Use `⌘K` to find work and Desk commands.
+Attach specific records when you want to control the context for a model request.
+
+[Memory and grounding](docs/RELATIONSHIP_AWARE_MEMORY.md)
+
+## Your machine, your choice of engines
+
+HoldSpeak stores its work on your machine and transcribes speech locally with Whisper.
+There is no HoldSpeak account or required HoldSpeak cloud service, and the product has no telemetry.
+
+Choose engines in **Settings > Engines**.
+Different jobs can use different engines: speech recognition, writing, meeting intelligence, tool use, and background work.
+
+| Engine path | Where the work runs |
+| --- | --- |
+| Local GGUF or MLX model | On your machine, with the appropriate runtime |
+| OpenAI-compatible endpoint | On the host you configure, including your LAN or a cloud provider |
+| Supported agent CLI | Through its installed CLI and sign-in, using its configured provider |
+
+Supported CLI presets include Claude Code, Codex, pi, and Gemini CLI.
+A CLI engine answers Desk requests through the installed CLI.
+Tool-capable presets receive scoped access to HoldSpeak tools for the run.
+Coding handoffs start separate repository sessions with a task and worktree.
+
+A CLI process on your machine can send its prompt to a cloud provider.
+Models, connectors, agent runtimes, and outbound actions each have their own data boundary.
+Check the assigned engine and destination before a run.
+Run records identify the route used.
+External providers can require accounts and charge for use.
+
+**Secure**, **Normal**, and **YOLO** set how eligible operations obtain authority.
+YOLO is the default and permits eligible work within configured scope without another confirmation.
+Tool permissions, source scope, and service checks still apply.
+Inspect Receipts for execution outcomes.
+
+[Models and assignments](docs/MODELS.md) · [Control modes](docs/AUTHORITY.md) · [Security and privacy](docs/SECURITY.md)
+
+## Connect it and extend it
+
+Send saved work to a folder, GitHub, Jira, Confluence, email, or Slack through configured destinations.
+The send controls show the content and target and retain an outcome record.
+
+Use MCP to let an external agent read context and perform permitted Desk operations.
+The local sidecar serves clients such as Claude Code, Codex, and Cursor.
+Reach exposes Streamable HTTP access with a scoped credential and expiry when enabled.
+The full catalogue has **306 tools across 52 families**.
+Each caller receives only its allowed tools.
+The [MCP reference](docs/MCP_SIDECAR.md) lists the tools and transport limits.
+
+| Add or configure | Purpose | Reference |
+| --- | --- | --- |
+| Meeting plugin | Produce a typed output from a transcript | [Plugin authoring](docs/PLUGIN_AUTHORING.md) |
+| Connector | Read activity from another tool | [Connector development](docs/CONNECTOR_DEVELOPMENT.md) |
+| Actuator | Propose and execute a supported external effect | [Actuator development](docs/ACTUATOR_DEVELOPMENT.md) |
+| Agent persona | Define instructions for a specialist conversation | [Agents and Threads](docs/AGENTS_AND_THREADS.md) |
+| Workflow | Run a supported sequence of processing steps | [Automation](docs/AUTOMATION.md) |
+| Voice command | Map a spoken phrase to a registered action | [Voice commands](docs/VOICE_COMMANDS.md) |
+
+[Integrations and destinations](docs/INTEGRATIONS.md) · [System architecture](docs/SYSTEM_ARCHITECTURE.md)
 
 ## Quick start
 
-You need Python 3.10+, [`uv`](https://docs.astral.sh/uv/), Node.js 22.12+, and a C++ compiler (the local model runtime builds from source).
+For a source install, use Python 3.10+, Git, [uv](https://docs.astral.sh/uv/), npm, and Node.js 22.12+.
+The local model runtime also needs CMake and a C++ compiler.
 
 ```sh
 git clone https://github.com/karolswdev/HoldSpeak.git
 cd HoldSpeak
-uv venv && source .venv/bin/activate
-uv pip install -e .            # Linux: uv pip install -e '.[linux]'
+uv venv
+source .venv/bin/activate
+uv pip install -e .
 holdspeak
 ```
 
-Then, in the browser tab that HoldSpeak opens:
+On Linux, replace the install command with `uv pip install -e '.[linux]'`.
+Open the URL printed by the hub.
 
-1. Select **Set up local AI**. It downloads the speech model and a starter language model.
-2. When **First words** shows **SPEECH READY**, select **Dictate one sentence**.
-3. Speak, select **Stop**, then select **Keep as note**.
+1. Follow Setup to prepare speech and the engines you want to use.
+2. Keep a dictated sentence as a Note, or continue to the Desk and type one.
+3. Choose an engine in **Settings > Engines** for the AI work you want to try.
+4. Ask about the Note, import a meeting, or create a Project.
 
-Setup then offers your calendar and connections. Set them up now, or select **Continue later** to enter the Desk. If something does not work, run `holdspeak doctor`. It tells you what is broken and what to do.
+Add provider connections and agent CLIs when you need their workflows.
+Run `holdspeak doctor` to diagnose missing dependencies and setup problems.
+See [Getting Started](docs/GETTING_STARTED.md) for system packages, permissions, optional extras, and first-run details.
 
-Full instructions, permissions, and Linux packages: [Getting Started](docs/GETTING_STARTED.md).
+## Platform support and current limits
 
-## Platform support
-
-| Capability | macOS (Apple Silicon) | Linux X11 | Linux Wayland |
+| Capability | macOS, Apple Silicon | Linux X11 | Linux Wayland |
 | --- | --- | --- | --- |
-| Transcription | MLX Whisper | faster-whisper | faster-whisper |
-| Global hotkey and typing | Yes, after you grant permissions | Yes | Best effort (compositor limits) |
-| Meeting capture | Microphone + BlackHole system audio | Microphone + PulseAudio/PipeWire | Microphone + PulseAudio/PipeWire |
+| Local speech recognition | MLX Whisper | faster-whisper | faster-whisper |
+| Global hotkey and text insertion | Requires OS permissions | Supported | Best effort, compositor dependent |
+| Meeting capture | Microphone, plus BlackHole for system audio | Microphone and PulseAudio/PipeWire | Microphone and PulseAudio/PipeWire |
+| Web Desk | Browser | Browser | Browser |
 
-The web app also takes browser microphone input. There is no Windows support today.
+The Desk also supports phone-sized browser layouts.
+The hub and native integrations run on the host machine.
+Windows is not supported today.
 
-## How it compares (mid-2026)
+HoldSpeak is pre-alpha. Interfaces, defaults, and APIs can change.
+Model quality and tool support depend on the engine you select.
+Recording, agent launches, source integrations, and scheduled work need their respective dependencies and a running hub.
+Published packages can differ from this repository's `main` branch.
 
-| Tool or category | They do better | HoldSpeak does better | Pick them if |
-| --- | --- | --- | --- |
-| OS dictation (Apple Dictation, Windows Voice Typing) | Zero setup, free, always there | Your own models, the learning loop, meetings | You dictate occasionally |
-| Local Whisper menu-bar apps (superwhisper, MacWhisper, VoiceInk) | Simpler setup, polished single-purpose UX | Local LLM rewriting, the visible learning loop, meetings, Linux | You want local transcription on a Mac and nothing else |
-| AI dictation services (Wispr Flow, Aqua Voice) | Strong accuracy and editing UX, no model management | Everything local, open source, no subscription, meetings | Your voice in their cloud is acceptable to you |
-| Talon | The deepest hands-free coding control, a mature ecosystem | Prose dictation with LLM rewriting, meetings, a lower learning curve | You need full hands-free computer control |
-| Raw Whisper tooling (whisper.cpp, faster-whisper) | Total control, minimal surface | A product: typing, routing, journal, meetings, a Desk | You enjoy building your own pipeline |
+## Documentation and development
 
-**The honest trade-offs.** HoldSpeak is 0.x and pre-alpha: defaults and APIs still change. The smart parts need a local model or an endpoint you provide. Setup is heavier than a menu-bar app. Wayland limits global hotkeys to best effort.
-
-## Documentation
-
-| Start with | Then |
+| You want to | Start with |
 | --- | --- |
-| [What is HoldSpeak?](docs/WHAT_IS_HOLDSPEAK.md): the product on one page | [User Guide](docs/USER_GUIDE.md): every daily task |
-| [Getting Started](docs/GETTING_STARTED.md): install and first run | [Agents and Threads](docs/AGENTS_AND_THREADS.md) and [MCP sidecar](docs/MCP_SIDECAR.md) |
-| [Models](docs/MODELS.md): pick and assign your models | [Architecture](docs/ARCHITECTURE.md): the runtime and data flow |
+| Install and try one flow | [Getting Started](docs/GETTING_STARTED.md) |
+| Use the Desk each day | [User Guide](docs/USER_GUIDE.md), [Desk guide](docs/WEB_DESK.md) |
+| Configure engines and data boundaries | [Models](docs/MODELS.md), [Security](docs/SECURITY.md) |
+| Connect an agent | [MCP sidecar](docs/MCP_SIDECAR.md), [Coder integration](docs/CODER_INTEGRATION.md) |
+| Understand the implementation | [Architecture](docs/ARCHITECTURE.md), [repository map](docs/generated/REPOSITORY_MAP.md) |
+| Contribute a change | [Contributing](CONTRIBUTING.md), [change history](CHANGELOG.md) |
 
-Every guide and reference is in the [documentation index](docs/README.md).
-
-## Contributing
-
-HoldSpeak is open source under the [Apache License 2.0](LICENSE). See [Contributing](CONTRIBUTING.md) for development setup and tests, and the [change history](CHANGELOG.md) for what changed.
+The [documentation index](docs/README.md) groups the full set of guides and references.

@@ -1,8 +1,23 @@
 # Memory
 
-HoldSpeak memory is a read layer over your durable work.
-It is an index. It is not a second notebook, and it does not hold facts that its sources do not hold.
-HoldSpeak rebuilds each memory row from a source record, so a deleted source leaves no memory.
+Memory lets Ask, project preparation, agent briefs, and background work retrieve context from retained records.
+You create the source through normal work, then the memory services index or derive evidence from it.
+Keep important content as a Note, Meeting, decision, or another domain record.
+The index and derived pages depend on those sources and their current validity.
+
+## Use memory in a flow
+
+| Task | Source selection | Result to inspect |
+| --- | --- | --- |
+| Find an earlier decision | Search or recall, optionally within a Project | Current, superseded, or disputed decision and its evidence |
+| Prepare an update | Project sources and permitted memory excerpts | Draft with supported sources |
+| Ask about a Note | Attached Note plus permitted retrieval tools | Answer, source references, and tool trace |
+| Hand work to an agent | Brief composition and bounded project memory | Previewed brief sent with the task |
+| Repeat an Automation | Its source selection and optional run memory | Output and retained execution record |
+
+A memory match supplies context.
+It does not authorize a write, send, or launch.
+Read [Automation](AUTOMATION.md) and [Coder integration](CODER_INTEGRATION.md) for those execution paths.
 
 ## What HoldSpeak remembers
 
@@ -133,9 +148,14 @@ The request records the receipt:
 }
 ```
 
-Explicit attachments win. A request with attached records uses those records and adds no automatic recall.
+Explicit attachments take precedence over automatic recall during grounding.
+A tool-capable Ask can still retrieve additional permitted records during its turn.
+Its **About** selection is a starting point, not a general read-access boundary.
+The caller, tool palette, and service-specific scope govern those reads.
 A Thread leaves out its own messages and freezes the recalled sources on the user message.
-Ask, Thread, Agent, Sequence, Workflow, Workbench, and Coder steering all use this contract.
+The applicable grounding path is shared by Ask, Thread, persona, Sequence, Workflow, Automation, and Coder preparation.
+Drafters also use `services/memory_grounding.py` and the per-capability memory policy for bounded excerpts.
+A narrow service scope, such as a project-update run, adds its own source checks.
 A provider never searches memory itself.
 
 ## Search contracts
@@ -182,3 +202,14 @@ The link step adapts the parent and child recall of RAGFlow (Apache-2.0).
 The facts, beliefs, and pages adapt ideas from Hindsight (MIT).
 HoldSpeak copies no source code from either project.
 The design is in `docs/internal/MEMORY-DESIGN.md`.
+
+
+## Automation working memory
+
+Per-Automation working memory is separate from the Desk retrieval index.
+`holdspeak/workbench_memory.py` stores bounded observations in a JSONL file for each Workbench.
+The admitted runner can recall them before a run and write an observation after an item completes.
+Memory must be enabled for that run path.
+A stored observation informs later work and does not grant authority for an effect.
+
+Read [Automation](AUTOMATION.md) for trigger configuration and result inspection.

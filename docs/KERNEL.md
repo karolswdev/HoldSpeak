@@ -1,14 +1,29 @@
 # Kernel and operation runtime
 
-The kernel is the Python package `holdspeak/kernel`. It admits typed
-operations, records who may run them, and keeps one terminal receipt for each.
-It is a durable operation coordinator and audit journal. It is not an
-operating-system kernel, a general scheduler, or a content store.
+The kernel coordinates consequential operations inside HoldSpeak's agentic work flows.
+It authenticates execution roles, binds the request and target, and records a terminal outcome.
+The implementation is `holdspeak/kernel/`.
+The local hub composes it with the domain services, inference runtime, and registered executors.
 
-Read this document if you add an operation, debug a refused or stuck
-operation, or review how HoldSpeak records outcomes. For the product rules on
-Secure, Normal and YOLO, read [Authority](AUTHORITY.md). For egress, read
-[Security](SECURITY.md).
+Read this reference when you add an operation, debug a refusal, or recover unfinished work.
+[Authority](AUTHORITY.md) describes Control modes.
+[Model runtime](MODEL_RUNTIME.md) explains inference attempts and tool effects.
+[Security](SECURITY.md) defines data boundaries and the limits of cooperating same-user code.
+
+## Where it sits in a work flow
+
+| Flow | Runtime responsibility | Separate domain result |
+| --- | --- | --- |
+| Ask with tools | Admit model work and applicable child tool effects | Saved conversation, Notes, tasks, prepared sends |
+| Automation | Bound parent run, children, execution route, and publication | Occurrence, output, run history, optional memory |
+| Coding handoff | Admit supported process and worktree operations | Launch and work-attempt records |
+| Speech delivery | Bind capture/transcription and consequential delivery operations | Transcript or dictation journal and target result |
+| External send | Bind the configured target and submitted content | Destination send state and effect evidence |
+
+A service validates its domain inputs and interprets its results.
+The kernel records execution authority and outcome.
+A read or presentation update does not need the same admission as an external effect.
+A parent model run does not grant blanket authority to every requested tool.
 
 ## What the kernel owns
 
@@ -26,6 +41,9 @@ Secure, Normal and YOLO, read [Authority](AUTHORITY.md). For egress, read
 Domain content stays in the native tables. The tables `kernel_operations`,
 `kernel_receipts`, `kernel_journal`, `kernel_parent_runs` and
 `kernel_projection_stages` hold runtime facts.
+Parent input snapshots can include caller-supplied prompt text.
+The filter rejects named audio, PCM, and token keys; it is not semantic content classification.
+Read [Data model](DATA_MODEL.md) before treating a kernel snapshot as content-free.
 
 The kernel does not transcribe audio. It does not decide what a Meeting
 artifact means. A codec validates the request and calls the service that does
@@ -80,9 +98,8 @@ registers an operation.
 
 ## Operation states
 
-An operation has an `operation_id` (`op_<uuid>`), a request key, an
-idempotency key, a name and version, a principal, a target, a placement, a
-payload hash, a parent id, a correlation id and a revision.
+An operation has an `operation_id` (`op_<uuid>`), request key, idempotency key, name, and version.
+It also binds a principal, target, placement, payload hash, parent id, correlation id, and revision.
 
 ```mermaid
 stateDiagram-v2
@@ -246,9 +263,8 @@ to the process state `unknown`.
 
 Do not put content in arguments that can reach the journal. Do not accept
 authority fields from a client. Do not make a generic executor import a native
-driver. For a new parent kind, add it to the `kind` check in the schema and use
-the controller epoch, budget, lease, checkpoint, cancellation and publication
-fence. For an OS effect, document its process boundary beside the codec.
+driver. For a new parent kind, extend the schema's `kind` check.
+Use the controller epoch, budget, lease, checkpoint, cancellation, and publication fence. For an OS effect, document its process boundary beside the codec.
 
 ## Tests
 

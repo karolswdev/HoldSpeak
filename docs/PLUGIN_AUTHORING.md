@@ -4,7 +4,7 @@ A meeting-intel plugin turns the transcript of a saved meeting into a typed,
 reviewable artifact. Examples are decisions, requirements, a risk register and
 an architecture diagram. HoldSpeak scores the transcript for intent, selects a
 chain of plugins, runs them, stores the output and shows it in the read-only
-History view.
+Meetings view.
 
 The routing, storage, rendering and approval code already exist. A new plugin
 supplies the prompt, the output shape and a renderer.
@@ -18,7 +18,7 @@ external effects, see [Actuators](#actuators) and
 
 1. Write a class with `id`, `version` and a `run(context) -> dict` method.
 2. For model work, use the dispatch handle that the host puts in the context.
-3. Register a renderer so the artifact is readable in History.
+3. Register a renderer so the artifact is readable in Meetings.
 4. Add the plugin id to a routing chain, or ship it as a plugin pack.
 5. Write unit tests with an injected model reply.
 
@@ -145,7 +145,7 @@ The router owns model selection, fallback and receipts. See
 ## Render the artifact
 
 [`holdspeak/plugins/synthesis.py`](../holdspeak/plugins/synthesis.py) renders
-stored output for History. Two registries connect a plugin to its renderer:
+stored output for Meetings. Two registries connect a plugin to its renderer:
 
 - `_ARTIFACT_TYPE_BY_PLUGIN` maps a plugin id to an artifact type.
 - `_ARTIFACT_RENDERERS` maps an artifact type to a renderer function.
@@ -287,7 +287,7 @@ status `blocked` and the error `Missing capabilities: llm`. The full example is
 A plugin is done when it has:
 
 - a real `run()` that uses the host dispatch handle for model work;
-- a stored artifact that History shows;
+- a stored artifact that Meetings shows;
 - a registered renderer;
 - chain membership;
 - tests for success, failure and the capability gate, with the routing tests

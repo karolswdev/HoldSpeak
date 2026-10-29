@@ -1,8 +1,9 @@
 # Companion architecture
 
 A companion is a client or presence surface that uses the hub's typed
-boundaries. A companion is not a second database, a second authority kernel or
-a second model router. The hub owns the records and the operation receipts.
+boundaries. A companion does not replace the hub's database, authority kernel or
+model router. A native client can keep a local cache or store for capture and
+sync, but the hub owns shared records and operation receipts.
 
 For setup steps, read [iPad](IPAD.md), [AIPI-Lite](AIPI_LITE.md),
 [Firefox extension](FIREFOX_EXTENSION_GUIDE.md) and
@@ -13,7 +14,7 @@ For setup steps, read [iPad](IPAD.md), [AIPI-Lite](AIPI_LITE.md),
 ```mermaid
 graph LR
     Web[Web Desk] -->|HTTP and RuntimeBus| Hub[HoldSpeak hub]
-    iPad[iPad and iPhone Swift client] -->|HTTP and Bearer token| Hub
+    iPad[iPad and iPhone Swift client] -->|HTTP and runtime Bearer token| Hub
     AIPI[AIPI-Lite bridge] -->|device bridge and audio WebSocket| Hub
     Coder[Claude Code or Codex hook] -->|loopback HTTP and agent credential| Hub
     Firefox[Firefox extension] -->|loopback event POST| Hub
@@ -22,8 +23,9 @@ graph LR
     Hub --> Presence[Qlippy presence]
 ```
 
-Authentication and authority are separate. A paired Bearer token or a device
-key proves who the client is. An owner action, a control posture or a bounded
+Authentication and authority are separate. The runtime Bearer token proves who
+the native HTTP client is; the device audio socket has its own PSK handshake. An
+owner action, a control posture or a bounded
 grant admits an effect. A local dismiss, a presence card or physical nearness
 is never approval. External effects use the same actuator policy and receipts
 as the Web Desk. See [Authority](AUTHORITY_MODEL.md) and [Kernel](KERNEL.md).
@@ -55,8 +57,9 @@ does not add its own HTTP stack.
 - A failed request becomes `DesktopClientError.http`. A malformed peer URL
   counts as offline.
 
-The iPad keeps a local SQLite store. A selection on the Coder board does not
-send anything. Sending needs an explicit answer action.
+The native client can keep a local SQLite store for on-device capture and sync.
+That store is a client cache/store, not a second hub authority. A selection on
+the Coder board does not send anything. Sending needs an explicit answer action.
 
 The routes the iPad calls are listed in [API surface](API_SURFACE.md). Each
 route there names its consumers.

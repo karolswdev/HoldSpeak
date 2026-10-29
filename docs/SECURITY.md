@@ -1,220 +1,132 @@
 # Security and privacy
 
-This document states what data HoldSpeak holds, where it lives, what can leave
-the machine, and which boundaries HoldSpeak enforces. If the code and this
-document disagree, that is a bug in one of them. File it.
+HoldSpeak is local-first, single-user software. Local-first describes the hub
+and its default storage. It does not mean that every configured model,
+connector, agent CLI, browser client, or destination is local. Check the
+assigned engine, egress chip where
+provided, and execution Receipt for the route that was used. A route label alone
+does not prove where every byte went.
 
-HoldSpeak is **local-first**. Nothing leaves your machine unless you choose a
-feature that sends it. HoldSpeak has no telemetry, no crash reporting, and no
-background beacons.
+HoldSpeak has no product telemetry, crash reporting, or background beacon.
 
-Related documents:
-
-- [Authority](AUTHORITY.md): Control mode, grants, and receipts.
-- [People security boundary](PEOPLE_SECURITY.md): the encrypted People store.
-- [Gate](GATE.md): held Coder tool calls.
-- [Security model](SECURITY_MODEL.md): the runtime controls behind this contract.
-- [`trust-destinations.json`](trust-destinations.json): the machine-readable
-  list of destinations. Setup, doctor, and the Web Desk render it.
+This page describes implemented controls and their limits. It is not a promise
+that cooperating same-user code is a sandbox.
 
 ## Control mode
 
-The `control_mode` config key sets how actions that cause an effect are handled.
-The modes are **Secure**, **Normal**, and **YOLO**. YOLO is the default.
+The modes are **Secure**, **Normal**, and **YOLO**. The wire values are
+`safe`, `neutral`, and `yolo`. **YOLO** is the default.
 
-Under YOLO, an action for a registered, configured destination runs when you
-propose it. Every execution writes an immutable receipt. Under Normal and
-Secure, an action needs a decision or an exact, bounded grant.
+YOLO permits an eligible operation inside its configured scope without another
+HoldSpeak prompt. It does not waive authentication, destination binding, the
+allow-list, payload binding, pane identity, or the terminal Receipt. Secure and
+Normal can require a preview, owner authorization, or an exact scoped grant.
 
-These limits hold in every mode:
-
-- Encryption at rest and key custody for People.
-- The People refusal rules (scoring, surveillance, employment inference).
-- Egress badges and disclosure surfaces.
-- The receipt and refusal ledger.
-- Refusal to sync, export, or connect People content.
-
-See [Authority](AUTHORITY.md) for the full mode table.
+The decision applies to a concrete operation descriptor. It is not a general
+permission for a model or a process.
 
 ## Interview context and model work
 
-Interview facts and suggestions belong to a saved Thread on the hub. A stated
-fact includes a source quote. An inference carries an explicit inferred
-classification.
+An Ask or Thread turn starts with its selected records and frozen references.
+Tool-capable Ask can retrieve additional permitted Desk context through its
+tools. The **About** objects are a starting point, not a limit. The model route
+receives the prompt and any context that the turn admits. A local model keeps
+that request on the hub. A configured endpoint, mesh node, or CLI provider can
+receive the prompt and selected records or tool results.
 
-A model turn can send permitted context to its assigned model endpoint. Check
-the **Engines** destination and the Receipt when the host matters.
-
-Removing a fact also removes its dependent suggestions. It does not erase earlier
-Thread messages, kept outputs, or backups. Use the retention controls for those
-copies.
-
-The People section of Interview opens the protected People surface. Enter
-confidential relationship material there. See the [Interview guide](INTERVIEW.md).
+The **People** section of Interview opens the protected People surface. A normal
+Thread does not turn private People material into generic memory. The agent
+brief composer includes People data under Conductor R7 when its grounded source
+supplies it. The brief redacts secrets, records source references, and reports
+the People cut value.
 
 ## Kernel boundary: cooperating code, not a sandbox
 
-HoldSpeak runs its effects through a kernel. The kernel admits one operation,
-signs a warrant, lets one executor claim it, and records one immutable receipt.
-Terminal text and keys enter through `process.input@1`. Connector subprocesses and
-egress enter through their registered operations. Classified CLI reads need an
-authenticated owner principal.
+The kernel admits operations, tracks principals, binds payloads and
+destinations, and writes receipts. It is a cooperating application boundary.
+It is not an OS sandbox against code that already runs as the same user. Such
+code can read files, open sockets, start processes, or bypass HoldSpeak.
 
-Desktop typing crosses a real process boundary. `TextTyper` is a proxy that sends
-a warrant over an anonymous pipe. A spawned child checks the broker signature,
-policy version, request shape, payload hash, expiry, one-use warrant ID, and
-focused-window generation. Only then does the child load the keyboard and
-clipboard driver. A focus refusal spends the warrant. A lost child is
-`indeterminate`. HoldSpeak never retries it blindly.
+Use OS isolation for untrusted plugins, agent-written programs, or a model that
+must not access the user account. A process that bypasses the hub is outside
+these controls.
 
-**This is not a sandbox against arbitrary same-user Python.** The OS account can
-launch processes and open sockets, and the native drivers are installed on disk.
-Run untrusted plugins or agent-written Python only with OS-level isolation. See
-the [kernel plan](internal/PLAN_KERNEL_OPERATION_BROKER.md#5b-effect-capability-confinement-the-enforcement-boundary).
+Desktop typing crosses a process boundary through the configured typing relay.
+If the relay outcome is uncertain, HoldSpeak reports `indeterminate` and does
+not retry blindly.
 
-A test fence counts every effect statement in the five census families. The
-effect debt register, [`effect_ledger.json`](../holdspeak/kernel/effect_ledger.json),
-now reads 0 total / 0 covered / 0 exempt / 0 debt. A new unclassified effect
-statement fails the fence by name.
+### Kernel effect census
 
-Approved work has a liveness bound. Work that is not claimed before its signed
-claim deadline ends as `execution_claim_expired`. Claimed work with no receipt
-before the execution deadline ends as `execution_liveness_expired` and
-`indeterminate`. The web runtime reaps expired work at startup and every second.
-Terminal receipts are immutable, so a late executor cannot change uncertainty
-into success.
-
-At the HTTP and WebSocket edge, credentials derive one of three principal kinds:
-owner, agent, or node. Routing is deny by default.
-
-- The owner approves or rejects.
-- An agent proposes allowed work and reads only its own scope. An agent never has
-  `decide`, posture, delegation, or owner rights.
-- A node claims executor work.
-
-Scheduled work uses an internal `scheduler` principal. No credential or code path
-upgrades it to owner.
+The Article XI transitional effect ledger reports `0 total / 0 covered / 0
+exempt / 0 debt` for the five named census families under `holdspeak/`. This is
+the ledger's classified statement count, backed by its machine-pinned proof
+map. It is not a universal sandbox claim: installed libraries, the operating
+system, and same-user code remain outside the kernel's control.
 
 ## Inference authority and schedules
 
-Every physical model attempt takes one path. `InferenceRunner` admits and claims
-one `inference.invoke@1` child, binds one deployment revision, and lets one
-reviewed adapter dispatch. A retry or fallback is a new child with a new receipt.
-Cancellation rejects a late publication. Work that cannot be proved complete is
-`indeterminate`. See [Architecture](ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt).
-
-One finite parent run covers each live meeting, dictation, or wake session
-(`meeting.session@1`, `dictation.session@1`, `wake.session@1`). Each model or
-Whisper call is still a child that rechecks liveness, revocation, deadline, budget,
-and revision.
-
-Generic inference receipts hold references and hashes, not model bodies. This is
-not a content-free promise for all kernel storage. A parent run keeps its input
-snapshot, which can contain request content. The generic filter rejects named
-audio, PCM, and token keys. It does not classify every string. See
-[Security model](SECURITY_MODEL.md#data-handling-and-egress).
+Every physical model call is a child inference attempt. It freezes the engine
+assignment, route boundary, and input reference, then records a terminal
+receipt. A fallback is another attempt with its own route and receipt.
 
 ### Scheduled Workbench runs
 
-A scheduled Workbench run has narrower authority than a manual run. When you
-enable the schedule, HoldSpeak writes one live row in `kernel_schedule_delegations`.
-The row binds:
-
-- the owner delegator
-- the Workbench ID and revision, and the schedule revision
-- the Agent (`recipe`) ID and revision
-- the exact cadence
-- the deployment revision and terms digest
-- an optional expiry
-
-The due tick acts as `scheduler`. Admission re-checks these terms in the same
-write transaction that claims the due minute. A missing, revoked, expired,
-disabled, changed, or duplicate attempt is refused before dispatch with one of
-`delegation_missing`, `delegation_revoked`, `delegation_expired`,
-`schedule_disabled`, `delegation_stale_work`, `delegation_target_changed`, or
-`duplicate_tick`. Each refusal leaves a receipt.
-An edit, a disable, or drift also advances the publication fence, so a running
-child cannot publish under old terms.
+An enabled automation stores its trigger, source scope, engine, output, and
+authority. Its delegation binds the Workbench and Agent revisions, exact
+cadence, deployment revision, terms digest, and optional expiry. The scheduler
+rechecks these terms at the due tick. A missing, revoked, expired, disabled,
+stale, changed, or duplicate schedule is refused before dispatch. A schedule is
+not proof that a run happened. Read the run record and terminal receipt.
 
 ### Scheduled recording
 
-Enabling a recording schedule approves its exact terms: time, cadence, and
-duration. Editing the cron expression, duration, or timezone writes a new
-delegation receipt. The due tick fires as `scheduler` and writes a receipt for
-each fire.
-
-A visible countdown on the capture hero names the schedule and the seconds left.
-You can cancel during the countdown. Every failure leaves a receipt:
-
-- `mic_floor_held`: another holder has the microphone. The receipt names it.
-- `missed`: the hub was down. HoldSpeak writes one receipt per missed window.
-- `missed_interrupted_arming`: the countdown was interrupted.
-
-Capture uses the normal meeting start path. Audio stays local.
+An armed recording stores its exact calendar rule. When it fires, it uses the
+ordinary meeting start contract. It can capture only when the local audio
+devices and permissions are ready. The schedule does not grant a model route or
+an outbound destination. A held audio floor, a missed hub window, or an
+interrupted countdown leaves a named receipt. Editing time, cadence, duration,
+or timezone creates a new delegation state.
 
 ## 1. Data classes
 
-| Data | Where it lives | Sensitivity | Notes |
-|---|---|---|---|
-| Meeting transcripts | `~/.local/share/holdspeak/holdspeak.db` (`segments`, `segments_fts`) | High | Speech text, speaker labels, timestamps. |
-| Speaker voice embeddings | same database, `speakers.embedding` | High | A voiceprint, not raw audio. Used to recognize speakers across meetings. |
-| Meeting intelligence | same database (`intel_snapshots`, `topics`, `action_items`, `artifacts`) | Medium-high | Model-derived topics, actions, summaries, and plugin artifacts. |
-| Activity ledger | same database (`activity_records`, `activity_annotations`, `activity_meeting_candidates`) | Medium | URLs, titles, and entity IDs from browser history. |
-| Raw meeting audio (iPad app) | Apple Documents, `meeting-audio/<meeting-id>.wav` | High | The app checkpoints the take on the device and finalizes a WAV. Recovery files are removed after finalization. |
-| Config | `~/.config/holdspeak/config.json` | Medium | Holds the device PSK and web auth token. Destination secrets are kept apart in owner-only local custody. |
-| Web recovery drafts | Browser `localStorage`, `hs.draft.v1.*` | High | Editable drafts. Cleared after the action that keeps them. |
-| Web pending voice capture | Browser IndexedDB, `holdspeak-voice-recovery` | High | One bounded WAV per scope, kept only while transcription has not confirmed text. A successful transcription deletes it. |
-| Native dictation recovery | Apple `UserDefaults` and Application Support | High | The draft, destination, and delivery ID, or bounded PCM. Cleared after delivery or transcription succeeds. |
-| First-value mechanics | same database (`first_value_attempts`, `first_value_events`) | Low | Event names, IDs, timing, counts, and failure category. No phrase, transcript, or audio column. |
-| Paired-delivery receipts | same database (`remote_dictation_deliveries`) | High | Delivery ID, request hash, lifecycle, and the terminal Receipt. A success Receipt can hold the final text so a reconnect returns it without typing twice. |
+| Class | Examples | Main boundary |
+| --- | --- | --- |
+| Capture | Microphone and system audio chunks | Local recorder, journal, and database |
+| Speech text | Transcript and dictation text | Local transcriber, then any assigned model route |
+| Desk records | Notes, meetings, decisions, projects, Threads | Main SQLite store and selected tools |
+| People | Relationships, shared intent, private preparation | Separate encrypted People store |
+| Credentials | Web token, model keys, connector keys | Owner-only config or native key custody |
+| Effects | Typing, issue creation, Slack, webhook | Destination-specific operation and receipt |
+| Agent work | Brief, repository, process, worktree | Agent launch scope and process receipt |
 
-All state sits under your home directory with normal file permissions.
+The main database also contains speaker embeddings, activity records, operation
+metadata, and paired-delivery receipts. Browser recovery storage can contain
+editable drafts or one bounded pending WAV. Native dictation recovery can hold a
+bounded draft, destination, delivery id, or PCM until transcription or delivery
+succeeds. These stores have separate retention and deletion paths.
 
 ## 2. Storage and at-rest posture
 
-- The database (`~/.local/share/holdspeak/holdspeak.db`) and the config
-  (`~/.config/holdspeak/config.json`) are **plaintext on disk**. File permissions
-  protect them.
-- The database runs in WAL mode. Recent writes live in `holdspeak.db-wal` and
-  `holdspeak.db-shm` while a hub is open. Do not put the data directory in a
-  synced folder. Back up with `holdspeak backup`. Do not copy the file.
-- Browser-history reads use temporary copies of the browser files. HoldSpeak
-  deletes the copies after import and never modifies the originals.
-- Activity retention applies at import time (default 30 days). Per-domain
-  exclusion rules apply.
+The normal data plane is SQLite under the configured data directory. It is not
+encrypted by the meeting or Desk layer. Use operating-system disk protection
+and file permissions for the main database.
+
+The database uses WAL files while the hub is open. Do not place the data
+directory in a synced folder. Browser-history reads use temporary copies and do
+not modify the browser database. Activity retention and per-domain exclusion
+apply when those records enter the activity ledger.
 
 ### Encryption at rest
 
-The normal data plane stays plaintext. People records use a separate encrypted
-store.
-
-Full-disk encryption (FileVault on macOS, LUKS on Linux) is the practical
-protection for a single-user local machine. It covers every file. HoldSpeak does
-not manage a key for the whole database. **Turn on full-disk encryption.** Without
-it, file-level access to a compromised machine exposes transcripts, voice
-embeddings, and the activity ledger.
-
-People content is different. HoldSpeak encrypts it with AES-256-GCM before it
-reaches SQLite. The key sits in macOS Keychain or Linux Secret Service. There is
-no file, config, or environment fallback. If the credential store is missing,
-locked, or does not match, People fails closed. People content stays out of the
-normal database, backups, search, Ask, Memory, sync, exports, connectors, Cadence,
-generic MCP surfaces, and logs. See [People security boundary](PEOPLE_SECURITY.md).
-
-A new class of third-party confidential data must use an equally reviewed
-encrypted boundary or stay unsupported. It must not reuse the plaintext plane.
+People records use AES-256-GCM before SQLite sees their payload. The key is held
+by the native key store. A missing, locked, mismatched, or unsafe key makes the
+People store unavailable. It does not silently open an empty replacement.
 
 ### The People resolver
 
-Meeting intelligence can match owner names and speaker labels to People
-relationships. The resolver (`people_service.resolve_relationship_by_watch_identity`)
-runs inside the encrypted store, in memory, at read time. Only an opaque
-relationship ID reaches the Watch projection.
-
-A match is never a guess. Two relationships with the same display name, or an owner
-string that fits two first names, resolve to nobody. HoldSpeak reports them as
-ambiguous with their candidates. Only your own alias link settles the match
-(`people_service.resolve_owner_candidates`).
+Meeting, Project, and follow-through services can resolve a People identity at
+read time. The resolver refuses ambiguous matches. It does not put private
+People notes into the plain transcript or generic search index.
 
 ### The reviewer nudge
 
@@ -239,29 +151,24 @@ deterministic fallback has no egress.
 
 ### The remote boundary
 
-The Streamable HTTP listener (`POST /api/mcp`) is off by default for remote
-callers. The `bind_host` setting is only stored. No listener or peer-address check uses it,
-so it is not a network fence. A request from a non-loopback address never gets the
-`OWNER` principal: the owner web token from a remote address returns 403.
-HoldSpeak never reads `X-Forwarded-For` to derive a principal.
-
-A loopback request with the owner token is local transport, not remote access. It
-works whether or not the remote flag is on. The stdio MCP sidecar uses this path.
-
-The sidecar never opens the database. It finds the running hub through the owner
-lock beside the database file. It forwards each JSON-RPC message to the hub at
-loopback `POST /api/mcp` with the owner token. The hub is the only writer. With no
-hub running, the sidecar refuses by name. It ignores `HOLDSPEAK_MCP_STANDALONE`.
-See [MCP sidecar](MCP_SIDECAR.md).
-
-Scoped credentials carry a palette (the tool families the caller may use) and a
-TTL capped at 30 days. The hub keeps `sha256(token)` and compares in constant
-time. The plaintext shows once, at issue. A hub restart clears all credentials.
-Each remote tool call writes a kernel-journal receipt with `origin: remote`, the
-caller label, and the caller's tailnet IP. There is no relay. Machines talk
-directly on the tailnet.
+The hub listens on its configured host, but the persisted `bind_host` value is
+not a network control. **No listener or peer-address check uses it,** so it is
+not a network fence. On `POST /api/mcp`, a non-loopback request with the owner
+token is refused. The owner web token is not a substitute for peer isolation.
+The stdio MCP sidecar forwards JSON-RPC to the running loopback hub; it does not
+open the database itself. Do not expose the hub to an untrusted network.
 
 ### Connector boundaries
+
+GitHub, Jira, Confluence, calendar, email, Slack, webhooks, model endpoints,
+mesh nodes, remote clients, and installed agent CLIs are separate boundaries. A
+connector can send data to its provider. The connector's credential and
+destination rules do not make model inference local.
+
+Confluence uses the configured read-only CLI allow-list. Calendar HTTPS sources
+use bounded fetches and refuse redirects. File calendar sources cause no network
+egress. Connector packs run in the hub process with the owner's permissions;
+their manifest is an honesty check, not a sandbox.
 
 - **Confluence.** The connector runs the `acli` CLI with a read-only allowlist
   (`auth status`, `auth switch`, `space list`, `space view`, `page view`,
@@ -276,164 +183,124 @@ directly on the tailnet.
 
 ## 3. Trust boundaries
 
-1. **The local process.** Fully trusted. It runs as you.
-2. **The web runtime** (`web_server.py`). It binds `127.0.0.1` by default. On a
-   non-loopback host, an auth token is required to bind and on every request. The
-   exceptions are `/health`, the device audio WebSocket, and `/_built` assets.
-3. **The device link** (`/api/devices/audio`). Devices such as AIPI-Lite
-   authenticate with a pre-shared key (PSK), compared in constant time
-   (`device_audio.verify_psk`). Reach is same-LAN.
-4. **The audio floor** (`/api/dictation/floor`, `/claim`, `/release`). The browser
-   open mic claims the same one-at-a-time arbiter as the hotkey, the meeting
-   recorder, and the wake listener. The claim is leased for 20 seconds
-   (`DEFAULT_LEASE_SECONDS`) and renewed at half that time. A closed tab stops
-   renewing, and the floor frees itself. A refused claim answers 409 and names the
-   active owner. The routes are local-only and carry no audio.
-5. **Connector packs.** Code in `~/.holdspeak/connector_packs/` runs in-process
-   with your permissions. The manifest permission check
-   (`connector_runtime.py`) is an honesty mechanism, **not a sandbox**. A
-   malicious pack can call `subprocess.run`. Install only packs you trust.
-6. **Session steering** (`coder_steering.py`). Typing into a live Coder tmux pane
-   is a this-device act. Nothing leaves the machine. Consent controls it, not an
-   egress row. Watching is free: the peek is read-only and never sends a key.
-7. **Rails as material** (`grounding_rails.py`, `rails_observer.py`). Grounding a
-   run on an open phase or story reads the exact file your own `dw` command names,
-   as opaque text. Nothing leaves the machine. The ambient observer is off by
-   default and read-only. It writes one local journal note per batch. It never
-   writes to the rails. A remote node sends rail events only, with no repo file
-   bodies, each stamped with its origin node.
-8. **The tool-call gate.** See below and [Gate](GATE.md).
+1. The local hub process runs as the owner and is trusted with the main data.
+2. The browser is an authenticated client. Its drafts and pending audio have
+   their own browser storage limits.
+3. The web runtime normally binds loopback. A non-loopback bind requires the
+   web token for HTTP requests. The device audio WebSocket has its own PSK
+   boundary, and WebSocket bus auth has its own route behavior.
+4. A model endpoint receives the frozen request selected for its assignment.
+5. An agent process receives its brief and scoped launch credentials.
+6. A desktop relay can type into the focused application. It is not a content
+   sandbox.
+7. A connector or destination provider receives the payload named by its
+   operation.
+
+The audio floor is a leased one-at-a-time arbiter shared by browser open mic,
+hotkey dictation, meeting capture, and wake listening. It does not carry audio
+itself. A paired device audio stream authenticates with a PSK and sends audio to
+the hub over its device route.
 
 ### Session steering rules
 
-- **Secure and Normal** need an arming grant. You issue it per session from the
-  Desk. The TTL is 5 minutes in Secure and 15 minutes in Normal. The hard cap is
-  60 minutes. The grant is pinned to the pane's tmux `%N` identity and held only
-  in memory. A hub restart disarms everything.
-- **YOLO** needs no arm grant for text and allowed-key delivery to a registered
-  session or an exact `pane:%N`.
-- The pane ID from the peek travels with the delivery request. One hub-side
-  chokepoint re-resolves the registry target before every send. It refuses a
-  missing, recycled, or retargeted pane and sends only to the verified `%N`.
-- A mode change invalidates old grants. Every delivery and refusal is audited with
-  its policy snapshot and shows as a source-linked Desk Receipt.
-- **Any key.** Control and named keys (`C-c`, `Escape`, arrows) go through
-  `coder_steering.deliver_keys`. A key must be on the allow-list or HoldSpeak
-  refuses it by name before it reaches `tmux`.
-- **Any pane.** A `pane:%N` key steers a raw tmux pane you started by hand, with
-  the same pin and re-check.
-- **Any configured machine.** `coder_steering_relay` forwards a command to a node
-  named in `HOLDSPEAK_STEER_NODES`. The machine that types resolves the policy or
-  grant and writes the audit. The hub only relays. Only the command, the expected
-  pane identity, and the node's own bearer token cross the wire. A node that does
-  not answer refuses with `node_offline`.
-- **The session factory** (`coder_factory.py`) holds `spawn`, `rename`, and
-  `kill`. A session name must pass a strict allow-list: it starts with a letter,
-  digit, or underscore, so it is never read as a flag. HoldSpeak passes it as its
-  own argument, never as a shell string. `kill` keeps a separate arm grant. It
-  re-checks the pinned pane, drops the grant, and audits.
+Coder steering binds the answer to the current agent wait, pane identity,
+destination, and launch. An owner answer press can authorize that one current
+wait. A stale wait or pane is refused. YOLO does not remove those checks.
+
+Secure and Normal use a bounded in-memory pane grant. YOLO can deliver text and
+allowed keys to a registered session or exact pane inside the configured scope.
+The relay re-resolves the current pane before each send. A missing, recycled,
+or retargeted pane is refused. Mode changes invalidate affected grants, and a
+hub restart clears in-memory grants.
+
+Named keys and control keys use an allow-list. A configured steering node
+receives only the command, expected pane identity, and its own bearer token. The
+node performs the policy check and writes the audit on the machine that types.
 
 ### Tool-call gate rules
 
-A Claude Code session that you opted in can hold a matched tool call for a Desk
-decision.
-
-- **One chokepoint.** Every state change passes through one transition method in
-  `db/gate.py`. The first write wins. A losing race gets a typed 409 that names
-  the standing decision. A census test (`tests/unit/test_gate_chokepoint.py`)
-  fails on a second path.
-- **The record is not authority.** Only the live hook that waits for the decision
-  can let the call proceed.
-- **Fail closed.** When armed, any error is a deny with a named reason. There is
-  no allow-on-error and no timeout auto-allow. When not armed, the hook is inert.
-- **Restart invalidation.** Hub startup flips every held proposal to
-  `invalidated`.
-- **Bounded preview.** The hook sends a SHA-256 and the first 120 characters of the
-  arguments. This truncates. It does not remove secrets.
-- **No config edits.** `holdspeak gate install` prints the hook block. You add it
-  to `~/.claude/settings.json`.
-- **Token totals.** The Stop-hook leg reports token counts and the model name to
-  the loopback hub. No message text leaves the hook process.
+Agent tool calls are checked against the launch scope and tool family. Agents
+cannot change control posture, impersonate the owner, or use a missing launch
+rule. The tool receipt records the operation and result. The Coder gate is one
+chokepoint. A held call has a bounded preview, a first-write-wins decision, and
+restart invalidation. The preview truncates canonical JSON after redaction; it
+does not make unknown secrets safe.
 
 ## 4. Egress points: everywhere data can leave the machine
 
-[`trust-destinations.json`](trust-destinations.json) is the machine-readable
-source for destination names, boundaries, data classes, authority, and revoke
-actions. This table adds implementation detail. It is not a second inventory.
+| Path | Data that can leave | Control |
+| --- | --- | --- |
+| Remote model endpoint | Prompt and selected context for an admitted inference attempt. Raw audio and embeddings are not sent by this path. | Frozen deployment revision, assigned host, child attempt, and Receipt. A fallback is a new attempt. |
+| Supported CLI inference engine | Prompt and selected context through the installed CLI and its provider. | The CLI profile and provider account are the boundary. It is not a coding-agent launch. |
+| Coding-agent handoff | Brief, selected Desk context, repository facts, and any People data carried by the brief. | Owner handoff, launch scope, worktree, process receipt, secret redaction, and 32 KB brief cap. |
+| Calendar ICS source | One bounded HTTPS fetch per source refresh. No credentials, cookies, or redirect follow-up. | HTTPS-only source, timeout and size cap, redirect refusal, and host disclosure. File sources cause no network egress. |
+| Calendar snapshot | Calendar screenshot to the vision route assigned to `calendar.snapshot_extract`. | Egress is resolved before upload. No assignment gives a named refusal. Confirmed events become a local source. |
+| Failure-alert webhook | Queue statistics and failure-alert metadata, not transcript text. | Optional `intel_retry_failure_webhook_url`, bounded request, and external-egress receipt. |
+| Wake-model download | Detection model bytes when wake word is enabled and models are absent. | Opt-in download. Detection runs locally after the model is cached. |
+| Email channel | Frozen email body, sender, recipients, and provider request. | `channel.send`, provider host allow-list, native key custody, size and recipient limits, and terminal Receipt. |
+| Slack channel | Frozen document text. Meeting forms omit transcript and audio. | Saved Slack destination, native key custody, host and size checks, channel operation, and Receipt. |
+| Desk webhook | Proposed text as previewed to the configured endpoint. | Fixed destination, allowed-host policy, control mode, and Receipt. The URL is not returned in the proposal. |
+| Desk GitHub issue or comment | Previewed issue or comment through the user's `gh` identity. | Registered repository or project effect policy, owner action, and Receipt. HoldSpeak cannot retract a posted comment. |
+| Phone message | Message text and reply metadata to a paired Phone or configured Calls transport. | `phone.reach`, owner or agent principal, secret filter, length limit, pairing/line authentication, and a message event Receipt. A Program step has its own hourly limit. |
+| Calls line / Phone call | The call reason, bounded context, and live call audio/text through the paired Phone or configured Calls Line. | Owner press, or a Program/step with `may_call` under non-Secure control; no transport, busy, quiet-hours, repeat, and secret checks refuse by name. Call events keep the terminal state and transcript reference. |
+| Programs reaching the owner | A Program step can request a Phone message or call; the Program records remain local. | The Program and step control plus `phone.reach` decide the channel. Silence is never consent; an unallowed agent call waits in **Needs you**. |
+| Connector CLI enrichment | Entity ids and provider query data to configured `gh`, `jira`, or `acli` tools. | Opt-in connector pack, read-only allow-list where defined, and provider credentials. |
+| Mesh relay | Prompt and result between the hub and the named node. Provider keys do not cross. | Paired node bearer, pinned hub key, bound offer, and `holdspeak mesh serve`. |
+| Web runtime response | Data requested by a browser or remote client. | Loopback default, web-token middleware for non-loopback HTTP, route rights, and the route's own WebSocket rules. |
+| Device audio link | Audio frames in and device status out. | Paired-device PSK, same-LAN deployment expectation, and device route checks. |
+| Browser mic capture | WAV to the hub's transcribe route. The local transcriber does not retain raw audio after the request. | Authenticated route, bounded body, and browser recovery copy deleted after confirmed transcription. |
+| Paired dictation delivery | Final text and opaque delivery id to the named desktop. Raw audio does not cross. | Token gate, delivery claim, same-id replay, destination binding, and terminal Receipt. |
+| Desktop notification and optional operations alerts | Local notification body, or configured failure-alert statistics to the webhook above. | Desktop notification is local and opt-in. Alert webhook is separately configured and does not carry transcript text. |
 
-| Egress | Trigger | What leaves | Control |
-|---|---|---|---|
-| **Remote model endpoint** (`kernel/inference_runner.py`) | An admitted attempt whose frozen **Engines** revision names an off-machine OpenAI-compatible endpoint | The model input for that attempt and request metadata. Never raw audio or embeddings. | You author and assign the destination. Each attempt has its own child and receipt. Local destinations never cross. A fallback is a separate frozen attempt. |
-| **Calendar ICS sources** (`calendar_ingest_conductor.py`) | You add an ICS source (file path or HTTPS URL) in **Settings**. Each source refreshes at boot and every 15 minutes. | One bounded fetch per HTTPS source per refresh. No credentials, headers, cookies, or redirect follow-up. 10 s timeout, 5 MiB cap. | HTTPS only. Redirects are refused. The egress chip names the host. File sources cause no egress. |
-| **Calendar snapshot** (`services/calendar_snapshot_service.py`) | You import a calendar screenshot with **Snapshot** or a Desk drop | The image goes to the vision model assigned to `calendar.snapshot_extract`. A local model means nothing leaves. | No vision assignment gives a named refusal. The generated `.ics` is a local source with the same parser limits. |
-| **Failure webhook** (`intel_queue.py`) | You set `intel_retry_failure_webhook_url` | Queue statistics only. No transcript. | Opt-in. |
-| **Wake-model download** (`wake_word.py`) | `wake_word.enabled` turns on with the models absent | Nothing leaves. HoldSpeak fetches the detection models (about 7 MB) once and caches them. | Opt-in. Detection runs locally. |
-| **Send to Slack** (`services/channel_slack.py`) | You press `channel.send` for a saved Slack destination | The frozen document as Slack text. Meeting forms omit the transcript and audio. | The kernel admits an `external.egress` child to `hooks.slack.com:443`. Redirects are refused. Text over 39,000 characters is refused. No automatic repost follows an uncertain result. The webhook URL stays in the native keyring. |
-| **Desk Slack relay** (`web/routes/desk_actuators.py`) | None | Nothing | Refuses with `slack_moved_to_channel`. Old proposals and receipts stay readable. |
-| **Desk webhook** (`web/routes/desk_actuators.py`) | `meeting.companion_webhook_url` is set | The proposed text, as previewed, to that one endpoint | The URL is the consent for its host. YOLO runs it on propose. Normal and Secure need an authorization or grant. Every run writes a receipt. The URL is a credential and never appears in proposals, broadcasts, or API responses. |
-| **Desk GitHub issue** (`web/routes/desk_actuators.py`) | The GitHub connector is on | The issue title and body, as previewed, through your own `gh` | HoldSpeak uses your `gh` login and stores no token. An unregistered repo is refused even in YOLO. |
-| **Connector CLI enrichment** (`gh`, `jira`) | You enable the connector pack | Entity IDs (PR, issue, ticket numbers) to your own CLI tools | Opt-in. Manifest permissions `shell:exec` and `network:outbound`. |
-| **Mission-control receipts** (`missioncontrol_bridge.py`) | A rails repo is in your project map (`~/.holdspeak/delivery_workbench.json`) and the conveyor is open | Nothing composed. A read of that repo's open pull requests through your `gh`. | You author the map. The routes are GET-only. A `gh` failure shows as a typed absence. |
-| **PR receipts** (`delivery/pr_receipts.py`) | You click **Refresh**, or you set `pr_refresh_seconds` on a source | Nothing composed. One batched read of that repo's pull requests through your `gh`. | Manual by default. The cadence is per source and set by hand. A failure shows as a stale row. |
-| **Mesh relay** (`intel/mesh_relay.py`) | An admitted run against an **Engines** destination of kind `meshNode` | The prompt and result between the hub and the machine you named. No provider key crosses. | You pair the node. A per-node bearer authenticates it. The pinned hub Ed25519 key verifies each bound offer. The hub private key never leaves the hub. `holdspeak mesh serve` is the live consent. |
-| **Web runtime responses** | A client asks for data | What the API returns | Loopback by default. Token-gated off loopback. |
-| **Device audio link** | A paired device streams audio | Audio in. Status text out. | PSK. Same LAN. |
-| **Browser mic capture** (`POST /api/dictation/transcribe`) | You hold the mic or TALK in the browser, or open-mic detects an utterance | Nothing leaves. The WAV goes to your own hub, local Whisper transcribes it, and HoldSpeak does not keep the audio (16 MB cap). | Off loopback, the hub is token-gated. Open-mic posts one WAV per utterance. The browser detects speech with energy and no model. |
-| **Paired dictation delivery** (`POST /api/dictation/remote`) | You release the native dictation control or TALK, or send a draft | Final text and an opaque delivery ID to the named desktop. Raw audio never crosses. | Direct LAN or Tailscale peer, token-gated off loopback. The hub claims the ID first and caches the Receipt. A repeat returns the Receipt. A different payload under the same ID is refused. |
-
-Notifications (`desktop_notify.py`) stay on this machine. macOS uses `osascript`.
-Linux uses libnotify. By default the body holds only the needs-you count. Room
-names appear only if you turn on the content setting. Quiet hours (default 22:00
-to 08:00) suppress notifications. There is no remote push.
-
-Browser-history reads make no network call. The activity ledger leaves the machine
-only through the connector CLIs above, as entity IDs.
+Meeting speech transcription and ordinary browser dictation use the local
+Whisper backend. Model assignments route later summary, rewrite, intent,
+plugin, or calendar-snapshot inference; they do not turn speech capture into a
+remote transcription path. Check the assigned engine, egress chip, and Receipt.
 
 ## 5. Secrets
 
-- **Model API key.** Write it through the owner secret subresource of the Model
-  Library for that model. It never appears in general model resources, sync, the
-  database, read responses, logs, or receipts. The hub keeps it in owner-only
-  (`0600`) local custody. Reads report presence only. `HOLDSPEAK_PROFILE_<ID>_KEY`
-  is a headless fallback. Deleting the key in the UI writes a tombstone that
-  suppresses the fallback. One model never uses another model's key. See
-  [Models](MODELS.md).
-- **Device PSK.** Created on first use and stored in `config.json`
-  (`device_audio.ensure_device_psk`). Constant-time comparison. An empty PSK fails
-  closed.
-- **Web auth token.** Created on first use and stored in `config.json`
-  (`web_auth.ensure_web_token`). Constant-time comparison. Never logged.
-- **Slack webhook URL.** The `channel.save_slack_webhook` operation keeps the
-  secret out of its recorded arguments. It saves the URL in the native keyring
-  under `slack:<key_ref>`. A destination stores only the key reference and the
-  channel label.
-- **Firmware secrets** (AIPI-Lite). They live in gitignored `bridge.env` and
-  `secrets.yaml`. The repo holds `.example` templates.
+Do not put credentials in a Note, prompt, project context file, or test
+fixture. Write model and connector keys through their owner-only settings.
+Receipts store secret-safe destination identities and redacted previews.
+
+Web authentication uses the configured owner token. Model keys stay in the
+profile key store or owner-only local custody. People keys stay in native key
+custody. A process that can already read the account can still read local
+credentials; use OS isolation for that threat.
+
+- Model keys are written through the owner-only Model Library secret route. A
+  model resource reports presence, not the key. A deleted key writes a tombstone
+  that suppresses a headless environment fallback for that profile.
+- The device audio PSK is created for pairing and compared in constant time.
+  An empty PSK refuses the device route.
+- Slack, email, and other channel keys stay in native or owner-only key storage.
+  A destination stores a key reference, not the secret.
+- Web and model credentials are not copied into normal Desk records, general
+  MCP resources, logs, or receipts.
 
 ## 6. Threat model
 
-In scope:
+Controls cover accidental wrong-target effects, stale agent waits, duplicate
+remote typing, missing model receipts, and disclosure of People private
+records. They do not protect against:
 
-- Accidental transcript egress to a cloud model. Control: local default, fail
-  closed.
-- Open exposure when bound off loopback. Control: bind guard and token gate.
-- Forged device audio. Control: PSK and LAN source-IP allowlist.
-
-Out of scope:
-
-- A compromised local account, or file access without full-disk encryption (see
-  section 2).
-- A malicious connector pack that you install (section 3).
-- Network confidentiality for cross-network device or web reach. TLS, tunnels, and
-  per-device PSKs are future work.
+- malware or a same-user process;
+- a compromised model or connector provider;
+- a user who exposes the hub token or database;
+- a provider that retains data after HoldSpeak sends it;
+- audio or text that the operating system never delivered;
+- a remote bind that is exposed without a trusted network boundary.
 
 ## 7. Reporting
 
-HoldSpeak is a personal, local-first project. To report a finding, open an issue
-that names the data class, the trust boundary, and the egress point.
+Report a security issue without including credentials, private transcripts, or
+People content. Include the route, operation id, refusal or receipt state, and a
+minimal reproduction that uses synthetic data.
 
 ## See also
 
-- [Models](MODELS.md): pointing at a cloud endpoint is the one deliberate egress
-  choice.
-- [Getting Started](GETTING_STARTED.md): the local-by-default setup.
+- [People security boundary](PEOPLE_SECURITY.md)
+- [Security model](SECURITY_MODEL.md)
+- [Authority](AUTHORITY.md)
+- [Models](MODELS.md)
+- [Storage and migrations](STORAGE_AND_MIGRATIONS.md)

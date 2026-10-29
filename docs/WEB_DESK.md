@@ -1,98 +1,121 @@
 # The Desk
 
-The Desk is the HoldSpeak web app. It holds your records and opens your tools.
-This guide is for the person who works on the Desk every day. It describes `main`
-(checked against the live Desk on 2026-10-27).
+The Desk is HoldSpeak's web operating surface. It holds records and opens the
+tools that work with them. The local hub owns the records and Desk windows.
+The browser presents that state.
 
 ## Start work
 
-1. Open the address that `holdspeak` prints.
-2. Open **Today** to see current work. It is the first icon in the dock.
-3. Open **Needs you** (**Go > Needs you**, or **⌃J**) for items that need your action.
-4. Use **Go** to open an app, project or drawer.
+1. Start the hub and open the printed URL.
+2. Open **Today** for current work.
+3. Open **Needs you** for items that need your action.
+4. Use **Go** or Search to open an app, Project, drawer, or record.
 
-The desk shows your drawers, Projects and Notes as icons. The floating dock
-at the bottom opens **Today**, **Meetings**, **People**, **Agents** and
-**Speak**; the red button records a meeting. A badge on an icon is a live
-count, never a zero. An iconified window gets its own tile in the dock.
-**Go > Archive** and **⌘K** open the Archive, where the records you put away
-wait until you restore them.
-
-On a phone, **Go** lists the apps. An app fills the screen.
-See [Getting Started](GETTING_STARTED.md) for the first capture.
+On a phone, **Go** lists the apps and a window fills the screen. **Back**
+returns to the previous window. The same hub can serve another browser or a
+configured MCP client.
 
 ## Create work
 
 The **Desk** menu offers **New Note**, **New Decision**, **New Automation**,
-**New Project**, **New Meeting**, **New Person** and **New Drawer**. On a phone,
-use **Go > New** or Search. **New Project** opens project setup. See
-[Project Rooms](PROJECT_ROOMS.md). To start a conversation, open Ask (**⌘I**).
+and **New Project**. On a phone, use **Go > New** or Search.
 
-**New Note** opens a Note window. The toolbar has **Done**, **Ask about
-this**, **Find the tasks**, **Project** and **Send…**. The Note shows its
-Markdown in place as you type: headings, emphasis, lists and task boxes,
-links, code, quotes, tables and Mermaid diagrams. The status bar shows when
-the Note was saved. **Done** finishes the note. Asking about a note does not
-move it to another drawer.
+**New Note** opens an editable Markdown Note. **Develop this thought** opens
+the refinement Workbench for that Note. The UI calls the record a **Note**.
+**Thought** is a legacy domain term for the refinement flow.
+
+**Ask AI** opens the **Ask** window. Ask and Thread are one window. Start a
+new conversation with the first row in **Recent** or **⌘N**. The first
+question is kept as a Thread, and later questions continue that Thread. A
+separate Thread window is not the current navigation path.
+
+**New Project** opens the Project setup Door. See [Project Rooms](PROJECT_ROOMS.md).
 
 ## Open and file records
 
-On a desktop, select an object, then press Enter or open it with a double
-click. The **Object** menu shows the verbs that apply to the selection.
-Use **Ask about this** to ask about that record. A person has **Ask about
-<name>**.
+Select an object, then press Enter or use its open verb. The **Object** menu
+shows verbs for the selected record. Use **Ask about this** on a Note, Meeting,
+Artifact, Decision, Recipe, Project, directory, knowledge base, or person.
+People itself is not an Ask target. A person uses **Ask about <first-name>**.
 
-A drawer shows its contents. Existing knowledge collections appear as
-named drawers. Their members can also remain on the desk. Use Search to
-find a drawer by name, including on a phone.
+The selected object appears in Ask's scope control (accessible label
+**About**). This tells retrieval where to start. It does not restrict an Ask
+tool loop to one object. The engine can read other permitted Desk records when
+the request and tools allow it.
 
-Drag an object to change its position. Use its filing controls to change
-where it is kept. A view change does not move the stored record to another
-hub.
+A drawer shows its contents. Dragging changes the Desk presentation. Filing
+controls change the record's stored drawer. A view change does not move a
+record to another hub.
 
 ## Use windows
 
-Speak, Meetings, Agents, Settings and other apps open in Desk windows.
-Every window has the same parts: a title bar, a toolbar with its verbs, the
-content, and a status bar with its state. Drag a desktop window by its title
-bar. Use its edge or corner to resize it. Iconify a window to keep it in the
-dock. Select its dock tile to return to it. Use **Window** to close, cycle,
-snap, zoom or send a window to the back.
+Speak, Meetings, Agents, Programs, Settings, Ask, Projects, People, and other
+apps open in Desk windows. Drag a title bar to move a window. Drag an edge or
+corner to resize it. Iconify a window to keep it in the dock. Select its dock
+entry to return to it.
 
-The Desk keeps the window layout in your browser. On a phone, **Back**
-returns to the previous window.
+Use **Window** to close, cycle, arrange, zoom, raise, or send a window back.
+For hub-backed windows, the hub stores open state, geometry, stacking, and desk
+membership in its `desk_windows` records. The browser keeps a local cache for
+first paint, then the hub state replaces it. Another browser can therefore see
+the same hub-backed window state after it loads the hub. Some transient views,
+including Ask, are view-specific and are not hub window rows.
+
+Every window write has a desk revision. If the owner moved a window while an
+older request was pending, the hub can reject the stale request. Ask's **Undo**
+restores the exact window state only when that state is still current.
+
+On a phone, use **Back** to return from a full-width window. Do not assume a
+phone has the same visible window geometry as a desktop browser.
 
 ## Ask about your work
 
-1. Open **Ask AI** from Go, or press **⌘I**.
-2. Use **+** beside **About** to select a meeting, note, drawer, project or
-   person. With no selection, Ask is about your whole desk.
-3. Enter your question, then press **Ask**.
+1. Open **Ask AI** from **Go**, or press **⌘I**.
+2. Use the scope control (accessible label **About**) to select a record.
+3. Enter a question, then select **Ask** or **Send**.
 
-You can also select **Ask about this** on a record. Its name appears in
-About. On an engine that can use tools, the answer shows **Looked at**,
-**Wrote** and **Prepared**. A prepared send waits for your **Send** press.
-When Ask was opened from a note, **Add to note** keeps an answer in that note.
+With no object, Ask starts with the whole Desk. With an object, its reference
+appears in the scope control (accessible label **About**). That reference is a
+retrieval starting point, not a blanket access boundary.
+
+Ask and Thread share one durable conversation. The answer shows **References**.
+The retained trace can also expose **Looked at**, **Wrote**, and **Prepared**.
+**Looked at** names the records used.
+**Wrote** lists Desk changes and offers **Undo** when the change supports it.
+**Prepared** lists a send that still needs your **Send** press. HoldSpeak does
+not send from a prepared result by itself.
+
+An engine must support the required tools. A held tool call asks for **Allow
+once** or **Deny**. A refused or unavailable tool does not prove that its
+result exists. Read the receipt and the tool result.
+
+Ask retains completed exchanges as a Thread. Use the follow-up box to continue
+the conversation. Open **Recent** and select its first row to start a new
+conversation, or press **⌘N**.
+When Ask opens from a Note, **Add to note** can copy the answer into that Note.
+**Save as note** creates a separate editable Note from the answer.
+The current Ask does not expose the parked Thread window's mode, branching, slash-command, or call controls.
 
 ## Record a meeting
 
-Use the recorder control to start or stop a meeting. The hub records the
-meeting; this is separate from browser microphone input. Open Meetings to
-read the transcript and results.
-See [Meeting mode](MEETING_MODE_GUIDE.md) for microphone selection, system
-audio and import.
+Use the recorder control to start or stop a meeting. Hub recording is separate
+from browser microphone input used for voice typing. Open **Meetings** to read
+the transcript, run configured intelligence, and review its results.
 
-You can drop a transcript or audio file on the desk to import it. Drop a
-calendar screenshot to read events from it.
+In **Meetings**, select **Import** and choose a supported recording or
+transcript. The Meetings window also accepts a file drop and opens the import
+form. The active Desk does not provide a general file drop. Read [Meeting
+mode](MEETING_MODE_GUIDE.md) for source and engine prerequisites.
 
 ## Set preferences
 
-Open **Settings** from the HoldSpeak menu, or press **⌃,**. The rail lists
-**You**, **Speak**, **Meetings**, **Notices**, **Accounts**, **Agents**,
-**Desk** and **This Mac**. Notices holds the Heartbeat (quiet hours, the daily
-brief, notifications). Desk holds Wallpaper, sounds and motion. Accounts holds
-connections, Calendar, Destinations and secrets. **HoldSpeak > Engines** has
-the model and job assignments. Use Search to find a setting.
+Open **Settings** from the HoldSpeak menu. The active Settings sections
+include **Meetings**, **Notices**, **Accounts**, **Calls**, **Agents**,
+**Desk**, and **This Mac**. **Engines** is under **This Mac**;
+**Wallpaper** is under **Desk**. Search finds a setting.
+
+The old **Places** entry opens the Wallpaper flow when it is present. The
+canonical path is **Settings > Wallpaper**. See [Places](ENVIRONMENTS.md).
 
 ## Keys
 
@@ -102,26 +125,38 @@ the model and job assignments. Use Search to find a setting.
 | **⌃⇧N** | New Decision |
 | **⌘I** | Ask |
 | **⌘K** | Search |
-| **⌃1** to **⌃5** | Today, Meetings, People, Agents, Speak |
+| **⌃1** | Today |
+| **⌃2** | Meetings |
+| **⌃3** | People |
+| **⌃4** | Agents |
+| **⌃5** | Speak |
+| **⌃7** | Programs |
 | **⌃J** | Needs you |
 | **⌃,** | Settings |
-| **⌘⇧E** | Window > Overview: every open window at once |
+| **⌘⇧E** | Overview |
 | **⌘/** | Keyboard shortcuts |
 
-The browser keeps some **⌘** keys. The menus show **⌃** alternatives for them.
+The browser can keep some **⌘** keys. Use the menu alternative when a browser
+or operating system shortcut takes precedence.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| A window is missing | Check the dock and Window menu. |
-| A verb is missing | Select the record the verb needs. |
-| Ask cannot answer | Read the failure and check its engine. |
-| The menus are hidden | Select Back to Desk, or press Escape. |
+| A window is missing | Check the dock and **Window** menu. Reload only after you read the hub state. |
+| A window moved back | Check for a stale revision or another browser that changed the same window. |
+| A verb is missing | Select the record that the verb needs. Some verbs apply only to one object kind. |
+| Ask cannot answer | Read its engine, source, tool, and permission result. Check **Settings > Engines**. |
+| A prepared send did not leave the Desk | Select **Send** after reviewing the target and content. |
+| The menus are hidden | Select **Back to Desk**, or press Escape. |
+| A record is not in About | Open the record and select **Ask about this**, or use **+** in Ask. |
 
 ## See also
 
-- [User Guide](USER_GUIDE.md)
-- [Desk object model](DESK_OBJECT_MODEL.md)
-- [Desk architecture](DESK_ARCHITECTURE.md)
-- [Control modes](AUTHORITY.md)
+- [Getting Started](GETTING_STARTED.md): installation and first capture.
+- [User Guide](USER_GUIDE.md): daily tasks, Threads, People, and follow-through.
+- [Project Rooms](PROJECT_ROOMS.md): source watches and Project work.
+- [Calls](calls.md): Calls and the Line.
+- [Phone](phone.md): paired-phone service limits.
+- [Places](ENVIRONMENTS.md): Wallpaper, motion, sound, and Settle in.
+- [Control modes](AUTHORITY.md): permission and approval rules.

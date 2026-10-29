@@ -1,110 +1,89 @@
 # Meeting aftercare
 
-Aftercare answers three questions after a meeting:
-
-- What is still open, and for whom?
-- What did we decide?
-- What changed since the previous meeting?
-
-Aftercare only reads saved data. It writes nothing. It sends nothing. It invents nothing.
-Sending a follow-up is a separate step with its own approval. See [Meeting Mode guide](MEETING_MODE_GUIDE.md#send).
+Aftercare reads saved meeting data and builds a deterministic view of open
+actions, decisions, and changes since the previous meeting. It does not call a
+model, send a message, or write a meeting record.
 
 ## Where you see it
 
-- The **Meeting ready** card appears when a meeting is saved or a summary finishes, and the digest has content.
-  It shows the open and decided counts. **Open proposals** opens the meeting.
-- The **Send** section of a meeting offers the **Digest** and **Follow-up** documents. Both come from aftercare data.
-- Project Memory shows the change since the previous meeting of a Project.
-- The API returns the digest and the follow-up draft.
+- The **Meeting ready** card opens a meeting with aftercare content.
+- The **Send** section offers **Digest** and **Follow-up** documents.
+- `GET /api/meetings/{meeting_id}/aftercare` returns the digest data.
+- `GET /api/meetings/{meeting_id}/followup-draft` returns the draft text.
 
-When a meeting has no open items, no decisions, and no change, the digest is empty.
-HoldSpeak then shows no card.
+No card appears when there is no open work, decision, or detected change.
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A[current saved meeting] --> B[read decisions and open actions]
-    C[previous meeting by start time] --> D[compare]
-    B --> D
-    D --> E[new decisions, new actions, closed actions]
-    E --> F[resolve transcript moments]
-    F --> G[digest]
-    G --> H{caller}
-    H --> I[Meeting ready card]
-    H --> J[follow-up draft]
-    H --> K[Digest and Follow-up documents]
-```
+`compute_meeting_aftercare` in `holdspeak/meeting_aftercare.py` reads the
+current meeting, finds the previous meeting in the same Project, and compares
+their saved records. It does not infer a new fact.
 
-`compute_meeting_aftercare` in `holdspeak/meeting_aftercare.py` builds the digest.
-
-1. It reads the open action items of the meeting. It groups them by owner. Named owners sort A to Z. Unassigned items come last.
-2. It reads the decisions from the `decisions` artifact of the meeting. It removes duplicates by normalized text.
-3. It finds the previous meeting. That is the meeting with the latest start time before this one. The meeting id breaks ties.
-4. It compares by normalized text:
-   - New decisions are decisions that the previous meeting did not have.
-   - New actions are open items that the previous meeting did not have.
-   - Closed actions are items of the previous meeting that are now `done` or `dismissed`.
-5. It sets `is_empty` when nothing is open, nothing is decided, and nothing changed.
-
-With no previous meeting, `since_last_meeting` is `null`.
+1. Open action items are grouped by owner. Named owners sort alphabetically.
+2. Meeting decisions are read from saved decision artifacts and de-duplicated.
+3. The previous meeting is selected by meeting start time and Project link.
+4. New, closed, and still-open actions are compared by stable identity.
+5. Transcript timestamps resolve to source segments when evidence exists.
+6. The result is rendered as a digest or a follow-up draft in memory.
 
 ## Digest shape
 
-| Field | Content |
-| --- | --- |
-| `meeting_id`, `meeting_title`, `meeting_date` | The meeting. |
-| `open_items.total` | Count of open action items. |
-| `open_items.by_owner[]` | `owner`, `count`, and `items[]`. Each item has `task`, `due`, `review_state`, and `provenance`. |
-| `decisions[]` | `decision`, `rationale`, `source_timestamp`, and `provenance`. |
-| `since_last_meeting` | `previous_meeting`, `new_decisions`, `new_actions`, `closed_actions`, and `changed`. |
-| `is_empty` | `true` when the caller should show nothing. |
+The API returns these logical groups when they contain data:
 
-An owner is the name from the transcript, `Me`, or `Remote`. A blank owner is unassigned.
+| Group | Meaning |
+| --- | --- |
+| `open_by_owner` | Current open action items by owner. |
+| `decisions` | Decisions linked to this meeting. |
+| `new_items` | Actions that were not open in the previous meeting. |
+| `closed_items` | Actions that closed since the previous meeting. |
+| `changed` | The previous and current saved state comparison. |
+| `moments` | Transcript timestamps resolved to evidence. |
+
+An empty group is omitted from user text. Aftercare does not manufacture a
+zero-count status line.
 
 ## Transcript moments
 
-A decision or action item can carry a `source_timestamp`. `resolve_provenance_segment` maps it to the
-transcript segment that starts at or before that time. The first segment is the lower bound.
-A missing or non-numeric timestamp gives no reference. A timestamp of `0.0` resolves to the first segment.
-A timestamp past the end resolves to the last segment.
-
-The decision plugin drops a timestamp outside the meeting range and records it in `provenance_drops`.
-The aftercare resolver does not apply that check.
+An action item or decision can carry a source timestamp. The resolver maps the
+timestamp to the nearest saved transcript segment. If no segment exists, the
+item remains valid and its evidence is marked unavailable.
 
 ## Follow-up draft
 
-`build_followup_draft` turns a digest into plain Markdown on your machine. It uses no model and sends nothing.
-The draft has these sections:
-
-- **What we decided**: each decision, with its reason.
-- **Open items**: each item with its owner and due date.
-- **Since**: new decisions, new actions, and closed items. HoldSpeak names the previous meeting.
-
-An empty digest gives the title, the date, and one line: "Nothing was decided and nothing is open for this meeting."
+`build_followup_draft` renders decisions, open actions, and the change since the
+previous meeting as plain Markdown. It uses no model and does not persist the
+draft. The draft is not proof that a message was sent.
 
 ## Project comparison
 
-`compute_project_since_last_meeting` compares the latest two meetings of one Project.
-It uses Project membership, not the global order. The result names both meetings.
+Aftercare uses the meeting's saved Project links. If no previous meeting is
+linked to that Project, the change section is empty. It does not search every
+meeting by similar title.
 
 ## Boundaries
 
-- A draft does not prove that a message was sent. Sending uses a destination, a control mode, and an approval.
-  See [Execution destinations](EXECUTION_DESTINATIONS.md).
-- Missing, queued, or failed summaries leave the digest incomplete. An empty digest does not mean "no follow-up".
-  Check the summary state on the meeting.
-- The comparison matches text. A reworded item counts as new.
+Aftercare has no authority to confirm proposals, change a person record, file a
+GitHub issue, or send a destination message. Those are separate operations.
+Sending uses channel destination binding and the central control policy. The
+default **YOLO** mode can run an eligible fixed destination without another
+prompt, while hard invariants and receipts still apply.
+
+People data remains in the encrypted People store. Aftercare can show only the
+People projection that the active service explicitly provides. It does not copy
+private People notes into the main database or a follow-up draft.
 
 ## API
 
 | Route | Purpose |
 | --- | --- |
-| `GET /api/meetings/{meeting_id}/aftercare` | The digest. |
-| `GET /api/meetings/{meeting_id}/followup-draft` | The follow-up draft. |
-| `POST /api/meetings/{meeting_id}/aftercare/file-issue` | Propose a GitHub issue for an accepted action item. |
+| `GET /api/meetings/{meeting_id}/aftercare` | Read the digest model. |
+| `GET /api/meetings/{meeting_id}/followup-draft` | Render the draft. |
+| `POST /api/meetings/{meeting_id}/aftercare/file-issue` | Propose a GitHub issue. |
+| `POST /api/meetings/{meeting_id}/export/slack` | Send through the configured Slack channel operation. |
 
 ## See also
 
+- [Meeting Mode guide](MEETING_MODE_GUIDE.md#after-the-meeting)
 - [Meeting intelligence](MEETING_INTELLIGENCE.md)
-- [Meeting architecture](MEETING_ARCHITECTURE.md)
+- [People security](PEOPLE_SECURITY.md)
+- [Authority](AUTHORITY.md)

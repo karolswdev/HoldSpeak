@@ -1,74 +1,111 @@
 # People integration
 
-The People ledger keeps relationships with the people you work with. It is not a dashboard of direct reports. It never ranks people and never derives relationship health.
+People stores relationship context for the people you work with. It is not a
+dashboard of direct reports. It does not rank people or derive relationship
+health.
 
 A relationship has one kind:
 
 - `direct_report`: an explicit reporting relationship.
 - `peer`: a regular collaborator at a similar level.
-- `extended`: a stakeholder, partner, skip-level, or other farther relationship.
+- `extended`: a stakeholder, partner, skip-level, or other relationship.
 
-All kinds use the same loop: encrypted context, notes-only 1:1s, requests, explicit commitments, and Follow-through. For the encryption and the access rules, see [People security](PEOPLE_SECURITY.md).
+All kinds use the same loop: encrypted context, notes-only 1:1s, requests,
+explicit commitments, and follow-through. See [People security](PEOPLE_SECURITY.md)
+for access rules.
 
 ## Where People connects
 
-- **Desk:** one People surface. The scope `people:<relationship-id>` opens a relationship from another surface.
-- **HTTP:** the People routes own relationships, 1:1s, agendas, grounding notes, requests, and commitments (`holdspeak/web/routes/people.py`). No other code writes the encrypted store.
-- **MCP:** the `people.*` tools (`holdspeak/mcp/families/people.py`). The default access is `write`. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `off` before the process starts to reduce it. MCP clients see only `shared_intent` material. `people.grounding.get` returns a bundle of manual sources and makes no model call.
-- **Follow-through:** open commitments appear in Follow-through and link back to People. People content never enters `action_items` or Cadence.
-- **Commitment execution:** select a commitment to open its inspector. **Send to Workbench** creates a normal Workbench item. The item status, result, and artifact reference show in People. Workbench runs the work. People records whether the promise is kept. A Workbench result never marks a promise as satisfied.
-- **Projects:** a relationship can link existing Projects. Linked Projects open in Project Memory. Their name, description, keywords, context, and resource references go into the Workbench item when a commitment becomes work.
+- **Desk:** one People surface. A `people:<relationship-id>` scope opens one relationship.
+- **HTTP:** People routes own relationships, 1:1s, agendas, grounding notes, requests, and commitments. No other service writes the encrypted store.
+- **MCP:** `people.*` tools use a separate access setting. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `off` before the process starts. Agents can read when access is not off. Agents do not write People records. Only `shared_intent` material crosses MCP.
+- **Follow-through:** open commitments can appear in Follow-through and link back to People. People content does not enter `action_items` or Cadence.
+- **Projects:** a relationship can link an existing Project. The link does not copy confidential People content into the Project.
+
+On first use, an empty People roster does not require a separate setup wizard.
+Select **Add person** to create the local People store and add a relationship.
+The relationship pane offers **Direct report**, **Peer**, and **Extended
+relationship**.
+
+If the store is not ready, locked, or unavailable, the surface reports that
+state. “People is not set up on this Mac.” and “People could not be read.
+Nothing changed. Press Try again.” are different states. An unavailable store
+does not mean an empty roster.
 
 ## Deliberate associations
 
-An association links a relationship to other HoldSpeak data. Two exist. Both follow these rules:
+People associations are explicit. Nothing links automatically.
 
-1. The owner chooses the link. Nothing links automatically.
-2. A picker proposes candidates from visible text only: an event title or an owner string.
-3. The link lives inside the encrypted People payload. The plaintext database never stores a person reference.
-4. Voice embeddings, speaking time, sentiment, attendance, calendar frequency, and message volume are never identity signals.
-5. Unlinking removes the link from the encrypted payload. It deletes neither the other record nor the relationship.
-6. MCP applies its access mode and `shared_intent` filter before linked material reaches a client.
-7. A locked or missing store returns `{"state": "unavailable"}`, never an empty match.
+1. Open a relationship.
+2. Select the **Context** lens.
+3. Use the named control to add a link or note.
+4. Check the relationship before you save.
+
+The picker can propose a calendar event by title or an owner alias from
+Follow-through. It does not use voice identity, speaking time, sentiment,
+attendance, calendar frequency, or message volume.
+
+Links live inside the encrypted People payload. The plaintext database does
+not store a person reference. Unlinking removes the People link. It does not
+delete the other record or the relationship.
+
+The **Context** lens can show Notes, linked Projects, Links, calendar series,
+and **Names in meeting notes** aliases. **Add note** asks for a visibility of
+**Leader private** or **Shared**. These are owner choices. A locked or missing
+store returns an unavailable state, not an empty match.
 
 ### Calendar series
 
-1. Open the relationship and select the Context lens.
+1. Open the relationship and select **Context**.
 2. Select **Link calendar event**.
-3. Choose an upcoming event. Events with the person's display name in the title sort first and show **SUGGESTED**.
+3. Choose an upcoming event.
 
-The link is a `calendar_links` entry (`uid`, `source_id`, `label`). One link covers every past and future occurrence of the series. One series belongs to one person. A series that another relationship holds fails with `series_already_linked`. Linking the same person again only refreshes the label.
+Events with the person's display name in the title can show **SUGGESTED**.
+One link covers past and future occurrences of one series. A series already
+linked to another relationship cannot be linked again.
 
-`resolve_relationship_by_series` in `holdspeak/services/people_service.py` reads the link. Linked calendar events show an opaque `person_label`. MCP tools: `people.calendar.link` and `people.calendar.unlink`.
+The link is a `calendar_links` entry with an opaque event source and label.
+Linked calendar events show an opaque person label. Use **Unlink** to remove
+the association. The link does not infer that the person attended an event.
 
-`one_on_one_brief` builds a 1:1 preparation view and stores nothing. It holds open commitments, agenda backlog, the grounding note count, recent linked meetings with their open action items, decisions from those meetings, and the count of unlinked meetings in the window. MCP tool: `people.one_on_one.brief`. Its `policy` block states `visibility: shared_intent_only`, `inference: client_owned`, and `employment_decisions: prohibited`.
+The 1:1 preparation view reads open commitments, agenda backlog, grounding notes, linked meetings, actions, and decisions.
+It also reports unlinked meetings within the selected window. It stores no generated brief. Its policy
+states `visibility: shared_intent_only`, `inference: client_owned`, and
+`employment_decisions: prohibited`.
 
 ### Owner alias
 
 An owner alias maps an owner string from Follow-through to a relationship.
 
-1. Open the relationship and select the Context lens.
-2. In **Owner aliases**, type the string and select **Add**.
-3. To remove an alias, select **Remove**, then **Remove?**.
+1. Open the relationship and select **Context**.
+2. In **Names in meeting notes**, type the string and select **Add**.
+3. Select **Remove** when you no longer want the alias.
 
-The alias is an `owner_aliases` entry in the encrypted payload. One alias belongs to one person. Comparison ignores case. Failures:
+Comparison ignores case. Reserved values include `me`, `remote`, and `you`.
+One alias belongs to one relationship. The service rejects an empty alias or
+an alias already held by another relationship.
 
-| Code | Cause |
-| --- | --- |
-| `owner_alias_taken` | Another relationship holds the alias. |
-| `owner_alias_reserved` | The string is `me`, `remote`, or `you`. |
-| `owner_alias_required` | The string is empty. |
-
-`resolve_relationship_by_owner` reads the alias. The `/api/follow-through/board` route adds `person_label` and `person_relationship_id` to mapped cards (`holdspeak/web/routes/follow_through.py`). `FollowThroughService.board()` stays free of person data. If the store is locked, the board shows no person data. MCP tools: `people.owner_alias.link` and `people.owner_alias.unlink`.
-
-`compose_person_overlay` (`holdspeak/services/person_overlay.py`) adds per-person sections to the Monday brief response. It counts what they owe you, what you owe them, the agenda backlog, and the next linked 1:1. The stored brief never holds these sections. When People access is `off`, the `monday_brief.get` tool omits them.
+Follow-through can add a person label and relationship identifier to a mapped
+card when the alias resolves. If People is locked, the board shows no person
+data. It does not guess the owner.
 
 ### Not available: meeting participants
 
-HoldSpeak does not link a meeting participant to a relationship. The rules above apply if this changes. Automatic matching, voice identity, and attendance analysis stay forbidden.
+HoldSpeak does not link a meeting participant to a People relationship.
+Automatic matching, voice identity, and attendance analysis are not available
+for this integration. A meeting name or title does not establish a person link.
 
 ## Satisfaction history
 
-Commitment history is append-only. Events for accepted, delegated, satisfied, dismissed, and reopened keep their time and source. A satisfaction gesture records the Workbench item status, completion time, and artifact reference. It can also record your reason.
+Commitment history is append-only. Events for accepted, delegated, satisfied,
+dismissed, and reopened keep their time and source.
 
-The History lens shows counts of accepted, open, satisfied, and evidence-backed commitments for one relationship. These are your follow-through facts. They are not performance scores.
+Open a commitment to inspect it. **Send to automation** can send the selected
+commitment to a configured Workbench when that control is available. This
+starts an automation path. It does not mark the commitment satisfied.
+Select **Mark satisfied** only when you have the evidence that the commitment
+is complete.
+
+The History lens shows counts of accepted, open, satisfied, and
+evidence-backed commitments for one relationship. These are follow-through
+facts. They are not performance scores.
