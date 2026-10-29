@@ -1,0 +1,10 @@
+{
+  "node": "this-mac",
+  "state": "not_installed",
+  "words": "Not installed",
+  "address": "",
+  "secrets": {
+    "sip_password": "missing",
+    "telnyx_api_key": "missing"
+  }
+}

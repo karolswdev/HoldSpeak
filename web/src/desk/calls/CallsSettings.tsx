@@ -8,8 +8,11 @@
  * its exact command with Copy. Egress is said here, once, in one plain
  * sentence (UX-CANON A.9): never as a chip on the Calls window. The fields
  * write the `calls` section of /api/settings; the passphrase is write only
- * (the read says `passphrase_set`, never the value). Phone (PHONE-DESIGN
- * §9) follows: Your phone, Reach you, Quiet hours, The number. */
+ * (the read says `passphrase_set`, never the value). Line (LINE-DESIGN
+ * §10) follows: Where it runs, The line, Test call, From Calls, Adapter.
+ * Phone (PHONE-DESIGN §9) follows: Your phone, Reach you, Quiet hours, The
+ * number. When the Line is the phone, the first three steps are the Line's
+ * (its commands are in Line). */
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { readableError } from "../../lib/api";
@@ -17,8 +20,9 @@ import { CommandWell } from "../../pages/cores/connections/ConnectionsPane";
 import { openSurfaceOr } from "../shell";
 import { DotWord } from "../surface/kit";
 import { CheckGadget, GadgetGroup, StringGadget } from "../surface/gadgets";
-import { ABSENT_STATUS, OPEN_STEPS, readCallsSettings, readCallsStatus, writeCallsSetting } from "./api";
+import { ABSENT_STATUS, OPEN_STEPS, lineInUse, readCallsSettings, readCallsStatus, writeCallsSetting } from "./api";
 import type { CallStep, CallStepId, CallsSettings, CallsStatus } from "./types";
+import { LINE_RUN_COMMAND, LineSettingsPane } from "./LineSettings";
 import { PhoneSettingsPane } from "./PhoneSettings";
 import "./calls.css";
 
@@ -30,6 +34,13 @@ export const SIP_COMMAND =
 export const TELNYX_COMMAND = "uv run ai-phone lines add telnyx --key-env TELNYX_API_KEY --country US --area 212";
 export const TWILIO_COMMAND =
   "uv run ai-phone lines add twilio --key-env TWILIO_ACCOUNT_SID --secret-env TWILIO_AUTH_TOKEN --existing <your Twilio number>";
+
+/** The first steps when the Line is the phone (the rest are the same). */
+const LINE_STEP_LABELS: Partial<Record<CallStepId, string>> = {
+  install: "Install the Line",
+  daemon: "Start it",
+  line: "A line",
+};
 
 const STEP_LABELS: Record<CallStepId, string> = {
   install: "Install ai-phone",
@@ -53,11 +64,13 @@ function StepState({ step }: { step: CallStep }) {
 
 /** One row of the checklist: the step, its state, its one verb; an open
  *  step's command under it. */
-function StepRow({ step, state, verb, children }: { step: CallStep; state?: ReactNode; verb?: ReactNode; children?: ReactNode }) {
+function StepRow({ step, state, verb, children, line = false }: {
+  step: CallStep; state?: ReactNode; verb?: ReactNode; children?: ReactNode; line?: boolean;
+}) {
   return (
     <div className="calls-step" data-step={step.id} data-done={step.done || undefined} data-testid={`calls-step-${step.id}`}>
       <div className="calls-step-line">
-        <span className="calls-step-name">{STEP_LABELS[step.id]}</span>
+        <span className="calls-step-name">{(line && LINE_STEP_LABELS[step.id]) || STEP_LABELS[step.id]}</span>
         {state ?? <StepState step={step} />}
         <span className="calls-step-verb">{verb}</span>
       </div>
@@ -175,7 +188,7 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
     return () => { window.cancelAnimationFrame(first); window.cancelAnimationFrame(second); };
   }, [loaded]);
 
-  const write = async (key: keyof CallsSettings | "passphrase", value: unknown) => {
+  const write = async (key: keyof CallsSettings | "passphrase", value: unknown, rethrow = false) => {
     setBusy(key);
     setRefusal("");
     try {
@@ -186,17 +199,28 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
       onSaved?.();
       setStatus(await readCallsStatus());
     } catch (error) {
+      if (rethrow) throw error;
       setRefusal(readableError(error));
     } finally {
       setBusy("");
     }
   };
 
+  const onLine = lineInUse(status);
   const steps = status.steps.length ? status.steps : OPEN_STEPS;
   const absent = settings == null;
   const passphraseSet = Boolean(settings?.passphrase_set ?? status.passphrase_set);
   const step = (id: CallStepId): CallStep => steps.find((entry) => entry.id === id) ?? { id, done: false, words: "" };
 
+  const lineRows: Partial<Record<CallStepId, ReactNode>> = {
+    install: <StepRow line step={step("install")} />,
+    daemon: (
+      <StepRow line step={step("daemon")}>
+        {step("daemon").done ? null : <CommandWell hint={LINE_RUN_COMMAND} />}
+      </StepRow>
+    ),
+    line: <StepRow line step={step("line")} />,
+  };
   const rows: Record<CallStepId, ReactNode> = {
     install: (
       <StepRow step={step("install")}>
@@ -292,7 +316,7 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
         <div className="calls-steps" data-testid="calls-steps">
           {steps.filter((entry) => entry.id in rows).map((entry) => (
             <div key={entry.id} className="calls-step-slot">
-              {rows[entry.id]}
+              {(onLine && lineRows[entry.id]) || rows[entry.id]}
               {entry.id === "passphrase" ? (
                 <div className="calls-step" data-step="numbers" data-testid="calls-step-numbers">
                   <div className="calls-step-line">
@@ -318,6 +342,12 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
         </div>
       </GadgetGroup>
       <p className="calls-egress" data-testid="calls-egress">{EGRESS_SENTENCE}</p>
+      {/* Line (LINE-DESIGN §10): Settings ▸ Calls ▸ Line, between Set up
+          calls and Phone. */}
+      {absent || !settings?.line ? null : <section className="calls-phone" aria-label="Line" data-testid="calls-line-section" data-highlight={highlight === "line" || undefined}>
+        <h3 className="calls-phone-title">Line</h3>
+        <LineSettingsPane settings={settings!} onWrite={(key, value) => write(key, value, true)} />
+      </section>}
       {/* Phone (PHONE-DESIGN §9): Settings ▸ Calls ▸ Phone. A hub without
           the Calls slice has no Phone either: nothing more is read. */}
       {absent ? null : <section className="calls-phone" aria-label="Phone" data-testid="calls-phone-section" data-highlight={highlight === "phone" || undefined}>

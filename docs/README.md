@@ -47,6 +47,7 @@ A line marked "(overlaps X)" repeats part of X. Read X first.
 | Steer coder sessions from the Desk | [Coder integration](CODER_INTEGRATION.md) |
 | Run a goal as steps, each done by an agent | [Programs](programs.md) |
 | Call your desk from your phone | [Calls](calls.md) |
+| Run HoldSpeak's own phone line | [The Line](calls.md#the-line) |
 | Let the desk message or call your phone | [Phone](phone.md) |
 | Connect an MCP client (306 tools across 52 families) | [MCP sidecar](MCP_SIDECAR.md) |
 | Run a remote sweep and steward | [Reach Runner](REACH_RUNNER.md) |

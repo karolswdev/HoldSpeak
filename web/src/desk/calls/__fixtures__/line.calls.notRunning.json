@@ -1,0 +1,59 @@
+{
+  "enabled": true,
+  "aiphone": {
+    "state": "off",
+    "words": "The Line is the phone"
+  },
+  "line": {
+    "node": "this-mac",
+    "state": "not_running",
+    "words": "Not running",
+    "address": "",
+    "secrets": {
+      "sip_password": "missing",
+      "telnyx_api_key": "missing"
+    }
+  },
+  "lines": [],
+  "engine": {
+    "profile_id": "",
+    "model": "",
+    "state": "none",
+    "words": "No engine for calls"
+  },
+  "passphrase_set": true,
+  "listening": true,
+  "active": null,
+  "steps": [
+    {
+      "id": "install",
+      "done": true,
+      "words": "Install the line: brew install baresip"
+    },
+    {
+      "id": "daemon",
+      "done": false,
+      "words": "Start it: holdspeak line"
+    },
+    {
+      "id": "line",
+      "done": false,
+      "words": "Add a line: a SIP address, or a Telnyx number"
+    },
+    {
+      "id": "engine",
+      "done": false,
+      "words": "An engine that can use the desk's tools"
+    },
+    {
+      "id": "passphrase",
+      "done": true,
+      "words": "Set a passphrase"
+    },
+    {
+      "id": "enable",
+      "done": true,
+      "words": "Turn on calls"
+    }
+  ]
+}

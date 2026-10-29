@@ -1,0 +1,10 @@
+{
+  "node": "this-mac",
+  "state": "ready",
+  "words": "Ready",
+  "address": "sip:holdspeak@127.0.0.1:5060",
+  "secrets": {
+    "sip_password": "missing",
+    "telnyx_api_key": "missing"
+  }
+}

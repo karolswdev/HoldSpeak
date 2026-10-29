@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
-import type { Call, CallStateFrame, CallStep, CallSummary, CallsSettings, CallsStatus } from "./types";
+import type { Call, CallStateFrame, CallStep, CallSummary, CallsSettings, CallsStatus, LineStatus, LineTestResult } from "./types";
 
 /** The checklist in its order, every step open: what the faces draw when
  *  the hub has no Calls slice or its status read fails. */
@@ -62,6 +62,38 @@ export async function readCallsStatus(): Promise<CallsStatus> {
   }
 }
 
+/** The Line's status; a hub without the route answers the Line off. */
+export const LINE_OFF: LineStatus = { node: "", state: "off", words: "Off", address: "", secrets: {} };
+
+export async function readLineStatus(): Promise<LineStatus> {
+  try {
+    const status = await apiFetch<LineStatus>("/api/calls/line/status");
+    return status && typeof status.state === "string" ? status : LINE_OFF;
+  } catch (error) {
+    if (notFound(error)) return LINE_OFF;
+    throw error;
+  }
+}
+
+/** Test call: the Line calls him and hangs up. A refusal (409) answers its
+ *  reason as the result (`no_number`, `no_line`, `busy`). */
+export async function testLine(): Promise<LineTestResult> {
+  try {
+    return await apiFetch<LineTestResult>("/api/calls/line/test", { method: "POST", json: {} });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 409) {
+      const reason = String((error.payload as { reason?: unknown } | null)?.reason ?? "");
+      if (reason) return { result: reason, to: "" };
+    }
+    throw error;
+  }
+}
+
+/** The Line is the phone on this hub (its block is not `off`). */
+export function lineInUse(status: CallsStatus | null | undefined): boolean {
+  return Boolean(status?.line && status.line.state !== "off");
+}
+
 export async function readCalls(): Promise<CallSummary[]> {
   try {
     const body = await apiFetch<{ calls?: CallSummary[] }>("/api/calls");
@@ -98,9 +130,10 @@ export const PLACE_REFUSALS: Record<string, string> = {
   rejected: "Call refused",
 };
 
-export function refusalWords(error: unknown): string {
+export function refusalWords(error: unknown, line = false): string {
   if (error instanceof ApiError) {
     const reason = String((error.payload as { reason?: unknown } | null)?.reason ?? "");
+    if (line && reason === "not_running") return "Line not running";
     if (PLACE_REFUSALS[reason]) return PLACE_REFUSALS[reason];
   }
   return readableError(error);

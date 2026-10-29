@@ -1,0 +1,7 @@
+{
+  "status": 409,
+  "body": {
+    "reason": "no_number",
+    "error": "Set your number or SIP address in Settings ▸ Calls first."
+  }
+}

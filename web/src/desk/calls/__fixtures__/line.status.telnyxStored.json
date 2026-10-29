@@ -1,0 +1,10 @@
+{
+  "node": "this-mac",
+  "state": "starting",
+  "words": "Starting",
+  "address": "sip:hsline@sip.telnyx.com",
+  "secrets": {
+    "sip_password": "keystore",
+    "telnyx_api_key": "keystore"
+  }
+}
