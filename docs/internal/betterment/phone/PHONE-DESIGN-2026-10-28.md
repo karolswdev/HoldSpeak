@@ -166,3 +166,66 @@ Fixtures: recorded through the real routes with a fake device (a tiny client in 
 | **PH-CANVAS** then **PH-FACES** | the canvas of §9 at 1440 and 393, then the faces | every state drawn from the recorded fixtures; pairing shows a QR; presses go through |
 | **PH-DOCS** | this design + ABSORBED-FROM-AGENTRING.md + third-party notices, `docs/phone.md`, the skill, RECIPE PH1–PHn, UX-CANON line, STATUS | docs current, gen_docs clean |
 | **the Program** | created on his desk by the orchestrator through `/api/programs` in Drafting (§11) | he sees it in Programs |
+
+## Built, 2026-10-28
+
+The hub lane (PH-HUB, `a65f523e4` on `lane/phone-20261028`) built §3 to §8
+and §10. The design's intent stands; this section names where the build
+differs from the text above, and why. The faces (§9) are the PH-FACES lane's.
+
+### Where the build differs
+
+- **`phone.call` is not offered to a launched agent.** A launch gets only the
+  WORK half of the family: `phone.send_message`, `phone.get_replies` and
+  `phone.status` (`holdspeak/mcp/tool_authority.py`, the Phone lines;
+  `holdspeak/services/conductor_launch.py`, "a call is EGRESS and never
+  offered"). Every other caller of `phone.call` meets the EGRESS gate of §7:
+  his press in Needs you, unless the Program may call and the level is not
+  Secure.
+- **APNs needs `httpx[http2]`.** `ApnsPush` answers `error`
+  (`http2_unavailable`) until the HTTP/2 extra is installed; the extra is not
+  added to `pyproject.toml` in this PR. Until his Apple key is in the
+  keystore the hub runs `NullPush`, which logs and keeps what it would have
+  sent (`holdspeak/phone/push.py`).
+- **Quiet hours come from the desk's one quiet-hours store,** the one
+  Settings ▸ Rhythm writes (`read_quiet_hours`,
+  `holdspeak/services/heartbeat_service.py`; default 22:00–08:00), not a
+  second setting under Settings ▸ Calls ▸ Phone with 23:00–07:00. A message
+  in quiet hours is written and its push waits ("Reached you: a message, held
+  for the morning"). **No push releases the queued messages in the morning**:
+  the phone reads them from the event log the next time it connects.
+- **No SMS.** ai-phone's commands (`call`, `listen`, `say`, `hangup`) have no
+  SMS (`holdspeak/phone/transport_number.py`, `sms_available` is false). A
+  message with no paired phone is a Needs you row, "No phone is paired", with
+  Let it wait (`phone_items`, `holdspeak/services/needs_you_membership.py`).
+- **The app transport is the state machine and the pushes only.** The hub
+  rings, times out, re-rings an urgent call once and falls back to the number;
+  the audio of an app call and its transcript are the Apple Program's (§11
+  step 6). Today a call with words is a call on the number.
+- **Only the Programs rows of §6 reach him today.** The Programs engine asks
+  `phone_rules.reach` for `core_question`, `step_red` and `program_done`
+  (`ProgramService.reach_phone`, `holdspeak/services/program_service.py`;
+  the callers in `holdspeak/services/program_runner.py`). The rules for
+  `heartbeat_security`, `aftercare` and `agent_question` are in the table
+  and tested, but no heartbeat, aftercare or agent-question path calls them
+  yet (RECIPE PH12).
+- **Two `may_call` columns:** `programs.may_call` and `program_steps.may_call`
+  (default 0; a step may call when it or its Program may). The Overnight
+  template sets it on (`holdspeak/program_templates.py`).
+- **The QR names the address he pressed Pair on** (his Tailscale name when
+  he pressed it over Tailscale), with the token and its expiry
+  (`qr_payload`, `holdspeak/phone/devices.py`). `qr_png_base64` is `null`:
+  the faces draw the QR from `qr_payload`.
+
+### What is the same as written
+
+The four tables of §10, the REST routes of §10 (plus `POST
+/api/phone/messages/{id}/wait`, `GET /api/phone/calls`, `POST
+/api/phone/calls/{id}/ring` and `POST /api/phone/calls/{id}/again` for the
+Needs you verbs), the call states of §4 with a 30 s ring and one urgent
+re-ring after 60 s, answer-later at 20 s (`holdspeak/calls/runner.py`), the
+rules table of §6 (`holdspeak/phone/phone_rules.py`), the kernel operation
+`phone.reach`, the frame `phone_changed`, the switch `HOLDSPEAK_PHONE=off`,
+and the four `phone.*` MCP tools (305 tools in 52 families). Proof:
+`tests/integration/test_phone_flow.py` (14 tests on a real hub with a fake
+device and the fake ai-phone) and the `tests/unit/test_phone_*.py` files.

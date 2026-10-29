@@ -10,6 +10,27 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+**Phone — 2026-10-28 (owner: "Do it. And definitely swallow the paradigm and
+'vendor' it… we literally absorb and rewrite and refactor it into HoldSpeak").**
+agentring (Apache-2.0, 10b0e55) absorbed and rewritten on the hub: one PR from
+`lane/phone-20261028`, three lanes (PH-HUB merged into the program branch
+`a65f523e4`; PH-FACES; PH-DOCS). Design
+`docs/internal/betterment/phone/PHONE-DESIGN-2026-10-28.md` (with "Built"),
+recipe `phone/RECIPE.md` (PH1–PH16; PH1–PH10 in this PR), absorption
+`phone/ABSORBED-FROM-AGENTRING.md`, the agentring notice in `NOTICE`, user doc
+`docs/phone.md`, skill `agent/skills/holdspeak-phone/SKILL.md`. The hub is the
+relay (`holdspeak/phone/`): the event log with `seq` and replay, messages with
+replies, the call state machine, pairing by QR with a device token, signed
+pushes (NullPush until his Apple key), the number transport through Calls with
+answer-later, `phone_rules.reach` by control level with quiet hours, the kernel
+op `phone.reach`, 15 routes, 4 `phone.*` MCP tools (305 in 52 families;
+`phone.call` EGRESS, not offered to launches), Needs you rows, `may_call` on
+Programs (on in Overnight), `HOLDSPEAK_PHONE=off`. Left (open work): PH11 SMS,
+PH12 the heartbeat / aftercare / agent-question reaches, PH13 `httpx[http2]`,
+PH14 the morning release, PH15 urgent through Do Not Disturb, PH16 Today; the
+iPhone app is the Program `program-29a6d2ef5d55` in Drafting (his Start); his
+Telnyx line for calls on the number; his live verdict on the faces.
+
 **Programs — 2026-10-28.** Design
 `docs/internal/betterment/programs/PROGRAMS-DESIGN-2026-10-28.md` (with its
 "Built, 2026-10-28" section), recipe `programs/RECIPE.md` (PG1–PG18; PG1–PG11

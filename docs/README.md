@@ -46,6 +46,8 @@ A line marked "(overlaps X)" repeats part of X. Read X first.
 | Connect Claude Code or Codex sessions | [Agent hooks](AGENT_HOOK_INSTALL.md) |
 | Steer coder sessions from the Desk | [Coder integration](CODER_INTEGRATION.md) |
 | Run a goal as steps, each done by an agent | [Programs](programs.md) |
+| Call your desk from your phone | [Calls](calls.md) |
+| Let the desk message or call your phone | [Phone](phone.md) |
 | Connect an MCP client (305 tools across 52 families) | [MCP sidecar](MCP_SIDECAR.md) |
 | Run a remote sweep and steward | [Reach Runner](REACH_RUNNER.md) |
 | Set up connectors and actuators | [Integrations](INTEGRATIONS.md) |

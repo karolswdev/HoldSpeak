@@ -17,7 +17,7 @@
       "type": "bool",
       "default_expression": "False",
       "path": "holdspeak/config/calls.py",
-      "line": 37
+      "line": 56
     },
     {
       "class": "CallsConfig",
@@ -25,7 +25,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/calls.py",
-      "line": 38
+      "line": 57
     },
     {
       "class": "CallsConfig",
@@ -33,7 +33,7 @@
       "type": "str",
       "default_expression": "DEFAULT_GREETING",
       "path": "holdspeak/config/calls.py",
-      "line": 39
+      "line": 58
     },
     {
       "class": "CallsConfig",
@@ -41,7 +41,7 @@
       "type": "list[str]",
       "default_expression": "field(default_factory=list)",
       "path": "holdspeak/config/calls.py",
-      "line": 40
+      "line": 59
     },
     {
       "class": "CallsConfig",
@@ -49,7 +49,23 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/calls.py",
-      "line": 41
+      "line": 60
+    },
+    {
+      "class": "CallsConfig",
+      "field": "phone_reach",
+      "type": "dict[str, str]",
+      "default_expression": "field(default_factory=dict)",
+      "path": "holdspeak/config/calls.py",
+      "line": 61
+    },
+    {
+      "class": "CallsConfig",
+      "field": "phone_urgent_dnd",
+      "type": "bool",
+      "default_expression": "False",
+      "path": "holdspeak/config/calls.py",
+      "line": 62
     },
     {
       "class": "Config",

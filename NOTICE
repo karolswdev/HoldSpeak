@@ -17,3 +17,20 @@ Copyright the herdr authors, licensed under the Apache License, Version 2.0.
 
 Nothing is copied from herdr releases before 0.8.0 or from any fork of it
 that carries the AGPL.
+
+This product includes ideas and schema shapes from agentring
+(https://github.com/mutonby/agentring, read at commit 10b0e55),
+Copyright the agentring authors, licensed under the Apache License,
+Version 2.0. agentring has no NOTICE file of its own.
+
+- No agentring file is copied and no agentring code runs. holdspeak/phone/
+  (the event log with seq and replay, the call state machine, pairing by a
+  QR token and a device JWT, the signed push payload, the PushProvider
+  answers), holdspeak/mcp/families/phone.py (the send_message, get_replies,
+  call and status tools) and agent/skills/holdspeak-phone/SKILL.md (the
+  etiquette) are fresh code and text written after agentring's relay,
+  daemon and skill. Our changes: the hub is the relay (no VPS, no LiveKit,
+  no Firebase), APNs in place of FCM, the voice is HoldSpeak's Calls turn
+  loop, and the rules to reach the owner are code by control level.
+- What each part took, file by file:
+  docs/internal/betterment/phone/ABSORBED-FROM-AGENTRING.md.

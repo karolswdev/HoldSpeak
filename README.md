@@ -127,6 +127,8 @@ Your Claude Code and Codex sessions report to the Desk through agent hooks.
 
 **Programs** run a goal that is too big for one agent. A program cuts the goal into steps. An agent does each step in its own worktree. HoldSpeak checks each result from its log, starts a review, opens the pull request and merges it at your control level (Secure, Normal or YOLO). Each step runs on Claude Code, Codex, or pi on any of your engines, also only when your home engine is idle. Only a core question comes to you, in Needs you. Read [Programs](docs/programs.md).
 
+**Phone** reaches you when you are away from the desk. The desk sends a message to your phone, or calls it, by your control level and your quiet hours. A voice says why it calls and takes your answer back to the desk. Your agents can message you, wait for your reply and ask to call you; a call waits for your press. Today a call goes to your real number through [Calls](docs/calls.md); the HoldSpeak app for iPhone is next. Read [Phone](docs/phone.md).
+
 ## Extend everything
 
 HoldSpeak is built from parts you can add to. You do not need to fork it.

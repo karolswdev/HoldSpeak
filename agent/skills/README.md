@@ -24,3 +24,4 @@ owner’s application data. Tests run with isolated HOME.
 - [holdspeak-release-auditor](holdspeak-release-auditor/SKILL.md)
 - [holdspeak-doc-maintainer](holdspeak-doc-maintainer/SKILL.md)
 - [holdspeak-programs](holdspeak-programs/SKILL.md)
+- [holdspeak-phone](holdspeak-phone/SKILL.md)

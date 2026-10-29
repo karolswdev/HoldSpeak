@@ -97,6 +97,18 @@ Each line names the ruling, its canvas or design note, and the PR.
   (the "Built" section names the faces' divergences), canvas direction C
   "the ledger" (`betterment/programs/CANVAS-NOTES-2026-10-28.md`), user doc
   `docs/programs.md`; the Programs PR.
+- **Phone (owner 2026-10-28: "Do it. And definitely swallow the paradigm
+  and 'vendor' it").** The desk reaches him on his phone (a message, or a
+  call by rule at his control level and quiet hours) and he reaches the desk.
+  The faces are kit only (design §9): Settings ▸ Calls ▸ Phone (Pair a phone
+  with its QR, Reach you as Message · Call · Nothing per kind), Phone in the
+  Calls window (the thread with a mic composer, the calls, the phones), the
+  Needs you rows ("Asked on your phone", "Missed call", "Call you about …?",
+  "No phone is paired") with library `Button` verbs, and the Reach line under
+  a Program's Decided for you. A call is egress: it waits for his press at
+  the act, in Needs you. Design `betterment/phone/PHONE-DESIGN-2026-10-28.md`
+  (with "Built"), absorption `betterment/phone/ABSORBED-FROM-AGENTRING.md`,
+  user doc `docs/phone.md`; the Phone PR.
 
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
