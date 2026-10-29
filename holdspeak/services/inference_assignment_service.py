@@ -7,7 +7,6 @@ does not perform fallback, reserve capacity, or reach a provider.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import uuid
@@ -23,6 +22,12 @@ from ..inference_capabilities import (
 from ..inference_locality import deployment_lamp
 from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
+from .inference_assignment_material import (
+    ASSIGNMENT_SCHEMA,
+    build_assignment_material,
+    canonical as _canonical,
+    sha256_of as _sha256,
+)
 from .model_profile_service import (
     ModelProfileService,
     adapt_v1_profile,
@@ -35,7 +40,6 @@ from .tool_capability_service import (
 )
 
 
-ASSIGNMENT_SCHEMA = "InferenceAssignment@1"
 PROJECTION_SCHEMA = "InferenceAssignmentProjection@1"
 _ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,191}$")
 _PROFILE_ID = re.compile(r"^[a-z][a-z0-9_-]{0,95}$")
@@ -104,16 +108,6 @@ def _now() -> str:
         .isoformat(timespec="microseconds")
         .replace("+00:00", "Z")
     )
-
-
-def _canonical(value: Any) -> str:
-    return json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
-    )
-
-
-def _sha256(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_canonical(value).encode()).hexdigest()
 
 
 def _safe_id(value: Any, *, field: str) -> str:
@@ -647,16 +641,14 @@ class InferenceAssignmentService:
                     else "ia_" + uuid.uuid4().hex
                 )
                 created_at = _now()
-                material = {
-                    "schema": ASSIGNMENT_SCHEMA,
-                    "id": assignment_id,
-                    "scope": self._public_scope(request["scope"]),
-                    "entries": entries,
-                    "retry_policy_id": policy_id,
-                    "revision": revision,
-                    "created_at": created_at,
-                }
-                digest = _sha256(material)
+                material, payload_json, digest = build_assignment_material(
+                    assignment_id=assignment_id,
+                    public_scope=self._public_scope(request["scope"]),
+                    entries=entries,
+                    retry_policy_id=policy_id,
+                    revision=revision,
+                    created_at=created_at,
+                )
                 conn.execute(
                     """INSERT INTO inference_assignment_revisions
                        (assignment_id,revision,assignment_key,scope_kind,scope_id,subject_kind,
@@ -673,7 +665,7 @@ class InferenceAssignmentService:
                         request["scope"].get("capability_id", ""),
                         request["scope"].get("group_id", ""),
                         policy_id,
-                        _canonical(material),
+                        payload_json,
                         digest,
                         created_at,
                         made_by,
@@ -1162,16 +1154,14 @@ class InferenceAssignmentService:
                         else "ia_" + uuid.uuid4().hex
                     )
                     revision, created_at = current_revision + 1, _now()
-                    material = {
-                        "schema": ASSIGNMENT_SCHEMA,
-                        "id": assignment_id,
-                        "scope": self._public_scope(scope),
-                        "entries": group["entries"],
-                        "retry_policy_id": group["retry_policy_id"],
-                        "revision": revision,
-                        "created_at": created_at,
-                    }
-                    digest = _sha256(material)
+                    material, payload_json, digest = build_assignment_material(
+                        assignment_id=assignment_id,
+                        public_scope=self._public_scope(scope),
+                        entries=group["entries"],
+                        retry_policy_id=group["retry_policy_id"],
+                        revision=revision,
+                        created_at=created_at,
+                    )
                     conn.execute(
                         """INSERT INTO inference_assignment_revisions
                         (assignment_id,revision,assignment_key,scope_kind,scope_id,subject_kind,selector_kind,capability_id,group_id,retry_policy_id,payload_json,sha256,created_at)
@@ -1187,7 +1177,7 @@ class InferenceAssignmentService:
                             "",
                             group["group_id"],
                             group["retry_policy_id"],
-                            _canonical(material),
+                            payload_json,
                             digest,
                             created_at,
                         ),
@@ -1423,16 +1413,14 @@ class InferenceAssignmentService:
                             )
                         assignment_id = "ia_" + uuid.uuid4().hex
                         created_at = _now()
-                        material = {
-                            "schema": ASSIGNMENT_SCHEMA,
-                            "id": assignment_id,
-                            "scope": self._public_scope(scope),
-                            "entries": entries,
-                            "retry_policy_id": None,
-                            "revision": 1,
-                            "created_at": created_at,
-                        }
-                        digest = _sha256(material)
+                        material, payload_json, digest = build_assignment_material(
+                            assignment_id=assignment_id,
+                            public_scope=self._public_scope(scope),
+                            entries=entries,
+                            retry_policy_id=None,
+                            revision=1,
+                            created_at=created_at,
+                        )
                         conn.execute(
                             """INSERT INTO inference_assignment_revisions
                                (assignment_id,revision,assignment_key,scope_kind,scope_id,
@@ -1442,7 +1430,7 @@ class InferenceAssignmentService:
                             (
                                 assignment_id, 1, scope["assignment_key"], "global", "", "",
                                 "capability", capability_id, "", None,
-                                _canonical(material), digest, created_at,
+                                payload_json, digest, created_at,
                             ),
                         )
                         conn.execute(
@@ -1550,12 +1538,10 @@ class InferenceAssignmentService:
                         if blockers:
                             raise ValidationError("Migration model is incompatible.", code="inference_assignment_incompatible", context={"issues": blockers})
                         assignment_id, created_at = "ia_" + uuid.uuid4().hex, _now()
-                        material = {
-                            "schema": ASSIGNMENT_SCHEMA, "id": assignment_id,
-                            "scope": self._public_scope(scope), "entries": entries,
-                            "retry_policy_id": None, "revision": 1, "created_at": created_at,
-                        }
-                        digest = _sha256(material)
+                        material, payload_json, digest = build_assignment_material(
+                            assignment_id=assignment_id, public_scope=self._public_scope(scope),
+                            entries=entries, retry_policy_id=None, revision=1, created_at=created_at,
+                        )
                         conn.execute(
                             """INSERT INTO inference_assignment_revisions
                                (assignment_id,revision,assignment_key,scope_kind,scope_id,subject_kind,
@@ -1563,7 +1549,7 @@ class InferenceAssignmentService:
                                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                             (assignment_id, 1, scope["assignment_key"], "subject", scope["scope_id"],
                              scope["subject_kind"], "capability", capability.id, "", None,
-                             _canonical(material), digest, created_at),
+                             payload_json, digest, created_at),
                         )
                         conn.execute("INSERT INTO inference_assignment_heads (assignment_key, assignment_id, revision, cleared, updated_at) VALUES (?,?,?,?,?)", (scope["assignment_key"], assignment_id, 1, 0, created_at))
                         for entry in entries:
@@ -1783,7 +1769,12 @@ class InferenceAssignmentService:
             "retry_policy_id": body.get("retry_policy_id"),
         }
 
-    def _scope(self, value: Any) -> dict[str, str]:
+    def _scope(self, value: Any, *, assignable: bool = True) -> dict[str, str]:
+        """Parse a public scope. ``assignable=False`` is for READING a stored
+        row: owner-assignability gates writes, not the verification of a row
+        HoldSpeak itself wrote for an internal capability (chat.guardrail and
+        chat.compact, copied from chat.turn by the startup reconcile)."""
+        require = self._require_assignable if assignable else self._registry.require
         if not isinstance(value, Mapping) or "kind" not in value:
             raise ValidationError(
                 "scope is invalid", code="inference_assignment_invalid"
@@ -1812,7 +1803,7 @@ class InferenceAssignmentService:
             }
         if kind == "capability" and set(value) == {"kind", "capability_id"}:
             capability_id = _safe_id(value["capability_id"], field="capability_id")
-            self._require_assignable(capability_id)
+            require(capability_id)
             return {
                 "kind": kind,
                 "scope_kind": "global",
@@ -1833,7 +1824,7 @@ class InferenceAssignmentService:
                 )
             subject_id = _safe_id(value["subject_id"], field="subject_id")
             capability_id = _safe_id(value["capability_id"], field="capability_id")
-            self._require_assignable(capability_id)
+            require(capability_id)
             return {
                 "kind": kind,
                 "scope_kind": "subject",
@@ -1850,7 +1841,7 @@ class InferenceAssignmentService:
         }:
             invocation_id = _safe_id(value["invocation_id"], field="invocation_id")
             capability_id = _safe_id(value["capability_id"], field="capability_id")
-            self._require_assignable(capability_id)
+            require(capability_id)
             return {
                 "kind": kind,
                 "scope_kind": "invocation",
@@ -2394,7 +2385,7 @@ class InferenceAssignmentService:
         affected = (
             (capability,)
             if capability is not None
-            else self._affected_capabilities(self._scope(material["scope"]))
+            else self._affected_capabilities(self._scope(material["scope"], assignable=False))
         )
         issues = self._compatibility_issues(conn, material["entries"], affected)
         if (
@@ -2496,7 +2487,7 @@ class InferenceAssignmentService:
                     or entry["profile_schema_version"] not in (1, 2)
                 ):
                     raise ValueError("entry value")
-            parsed_scope = self._scope(material["scope"])
+            parsed_scope = self._scope(material["scope"], assignable=False)
             if str(row["sha256"]) != _sha256(material):
                 raise ValueError("hash")
             if (
@@ -2581,7 +2572,7 @@ class InferenceAssignmentService:
                 or not isinstance(material["created_at"], str)
             ):
                 raise ValueError("identity")
-            parsed_scope = self._scope(material["scope"])
+            parsed_scope = self._scope(material["scope"], assignable=False)
             expected = (
                 parsed_scope["assignment_key"],
                 parsed_scope["scope_kind"],

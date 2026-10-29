@@ -805,6 +805,22 @@ def reconcile_schema(
             conn.execute("ROLLBACK")
             raise
 
+    # Assignment copy identity repair (2026-10-29). The chat copy backfills
+    # once copied a source chain's material verbatim, so the copies named the
+    # source id and scope and every read of the assignments answered 409
+    # ("Not read" in Engines and Settings > Runs on). UNGATED: his desk is
+    # already at shape; idempotent by its marker. Never blocks a reconcile.
+    try:
+        repaired = _repair_assignment_copy_identity(conn)
+        if repaired:
+            log.info("Reconcile: repaired assignment material for %s", repaired)
+    except Exception as exc:  # pragma: no cover - never block a reconcile
+        log.warning(
+            "Reconcile: assignment copy identity repair skipped (%s: %s)",
+            type(exc).__name__,
+            exc,
+        )
+
     # Always run the cheap, idempotent privacy seed.
     conn.execute(
         """
@@ -1067,6 +1083,85 @@ def _apply_data_backfills(conn: sqlite3.Connection) -> None:
     _backfill_watch_graduation(conn)
 
 
+def _assignment_now() -> str:
+    from datetime import datetime, timezone
+
+    return (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="microseconds")
+        .replace("+00:00", "Z")
+    )
+
+
+def _insert_capability_copy(
+    conn: sqlite3.Connection,
+    *,
+    target_cap: str,
+    retry_policy_id: str | None,
+    entries: list,
+) -> str:
+    """Write one new global capability chain for *target_cap*.
+
+    The material is built for the NEW row (its own id, revision 1, its own
+    scope, created now) by the service's builder, so the copy verifies.
+    Copying the source's ``payload_json`` and ``sha256`` verbatim made every
+    copy name the source id and scope (owner's desk 2026-10-29: Engines read
+    "Not read" on chat.turn, chat.guardrail and chat.compact).
+    """
+    import uuid as _uuid
+
+    from ..services.inference_assignment_material import (
+        build_assignment_material,
+        entries_from_rows,
+    )
+
+    target_key = f"capability:{target_cap}"
+    new_id = "ia_" + _uuid.uuid4().hex
+    new_revision = 1
+    created_at = _assignment_now()
+    material_entries = entries_from_rows(entries)
+    _material, payload_json, digest = build_assignment_material(
+        assignment_id=new_id,
+        public_scope={"kind": "capability", "capability_id": target_cap},
+        entries=material_entries,
+        retry_policy_id=retry_policy_id,
+        revision=new_revision,
+        created_at=created_at,
+    )
+    conn.execute(
+        """INSERT INTO inference_assignment_revisions
+           (assignment_id, revision, assignment_key, scope_kind, scope_id,
+            subject_kind, selector_kind, capability_id, group_id,
+            retry_policy_id, payload_json, sha256, created_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            new_id, new_revision, target_key,
+            "global", "", "", "capability", target_cap, "",
+            retry_policy_id, payload_json, digest, created_at,
+        ),
+    )
+    conn.execute(
+        """INSERT INTO inference_assignment_heads
+           (assignment_key, assignment_id, revision, cleared, updated_at)
+           VALUES (?,?,?,0,?)""",
+        (target_key, new_id, new_revision, created_at),
+    )
+    for entry in material_entries:
+        conn.execute(
+            """INSERT INTO inference_assignments
+               (id, assignment_id, assignment_revision, profile_id,
+                profile_revision, profile_schema_version, ordinal)
+               VALUES (?,?,?,?,?,?,?)""",
+            (
+                f"{new_id}:{new_revision}:{entry['ordinal']}",
+                new_id, new_revision,
+                entry["profile_id"], entry["profile_revision"],
+                entry["profile_schema_version"], entry["ordinal"],
+            ),
+        )
+    return new_id
+
+
 def _backfill_chat_route_assignments(conn: sqlite3.Connection) -> None:
     """Family ``chat-route-assignments`` (HS-151-02).
 
@@ -1075,8 +1170,6 @@ def _backfill_chat_route_assignments(conn: sqlite3.Connection) -> None:
     Idempotent: a second run is a no-op; an existing ``chat.turn`` chain
     is never overwritten.
     """
-    import uuid as _uuid
-
     TARGET_KEY = "capability:chat.turn"
     existing = conn.execute(
         "SELECT 1 FROM inference_assignment_heads WHERE assignment_key=?",
@@ -1119,48 +1212,9 @@ def _backfill_chat_route_assignments(conn: sqlite3.Connection) -> None:
     if not entries:
         return  # empty chain
 
-    new_id = "ia_" + _uuid.uuid4().hex
-    new_revision = 1
-    created_at = rev_row[9]
-
-    conn.execute(
-        """INSERT INTO inference_assignment_revisions
-           (assignment_id, revision, assignment_key, scope_kind, scope_id,
-            subject_kind, selector_kind, capability_id, group_id,
-            retry_policy_id, payload_json, sha256, created_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        (
-            new_id, new_revision, TARGET_KEY,
-            "global",  # scope_kind
-            "",         # scope_id
-            "",         # subject_kind
-            "capability",  # selector_kind
-            "chat.turn",   # capability_id
-            "",         # group_id
-            rev_row[6],  # retry_policy_id
-            rev_row[7],  # payload_json
-            rev_row[8],  # sha256
-            created_at,
-        ),
+    _insert_capability_copy(
+        conn, target_cap="chat.turn", retry_policy_id=rev_row[6], entries=entries
     )
-    conn.execute(
-        """INSERT INTO inference_assignment_heads
-           (assignment_key, assignment_id, revision, cleared, updated_at)
-           VALUES (?,?,?,0,?)""",
-        (TARGET_KEY, new_id, new_revision, created_at),
-    )
-    for entry in entries:
-        conn.execute(
-            """INSERT INTO inference_assignments
-               (id, assignment_id, assignment_revision, profile_id,
-                profile_revision, profile_schema_version, ordinal)
-               VALUES (?,?,?,?,?,?,?)""",
-            (
-                f"{new_id}:{new_revision}:{entry[3]}",
-                new_id, new_revision,
-                entry[0], entry[1], entry[2], entry[3],
-            ),
-        )
     log.info(
         "chat-route-assignments backfill: copied %s to chat.turn (%d entries)",
         source_key, len(entries),
@@ -1175,8 +1229,6 @@ def _backfill_chat_practice_assignments(conn: sqlite3.Connection) -> None:
     overwritten.  Runs after ``_backfill_chat_route_assignments`` so the
     ``chat.turn`` chain is guaranteed to exist when a source is available.
     """
-    import uuid as _uuid
-
     SOURCE_KEY = "capability:chat.turn"
     TARGETS = ("chat.guardrail", "chat.compact")
 
@@ -1217,44 +1269,166 @@ def _backfill_chat_practice_assignments(conn: sqlite3.Connection) -> None:
         if existing is not None:
             continue  # never overwrite
 
-        new_id = "ia_" + _uuid.uuid4().hex
-        new_revision = 1
-        created_at = rev_row[9]
-
-        conn.execute(
-            """INSERT INTO inference_assignment_revisions
-               (assignment_id, revision, assignment_key, scope_kind, scope_id,
-                subject_kind, selector_kind, capability_id, group_id,
-                retry_policy_id, payload_json, sha256, created_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (
-                new_id, new_revision, target_key,
-                "global", "", "", "capability", target_cap, "",
-                rev_row[6], rev_row[7], rev_row[8], created_at,
-            ),
+        _insert_capability_copy(
+            conn, target_cap=target_cap, retry_policy_id=rev_row[6], entries=entries
         )
-        conn.execute(
-            """INSERT INTO inference_assignment_heads
-               (assignment_key, assignment_id, revision, cleared, updated_at)
-               VALUES (?,?,?,0,?)""",
-            (target_key, new_id, new_revision, created_at),
-        )
-        for entry in entries:
-            conn.execute(
-                """INSERT INTO inference_assignments
-                   (id, assignment_id, assignment_revision, profile_id,
-                    profile_revision, profile_schema_version, ordinal)
-                   VALUES (?,?,?,?,?,?,?)""",
-                (
-                    f"{new_id}:{new_revision}:{entry[3]}",
-                    new_id, new_revision,
-                    entry[0], entry[1], entry[2], entry[3],
-                ),
-            )
         log.info(
             "chat-practice-assignments backfill: copied chat.turn to %s (%d entries)",
             target_cap, len(entries),
         )
+
+
+ASSIGNMENT_COPY_REPAIR_FAMILY = "assignment-copy-identity-repair"
+
+
+def _repair_assignment_copy_identity(conn: sqlite3.Connection) -> list[str]:
+    """Family ``assignment-copy-identity-repair``, marker_revision 1.
+
+    For each active head whose current revision's material names another
+    id, revision, created_at or scope than the row itself, append a NEW
+    revision (revision + 1) with correct material and the same entries and
+    move the head to it. Stored revisions are immutable receipts: the bad
+    ones stay as history. Records the repaired keys in the marker. A second
+    run (marker present) changes nothing. Returns the repaired keys.
+    """
+    import json as _json
+
+    from ..services.inference_assignment_material import (
+        assignment_key_for_scope,
+        build_assignment_material,
+        canonical,
+        entries_from_rows,
+        public_scope_from_columns,
+        sha256_of,
+    )
+
+    if conn.execute(
+        "SELECT 1 FROM inference_assignment_migrations WHERE family=?",
+        (ASSIGNMENT_COPY_REPAIR_FAMILY,),
+    ).fetchone() is not None:
+        return []
+
+    rows = conn.execute(
+        """SELECT h.assignment_key, h.assignment_id, h.revision,
+                  r.scope_kind, r.scope_id, r.subject_kind, r.selector_kind,
+                  r.capability_id, r.group_id, r.retry_policy_id,
+                  r.payload_json, r.sha256, r.created_at, r.made_by
+             FROM inference_assignment_heads h
+             JOIN inference_assignment_revisions r
+               ON r.assignment_id = h.assignment_id AND r.revision = h.revision
+            WHERE h.cleared = 0
+            ORDER BY h.assignment_key"""
+    ).fetchall()
+    broken: list[tuple] = []
+    for row in rows:
+        key, assignment_id, revision = str(row[0]), str(row[1]), int(row[2])
+        scope = public_scope_from_columns(
+            scope_kind=str(row[3]), scope_id=str(row[4]), subject_kind=str(row[5]),
+            selector_kind=str(row[6]), capability_id=str(row[7]), group_id=str(row[8]),
+        )
+        if scope is None or assignment_key_for_scope(scope) != key:
+            continue  # the row's own columns disagree: not this defect
+        try:
+            material = _json.loads(str(row[10]))
+        except ValueError:
+            continue
+        if not isinstance(material, dict):
+            continue
+        if (
+            material.get("id") == assignment_id
+            and material.get("revision") == revision
+            and material.get("created_at") == str(row[12])
+            and assignment_key_for_scope(material.get("scope")) == key
+        ):
+            continue  # verifiable identity
+        entry_rows = conn.execute(
+            "SELECT profile_id, profile_revision, profile_schema_version, ordinal "
+            "FROM inference_assignments WHERE assignment_id=? AND assignment_revision=?",
+            (assignment_id, revision),
+        ).fetchall()
+        if not 1 <= len(entry_rows) <= 4:
+            continue
+        broken.append((row, scope, entries_from_rows(entry_rows)))
+    if not broken:
+        return []
+
+    conn.execute("SAVEPOINT assignment_copy_identity_repair")
+    try:
+        sources = []
+        proofs = []
+        for row, scope, entries in broken:
+            key, assignment_id, revision = str(row[0]), str(row[1]), int(row[2])
+            new_revision = revision + 1
+            created_at = _assignment_now()
+            _material, payload_json, digest = build_assignment_material(
+                assignment_id=assignment_id,
+                public_scope=scope,
+                entries=entries,
+                retry_policy_id=row[9],
+                revision=new_revision,
+                created_at=created_at,
+            )
+            conn.execute(
+                """INSERT INTO inference_assignment_revisions
+                   (assignment_id, revision, assignment_key, scope_kind, scope_id,
+                    subject_kind, selector_kind, capability_id, group_id,
+                    retry_policy_id, payload_json, sha256, created_at, made_by)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    assignment_id, new_revision, key, row[3], row[4], row[5],
+                    row[6], row[7], row[8], row[9], payload_json, digest,
+                    created_at, row[13],
+                ),
+            )
+            for entry in entries:
+                conn.execute(
+                    """INSERT INTO inference_assignments
+                       (id, assignment_id, assignment_revision, profile_id,
+                        profile_revision, profile_schema_version, ordinal)
+                       VALUES (?,?,?,?,?,?,?)""",
+                    (
+                        f"{assignment_id}:{new_revision}:{entry['ordinal']}",
+                        assignment_id, new_revision, entry["profile_id"],
+                        entry["profile_revision"], entry["profile_schema_version"],
+                        entry["ordinal"],
+                    ),
+                )
+            conn.execute(
+                "UPDATE inference_assignment_heads SET revision=?, updated_at=? "
+                "WHERE assignment_key=? AND assignment_id=? AND revision=?",
+                (new_revision, created_at, key, assignment_id, revision),
+            )
+            sources.append(
+                {"assignment_key": key, "assignment_id": assignment_id,
+                 "revision": revision, "sha256": str(row[11])}
+            )
+            proofs.append(
+                {"assignment_key": key, "assignment_id": assignment_id,
+                 "revision": new_revision, "sha256": digest}
+            )
+        source_sha256 = sha256_of(sources)
+        result = {
+            "schema": "InferenceAssignmentMigrationMarker@1",
+            "family": ASSIGNMENT_COPY_REPAIR_FAMILY,
+            "marker_revision": 1,
+            "source_sha256": source_sha256,
+            "repaired_keys": [proof["assignment_key"] for proof in proofs],
+            "assignments": proofs,
+        }
+        conn.execute(
+            "INSERT INTO inference_assignment_migrations (family, marker_revision, "
+            "source_sha256, result_json, result_sha256, committed_at) VALUES (?,?,?,?,?,?)",
+            (
+                ASSIGNMENT_COPY_REPAIR_FAMILY, 1, source_sha256, canonical(result),
+                sha256_of(result), _assignment_now(),
+            ),
+        )
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT assignment_copy_identity_repair")
+        conn.execute("RELEASE SAVEPOINT assignment_copy_identity_repair")
+        raise
+    conn.execute("RELEASE SAVEPOINT assignment_copy_identity_repair")
+    return [proof["assignment_key"] for proof in proofs]
 
 
 def _backfill_deployment_revision_context_ceiling(conn: sqlite3.Connection) -> None:
