@@ -1,6 +1,6 @@
 # Core documentation refresh, 2026-10-29
 
-Status: DRAFT. UNCHECKED — awaiting Muad'Dib.
+Status: Owner-authorized merge of PR #1612. UNCHECKED — awaiting post-merge review.
 
 ## Current source correction
 
