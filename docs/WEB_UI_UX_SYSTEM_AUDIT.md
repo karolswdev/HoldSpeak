@@ -35,15 +35,20 @@ Do not show a message that repeats a visible fact, such as `Found 1 model.` unde
 
 ## Shared controls
 
-| Control | Where it lives |
+| Control | Supported implementation |
 | --- | --- |
-| Button (primary, ghost, dense) | `Button` in `web/src/components/signal/Signal.tsx` |
-| Text, number, and URL fields | `Field`, `TextInput`, `TextArea` (`Signal.tsx`), and `StringGadget` (`desk/surface/gadgets.tsx`) |
-| Select | `Select` and `.hs-select` |
-| Checkbox | `CheckGadget` |
-| Choice cards | `ChoiceCard` and `ChoiceCardGroup` |
-| Disclosure | `Disclosure` |
-| Notice | `ActionNotice` and `StateChip` |
+| Verb | Library `Button`, exported by `components/signal/Signal.tsx` from `Button.tsx` |
+| Text or number field | `StringGadget` from `desk/surface` |
+| Multiline field | `PadGadget` from `desk/surface` |
+| Finite choice | `CycleGadget` or `MxRadio` from `desk/surface` |
+| Checkbox | `CheckGadget` from `desk/surface` |
+| Choice cards | `ChoiceCard` and `ChoiceCardGroup` from `desk/surface` |
+| Disclosure | `Disclosure` or `FoldGadget` from `desk/surface` |
+| Notice and status | `ActionNotice`, `StateChip`, and the kit `StatusBar` from `desk/surface` |
+
+Feature code uses the surface barrel instead of private implementation imports.
+The surviving `Field`, `TextInput`, `TextArea`, and `Select` exports in `Signal.tsx` support the legacy InlineEditor cluster.
+They are not the input controls for new Desk faces. The former Signal versions of ChoiceCard and Disclosure are retired; use the surface exports above.
 
 The component gallery is at `/design/components`.
 It opens the **Components** window.
@@ -70,7 +75,7 @@ replace the quick check or the generic sweep.
 1. Show a new reusable pattern in `/design/components`.
 2. Run `scripts/quick_check.sh`; it is the current pre-merge web build, related-test, affected-test, desk-sweep, and guard procedure.
 3. Read the sweep at 1440 and 393 pixels. Do not accept a skipped sweep.
-4. Add no raw native select, unnamed control, control smaller than 24 pixels, or console error.
+4. Add no raw native select, unnamed control, console error, or undersized press target. At 393 pixels, interactive controls need their 44 × 44 pixel owned hit area.
 5. Check a Swift change on the native target separately.
 
 ## See also

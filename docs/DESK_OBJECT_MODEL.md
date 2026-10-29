@@ -12,10 +12,13 @@ Other service-backed records can have their own opener contract.
 For example, `program:<id>` opens a Program through `openObject.ts` and the Programs host.
 The `PRIMITIVES` table gives each kind its label, sync class, object verbs, and opening surface.
 The descriptor declares static capabilities.
+The authorable column records that metadata flag, not every current creation flow.
+For example, New Project has an active setup Door although its descriptor flag is false.
+The table uses descriptor labels; a host can use another current label, such as Drawer for a `kb`.
 The active opener, selected object, and runtime state determine how the current Desk exposes them.
 A descriptor alone does not establish a separate app or an available control.
 
-| Kind | Label | Sync class | Create | Object verbs | Opens as |
+| Kind | Label | Sync class | Descriptor authorable | Object verbs | Opens as |
 | --- | --- | --- | :-: | --- | --- |
 | `meeting` | Meeting | content | no | ask, send, hand | Meetings host |
 | `artifact` | Artifact | content | no | ask, send, hand | pullout |
@@ -26,11 +29,11 @@ A descriptor alone does not establish a separate app or an available control.
 | `kb` | Knowledge | organization | yes | ask, edit, rename, duplicate, delete | pullout |
 | `project` | Project | organization | no | send, rename, archive | Project Room (`open-project-memory`) |
 | `repository` | Repository | organization | yes | none | repository window |
-| `recipe` | Agent | capability | yes | ask, edit, rename, duplicate, delete | pullout |
+| `recipe` | Mode | capability | yes | ask, edit, rename, duplicate, delete | pullout |
 | `chain` | Sequence | capability | yes | delete | pullout |
 | `workflow` | Workflow | capability | yes | ask, edit, rename, duplicate, delete | pullout |
 | `workbench` | Automation | capability | yes | duplicate | Automation host, with legacy queue view for an old queue |
-| `coder` | Coder session | presence | no | none | pullout |
+| `coder` | Agent | presence | no | none | pullout |
 | `roadmap` | Roadmap | organization | no | none | roadmap window |
 | `intelligence` | Intelligence | local | no | none | pullout |
 | `people` | People | local | no | none | People window |
@@ -67,14 +70,16 @@ The menu hides a verb when it cannot run for the current selection.
 
 | Menu | Verbs |
 | --- | --- |
-| **Desk** | **New Note**, **New Decision**, **New Automation**, **New Thread**, **New Project**, **Hide the menus** (Settle in). **Reset layout**, **Reset to seed…** and **Refresh from hub** are in Search. |
-| **Object** | **Open**, **Get Info**, **Ask about this**, **Write update**, **Hand to agent**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, **Delete**. The selected object determines which verbs appear. |
+| **Desk** | **New Note**, **New Decision**, **New Automation**, **New Project**, **New Meeting**, **New Person**, and **New Drawer**. **Reset layout**, **Reset to seed…** and **Refresh from hub** are in Search. |
+| **Object** | **Open**, **Get Info**, **Ask about this**, **Write update**, **Hand to agent**, **Edit**, **Rename**, **Duplicate**, **Keep on desk**, **Remove from desk**, **Delete**, **Archive**. The selected object determines which verbs appear. |
 | **Go** | Apps from `DESK_APPLICATIONS`, grouped by their `go` entries, plus projects and drawers. An open window gets focus instead of a second copy. |
-| **Window** | **Close window**, **Iconify**, **Cycle windows**, **Cycle windows (reverse)**, **Snap left**, **Snap right**, **Zoom**, **To back**, and the current-work windows |
+| **Window** | **Close**, **Minimize**, **Next window**, **Tile left**, **Tile right**, **Zoom**, **To back**, **Overview**, **Stage**, **Arrange all**, **Gather**, **Back**, and the current-work windows |
 | System | **Search**, **Keyboard shortcuts** |
 
 **Reset to seed…** opens Settings. You confirm the reset there. The menu never resets by itself.
-New Thread opens Ask. The separate Thread window is parked.
+The compatibility New Thread verb opens Ask but is hidden from menus and Search.
+Start a conversation from the first row of Ask's **Recent** rail, or press `⌘N` while Ask has focus.
+The separate Thread window is parked.
 
 ### Keys
 
@@ -91,18 +96,21 @@ The old `⌘` keys stay bound. They work where the browser sends them to the pag
 | `⌃N` | **New Note** |
 | `⌃⇧N` | **New Decision** |
 | `⌃T` | **New Note** |
-| `⌘⇧F` | Settle in |
-| `⌃↑` | **Overview** |
+| `⌘⇧E` | **Overview** |
 | `F2` | **Rename** |
 | `Delete` | **Delete** (Backspace on a Mac) |
 | `⌘I` | **Ask** |
-| `⌃1` to `⌃4` | Speak, Meetings, Agents, Settings |
-| `⌘⇧P` | Wallpaper in Settings |
-| `⌃W` | **Close window** |
-| `⌃M` | **Iconify** |
+| `⌃1` to `⌃5` | Today, Meetings, People, Agents, Speak |
+| `⌃7` | **Programs** |
+| `⌃,` | **Settings** |
+| `⌃W` | **Close** |
+| `⌃M` | **Minimize** |
 | `⌘⇧Z` | **Zoom** |
-| `⌃B` | **To back** |
-| ``⌃` `` and ``⌃⇧` `` | Cycle windows, forward and reverse |
+| ``⌘⇧` `` | **To back** |
+| `⌘⌥←` and `⌘⌥→` | **Tile left** and **Tile right** |
+| `⌘⏎` | **Stage** |
+| ``⌘` `` | **Next window** |
+| ``⌃⇧` `` | Reverse cycle compatibility binding |
 | `⌘K` | **Search** |
 | `⌘/` | **Keyboard shortcuts** |
 
@@ -127,8 +135,8 @@ Any pair not in the table does nothing.
 
 | Target | Accepted kinds | Label | Result |
 | --- | --- | --- | --- |
-| Agent, Sequence, Workflow | Note, Knowledge, Meeting, Artifact | **Hold as source** | The record becomes held context. Nothing runs. |
-| Knowledge | Note, Meeting, Artifact, Agent | **Add to Knowledge** | The record joins the Knowledge. You can undo it. |
+| Mode, Sequence, Workflow | Note, Knowledge, Meeting, Artifact | **Hold as source** | The record becomes held context. Nothing runs. |
+| Knowledge | Note, Meeting, Artifact, Mode | **Add to Knowledge** | The record joins the Knowledge. You can undo it. |
 
 The old Floor file-drop host is parked in the active Desk composition.
 The matrix describes supported internal object pairs, not a general file-ingestion promise.
@@ -179,7 +187,8 @@ Raising a window advances the shared depth counter.
 A window opens as a region and takes focus.
 Closing it returns focus to the element that opened it.
 Windows do not trap focus.
-`Escape` closes an open head menu first. A second `Escape` closes the window.
+`Escape` closes an open head menu first. A later `Escape` requests window close when that host enables `escapeCloses`.
+A host can disable Escape closing, and an editor can require its own close handling.
 Dragging the head moves the window. Double-clicking the head zooms it.
 
 ### Saved layout

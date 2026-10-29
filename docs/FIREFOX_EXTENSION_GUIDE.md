@@ -4,6 +4,11 @@ The repository contains a temporary Firefox companion. It builds a small active-
 
 The extension is not on addons.mozilla.org. It lives in this repository. You load it as a temporary add-on.
 
+## Current limitation
+
+The current add-on sends no `Authorization` or `X-HoldSpeak-Token` header. The web edge normally requires the runtime credential for `/api` routes, so source inspection does not establish a working authenticated extension path in this checkout. The sections below describe the payload and privacy contract.
+Successful ingestion requires working authentication and an accepted runtime response.
+
 ## Install
 
 1. Start HoldSpeak with `holdspeak web`. Note the `http://127.0.0.1:<port>` address in the output.
@@ -15,8 +20,6 @@ The extension is not on addons.mozilla.org. It lives in this repository. You loa
 
 Firefox removes a temporary add-on when it restarts. Load it again each session.
 
-The current add-on sends no `Authorization` or `X-HoldSpeak-Token` header. The web edge normally requires the runtime credential for `/api` routes, so source inspection does not establish a working authenticated extension path in this checkout. The sections below describe the payload and privacy contract.
-Successful ingestion requires working authentication and an accepted runtime response.
 
 ## Check that it works
 

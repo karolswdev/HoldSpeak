@@ -129,11 +129,12 @@ Desk records are excluded.
 
 ## Set up models
 
-1. Open **Settings > Engines**.
+1. Open **Settings > This Mac > Engines**.
 2. Read the engine and host for each capability.
 3. Add an endpoint or download a model when no engine is ready.
-4. Select **Use these** when the required assignments are ready.
-5. Select **Test** only when you want to send a real request.
+4. Select **Use it** on a found engine, or select **Use** when you change a
+   capability assignment.
+5. Select **Try it** on a capability only when you want to send a real request.
 
 A CLI engine is an inference route. It is not a coding-agent session. A
 coding-agent handoff starts a separate agent session with its own repository
@@ -211,7 +212,7 @@ Rooms](PROJECT_ROOMS.md) for provider prerequisites.
 | Capture does not start | Check browser microphone permission and the macOS Microphone pane. Run `holdspeak doctor`. |
 | The key does nothing | Grant Input Monitoring to the launching application. Restart it. Select **Re-check** in Speak. |
 | Text is transcribed but not inserted | Grant Accessibility to the launching application. Check the preview setting. Use clipboard paste on Wayland. |
-| A Thread does not run | Open **Settings > Engines**. Repair the named assignment or engine. |
+| A Thread does not run | Open **Settings > This Mac > Engines**. Repair the named assignment or engine. |
 | Ask has no tool result | Check the selected engine, its tool support, source permission, and any held **Allow once** request. |
 | You need to restore data | Read [Release and recovery](RELEASING.md), then run `holdspeak restore`. |
 

@@ -11,7 +11,7 @@ A saved configuration does not establish that a later job will run. Inspect the 
 ## Start here
 
 1. Start the local hub and open its printed URL.
-2. Open **Settings > Engines** and check the engine for the task.
+2. Open **Settings > This Mac > Engines** and check the engine for the task.
 3. Keep one Note by typing or using **Speak**.
 4. Select **Ask about this** on the Note, or open **Ask** for a whole-Desk question.
 5. Inspect **References** and any **Wrote** or **Prepared** result.
@@ -204,7 +204,7 @@ use project facts or an optional project context rewrite before delivery.
 
 ### Set up the pipeline
 
-1. Open **Settings > Engines** and choose the speech and rewrite engines.
+1. Open **Settings > This Mac > Engines** and choose the speech and rewrite engines.
 2. Set project facts in the project configuration when the template needs exact values.
 3. Set optional project context files when a rewrite needs them.
 4. Speak into the focused coding tool.
@@ -489,7 +489,7 @@ decision, a People score, or a sent message.
 
 ## Connect your tools
 
-Open **Settings > Connections** to configure GitHub, Jira, Confluence, a
+Open **Settings > Accounts > Connections** to configure GitHub, Jira, Confluence, a
 calendar, or another supported provider. Check the account and source scope.
 The provider's credentials remain under its configured boundary.
 
@@ -549,8 +549,8 @@ make it a coding agent. A coding-agent handoff launches a separate session in
 a repository worktree. A Mode supplies instructions. It does not execute
 by itself.
 
-Select **Test** to send a real request. Read the result and receipt. A cloud
-check can incur cost.
+Select **Try it** on a capability to send a real request. Read the result and
+receipt. A cloud check can incur cost.
 
 ## People
 
@@ -706,8 +706,9 @@ recording. Read the resulting Meeting and receipt after the event.
 
 ## Project memory
 
-Open **Memory** for **What I owe**, **What changed this week**, **Ask your
-desk**, and **RAW** recall. Open a Project scope to read its standing pages.
+Open **Memory** for **What I owe**, **What changed this week**, the **Find or
+ask your desk** field, and recall rows. Open a Project scope to read its
+standing pages.
 Standing pages are read-only at the time of display and show only sentences
 whose cited inputs remain live.
 
@@ -730,7 +731,9 @@ phone client is connected.
 
 Open **Today**, **Needs you**, **Memory**, Projects, or People from **Go**.
 Select an object to open its window. Use **Object** for object-specific verbs.
-Use **Window** to close, arrange, zoom, raise, cycle, or send back.
+Use **Window** for **Close**, **Minimize**, **Next window**, **Tile left**,
+**Tile right**, **Zoom**, **To back**, **Stage**, **Arrange all**, or **Back**
+when the selected window supports the action.
 
 The hub owns state for hub-backed Desk windows. The browser has a local
 first-paint cache. Some transient views, including Ask, are view-specific. A

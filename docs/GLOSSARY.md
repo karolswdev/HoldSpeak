@@ -51,7 +51,7 @@ product records, modes, or controls.
 | Needs you | The Desk drawer for held decisions and other work that requires owner attention. |
 | People | The protected surface for confidential relationship records and permitted shared intent. |
 | Phone | The Desk Phone wing and service contract. A delivered paired-phone app is not part of the current repository; configured Calls number transport is separate. |
-| Places | The former wallpaper picker name. Use Settings > Wallpaper. |
+| Places | The former wallpaper picker name. Use Settings > Desk > Wallpaper. |
 | Project | A record that groups an outcome, selected sources, and related work. |
 | Project Room | The working surface for one Project, its sources, changes, decisions, and scoped automation controls. |
 | Project update run | A Project-scoped operation that prepares an update from Project evidence. It is narrower than a whole-Desk Ask. |
@@ -74,7 +74,7 @@ product records, modes, or controls.
 | Today | The active Desk home application for current work, Notes, Meetings, and **Needs you**. |
 | tool | A named callable operation. Its existence does not grant execution authority. |
 | Watch | A Project-scoped configuration that observes a source population and evaluates conditions. |
-| Wallpaper | The Desk atmosphere selected in Settings > Wallpaper. |
+| Wallpaper | The Desk atmosphere selected in Settings > Desk > Wallpaper. |
 | Workbench | A Note refinement surface or configured automation destination, depending on context. Read the current control label. |
 | Zone | A Desk container for filed objects. |
 | Line | The optional HoldSpeak phone adapter/node. It can use a SIP address or provider number and sends text turns through the hub; it is not the paired Phone app. |

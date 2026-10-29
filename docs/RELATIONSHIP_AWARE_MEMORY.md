@@ -83,7 +83,7 @@ Background jobs can turn your records into more memory:
 
 - **Facts and names.** The `memory.extract` capability reads admitted text and writes facts and the names in them.
 - **Observations.** The `memory.consolidate` capability folds facts into beliefs. A belief keeps its evidence and its history. A later fact can refine, supersede, or contradict a belief.
-- **Pages.** The `memory.page` capability writes standing answers. A Project has four: what we decided, what is open and who owes it, risks and disputes, and what changed this week. The desk has two: what I owe, and what changed this week.
+- **Pages.** The `memory.page` capability writes standing answers. A Project has four: what we decided, what is open and who owes it, risks and disputes, and what changed this week. The desk has three: what I owe, what others owe me, and what changed this week.
 
 Every page sentence cites its sources.
 HoldSpeak cuts a sentence that has no source or an unsupported word.
@@ -91,8 +91,10 @@ HoldSpeak checks the sources again on each read.
 When you edit or delete a source, the sentence that cites it disappears at once.
 A page read makes no model call.
 
-These jobs run only when a model is assigned to the capability, or when a local default exists.
-With no model, nothing runs and nothing is written.
+These semantic jobs run only when a capability has its own assignment, or when
+that capability supports a `LOCAL` or owner-made default. With no semantic model,
+extraction, consolidation and page writes do not run. The index still builds
+chunks, and keyword and relationship search remain available.
 Set the models in the **Engines** window.
 
 ## Where you see memory
@@ -153,7 +155,7 @@ A tool-capable Ask can still retrieve additional permitted records during its tu
 Its **About** selection is a starting point, not a general read-access boundary.
 The caller, tool palette, and service-specific scope govern those reads.
 A Thread leaves out its own messages and freezes the recalled sources on the user message.
-The applicable grounding path is shared by Ask, Thread, persona, Sequence, Workflow, Automation, and Coder preparation.
+The applicable grounding path is shared by Ask, Thread, Mode, Sequence, Workflow, Automation, and Coder preparation.
 Drafters also use `services/memory_grounding.py` and the per-capability memory policy for bounded excerpts.
 A narrow service scope, such as a project-update run, adds its own source checks.
 A provider never searches memory itself.

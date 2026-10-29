@@ -149,13 +149,14 @@ Read [Calls](calls.md) and [Phone](phone.md) for setup, access, and transport li
 
 This section is the integration contract for model work.
 
-Every provider attempt enters `InferenceRunner.invoke()` and becomes one
-`inference.invoke@1` operation. The runner admits and claims that child before
-an adapter can call a provider. The child names one immutable
-`DeploymentRevision`, captured before admission. It ends in exactly one
-immutable terminal receipt. The reviewed adapters accept a single-use
-`DispatchContext` from the runner. No route, service, plugin, command, local
-Whisper backend or mesh worker is an alternate entrance.
+Every core inference provider attempt enters `InferenceRunner.invoke()` or
+`invoke_stream()` and becomes one `inference.invoke@1` operation. The runner
+admits and claims that child before a core adapter can call a provider. The
+child names one immutable `DeploymentRevision`, captured before admission. It
+ends in exactly one immutable terminal receipt. The reviewed core adapters
+accept a single-use `DispatchContext` from the runner. The Line's separate
+speech process is an exception: it loads Parakeet ASR and Pocket TTS directly,
+so those calls do not enter this core inference contract.
 
 - A parent run or session is causation and a finite budget. It does not replace
   the receipt of each attempt.
@@ -165,7 +166,7 @@ Whisper backend or mesh worker is an alternate entrance.
 - A parent receipt says how the run ended. A child receipt says how that
   attempt ended.
 - Ask uses the service contract `holdspeak.ask` (`services/ask_service.py`).
-  Saved Agents use `recipe:<id>` and the Agent's `last_modified` revision.
+  Saved Modes use `recipe:<id>` and the Mode's `last_modified` revision.
 - Both freeze the destination as a `DeploymentRevision` before dispatch. A
   later **Engines** edit cannot retarget a child in flight.
 - Provider output waits behind the terminal election. The receipt carries the
@@ -183,8 +184,11 @@ A live Meeting, dictation or wake session has one authenticated parent
 Whisper call is a linked child. A child checks the parent for liveness,
 revocation, deadline, budget and revision. Whisper preload needs a narrow
 preload authority and its own receipt. Prompt, transcript, text and audio stay
-in the dispatch path. Kernel records carry only refs, hashes, authority,
-placement and outcomes.
+in the dispatch path. Child and receipt records carry refs, hashes, authority,
+placement and outcomes. Parent run input snapshots are a deliberate exception:
+`kernel_parent_runs.input_json` stores the caller snapshot and can include
+prompt text. Its filter blocks named audio, PCM and token keys, but it is not a
+semantic content classifier.
 
 A scheduled Workbench run is not owner impersonation. Enabling a schedule
 mints one bounded delegation over the exact Workbench, Agent and schedule
@@ -258,9 +262,10 @@ correction.
   `empty`, `secret` or `one_word`. The one-word refusal applies only to the
   routing kinds.
 
-The routes are under `/api/dictation/`: `dry-run`, `remote`, `journal`,
-`journal/{entry_id}/correct`, `corrections`, `corrections/{id}` (delete) and
-`readiness`. See [API reference](API_REFERENCE.md).
+The pipeline and learning routes under `/api/dictation/` include `dry-run`,
+`remote`, `journal`, `journal/{entry_id}/correct`, `corrections`,
+`corrections/{id}` (delete) and `readiness`. Capture and preview routes are
+separate. See [API reference](API_REFERENCE.md).
 
 ### The device path
 
@@ -440,11 +445,12 @@ triggers keep them current. `holdspeak memory rebuild-index` rebuilds them.
 Search normalizes BM25 scores within each kind before it merges the kinds.
 
 The native memory engine (`holdspeak/memory/`) adds chunks, embeddings, facts,
-entities, consolidation and pages. The memory conductor runs it. It needs a
-model assignment for the capabilities `memory.embed`, `memory.extract` and
-`memory.page`. Without an assignment, memory still builds chunks. Recall falls
-back to keyword and relation search. It yields to a live Meeting and to a live
-local model call.
+entities, consolidation and pages. The memory conductor runs it. `memory.embed`
+uses its own assignment. `memory.extract`, `memory.consolidate` and
+`memory.page` can use their own assignment or a supported `LOCAL` or owner-made
+default. Without a semantic engine, extraction, consolidation and page writes
+do not run, but memory still builds chunks and recall falls back to keyword and
+relation search. It yields to a live Meeting and to a live local model call.
 
 The grounding hydrator turns a project reference into citable source blocks,
 each with a `[REF: kind:id]` line. The hydration receipt carries
@@ -458,10 +464,13 @@ reads and shows. It admits no operation and has no execution controls.
 
 Interview uses the Thread conversation, the model routing and the MCP
 services. It does not add a model runtime or an automation engine.
+The Thread pullout and its older controls are parked. Opening a saved Thread
+loads it into Ask, the active browser conversation surface. Interview state
+remains a Thread-backed service and API contract, not a separate active window.
 
 | Component | Job |
 | --- | --- |
-| Thread window and store | Show messages, streamed replies, references and tool activity |
+| Thread store and Ask surface | Store messages, streamed replies, references and tool activity. Ask renders the active conversation surface |
 | Thread service | Run the conversation and its tool loop |
 | Interview section descriptors | Declare the purpose, tool set and handoff of each section |
 | Interview service | Validate and save facts, suggestion choices, section changes and revisions |
@@ -567,7 +576,7 @@ chain, workflow, profile) is a primitive under one contract. See
 The hub owns the canonical store. The iPad and the web desk are authoring
 ports.
 
-Sync keeps four classes apart:
+Sync keeps five classes apart:
 
 - **Content** (Meetings, Artifacts): the canonical record. It syncs.
 - **Organization** (directories, knowledge bases, membership): shared truth.

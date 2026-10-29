@@ -10,8 +10,10 @@ Create commands in **Settings ▸ Speak ▸ Voice commands**. Each command has a
 and an enabled state. Keep phrases distinct. A `type_text` action needs a
 focused desktop relay or the action records a named refusal.
 
-The test route is `POST /api/commands/test`. It evaluates the configured
-command without making a live desktop effect.
+The test route is `POST /api/commands/test`. It validates the submitted action
+(`kind` and `payload`). `open_url`, `launch_app`, and `shell` run through the
+bounded connector; `type_text` and `desk_verb` return a preview without firing
+the live effect.
 
 ## Command behaviors
 
@@ -32,9 +34,9 @@ prose. A configured voice command is not a generic command language.
 
 ## Test a command
 
-Use the test control or `POST /api/commands/test` with a disposable phrase.
-Inspect the returned match and refusal. The test path does not type into the
-focused application.
+Use the test control or `POST /api/commands/test` with an action `kind` and
+`payload`. Inspect `tested`, the preview/result, or the refusal. The test path
+does not type into the focused application, but egress actions can run.
 
 ## Turn commands on and off
 

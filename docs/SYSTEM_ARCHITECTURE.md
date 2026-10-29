@@ -37,7 +37,8 @@ flowchart TB
 The arrows show subsystem relationships, not every function call.
 Reads and presentation do not each need an operation admission.
 Consequential operations use their registered runtime paths.
-Domain content belongs to its domain store, while operation evidence records execution facts.
+Domain content belongs to its domain store. Operation evidence records execution
+facts, and a parent input snapshot can retain caller-supplied prompt text.
 
 ## Who owns what
 
@@ -68,7 +69,7 @@ Paths abbreviated to `services/` in the table are relative to `holdspeak/`.
 | Browser workspace snapshot | Browser cache and local view preferences | Used for initial presentation and view-local state |
 | Unsent field draft | Its editor and local draft contract | Until saved, discarded, or replaced by that editor |
 | Hover, selection, or animation | Browser presentation | Transient |
-| Model attempt or external effect | Registered operation and its Receipt | Durable execution evidence |
+| Core model attempt or admitted external effect | Registered operation and its Receipt | Durable execution evidence |
 
 `web/src/desk/compositor/hubWindows.ts` follows the hub's window rows.
 Some contextual windows remain view-local, as listed in `NOT_ON_HUB` in the window service.
@@ -77,6 +78,10 @@ A local cache must not replace newer hub state.
 Closing a window does not remove its underlying record.
 It also does not prove that an active server run stopped.
 Use the flow's supported stop operation and read its result.
+
+The core inference receipt contract does not cover the Line's direct Parakeet
+ASR and Pocket TTS calls. That separate local speech process is described in
+[Architecture](ARCHITECTURE.md).
 
 ## Authority
 

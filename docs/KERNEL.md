@@ -168,11 +168,13 @@ caller's input snapshot. Do not treat every kernel table as content-free.
 
 ## Inference attempts
 
-Each physical model attempt is one `inference.invoke@1` child. The
-`InferenceRunner` freezes the deployment revision before admission. At claim,
-the executor checks the warrant, payload hash, expiry, revocation and every
-live ancestor. Then it issues a one-use claim witness. A fallback or retry is
-a new child with a new operation id and a new receipt.
+Each model attempt admitted by the core inference runtime is one
+`inference.invoke@1` child. The `InferenceRunner` freezes the deployment
+revision before admission. At claim, the executor checks the warrant, payload
+hash, expiry, revocation and every live ancestor. Then it issues a one-use
+claim witness. A fallback or retry is a new child with a new operation id and a
+new receipt. The Line's direct Parakeet ASR and Pocket TTS calls are outside
+this core kernel inference contract.
 
 An inference receipt also carries an HMAC attestation. It binds the receipt,
 operation, outcome, result reference, destination, placement, principal and

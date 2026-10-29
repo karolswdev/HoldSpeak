@@ -106,7 +106,9 @@ and repository when detected. With capture enabled, an agent question should
 include `awaiting_response: true` and bounded `last_assistant_text`.
 
 The Desk's **Automation hooks** view and `GET /api/dictation/agent-hooks`
-report the same hook readiness. Live pane records appear in
+report the hook templates and latest-session status. This is not the
+voice-reply readiness contract. Read `GET /api/coders/status` for
+`ready_for_agent_reply` and `blockers`. Live pane records appear in
 `GET /api/coders/sessions`.
 
 ## Check readiness for voice replies

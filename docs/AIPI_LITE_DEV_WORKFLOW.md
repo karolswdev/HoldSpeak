@@ -41,11 +41,12 @@ The script installs `aipi-lite/requirements-dev.txt` into `aipi-lite/.venv`. It 
 ## 3. Run the tests
 
 ```bash
-scripts/aipi_test.sh -q
-scripts/aipi_test.sh tests/test_settings.py -q
+HOME="$(mktemp -d)" uv run python scripts/test_lock.py -- scripts/aipi_test.sh -q
+HOME="$(mktemp -d)" uv run python scripts/test_lock.py -- scripts/aipi_test.sh tests/test_settings.py -q
 ```
 
-The second command runs one file.
+The second command runs one file. Each command uses an isolated HOME and the machine test lock.
+The helper itself does not provide that isolation or lock. Its test paths are relative to `aipi-lite/`.
 
 ## 4. Run the bridge
 
@@ -78,7 +79,7 @@ Diagnostics:
 
 ```bash
 scripts/aipi_bridge.sh --audio-loopback
-scripts/aipi_bridge.sh --send-test-audio path/to/16khz-mono-int16.wav
+scripts/aipi_bridge.sh --send-test-audio /absolute/path/to/16khz-mono-int16.wav
 ```
 
 `bridge.env.example` lists every setting, such as `ESPHOME_HOST`, `DEVICE_ID`, `DEVICE_LABEL`, and `UDP_AUDIO_PORT`.

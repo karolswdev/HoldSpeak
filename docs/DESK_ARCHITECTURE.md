@@ -50,7 +50,8 @@ A saved domain object and its open window retain separate identities.
 
 ## What the Desk renders
 
-The Screen presents root drawers, Projects, loose work, and live agents.
+The Screen presents root drawers, Projects, unfiled Notes, and supported items explicitly kept on the Desk.
+Per-agent floor icons are parked. Agents, their Dock tile, and Needs you carry session work.
 Drawer contents open through the existing drawer hosts.
 `zone:<id>` remains the qualified reference for a stored directory.
 Phone Go exposes the available apps, drawers, and Projects through compact navigation.

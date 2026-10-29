@@ -54,7 +54,9 @@ apps open in Desk windows. Drag a title bar to move a window. Drag an edge or
 corner to resize it. Iconify a window to keep it in the dock. Select its dock
 entry to return to it.
 
-Use **Window** to close, cycle, arrange, zoom, raise, or send a window back.
+Use **Window** for **Close**, **Minimize**, **Next window**, **Tile left**,
+**Tile right**, **Zoom**, **To back**, **Stage**, **Arrange all**, or **Back**
+when the selected window supports the action.
 For hub-backed windows, the hub stores open state, geometry, stacking, and desk
 membership in its `desk_windows` records. The browser keeps a local cache for
 first paint, then the hub state replaces it. Another browser can therefore see
@@ -115,7 +117,7 @@ include **Meetings**, **Notices**, **Accounts**, **Calls**, **Agents**,
 **Wallpaper** is under **Desk**. Search finds a setting.
 
 The old **Places** entry opens the Wallpaper flow when it is present. The
-canonical path is **Settings > Wallpaper**. See [Places](ENVIRONMENTS.md).
+canonical path is **Settings > Desk > Wallpaper**. See [Places](ENVIRONMENTS.md).
 
 ## Keys
 
@@ -146,7 +148,7 @@ or operating system shortcut takes precedence.
 | A window is missing | Check the dock and **Window** menu. Reload only after you read the hub state. |
 | A window moved back | Check for a stale revision or another browser that changed the same window. |
 | A verb is missing | Select the record that the verb needs. Some verbs apply only to one object kind. |
-| Ask cannot answer | Read its engine, source, tool, and permission result. Check **Settings > Engines**. |
+| Ask cannot answer | Read its engine, source, tool, and permission result. Check **Settings > This Mac > Engines**. |
 | A prepared send did not leave the Desk | Select **Send** after reviewing the target and content. |
 | The menus are hidden | Select **Back to Desk**, or press Escape. |
 | A record is not in About | Open the record and select **Ask about this**, or use **+** in Ask. |

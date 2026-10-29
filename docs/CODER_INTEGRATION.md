@@ -68,11 +68,12 @@ recycled or missing pane produces `pane_mismatch` or
 
 ## Review and the Gate
 
-**Review by** launches a separate reviewer profile with the hand's acceptance
-checks. The review metadata stays with the launch so the pair survives a hub
-restart. Reviewer options are Claude Code, Codex, or pi, and reviewer launches
-are read-only. A reviewer does not replace the builder's worktree or owner
-decision.
+**Review by** records a separate reviewer profile with the hand's acceptance
+checks. The reviewer starts after HoldSpeak observes a new builder commit; it
+is not an immediate second launch. The review metadata stays with the launch so
+the pair survives a hub restart. Reviewer options are Claude Code, Codex, or
+pi, and reviewer launches are read-only. A reviewer does not replace the
+builder's worktree or owner decision.
 
 The Gate is a different control. A launch can arm the Gate for its new
 worktree, while steering remains an owner reply to a pane. The Gate holds a

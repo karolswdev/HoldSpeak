@@ -79,7 +79,7 @@ private People notes into the main database or a follow-up draft.
 | `GET /api/meetings/{meeting_id}/aftercare` | Read the digest model. |
 | `GET /api/meetings/{meeting_id}/followup-draft` | Render the draft. |
 | `POST /api/meetings/{meeting_id}/aftercare/file-issue` | Propose a GitHub issue. |
-| `POST /api/meetings/{meeting_id}/export/slack` | Send through the configured Slack channel operation. |
+| `POST /api/meetings/{meeting_id}/export/slack` | Parked legacy route; returns `slack_moved_to_channel`. Use the channel operation instead. |
 
 ## See also
 

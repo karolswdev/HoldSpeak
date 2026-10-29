@@ -32,7 +32,7 @@ holdspeak
 ```
 
 1. Open the URL printed by the hub and follow Setup.
-2. Choose an engine in **Settings > Engines**.
+2. Choose an engine in **Settings > This Mac > Engines**.
 3. Speak or type a Note, then select **Ask about this**.
 
 Try a service migration idea: use **Develop this thought** to refine its constraints, then **Find the tasks** to prepare work.

@@ -1,9 +1,9 @@
 # Activity pre-briefing
 
 Activity pre-briefing collects relevant records from configured activity
-connectors and shows a source-linked note before a meeting or work session. It
-is a preparation read. It does not record audio, call a model, or send a
-message.
+connectors and shows source-linked records and meeting candidates before a
+meeting or work session. It is a preparation read. It does not record audio,
+call a model, or send a message.
 
 ## Before you start
 
@@ -13,17 +13,20 @@ A connector can return no records or a named error.
 
 ## Find the notes
 
-Open **Activity** and select the pre-briefing note. The route
-`GET /api/activity/records` returns saved activity records. Use
-`POST /api/activity/refresh` to refresh configured connectors. Candidate
+Open **Activity**. Its **Records** face lists saved activity projections; open
+the **Candidates and connectors** wing for meeting candidates and connector
+actions. The route `GET /api/activity/records` returns saved activity records.
+Use `POST /api/activity/refresh` to refresh configured connectors. Candidate
 meetings are available from `GET /api/activity/meeting-candidates`.
 
-## Use or dismiss a note
+## Start a candidate
 
-Open a note to inspect its source references. Use the available **Use** or
-**Dismiss** control. Using a note adds it as context for the current task. It
-does not approve an external effect. Dismissal parks the candidate and does not
-delete the source record.
+Open a record to inspect its source references. The current Activity face offers
+**Start meeting** for a candidate and **Dry run** for a connector. Candidate
+status can also be changed with `PUT /api/activity/meeting-candidates/{candidate_id}/status`
+and a `{ "status": "..." }` body. Starting a candidate uses the ordinary
+meeting capture and authority path; it does not approve an unrelated external
+effect.
 
 ## What a note cites
 

@@ -5,6 +5,8 @@
 Source snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`.
 
 This catalogue is generated from the Philo metadata shards. Status, evidence and release availability are separate fields.
+The pinned snapshot is a metadata baseline, not an exhaustive list of current features.
+Regeneration does not rerun tests or establish current release availability.
 Missing shards: **none**.
 
 | Capability | Name | Purpose | Status | Exposure | Evidence | Owner observed | Egress |

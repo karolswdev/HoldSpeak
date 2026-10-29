@@ -14,8 +14,9 @@ The loop is:
 speech -> Whisper transcript -> punctuation cleanup -> dictation pipeline -> typed text
 ```
 
-The pipeline is on by default. Every stage fails open. If a stage fails or its
-model is not available, HoldSpeak types your plain transcript.
+The pipeline is on by default. Non-fatal stage failures fail open: if a stage
+fails or its model is not available, HoldSpeak keeps the original transcript.
+A fatal speech-session signal stops publication instead of typing late text.
 
 An optional last gate sits after the pipeline. Turn on **Preview before
 type** in **Settings > Speak > Voice typing**. HoldSpeak then shows the finished
@@ -60,7 +61,7 @@ The available backends for model stages are:
 
 | Backend | Use when |
 |---|---|
-| `auto` | You want MLX on Apple Silicon, and llama.cpp elsewhere. |
+| `auto` | Use MLX on Apple Silicon only when `mlx_lm` and an MLX model are available; otherwise try llama.cpp and report unavailable if neither backend is ready. |
 | `mlx` | You are on Apple Silicon with an MLX model. |
 | `llama_cpp` | You have a local GGUF model. |
 | `openai_compatible` | You have a local, LAN, or hosted `/v1/chat/completions` endpoint. |
@@ -99,8 +100,9 @@ edit **Stages** in the **Pipeline** group. Or edit the config file:
 }
 ```
 
-Stages that need no assigned model can still run. A missing or failed model
-stage falls back to the prior text and records the reason.
+Stages that need no assigned model can still run. A skipped model stage leaves
+the current text unchanged. A non-fatal failed stage records the reason and
+returns the original utterance text.
 
 ## 4. Set the output target
 
@@ -177,8 +179,9 @@ Blocks are data. They do not override route rights or operation policy.
 Set **Rewrite passes** in **Settings > Speak > More**, or in the config:
 
 An assigned rewrite model receives the frozen transcript and the selected
-project context. It can return unchanged text, a rewritten text, or a named
-failure. The pipeline keeps the prior text when it cannot complete a stage.
+project context. It can return unchanged text, rewritten text, or a named
+failure. A non-fatal stage failure is recorded and returns the original
+utterance text.
 
 ## The journal, corrections, and replay
 

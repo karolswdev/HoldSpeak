@@ -86,11 +86,11 @@ of the automated checks.
 
 ```sh
 python scripts/check_docs.py
-uv run python scripts/test_lock.py -- python docs/internal/architect-assistant/proof/run_tests.py -q --tb=short tests/unit/test_docs_navigation.py tests/unit/test_doc_drift_guard.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_api_surface.py tests/unit/test_phase200_doc_claims.py
+HOME="$(mktemp -d)" uv run python scripts/test_lock.py -- uv run pytest -q -n 8 --dist worksteal tests/unit/test_docs_navigation.py tests/unit/test_doc_drift_guard.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_api_surface.py tests/unit/test_phase200_doc_claims.py
 ```
 
 The lock serializes the run with other lanes.
-The proof driver isolates HOME before it imports pytest. The
+The command sets HOME before the test process starts. The
 navigation check verifies local links and heading targets. The drift guards
 compare documented counts, terms and generated contracts with their sources.
 Registered-claim checks bind documented statements to implementation probes.

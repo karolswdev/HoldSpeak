@@ -99,9 +99,10 @@ and **Artifacts** wings read the same saved meeting and service state.
 
 ### Summary
 
-Select **Run summary** when a route is available. The route is chosen from the
-model assignments, not from the legacy `meeting.intel_provider` value. The host
-chip and the terminal receipt identify the selected host. A remote endpoint,
+Select **Run summary** when a route is available. An adopted model destination
+wins; when none is adopted, the `meeting.intel_provider` intent (`local`,
+`cloud`, or `auto`) selects the fallback against the hub default. The host chip
+and terminal receipt identify the selected host. A remote endpoint,
 CLI engine, or mesh node is an egress boundary for transcript text.
 
 The summary can be queued. Use **Retry** or **Skip** on recovery state. The CLI
@@ -197,7 +198,7 @@ journal. People content uses its separate encrypted store.
 Speech transcription uses the local Whisper backend. Summary and assigned
 plugins can send transcript text to their model hosts.
 
-Meeting model work uses the assigned route for each capability. Check the primary and fallback hosts in **HoldSpeak > Engines**. The retained `meeting.intel_provider` value is a legacy migration input. It does not select a current route or prevent egress.
+Meeting model work uses the assigned route for each capability. Check the primary and fallback hosts in **HoldSpeak > Engines**. Deferred intelligence processing also reads `meeting.intel_provider` (`local`, `cloud`, or `auto`) when no adopted model destination overrides it. This setting does not prevent egress.
 
 - Add and assign models in **HoldSpeak > Engines**. See [Models](MODELS.md).
 - Engines shows where each job runs before you pick its engine; the Meetings window does not repeat the host on its rows (owner ruling 2026-10-25). A hover title on **Run summary** names the host. The receipt shows the hosts that HoldSpeak contacted.
@@ -237,17 +238,17 @@ Use **Settings ▸ Meetings** for supported changes. The active configuration fi
 | `system_audio_device` | `null` | System audio device, for example `BlackHole 2ch`. `null` finds it. |
 | `mic_label`, `remote_label` | `Me`, `Remote` | Speaker labels for the two streams. |
 | `auto_export` | `false` | Terminal recorder only: save the transcript when the meeting ends. |
-| `export_format` | `markdown` | `txt`, `markdown`, or `json` for the terminal recorder. |
+| `export_format` | `markdown` | `txt`, `markdown`, or `json` for the terminal recorder. (`srt` is accepted by shared config but the terminal exporter falls back to `txt`.) |
 | `intel_enabled` | `true` | Allows summaries. |
 | `intelligence_auto` | `every` | When to run the summary by itself: `every`, `room_linked`, or `off`. |
-| `intel_provider` | `local` | Legacy migration input. Use the model assignments to select current routes. |
-| `intel_realtime_model` | local starter model | Path to a GGUF model for local runs. |
+| `intel_provider` | `local` | Provider hint for deferred intelligence processing; model assignments select the current model route. |
+| `intel_realtime_model` | `~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf` | GGUF model path for local runs. |
 | `intel_summary_model` | `null` | Larger local model for the summary. `null` uses the main one. |
 | `intel_deferred_enabled` | `true` | Queue the summary when no model is ready. |
 | `routing_profile` | `balanced` | Intent routing preset. |
-| `intent_router_enabled` | `false` | Intent router switch. `holdspeak doctor` reports it. |
+| `intent_router_enabled` | `true` | Intent router switch. `holdspeak doctor` reports it. |
 | `disabled_plugins` | `[]` | Plugin ids to skip. |
-| `allow_actuators`, `allowed_actuators` | `true`, `["*"]` | Master switch and allow list for actions that leave HoldSpeak. |
+| `allow_actuators`, `allowed_actuators` | `true`, `["*"]` | Stored settings. Current Desk and Mission Control executors do not enforce them. See [Actuators](ACTUATOR_DEVELOPMENT.md#gates). |
 | `webhook_allowed_hosts` | `["*"]` | Hosts a webhook action can reach. |
 | `diarization_enabled` | `false` | Label speakers in system audio. |
 | `diarize_mic` | `false` | Label speakers in the microphone stream. |
@@ -283,7 +284,7 @@ apply.
 | No remote audio | Check the monitor device and run `holdspeak meeting --setup`. |
 | No **Run summary** | Read the **NO SUMMARY ROUTE** reason and assign a model route. |
 | Summary is queued | Run `holdspeak intel --process` or inspect the recovery state. |
-| Capture is recoverable | Stop the hub cleanly, inspect the capture state, then use `/capture/recover`. |
+| Capture is recoverable | Stop the hub cleanly, inspect the capture state, then use `POST /api/meetings/{id}/capture/recover`. |
 | Endpoint fails | Check its URL, credential, model name, and egress chip. |
 | Transcript is poor | Check microphone permission and the assigned speech model. |
 | Browser does not load | Run `holdspeak doctor` and check the local runtime URL. |
