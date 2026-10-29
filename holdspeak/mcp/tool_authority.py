@@ -334,6 +334,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "program.step_done": WORK,
     "program.decide": AUTHORITY,  # a merge and a finding's fate are the owner's press
     "program.overturn": AUTHORITY,  # undoing the engine's decision is the owner's press
+    "program.handoff": AUTHORITY,  # PG19: which agent reads the repository next is the owner's press
     "agent.hand": EGRESS,  # starts a cloud coding agent and sends it a brief from the desk
     # PHILO-16 (16b): the owner's desk windows. A window is not egress,
     # authority or config: an agent composes the desk beside the owner.

@@ -1,23 +1,24 @@
 {
+  "allowed_profiles": [],
   "asks": 1,
-  "check_command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+  "check_command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-10-28T17:50:10.519256+00:00",
+      "at": "2026-10-28T23:53:34.412133+00:00",
       "by": "engine",
       "choice": null,
       "id": 44,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-7f90e81cf86a",
+      "line": "Handed to Claude Code in hs-program-step-a3a6932332e6",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-7f90e81cf86a",
+      "step_id": "step-a3a6932332e6",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.017809+00:00",
+      "at": "2026-10-28T23:53:33.831798+00:00",
       "by": "engine",
       "choice": "add",
       "id": 24,
@@ -27,13 +28,13 @@
       "overturnable": true,
       "overturned_at": null,
       "rule": "YOLO: the engine adds a missing step and says so",
-      "step_id": "step-7f90e81cf86a",
+      "step_id": "step-a3a6932332e6",
       "undo": {
-        "step_id": "step-7f90e81cf86a"
+        "step_id": "step-a3a6932332e6"
       }
     },
     {
-      "at": "2026-10-28T17:50:09.015830+00:00",
+      "at": "2026-10-28T23:53:33.830023+00:00",
       "by": "owner",
       "choice": null,
       "id": 23,
@@ -43,11 +44,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e1f43f4cba9c",
+      "step_id": "step-e5cad9258cab",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.014072+00:00",
+      "at": "2026-10-28T23:53:33.828598+00:00",
       "by": "engine",
       "choice": null,
       "id": 22,
@@ -61,7 +62,7 @@
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.013197+00:00",
+      "at": "2026-10-28T23:53:33.827520+00:00",
       "by": "engine",
       "choice": null,
       "id": 21,
@@ -71,11 +72,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e1f43f4cba9c",
+      "step_id": "step-e5cad9258cab",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:09.008148+00:00",
+      "at": "2026-10-28T23:53:33.824127+00:00",
       "by": "engine",
       "choice": "retry",
       "id": 20,
@@ -85,39 +86,39 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": "a red check goes back to the builder (round 2 of 3)",
-      "step_id": "step-942a9b0c6666",
+      "step_id": "step-2ddb03d700b8",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.930080+00:00",
+      "at": "2026-10-28T23:53:33.787895+00:00",
       "by": "engine",
       "choice": null,
       "id": 19,
       "kind": null,
-      "line": "Running the check: FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-942a9b0c6666",
+      "step_id": "step-2ddb03d700b8",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.929529+00:00",
+      "at": "2026-10-28T23:53:33.787657+00:00",
       "by": "engine",
       "choice": null,
       "id": 18,
       "kind": null,
-      "line": "New commit 9097fcf8; the check runs",
+      "line": "New commit 550c2db5; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-942a9b0c6666",
+      "step_id": "step-2ddb03d700b8",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.800870+00:00",
+      "at": "2026-10-28T23:53:33.727506+00:00",
       "by": "engine",
       "choice": null,
       "id": 17,
@@ -127,53 +128,53 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-077199e530e5",
+      "step_id": "step-141719445341",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.572053+00:00",
+      "at": "2026-10-28T23:53:33.656184+00:00",
       "by": "engine",
       "choice": null,
       "id": 16,
       "kind": null,
-      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-077199e530e5/.tmp/program-check/step-077199e530e5/20261028T175008Z.log",
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-141719445341/.tmp/program-check/step-141719445341/20261028T235333Z.log",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-077199e530e5",
+      "step_id": "step-141719445341",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.498920+00:00",
+      "at": "2026-10-28T23:53:33.620258+00:00",
       "by": "engine",
       "choice": null,
       "id": 15,
       "kind": null,
-      "line": "Running the check: FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-077199e530e5",
+      "step_id": "step-141719445341",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.498518+00:00",
+      "at": "2026-10-28T23:53:33.619949+00:00",
       "by": "engine",
       "choice": null,
       "id": 14,
       "kind": null,
-      "line": "New commit e6156000; the check runs",
+      "line": "New commit 7f1a3b41; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-077199e530e5",
+      "step_id": "step-141719445341",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.387550+00:00",
+      "at": "2026-10-28T23:53:33.561861+00:00",
       "by": "engine",
       "choice": null,
       "id": 13,
@@ -183,11 +184,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-de71061795b3",
+      "step_id": "step-30c441b55da9",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.386427+00:00",
+      "at": "2026-10-28T23:53:33.560609+00:00",
       "by": "engine",
       "choice": "merge",
       "id": 12,
@@ -197,11 +198,11 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": "Yolo merges on a green check and a passed review",
-      "step_id": "step-de71061795b3",
+      "step_id": "step-30c441b55da9",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.382287+00:00",
+      "at": "2026-10-28T23:53:33.557015+00:00",
       "by": "engine",
       "choice": null,
       "id": 11,
@@ -211,109 +212,109 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-de71061795b3",
+      "step_id": "step-30c441b55da9",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.208682+00:00",
+      "at": "2026-10-28T23:53:33.478270+00:00",
       "by": "engine",
       "choice": null,
       "id": 10,
       "kind": null,
-      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-de71061795b3/.tmp/program-check/step-de71061795b3/20261028T175008Z.log",
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-30c441b55da9/.tmp/program-check/step-30c441b55da9/20261028T235333Z.log",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-de71061795b3",
+      "step_id": "step-30c441b55da9",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.150127+00:00",
+      "at": "2026-10-28T23:53:33.438598+00:00",
       "by": "engine",
       "choice": null,
       "id": 9,
       "kind": null,
-      "line": "Running the check: FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-de71061795b3",
+      "step_id": "step-30c441b55da9",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.149740+00:00",
+      "at": "2026-10-28T23:53:33.438272+00:00",
       "by": "engine",
       "choice": null,
       "id": 8,
       "kind": null,
-      "line": "New commit 0ca32dcc; the check runs",
+      "line": "New commit f92fddbc; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-de71061795b3",
+      "step_id": "step-30c441b55da9",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:08.012087+00:00",
+      "at": "2026-10-28T23:53:33.368131+00:00",
       "by": "engine",
       "choice": null,
       "id": 7,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-e1f43f4cba9c",
+      "line": "Handed to Claude Code in hs-program-step-e5cad9258cab",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-e1f43f4cba9c",
+      "step_id": "step-e5cad9258cab",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:07.879330+00:00",
+      "at": "2026-10-28T23:53:33.298022+00:00",
       "by": "engine",
       "choice": null,
       "id": 6,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-942a9b0c6666",
+      "line": "Handed to Claude Code in hs-program-step-2ddb03d700b8",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-942a9b0c6666",
+      "step_id": "step-2ddb03d700b8",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:07.740985+00:00",
+      "at": "2026-10-28T23:53:33.239764+00:00",
       "by": "engine",
       "choice": null,
       "id": 5,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-077199e530e5",
+      "line": "Handed to Claude Code in hs-program-step-141719445341",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-077199e530e5",
+      "step_id": "step-141719445341",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:07.647256+00:00",
+      "at": "2026-10-28T23:53:33.183001+00:00",
       "by": "engine",
       "choice": null,
       "id": 4,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-de71061795b3",
+      "line": "Handed to Claude Code in hs-program-step-30c441b55da9",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": null,
-      "step_id": "step-de71061795b3",
+      "step_id": "step-30c441b55da9",
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:07.541494+00:00",
+      "at": "2026-10-28T23:53:33.112354+00:00",
       "by": "owner",
       "choice": null,
       "id": 3,
@@ -327,7 +328,7 @@
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:07.539716+00:00",
+      "at": "2026-10-28T23:53:33.110468+00:00",
       "by": "owner",
       "choice": null,
       "id": 2,
@@ -341,7 +342,7 @@
       "undo": {}
     },
     {
-      "at": "2026-10-28T17:50:07.533802+00:00",
+      "at": "2026-10-28T23:53:33.104761+00:00",
       "by": "owner",
       "choice": null,
       "id": 1,
@@ -358,10 +359,10 @@
   "closed_at": null,
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-10-28T17:50:07.533371+00:00",
+  "created_at": "2026-10-28T23:53:33.104460+00:00",
   "decided_for_you": [
     {
-      "at": "2026-10-28T17:50:09.017809+00:00",
+      "at": "2026-10-28T23:53:33.831798+00:00",
       "choice": "add",
       "id": 24,
       "kind": "add_step",
@@ -370,10 +371,10 @@
       "overturnable": true,
       "overturned_at": null,
       "rule": "YOLO: the engine adds a missing step and says so",
-      "step_id": "step-7f90e81cf86a"
+      "step_id": "step-a3a6932332e6"
     },
     {
-      "at": "2026-10-28T17:50:09.008148+00:00",
+      "at": "2026-10-28T23:53:33.824127+00:00",
       "choice": "retry",
       "id": 20,
       "kind": "check_failed",
@@ -382,10 +383,10 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": "a red check goes back to the builder (round 2 of 3)",
-      "step_id": "step-942a9b0c6666"
+      "step_id": "step-2ddb03d700b8"
     },
     {
-      "at": "2026-10-28T17:50:08.386427+00:00",
+      "at": "2026-10-28T23:53:33.560609+00:00",
       "choice": "merge",
       "id": 12,
       "kind": "merge",
@@ -394,35 +395,44 @@
       "overturnable": false,
       "overturned_at": null,
       "rule": "Yolo merges on a green check and a passed review",
-      "step_id": "step-de71061795b3"
+      "step_id": "step-30c441b55da9"
     }
   ],
   "default": {
     "agent": "Claude Code",
     "engine": null,
-    "profile": "claude-default"
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
   },
   "done": 1,
   "for_person_id": "p-alice",
   "goal": "The hub stops stalling.",
-  "id": "program-be15f10c8141",
-  "in_state_seconds": 3,
+  "id": "program-d3636f1e740c",
+  "in_state_seconds": 1,
   "last_checkpoint": {
-    "at": "2026-10-28T17:50:10.519256+00:00",
+    "at": "2026-10-28T23:53:34.412133+00:00",
     "by": "engine",
     "choice": null,
     "id": 44,
     "kind": null,
-    "line": "Handed to Claude Code in hs-program-step-7f90e81cf86a",
+    "line": "Handed to Claude Code in hs-program-step-a3a6932332e6",
     "operation_id": null,
     "overturnable": false,
     "overturned_at": null,
     "rule": null,
-    "step_id": "step-7f90e81cf86a",
+    "step_id": "step-a3a6932332e6",
     "undo": {}
   },
-  "note_id": "program-program-be15f10c8141",
-  "note_window": "pullout:note:program-program-be15f10c8141",
+  "may_handoff": false,
+  "note_id": "program-program-d3636f1e740c",
+  "note_window": "pullout:note:program-program-d3636f1e740c",
   "origin_ref": null,
   "place": {
     "origin": null,
@@ -440,7 +450,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/app"
   },
   "reviewer": {
     "agent": null,
@@ -459,9 +469,9 @@
       "branch": "program/the-hub-stops-stalling/1-indexes",
       "brief": "Add the three indexes.",
       "check": {
-        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
-        "commit": "0ca32dcc5855bb29ef89088d417261df83d4a8d8",
-        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-de71061795b3/.tmp/program-check/step-de71061795b3/20261028T175008Z.log",
+        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": "f92fddbcd45fa87c9fb6005f53ec6b8abf8e5810",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-30c441b55da9/.tmp/program-check/step-30c441b55da9/20261028T235333Z.log",
         "minutes": 0.0,
         "reasons": [],
         "running": false,
@@ -497,7 +507,7 @@
       "effort": "low",
       "elapsed": "under a minute",
       "elapsed_seconds": 0,
-      "ended_at": "2026-10-28T17:50:08.387452+00:00",
+      "ended_at": "2026-10-28T23:53:33.561780+00:00",
       "engine": null,
       "findings": [],
       "for_person": null,
@@ -508,10 +518,11 @@
         "review": "none",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-de71061795b3",
+      "id": "step-30c441b55da9",
       "last_checkpoint": {
-        "at": "2026-10-28T17:50:08.387550+00:00",
+        "at": "2026-10-28T23:53:33.561861+00:00",
         "by": "engine",
         "choice": null,
         "id": 13,
@@ -521,10 +532,11 @@
         "overturnable": false,
         "overturned_at": null,
         "rule": null,
-        "step_id": "step-de71061795b3",
+        "step_id": "step-30c441b55da9",
         "undo": {}
       },
       "launch_id": "L1",
+      "limit": null,
       "ordinal": 1,
       "origin_ref": null,
       "owns": [
@@ -547,7 +559,15 @@
         "verdict": null
       },
       "rounds": 0,
-      "started_at": "2026-10-28T17:50:07.646815+00:00",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:33.182702+00:00",
       "state": "done",
       "state_word": "Done",
       "station": 5,
@@ -560,8 +580,8 @@
         "merge"
       ],
       "title": "Indexes",
-      "updated_at": "2026-10-28T17:50:08.387654+00:00",
-      "worktree": "hs-program-step-de71061795b3"
+      "updated_at": "2026-10-28T23:53:33.561947+00:00",
+      "worktree": "hs-program-step-30c441b55da9"
     },
     {
       "after": [],
@@ -569,9 +589,9 @@
       "branch": "program/the-hub-stops-stalling/2-retention",
       "brief": "Prune read receipts after 14 days.",
       "check": {
-        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
-        "commit": "e6156000d46f693a4ab98b7ddcea20a176ce0f23",
-        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-077199e530e5/.tmp/program-check/step-077199e530e5/20261028T175008Z.log",
+        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": "7f1a3b4132e9bca30ad67b61c326fa6f5f90ad25",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-141719445341/.tmp/program-check/step-141719445341/20261028T235333Z.log",
         "minutes": 0.0,
         "reasons": [],
         "running": false,
@@ -606,7 +626,7 @@
       "contenders": [],
       "effort": "low",
       "elapsed": "under a minute",
-      "elapsed_seconds": 4,
+      "elapsed_seconds": 2,
       "ended_at": null,
       "engine": null,
       "findings": [],
@@ -618,10 +638,11 @@
         "review": "none",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-077199e530e5",
+      "id": "step-141719445341",
       "last_checkpoint": {
-        "at": "2026-10-28T17:50:08.800870+00:00",
+        "at": "2026-10-28T23:53:33.727506+00:00",
         "by": "engine",
         "choice": null,
         "id": 17,
@@ -631,10 +652,11 @@
         "overturnable": false,
         "overturned_at": null,
         "rule": null,
-        "step_id": "step-077199e530e5",
+        "step_id": "step-141719445341",
         "undo": {}
       },
       "launch_id": "L2",
+      "limit": null,
       "ordinal": 2,
       "origin_ref": null,
       "owns": [
@@ -657,7 +679,15 @@
         "verdict": null
       },
       "rounds": 0,
-      "started_at": "2026-10-28T17:50:07.740341+00:00",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:33.239508+00:00",
       "state": "pr_open",
       "state_word": "PR open",
       "station": 4,
@@ -670,8 +700,8 @@
         "merge"
       ],
       "title": "Retention",
-      "updated_at": "2026-10-28T17:50:08.800374+00:00",
-      "worktree": "hs-program-step-077199e530e5"
+      "updated_at": "2026-10-28T23:53:33.727266+00:00",
+      "worktree": "hs-program-step-141719445341"
     },
     {
       "after": [],
@@ -679,9 +709,9 @@
       "branch": "program/the-hub-stops-stalling/3-projections-off-the-loop",
       "brief": "Move the slow reads off the event loop.",
       "check": {
-        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
-        "commit": "9097fcf8acdb9c416a15ee1586e1b44931aa6d67",
-        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-942a9b0c6666/.tmp/program-check/step-942a9b0c6666/20261028T175008Z.log",
+        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": "550c2db5ceef03759ca05b7b6088bfc642136241",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-2ddb03d700b8/.tmp/program-check/step-2ddb03d700b8/20261028T235333Z.log",
         "minutes": 0.0,
         "reasons": [
           "the section pytest is red",
@@ -719,7 +749,7 @@
       "contenders": [],
       "effort": "medium",
       "elapsed": "under a minute",
-      "elapsed_seconds": 4,
+      "elapsed_seconds": 1,
       "ended_at": null,
       "engine": null,
       "findings": [],
@@ -731,10 +761,11 @@
         "review": "none",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-942a9b0c6666",
+      "id": "step-2ddb03d700b8",
       "last_checkpoint": {
-        "at": "2026-10-28T17:50:09.008148+00:00",
+        "at": "2026-10-28T23:53:33.824127+00:00",
         "by": "engine",
         "choice": "retry",
         "id": 20,
@@ -744,10 +775,11 @@
         "overturnable": false,
         "overturned_at": null,
         "rule": "a red check goes back to the builder (round 2 of 3)",
-        "step_id": "step-942a9b0c6666",
+        "step_id": "step-2ddb03d700b8",
         "undo": {}
       },
       "launch_id": "L3",
+      "limit": null,
       "ordinal": 3,
       "origin_ref": null,
       "owns": [],
@@ -765,7 +797,15 @@
         "verdict": null
       },
       "rounds": 1,
-      "started_at": "2026-10-28T17:50:07.878615+00:00",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:33.297634+00:00",
       "state": "check_failed",
       "state_word": "Check failed",
       "station": 2,
@@ -778,8 +818,8 @@
         "merge"
       ],
       "title": "Projections off the loop",
-      "updated_at": "2026-10-28T17:50:09.008027+00:00",
-      "worktree": "hs-program-step-942a9b0c6666"
+      "updated_at": "2026-10-28T23:53:33.824017+00:00",
+      "worktree": "hs-program-step-2ddb03d700b8"
     },
     {
       "after": [],
@@ -787,7 +827,7 @@
       "branch": "program/the-hub-stops-stalling/4-people-routes",
       "brief": "31 handlers through run_in_threadpool.",
       "check": {
-        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -799,7 +839,7 @@
       "contenders": [],
       "effort": "medium",
       "elapsed": "under a minute",
-      "elapsed_seconds": 4,
+      "elapsed_seconds": 1,
       "ended_at": null,
       "engine": null,
       "findings": [],
@@ -811,10 +851,11 @@
         "review": "none",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-e1f43f4cba9c",
+      "id": "step-e5cad9258cab",
       "last_checkpoint": {
-        "at": "2026-10-28T17:50:09.015830+00:00",
+        "at": "2026-10-28T23:53:33.830023+00:00",
         "by": "owner",
         "choice": null,
         "id": 23,
@@ -824,10 +865,11 @@
         "overturnable": false,
         "overturned_at": null,
         "rule": null,
-        "step_id": "step-e1f43f4cba9c",
+        "step_id": "step-e5cad9258cab",
         "undo": {}
       },
       "launch_id": "L4",
+      "limit": null,
       "ordinal": 4,
       "origin_ref": null,
       "owns": [],
@@ -845,7 +887,15 @@
         "verdict": null
       },
       "rounds": 0,
-      "started_at": "2026-10-28T17:50:08.011561+00:00",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:33.367808+00:00",
       "state": "waiting",
       "state_word": "Asks you",
       "station": 1,
@@ -858,8 +908,8 @@
         "merge"
       ],
       "title": "People routes",
-      "updated_at": "2026-10-28T17:50:09.013095+00:00",
-      "worktree": "hs-program-step-e1f43f4cba9c"
+      "updated_at": "2026-10-28T23:53:33.827446+00:00",
+      "worktree": "hs-program-step-e5cad9258cab"
     },
     {
       "after": [],
@@ -867,7 +917,7 @@
       "branch": null,
       "brief": "Sweep the copy.",
       "check": {
-        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -896,10 +946,12 @@
         "review": "none",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": "waiting for qwen",
-      "id": "step-bda1920c6395",
+      "id": "step-467f7bbf01a9",
       "last_checkpoint": null,
       "launch_id": null,
+      "limit": null,
       "ordinal": 5,
       "origin_ref": null,
       "owns": [],
@@ -917,6 +969,20 @@
         "verdict": null
       },
       "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "pi",
+          "engine": "engine-tailscale-karol-8080",
+          "label": "pi · qwen",
+          "profile": "pi-default"
+        },
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
       "started_at": null,
       "state": "ready",
       "state_word": "Ready · waiting for qwen",
@@ -930,7 +996,7 @@
         "merge"
       ],
       "title": "Overnight sweep on qwen",
-      "updated_at": "2026-10-28T17:50:08.012288+00:00",
+      "updated_at": "2026-10-28T23:53:33.368551+00:00",
       "worktree": null
     },
     {
@@ -942,7 +1008,7 @@
       "branch": null,
       "brief": "Fan out the reads.",
       "check": {
-        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -966,10 +1032,12 @@
         "review": "none",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-c67c1b6bc8a7",
+      "id": "step-c32356e017df",
       "last_checkpoint": null,
       "launch_id": null,
+      "limit": null,
       "ordinal": 6,
       "origin_ref": null,
       "owns": [],
@@ -987,6 +1055,14 @@
         "verdict": null
       },
       "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
       "started_at": null,
       "state": "planned",
       "state_word": "Planned",
@@ -1000,7 +1076,7 @@
         "merge"
       ],
       "title": "The fan-out",
-      "updated_at": "2026-10-28T17:50:07.539116+00:00",
+      "updated_at": "2026-10-28T23:53:33.109819+00:00",
       "worktree": null
     },
     {
@@ -1011,7 +1087,7 @@
       "branch": "program/the-hub-stops-stalling/7-write-the-docs",
       "brief": "docs/programs.md",
       "check": {
-        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/red sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "command": "FAKE_CHECK_RED_FILE=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/red sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -1023,7 +1099,7 @@
       "contenders": [],
       "effort": "medium",
       "elapsed": "under a minute",
-      "elapsed_seconds": 1,
+      "elapsed_seconds": 0,
       "ended_at": null,
       "engine": null,
       "findings": [],
@@ -1035,23 +1111,25 @@
         "review": "none",
         "review_depth": "delta"
       },
+      "handoffs": [],
       "held_reason": null,
-      "id": "step-7f90e81cf86a",
+      "id": "step-a3a6932332e6",
       "last_checkpoint": {
-        "at": "2026-10-28T17:50:10.519256+00:00",
+        "at": "2026-10-28T23:53:34.412133+00:00",
         "by": "engine",
         "choice": null,
         "id": 44,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-7f90e81cf86a",
+        "line": "Handed to Claude Code in hs-program-step-a3a6932332e6",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "rule": null,
-        "step_id": "step-7f90e81cf86a",
+        "step_id": "step-a3a6932332e6",
         "undo": {}
       },
       "launch_id": "L8",
+      "limit": null,
       "ordinal": 7,
       "origin_ref": null,
       "owns": [],
@@ -1069,7 +1147,15 @@
         "verdict": null
       },
       "rounds": 0,
-      "started_at": "2026-10-28T17:50:10.518887+00:00",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-28T23:53:34.411859+00:00",
       "state": "working",
       "state_word": "Working",
       "station": 1,
@@ -1082,29 +1168,30 @@
         "merge"
       ],
       "title": "Write the docs",
-      "updated_at": "2026-10-28T17:50:10.798268+00:00",
-      "worktree": "hs-program-step-7f90e81cf86a"
+      "updated_at": "2026-10-28T23:53:34.531201+00:00",
+      "worktree": "hs-program-step-a3a6932332e6"
     }
   ],
   "template": "fast-cycle",
   "title": "The hub stops stalling",
   "total": 7,
-  "updated_at": "2026-10-28T17:50:09.014001+00:00",
+  "updated_at": "2026-10-28T23:53:33.828533+00:00",
+  "usage_warning_share": null,
   "your_turn": 0,
   "your_turn_items": [
     {
       "choices": [],
       "for_person_id": "p-alice",
-      "id": "step-e1f43f4cba9c:answer",
+      "id": "step-e5cad9258cab:answer",
       "kind": "answer",
       "launch_id": "L4",
       "ordinal": 4,
       "pr": null,
-      "program_id": "program-be15f10c8141",
+      "program_id": "program-d3636f1e740c",
       "program_title": "The hub stops stalling",
       "project_id": "proj-holdspeak",
-      "since": "2026-10-28T17:50:09.013095+00:00",
-      "step_id": "step-e1f43f4cba9c",
+      "since": "2026-10-28T23:53:33.827446+00:00",
+      "step_id": "step-e5cad9258cab",
       "step_title": "People routes",
       "title": "Answer step 4 “People routes”"
     }

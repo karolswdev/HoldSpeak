@@ -11,7 +11,7 @@ live in the service, so every transport keeps them:
 - ``program.checkpoint`` / ``program.step_done``: the step's own launch (by
   its credential) and, for checkpoints, the owner; any other caller is
   refused ``not_your_step``;
-- ``program.decide`` and ``program.overturn``: the owner only (AUTHORITY in ``tool_authority.py``,
+- ``program.decide``, ``program.overturn`` and ``program.handoff`` (PG19): the owner only (AUTHORITY in ``tool_authority.py``,
   never in the CONDUCTOR palette).
 """
 from __future__ import annotations
@@ -26,6 +26,23 @@ _RUNS_ON = {
     "engine": {"type": ["string", "null"], "description": "For pi only: an engine profile id of the model library (model_library.get). Empty: the desk's engine for coding work."},
     "prefer_idle": {"type": ["boolean", "null"], "description": "pi only: start the step only when its engine is idle (a foreground use always wins)."},
 }
+#: PG19: Runs on as an ordered list: the first runs the role, the rest take
+#: the step over at a usage limit.
+_RUNS_ON_LIST = {"type": ["array", "null"], "maxItems": 4, "items": {"anyOf": [
+    {"type": "string"},
+    {"type": "object", "properties": {"profile": {"type": "string"}, "engine": {"type": ["string", "null"]}},
+     "required": ["profile"], "additionalProperties": False},
+]}, "description": "The agents in order (claude-default, codex-default, pi-default with an engine). The first runs "
+                   "it; the next takes over when one stops at its usage limit."}
+_HANDOFF = {
+    "runs_on": _RUNS_ON_LIST,
+    "allowed_profiles": {"type": ["array", "null"], "items": {"type": "string"},
+                         "description": "The agents that may read this repository. Empty: every agent."},
+    "may_handoff": {"type": ["boolean", "null"], "description": "Normal: hand off on its own after 10 minutes at a limit."},
+    "usage_warning_share": {"type": ["number", "null"], "minimum": 0, "maximum": 1,
+                            "description": "Hand off at a turn end once a harness reports this share of its window (0.9). Off by default."},
+}
+
 _STEP = {
     "type": "object",
     "properties": {
@@ -34,6 +51,7 @@ _STEP = {
         "owns": {"type": "array", "items": {"type": "string"}, "description": "The files this step owns."},
         "after": {"type": "array", "items": {"type": "integer", "minimum": 1}, "description": "The step numbers it waits for."},
         **_RUNS_ON,
+        "runs_on": _RUNS_ON_LIST,
         "effort": {"type": ["string", "null"], "enum": ["low", "medium", "high", None]},
         "race": {"type": ["integer", "null"], "minimum": 0, "maximum": 3, "description": "2 or 3: that many agents race on it."},
         "gate_check": {"type": ["boolean", "null"]},
@@ -75,6 +93,7 @@ TOOLS: list[dict[str, Any]] = [
          "for_person_id": {"type": ["string", "null"]},
          "spend_limit_usd": {"type": ["number", "null"], "minimum": 0,
                              "description": "The most a paid engine may cost; unset: any spend is his question."},
+         **_HANDOFF,
      }, ["title"])},
     {"name": "program.plan",
      "description": "Replace or append a Program's steps. size auto sets each step's effort by rule (more than 12 "
@@ -94,6 +113,7 @@ TOOLS: list[dict[str, Any]] = [
          "spend_limit_usd": {"type": ["number", "null"], "minimum": 0},
          "default_profile": _RUNS_ON["profile"], "default_engine": _RUNS_ON["engine"],
          "reviewer_profile": _RUNS_ON["profile"], "reviewer_engine": _RUNS_ON["engine"],
+         **_HANDOFF,
      }, ["program_id"])},
     {"name": "program.start", "description": "Start a Program: its ready steps are handed to agents.",
      "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
@@ -121,14 +141,27 @@ TOOLS: list[dict[str, Any]] = [
                             ["step_id", "report"])},
     {"name": "program.decide",
      "description": "The owner's decision on a step: a merge (merge, not_yet), a finding (fix_now, later, skip), a "
-                    "parked step (resume, skip), a person review (prepare: a send is prepared, he presses Send). "
+                    "parked step (resume, skip), a person review (prepare: a send is prepared, he presses Send), "
+                    "an agent at its usage limit (limited: continue, wait). "
                     "Owner only.",
      "inputSchema": _schema({
          "program_id": _ID, "step_id": _ID,
-         "kind": {"type": "string", "enum": ["merge", "finding", "parked", "ask_review", "core", "race", "add_step", "close"]},
+         "kind": {"type": "string", "enum": ["merge", "finding", "parked", "ask_review", "core", "race", "add_step", "close",
+                                             "limited"]},
          "choice": {"type": "string"}, "finding_id": {"type": ["string", "null"]},
          "reason": {"type": ["string", "null"], "maxLength": 400},
      }, ["program_id", "step_id", "kind", "choice"])},
+    {"name": "program.handoff",
+     "description": "Move a step that holds an agent to another agent, in the same worktree on the same branch, with "
+                    "HoldSpeak's handoff brief as its first message. preview true returns the brief, what was redacted "
+                    "and the earlier turns, and moves nothing. Owner only.",
+     "inputSchema": _schema({
+         "program_id": _ID, "step_id": _ID,
+         "to": {"anyOf": [{"type": "string"}, {"type": "object", "properties": {
+             "profile": {"type": "string"}, "engine": {"type": ["string", "null"]}}, "required": ["profile"],
+             "additionalProperties": False}]},
+         "preview": {"type": ["boolean", "null"]},
+     }, ["program_id", "step_id", "to"])},
     {"name": "program.overturn",
      "description": "Undo one of the engine's decisions (Decided for you) while it can still be undone: a Later task, "
                     "a Skip, a parked step, an added step. Never a merge. Owner only.",
@@ -172,6 +205,9 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                                  follow_ups=list(args.get("follow_ups") or []))
     if name == "program.overturn":
         return service.overturn(principal, str(args["program_id"]), args["decision_id"])
+    if name == "program.handoff":
+        return service.handoff(principal, str(args["program_id"]), str(args["step_id"]), args.get("to"),
+                               preview=bool(args.get("preview")))
     return service.decide(
         principal, str(args["program_id"]), str(args["step_id"]), kind=str(args.get("kind") or ""),
         choice=str(args.get("choice") or ""), finding_id=args.get("finding_id"), reason=args.get("reason"),

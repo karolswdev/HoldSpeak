@@ -84,13 +84,19 @@ class FakeHand:
             assert spec is not None
             name, branch, start = spec["name"], spec["branch"], spec.get("start_point") or "main"
         path = self.repo.parent / name
-        git(self.repo, "worktree", "add", "-b", branch, str(path), start)
-        git(path, "config", "user.email", "agent@example.test")
-        git(path, "config", "user.name", "Agent")
+        if not path.exists():
+            git(self.repo, "worktree", "add", "-b", branch, str(path), start)
+            git(path, "config", "user.email", "agent@example.test")
+            git(path, "config", "user.name", "Agent")
+        else:
+            # PG19: a handoff continues in the same worktree, on its branch
+            # (the real hand's Hand again path).
+            assert kwargs.get("handoff_brief"), "a second hand of a step is a handoff"
         self.ledger.record({
             "launch_id": launch_id, "state": "registered", "profile_id": kwargs.get("profile") or "claude-default",
             "origin_ref": {"kind": kind, "id": item_id}, "branch": branch, "worktree_path": str(path),
             "helper_of": helper_of, "engine_id": kwargs.get("engine"),
+            **({"first_message": kwargs["handoff_brief"]} if kwargs.get("handoff_brief") else {}),
             **({"review": dict(kwargs["review"]), "role": "reviewer"} if helper_of and kwargs.get("review") else {}),
         })
         self.states[launch_id] = {"state": "working", "turn_id": None}

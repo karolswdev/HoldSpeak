@@ -692,6 +692,25 @@ The faces lane (PG-FACES, merge `bad00fb76`) is in "The faces" below.
   park), `race` (pick), `add_step` (add, skip), `close` (close). Each is a
   your-turn kind the §6 table can send to him.
 
+### Taken from Moonfold (PG19)
+
+The handoff of PG19 takes its ideas from Moonfold's provider handoff
+(github.com/Mr-Dark-debug/Moonfold, `docs/user/provider-handoff.md` and
+`apps/server/src/handoff/`): a fallback order of agents, a limit notice
+that offers "Continue in …" beside waiting for the reset, a brief built
+from the thread's history without a model so the same thread gives the
+same brief, redaction counted by kind and shown before the send, a
+divider with View brief, allowed providers per project, never twice for
+the same stopped turn, and an optional usage warning. HoldSpeak's words
+and code are its own; no Moonfold code was copied. Moonfold is MIT
+licensed (Copyright (c) 2026 T3 Tools Inc., Copyright (c) 2026 Moonfold
+contributors); the attribution is in `THIRD_PARTY_NOTICES.md`. Where
+HoldSpeak differs: the brief is built from the step's record (checkpoints,
+his lines, the gate's log, the worktree), not a chat transcript; the next
+agent continues on the step's own branch, so there is no new thread; the
+levels of the control ladder decide what Moonfold's Ask and Automatic
+modes decide.
+
 ### What was left out, and why
 
 - **The runner does not tick at once on a coder frame.** It ticks every 30 s
@@ -741,3 +760,77 @@ canvas:
 - **The canvas's "Control: Owner / Delegate" words** are the ladder's
   Secure · Normal · YOLO on the built window (§6 as amended).
 
+
+## PG19 Handoff: when an agent runs out (2026-10-28)
+
+Owner, 2026-10-28, on Moonfold: "how could it enhance our Programs and other
+pipelines?" Canvas: `canvases/handoff-2026-10-28.html` (1440 and 393).
+
+### What and why
+
+A step's agent can stop at its harness's usage limit: Claude Code's
+"limit reached · resets 2pm", Codex's "You've hit your usage limit … try
+again at 2:05 PM". Before PG19 the step sat in Working until the reset, or
+the engine read the stopped turn as "no commit" and parked it. Overnight on
+the home box that is a lost night.
+
+PG19 gives every role an **ordered list of agents** (Runs on, first to
+last), reads the limit notice from the agent's own screen, and continues
+the step in the next agent: same worktree, same branch, with a
+**handoff brief** that HoldSpeak builds without a model from what it
+already holds (the step's brief, the goal, the plan and progress, what he
+said since, the files changed, `git status`, `git diff --stat`, the last red
+check's tail, open asks, the repository's CLAUDE.md or AGENTS.md). The
+brief is redacted before it leaves; he sees the counts by kind.
+
+**Recommendation (pre-approved, built):** the list is the Agent picker's
+menu ("then Codex" rows under the first choice), not a separate editor;
+the limit is a step state of its own (**Limited until 14:00**); the
+handoff is a divider line in the Checkpoints fold with **View brief**; at
+Normal the Your turn row has **Continue in Codex** as its first press.
+
+### The rules (`program_rules.decide(level, "limited", facts)`)
+
+| Facts | Secure | Normal | YOLO |
+|---|---|---|---|
+| a next agent is free (on, allowed, not limited itself) | Your turn: Continue in <next> / Wait until <reset> | Your turn, Continue first; after 10 min HoldSpeak continues on its own when the Program **may hand off** | continue at once in the next agent |
+| no next agent is left | wait until the reset, and say so | same | same |
+| this stopped turn was handed off before | nothing (never twice for one stopped turn) | same | same |
+| a usage warning (the share he set is reached, at a turn end) | Your turn | Your turn | continue at once |
+
+Skipped entries: an agent the desk does not have (profile unknown), an
+agent the Program does not allow (`allowed_profiles`, default all), and an
+agent whose own limit is still on (read on any step of any Program).
+
+### In data
+
+- `program_steps.runs_on_json` and `programs.default_runs_on_json`: an
+  ordered list of `{profile, engine}`. The first entry is the old
+  `profile` / `engine` pair, which stay readable and are written from it.
+- `programs.allowed_profiles_json` (empty: every agent),
+  `programs.may_handoff` (default off), `programs.usage_warning_share`
+  (default off; a share such as 0.9).
+- `program_steps.handoffs_json`: one entry per handoff: `at`, `from`, `to`,
+  `reason` (`usage_limit`, `usage_warning`, `by_hand`), `by`, `brief_ref`,
+  `brief`, `redacted` (counts by kind), `earlier_turns`, `launch_from`,
+  `launch_to`.
+- The step state `limited` (station Work, tone warn). Its word is
+  "Limited until 14:00", with "· continuing in Codex" while a next agent
+  waits for his press or the 10 minutes.
+
+### The pieces
+
+- `holdspeak/agent_context/usage_limit.py`: two notice rules (Claude Code,
+  Codex) and the share read; pure, the notice text pinned in tests from the
+  harnesses' documented wording (no capture of a real notice is in the
+  repository; marked as such in the test).
+- The screen record carries the notice (`ScreenRecord.limit`); the flight
+  says `limited` with `limit: {until, words, rule}` over the hook's word.
+- `holdspeak/services/program_handoff.py`: `gather` (reads the database and
+  git), `build` (pure: the same inputs give the same bytes), `redact_counted`.
+- `ProgramRunner.handoff`: marks the earlier launch `handed_off`, hands
+  the step again through the hand with the brief as its first message
+  (`AgentHandService.hand(..., handoff_brief=…)`: the Hand again path, the
+  same worktree and branch), records the entry and the checkpoint.
+- By hand: `program.handoff(step_id, to, preview)` and
+  `POST /api/programs/{id}/steps/{sid}/handoff`, owner only.

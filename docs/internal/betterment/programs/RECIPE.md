@@ -324,3 +324,56 @@ State: **Shipped** means in this PR. **Left** means a later slice.
 - **Done when**: a Program that moved today shows the line at 1440 and 393.
 - **Tests**: T2 the Today app file.
 - **Not in this slice**: The Week's count.
+
+## PG19. Handoff: when an agent runs out (Shipped)
+
+- **Goal**: a step whose agent stops at its usage limit continues in the
+  next agent of its Runs on list, same worktree, same branch, with a
+  deterministic, redacted handoff brief (design "PG19 Handoff"; taken from
+  Moonfold, MIT, `THIRD_PARTY_NOTICES.md`).
+- **Files**: `hs/agent_context/usage_limit.py`, `screen_watch.py`
+  (`ScreenRecord.limit`), `hs/services/agent_flights.py` (`limit`),
+  `hs/services/program_handoff.py`, `program_rules.py` (`limited`),
+  `program_runner.py`, `program_service.py`, `agent_hand_service.py`
+  (`handoff_brief`), `hs/db/schema.py` + `programs.py`,
+  `hs/web/routes/programs.py`, `hs/mcp/families/program.py`,
+  `tool_authority.py`; `desk/programs/` (RunsOn then rows, the Limited
+  word, the handoff divider and View brief, the limited Your turn row,
+  Allowed agents); `desk/needs/NeedsDrawer.tsx` (the two verbs).
+- **Done when**: at YOLO a limited step continues in the next agent at
+  once; at Normal and Secure he presses Continue in … or Wait; the same
+  inputs give the same brief byte for byte.
+- **Tests**: T1 `tests/unit/test_program_handoff.py` (25 cases: the two
+  notices, the rules per level, the golden brief, the redaction counts,
+  never twice, the skip rules, the fallback at dispatch, the route and the
+  MCP authority); T2 three cases in `programs.app.test.tsx` on the recorded
+  `program.limited.json`.
+- **Not in this slice**: the hook subtype (no harness hook that names a
+  usage limit is known to the repository); the Agents window's own word for
+  a limited agent (the flight carries `limit`, its state word is unchanged);
+  a real capture of either notice (the wordings are the documented ones).
+
+## PG20. Hidden-ref checkpoints (Left)
+
+- **Goal**: each checkpoint of a step also pins the worktree's state to a
+  hidden ref (`refs/holdspeak/checkpoints/<step>/<n>`), so a handoff or a
+  rollback can start from a named moment, not only the branch head.
+- **Files**: `program_runner.py`, `program_handoff.py`, the Checkpoints fold.
+- **Changes**: `git update-ref` from a temporary index at each checkpoint;
+  View brief names the ref; a "Start from here" verb for him.
+- **Done when**: a handoff names the ref it continues from.
+- **Tests**: T1 on the rig's real git.
+- **Not in this slice**: pruning old refs.
+
+## PG21. The verified provider matrix in Engines (Left)
+
+- **Goal**: Settings ▸ Engines shows, per agent, whether its usage-limit
+  notice was read on this desk (verified from a real stop) or only from the
+  documented wording, and its last reset.
+- **Files**: the Engines face, `usage_limit.py` (a recorded capture per
+  harness), a hub read of the last limit per agent.
+- **Changes**: one row per harness: notice read · verified or documented ·
+  last stop.
+- **Done when**: a real stop of Claude Code or Codex turns its row verified.
+- **Tests**: T1 on a recorded capture; T2 the Engines app file.
+- **Not in this slice**: other harnesses (gemini, opencode).

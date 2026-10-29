@@ -334,6 +334,9 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         # choices, the rule), for the faces and "Why this state".
         "state_source": state_source,
         "screen": _screen_wire(screen_row, clock),
+        # Programs PG19: the harness stopped at its usage limit (its own
+        # notice on the screen): ``{until, words, rule, line}``; ``None``.
+        "limit": _limit_wire(record, screen_row, state, clock),
         # Betterment AG0: the done turn's id, and whether the owner has not
         # opened the agent since (``POST /api/agent/launches/{id}/seen``).
         "turn_id": turn_id,
@@ -421,6 +424,19 @@ def _screen(
         if word and (state in _SCREEN_FILLS or stale_work):
             return row, "screen", _SCREEN_FLIGHT[word]
     return row, ("hook" if hooked else None), (state, None)
+
+
+def _limit_wire(record: Mapping[str, Any], row: Any, state: str, clock: datetime) -> Optional[dict[str, Any]]:
+    """PG19: the screen's usage-limit notice of a running launch whose
+    agent is not working; a share warning carries ``share``."""
+    limit = getattr(row, "limit", None) if row is not None else None
+    if limit is None or state in ("working", "merged", "checked"):
+        return None
+    if str(record.get("state") or "") not in ("launched", "registered"):
+        return None
+    if limit.until is not None and limit.until <= clock:
+        return None   # an old notice still in the scrollback: the window reset
+    return limit.wire(clock)
 
 
 def _screen_wire(row: Any, clock: datetime) -> Optional[dict[str, Any]]:

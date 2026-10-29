@@ -16,6 +16,7 @@ import { spriteUrl } from "../sprites";
 import { afterWords, agentKey, runsOnWords, stationsOf, stepChip, stepTone, stepWord } from "./model";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { StationTrack } from "./StationTrack";
+import { stateWords } from "../surface/words";
 import type { PlanStep, ProgramStep } from "./types";
 
 function quote(line: string | undefined | null): string {
@@ -62,7 +63,8 @@ export function StepRow({
       </Button>
       <span className="pg-step-track">
         <StationTrack stations={stationsOf(step)} />
-        <DotWord tone={stepTone(step.state)} className="pg-step-word" data-testid="programs-step-word">{word}</DotWord>
+        <DotWord tone={stepTone(step.state)} className="pg-step-word" data-testid="programs-step-word"
+          title={step.state === "limited" ? stateWords(step.state_word) : undefined}>{word}</DotWord>
       </span>
       <span className="pg-step-chip"><StateChip state={stepChip(step.state)} label={word} wordless={false} /></span>
       <span className="pg-step-agent">

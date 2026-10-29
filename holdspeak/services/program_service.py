@@ -42,7 +42,7 @@ log = get_logger("program_service")
 
 PROGRAM_STATES = ("drafting", "running", "waiting", "done", "parked", "failed")
 STEP_STATES = (
-    "planned", "ready", "briefed", "working", "waiting", "checking", "check_failed", "review",
+    "planned", "ready", "briefed", "working", "waiting", "limited", "checking", "check_failed", "review",
     "findings", "pr_open", "merge_ask", "merged", "done", "parked", "failed",
 )
 
@@ -50,11 +50,14 @@ STEP_STATES = (
 STEP_TRANSITIONS: dict[str, frozenset[str]] = {
     "planned": frozenset({"ready", "parked"}),
     "ready": frozenset({"briefed", "planned", "parked"}),
-    "briefed": frozenset({"working", "waiting", "checking", "parked", "failed"}),
-    "working": frozenset({"waiting", "checking", "parked", "failed"}),
-    "waiting": frozenset({"working", "checking", "parked", "failed"}),
+    "briefed": frozenset({"working", "waiting", "limited", "checking", "parked", "failed"}),
+    "working": frozenset({"briefed", "waiting", "limited", "checking", "parked", "failed"}),
+    "waiting": frozenset({"briefed", "working", "limited", "checking", "parked", "failed"}),
+    # PG19: the agent stopped at its usage limit; a handoff re-briefs the
+    # step in the next agent (``briefed``), a reset lets it go on.
+    "limited": frozenset({"briefed", "working", "waiting", "checking", "parked", "failed"}),
     "checking": frozenset({"review", "pr_open", "check_failed", "done", "parked", "failed"}),
-    "check_failed": frozenset({"working", "waiting", "checking", "parked", "failed"}),
+    "check_failed": frozenset({"briefed", "working", "waiting", "limited", "checking", "parked", "failed"}),
     "review": frozenset({"pr_open", "findings", "checking", "done", "parked", "failed"}),
     "findings": frozenset({"review", "working", "checking", "pr_open", "done", "parked", "failed"}),
     "pr_open": frozenset({"merge_ask", "merged", "parked", "failed"}),
@@ -66,7 +69,7 @@ STEP_TRANSITIONS: dict[str, frozenset[str]] = {
 }
 
 #: A step in one of these holds an agent (the board's live rows).
-ACTIVE_STATES = frozenset({"briefed", "working", "waiting", "checking", "check_failed", "review", "findings"})
+ACTIVE_STATES = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings"})
 #: Finished: its dependents may run.
 FINISHED_STATES = frozenset({"merged", "done"})
 #: Nothing more happens to it unless he says so.
@@ -75,7 +78,7 @@ CLOSED_STATES = frozenset({"merged", "done", "parked"})
 #: The station track of the board (design §9): which station each state lights.
 STATIONS = ("brief", "work", "check", "review", "pr", "merge")
 _STATION_OF = {
-    "planned": -1, "ready": -1, "briefed": 0, "working": 1, "waiting": 1, "checking": 2,
+    "planned": -1, "ready": -1, "briefed": 0, "working": 1, "waiting": 1, "limited": 1, "checking": 2,
     "check_failed": 2, "review": 3, "findings": 3, "pr_open": 4, "merge_ask": 5, "merged": 5,
     "done": 5, "parked": -1, "failed": -1,
 }
@@ -83,7 +86,7 @@ _STATION_OF = {
 #: The words a state reads on a face (sentence case; ``stateWords`` draws them).
 STEP_WORDS = {
     "planned": "Planned", "ready": "Ready", "briefed": "Briefed", "working": "Working",
-    "waiting": "Asks you", "checking": "Checking", "check_failed": "Check failed",
+    "waiting": "Asks you", "limited": "Limited", "checking": "Checking", "check_failed": "Check failed",
     "review": "In review", "findings": "Findings", "pr_open": "PR open", "merge_ask": "Merge?",
     "merged": "Merged", "done": "Done", "parked": "Parked", "failed": "Failed",
 }
@@ -113,6 +116,8 @@ RACE_PROFILES = ("claude-default", "codex-default", "pi-default")
 MAX_RACE = 3
 #: Two rounds, then him (AG12, hivehouse).
 MAX_ROUNDS = 2
+#: PG19: the longest Runs on list (the three harnesses and one more engine).
+MAX_RUNS_ON = 4
 
 AGENT_LABELS = {"claude-default": "Claude Code", "codex-default": "Codex", "pi-default": "pi"}
 #: The default reviewer pairing (decision 4): Codex reviews Claude Code and back.
@@ -132,7 +137,12 @@ DECIDE_CHOICES = {
     "race": ("pick",),
     "add_step": ("add", "skip"),
     "close": ("close",),
+    # PG19: the agent is at its usage limit: continue in the next agent now,
+    # or wait for the reset.
+    "limited": ("continue", "wait"),
 }
+
+
 
 #: ``HOLDSPEAK_PROGRAMS=off``: the runner does not tick (every rig hub).
 PROGRAMS_ENV = "HOLDSPEAK_PROGRAMS"
@@ -281,9 +291,21 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) ->
                           "choices": list(DECIDE_CHOICES["core"]), "reason": core.get("reason"),
                           "title": f"{label.capitalize()}: {core.get('reason')}"})
             continue
+        limit = facts.get("limit") if isinstance(facts.get("limit"), Mapping) else None
         if state == "waiting":
             items.append({**base, "id": f"{step['id']}:answer", "kind": "answer", "choices": [],
                           "title": f"Answer {label}"})
+        elif state == "limited" and limit and limit.get("next") and not limit.get("waiting") and level != "yolo":
+            # PG19: Secure and Normal ask him; YOLO continued at once.
+            nxt = limit["next"]
+            until = f" until {limit['words']}" if limit.get("words") else ""
+            items.append({**base, "id": f"{step['id']}:limited", "kind": "limited",
+                          "choices": list(DECIDE_CHOICES["limited"]), "next": dict(nxt),
+                          "until": limit.get("until"), "until_words": limit.get("words") or "",
+                          "agent": agent_label(limit.get("profile") or step.get("profile")),
+                          "warning": bool(limit.get("share")),
+                          "title": f"{agent_label(limit.get('profile') or step.get('profile'))} is at its limit{until}: "
+                                   f"continue in {nxt.get('label') or agent_label(nxt.get('profile'))} now, or wait?"})
         elif state == "merge_ask":
             number = step.get("pr_number")
             pr = f"PR #{number}" if number else "the PR"
@@ -328,6 +350,18 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) ->
             "title": f"Close \u201c{program['title']}\u201d: every step is finished",
         })
     return items
+
+
+def limit_words(limit: Optional[Mapping[str, Any]]) -> str:
+    """PG19: ``Limited until 14:00 · continuing in Codex`` (a next agent
+    waits for his press or the minutes), ``… · waits for the reset`` (no
+    next agent is left, or he chose to wait)."""
+    limit = limit or {}
+    head = f"Limited until {limit['words']}" if limit.get("words") else "Limited"
+    nxt = limit.get("next") if isinstance(limit.get("next"), Mapping) else None
+    if nxt and not limit.get("waiting"):
+        return f"{head} · continuing in {nxt.get('label') or agent_label(nxt.get('profile'))}"
+    return f"{head} · waits for the reset"
 
 
 def program_state(program: Mapping[str, Any], steps: list[Mapping[str, Any]]) -> str:
@@ -599,11 +633,19 @@ class ProgramService:
         profile = step.get("profile") or program.get("default_profile")
         engine_id = step.get("engine") if step.get("profile") else (step.get("engine") or program.get("default_engine"))
         facts = step.get("facts") or {}
+        running = facts.get("running_on")
+        if isinstance(running, Mapping) and running.get("profile") and step.get("state") not in ("planned", "ready"):
+            # PG19: the row names the agent that runs it now (a later entry of
+            # its Runs on after a handoff, or when the first was at its limit).
+            profile, engine_id = running["profile"], running.get("engine")
         last = next((row for row in checkpoints if row["step_id"] == step["id"]), None)
         state = str(step.get("state") or "")
         word = STEP_WORDS.get(state, state)
         if state == "ready" and step.get("held_reason"):
             word = f"Ready · {step['held_reason']}"
+        limit = facts.get("limit") if isinstance(facts.get("limit"), Mapping) else None
+        if state == "limited":
+            word = limit_words(limit)
         check = facts.get("check") or {}
         return {
             "id": step["id"], "ordinal": step["ordinal"], "title": step["title"], "state": state,
@@ -638,6 +680,12 @@ class ProgramService:
             "updated_at": step.get("updated_at"),
             "elapsed_seconds": _seconds_between(step.get("started_at"), step.get("ended_at")),
             "elapsed": duration_words(_seconds_between(step.get("started_at"), step.get("ended_at"))),
+            # PG19: the ordered agents, the usage limit it stopped at, and
+            # each handoff (with the brief he can read under View brief).
+            "runs_on": [self.entry_wire(row) for row in self.runs_on_of(program, step)],
+            "limit": {key: limit.get(key) for key in ("until", "words", "rule", "line", "share", "next", "waiting",
+                                                       "profile", "seen_at", "auto_at")} if limit and state == "limited" else None,
+            "handoffs": [dict(row) for row in step.get("handoffs") or []],
         }
 
     def _place(self, program: Mapping[str, Any]) -> dict[str, Any]:
@@ -680,7 +728,11 @@ class ProgramService:
             },
             "check_command": program.get("check_command"),
             "default": {"profile": program.get("default_profile"), "agent": agent_label(program.get("default_profile")),
-                        "engine": self._engine_wire(program.get("default_profile"), program.get("default_engine"))},
+                        "engine": self._engine_wire(program.get("default_profile"), program.get("default_engine")),
+                        "runs_on": [self.entry_wire(row) for row in self.runs_on_of(program, {})]},
+            "allowed_profiles": list(program.get("allowed_profiles") or []),
+            "may_handoff": bool(program.get("may_handoff")),
+            "usage_warning_share": program.get("usage_warning_share"),
             "reviewer": {"profile": program.get("reviewer_profile"),
                          "agent": agent_label(program.get("reviewer_profile")) if program.get("reviewer_profile") else None,
                          "engine": self._engine_wire(program.get("reviewer_profile"), program.get("reviewer_engine"))},
@@ -751,6 +803,88 @@ class ProgramService:
         if getattr(found, "engine", None) is None:
             raise ProgramRefused("engine_not_compatible", f"{field}: pi cannot run on {found.label!r}; it is not an OpenAI-compatible engine.", status=400)
         return engine_id
+
+    def _runs_on(self, raw: Any, field: str) -> list[dict[str, Any]]:
+        """PG19: an ordered list of agents (``[{profile, engine}]``, or names);
+        the first runs the role, the rest take it over at a usage limit."""
+        if raw in (None, "", []):
+            return []
+        if isinstance(raw, (str, Mapping)):
+            raw = [raw]
+        if not isinstance(raw, (list, tuple)):
+            raise ProgramRefused("runs_on_invalid", f"{field}: give a list of agents.", status=400)
+        out: list[dict[str, Any]] = []
+        for index, entry in enumerate(raw, start=1):
+            if isinstance(entry, str):
+                profile_raw, engine_raw = entry, None
+            elif isinstance(entry, Mapping):
+                profile_raw, engine_raw = entry.get("profile"), entry.get("engine")
+            else:
+                raise ProgramRefused("runs_on_invalid", f"{field} {index}: an agent is a name or {{profile, engine}}.", status=400)
+            profile = self._profile(profile_raw, f"{field} {index}")
+            if not profile:
+                raise ProgramRefused("runs_on_invalid", f"{field} {index}: name the agent.", status=400)
+            engine = self._engine_id(engine_raw, profile, f"{field} {index} engine") if engine_raw else None
+            if any(row["profile"] == profile and row["engine"] == engine for row in out):
+                continue
+            out.append({"profile": profile, "engine": engine})
+        if len(out) > MAX_RUNS_ON:
+            raise ProgramRefused("runs_on_too_long", f"{field}: at most {MAX_RUNS_ON} agents.", status=400)
+        return out
+
+    def _allowed_profiles(self, raw: Any) -> list[str]:
+        """PG19: the agents that may receive this repository's context
+        (empty: every agent the desk has)."""
+        if raw in (None, "", []):
+            return []
+        if not isinstance(raw, (list, tuple)):
+            raise ProgramRefused("allowed_invalid", "Allowed agents is a list of agents.", status=400)
+        out: list[str] = []
+        for index, value in enumerate(raw, start=1):
+            profile = self._profile(value, f"allowed agent {index}")
+            if profile and profile not in out:
+                out.append(profile)
+        return out
+
+    @staticmethod
+    def _share(value: Any) -> Optional[float]:
+        if value in (None, "", 0, False):
+            return None
+        try:
+            share = float(value)
+        except (TypeError, ValueError):
+            raise ProgramRefused("usage_warning_invalid", "The usage warning is a share such as 0.9.", status=400)
+        if share > 1:
+            share = share / 100.0
+        if not 0 < share <= 1:
+            raise ProgramRefused("usage_warning_invalid", "The usage warning is a share between 0 and 1.", status=400)
+        return share
+
+    def runs_on_of(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[dict[str, Any]]:
+        """PG19: the step's ordered agents. The step's own list, else its one
+        agent then the Program's later entries, else the Program's list."""
+        own = [dict(row) for row in step.get("runs_on") or [] if isinstance(row, Mapping) and row.get("profile")]
+        if own:
+            return own
+        default = [dict(row) for row in program.get("default_runs_on") or [] if isinstance(row, Mapping) and row.get("profile")]
+        if not default:
+            default = [{"profile": program.get("default_profile") or "claude-default",
+                        "engine": program.get("default_engine") or None}]
+        if step.get("profile"):
+            first = {"profile": step["profile"], "engine": step.get("engine") or None}
+            return [first] + [row for row in default if (row["profile"], row.get("engine")) != (first["profile"], first["engine"])]
+        if step.get("engine") and default[0]["profile"] == "pi-default":
+            default[0] = {**default[0], "engine": step["engine"]}
+        return default
+
+    def entry_wire(self, entry: Mapping[str, Any]) -> dict[str, Any]:
+        """One agent of a Runs on list as the faces read it."""
+        profile = str(entry.get("profile") or "")
+        engine = self._engine_wire(profile, entry.get("engine"))
+        label = agent_label(profile)
+        if profile == "pi-default":
+            label += f" · {engine.get('short') or engine.get('label')}" if engine and not engine.get("assignment") else " · the desk's assignment"
+        return {"profile": profile, "engine": entry.get("engine") or None, "agent": agent_label(profile), "label": label}
 
     def _repository(self, repository: Any, project_id: Optional[str]) -> tuple[str, Optional[str]]:
         """``(repo_root, project_id)``: a path, else the Project's repository;
@@ -828,6 +962,8 @@ class ProgramService:
         reviewer_profile: Optional[str] = None, reviewer_engine: Optional[str] = None,
         prefer_idle: Optional[bool] = None, origin_ref: Optional[str] = None,
         for_person_id: Optional[str] = None, spend_limit_usd: Optional[float] = None,
+        runs_on: Any = None, allowed_profiles: Any = None, may_handoff: Optional[bool] = None,
+        usage_warning_share: Any = None,
     ) -> dict[str, Any]:
         from ..program_templates import get_template
         from .program_rules import DESK_MODES
@@ -855,6 +991,10 @@ class ProgramService:
         engine = self._engine_id(default_engine, profile, "default_engine") if default_engine else (
             self._engine_id(defaults.get("default_engine"), profile, "default_engine", optional_missing=True)
             if defaults.get("default_engine") else None)
+        listed = self._runs_on(runs_on, "runs_on")
+        if listed:
+            profile, engine = listed[0]["profile"], listed[0]["engine"]
+        allowed = self._allowed_profiles(allowed_profiles)
         reviewer = self._profile(reviewer_profile, "reviewer_profile") or defaults.get("reviewer_profile")
         reviewer_engine_id = self._engine_id(reviewer_engine, reviewer, "reviewer_engine") if reviewer_engine else None
         command, _sections = self._check_command(root, check_command)
@@ -873,6 +1013,8 @@ class ProgramService:
             "template": (shape or {}).get("id") or "", "origin_ref": origin_ref or None,
             "for_person_id": for_person_id or None, "created_by": _creator(principal),
             "state": "drafting", "note_id": None, "closed_at": None, "revision": 0, "created_at": now, "updated_at": now,
+            "default_runs_on": listed if len(listed) > 1 else [], "allowed_profiles": allowed,
+            "may_handoff": bool(may_handoff), "usage_warning_share": self._share(usage_warning_share),
         }
         with _LOCK:
             self.store.save_program(program)
@@ -924,6 +1066,22 @@ class ProgramService:
             engine = self._engine_id(fields.get("default_engine"), profile, "default_engine")
             program["default_profile"], program["default_engine"] = profile, engine
             changed.append("Runs on")
+        if fields.get("runs_on") is not None:
+            listed = self._runs_on(fields["runs_on"], "runs_on")
+            if not listed:
+                raise ProgramRefused("runs_on_invalid", "runs_on: name at least one agent.", status=400)
+            program["default_profile"], program["default_engine"] = listed[0]["profile"], listed[0]["engine"]
+            program["default_runs_on"] = listed if len(listed) > 1 else []
+            changed.append("agents")
+        if fields.get("allowed_profiles") is not None:
+            program["allowed_profiles"] = self._allowed_profiles(fields["allowed_profiles"])
+            changed.append("allowed agents")
+        if fields.get("may_handoff") is not None:
+            program["may_handoff"] = bool(fields["may_handoff"])
+            changed.append("hand off on its own" if program["may_handoff"] else "hand off on your press")
+        if "usage_warning_share" in fields:
+            program["usage_warning_share"] = self._share(fields["usage_warning_share"])
+            changed.append("usage warning")
         if fields.get("reviewer_profile") is not None or fields.get("reviewer_engine") is not None:
             reviewer = self._profile(fields.get("reviewer_profile"), "reviewer_profile") or program.get("reviewer_profile")
             program["reviewer_profile"] = reviewer
@@ -971,9 +1129,13 @@ class ProgramService:
             ordinal = start + index
             if any(value >= ordinal or value < 1 for value in after):
                 raise ProgramRefused("after_invalid", f"Step {index} may only come after an earlier step.", status=400)
-            profile = self._profile(raw.get("profile"), f"step {index} profile")
-            run_profile = profile or program["default_profile"]
-            engine = self._engine_id(raw.get("engine"), run_profile, f"step {index} engine") if raw.get("engine") else None
+            listed = self._runs_on(raw.get("runs_on"), f"step {index} runs_on")
+            if listed:
+                profile, engine = listed[0]["profile"], listed[0]["engine"]
+            else:
+                profile = self._profile(raw.get("profile"), f"step {index} profile")
+                run_profile = profile or program["default_profile"]
+                engine = self._engine_id(raw.get("engine"), run_profile, f"step {index} engine") if raw.get("engine") else None
             effort = str(raw.get("effort") or "").strip().lower()
             if size == "auto" or not effort:
                 effort = triage_effort(brief, owns) if (size == "auto" or not effort) else effort
@@ -1016,6 +1178,7 @@ class ProgramService:
                 "findings": [], "report": None, "rounds": 0, "parked_reason": None, "parked_by": None,
                 "origin_ref": raw.get("origin_ref") or None, "for_person_id": for_person,
                 "started_at": None, "ended_at": None, "updated_at": now,
+                "runs_on": listed if len(listed) > 1 else [], "handoffs": [],
             })
         with _LOCK:
             if replace:
@@ -1246,10 +1409,64 @@ class ProgramService:
                 self.runner().pass_gate(program, step, by="owner")
             elif kind == "add_step":
                 answer = self._decide_add_step(principal, program, step, finding_id, choice)
+            elif kind == "limited":
+                facts = step.setdefault("facts", {})
+                limit = dict(facts.get("limit") or {})
+                if step["state"] != "limited" or not limit:
+                    raise ProgramRefused("not_limited", "This step's agent is not at its limit.")
+                if choice == "wait":
+                    limit["waiting"] = True
+                    limit.pop("auto_at", None)
+                    facts["limit"] = limit
+                    self._save(step)
+                    until = f" until {limit['words']}" if limit.get("words") else ""
+                    self._checkpoint(program, step, "owner", f"Wait for the reset{until}")
+                else:
+                    nxt = limit.get("next")
+                    if not nxt:
+                        raise ProgramRefused("no_next_agent", "No other agent may take this step now.")
+                    reason = "usage_warning" if limit.get("share") is not None else "usage_limit"
+                    answer = {"handoff": self.runner().handoff(program, step, nxt, reason=reason, by="owner")}
             self._touch(program)
             self.changed(program["id"], step["id"], verb="decide")
         self._tick_now(program["id"])
         return {**answer, "program": self.get(principal, program["id"])}
+
+    def handoff(self, principal: Any, program_id: str, step_id: str, to: Any, *, preview: bool = False) -> dict[str, Any]:
+        """PG19, by hand: move a step that holds an agent to ``to`` (a name or
+        ``{profile, engine}``) in the same worktree, on the same branch.
+        ``preview``: the brief only (what is sent, the redaction counts, the
+        earlier turns); nothing moves. Owner only; agents never."""
+        self._require_owner(principal, "hand a step to another agent")
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        listed = self._runs_on([to] if to not in (None, "") else [], "to")
+        if not listed:
+            raise ProgramRefused("to_required", "Name the agent to continue in.", status=400)
+        target = listed[0]
+        allowed = list(program.get("allowed_profiles") or [])
+        if allowed and target["profile"] not in allowed:
+            raise ProgramRefused("agent_not_allowed", f"{agent_label(target['profile'])} may not read this repository.", status=403)
+        if step.get("state") not in ("briefed", "working", "waiting", "limited", "check_failed") or not step.get("launch_id"):
+            raise ProgramRefused("step_not_running", "Only a step with a running agent can be handed off.")
+        runner = self.runner()
+        current = runner.current_agent(program, step)
+        if (current["profile"], current.get("engine")) == (target["profile"], target.get("engine")):
+            raise ProgramRefused("same_agent", f"The step already runs on {agent_label(target['profile'])}.", status=400)
+        if preview:
+            from .program_handoff import redacted_words
+
+            brief = runner.handoff_brief(program, step, target, reason="by_hand", by="owner")
+            return {"preview": True, "from": self.entry_wire(current), "to": self.entry_wire(target),
+                    "brief": brief.text, "redacted": dict(brief.redacted), "redacted_words": redacted_words(brief.redacted),
+                    "earlier_turns": brief.earlier_turns, "bytes": len(brief.text.encode("utf-8"))}
+        with _LOCK:
+            entry = runner.handoff(program, step, target, reason="by_hand", by="owner")
+            self._touch(program)
+            self.changed(program["id"], step["id"], verb="handoff")
+        self._tick_now(program["id"])
+        return {"handoff": {key: value for key, value in entry.items() if key != "brief"},
+                "program": self.get(principal, program["id"])}
 
     def close(self, principal: Any, program_id: str) -> dict[str, Any]:
         """He closes a finished Program (Secure: Done is his press)."""

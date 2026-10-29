@@ -21,7 +21,7 @@ from ..db.programs import ProgramStore
 from ..memory.defense import redact
 
 #: The sibling states whose files are theirs now (they work, check or wait).
-_LIVE = frozenset({"briefed", "working", "waiting", "checking", "check_failed", "review", "findings",
+_LIVE = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings",
                    "pr_open", "merge_ask"})
 
 
