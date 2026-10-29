@@ -129,6 +129,8 @@ Your Claude Code and Codex sessions report to the Desk through agent hooks.
 
 **Phone** reaches you when you are away from the desk. The desk sends a message to your phone, or calls it, by your control level and your quiet hours. A voice says why it calls and takes your answer back to the desk. Your agents can message you, wait for your reply and ask to call you; a call waits for your press. Today a call goes to your real number through [Calls](docs/calls.md); the HoldSpeak app for iPhone is next. Read [Phone](docs/phone.md).
 
+**The Line** is HoldSpeak's own phone line for Calls. baresip holds the call as a separate program; Parakeet hears you and Pocket TTS speaks, on your Mac or on a machine on your tailnet. A SIP address on your tailnet is free; a Telnyx number is a real one, and its password goes into your keystore. **Settings ▸ Calls ▸ Line** shows where it runs, its state and a **Test call**. All its parts have a permissive licence. Read [The Line](docs/calls.md#the-line).
+
 ## Extend everything
 
 HoldSpeak is built from parts you can add to. You do not need to fork it.

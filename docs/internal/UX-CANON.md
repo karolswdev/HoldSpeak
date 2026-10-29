@@ -109,6 +109,21 @@ Each line names the ruling, its canvas or design note, and the PR.
   the act, in Needs you. Design `betterment/phone/PHONE-DESIGN-2026-10-28.md`
   (with "Built"), absorption `betterment/phone/ABSORBED-FROM-AGENTRING.md`,
   user doc `docs/phone.md`; the Phone PR.
+- **The Line (owner 2026-10-29: "I'm choosing the second").** HoldSpeak's
+  own phone line. Settings ▸ Calls ▸ Line, between Set up calls and Phone,
+  kit only (canvas direction A, `betterment/line/CANVAS-NOTES-2026-10-29.md`):
+  Where it runs (the place, its Engines word, its measured cost; on This Mac
+  the own-venv install commands with Copy), The line (the free SIP address
+  with Copy, or a Telnyx number whose password and key are write only:
+  "Stored in your keystore" / "From the environment: move it to the
+  keystore" / "Missing"), Test call (Ringing, then the result word), From
+  Calls (read only), Adapter (The Line · ai-phone), egress once. The
+  machine is named only there and as the hover title of Test call; the
+  Calls window's status bar says Ready for calls, Line starting, Line not
+  running, or No line: set one in Settings ▸ Calls ▸ Line (A.9). Design
+  `betterment/line/LINE-DESIGN-2026-10-29.md` (with "Built"), recipe
+  `betterment/line/RECIPE.md`, user doc `docs/calls.md` "The Line"; #1606,
+  #1607, #1608 and the LINE-4b PR.
 
 ## Owner direction — crisp illustrated icons (2026-10-22)
 

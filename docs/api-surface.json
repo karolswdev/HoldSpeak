@@ -1215,7 +1215,9 @@
         "GET"
       ],
       "module": "web.routes.calls",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calls/line/test",
@@ -1223,7 +1225,9 @@
         "POST"
       ],
       "module": "web.routes.calls",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calls/place",

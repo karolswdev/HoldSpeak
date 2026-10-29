@@ -1,0 +1,10 @@
+{
+  "node": "this-mac",
+  "state": "not_set_up",
+  "words": "Not set up",
+  "address": "sip:hsline@sip.telnyx.com",
+  "secrets": {
+    "sip_password": "missing",
+    "telnyx_api_key": "environment"
+  }
+}

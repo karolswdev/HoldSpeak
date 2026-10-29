@@ -1,0 +1,7 @@
+{
+  "status": 200,
+  "body": {
+    "result": "not_running",
+    "to": "sip:karol@karol-iphone"
+  }
+}

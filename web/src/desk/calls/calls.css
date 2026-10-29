@@ -259,3 +259,60 @@
 /* The command well's Copy keeps its one word beside a long command. */
 .desk-next .calls-step-body .connections-command-row { align-items: flex-start; }
 .desk-next .calls-step-body .connections-command-row > .btn { flex: none; }
+
+/* ── Settings ▸ Calls ▸ Line (LINE canvas 2026-10-29, direction A): the
+   Phone rows' grammar, name · fact · state · verb; 32 px rows, 30 px From
+   Calls rows; the rows fold at the phone width. ── */
+.desk-next .line-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.desk-next .line-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, max-content) max-content max-content;
+  align-items: center;
+  gap: 0 12px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.desk-next .line-row-name { display: flex; align-items: center; gap: 8px; min-width: 0; font: 500 13px / 1.3 var(--font-sans); color: var(--wb-ink); overflow-wrap: anywhere; }
+.desk-next .line-row-fact { min-width: 0; font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); overflow-wrap: anywhere; }
+.desk-next .line-row-state { display: flex; align-items: center; }
+.desk-next .line-row-verb { display: flex; justify-content: flex-end; gap: 6px; }
+.desk-next .line-sprite { flex: none; width: 20px; height: 20px; image-rendering: pixelated; }
+.desk-next .line-place,
+.desk-next .line-kind { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; font: 500 13px / 1.3 var(--font-sans); color: var(--wb-ink); }
+.desk-next .line-place-name { min-width: 72px; }
+.desk-next .line-kind .line-row-fact { font-weight: 400; }
+.desk-next .line-address { font: 400 12px / 1.3 var(--font-mono); color: var(--wb-ink); overflow-wrap: anywhere; }
+.desk-next .line-field { padding: 4px 8px; border-bottom: 1px solid var(--wb-rule-soft); }
+.desk-next .line-commands { display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; min-width: 0; }
+.desk-next .line-commands .connections-command-row { align-items: flex-start; }
+.desk-next .line-commands .connections-command-row > .btn { flex: none; }
+.desk-next .line-commands .connections-command-code { overflow-wrap: anywhere; }
+.desk-next .line-quiet { margin: 0; padding: 6px 8px 2px; font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .line-settings .calls-may-row { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); min-height: 30px; }
+/* Ringing breathes in its own tone (the live lamp's ring); still under
+   reduced motion. */
+.desk-next .line-live .kit-dot {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-info)) 45%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--dot-tone, var(--lamp-info)) 22%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .desk-next .line-live .kit-dot { animation: kit-lamp-live 2.4s ease-in-out infinite; }
+}
+@container surface (max-width: 560px) {
+  .desk-next .line-row {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: "name verb" "fact state";
+    gap: 2px 8px;
+    padding: 6px 8px;
+    min-height: 44px;
+  }
+  .desk-next .line-row-name { grid-area: name; }
+  .desk-next .line-row-fact { grid-area: fact; }
+  .desk-next .line-row-state { grid-area: state; justify-content: flex-end; }
+  .desk-next .line-row-verb { grid-area: verb; }
+  .desk-next .line-settings .btn { min-height: 44px; }
+  .desk-next .line-settings .gadget-mx-row { min-height: 44px; }
+  .desk-next .line-settings .calls-may-row { grid-template-columns: minmax(0, 1fr); min-height: 44px; }
+}

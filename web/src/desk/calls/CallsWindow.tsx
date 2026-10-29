@@ -5,7 +5,9 @@
  * Window grammar: title bar → Toolbar (Call me, the primary that makes the
  * object; Hang up on a call) → the body → a 24 px StatusBar with a dot and a
  * word (`● Ready for calls`, `● On a call · 2:14`, `● ai-phone not running`,
- * `● Calls are off · Settings ▸ Calls`). No host, number or engine chip
+ * `● Calls are off · Settings ▸ Calls`; with the Line as the phone, `● Line
+ * starting`, `● Line not running`, `● No line: set one in Settings ▸ Calls ▸
+ * Line`; LINE-DESIGN §10). No host, number or engine chip
  * (UX-CANON A.9): egress is said in Settings ▸ Calls.
  *
  * On a call the body is the call as a document (the Live transcript), a
@@ -25,7 +27,7 @@ import { useWindowInterior } from "../surface/interior";
 import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem, type ToolGlyphKind } from "../surface/kit";
 import { ObjectList, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../surface/objects/ObjectList";
 import { SurfaceState } from "../surface/Surface";
-import { decide, hangUp, placeCall, readCall, refusalWords, useCalls, withTranscript } from "./api";
+import { decide, hangUp, lineInUse, placeCall, readCall, refusalWords, useCalls, withTranscript } from "./api";
 import { useCoreWings } from "../../pages/cores/core-hooks";
 import { usePhone } from "./phoneApi";
 import { PhoneWing } from "./PhoneWing";
@@ -202,13 +204,39 @@ function useCallClock(call: Call | null): number | null {
   return call && Number.isFinite(start) ? Math.max(0, (now - start) / 1000) : null;
 }
 
-/** Ready for calls: Calls on and the daemon running. */
+/** Ready for calls: Calls on and the phone running (the Line ready, or
+ *  the ai-phone daemon running). */
 export function callsReady(settings: CallsSettings | null, status: CallsStatus): boolean {
-  return Boolean(settings?.enabled && status.enabled && status.aiphone.state === "running");
+  const phone = lineInUse(status) ? status.line?.state === "ready" : status.aiphone.state === "running";
+  return Boolean(settings?.enabled && status.enabled && phone);
+}
+
+/** The status bar's word for the Line (LINE canvas, the Calls bar): no
+ *  machine is named here (A.9). */
+export function lineBarItem(status: CallsStatus): StatusBarItem {
+  const state = status.line?.state;
+  if (state === "ready") return { key: "ready", lamp: "ok", text: "Ready for calls", testId: "calls-status-ready" };
+  if (state === "starting") return { key: "line", lamp: "info", live: true, text: "Line starting", testId: "calls-status-line" };
+  if (state === "not_running" || state === "offline") return { key: "line", lamp: "warn", text: "Line not running", testId: "calls-status-line" };
+  return {
+    key: "line",
+    testId: "calls-status-line",
+    text: (
+      <span className="calls-idle-word">
+        <span className="kit-dot" data-tone="idle" aria-hidden="true" />
+        No line: set one in Settings ▸ Calls ▸ Line
+      </span>
+    ),
+  };
 }
 
 function openCallsSettings() {
   openSurfaceOr("configure-settings", "/settings", "calls");
+}
+
+/** Settings ▸ Calls ▸ Line (the section's focus). */
+function openLineSettings() {
+  openSurfaceOr("configure-settings", "/settings", "calls::line");
 }
 
 /** The Calls window's two faces (PHONE-DESIGN §9, direction A): the calls
@@ -240,10 +268,11 @@ export function CallsCore({ scope }: CoreProps) {
   const mine = calls.settings?.allowed_numbers ?? [];
   const canCall = ready && mine.length > 0;
 
+  const onLine = lineInUse(calls.status);
   const run = async (kind: typeof busy, act: () => Promise<void>) => {
     setBusy(kind);
     setRefusal("");
-    try { await act(); } catch (error) { setRefusal(refusalWords(error)); } finally { setBusy(""); }
+    try { await act(); } catch (error) { setRefusal(refusalWords(error, onLine)); } finally { setBusy(""); }
   };
   const callMe = () => run("place", async () => {
     setViewing(null);
@@ -311,6 +340,8 @@ export function CallsCore({ scope }: CoreProps) {
         </span>
       ),
     },
+  ] : onLine ? [
+    lineBarItem(calls.status),
   ] : calls.status.aiphone.state !== "running" ? [
     { key: "daemon", lamp: "warn", text: "ai-phone not running", testId: "calls-status-daemon" },
   ] : [
@@ -337,10 +368,10 @@ export function CallsCore({ scope }: CoreProps) {
         empty
         emptyKind="call"
         emptyImage={spriteUrl("call", "calls")}
-        emptyLabel="No calls yet"
-        emptyHint="Call me rings your number and HoldSpeak answers."
-        actionLabel={canCall ? "Call me" : "Set up calls"}
-        onAction={canCall ? () => void callMe() : openCallsSettings}
+        emptyLabel={onLine && !ready ? "No line yet" : "No calls yet"}
+        emptyHint={onLine && !ready ? "Set up the Line, then Call me rings your number." : "Call me rings your number and HoldSpeak answers."}
+        actionLabel={canCall ? "Call me" : onLine ? "Set up the Line ›" : "Set up calls"}
+        onAction={canCall ? () => void callMe() : onLine ? openLineSettings : openCallsSettings}
       />
     );
   } else {

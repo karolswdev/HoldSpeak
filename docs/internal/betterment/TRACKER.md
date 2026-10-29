@@ -302,3 +302,16 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | PH14 | The morning release of queued messages | Open |  |
 | PH15 | Urgent through Do Not Disturb | Open | Needs Apple's critical-alerts entitlement. |
 | PH16 | Today counts the reaches | Open |  |
+
+## The Line (`line/RECIPE.md`): 3 of 8
+
+| Slice | What | State | Note |
+|---|---|---|---|
+| LINE-1 | The spike and the design | Done #1606 | Measured on the Mac and on karol. |
+| LINE-2 | The node | Done #1608 | The runner is unchanged; the Line adapter has AiPhone's methods. |
+| LINE-3 | The Line on the home box | Open | The node credential, the units, the build script, `holdspeak line install`. |
+| LINE-3b | The Telnyx line | Open | Needs his account; the Number has no settings key yet. |
+| LINE-4 | The faces and the docs | Done #1607 (canvas) + the LINE-4b PR | Engines rows are LINE-6. |
+| LINE-5 | Barge-in, measured | Open |  |
+| LINE-6 | The concierge rows | Open | The Engines catalog is a signed LLM preset envelope. |
+| LICENCE | The hub's own GPL pulls (Kokoro, faster-whisper's PyAV) | Open | Needs his ruling. |

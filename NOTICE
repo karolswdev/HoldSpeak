@@ -56,7 +56,58 @@ Copyright (c) 2016 Kazuhiko Arase, licensed under the MIT License.
 - It is an npm dependency of the web desk (web/package.json); the phone
   pairing screen draws its QR with it. It is bundled unchanged.
 
-The MIT License text, for Moonfold and qrcode-generator:
+The Line (holdspeak/line/, docs/calls.md "The Line") uses these, each as a
+separate program or a Python dependency; no source of theirs is copied into
+this tree:
+
+- baresip 4.12 (https://github.com/baresip/baresip), Copyright (C) 2020 -
+  2026, Baresip Foundation, licensed under the BSD 3-Clause License. The Line
+  runs it as a supervised child process and loads only its BSD-3 modules
+  (holdspeak/line/supervisor.py MODULES).
+- libre 4.12 (https://github.com/baresip/re), Copyright (C) 2020 - 2026,
+  Baresip Foundation, licensed under the BSD 3-Clause License. baresip links
+  it; holdspeak/line/aupipe/aupipe.c (our own module, BSD-3-Clause) is built
+  against its headers.
+- onnx-asr (https://pypi.org/project/onnx-asr/), Copyright the onnx-asr
+  authors, licensed under the MIT License (the `line` extra).
+- pocket-tts (https://pypi.org/project/pocket-tts/), Copyright the
+  pocket-tts authors (Kyutai), licensed under the MIT License (the `line`
+  extra).
+- The Parakeet TDT 0.6B v2 model weights (NVIDIA; the ONNX export
+  istupakov/parakeet-tdt-0.6b-v2-onnx), licensed under the Creative Commons
+  Attribution 4.0 International License (CC-BY-4.0). Downloaded by
+  `holdspeak line models`; not in this tree.
+- The Pocket TTS model weights (Kyutai, kyutai/pocket-tts-without-voice-cloning),
+  licensed under CC-BY-4.0. Downloaded by `holdspeak line models`; not in
+  this tree.
+
+The BSD 3-Clause License text, for baresip and libre:
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+  3. Neither the name of the copyright holder nor the names of its
+     contributors may be used to endorse or promote products derived from
+     this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+The MIT License text, for Moonfold, qrcode-generator, onnx-asr and pocket-tts:
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to
