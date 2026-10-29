@@ -1,8 +1,8 @@
 # iPad companion
 
-The iPad app is a client of the HoldSpeak runtime. It is not a second hub. The runtime on your computer stays the owner of records and receipts.
+The iPad app is a client of the HoldSpeak runtime. It does not replace the hub. The runtime on your computer stays the owner of shared records and operation receipts. The native client may keep local capture, model, or sync state, but that state is not the hub's authority.
 
-The app connects to the runtime over your own network (LAN or Tailscale) with a base URL and an optional Bearer token. There is no hosted relay. The app is built from source. It has no App Store release.
+The app connects to the runtime over your own network (LAN or Tailscale) with a base URL and the runtime authentication token. It sends the token as `Authorization: Bearer ...` on hub API calls. A non-loopback runtime refuses to start without a configured token. There is no hosted relay. The app is built from source. It has no signed App Store release.
 
 ## What you can do
 

@@ -1,8 +1,9 @@
 # MCP sidecar
 
-The MCP sidecar is the desk's programmable surface over stdio. It exposes
-306 tools across 52 families. Any MCP client (Claude Code, Cursor, a
-custom script) can read and drive the desk without the web UI.
+The MCP sidecar is the Desk's programmable surface over stdio. The current
+generated roster below names the registered tools. Any MCP client (Claude Code,
+Cursor, or a custom script) can read and drive the Desk without the web UI.
+Do not copy generated totals into other guides.
 
 This page is the MCP transport reference. Each tool description in the
 live catalogue is the per-tool reference. This page covers how the sidecar
@@ -48,9 +49,11 @@ codex exec \
 
 ### Limit People access
 
-The People family defaults to `write` for the local owner. Set
-`HOLDSPEAK_MCP_PEOPLE_ACCESS` in the hub's environment before you start the
-hub. This restriction applies to all MCP clients of that hub.
+The People family defaults to `write` for the local owner. The saved setting is
+`people.mcp_access`; the owner can change it with `people.access.set` or in the
+supported Settings surface. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS` in the hub's
+environment before you start the hub to override the saved setting. The
+effective value is `off`, `read`, or `write`.
 
 ```sh
 HOLDSPEAK_MCP_PEOPLE_ACCESS=read holdspeak web
@@ -58,6 +61,9 @@ HOLDSPEAK_MCP_PEOPLE_ACCESS=read holdspeak web
 
 Use `read` for read-only access. Use `off` to disable the family. The
 People family returns only `shared_intent` material in every mode.
+An agent launched by HoldSpeak receives People reads whenever access is not
+`off`; launched agents never write People. A Thread does not receive the People
+family. The environment override also controls the launched-agent read path.
 
 ## How the sidecar works
 
@@ -108,9 +114,8 @@ A write through MCP emits one `desk_changed` frame on the hub's `/ws` bus:
 ```
 
 The `op` value is `create`, `update` or `delete`. Any open desk then reads
-the change. The hub emits the frame for every write through its
-`PrimitiveService` and `WorkbenchService`, whichever caller made the write
-(an HTTP route, MCP over stdio, MCP over `/api/mcp`, or the iPad). Writes
+the change. Writes through `PrimitiveService` and `WorkbenchService` emit the frame.
+This applies to their HTTP, stdio MCP, HTTP MCP, and native-client callers. Writes
 that reach a table by another path (a meeting, a Project, a Thought, a sync
 pull) emit no frame. Those surfaces have their own signals.
 
@@ -137,11 +142,23 @@ lists every tool name.
 
 ### Automations
 
-`automation.create` (or `workbench.create`) makes one automation from its
-sentence in one call: `do` (what each run does), `about` (what it reads),
-`put_in` (inbox, needs_you or destination:<id>), `when` (a schedule, an
-event or manual), `with` (the engine's profile id) and `spend_limit`
-(dollars per run). `automation.update` changes the words you give.
+`automation.create` and its `workbench.create` alias create an Automation from the supported sentence fields.
+`automation.update` changes the fields supplied in a request.
+
+| Field | Meaning |
+| --- | --- |
+| `name` | Automation name |
+| `do` | Instruction text, or `run` / `hand_to_agent` to select the execution kind |
+| `about` | Supported source references or relative sets |
+| `put_in` | `inbox`, `needs_you`, `today`, or `destination:<id>` |
+| `when` | A supported schedule, event, or manual trigger |
+| `with` | Engine or installed agent profile, as required by the execution kind |
+| `review_by` | Optional installed reviewer for a coding handoff |
+| `spend_limit` | Dollars per run, where supported |
+| `fields` | Additional closed fields, including `instruction` and `do_kind` when needed |
+
+The service rejects overlapping values supplied both as sentence words and stored fields.
+Read the live schema for the permitted fields and required combinations.
 `automation.results` returns the newest results: the text, what the agent
 looked at, wrote and prepared, the cost and the failure reason.
 `automation.cancel` cancels the run that is running. `when` is authority;
@@ -362,7 +379,7 @@ database, FTS index or Cadence.
 - `agent.hand` hands one desk item (an action, a decision, a Project
   item, a note, a meeting or an artifact) to a coding agent. HoldSpeak
   writes a brief, makes a new git worktree in the Project repository and
-  starts Claude Code or Codex there. It is egress: a Thread never calls it.
+  starts Claude Code, Codex, or pi there. It is egress: a Thread never calls it.
 - A launched agent may start one helper (`agent.start_helper`: a reviewer or
   a test runner, in its own worktree), then `agent.prompt` it (with `wait`,
   in one request), `agent.wait` for it, `agent.read` it and `agent.answer`
@@ -881,9 +898,12 @@ Use the Desk or the HTTP routes for these actions.
 
 ## Resources
 
-Owner discovery exposes 16 static resources and 21 resource templates. The
-default non-owner discovery filters that to 15 static resources and
-19 templates, or 34 total. A list result holds at most 100 items.
+Owner discovery exposes 16 static resources and 21 resource templates.
+The default non-owner discovery filters that to 15 static resources and
+19 templates, or 34 total. When effective People access is `off`, People
+resources leave discovery too. Project-update credentials receive no raw
+resources. These are discovery counts, not grants of authority to execute a
+tool; the server remains the source of the current list.
 
 ### Static resources
 
@@ -937,8 +957,9 @@ An unknown id refuses with a typed error.
 ## The project palette
 
 The project family ships a `PROJECT_PALETTE`: a frozen set of the 66
-project.*, provider.* and connection.* tool names. Two functions in the MCP layer
-use it.
+project.*, provider.* and connection.* tool names. The generated roster and the palette resolver
+are the source for its current membership. Two functions in the MCP layer use
+it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 66 tools

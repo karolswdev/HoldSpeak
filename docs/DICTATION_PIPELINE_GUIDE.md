@@ -1,9 +1,9 @@
 # Dictation Pipeline Guide
 
-The dictation pipeline turns rough speech into useful text for the app you
-type in. It routes each utterance through your dictation blocks, your project
-facts, your project context, and an optional model rewrite. Then HoldSpeak
-types the result.
+Dictation turns an owner speech gesture into useful text for the app you type
+in, a preview, focused typing, or an admitted agent destination. Capture,
+local Whisper transcription, model stages, and typing are separate. A stage can
+fail without losing the original transcript.
 
 Read [Getting Started](./GETTING_STARTED.md) first if basic voice typing does
 not work yet. To see a full run first, read [The Dictation Copilot](./DICTATION_COPILOT.md).
@@ -18,49 +18,45 @@ The pipeline is on by default. Every stage fails open. If a stage fails or its
 model is not available, HoldSpeak types your plain transcript.
 
 An optional last gate sits after the pipeline. Turn on **Preview before
-type** in **Settings > Speak > Typing**. HoldSpeak then shows the finished
+type** in **Settings > Speak > Voice typing**. HoldSpeak then shows the finished
 text on a card. **Type it** commits the text. **Discard** drops it.
 
 ## Project knowledge: facts and context
 
-Project knowledge has two parts. They do different jobs.
+Project knowledge is input to a rewrite stage. It is not a sandbox and it is
+not an instruction to write files.
 
-| Part | Where it lives | Used by | What it does |
-|---|---|---|---|
-| Facts | `kb:` map in `<repo>/.holdspeak/project.yaml` | `kb-enricher` stage | Stamps exact values into a block template. No model. |
-| Context | `.hs/` folder of Markdown files in your repo | `project-rewriter` stage | Guides the model when it rewrites your speech. |
+| Input | Source | Stage |
+| --- | --- | --- |
+| Facts | `<repo>/.holdspeak/project.yaml` | `kb-enricher` |
+| Context | `.hs/` Markdown files | `project-rewriter` |
+| Blocks | Saved block templates | `block-resolver` |
 
-HoldSpeak reads both. It never writes them without your approval.
+HoldSpeak reads these files when the project root is configured. A project
+document suggestion is a separate saved proposal. Applying it is a Desk write.
 
 ## 1. Open the dictation face
 
-Start HoldSpeak and open `/dictation`.
-
-```bash
-holdspeak
-```
-
-The face has four wings: **Speak**, **Journal**, **Blocks**, and **Learned**.
-The gear opens **Configure dictation**. It holds readiness, the learning
-digest, project knowledge, the runtime, automation hooks, and activity nudges.
-
-Start in **Configure dictation**. The **Pipeline** group shows if the pipeline
-is on and what is missing.
+Open **Dictation** in the Desk, or use the configured desktop hotkey. In the
+browser, `POST /api/dictation/mic/open` admits one microphone interval and
+`POST /api/dictation/mic/close` ends it. The interval has an opaque server
+handle and an expiry. The audio floor prevents two capture owners from using the
+same microphone.
 
 ## 2. Choose the model
 
-The dictation runtime is not set on the dictation face. The **Dictation
-runtime** group in **Configure dictation** says **SET IN ENGINES**.
-Click **Open Engines**.
+Speech transcription uses the local Whisper backend selected by the runtime.
+Pipeline stages can use a configured model assignment. The dictation runtime is
+not set on the dictation face. The **Dictation runtime** group in **Configure
+dictation** says **SET IN ENGINES**. Click **Open Engines**.
 
 1. In **HoldSpeak > Engines**, add your endpoint or local model.
 2. Assign it to **Dictation clean-up** in **HoldSpeak > Engines**.
 3. Click **Use these**.
 
-See [Models](./MODELS.md) for the full contract, API keys, and the headless
-fallback.
+See [Models](./MODELS.md) for the full contract and headless fallback.
 
-The available backends are:
+The available backends for model stages are:
 
 | Backend | Use when |
 |---|---|
@@ -69,33 +65,27 @@ The available backends are:
 | `llama_cpp` | You have a local GGUF model. |
 | `openai_compatible` | You have a local, LAN, or hosted `/v1/chat/completions` endpoint. |
 
-Install the extra for your backend:
+The intent router and rewriter need a model. The `kb-enricher` stage does not.
 
-```bash
-uv pip install -e '.[dictation-mlx]'
-uv pip install -e '.[dictation-llama]'
-uv pip install -e '.[dictation-openai]'
-```
-
-HoldSpeak sends `thinking: false` on every call to an OpenAI-compatible
-endpoint. This stops extended thinking on models that support it. An endpoint
-that does not support the field ignores it.
-
-The intent router and the rewriter need a model. The `kb-enricher` stage does
-not.
+The engine route is not the same as a coding-agent launch. A CLI can be an
+inference engine for one request; **Hand to agent** starts a separate process
+with its own worktree and brief.
 
 ## 3. Choose the stages
 
-The `dictation.pipeline.stages` list sets which stages run, in order. The
-default is `intent-router` and `kb-enricher`.
+Use `POST /api/dictation/dry-run` to see the proposed stages and egress before
+delivery.
 
-| Stage | Needs model | What it does |
-|---|---|---|
-| `intent-router` | Yes | Matches the utterance to a dictation block. |
-| `kb-enricher` | No | Stamps project facts into the block template. |
-| `project-rewriter` | Yes | Rewrites speech with `.hs/` context. Adds one model call. |
+| Stage | Model | Result |
+| --- | --- | --- |
+| Transcribe | Speech backend | Original speech text. |
+| Intent router | Optional | Target and configured intent. |
+| Correction | No | Applies saved correction rules. |
+| `project-rewriter` | Yes | Rewrites with project context. |
+| `kb-enricher` | No | Adds configured facts or block values. |
+| Delivery | No model by itself | Preview, focused typing, or agent relay. |
 
-To add the rewriter, set `stages` in **Settings > Speak**. Unfold **RAW** and
+To add the rewriter, set `stages` in **Settings > Speak**. Unfold **More** and
 edit **Stages** in the **Pipeline** group. Or edit the config file:
 
 ```json
@@ -109,250 +99,109 @@ edit **Stages** in the **Pipeline** group. Or edit the config file:
 }
 ```
 
-Enable the rewriter only when a model is assigned and you have written
-`.hs/instructions.md`.
+Stages that need no assigned model can still run. A missing or failed model
+stage falls back to the prior text and records the reason.
 
 ## 4. Set the output target
 
-HoldSpeak detects the active app and shapes the text for it. Set
-`dictation.pipeline.target_profile_override` when detection is wrong.
+Choose **Preview** when you want to inspect text. Choose focused delivery only
+when the desktop target is identified. Choose **Agent** when a waiting coding
+session owns the destination.
 
-| Value | Meaning |
-|---|---|
-| `auto` | Use active-window hints. This is the default. |
-| `codex_cli` | Write an implementation prompt for Codex. |
-| `claude_code` | Write a prompt or reply for Claude Code. |
-| `terminal_shell` | Keep command syntax exact. |
-| `browser` | Write plain prose for text boxes. |
-| `editor` | Write code-friendly prose. |
-| `chat` | Write conversational text. |
+The remote route is `POST /api/dictation/remote`. A committed remote delivery
+requires a caller-supplied `delivery_id`; the hub claims it before typing and
+returns the same terminal receipt on a retry. A different payload with the same
+id is refused.
 
 The **Delivery** group in **Configure dictation** shows the detected target.
 Set the value back to `auto` when detection works again.
 
 When the window gives weak hints, the model can infer the target. Turn on
-**LLM target detect** in **Settings > Speak > RAW**. **Detect below** sets
+**LLM target detect** in **Settings > Speak > More**. **Detect below** sets
 the confidence limit. The default is `0.8`. A manual override always wins.
 
 ## 5. Set up project knowledge
 
+Use the Dictation face or these routes:
+
+- `GET/PUT /api/dictation/project-kb`
+- `GET/PUT /api/dictation/project-hs`
+- `GET /api/dictation/project-context`
+- `GET /api/dictation/agent-context`
+
 ### Facts
 
-A fact is an exact value that you reuse: your stack, a deploy command, a ticket
-prefix. In **Configure dictation**, open **Knowledge**. Enter a **Fact name**
-and **Fact value**.
-
-A fact in `<repo>/.holdspeak/project.yaml`:
-
-```yaml
-kb:
-  stack: Rails 7 + Postgres 16
-```
-
-A block template that uses it:
-
-```text
-Follow our stack: {project.kb.stack}
-```
-
-The typed text is:
-
-```text
-Follow our stack: Rails 7 + Postgres 16
-```
-
-Fact names must match `[A-Za-z_][A-Za-z0-9_]*`. Values are strings.
-
-If the project has no facts, the **Pipeline** group shows **Project KB:
-MISSING**. Click **Create** to write a starter file.
-
-To use another repository, set **Project root** in **Knowledge** and click
-**Use**. The default is the working directory of HoldSpeak.
+Facts are structured project values. The enricher stamps exact values. It does
+not ask a model to invent them.
 
 ### Context
 
-Context is prose that the `project-rewriter` stage reads. Create a `.hs/`
-folder in your repository:
-
-```text
-.hs/
-  instructions.md
-  context.md
-  workflows.md
-  targets.md
-  ignore
-```
-
-The **Instructions** group in **Knowledge** edits `.hs/instructions.md`. A
-minimal set:
-
-```md
-# .hs/instructions.md
-When dictating into Codex or Claude, rewrite rough speech into a concise
-engineering request. Keep filenames, commands, and test names exact.
-
-# .hs/context.md
-This project is a local-first Python app with a FastAPI runtime and a
-React and Vite frontend.
-
-# .hs/workflows.md
-Run focused Python tests with `.venv/bin/pytest <path>`.
-
-# .hs/targets.md
-Codex: concise implementation request.
-Terminal: keep command syntax exact.
-
-# .hs/ignore
-.env
-secrets
-private keys
-```
-
-Rules:
-
-- HoldSpeak reads `.hs/` during dictation.
-- HoldSpeak does not write `.hs/` files unless you approve a suggestion.
-- HoldSpeak skips or rejects content that looks like a secret.
-- Do not put API keys in `.hs/` files.
+Context files guide a rewrite. They can contain instructions for the selected
+model, but they do not grant authority to type or send.
 
 ### Suggested documentation updates
 
-When the rewriter sees durable context, it can suggest a small update, for
-example `.hs/decisions/agent-hooks-context-channel.md`. You can read, apply,
-or dismiss a suggestion through `/api/dictation/project-doc-suggestion`.
-Apply writes only to these folders:
-
-```text
-.hs/memory/
-.hs/decisions/
-.hs/handoffs/
-.hs/workflows/
-.hs/issues/
-```
-
-HoldSpeak hides a suggestion that repeats the target file. HoldSpeak does not
-repeat a dismissed suggestion for a similar utterance in the same session.
+The pipeline can create a project document suggestion. Review the diff and use
+the explicit apply action. A model result or a dry run never writes `.hs/` files
+by itself.
 
 ## 6. Install the agent hooks
 
-Hooks tell HoldSpeak the working directory, session id, and recent state of
-your Claude Code or Codex session. This tells HoldSpeak which project the
-agent works in. The full install is in
-[Claude/Codex automation hook install](./AGENT_HOOK_INSTALL.md).
+Agent hooks capture a short session event for the selected project. They do not
+grant the hook authority to type or send. Generate the installed hook with
+`holdspeak agent-hook templates --agent claude` or
+`holdspeak agent-hook templates --agent codex`.
 
-Print a template:
-
-```bash
-holdspeak agent-hook templates --agent claude
-holdspeak agent-hook templates --agent codex
-```
-
-Add `--capture-messages` to also capture the latest assistant message. This
-lets HoldSpeak detect that the session waits for your reply. HoldSpeak stores
-only a short local snippet.
-
-The **Automation hooks** group in **Configure dictation** shows a `SET` chip
-for each agent that has sent a session.
+Use [Claude/Codex automation hooks](AGENT_HOOK_INSTALL.md) for installation and
+the `--capture-messages` boundary.
 
 ## 7. Rehearse a dictation
 
-A dry run shows the pipeline result and types nothing. In the **Speak** wing,
-turn on **DRY RUN**, type or speak an utterance, and read the result. From the
-command line:
+Use **Dry run** before a first remote route. It returns the original text,
+stages, selected route, and egress boundary without typing or sending.
 
-```bash
-holdspeak dictation dry-run "ask codex to inspect the failing test and propose a minimal fix"
-```
-
-Check these items:
-
-- The runtime status is loaded.
-- The target is correct.
-- No stage fell back without a reason.
-- The final text is useful.
-
-Other CLI commands:
-
-```bash
-holdspeak dictation runtime status
-holdspeak dictation blocks ls
-holdspeak dictation blocks show <id>
-holdspeak dictation blocks validate [--project PATH]
-holdspeak doctor
-```
+The browser can also use `POST /api/dictation/transcribe` for one WAV. The hub
+caps the body, runs the local transcriber, and does not retain that raw audio.
 
 ## 8. Dictation blocks
 
-A block is a named kind of utterance. The router matches speech to a block.
-The block holds the template, which can include `{project.kb.<key>}` values.
-Use the **Blocks** wing to add, edit, and delete blocks. A project can
-override the global set with `<repo>/.holdspeak/blocks.yaml`.
+Block templates and records are managed by:
+
+- `GET /api/dictation/block-templates`
+- `GET/POST /api/dictation/blocks`
+- `PUT/DELETE /api/dictation/blocks/{block_id}`
+
+Blocks are data. They do not override route rights or operation policy.
 
 ## Rewrite passes
+Set **Rewrite passes** in **Settings > Speak > More**, or in the config:
 
-`rewrite_passes` sets how many times the rewriter refines its draft. The range
-is 1 to 5. The default is `1`. A higher value adds a critique and a refine
-pass. HoldSpeak skips a pass that would break `max_total_latency_ms`. A failed
-refine pass keeps the best draft.
-
-Set **Rewrite passes** in **Settings > Speak > RAW**, or in the config:
-
-```json
-{ "dictation": { "pipeline": { "rewrite_passes": 2 } } }
-```
+An assigned rewrite model receives the frozen transcript and the selected
+project context. It can return unchanged text, a rewritten text, or a named
+failure. The pipeline keeps the prior text when it cannot complete a stage.
 
 ## The journal, corrections, and replay
 
-HoldSpeak learns from your corrections. Every step runs on your machine.
-
-1. **Dictate.** Each run is journaled, spoken or dry run.
-2. **Correct.** Mark a result **Wrong** and teach the fix.
-3. **Learn.** The correction changes later similar utterances.
-4. **See it.** The **Learned** wing shows what HoldSpeak learned.
-5. **Replay.** Run a past utterance again and compare.
-
 ### The journal
 
-Open the **Journal** wing. Each entry shows the time, the transcript, where
-it landed, the run time in milliseconds, and a source badge. Search the list.
-Filter by source: **ALL**, **DICTATION**, **BROWSER**, or **HOTKEY**. Open an
-entry to edit the transcript, **Replay**, **Copy** the transcript, or
-**Delete** it. **Clear** removes all entries after you confirm.
-
-The journal stays on your machine. It uses a secret filter before storage.
-It keeps the 500 most recent entries (`dictation.pipeline.journal_retention`).
-It never changes what gets typed.
+The dictation journal records the heard text, processed text, route, and
+delivery outcome. It is an audit and learning record, not a copy of raw audio.
 
 ### Correct a result
 
-A result shows **OK** and **Wrong**. **OK** only acknowledges the result.
-**Wrong** opens the teach row. Pick a **FIELD**: `TEXT`, `INTENT`, or
-`TARGET`. Type the right value. Click **Teach**.
-
-| Kind | What it corrects | How it matches |
-|---|---|---|
-| `text` | A phrase Whisper heard wrong | Exact phrase. Ignores case, spacing, and edge punctuation. Matches whole words only. |
-| `intent` | The block that the router chose | Word overlap (Jaccard similarity) above a threshold. |
-| `target` | The delivery target | Word overlap, same as `intent`. |
-
-A `text` correction rewrites the transcript before the stages run. An
-`intent` or `target` correction nudges the routing of a similar utterance.
-HoldSpeak rejects text that looks like a secret. It also refuses a one-word
-routing gist. There is no model training and no embedding model.
+Use the correction action on a journal row. Corrections create new entries and
+do not rewrite the old receipt.
 
 ### See what it learned
 
-The **Learned** wing lists every correction with its kind, the key, and the
-corrected value. **N APPLIED** is the number of retained journal entries that
-the rule changed. The number can fall as old entries age out. **Forget**
-removes a correction. The **Learning digest** in **Configure dictation**
-counts corrections by block and target.
+`GET /api/dictation/corrections` and
+`GET /api/dictation/learning-digest` show correction rules and a bounded
+digest. The digest is not model training.
 
 ### Replay
 
-**Replay** on a journal entry runs the stored transcript through the current
-pipeline as a dry run. It types nothing and writes no new journal entry. It
-shows the before and after. Use it to check that a correction works.
+`POST /api/dictation/journal/{entry_id}/replay` replays stored transcript text
+through the dry-run stages. It does not replay audio and does not type.
 
 ## Desktop presence
 
@@ -414,56 +263,37 @@ slides out only in these cases:
   the real match count.
 - **A finished meeting left open items.** The card names the top items.
 
-Qlippy never acts on his own. **Approve** on a card sends the same request as
-**Approve** on the dashboard. It uses the same audit trail and the same
-guarded path. Dismissing a card is always safe.
+Qlippy, the mascot, never acts on his own. **Approve** on a card sends the same
+request as **Approve** on the dashboard. It uses the same audit trail and the
+same guarded path. Dismissing a card is always safe. Each card shows the egress badge.
 
-Each card shows the egress badge. **Local** means everything stays on this
-machine. A cloud mark with a destination means that approval sends the
-previewed content to that destination only. The preview is the exact content.
-The badge is the destination.
+**Local** means everything stays on this machine. A cloud mark with a
+destination means that approval sends the previewed content to that destination
+only. The preview is the exact content. The badge is the destination.
 
 ![The decision card with Qlippy, the preview, the egress badge, and the Approve and Decline buttons.](assets/presence/qlippy-decision-card.png)
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| Runtime unavailable | Missing extra, model, or server | Run `holdspeak doctor` and `holdspeak dictation runtime status`. |
-| Dry run keeps the original text | A stage fell back, or no context exists | Check `.hs/instructions.md` and the model assignment. |
-| Target shows `unknown` | Window hints are not available | Set `target_profile_override`. |
-| Agent working directory is missing | Hooks are not installed | Print the templates again and install them. |
-| Suggestions are noisy | Context is too broad | Narrow `.hs/instructions.md` and `.hs/targets.md`. |
-| Endpoint times out | Model is too slow | Raise `openai_compatible_timeout_seconds` or use a smaller model. |
+| Problem | Action |
+| --- | --- |
+| No microphone | Check the floor and microphone permission. Re-open the interval. |
+| Dry run keeps original text | Check stage readiness and the assigned model route. |
+| Remote delivery repeats | Retry the same `delivery_id`; do not make a new id for an unknown result. |
+| Agent target unavailable | Check the waiting session and its scoped relay. |
+| Endpoint fails | Check the host, key, model id, and egress chip. |
+| Hooks show no events | Reinstall the generated hook and check its project root. |
 
 ## Verification lanes
 
-Default tests never open a real microphone, load a model, or type through the
-keyboard. Tests marked `metal` need the explicit hardware flag.
-
-```bash
-.venv/bin/pytest -q tests/unit tests/integration
-cd web && npm run check
-swift test --package-path apple
-```
-
-The hardware lane needs microphone permission, PortAudio, and the local
-Whisper and model files. It can type into the active app. Close sensitive
-apps and use a disposable document.
-
-```bash
-.venv/bin/pytest -q tests/e2e/test_metal.py -m metal --run-metal -s
-```
-
-Record the build, audio route, model, destination, elapsed time, and result.
-Never record the dictated phrase.
+Default tests use an isolated home. They do not open a real microphone or type
+through a real keyboard. Hardware walks are separate and must state their
+machine, model, and destination.
 
 ## See also
 
-- [Getting Started](./GETTING_STARTED.md): install and basic voice typing.
-- [The Dictation Copilot](./DICTATION_COPILOT.md): one full run.
-- [Voice Commands](./VOICE_COMMANDS.md): spoken keywords that run actions.
-- [Dictation architecture](./DICTATION_ARCHITECTURE.md): the code path.
-- [Models](./MODELS.md): choose and assign a model.
-- [Claude/Codex automation hooks](./AGENT_HOOK_INSTALL.md): hook install.
-- [Security & Privacy](./SECURITY.md): what is stored and what can leave your machine.
+- [Dictation architecture](DICTATION_ARCHITECTURE.md)
+- [The Dictation Copilot](DICTATION_COPILOT.md)
+- [Voice commands](VOICE_COMMANDS.md)
+- [Models](MODELS.md)
+- [Security](SECURITY.md)

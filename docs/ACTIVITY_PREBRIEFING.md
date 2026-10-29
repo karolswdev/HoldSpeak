@@ -1,82 +1,73 @@
 # Activity pre-briefing
 
-Activity pre-briefing shows quiet notes about what you looked at recently.
-Each note cites its source. You can use one note as context for your next dictation.
-Nothing runs on its own.
-
-If you are new here, read [Getting Started](./GETTING_STARTED.md) first.
+Activity pre-briefing collects relevant records from configured activity
+connectors and shows a source-linked note before a meeting or work session. It
+is a preparation read. It does not record audio, call a model, or send a
+message.
 
 ## Before you start
 
-Pre-briefing reads the activity ledger. Turn the ledger on first:
-
-1. Open the **Activity** page (`/activity`).
-2. Turn on **Watching**.
-
-With **Watching** off, the ledger is empty and no notes appear.
-The ledger comes from local Safari and Firefox history.
-Connected sources, such as GitHub and Jira, can add detail.
+Connectors must be configured and the hub must be running. The activity face
+shows connector readiness, the current privacy setting, and the last refresh.
+A connector can return no records or a named error.
 
 ## Find the notes
 
-1. Open the **Dictation** page.
-2. Open the gear (**Configure dictation**).
-3. Find the **Activity nudges** group.
-
-The page shows up to eight rows. The API returns three by default.
-Each row has this form: time, domain, and kind. Example: `14:05 · github.com · GITHUB_ISSUE`.
-With no recent activity, the group says **No recent activity to cite**.
+Open **Activity** and select the pre-briefing note. The route
+`GET /api/activity/records` returns saved activity records. Use
+`POST /api/activity/refresh` to refresh configured connectors. Candidate
+meetings are available from `GET /api/activity/meeting-candidates`.
 
 ## Use or dismiss a note
 
-Each row has two buttons.
-
-- **Use**: Pins the record. Your next dictation receives it as context.
-- **Dismiss**: Closes the note. The same note does not return.
-
-The pin is one-shot. HoldSpeak keeps it for five minutes, in memory only.
-One dictation consumes it. A restart or a timeout drops it.
-
-Pre-briefing never opens a URL, sends data, or runs a command.
+Open a note to inspect its source references. Use the available **Use** or
+**Dismiss** control. Using a note adds it as context for the current task. It
+does not approve an external effect. Dismissal parks the candidate and does not
+delete the source record.
 
 ## What a note cites
 
-Every note carries a citation. The API returns it, so you can check the record on `/activity`:
-
-- The entity: a GitHub issue, a pull request, a Jira issue, or a calendar event. Other pages give the domain, the title, and the URL.
-- The browser and profile that recorded the visit, for example `safari/default`.
-- The date of the last recorded visit.
+Each candidate records its connector, source identity, and observed time. The
+note is a projection. It is not a transcript and it does not prove that the
+source is current after the refresh.
 
 ## Which notes appear
 
-HoldSpeak picks notes with a fixed rule. No model is involved, so the same input gives the same notes.
-
-1. The window starts at the end of your previous meeting. With no earlier meeting, it starts 24 hours ago.
-2. A summary note appears when the window holds at least two records. Example: "You touched 5 things since your last meeting".
-3. Per-record notes follow. The score rises with recency, with a known entity type, and with a Project match.
-4. Records with a weak score do not appear.
+Project rules and connector filters decide which records become candidates.
+Meeting candidates can be started through
+`POST /api/activity/meeting-candidates/{candidate_id}/start`. The route still
+uses the ordinary meeting capture and authority path.
 
 ## Privacy
 
-- Pre-briefing reads only the activity ledger. It does not watch desktop apps.
-- It computes notes on your machine, from your local database. It sends nothing out.
-- It does not learn from your dictation.
+Activity connectors are separate egress boundaries. A refresh can send
+connector credentials or query data to the configured provider. Activity
+pre-briefing does not make a blanket local-only claim. Inspect connector
+configuration and the activity privacy setting before refresh.
+
+People data stays in the encrypted People store. Activity pre-briefing does not
+copy private People notes into the plain activity ledger.
 
 ## Turn it off
 
-Turn off **Watching** on the `/activity` page. The notes stop at once.
-You can also keep **Watching** on and dismiss single notes.
+Use **Settings > Activity** or `PUT /api/activity/settings` to disable the
+refresh or change connector scope. `DELETE /api/activity/records` clears the
+activity projection when the route permits it. It does not delete the source
+provider records.
 
 ## API
 
 | Route | Purpose |
 | --- | --- |
-| `GET /api/activity/nudges` | List notes. Takes `project_id` and `limit`. |
-| `POST /api/activity/nudges/{nudge_id}/dismiss` | Dismiss a note. |
-| `POST /api/activity/nudges/select` | Pin a record (`record_id`). |
-| `POST /api/activity/nudges/select/clear` | Clear the pin. |
+| `GET /api/activity/status` | Read readiness and privacy state. |
+| `GET /api/activity/records` | Read saved projections. |
+| `GET /api/activity/project-rules` | Read project filters. |
+| `GET /api/activity/meeting-candidates` | List meeting candidates. |
+| `POST /api/activity/refresh` | Refresh configured connectors. |
+| `PUT /api/activity/settings` | Change local activity settings. |
 
 ## See also
 
-- [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md)
-- [Connector development](CONNECTOR_DEVELOPMENT.md)
+- [Meeting Mode guide](MEETING_MODE_GUIDE.md)
+- [Security](SECURITY.md)
+- [Project Rooms](PROJECT_ROOMS.md)

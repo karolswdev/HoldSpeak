@@ -1,31 +1,35 @@
 # Desk object model
 
 This page is for contributors.
-It lists the Desk object kinds, the verbs and keys, the drag rules, and the window geometry.
+It connects object declarations to active openers, verbs, keys, and shared window behavior.
 The source is the final authority. Each section names the file that owns the rule.
 For the app structure, see [Desk architecture](DESK_ARCHITECTURE.md).
 
 ## Object kinds
 
-`PrimitiveKind` in `web/src/lib/primitives.ts` lists every kind.
+`PrimitiveKind` in `web/src/lib/primitives.ts` lists the declared shared primitive kinds.
+Other service-backed records can have their own opener contract.
+For example, `program:<id>` opens a Program through `openObject.ts` and the Programs host.
 The `PRIMITIVES` table gives each kind its label, sync class, object verbs, and opening surface.
-A verb that the table does not list is not available for that kind.
+The descriptor declares static capabilities.
+The active opener, selected object, and runtime state determine how the current Desk exposes them.
+A descriptor alone does not establish a separate app or an available control.
 
 | Kind | Label | Sync class | Create | Object verbs | Opens as |
 | --- | --- | --- | :-: | --- | --- |
-| `meeting` | Meeting | content | no | ask, send | pullout |
-| `artifact` | Artifact | content | no | ask, send | pullout |
-| `note` | Note | content | yes | ask, edit, rename, duplicate, delete | pullout |
-| `decision` | Decision | content | yes | duplicate, delete, send | pullout |
-| `thread` | Thread | content | yes | delete | pullout |
+| `meeting` | Meeting | content | no | ask, send, hand | Meetings host |
+| `artifact` | Artifact | content | no | ask, send, hand | pullout |
+| `note` | Note | content | yes | ask, edit, rename, duplicate, delete, hand | Note workspace |
+| `decision` | Decision | content | yes | duplicate, delete, send, hand | pullout |
+| `thread` | Thread | content | yes | delete | current Ask/conversation host |
 | `directory` | Zone (drawer) | organization | yes | rename, delete | Directory contents window |
 | `kb` | Knowledge | organization | yes | ask, edit, rename, duplicate, delete | pullout |
-| `project` | Project | organization | no | send | Project Room (the `open-project-memory` surface) |
+| `project` | Project | organization | no | send, rename, archive | Project Room (`open-project-memory`) |
 | `repository` | Repository | organization | yes | none | repository window |
 | `recipe` | Agent | capability | yes | ask, edit, rename, duplicate, delete | pullout |
 | `chain` | Sequence | capability | yes | delete | pullout |
 | `workflow` | Workflow | capability | yes | ask, edit, rename, duplicate, delete | pullout |
-| `workbench` | Automation | capability | yes | duplicate | workbench window |
+| `workbench` | Automation | capability | yes | duplicate | Automation host, with legacy queue view for an old queue |
 | `coder` | Coder session | presence | no | none | pullout |
 | `roadmap` | Roadmap | organization | no | none | roadmap window |
 | `intelligence` | Intelligence | local | no | none | pullout |
@@ -44,15 +48,14 @@ An ID resolves as a bare ID or as a qualified `kind:id` reference.
 
 ## Floor placement
 
-`objUnit` in `web/src/desk/world.ts` returns a saved position when one exists.
-Otherwise it places the object on a grid.
-Dragging an object saves its position and removes it from the grid.
-Positions are normalized from 0 to 1.
-A compact screen is a screen 720 pixels wide or less.
+The previous spatial Floor is parked.
+The active Screen and drawers present objects through `web/src/desk/screen/` and the current drawer hosts.
+Legacy placement helpers remain in `world.ts` for callers that use them.
+They are not a promise that the active Screen exposes free placement for every object.
 
-Icon art is 64 by 64 pixels in a uniform cell.
-Selected and stale states are separate image files, not CSS filters.
-A state badge needs a named live field.
+Icon identity and state come from the shared sprite and component contracts.
+A badge must name a real field or stored state.
+Object placement, filing, and a registered window's geometry are separate operations.
 
 ## Verbs
 
@@ -65,7 +68,7 @@ The menu hides a verb when it cannot run for the current selection.
 | Menu | Verbs |
 | --- | --- |
 | **Desk** | **New Note**, **New Decision**, **New Automation**, **New Thread**, **New Project**, **Hide the menus** (Settle in). **Reset layout**, **Reset to seed…** and **Refresh from hub** are in Search. |
-| **Object** | **Open**, **Get Info**, **Ask about this**, **Draft update**, **Hand to agent**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, **Delete**. The selected object determines which verbs appear. |
+| **Object** | **Open**, **Get Info**, **Ask about this**, **Write update**, **Hand to agent**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, **Delete**. The selected object determines which verbs appear. |
 | **Go** | Apps from `DESK_APPLICATIONS`, grouped by their `go` entries, plus projects and drawers. An open window gets focus instead of a second copy. |
 | **Window** | **Close window**, **Iconify**, **Cycle windows**, **Cycle windows (reverse)**, **Snap left**, **Snap right**, **Zoom**, **To back**, and the current-work windows |
 | System | **Search**, **Keyboard shortcuts** |
@@ -107,7 +110,7 @@ The old `⌘` keys stay bound. They work where the browser sends them to the pag
 
 `selectedIds` holds the selection. `toggleSelected`, `setSelected`, and `clearSelection` change it.
 An object verb works only when exactly one object is selected.
-With more than one selected object, an object verb is unavailable. **Ask AI** still uses the whole selection.
+With more than one selected object, an object verb is unavailable. **Ask** still uses the whole selection.
 
 | Gesture | Result |
 | --- | --- |
@@ -127,37 +130,27 @@ Any pair not in the table does nothing.
 | Agent, Sequence, Workflow | Note, Knowledge, Meeting, Artifact | **Hold as source** | The record becomes held context. Nothing runs. |
 | Knowledge | Note, Meeting, Artifact, Agent | **Add to Knowledge** | The record joins the Knowledge. You can undo it. |
 
-`GlassDropLayer` accepts files from outside the browser.
-It refuses unknown file types and names the reason.
-A transcript or audio file goes to `POST /api/meetings/import`.
-A calendar screenshot goes to `POST /api/calendar/snapshot`.
+The old Floor file-drop host is parked in the active Desk composition.
+The matrix describes supported internal object pairs, not a general file-ingestion promise.
+Meetings import and calendar snapshot review have their own active controls and API routes.
+Read [Meeting mode](MEETING_MODE_GUIDE.md) for supported import steps.
 
 ## Window geometry
 
 `web/src/desk/components/window/windowGeometry.ts` holds the geometry functions.
 `DESK_WINDOW` comes from `web/design-tokens.json` through `web/src/lib/tokens.gen.ts`.
 
-| Constant | Value |
-| --- | --- |
-| Margin from the viewport edge | 10 px |
-| Top of the work area | 54 px |
-| Bottom of the work area | 52 px, or the dock height when the dock is taller |
-| Cascade step | 26 px |
-| Title strip used to score overlap | 44 px |
-| Placement scan step | 32 px |
-| Default minimum size | 320 by 220 px |
-| Snap edge | 26 px |
-| Snap corner | 150 px |
-| Overview gap | 18 px |
-| Re-clamp delay after a resize | 150 ms |
+The work area comes from shell CSS properties and the measured Dock height.
+Token defaults come from `web/design-tokens.json` and `web/src/lib/tokens.gen.ts`.
+Read the geometry module for placement steps, title-occlusion scoring, and minimum-size defaults.
+Each app can declare its own window constraints.
 
 ### Placement
 
-`placeWindow` picks a position for a new window.
-It scans the work area in 32 px steps and scores each candidate.
-A title strip overlap costs more than any body overlap.
-A candidate must beat the best score to win.
-When every candidate covers a title, the window cascades by 26 px for each open window, up to 8.
+`placeWindow` starts near the front window or the app's default position.
+It fits the candidate within the usable band and avoids the icon columns when the window fits.
+Its scan gives title-bar overlap a higher cost than body overlap.
+A saturated layout uses the bounded cascade logic in the geometry module.
 
 ### Snap and resize
 
@@ -179,7 +172,9 @@ Press `Escape` to leave it.
 Each window has one ID, one rect, one place in the stacking order, and an iconified or zoomed flag.
 Opening a window puts it in front. Focusing a window moves it to the front.
 Closing a window removes its ID.
-`windowRegistry.ts` defines the front window as the last open window that is not iconified.
+The front registered window is derived from the greatest shown depth.
+Raising a window advances the shared depth counter.
+`services/desk_window_service.py` and `compositor/hubWindows.ts` own the hub and browser sides.
 
 A window opens as a region and takes focus.
 Closing it returns focus to the element that opened it.
@@ -189,11 +184,17 @@ Dragging the head moves the window. Double-clicking the head zooms it.
 
 ### Saved layout
 
-The browser saves one document, `hs.desk.workspace.v1`.
-It holds the open tool windows, rects, stacking order, zoomed windows, iconified windows, open Zones, Zone view preferences, Chair window state, drafts, and window places.
-Window IDs match `^[A-Za-z0-9:_-]+$`.
-The loader drops invalid entries and caps ordered IDs at 100.
-An unknown version or damaged data gives an empty layout.
+The hub owns registered window rows in `desk_windows` and desk-level counters in `desk_window_desk`.
+Each window write takes the desk's next revision.
+Stale expected revisions are refused and followed by a read of current state.
+Share-plus-pixel geometry resolves against each view's usable band.
+
+The browser saves `hs.desk.workspace.v1` for initial presentation, local drafts, places, and preferences.
+Hub rows overwrite the registered-window cache when loaded.
+Context-dependent windows listed in `NOT_ON_HUB` remain local to their browser host.
+The loader validates local entries and drops corrupt or unknown data.
+
+A window cache does not own the Note, Meeting, or output shown inside it.
 
 ## Motion and states
 
@@ -205,3 +206,10 @@ Window motion uses transform and opacity.
 `SurfaceLedgerRow` is a `div` with `role="button"`.
 It cannot be a `button` because its trailing action would nest inside it.
 Do not copy this pattern. New faces use the library Button.
+
+
+## See also
+
+- [Desk architecture](DESK_ARCHITECTURE.md): rendering and state ownership.
+- [Domain model](DOMAIN_MODEL.md): retained records and execution evidence.
+- [The Desk](WEB_DESK.md): user procedures.

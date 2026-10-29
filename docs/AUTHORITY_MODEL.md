@@ -1,144 +1,101 @@
 # Authority model
 
-This page maps the [Authority](AUTHORITY.md) contract to the runtime code. It is
-for contributors. It adds no second contract.
+This page maps the user-facing [Authority](AUTHORITY.md) contract to the
+runtime. It adds no second policy.
 
 ## Three separate questions
 
 1. **Review.** Is the proposed content acceptable?
-2. **Authorization.** May this exact effect occur under the current mode, grant,
-   delegation, and hard invariants?
-3. **Execution.** Did an admitted executor claim, perform, and receipt the effect?
+2. **Authorization.** May this exact effect occur under the principal, mode,
+   grant, delegation, and hard invariants?
+3. **Execution.** Did an executor claim, perform, and receipt the effect?
 
-An accepted proposal is not proof that the effect ran. A successful authorization
-is not proof that a provider finished. The terminal receipt and the operation
-state are the evidence. The `actuator_proposals` table in `holdspeak/db/schema.py` stores the
-three fields apart: `review_decision`, `authorization_state`, and the execution
-state.
+The operation record stores these states separately. A provider response without
+a terminal Receipt is not proof of completion.
 
 ## Authority flow
 
 ```mermaid
 flowchart TD
-  REQUEST[Request with declared capability]
-  PRINCIPAL[Authenticated principal]
-  POLICY[Operation policy and control mode]
-  GRANT[Exact grant or schedule delegation]
-  OWNER[Owner decision]
-  WARRANT[Signed operation warrant]
-  CLAIM[Node or local executor claim]
-  RECEIPT[Immutable terminal receipt]
-  REFUSE[Refusal or indeterminate receipt]
-
-  REQUEST --> PRINCIPAL
-  PRINCIPAL --> POLICY
-  POLICY -->|hard invariants pass| GRANT
-  GRANT -->|grant, YOLO, or schedule permits| WARRANT
-  GRANT -->|review required| OWNER
+  REQUEST[Declared operation] --> PRINCIPAL[Authenticated principal]
+  PRINCIPAL --> POLICY[Policy and hard invariants]
+  POLICY -->|grant, YOLO, or schedule| WARRANT[Admitted operation]
+  POLICY -->|review required| OWNER[Owner decision]
   OWNER -->|approve| WARRANT
-  OWNER -->|reject| RECEIPT
-  WARRANT --> CLAIM
-  CLAIM --> RECEIPT
-  POLICY -->|unsupported or invariant fails| REFUSE
-  CLAIM -->|expiry, cancellation, lost provider| REFUSE
+  OWNER -->|reject| RECEIPT[Terminal refusal receipt]
+  WARRANT --> CLAIM[Executor claim]
+  CLAIM --> RECEIPT2[Terminal receipt]
+  POLICY -->|unsupported or refused| RECEIPT
 ```
 
 ## Principal rights
 
-The edge derives the principal kind from authentication. A request body cannot
-set it. `holdspeak/principals.py` declares the rights.
+The edge derives the principal from authentication. A request body cannot choose
+its principal.
 
 | Principal | Rights | Limit |
 | --- | --- | --- |
-| Owner | All rights: owner routes, decide, delegate, posture, read | Operation policy and hard invariants still apply |
-| Agent | `agent.submit`, `agent.read`, `agent.usage`, `self.revoke` | Cannot decide, delegate, change posture, or claim as a node |
-| Node | `node.link` | Executor and delivery protocol only. No owner control plane. |
-| Scheduler | None | Internal due-tick identity. Only an exact saved delegation admits scheduled work. |
-| Service | None | Narrow identity for a service path that accepts it |
-| None | None | Public routes are named exceptions |
-
-Route mapping and the deny-by-default fallback are in the same file.
+| Owner | Owner routes, decisions, posture, grants, and reads | Policy and hard invariants still apply |
+| Agent | Submit and read scoped work, usage, self-revoke | Cannot decide, delegate, change posture, or claim as a node |
+| Node | Node link and executor protocol | No owner control plane |
+| Scheduler | Exact saved delegation only | Cannot widen a schedule |
+| Service | Narrow service path | No general owner rights |
+| None | Named public exceptions | No protected operation |
 
 ## Policy resolution
 
-`holdspeak/operation_policy.py` evaluates in this order: hard invariants,
-revocation, exact scoped grant, control mode, feature default. An unknown family is
-refused. The policy has the wire modes `safe`, `neutral`, and `yolo`. It treats
-`dictation_commit`, `coder_steering`, `external_write`, and `sync_cadence` as
-separate families. Steering grant TTLs are 5, 15, and 60 minutes for `safe`,
-`neutral`, and `yolo`.
+`holdspeak/operation_policy.py` evaluates hard invariants, revocation, exact
+grant, control mode, and feature default. The wire modes are `safe`, `neutral`,
+and `yolo`. The initial families are dictation commit, coder steering,
+external write, sync cadence, and tool gate. Unknown families are refused.
 
-`holdspeak/services/authority_service.py` owns the mode and the grants.
-`set_control_mode` revokes the reusable grants that the change affects. A change to
-a configured destination does the same. `issue_grant` needs a fixed-destination
-proposal. Each use records a row. A grant ends when its count is used up.
+Steering grant TTLs are five, fifteen, and sixty minutes for Secure, Normal, and
+YOLO. `AuthorityService` owns mode and grant persistence.
 
 ## Kernel authority layers
 
-The broker (`holdspeak/kernel/broker.py`) applies four gates:
+The broker applies authenticated principal, declared operation, hard
+prerequisites, and interruption policy. The envelope binds operation name and
+version, target, placement, policy version, authority basis, identity, and
+idempotency.
 
-- the authenticated principal and its route right
-- the declared capability and the registered operation spec
-- hard prerequisites such as causality, destination, and policy
-- interruption policy for deadlines, cancellation, and liveness
-
-The envelope binds name and version, target, placement, policy version, authority
-basis, principal identity, and idempotency. A caller cannot inject authority
-fields into the admission body (`holdspeak/kernel/admission.py`). The same
-principal and key with a changed envelope is refused.
-
-An owner approval signs a warrant. The executor must check the warrant, the exact
-envelope, revocation, the deadline, and the live ancestor. Then it writes one claim
-witness (`holdspeak/kernel/executor.py`). A warrant covers one operation with its
-fixed target and placement.
+An executor checks the warrant, envelope, revocation, deadline, ancestor
+liveness, and claim identity before it performs work. A caller cannot inject
+authority fields into the admission body.
 
 ## Parent runs, schedules, and delegation
 
-A parent run is a durable, bounded authority shell. It holds a definition
-reference and revision, an input snapshot, a deadline, an execution epoch, a
-planned node, an active child, a child budget, and a lease (`kernel_parent_runs`
-in `holdspeak/db/schema.py`). A physical model attempt is a child operation. A
-retry or fallback is a new child. The parent controller saves each child and
-checkpoint, so a stale child cannot advance a newer epoch
-(`holdspeak/kernel/parent_run.py`, `holdspeak/kernel/parent_checkpoint.py`).
+A parent run stores a definition reference, input snapshot, deadline, execution
+epoch, active child, budget, and lease in `kernel_parent_runs`. Each physical
+model attempt is a child. A retry or fallback creates a new child and receipt.
 
-Scheduled work uses the internal `scheduler` principal, and only when an exact
-owner delegation exists (`holdspeak/kernel/schedule_delegated.py`). A due tick
-cannot widen its destination, definition, cadence, or deployment revision. A
-missing, revoked, expired, stale, or changed term is refused before dispatch. The
-terms are listed in [Security and privacy](SECURITY.md#scheduled-workbench-runs).
+Scheduled work uses the internal scheduler principal and an exact owner
+delegation. A missing, expired, revoked, stale, or changed term is refused
+before dispatch.
 
 ## Approval, rejection, and cancellation
 
-The decision route `POST /api/kernel/operations/{operation_id}/decide` accepts
-decision data only. It rejects mutation fields
-(`holdspeak/web/routes/system/kernel_routes.py`). Approval signs a warrant.
-Rejection is a terminal receipt with an owner-rejection outcome and no execution
-claim.
+`POST /api/kernel/operations/{operation_id}/decide` accepts decision data only.
+Approval signs a warrant. Rejection writes a terminal owner-rejection receipt
+without an execution claim.
 
-Cancellation takes a write lock, sets an open parent to `CANCELLING`, raises its
-execution epoch, and clears its active child. Then it asks the provider to stop. A
-pending publication ends in a truthful terminal state, and a late result cannot
-win (`holdspeak/kernel/parent_terminal.py`). While a publication claim is active,
-the publication guard blocks ordinary state writes and warrant revocation
-(`holdspeak/kernel/publication_transition.py`).
+Cancellation raises the execution epoch and clears the active child before the
+provider stop request. A late result cannot win a newer epoch. A publication
+claim blocks ordinary writes until it reaches a terminal state.
 
 ## Receipts and audit
 
-The terminal states are `succeeded`, `failed`, `refused`, `cancelled`, and
-`indeterminate`. Every admitted terminal path leaves one immutable receipt,
-including rejection and refusal. HoldSpeak validates the result reference.
-Inference receipts include an attestation. The journal is hash-chained, and
-database triggers block updates and deletes on the attestation.
+Terminal states include `succeeded`, `failed`, `refused`, `cancelled`, and
+`indeterminate`. Every admitted terminal path leaves an immutable receipt.
+Inference receipts include attestation. The journal is hash chained and
+attestation rows cannot be updated or deleted.
 
-To judge whether an effect completed, read the operation state, the receipt, the
-journal event, and the domain record together. A review decision alone, a grant
-row alone, a process projection alone, or a provider HTTP response without a
-receipt is not enough.
+To judge completion, read operation state, Receipt, journal event, and domain
+record together.
 
 ## Limits
 
-This page covers the application-level authority path. It does not prove that
-every future adapter uses the kernel, or that a same-user process cannot bypass
-cooperating code. Agent credentials live in memory and a restart clears them. See
-[Security model](SECURITY_MODEL.md).
+These are application controls. They do not isolate a same-user process, prove
+that every future adapter uses the broker, or recover text that the operating
+system never delivered. Agent credentials live in memory and a restart clears
+them. See [Security model](SECURITY_MODEL.md).

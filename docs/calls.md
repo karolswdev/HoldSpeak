@@ -1,230 +1,239 @@
 # Calls
 
-You can call HoldSpeak from your phone. You speak, and HoldSpeak does the work on your desk. It tells you what it did. It asks you before it sends something.
+Calls lets a configured phone line reach the HoldSpeak Desk. You can call the
+Desk, speak a request, and receive a short spoken result. The Desk can also
+place a call to the configured owner number from **Call me**.
 
-HoldSpeak also calls you when you press **Call me**.
+This guide is source-backed. No provider, hardware, or real call was used while
+refreshing it. A phone-number call needs an enabled Calls adapter, its
+credentials, a reachable engine, and a configured number or SIP address.
 
 ## How it works
 
-Two programs work together. One holds the line, and HoldSpeak does the work:
+The phone half and the Desk have separate jobs:
 
-- **The Line** is HoldSpeak's own phone line. It runs on your Mac or on a machine on your tailnet. Read [The Line](#the-line).
-- **ai-phone** can hold the line in place of the Line. It hears your words and speaks the answers. It runs on your Mac. Get it at <https://github.com/oxnw/ai-phone>.
-- **HoldSpeak** does each turn of the call. It uses the tools of your desk.
+- **The Line** is HoldSpeak's adapter. It can run on this Mac or on an enrolled
+  Line node. It uses SIP audio locally and sends text turns to the hub.
+- **ai-phone** is an optional external adapter. It is a separate program that
+  can hold the line and provide speech.
+- **HoldSpeak** owns the call turn, the Desk tools, the held decisions, and the
+  call record.
 
-The model that thinks runs on your engine. The default is your home engine over Tailscale ("Home engine over Tailscale"). Settings ▸ Engines ▸ **Phone calls** can change it.
+Use **Settings > Calls > Line > Adapter** to select **The Line** or
+**ai-phone**. With no explicit choice, the service selects The Line when
+baresip or an enrolled node is available, then ai-phone when it is available.
+The relevant process and adapter must still be running.
 
-**Settings ▸ Calls ▸ Line ▸ Adapter** selects the Line or ai-phone. ai-phone needs a Mac with Apple Silicon. It does not run on Linux. Your home engine can be on Linux.
+The call turn uses the configured Calls engine. The source does not require a
+particular provider, host, endpoint, or model name. Read **Settings > Calls**
+and **Settings > This Mac > Engines** before you run a call.
 
 ## What a call can do
 
-| HoldSpeak does it at once | HoldSpeak asks you first | HoldSpeak does not do it on a call |
-|---|---|---|
-| Read your desk, meetings, people, projects, decisions, memory and Jira | Send a prepared send | Change a setting |
-| Write a note | Post a nudge on GitHub | Change an engine or an account |
-| Add a task | A desk change that your control mode holds | Confirm a decision for you |
-| Propose a decision | | Call another person |
-| Prepare a send | | |
+| HoldSpeak can do | HoldSpeak asks first | HoldSpeak does not do from a call |
+| --- | --- | --- |
+| Read permitted Desk records | Send a prepared action | Change a setting |
+| Write a Note or add a task | Post a send or other held egress | Change an engine or account |
+| Propose a decision or add Project work | A control-mode hold | Confirm a decision for you |
+| Prepare a send | | Call another person |
 
-When HoldSpeak asks, it says what will go and where. Say "yes" to let it go. Say "no" to stop it. You can also press **Yes** or **No** in the Calls window.
+The exact tool palette and source scope apply to the call turn. When a held
+operation is needed, the caller hears the question. The Calls window can show
+the same hold; select **Yes** or **No** there when that control is available.
 
-After each turn, HoldSpeak tells you what it did: "Done: added a task: Nudge Tomás about the runbook."
-
-At the end of the call, the call is a note on your desk. The note has all the words of the call. Your passphrase is not in the note. If the call was about a project, the note goes into that project.
+A finished call is retained in the Calls service and its transcript becomes a
+Desk Note. The passphrase is redacted from the transcript and Note. A call
+record is evidence of the turn, not proof that an external action completed;
+read its receipt and the target record.
 
 ## Who can use your line
 
-1. Your number. Put your number in **Settings ▸ Calls ▸ Allowed numbers**. Then only that number gets to the passphrase. If the list is empty, all callers get to the passphrase.
-2. Your passphrase. HoldSpeak asks for it at the start of each call. If you do not say it correctly two times, HoldSpeak ends the call. If you did not set a passphrase, HoldSpeak ends each call.
+Calls uses two gates:
 
-Caller ID is not proof of who calls. The passphrase is the key.
+1. **Allowed numbers.** Add numbers in **Settings > Calls > Allowed numbers**.
+   An empty list lets any caller reach the passphrase gate. It does not grant
+   Desk access.
+2. **Passphrase.** Calls asks for the configured passphrase at the start of
+   every call. The caller has two attempts. If no passphrase is configured, or
+   both attempts fail, the call ends.
+
+Caller ID is not proof of identity. Keep the passphrase separate from Notes,
+prompts, and provider settings.
 
 ## Set up calls
 
-Do these steps one time. **Settings ▸ Calls** shows each step and its status.
+The active UI is the authority for setup state. Do not copy a provider key into
+a Note or a Thread.
 
-1. Install ai-phone on your Mac:
+1. Open **Settings > Calls** and read each setup row.
+2. Choose **The Line** or **ai-phone** in the adapter row.
+3. Configure the Calls engine in **Settings > This Mac > Engines** when the
+   default assignment is not suitable.
+4. Set a passphrase and, when needed, add allowed caller numbers.
+5. Turn Calls on only when the selected phone half is configured and running.
+6. Start with the adapter's own status or test controls. Read the returned
+   state before placing a real call.
 
-   ```bash
-   git clone https://github.com/oxnw/ai-phone.git ~/dev/ai-phone
-   cd ~/dev/ai-phone
-   ./scripts/install.sh
-   uv run ai-phone setup
-   ```
-
-   Setup downloads the speech models. This can be some GB.
-
-2. In setup, choose these items:
-   - **Receive and place calls**.
-   - The brain: **OpenAI-compatible**, at `http://100.118.33.80:8080/v1`, model `qwen3.8-27b`. Then ai-phone downloads no language model.
-   - The line: **A SIP address** for a free first call (no carrier).
-3. Start ai-phone, and keep it running:
-
-   ```bash
-   uv run ai-phone run
-   ```
-
-4. In **Settings ▸ Calls**:
-   - Set the ai-phone folder (`~/dev/ai-phone`).
-   - Set a passphrase.
-   - Add your number.
-   - Turn on calls.
+For ai-phone, use its own installation and configuration instructions. A
+typical checkout path is a placeholder such as
+`<path-to-ai-phone>`; do not assume a particular home directory or model
+endpoint. HoldSpeak does not include ai-phone and does not own its secrets.
 
 ## Make a free first call
 
-Use a SIP address on your tailnet. You do not need a carrier or an account.
+A SIP address can avoid a carrier account when the Line or ai-phone is
+reachable on the same private network. The exact SIP address is shown by the
+configured adapter. A SIP client and network route are still required.
 
-1. Install a SIP phone app on your iPhone (for example, Linphone).
-2. Turn on Tailscale on the iPhone.
-3. Call `sip:agent@<your Mac's Tailscale name>`.
-
-To test on the Mac only: `pjsua --local-port 5070 sip:agent@127.0.0.1`.
+For the Line, **Settings > Calls > Line > Address to dial** shows the address
+when one is available. The Line binds to the configured address; it does not
+listen on every interface by default. Use the address shown by the Desk and
+the network policy you selected.
 
 ## Get a real phone number
 
-A real number lets you call from the Phone app, or from CarPlay. The carrier charges money for the number and for each minute.
+A provider number is optional. It can let an ordinary phone call the Desk or
+let **Call me** ring the owner number. Provider charges, credentials, and
+regional availability belong to that provider.
 
-We recommend **Telnyx**. You need one API key, and ai-phone buys the number for you.
+Configure an existing number or a provider account through the selected phone
+half. Use placeholders in operational notes, for example
+`<your-number>`, `<provider-account>`, and `<area-code>`. Never put a
+real secret in this guide.
 
-1. Make a Telnyx account at <https://telnyx.com>. Make an API key.
-2. Put the key in `~/.ai-phone/secrets.env`:
-
-   ```bash
-   TELNYX_API_KEY=your-key
-   ```
-
-3. Add the line (this example buys a New York number):
-
-   ```bash
-   uv run ai-phone lines add telnyx --key-env TELNYX_API_KEY --country US --area 212
-   ```
-
-4. Stop ai-phone and start it again.
-
-Do you already have a Twilio number? Use it, and nothing is bought:
-
-```bash
-uv run ai-phone lines add twilio --key-env TWILIO_ACCOUNT_SID --secret-env TWILIO_AUTH_TOKEN --existing +15555550100
-```
-
-With ai-phone, HoldSpeak does not ask for your carrier key, and it does not read it. The key stays in ai-phone's `secrets.env`. The Line keeps its secrets in your keystore (see [A Telnyx number on the Line](#a-telnyx-number-on-the-line)).
+With ai-phone, its separate secret store remains outside HoldSpeak. With the
+Line, SIP and provider secrets are held by the HoldSpeak keystore; the Calls
+settings file stores only the reference needed to find them.
 
 ## The Line
 
-The Line is HoldSpeak's own phone line. It does the job of ai-phone, and all of its parts have a permissive licence.
+The Line is the HoldSpeak-owned adapter. It runs baresip for SIP and audio,
+speech recognition and speech output on the Line machine, and a text-only wire
+to the hub. The audio does not travel over the hub wire.
 
-- **baresip** holds the call: SIP and the call audio. It runs as a separate program, and the Line starts it and starts it again if it stops.
-- **Parakeet** hears your words. **Pocket TTS** speaks the answers. Both run on the machine of the Line, on the CPU.
-- **HoldSpeak** does each turn of the call, the same as with ai-phone. Only text goes between the Line and the hub. The audio stays on the machine of the Line.
-
-**Settings ▸ Calls ▸ Line** shows where the Line runs, its state, the line, a **Test call**, the rules it takes from Calls, and the adapter.
+**Settings > Calls > Line** shows where the Line runs, its state, the address,
+the selected account, the adapter, the rules from Calls, and **Test call**.
+A status such as Not installed, Not set up, Offline, or Not running is a
+configuration state; it is not a successful call.
 
 ### Where it runs
 
-The Line runs on this Mac or on a machine on your tailnet (for example, your home box). Select it in **Settings ▸ Calls ▸ Line ▸ Where it runs**. The state is one of: Ready, Starting, Not running, Not installed, Not set up, Offline.
+The Line can run on this Mac or on an enrolled node on the configured network.
+The source names `this_mac` and `node:<name>` as the location forms. A node
+reports its machine and model facts at hello time. The hub can show a node as
+ready, starting, not running, not installed, not set up, or offline.
 
-A call minute costs about 0.13 of one core on an Apple Silicon Mac, and about 0.4 of one core on the home box (measured).
+The Line has its own Python 3.13 environment because its speech dependencies
+are separate from the hub. The hub does not silently install or start that
+environment.
 
 ### Install the Line on your Mac
 
-The Line runs in its own Python 3.13. The speech engine (onnxruntime) has no package for Python 3.14 yet, so it cannot go into the hub's Python. Do these steps one time:
+Installation is optional and was not run for this documentation task. The
+supported CLI shape is:
 
 ```bash
 brew install baresip
 uv python install 3.13
-uv venv ~/.holdspeak/line/venv --python 3.13
-uv pip install --python ~/.holdspeak/line/venv -e "<your HoldSpeak checkout>[line]"
-~/.holdspeak/line/venv/bin/holdspeak line models
+uv venv <line-venv> --python 3.13
+uv pip install --python <line-venv> -e "<holdspeak-checkout>[line]"
+<line-venv>/bin/holdspeak line models
+<line-venv>/bin/holdspeak line
 ```
 
-`holdspeak line models` downloads the two speech models from Hugging Face (about 0.6 GB and 0.2 GB). Then start the Line, and keep it running:
+`holdspeak line models` downloads the Line speech models. Keep the venv and
+model path under your control, and read the displayed licences. The CLI also
+supports:
 
-```bash
-~/.holdspeak/line/venv/bin/holdspeak line
-```
+| Command | Meaning |
+| --- | --- |
+| `holdspeak line` | Run the Line (`--node`, `--hub`, `--bind`, and `--sip-port` are supported). |
+| `holdspeak line check` | Report installed and missing pieces. |
+| `holdspeak line build` | Build the audio module for the local baresip. |
+| `holdspeak line models` | Download and report the speech models. |
+| `holdspeak line enrol` | Redeem a one-time node code from a hub. |
+| `holdspeak line unenrol` | Remove the node credential on that machine. |
 
-The hub does not start the Line for you. When the Line is not running, **Settings ▸ Calls ▸ Line** shows these commands, each with **Copy**.
-
-The `holdspeak line` commands:
-
-| Command | What it does |
-|---|---|
-| `holdspeak line` | Run the Line on this machine (`--node`, `--hub`, `--bind`, `--sip-port`) |
-| `holdspeak line check` | Show what is installed and what is missing |
-| `holdspeak line build` | Build the Line's audio module for this machine's baresip again |
-| `holdspeak line models` | Download the two speech models, and show their licences |
-
-On another machine, the Line runs as `holdspeak line --node <name> --hub <your hub's address>`. The setup of another machine is not done yet.
+A remote node first needs a one-time code from the hub. The node credential is
+scoped to the Line wire, not to the rest of the Desk API. Do not paste a node
+token into general client configuration.
 
 ### The free SIP address
 
-You do not need a carrier or an account. The Line listens on one address only, never on all addresses. To take calls from your iPhone, start the Line on your Mac's Tailscale address:
-
-```bash
-~/.holdspeak/line/venv/bin/holdspeak line --bind <your Mac's Tailscale IP>
-```
-
-**Settings ▸ Calls ▸ Line ▸ Address to dial** shows the address, with **Copy**. Dial it from a SIP app on your iPhone (for example, Linphone), with Tailscale on. Tailscale decides who can reach the address; your numbers and your passphrase decide who gets to your desk.
+When the Line reports an address, use **Address to dial** in Settings. A SIP
+client on the allowed network can dial it. A tailnet or firewall controls who
+can reach the address; the Calls allowed-number and passphrase gates control
+who reaches the Desk.
 
 ### A Telnyx number on the Line
 
-Select **A Telnyx number** in **Settings ▸ Calls ▸ Line ▸ The line**. Type the SIP user and the domain of your Telnyx credential connection, the SIP password and the Telnyx API key.
+The Line account can be a SIP account or a provider account. Configure the
+account in **Settings > Calls > Line** and enter secrets only through the
+keystore control. The settings file keeps a secret reference, not the secret
+value. The status can say Stored in your keystore, From the environment, or
+Missing.
 
-The SIP password and the API key go into your keystore (the macOS Keychain). HoldSpeak does not write them to its settings file, and it never shows them again. The row says where each one is:
-
-- **Stored in your keystore**.
-- **From the environment: move it to the keystore**. The hub found it in its own environment. Type it in Settings to keep it in the keystore.
-- **Missing**. Type it in Settings.
-
-A key in your shell profile (for example, `~/.zshrc`) is not in the hub's environment. Type it in Settings.
-
-The Telnyx line is not tested with a real account yet.
+Provider-specific setup and pricing are not verified by this repository guide.
+Use the provider's current instructions and read the Line status before a
+call.
 
 ### Test call
 
-**Test call** calls your first number (or your SIP address). The Line says one sentence and ends the call. The row shows **Ringing**, then **Answered**, **No answer**, **Busy**, **Rejected** or **Line not running**. With no number in **Your numbers**, the row says **No number**.
+**Test call** is an adapter check. When the Line is ready, it calls the
+configured destination, says one sentence, and ends the call. The status can
+report Ringing, Answered, No answer, Busy, Rejected, Line not running, or No
+number. A successful test checks the adapter path; it does not prove a Desk
+turn or an external send.
 
 ### The rules the Line takes from Calls
 
-- **Daily limit**: at most 20 placed calls a day (`calls.daily_limit`; 0 is no limit). Calls to you do not count.
-- **First words out**: each call the Line places starts with "This is HoldSpeak, an AI assistant, calling for <your name>."
-- **Never dialled**: 911, 112, 999, 000 and the other emergency numbers.
+- `daily_limit` defaults to 20 placed calls per day; `0` means no limit.
+  Incoming calls do not count.
+- The Line follows the Calls passphrase, allowed-number, control-mode, and
+  held-operation rules.
+- The call's spoken result must not reveal the passphrase.
+- Emergency-number handling is provider and adapter policy. Do not use Calls
+  as an emergency service.
 
 ### The adapter
 
-**Settings ▸ Calls ▸ Line ▸ Adapter** selects the program that holds the line: **The Line**, or **ai-phone** (optional, AGPL, a separate program). With no choice, HoldSpeak uses the Line when it finds baresip, else ai-phone when it finds it.
+**Settings > Calls > Line > Adapter** selects **The Line** or **ai-phone**.
+An empty adapter choice lets the service choose from the available phone
+halves. `HOLDSPEAK_CALLS=off` disables the Calls listener and state reads;
+`HOLDSPEAK_LINE=off` disables the Line adapter.
 
 ## Time to answer
 
-The first answer of a call can take 5 to 9 seconds, because the engine reads the desk's tools one time. The answers after it are faster. While HoldSpeak works, ai-phone says "One moment." and HoldSpeak says "Still working on it." The line does not go quiet.
+Call latency depends on the speech engine, the Calls engine, the source scope,
+and the phone network. The service can report **Still working** while a turn
+runs. There is no fixed response-time guarantee in the source.
 
 ## For tools and agents
 
-| Route | What it does |
-|---|---|
-| `GET /api/calls/status` | The line, the engine, the setup steps and the active call |
-| `GET /api/calls` | The last 20 calls |
-| `GET /api/calls/{id}` | One call, with all its words |
-| `POST /api/calls/place` | Call a number (`{"to": "+1…"}`); with no number, call you |
-| `POST /api/calls/{id}/hangup` | End a call |
-| `POST /api/calls/{id}/decide` | Answer the held question (`{"decision": "approve"}` or `"deny"`) |
-| `GET /api/calls/line/status` | The Line: where it runs, its state, the address, and where each secret is (never a value) |
-| `POST /api/calls/line/test` | Test call: the Line calls you, says one sentence and ends the call |
+| Route | Meaning |
+| --- | --- |
+| `GET /api/calls/status` | Calls listener, engine, setup state, and active call. |
+| `GET /api/calls` | The retained Calls list (up to the service's current retention). |
+| `GET /api/calls/{id}` | One call and its transcript. |
+| `POST /api/calls/place` | Owner-authorized outgoing call; an empty target means the configured owner number. |
+| `POST /api/calls/{id}/hangup` | End one call. |
+| `POST /api/calls/{id}/decide` | Approve or deny a held call operation. |
+| `GET /api/calls/line/status` | Line location, state, address, machine facts, and secret status. |
+| `POST /api/calls/line/test` | Run the Line's one-sentence adapter test. |
+| `POST /api/calls/line/hello` | Line node hello on the text wire. |
+| `POST /api/calls/line/events` | Line node event batch. |
+| `POST /api/calls/line/next` | Long-poll the Line command wire. |
+| `POST /api/calls/line/codes` | Mint a one-time, ten-minute node enrolment code. |
+| `POST /api/calls/line/enrol` | Redeem the code for a scoped node credential. |
+| `GET /api/calls/line/nodes` | List enrolled nodes and their reported state. |
+| `DELETE /api/calls/line/nodes/{node}` | Revoke one node credential. |
 
-The MCP tools are `calls.status`, `calls.list`, `calls.hangup` and `calls.place`. Only you can use `calls.place`. HoldSpeak refuses it from an agent. Each change of a call is a `call_state` frame.
+MCP calls tools have their own principal and authority checks. A route's
+existence does not grant permission to use it. Read the response and receipt.
 
 ## Licence
 
-ai-phone has the AGPL-3.0 licence. HoldSpeak does not include ai-phone. HoldSpeak runs your own copy of ai-phone as a different program.
-
-The Line has no GPL or AGPL code:
-
-| Part | Licence |
-|---|---|
-| baresip 4.12 and libre 4.12 | BSD-3-Clause |
-| aupipe (the Line's audio module, in HoldSpeak) | BSD-3-Clause |
-| onnx-asr, onnxruntime, pocket-tts | MIT |
-| Parakeet TDT 0.6B v2 weights (NVIDIA) | CC-BY-4.0 |
-| Pocket TTS weights (Kyutai) | CC-BY-4.0 |
-
-The attributions are in [NOTICE](../NOTICE).
+ai-phone is an external AGPL-3.0 program; HoldSpeak does not include it. The
+Line keeps its own component attributions in [NOTICE](../NOTICE). Licence,
+model, and provider terms can change; read the current attribution and
+provider terms before installation.

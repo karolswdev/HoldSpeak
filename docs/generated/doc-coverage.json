@@ -1432,7 +1432,7 @@
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 14
+      "tests_executed": 13
     },
     {
       "assertions_inspected": 2,
@@ -4266,7 +4266,7 @@
       276,
       276
     ],
-    "tests_executed": 238
+    "tests_executed": 237
   },
   "validation_errors": 0
 }

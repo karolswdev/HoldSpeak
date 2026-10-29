@@ -1,6 +1,10 @@
 # Programs
 
-A program is a goal cut into steps. An agent does each step in its own worktree. HoldSpeak checks the result of each step, starts a review, opens the pull request and merges it. What only you can do waits for you in **Needs you**. The program keeps a note on your desk that tells its state in plain words.
+A program is a goal cut into steps. An agent does each step in its own worktree.
+HoldSpeak runs the configured check and review gates, opens a pull request when
+the step has a PR gate, and merges only when the step's merge gate and Control
+level allow it. What only you can do waits for you in **Needs you**. The program
+keeps a note on your desk that tells its state in plain words.
 
 Use a program when one goal is too big for one agent: "make the hub stop stalling", "the words wave", "wave 6 of the atlas".
 
@@ -14,7 +18,7 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 |---|---|
 | **Program** | A goal, a repository, a base branch, a control level, the steps and a handover note. |
 | **Step** | One bounded part of the goal: a brief, the files it owns, the agent that does it, an effort and a gate. One step is one agent in one worktree. |
-| **Gate** | What must be true before a step is done: the check log is green, the review passed, the pull request merged. |
+| **Gate** | The step's independent check, review (`none`, `agent`, or `person`), and merge (`level`, `owner`, or `none`) settings. A `none` merge gate finishes without a PR. |
 | **Checkpoint** | One line that the agent, HoldSpeak or you write on a step at an important moment. |
 | **Your turn** | A thing that only you can do: merge, decide a finding, resume a parked step, answer a core question. |
 | **Handover note** | A desk note named "Program: <title>". HoldSpeak writes it again after each change. |
@@ -41,17 +45,24 @@ On a note, open the toolbar fold and press **Run as a program**. The note become
 
 | Template | Steps | Gate | Review |
 |---|---|---|---|
-| **Fast cycle** | One step for each brief you paste. | The repository's check. | None. Your control level decides the merge. |
-| **Build and review** | One step for each brief. | The check. | Codex reviews each change. |
-| **Race** | One brief, two agents (Claude Code and Codex) in two worktrees. | The check. | None. The first green change wins. HoldSpeak parks the other. |
-| **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | Claude Code reviews. The program runs at YOLO. |
+| **Fast cycle** | One step for each brief you paste. | The repository's check. | None. The step's merge gate uses your Control level. |
+| **Build and review** | One step for each brief. | The check. | Codex reviews each change at the configured depth. |
+| **Race** | One brief, two agents (Claude Code and Codex) in two worktrees. | The check. | None. The first contender that satisfies its configured gate wins; HoldSpeak parks the other. |
+| **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | Claude Code reviews. The program runs at YOLO and its merge gate is `level`. |
 | **From the desk** | One step for each open action of a project. | The check. | None. |
 
 You can change all values after you pick a template.
 
 ### Overnight on the home box
 
-Use this template for work you want done while you sleep. pi does the steps on your home engine (for example qwen3.8-27b over Tailscale). Claude Code reviews each change. The program runs at YOLO, so a green and reviewed step merges without you. In the morning you find the merged pull requests, a note that tells what HoldSpeak decided for you, and only the core questions in Needs you.
+Use this template for work you want done while you sleep. pi does the steps on
+your home engine (for example qwen3.8-27b over Tailscale). Claude Code reviews
+each change. The program runs at YOLO and its default step has a check, an agent
+review, and a level merge gate, so a green and reviewed step can merge without
+you. In the morning you find the merged pull requests, a note that tells what
+HoldSpeak decided for you, and only the core questions in Needs you. Phone
+escalation is enabled by this template, but it still follows the configured
+Reach rules and requires a configured phone path.
 
 ## The agent and the engine
 
@@ -80,7 +91,7 @@ Claude Code and Codex stop when their plan's usage window is used up. A program 
 
 | Control | What HoldSpeak does |
 |---|---|
-| **Secure** | A Your turn row asks you: **Continue in Codex** or **Wait**. |
+| **Secure** | A Your turn row asks you to continue in the next configured agent or **Wait**. |
 | **Normal** | The same row. If the program **may hand off on its own**, HoldSpeak continues after 10 minutes. |
 | **YOLO** | HoldSpeak continues at once in the next agent and writes it under Decided for you. |
 
@@ -92,7 +103,10 @@ HoldSpeak moves a stopped turn one time only. It never moves the same turn two t
 
 In the Checkpoints fold, a handoff is one line: **Step 1 · Handed to Codex · usage limit**. Press **View brief** to read the brief that was sent, what was removed (for example "Redacted: 2 keys, 1 token") and how many earlier turns it does not include.
 
-**Allowed agents.** In Drafting, the **Allowed agents** fold sets which agents may read the repository. By default every agent may. Turn one off for a repository whose code must stay with one company.
+**Allowed agents.** In Drafting, the **Allowed agents** fold sets which agents
+may receive this repository's context. An empty list means every agent that the
+desk has. Turn an agent off for a repository whose code must stay with one
+company.
 
 **By hand.** A tool or the API can move a running step to another agent (`program.handoff`, or `POST /api/programs/{id}/steps/{sid}/handoff` with `preview: true` to read the brief first). Only you can do this; an agent cannot.
 
@@ -156,7 +170,7 @@ A program uses your desk's control mode when you make it. You can change it for 
 |---|---|---|---|
 | Start, brief again, run the check, start a reviewer | HoldSpeak | HoldSpeak | HoldSpeak |
 | Open the step's pull request on your repository | HoldSpeak | HoldSpeak | HoldSpeak |
-| Merge when the check is green and the review passed | You | HoldSpeak | HoldSpeak |
+| Merge when the check is green and the review passed | You when `gate_merge=level` or `owner` | HoldSpeak when `gate_merge=level`; you when `owner` | HoldSpeak when `gate_merge=level`; you when `owner` |
 | A REQUIRED finding | Two rounds for the agent, then you | Two rounds, then you | Three rounds, then you |
 | A SHOULD finding | You | HoldSpeak: **Later** (a task for you) | HoldSpeak: fixed in the open round, else Later |
 | A NOTE finding | HoldSpeak: Skip | HoldSpeak: Skip | HoldSpeak: Skip |
@@ -175,7 +189,18 @@ Note: the agents' routine questions and the gate's held calls follow your desk's
 
 ## Decided for you, and Overturn
 
-Each decision that HoldSpeak makes for you is a line in the **Decided for you** fold of the Program window, and in the handover note. Each line gives the rule. While a decision can be undone, it has an **Overturn** verb: a Later task, a Skip, a parked step, an added step. A merge cannot be undone.
+Each decision that HoldSpeak makes for you is a line in the **Decided for you** fold of the Program window, and in the handover note. Each line gives the rule. While a decision can be undone, it has an **Overturn** verb: a Later task, a Skip, a parked step, or an added step. A merge cannot be undone.
+
+## Phone escalation
+
+A program or step may set **May call**. This only permits the engine to ask
+the Phone service to call where the Reach rules allow it; it does not force a
+call. Secure does not allow an unattended program call. The owner's
+**Settings > Calls > Phone > Reach you** choices, quiet hours, reply state,
+repeat window, active-call state, and the configured phone/Line path still
+apply. Without a paired phone or configured Line, the call is held or falls
+back to a message according to the service result. If **May call** is off, the
+program uses the normal message or desk path.
 
 ## The gate and its log
 
@@ -217,20 +242,26 @@ A program is a desk object, like a meeting or a note.
 
 ## For tools and agents
 
+The service and web API use `gate_merge: "level"` for merge behavior governed by the Program's Control level.
+The current MCP step schema spells that value `"auto"` instead.
+MCP callers must send `"auto"`, `"owner"`, or `"none"`; the service normalizes `"auto"` to `"level"`.
+This spelling difference does not change the gate's behavior.
+
+
 The MCP tools are in the `program` family:
 
 | Tool | What it does | Who can use it |
 |---|---|---|
-| `program.create` | Make a program (title, goal, repository or project, base branch, control, check command, agent and engine, template). | You, an agent |
-| `program.plan` | Replace or add steps. `size: "auto"` sets each step's effort by rule. | You, an agent |
-| `program.update` | Change the title, goal, control, project, spend limit, agent or engine. | You, an agent |
-| `program.start`, `program.park`, `program.resume` | Start, park or resume a program. | You, an agent |
+| `program.create` | Make a program (title, goal, repository or project, base branch, control, check command, agent and engine, template). | You, or the orchestrating agent |
+| `program.plan` | Replace or add steps. `size: "auto"` sets each step's effort by rule. | You, or the orchestrating agent |
+| `program.update` | Change the title, goal, control, project, spend limit, agent or engine. | You, or the orchestrating agent |
+| `program.start`, `program.park`, `program.resume` | Start, park or resume a program. | You, or the orchestrating agent |
 | `program.get`, `program.list` | Read programs, their steps, checkpoints and your turn. | Everyone |
 | `program.checkpoint` | Write one line on a step. | The step's own agent, you |
 | `program.step_done` | The step's agent says that it is done, with its report. HoldSpeak still waits for the commit. | The step's own agent |
 | `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. | You only |
 | `program.overturn` | Undo a decision of HoldSpeak. | You only |
-| `program.handoff` | Move a running step to another agent, with the handoff brief. `preview: true` shows the brief and sends nothing. | You only |
+| `program.handoff` | Move a running step to another agent, with the handoff brief. `preview: true` shows the brief and sends nothing. The next agent uses the same worktree and branch. | You only |
 
 An agent can make and start a program, but it cannot decide for you, and it does not prompt a step's agent: HoldSpeak does that. The skill `agent/skills/holdspeak-programs/SKILL.md` tells an agent how to drive a program.
 

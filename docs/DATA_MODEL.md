@@ -1,7 +1,8 @@
 # Data model
 
-HoldSpeak keeps its records in one SQLite database.
-This page groups the tables and lists the rules for keys, JSON columns, and projections.
+The hub keeps its main domain and runtime records in a SQLite database.
+People records, files, configuration, launch ledgers, and browser state have their own storage contracts.
+This page groups the main tables and explains keys, JSON columns, projections, and recovery.
 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) defines the terms.
 [KERNEL.md](KERNEL.md) describes kernel rows.
 [STORAGE_AND_MIGRATIONS.md](STORAGE_AND_MIGRATIONS.md) covers backup and schema repair.
@@ -58,6 +59,34 @@ The queue is not the kernel journal.
 - `projects`, `meeting_projects`, and `project_resources` hold project context.
 - `notes`, `kbs`, `recipes`, `chains`, `workflows`, `directories`, and `workbenches` hold Desk objects.
 - The `memory_*` tables hold the memory index: sources, chunks, embeddings, entities, facts, observations, pages, and jobs.
+
+### Conversations, automation, and window state
+
+Thread tables retain conversations, messages, source references, and tool-turn state.
+`workbenches` holds Automation definitions. `workbench_items` and `workbench_runs` hold work and execution results.
+Automation working memory can also live in per-Workbench JSONL files under the configured home.
+Read `holdspeak/workbench_memory.py` for that separate store.
+
+`desk_windows` holds registered window identities, share-plus-pixel geometry, depth, seat, and revision.
+`desk_window_desk` holds desk-wide presentation state and counters.
+The service registry identifies context-dependent windows that remain browser-local.
+Browser workspace storage caches presentation and keeps local drafts and preferences.
+It must not supersede a newer hub window revision.
+
+Agent launch and worktree records also have service-owned ledgers outside these base tables.
+The [repository map](generated/REPOSITORY_MAP.md) and launch services identify their writers.
+
+### Programs and Phone
+
+`programs` holds the goal, repository, Control level, default agents, and handover Note identity.
+`program_steps` holds dependencies, owned files, worktree, launch, gate, review, pull request, and handoff fields.
+`program_checkpoints` records step and Program events.
+`holdspeak/db/programs.py` owns the table writers.
+
+`phone_devices`, `phone_messages`, `phone_calls`, and `phone_events` retain Phone transport and attention state.
+`holdspeak/phone/store.py` owns those writers.
+The Calls runner has separate active call state and saves a completed transcript as a Note.
+A pending Phone message and a completed call Note are different records.
 
 ### Proposals and grants
 
@@ -131,3 +160,10 @@ Kernel journal and receipt rows are runtime evidence and are not transcript stor
 A backup holds every database row at its snapshot time.
 A restore does not change config, audio files, browser storage, or People data.
 [SECURITY.md](SECURITY.md) defines the data classes.
+
+
+## See also
+
+- [Domain model](DOMAIN_MODEL.md): record identities and relationships.
+- [Storage and migrations](STORAGE_AND_MIGRATIONS.md): reconciliation and backups.
+- [Security and privacy](SECURITY.md): data classes and additional stores.

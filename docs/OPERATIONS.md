@@ -1,160 +1,131 @@
 # Operations
 
-Use this runbook to check that HoldSpeak is healthy, to back up and restore
-the database, and to run a mesh node. For a specific failure, read
+Use this runbook to check HoldSpeak health, protect the Desk database, and
+recover an uncertain run. For one failure, read
 [Troubleshooting](TROUBLESHOOTING.md).
 
 ## Check health
 
-Run the doctor after you install, after you upgrade, and when something fails.
+Run the doctor after install, after upgrade, and when a runtime fails:
 
-```console
+```sh
 holdspeak doctor
 holdspeak doctor --strict
 holdspeak doctor --connectors
 ```
 
-- `holdspeak doctor` exits with a non-zero code when a check fails.
-- `--strict` also treats warnings as failures.
-- `--connectors` lists the connector packs and skips all other checks.
+`--strict` treats warnings as failures. `--connectors` lists connector packs
+and skips unrelated checks. The checks cover runtime, configuration, database, web authentication, models, inference targets, mesh, dictation, and connectors.
+They also cover People custody, agent hooks, tmux, MCP, and the running hub.
 
-The doctor checks these areas:
+Some checks contact configured endpoints. Doctor reports current observations;
+it does not prove that a future provider call will succeed.
 
-- runtime, config, database
-- microphone, transcription, hotkey, text injection, clipboard
-- `ffmpeg`, `pactl`, system audio capture
-- web runtime and web authentication
-- meeting intelligence and its egress
-- endpoint health, trust destinations, profiles, inference targets, mesh edges
-- dictation and MIR telemetry
-- connector packs
-- People key custody, agent capabilities, the tool-call gate
-- coding agents (Claude Code, Codex, their hooks, `tmux`), People MCP access
-- then the running hub: health, runtime, websocket, Desk, auth, MCP server,
-  inference, database, observer
+The generated [doctor check reference](generated/doctor-checks.json) lists
+conditions and repair text. Regenerate it with
+`python scripts/philo_doctor_reference.py` when its source changes.
 
-Setup status shows the same list of local checks.
+## Check the running hub
 
-Some checks contact configured endpoints. The doctor reports what it finds.
-It does not prove that a provider will complete a future request.
-
-The [doctor check reference](generated/doctor-checks.json) lists each check,
-its condition and its repair text. Regenerate it with
-`python scripts/philo_doctor_reference.py`. The local checks are in
-`holdspeak/commands/doctor.py`. The checks for a running hub are in
-`holdspeak/doctor.py`.
-
-### Check the running hub
-
-A new checkout does not change a running hub. The hub keeps the code and web
-bundle it loaded at start. Open **Settings**, then **System**, to see what the
-hub loaded: version, revision, bundle, schema version and process start. The
-**RAW** fold shows the database path and the process id.
-
-The block shows a token when something does not match:
+The running hub keeps the code and web bundle loaded at startup. In **Settings
+> System**, inspect the version, revision, bundle, schema version, process
+start, and RAW database path.
 
 | Token | Meaning | Action |
 | --- | --- | --- |
-| `STALE BUNDLE` | The bundle on disk differs from the bundle the process loaded, or no bundle exists. | Restart the hub. Or run `npm --prefix web run build`. |
-| `TWO RUNTIMES` | Another hub owns this database. | Stop the other hub. |
-| `SCHEMA AHEAD` | The database is newer than this build. | Run a newer build, or restore a backup. |
-| `SCHEMA BEHIND` | The database is older than this build expects. | Run the matching build, or restore a backup. |
+| `STALE BUNDLE` | The process bundle differs from disk. | Restart the hub or rebuild the web bundle. |
+| `TWO RUNTIMES` | Another hub owns the database. | Stop the other hub. |
+| `SCHEMA AHEAD` | The database is newer than this build. | Use the newer build or restore a backup. |
+| `SCHEMA BEHIND` | The database is older than this build expects. | Use the matching build or restore a backup. |
 
-### One hub owns the database
+## One hub owns the database
 
-A second `holdspeak web` on the same database refuses to start. The message
-names the process that holds the database, its port and its start time. Two
-hubs would run the scheduled work twice.
+Only one `holdspeak web` can own a database. The owner lock is beside the file:
+`holdspeak.db.owner.lock`. A second hub refuses to start, because two
+schedulers could run the same work twice.
 
-The owner lock is a file next to the database, `holdspeak.db.owner.lock`. The
-operating system releases it when the process exits. A crashed hub leaves
-nothing to clean up.
+The local MCP sidecar is not a second hub. It reads the owner lock, sends each
+JSON-RPC message to the hub's loopback `/api/mcp`, and never opens or writes
+the database. The retired standalone sidecar mode is ignored.
 
-For diagnosis only, set `HOLDSPEAK_ALLOW_UNOWNED_DB=1`. The hub then starts
-with scheduled work off and shows `TWO RUNTIMES`.
+For diagnosis only, `HOLDSPEAK_ALLOW_UNOWNED_DB=1` starts with scheduled work
+off and shows `TWO RUNTIMES`. Do not use it for normal operation.
 
 ## Back up and restore the database
 
-```console
+```sh
 holdspeak backup
 holdspeak restore
 holdspeak restore <backup-file>
 holdspeak restore <backup-file> --yes
 ```
 
-1. Run `holdspeak backup`. It writes a timestamped file next to the database
-   and prints the path.
-2. Run `holdspeak restore` with no file to list the backups.
-3. Stop the hub and every tool that holds the database. Restore refuses
-   while another process has it open.
-4. Run `holdspeak restore <backup-file>`. Add `--yes` to skip the
-   confirmation.
+1. Run `holdspeak backup` and save the printed path.
+2. Run `holdspeak restore` with no file to list backups.
+3. Stop the hub and every process that holds the database.
+4. Restore the validated backup. Add `--yes` to skip confirmation.
 5. Start the hub and run `holdspeak doctor`.
-6. Check your records and receipts before you continue work.
+6. Inspect records and Receipts before continuing work.
 
-Restore validates the file first. It saves a safety copy of the current
-database, then replaces the file. It removes the stale `-wal` and `-shm`
-files. If the file is missing, truncated or not a HoldSpeak database, restore
-stops and changes nothing. Keep the printed safety-copy path.
+Restore validates the backup, saves a safety copy of the current database,
+replaces the file, and removes stale `-wal` and `-shm` files. If validation
+fails, it stops without changing the database.
 
-The backup holds the main database only. These items are outside it:
-
-- The People store, `people.v1.sqlite3`. It has its own keys. Back it up
-  separately.
-- Credentials in the operating system keychain. Reconnect the accounts after
-  a restore.
-- Config and audio files.
-
-See [Storage and migrations](STORAGE_AND_MIGRATIONS.md) and
-[Security](SECURITY.md) for these limits.
+The main backup does not include the encrypted People store, operating-system
+keychain credentials, config files, or audio files. Back up or reconnect those
+separately. See [Security and privacy](SECURITY.md).
 
 ## Restart behavior
 
-When the hub starts, it opens the database and repairs its shape. Then it
-recovers parent work, checks liveness and repairs projections, in that order.
+At startup the hub repairs database shape, recovers parent work, checks
+liveness, and repairs projections in that order. A result that cannot be
+proved becomes `indeterminate` or refused. Read its Receipt before retrying an
+external effect.
 
-After a restart, work whose result cannot be proved ends as `indeterminate`
-or refused. Read the receipt before you retry any external effect. The state
-table in [Troubleshooting](TROUBLESHOOTING.md) lists each case.
+## Coding-agent operations
+
+For a launched Claude Code, Codex, or pi task, check the launch record,
+worktree, hooks, tmux, and brief delivery state. The `agents.working_at_once`
+setting defaults to 6. A queued hand is expected when all working slots are
+full. Do not delete a worktree or a launch record to clear a stale card; use
+the supported resume, stop, clear-stale, or park operation.
+
+For an inference CLI engine, check the executable, preset, model, and provider
+egress. CLI engines are not coding-agent launches. `HOLDSPEAK_CLI_ENGINES=off`
+disables their discovery and execution.
 
 ## Run a mesh node
 
-A mesh node serves this machine's model to the hub.
+A mesh node serves this machine's model to the hub:
 
-```console
+```sh
 holdspeak mesh serve [--hub URL] [--node NAME] [--token-env ENV] [--once]
 ```
 
-- `--hub` sets the hub URL. The default is `http://127.0.0.1:8765`.
-- `--node` sets the node name. The default is the device mesh name.
-- `--token-env` names the environment variable that holds the node token.
-  The default is `HOLDSPEAK_NODE_TOKEN`. If it is unset, the command uses the
-  imported pairing token.
-- `--once` claims at most one job and exits.
-
-The owner token does not work as a node token. A node cannot use owner
-decision rights.
+The default hub is `http://127.0.0.1:8765`. The default token environment is
+`HOLDSPEAK_NODE_TOKEN`. An owner token is not a node token. A node cannot use
+owner decision rights.
 
 ## Control mode
 
-```console
+```sh
 holdspeak control-mode
 holdspeak control-mode secure|normal|yolo
 ```
 
-The command shows or sets the mode for future operations. A mode change
-revokes the active grants that it affects. See [Authority](AUTHORITY.md) for
-the rules and [Authority model](AUTHORITY_MODEL.md) for the runtime gates.
+The command reads or sets the mode for future operations. A mode change can
+revoke active grants. See [Control mode](SECURITY.md#control-mode).
 
 ## Record facts for an incident
 
-Collect these facts when you diagnose a problem or hand it to someone:
+Record:
 
-- the branch or commit of the build
-- the doctor output and its exit code
-- the database path, backup path and timestamps
-- the operation id, state, receipt id and outcome
-- the principal kind: owner, agent, node or scheduler
-- the egress destination and the refusal code
+- the build branch or commit;
+- doctor output and exit code;
+- database and backup paths with timestamps;
+- operation id, state, Receipt id, and outcome;
+- principal kind: owner, agent, node, or scheduler;
+- egress destination and refusal code.
 
-Do not record prompts, transcripts, audio, credentials or tokens in a handoff.
+Do not record prompts, transcripts, audio, credentials, or tokens in an
+incident handoff.

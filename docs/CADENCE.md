@@ -1,16 +1,17 @@
 # Cadence
 
-Cadence reviews unresolved work and prepares next actions.
-It can use meeting action items, proposed actions, and Coder sessions that need a reply.
+Cadence reviews unresolved work and prepares next actions. It can collect
+meeting action items, proposed actions, and Coder sessions that need a reply.
+Cadence does not send an external nudge during its collection tick.
 
-The background Cadence loop is off by default.
-The morning Brief job is on by default. It makes the day's Brief at 06:00 local time.
-Manual commands can still inspect work or request an evaluation.
+The background Cadence loop is off by default. The morning Brief job is on by
+default and prepares one deterministic Brief at 06:00 local time. Manual
+commands can still inspect work or request an evaluation.
 Cadence is separate from the [Heartbeat](USER_GUIDE.md#notices-and-the-heartbeat) and from preferences saved in [Interview](INTERVIEW.md).
 
 ## Inspect work manually
 
-Run these commands from your HoldSpeak environment:
+Run these commands from the HoldSpeak environment:
 
 ```sh
 holdspeak cadence status
@@ -18,34 +19,28 @@ holdspeak cadence loops
 holdspeak cadence run-now
 holdspeak cadence brief
 holdspeak cadence closeout
+holdspeak cadence audit --out audit.json
 ```
 
-`status` reports the engine state.
-`loops` lists unresolved work.
-`run-now` requests one evaluation, including when background Cadence is disabled.
-`brief` shows the current brief.
-`closeout` shows the day closeout.
-
-The Web Cadence surface also provides current work, open loops, review, and history.
-Open it through **Rhythm** or the `/cadence` address.
+`run-now` performs one evaluation even when the background loop is disabled.
+The Web surface is available through **Rhythm** or `/cadence`.
 
 ## Understand the records
 
 | Record | Meaning |
 | --- | --- |
-| Open loop | Unresolved work derived from a source record |
-| Next action | A prepared response to that work, such as an owner assignment or issue draft |
-| Nudge | A presentation of the next action through an enabled delivery surface |
-| Decision | Your response, such as snooze, completion, dismissal, or delegation |
+| Open loop | Unresolved work projected from a source |
+| Next action | A prepared response, such as an owner assignment or issue draft |
+| Nudge | A presentation of a next action through an enabled surface |
+| Decision | Your snooze, completion, dismissal, or delegation |
 
-Cadence retains your decisions about a loop.
-A dismissed loop stays dismissed unless its source materially changes.
-The optional model can draft wording. Execution still requires the applicable operation authority.
+Cadence retains your decision about a loop. A dismissed loop stays dismissed
+until its source changes materially. An optional model can draft wording. It
+does not change the action or its authority.
 
 ## Configure background Cadence
 
-The configuration uses the `cadence` object in `~/.config/holdspeak/config.json`.
-These values are the defaults. They keep the loop and model drafts disabled. They make the morning Brief:
+The `cadence` object is in `~/.config/holdspeak/config.json`:
 
 ```json
 {
@@ -55,68 +50,54 @@ These values are the defaults. They keep the loop and model drafts disabled. The
     "brief_hour": 6,
     "pressure": "normal",
     "use_llm": false,
-    "quiet_hours_start": 22,
-    "quiet_hours_end": 8,
     "max_nudges_per_day": 12,
     "tick_interval_seconds": 300
   }
 }
 ```
 
-Set `enabled` to `true` when you want the runtime loop.
-`brief_enabled` makes the Brief one time each local day, at or after `brief_hour` (0 to 23).
-The Brief uses no model and sends nothing, so quiet hours do not stop it.
-Set `brief_enabled` to `false` to make the Brief only when you select **Generate**.
-The runtime must be available for background evaluation.
-**Secure** Control mode permits explicit `run-now` but prevents the background loop.
-See [Control modes](AUTHORITY.md) for precedence and effects.
+Set `enabled` to `true` to run the background loop. Set `brief_enabled` to
+`false` to prepare the Brief only when you select **Generate**. The minimum
+`tick_interval_seconds` is 30. `pressure` is `gentle`, `normal`, or
+`aggressive` and changes timing only. `use_llm` allows bounded draft wording;
+Cadence falls back to its deterministic action when the draft is unusable.
 
-`tick_interval_seconds` sets how often the loop runs. The minimum is 30.
-`pressure` accepts `gentle`, `normal`, or `aggressive` and changes timing.
-It does not add authority.
-`use_llm` permits model-generated draft wording.
-If that draft fails validation, Cadence uses its deterministic next action.
+Quiet hours are configured by the Heartbeat policy in **Settings > Rhythm**.
+The old `cadence.quiet_hours_start` and `cadence.quiet_hours_end` keys are
+retired. A stale client write of those keys is dropped.
+
+**Secure** allows an explicit **run-now** but prevents the background loop.
+See [Control mode](SECURITY.md#control-mode).
 
 ## Deliver through Telegram
 
-Telegram delivery has a separate `cadence_telegram` configuration.
-It is disabled by default and requires a bot token plus `allowed_chat_ids` or a `pairing_code`.
-A chat can pair itself with `/pair <code>`.
-Only configured, permitted chats receive delivery.
-Keep the token in the credential configuration, not in a Note or Thread.
+Telegram is a separate `cadence_telegram` surface. It is disabled by default
+and needs a bot token plus `allowed_chat_ids`, or a `pairing_code`. A chat can
+pair with `/pair <code>`. Only paired, allowed chats receive delivery.
 
-The Telegram controls include `/brief`, `/loops`, `/closeout`, and `/status`.
-Inline controls can record decisions about the presented work.
-Telegram configuration does not replace authority checks for a proposed external action.
+The available commands include `/brief`, `/loops`, `/closeout`, and `/status`.
+Inline controls can record a decision about presented work. Telegram does not
+replace the operation authority for an external effect.
 
 ## Inspect outcomes
 
-Use the action's execution state and Receipt to determine whether an effect occurred.
-Accepting content does not prove that an executor completed it.
-Eligible configured destinations can execute directly under YOLO.
-Normal and Secure require the applicable decision or scoped grant.
+Read the action's execution state and Receipt. Accepting text does not prove
+that an executor completed an effect. An external destination has its own
+credential and boundary.
 
-To export a local audit file, run:
-
-```sh
-holdspeak cadence audit --out audit.json
-```
-
-The audit includes loops, supporting records, and nudge history.
-Model drafts can send context to the configured model endpoint.
-Telegram delivery sends content to the configured chat.
-Authorized outbound actions can contact their configured destinations.
-See [Security & Privacy](SECURITY.md) for the complete data boundary.
+The audit export includes loops, supporting records, and nudge history. A
+model draft can send the selected context to its configured model endpoint.
+Telegram delivery sends the presented content to the configured chat.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| No background evaluation occurs | Check `enabled`, the runtime state, and Control mode. |
-| Manual evaluation works but no Telegram message arrives | Check Telegram enablement, credentials, pairing, and timing limits. |
-| A discarded loop returns | Check whether its source materially changed. Inspect the audit history. |
-| A next action exists but has no external result | Inspect its authorization and execution states. |
-| An Interview cadence preference never runs | Configure a supported recurring path. Interview context alone does not enable Cadence. |
+| No background evaluation | Check `enabled`, runtime state, and Control mode. |
+| Manual evaluation works but Telegram is quiet | Check Telegram enablement, token, pairing, chat allow-list, and timing policy. |
+| A discarded loop returns | Inspect whether its source changed materially. |
+| A next action has no external result | Read its authorization and execution states. |
+| An Interview cadence preference does nothing | Configure a supported recurring path. Interview context alone does not enable Cadence. |
 
 ## See also
 

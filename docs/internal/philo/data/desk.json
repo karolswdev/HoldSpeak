@@ -269,9 +269,9 @@
         },
         {
           "path": "web/src/desk/pullouts/_parked/__tests__/ThreadPullout.test.tsx",
-          "node": "names seeded material from the live desk, prefers frozen titles and keeps an honest unavailable ref",
+          "node": "names seeded material from the live desk, prefers frozen titles and says a gone source was deleted",
           "assertion": "Real seed reference shape resolves a readable title, frozen names win and unavailable material retains identity.",
-          "execution": "passed"
+          "execution": "not_run"
         },
         {
           "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx",
@@ -516,7 +516,7 @@
         {
           "path": "web/src/desk/pullouts/IntelligencePullout.tsx",
           "symbol": "RetainedView",
-          "line": 86,
+          "line": 20,
           "claim": "Visited views preserve state and scroll through source return; inactive view footer targets hide their portaled actions."
         }
       ],
@@ -589,7 +589,7 @@
           }
         },
         {
-          "path": "web/src/desk/pullouts/IntelligencePullout.test.tsx",
+          "path": "web/src/desk/pullouts/_parked/IntelligencePullout.wings.test.tsx",
           "node": "keeps Brief draft and scroll through source inspection while hiding inactive footer actions",
           "assertion": "The retained Brief DOM keeps its draft/scroll after source return; hidden footer actions are inaccessible and exactly one frame footer is active.",
           "execution": {
@@ -2005,9 +2005,9 @@
           "claim": "Board composition and transactional commands preserve canonical action identity and Snooze facts."
         },
         {
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "symbol": "FollowThroughView",
-          "line": 130,
+          "line": 141,
           "claim": "Existing authorities are rendered as populated ledgers, named controls, guarded writes and exact Retry."
         },
         {
@@ -2017,9 +2017,9 @@
           "claim": "Only the canonical focused open action bypasses ordinary snooze/defer suppression; existing filters and terminal omission remain unchanged."
         },
         {
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "symbol": "FollowThroughView",
-          "line": 133,
+          "line": 312,
           "claim": "Focused task reads expand the exact row, show hold dates and local unavailable/read Retry while preserving row drafts and failed writer requests."
         }
       ],
@@ -2080,7 +2080,7 @@
           }
         },
         {
-          "path": "web/src/desk/pullouts/views/FollowThroughView.test.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.test.tsx",
           "node": "reads and expands the exact held source despite the ordinary overdue filter without a lifecycle write",
           "assertion": "A focused held row expands despite the ordinary overdue filter, shows both hold dates and performs no lifecycle writer.",
           "execution": {
@@ -2091,7 +2091,7 @@
           }
         },
         {
-          "path": "web/src/desk/pullouts/views/FollowThroughView.test.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.test.tsx",
           "node": "missing focus and refused focus reads each retry the same canonical source",
           "assertion": "Missing and refused focused reads expose Retry read and repeat the same encoded canonical focus ID.",
           "execution": {

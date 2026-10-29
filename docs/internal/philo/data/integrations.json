@@ -735,7 +735,7 @@
           }
         },
         {
-          "path": "web/src/desk/__tests__/askPanelExperience.test.tsx",
+          "path": "web/src/desk/_parked/ask/askPanelProjectsRead.test.tsx",
           "node": "a failed Projects refresh retains known choices, the question, selected passage and Note context",
           "assertion": "Failed Projects refresh and exact Retry preserve known choices and selected Note/passage/question.",
           "execution": "passed"

@@ -14,7 +14,7 @@ graph LR
     Bridge -->|LCD text| Device
 ```
 
-- The device holds no model keys. It sends audio only.
+- The device holds no model keys. It sends audio and device control/health frames; the bridge sends status text back to the device.
 - The bridge runs on the same machine as HoldSpeak. It connects to `ws://127.0.0.1:<port>/api/devices/audio`.
 - The device reaches the bridge over your Wi-Fi, a phone hotspot, a VPN, or a private tunnel. HoldSpeak has no hosted relay.
 - The bridge has its own Python environment in `aipi-lite/.venv`. This keeps ESPHome pins out of the main runtime.
