@@ -510,6 +510,11 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/transcribe.py", "_MlxTranscriber._model_holder_get._run"): "L: the MLX Whisper PRELOAD leaf (its own admitted child)",
     ("holdspeak/transcribe.py", "_MlxTranscriber._silent_audio_load._run"): "L: the MLX Whisper warmup leaf (its own admitted child)",
     ("holdspeak/transcribe.py", "_FasterWhisperTranscriber.transcribe"): "L: the faster-whisper execution leaf",
+    # The Line (2026-10-29, LINE design §7): the phone line's own speech leaf,
+    # Parakeet in the Line node's process (not the hub's); no route and no hub
+    # model. The call's TURN runs on calls.turn through the runner, unchanged.
+    ("holdspeak/line/speech.py", "Parakeet.__init__"): "L: the Line node's speech-in warmup leaf (Parakeet, the node's own process)",
+    ("holdspeak/line/node.py", "LineNode._hear"): "L: the Line node's speech-in leaf: one caller utterance to text (Parakeet, the node's own process)",
 }
 
 # -------------------------------------------- bucket 3: admitted-seam callers

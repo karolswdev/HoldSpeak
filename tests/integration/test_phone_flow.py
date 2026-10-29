@@ -348,6 +348,21 @@ def test_an_agents_call_waits_for_his_press_in_needs_you(hub, monkeypatch) -> No
 
 # ── reach and quiet hours ───────────────────────────────────────────────
 
+@pytest.fixture(autouse=True)
+def _daytime(hub, request):
+    """The rig's quiet hours default to 22–08 (the desk's one store), so a
+    test that expects a reach at night was red between 22:00 and 08:00
+    (2026-10-29, found by the Line lane's quick check at 05:54). Every test
+    here starts outside quiet hours; the quiet-hours test moves them back
+    over now itself."""
+    from holdspeak.services.heartbeat_service import HeartbeatService
+    from holdspeak.timestamps import local_now
+
+    hour = local_now().hour
+    HeartbeatService(_db(hub)).update_settings({"quiet_hours": {"start": (hour + 3) % 24, "end": (hour + 4) % 24}})
+
+
+
 def _quiet_now(db: Any) -> None:
     from holdspeak.services.heartbeat_service import HeartbeatService
     from holdspeak.timestamps import local_now

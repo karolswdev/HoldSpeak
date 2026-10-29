@@ -197,6 +197,17 @@ def redacted_settings(
         from ..phone import phone_on
 
         calls_payload["phone_on"] = phone_on()
+        # The Line (2026-10-29): its two secrets live in the hub's keystore;
+        # the read says where each one is, never its value.
+        line_payload = calls_payload.get("line")
+        if isinstance(line_payload, dict):
+            from ..line import secrets as line_secrets
+
+            account = line_payload.get("account")
+            if isinstance(account, dict):
+                account.pop("password", None)
+            line_payload.pop("telnyx_api_key", None)
+            line_payload["secrets"] = line_secrets.presence()
     return payload
 
 
@@ -238,6 +249,35 @@ def _strip_legacy_endpoint_fields(payload: dict[str, Any]) -> dict[str, Any]:
             for field in fields:
                 node.pop(field, None)
     return payload
+
+
+def _keep_line_secrets(calls_data: dict[str, Any]) -> str:
+    """The Line (2026-10-29): ``calls.line.account.password`` (the SIP
+    password) and ``calls.line.telnyx_api_key`` are write only: each goes into
+    the hub's keystore and never into the config file. A value of ``null``
+    forgets it. The read's ``secrets`` is not a field. An error, or ``""``."""
+    line = calls_data.get("line")
+    if not isinstance(line, dict):
+        return ""
+    from ..line import secrets as line_secrets
+
+    line.pop("secrets", None)
+    account = line.get("account") if isinstance(line.get("account"), dict) else {}
+    writes = []
+    if "password" in account:
+        writes.append((line_secrets.SIP_PASSWORD, account.pop("password")))
+    if "telnyx_api_key" in line:
+        writes.append((line_secrets.TELNYX_API_KEY, line.pop("telnyx_api_key")))
+    for slot, value in writes:
+        if value is not None and not str(value).strip():
+            continue  # an empty field keeps the saved secret
+        try:
+            line_secrets.write(slot, None if value is None else str(value).strip())
+        except Exception:
+            return "The keystore is not available on this machine, so the secret was not saved."
+        if slot == line_secrets.SIP_PASSWORD:
+            account["password_ref"] = slot if value is not None else ""
+    return ""
 
 
 def _merge_dict(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
@@ -1062,6 +1102,9 @@ class SettingsService:
             calls_data = dict(merged.get("calls") or {})
             calls_data.pop("passphrase_set", None)
             calls_data.pop("phone_on", None)
+            line_error = _keep_line_secrets(calls_data)
+            if line_error:
+                return {"success": False, "error": line_error}
             calls_cfg = CallsConfig(**calls_data)
         except (TypeError, ValueError) as exc:
             return {"success": False, "error": f"Invalid preference: {exc}"}

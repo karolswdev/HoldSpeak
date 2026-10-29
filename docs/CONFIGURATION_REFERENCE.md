@@ -11,13 +11,15 @@ The hub configuration shell is [`Config`](../holdspeak/config/core.py). Its load
 | Class.field | Type | Declared default | Source |
 | --- | --- | --- | --- |
 | `AgentsConfig.working_at_once` | `int` | `DEFAULT_WORKING_AT_ONCE` | [holdspeak/config/agents.py:27](../holdspeak/config/agents.py) |
-| `CallsConfig.enabled` | `bool` | `False` | [holdspeak/config/calls.py:56](../holdspeak/config/calls.py) |
-| `CallsConfig.aiphone_dir` | `str` | `''` | [holdspeak/config/calls.py:57](../holdspeak/config/calls.py) |
-| `CallsConfig.greeting` | `str` | `DEFAULT_GREETING` | [holdspeak/config/calls.py:58](../holdspeak/config/calls.py) |
-| `CallsConfig.allowed_numbers` | `list[str]` | `field(default_factory=list)` | [holdspeak/config/calls.py:59](../holdspeak/config/calls.py) |
-| `CallsConfig.passphrase` | `str` | `''` | [holdspeak/config/calls.py:60](../holdspeak/config/calls.py) |
-| `CallsConfig.phone_reach` | `dict[str, str]` | `field(default_factory=dict)` | [holdspeak/config/calls.py:61](../holdspeak/config/calls.py) |
-| `CallsConfig.phone_urgent_dnd` | `bool` | `False` | [holdspeak/config/calls.py:62](../holdspeak/config/calls.py) |
+| `CallsConfig.enabled` | `bool` | `False` | [holdspeak/config/calls.py:103](../holdspeak/config/calls.py) |
+| `CallsConfig.aiphone_dir` | `str` | `''` | [holdspeak/config/calls.py:104](../holdspeak/config/calls.py) |
+| `CallsConfig.greeting` | `str` | `DEFAULT_GREETING` | [holdspeak/config/calls.py:105](../holdspeak/config/calls.py) |
+| `CallsConfig.allowed_numbers` | `list[str]` | `field(default_factory=list)` | [holdspeak/config/calls.py:106](../holdspeak/config/calls.py) |
+| `CallsConfig.passphrase` | `str` | `''` | [holdspeak/config/calls.py:107](../holdspeak/config/calls.py) |
+| `CallsConfig.phone_reach` | `dict[str, str]` | `field(default_factory=dict)` | [holdspeak/config/calls.py:108](../holdspeak/config/calls.py) |
+| `CallsConfig.phone_urgent_dnd` | `bool` | `False` | [holdspeak/config/calls.py:109](../holdspeak/config/calls.py) |
+| `CallsConfig.daily_limit` | `int` | `DEFAULT_DAILY_LIMIT` | [holdspeak/config/calls.py:110](../holdspeak/config/calls.py) |
+| `CallsConfig.line` | `dict` | `field(default_factory=default_line)` | [holdspeak/config/calls.py:111](../holdspeak/config/calls.py) |
 | `Config.config_version` | `int` | `CONFIG_VERSION` | [holdspeak/config/core.py:287](../holdspeak/config/core.py) |
 | `Config.machine_id` | `str` | `''` | [holdspeak/config/core.py:291](../holdspeak/config/core.py) |
 | `Config.control_mode` | `str` | `'yolo'` | [holdspeak/config/core.py:295](../holdspeak/config/core.py) |

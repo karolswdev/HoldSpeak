@@ -287,6 +287,8 @@ def _boot(
     monkeypatch.setenv("HOLDSPEAK_SCREEN_RULES", "off")
     # Calls (2026-10-28): no listener, no read of ai-phone's state.
     monkeypatch.setenv("HOLDSPEAK_CALLS", "off")
+    # The Line (2026-10-29): no baresip is looked for or run; no Line adapter.
+    monkeypatch.setenv("HOLDSPEAK_LINE", "off")
     # Programs (2026-10-28): the engine does not tick (no agent is handed).
     monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")
     # Phone (2026-10-28): no phone route, no ring timer, no push.

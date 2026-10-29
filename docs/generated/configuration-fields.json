@@ -17,7 +17,7 @@
       "type": "bool",
       "default_expression": "False",
       "path": "holdspeak/config/calls.py",
-      "line": 56
+      "line": 103
     },
     {
       "class": "CallsConfig",
@@ -25,7 +25,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/calls.py",
-      "line": 57
+      "line": 104
     },
     {
       "class": "CallsConfig",
@@ -33,7 +33,7 @@
       "type": "str",
       "default_expression": "DEFAULT_GREETING",
       "path": "holdspeak/config/calls.py",
-      "line": 58
+      "line": 105
     },
     {
       "class": "CallsConfig",
@@ -41,7 +41,7 @@
       "type": "list[str]",
       "default_expression": "field(default_factory=list)",
       "path": "holdspeak/config/calls.py",
-      "line": 59
+      "line": 106
     },
     {
       "class": "CallsConfig",
@@ -49,7 +49,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/calls.py",
-      "line": 60
+      "line": 107
     },
     {
       "class": "CallsConfig",
@@ -57,7 +57,7 @@
       "type": "dict[str, str]",
       "default_expression": "field(default_factory=dict)",
       "path": "holdspeak/config/calls.py",
-      "line": 61
+      "line": 108
     },
     {
       "class": "CallsConfig",
@@ -65,7 +65,23 @@
       "type": "bool",
       "default_expression": "False",
       "path": "holdspeak/config/calls.py",
-      "line": 62
+      "line": 109
+    },
+    {
+      "class": "CallsConfig",
+      "field": "daily_limit",
+      "type": "int",
+      "default_expression": "DEFAULT_DAILY_LIMIT",
+      "path": "holdspeak/config/calls.py",
+      "line": 110
+    },
+    {
+      "class": "CallsConfig",
+      "field": "line",
+      "type": "dict",
+      "default_expression": "field(default_factory=default_line)",
+      "path": "holdspeak/config/calls.py",
+      "line": 111
     },
     {
       "class": "Config",
