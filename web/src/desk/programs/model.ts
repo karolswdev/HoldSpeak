@@ -41,6 +41,8 @@ export function stepTone(state: StepState | string): Tone {
     case "briefed": case "working": case "checking": case "review": case "pr_open": return "info";
     case "waiting": case "findings": case "merge_ask": return "ask";
     case "check_failed": case "failed": return "fail";
+    // PG19: the agent stopped at its usage limit.
+    case "limited": return "warn";
     case "merged": case "done": return "ok";
     default: return "idle";
   }
@@ -80,6 +82,7 @@ export function stepChip(state: StepState | string): ChipState {
   if (tone === "info") return "working";
   if (tone === "ok") return "success";
   if (tone === "fail") return "failure";
+  if (tone === "warn") return "warning";
   return "idle";
 }
 
@@ -109,6 +112,9 @@ export function stepWord(step: ProgramStep): string {
   if (step.contenders?.length) return `Race of ${step.contenders.length}`;
   if ((step.state === "merged" || step.state === "merge_ask") && step.pr?.number) return `${base} #${step.pr.number}`;
   if (step.state === "check_failed") return `${base} · log`;
+  // PG19: the row keeps "Limited until 14:00"; the rest ("continuing in
+  // Codex") is the Your turn row's and the word's hover.
+  if (step.state === "limited") return base.split(" · ")[0];
   if (step.gate.review === "person" && (step.state === "pr_open" || step.state === "review") && step.for_person) {
     return `Waits for ${step.for_person}`;
   }

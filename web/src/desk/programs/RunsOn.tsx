@@ -38,6 +38,33 @@ export function pickerEngines(engines: readonly Engine[]): PickerEngine[] {
 
 const sprite = (agent: string) => <img src={spriteUrl("coder", agent, "rest", agent, 20)} alt="" width={20} height={20} />;
 
+const same = (a: RunsOnChoice, b: RunsOnChoice) => a.profile === b.profile && (a.engine ?? null) === (b.engine ?? null);
+
+/** The "Then, at a limit" rows: each agent other than the first, checked
+ *  when it is in the order; a press adds it at the end or takes it out. */
+function thenEntries(first: RunsOnChoice | null, then: readonly RunsOnChoice[], engines: PickerEngine[],
+  onThen: (next: RunsOnChoice[]) => void): WorkMenuEntry[] {
+  const options: { choice: RunsOnChoice; label: string; agent: string }[] = [
+    { choice: { profile: "claude-default", engine: null }, label: "Claude Code", agent: "claude" },
+    { choice: { profile: "codex-default", engine: null }, label: "Codex", agent: "codex" },
+    ...engines.map((engine) => ({ choice: { profile: "pi-default", engine: engine.id }, label: `pi · ${engine.label}`, agent: "pi" })),
+  ].filter((row) => !first || !same(row.choice, first));
+  const order = (choice: RunsOnChoice) => then.findIndex((row) => same(row, choice));
+  return [
+    { type: "sep", id: "then" },
+    { type: "note", id: "then-note", label: "Then, at a limit" },
+    ...options.map((row): WorkMenuEntry => {
+      const at = order(row.choice);
+      return {
+        type: "item", id: `then:${row.choice.profile}:${row.choice.engine ?? ""}`,
+        label: at >= 0 ? `then ${row.label} · ${at + 1}` : `then ${row.label}`, glyph: sprite(row.agent),
+        checked: at >= 0,
+        onSelect: () => onThen(at >= 0 ? then.filter((_, index) => index !== at) : [...then, row.choice]),
+      };
+    }),
+  ];
+}
+
 export function RunsOnPicker({
   label,
   value,
@@ -46,6 +73,8 @@ export function RunsOnPicker({
   onPick,
   onIdle,
   disabled,
+  then,
+  onThen,
   "data-testid": testId,
 }: {
   /** The Button's words (`Runs on: Claude Code`). */
@@ -57,6 +86,10 @@ export function RunsOnPicker({
   onPick(choice: RunsOnChoice): void;
   onIdle(next: boolean): void;
   disabled?: boolean;
+  /** PG19: the agents that take over at a usage limit, in order ("then"
+   *  rows under the first choice). Absent: the picker has no then rows. */
+  then?: readonly RunsOnChoice[];
+  onThen?(next: RunsOnChoice[]): void;
   "data-testid"?: string;
 }) {
   const opener = useRef<HTMLButtonElement | null>(null);
@@ -83,6 +116,7 @@ export function RunsOnPicker({
     })),
     ...(engines == null ? [{ type: "note" as const, id: "reading", label: "Reading the engines…" }] : []),
     { type: "item", id: "assignment", label: "pi · the desk's assignment", glyph: sprite("pi"), checked: is("pi-default", null) ? "exclusive" : undefined, onSelect: () => onPick({ profile: "pi-default", engine: null }) },
+    ...(onThen ? thenEntries(value, then ?? [], engines ?? [], onThen) : []),
     { type: "sep", id: "foot" },
     { type: "item", id: "idle", label: idleLabel, checked: idle, onSelect: () => onIdle(!idle) },
     { type: "item", id: "engines", label: "Engines…", onSelect: () => openSurfaceOr("configure-runs-on", "/models") },

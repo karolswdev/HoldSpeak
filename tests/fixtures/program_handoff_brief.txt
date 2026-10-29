@@ -1,0 +1,72 @@
+# Handoff brief
+HoldSpeak on step 4 of 6 of the program “The hub stops stalling”. Claude Code reached its usage limit, so HoldSpeak moved the step to you, Codex.
+This brief is HoldSpeak's, built from the step's record without a model; the owner's words are quoted as his. You do not get the earlier agent's conversation.
+
+## Where
+- Step 4: People routes
+- Worktree: hs-program-step-4 (the same one; continue here)
+- Branch: program/the-hub-stops-stalling/4-people-routes (from main; do not make a new branch)
+- Earlier turns on this step: 12 (not included)
+
+## The goal
+The goal of the program, in the owner's words:
+```
+Make the hub stop stalling.
+```
+
+## This step
+```
+31 handlers through run_in_threadpool.
+```
+
+## The plan and progress
+`[x]` done, `[~]` this step or running, `[ ]` not started.
+- [x] 1 Indexes (Merged)
+- [~] 2 Retention (PR open)
+- [~] 4 People routes (this step)
+- [ ] 5 Projects routes (Ready)
+
+## Checkpoints on this step
+Oldest first.
+- Handed to Claude Code in hs-program-step-4
+- 31 handlers, 20 done
+
+## What the owner said since
+Newest first. These still apply.
+- Keep the 14-day rule
+- Our deploy key is [redacted]
+
+## Files changed on the branch
+- M holdspeak/web/routes/people.py
+- A tests/unit/test_people_routes.py
+
+## The worktree now
+`git status --porcelain`:
+```
+ M holdspeak/web/routes/people.py
+?? notes.txt
+```
+`git diff --stat` against the step's base:
+```
+ holdspeak/web/routes/people.py | 40 ++++++++++++++++++++--------------
+ 1 file changed, 22 insertions(+), 18 deletions(-)
+```
+
+## Open problems
+- The last check was red: `scripts/quick_check.sh`. The end of its log:
+```
+== pytest affected (2 files)
+   FAILED tests/unit/test_people_routes.py::test_list
+   1 failed, 11 passed
+```
+- The earlier agent stopped with: You've hit your limit · resets 2pm
+- Open: Answer step 4 “People routes”
+
+## Repository instructions (CLAUDE.md)
+```
+Run one test at a time.
+[redacted]
+```
+
+## How to continue
+Check the worktree against this brief before you change anything. Do not redo finished work. Continue with what is left of this step, commit on this branch, and end your turn. HoldSpeak runs `scripts/quick_check.sh` on your last commit. Write one line with program.checkpoint to say where you pick up, and call program.step_done with your report when you are done.

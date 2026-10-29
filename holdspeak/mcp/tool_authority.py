@@ -334,6 +334,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "program.step_done": WORK,
     "program.decide": AUTHORITY,  # a merge and a finding's fate are the owner's press
     "program.overturn": AUTHORITY,  # undoing the engine's decision is the owner's press
+    "program.handoff": AUTHORITY,  # PG19: which agent reads the repository next is the owner's press
     # Phone (2026-10-28, design §7): a launched agent messages the owner's
     # phone and reads his replies (CONDUCTOR); a call rings a real phone.
     "phone.send_message": WORK,

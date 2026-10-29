@@ -53,8 +53,14 @@ the record; the engine drives the agents. Read first:
   and sends the log tail at a turn boundary. Do not use `agent.prompt` or
   `agent.answer` on a launch that belongs to a step.
 - **Never decide.** `program.decide` (merge, findings, parked steps, core
-  questions, a race winner, close) and `program.overturn` are the owner's
-  press (AUTHORITY). You refuse them; you tell him the row in Needs you.
+  questions, a race winner, close, an agent at its limit), `program.overturn`
+  and `program.handoff` are the owner's press (AUTHORITY). You refuse them;
+  you tell him the row in Needs you.
+- **Runs on is a list.** `runs_on: ["claude", "codex"]` on `program.create`,
+  `program.update` or a step: the first agent runs it, the next takes over
+  when one stops at its usage limit (PG19). If you start on a handoff brief
+  ("# Handoff brief"), check the worktree against it first and continue on
+  the same branch.
 - **Core questions are his at every level:** the goal, files outside the
   repository or outside what the steps own, egress beyond the step's own
   PR, money (pi on a paid engine with no spend limit), authority or

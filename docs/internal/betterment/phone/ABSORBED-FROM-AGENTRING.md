@@ -94,4 +94,11 @@ From the hub lane's report (2026-10-28):
 
 ## Taken by PH-FACES
 
-The faces lane adds its lines here when it lands.
+- The phone thread with threaded inline replies and read receipts
+  (agentring's Android messages thread) → rewritten as a Calls-window wing
+  in the desk kit.
+- The QR pairing screen → the idea taken; HoldSpeak draws its own QR with
+  `qrcode-generator`.
+- The missed-call message with an inline reply → the Needs you "Answer here"
+  verb.
+- No code or text copied.

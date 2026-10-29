@@ -5389,6 +5389,14 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/steps/{step_id}/handoff",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/steps/{step_id}/race",
       "methods": [
         "POST"

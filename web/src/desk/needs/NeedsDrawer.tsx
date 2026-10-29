@@ -176,6 +176,8 @@ async function settleOut(origin?: Element | null): Promise<Element | null> {
 /** Programs (2026-10-28): the words of a your-turn choice. */
 const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   merge: "Merge", not_yet: "Not yet", fix_now: "Fix now", later: "Later", skip: "Skip", resume: "Resume", prepare: "Send…",
+  // PG19: an agent at its usage limit.
+  continue: "Continue", wait: "Wait",
 };
 
 function NeedVerbsView({ face, primary, onWell, well }: {

@@ -7,7 +7,7 @@
 export type ProgramState = "drafting" | "running" | "waiting" | "done" | "parked" | "failed";
 
 export type StepState =
-  | "planned" | "ready" | "briefed" | "working" | "waiting" | "checking" | "check_failed"
+  | "planned" | "ready" | "briefed" | "working" | "waiting" | "limited" | "checking" | "check_failed"
   | "review" | "findings" | "pr_open" | "merge_ask" | "merged" | "done" | "parked" | "failed";
 
 export type StationKey = "brief" | "work" | "check" | "review" | "pr" | "merge";
@@ -62,6 +62,55 @@ export interface ProgramEngine {
   assignment?: boolean;
   /** The named engine is not in the library any more. */
   missing?: boolean;
+}
+
+/** PG19: one agent of a Runs on list (the first runs it, the next takes
+ *  over at a usage limit). */
+export interface RunsOnEntry {
+  profile: string;
+  engine: string | null;
+  /** `Claude Code`, `Codex`, `pi`. */
+  agent: string;
+  /** `Codex`, `pi · qwen`. */
+  label: string;
+}
+
+/** PG19: the usage limit a step's agent stopped at. */
+export interface StepLimit {
+  until: string | null;
+  /** `14:00` (the hub's clock words). */
+  words: string;
+  rule: string | null;
+  line: string;
+  /** A reported share of the window (a warning), else null. */
+  share: number | null;
+  /** The agent that takes it over next; null: none is left. */
+  next: RunsOnEntry | null;
+  /** He chose to wait for the reset. */
+  waiting: boolean;
+  profile: string | null;
+  seen_at: string | null;
+  /** Normal, may hand off: when HoldSpeak continues on its own. */
+  auto_at?: string | null;
+}
+
+/** PG19: one handoff of a step to the next agent. */
+export interface StepHandoff {
+  at: string;
+  from: string;
+  to: string;
+  reason: "usage_limit" | "usage_warning" | "by_hand" | string;
+  by: "engine" | "owner" | string;
+  brief_ref: string;
+  /** The brief the next agent received (redacted). */
+  brief: string;
+  redacted: Record<string, number>;
+  /** `2 keys, 1 token`; empty: nothing was redacted. */
+  redacted_words: string;
+  earlier_turns: number;
+  launch_from: string | null;
+  launch_to: string | null;
+  until?: string | null;
 }
 
 export interface ProgramSummary {
@@ -162,9 +211,13 @@ export interface ProgramStep {
   elapsed: string;
   /** A race's contenders (top-level steps only). */
   contenders?: ProgramStep[];
+  /** PG19: the ordered agents, the limit it stopped at, its handoffs. */
+  runs_on?: RunsOnEntry[];
+  limit?: StepLimit | null;
+  handoffs?: StepHandoff[];
 }
 
-export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "race" | "add_step" | "close";
+export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "race" | "add_step" | "close" | "limited";
 
 export interface YourTurnItem {
   id: string;
@@ -189,6 +242,12 @@ export interface YourTurnItem {
   reason?: string | null;
   /** add_step: the proposal's index (sent as `finding_id`). */
   proposal?: number;
+  /** limited (PG19): the agent that would take it over, and the reset. */
+  next?: RunsOnEntry;
+  agent?: string;
+  until?: string | null;
+  until_words?: string;
+  warning?: boolean;
 }
 
 export interface ProgramPlace {
@@ -201,7 +260,12 @@ export interface Program extends ProgramSummary {
   goal: string;
   repository: { root: string | null; label: string; base_branch: string | null };
   check_command: string | null;
-  default: { profile: string | null; agent: string; engine: ProgramEngine | null };
+  default: { profile: string | null; agent: string; engine: ProgramEngine | null; runs_on?: RunsOnEntry[] };
+  /** PG19: the agents that may read this repository (empty: every one). */
+  allowed_profiles?: string[];
+  /** PG19: at Normal, hand off on its own after 10 minutes at a limit. */
+  may_handoff?: boolean;
+  usage_warning_share?: number | null;
   reviewer: { profile: string | null; agent: string | null; engine: ProgramEngine | null };
   prefer_idle: boolean;
   template: string | null;

@@ -4,7 +4,8 @@ GET    /api/programs                               the Programs, waiting first
 POST   /api/programs                               create {title, goal, repository | project_id,
                                                    base_branch, control, check_command, template,
                                                    default_profile, default_engine, reviewer_profile,
-                                                   reviewer_engine, prefer_idle, origin_ref, for_person_id}
+                                                   reviewer_engine, prefer_idle, origin_ref, for_person_id,
+                                                   runs_on, allowed_profiles, may_handoff, usage_warning_share}
 GET    /api/programs/templates                     the templates (§10)
 GET    /api/programs/{id}                          the Program, its steps, checkpoints, your turn
 PATCH  /api/programs/{id}                          {title, goal, control, prefer_idle, project_id, spend_limit_usd,
@@ -15,6 +16,8 @@ POST   /api/programs/{id}/start | /park | /resume
 POST   /api/programs/{id}/steps/{sid}/checkpoint   {line}
 POST   /api/programs/{id}/steps/{sid}/decide       {kind, choice, finding_id?, reason?}
 POST   /api/programs/{id}/steps/{sid}/race         {n}
+POST   /api/programs/{id}/steps/{sid}/handoff      {to: profile | {profile, engine}, preview: bool} (owner only;
+                                                   PG19: preview returns the brief, nothing moves)
 POST   /api/programs/{id}/decisions/{did}/overturn undo one engine decision (owner only)
 POST   /api/programs/{id}/close                    he closes a finished Program (Secure)
 
@@ -38,13 +41,13 @@ log = get_logger("web.routes.programs")
 _CREATE_FIELDS = (
     "title", "goal", "repository", "project_id", "base_branch", "control", "check_command", "template",
     "default_profile", "default_engine", "reviewer_profile", "reviewer_engine", "prefer_idle", "origin_ref",
-    "for_person_id", "spend_limit_usd", "may_call",
+    "for_person_id", "spend_limit_usd", "runs_on", "allowed_profiles", "may_handoff", "usage_warning_share", "may_call",
 )
 
 
 _UPDATE_FIELDS = (
     "title", "goal", "control", "prefer_idle", "project_id", "spend_limit_usd", "default_profile", "default_engine",
-    "reviewer_profile", "reviewer_engine", "may_call",
+    "reviewer_profile", "reviewer_engine", "runs_on", "allowed_profiles", "may_handoff", "usage_warning_share", "may_call",
 )
 
 
@@ -161,6 +164,13 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
     async def api_programs_race(program_id: str, step_id: str, request: Request) -> Any:
         principal, body = _principal(request), await _body(request)
         return await _call(lambda: _service().race(principal, program_id, step_id, int(body.get("n") or 0)))
+
+    @router.post("/api/programs/{program_id}/steps/{step_id}/handoff")
+    async def api_programs_handoff(program_id: str, step_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().handoff(
+            principal, program_id, step_id, body.get("to"), preview=bool(body.get("preview")),
+        ))
 
     @router.post("/api/programs/{program_id}/decisions/{decision_id}/overturn")
     async def api_programs_overturn(program_id: str, decision_id: str, request: Request) -> Any:

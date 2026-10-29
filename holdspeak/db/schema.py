@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 87  # informational; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
+SCHEMA_VERSION = 87  # informational; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -5211,6 +5211,10 @@ CREATE TABLE IF NOT EXISTS programs (
     revision INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
+    default_runs_on_json TEXT NOT NULL DEFAULT '[]',
+    allowed_profiles_json TEXT NOT NULL DEFAULT '[]',
+    may_handoff INTEGER NOT NULL DEFAULT 0,
+    usage_warning_share REAL,
     may_call INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS program_steps (
@@ -5254,6 +5258,8 @@ CREATE TABLE IF NOT EXISTS program_steps (
     started_at TEXT,
     ended_at TEXT,
     updated_at TEXT NOT NULL,
+    runs_on_json TEXT NOT NULL DEFAULT '[]',
+    handoffs_json TEXT NOT NULL DEFAULT '[]',
     may_call INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_program_steps_program ON program_steps(program_id, ordinal);

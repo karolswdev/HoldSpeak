@@ -13,7 +13,7 @@ answer through the REAL routes (``web/routes/programs.py`` on a FastAPI
 It writes ``web/src/desk/programs/__fixtures__/``:
 programs.list.json, program.running.json, program.your_turn.json,
 program.done.json, program.parked.json, program.drafting.json,
-needs_you.program.json, room.programs.json, person.programs.json.
+program.limited.json (PG19), needs_you.program.json, room.programs.json, person.programs.json.
 """
 from __future__ import annotations
 
@@ -74,6 +74,51 @@ def _review(rig: Rig, words: str) -> None:
             rig.words.setdefault(record["launch_id"], words)
             rig.states[record["launch_id"]] = {"state": "done", "turn_id": f"r-{record['launch_id']}"}
     rig.tick(2)
+
+
+def _at_limit(rig: Rig, launch_id: str, turn: str) -> None:
+    """The flight of a Claude Code launch that stopped at its usage limit
+    (the screen's notice, as ``agent_flights`` reads it)."""
+    from datetime import datetime, timedelta, timezone
+
+    until = (datetime.now(timezone.utc) + timedelta(minutes=90)).replace(second=0, microsecond=0)
+    rig.states[launch_id] = {"state": "done", "turn_id": turn, "limit": {
+        "rule": "claude.usage_limit", "line": "You've hit your limit · resets 2pm", "share": None,
+        "until": until.isoformat().replace("+00:00", "Z"), "words": until.astimezone().strftime("%H:%M")}}
+
+
+def record_limited(root: Path) -> Any:
+    """PG19, in a rig of its own (the list, Room and Needs you fixtures stay
+    as they were): a step handed off at its limit by his press, and a step
+    limited now with its Your turn row (Normal)."""
+    rig = Rig(root / "rig-limited", people=lambda: People())
+    with rig.db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
+    client = _client(rig)
+    limited = _create(rig, "People routes overnight", template="fast-cycle", control="normal",
+                      project_id="proj-holdspeak", runs_on=["claude", "codex"])
+    rig.service.plan(OWNER, limited, steps=[
+        {"title": "People routes", "brief": "31 handlers through run_in_threadpool.", "owns": ["holdspeak/web/routes/people.py"]},
+        {"title": "Projects routes", "brief": "20 handlers through run_in_threadpool.", "owns": ["holdspeak/web/routes/projects.py"]},
+    ])
+    rig.service.start(OWNER, limited)
+    l1, l2 = rig.step(limited, 1), rig.step(limited, 2)
+    tree = Path(rig.ledger.get(l1["launch_id"])["worktree_path"])
+    (tree / "CLAUDE.md").write_text("Run one test at a time.\napi_key=sk-demo0123456789abcdefghij\n"
+                                    "token=ghp_demo0123456789abcdefghijkl\n", encoding="utf-8")
+    (tree / "holdspeak" / "web" / "routes").mkdir(parents=True, exist_ok=True)
+    (tree / "holdspeak" / "web" / "routes" / "people.py").write_text("# 20 of 31 handlers\n", encoding="utf-8")
+    rig.service.checkpoint(OWNER, limited, l1["id"], "Keep the 14-day rule")
+    rig.agent.end_turn(l1["launch_id"])
+    rig.tick()  # a turn with no commit: asked to commit (one earlier turn)
+    _at_limit(rig, l1["launch_id"], "t-limit-1")
+    rig.tick()
+    rig.service.decide(OWNER, limited, l1["id"], kind="limited", choice="continue")
+    rig.states[rig.step(limited, 1)["launch_id"]] = {"state": "working", "turn_id": None}
+    _at_limit(rig, l2["launch_id"], "t-limit-2")
+    rig.tick()
+
+    return _get(client, f"/api/programs/{limited}")
 
 
 def record(root: Path) -> dict[str, Any]:
@@ -189,6 +234,7 @@ def record(root: Path) -> dict[str, Any]:
 
     fixtures["room.programs.json"] = ProjectService(rig.db).room(OWNER, "proj-holdspeak")["programs"]
     fixtures["person.programs.json"] = {"programs": rig.service.for_person("p-alice", since="2026-01-01T00:00:00+00:00")}
+    fixtures["program.limited.json"] = record_limited(root)
     return fixtures
 
 
@@ -206,6 +252,10 @@ def _check(fixtures: dict[str, Any]) -> None:
     assert fixtures["program.parked.json"]["state"] == "parked"
     assert fixtures["program.drafting.json"]["state"] == "drafting"
     assert fixtures["needs_you.program.json"]["items"]
+    limited = fixtures["program.limited.json"]
+    assert limited["steps"][0]["handoffs"] and limited["steps"][0]["handoffs"][0]["redacted_words"], limited["steps"][0]
+    assert limited["steps"][1]["state"] == "limited", limited["steps"][1]["state"]
+    assert any(item["kind"] == "limited" for item in limited["your_turn_items"])
 
 
 def main() -> int:

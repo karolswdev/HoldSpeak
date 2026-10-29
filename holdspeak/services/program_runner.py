@@ -38,6 +38,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+from datetime import datetime, timedelta, timezone
 import tempfile
 import threading
 import time
@@ -49,7 +50,7 @@ from .program_service import (
     ACTIVE_STATES, PARKED_BY_ENGINE, PARKED_BY_RACE, RACE_PROFILES,
     ProgramRefused, ProgramService, agent_label, duration_words, programs_on,
 )
-from .program_rules import decide, is_core
+from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
 from .program_verifier import log_tail, verify_log
 
 log = get_logger("program_runner")
@@ -72,6 +73,26 @@ _CHECK_LOCK = threading.Lock()
 _PROGRAM_LOCKS: dict[str, threading.Lock] = {}
 _PROGRAM_LOCKS_GUARD = threading.Lock()
 _RUNNING_CHECKS: dict[str, threading.Thread] = {}
+
+#: PG19: when a limit notice names no reset time, its agent counts as
+#: limited this long after the handoff (a plan's usage window).
+UNKNOWN_RESET_HOURS = 5
+#: PG19: a handoff's reason in the checkpoint's words.
+REASON_WORDS = {"usage_limit": "usage limit", "usage_warning": "usage warning", "by_hand": "by hand"}
+
+
+def utc_iso(moment: datetime) -> str:
+    return moment.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _parse(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        moment = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
 
 
 def _default_runner(argv: list[str], cwd: Optional[str] = None, env: Optional[Mapping[str, str]] = None,
@@ -298,8 +319,11 @@ class ProgramRunner:
         busy_engines = {self._engine_of(program, other) for other in steps
                         if other["state"] in ACTIVE_STATES and self._profile_of(program, other) == "pi-default"}
         for step in ready:
-            profile = self._profile_of(program, step)
-            engine = self._engine_of(program, step)
+            entry = self.first_agent(program, step)
+            if entry is None:
+                self._hold(step, "waiting for an agent's limit to reset")
+                continue
+            profile, engine = entry["profile"], entry.get("engine")
             if profile == "pi-default" and (step.get("prefer_idle") or program.get("prefer_idle")):
                 idle, name = self.engine_idle(engine)
                 if not idle or engine in busy_engines:
@@ -341,13 +365,236 @@ class ProgramRunner:
 
     @staticmethod
     def _profile_of(program: Mapping[str, Any], step: Mapping[str, Any]) -> str:
+        running = (step.get("facts") or {}).get("running_on")
+        if isinstance(running, Mapping) and running.get("profile"):
+            return str(running["profile"])
         return str(step.get("profile") or program.get("default_profile") or "claude-default")
 
     @staticmethod
     def _engine_of(program: Mapping[str, Any], step: Mapping[str, Any]) -> Optional[str]:
+        running = (step.get("facts") or {}).get("running_on")
+        if isinstance(running, Mapping) and running.get("profile"):
+            return running.get("engine") or None
         if step.get("profile"):
             return step.get("engine") or None
         return step.get("engine") or program.get("default_engine") or None
+
+    # ── PG19: Runs on as a list, the usage limit, the handoff ───────
+
+    def _now(self) -> datetime:
+        return datetime.now(timezone.utc)
+
+    def limited_agents(self) -> dict[tuple[str, Optional[str]], Optional[datetime]]:
+        """The agents at their usage limit now, read off every Program: a
+        limited step's own agent, and the agent a step was handed away from
+        at a limit (until its reset). ``None``: no reset time known."""
+        now = self._now()
+        out: dict[tuple[str, Optional[str]], Optional[datetime]] = {}
+
+        def note(profile: Any, engine: Any, until: Any) -> None:
+            moment = _parse(until)
+            if moment is not None and moment <= now:
+                return
+            out[(str(profile or ""), engine or None)] = moment
+
+        for program in self.service.store.list_programs():
+            for step in self.service.store.list_steps(program["id"]):
+                limit = (step.get("facts") or {}).get("limit")
+                if step.get("state") == "limited" and isinstance(limit, Mapping) and not limit.get("share"):
+                    note(limit.get("profile"), limit.get("engine"), limit.get("until"))
+                for entry in step.get("handoffs") or []:
+                    if entry.get("reason") != "usage_limit":
+                        continue
+                    until = entry.get("until")
+                    if not until:
+                        # No reset time was shown: a plan's window is five hours.
+                        at = _parse(entry.get("at"))
+                        until = utc_iso(at + timedelta(hours=UNKNOWN_RESET_HOURS)) if at else None
+                    note(entry.get("from_profile"), entry.get("from_engine"), until)
+        return out
+
+    def _usable(self, program: Mapping[str, Any], entry: Mapping[str, Any],
+                limited: Mapping[tuple[str, Optional[str]], Any]) -> bool:
+        """An entry is on (the desk has the agent), allowed for this
+        repository, and not at its own limit."""
+        profile = str(entry.get("profile") or "")
+        try:
+            known = self.service._known_profiles()
+        except Exception:
+            known = {profile}
+        if profile not in known:
+            return False
+        allowed = list(program.get("allowed_profiles") or [])
+        if allowed and profile not in allowed:
+            return False
+        return (profile, entry.get("engine") or None) not in limited and (profile, None) not in limited
+
+    def first_agent(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+        """The first allowed and available entry of the step's Runs on."""
+        limited = self.limited_agents()
+        for entry in self.service.runs_on_of(program, step):
+            if self._usable(program, entry, limited):
+                return dict(entry)
+        return None
+
+    def next_agent(self, program: Mapping[str, Any], step: Mapping[str, Any],
+                   current: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+        """The next entry after ``current`` that may take the step (then
+        the ones before it), skipping off, disallowed and limited agents."""
+        limited = dict(self.limited_agents())
+        limited[(str(current.get("profile") or ""), current.get("engine") or None)] = None
+        entries = self.service.runs_on_of(program, step)
+        key = (current.get("profile"), current.get("engine") or None)
+        index = next((i for i, row in enumerate(entries) if (row["profile"], row.get("engine") or None) == key), -1)
+        ordered = entries[index + 1:] + entries[:max(index, 0)] if index >= 0 else entries
+        for entry in ordered:
+            if self._usable(program, entry, limited):
+                return dict(entry)
+        return None
+
+    def current_agent(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> dict[str, Any]:
+        return {"profile": self._profile_of(program, step), "engine": self._engine_of(program, step)}
+
+    def _limit_follow(self, program: dict[str, Any], step: dict[str, Any], flight: Mapping[str, Any]) -> bool:
+        """PG19: read the flight's usage-limit notice. True when the step's
+        move this tick is the limit's (the rest of the follow waits)."""
+        notice = flight.get("limit") if isinstance(flight.get("limit"), Mapping) else None
+        facts = dict(step.get("facts") or {})
+        state = str(flight.get("state") or "")
+        if notice and notice.get("share") is not None:
+            wanted = program.get("usage_warning_share")
+            turn = str(flight.get("turn_id") or "")
+            if not wanted or float(notice["share"]) < float(wanted) or state not in _TURN_END or not turn:
+                notice = None   # a share below his warning, or mid-turn: work on
+            elif f"{step.get('launch_id')}:{turn}" in (facts.get("handed_turns") or []):
+                notice = None
+        if not notice:
+            if step["state"] == "limited":
+                facts.pop("limit", None)
+                step["facts"] = facts
+                if state not in ("working", "resuming") and step.get("launch_id"):
+                    facts["last_turn"] = str(flight.get("turn_id") or "") or facts.get("last_turn")
+                    try:
+                        self.prompt_builder(step, "HoldSpeak: your usage window reset. Continue the step where you stopped.")
+                    except Exception as exc:
+                        log.info(f"reset prompt not typed: {exc}")
+                self.service.transition(program, step, "working", facts=facts, line="The limit reset; the agent works again")
+                return True
+            return False
+        current = self.current_agent(program, step)
+        turn_key = f"{step.get('launch_id')}:{flight.get('turn_id') or notice.get('line') or ''}"
+        old = dict(facts.get("limit") or {})
+        nxt = self.next_agent(program, step, current)
+        limit = {
+            "until": notice.get("until"), "words": notice.get("words") or "", "rule": notice.get("rule"),
+            "line": notice.get("line") or "", "share": notice.get("share"),
+            "profile": current["profile"], "engine": current.get("engine"), "turn": turn_key,
+            "seen_at": old.get("seen_at") if old.get("turn") == turn_key else utc_iso(self._now()),
+            "waiting": bool(old.get("waiting")) if old.get("turn") == turn_key else False,
+            "next": self.service.entry_wire(nxt) if nxt else None,
+        }
+        handed = turn_key in (facts.get("handed_turns") or [])
+        if limit["next"] and not limit["waiting"] and program.get("may_handoff") and level_of(program.get("control")) == "normal":
+            seen = _parse(limit["seen_at"]) or self._now()
+            limit["auto_at"] = utc_iso(seen + timedelta(minutes=HANDOFF_AFTER_MINUTES))
+        facts["limit"] = limit
+        who = agent_label(current["profile"])
+        if step["state"] != "limited":
+            words = f" until {limit['words']}" if limit["words"] else ""
+            line = (f"{who} reported {round(float(limit['share']) * 100)}% of its usage window" if limit["share"] is not None
+                    else f"{who} stopped at its usage limit{words}")
+            self.service.transition(program, step, "limited", facts=facts, line=line)
+        elif old != limit:
+            step["facts"] = facts
+            self.service.save_step(step)
+        seen = _parse(limit["seen_at"]) or self._now()
+        outcome = decide(program.get("control"), "limited", {
+            "next": bool(nxt), "handed": handed, "waiting": limit["waiting"],
+            "may_handoff": bool(program.get("may_handoff")),
+            "minutes": (self._now() - seen).total_seconds() / 60.0,
+        })
+        if not outcome.to_owner and outcome.choice == "handoff" and nxt is not None:
+            fresh = self.service.store.get_step(step["id"]) or step
+            reason = "usage_warning" if limit["share"] is not None else "usage_limit"
+            self.handoff(program, fresh, nxt, reason=reason, by="engine", outcome=outcome)
+        return True
+
+    def _git_out(self, cwd: str, *args: str) -> str:
+        """git's stdout as it is (``status --porcelain`` keeps its columns)."""
+        try:
+            proc = self._run(["git", "-C", cwd, *args], cwd=cwd)
+        except Exception as exc:
+            log.debug(f"git {args[:1]} failed: {exc}")
+            return ""
+        return str(proc.stdout or "").rstrip("\n") if proc.returncode == 0 else ""
+
+    def handoff_brief(self, program: Mapping[str, Any], step: Mapping[str, Any], to: Mapping[str, Any], *,
+                      reason: str, by: str) -> Any:
+        """The brief the next agent receives (deterministic, redacted)."""
+        from .program_handoff import brief_of, gather
+
+        current = self.current_agent(program, step)
+        inputs = gather(self.service, program, step, to_label=self.service.entry_wire(to)["label"],
+                        from_label=self.service.entry_wire(current)["label"], reason=reason, by=by, git=self._git_out)
+        return brief_of(inputs)
+
+    def handoff(self, program: dict[str, Any], step: dict[str, Any], to: Mapping[str, Any], *, reason: str,
+                by: str = "engine", outcome: Any = None) -> dict[str, Any]:
+        """Continue the step in ``to``: the earlier launch is handed off, the
+        hand starts the next agent in the same worktree on the same branch
+        with the brief as its first message, and the step records it."""
+        from .agent_hand_service import AgentHandRefused
+        from .program_handoff import redacted_words
+
+        brief = self.handoff_brief(program, step, to, reason=reason, by=by)
+        current = self.current_agent(program, step)
+        old_launch = str(step.get("launch_id") or "")
+        ledger = self.ledger()
+        before = (ledger.get(old_launch) or {}) if old_launch else {}
+        now = utc_iso(self._now())
+        if old_launch:
+            ledger.update(old_launch, state="handed_off", stopped={"by": by, "at": now, "reason": reason})
+        try:
+            answer = self.hand().hand(
+                self.principal, "program_step", step["id"], profile=to["profile"],
+                project_id=program.get("project_id"), engine=to.get("engine"), handoff_brief=brief.text,
+            )
+        except AgentHandRefused as exc:
+            answer = {"status": "refused", "failure": {"stage": exc.reason}}
+        if answer.get("status") != "launched" or not answer.get("launch_id"):
+            if old_launch and before:
+                ledger.update(old_launch, state=before.get("state") or "launched", stopped=before.get("stopped"))
+            failure = (answer.get("failure") or {}).get("stage") or answer.get("status") or "failed"
+            self.service._checkpoint(program, step, "engine", f"Could not hand off to {agent_label(to['profile'])} ({failure})")
+            raise ProgramRefused("handoff_failed", f"The next agent did not start ({failure}).")
+        facts = dict(step.get("facts") or {})
+        limit = dict(facts.pop("limit", None) or {})
+        handed = list(facts.get("handed_turns") or [])
+        if limit.get("turn"):
+            handed.append(limit["turn"])
+        facts.update({"handed_turns": handed[-20:], "running_on": {"profile": to["profile"], "engine": to.get("engine")},
+                      "last_turn": None, "nudged": False})
+        entries = list(step.get("handoffs") or [])
+        to_wire, from_wire = self.service.entry_wire(to), self.service.entry_wire(current)
+        entries.append({
+            "at": now, "from": from_wire["label"], "from_profile": current["profile"], "from_engine": current.get("engine"),
+            "to": to_wire["label"], "to_profile": to["profile"], "to_engine": to.get("engine"), "reason": reason, "by": by,
+            "brief_ref": f"program_step:{step['id']}/handoff/{len(entries) + 1}", "brief": brief.text,
+            "redacted": dict(brief.redacted), "redacted_words": redacted_words(brief.redacted),
+            "earlier_turns": brief.earlier_turns, "launch_from": old_launch or None, "launch_to": answer["launch_id"],
+            "until": limit.get("until"),
+        })
+        worktree = answer.get("worktree") or {}
+        step["handoffs"] = entries
+        line = f"Handed to {to_wire['label']} · {REASON_WORDS.get(reason, reason)}"
+        self.service.transition(program, step, "briefed", launch_id=answer["launch_id"], facts=facts,
+                                branch=worktree.get("branch") or step.get("branch"))
+        if by == "engine" and outcome is not None:
+            self.service.engine_decision(program, step, "handoff", outcome, line)
+        else:
+            self.service.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self.service._clock(),
+                                              by=by, line=line, kind="handoff", choice=str(len(entries)))
+        return entries[-1]
 
     def _make_contenders(self, program: dict[str, Any], step: dict[str, Any], steps: list[dict[str, Any]]) -> None:
         existing = [other for other in steps if other.get("race_of") == step["id"]]
@@ -362,6 +609,7 @@ class ProgramRunner:
         for index, profile in enumerate(profiles, start=2):
             contender = {**step, "id": f"{step['id']}-r{index}", "race_of": step["id"], "race": 0,
                          "profile": profile, "engine": None, "facts": {}, "findings": [], "launch_id": None,
+                         "runs_on": [], "handoffs": [],
                          "worktree": None, "branch": None, "started_at": None, "ended_at": None}
             self.service.save_step(contender)
         self.service._checkpoint(program, step, "engine",
@@ -393,7 +641,8 @@ class ProgramRunner:
         path = self._worktree_path(program, str(worktree.get("name") or ""))
         base = self._git(path, "rev-parse", "HEAD") if path else ""
         facts = dict(step.get("facts") or {})
-        facts.update({"base_commit": base or None, "last_turn": None, "nudged": False})
+        facts.update({"base_commit": base or None, "last_turn": None, "nudged": False,
+                      "running_on": {"profile": profile, "engine": engine}})
         who = agent_label(profile)
         found = self.service.engine(engine) if engine else None
         if profile == "pi-default":
@@ -423,7 +672,7 @@ class ProgramRunner:
             return
         if (step.get("facts") or {}).get("awaiting_pick"):
             return
-        if state in ("briefed", "working", "waiting", "check_failed"):
+        if state in ("briefed", "working", "waiting", "limited", "check_failed"):
             self._follow(program, step)
         elif state == "checking":
             self._check(program, step)
@@ -437,6 +686,8 @@ class ProgramRunner:
     def _follow(self, program: dict[str, Any], step: dict[str, Any]) -> None:
         flight = self.flight(str(step.get("launch_id") or ""))
         state = str(flight.get("state") or "")
+        if state not in ("starting", "") and state not in _STOPPED and self._limit_follow(program, step, flight):
+            return
         facts = dict(step.get("facts") or {})
         if state in ("starting", ""):
             return
@@ -460,6 +711,7 @@ class ProgramRunner:
             return  # the turn the engine already read (it prompted after it)
         head = self._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
         facts["last_turn"] = turn or None
+        facts["turns"] = int(facts.get("turns") or 0) + 1
         if not turn and step["state"] == "check_failed" and head == step.get("head_commit"):
             return  # no turn id: wait for the commit of the fix
         if head and head != step.get("head_commit"):
