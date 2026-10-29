@@ -73,7 +73,7 @@ Each role in a program (the agent that builds a step, the reviewer, each agent i
 | **Claude Code** | The `claude` harness. |
 | **Codex** | The `codex` harness. |
 | **pi on an engine** | The `pi` harness on an engine from your library: your home engine, a LAN engine, or a hosted model. |
-| **The desk's assignment** | pi on the engine that **Settings ▸ Engines** gives to code. |
+| **The desk's assignment** | pi on the engine that **Settings ▸ This Mac ▸ Engines** gives to code. |
 
 The default pair: Codex reviews the work of Claude Code, and Claude Code reviews the work of Codex. You can change each role on each step.
 

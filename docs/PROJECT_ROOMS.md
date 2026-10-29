@@ -15,7 +15,7 @@ needs a configured provider and access to the selected source scope.
 | Jira | The `acli` CLI, intended site, and account | Jira access is read-only. |
 | Confluence | The `acli` CLI, intended site, and account | Confluence access is read-only. |
 
-Open **Settings > Connections** to check a provider. Select **Recheck** after
+Open **Settings > Accounts > Connections** to check a provider. Select **Recheck** after
 you change its setup. The provider CLI keeps its credentials. Do not put a
 token in a Project description or Thread.
 
@@ -129,7 +129,7 @@ successful request as proof that a provider source changed.
 
 | Problem | Action |
 | --- | --- |
-| A provider does not connect | Follow its recovery command in **Settings > Connections**. Select **Recheck**. |
+| A provider does not connect | Follow its recovery command in **Settings > Accounts > Connections**. Select **Recheck**. |
 | A count check fails | Check source scope, account, provider access, and the reason in the row. |
 | The Room shows no decisions | Check linked work and source scope. An empty section does not prove that no decision exists elsewhere. |
 | A Watch creates too much work | Adjust its source or select **Pause**. Check the effect before you resume it. |

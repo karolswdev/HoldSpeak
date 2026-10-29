@@ -45,8 +45,9 @@ available and the refusal is recorded.
 | Rewrite | `project-rewriter` | Yes |
 | Delivery | Dictation service and desktop relay | No model by itself |
 
-A stage receives a frozen configuration snapshot. An unavailable model stage
-returns the previous text and a named reason.
+A stage receives a frozen configuration snapshot. A skipped model stage leaves
+the current text unchanged. A non-fatal stage failure returns the original
+utterance text and a named reason.
 
 ## Runtime backends
 

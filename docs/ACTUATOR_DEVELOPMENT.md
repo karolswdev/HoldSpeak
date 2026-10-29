@@ -6,8 +6,13 @@ write connectors and the tests. For plugin basics, read
 [Plugin Authoring](PLUGIN_AUTHORING.md) first. For read-only activity
 connectors, see [Connector Development](CONNECTOR_DEVELOPMENT.md).
 
-The rule: no external effect happens without recorded authority, and the effect
-that runs is exactly the effect that the owner saw in the preview.
+The rule: no external effect happens without recorded authority. Approval saves
+the proposal's payload hash, normalized destination, preview hash, renderer
+version, effect class and policy version. Execution recomputes that binding
+before egress, so it runs only the stored proposal that the authority covers.
+Under YOLO, a fixed registered destination can be authorized by the captured
+control posture without a new per-effect owner preview. A free destination
+still needs an explicit owner decision.
 
 ## Contract
 
@@ -33,8 +38,13 @@ title and the body. For a webhook, it holds the exact text to send. Secrets stay
 in host configuration. A proposal can carry a normalized destination and
 hashes, but never a secret URL or token.
 
-The `actuator` capability is off by default. A registered actuator is `blocked`
-until the host enables it.
+On a bare `PluginHost`, the `actuator` capability is off by default. A
+registered actuator with `required_capabilities = ["actuator"]` is `blocked`
+until that host enables the capability. This is separate from the execution
+policy: `PluginHost.allow_actuators` is a separate, reserved execution setting;
+`ActuatorExecutor` checks its constructor execution flag and optional actuator
+allow-list. These arguments are separate from similarly named meeting config fields. The web runtime currently enables only `llm` on its plugin host;
+the desk actuator routes construct an executor with actuator execution enabled.
 
 ## Lifecycle
 
@@ -72,11 +82,16 @@ sequenceDiagram
 `ActuatorProposalService`
 ([`holdspeak/services/actuator_service.py`](../holdspeak/services/actuator_service.py))
 creates proposals for webhook and GitHub destinations. A Slack proposal is
-refused with `slack_moved_to_channel`. The service validates the destination. It resolves an optional `source_ref` that names a Meeting, a Note
-or an Artifact. It makes an idempotency key from the destination and the
-content. The same source and content return the same proposal. New content
-makes a new proposal. The source puts the receipt back on the Desk subject that
-it came from.
+refused with `slack_moved_to_channel`. The service validates the destination.
+It resolves an optional `source_ref` that names a Meeting, a Note or an
+Artifact. It makes an idempotency key from the target, the resolved source
+reference when present, and target-specific content: GitHub uses
+`repo|title|text`, while a webhook uses the request body. The configured
+webhook URL is not key material, so changing only that destination does not
+guarantee a new proposal. The same source and content can therefore return the
+same proposal; new content makes a new proposal. The service broadcasts a
+wire-safe proposal event; the executor routes broadcast wire-safe result events
+without including secrets.
 
 ## Gates
 
@@ -85,7 +100,7 @@ it came from.
 is the one place where an effect happens. It checks, in order:
 
 1. The proposal status is `approved`.
-2. The master switch and the allow-list admit the actuator. A refusal here
+2. The executor's supplied `allow_actuators` flag and optional `allowed_actuator_ids` set admit the actuator. A refusal here
    changes no state, so the owner can fix the setting and retry.
 3. The current authority binding equals the binding saved at approval. A
    mismatch ends as `failed` with no outside call.
@@ -95,8 +110,9 @@ is the one place where an effect happens. It checks, in order:
    socket itself.
 
 The executor stores the result. The proposal becomes `executed`, or `failed`
-with a reason if the connector raised. The kernel operation closes with a
-receipt. An executed proposal does not send a second time.
+with a reason if the connector raised. When a kernel broker is attached, its operation closes with a receipt.
+A bare executor without that broker does not create a kernel Receipt.
+An executed proposal does not send a second time.
 
 Who authorizes an execution depends on the control posture:
 
@@ -108,10 +124,17 @@ Who authorizes an execution depends on the control posture:
 - A suggestion, a model output or a dismissed Qlippy card never authorizes an
   effect.
 
-Two config keys set the governance. `meeting.allow_actuators` is the master
-switch. `meeting.allowed_actuators` is the allow-list. The shipped defaults are
-`true` and `["*"]`. A host or executor that you build in code stays closed
-unless you enable it. A project can narrow both values.
+The config declares `meeting.allow_actuators=true` and
+`meeting.allowed_actuators=["*"]`. These values are validated and appear in
+setup status. Current Desk and Mission Control executors do not read them;
+they pass `allow_actuators=True` directly and no actuator-ID allow-list.
+Setting these config values does not disable or narrow those execution paths.
+Their actual gates are the stored proposal binding, operation policy,
+registered destination, and connector checks.
+
+A manually constructed `ActuatorExecutor` defaults to closed. Its constructor
+flag and optional exact `allowed_actuator_ids` set are real SDK gates.
+A project config value does not wire those arguments automatically.
 
 ## Write connectors
 
@@ -163,16 +186,21 @@ owner presses. A posture policy cannot press it.
 
 ## Live proposals
 
-When a proposal is stored for a meeting, the host sends a read-only
+When a proposal is stored for a meeting, the plugin-host path sends a read-only
 `actuator_proposed` frame. The frame holds `id`, `meeting_id`, `plugin_id`,
 `status`, `target`, `action`, `preview`, `reversible` and `created_at`. It never
 holds the `payload`. The
 dashboard shows the proposal with Approve and Reject.
 
 Both actions use `POST /api/meetings/{id}/proposals/{pid}/decision`. The body
-sets `decision` to `approved` or `rejected`. The request records the decision. For a registered connector target, it can also
-call the executor. Nothing is sent unless an actuator is registered and its
-capability is on.
+sets `decision` to `approved` or `rejected`. This meeting route records the
+decision and policy snapshot; it does not call an executor or send anything.
+An approved meeting proposal is not a delivered effect.
+
+Execution requires a caller that wires `ActuatorExecutor`. The current Desk
+actuator decision routes and Mission Control do this under their own proposal,
+origin, destination, and authority checks. The sequence diagram above describes
+such a wired execution path, not the meeting decision route alone.
 
 ## Failure and receipts
 
@@ -180,12 +208,10 @@ capability is on.
 - A rejected or unapproved proposal never reaches a connector.
 - An authority mismatch fails before egress. The receipt says no effect
   happened.
-- A refusal, a timeout, a non-2xx reply and a connector exception are failed
-  receipts with retry information. They are never a success.
+- Connector exceptions mark the proposal failed. A transport failure does not prove that the remote effect did not happen; inspect it before retrying.
 - Proposals and broadcasts omit secrets. The UI shows the egress host where the
   call leaves the machine.
-- Every consequential action closes with a receipt, including refusal, failure
-  and an unknown outcome.
+- An admitted kernel operation has its own terminal Receipt. A bare SDK refusal can raise before a kernel claim; inspect the proposal state and error.
 
 ## Test an actuator
 

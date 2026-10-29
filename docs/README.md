@@ -127,4 +127,8 @@ The [modernization record](internal/betterment/MODERNIZATION-IMPLEMENTATION-2026
 The [documentation writing standard](internal/DOCS_STYLE.md) defines language and source-review requirements.
 
 Generated inventories keep their recorded snapshot and evidence labels.
-Read their generation notes before using them as evidence of current release availability.
+The API surface lists reference-app routes, including compatibility handlers that can return a named refusal.
+Consumer tags are static source matches and can include parked clients.
+The capability and platform tables cover a pinned metadata baseline, not every current feature.
+Read each task guide for its active controls and required setup.
+Source review, passing fixture tests, and a working physical deployment are different evidence.

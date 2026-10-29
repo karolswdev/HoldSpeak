@@ -26,10 +26,13 @@ from __future__ import annotations
 import json
 import re
 import tempfile
+import sys
 from pathlib import Path
 from typing import Any, Iterable
 
 REPO = Path(__file__).resolve().parents[1]
+# A shared environment can point at another checkout. Inspect this checkout.
+sys.path.insert(0, str(REPO))
 MANIFEST_JSON = REPO / "docs" / "api-surface.json"
 MANIFEST_MD = REPO / "docs" / "API_SURFACE.md"
 
@@ -248,10 +251,13 @@ def render_markdown(manifest: dict[str, Any]) -> str:
         "regenerate with `uv run python scripts/gen_api_surface.py` after any",
         "route change (the snapshot test fails otherwise).",
         "",
-        "Every HTTP route the runtime serves, with the module that defines it",
-        "and the clients that call it (extracted from the real call sites in",
-        "`web/src` and `apple/`). \"server only\" means no in-repo client calls",
-        "it today.",
+        "Routes registered by the reference FastAPI app, with their defining modules.",
+        "Consumer tags are static matches in `web/src` and Swift sources.",
+        "They can include parked code and do not prove a current UI calls the route.",
+        "The `server only` label means the extractor found no matching client literal.",
+        "A registered compatibility route can return a named refusal instead of an effect.",
+        "For example, the old meeting Slack-export route returns `slack_moved_to_channel`.",
+        "Read the handler and owning guide before treating route presence as feature availability.",
         "Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).",
         "",
         f"Routes: {sum(1 for r in routes if r['methods'] not in (['MOUNT'],))} "

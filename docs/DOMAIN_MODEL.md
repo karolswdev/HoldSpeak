@@ -21,11 +21,11 @@ The [Data model](DATA_MODEL.md) shows the table layout.
 | Receipt | Proof that an operation ended | `kernel_receipts` |
 | Operation | One bounded unit of runtime work | `kernel_operations` |
 | Parent run | An outer run that holds a bounded set of child operations | `kernel_parent_runs` |
-| Route attempt | One physical model call | `inference_route_attempts` |
+| Route attempt | One core-routed model call | `inference_route_attempts` |
 | Project | A context you define, with its meetings and resources | `projects` |
 | Note | Editable working text | `notes` |
 | Thread | Saved conversation, messages, and tool activity | `threads` and Thread child tables |
-| Agent persona | Instructions for a specialist conversation | `recipes` |
+| Mode | Reusable instructions for a Thread conversation | `recipes` |
 | Automation | A job definition with sources, trigger, executor, and output | `workbenches` |
 | Automation occurrence | One task and output produced by a run | `workbench_items`, `workbench_runs` |
 | Drawer | A container for filed work, addressed as a Zone | `directories` and membership records |

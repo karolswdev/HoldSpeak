@@ -16,19 +16,19 @@ graph LR
     Web[Web Desk] -->|HTTP and RuntimeBus| Hub[HoldSpeak hub]
     iPad[iPad and iPhone Swift client] -->|HTTP and runtime Bearer token| Hub
     AIPI[AIPI-Lite bridge] -->|device bridge and audio WebSocket| Hub
-    Coder[Claude Code or Codex hook] -->|loopback HTTP and agent credential| Hub
+    Coder[Claude Code or Codex hook] -->|loopback hook HTTP| Hub
     Firefox[Firefox extension] -->|loopback event POST| Hub
     Hub -->|approved connector| GitHub[GitHub]
     Hub -->|approved connector| Slack[Slack or webhook]
     Hub --> Presence[Qlippy presence]
 ```
 
-Authentication and authority are separate. The runtime Bearer token proves who
-the native HTTP client is; the device audio socket has its own PSK handshake. An
+Authentication and authority are separate. The configured runtime Bearer token authenticates the native HTTP request.
+It does not identify a unique physical device. The device audio socket has its own PSK handshake. An
 owner action, a control posture or a bounded
 grant admits an effect. A local dismiss, a presence card or physical nearness
-is never approval. External effects use the same actuator policy and receipts
-as the Web Desk. See [Authority](AUTHORITY_MODEL.md) and [Kernel](KERNEL.md).
+is never approval. External actions use their owning hub service, authority policy, and receipts.
+A channel send and an actuator proposal have different execution contracts. See [Authority](AUTHORITY_MODEL.md) and [Kernel](KERNEL.md).
 
 ## Companions
 
@@ -46,11 +46,12 @@ See `apple/README.md`.
 
 ## The native hub client
 
-`HTTPDesktopClient` is the only HTTP client in the Swift package. A feature
-adds an extension file, such as `HTTPDesktopClient+Proposals.swift`. A feature
-does not add its own HTTP stack.
+`HTTPDesktopClient` is the shared hub API client in the Swift package.
+A hub feature adds an extension file, such as `HTTPDesktopClient+Proposals.swift`.
+Separate sync, model-endpoint, and download providers also use HTTP.
+Those provider paths are not extensions of the hub API client.
 
-- It builds URLs from a base URL and adds the Bearer token to each request.
+- It builds URLs from a base URL and adds the configured Bearer token when present.
 - The default timeout is 8 seconds.
 - The WebSocket uses the `holdspeak.v1` subprotocol. The token is not in the
   URL.

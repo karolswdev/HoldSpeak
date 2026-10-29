@@ -1,0 +1,398 @@
+{
+  "lane": "agents",
+  "audited_at": "2026-10-29",
+  "base": "4dce2796d",
+  "scope": "agents-owned extended guides; no product, test, package, or generated-region edits",
+  "documents": [
+    {
+      "path": "docs/AGENTS_AND_THREADS.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/AGENTS_AND_THREADS.md:64-80",
+          "source": "holdspeak/services/thread_service.py:117-121,757-770",
+          "finding": "Thread turns use the ten-pass and thirty-second tool limits, and the admitted tool palette is frozen for the turn."
+        },
+        {
+          "document": "docs/AGENTS_AND_THREADS.md:90-101",
+          "source": "holdspeak/services/thread_tools.py:519-552,577-616",
+          "finding": "The allow/deny/ask and YOLO/Normal/Secure decision table, result byte cap, and ten-step chat lease match the active executor."
+        },
+        {
+          "document": "docs/AGENTS_AND_THREADS.md:122-130",
+          "source": "holdspeak/grounding.py:25-28",
+          "finding": "Grounding limits are 16 references and a 12,000-character transcript."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No live Ask stream or provider call was run; the brief prohibits live Desk/provider actions."]
+    },
+    {
+      "path": "docs/AUTOMATION.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/AUTOMATION.md:15-23,47-55",
+          "source": "holdspeak/services/workbench_runner.py:504-532",
+          "finding": "The run and hand-to-agent execution paths are distinct, and an agent hand can carry an optional reviewer choice."
+        },
+        {
+          "document": "docs/AUTOMATION.md:95-102",
+          "source": "holdspeak/services/inference_route_plan_service.py:1-6,187-199",
+          "finding": "Route execution is based on persisted frozen evidence; the caller cannot supply a replacement leg or budget."
+        },
+        {
+          "document": "docs/AUTOMATION.md:106-120",
+          "source": "holdspeak/services/workbench_runner.py:534-548",
+          "finding": "Instruction automations mint one occurrence per run; the no-instruction path retains queue behavior."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No scheduled run was started; external scheduler behavior remains unobserved."]
+    },
+    {
+      "path": "docs/CODER_INTEGRATION.md",
+      "result": "changed",
+      "claims": [
+        {
+          "document": "docs/CODER_INTEGRATION.md:19-32",
+          "source": "holdspeak/services/agent_hand_service.py:369-381,545-565",
+          "finding": "Working-slot counting and queued hand output match the six-default setting and queue response."
+        },
+        {
+          "document": "docs/CODER_INTEGRATION.md:41-47",
+          "source": "holdspeak/services/agent_hand_preview.py:184-225",
+          "finding": "The preview is owner-only and has no launch side effect while it validates profile and preflight data."
+        },
+        {
+          "document": "docs/CODER_INTEGRATION.md:71-76",
+          "source": "holdspeak/services/agent_review.py:60-74,271-306",
+          "finding": "Review metadata starts in awaiting_builder_commit and the reviewer is started only after an observed builder commit; the guide was corrected to say this."
+        },
+        {
+          "document": "docs/CODER_INTEGRATION.md:78-81",
+          "source": "holdspeak/delivery/factory_launch.py:908-928",
+          "finding": "Reviewer launches are durably marked read-only before launch delivery."
+        }
+      ],
+      "changes": ["Corrected Review by wording so queued reviewer scheduling is not described as an immediate launch."],
+      "unknowns": ["No coder process, worktree, or reviewer launch was started."]
+    },
+    {
+      "path": "docs/AGENT_HOOK_INSTALL.md",
+      "result": "changed",
+      "claims": [
+        {
+          "document": "docs/AGENT_HOOK_INSTALL.md:21-42,95-106",
+          "source": "holdspeak/commands/agent_hook.py:239-303,holdspeak/agent_context/hooks.py:347-380",
+          "finding": "The documented latest/templates/install commands and idempotent preservation of foreign hooks match the CLI and installer."
+        },
+        {
+          "document": "docs/AGENT_HOOK_INSTALL.md:108-112",
+          "source": "holdspeak/web/routes/dictation/agent.py:74-105,web/src/pages/cores/dictation/DictationSections.tsx:45-88",
+          "finding": "The hook endpoint and Automation hooks face expose templates plus latest-session SET status, not voice-reply readiness; the guide now says so."
+        },
+        {
+          "document": "docs/AGENT_HOOK_INSTALL.md:114-125",
+          "source": "holdspeak/web/routes/system/coders.py:202-224,holdspeak/agent_context/models.py:35-38",
+          "finding": "Voice readiness belongs to /api/coders/status and uses blockers; fresh-session timing is 30 minutes."
+        }
+      ],
+      "changes": ["Separated hook status from the /api/coders/status voice-reply readiness contract."],
+      "unknowns": ["No native Claude, Codex, or pi hook was installed or exercised."]
+    },
+    {
+      "path": "docs/MCP_SIDECAR.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/MCP_SIDECAR.md:71-96",
+          "source": "holdspeak/mcp/server.py:1-39,107-115,191-213",
+          "finding": "The sidecar is a loopback HTTP proxy to the running hub, does not open the database, and answers only handshake/ping locally when no hub is live."
+        },
+        {
+          "document": "docs/MCP_SIDECAR.md:159-180",
+          "source": "holdspeak/mcp/server.py:12-18,216-220",
+          "finding": "The sidecar forwards the hub-owned tool decision and does not create a second service authority."
+        },
+        {
+          "document": "docs/MCP_SIDECAR.md:959-975",
+          "source": "holdspeak/mcp/palettes.py:11-24",
+          "finding": "PROJECT adds kernel.receipt and channel tools to the project family, consistent with the guide's palette explanation."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["The generated roster was not regenerated; no live MCP client handshake was run."]
+    },
+    {
+      "path": "docs/REACH_RUNNER.md",
+      "result": "changed",
+      "claims": [
+        {
+          "document": "docs/REACH_RUNNER.md:3-17,43-66",
+          "source": "scripts/reach_runner.py:1-15,309-358",
+          "finding": "The stdlib-only client, required hub/token/rooms arguments, and poll/timeout defaults match the script."
+        },
+        {
+          "document": "docs/REACH_RUNNER.md:56-70",
+          "source": "scripts/reach_runner.py:213-243",
+          "finding": "The cadence_run_now console label calls heartbeat.run_now and --rooms all excludes archived projects."
+        },
+        {
+          "document": "docs/REACH_RUNNER.md:77-86",
+          "source": "scripts/reach_runner.py:288-306",
+          "finding": "active_run_exists is treated as a successful, already-resolved run; the exit-code table now includes it under code 0."
+        }
+      ],
+      "changes": ["Added already-active Steward runs to the documented successful exit-code cases."],
+      "unknowns": ["No remote hub, credential, or external scheduler was contacted."]
+    },
+    {
+      "path": "docs/GATE.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/GATE.md:7-35,37-44",
+          "source": "holdspeak/commands/gate.py:35-80,holdspeak/coder_gate.py:45-58",
+          "finding": "Install prints a block, arm is separate, repository allow is required, and schema/TTL/timeout defaults match."
+        },
+        {
+          "document": "docs/GATE.md:51-79",
+          "source": "holdspeak/coder_gate.py:61-66,502-595",
+          "finding": "The redacted head, held-call lifetime, decision states, restart invalidation, and fail-closed behavior match the hook implementation."
+        },
+        {
+          "document": "docs/GATE.md:87-89",
+          "source": "holdspeak/coder_gate.py:275-341,365-379",
+          "finding": "Session credentials are issued for the agent session and revoked at session end."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No gate hook was armed and no tool call was held."]
+    },
+    {
+      "path": "docs/CADENCE.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/CADENCE.md:3-10,41-67",
+          "source": "holdspeak/config/integrations.py:213-245,holdspeak/services/heartbeat_service.py:153-160",
+          "finding": "Cadence loop and morning Brief defaults, timing fields, and retired quiet-hours read path match active configuration and Heartbeat policy."
+        },
+        {
+          "document": "docs/CADENCE.md:14-26",
+          "source": "holdspeak/main.py:283-308,holdspeak/commands/cadence.py:23-59",
+          "finding": "All documented cadence commands, including audit --out, are registered and dispatch to the shown handlers."
+        },
+        {
+          "document": "docs/CADENCE.md:84-90",
+          "source": "holdspeak/commands/cadence.py:46-59",
+          "finding": "The audit is a local JSON export and the guide correctly separates recorded execution outcome from accepted text."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No cadence loop, Telegram delivery, or external destination was run."]
+    },
+    {
+      "path": "docs/INTEGRATIONS.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/INTEGRATIONS.md:7-18,84-88",
+          "source": "holdspeak/connector_sdk.py:8-20,51-66",
+          "finding": "Connector manifests, explicit permissions, dry-run lifecycle, and absence of a remote marketplace match the SDK contract."
+        },
+        {
+          "document": "docs/INTEGRATIONS.md:20-31",
+          "source": "holdspeak/services/confluence_provider.py:1097-1110",
+          "finding": "The Confluence no-page-search limitation is explicit in the provider and correctly documented."
+        },
+        {
+          "document": "docs/INTEGRATIONS.md:68-82",
+          "source": "holdspeak/web/routes/desk_actuators.py:20-49",
+          "finding": "The documented actuator proposal/decision routes are the active routes, with a terminal failure recorded by the service layer."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No provider sign-in, connector command, or external actuator was invoked."]
+    },
+    {
+      "path": "docs/MODELS.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/MODELS.md:45-71",
+          "source": "holdspeak/intel/cli_engine.py:1-31,67-161",
+          "finding": "CLI engines are one-shot inference subprocesses with their own sign-in, scoped MCP behavior, and per-preset tool differences; they are not coder handoffs."
+        },
+        {
+          "document": "docs/MODELS.md:77-89",
+          "source": "holdspeak/inference_targets.py:389-450",
+          "finding": "Readiness is a point-in-time target projection and is distinct from a successful provider call."
+        },
+        {
+          "document": "docs/MODELS.md:100-109",
+          "source": "holdspeak/inference_targets.py:607-644,holdspeak/services/inference_route_plan_service.py:1-6",
+          "finding": "Placement precedence and frozen ordered routes are source-owned; later settings do not silently retarget an active run."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No engine readiness probe, download, paid probe, or CLI process was run."]
+    },
+    {
+      "path": "docs/MODEL_RUNTIME.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/MODEL_RUNTIME.md:25-45",
+          "source": "holdspeak/inference_capabilities.py:1238-1243",
+          "finding": "The documented structured, audio, and tool retry counts/deadlines match registry data."
+        },
+        {
+          "document": "docs/MODEL_RUNTIME.md:47-60",
+          "source": "holdspeak/services/inference_route_plan_service.py:1-6,holdspeak/services/inference_fallback_controller.py:187-199",
+          "finding": "Assignment is separate from execution and fallback reserves only the next lawful child from frozen evidence."
+        },
+        {
+          "document": "docs/MODEL_RUNTIME.md:74-100",
+          "source": "holdspeak/intel/cli_engine.py:1-31,holdspeak/mcp/palettes.py:96-105",
+          "finding": "CLI adapters and coder handoffs remain separate, and tool support does not grant configuration or nested-delegation authority."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["The guide describes the governed inference path; SIP/phone speech adapters were not treated as InferenceRunner evidence in this audit."]
+    },
+    {
+      "path": "docs/INFERENCE_TARGETS.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/INFERENCE_TARGETS.md:14-19",
+          "source": "holdspeak/inference_targets.py:41-48,607-644",
+          "finding": "Invocation, Workbench, agent, then global placement precedence and the named this_machine default match source."
+        },
+        {
+          "document": "docs/INFERENCE_TARGETS.md:23-33",
+          "source": "holdspeak/inference_targets.py:345-386,742-826",
+          "finding": "Paired-device readiness can be projected, but execution is explicitly refused; same-device and cloud legs are distinct."
+        },
+        {
+          "document": "docs/INFERENCE_TARGETS.md:44-55",
+          "source": "holdspeak/inference_targets.py:679-739",
+          "finding": "A same-device child is built only from its frozen local model path and cannot silently become a cloud child."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No target readiness check or execution attempt was performed."]
+    },
+    {
+      "path": "docs/EXECUTION_DESTINATIONS.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/EXECUTION_DESTINATIONS.md:20-33",
+          "source": "holdspeak/inference_targets.py:607-644,742-826",
+          "finding": "Destination kinds, placement resolution, paired-device refusal, and separate cloud route boundaries match the execution factory."
+        },
+        {
+          "document": "docs/EXECUTION_DESTINATIONS.md:35-54",
+          "source": "holdspeak/services/inference_route_plan_service.py:1-6,holdspeak/services/inference_fallback_controller.py:187-199",
+          "finding": "Readiness does not probe every target, and active route execution cannot be altered by assignment edits."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No local, private-network, paired, or cloud destination was probed."]
+    },
+    {
+      "path": "docs/TROUBLESHOOTING.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/TROUBLESHOOTING.md:70-90",
+          "source": "holdspeak/services/agent_hand_service.py:545-565,holdspeak/agent_context/models.py:35-38",
+          "finding": "The documented launch refusal/queue advice matches the queue response and stale-session freshness boundary."
+        },
+        {
+          "document": "docs/TROUBLESHOOTING.md:96-106",
+          "source": "holdspeak/mcp/server.py:20-23,holdspeak/runtime/ownership.py:55-70",
+          "finding": "The sidecar database boundary and hub ownership refusal guidance match active runtime behavior."
+        },
+        {
+          "document": "docs/TROUBLESHOOTING.md:111-124",
+          "source": "holdspeak/commands/gate.py:35-80,holdspeak/commands/doctor.py:1729-1761",
+          "finding": "Control-mode and doctor commands/exit behavior are valid."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No fault recovery, provider retry, or live hub restart was exercised."]
+    },
+    {
+      "path": "docs/OPERATIONS.md",
+      "result": "pass",
+      "claims": [
+        {
+          "document": "docs/OPERATIONS.md:16-24,30-51",
+          "source": "holdspeak/commands/doctor.py:1729-1761,holdspeak/runtime/ownership.py:55-70",
+          "finding": "Doctor scope/strict exit behavior, owner-lock refusal, and unowned-DB scheduled-work-off behavior match source."
+        },
+        {
+          "document": "docs/OPERATIONS.md:85-107",
+          "source": "holdspeak/config/agents.py:1-30,holdspeak/intel/cli_engine.py:1-31",
+          "finding": "The coding-agent slot default and CLI-engine-versus-coder distinction are explicit in source."
+        },
+        {
+          "document": "docs/OPERATIONS.md:111-130",
+          "source": "holdspeak/commands/gate.py:35-80,holdspeak/coder_gate.py:45-58",
+          "finding": "Control-mode commands and Gate defaults are valid operational guidance."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["No production hub, backup, restore, or hardware state was touched."]
+    },
+    {
+      "path": "docs/CONFIGURATION_REFERENCE.md",
+      "result": "pass_with_read_only_metadata_note",
+      "claims": [
+        {
+          "document": "docs/CONFIGURATION_REFERENCE.md:7-13",
+          "source": "holdspeak/config/core.py:284-316,holdspeak/config/agents.py:25-30",
+          "finding": "The generated-document caveat and Config/Agents declarations are accurate."
+        },
+        {
+          "document": "docs/CONFIGURATION_REFERENCE.md:62-70",
+          "source": "holdspeak/config/integrations.py:213-245",
+          "finding": "Cadence declaration rows and source links resolve to the current declarations, including retained quiet-hours compatibility fields."
+        },
+        {
+          "document": "docs/CONFIGURATION_REFERENCE.md:141-159",
+          "source": "holdspeak/config/model.py:14-80",
+          "finding": "Model and LLM runtime declaration rows resolve to current source declarations."
+        }
+      ],
+      "changes": [],
+      "unknowns": ["The table is declaration-only and does not establish migrated/effective runtime values, as its own warning states."]
+    }
+  ],
+  "read_only_regions": [
+    {
+      "path": "docs/CONFIGURATION_REFERENCE.md:5",
+      "status": "metadata_stale_or_historical",
+      "evidence": "Source snapshot 675401a857b85336d4acaa8c65383dfc9636e4c8 is an ancestor of base 4dce2796d; all 160 linked declaration lines nevertheless resolve to current declarations.",
+      "action": "Do not edit in this lane; root may regenerate the generated reference if snapshot metadata must match the current source."
+    },
+    {
+      "path": "docs/MCP_SIDECAR.md generated roster region",
+      "status": "not_modified",
+      "evidence": "The sidecar/Palette claims match holdspeak/mcp/server.py:1-39 and holdspeak/mcp/palettes.py:11-24; generated roster editing was out of scope.",
+      "action": "No regeneration requested from this audit."
+    }
+  ],
+  "cross_lane_defects": [],
+  "verification": {
+    "commands": [
+      "python3 scripts/check_docs.py docs/AGENTS_AND_THREADS.md docs/AUTOMATION.md docs/CODER_INTEGRATION.md docs/AGENT_HOOK_INSTALL.md docs/MCP_SIDECAR.md docs/REACH_RUNNER.md docs/GATE.md docs/CADENCE.md docs/INTEGRATIONS.md docs/MODELS.md docs/MODEL_RUNTIME.md docs/INFERENCE_TARGETS.md docs/EXECUTION_DESTINATIONS.md docs/TROUBLESHOOTING.md docs/OPERATIONS.md docs/CONFIGURATION_REFERENCE.md",
+      "git diff --check"
+    ],
+    "tests_not_run": "No product tests, installs, live Desk/provider actions, or browser/hardware actions per brief."
+  }
+}

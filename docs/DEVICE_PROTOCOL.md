@@ -153,7 +153,7 @@ Each device has a buffer of 2 seconds of audio. When the buffer is full, the run
 
 | Field | Meaning |
 |---|---|
-| `text` | The text for the LCD. The runtime replaces `{label}` with the device label. The runtime limits the length to 150 characters. |
+| `text` | The text for the LCD. The runtime replaces `{label}` with the device label. LCD-oriented helpers truncate their payload to 150 characters; the low-level status emitter passes text through, and runtime query responses are capped at 500 characters. |
 | `ttl_ms` | Display time in milliseconds. `0` means until the next status. |
 
 ### Voice typing

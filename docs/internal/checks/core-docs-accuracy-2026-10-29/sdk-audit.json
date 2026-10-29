@@ -1,0 +1,129 @@
+{
+  "audit": "core-docs-accuracy-2026-10-29",
+  "lane": "sdk",
+  "source_base": "4dce2796d",
+  "rows": [
+    {
+      "path": "docs/ACTUATOR_DEVELOPMENT.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "9-15",
+          "claim": "Approval records the material authority binding, and YOLO can authorize a fixed registered destination from the captured posture without a new per-effect preview.",
+          "source": "holdspeak/db/actuators.py:262-395; holdspeak/actuator_authority.py:15-90; holdspeak/web/routes/actuator_shared.py:108-152; holdspeak/operation_policy.py:193-374",
+          "result": "Corrected the universal owner-preview wording to describe the stored binding and the conditional YOLO seam; free destinations still require an owner decision."
+        },
+        {
+          "document_lines": "41-47,125-133",
+          "claim": "The bare PluginHost capability gate is separate from actuator execution policy and meeting configuration defaults.",
+          "source": "holdspeak/plugins/host.py:138-169,284-291,456-462; holdspeak/web_runtime.py:255-271; holdspeak/config/meeting.py:117-131; holdspeak/plugins/actuator_executor.py:60-117",
+          "result": "Corrected the capability statement and distinguished default-disabled PluginHost capability, shipped meeting values true/[\"*\"], and the executor's explicit master/allow-list arguments."
+        },
+        {
+          "document_lines": "82-93",
+          "claim": "Companion proposal idempotency includes target, optional source reference, and target-specific content; webhook body is hashed, not configured URL.",
+          "source": "holdspeak/services/actuator_service.py:50-85",
+          "result": "Corrected the key description to GitHub repo|title|text and webhook body, and stated that changing only the webhook destination does not guarantee a new proposal."
+        },
+        {
+          "document_lines": "97-113,171-181,183-208",
+          "claim": "The executor checks approval, policy, authority parity and connector results; built-in write paths and wire events omit the machine payload.",
+          "source": "holdspeak/plugins/actuator_executor.py:92-145; holdspeak/plugins/gated_connector.py:137-186,211-253; holdspeak/web/routes/actuator_shared.py:92-105,233-296; holdspeak/plugins/builtin/github_pr_actuator.py:1-6,19-31,83-98",
+          "result": "Source-checked unchanged gate order, connector manifest limits, result-event redaction, and GitHub PR connector limits."
+        }
+      ],
+      "changes": [
+        "Replaced the universal per-effect owner-preview rule with proposal binding and conditional YOLO authority.",
+        "Separated PluginHost capability admission from executor policy and meeting config defaults.",
+        "Corrected service idempotency material and removed the unsupported Desk-subject receipt claim.",
+        "Qualified live proposal wording by path."
+      ],
+      "unknowns": [
+        "No live Desk, provider, webhook, GitHub, or device flow was run under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/CONNECTOR_DEVELOPMENT.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "13-20,147-152",
+          "claim": "A connector pack is discovered through the registry; a new pack gets manifest/CLI preview data, while row previews require a dry_run branch.",
+          "source": "holdspeak/connector_pack_loader.py:279-321; holdspeak/activity_connectors.py:90-140; holdspeak/activity_connector_preview.py:97-150",
+          "result": "Added the runtime-restart/registry prerequisite and retained the source-backed distinction between generic manifest preview and connector-specific rows."
+        },
+        {
+          "document_lines": "171-221",
+          "claim": "The fixture example is the committed gh-happy-path fixture and accurately describes the selected harness expectations and registry prerequisite.",
+          "source": "tests/fixtures/connectors/gh-happy-path.json; tests/unit/test_connector_fixture_harness.py:30-48; holdspeak/connector_fixtures.py:252-260",
+          "result": "Replaced the unregistered my_connector example and mismatched one-row expectation with the real gh fixture, its two commands/two annotations, disabled state and gh CLI."
+        },
+        {
+          "document_lines": "223-234",
+          "claim": "The fixture command uses an isolated HOME and the repository test lock.",
+          "source": "scripts/test_lock.py:1-16,70-107",
+          "result": "Corrected the command to use a temporary HOME, scripts/test_lock.py, the selected fixture test and cleanup."
+        },
+        {
+          "document_lines": "46-119,121-152",
+          "claim": "Manifest validation, PermissionGate mappings, preview mutation boundary and payload cap match the active connector SDK.",
+          "source": "holdspeak/connector_sdk.py:103-190,219-420; holdspeak/connector_runtime.py:1-80; holdspeak/activity_connector_preview.py:97-152",
+          "result": "Source-checked these unchanged contract sections; no product behavior or fixture file was edited."
+        }
+      ],
+      "changes": [
+        "Added registry discovery/restart guidance.",
+        "Replaced the fictional fixture with the committed gh-happy-path fixture and selected test.",
+        "Added isolated HOME and scripts/test_lock.py to the test example."
+      ],
+      "unknowns": [
+        "No runtime restart, Activity view, CLI, provider, or live connector preview was run under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/PLUGIN_AUTHORING.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "39-50",
+          "claim": "The pipeline persists host run records and synthesis persists artifacts; PluginHost idempotency is a four-field key in an in-memory host cache with an explicit duplicate bypass.",
+          "source": "holdspeak/plugins/pipeline.py:164-215; holdspeak/plugins/host.py:118-135,439-445,487-506,605-606",
+          "result": "Corrected the persistence owner and replaced the unbounded same-window promise with the exact key, cache scope and allow_duplicate behavior."
+        },
+        {
+          "document_lines": "54-67,211-250",
+          "claim": "PluginHost.register only requires non-empty id/run; plugin pack validation separately requires id/version and enforces manifest shape.",
+          "source": "holdspeak/plugins/host.py:211-217,468-473,598-606; holdspeak/plugin_sdk.py:209-318",
+          "result": "Corrected the id/version contract table and retained the pack manifest requirements."
+        },
+        {
+          "document_lines": "112-146",
+          "claim": "The model-call example's _parse_and_validate method is a skeleton that authors must implement.",
+          "source": "docs/PLUGIN_AUTHORING.md:112-137; holdspeak/plugins/intelligence.py:536-569",
+          "result": "Labeled the example skeleton and made the required parser/shape validation explicit."
+        },
+        {
+          "document_lines": "259-264,303-323",
+          "claim": "The dispatcher, not PluginHost, applies disabled_plugins; bare PluginHost actuator admission is separate from actuator execution policy.",
+          "source": "holdspeak/plugins/dispatch.py:120-162; holdspeak/plugins/host.py:138-169,284-291; holdspeak/web_runtime.py:255-271; holdspeak/plugins/actuator_executor.py:60-117",
+          "result": "Corrected disable ownership and qualified the actuator capability statement for bare host versus web runtime/executor paths."
+        },
+        {
+          "document_lines": "151-207,245-257",
+          "claim": "Renderer registries, routing chains, local pack discovery and pack intent/profile behavior remain as documented.",
+          "source": "holdspeak/plugins/synthesis.py:13-29,745-793; holdspeak/plugins/router.py:12-40,174-218; holdspeak/plugin_pack_loader.py:279-321",
+          "result": "Source-checked unchanged renderer, routing and pack sections; no generated region was edited."
+        }
+      ],
+      "changes": [
+        "Corrected persistence ownership and bounded idempotency semantics.",
+        "Distinguished class registration from pack manifest validation for id/version.",
+        "Labeled the _parse_and_validate example skeleton.",
+        "Corrected dispatcher ownership of disabled_plugins and actuator gate wording."
+      ],
+      "unknowns": [
+        "No model call, runtime launch, pack discovery, live meeting, or provider flow was run under the audit brief."
+      ]
+    }
+  ]
+}

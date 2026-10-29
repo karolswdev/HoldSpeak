@@ -20,9 +20,16 @@ The phone half and the Desk have separate jobs:
   call record.
 
 Use **Settings > Calls > Line > Adapter** to select **The Line** or
-**ai-phone**. With no explicit choice, the service selects The Line when
-baresip or an enrolled node is available, then ai-phone when it is available.
-The relevant process and adapter must still be running.
+**ai-phone**. Selection follows these rules:
+
+1. `HOLDSPEAK_LINE=off` overrides the setting. It selects a detected ai-phone adapter, or none.
+2. Otherwise, an explicit **The Line** or **ai-phone** choice wins.
+3. With no explicit choice, a non-empty `HOLDSPEAK_AI_PHONE` command selects ai-phone.
+4. Otherwise, a found baresip binary or a `calls.line.where` value starting with `node:` selects The Line.
+5. The remaining fallback is a detected ai-phone adapter, or none.
+
+A `node:` setting does not prove enrollment, reachability, or readiness.
+The selected process and adapter must still start successfully.
 
 The call turn uses the configured Calls engine. The source does not require a
 particular provider, host, endpoint, or model name. Read **Settings > Calls**
@@ -50,7 +57,8 @@ read its receipt and the target record.
 
 Calls uses two gates:
 
-1. **Allowed numbers.** Add numbers in **Settings > Calls > Allowed numbers**.
+1. **Your numbers.** Add numbers in **Settings > Calls > Your numbers**. The
+   stored key remains `allowed_numbers`.
    An empty list lets any caller reach the passphrase gate. It does not grant
    Desk access.
 2. **Passphrase.** Calls asks for the configured passphrase at the start of

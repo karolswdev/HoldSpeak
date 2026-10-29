@@ -15,7 +15,7 @@ The app connects to the runtime over your own network (LAN or Tailscale) with a 
 | See and select coding sessions | `GET /api/coders/status`, `POST /api/coders/select`, `POST /api/coders/dismiss`, `POST /api/coders/pin`, `GET /api/coders/sessions` |
 | Reply to or steer a coding session | `POST /api/coders/{key}/steer`, `arm`, `disarm`, `keys`, `kill`, and `GET /api/coders/{key}/peek` |
 | Review activity nudges and the briefing | `GET /api/activity/nudges`, `POST /api/activity/nudges/select`, `POST /api/activity/nudges/{nudge_id}/dismiss`, `GET /api/activity/briefing` |
-| Run saved recipes and chains | `POST /api/recipes/{recipe_id}/run`, `POST /api/chains/{chain_id}/run` |
+| Run saved Modes and Sequences | `POST /api/recipes/{recipe_id}/run`, `POST /api/chains/{chain_id}/run` |
 
 The client is `HTTPDesktopClient` in `apple/Sources/Providers/Desktop/`. A response that is not 2xx raises a typed HTTP error. A payload that does not parse is reported as malformed.
 
@@ -28,7 +28,10 @@ The client is `HTTPDesktopClient` in `apple/Sources/Providers/Desktop/`. A respo
 3. Show the text. You can edit it.
 4. Send the reviewed text to the runtime.
 
-Your Send action is the approval. The app sends text, not audio. Each request has a stable ID. If the app retries, the runtime returns the first receipt. The runtime refuses a different payload under the same ID.
+Your Send action starts delivery. This composer sends text, not audio.
+`VoiceNoteComposer` calls the ordinary remote-dictation method without a `delivery_id`; it does not retry a failed send automatically.
+The separate paired-delivery overload accepts a stable `deliveryID` for receipt-based deduplication.
+Do not assume that this protection applies to the ordinary composer. Inspect an uncertain delivery before repeating it.
 
 ## Meetings and proposals
 
@@ -42,7 +45,9 @@ In **Settings**, **Serve my models to the mesh** is off by default. When on, the
 
 ## Build
 
-See `apple/README.md` for the build, tests, and the device scripts. The Swift package needs macOS 14 or iOS 17 and Swift tools 6.0. To install on a device, run `apple/scripts/meeting-capture-device.sh`.
+See `apple/README.md` for the build, tests, and the device scripts. The Swift package needs macOS 14 or iOS 17 and Swift tools 6.0. `apple/scripts/meeting-capture-device.sh` builds, signs, installs, and launches the meeting-capture target on a physical device.
+It needs the local Xcode and signing setup described in `apple/README.md`.
+This audit did not build or run that target; source and hub-route availability do not prove a working device installation.
 
 ## See also
 

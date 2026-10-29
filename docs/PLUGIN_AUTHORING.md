@@ -42,8 +42,11 @@ flowchart LR
   chain from the meeting profile and the active intents.
 - **Run.** The host calls `run(context)` inside a timeout, after the capability
   checks pass.
-- **Persist.** The host stores the output as an artifact. The key is an
-  idempotency hash, so a second run on the same window changes nothing.
+- **Persist.** The plugin pipeline persists the host's run result, and the
+  synthesis step persists the artifact. The host's idempotency key hashes
+  `meeting_id`, `window_id`, `plugin_id` and `transcript_hash`, so a second run
+  with that same key is deduped while it remains in the same host's in-memory
+  cache. `allow_duplicate=True` bypasses that cache.
 - **Render.** Your renderer turns the stored output into a Markdown block.
 
 Plugins run on saved meetings. They never run on live audio.
@@ -57,8 +60,8 @@ reads every other attribute with a default.
 
 | Attribute | Type | Required | Notes |
 |---|---|---|---|
-| `id` | `str` | Yes | Unique and stable. Lowercase snake_case, for example `decision_capture`. |
-| `version` | `str` | Yes | Recorded on every run result. |
+| `id` | `str` | Yes | `PluginHost.register()` requires a non-empty value. Plugin-pack manifests additionally enforce lowercase `^[a-z][a-z0-9_]{0,31}$`; keep ids unique and stable, for example `decision_capture`. |
+| `version` | `str` | Yes for a pack manifest | `PluginHost.register()` does not enforce it; a missing class attribute is recorded as `unknown`. `validate_manifest()` requires a version for plugin packs. |
 | `kind` | `str` | No | `synthesizer`, `artifact_generator`, `validator`, `signals`, `detector` or `actuator`. |
 | `execution_mode` | `str` | No | `inline` (default) or `deferred`. |
 | `required_capabilities` | `list[str]` | No | `llm`, `actuator`. The host blocks the plugin if a capability is off. |
@@ -129,6 +132,9 @@ class MyPlugin(IntelligenceConsumer):
             raise
         return self._parse_and_validate(raw)
 ```
+
+This example leaves `_parse_and_validate` as a skeleton. Implement the parser
+and reply-shape checks for your plugin before using the class.
 
 Follow these rules:
 
@@ -252,8 +258,9 @@ A complete working pack is
 
 ### Disable a plugin
 
-Add plugin ids to `meeting.disabled_plugins` in the config. The host records a
-disabled plugin as `skipped` and never calls it. The built chain does not
+Add plugin ids to `meeting.disabled_plugins` in the config. The dispatcher
+reads this setting, records a disabled plugin as `skipped` and does not call
+it. The host does not apply this setting itself, and the built chain does not
 change. An empty list runs every plugin in the chain.
 
 ## Test a plugin
@@ -302,8 +309,12 @@ effect. `run()` returns an `ActuatorProposal` dict with `target`, `action`,
 it as `proposed`. A separate authority path and a guarded executor decide
 whether the effect runs.
 
-The `actuator` capability is off by default. A registered actuator is
-`blocked` until the host enables it.
+On a bare `PluginHost`, the `actuator` capability is off by default. A
+registered actuator with `required_capabilities = ["actuator"]` is `blocked`
+until that host enables the capability. The web runtime currently enables only
+`llm` on its plugin host. This capability check is separate from
+`PluginHost.allow_actuators` and the `ActuatorExecutor` execution policy; see
+[Actuator Development](ACTUATOR_DEVELOPMENT.md).
 
 The reference actuators are `followup_ticket_actuator`,
 `github_issue_actuator` and `webhook_post_actuator`. They are not part of

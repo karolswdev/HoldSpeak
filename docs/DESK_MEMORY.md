@@ -3,8 +3,8 @@
 <a id="missed-attention-and-receipts"></a>
 
 The **Memory** app is the current Desk entry for retained work. It opens the
-pages **What I owe** and **What changed this week**, an **Ask your desk** field,
-links to Projects and People, and **RAW** recall.
+pages **What I owe** and **What changed this week**, a **Find or ask your desk**
+field, links to Projects and People, and recall rows.
 
 The old **Missed** title remains as an inbound anchor for the attention and
 receipt projection API. It is not the name of the current Memory app. The
@@ -15,13 +15,14 @@ records or act as an audit log.
 
 1. Open **Go > Memory** or select **Memory** in the Dock.
 2. Read **What I owe** and **What changed this week**.
-3. Enter a question in **Ask your desk**, then select **Ask**.
+3. Enter words or a question in **Find or ask your desk**, then select **Ask**.
 4. Open a Project or person link when you need its narrower context.
-5. Open **RAW** when you need recall states and source references.
+5. Use the recall rows when you need recall states and source references.
 
 The unscoped Memory app reads Desk memory. A Project scope opens that Project's
-Room. A query scope opens recall for that query. **Ask your desk** opens Ask
-without an About chip, so it starts with whole-Desk retrieval rules.
+Room. A query scope opens recall for that query. **Find or ask your desk** sends
+a question to Ask without an About chip, so it starts with whole-Desk retrieval
+rules.
 
 Standing pages are read operations. They do not make a model call or write a
 record at read time. A page sentence is served only while its cited sources
@@ -79,7 +80,7 @@ The response identifies counts and whether more rows exist.
 | --- | --- |
 | Memory says **Not written yet.** | Check the named `memory.page` engine and source records. A read does not build a page. |
 | A page has no sentence | Check whether its cited sources are still live in the Desk or Project scope. |
-| Ask your desk has no answer | Check Ask's engine, sources, tools, and permission result. |
+| Find or ask your desk has no answer | Check Ask's engine, sources, tools, and permission result. |
 | Meaning search is unavailable | Open its Settings control and check the local index state. |
 | People is missing from Memory | Open People separately. Protected People content is not copied into Memory. |
 | An old Missed link is empty | Open **Memory** for current pages, or query the projection API for attention and receipts. |

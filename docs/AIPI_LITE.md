@@ -2,7 +2,8 @@
 
 AIPI-Lite is an optional ESP32-S3 device. It runs ESPHome firmware. A Python bridge connects it to HoldSpeak.
 
-The device gives you a button and a small LCD. You can dictate, record a meeting, add a bookmark, and answer a waiting coding agent by voice.
+The bridge implements button, LCD, dictation, meeting, bookmark, and coding-agent reply paths.
+The steps below describe those implemented paths. They do not establish that a particular board, firmware, or network has been tested.
 
 ## How it connects
 
@@ -16,7 +17,8 @@ graph LR
 
 - The device holds no model keys. It sends audio and device control/health frames; the bridge sends status text back to the device.
 - The bridge runs on the same machine as HoldSpeak. It connects to `ws://127.0.0.1:<port>/api/devices/audio`.
-- The device reaches the bridge over your Wi-Fi, a phone hotspot, a VPN, or a private tunnel. HoldSpeak has no hosted relay.
+- The device must reach the bridge through the ESPHome API and UDP audio path. Wi-Fi or a phone hotspot must provide that reachability.
+Remote routing or a tunnel needs separate network setup; this guide does not establish a device-native VPN client. HoldSpeak has no hosted relay.
 - The bridge has its own Python environment in `aipi-lite/.venv`. This keeps ESPHome pins out of the main runtime.
 - The bridge authenticates with a shared secret (PSK). Run `holdspeak device-psk show` to read it. Run `holdspeak device-psk rotate` to replace it.
 

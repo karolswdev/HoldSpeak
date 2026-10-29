@@ -76,7 +76,7 @@ the hub's run and Receipt records. The exit codes are:
 
 | Code | Meaning |
 | --- | --- |
-| `0` | All requested calls completed, or a configured Steward was disabled or in cooldown |
+| `0` | All requested calls completed, a run was already active, or a configured Steward was disabled or in cooldown |
 | `1` | A tool failed, or a Steward run failed or timed out |
 | `2` | Connection or MCP initialization failed |
 | `3` | Credential was missing or refused |

@@ -5,13 +5,17 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import json
+import sys
 from typing import Any
 
+# Resolve validator modules from this checkout, even in a shared environment.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 try:  # Works both as ``python scripts/...`` and as an imported test module.
-    from scripts.validate_architecture import ROOT, REGISTRY_TYPES, ValidationResult, validate
+    from scripts.validate_architecture import ROOT, REGISTRY_TYPES, validate
     from scripts.check_doc_coverage import generate as generate_coverage
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    from validate_architecture import ROOT, REGISTRY_TYPES, ValidationResult, validate
+    from validate_architecture import ROOT, REGISTRY_TYPES, validate
     from check_doc_coverage import generate as generate_coverage
 
 
@@ -63,7 +67,7 @@ def _platform_rows(capabilities: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _capability_markdown(records: list[dict[str, Any]], snapshot: str | None, missing: list[str]) -> str:
-    lines = ["# Capabilities", "", "<!-- GENERATED FILE: scripts/generate_capability_docs.py -->", "", f"Source snapshot: `{snapshot or 'unknown'}`.", "", "This catalogue is generated from the Philo metadata shards. Status, evidence and release availability are separate fields.", f"Missing shards: **{', '.join(missing) if missing else 'none'}**.", "", "| Capability | Name | Purpose | Status | Exposure | Evidence | Owner observed | Egress |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    lines = ["# Capabilities", "", "<!-- GENERATED FILE: scripts/generate_capability_docs.py -->", "", f"Source snapshot: `{snapshot or 'unknown'}`.", "", "This catalogue is generated from the Philo metadata shards. Status, evidence and release availability are separate fields.", "The pinned snapshot is a metadata baseline, not an exhaustive list of current features.", "Regeneration does not rerun tests or establish current release availability.", f"Missing shards: **{', '.join(missing) if missing else 'none'}**.", "", "| Capability | Name | Purpose | Status | Exposure | Evidence | Owner observed | Egress |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     for row in records:
         lines.append(f"| `{row.get('id')}` | {row.get('name')} | {row.get('purpose')} | {row.get('status')} | {row.get('exposure')} | {row.get('evidence_level')} | {'yes' if row.get('owner_observed') else 'no'} | {'possible' if row.get('egress_possible') else 'local'} |")
     lines.extend(["", "## Reading the catalogue", "", "A source path proves that a file was inspected. A test assertion proves what was inspected. A passing execution and owner observation are separate evidence. An unverified or missing shard stays visible in the generated metadata.", ""])
@@ -71,7 +75,7 @@ def _capability_markdown(records: list[dict[str, Any]], snapshot: str | None, mi
 
 
 def _platform_markdown(rows: list[dict[str, Any]], snapshot: str | None, missing: list[str]) -> str:
-    lines = ["# Platform matrix", "", "<!-- GENERATED FILE: scripts/generate_capability_docs.py -->", "", f"Source snapshot: `{snapshot or 'unknown'}`.", "", f"Missing shards: **{', '.join(missing) if missing else 'none'}**.", "", "| Capability | Platform | Availability | Status |", "| --- | --- | --- | --- |"]
+    lines = ["# Platform matrix", "", "<!-- GENERATED FILE: scripts/generate_capability_docs.py -->", "", f"Source snapshot: `{snapshot or 'unknown'}`.", "", "This matrix covers the capabilities in the pinned metadata baseline.", "It is not an exhaustive current support matrix. Regeneration does not verify a device or deployment.", f"Missing shards: **{', '.join(missing) if missing else 'none'}**.", "", "| Capability | Platform | Availability | Status |", "| --- | --- | --- | --- |"]
     for row in rows:
         lines.append(f"| `{row['capability_id']}` | `{row['platform']}` | {row['availability']} | {row['status']} |")
     lines.extend(["", "Availability is a source-backed classification. It does not establish a release or owner observation.", ""])

@@ -1,11 +1,11 @@
 # Places
 
-Choose the Desk atmosphere in **Settings > Wallpaper**. Use **Hide the menus**
+Choose the Desk atmosphere in **Settings > Desk > Wallpaper**. Use **Hide the menus**
 when you want fewer navigation controls around open work.
 
 ## Change places
 
-1. Open **Settings > Wallpaper**.
+1. Open **Settings > Desk > Wallpaper**.
 2. Select an atmosphere with its radio control.
 3. Return to the Desk.
 
@@ -38,7 +38,7 @@ state. The scenes do not acquire a microphone or start product work.
 
 ### In Jupiter's orbit
 
-Open **Settings > Wallpaper** and select **In Jupiter's orbit**. The scene uses
+Open **Settings > Desk > Wallpaper** and select **In Jupiter's orbit**. The scene uses
 local maps and its own scene timing. Its sizes and times do not show current
 positions in space.
 
@@ -58,7 +58,8 @@ Use **Motion** in Wallpaper settings to pause or resume animation. The
 operating system reduced-motion preference takes precedence. Hidden tabs pause
 the scenes.
 
-Room sound is off by default. When enabled, HoldSpeak generates quiet room
+Room sound is off by default. Open **Settings > Desk > Sounds & Presence** and
+enable **Desk sounds**. HoldSpeak then generates quiet room
 sound locally. It reduces sound while the browser microphone is open or the hub
 reports recording. It suspends sound in a hidden tab. **Quiet Desk** has no
 room sound.
@@ -69,9 +70,9 @@ room sound.
 2. Continue work in the open windows.
 3. Select **Back to Desk** to restore navigation controls.
 
-**Command/Ctrl+Shift+F** toggles Settle in. The first **Escape** restores the
-Desk without closing the focused window or draft. The recorder state and
-record control remain available.
+The current Desk has no dedicated keyboard shortcut for this view. The first
+**Escape** restores the Desk without closing the focused window or draft. The
+recorder state and record control remain available.
 
 Settle in is a temporary browser view state. It does not change recording,
 enable sound, or save a new window layout.
@@ -81,7 +82,7 @@ enable sound, or save a new window layout.
 | Problem | Action |
 | --- | --- |
 | An animated scene stays still | Check **Motion** and the operating system reduced-motion setting. |
-| There is no room sound | Enable sound in Wallpaper. Check whether recording or a hidden tab suspended it. |
+| There is no room sound | Enable **Desk sounds** in **Settings > Desk > Sounds & Presence**. Check whether recording or a hidden tab suspended it. |
 | Favorites are absent in another browser | Set favorites in that browser. The preference does not synchronize through the hub. |
 | Navigation controls are absent | Select **Back to Desk** or press **Escape**. |
 | A scene is distracting or slow | Select **Quiet Desk** or pause animation. |

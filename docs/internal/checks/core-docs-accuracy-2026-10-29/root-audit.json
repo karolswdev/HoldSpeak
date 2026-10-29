@@ -1,0 +1,342 @@
+{
+  "lane": "root",
+  "source_base": "4dce2796d",
+  "rows": [
+    {
+      "path": "docs/AIPI_LITE.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/AIPI_LITE.md:6",
+          "source": "holdspeak/device_audio_ws.py:343",
+          "result": "Device paths are implemented in the dispatcher; physical behavior is not established by source alone."
+        },
+        {
+          "document": "docs/AIPI_LITE.md:12",
+          "source": "scripts/aipi_bridge.sh:37",
+          "result": "The bridge helper runs the local bridge; remote routing needs separate network setup."
+        }
+      ],
+      "changes": [
+        "Qualify hardware availability and network reachability."
+      ],
+      "unknowns": [
+        "No board, ESPHome firmware, UDP network, microphone, or LCD run."
+      ]
+    },
+    {
+      "path": "docs/AIPI_LITE_DEV_WORKFLOW.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/AIPI_LITE_DEV_WORKFLOW.md:49",
+          "source": "scripts/aipi_test.sh:40",
+          "result": "The wrapper invokes pytest directly without isolating HOME or taking the machine lock."
+        },
+        {
+          "document": "docs/AIPI_LITE_DEV_WORKFLOW.md:82",
+          "source": "scripts/aipi_bridge.sh:37",
+          "result": "Relative bridge arguments resolve under aipi-lite, so the WAV example now uses an absolute path."
+        }
+      ],
+      "changes": [
+        "Use isolated HOME and the lock in test examples; clarify helper working directory."
+      ],
+      "unknowns": [
+        "No setup install, firmware compilation, flash, or physical bridge check was run."
+      ]
+    },
+    {
+      "path": "docs/IPAD.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/IPAD.md:32",
+          "source": "apple/Sources/RuntimeCore/Companion/VoiceNoteComposer.swift:112",
+          "result": "The ordinary composer calls the non-idempotent overload."
+        },
+        {
+          "document": "docs/IPAD.md:33",
+          "source": "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift:182",
+          "result": "The three-argument method forwards a nil delivery ID; stable delivery IDs are optional on a separate overload."
+        },
+        {
+          "document": "docs/IPAD.md:48",
+          "source": "apple/Package.swift:1",
+          "result": "Declared platforms are macOS14 and iOS17 with Swift tools6.0."
+        }
+      ],
+      "changes": [
+        "Remove universal stable-ID/retry guarantee; distinguish the native meeting-capture build helper."
+      ],
+      "unknowns": [
+        "No Swift build, signing, installed iPad app, mesh serving, or physical dictation delivery."
+      ]
+    },
+    {
+      "path": "docs/COMPANIONS_ARCHITECTURE.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/COMPANIONS_ARCHITECTURE.md:49",
+          "source": "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift:71",
+          "result": "Hub features share this adapter; it is not the only network client in the Swift package."
+        },
+        {
+          "document": "docs/COMPANIONS_ARCHITECTURE.md:51",
+          "source": "apple/Sources/Providers/Sync/HTTPSyncProvider.swift:31",
+          "result": "A separate sync provider uses HTTP."
+        },
+        {
+          "document": "docs/COMPANIONS_ARCHITECTURE.md:55",
+          "source": "apple/Sources/Providers/Desktop/HTTPDesktopClient.swift:76",
+          "result": "The optional configured Bearer token is sent in headers; the WebSocket uses holdspeak.v1."
+        }
+      ],
+      "changes": [
+        "Narrow the shared-client claim, optional token behavior, and effect-policy wording."
+      ],
+      "unknowns": [
+        "Native clients and network transports were source-checked only."
+      ]
+    },
+    {
+      "path": "docs/DESK_ARCHITECTURE.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/DESK_ARCHITECTURE.md:54",
+          "source": "web/src/desk/screen/compose.ts:405",
+          "result": "Agent icons are parked; current Screen composition adds drawers, Projects, Notes, and explicit kept members."
+        },
+        {
+          "document": "docs/DESK_ARCHITECTURE.md:74",
+          "source": "holdspeak/services/desk_window_service.py:353",
+          "result": "Registered window rows remain hub-owned; contextual exceptions are explicit in the service."
+        }
+      ],
+      "changes": [
+        "Remove the stale live-agent floor claim."
+      ],
+      "unknowns": [
+        "No new owner Desk session or live multi-browser reconciliation was performed."
+      ]
+    },
+    {
+      "path": "docs/DESK_OBJECT_MODEL.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/DESK_OBJECT_MODEL.md:17",
+          "source": "web/src/lib/primitives.ts:471",
+          "result": "Separate static descriptors from current creation and host affordances."
+        },
+        {
+          "document": "docs/DESK_OBJECT_MODEL.md:80",
+          "source": "web/src/desk/verbRegistry.ts:321",
+          "result": "The old New Thread verb remains callable but has no menu or palette exposure."
+        },
+        {
+          "document": "docs/DESK_OBJECT_MODEL.md:103",
+          "source": "web/src/desk/applications.ts:128",
+          "result": "Current app bindings are Today, Meetings, People, Agents, Speak; Programs usesCtrl7."
+        },
+        {
+          "document": "docs/DESK_OBJECT_MODEL.md:190",
+          "source": "web/src/desk/components/DeskWindow.tsx:1272",
+          "result": "Escape close is a host option and can be refused by editor close handling."
+        }
+      ],
+      "changes": [
+        "Correct labels, menu membership, shortcuts, descriptor/host distinctions, and conditional Escape behavior."
+      ],
+      "unknowns": [
+        "Keyboard and window claims are source-checked; the general fixture Desk sweep is separate runtime evidence."
+      ]
+    },
+    {
+      "path": "docs/FIREFOX_EXTENSION_GUIDE.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/FIREFOX_EXTENSION_GUIDE.md:9",
+          "source": "extensions/firefox/background.js:38",
+          "result": "The packaged sender has no auth header; the guide exposes this limit before installation."
+        },
+        {
+          "document": "docs/FIREFOX_EXTENSION_GUIDE.md:32",
+          "source": "extensions/firefox/background.js:53",
+          "result": "Only http/https tab metadata is posted; incognito tabs are dropped."
+        }
+      ],
+      "changes": [
+        "Put the unsupported authenticated path before the install procedure."
+      ],
+      "unknowns": [
+        "No Firefox add-on installation or authenticated ingestion was observed."
+      ]
+    },
+    {
+      "path": "docs/WEB_UI_UX_SYSTEM_AUDIT.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/WEB_UI_UX_SYSTEM_AUDIT.md:50",
+          "source": "web/src/components/signal/Signal.tsx:8",
+          "result": "Legacy inputs are not the controls for new Desk faces."
+        },
+        {
+          "document": "docs/WEB_UI_UX_SYSTEM_AUDIT.md:45",
+          "source": "web/src/desk/surface/index.ts:142",
+          "result": "Current composites are surface exports, not retired Signal exports."
+        },
+        {
+          "document": "docs/WEB_UI_UX_SYSTEM_AUDIT.md:78",
+          "source": "tests/e2e/test_desk_sweep.py:55",
+          "result": "The compact-width target reader checks an owned 44px hit area."
+        }
+      ],
+      "changes": [
+        "Replace obsolete control guidance and state the actual phone hit-area floor."
+      ],
+      "unknowns": [
+        "Exact component coverage and visual behavior rely on the separately reported fixture sweep."
+      ]
+    },
+    {
+      "path": "docs/CAPABILITIES.md",
+      "disposition": "generated_checked",
+      "claims": [
+        {
+          "document": "docs/CAPABILITIES.md:8",
+          "source": "scripts/generate_capability_docs.py:69",
+          "result": "The page is generated from curated pinned metadata, not a live exhaustive feature discovery."
+        },
+        {
+          "document": "docs/CAPABILITIES.md:5",
+          "source": "docs/internal/philo/snapshot.json:4",
+          "result": "The historical metadata baseline is preserved rather than relabeled as current test execution."
+        }
+      ],
+      "changes": [
+        "Add a generated scope and evidence caveat."
+      ],
+      "unknowns": [
+        "Historical capability evidence was not rerun individually."
+      ]
+    },
+    {
+      "path": "docs/API_SURFACE.md",
+      "disposition": "generated_checked",
+      "claims": [
+        {
+          "document": "docs/API_SURFACE.md:8",
+          "source": "scripts/gen_api_surface.py:146",
+          "result": "Client tags come from literal extraction, which includes parked source."
+        },
+        {
+          "document": "docs/API_SURFACE.md:11",
+          "source": "holdspeak/web/routes/meetings/aftercare.py:59",
+          "result": "A registered route can refuse a retired operation."
+        },
+        {
+          "document": "docs/API_SURFACE.md:16",
+          "source": "scripts/gen_api_surface.py:50",
+          "result": "Regeneration against this checkout produced877 routes with no unmatched client warnings."
+        }
+      ],
+      "changes": [
+        "Clarify registry membership versus available operation; fix checkout selection in its generator."
+      ],
+      "unknowns": [
+        "Reference-app route membership does not prove every endpoint authorization or successful service execution."
+      ]
+    },
+    {
+      "path": "docs/API_REFERENCE.md",
+      "disposition": "generated_checked",
+      "claims": [
+        {
+          "document": "docs/API_REFERENCE.md:12",
+          "source": "scripts/philo_api_reference.py:71",
+          "result": "The handler ledger labels test candidates as literal matches rather than executed assertions."
+        },
+        {
+          "document": "docs/API_REFERENCE.md:7",
+          "source": "scripts/philo_api_reference.py:54",
+          "result": "The current handler ledger matches the API roster; its check passed."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "No endpoint-by-endpoint semantic certification or full HTTP run."
+      ]
+    },
+    {
+      "path": "docs/README.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/README.md:130",
+          "source": "scripts/gen_api_surface.py:50",
+          "result": "The index now explains what API and pinned metadata inventories establish."
+        },
+        {
+          "document": "docs/README.md:133",
+          "source": "web/src/desk/applications.ts:73",
+          "result": "The linked task guides were separately audited against active registrations."
+        }
+      ],
+      "changes": [
+        "Explain generated inventory and deployment verification limits."
+      ],
+      "unknowns": [
+        "The index is navigation, not an independently executed end-to-end workflow."
+      ]
+    },
+    {
+      "path": "README.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "README.md:35",
+          "source": "web/src/pages/cores/settingsPrefs.tsx:128",
+          "result": "The first-flow engine path now names the actual Settings group."
+        }
+      ],
+      "changes": [
+        "Expand the engine navigation path."
+      ],
+      "unknowns": [
+        "No new visual redesign; existing sample screenshots are retained."
+      ]
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "CONTRIBUTING.md:93",
+          "source": "docs/internal/architect-assistant/proof/run_tests.py:17",
+          "result": "The old proof driver patched Python home resolution but did not set HOME for subprocesses."
+        },
+        {
+          "document": "CONTRIBUTING.md:89",
+          "source": "scripts/test_lock.py:70",
+          "result": "The replacement command isolates the environment and takes the shared lock."
+        },
+        {
+          "document": "CONTRIBUTING.md:19",
+          "source": "hatch_build.py:47",
+          "result": "The default build hook installs web dependencies and invokes the build, subject to explicit prebuilt/skip conditions."
+        }
+      ],
+      "changes": [
+        "Use actual HOME isolation and eight pytest workers in the documentation example."
+      ],
+      "unknowns": [
+        "No fresh source install or package build is claimed."
+      ]
+    }
+  ]
+}

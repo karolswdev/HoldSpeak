@@ -11,8 +11,9 @@ route can be local, remote, a supported CLI inference engine, or a mesh node.
 route and records attempts, status, and the terminal result. The queue can be
 processed by the hub or by `holdspeak intel --process`.
 
-The route is selected from current model assignments. The legacy
-`meeting.intel_provider` value does not force local execution. The UI exposes
+The route is selected from current model assignments. When no adopted model
+destination overrides it, deferred processing also reads `meeting.intel_provider`
+(`local`, `cloud`, or `auto`); it does not force local execution. The UI exposes
 the planned host before a run and the receipt records the host that handled it.
 
 If the route is not ready, the job can remain queued or enter recovery. Retry

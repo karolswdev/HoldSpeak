@@ -15,7 +15,8 @@ systems, see [Actuator Development](ACTUATOR_DEVELOPMENT.md).
 2. If the pack runs commands, add a read-only command policy
    (`is_command_allowed`) and a `run(db, ...)` entry point.
 3. Drop the file in `~/.holdspeak/connector_packs/`.
-4. Check the preview in the Activity view. Preview never changes data.
+4. Restart the runtime so the registry discovers the pack, then check the
+   preview in the Activity view. Preview never changes data.
 5. Add a fixture under `tests/fixtures/connectors/` for first-party packs.
 
 The cleanest references are
@@ -174,24 +175,34 @@ Add a JSON file under `tests/fixtures/connectors/`:
 
 ```json
 {
-  "id": "my-connector-happy-path",
-  "connector": "my_connector",
+  "id": "gh-happy-path",
+  "connector": "gh",
   "limit": 10,
   "activity_records": [
     {
-      "url": "https://example.com/things/1",
-      "title": "Thing 1",
-      "domain": "example.com",
-      "entity_type": "my_entity_type",
-      "entity_id": "thing-1",
+      "url": "https://github.com/anthropic/holdspeak/pull/7",
+      "title": "PR 7 — connector dry-run",
+      "domain": "github.com",
+      "entity_type": "github_pull_request",
+      "entity_id": "anthropic/holdspeak#7",
       "last_seen_at": "2026-04-30T10:00:00"
+    },
+    {
+      "url": "https://github.com/anthropic/holdspeak/issues/12",
+      "title": "Issue 12 — connector listing",
+      "domain": "github.com",
+      "entity_type": "github_issue",
+      "entity_id": "anthropic/holdspeak#12",
+      "last_seen_at": "2026-04-30T10:05:00"
     }
   ],
   "expect": {
     "kind": "cli_enrichment",
     "capabilities": ["annotations"],
-    "command_count": 1,
-    "annotation_count": 1,
+    "enabled": false,
+    "cli_required": "gh",
+    "command_count": 2,
+    "annotation_count": 2,
     "candidate_count": 0,
     "permission_notes_contain": ["disabled"],
     "warnings_contain": [],
@@ -200,15 +211,27 @@ Add a JSON file under `tests/fixtures/connectors/`:
 }
 ```
 
-Run one fixture:
+This example uses the committed
+[`gh-happy-path.json`](../tests/fixtures/connectors/gh-happy-path.json)
+fixture. The harness discovers fixture files and sends the selected connector
+through `activity_connector_preview.dry_run`; the connector id must therefore
+be in the active registry. A new user pack is discovered after a runtime
+restart (or `activity_connectors.reload_registry()` in a test). A new pack's
+manifest supplies its descriptor, enabled state and CLI check, but row
+previews require a matching `dry_run` branch for that connector.
+
+Run one fixture with an isolated HOME and the repository test lock:
 
 ```
-uv run pytest tests/unit/test_connector_fixture_harness.py -k my-connector
+isolated_home=$(mktemp -d)
+trap 'rm -rf "$isolated_home"' EXIT
+HOME="$isolated_home" uv run python scripts/test_lock.py -- \
+  uv run pytest -q tests/unit/test_connector_fixture_harness.py -k gh-happy-path
 ```
 
 The harness finds every fixture by itself. It also checks that no rows were
 added to `activity_annotations` or `activity_meeting_candidates`. Every `expect`
-field is optional. Lock only what you need.
+field is optional. The temporary HOME is removed when the shell exits.
 
 ## First-party packs
 
