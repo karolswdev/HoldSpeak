@@ -7,6 +7,12 @@ ai-phone does); each finished call is a Note on the desk.
 "Full auto": while ``calls.enabled`` is on and ai-phone runs, the hub keeps
 one ``ai-phone listen`` waiting for a call. ``HOLDSPEAK_CALLS=off`` (rig
 hubs) turns the listener and every read of ai-phone's state off.
+
+The phone half is one of two adapters with one surface (LINE design §4):
+HoldSpeak's own Line (``holdspeak/line/adapter.py``) or ai-phone.
+``calls.line.adapter`` picks; empty means the Line when baresip is found,
+else ai-phone when it is (:func:`pick_adapter`). ``HOLDSPEAK_LINE=off``
+(every rig) keeps ai-phone as before.
 """
 from __future__ import annotations
 
@@ -63,6 +69,71 @@ def _settings() -> Any:
     from ..config import Config
 
     return Config.load().calls
+
+
+def line_node_name(where: str) -> str:
+    """``calls.line.where`` as the node's name (``this_mac`` is ``this-mac``)."""
+    where = str(where or "this_mac")
+    return where[5:] if where.startswith("node:") else "this-mac"
+
+
+def pick_adapter(cfg: Any = None) -> str:
+    """``line``, ``ai-phone`` or ``none``: the phone half this hub drives."""
+    from ..line import line_on
+
+    cfg = cfg or _settings()
+    choice = str((cfg.line or {}).get("adapter") or "")
+    if not line_on():
+        return "ai-phone" if AiPhone.from_settings(cfg.aiphone_dir) else "none"
+    if choice in {"line", "ai-phone"}:
+        return choice
+    from .aiphone import COMMAND_ENV
+
+    if os.environ.get(COMMAND_ENV, "").strip():
+        return "ai-phone"  # a rig (or the owner) named ai-phone whole
+    from ..line.supervisor import find_baresip
+
+    if find_baresip() or str((cfg.line or {}).get("where") or "").startswith("node:"):
+        return "line"
+    return "ai-phone" if AiPhone.from_settings(cfg.aiphone_dir) else "none"
+
+
+_LINES: dict[str, Any] = {}
+
+
+def _line_adapter(node: str) -> Any:
+    from ..line.adapter import Line
+
+    found = _LINES.get(node)
+    if found is None:
+        found = _LINES[node] = Line(node, daily_limit=lambda: int(_settings().daily_limit))
+    return found
+
+
+def default_phone() -> Optional[Any]:
+    """The adapter :func:`pick_adapter` names (None: none is found)."""
+    cfg = _settings()
+    kind = pick_adapter(cfg)
+    if kind == "line":
+        return _line_adapter(line_node_name((cfg.line or {}).get("where")))
+    if kind == "ai-phone":
+        return AiPhone.from_settings(cfg.aiphone_dir)
+    return None
+
+
+def line_config(node: str) -> dict[str, Any]:
+    """What a Line node gets in its ``hello`` answer: its account, the SIP
+    password (a carrier line only; from the keystore), the daily limit and
+    the owner's name for the AI disclosure."""
+    from ..config import Config
+    from ..line import secrets as line_secrets
+
+    config = Config.load()
+    account = dict((config.calls.line or {}).get("account") or {})
+    account.pop("password_ref", None)
+    password = line_secrets.read(line_secrets.SIP_PASSWORD) if account.get("kind") == "telnyx" else ""
+    return {"account": account, "password": password, "daily_limit": int(config.calls.daily_limit),
+            "owner": str(getattr(config.owner, "name", "") or "")}
 
 
 class DeskTurns:
@@ -176,7 +247,7 @@ class CallsService:
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._listener: Optional[asyncio.Task[None]] = None
         self._active: Optional[asyncio.Task[Any]] = None
-        self._phone_fn: Callable[[], Optional[AiPhone]] = lambda: AiPhone.from_settings(_settings().aiphone_dir)
+        self._phone_fn: Callable[[], Optional[AiPhone]] = default_phone
         self._turns_fn: Optional[Callable[[], Optional[Turns]]] = None
         self._lock = threading.Lock()
         #: Phone (2026-10-28): a slow hand's answer after the hang-up.
@@ -303,10 +374,11 @@ class CallsService:
         if not calls_on():
             return {
                 "enabled": cfg.enabled, "aiphone": {"state": "off", "words": "Calls are off on this hub"},
-                "lines": [], "engine": {"profile_id": "", "model": "", "state": "none", "words": ""},
+                "line": {"node": "", "state": "off", "words": "Off", "address": "", "secrets": {}}, "lines": [], "engine": {"profile_id": "", "model": "", "state": "none", "words": ""},
                 "passphrase_set": bool(cfg.passphrase), "listening": False, "active": None, "steps": [],
             }
         phone = self._phone_fn()
+        is_line = _is_line(phone)
         if phone is None:
             aiphone = {"state": "not_found", "words": "ai-phone not found"}
             lines: list[dict[str, Any]] = []
@@ -315,17 +387,30 @@ class CallsService:
             aiphone = {"state": "running" if running else "not_running",
                        "words": "Running" if running else "ai-phone not running"}
             lines = _lines(phone.state())
+        if is_line:
+            aiphone = {"state": "off", "words": "The Line is the phone"}
+        line = line_status(phone, cfg)
         engine = self.engine()
+        if is_line:
+            first = [
+                {"id": "install", "done": line["state"] != "not_installed", "words": "Install the line: brew install baresip"},
+                {"id": "daemon", "done": line["state"] in {"ready", "starting", "not_set_up"}, "words": "Start it: holdspeak line"},
+                {"id": "line", "done": line["state"] == "ready", "words": "Add a line: a SIP address, or a Telnyx number"},
+            ]
+        else:
+            first = [
+                {"id": "install", "done": aiphone["state"] != "not_found", "words": "Install ai-phone on this Mac"},
+                {"id": "daemon", "done": aiphone["state"] == "running", "words": "Start it: uv run ai-phone run"},
+                {"id": "line", "done": bool(lines), "words": "Add a line: a SIP address, or a Telnyx number"},
+            ]
         steps = [
-            {"id": "install", "done": aiphone["state"] != "not_found", "words": "Install ai-phone on this Mac"},
-            {"id": "daemon", "done": aiphone["state"] == "running", "words": "Start it: uv run ai-phone run"},
-            {"id": "line", "done": bool(lines), "words": "Add a line: a SIP address, or a Telnyx number"},
+            *first,
             {"id": "engine", "done": engine["state"] == "ready", "words": "An engine that can use the desk's tools"},
             {"id": "passphrase", "done": bool(cfg.passphrase), "words": "Set a passphrase"},
             {"id": "enable", "done": bool(cfg.enabled), "words": "Turn on calls"},
         ]
         return {
-            "enabled": cfg.enabled, "aiphone": aiphone, "lines": lines, "engine": engine,
+            "enabled": cfg.enabled, "aiphone": aiphone, "line": line, "lines": lines, "engine": engine,
             "passphrase_set": bool(cfg.passphrase), "listening": listening,
             "active": active.summary() if active else None, "steps": steps,
         }
@@ -507,6 +592,30 @@ class CallsService:
         asyncio.ensure_future(run_then_listen())
         return record.summary()
 
+    async def test_line(self, to: str = "") -> dict[str, Any]:
+        """Settings ▸ Calls ▸ Line ▸ Test call: the Line calls him (``to``, else
+        his first allowed number), says one line and hangs up. No turn runs."""
+        from ..services.errors import ServiceError
+
+        cfg = _settings()
+        target = str(to or "").strip() or (cfg.allowed_numbers[0] if cfg.allowed_numbers else "")
+        if not target:
+            raise ServiceError("calls_no_number", "Set your number or SIP address in Settings ▸ Calls first.",
+                               context={"status": 409, "reason": "no_number"})
+        phone = self._phone_fn() if calls_on() else None
+        if not _is_line(phone):
+            raise ServiceError("calls_no_line", "The Line is not the phone on this hub.",
+                               context={"status": 409, "reason": "no_line"})
+        if self._active_record() is not None:
+            raise ServiceError("calls_busy", "A call is in progress.", context={"status": 409, "reason": "busy"})
+        reply = await phone.call(target, ring_seconds=30.0)
+        if not (reply.ok and reply.data.get("outcome") == "answered"):
+            return {"result": reply.reason or str(reply.data.get("outcome") or "failed"), "to": target}
+        call_id = str(reply.data.get("call_id") or "")
+        await phone.say("This is a test call from your HoldSpeak line. It works.", call_id=call_id)
+        await phone.hangup(say="Goodbye.", call_id=call_id)
+        return {"result": "answered", "to": target}
+
     async def hangup(self, call_id: str) -> Optional[dict[str, Any]]:
         record = self._calls.get(call_id)
         if record is None:
@@ -581,6 +690,48 @@ def _note_id(created: Any) -> str:
     return ""
 
 
+def _is_line(phone: Any) -> bool:
+    from ..line.adapter import Line
+
+    return isinstance(phone, Line)
+
+
+#: The Line's state words (the Engines vocabulary).
+LINE_WORDS = {"ready": "Ready", "starting": "Starting", "not_running": "Not running", "not_installed": "Not installed",
+              "not_set_up": "Not set up", "offline": "Offline", "off": "Off"}
+
+
+def line_status(phone: Any, cfg: Any) -> dict[str, Any]:
+    """``line: {node, state, words, address, secrets}`` for ``GET /api/calls/status``."""
+    from ..line import line_on, secrets as line_secrets
+
+    if not _is_line(phone):
+        return {"node": "", "state": "off", "words": LINE_WORDS["off"], "address": "", "secrets": {}}
+    node = phone.node
+    account = (cfg.line or {}).get("account") or {}
+    presence = line_secrets.presence() if line_on() else {}
+    wire = phone.hub.node_state(node)
+    snap = phone.state()
+    row = next(iter((snap.get("lines") or {}).values()), {}) if snap else {}
+    if wire in {"never", "offline"}:
+        from ..line.supervisor import find_baresip
+
+        if node == "this-mac" and not find_baresip():
+            state = "not_installed"
+        else:
+            state = "offline" if node != "this-mac" and wire == "offline" else "not_running"
+    elif account.get("kind") == "telnyx" and presence.get("sip_password") == "missing":
+        state = "not_set_up"
+    elif row.get("state") in {"registered", "listening"}:
+        state = "ready"
+    elif row.get("state") == "unregistered":
+        state = "not_set_up"
+    else:
+        state = "starting"
+    return {"node": node, "state": state, "words": LINE_WORDS[state], "address": str(row.get("address") or ""),
+            "secrets": presence}
+
+
 def _lines(state: dict[str, Any]) -> list[dict[str, Any]]:
     out = []
     for line_id, line in (state.get("lines") or {}).items():
@@ -600,4 +751,7 @@ def _lines(state: dict[str, Any]) -> list[dict[str, Any]]:
 #: The hub's one calls service.
 CALLS = CallsService()
 
-__all__ = ["CALLS", "CAPABILITY", "CALL_PROMPT", "CallsService", "DeskTurns", "FRAME", "HOME_ENGINE_PROFILE", "calls_on"]
+__all__ = [
+    "CALLS", "CAPABILITY", "CALL_PROMPT", "CallsService", "DeskTurns", "FRAME", "HOME_ENGINE_PROFILE", "calls_on",
+    "default_phone", "line_config", "line_node_name", "line_status", "pick_adapter",
+]

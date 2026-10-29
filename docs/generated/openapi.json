@@ -6584,6 +6584,96 @@
         "summary": "Api Calls List"
       }
     },
+    "/api/calls/line/events": {
+      "post": {
+        "operationId": "api_line_events_api_calls_line_events_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Events Api Calls Line Events Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Events"
+      }
+    },
+    "/api/calls/line/hello": {
+      "post": {
+        "operationId": "api_line_hello_api_calls_line_hello_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Hello Api Calls Line Hello Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Hello"
+      }
+    },
+    "/api/calls/line/next": {
+      "post": {
+        "operationId": "api_line_next_api_calls_line_next_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Next Api Calls Line Next Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Next"
+      }
+    },
+    "/api/calls/line/status": {
+      "get": {
+        "operationId": "api_line_status_api_calls_line_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Status Api Calls Line Status Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Status"
+      }
+    },
+    "/api/calls/line/test": {
+      "post": {
+        "operationId": "api_line_test_api_calls_line_test_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Test Api Calls Line Test Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Test"
+      }
+    },
     "/api/calls/place": {
       "post": {
         "operationId": "api_call_place_api_calls_place_post",

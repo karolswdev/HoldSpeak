@@ -439,6 +439,14 @@ Logs are written to: {LOG_FILE}
     )
     node_parser.add_argument("node_args", nargs=argparse.REMAINDER)
 
+    # The Line (2026-10-29): this machine runs HoldSpeak's own phone line.
+    line_parser = subparsers.add_parser(
+        "line",
+        help="Run this machine's phone line (run, check, build, models)",
+        add_help=False,
+    )
+    line_parser.add_argument("line_args", nargs=argparse.REMAINDER)
+
     subparsers.add_parser(
         "backup",
         help="Back up the HoldSpeak database to a timestamped file",
@@ -597,6 +605,11 @@ Logs are written to: {LOG_FILE}
         from .commands.node_serve import main as node_main
 
         raise SystemExit(node_main(getattr(args, "node_args", [])))
+
+    if args.command == "line":
+        from .line.node import main as line_main
+
+        raise SystemExit(line_main(getattr(args, "line_args", [])))
 
     # Handle backup / restore subcommands (HS-50-03)
     if args.command == "backup":

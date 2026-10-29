@@ -118,6 +118,16 @@ tts = [
     "kokoro-onnx>=0.4.0",
     "soundfile>=0.12.0",
 ]
+# The Line (2026-10-29, docs/internal/betterment/line/LINE-DESIGN-2026-10-29.md):
+# its own speech. Each is MIT (code); the weights are CC-BY-4.0 (Parakeet TDT
+# 0.6B v2, Kyutai Pocket TTS). Nothing here is GPL: not kokoro-onnx, not
+# faster-whisper (each pulls GPL code; design §2).
+line = [
+    "onnx-asr>=0.12.0",
+    "onnxruntime>=1.20",
+    "pocket-tts>=4.0.1",
+    "scipy>=1.10.0",
+]
 dictation-llama = [
     "llama-cpp-python>=0.3.34",
 ]

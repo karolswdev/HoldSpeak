@@ -182,6 +182,19 @@ _CALL_RULES = (
 # lands outside today's plugin/connector denominator.  Selectors are line-
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
+    # The Line (2026-10-29): the node's link to its own hub and two local
+    # build/probe processes. A call's own effects (say, hang up, place a call)
+    # are the hub's Calls service's, as with ai-phone.
+    ("holdspeak/line/node.py", "HubClient._post", "urlopen", 1): (
+        "line-node operation-state transport (hello, events, next to its own hub; text only)"
+    ),
+    ("holdspeak/line/supervisor.py", "baresip_version", "run", 1): (
+        "setup/diagnostic probe: `baresip -h`, a read of the local build's version"
+    ),
+    ("holdspeak/line/supervisor.py", "build_aupipe", "run", 1): (
+        "The Line: `make` compiles our aupipe module into the Line's own folder; "
+        "no network, no desk write"
+    ),
     # Recordings (2026-10-28): local processes on the owner's own files;
     # nothing leaves the device and no desk object changes outside the
     # recording's folder.

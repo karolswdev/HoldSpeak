@@ -17,6 +17,15 @@ phone half) and owns each turn of a call.
   level.
 - ``phone_urgent_dnd``: an urgent call may ring through Do Not Disturb (off
   until Apple grants the critical-alerts entitlement).
+- ``daily_limit``: the Line (2026-10-29): the most calls HoldSpeak places in
+  a day (0: no limit); incoming calls do not count.
+- ``line``: the Line (docs/internal/betterment/line/LINE-DESIGN-2026-10-29.md):
+  ``adapter`` (``line`` | ``ai-phone``; empty: the Line when baresip is
+  found, else ai-phone when it is), ``where`` (``this_mac`` | ``node:<name>``)
+  and ``account`` (``kind`` ``sip`` | ``telnyx``, ``user``, ``domain``,
+  ``outbound``, ``password_ref``, ``codecs``). The SIP password and the
+  Telnyx key are kept in the hub's keystore (``holdspeak/line/secrets.py``),
+  never in this file; ``password_ref`` names the keystore slot.
 """
 from __future__ import annotations
 
@@ -51,6 +60,44 @@ def _numbers(value: object) -> list[str]:
     return out
 
 
+LINE_ADAPTERS = ("", "line", "ai-phone")
+LINE_ACCOUNT_KINDS = ("sip", "telnyx")
+LINE_CODECS = ("opus", "PCMU", "PCMA", "L16")
+DEFAULT_DAILY_LIMIT = 20
+
+
+def default_line() -> dict:
+    return {"adapter": "", "where": "this_mac", "account": {
+        "kind": "sip", "user": "holdspeak", "domain": "", "outbound": "", "password_ref": "",
+        "codecs": ["opus", "PCMU", "PCMA"]}}
+
+
+def _line(value: object) -> dict:
+    out = default_line()
+    if not isinstance(value, dict):
+        return out
+    adapter = str(value.get("adapter") or "").strip().lower()
+    out["adapter"] = adapter if adapter in LINE_ADAPTERS else ""
+    where = str(value.get("where") or "").strip()
+    if where == "this_mac" or (where.startswith("node:") and len(where) > 5):
+        out["where"] = where
+    account = value.get("account") if isinstance(value.get("account"), dict) else {}
+    kind = str(account.get("kind") or "sip").strip().lower()
+    out["account"]["kind"] = kind if kind in LINE_ACCOUNT_KINDS else "sip"
+    for key in ("user", "domain", "outbound", "password_ref"):
+        text = str(account.get(key) or "").strip()
+        if text or key != "user":
+            out["account"][key] = text
+    codecs = account.get("codecs")
+    if isinstance(codecs, str):
+        codecs = [part.strip() for part in codecs.split(",")]
+    if isinstance(codecs, (list, tuple)):
+        picked = [c for c in (str(c).strip() for c in codecs) if c in LINE_CODECS]
+        if picked:
+            out["account"]["codecs"] = list(dict.fromkeys(picked))
+    return out
+
+
 @dataclass
 class CallsConfig:
     enabled: bool = False
@@ -60,6 +107,8 @@ class CallsConfig:
     passphrase: str = ""
     phone_reach: dict[str, str] = field(default_factory=dict)
     phone_urgent_dnd: bool = False
+    daily_limit: int = DEFAULT_DAILY_LIMIT
+    line: dict = field(default_factory=default_line)
 
     def __post_init__(self) -> None:
         self.enabled = bool(self.enabled)
@@ -69,3 +118,8 @@ class CallsConfig:
         self.passphrase = str(self.passphrase or "").strip()
         self.phone_reach = _reach(self.phone_reach)
         self.phone_urgent_dnd = bool(self.phone_urgent_dnd)
+        try:
+            self.daily_limit = max(0, min(1000, int(self.daily_limit)))
+        except (TypeError, ValueError):
+            self.daily_limit = DEFAULT_DAILY_LIMIT
+        self.line = _line(self.line)

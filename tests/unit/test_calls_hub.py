@@ -37,6 +37,8 @@ def test_the_five_calls_keys_round_trip_and_the_passphrase_is_write_only(home) -
 
     service = SettingsService(get_database())
     fresh = service.get_settings(OWNER)["calls"]
+    # The Line's keys (2026-10-29) are pinned in tests/unit/test_line_settings.py.
+    assert fresh.pop("daily_limit") == 20 and fresh.pop("line")["adapter"] == ""
     assert fresh == {"enabled": False, "aiphone_dir": "", "greeting": "Hello. What can I do?",
                      "allowed_numbers": [], "passphrase_set": False,
                      # Phone (2026-10-28): Settings ▸ Calls ▸ Phone; phone_on
@@ -46,6 +48,7 @@ def test_the_five_calls_keys_round_trip_and_the_passphrase_is_write_only(home) -
         "enabled": True, "aiphone_dir": " ~/dev/ai-phone ", "greeting": "Hi Karol.",
         "allowed_numbers": "+1 212 555 0142, sip:agent@mac", "passphrase": "blue heron"}})
     read = service.get_settings(OWNER)["calls"]
+    read.pop("daily_limit"), read.pop("line")
     assert read == {"enabled": True, "aiphone_dir": "~/dev/ai-phone", "greeting": "Hi Karol.",
                     "allowed_numbers": ["+1 212 555 0142", "sip:agent@mac"], "passphrase_set": True,
                     "phone_reach": {}, "phone_urgent_dnd": False, "phone_on": phone_on()}
