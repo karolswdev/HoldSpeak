@@ -43,9 +43,14 @@ BACKOFF_FIRST, BACKOFF_MAX = 1.0, 30.0
 AUPIPE_SOURCE = Path(__file__).resolve().parent / "aupipe"
 
 
+#: The Line's folder, named whole (a machine that keeps the Line in one place).
+HOME_ENV = "HOLDSPEAK_LINE_HOME"
+
+
 def state_dir() -> Path:
-    """The Line's folder: ``~/.holdspeak/line``."""
-    return Path.home() / ".holdspeak" / "line"
+    """The Line's folder: ``HOLDSPEAK_LINE_HOME``, else ``~/.holdspeak/line``."""
+    named = os.environ.get(HOME_ENV, "").strip()
+    return Path(named).expanduser() if named else Path.home() / ".holdspeak" / "line"
 
 
 def find_baresip() -> Optional[str]:

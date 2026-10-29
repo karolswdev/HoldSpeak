@@ -27,6 +27,9 @@ log = get_logger("line.hub")
 LIVE_SECONDS = 15.0
 #: … stale until this long, then offline.
 OFFLINE_SECONDS = 30.0
+#: A node's readiness word comes from its last hello; after this long with no
+#: hello the word is "Not running" (LINE-3).
+HELLO_STALE_SECONDS = 120.0
 #: The longest ``next`` wait.
 NEXT_WAIT_MAX = 25.0
 #: A wait woken by ``stop_all``.
@@ -39,6 +42,9 @@ class NodeState:
     version: str = ""
     lines: list[dict[str, Any]] = field(default_factory=list)
     active_call: Optional[dict[str, Any]] = None
+    #: The node's machine (its hello): name, platform, baresip version, models.
+    machine: dict[str, Any] = field(default_factory=dict)
+    hello_at: float = 0.0
     seen_at: float = 0.0
     polling: int = 0
     seq: int = 0  # the last event seq taken
@@ -74,11 +80,14 @@ class LineHub:
     # ── the node's side ───────────────────────────────────────────────
 
     def hello(self, name: str, *, lines: list[dict[str, Any]], version: str = "",
-              active_call: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+              active_call: Optional[dict[str, Any]] = None,
+              machine: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         with self._lock:
             node = self._node(name)
             node.version, node.lines, node.active_call = str(version or ""), list(lines or []), active_call
-            node.seen_at = time.monotonic()
+            if isinstance(machine, dict):
+                node.machine = _machine(machine)
+            node.seen_at = node.hello_at = time.monotonic()
         return {"config": self.config_fn(name)}
 
     def post_events(self, name: str, events: list[dict[str, Any]]) -> int:
@@ -227,20 +236,42 @@ class LineHub:
             return "live"
         return "stale" if age < OFFLINE_SECONDS else "offline"
 
+    def hello_age(self, name: str) -> Optional[float]:
+        """Seconds since the node's last hello (``None``: never)."""
+        with self._lock:
+            node = self._nodes.get(name)
+            if node is None or not node.hello_at:
+                return None
+            return time.monotonic() - node.hello_at
+
     def snapshot(self, name: str) -> dict[str, Any]:
         with self._lock:
             node = self._nodes.get(name)
             if node is None:
                 return {}
             return {"node": node.name, "version": node.version, "lines": [dict(r) for r in node.lines],
-                    "active_call": dict(node.active_call) if node.active_call else None}
+                    "active_call": dict(node.active_call) if node.active_call else None,
+                    "machine": dict(node.machine)}
 
     def nodes(self) -> list[str]:
         with self._lock:
             return sorted(self._nodes)
 
 
+def _machine(data: dict[str, Any]) -> dict[str, Any]:
+    """The hello's machine block, bounded: short strings, at most 8 models."""
+    def text(value: Any, limit: int = 64) -> str:
+        return str(value or "")[:limit]
+
+    models = []
+    for row in (data.get("models") or [])[:8]:
+        if isinstance(row, dict):
+            models.append({"id": text(row.get("id")), "name": text(row.get("name")), "state": text(row.get("state"), 24)})
+    return {"name": text(data.get("name")), "platform": text(data.get("platform")),
+            "baresip": text(data.get("baresip"), 24), "models": models}
+
+
 #: The hub's one Line wire.
 LINE_HUB = LineHub()
 
-__all__ = ["LINE_HUB", "LIVE_SECONDS", "LineHub", "NEXT_WAIT_MAX", "NodeState", "OFFLINE_SECONDS", "STOPPED"]
+__all__ = ["HELLO_STALE_SECONDS", "LINE_HUB", "LIVE_SECONDS", "LineHub", "NEXT_WAIT_MAX", "NodeState", "OFFLINE_SECONDS", "STOPPED"]

@@ -14,17 +14,24 @@ POST /api/calls/line/next      {node, after?, wait_s≤25} → {commands} (a lon
 And what the faces need:
 GET  /api/calls/line/status    the Line's node, state, words, address, and where each secret is
 POST /api/calls/line/test      {"to"?}: the Line calls him, says one line, hangs up
+Enrolment (LINE-3): a Line node on another machine gets its own credential,
+scoped to the three wire routes above and nothing else:
+POST   /api/calls/line/codes          {node}: a one-time code (10 minutes, once) and the command to run there
+POST   /api/calls/line/enrol          {code}: public at the edge; the code is the authority → {node, token}
+GET    /api/calls/line/nodes          the enrolled Line nodes and each one's word from its last hello
+DELETE /api/calls/line/nodes/{node}   revoke that node's credential
 """
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ...calls.service import CALLS, line_config, line_status
 from ...line import line_on
+from ...line.enrol import CODES, EnrolError, enrolled, redeem, revoke, wire_node
 from ...line.hub import LINE_HUB
 from ...logging_config import get_logger
 from ...services.errors import ServiceError, ValidationError
@@ -81,8 +88,13 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
             return {}
         return body if isinstance(body, dict) else {}
 
-    def _node(body: dict[str, Any]) -> str:
-        return str(body.get("node") or "").strip()[:64]
+    def _node(body: dict[str, Any], request: Optional[Request] = None) -> str:
+        """The node a wire request speaks for: a line credential speaks only
+        for its own node (LINE-3); the owner's token names it in the body."""
+        named = str(body.get("node") or "").strip()[:64]
+        if request is None:
+            return named
+        return wire_node(getattr(request.state, "node_credential", None), named) or ""
 
     @router.post("/api/calls/line/hello")
     async def api_line_hello(request: Request) -> Any:
@@ -90,13 +102,14 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
         if off is not None:
             return off
         body = await _body(request)
-        node = _node(body)
+        node = _node(body, request)
         if not node:
             return JSONResponse({"error": "node is required", "reason": "usage"}, status_code=400)
         lines = body.get("lines") if isinstance(body.get("lines"), list) else []
         active = body.get("active_call") if isinstance(body.get("active_call"), dict) else None
+        machine = body.get("machine") if isinstance(body.get("machine"), dict) else None
         answer = await asyncio.to_thread(LINE_HUB.hello, node, lines=lines, version=str(body.get("version") or ""),
-                                         active_call=active)
+                                         active_call=active, machine=machine)
         return JSONResponse(answer)
 
     @router.post("/api/calls/line/events")
@@ -105,7 +118,7 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
         if off is not None:
             return off
         body = await _body(request)
-        node = _node(body)
+        node = _node(body, request)
         events = [e for e in (body.get("events") or []) if isinstance(e, dict)][:200]
         if not node:
             return JSONResponse({"error": "node is required", "reason": "usage"}, status_code=400)
@@ -117,7 +130,7 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
         if off is not None:
             return off
         body = await _body(request)
-        node = _node(body)
+        node = _node(body, request)
         if not node:
             return JSONResponse({"error": "node is required", "reason": "usage"}, status_code=400)
         try:
@@ -125,6 +138,71 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
         except (TypeError, ValueError):
             return JSONResponse({"error": "after and wait_s are numbers", "reason": "usage"}, status_code=400)
         return JSONResponse({"commands": await LINE_HUB.next(node, after=after, wait=wait)})
+
+    # ── enrolment (LINE-3) ───────────────────────────────────────────
+
+    def _store(request: Request) -> Any:
+        return getattr(request.app.state, "node_token_store", None)
+
+    @router.post("/api/calls/line/codes")
+    async def api_line_code(request: Request) -> Any:
+        body = await _body(request)
+        try:
+            minted = CODES.mint(str(body.get("node") or ""))
+        except EnrolError as exc:
+            return JSONResponse({"error": str(exc), "reason": exc.reason}, status_code=400)
+        hub = str(body.get("hub") or "").strip() or str(request.base_url).rstrip("/")
+        minted["hub"] = hub
+        minted["command"] = f"holdspeak line enrol --hub {hub} --code {minted['code']} --node {minted['node']}"
+        return JSONResponse(minted)
+
+    @router.post("/api/calls/line/enrol")
+    async def api_line_enrol(request: Request) -> Any:
+        off = _line_off()
+        if off is not None:
+            return off
+        store = _store(request)
+        if store is None:
+            return JSONResponse({"error": "This hub has no node store.", "reason": "no_store"}, status_code=409)
+        body = await _body(request)
+        try:
+            answer = await asyncio.to_thread(redeem, CODES, store, str(body.get("code") or ""))
+        except EnrolError as exc:
+            return JSONResponse({"error": str(exc), "reason": exc.reason}, status_code=401)
+        log.info(f"line node enrolled: {answer['node']}")
+        return JSONResponse(answer)
+
+    @router.get("/api/calls/line/nodes")
+    async def api_line_nodes(request: Request) -> Any:
+        store = _store(request)
+
+        def read() -> list[dict[str, Any]]:
+            from ...line.adapter import Line
+            from ...calls.service import _settings
+
+            cfg = _settings()
+            rows = []
+            for row in enrolled(store):
+                status = line_status(Line(row["node"]), cfg)
+                rows.append({**row, "state": status["state"], "words": status["words"],
+                             "machine": status.get("machine") or {}})
+            return rows
+
+        try:
+            return JSONResponse({"nodes": await asyncio.to_thread(read)})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read the line nodes")
+
+    @router.delete("/api/calls/line/nodes/{node}")
+    async def api_line_node_revoke(node: str, request: Request) -> Any:
+        store = _store(request)
+        try:
+            done = store is not None and await asyncio.to_thread(revoke, store, node)
+        except EnrolError as exc:
+            return JSONResponse({"error": str(exc), "reason": exc.reason}, status_code=400)
+        if not done:
+            return JSONResponse({"error": "No such Line node.", "reason": "not_found"}, status_code=404)
+        return JSONResponse({"node": node, "revoked": True})
 
     # ── the Line, for the faces ──────────────────────────────────────
 

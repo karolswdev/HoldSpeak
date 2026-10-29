@@ -195,6 +195,30 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "The Line: `make` compiles our aupipe module into the Line's own folder; "
         "no network, no desk write"
     ),
+    # The Line on another machine (LINE-3): the node's one-time enrolment POST
+    # to the hub the owner named, and the node machine's own install verbs
+    # (the pinned user-space build, the node venv, the user service). Each runs
+    # from `holdspeak line <verb>` on that machine; none is a hub route.
+    ("holdspeak/line/node.py", "enrol", "urlopen", 1): (
+        "line-node enrolment: redeems the owner's one-time code at his hub (text only)"
+    ),
+    ("holdspeak/line/install.py", "build_baresip_linux", "run", 1): (
+        "The Line: the pinned user-space baresip build (scripts/line/build-baresip-linux.sh)"
+    ),
+    ("holdspeak/line/install.py", "python_ok", "run", 1): (
+        "setup/diagnostic probe: a Python's minor version"
+    ),
+    ("holdspeak/line/install.py", "make_venv", "run", 1): "The Line: uv python install (the node venv)",
+    ("holdspeak/line/install.py", "make_venv", "run", 2): "The Line: uv venv (the node venv)",
+    ("holdspeak/line/install.py", "make_venv", "run", 3): "The Line: uv pip install holdspeak[line] (the node venv)",
+    ("holdspeak/line/install.py", "make_venv", "run", 4): "The Line: pip install holdspeak[line] (the node venv)",
+    ("holdspeak/line/install.py", "linger_on", "run", 1): "setup/diagnostic probe: loginctl show-user -p Linger",
+    ("holdspeak/line/install.py", "install_unit", "run", 1): "The Line: launchctl bootout (this user's agent)",
+    ("holdspeak/line/install.py", "install_unit", "run", 2): "The Line: launchctl bootstrap (this user's agent)",
+    ("holdspeak/line/install.py", "install_unit", "run", 3): "The Line: systemctl --user enable (this user's unit)",
+    ("holdspeak/line/install.py", "install_unit", "run", 4): "The Line: systemctl --user restart (this user's unit)",
+    ("holdspeak/line/install.py", "restart_unit", "run", 1): "The Line: launchctl kickstart after an enrolment",
+    ("holdspeak/line/install.py", "restart_unit", "run", 2): "The Line: systemctl --user restart after an enrolment",
     # Recordings (2026-10-28): local processes on the owner's own files;
     # nothing leaves the device and no desk object changes outside the
     # recording's folder.

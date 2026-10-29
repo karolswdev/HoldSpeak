@@ -34,6 +34,10 @@ class PrincipalKind(str, Enum):
     # writes it directly; no right gates it).  It cannot decide, delegate,
     # change posture, submit agent work, link a node or create a profile.
     BRIEF_CONDUCTOR = "brief-conductor"
+    # The Line (LINE-3, 2026-10-29): a phone-line node enrolled with a one-time
+    # code. Its credential reaches the Line's three wire routes and nothing else
+    # (not the node link, not the mesh, not an owner read).
+    LINE_NODE = "line-node"
     NONE = "none"
 
 
@@ -48,6 +52,7 @@ class PrincipalRight(str, Enum):
     AGENT_USAGE = "agent.usage"
     SELF_REVOKE = "self.revoke"
     NODE_LINK = "node.link"
+    LINE_LINK = "line.link"
 
 
 _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
@@ -64,6 +69,7 @@ _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
     PrincipalKind.SCHEDULER: frozenset(),
     PrincipalKind.SERVICE: frozenset(),
     PrincipalKind.BRIEF_CONDUCTOR: frozenset({PrincipalRight.READ}),
+    PrincipalKind.LINE_NODE: frozenset({PrincipalRight.LINE_LINK}),
     PrincipalKind.NONE: frozenset(),
 }
 
@@ -818,6 +824,13 @@ def phone_device_route(method: str, path: str) -> bool:
     return any(verb == want and pattern.match(path) for want, pattern in _PHONE_DEVICE_ROUTES)
 
 
+#: The Line's wire (LINE design §4): the only routes a line-node credential
+#: reaches. The owner (a local node on the hub token) reaches them too.
+LINE_WIRE_ROUTES = frozenset({"/api/calls/line/hello", "/api/calls/line/events", "/api/calls/line/next"})
+#: The enrolment entrance: public at the edge; the one-time code is the authority.
+LINE_ENROL_ROUTE = "/api/calls/line/enrol"
+
+
 def required_right(method: str, path: str) -> Optional[PrincipalRight]:
     """Return the centralized edge right for one HTTP route.
 
@@ -836,6 +849,10 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return None
     if phone_device_route(verb, path):
         return None  # the handler admits the owner, an agent or a paired phone
+    if verb == "POST" and path in LINE_WIRE_ROUTES:
+        return PrincipalRight.LINE_LINK
+    if verb == "POST" and path == LINE_ENROL_ROUTE:
+        return None  # the handler redeems a one-time code, once, within 10 minutes
     if (
         path == "/api/decisions"
         or path.startswith("/api/decisions/")

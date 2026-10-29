@@ -6,15 +6,21 @@ the hub. Text crosses the link, never audio: the hub sends ``say``,
 ``hangup`` and ``call``; the node sends ``incoming``, ``heard``, ``ended``,
 ``dtmf`` and each command's ``result``.
 
-For now the node runs on this Mac against this hub with the hub token
-(``HOLDSPEAK_HUB_TOKEN``, else the local config's). The node credential and
-the home-box enrolment are LINE-3; everything the node says to the hub goes
-through :class:`HubClient`, so that is the one class LINE-3 changes.
+On the hub's own Mac the node uses the hub token (``HOLDSPEAK_HUB_TOKEN``,
+else the local config's). On another machine it uses its own node credential
+(LINE-3): ``holdspeak line enrol`` redeems the one-time code from Settings ▸
+Calls ▸ Line, and the hub's answer is a token that reaches the Line's three
+wire routes and nothing else. Everything the node says to the hub goes
+through :class:`HubClient`.
 
-    holdspeak line [run] [--node this-mac] [--hub URL] [--bind 127.0.0.1] [--sip-port 5060]
-    holdspeak line check      what is installed and what is missing
-    holdspeak line build      compile aupipe against this machine's baresip
-    holdspeak line models     fetch the two speech models (and say their licences)
+    holdspeak line [run] [--node NAME] [--hub URL] [--bind ADDR] [--sip-port 5060]
+    holdspeak line enrol --hub URL --code CODE [--node NAME]   this machine's credential
+    holdspeak line unenrol        forget it
+    holdspeak line check          what is installed and what is missing
+    holdspeak line build          Linux: build baresip 4.12.0 in user space; then compile aupipe
+    holdspeak line models         fetch the two speech models (and say their licences)
+    holdspeak line install [--checkout PATH]   the node venv (Python 3.13) and the service
+    holdspeak line install-unit [--python PATH] the service only (systemd user unit / launchd agent)
 """
 from __future__ import annotations
 
@@ -43,9 +49,11 @@ from .turns import GIVE_UP, ONE_MOMENT, STILL_WITH_YOU, CallTurns, Timing, Voice
 
 log = get_logger("line.node")
 
-VERSION = "line-2"
+VERSION = "line-3"
 HEARTBEAT_SECONDS = 5.0
-NODE_TOKEN_HEADER = "X-HoldSpeak-Token"
+HUB_TOKEN_HEADER = "X-HoldSpeak-Token"
+#: The node credential's header (the node link's, never the browser token's).
+NODE_TOKEN_HEADER = "X-HoldSpeak-Node-Token"
 
 
 # ── the link to the hub ───────────────────────────────────────────────
@@ -62,16 +70,18 @@ class HubLink(Protocol):
 class HubClient:
     """Everything the node says to the hub: three POSTs (design §4 "the wire")."""
 
-    def __init__(self, hub: str, token: str, node: str, *, timeout: float = 35.0) -> None:
+    def __init__(self, hub: str, token: str, node: str, *, timeout: float = 35.0, node_token: bool = False) -> None:
         self.hub = hub.rstrip("/")
         self.node = node
         self._token = token
         self._timeout = timeout
+        #: True: ``token`` is this node's own credential (enrolment), else the hub token.
+        self._header = NODE_TOKEN_HEADER if node_token else HUB_TOKEN_HEADER
 
     def _post(self, path: str, body: dict[str, Any], timeout: float) -> dict[str, Any]:
         request = urllib.request.Request(
             self.hub + path, data=json.dumps({"node": self.node, **body}).encode("utf-8"), method="POST",
-            headers={"Content-Type": "application/json", NODE_TOKEN_HEADER: self._token},
+            headers={"Content-Type": "application/json", self._header: self._token},
         )
         with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 (the hub's own URL)
             return json.loads(response.read().decode("utf-8") or "{}")
@@ -98,7 +108,7 @@ class LocalLink:
 
     async def hello(self, payload: dict[str, Any]) -> dict[str, Any]:
         return self._hub.hello(self.node, lines=payload.get("lines") or [], version=payload.get("version") or "",
-                               active_call=payload.get("active_call"))
+                               active_call=payload.get("active_call"), machine=payload.get("machine"))
 
     async def events(self, events: list[dict[str, Any]]) -> int:
         return self._hub.post_events(self.node, events)
@@ -154,8 +164,11 @@ class LineNode:
                  argv: Optional[list[str]] = None, home: Optional[Path] = None, bind: str = "127.0.0.1",
                  sip_port: int = 5060, ctrl_port: int = 4444, timing: Optional[Timing] = None,
                  heartbeat: float = HEARTBEAT_SECONDS, aupipe: Optional[Path] = None,
-                 say_sock: Optional[Path] = None, heard_sock: Optional[Path] = None) -> None:
+                 say_sock: Optional[Path] = None, heard_sock: Optional[Path] = None,
+                 machine: Optional[dict[str, Any]] = None) -> None:
         self.name = name
+        #: The hello's machine block: name, platform, baresip version, models.
+        self.machine = dict(machine or {})
         self.link = link
         self.stt, self.tts = stt, tts
         self.binary = binary
@@ -247,6 +260,7 @@ class LineNode:
         call = self.call
         return {
             "version": VERSION,
+            "machine": self.machine,
             "lines": [{"id": "main", "kind": self.account.kind, "address": self._address(), "state": self.line_state}],
             "active_call": {"call_id": call.id, "direction": call.direction, "remote": call.remote,
                             "established": call.established} if call else None,
@@ -399,7 +413,8 @@ class LineNode:
         self.heard_times.append({"end_of_speech": at, "text_at": done, "text": text})
         if not text or self.call is not call:
             return
-        await self._post("heard", call_id=call.id, text=text)
+        # The node's own clock: end of speech detected → text (the speech-in pass).
+        await self._post("heard", call_id=call.id, text=text, stt_ms=round((done - at) * 1000, 1))
         call.turns.heard()
 
     # ── the hub's commands ────────────────────────────────────────────
@@ -570,6 +585,39 @@ def _hub_token() -> str:
         return ""
 
 
+def machine_block(*, models_state: str = "") -> dict[str, Any]:
+    """The hello's ``machine``: the name, the platform, baresip's version and
+    each model's state (``ready`` once loaded; else ``downloaded`` or
+    ``missing`` from the Hugging Face cache)."""
+    import platform
+
+    from .install import default_node_name
+    from .speech import MODELS
+    from .supervisor import baresip_version
+
+    binary = find_baresip()
+    models = []
+    for model in MODELS:
+        state = models_state or ("downloaded" if _cached(model["repo"]) else "missing")
+        models.append({"id": model["id"], "name": model["name"], "state": state})
+    return {"name": default_node_name(), "platform": f"{platform.system()} {platform.machine()}",
+            "baresip": baresip_version(binary) if binary else "", "models": models}
+
+
+def _cached(repo: str) -> bool:
+    try:
+        from huggingface_hub import try_to_load_from_cache
+
+        return isinstance(try_to_load_from_cache(repo, "config.json"), str) or _cache_dir_has(repo)
+    except Exception:
+        return _cache_dir_has(repo)
+
+
+def _cache_dir_has(repo: str) -> bool:
+    base = Path(os.environ.get("HF_HOME") or Path.home() / ".cache" / "huggingface") / "hub"
+    return (base / ("models--" + repo.replace("/", "--")) / "snapshots").is_dir()
+
+
 def check() -> dict[str, Any]:
     """What the Line needs on this machine, and what is there."""
     from .speech import MODELS
@@ -607,20 +655,39 @@ def fetch_models() -> list[str]:
     return done
 
 
+def _link_for(args: argparse.Namespace) -> Optional[HubClient]:
+    """The node's link: this machine's credential (enrolled), else the hub
+    token for a node on the hub's own machine. ``None``: neither."""
+    from .install import load_credential
+
+    credential = load_credential()
+    if credential and not args.hub:
+        args.node = args.node or credential["node"]
+        return HubClient(credential["hub"], credential["node_token"], credential["node"], node_token=True)
+    token = _hub_token()
+    if not token:
+        return None
+    args.node = args.node or "this-mac"
+    return HubClient(args.hub or "http://127.0.0.1:8765", token, args.node)
+
+
 async def _run_node(args: argparse.Namespace) -> int:
     from .speech import Parakeet, Pocket
 
     binary = find_baresip()
     if not binary:
-        print("baresip is not installed. On macOS: brew install baresip")
+        print("baresip is not installed. On macOS: brew install baresip. On Linux: holdspeak line build")
         return 2
-    token = _hub_token()
-    if not token:
-        print("No hub token: set HOLDSPEAK_HUB_TOKEN.")
-        return 2
+    link = _link_for(args)
+    if link is None:
+        # A clean exit: the service stays stopped until the owner enrols it.
+        print("Not enrolled. Make a code in Settings ▸ Calls ▸ Line, then run: "
+              "holdspeak line enrol --hub <hub> --code <code>")
+        return 0
     print("Loading the speech models…", flush=True)
     stt, tts = await asyncio.to_thread(Parakeet), await asyncio.to_thread(Pocket)
-    node = LineNode(args.node, HubClient(args.hub, token, args.node), stt=stt, tts=tts, binary=binary,
+    machine = await asyncio.to_thread(machine_block, models_state="ready")
+    node = LineNode(args.node, link, stt=stt, tts=tts, binary=binary, machine=machine,
                     bind=args.bind, sip_port=args.sip_port, ctrl_port=args.ctrl_port)
     await node.start()
     print(f"The Line is ready: {node._address()}", flush=True)
@@ -635,20 +702,48 @@ def main(argv: Optional[list[str]] = None) -> int:
     from . import line_on
 
     parser = argparse.ArgumentParser(prog="holdspeak line", description="Run this machine's phone line.")
-    parser.add_argument("action", nargs="?", default="run", choices=("run", "check", "build", "models"))
-    parser.add_argument("--node", default="this-mac")
-    parser.add_argument("--hub", default="http://127.0.0.1:8765")
-    parser.add_argument("--bind", default="127.0.0.1", help="the one address SIP listens on (never 0.0.0.0)")
-    parser.add_argument("--sip-port", type=int, default=5060)
+    parser.add_argument("action", nargs="?", default="run",
+                        choices=("run", "check", "build", "models", "enrol", "unenrol", "install", "install-unit"))
+    parser.add_argument("--node", default="", help="this machine's name on the hub (default: its host name)")
+    parser.add_argument("--hub", default="", help="the hub's URL (default: the enrolled hub, else this Mac's)")
+    parser.add_argument("--code", default="", help="enrol: the one-time code from Settings ▸ Calls ▸ Line")
+    parser.add_argument("--checkout", default="", help="install: the HoldSpeak checkout the hub runs from")
+    parser.add_argument("--python", default="", help="install-unit: the Python the service runs")
+    parser.add_argument("--bind", default=os.environ.get("HOLDSPEAK_LINE_BIND", "127.0.0.1"),
+                        help="the one address SIP listens on (never 0.0.0.0)")
+    parser.add_argument("--sip-port", type=int, default=int(os.environ.get("HOLDSPEAK_LINE_SIP_PORT", "5060")))
     parser.add_argument("--ctrl-port", type=int, default=4444)
     args = parser.parse_args(list(argv if argv is not None else sys.argv[1:]))
     if args.action == "check":
         print(json.dumps(check(), indent=1))
         return 0
+    if args.action == "enrol":
+        return enrol(args.hub, args.code, args.node)
+    if args.action == "unenrol":
+        from .install import forget_credential
+
+        from .install import restart_unit
+
+        print("This machine is not enrolled any more." if forget_credential() else "This machine was not enrolled.")
+        restart_unit()  # the service stops: a node with no credential exits clean
+        return 0
+    if args.action in {"install", "install-unit"}:
+        return _install(args)
     if args.action == "build":
+        import platform
+
         from .supervisor import build_aupipe
 
         binary = find_baresip()
+        if platform.system() == "Linux":
+            from .install import build_baresip_linux
+            from .supervisor import baresip_version
+
+            if not binary or baresip_version(binary) != "4.12.0":
+                code = build_baresip_linux()
+                if code != 0:
+                    return code
+                binary = find_baresip()
         if not binary:
             print("baresip is not installed. On macOS: brew install baresip")
             return 2
@@ -666,4 +761,59 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
 
 
-__all__ = ["Call", "HubClient", "HubLink", "LineNode", "LocalLink", "VERSION", "check", "close_outcome", "dial_id", "main"]
+def enrol(hub: str, code: str, node: str = "") -> int:
+    """Redeem the one-time code: the hub answers with this node's credential."""
+    from .install import default_node_name, restart_unit, save_credential
+
+    hub = str(hub or "").rstrip("/")
+    if not hub or not code:
+        print("Run: holdspeak line enrol --hub <hub URL> --code <code from Settings ▸ Calls ▸ Line>")
+        return 2
+    request = urllib.request.Request(
+        hub + "/api/calls/line/enrol", method="POST", headers={"Content-Type": "application/json"},
+        data=json.dumps({"code": code, "node": node or default_node_name()}).encode("utf-8"),
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:  # noqa: S310 (the hub the owner named)
+            answer = json.loads(response.read().decode("utf-8") or "{}")
+    except urllib.error.HTTPError as exc:
+        try:
+            detail = json.loads(exc.read().decode("utf-8") or "{}").get("error") or exc.reason
+        except Exception:
+            detail = exc.reason
+        print(f"The hub refused the code: {detail}")
+        return 1
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"The hub did not answer: {exc}")
+        return 1
+    name, token = str(answer.get("node") or ""), str(answer.get("token") or "")
+    if not name or not token:
+        print("The hub's answer had no credential.")
+        return 1
+    save_credential(hub, name, token)
+    restarted = restart_unit()
+    print(f"Enrolled as {name} on {hub}." + (" The Line service starts again." if restarted else
+                                              " Start it: holdspeak line install-unit"))
+    return 0
+
+
+def _install(args: argparse.Namespace) -> int:
+    from . import install
+
+    python = args.python
+    if args.action == "install":
+        checkout = Path(args.checkout or install.REPO)
+        if not (checkout / "pyproject.toml").exists():
+            print(f"No HoldSpeak checkout at {checkout}: name it with --checkout")
+            return 2
+        if not python and not install.python_ok(sys.executable):
+            print(f"Making the node venv (Python {install.NODE_PYTHON}) in {install.venv_dir()}…", flush=True)
+            python = str(install.make_venv(checkout))
+    done = install.install_unit(install.node_python(python))
+    print(f"The Line service is installed ({done['kind']}): {done['path']}")
+    for press in done["presses"]:
+        print(f"One press left for you: {press}")
+    return 0
+
+
+__all__ = ["Call", "HubClient", "HubLink", "LineNode", "LocalLink", "VERSION", "check", "close_outcome", "dial_id", "enrol", "machine_block", "main"]

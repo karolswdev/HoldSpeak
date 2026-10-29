@@ -105,7 +105,10 @@ class Line:
                 return Reply(OK, {"ok": True, "kind": "incoming", "call_id": str(event.get("call_id") or ""),
                                   "line": str(event.get("line") or "main"), "remote": str(event.get("remote") or "")})
             if kind == "heard":
-                return Reply(OK, {"ok": True, "kind": "heard", "text": str(event.get("text") or "")})
+                heard = {"ok": True, "kind": "heard", "text": str(event.get("text") or "")}
+                if isinstance(event.get("stt_ms"), (int, float)):
+                    heard["stt_ms"] = float(event["stt_ms"])  # the node's own speech-in time
+                return Reply(OK, heard)
             if kind == "ended":
                 return Reply(OK, {"ok": True, "kind": "ended", "call_id": call_id,
                                   "outcome": str(event.get("outcome") or "completed"),

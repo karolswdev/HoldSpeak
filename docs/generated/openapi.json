@@ -6584,6 +6584,42 @@
         "summary": "Api Calls List"
       }
     },
+    "/api/calls/line/codes": {
+      "post": {
+        "operationId": "api_line_code_api_calls_line_codes_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Code Api Calls Line Codes Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Code"
+      }
+    },
+    "/api/calls/line/enrol": {
+      "post": {
+        "operationId": "api_line_enrol_api_calls_line_enrol_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Enrol Api Calls Line Enrol Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Enrol"
+      }
+    },
     "/api/calls/line/events": {
       "post": {
         "operationId": "api_line_events_api_calls_line_events_post",
@@ -6636,6 +6672,63 @@
           }
         },
         "summary": "Api Line Next"
+      }
+    },
+    "/api/calls/line/nodes": {
+      "get": {
+        "operationId": "api_line_nodes_api_calls_line_nodes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Nodes Api Calls Line Nodes Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Nodes"
+      }
+    },
+    "/api/calls/line/nodes/{node}": {
+      "delete": {
+        "operationId": "api_line_node_revoke_api_calls_line_nodes__node__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "node",
+            "required": true,
+            "schema": {
+              "title": "Node",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Node Revoke Api Calls Line Nodes  Node  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Line Node Revoke"
       }
     },
     "/api/calls/line/status": {

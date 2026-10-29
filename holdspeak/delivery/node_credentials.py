@@ -81,6 +81,10 @@ class NodeCredentialSnapshot:
     offer_public_key: str
     token: str = ""
     offer_private_key: str = ""
+    #: What this credential may reach. ``""``: the node link (delivery, mesh,
+    #: executor). ``"calls.line"``: the Line's three wire routes and nothing
+    #: else (LINE-3 enrolment; the edge maps it to the line-node principal).
+    scope: str = ""
 
     def public_view(self) -> "NodeCredentialSnapshot":
         """The same identity with every secret dropped."""
@@ -90,6 +94,7 @@ class NodeCredentialSnapshot:
             generation=self.generation,
             key_id=self.key_id,
             offer_public_key=self.offer_public_key,
+            scope=self.scope,
         )
 
     def __repr__(self) -> str:
@@ -107,7 +112,7 @@ class NodeCredentialSnapshot:
             "NodeCredentialSnapshot("
             f"name={self.name!r}, node_id={self.node_id!r}, "
             f"generation={self.generation!r}, key_id={self.key_id!r}, "
-            f"token={token!r}, offer_private_key={private!r})"
+            f"token={token!r}, offer_private_key={private!r}, scope={self.scope!r})"
         )
 
 

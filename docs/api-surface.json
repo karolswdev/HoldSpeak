@@ -1186,6 +1186,22 @@
       ]
     },
     {
+      "path": "/api/calls/line/codes",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": []
+    },
+    {
+      "path": "/api/calls/line/enrol",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": []
+    },
+    {
       "path": "/api/calls/line/events",
       "methods": [
         "POST"
@@ -1205,6 +1221,22 @@
       "path": "/api/calls/line/next",
       "methods": [
         "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": []
+    },
+    {
+      "path": "/api/calls/line/nodes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calls",
+      "consumers": []
+    },
+    {
+      "path": "/api/calls/line/nodes/{node}",
+      "methods": [
+        "DELETE"
       ],
       "module": "web.routes.calls",
       "consumers": []
