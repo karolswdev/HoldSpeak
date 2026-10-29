@@ -112,3 +112,42 @@ Advisory only; I edited nothing. I ran no tests or builds, made no MCP calls, an
 - I sampled only: README, GETTING_STARTED, AGENTS_AND_THREADS, CODER_INTEGRATION, MCP_SIDECAR, the Prepared-work section of USER_GUIDE, and parts of WEB_DESK and DESK_ARCHITECTURE.
 - I did not review WHAT_IS_HOLDSPEAK, INTERVIEW, ARCHITECTURE_WORK, AUTOMATION, MODELS, SECURITY (beyond grep hits), PEOPLE_SECURITY, SYSTEM_ARCHITECTURE or DOMAIN_MODEL in depth.
 - I did not trace whether **Ask about this** on a person can send People-derived text through AskService to a cloud engine. The redaction I confirmed is ThreadService's. That path deserves its own check before the docs promise that People text is redacted for Ask as well.
+
+
+## README visual revision advisory, 2026-10-29
+
+The owner asked for a more alluring, modern, simple, screenshot-rich README. A further read-only `claude -p --model claude-opus-5-5` advisory reviewed this separate editorial revision. This is advice invoked by Astra, not Muad'Dib's check.
+
+Disposition: corrected the two template names against the Programs guide, put the fixture disclosure beside the first Program image, removed repeated feature descriptions, simplified the phone/Calls explanation, and stated the meeting plugin engine prerequisite. Kept the numeric tool claim because live documentation guards enforce the registry count. The first Ask flow uses the hero screenshot; an additional nearly empty Note image would repeat the visual story. Root inspected all seven source images, including the JPG and Program captures the advisor did not open.
+
+### Advisory response before corrections
+
+The raw response uses paths relative to the repository root.
+
+```text
+**Verdict: Pass, with five small fixes.** The README has a clear goal and enough screenshots. All its links, anchors and image paths resolve. `agents.png`, `ask-mobile.png` and `project.png` are byte-for-byte copies of the files in `docs/internal/betterment/native-experience/atlas-2026-10-27/`. The alt text on those three images matches what they show.
+
+**Findings**
+
+1. **`README.md:106`: two Program template names do not match the guide.** `docs/programs.md:51-52` names them **Overnight on the home box** and **From the desk**. Suggested wording: "Templates include **Fast cycle**, **Build and review**, **Race**, **Overnight on the home box**, and **From the desk**."
+
+2. **`README.md:168`: the note that the Program images come from test fixtures is too far from the first one.** That image is at line 97, 70 lines above the note. A reader sees "a pull request ready for a merge decision" as live product. Add to the caption at line 99: "*… (Check and pull request states come from a test fixture.)*" Keep line 168 as the general note.
+
+3. **`README.md:19-26` repeats what comes next.** Line 23 ("find evidence, write a Note, make a task, or prepare an update") comes back almost word for word at lines 51-52. Lines 24-26 say the same as the table rows at lines 39-41. Suggestion: cut lines 23-26 to one line, such as "**Agentic-first:** Ask, coding agents, Programs and Automations act with tools on the context your Desk already holds." Let the table carry the rest.
+
+4. **`README.md:148-166` puts three different topics under "Take the Desk with you".** Mobile, voice typing, and Calls/Line/Phone share one section. Lines 163-164 ("The Line supplies a SIP adapter; ai-phone is an optional alternative. Phone adds reach-you rules. Its iPhone-app transport is still incomplete.") is internal jargon in a showcase README. Suggestion: keep the two phone screenshots and voice typing here. Move Calls to one line: "With Calls set up, you can phone your Desk to ask, add a task or write a Note. [Calls](docs/calls.md)". Leave the Phone transport status to `docs/phone.md:8`, which already says it.
+
+5. **`README.md:68`: "14 built-in plugins" is correct but leaves out a condition.** The count matches `_BUILTIN_PLUGIN_DEFS` in `holdspeak/plugins/builtin/__init__.py`. But `docs/MEETING_INTELLIGENCE.md:36-42` gives no count and says each plugin needs an engine assignment, or it records a skip. Suggestion: "HoldSpeak includes 14 built-in plugins; each one runs on the engine you assign to it."
+
+**Smaller points**
+
+- **`README.md:196`:** "306 tools across 52 families" matches `docs/MCP_SIDECAR.md:394`. It will drift as tools are added. Either drop the numbers ("a full catalogue of Desk tools; each caller sees only its allowed tools") or accept that both files must be updated together.
+- **`README.md:111-112`:** the overnight sentence is hard to read. Suggestion: "If an agent reaches its usage limit, a fallback agent continues on the same step, branch and worktree. **Overnight on the home box** runs pi on your idle home engine."
+- **`README.md:44`:** "From a thought to a useful result" is the first and most agentic flow, but it is the only main flow with no image. If the atlas has a Note or "Develop this thought" capture, put it here.
+- **`README.md:120`:** the caption quotes "What needs me?", but the window in the image shows **Needs you**. Use the label on screen.
+
+**Unknowns**
+
+- I did not open the two JPGs or the two Program PNGs. The hero alt text (line 9) and the Program alt text (lines 97 and 152) are not checked against their images.
+- I did not check these claims against source: "Speech recognition runs locally with Whisper" (line 172), Calls' spoken confirmation (line 162), and Gemini CLI as an engine. `docs/MODELS.md:47` does list Gemini CLI.
+```

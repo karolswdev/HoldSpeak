@@ -149,3 +149,28 @@ No full application suite, browser, microphone, provider, live call, agent launc
 | `docs/CONNECTOR_DEVELOPMENT.md` | Specialist protocol/development contract reviewed and retained. |
 | `docs/DEVICE_PROTOCOL.md` | Specialist protocol/development contract reviewed and retained. |
 | `docs/PLATFORMS.md` | Generator-owned reference, checked through its existing generator or roster guard. |
+
+
+## README visual revision, 2026-10-29
+
+The owner requested an alluring, modern, simple README that shows HoldSpeak's potential with screenshots. The revised page starts with the current Desk and a concrete question, then follows thoughts, meetings, coding agents, Programs, projects, Automations, and phone-sized browser work. It has seven screenshots with descriptive alt text and captions. The text is about one third shorter than the preceding draft. Product code is unchanged.
+
+### Screenshot provenance
+
+All captures were already in this repository. No new product capture, live flow, provider request, owner Desk write, or successful real Program execution is claimed. The Program screenshots use fixture check/PR states, disclosed beside the first Program image and in the gallery note.
+
+| README asset | Existing source | Natural dimensions | SHA-256 prefix |
+| --- | --- | --- | --- |
+| `docs/assets/readme/desk-project-room.jpg` | Existing public hero, regenerated in `a445cc060` | 1440 × 900 | `aa6bf6defcfe` |
+| `docs/assets/readme/desk-meeting-review.jpg` | Existing public Today capture, regenerated in `a445cc060` | 1440 × 900 | `4cd44ed40159` |
+| `docs/assets/readme/agents.png` | `docs/internal/betterment/native-experience/atlas-2026-10-27/agents-1440.png`, exact copy | 794 × 568 | `9758184517b1` |
+| `docs/assets/programs/program-your-turn-1440.png` | Existing public Programs fixture capture | 1440 × 900 | `0d9d47f4dc73` |
+| `docs/assets/readme/project.png` | `docs/internal/betterment/native-experience/atlas-2026-10-27/room-1440.png`, exact copy | 848 × 570 | `84a4c4e01c94` |
+| `docs/assets/readme/ask-mobile.png` | `docs/internal/betterment/native-experience/atlas-2026-10-27/ask-answer-top-393.png`, exact copy | 393 × 852 | `b8e8266fcb49` |
+| `docs/assets/programs/program-running-393.png` | Existing public Programs fixture capture | 393 × 852 | `39f2a3248d52` |
+
+Root inspected every source image. A standalone local Markdown preview was rendered at 1440 and 393 pixels in a new headless browser context. All seven images decoded at each width, there was one H1, and the page had no horizontal overflow. Root inspected the opening and phone gallery at both sizes. This is a README layout check with approximate GitHub styling, not a live product walk or owner aesthetic acceptance. Preview files and machine reports are under `.tmp/readme-preview/`.
+
+The revision's focused documentation check ran under the test lock with an isolated HOME: **88 passed in 4.03s**. The public navigation checker reports **73 files checked**. The earlier broader validation remains recorded above; it is not described as a new run. The extra advisory response and disposition are in `checks/core-docs-claude-p-invoked-by-astra.md`. Status remains UNCHECKED, awaiting Muad'Dib.
+
+The README revision removes its overview diagram. The other 27 public Mermaid diagrams are unchanged from the earlier syntax validation.
