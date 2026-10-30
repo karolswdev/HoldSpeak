@@ -355,7 +355,7 @@ def _loop(page: Any, width: int) -> None:
     assert landed == APPLIED_TEXT, landed
     chip = result.get_by_role("button", name="Corrections applied")
     chip.wait_for(timeout=8000)
-    assert chip.inner_text().strip() == "APPLIED"
+    assert chip.inner_text().strip() == "Applied"
     # ONE mic authority on this face (ruling R13): the well carries none
     assert page.locator(".speak-well .desk-mic").count() == 0
     _shot(page, "loop-speak", width)

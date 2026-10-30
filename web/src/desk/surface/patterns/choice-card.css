@@ -97,7 +97,7 @@
 }
 
 .surface-choice-card[data-recommended]::after {
-  content: "RECOMMENDED";
+  content: "Recommended";
   position: absolute;
   top: -1px;
   right: var(--space-2, 8px);
@@ -105,9 +105,7 @@
   border: 1px solid var(--accent);
   border-top: 0;
   background: var(--accent);
-  font: 700 var(--font-size-xs) / 1.2 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-wide);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1.2 var(--font-sans);
   color: var(--text-on-accent);
 }
 
@@ -218,8 +216,6 @@
 
 .surface-choice-card-fact-key {
   color: var(--text-faint);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-label-compact);
   font-weight: 600;
 }
 
@@ -255,8 +251,6 @@
 
 .surface-choice-card-fold .surface-disclosure-trigger {
   font-size: var(--desk-surface-label-size, 11px);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-label-compact);
   color: var(--text-faint);
 }
 
@@ -281,9 +275,7 @@
   border-radius: 0;
   background: var(--accent);
   color: var(--text-on-accent);
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   cursor: pointer;
 }
 

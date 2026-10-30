@@ -7,22 +7,15 @@
 import "./agent-flight.css";
 import { Button } from "../../components/signal/Signal";
 import { DotWord } from "../surface";
-import { stateWords } from "../surface/objects/NeedsRow";
 import { openCoderSession } from "../shell";
 import { flightLabel, flightTone, type AgentFlight } from "../agentFlights";
 
-/** The agents' own names (the flight vocabulary says them in caps). */
-const AGENT_FACE: Record<string, string> = { "CLAUDE CODE": "Claude Code", CODEX: "Codex", PI: "pi" };
 const FLIGHT_DOT = { working: "info", warning: "warn", active: "ask", success: "ok", idle: "idle" } as const;
 
 /** W6-J words: the flight's state in sentence case (`Claude Code · Waiting`,
- *  `PR #412 · Open`); the caps vocabulary of `flightLabel` stays as it is. */
+ *  `PR #412 · Open`); WORDS-LEFTOVERS: `flightLabel` says them so itself. */
 export function flightWords(flight: AgentFlight): string | null {
-  const label = flightLabel(flight);
-  if (!label) return null;
-  const [head, ...rest] = label.split(" · ");
-  const name = AGENT_FACE[head];
-  return name ? [name, stateWords(rest.join(" · "))].filter(Boolean).join(" · ") : stateWords(label);
+  return flightLabel(flight);
 }
 
 export function FlightChip({ flight }: { flight: AgentFlight | null }) {

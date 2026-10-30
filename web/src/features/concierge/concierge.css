@@ -28,8 +28,6 @@
 
 .concierge-hardware-token {
   font: 600 var(--font-size-xs)/1 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--text, #f2f3f5);
   background: var(--desk-window-well, #1c1f27);
   border: 1px solid var(--border, #2a2e3e);
@@ -39,9 +37,7 @@
 
 .concierge-checked-at {
   font: 400 var(--font-size-xs)/1 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
-  letter-spacing: 0.06em;
   color: var(--text-faint);
-  text-transform: uppercase;
 }
 
 /* ── 2. Sections ── */
@@ -60,8 +56,6 @@
 
 .concierge-section-label {
   font: 600 var(--font-size-xs)/1 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);
   padding-left: 2px;
 }
@@ -146,8 +140,6 @@
 .concierge-lead {
   font: 600 var(--font-size-xs)/1 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
   color: var(--muted, #9ba2b0);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 /* ── Engine name (primary type step 15px/600) ── */
@@ -229,8 +221,6 @@
 
 .concierge-key-chip {
   font: 600 var(--font-size-xs)/1 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   padding: 2px 6px;
   border-radius: 2px;
   border: 1px solid var(--border, #2a2e3e);
@@ -256,8 +246,6 @@
 
 .concierge-cost-chip {
   font: 600 var(--font-size-xs)/1 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--warning, #f5a623);
   padding: 2px 6px;
   border-radius: 2px;
@@ -268,8 +256,6 @@
 
 .concierge-progress-token {
   font: 600 var(--font-size-xs)/1 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--accent, #a86e4a);
   padding: 4px 10px;
   border-radius: 2px;
@@ -495,8 +481,6 @@
 }
 .concierge-receipt {
   font: 600 var(--font-size-xs)/1.35 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);
   white-space: normal;
   overflow-wrap: anywhere;

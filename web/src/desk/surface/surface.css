@@ -119,7 +119,8 @@
   flex: 1 0 auto;
   max-width: 100%;
 }
-/* HS-111-01: section labels in mono — the system-label style */
+/* WORDS-LEFTOVERS (2026-10-30): the section caption of the Window grammar:
+   sans 12/600 in ink, sentence case (never mono uppercase). */
 /* PHILO-4-01 r3: a label is often user data (a directory name, a
    destination). A long single word breaks inside the label; it never
    pushes the head wider than its section. */
@@ -127,12 +128,8 @@
   min-width: 0;
   overflow-wrap: anywhere;
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--wb-muted);
+  font: 600 12px / 1.4 var(--font-sans);
+  color: var(--wb-text);
 }
 
 /* Rules 3 + 4 — dense honest rows. */
@@ -449,11 +446,9 @@
 .surface-well-head {
   flex: none;
   padding: 6px 10px 4px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--desk-surface-label-size); /* PHILO-7-02: the 12 px floor (was 10px) */
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -638,9 +633,7 @@
 }
 .surface-traffic-empty {
   padding: 10px 6px;
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-wide);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   color: var(--text-faint);
 }
 
@@ -895,10 +888,8 @@ button.surface-edit-in-place:hover {
 }
 .surface-preview > .surface-preview-label {
   font-size: var(--desk-surface-label-size);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-weight: 600;
-  letter-spacing: var(--letter-spacing-label-wide);
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .surface-preview p {
@@ -1015,11 +1006,9 @@ button.surface-edit-in-place:hover {
 /* HS-170-04 — speaker token in the transcript well. */
 .desk-surface-body .transcript-list .transcript-speaker {
   flex-shrink: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--accent);
   min-width: 5ch;
 }
@@ -1092,11 +1081,9 @@ button.surface-edit-in-place:hover {
 .surface-group-label {
   margin: 0;
   padding: 0 4px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 /* HS-111-01: groups are flat rows with hairlines, not iOS inset cards */
@@ -1199,11 +1186,9 @@ button.surface-edit-in-place:hover {
 /* HS-111-01: panel title in mono — system-label style */
 .surface-panel-title {
   margin: 2px 0 6px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 
@@ -1335,11 +1320,9 @@ button.surface-edit-in-place:hover {
   gap: 10px;
   margin: 0;
   padding: 14px 4px 6px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 .surface-stream-day-label::after {
@@ -1684,9 +1667,7 @@ button.surface-edit-in-place:hover {
 .surface-ledger-band {
   margin: 10px 0 2px;
   padding: 0 6px;
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-wide);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   color: var(--text-faint);
 }
 .surface-ledger-band:first-of-type {
@@ -1695,9 +1676,7 @@ button.surface-edit-in-place:hover {
 /* HS-111-04 — an empty band is ONE quiet ledger line, never a void. */
 .surface-ledger-empty {
   padding: 4px 6px;
-  font: 600 var(--font-size-xs) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1.4 var(--font-sans);
   color: var(--text-faint);
 }
 
@@ -1712,9 +1691,7 @@ button.surface-edit-in-place:hover {
 .surface-ledger-origin {
   display: block;
   padding: 2px 6px 0;
-  font: 500 var(--font-size-xs) / 1.3 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 500 var(--font-size-xs) / 1.3 var(--font-sans);
   color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -1788,11 +1765,9 @@ button.surface-edit-in-place:hover {
   gap: 4px;
   padding: 1px 8px;
   border-radius: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--desk-surface-label-size);
   font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--ok);
   background: var(--ok-soft);
   box-shadow: inset 0 0 0 1px var(--ok-soft);
@@ -1881,8 +1856,6 @@ button.surface-edit-in-place:hover {
 .surface-mode {
   font-size: var(--desk-surface-label-size);
   font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 /* HS-111: status indicators — square, no glow */
@@ -1911,8 +1884,6 @@ button.surface-edit-in-place:hover {
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -2093,9 +2064,7 @@ button.surface-edit-in-place:hover {
 }
 .surface-bay-tag {
   font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: var(--letter-spacing-label-wide);
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--accent);
   background: var(--accent-tint);
   padding: 2px 8px;
@@ -2218,10 +2187,8 @@ button.surface-edit-in-place:hover {
 /* HS-111-03 — the record index line: ONE mono facts line under the
    title (the archive card's stamp). */
 .surface-detail-facts {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -2316,10 +2283,8 @@ button.surface-edit-in-place:hover {
    literal lowercase suffixes — they are the wire truth). */
 .surface-dropwell small {
   color: var(--text-faint);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--desk-surface-label-size);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
 }
 .surface-dropwell-glyph {
   font-size: var(--font-size-xl);
@@ -2575,9 +2540,7 @@ button.surface-edit-in-place:hover {
 }
 .prefs-hit-module {
   color: var(--text-muted);
-  text-transform: uppercase;
   font-size: var(--font-size-xs);
-  letter-spacing: 0.06em;
 }
 /* HS-139-07: composed 4+3 grid with bright pixel-sprite tiles. Tiles are
    Workbench-beveled at rest, ember-glow hover, pressed = bevel inversion.
@@ -2650,11 +2613,9 @@ button.surface-edit-in-place:hover {
   image-rendering: auto;
 }
 .prefs-tile-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
   text-align: center;
   line-height: 1.2;
   color: var(--text-muted);
@@ -2790,9 +2751,7 @@ button.surface-edit-in-place:hover {
 .prefs-wallpaper-copy strong,
 .prefs-wallpaper-state,
 .prefs-wallpaper-fact {
-  font-family: var(--font-mono);
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
+  font-family: var(--font-sans);
 }
 .prefs-wallpaper-copy strong {
   font-size: var(--font-size-xs);
@@ -2849,8 +2808,6 @@ button.surface-edit-in-place:hover {
   min-width: 0;
   text-align: center;
   font-size: var(--desk-surface-label-size); /* PHILO-10-04: the 12 px floor on the Connections window (was 10 px) */
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2939,8 +2896,6 @@ button.surface-edit-in-place:hover {
 }
 .meeting-conflict-slip-facts dt {
   color: var(--text-faint);
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
 }
 .meeting-conflict-slip-facts dd {
   margin: 0;
@@ -3661,9 +3616,7 @@ button.surface-edit-in-place:hover {
 .assignment-candidate-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .assignment-candidate-added {
   margin-block-start: auto;
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   color: var(--text-faint);
 }
 .assignment-candidates > button[data-added] .assignment-candidate-added { color: var(--accent); }
@@ -3827,9 +3780,7 @@ button.surface-edit-in-place:hover {
 }
 .prefs-token-caption {
   display: block;
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   padding-top: 4px;
 }
 .prefs-token-caption[data-tone="warning"] {
@@ -4199,11 +4150,9 @@ button.surface-edit-in-place:hover {
   gap: 6px;
 }
 .meetings-stream-fact {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -4215,11 +4164,9 @@ button.surface-edit-in-place:hover {
   margin: 0 0.5ch;
 }
 .meetings-stream-no-transcript {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-dimmed);
   white-space: nowrap;
 }
@@ -4266,11 +4213,9 @@ button.surface-edit-in-place:hover {
 }
 .meetings-stream[data-narrowed] .meetings-stream-compact-facts {
   display: block;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -4407,11 +4352,9 @@ button.surface-edit-in-place:hover {
 }
 .meetings-detail-needs-head .surface-caption {
   flex: 1;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .meetings-detail-outcomes {
@@ -4503,18 +4446,14 @@ button.surface-edit-in-place:hover {
   font-size: var(--font-size-xs);
 }
 .meetings-review-project .btn {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 .meetings-review .surface-caption {
   display: block;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   margin-bottom: 6px;
 }
@@ -4543,8 +4482,6 @@ button.surface-edit-in-place:hover {
   min-width: 0;
 }
 .meetings-detail-head[data-compact] .meetings-detail-name {
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-primary);
 }
 .meetings-review-emblem {

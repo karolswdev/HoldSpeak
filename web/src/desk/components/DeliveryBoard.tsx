@@ -59,6 +59,12 @@ const GLYPH_WARN = String.fromCodePoint(0x26A0);
 const GLYPH_CHECK = String.fromCodePoint(0x2713);
 const GLYPH_CLOSE = String.fromCodePoint(0x2715);
 
+/** A wire word in sentence case (`stale` → `Stale`). */
+function sentence(word: string): string {
+  const w = word.replace(/_/g, " ");
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+}
+
 function stateTone(state: string): "warn" | "danger" | undefined {
   if (state === "waiting") return "warn";
   if (state === "abandoned" || state === "unknown") return "danger";
@@ -76,17 +82,17 @@ function FreshnessChip({ source }: { source: DeliverySource }) {
   const recovery = sourceRecovery(source);
   if (!recovery) {
     return (
-      <span className="desk-chip quiet desk-dlv-fresh is-live" title="live">
-        live
+      <span className="desk-chip quiet desk-dlv-fresh is-live" title="Live">
+        Live
       </span>
     );
   }
   return (
     <span className="desk-dlv-recovery" role="status">
       <span className={"desk-dlv-fresh is-" + recovery.state}>
-        {recovery.state}
+        {sentence(recovery.state)}
       </span>
-      <Token className="quiet surface-token">{recovery.state.toUpperCase()}</Token>
+      <Token className="quiet surface-token">{sentence(recovery.state)}</Token>
       <Button
         dense
         variant="ghost"
@@ -123,7 +129,7 @@ function AttemptLedgerRow({
         <>
           <span className="surface-ledger-cell">
             <Token className="surface-token" data-tone={stateTone(attempt.state)}>
-              {attempt.state.toUpperCase()}
+              {sentence(attempt.state)}
             </Token>
           </span>
           <span className="surface-ledger-cell">
@@ -535,7 +541,7 @@ export function DeliveryBoard() {
                             className="surface-token"
                             data-tone={stateTone(t.attemptState)}
                           >
-                            {t.attemptState.toUpperCase()}
+                            {sentence(t.attemptState)}
                           </Token>
                         </span>
                       ) : null}

@@ -101,7 +101,8 @@ export function PrReceiptsSection() {
                     const w = rowWork(key);
                     const proposalId = w.result?.proposal_id;
                     const proposal = proposalId ? w.result : null;
-                    const gateLabel = (row.agent_gate || "ungated").toUpperCase();
+                    const gateWord = String(row.agent_gate || "ungated").replace(/_/g, " ");
+                    const gateLabel = gateWord.charAt(0).toUpperCase() + gateWord.slice(1);
                     const headRef = row.head_ref;
                     const rowObserved = row.observed_at;
                     const rowGate = row.agent_gate;
@@ -184,7 +185,7 @@ export function PrReceiptsSection() {
                         ) : null}
                         {proposal ? (
                           <tr className="desk-pr-proposal"><td colSpan={4}>
-                            <div className="desk-pr-proposal-head"><strong>PROPOSED</strong><span className="egress-badge is-cloud">GitHub</span></div>
+                            <div className="desk-pr-proposal-head"><strong>Proposed</strong><span className="egress-badge is-cloud">GitHub</span></div>
                             {/* HS-111-07 — RAW pattern, default-open:
                                 the complete text IS the consent surface. */}
                             <FoldGadget title="RAW · PROPOSAL" open>

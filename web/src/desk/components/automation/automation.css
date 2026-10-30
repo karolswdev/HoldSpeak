@@ -44,9 +44,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font: 600 var(--font-size-xs, 12px) / 1.6 var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font: 600 var(--font-size-xs, 12px) / 1.6 var(--font-sans);
   color: var(--wb-muted);
   padding-top: 6px;
 }
@@ -140,9 +138,7 @@
 .automation-put-editor section { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .automation-editor-head,
 .automation-editor-caption {
-  font: 600 var(--font-size-xs, 12px) / 1.5 var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font: 600 var(--font-size-xs, 12px) / 1.5 var(--font-sans);
   color: var(--wb-muted);
 }
 .automation-picks { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
@@ -172,9 +168,7 @@
   overflow-wrap: anywhere;
 }
 .automation-engine-using {
-  font: 600 var(--font-size-xs, 12px) / 1.5 var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font: 600 var(--font-size-xs, 12px) / 1.5 var(--font-sans);
   color: var(--wb-text);
 }
 .automation-spend { padding: 4px 0 2px; }
@@ -434,9 +428,7 @@
 .automation-setup-kicker,
 .automation-setup-subheading {
   display: block;
-  font: 600 12px / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 12px / 1.4 var(--font-sans);
   color: var(--wb-muted);
 }
 .automation-setup-heading h2 {

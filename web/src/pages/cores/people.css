@@ -56,15 +56,15 @@
 .people-prep-summary { display: flex; flex-direction: column; }
 .people-prep-row { border-top: 1px solid var(--border); }
 .people-prep-row-main { display: flex; align-items: center; gap: 8px; padding: 10px 0; flex-wrap: wrap; }
-.people-prep-row-primary { font: 600 15px/1.4 var(--font-sans, 'Inter', system-ui, sans-serif); color: var(--text); white-space: nowrap; text-transform: uppercase; min-width: 0; }
+.people-prep-row-primary { font: 600 15px/1.4 var(--font-sans, 'Inter', system-ui, sans-serif); color: var(--text); white-space: nowrap; min-width: 0; }
 .people-prep-row-tokens { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.people-prep-token { font: 600 var(--font-size-xs)/1 var(--font-mono, 'JetBrains Mono', "JetBrains Mono Fallback", monospace); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
+.people-prep-token { font: 600 var(--font-size-xs)/1 var(--font-sans); color: var(--text-muted); white-space: nowrap; }
 .people-prep-token[data-warning] { color: var(--warning, #fbbf24); }
 .people-prep-token-muted { color: var(--text-muted); }
 .people-prep-row-spacer { flex: 1; min-width: 8px; }
 /* The Open verb must never clip or be pushed out of the row. */
 .people-prep-row-main > .btn { flex-shrink: 0; }
-.people-prep-receipt { font: 600 var(--font-size-xs)/1 var(--font-mono, 'JetBrains Mono', "JetBrains Mono Fallback", monospace); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.people-prep-receipt { font: 600 var(--font-size-xs)/1 var(--font-sans); color: var(--text-muted); }
 
 /* HS-172-05 — Now wing caption tokens (same grammar as Room proposal captions). */
 .people-now-caption {
@@ -256,9 +256,7 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px 14px;
-  font: 600 12px / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 12px / 1.4 var(--font-sans);
   color: var(--wb-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -287,9 +285,7 @@
   border: 1px solid color-mix(in srgb, var(--wb-ink) 55%, transparent);
   background: var(--wb-steel);
   box-shadow: var(--wb-raised);
-  font: 700 12px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font: 600 12px / 1 var(--font-sans);
   color: var(--wb-muted);
 }
 .desk-next .person-page .people-lenses > .btn:hover {
@@ -349,9 +345,7 @@
 .desk-next .people-next-when {
   margin-left: auto;
   text-align: right;
-  font: 700 12px / 1.2 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 600 12px / 1.2 var(--font-sans);
   font-variant-numeric: tabular-nums;
   color: var(--wb-ink);
 }
@@ -681,9 +675,7 @@
 }
 .desk-next .people-last-head > .btn { flex: none; }
 .desk-next .people-mono {
-  font: 700 12px / 1.2 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 600 12px / 1.2 var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--wb-text);
 }
@@ -713,9 +705,7 @@
 }
 .desk-next .people-next-row > .btn { flex: none; }
 .desk-next .people-surface .surface-split-main .surface-section-head > h3 {
-  font: 800 12px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font: 600 12px / 1 var(--font-sans);
   color: var(--wb-muted);
 }
 .desk-next .people-surface .surface-row-text small .people-pill { min-height: 20px; }
@@ -764,7 +754,6 @@
 .people-nudge { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .people-nudge-text { margin: 0; font: 500 13px / 1.4 var(--font-sans); color: var(--wb-text, var(--text)); }
 /* The two column heads read as the other caps ("MIRA OWES ME"). */
-.people-owe-grid .people-cap { text-transform: uppercase; }
 
 /* ── Window grammar (2026-10-24): People, the roster. Toolbar [Add person]
    + search → the dense list view (an initials disc in the person's hue

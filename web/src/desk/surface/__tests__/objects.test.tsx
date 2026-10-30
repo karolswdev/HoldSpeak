@@ -519,7 +519,7 @@ describe("AskWell", () => {
       );
     }
     const { container } = render(<Host />);
-    expect(screen.getByText("CLAUDE CODE ASKS · 6 MIN")).toBeInTheDocument();
+    expect(screen.getByText("Claude Code asks · 6 min")).toBeInTheDocument();
     // The field is the StringGadget (its mic draws where the browser can listen).
     expect(container.querySelector(".ask-well-answer > .gadget-string")).not.toBeNull();
     const field = screen.getByRole("textbox", { name: "Answer" });

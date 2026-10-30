@@ -94,10 +94,8 @@
   background: var(--wb-steel);
   box-shadow: none;
   color: var(--wb-ink);
-  font: 700 12px / 1 var(--font-mono);
-  letter-spacing: 0.02em;
+  font: 600 12px / 1 var(--font-sans);
   text-align: center;
-  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -105,9 +103,7 @@
 /* The LedgerRow meta: mono 12 upper; the `ask`, `ok` and `fail` tones are
    lane A1's ink tones (readable on paper and slate). */
 .surface-ledger-meta {
-  font: 500 12px / 1.3 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 500 12px / 1.3 var(--font-sans);
   color: var(--wb-muted);
   white-space: nowrap;
 }

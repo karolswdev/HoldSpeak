@@ -14,18 +14,18 @@
    one child fewer, and its chip fell into the 16 px mark column and spilled
    left over the title (IN PROGRESS over "HS-202-06 - The sitting…"). */
 .desk-roadmap-stories li > .desk-roadmap-status { grid-column: -2 / -1; }
-.desk-roadmap-status { justify-self: end; padding: var(--space-1) var(--space-2); border: 1px solid color-mix(in srgb, currentColor 46%, var(--wb-rule-soft)); border-radius: var(--radius-sm); font: 500 var(--desk-surface-detail-size)/1 var(--font-sans); letter-spacing: var(--letter-spacing-label-compact); text-transform: uppercase; white-space: nowrap; }
+.desk-roadmap-status { justify-self: end; padding: var(--space-1) var(--space-2); border: 1px solid color-mix(in srgb, currentColor 46%, var(--wb-rule-soft)); border-radius: var(--radius-sm); font: 500 var(--desk-surface-detail-size)/1 var(--font-sans); white-space: nowrap; }
 .desk-roadmap-status[data-status="done"], .desk-roadmap-status[data-status="closed"], .desk-roadmap-status[data-status="green"] { color: var(--ok); }
 .desk-roadmap-status[data-status="blocked"], .desk-roadmap-status[data-status="error"], .desk-roadmap-status[data-status="red"] { color: var(--danger-signal); }
 .desk-roadmap-status[data-status="in-progress"], .desk-roadmap-status[data-status="active"], .desk-roadmap-status[data-status="ready"], .desk-roadmap-status[data-status="warn"] { color: var(--warn-signal); }
 .desk-roadmap-status[data-status="backlog"] { color: var(--text-faint); }
 .desk-roadmap-story-groups section { margin: 0; border: 1px solid var(--wb-rule-soft); border-radius: var(--radius-sm); background: var(--wb-paper); }
-.desk-roadmap-story-groups h4 { margin: 0; padding: var(--space-2); border-bottom: 1px solid var(--wb-rule-soft); font: 600 var(--desk-surface-label-size)/1.2 var(--font-sans); letter-spacing: var(--letter-spacing-label-compact); text-transform: uppercase; color: var(--wb-muted); }
+.desk-roadmap-story-groups h4 { margin: 0; padding: var(--space-2); border-bottom: 1px solid var(--wb-rule-soft); font: 600 var(--desk-surface-label-size)/1.2 var(--font-sans); color: var(--wb-muted); }
 .desk-roadmap-story-groups li { display: grid; grid-template-columns: 100px minmax(100px, 1fr) auto; gap: var(--space-2); min-height: 28px; align-items: center; padding: 0 var(--space-2); border-bottom: 1px solid var(--wb-rule-soft); color: var(--wb-text); }
 .desk-roadmap-story-groups li:last-child { border-bottom: 0; }
 .desk-roadmap-story-groups b { color: var(--wb-sel); font: 600 var(--desk-surface-detail-size)/1 var(--font-sans); letter-spacing: var(--letter-spacing-label-compact); }
 .desk-roadmap-next { margin: 0; padding: var(--space-2); border: 1px solid var(--wb-sel); border-radius: var(--radius-sm); background: var(--wb-blue); color: var(--wb-sel); font: 600 var(--desk-surface-detail-size)/1.3 var(--font-sans); }
-.desk-roadmap-next-chip { color: var(--wb-muted); font: 500 var(--desk-surface-detail-size)/1.2 var(--font-sans); letter-spacing: var(--letter-spacing-label-compact); text-transform: uppercase; }
+.desk-roadmap-next-chip { color: var(--wb-muted); font: 500 var(--desk-surface-detail-size)/1.2 var(--font-sans);}
 .desk-roadmap-health li { display: grid; grid-template-columns: auto minmax(80px, .5fr) minmax(130px, 1fr); gap: var(--space-2); align-items: center; min-height: 32px; padding: var(--space-1) 0; border-bottom: 1px solid var(--wb-rule-soft); }
 .desk-roadmap-health code { overflow: hidden; color: var(--wb-muted); text-overflow: ellipsis; white-space: nowrap; }
 .desk-roadmap-footer { display: flex; align-items: center; justify-content: space-between; min-height: 28px; gap: 8px; padding: 0 10px; border-top: 1px solid var(--border); font: var(--font-size-xs) / 16px var(--font-mono); color: var(--text-faint); }

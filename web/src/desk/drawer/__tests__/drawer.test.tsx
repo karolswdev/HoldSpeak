@@ -173,10 +173,10 @@ describe("PHILO-14 A2 the drawer", () => {
 
   it("icons wear their lamps: the agent asks, the item names its agent", async () => {
     await renderDrawer();
-    expect(screen.getByRole("button", { name: "Write the rollback runbook, ACTION ITEM, CLAUDE CODE ASKS" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Write the rollback runbook, ACTION ITEM, Claude Code asks" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Claude Code: Write the rollback runbook, AGENT, ASKS" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "#412 Add the freeze flag, PULL REQUEST, OPEN" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add the freeze flag, ACTION ITEM, PR #412 OPEN" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add the freeze flag, ACTION ITEM, PR #412 open" })).toBeInTheDocument();
   });
 
   it("Icons | List is remembered per drawer", async () => {
@@ -393,7 +393,7 @@ describe("PHILO-14 A2 drawer members (pure)", () => {
     expect(members.map((m) => m.ref)).toEqual(["decision:dec-9"]);
     const record = members[0];
     expect(record.kind).toBe("decision");
-    expect(record.state?.label).toMatch(/^CLAUDE CODE /);
+    expect(record.state?.label).toMatch(/^Claude Code /);
     expect(memberOpens(record)).toBe(true);
     opened.refs.length = 0;
     openMember(record);

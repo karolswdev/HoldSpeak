@@ -778,7 +778,7 @@ function ResultRow({
             aria-label="Corrections applied"
             onClick={() => setAppliedOpen(!appliedOpen)}
           >
-            APPLIED
+            Applied
           </Button>
         ) : null}
         <Button

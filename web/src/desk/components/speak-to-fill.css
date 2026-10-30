@@ -191,7 +191,6 @@
 }
 .desk-voice-proposal-action {
   color: var(--text);
-  text-transform: uppercase;
 }
 .desk-voice-scan {
   position: relative;

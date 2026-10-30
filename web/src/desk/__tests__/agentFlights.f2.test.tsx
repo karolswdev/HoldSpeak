@@ -30,12 +30,12 @@ const wire = (over: Record<string, unknown> = {}) => ({
 
 describe("the flight's words", () => {
   it("names the agent in flight, then the PR once it exists", () => {
-    expect(flightLabel(fromWireFlight(wire()))).toBe("CLAUDE CODE · WAITING");
-    expect(flightLabel(fromWireFlight(wire({ agent: "codex", state: "working" })))).toBe("CODEX · WORKING");
-    expect(flightLabel(fromWireFlight(wire({ state: "pr_open", pr: { number: 412, url: "u", state: "open" } })))).toBe("PR #412 · OPEN");
-    expect(flightLabel(fromWireFlight(wire({ state: "merged", pr: { number: 413, url: "u", state: "merged" } })))).toBe("PR #413 · MERGED");
+    expect(flightLabel(fromWireFlight(wire()))).toBe("Claude Code · Waiting");
+    expect(flightLabel(fromWireFlight(wire({ agent: "codex", state: "working" })))).toBe("Codex · Working");
+    expect(flightLabel(fromWireFlight(wire({ state: "pr_open", pr: { number: 412, url: "u", state: "open" } })))).toBe("PR #412 · Open");
+    expect(flightLabel(fromWireFlight(wire({ state: "merged", pr: { number: 413, url: "u", state: "merged" } })))).toBe("PR #413 · Merged");
     // No session bound yet: STARTING. Ended or expired draws nothing.
-    expect(flightLabel(fromWireFlight(wire({ state: "starting", session_key: null })))).toBe("CLAUDE CODE · STARTING");
+    expect(flightLabel(fromWireFlight(wire({ state: "starting", session_key: null })))).toBe("Claude Code · Starting");
     expect(flightLabel(fromWireFlight(wire({ state: "ended" })))).toBeNull();
     expect(flightLabel(fromWireFlight(wire({ state: "expired" })))).toBeNull();
   });

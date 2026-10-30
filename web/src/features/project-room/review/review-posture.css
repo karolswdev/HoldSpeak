@@ -154,11 +154,9 @@
 }
 
 .review-edit-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted, #9ba2b0);
   min-width: 60px;
   flex-shrink: 0;

@@ -203,9 +203,6 @@
   white-space: nowrap;
 }
 /* Speaker token is uppercase per F8 but separated from the provenance */
-.room-proposal-speaker {
-  text-transform: uppercase;
-}
 .room-proposal-verbs {
   display: inline-flex;
   gap: 4px;
@@ -245,19 +242,15 @@
 }
 .room-proposal-edit-label-text {
   font-size: var(--font-size-xs);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--text-muted);
   min-width: 50px;
 }
 .room-proposal-was-caption {
   margin: 0;
   font-size: var(--font-size-xs);
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-family: var(--font-sans);
   color: var(--text-faint);
 }
 .room-proposal-edit-verbs {
@@ -719,9 +712,7 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px 14px;
-  font: 600 12px / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 12px / 1.4 var(--font-sans);
   color: var(--wb-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -1080,7 +1071,6 @@
   scroll-padding-bottom: 0;
 }
 .room-head .room-head-trailing .btn { width: auto; }
-.room-plate-cap { text-transform: uppercase; }
 .room-signal-facts {
   display: flex;
   flex-wrap: wrap;

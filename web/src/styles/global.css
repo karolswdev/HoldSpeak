@@ -550,9 +550,7 @@ pre {
   width: fit-content;
   min-height: 18px;
   padding: 0 8px;
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--wb-well);

@@ -15,6 +15,12 @@ import { humanTime } from "../surface/format";
 import { StringGadget } from "../surface/gadgets";
 import { Token } from "../surface/Token";
 
+/** A wire word in sentence case (`needs_review` → `Needs review`). */
+function wireWord(word: string): string {
+  const w = String(word || "").replace(/_/g, " ").toLowerCase();
+  return w.charAt(0).toUpperCase() + w.slice(1);
+}
+
 const PRESETS = [
   {
     id: "github-review-requested" as const,
@@ -70,7 +76,7 @@ function AutomationHistory({ workbenchId, automationId }: { workbenchId: string;
           key={entry.id}
           time={humanTime(entry.occurred_at)}
           primary={`${eventKind} · ${entry.subject}`}
-          cells={<span className="desk-chip" data-tone={historyTone(entry.outcome)}>{entry.outcome.toUpperCase()}</span>}
+          cells={<span className="desk-chip" data-tone={historyTone(entry.outcome)}>{wireWord(entry.outcome)}</span>}
         >
           <dl className="surface-facts wb-automation-history-detail">
             {receiptId ? <div><dt>receipt</dt><dd>{receiptId}</dd></div> : null}
@@ -112,7 +118,7 @@ function AutomationRow({
       <Button variant="ghost" className="wb-automation-head" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span className="wb-automation-source">{providerLabel(automation.provider)}</span>
         <span className="wb-automation-title">{automation.name}</span>
-        <span className="desk-chip" data-tone={statusTone(automation.status)}>{automation.status.toUpperCase()}</span>
+        <span className="desk-chip" data-tone={statusTone(automation.status)}>{wireWord(automation.status)}</span>
         <span aria-hidden="true">{open ? "▴" : "▾"}</span>
       </Button>
       <Token className="wb-automation-summary surface-token">{`WHEN ${eventKind} · ADD ITEM ONLY`}</Token>

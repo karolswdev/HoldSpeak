@@ -358,11 +358,9 @@
 .desk-next .desk-tool-shelf h3 {
   margin: 12px 0 4px;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 .desk-next .desk-tool-shelf header p {
   margin-top: 4px;

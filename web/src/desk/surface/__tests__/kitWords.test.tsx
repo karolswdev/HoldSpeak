@@ -31,6 +31,12 @@ describe("stateWords", () => {
     ["SUPERSEDED BY DEC 09-07", "Superseded by DEC 09-07"],
     ["DUE DEC 12", "Due Dec 12"],
     ["CLAUDE CODE · HOOKS IN", "Claude Code · Hooks in"],
+    // WORDS-LEFTOVERS: the one-letter article in a caps wire is a word too.
+    ["NEEDS A DECISION", "Needs a decision"],
+    ["WAITING ON A REVIEW", "Waiting on a review"],
+    ["WAITS FOR A FREE AGENT", "Waits for a free agent"],
+    ["A NEW SESSION", "A new session"],
+    ["Plan A", "Plan A"],
   ])("%s → %s", (caps, words) => {
     expect(stateWords(caps)).toBe(words);
   });

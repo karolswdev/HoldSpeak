@@ -231,7 +231,7 @@ describe("the APPLIED chip", () => {
     landed = { ...landed, corrections_applied: [3] };
     const result = await land();
     const chip = await within(result).findByRole("button", { name: "Corrections applied" });
-    expect(chip.textContent).toBe("APPLIED");
+    expect(chip.textContent).toBe("Applied");
     expect(chip.getAttribute("aria-expanded")).toBe("false");
     await userEvent.click(chip);
 

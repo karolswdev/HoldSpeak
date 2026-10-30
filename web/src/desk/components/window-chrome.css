@@ -244,9 +244,7 @@
 .desk-next .desk-panel-eyebrow {
   display: block;
   color: var(--accent);
-  font: 700 var(--font-size-xs) / 16px var(--font-mono);
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 16px var(--font-sans);
 }
 .desk-next .desk-pullout-body {
   flex: 1;
@@ -277,11 +275,9 @@
 /* HS-111: section labels — mono, 10px, 600 (system-label style) */
 .desk-next .desk-pullout-body h3 {
   margin: 0 0 6px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   /* The object tint stays on the WINDOW EDGE; headings are quiet. */
   color: var(--text-muted);
 }
@@ -1004,8 +1000,6 @@
   border: 0;
   color: var(--text-muted);
   font-size: var(--font-size-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   cursor: pointer;
   padding: 0;
 }
@@ -1035,8 +1029,6 @@
 /* HS-105-04 — the Info card: one contract-derived surface. */
 .desk-info-window .desk-info-body section h3 {
   font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 .desk-info-window .info-kv {
@@ -1048,10 +1040,8 @@
 .desk-info-window .info-kv b {
   color: var(--text-muted);
   font-weight: 400;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--desk-surface-label-size);
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
 }
 .desk-info-window .info-id {
   font-family: var(--font-mono);

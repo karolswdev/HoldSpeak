@@ -35,8 +35,6 @@
 .write-receipt.write-receipt-mono {
   font-family: var(--font-mono);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 .write-receipt-mono .write-receipt-lamp {
   border-radius: 0;

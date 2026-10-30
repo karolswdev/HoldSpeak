@@ -302,9 +302,7 @@
   border: 0;
   background: transparent;
   color: var(--wb-ink);
-  font: 700 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   text-align: left;
   cursor: pointer;
   box-shadow: none;
@@ -802,9 +800,7 @@
 }
 .object-info-kind {
   margin: 2px 0 0;
-  font: 700 var(--font-size-xs) / 1.2 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1.2 var(--font-sans);
   color: var(--text);
 }
 .object-info-facts {
@@ -817,9 +813,7 @@
   display: contents;
 }
 .object-info-fact dt {
-  font: 600 var(--font-size-xs) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1.5 var(--font-sans);
   color: var(--text-muted);
 }
 .object-info-fact dd {
@@ -859,9 +853,7 @@
 }
 .lane-word {
   flex: none;
-  font: 700 var(--font-size-xs) / 18px var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 18px var(--font-sans);
   color: var(--text-muted);
 }
 .lane-verbs,
@@ -1034,9 +1026,7 @@
 .ask-well-caption,
 .ask-well-draft-word {
   margin: 0;
-  font: 700 var(--font-size-xs) / 1.2 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1.2 var(--font-sans);
   color: var(--text);
 }
 .ask-well-draft-word {
