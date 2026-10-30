@@ -38,9 +38,19 @@ class ToolCallCodec:
     # context and authenticated parent scope are validated by the broker.
     trusted_child = True
 
-    def __init__(self, gate: Any, mode_loader: Any) -> None:
+    def __init__(self, gate: Any, mode_loader: Any, db: Any = None) -> None:
         self._gate = gate
         self._mode_loader = mode_loader
+        # Programs PG13: with the hub's database, a Program step's launch is
+        # decided at its Program's level (``control_level``); else the desk's.
+        self._db = db
+
+    def _mode_for(self, launch_id: str) -> str:
+        if self._db is not None and launch_id:
+            from ..services.control_level import mode_for_launch
+
+            return mode_for_launch(launch_id, db=self._db, desk=self._mode_loader)
+        return str(self._mode_loader())
 
     def validate(self, request: OperationRequest) -> Admission:
         args = request.arguments
@@ -120,7 +130,7 @@ class ToolCallCodec:
             **admission.__dict__,
             operation=operation,
             policy=resolve_policy(
-                descriptor, mode=self._mode_loader(), source="config",
+                descriptor, mode=self._mode_for(verdict.get("launch_id", "")), source="config",
                 tool_call=verdict,
             ).to_dict(),
         )

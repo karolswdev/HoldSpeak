@@ -185,7 +185,7 @@ A program uses your desk's control mode when you make it. You can change it for 
 
 Use Secure for a repository where you do not trust the engine yet. Use YOLO when you want HoldSpeak to do as much as possible without you.
 
-Note: the agents' routine questions and the gate's held calls follow your desk's control mode, not the program's level. A program at YOLO on a desk at Secure still asks you about them.
+The agents of a program's steps follow the program's level, not your desk's control mode. This applies to their routine questions and to the tool calls that the gate holds. A program at Secure on a desk at YOLO sends each question and each held call to you. A program at YOLO on a desk at Normal gets the desk's draft typed and the calls that the YOLO rules allow. Agents that are not in a program continue to use your desk's mode. Each answer or call that HoldSpeak gives for a step is a line in **Decided for you**, for example "Answered for you: …" or "Allowed: Bash", with its rule. HoldSpeak writes one "Allowed" line for each tool and rule on a step. Note: file edits in the step's own worktree follow your desk's mode at the time the agent starts.
 
 ## Decided for you, and Overturn
 

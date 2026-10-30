@@ -54,7 +54,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     store = JournalStore(database._connection, **({"clock": clock} if clock else {}))
     from ..delivery.factory_launch import default_launch_service
 
-    tool_calls = ToolCallCodec(database.gate, _mode)
+    tool_calls = ToolCallCodec(database.gate, _mode, db=database)
     process_input = ProcessInputCodec(database.delivery_receipts)
     desktop_type_text = DesktopTypeTextCodec(
         database.desktop_type_receipts,

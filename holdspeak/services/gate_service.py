@@ -159,6 +159,13 @@ class GateService:
             return proposal
         record = found[1]
         pre_approved = (record.get("mcp") or {}).get("pre_approved") is True
+        from .control_level import level_for_launch, step_of_launch
+
+        launch_id = str(record.get("launch_id") or "")
+        if step_of_launch(launch_id, db=self._db) is not None:
+            # Programs PG13: a step's launch follows its Program's level,
+            # not the desk's mode at launch (Secure pre-approves nothing).
+            pre_approved = level_for_launch(launch_id, db=self._db) != "secure"
         if pre_approved:
             reason = "MCP tool pre-approved at launch; the palette decides"
         elif mcp_tool_is_read(tool):
@@ -197,7 +204,17 @@ class GateService:
             )
         except ConflictError:
             pass  # decided in the meantime: the standing state answers
-        return self._db.gate.get(proposal.id) or proposal
+        decided = self._db.gate.get(proposal.id) or proposal
+        if decided.state == APPROVED and verdict.get("launch_id"):
+            # Programs PG13: a step's allowed call is a Decided-for-you line
+            # (one per tool and rule on the step).
+            from .control_level import record_decision
+
+            record_decision(
+                str(verdict["launch_id"]), "gate_approval", f"Allowed: {proposal.tool}"[:200],
+                facts={"gate_allows": True}, db=self._db, dedupe=True,
+            )
+        return decided
 
     def _checked_verdict(self, principal: Principal, payload: Mapping[str, Any]) -> dict[str, str]:
         """The hook's verdict, checked against the caller's OWN launch: the
