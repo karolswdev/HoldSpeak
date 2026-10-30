@@ -9,6 +9,7 @@ This is the record of that requested committee, not a new delivery ritual.
 Source base: `44b7104f7` (`origin/main` when this worktree was created).
 Worktree: `/Users/karol/.codex/worktrees/agents-development/HoldSpeak`.
 Branch: `docs/agents-development`.
+PR: [#1635](https://github.com/karolswdev/HoldSpeak/pull/1635).
 
 Three independent owner-started local agents, each `gpt-5.6-luna` at `xhigh`,
 read the current rules and source, then checked the integrated guidance once:
