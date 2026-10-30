@@ -13,7 +13,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 877 (plus static mounts). iOS-consumed: 89. Web-consumed: 679.
+Routes: 877 (plus static mounts). iOS-consumed: 89. Web-consumed: 682.
 
 ## device_audio_ws
 
@@ -207,13 +207,13 @@ Routes: 877 (plus static mounts). iOS-consumed: 89. Web-consumed: 679.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/calls` | web |
-| POST | `/api/calls/line/codes` | server only |
+| POST | `/api/calls/line/codes` | web |
 | POST | `/api/calls/line/enrol` | server only |
 | POST | `/api/calls/line/events` | server only |
 | POST | `/api/calls/line/hello` | server only |
 | POST | `/api/calls/line/next` | server only |
-| GET | `/api/calls/line/nodes` | server only |
-| DELETE | `/api/calls/line/nodes/{node}` | server only |
+| GET | `/api/calls/line/nodes` | web |
+| DELETE | `/api/calls/line/nodes/{node}` | web |
 | GET | `/api/calls/line/status` | web |
 | POST | `/api/calls/line/test` | web |
 | POST | `/api/calls/place` | web |

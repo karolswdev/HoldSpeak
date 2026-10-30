@@ -1,0 +1,7 @@
+{
+  "status": 400,
+  "body": {
+    "error": "A machine name is 1 to 32 letters, digits or dashes (not this-mac).",
+    "reason": "bad_name"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "node": "karol",
+  "code": "QW29-X9TU",
+  "expires_in": 600,
+  "hub": "https://holdspeak.tailnet.ts.net",
+  "command": "holdspeak line enrol --hub https://holdspeak.tailnet.ts.net --code QW29-X9TU --node karol"
+}

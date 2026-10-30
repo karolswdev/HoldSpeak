@@ -6,5 +6,6 @@
   "secrets": {
     "sip_password": "missing",
     "telnyx_api_key": "missing"
-  }
+  },
+  "machine": {}
 }

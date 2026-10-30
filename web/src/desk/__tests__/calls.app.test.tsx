@@ -830,7 +830,16 @@ import lineTestBusy from "../calls/__fixtures__/line.test.busy.json";
 import lineTestRejected from "../calls/__fixtures__/line.test.rejected.json";
 import lineTestNotRunning from "../calls/__fixtures__/line.test.notRunning.json";
 import lineTestNoNumber from "../calls/__fixtures__/line.test.noNumber.json";
-import { LINE_BREW_COMMAND, LINE_RUN_COMMAND, LINE_VENV_COMMAND } from "../calls/LineSettings";
+import lineNodesNone from "../calls/__fixtures__/line.nodes.none.json";
+import lineNodesEnrolled from "../calls/__fixtures__/line.nodes.enrolled.json";
+import lineNodesReady from "../calls/__fixtures__/line.nodes.ready.json";
+import lineNodesRevoke from "../calls/__fixtures__/line.nodes.revoke.json";
+import lineCodeKarol from "../calls/__fixtures__/line.codes.karol.json";
+import lineCodeBadName from "../calls/__fixtures__/line.codes.badName.json";
+import lineSettingsKarol from "../calls/__fixtures__/line.settings.karol.json";
+import lineStatusKarol from "../calls/__fixtures__/line.status.karol.json";
+import linePutWhereKarol from "../calls/__fixtures__/line.put.whereKarol.json";
+import { LINE_BREW_COMMAND, LINE_RUN_COMMAND, LINE_VENV_COMMAND, NODE_POLL_MS } from "../calls/LineSettings";
 
 function lineHub(extra: Record<string, Answer> = {}) {
   hub({
@@ -976,6 +985,119 @@ describe("Settings ▸ Calls ▸ Line", () => {
     const adapter = await screen.findByTestId("line-adapter");
     fireEvent.click(within(adapter).getByRole("radio", { name: /ai-phone/ }));
     await waitFor(() => expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { adapter: "ai-phone" } } })}`));
+  });
+
+  /* LINE-4c: another machine. Install the Line on karol → the one-time code
+     sheet → Copy; karol's first hello → Ready; Revoke → gone; pick karol →
+     where = node:karol. Every answer is the hub's own (record_line_fixtures). */
+  const nodeRow = (node: string) => screen.getAllByTestId("line-place").find((row) => row.getAttribute("data-where") === `node:${node}`);
+
+  it("Install the Line on karol: the hub's one-time code, its life as a word, the whole command with Copy", async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    lineHub({ "GET /api/calls/line/nodes": lineNodesNone, "POST /api/calls/line/codes": lineCodeKarol });
+    render(<CallsSettingsPane />);
+    const add = await screen.findByTestId("line-add");
+    const press = within(add).getByTestId("line-install-node");
+    expect(press).toBeDisabled();
+    expect(press.textContent).toBe("Install the Line");
+    fireEvent.change(within(add).getByLabelText("Add a machine"), { target: { value: "karol" } });
+    expect(press.textContent).toBe("Install the Line on karol");
+    fireEvent.click(press);
+    const sheet = await screen.findByTestId("line-code-sheet");
+    expect(calls).toContain(`POST /api/calls/line/codes ${JSON.stringify({ node: "karol", hub: window.location.origin })}`);
+    expect(within(sheet).getByTestId("line-code").textContent).toBe(lineCodeKarol.code);
+    expect(within(sheet).getByTestId("line-code-life").textContent).toBe("Good for 10 more minutes");
+    expect(sheet.textContent).toContain("Run this on karol");
+    expect(sheet.textContent).toContain(lineCodeKarol.command);
+    expect(within(sheet).getByTestId("line-code-wait").textContent).toBe("Waiting for karol");
+    expect(screen.queryByTestId("line-add")).toBeNull();
+    fireEvent.click(within(sheet).getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(lineCodeKarol.command));
+    // Cancel closes the sheet; Add a machine is back.
+    fireEvent.click(within(sheet).getByTestId("line-code-cancel"));
+    expect(screen.queryByTestId("line-code-sheet")).toBeNull();
+    expect(screen.getByTestId("line-add")).toBeInTheDocument();
+  });
+
+  it("a name the hub refuses: its own reason, and no sheet", async () => {
+    lineHub({ "GET /api/calls/line/nodes": lineNodesNone,
+      "POST /api/calls/line/codes": () => { throw new ApiError(lineCodeBadName.status, lineCodeBadName.body.error, lineCodeBadName.body); } });
+    render(<CallsSettingsPane />);
+    const add = await screen.findByTestId("line-add");
+    fireEvent.change(within(add).getByLabelText("Add a machine"), { target: { value: "Karol's box!" } });
+    fireEvent.click(within(add).getByTestId("line-install-node"));
+    await waitFor(() => expect(screen.getByTestId("line-refusal").textContent).toContain(lineCodeBadName.body.error));
+    expect(screen.queryByTestId("line-code-sheet")).toBeNull();
+  });
+
+  it("karol's first hello closes the sheet, and its row reads Ready with its platform and its cost", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let nodes: unknown = lineNodesNone;
+      lineHub({ "GET /api/calls/line/nodes": () => nodes, "POST /api/calls/line/codes": lineCodeKarol });
+      render(<CallsSettingsPane />);
+      const add = await screen.findByTestId("line-add");
+      fireEvent.change(within(add).getByLabelText("Add a machine"), { target: { value: "karol" } });
+      fireEvent.click(within(add).getByTestId("line-install-node"));
+      await screen.findByTestId("line-code-sheet");
+      // karol redeemed the code; the Line there has not said hello yet.
+      nodes = lineNodesEnrolled;
+      await act(async () => { vi.advanceTimersByTime(NODE_POLL_MS); });
+      await waitFor(() => expect(within(nodeRow("karol")!).getByTestId("line-node-state").textContent).toBe("Not running"));
+      expect(screen.getByTestId("line-code-sheet")).toBeInTheDocument();
+      // A minute on, the life word counts down.
+      await act(async () => { vi.advanceTimersByTime(60_000); });
+      expect(screen.getByTestId("line-code-life").textContent).toBe("Good for 9 more minutes");
+      // Its first hello.
+      nodes = lineNodesReady;
+      await act(async () => { vi.advanceTimersByTime(NODE_POLL_MS); });
+      await waitFor(() => expect(screen.queryByTestId("line-code-sheet")).toBeNull());
+      const row = nodeRow("karol")!;
+      expect(within(row).getByTestId("line-node-state").textContent).toBe("Ready");
+      expect(row.textContent).toContain("Linux x86_64 · About 0.4 core per call minute");
+      expect(screen.getByTestId("line-add")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("pick karol: where = node:karol, and the place word is the Line's there", async () => {
+    let picked = false;
+    hub({
+      "GET /api/settings": () => ({ calls: picked ? lineSettingsKarol : lineSettings }),
+      "GET /api/calls/status": lineCallsReady,
+      "GET /api/calls/line/status": () => (picked ? lineStatusKarol : lineReady),
+      "GET /api/calls/line/nodes": lineNodesReady,
+      "PUT /api/settings": () => { picked = true; return linePutWhereKarol; },
+    });
+    render(<CallsSettingsPane />);
+    await waitFor(() => expect(nodeRow("karol")).toBeTruthy());
+    fireEvent.click(within(screen.getByTestId("line-where")).getByRole("radio", { name: /karol/ }));
+    await waitFor(() => expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { where: "node:karol" } } })}`));
+    await waitFor(() => expect(within(nodeRow("karol")!).getByTestId("line-place-state").textContent).toBe("Ready"));
+    expect(within(screen.getByTestId("line-where")).getByRole("radio", { name: /karol/ })).toBeChecked();
+    expect(screen.getByTestId("line-test-call").getAttribute("title")).toBe("From the Line on karol");
+  });
+
+  it("Revoke on karol: two presses, the hub's DELETE, and the row is gone", async () => {
+    let gone = false;
+    lineHub({
+      "GET /api/calls/line/nodes": () => (gone ? lineNodesNone : lineNodesReady),
+      "DELETE /api/calls/line/nodes/karol": () => { gone = true; return lineNodesRevoke; },
+    });
+    render(<CallsSettingsPane />);
+    await waitFor(() => expect(nodeRow("karol")).toBeTruthy());
+    const revoke = within(nodeRow("karol")!).getByTestId("line-node-revoke");
+    fireEvent.click(revoke);
+    expect(revoke.textContent).toBe("Revoke?");
+    expect(calls).not.toContain("DELETE /api/calls/line/nodes/karol");
+    // The press is the verb's own: the place stays This Mac.
+    expect(within(screen.getByTestId("line-where")).getByRole("radio", { name: /karol/ })).not.toBeChecked();
+    fireEvent.click(revoke);
+    await waitFor(() => expect(calls).toContain("DELETE /api/calls/line/nodes/karol"));
+    await waitFor(() => expect(nodeRow("karol")).toBeUndefined());
+    expect(calls.filter((call) => call.startsWith("PUT /api/settings"))).toEqual([]);
   });
 
   it("a hub without the Line draws no Line section", async () => {

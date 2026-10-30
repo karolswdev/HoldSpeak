@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
-import type { Call, CallStateFrame, CallStep, CallSummary, CallsSettings, CallsStatus, LineStatus, LineTestResult } from "./types";
+import type { Call, CallStateFrame, CallStep, CallSummary, CallsSettings, CallsStatus, LineCode, LineNode, LineStatus, LineTestResult } from "./types";
 
 /** The checklist in its order, every step open: what the faces draw when
  *  the hub has no Calls slice or its status read fails. */
@@ -87,6 +87,28 @@ export async function testLine(): Promise<LineTestResult> {
     }
     throw error;
   }
+}
+
+/** The enrolled Line nodes; a hub without the route has none. */
+export async function readLineNodes(): Promise<LineNode[]> {
+  try {
+    const body = await apiFetch<{ nodes?: LineNode[] }>("/api/calls/line/nodes");
+    return Array.isArray(body?.nodes) ? body.nodes : [];
+  } catch (error) {
+    if (notFound(error)) return [];
+    throw error;
+  }
+}
+
+/** Install the Line on a machine: the hub mints its one-time code and the
+ *  command, with this desk's own address as the hub to call. */
+export function mintLineCode(node: string): Promise<LineCode> {
+  return apiFetch<LineCode>("/api/calls/line/codes", { method: "POST", json: { node, hub: window.location.origin } });
+}
+
+/** Revoke a Line node's credential. */
+export function revokeLineNode(node: string): Promise<unknown> {
+  return apiFetch(`/api/calls/line/nodes/${encodeURIComponent(node)}`, { method: "DELETE" });
 }
 
 /** The Line is the phone on this hub (its block is not `off`). */

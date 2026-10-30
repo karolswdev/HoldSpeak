@@ -1,0 +1,11 @@
+{
+  "nodes": [
+    {
+      "node": "karol",
+      "enrolled_at": "2026-10-29T14:58:19Z",
+      "state": "not_running",
+      "words": "Not running",
+      "machine": {}
+    }
+  ]
+}

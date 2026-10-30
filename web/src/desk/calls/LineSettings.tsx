@@ -10,15 +10,16 @@
  * goes to the hub's keystore. The machine is named here (and as the hover
  * title of Test call), never on the Calls window (UX-CANON A.9). Egress is
  * said here once. */
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { readableError } from "../../lib/api";
 import { CommandWell } from "../../pages/cores/connections/ConnectionsPane";
 import { spriteUrl } from "../sprites";
 import { GadgetGroup, MxRadio, StringGadget } from "../surface/gadgets";
+import { ConfirmVerb } from "../surface/Surface";
 import { DotWord } from "../surface/kit";
-import { LINE_OFF, readLineStatus, testLine } from "./api";
-import type { CallsSettings, LineSettings, LineState, LineStatus, SecretPlace } from "./types";
+import { LINE_OFF, mintLineCode, readLineNodes, readLineStatus, revokeLineNode, testLine } from "./api";
+import type { CallsSettings, LineCode, LineNode, LineState, LineStatus, SecretPlace } from "./types";
 import "./calls.css";
 
 /** The Line runs in its own Python 3.13 (the hub's Python has no
@@ -71,11 +72,51 @@ const COST: Record<string, string> = {
 
 const NEVER_DIALLED = "911, 112, 999, 000 and the other emergency numbers";
 
+/** While the code sheet is open the pane reads the nodes this often: the
+ *  machine's first hello closes the sheet. */
+export const NODE_POLL_MS = 5000;
+
 function placeName(where: string): string {
   return where.startsWith("node:") ? where.slice(5) : "This Mac";
 }
 function nodeOf(where: string): string {
   return where.startsWith("node:") ? where.slice(5) : "this-mac";
+}
+
+/** A verb inside a place's radio row: its press is its own, never the row's
+ *  select. */
+function OwnPress({ children }: { children: ReactNode }) {
+  const keep = (event: MouseEvent) => { event.preventDefault(); event.stopPropagation(); };
+  return <span className="line-own-press" onClick={keep}>{children}</span>;
+}
+
+function minutesLeft(deadline: number, now: number): number {
+  return Math.max(0, Math.ceil((deadline - now) / 60_000));
+}
+
+/** The one-time code: large, its life as a word, the whole command with
+ *  Copy. It closes when the machine's first hello arrives. */
+function CodeSheet({ code, deadline, now, busy, onNew, onCancel }: {
+  code: LineCode; deadline: number; now: number; busy: boolean; onNew(): void; onCancel(): void;
+}) {
+  const left = minutesLeft(deadline, now);
+  return (
+    <div className="line-code-sheet" data-testid="line-code-sheet" data-node={code.node}>
+      <div className="line-code-head">
+        <code className="line-code" data-testid="line-code">{code.code}</code>
+        <span className="line-code-life" data-testid="line-code-life">
+          {left > 0 ? `Good for ${left} more ${left === 1 ? "minute" : "minutes"}` : "This code is too old"}
+        </span>
+        <span className="line-row-verb">
+          {left > 0 ? null : <Button dense variant="secondary" loading={busy} onClick={onNew} data-testid="line-code-new">New code</Button>}
+          <Button dense variant="ghost" onClick={onCancel} data-testid="line-code-cancel">Cancel</Button>
+        </span>
+      </div>
+      <p className="calls-step-say">Run this on {code.node}</p>
+      <div className="line-commands"><CommandWell hint={code.command} /></div>
+      <span className="line-code-wait"><DotWord tone="info" data-testid="line-code-wait">Waiting for {code.node}</DotWord></span>
+    </div>
+  );
 }
 
 function Row({ name, fact, state, verb, testId }: {
@@ -185,11 +226,68 @@ export function LineSettingsPane({ settings, onWrite }: {
   const [busy, setBusy] = useState("");
   const [refusal, setRefusal] = useState("");
   const [test, setTest] = useState<string>("");
+  const [nodes, setNodes] = useState<LineNode[]>([]);
+  const [machine, setMachine] = useState("");
+  const [sheet, setSheet] = useState<{ code: LineCode; deadline: number } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const load = useCallback(async () => {
-    try { setStatus(await readLineStatus()); } catch (error) { setRefusal(readableError(error)); } finally { setLoaded(true); }
+    try {
+      const [read, enrolled] = await Promise.all([readLineStatus(), readLineNodes()]);
+      setStatus(read);
+      setNodes(enrolled);
+    } catch (error) { setRefusal(readableError(error)); } finally { setLoaded(true); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+
+  // The sheet is open: its life ticks, and the nodes are read again until
+  // the machine's first hello (its word is no longer Not running).
+  const waitingFor = sheet?.code.node ?? "";
+  useEffect(() => {
+    if (!waitingFor) return undefined;
+    const tick = window.setInterval(() => setNow(Date.now()), 1000);
+    const poll = window.setInterval(() => {
+      void readLineNodes().then((enrolled) => {
+        setNodes(enrolled);
+        const arrived = enrolled.find((row) => row.node === waitingFor);
+        if (arrived && arrived.state !== "not_running") {
+          setSheet(null);
+          void load();
+        }
+      }).catch(() => undefined);
+    }, NODE_POLL_MS);
+    return () => { window.clearInterval(tick); window.clearInterval(poll); };
+  }, [waitingFor, load]);
+
+  const install = async (name: string) => {
+    if (!name) return;
+    setBusy("install");
+    setRefusal("");
+    try {
+      const code = await mintLineCode(name);
+      const at = Date.now();
+      setNow(at);
+      setSheet({ code, deadline: at + code.expires_in * 1000 });
+      setMachine("");
+    } catch (error) {
+      setRefusal(readableError(error));
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const revoke = async (node: string) => {
+    setBusy(`revoke-${node}`);
+    setRefusal("");
+    try {
+      await revokeLineNode(node);
+      await load();
+    } catch (error) {
+      setRefusal(readableError(error));
+    } finally {
+      setBusy("");
+    }
+  };
 
   const line = settings.line;
   const where = line?.where ?? "this_mac";
@@ -210,7 +308,9 @@ export function LineSettingsPane({ settings, onWrite }: {
     }
   };
 
-  const places = Array.from(new Set(["this_mac", where]));
+  const places = Array.from(new Set(["this_mac", ...nodes.map((row) => `node:${row.node}`), where]));
+  const nodeRow = (value: string) => nodes.find((row) => `node:${row.node}` === value);
+  const typed = machine.trim();
   const place = PLACE[status.state] ?? PLACE.off;
   const here = nodeOf(where);
   const firstNumber = settings.allowed_numbers?.[0] ?? "";
@@ -240,20 +340,53 @@ export function LineSettingsPane({ settings, onWrite }: {
             label="Where it runs"
             value={where}
             onChange={(next) => void write("where", { where: next })}
-            options={places.map((value) => ({
-              value,
-              label: (
-                <span className="line-place" data-testid="line-place" data-where={value}>
-                  <img className="line-sprite" src={spriteUrl("model", "line", "rest", null, 20)} alt="" width={20} height={20} />
-                  <span className="line-place-name">{placeName(value)}</span>
-                  <span className="line-row-fact">{COST[nodeOf(value)] ?? ""}</span>
-                  {value === where ? (
-                    <DotWord tone={place.tone} className="line-place-state" data-testid="line-place-state">{status.words || place.word}</DotWord>
-                  ) : null}
-                </span>
-              ),
-            }))}
+            options={places.map((value) => {
+              const row = nodeRow(value);
+              const own = row ? (PLACE[row.state] ?? PLACE.not_running) : null;
+              const fact = [row?.machine?.platform, COST[nodeOf(value)]].filter(Boolean).join(" · ");
+              return {
+                value,
+                label: (
+                  <span className="line-place" data-testid="line-place" data-where={value}>
+                    <img className="line-sprite" src={spriteUrl("model", "line", "rest", null, 20)} alt="" width={20} height={20} />
+                    <span className="line-place-name">{placeName(value)}</span>
+                    <span className="line-row-fact">{fact}</span>
+                    {value === where ? (
+                      <DotWord tone={place.tone} className="line-place-state" data-testid="line-place-state">{status.words || place.word}</DotWord>
+                    ) : row && own ? (
+                      <DotWord tone={own.tone} className="line-place-state" data-testid="line-node-state">{row.words || own.word}</DotWord>
+                    ) : null}
+                    {row ? (
+                      <OwnPress>
+                        <ConfirmVerb label="Revoke" confirmLabel="Revoke?" busy={busy === `revoke-${row.node}`}
+                          onConfirm={() => void revoke(row.node)} data-testid="line-node-revoke" />
+                      </OwnPress>
+                    ) : null}
+                  </span>
+                ),
+              };
+            })}
           />
+          {sheet ? (
+            <CodeSheet code={sheet.code} deadline={sheet.deadline} now={now} busy={busy === "install"}
+              onNew={() => void install(sheet.code.node)} onCancel={() => setSheet(null)} />
+          ) : (
+            <div className="line-field line-add" data-testid="line-add">
+              <span className="calls-field-line">
+                <StringGadget
+                  label="Add a machine"
+                  value={machine}
+                  onChange={setMachine}
+                  placeholder="Add a machine: its name on your tailnet"
+                  onKeyDown={(event) => { if (event.key === "Enter") void install(typed); }}
+                />
+                <Button dense variant="primary" loading={busy === "install"} disabled={!typed}
+                  onClick={() => void install(typed)} data-testid="line-install-node">
+                  {typed ? `Install the Line on ${typed}` : "Install the Line"}
+                </Button>
+              </span>
+            </div>
+          )}
           {here === "this-mac" && status.state === "not_installed" ? (
             <div className="line-commands" data-testid="line-install">
               <p className="calls-step-say">Install baresip, then the Line in its own Python 3.13.</p>

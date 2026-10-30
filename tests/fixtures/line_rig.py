@@ -52,7 +52,7 @@ class Rig:
 @asynccontextmanager
 async def running_node(scenario: dict[str, Any], *, hub: Optional[LineHub] = None, name: str = "this-mac",
                        timing: Optional[Timing] = None, config: Optional[dict[str, Any]] = None,
-                       heartbeat: float = 1.0) -> AsyncIterator[Rig]:
+                       heartbeat: float = 1.0, machine: Optional[dict[str, Any]] = None) -> AsyncIterator[Rig]:
     root = short_dir()
     (root / "scenario.json").write_text(json.dumps(scenario))
     saved = {key: os.environ.get(key) for key in ("FAKE_BARESIP_SCRIPT", "FAKE_BARESIP_OUT")}
@@ -62,7 +62,7 @@ async def running_node(scenario: dict[str, Any], *, hub: Optional[LineHub] = Non
     if config is not None:
         hub.config_fn = lambda _node: dict(config)
     node = LineNode(name, LocalLink(hub, name), stt=ToneSTT(), tts=ToneTTS(), argv=[sys.executable, str(FAKE)],
-                    home=root, ctrl_port=free_port(), timing=timing, heartbeat=heartbeat)
+                    home=root, ctrl_port=free_port(), timing=timing, heartbeat=heartbeat, machine=machine)
     try:
         await node.start()
         yield Rig(node, hub, root)

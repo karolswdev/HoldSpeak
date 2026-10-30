@@ -162,6 +162,45 @@ supports:
 | `holdspeak line enrol` | Redeem a one-time node code from a hub. |
 | `holdspeak line unenrol` | Remove the node credential on that machine. |
 
+The hub does not start the Line for you. When the Line is not running, **Settings ▸ Calls ▸ Line** shows these commands, each with **Copy**.
+
+The `holdspeak line` commands:
+
+| Command | What it does |
+|---|---|
+| `holdspeak line` | Run the Line on this machine (`--node`, `--hub`, `--bind`, `--sip-port`) |
+| `holdspeak line check` | Show what is installed and what is missing |
+| `holdspeak line build` | Build the Line's audio module for this machine's baresip again |
+| `holdspeak line models` | Download the two speech models, and show their licences |
+
+### Install the Line on another machine
+
+The Line can run on a machine on your tailnet, for example your home box `karol`. That machine gets its own credential. The credential reaches only the Line's three wire routes on the hub, and nothing else.
+
+1. On that machine, get the Line ready. You need a HoldSpeak checkout there. On Linux, `holdspeak line build` builds baresip 4.12.0 in your home folder, with no sudo:
+
+   ```bash
+   holdspeak line build
+   holdspeak line models
+   holdspeak line install --checkout <the HoldSpeak checkout on that machine>
+   ```
+
+   `holdspeak line install` makes the Line's own Python 3.13 and installs the service (a systemd user unit on Linux, a launchd agent on a Mac). Until the machine is enrolled, the service says "Not enrolled" and stops.
+
+2. In **Settings ▸ Calls ▸ Line ▸ Where it runs**, type the machine's name in **Add a machine**, then press **Install the Line on karol**. The hub makes a one-time code. The code works one time, for 10 minutes. The sheet shows the code, the time that is left, and the whole command under **Run this on karol**, with **Copy**:
+
+   ```bash
+   holdspeak line enrol --hub <your desk's address> --code <the code> --node karol
+   ```
+
+   Run it on that machine. The Line service starts again with the new credential. When the Line there says hello to the hub, the sheet closes and the row reads **Ready**. If the code is too old, press **New code**.
+
+   The hub in the command is the address you opened the desk on. Open the desk on its Tailscale address before you press Install, so that the other machine can reach it.
+
+3. Select the machine's row in **Where it runs** to make it the place of the Line. Each machine row shows its platform, the cost of a call minute, and its state from its last hello. After 2 minutes with no hello, the row reads **Not running**.
+
+To take the credential away, press **Revoke** on the machine's row, then **Revoke?** to confirm. The credential stops at once. To enrol the machine again, press **Install the Line** again.
+
 A remote node first needs a one-time code from the hub. The node credential is
 scoped to the Line wire, not to the rest of the Desk API. Do not paste a node
 token into general client configuration.
