@@ -16,6 +16,7 @@ import type { ReactNode } from "react";
 import { PreparedChip, SendWells, SendWellsFold, mergeKnown, useSends, type DocRef } from "./surface/send";
 import { stamp } from "../features/channels/channels";
 import { useAnnounceWindowDocument } from "./windowSend";
+import { wireWords } from "./surface/words";
 import "./documentSends.css";
 
 /** `SEP 29` from an ISO time, in the viewer's zone. */
@@ -55,7 +56,7 @@ export function BriefSendWells({ brief, onBack }: { brief: BriefLike; onBack?: (
 export const artifactDoc = (id: string, title?: string | null, type?: string | null): DocRef => ({
   ref: `artifact:${id}`,
   title: String(title || "Artifact"),
-  label: `ARTIFACT · ${String(type || "artifact").replace(/[_-]+/g, " ").toUpperCase()}`,
+  label: `Artifact · ${wireWords(String(type || "artifact").replace(/-+/g, "_"), false)}`,
 });
 
 export function ArtifactSendWells({ id, title, type, onBack }: { id: string; title?: string | null; type?: string | null; onBack?: () => void }) {

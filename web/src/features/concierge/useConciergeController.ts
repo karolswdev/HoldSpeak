@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, readableError } from "../../lib/api";
 import { announceTaskReturn } from "../../desk/returnToTask";
+import { stateWords, wireWords } from "../../desk/surface/words";
 import {
   conciergeDetect,
   conciergePropose,
@@ -146,36 +147,38 @@ export interface ApplyReceipt {
   failures: Array<{ group: string; label: string; token: string }>;
 }
 
-/** The receipt line: `USING · Qwen3.8 27B · 6 GROUPS · 4 LIMITED`. */
+/** The receipt line: `Using · Qwen3.8 27B · 6 groups · 4 limited`: the
+ *  engine and the group names as typed, the hub's reason tokens in
+ *  sentence case (`stateWords`). */
 export function receiptLine(receipt: ApplyReceipt): string {
   const parts: string[] = [];
-  if (receipt.engine) parts.push(`USING · ${receipt.engine.toUpperCase()}`);
+  if (receipt.engine) parts.push(`Using · ${receipt.engine}`);
   if (receipt.kind === "summaries") {
-    parts.push("SUMMARIES");
+    parts.push("Summaries");
   } else {
     const set = receipt.ready + receipt.limited;
-    if (set > 0) parts.push(`${set} ${set === 1 ? "GROUP" : "GROUPS"}`);
-    if (receipt.limited > 0) parts.push(`${receipt.limited} LIMITED`);
-    if (receipt.off > 0) parts.push(`${receipt.off} OFF`);
+    if (set > 0) parts.push(`${set} ${set === 1 ? "group" : "groups"}`);
+    if (receipt.limited > 0) parts.push(`${receipt.limited} limited`);
+    if (receipt.off > 0) parts.push(`${receipt.off} off`);
   }
   // PHILO-17: plain words (was "DEFAULT SET").
-  if (receipt.defaultSet) parts.push("NOW THE DEFAULT");
+  if (receipt.defaultSet) parts.push("Now the default");
   // Astra r2 (finding 4): each cause ONCE. One group names itself; several
-  // with one cause read `5 GROUPS · NO MODEL RECORD`. Each row keeps its own.
+  // with one cause read `5 groups · No model record`. Each row keeps its own.
   const byToken = new Map<string, string[]>();
   for (const failure of receipt.failures) {
     byToken.set(failure.token, [...(byToken.get(failure.token) ?? []), failure.label]);
   }
   for (const [token, labels] of byToken) {
-    parts.push(labels.length === 1 ? `${labels[0].toUpperCase()} · ${token}` : `${labels.length} GROUPS · ${token}`);
+    parts.push(labels.length === 1 ? `${labels[0]} · ${stateWords(token)}` : `${labels.length} groups · ${stateWords(token)}`);
   }
   return parts.join(" · ");
 }
 
-/** The group's short name in a refusal: `WAITS · SPEECH DOWNLOAD`. */
+/** The group's short name in a refusal: `Waits · Speech download`. */
 export function waitsToken(group: string, label: string): string {
-  const short = group === "speech_recognition" ? "SPEECH" : label.toUpperCase();
-  return `WAITS · ${short} DOWNLOAD`;
+  const short = group === "speech_recognition" ? "Speech" : label;
+  return `Waits · ${short} download`;
 }
 
 /** The one group whose row IS the exact `meeting.deferred_analysis` choice. */
@@ -245,7 +248,7 @@ export function summaryRowFromAssignment(
     ...row,
     engineId: assignment.profileId,
     state,
-    host: (assignment.boundary ?? "").toUpperCase(),
+    host: wireWords(assignment.boundary),
     applied: true,
     appliedLabel: assignment.label ?? undefined,
   };

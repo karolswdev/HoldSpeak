@@ -4,6 +4,7 @@
 // only the binding is new (design D3, "the claim seam").
 
 import { wireDate } from "../../../desk/surface/format";
+import { wireWords } from "../../../desk/surface/words";
 import { decodeClaim, type UpdateClaim } from "../update/model";
 
 export type ManifestSourceState = "available" | "stale" | "failed" | "unavailable";
@@ -383,6 +384,5 @@ export function refLabel(ref: string, manifest: BriefManifest): string {
     const source = manifest.sources.find((s) => s.sourceId === id);
     return source ? source.label || sourceEmblem(source.kind) : "SOURCE";
   }
-  const kind = ref.split(":", 1)[0] || "REF";
-  return kind.replace(/_/g, " ").toUpperCase();
+  return wireWords(ref.split(":", 1)[0] || "ref");
 }

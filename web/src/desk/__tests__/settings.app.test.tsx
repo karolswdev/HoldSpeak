@@ -798,14 +798,14 @@ describe("Settings › System › Remote access grants", () => {
     await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.live));
     expect(within(row("desk-agent")).getByTestId("grant-chip")).toHaveAttribute("data-state", "success");
     expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.stop);
-    await waitFor(() => expect(foot().textContent).toContain("ALLOWED"));
+    await waitFor(() => expect(foot().textContent).toContain("Allowed"));
     expect(foot()).toHaveAttribute("data-operation-id", grant("allow").operation_id);
 
     fireEvent.click(within(row("desk-agent")).getByTestId("grant-verb"));
     await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.stopped));
     expect(within(row("desk-agent")).getByTestId("grant-chip")).toHaveAttribute("data-state", "idle");
     expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.allow);
-    await waitFor(() => expect(foot().textContent).toContain("STOPPED"));
+    await waitFor(() => expect(foot().textContent).toContain("Stopped"));
 
     // Another owner request revoked the grant first; the face still says LIVE.
     hub.state.remote = grant("remote-live");
@@ -820,7 +820,7 @@ describe("Settings › System › Remote access grants", () => {
     expect(refused.textContent).toContain("No grant");
     // After the reread the chip agrees with the hub: STOPPED.
     await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.stopped));
-    await waitFor(() => expect(foot().textContent).toContain("REFUSED"));
+    await waitFor(() => expect(foot().textContent).toContain("Refused"));
     fireEvent.click(foot());
     const well = await screen.findByTestId("grant-receipt");
     for (const word of ["Refused", "Stop filing", "No grant", "desk-agent", "By owner"]) expect(well.textContent).toContain(word);
@@ -841,7 +841,7 @@ describe("Settings › System › Remote access grants", () => {
     fireEvent.click(within(row("desk-agent")).getByTestId("credential-revoke"));
     await waitFor(() => expect(screen.queryByText("desk-agent")).toBeNull());
     expect(document.querySelector('[data-settings-section="this-mac"] .surface-ledger')).toBeNull();
-    await waitFor(() => expect(foot().textContent).toContain("STOPPED"));
+    await waitFor(() => expect(foot().textContent).toContain("Stopped"));
     fireEvent.click(foot());
     const well = await screen.findByTestId("grant-receipt");
     for (const word of ["Succeeded", W.stopped, "desk-agent", "By owner"]) expect(well.textContent).toContain(word);
@@ -869,7 +869,7 @@ describe("Settings › System › Remote access grants", () => {
     fireEvent.click(within(orphan).getByTestId("grant-verb"));
     await waitFor(() => expect(screen.queryByText("orphan-agent")).toBeNull());
     expect(document.querySelector('[data-settings-section="this-mac"] .surface-ledger')).toBeNull();
-    await waitFor(() => expect(foot().textContent).toContain("STOPPED"));
+    await waitFor(() => expect(foot().textContent).toContain("Stopped"));
   });
 
   it("a stored LIVE grant past its expiry reads FILING STOPPED, with Allow", async () => {
@@ -921,7 +921,7 @@ describe("Settings › System › Remote access grants", () => {
     expect(within(await line(pay.id)).getByTestId("project-grant-verb").textContent).toBe(P.stop);
     expect(within(await line(hire.id)).queryByTestId("project-grant-chip")).toBeNull();
     expect(within(await line(hire.id)).getByTestId("project-grant-verb").textContent).toBe(P.allow);
-    await waitFor(() => expect(foot().textContent).toContain("ALLOWED"));
+    await waitFor(() => expect(foot().textContent).toContain("Allowed"));
     const summary = within(row("sweep-runner")).getByTestId("project-grant-summary");
     expect(summary.textContent).toContain(P.live);
     expect(summary.textContent).toContain("Payments ledger cutover");
@@ -948,7 +948,7 @@ describe("Settings › System › Remote access grants", () => {
     expect(refused.textContent).toContain("Cannot stop");
     expect(refused.textContent).toContain("No grant");
     await waitFor(() => expect(within(screen.getByTestId(`project-line-${pay.id}`)).getByTestId("project-grant-chip").textContent).toContain(P.stopped));
-    await waitFor(() => expect(foot().textContent).toContain("REFUSED"));
+    await waitFor(() => expect(foot().textContent).toContain("Refused"));
   });
 });
 

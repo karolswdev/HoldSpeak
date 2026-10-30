@@ -345,7 +345,7 @@ describe("HS-200-06: the three claim axes on the glass", () => {
     const labels = screen
       .getAllByTestId("update-claim-ref")
       .map((el) => el.textContent);
-    expect(labels).toContain("ITEM");
+    expect(labels).toContain("Item");
     expect(labels.join(" ")).not.toContain("830A2CB0");
   });
 

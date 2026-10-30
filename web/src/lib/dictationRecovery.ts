@@ -1,4 +1,5 @@
 import { ApiError, type JsonRecord } from "./api";
+import { wireWords } from "../desk/surface/words";
 
 export type DictationFailure =
   | "permission_denied"
@@ -235,7 +236,7 @@ export function streamFailure(refusal: StreamRefusal): DictationFailure {
 export function refusalCode(refusal: StreamRefusal): string | null {
   const raw = (refusal.reason || refusal.failure_category || "").trim();
   if (!raw) return null;
-  return raw.replace(/[_\s]+/g, " ").trim().toUpperCase();
+  return wireWords(raw.replace(/\s+/g, "_"));
 }
 
 export function dictationFailure(error: unknown): DictationFailure {

@@ -48,7 +48,7 @@ import {
   SurfaceWell,
 } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { egressFor } from "../../desk/surface/egress";
+import { egressFor, refusalWord } from "../../desk/surface/egress";
 import { openSurfaceOr } from "../../desk/shell";
 import { importCalendarImage, snapshotEgressChip } from "../../desk/calendarImageImport";
 import { announceTaskReturn } from "../../desk/returnToTask";
@@ -439,18 +439,21 @@ function paletteHolds(palette: string | string[] | null, named: readonly string[
   return palette.some((tool) => prefixes.some((prefix) => tool.startsWith(prefix)));
 }
 
-/** The kernel's refusal codes (verbatim) and their plain face tokens; the
- *  code rides `data-code` for the fence. */
-export const GRANT_REFUSAL_TOKEN: Record<string, string> = {
-  owner_principal_required: "OWNER ONLY",
-  desk_delegation_required: "NO GRANT",
-  desk_delegation_revoked: "GRANT STOPPED",
-  desk_delegation_expired: "GRANT EXPIRED",
-  project_delegation_required: "NO GRANT",
-  project_delegation_revoked: "GRANT STOPPED",
-  project_delegation_expired: "GRANT EXPIRED",
-  invalid_arguments: "BAD REQUEST",
-};
+/** The kernel's refusal codes (verbatim) and their plain face words, from
+ *  the egress table (`refusalWord`), so the grant row and the Room's refusal
+ *  say one word; the code rides `data-code` for the fence. */
+export const GRANT_REFUSAL_TOKEN: Record<string, string> = Object.fromEntries(
+  [
+    "owner_principal_required",
+    "desk_delegation_required",
+    "desk_delegation_revoked",
+    "desk_delegation_expired",
+    "project_delegation_required",
+    "project_delegation_revoked",
+    "project_delegation_expired",
+    "invalid_arguments",
+  ].map((code) => [code, refusalWord(code)]),
+);
 
 type GrantVerbKind = "allow" | "stop";
 type GrantRefusal = { verb: GrantVerbKind; code: string };
@@ -522,7 +525,7 @@ function GrantRefusalChip({ refusal }: { refusal?: GrantRefusal }) {
   return (
     <span data-testid="grant-refused" data-code={refusal.code}>
       <StateChip state="failure" label={refusal.verb === "allow" ? GRANT_WORDS.cannotAllow : GRANT_WORDS.cannotStop} />{" "}
-      <Token className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[refusal.code] ?? refusal.code}</Token>
+      <Token className="surface-token" data-chip>{refusalWord(refusal.code)}</Token>
     </span>
   );
 }
@@ -532,7 +535,7 @@ export function GrantReceiptWell({ act }: { act: GrantAct }) {
   const ok = act.outcome === "succeeded";
   const words = act.kind === "project" ? PROJECT_GRANT_WORDS : GRANT_WORDS;
   return (
-    <SurfaceWell head="RECEIPT">
+    <SurfaceWell head="Receipt">
       <div
         className="prefs-grant-receipt"
         data-testid="grant-receipt"
@@ -540,19 +543,19 @@ export function GrantReceiptWell({ act }: { act: GrantAct }) {
         data-outcome={act.outcome}
         data-code={act.code}
       >
-        {ok ? <StateChip state="success" label="SUCCEEDED" /> : <StateChip state="failure" label="REFUSED" />}
+        {ok ? <StateChip state="success" label="Succeeded" /> : <StateChip state="failure" label="Refused" />}
         <Token className="surface-token" data-chip>
           {ok
             ? (act.verb === "stop" ? words.stopped : words.live)
             : (act.verb === "stop" ? words.actStop : words.actAllow)}
         </Token>
         {!ok && act.code ? (
-          <Token className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[act.code] ?? act.code}</Token>
+          <Token className="surface-token" data-chip>{refusalWord(act.code)}</Token>
         ) : null}
         {act.reason ? <Token className="surface-token" data-chip>{act.reason}</Token> : null}
         {act.project ? <span className="gadget-fact">{act.project}</span> : null}
         <span className="gadget-fact">{act.identity}</span>
-        <Token className="surface-token" data-chip>BY OWNER</Token>
+        <Token className="surface-token" data-chip>By owner</Token>
         <Token className="surface-token" data-chip data-muted>{act.date} {act.time}</Token>
       </div>
     </SurfaceWell>
@@ -561,7 +564,7 @@ export function GrantReceiptWell({ act }: { act: GrantAct }) {
 
 /** The footer's centre slot: ONE library Button whose face is the library Receipt. */
 export function GrantFootReceipt({ act, open, onToggle }: { act: GrantAct; open: boolean; onToggle: () => void }) {
-  const word = act.outcome === "succeeded" ? (act.verb === "stop" ? "STOPPED" : "ALLOWED") : "REFUSED";
+  const word = act.outcome === "succeeded" ? (act.verb === "stop" ? "Stopped" : "Allowed") : "Refused";
   return (
     <Button
       variant="ghost"

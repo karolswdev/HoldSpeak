@@ -91,7 +91,7 @@ export function BeliefCard({
                 <s className="recall-belief-old" data-testid="recall-belief-old">{row.text}</s>
                 {row.word ? (
                   <Token className="surface-token" data-tone="warn">
-                    {row.reason ? `${row.word} · ${row.reason.toUpperCase()}` : row.word}
+                    {row.reason ? `${row.word} · ${row.reason.charAt(0).toUpperCase()}${row.reason.slice(1)}` : row.word}
                   </Token>
                 ) : null}
               </li>

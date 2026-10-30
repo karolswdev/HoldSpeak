@@ -30,17 +30,17 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("prsSummaryLabel", () => {
   it("includes the name when short enough", () => {
-    expect(prsSummaryLabel(2, "Ania")).toBe("2 PRS WAITING ON ANIA");
+    expect(prsSummaryLabel(2, "Ania")).toBe("2 PRs waiting on Ania");
   });
 
   it("uses singular PR for count 1", () => {
-    expect(prsSummaryLabel(1, "Ania")).toBe("1 PR WAITING ON ANIA");
+    expect(prsSummaryLabel(1, "Ania")).toBe("1 PR waiting on Ania");
   });
 
   it("drops the name when the label is too long", () => {
     const longName = "Aleksandra Magdalena Kowalski";
     const label = prsSummaryLabel(2, longName);
-    expect(label).toBe("2 PRS WAITING");
+    expect(label).toBe("2 PRs waiting");
   });
 
   it("never contains her/him/she/he", () => {
@@ -137,7 +137,7 @@ describe("People Prep enrichment HS-172-05", () => {
 
     // PRS WAITING row.
     const prsRow = screen.getByTestId("prep-prs-row");
-    expect(within(prsRow).getByTestId("prep-prs-label")).toHaveTextContent("2 PRS WAITING ON ANIA");
+    expect(within(prsRow).getByTestId("prep-prs-label")).toHaveTextContent("2 PRs waiting on Ania");
     expect(within(prsRow).getByTestId("prep-prs-days")).toHaveTextContent("5+ DAYS");
     expect(within(prsRow).getByTestId("prep-prs-numbers")).toHaveTextContent("#612 · #618");
     expect(within(prsRow).getByRole("button", { name: "Show" })).toBeTruthy();

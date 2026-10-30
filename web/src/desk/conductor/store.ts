@@ -18,6 +18,7 @@ import { fromWireFlight, fromWireOwnAgent, fromWireSessionRow, useAgentFlights, 
 import type { LaneReceipt } from "../lane/laneStore";
 import { AGENTS_PATH, AGENTS_USE_PATH, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import type { ConductorMember } from "./members";
+import { wireWords } from "../surface/words";
 
 export const CONDUCTOR_WINDOW_ID = "conductor";
 export const CONDUCTOR_KEY = "open-conductor";
@@ -197,7 +198,7 @@ export const useConductor = create<ConductorState>((set, get) => ({
     } catch (error) {
       const payload = error instanceof ApiError ? (error.payload as Record<string, unknown> | null) : null;
       set({
-        installFailure: typeof payload?.code === "string" ? payload.code.replace(/_/g, " ").toUpperCase() : failureToken(error),
+        installFailure: typeof payload?.code === "string" ? wireWords(payload.code, false) : failureToken(error),
         installFailedAgent: agent,
       });
       return false;

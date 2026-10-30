@@ -15,6 +15,7 @@ import { useDebouncedSave } from "./useDebouncedSave";
 import { keptEditorPatch, keptField } from "./editorDraft";
 import type { InlineEditorContentProps } from "./types";
 import { Button } from "../../../components/signal/Signal";
+import { wireWords } from "../../surface/words";
 
 export function NoteEditor({ object: o, onClose, autoFocusName, onWriter }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
@@ -104,14 +105,14 @@ export function NoteEditor({ object: o, onClose, autoFocusName, onWriter }: Inli
       selection: { anchor: from, head: from + proposal.proposed.length },
     });
     editorView.focus();
-    setAppliedReceipt(`${proposal.lens.toUpperCase()} APPLIED · ⌘Z TO UNDO`);
+    setAppliedReceipt(`${wireWords(proposal.lens)} applied · ⌘Z to undo`);
     setProposal(null);
   };
 
   const proposalInset = proposal ? (
     <div className="surface-aerogel editor-proposal-inset" role="status" aria-live="polite">
       <span className="editor-proposal-heading">
-        PROPOSED {proposal.lens.toUpperCase()}
+        Proposed {wireWords(proposal.lens, false)}
       </span>
       <div className="editor-proposal-copy">{proposal.proposed}</div>
       <div className="editor-proposal-actions">

@@ -149,7 +149,7 @@ describe("the Agents card", () => {
   });
 
   it("codeWords never leaves snake_case on a face", () => {
-    expect(codeWords("agent_settings_path_changed")).toBe("AGENT SETTINGS PATH CHANGED");
+    expect(codeWords("agent_settings_path_changed")).toBe("Agent settings path changed");
   });
 });
 

@@ -245,7 +245,7 @@ export function ProjectsCore(_props: CoreProps) {
 /** A reason in quiet sentence case: an all-caps wire word (`1 MILESTONE
  *  LATE`) reads `1 milestone late`; a mixed-case reason stays as written. */
 function quietReason(reason: string): string {
-  if (reason !== reason.toUpperCase()) return reason;
+  if (/\p{Ll}/u.test(reason)) return reason; // any lower-case letter: written as meant
   const lower = reason.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }

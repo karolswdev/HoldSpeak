@@ -392,11 +392,13 @@ function reasonDetail(why: string): string[] {
 export function reasonToken(item: RankableItem, now: Date = new Date()): string {
   const cls = rankClassOf(item, now);
   const label = RANK_LABEL[cls];
-  const detail = reasonDetail((item.why || "").toUpperCase());
+  // The source's own words as it wrote them (a name stays as typed); the
+  // class compare is in caps.
+  const detail = reasonDetail(item.why || "");
   const parts: string[] = [];
   // A source whose head phrase already begins with the class word states
   // the class in its own words (`WAITING ON YOUR REVIEW`), said once.
-  if (detail[0] && detail[0].startsWith(label)) {
+  if (detail[0] && detail[0].toUpperCase().startsWith(label)) {
     parts.push(detail[0]);
     parts.push(...detail.slice(1));
   } else {

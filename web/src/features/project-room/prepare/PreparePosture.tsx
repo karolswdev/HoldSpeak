@@ -215,7 +215,7 @@ function SourceRow({
 }) {
   const state = sourceStateToken(source);
   const observed = observedToken(source.observedAt);
-  const reason = source.reason ? `${source.reason.toUpperCase()}${omitted ? " · OMITTED" : ""}` : omitted ? "OMITTED" : "";
+  const reason = source.reason ? `${source.reason}${omitted ? " · Omitted" : ""}` : omitted ? "Omitted" : "";
   const openHref =
     source.kind === "github" && source.label ? `https://github.com/${source.label}` : "";
   return (
@@ -529,7 +529,7 @@ function BriefBody({ brief, ctrl, onOpenRef }: { brief: Brief; ctrl: PrepareCont
                   cells={
                     <span className="prepare-claim-source">
                       {item.ref ? <Token>{refLabel(item.ref, brief.manifest)}</Token> : null}
-                      <Token testId="prepare-not-included-why">{item.why.toUpperCase()}</Token>
+                      <Token testId="prepare-not-included-why">{item.why}</Token>
                     </span>
                   }
                   wrap
