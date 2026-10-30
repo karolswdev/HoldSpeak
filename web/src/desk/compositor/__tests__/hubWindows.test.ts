@@ -11,7 +11,7 @@ import { useChairWindows } from "../../chair/chairWindows";
 import { useDrawers } from "../../drawer/store";
 import { useLane } from "../../lane/laneStore";
 import { __resetConductor, useConductor } from "../../conductor/store";
-import { useDesk } from "../../store";
+import { forgetLoadRaises, useDesk } from "../../store";
 import { COMPACT_VIEWPORT_QUERY } from "../../useCompactViewport";
 import { peekPersonLens, takePersonLens } from "../../objectWindows";
 import { DESK_WORKSPACE_STORAGE_KEY } from "../../store/workspaceStorage";
@@ -137,6 +137,7 @@ let hub: HubWindows | null = null;
 
 beforeEach(() => {
   localStorage.clear();
+  forgetLoadRaises();
   useDesk.setState({
     panelDepth: {}, panelOrder: [], panelMin: [], panelRects: {}, panelSaved: [], panelMax: [],
     panelZoom: {}, windowsById: {}, zoneWindows: [], pullouts: [], repositoryWindows: [],
@@ -712,6 +713,24 @@ describe("hubWindows", () => {
     await flush(hub);
     expect(order(["chair:capture", "chair:needs"])).toEqual(["chair:capture", "chair:needs"]);
     expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["raise", "chair:needs"]]);
+  });
+
+  it("the Chair's mount restack before the hub answered is not a raise (a reload keeps the hub's order)", async () => {
+    // The cache and the hub agree: Capture over Needs you. A slow hub read:
+    // the Chair mounts first and its legacy order write (raiseNeedsAmongChair)
+    // puts Needs you on top of the Chair's windows. The seed must keep the
+    // hub's order and send no raise (test_windows_glass C1 under load).
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:capture": false, "chair:needs": false } }));
+    useDesk.setState({ panelDepth: { "chair:needs": 1, "chair:capture": 2 }, panelOrder: ["chair:needs", "chair:capture"] });
+    const boot = { "chair:needs": 1, "chair:capture": 2 };
+    useDesk.setState({ panelOrder: ["chair:capture", "chair:needs"] }); // the Chair's mount rule
+    expect(order(["chair:capture", "chair:needs"])).toEqual(["chair:capture", "chair:needs"]);
+    const { fake, hub } = start(
+      [row("chair:needs", { depth: 1 }), row("chair:capture", { depth: 2 })], true, ["chair:capture", "chair:needs"], boot);
+    await hub.start();
+    await flush(hub);
+    expect(order(["chair:capture", "chair:needs"])).toEqual(["chair:needs", "chair:capture"]);
+    expect(fake.calls.filter((c) => c.verb === "raise")).toEqual([]);
   });
 
   it("a window frame is not a desk data change", () => {

@@ -110,6 +110,8 @@ function raiseNeedsAmongChair() {
   // PHILO-16 (16b): the hub owns the stacking. Once its rows seeded this
   // desk, the Chair's mount does not reorder them (a reload keeps the
   // hub's order, L3; a second view never disagrees with the first).
+  // Before the seed this order is a local view rule only: it is not a
+  // raise, so the seed applies the hub's order over it and sends nothing.
   if (hubSeeded()) return;
   const s = useDesk.getState();
   const order = s.panelOrder;
