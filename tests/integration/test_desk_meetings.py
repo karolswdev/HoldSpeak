@@ -797,7 +797,15 @@ def _fire_now(base: str, title: str) -> dict[str, Any]:
         enabled=True, next_fire_at=time.time() - 1,
     )
     conductor._tick()
-    assert _wait(lambda: db.scheduled_recordings.get(sched.id).state not in ("idle", "arming"), timeout=10)
+    # Wait for the fire itself, not its first write: the countdown thread
+    # writes `recording`, then calls the start, then writes `refused` if the
+    # start raised. A read between those writes is a half-done fire (the
+    # 2026-10-29/30 FAST reds). The thread ends when the fire is decided.
+    fire = [t for t in threading.enumerate() if t.name == f"sr-countdown-{sched.id}"]
+    for thread in fire:
+        thread.join(timeout=10)
+        assert not thread.is_alive(), "the scheduled fire did not finish"
+    assert db.scheduled_recordings.get(sched.id).state not in ("idle", "arming")
     rows = _api(base, "GET", "/api/scheduled-recordings", token=FIRE_TOKEN)["schedules"]
     return next(r for r in rows if r["id"] == sched.id)
 
