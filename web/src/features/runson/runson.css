@@ -313,6 +313,14 @@
 .runson-pane > .runson-downloads { margin: 10px 12px 12px; }
 .runson-pane > .surface-speech-setup, .runson-pane > [data-testid="runson-speech-setup"] { margin: 10px 12px 0; }
 .runson-body > .runson-wiring { margin: 12px; }
+/* ENGINES-WORDS-LAST (2026-10-30): "Builder tools" is a word, not a
+   budget token: the fold's trailing slot draws it as quiet sans 12 muted
+   in sentence case (the window grammar: mono only for code and ids). */
+.runson-wiring > summary .gadget-fold-token {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
 .runson-catalog { margin: 4px 0 0; }
 
 /* The jobs: the chooser is a plated Button that names the engine. */
