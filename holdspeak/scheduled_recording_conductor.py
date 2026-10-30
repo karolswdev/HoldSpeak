@@ -729,23 +729,22 @@ class ScheduledRecordingConductor:
         now = self._clock()
         deadline = now + (sched.duration_minutes * 60)
 
-        # I7: persist deadline BEFORE starting capture (durable before observable)
-        db.scheduled_recordings.set_state(
-            schedule_id, "recording",
-            last_fired_at=now,
-            armed_at=None,
-            deadline_at=deadline,
-        )
-
         # I5: write admission receipt
         receipt_id = self._write_receipt(
             db, schedule_id, "succeeded", "recording_started",
             detail=f"Scheduled recording '{sched.title}' fired",
         )
+        # I7: persist deadline BEFORE starting capture (durable before
+        # observable). ONE write: the state and its outcome land together, so
+        # no reader sees `recording` with the outcome of the run before (the
+        # 2026-10-30 flake: a slow receipt write held the row there).
         db.scheduled_recordings.set_state(
             schedule_id, "recording",
             last_outcome="recording_started",
             last_receipt_id=receipt_id,
+            last_fired_at=now,
+            armed_at=None,
+            deadline_at=deadline,
         )
 
         try:
