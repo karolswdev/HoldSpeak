@@ -290,6 +290,29 @@
 .desk-next .line-commands .connections-command-code { overflow-wrap: anywhere; }
 .desk-next .line-quiet { margin: 0; padding: 6px 8px 2px; font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
 .desk-next .line-settings .calls-may-row { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); min-height: 30px; }
+/* LINE-4c: another machine — a node row's own verb (Revoke), Add a machine,
+   and the one-time code sheet (the code large in mono, its life as a word,
+   the whole command with Copy). */
+.desk-next .line-own-press { display: inline-flex; margin-left: auto; }
+.desk-next .line-add .calls-field-line > .btn { flex: none; }
+.desk-next .line-code-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 8px 8px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--lamp-info) 40%, var(--wb-rule-soft));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--lamp-info) 6%, transparent);
+  min-width: 0;
+}
+.desk-next .line-code-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; }
+.desk-next .line-code { font: 600 24px / 1.2 var(--font-mono); letter-spacing: 0.08em; color: var(--wb-ink); }
+.desk-next .line-code-life { font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .line-code-head .line-row-verb { margin-left: auto; }
+.desk-next .line-code-sheet .calls-step-say { margin: 0; }
+.desk-next .line-code-sheet .line-commands { padding: 0; }
+.desk-next .line-code-wait { display: inline-flex; }
 /* Ringing breathes in its own tone (the live lamp's ring); still under
    reduced motion. */
 .desk-next .line-live .kit-dot {

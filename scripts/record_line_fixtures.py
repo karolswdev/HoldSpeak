@@ -31,13 +31,22 @@ sys.path.insert(0, str(REPO))
 
 OUT = REPO / "web" / "src" / "desk" / "calls" / "__fixtures__"
 HIS_SIP = "sip:karol@karol-iphone"
+#: The desk's own address, as the face sends it (``window.location.origin``).
+DESK = "https://holdspeak.tailnet.ts.net"
+#: The home box's hello, as `holdspeak line` there says it (`node.machine_block`,
+#: the values #1610 measured on karol).
+KAROL = {"name": "karol", "platform": "Linux x86_64", "baresip": "4.12.0",
+         "models": [{"id": "line-stt", "name": "Phone speech in (Parakeet)", "state": "ready"},
+                    {"id": "line-tts", "name": "Phone speech out (Pocket TTS)", "state": "ready"}]}
 
 
 class _Node:
     """A Line node on the fake baresip, run on its own loop in a thread."""
 
-    def __init__(self, hub: Any, scenario: dict[str, Any]) -> None:
+    def __init__(self, hub: Any, scenario: dict[str, Any], *, name: str = "this-mac",
+                 machine: dict[str, Any] | None = None) -> None:
         self.hub, self.scenario = hub, scenario
+        self.name, self.machine = name, machine
         self.ready = threading.Event()
         self.stop = threading.Event()
         self.error: BaseException | None = None
@@ -47,7 +56,7 @@ class _Node:
         from tests.fixtures.line_rig import running_node
 
         async def main() -> None:
-            async with running_node(self.scenario, hub=self.hub, heartbeat=0.2):
+            async with running_node(self.scenario, hub=self.hub, heartbeat=0.2, name=self.name, machine=self.machine):
                 self.ready.set()
                 while not self.stop.is_set():
                     await asyncio.sleep(0.05)
@@ -93,6 +102,8 @@ def record(root: Path) -> dict[str, Any]:
     import holdspeak.line.supervisor as supervisor
     import holdspeak.web.routes.calls as calls_routes
     from holdspeak.db import get_database
+    from holdspeak.delivery.node_link import NodeTokenStore
+    from holdspeak.line import enrol as line_enrol
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.settings_service import SettingsService
     from holdspeak.web.context import WebContext
@@ -121,6 +132,9 @@ def record(root: Path) -> dict[str, Any]:
                      credential_service=object())  # the secret routes are not read here
     app.include_router(calls_routes.build_calls_router(ctx))
     app.include_router(build_settings_router(ctx))
+    # The hub's node token store (the custody every node shares), in this HOME.
+    app.state.node_token_store = NodeTokenStore(root / "node_auth_tokens.json")
+    calls_routes.CODES = line_enrol.EnrolCodes()  # type: ignore[attr-defined]
     client = TestClient(app)
 
     def get(path: str) -> Any:
@@ -199,8 +213,42 @@ def record(root: Path) -> dict[str, Any]:
         out["line.settings.telnyxStored.json"] = calls_section()
     os.environ.pop("TELNYX_API_KEY", None)
     hub.reset()
+    put({"calls": {"line": {"account": {"kind": "sip"}}}})
+
+    # 6. Another machine (LINE-3): none enrolled; Install the Line on karol
+    #    mints a one-time code and the command; a bad name is refused.
+    out["line.nodes.none.json"] = get("/api/calls/line/nodes")
+    minted = client.post("/api/calls/line/codes", json={"node": "karol", "hub": DESK})
+    assert minted.status_code == 200, minted.text
+    out["line.codes.karol.json"] = minted.json()
+    bad = client.post("/api/calls/line/codes", json={"node": "Karol's box!", "hub": DESK})
+    out["line.codes.badName.json"] = {"status": bad.status_code, "body": bad.json()}
+    # karol runs the command: the code becomes karol's credential (never in a read).
+    enrolled = client.post("/api/calls/line/enrol", json={"code": minted.json()["code"]})
+    assert enrolled.status_code == 200, enrolled.text
+    token = enrolled.json()["token"]
+    # Enrolled, no hello yet: the row reads Not running.
+    out["line.nodes.enrolled.json"] = get("/api/calls/line/nodes")
+    # The Line on karol says hello (the real node on the fake baresip): Ready.
+    with _Node(hub, {"dial": "answer"}, name="karol", machine=KAROL):
+        _wait(lambda: get("/api/calls/line/nodes")["nodes"][0]["state"] == "ready")
+        out["line.nodes.ready.json"] = get("/api/calls/line/nodes")
+        # He picks karol as the place.
+        out["line.put.whereKarol.json"] = put({"calls": {"line": {"where": "node:karol"}}})
+        out["line.settings.karol.json"] = calls_section()
+        _wait(lambda: get("/api/calls/line/status")["state"] == "ready")
+        out["line.status.karol.json"] = get("/api/calls/line/status")
+    put({"calls": {"line": {"where": "this_mac"}}})
+    hub.reset()
+    calls_service._LINES.clear()
+    # Revoke: the credential is gone and so is the row.
+    revoked = client.delete("/api/calls/line/nodes/karol")
+    assert revoked.status_code == 200, revoked.text
+    out["line.nodes.revoke.json"] = revoked.json()
+    assert get("/api/calls/line/nodes") == out["line.nodes.none.json"]
 
     text = json.dumps(out)
+    assert token not in text, "a node credential in a read"
     assert "sip-secret" not in text and "KEY-typed" not in text and "KEY-in-his-shell" not in text, "a secret in a read"
     return out
 

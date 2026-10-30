@@ -1,0 +1,27 @@
+{
+  "node": "karol",
+  "state": "ready",
+  "words": "Ready",
+  "address": "sip:hsline@127.0.0.1:5060",
+  "secrets": {
+    "sip_password": "keystore",
+    "telnyx_api_key": "keystore"
+  },
+  "machine": {
+    "name": "karol",
+    "platform": "Linux x86_64",
+    "baresip": "4.12.0",
+    "models": [
+      {
+        "id": "line-stt",
+        "name": "Phone speech in (Parakeet)",
+        "state": "ready"
+      },
+      {
+        "id": "line-tts",
+        "name": "Phone speech out (Pocket TTS)",
+        "state": "ready"
+      }
+    ]
+  }
+}

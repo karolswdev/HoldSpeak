@@ -36,6 +36,35 @@ export interface LineStatus {
   words: string;
   address: string;
   secrets: { sip_password?: SecretPlace; telnyx_api_key?: SecretPlace };
+  machine?: LineMachine;
+}
+
+/** A machine's own word of itself, from its last hello (`line/hub.py` _machine). */
+export interface LineMachine {
+  name?: string;
+  platform?: string;
+  baresip?: string;
+  models?: Array<{ id: string; name: string; state: string }>;
+}
+
+/** One row of `GET /api/calls/line/nodes`: an enrolled Line node, the word
+ *  from its last hello (stale after 2 minutes: Not running). Never a token. */
+export interface LineNode {
+  node: string;
+  enrolled_at: string;
+  state: LineState;
+  words: string;
+  machine: LineMachine;
+}
+
+/** `POST /api/calls/line/codes`: the one-time code (10 minutes, once) and
+ *  the whole command to run on that machine. */
+export interface LineCode {
+  node: string;
+  code: string;
+  expires_in: number;
+  hub: string;
+  command: string;
 }
 
 /** `POST /api/calls/line/test` (200): the result word, and who was called. */

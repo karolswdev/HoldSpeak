@@ -1191,7 +1191,9 @@
         "POST"
       ],
       "module": "web.routes.calls",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calls/line/enrol",
@@ -1231,7 +1233,9 @@
         "GET"
       ],
       "module": "web.routes.calls",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calls/line/nodes/{node}",
@@ -1239,7 +1243,9 @@
         "DELETE"
       ],
       "module": "web.routes.calls",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calls/line/status",

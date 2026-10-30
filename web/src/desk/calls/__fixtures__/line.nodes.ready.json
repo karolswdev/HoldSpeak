@@ -1,0 +1,27 @@
+{
+  "nodes": [
+    {
+      "node": "karol",
+      "enrolled_at": "2026-10-29T14:58:19Z",
+      "state": "ready",
+      "words": "Ready",
+      "machine": {
+        "name": "karol",
+        "platform": "Linux x86_64",
+        "baresip": "4.12.0",
+        "models": [
+          {
+            "id": "line-stt",
+            "name": "Phone speech in (Parakeet)",
+            "state": "ready"
+          },
+          {
+            "id": "line-tts",
+            "name": "Phone speech out (Pocket TTS)",
+            "state": "ready"
+          }
+        ]
+      }
+    }
+  ]
+}
