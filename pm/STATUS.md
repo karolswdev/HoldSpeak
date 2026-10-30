@@ -62,10 +62,13 @@ review, a PR and a merge by the control level (Secure · Normal · YOLO); only
 core questions reach him; Decided for you with Overturn; a handover note on
 the desk. 12 `program.*` MCP tools (301 tools in 51 families), 15 routes, the
 `program_changed` frame, `HOLDSPEAK_PROGRAMS=off` for rig hubs. Left (open
-work): PG12 tick on the coder frame, PG13 the Program's level drives
-`AgentResponder` and the gate, PG14 Automations, PG15 Calls, PG16 decisions,
-PG17 the refactor program re-created on his desk, PG18 Programs on Today; his live verdict on the two
-windows.
+work): PG13 the Program's level drives `AgentResponder` and the gate, PG14
+Automations, PG15 Calls, PG16 decisions, PG17 the refactor program re-created
+on his desk; his live verdict on the two windows. Shipped 2026-10-29 (lane
+PROGRAMS-NEXT): PG12 a coder frame ticks its Program (1 s debounce, one tick
+at a time per Program), the race fixture and shot (`program.race.json`),
+PG18 the Programs line on Today at any hour (`/api/today/since-morning`
+`programs` block).
 
 **Calls — 2026-10-28 (owner: "place calls and use them to integrate with a
 specific HoldSpeak instance… push things forward, prepare things, send things";
@@ -2421,9 +2424,10 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-- **Programs (2026-10-28):** the Programs PR (one PR, three lanes) to merge;
-  then PG12–PG18 in `docs/internal/betterment/programs/RECIPE.md`; his live
-  verdict on the Programs window and the Program window.
+- **Programs (2026-10-28):** PG13–PG17 and PG20 in
+  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG18 and the race shot
+  shipped 2026-10-29); his live verdict on the Programs window and the Program
+  window.
 
 - **Adversarial review follow-through:** the 47 records and shared delivery
   priorities are in `docs/internal/betterment/native-experience/adversarial/README.md`.

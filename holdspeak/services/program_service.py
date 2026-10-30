@@ -578,6 +578,45 @@ class ProgramService:
             items.extend(your_turn(program, self.store.list_steps(program["id"])))
         return items
 
+    def since_morning(self, principal: Any = None, *, now: Any = None) -> dict[str, int]:
+        """Today's Since this morning line (design §9 Seams, PG18): of the
+        Programs that moved since the local midnight of ``now`` (the Program
+        or one of its steps changed), how many run, wait on him (or failed)
+        and are done, and how many of their PRs merged today. ``moved`` is 0
+        when none moved (the face draws no line)."""
+        from datetime import datetime, timezone
+
+        from ..timestamps import local_now
+
+        local = (now or local_now()).astimezone()
+        morning = local.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+
+        def today(value: Any) -> bool:
+            if not value:
+                return False
+            try:
+                at = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            except ValueError:
+                return False
+            return (at if at.tzinfo else at.replace(tzinfo=timezone.utc)) >= morning
+
+        out = {"moved": 0, "running": 0, "waiting": 0, "done": 0, "merged": 0}
+        for program in self.store.list_programs():
+            steps = self.store.list_steps(program["id"])
+            if not (today(program.get("updated_at")) or any(today(step.get("updated_at")) for step in steps)):
+                continue
+            out["moved"] += 1
+            state = program_state(program, steps)
+            if state == "running":
+                out["running"] += 1
+            elif state in ("waiting", "failed"):
+                out["waiting"] += 1
+            elif state == "done":
+                out["done"] += 1
+            out["merged"] += sum(1 for step in steps if step.get("state") in FINISHED_STATES
+                                 and step.get("pr_number") and today(step.get("ended_at")))
+        return out
+
     def counts_for_project(self, project_id: str) -> dict[str, int]:
         rows = self.for_project(project_id)
         return {

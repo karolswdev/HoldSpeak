@@ -211,8 +211,13 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   still, fit, contrast and 44 px at 393.
 - **Tests**: T2 `desk/programs/__tests__/programs.app.test.tsx`; T3 the
   sweep cases `surface-programs` and `pullout:program` at 1440 and 393.
-- **Not in this slice**: editing a step's brief on the phone; a race shot
-  (the rig recorded no race fixture).
+- **Not in this slice**: editing a step's brief on the phone. The race shot
+  came after (2026-10-29): the rig records a race of 2 (Codex wins in 34
+  min, Claude Code parks "Lost the race to Codex") as
+  `__fixtures__/program.race.json`; `programs.app.test.tsx` draws the
+  contender under the step, the loser's line and Open lane on each; the
+  step's word is "Race of 2" (it said "Race of 1": the count left out the
+  step's own agent).
 
 ## PG10. The seams on the faces (Shipped)
 
@@ -246,19 +251,29 @@ State: **Shipped** means in this PR. **Left** means a later slice.
 
 ## Left for later slices
 
-## PG12. Tick on the coder frame (Left)
+## PG12. Tick on the coder frame (Shipped)
 
 - **Goal**: a step moves on the moment its agent's turn ends, not on the
   next 30 s tick.
-- **Files**: `hs/services/program_runner.py`, the coder frame's hub-side
-  listener.
-- **Changes**: a launch that belongs to a step ticks its Program on its
-  `intel_status` (scope `coder`) frame and on the Heartbeat's
-  `desk_changed("launch", …)`.
+- **Files**: `hs/services/program_runner.py` (`tick_on_frames`,
+  `programs_of_sessions`, `schedule_tick`), `hs/web_server.py`
+  (`_program_frame_ticks`, called from `_coder_frames_loop` after the
+  frames).
+- **Changes**: each coder frame key (`<agent>:<session_id>`) maps through
+  the launch ledger (origin `program_step:<id>`, the bound work attempt's
+  session) to its Program; the Program ticks after a 1 s debounce on a
+  timer thread, off the loop; a frame inside the window adds nothing; the
+  tick waits for a tick of the same Program in flight (the per-Program
+  lock), never two at once. `HOLDSPEAK_PROGRAMS=off`: nothing is scheduled;
+  no running Program: the ledger is not read.
 - **Done when**: in the rig, a fake turn end moves the step to Checking
   with no wait.
-- **Tests**: T1 `tests/integration/test_program_run.py`.
-- **Not in this slice**: none.
+- **Tests**: T1 `tests/integration/test_program_run.py` (`test_pg12_*`: the
+  step leaves Working in under 1 s with a 0.2 s window, the debounce, the
+  lock, off, the hub's call).
+- **Not in this slice**: the Heartbeat's `desk_changed("launch", …)` as a
+  second trigger (the coder frame covers a turn end; the 30 s tick covers
+  the rest).
 
 ## PG13. The Program's level drives the desk's answers (Left)
 
@@ -315,14 +330,26 @@ State: **Shipped** means in this PR. **Left** means a later slice.
 - **Tests**: none (his desk).
 - **Not in this slice**: none.
 
-## PG18. Programs on Today (Left)
+## PG18. Programs on Today (Shipped)
 
 - **Goal**: "Programs: 1 running, 1 waits on you" in Today's Since morning
   when a Program moved today (design §9 Seams).
-- **Files**: the Today face, the Today read.
-- **Changes**: one line from `program.list`, only when not zero.
+- **Files**: `hs/services/program_service.py` (`since_morning`),
+  `hs/services/today_service.py`, `hs/web/routes/today.py`,
+  `desk/pullouts/views/TodayView.tsx`, `today.css`, `desk/programs/lamp.ts`
+  (`programsTodayLine`).
+- **Changes**: `GET /api/today/since-morning` gains a `programs` block
+  (`moved`, `running`, `waiting`, `done`, `merged` PRs today; `null` when
+  the Programs could not be read). Today reads it at any hour and on each
+  Program frame. After 17:00 the line is a row of the Since this morning
+  fold; before 17:00 the fold is not drawn (its own rule), so the line
+  heads the day (`today-programs-head`). No line when nothing moved.
 - **Done when**: a Program that moved today shows the line at 1440 and 393.
-- **Tests**: T2 the Today app file.
+- **Tests**: T1 `tests/unit/test_desk_today.py` (the block over the
+  Programs rig, recorded as `today-hub/since-morning.programs.json`; empty;
+  `null` on a failed read); T2 `TodayView.test.tsx` (at 18:00 in the fold,
+  at 09:00 at the head) and `programs.app.test.tsx`; T3 the sweep's `today`
+  case at 1440 and 393.
 - **Not in this slice**: The Week's count.
 
 ## PG19. Handoff: when an agent runs out (Shipped)

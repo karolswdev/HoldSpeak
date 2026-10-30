@@ -109,7 +109,8 @@ export function banded(programs: readonly ProgramSummary[]): { state: ProgramSta
  *  (`Merged #1585`, `Merge? #1591`) and the race's count. */
 export function stepWord(step: ProgramStep): string {
   const base = stateWords(step.state_word || step.state);
-  if (step.contenders?.length) return `Race of ${step.contenders.length}`;
+  // A race of 2 is the step's own agent and one contender.
+  if (step.contenders?.length) return `Race of ${Math.max(step.race || 0, step.contenders.length + 1)}`;
   if ((step.state === "merged" || step.state === "merge_ask") && step.pr?.number) return `${base} #${step.pr.number}`;
   if (step.state === "check_failed") return `${base} · log`;
   // PG19: the row keeps "Limited until 14:00"; the rest ("continuing in

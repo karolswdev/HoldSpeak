@@ -2,7 +2,9 @@
 
 The workbench conductor calls :meth:`ProgramRunner.tick` every 30 s
 (``HOLDSPEAK_PROGRAMS=off``: never); a press (start, resume, decide,
-step_done) ticks its Program at once. One tick, for each running Program:
+step_done) ticks its Program at once; a coder frame for a step's launch
+(the hub's coder watcher, :func:`tick_on_frames`, PG12) ticks its Program
+after a 1 s debounce. One tick, for each running Program:
 
 1. **Dispatch**: a planned step whose ``after`` steps are finished is
    ``ready``; a ready step is handed (``AgentHandService.hand(kind=
@@ -61,6 +63,10 @@ CHECK_TIMEOUT_SECONDS = 3600
 CALL_TIMEOUT_SECONDS = 120
 #: The tick's cadence (the conductor's loop).
 TICK_SECONDS = 30
+#: PG12: frames for one Program inside this window give one tick.
+FRAME_DEBOUNCE_SECONDS = 1.0
+#: PG12: how long a frame's tick waits for a tick already in flight.
+FRAME_LOCK_WAIT_SECONDS = 30
 
 #: Flight states whose agent stopped: the step parks with his row.
 _STOPPED = frozenset({"ended", "expired", "stopped_by_restart", "resume_failed", "checked"})
@@ -73,6 +79,9 @@ _CHECK_LOCK = threading.Lock()
 _PROGRAM_LOCKS: dict[str, threading.Lock] = {}
 _PROGRAM_LOCKS_GUARD = threading.Lock()
 _RUNNING_CHECKS: dict[str, threading.Thread] = {}
+#: PG12: the one pending frame tick per Program (the debounce).
+_FRAME_TIMERS: dict[str, threading.Timer] = {}
+_FRAME_GUARD = threading.Lock()
 
 #: PG19: when a limit notice names no reset time, its agent counts as
 #: limited this long after the handoff (a plan's usage window).
@@ -1314,4 +1323,86 @@ def tick() -> list[str]:
     return default_runner().tick()
 
 
-__all__ = ["CHECK_TIMEOUT_SECONDS", "ProgramRunner", "TICK_SECONDS", "default_runner", "tick"]
+# ── PG12: a tick at once on a coder frame ────────────────────────────
+
+
+def programs_of_sessions(db: Any, keys: list[str], *, ledger: Any) -> list[str]:
+    """The Programs whose step launches are bound to these coder session keys
+    (``<agent>:<session_id>``, the coder frame's ids), each once. A launch
+    belongs to a step when its origin is ``program_step:<step id>`` (the
+    flight's ``program`` join, ``agent_flights._program_of``)."""
+    from ..db.programs import ProgramStore
+    from .agent_flights import _bound_session_key
+
+    wanted = {str(key) for key in keys if key}
+    if not wanted:
+        return []
+    store = ProgramStore(db)
+    found: list[str] = []
+    for record in ledger.list():
+        origin = record.get("origin_ref") or {}
+        if origin.get("kind") != "program_step" or not origin.get("id"):
+            continue
+        if _bound_session_key(db, record) not in wanted:
+            continue
+        step = store.get_step(str(origin["id"]))
+        if step and step["program_id"] not in found:
+            found.append(step["program_id"])
+    return found
+
+
+def _frame_tick(runner: ProgramRunner, program_id: str) -> None:
+    with _FRAME_GUARD:
+        _FRAME_TIMERS.pop(program_id, None)
+    lock = _program_lock(program_id)
+    # A tick in flight read the state before the frame: wait for it, then
+    # tick again (never two ticks of one Program at once).
+    if not lock.acquire(timeout=FRAME_LOCK_WAIT_SECONDS):
+        log.info(f"program {program_id}: the frame tick waited too long; the 30 s tick takes it")
+        return
+    try:
+        runner._tick_program(program_id)
+    except Exception as exc:
+        log.error(f"program {program_id} frame tick failed: {exc}", exc_info=True)
+    finally:
+        lock.release()
+
+
+def schedule_tick(program_id: str, *, runner: Optional[ProgramRunner] = None,
+                  delay: float = FRAME_DEBOUNCE_SECONDS) -> bool:
+    """One tick of ``program_id`` after ``delay`` seconds, off the caller's
+    thread. A second call inside the window adds nothing (``False``)."""
+    if not programs_on():
+        return False
+    runner = runner or default_runner()
+    with _FRAME_GUARD:
+        if program_id in _FRAME_TIMERS:
+            return False
+        timer = threading.Timer(delay, _frame_tick, args=(runner, program_id))
+        timer.daemon = True
+        timer.name = f"program-frame-{program_id}"
+        _FRAME_TIMERS[program_id] = timer
+    timer.start()
+    return True
+
+
+def tick_on_frames(keys: list[str], *, runner: Optional[ProgramRunner] = None, ledger: Any = None,
+                   delay: float = FRAME_DEBOUNCE_SECONDS) -> list[str]:
+    """The coder watcher's call (``web_server._coder_frames_loop``): a frame
+    for a step's launch schedules one tick of its Program. The ids it
+    scheduled; ``HOLDSPEAK_PROGRAMS=off``: none."""
+    if not programs_on() or not keys:
+        return []
+    runner = runner or default_runner()
+    try:
+        if not any(program["state"] in _TICKED for program in runner.service.store.list_programs()):
+            return []  # no Program runs: no ledger read
+        ids = programs_of_sessions(runner.db, list(keys), ledger=ledger if ledger is not None else runner.ledger())
+    except Exception as exc:
+        log.warning(f"coder frames not mapped to programs: {exc}")
+        return []
+    return [program_id for program_id in ids if schedule_tick(program_id, runner=runner, delay=delay)]
+
+
+__all__ = ["CHECK_TIMEOUT_SECONDS", "FRAME_DEBOUNCE_SECONDS", "ProgramRunner", "TICK_SECONDS", "default_runner",
+           "programs_of_sessions", "schedule_tick", "tick", "tick_on_frames"]

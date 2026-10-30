@@ -14,6 +14,7 @@ from __future__ import annotations
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -114,3 +115,65 @@ def test_since_morning_lists_what_got_done_today(hub: Any, tmp_path: Path) -> No
 def test_since_morning_is_empty_on_a_new_desk(hub: Any) -> None:
     body = _ok(hub.client.get("/api/today/since-morning"))
     assert body["items"] == []
+
+
+def test_since_morning_is_empty_of_programs_on_a_new_desk(hub: Any) -> None:
+    body = _ok(hub.client.get("/api/today/since-morning"))
+    assert body["programs"] == {"moved": 0, "running": 0, "waiting": 0, "done": 0, "merged": 0}
+
+
+def _programs_day(tmp_path: Path) -> tuple[Any, Any]:
+    """Programs PG18: the Programs rig (real git, a real database, the real
+    engine) with one Program running (its first step merged at Normal, its
+    second working) and one waiting on his merge (Secure), read through the
+    real Today route over the rig's database."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from holdspeak.services.today_service import TodayService
+    from holdspeak.web.routes.today import build_today_router
+    from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig
+
+    rig = Rig(tmp_path / "rig")
+
+    def made(title: str, control: str, steps: list[dict[str, Any]]) -> str:
+        pid = rig.service.create(OWNER, title=title, goal=f"{title}.", repository=str(rig.repo),
+                                 check_command=f"sh {FAKE_CHECK}", template="fast-cycle", control=control)["id"]
+        rig.service.plan(OWNER, pid, steps=steps)
+        rig.service.start(OWNER, pid)
+        return pid
+
+    running = made("The hub stops stalling", "normal", [
+        {"title": "Indexes", "brief": "Add the indexes."}, {"title": "Retention", "brief": "Prune.", "after": [1]}])
+    waiting = made("The words wave", "secure", [{"title": "Settings words", "brief": "Plain words."}])
+    rig.agent.finish(rig.step(running, 1)["launch_id"], {"a.txt": "1\n"})
+    rig.agent.finish(rig.step(waiting, 1)["launch_id"], {"b.txt": "1\n"})
+    rig.tick(4)
+    assert rig.program(running)["state"] == "running" and rig.program(waiting)["state"] == "waiting"
+    app = FastAPI()
+    app.include_router(build_today_router(SimpleNamespace(today_service=TodayService(rig.db))))  # type: ignore[arg-type]
+    return rig, TestClient(app)
+
+
+def test_since_morning_counts_the_programs_that_moved_today(tmp_path: Path) -> None:
+    rig, client = _programs_day(tmp_path)
+    body = _ok(client.get("/api/today/since-morning"))
+    assert body["programs"] == {"moved": 2, "running": 1, "waiting": 1, "done": 0, "merged": 1}, body["programs"]
+    _record("since-morning.programs", {"/api/today/since-morning": body}, tmp_path,
+            "tests/unit/test_desk_today.py (the Programs rig)", folder=TODAY_FIXTURES)
+    # Tomorrow nothing moved: the block says so with moved 0.
+    tomorrow = datetime.now().astimezone() + timedelta(days=1)
+    from holdspeak.services.program_service import ProgramService
+
+    assert ProgramService(rig.db).since_morning(None, now=tomorrow)["moved"] == 0
+
+
+def test_since_morning_says_none_when_the_programs_cannot_be_read(hub: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.services import program_service
+
+    def broken(self, principal=None, *, now=None):
+        raise RuntimeError("no programs table")
+
+    monkeypatch.setattr(program_service.ProgramService, "since_morning", broken)
+    body = _ok(hub.client.get("/api/today/since-morning"))
+    assert body["programs"] is None and body["items"] == []

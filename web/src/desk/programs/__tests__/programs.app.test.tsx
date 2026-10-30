@@ -18,9 +18,11 @@ import doneFixture from "../__fixtures__/program.done.json";
 import parkedFixture from "../__fixtures__/program.parked.json";
 import draftingFixture from "../__fixtures__/program.drafting.json";
 import limitedFixture from "../__fixtures__/program.limited.json";
+import raceFixture from "../__fixtures__/program.race.json";
 import needsFixture from "../__fixtures__/needs_you.program.json";
 import roomFixture from "../__fixtures__/room.programs.json";
 import personFixture from "../__fixtures__/person.programs.json";
+import sinceMorningPrograms from "../../__tests__/fixtures/today-hub/since-morning.programs.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -88,6 +90,7 @@ const done = doneFixture as unknown as Program;
 const parked = parkedFixture as unknown as Program;
 const drafting = draftingFixture as unknown as Program;
 const limited = limitedFixture as unknown as Program;
+const raced = raceFixture as unknown as Program;
 let calls: string[];
 
 function hub(table: Record<string, Answer>) {
@@ -325,6 +328,34 @@ describe("the Program window (direction C, the ledger)", () => {
   });
 });
 
+describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
+  it("the contender is indented under the step, the loser says Lost the race to Codex · 34 min, Open lane on each", async () => {
+    hub({ [`GET /api/programs/${raced.id}`]: raced });
+    render(<ProgramBody programId={raced.id} />);
+    await screen.findByTestId("programs-board");
+    const lead = stepRow(1);
+    expect(within(lead).getByTestId("programs-step-word").textContent).toBe("Race of 2");
+    // The step's own agent lost: its line and its time.
+    expect(lead.textContent).toContain("Claude Code");
+    expect(lead.textContent).toContain("“Lost the race to Codex”");
+    expect(lead.querySelector(".pg-step-when")?.textContent).toBe("34 min");
+    expect(lead.querySelector(".pg-step-meta")?.textContent).toBe("Claude Code · 34 min · “Lost the race to Codex”");
+    // The contender row comes right after the step, indented, and names its agent.
+    const [contender] = screen.getAllByTestId("programs-contender");
+    expect(lead.nextElementSibling).toBe(contender);
+    expect(contender.hasAttribute("data-contender")).toBe(true);
+    expect(within(contender).getByTestId("programs-step-select").textContent).toContain("Codex");
+    expect(within(contender).getByTestId("programs-step-word").textContent).toBe("Done");
+    expect(contender.textContent).toContain("Merged #101");
+    // Open lane on each: the loser's lane and the winner's.
+    fireEvent.click(within(lead).getByTestId("programs-step-open"));
+    fireEvent.click(within(contender).getByTestId("programs-step-open"));
+    expect(mocks.openRef.mock.calls).toEqual([["launch:L1"], ["launch:L2"]]);
+    // The engine's choice is under Decided for you.
+    expect(screen.getByTestId("programs-decided").textContent).toContain("Codex won the race in 34 min");
+  });
+});
+
 describe("PG19: when an agent runs out (canvas handoff-2026-10-28)", () => {
   it("the limited step reads Limited until … · continuing in Codex, and Continue in Codex presses through", async () => {
     const item = limited.your_turn_items.find((row) => row.kind === "limited")!;
@@ -429,9 +460,12 @@ describe("the seams", () => {
   });
 
   it("Today and the Dock: one Since this morning line, and the worst Program state on the Agents lamp", () => {
-    const now = new Date(list.programs[0].updated_at);
-    expect(programsTodayLine(list.programs, now)).toBe("Programs: 2 wait on you, 1 done");
-    expect(programsTodayLine(list.programs, new Date(now.getTime() + 3 * 86_400_000))).toBe("");
+    // The hub's block (`ProgramService.since_morning`, recorded through the Today route).
+    const block = (sinceMorningPrograms as { "/api/today/since-morning": { programs: Parameters<typeof programsTodayLine>[0] } })
+      ["/api/today/since-morning"].programs;
+    expect(programsTodayLine(block)).toBe("Programs: 1 running, 1 waits on you, 1 PR merged");
+    expect(programsTodayLine({ moved: 0, running: 0, waiting: 0, done: 0, merged: 0 })).toBe("");
+    expect(programsTodayLine(null)).toBe("");
     const lamp = programsLampOf(list.worst, list.counts);
     expect(lamp).toEqual({ lamp: "ask", words: "2 programs wait on you" });
     expect(worseLamp("work", lamp.lamp)).toBe("ask");

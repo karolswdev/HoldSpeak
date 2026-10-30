@@ -190,6 +190,19 @@ def _coder_watch_step(
     return {**current, **dones}, transitions, entered
 
 
+def _program_frame_ticks(keys: list[str]) -> list[str]:
+    """Programs PG12: a coder frame for a step's launch ticks its Program
+    after a 1 s debounce (``program_runner.tick_on_frames``), not on the
+    next 30 s tick. A failure is logged and never stops the coder watcher."""
+    try:
+        from .services.program_runner import tick_on_frames
+
+        return tick_on_frames(keys)
+    except Exception as exc:
+        log.warning(f"program frame tick failed: {exc}")
+        return []
+
+
 def _coder_awaiting_edge(keys: list[str]) -> Optional[dict]:
     """Conductor K3: coder sessions began to wait for the owner.
 
@@ -2251,6 +2264,10 @@ class MeetingWebServer:
                                 },
                             )
                         )
+                    if transitions:
+                        # Programs PG12: a step's agent moved: its Program
+                        # ticks now (debounced, off the loop).
+                        await asyncio.to_thread(_program_frame_ticks, transitions)
                     if entered:
                         # After the frames: the decision builds the full
                         # needs-you answer, and the frames must not wait on it.
