@@ -36,7 +36,7 @@ describe("EgressChip with no props (HS-202-02)", () => {
   it("keeps a clickable local chrome chip functional", () => {
     const onClick = vi.fn();
     render(<EgressChip label="THIS DEVICE" scope="local" onClick={onClick} />);
-    fireEvent.click(screen.getByRole("button", { name: "THIS DEVICE" }));
+    fireEvent.click(screen.getByRole("button", { name: "This device" }));
     expect(onClick).toHaveBeenCalledOnce();
   });
 });

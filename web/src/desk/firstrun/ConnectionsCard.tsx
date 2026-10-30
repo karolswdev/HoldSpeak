@@ -26,7 +26,7 @@ export const SIGN_IN_COMMAND: Record<"gh" | "acli", string> = {
 /** Why a row has no verb, as one token. */
 function noVerbToken(row: ConnectionCandidate, step: ConnectionsStep): string {
   const tool = PROVIDER_TOOL[row.provider];
-  if (!step.tools[tool]?.installed) return `${tool.toUpperCase()} NOT INSTALLED`;
+  if (!step.tools[tool]?.installed) return `${tool} NOT INSTALLED`;
   if (row.provider === "github" && !row.active) return "NOT ACTIVE IN GH";
   return "";
 }
@@ -116,7 +116,7 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
                     </span>
                     {row.egress_host ? (
                       <span className="concierge-found-line2">
-                        <EgressChip label={row.egress_host.toUpperCase()} scope={row.lamp === "cloud" ? "cloud" : "local"} />
+                        <EgressChip label={row.egress_host} scope={row.lamp === "cloud" ? "cloud" : "local"} />
                       </span>
                     ) : null}
                     {state?.kind === "refused" ? (
@@ -143,7 +143,7 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
                 <CommandWell hint={SIGN_IN_COMMAND[tool]} />
               </span>
             ) : (
-              <Token key={tool} className="surface-token">{`${tool.toUpperCase()} NOT INSTALLED`}</Token>
+              <Token key={tool} className="surface-token">{`${tool} NOT INSTALLED`}</Token>
             ),
           )}
           {step.tools.gh?.installed || step.tools.acli?.installed ? (

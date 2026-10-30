@@ -87,7 +87,7 @@ export function engineEgress(agent: AgentId, preview: HandPreview | null | undef
 } {
   const engine = agent === "pi" ? preview?.engine : null;
   if (!engine) return { label: AGENT_HOST[agent], scope: agent === "pi" ? "remote" : "cloud" };
-  const host = engine.host.toUpperCase();
+  const host = engine.host;
   return engine.boundary === "private_network" ? { label: `LAN · ${host}`, scope: "remote" } : { label: host, scope: "cloud" };
 }
 
@@ -233,7 +233,7 @@ export function refusalToken(code: string, agent: AgentId): string {
     case "item_unknown":
       return "ITEM NOT FOUND";
     case "executable_absent":
-      return `${AGENT_NAME[agent].toUpperCase()} NOT INSTALLED`;
+      return `${AGENT_NAME[agent]} NOT INSTALLED`;
     case "tmux_absent":
       return "TMUX NOT INSTALLED";
     case "worktree_duplicate":
@@ -248,7 +248,7 @@ export function refusalToken(code: string, agent: AgentId): string {
       return "AGENT LIMIT REACHED";
     case "launch_profile_mismatch":
       // `agent` is the HELD launch's agent here (the sheet passes it).
-      return `HELD FOR ${AGENT_NAME[agent].toUpperCase()}`;
+      return `HELD FOR ${AGENT_NAME[agent]}`;
     case "hub_unreachable":
       return "HUB UNREACHABLE";
     default:
@@ -518,7 +518,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
           /* The issue body is read from its tracker when the sheet opens: the
              egress at the fetch, with its outcome (R4, Astra #912). */
           <span className="desk-hand-tokens" data-testid="hand-tracker" data-state={tracker.state}>
-            <EgressChip label={tracker.host ? tracker.host.toUpperCase() : undefined} scope="cloud" />
+            <EgressChip label={tracker.host || undefined} scope="cloud" />
             <StateChip state={tracker.state} label={tracker.label} />
           </span>
         ) : null}
@@ -575,7 +575,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
               <span className="desk-hand-tokens" data-testid="hand-where">
                 {clone ? (
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="cloned">
-                    <EgressChip label={clone.host.toUpperCase()} scope="cloud" />
+                    <EgressChip label={clone.host} scope="cloud" />
                     <Token className="surface-token" data-tone="ok" data-chip data-wrap>{cloneWords(clone)}</Token>
                     {clone.folder ? (
                       <Token className="surface-token" data-chip data-wrap data-testid="hand-clone-folder">{clone.folder}</Token>
@@ -583,9 +583,9 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                   </span>
                 ) : preview.clone ? (
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="to_clone">
-                    <EgressChip label={preview.clone.host.toUpperCase()} scope="cloud" />
+                    <EgressChip label={preview.clone.host} scope="cloud" />
                     <Token className="surface-token" data-chip data-wrap>CLONES {preview.clone.repository}</Token>
-                    <Token className="surface-token" data-chip>{branchFace(preview.branch).toUpperCase()}</Token>
+                    <Token code className="surface-token" data-chip>{branchFace(preview.branch)}</Token>
                   </span>
                 ) : null}
                 {preview.repo ? (
@@ -634,7 +634,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
             </Token>
           ) : (
             <Token className="surface-footer-receipt-line">
-              {AGENT_NAME[actual].toUpperCase()}{preview ? ` · ${mode}` : ""}
+              {AGENT_NAME[actual]}{preview ? ` · ${mode}` : ""}
             </Token>
           )
         }

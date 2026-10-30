@@ -21,6 +21,7 @@ import { MicButton } from "../components/MicButton";
 import { ConfirmVerb } from "./Surface";
 import { useRovingRows } from "./roving";
 import { sentenceChildren, stateWords } from "./words";
+import { Token } from "./Token";
 import "./gadgets.css";
 
 /* ── the sheet: two aligned columns, 26px rows, engraved groups ── */
@@ -889,13 +890,21 @@ export function EgressChip({
   const word = String(label ?? "").trim();
   const passiveSameDevice =
     scope === "local" && /^(?:THIS DEVICE|THIS MAC)$/i.test(word);
+  const notSet = /^not set$/i.test(word);
   /* PHILO-17 — blank/default chips and passive same-device badges take no
    * space. A local chip with an onClick remains a working chrome control. */
-  if (!word || word === "NOT SET" || (passiveSameDevice && !onClick)) return null;
+  if (!word || notSet || (passiveSameDevice && !onClick)) return null;
 
+  /* EGRESS-CHIP-WORDS (2026-10-30): the chip says its word in sentence
+     case through `stateWords` (`THIS DEVICE` draws `This device`, `SENDS
+     OUT` draws `Sends out`). A host or an address is shown as typed: the
+     chip then draws as a code token (`data-literal`, mono, no case change;
+     stateWords leaves a dotted host as it is). */
+  const words = stateWords(word);
+  const literal = chipCarriesHost(word) || undefined;
   /* PHILO-4-01 r5 — a chip that names its destination carries that full
      text as its title. */
-  const tip = title ?? (label && label !== "NOT SET" ? label : "The route for this face is not set.");
+  const tip = title ?? words;
   const cls =
     "gadget-chip gadget-chip-egress" + (className ? ` ${className}` : "");
   if (onClick) {
@@ -904,22 +913,29 @@ export function EgressChip({
         variant="chrome"
         className={cls}
         data-scope={scope}
+        data-literal={literal && ""}
         title={tip}
         aria-label={ariaLabel}
         onClick={onClick}
       >
-        {label}
+        {words}
       </Button>
     );
   }
   return (
-    <span className={cls} data-scope={scope} title={tip}>
-      {label}
-    </span>
+    <Token code={Boolean(literal)} className={cls} data-scope={scope} title={tip}>
+      {words}
+    </Token>
   );
 }
 
-/* ── SecretRow: SET/— chip, hover verbs, in-row armed replace ── */
+/** A chip part is a host or an address when it is one word with a dot or a
+ *  colon (`github.com`, `192.168.1.36`, `::1`, `api.example.com:443`). */
+export function chipCarriesHost(label: string): boolean {
+  return label.split(" · ").some((part) => /^[^\s]*[.:][^\s]*[A-Za-z0-9]$/.test(part.trim()));
+}
+
+/* ── SecretRow: Set / Not set chip, hover verbs, in-row armed replace ── */
 
 export function SecretRow({
   label,
@@ -972,7 +988,7 @@ export function SecretRow({
       ) : (
         <span>
           <span className="gadget-chip" data-set={configured || undefined}>
-            {configured ? "SET" : "—"}
+            {configured ? "Set" : "Not set"}
           </span>
         </span>
       )}

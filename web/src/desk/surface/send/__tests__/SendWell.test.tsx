@@ -437,8 +437,8 @@ describe("the SEND well species on a brief (not an update)", () => {
     // Betterment send S1: an account chip only for a sign-in failure; a webhook that is set says nothing.
     expect(row.querySelector(".send-cells")?.textContent).not.toContain("WEBHOOK SET");
     // W4-PHONE: the egress is said on the destination row, and only there.
-    expect(within(row).getByText("HOOKS.SLACK.COM")).toBeTruthy();
-    expect(within(screen.getByTestId("send-verbs")).queryByText("HOOKS.SLACK.COM")).toBeNull();
+    expect(row.querySelector(".send-cells .gadget-chip-egress")?.textContent).toBe("hooks.slack.com");
+    expect(within(screen.getByTestId("send-verbs")).queryByText("hooks.slack.com")).toBeNull();
     fireEvent.click(within(row).getByText("Slack #leads"));
     expect(row.querySelector(".send-target")?.textContent).toBe("#leads");
   });
@@ -487,7 +487,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     })] });
     render(<SendWells doc={BRIEF} />);
     const row = await pick("Slack #leads");
-    expect(row.textContent).toContain("HOOKS.SLACK.COM");
+    expect(row.textContent).toContain("hooks.slack.com");
     expect(row.textContent).not.toContain("WEBHOOK SET");   // betterment send S1: no chip beside a good send
     const sent = await screen.findByTestId("send-sent");
     expect(sent.textContent).toContain("Posted");
@@ -531,7 +531,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(refused.textContent).toContain("Too large for Slack");
     expect(within(refused).getByTestId("preview-size").textContent).toBe("41,099 / 39,000 characters");
     expect(refused.textContent).toContain("Nothing sent");
-    expect(refused.textContent).toContain("HOOKS.SLACK.COM");
+    expect(refused.textContent).toContain("hooks.slack.com");
     expect(screen.getByTestId("send-open").textContent).not.toContain("No answer");
     expect(screen.queryByTestId("send-verb")).toBeNull();
     expect(screen.queryByTestId("preview-failed")).toBeNull();

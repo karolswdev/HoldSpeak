@@ -122,7 +122,7 @@ describe("the launch sheet", () => {
     expect(where).not.toContain("ai_1");
     expect(where).toContain("Control · Open throttle");
     const footer = document.querySelector(".desk-hand-footer")!;
-    expect(footer.querySelector(".gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
+    expect(footer.querySelector(".gadget-chip-egress")!.textContent).toContain("api.anthropic.com");
     expect(footer.textContent).toContain("Claude Code · Open throttle");
     expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(false);
     // The agent cards carry the hub's facts.
@@ -137,7 +137,7 @@ describe("the launch sheet", () => {
     fireEvent.click(within(sheet).getByRole("radio", { name: /Codex/ }));
     await waitFor(() => expect(calls.some((c) => c.body?.profile === "codex-default")).toBe(true));
     const footer = document.querySelector(".desk-hand-footer")!;
-    await waitFor(() => expect(footer.querySelector(".gadget-chip-egress")!.textContent).toContain("API.OPENAI.COM"));
+    await waitFor(() => expect(footer.querySelector(".gadget-chip-egress")!.textContent).toContain("api.openai.com"));
     expect(footer.textContent).toContain("Codex");
   });
 
@@ -218,7 +218,7 @@ describe("the words", () => {
     expect(sourceFact({ kind: "decision", ref: "d", title: "", lines: null })).toBe("DECISION");
     expect(sourceFact({ kind: "project_decisions", ref: "p", title: "", lines: 1 })).toBe("1 DECISION");
     expect(sourceFact({ kind: "memory", ref: "p", title: "", lines: 0 })).toBeNull();
-    expect(refusalToken("executable_absent", "codex")).toBe("CODEX NOT INSTALLED");
+    expect(refusalToken("executable_absent", "codex")).toBe("Codex NOT INSTALLED");
     expect(refusalToken("some_new_reason", "claude")).toBe("SOME NEW REASON");
   });
 });
@@ -383,7 +383,7 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
     await waitFor(() => expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(false));
     await act(async () => { release?.(); await Promise.resolve(); });
     expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(false);
-    expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
+    expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("api.anthropic.com");
   });
 
   it("a held Claude launch: picking Codex shows the held agent, its egress, RESUMES, and withholds Launch", async () => {
@@ -402,7 +402,7 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
     await waitFor(() => expect(screen.getByTestId("hand-refused").textContent).toContain("Held for Claude Code"));
     expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(true);
     // The egress is the agent that really runs: Anthropic, not OpenAI.
-    expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
+    expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("api.anthropic.com");
   });
 });
 
@@ -476,7 +476,7 @@ describe("after Launch (Astra #905 round 2)", () => {
     const codex = screen.getByRole("radio", { name: /Codex/ }) as HTMLInputElement;
     expect(codex.disabled).toBe(true);
     fireEvent.click(codex);
-    expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
+    expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("api.anthropic.com");
     expect(calls.filter((c) => c.url.endsWith("/api/agent/hand/preview") && c.body?.profile === "codex-default")).toEqual([]);
   });
 
@@ -522,14 +522,14 @@ describe("R4 (Astra #912): the issue body read is egress, named at the fetch", (
     act(() => useAgentHand.getState().open(ISSUE));
     const line = await screen.findByTestId("hand-tracker");
     expect(line.getAttribute("data-state")).toBe("working");
-    expect(line.textContent).toContain("ACME.ATLASSIAN.NET");
+    expect(line.textContent).toContain("acme.atlassian.net");
     expect(line.textContent).toContain("Reading");
     await act(async () => release({ status: 200, body: preview({
       kind: "issue", id: ISSUE.id, tracker: { host: "acme.atlassian.net", state: "read" },
     }) }));
     await waitFor(() => expect(screen.getByTestId("hand-tracker").getAttribute("data-state")).toBe("success"));
     expect(screen.getByTestId("hand-tracker").textContent).toContain("Read");
-    expect(screen.getByTestId("hand-tracker").querySelector(".gadget-chip-egress")?.textContent).toBe("ACME.ATLASSIAN.NET");
+    expect(screen.getByTestId("hand-tracker").querySelector(".gadget-chip-egress")?.textContent).toBe("acme.atlassian.net");
   });
 
   it("NOT READ when the tracker did not answer", async () => {
@@ -540,7 +540,7 @@ describe("R4 (Astra #912): the issue body read is egress, named at the fetch", (
     render(<HandSheet />);
     act(() => useAgentHand.getState().open({ ...ISSUE, trackerHost: null }));
     await waitFor(() => expect(screen.getByTestId("hand-tracker").getAttribute("data-state")).toBe("failure"));
-    expect(screen.getByTestId("hand-tracker").textContent).toContain("GITHUB.COM");
+    expect(screen.getByTestId("hand-tracker").textContent).toContain("github.com");
     expect(screen.getByTestId("hand-tracker").textContent).toContain("Not read");
   });
 

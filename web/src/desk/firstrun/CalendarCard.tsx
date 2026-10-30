@@ -11,8 +11,8 @@ import { hostOf, meetingClock, stateCount, type CalendarCandidate, type Calendar
 import { Token } from "../surface/Token";
 
 function rowEgress(row: CalendarCandidate): { label: string; scope: "local" | "cloud" } {
-  if (row.kind === "macos" || !row.egress_host) return { label: "THIS DEVICE", scope: "local" };
-  return { label: row.egress_host.toUpperCase(), scope: row.lamp === "cloud" ? "cloud" : "local" };
+  if (row.kind === "macos" || !row.egress_host) return { label: "This device", scope: "local" };
+  return { label: row.egress_host, scope: row.lamp === "cloud" ? "cloud" : "local" };
 }
 
 /** `14 EVENTS · NEXT ATLAS WEEKLY 10:30`, each part only when known. */
@@ -119,7 +119,7 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
           >
             Allow calendar access
           </Button>
-          <EgressChip label="THIS DEVICE" scope="local" />
+          <EgressChip label="This device" scope="local" />
         </div>
       ) : null}
       {step.notAllowed && nativeAccessVisible ? (
@@ -147,7 +147,7 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
           >
             Check again
           </Button>
-          <EgressChip label="THIS DEVICE" scope="local" />
+          <EgressChip label="This device" scope="local" />
           {step.settingsFailed ? <DotWord tone="fail" data-testid="firstrun-calendar-settings-failed">Could not open System Settings · Nothing changed · Open it yourself, then press Check again</DotWord> : null}
         </div>
       ) : null}
@@ -234,7 +234,7 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
               Add
             </Button>
           </span>
-          {host ? <EgressChip label={typed.label.toUpperCase()} scope={typed.scope} /> : null}
+          {host ? <EgressChip label={typed.label} scope={typed.scope} /> : null}
         </label>
       ) : null}
       {failure?.kind === "cant_read" ? (

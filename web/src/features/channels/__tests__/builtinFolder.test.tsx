@@ -102,9 +102,9 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
     rows = [{ ...builtin(), synced: true, badge: "cloud", target: { ...builtin().target, cloud: "icloud" } }];
     render(<Well />);
     const row = await screen.findByTestId("destination-row");
-    expect(row.textContent).toContain("ICLOUD");
+    expect(row.textContent).toContain("iCloud");
     expect(row.textContent).not.toContain("THIS DEVICE");
-    const chip = within(row).getAllByText("ICLOUD")[0];
+    const chip = within(row).getAllByText("iCloud")[0];
     expect(chip.closest(".gadget-chip-egress")?.getAttribute("data-scope")).toBe("cloud");
   });
 
@@ -112,7 +112,7 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
     render(<Well />);
     const row = await screen.findByTestId("destination-row");
     expect(row.textContent).not.toContain("THIS DEVICE");
-    expect(row.textContent).not.toContain("ICLOUD");
+    expect(row.textContent).not.toContain("iCloud");
   });
 
   it("a SAVED receipt whose proof names iCloud shows the ICLOUD egress beside the path", async () => {
@@ -135,23 +135,23 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
     const { unmount } = render(<Well />);
     const receipt = await screen.findByTestId("send-sent");
     expect(receipt.textContent).toContain("Saved");
-    expect(receipt.textContent).toContain("ICLOUD");
+    expect(receipt.textContent).toContain("iCloud");
     unmount();
     resetSendStore();
     stored = [sent()];
     render(<Well />);
     const plain = await screen.findByTestId("send-sent");
-    expect(plain.textContent).not.toContain("ICLOUD");
+    expect(plain.textContent).not.toContain("iCloud");
   });
 });
 
 describe("another sync service: never THIS DEVICE", () => {
   it.each([
-    ["dropbox", "DROPBOX"],
-    ["googledrive", "GOOGLE DRIVE"],
-    ["onedrive", "ONEDRIVE"],
-    ["synced", "SYNCED"],
-    ["com.example.unknown", "SYNCED"],
+    ["dropbox", "Dropbox"],
+    ["googledrive", "Google Drive"],
+    ["onedrive", "OneDrive"],
+    ["synced", "Synced"],
+    ["com.example.unknown", "Synced"],
   ])("a %s folder: the row's chip is %s (cloud scope)", async (provider, label) => {
     rows = [{ ...builtin(), synced: true, badge: "cloud", target: { ...builtin().target, cloud: provider } }];
     render(<Well />);

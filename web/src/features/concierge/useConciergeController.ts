@@ -87,11 +87,11 @@ export function latencyToken(ms: number | null | undefined): string | null {
 
 export function engineHostLabel(engine: Engine): string {
   if (engine.kind === "cloud") {
-    return engine.host.toUpperCase();
+    return engine.host;
   }
   if (engine.kind === "lan") {
     const suffix = engine.host.match(/^(\d+\.\d+\.\d+\.\d+)/) ? " · LAN" : "";
-    return `${engine.host}${suffix}`.toUpperCase();
+    return `${engine.host}${suffix}`;
   }
   return "THIS DEVICE";
 }
@@ -519,7 +519,7 @@ export function useConciergeController(): ConciergeController {
       group: r.label,
       engineId: r.engineId,
       engineName: engine?.name ?? (r.engineId === "OFF" ? "OFF" : "—"),
-      host: engine ? engineHostLabel(engine) : r.host.toUpperCase() || "—",
+      host: engine ? engineHostLabel(engine) : r.host || "—",
     };
   });
 

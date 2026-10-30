@@ -59,7 +59,7 @@ describe("Waiting on Nudge", () => {
     fireEvent.click(screen.getByTestId("waiting-on-nudge"));
     expect(await screen.findByTestId("nudge-card")).toBeTruthy();
     expect(screen.getByTestId("nudge-card").textContent).toContain("Nudge ready");
-    expect(screen.getByTestId("nudge-card").textContent).toContain("GITHUB.COM");
+    expect(screen.getByTestId("nudge-card").textContent).toContain("github.com");
     expect(apiFetch).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByTestId("nudge-send"));

@@ -62,10 +62,10 @@ describe("a prepared send to the iCloud HoldSpeak folder", () => {
   it("names ICLOUD on the waiting row, the terminal result and the history row", async () => {
     expect(fixture.after.send.proof.egress).toBe("icloud");
     const t = await pressPrepared(fixture);
-    expect(t.before).toContain("ICLOUD");
+    expect(t.before).toContain("iCloud");
     expect(t.after).toContain("Saved");
-    expect(t.after).toContain("ICLOUD");
-    expect(t.history).toContain("ICLOUD");
+    expect(t.after).toContain("iCloud");
+    expect(t.history).toContain("iCloud");
   });
 
   it("a Dropbox-synced folder: DROPBOX on every receipt (any provider leaves this device)", async () => {
@@ -78,16 +78,16 @@ describe("a prepared send to the iCloud HoldSpeak folder", () => {
       if (s.proof) (s.proof as Record<string, unknown>).egress = "dropbox";
     }
     const t = await pressPrepared(f);
-    expect(t.before).toContain("DROPBOX");
-    expect(t.after).toContain("DROPBOX");
-    expect(t.history).toContain("DROPBOX");
+    expect(t.before).toContain("Dropbox");
+    expect(t.after).toContain("Dropbox");
+    expect(t.history).toContain("Dropbox");
     expect(t.after).not.toContain("THIS DEVICE");
   });
 
   it("a plain Documents folder: no same-device chip while waiting, no ICLOUD after", async () => {
     const t = await pressPrepared(plain());
     expect(t.before).not.toContain("THIS DEVICE");
-    expect(t.after).not.toContain("ICLOUD");
-    expect(t.history).not.toContain("ICLOUD");
+    expect(t.after).not.toContain("iCloud");
+    expect(t.history).not.toContain("iCloud");
   });
 });

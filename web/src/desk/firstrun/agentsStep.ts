@@ -46,7 +46,7 @@ export const AGENT_GLYPH: Record<AgentId, string> = { claude: "CC", codex: "CX",
 /** The host each agent's model runs on (the egress of a hand-off). pi runs
  *  on the hub's engine for coding work (the LAN box); the Hand line names
  *  that engine's own host from the preview (`engineEgress`). */
-export const AGENT_HOST: Record<AgentId, string> = { claude: "API.ANTHROPIC.COM", codex: "API.OPENAI.COM", pi: "LAN" };
+export const AGENT_HOST: Record<AgentId, string> = { claude: "api.anthropic.com", codex: "api.openai.com", pi: "LAN" };
 export const AGENT_NAME: Record<AgentId, string> = { claude: "Claude Code", codex: "Codex", pi: "pi" };
 
 /** An agent whose hooks the press would install: on PATH, hooks not in.

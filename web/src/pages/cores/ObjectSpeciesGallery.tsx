@@ -156,8 +156,8 @@ function LaneSpecimen() {
           onAnswer={() => setAnswer("")}
           draft="Jordan owns it. Avery reviews."
           onUseDraft={setAnswer}
-          draftEgress={{ label: "API.ANTHROPIC.COM", scope: "cloud" }}
-          egress={{ label: "THIS DEVICE", scope: "local" }}
+          draftEgress={{ label: "api.anthropic.com", scope: "cloud" }}
+          egress={{ label: "This device", scope: "local" }}
         />
       </SurfaceSection>
       <SurfaceSection label="PRCard · FilesChanged">
@@ -296,7 +296,7 @@ export function ObjectSpeciesGallery() {
             lamp={{ label: "CHECKS PASS", tone: "ok" }}
             verbs={
               <>
-                <EgressChip label="GITHUB.COM" scope="cloud" />
+                <EgressChip label="github.com" scope="cloud" />
                 <Button dense variant="secondary">Open PR</Button>
               </>
             }

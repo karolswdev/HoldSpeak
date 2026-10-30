@@ -1,5 +1,5 @@
 // HS-173-04 -- StewardPosture 173 face tests: the sixth row (Reviewer nudge),
-// its EgressChip GITHUB.COM, PER-NUDGE APPROVAL token, and the nudge_template
+// its EgressChip github.com, PER-NUDGE APPROVAL token, and the nudge_template
 // StringGadget row that appears only when github_comment is checked.
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -235,8 +235,8 @@ describe("HS-173-04: github_comment model labels", () => {
     expect(isModelTouchingKind("github_comment")).toBe(false);
   });
 
-  it("effectKindEgressHost returns 'GITHUB.COM'", () => {
-    expect(effectKindEgressHost("github_comment")).toBe("GITHUB.COM");
+  it("effectKindEgressHost returns 'github.com'", () => {
+    expect(effectKindEgressHost("github_comment")).toBe("github.com");
   });
 });
 
@@ -263,7 +263,7 @@ describe("HS-173-04: sixth row (Reviewer nudge) in policy", () => {
     expect(label.textContent).toBe("Reviewer nudge");
   });
 
-  it("sixth row carries EgressChip GITHUB.COM", async () => {
+  it("sixth row carries EgressChip github.com", async () => {
     setupStewardPolicy();
     render(<WindowHarness scope="project:p1" />);
     await openPolicy();
@@ -271,7 +271,7 @@ describe("HS-173-04: sixth row (Reviewer nudge) in policy", () => {
     const effectsSection = screen.getByTestId("steward-policy-effects");
     const egressChips = effectsSection.querySelectorAll(".gadget-chip-egress");
     const githubChip = Array.from(egressChips).find(
-      (el) => el.textContent === "GITHUB.COM",
+      (el) => el.textContent === "github.com",
     );
     expect(githubChip).toBeTruthy();
     expect(githubChip!.getAttribute("data-scope")).toBe("cloud");

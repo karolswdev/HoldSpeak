@@ -31,6 +31,14 @@ const NAMES: Record<string, string> = {
   ),
 };
 
+/** A vendor or product word in its own spelling (`openai` → `OpenAI`,
+ *  `anthropic` → `Anthropic`); a word the table does not know stays as it
+ *  is typed. EGRESS-CHIP-WORDS: the one way to name a vendor without a
+ *  caller's `.toUpperCase()`. */
+export function nameWord(word: string): string {
+  return NAMES[word.trim().toUpperCase()] ?? word;
+}
+
 /** A citation's kind plate keeps its capitals before the cited date
  *  (`DEC 10-11`, `MTG 09-07 · 11:31`): the plate is an id, not a word. */
 const REF_KINDS = new Set(["DEC", "MTG", "ACT", "CMT", "REF"]);

@@ -109,13 +109,13 @@ describe("the Destinations group", () => {
     }
   });
 
-  it("a synced folder is SYNCED FOLDER (cloud), with no same-device chip", async () => {
+  it("a synced folder is Synced folder (cloud), with no same-device chip", async () => {
     render(<Destinations />);
     await screen.findByTestId("dest-form");
     fireEvent.change(screen.getByTestId("dest-folder"), { target: { value: "/Users/owner/Drive" } });
     expect(screen.getByTestId("dest-form-verbs").querySelector(".gadget-chip-egress")).toBeNull();
     fireEvent.click(within(screen.getByTestId("dest-form")).getByText("SYNCED"));
-    expect(egress().textContent).toBe("SYNCED FOLDER");
+    expect(egress().textContent).toBe("Synced folder");
     expect(egress()).toHaveAttribute("data-scope", "cloud");
   });
 
@@ -136,8 +136,8 @@ describe("the Destinations group", () => {
     // The key row: present or absent, never the key.
     const keyRow = screen.getByTestId("dest-key-row");
     expect(keyRow.textContent).toContain("SendGrid key");
-    expect(keyRow.textContent).toContain("—");
-    expect(egress().textContent).toBe("API.SENDGRID.COM");
+    expect(keyRow.textContent).toContain("Not set");
+    expect(egress().textContent).toBe("api.sendgrid.com");
     expect(egress()).toHaveAttribute("data-scope", "cloud");
   });
 
@@ -290,7 +290,7 @@ describe("the email destination setup", () => {
     };
     await emailForm();
     typeKey("SG.glassKEY");
-    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("SET")).toBeTruthy());
+    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("Set")).toBeTruthy());
     expect(document.body.innerHTML).not.toContain("glassKEY");
     const put = calls.find((c) => c.method === "PUT")!;
     expect(put.url).toBe("/api/channels/email-keys/sendgrid-karol%40acme.io");
@@ -334,7 +334,7 @@ describe("the email destination setup", () => {
     routes["POST /api/channels/destinations"] = () => ok({ destination: saved });
     await editEmail();
     expect(screen.getByRole("textbox", { name: "To" })).toHaveValue("lena@acme.io\ntomas@acme.io");
-    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("SET")).toBeTruthy());
+    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("Set")).toBeTruthy());
     expect(screen.getByTestId("dest-save")).toBeEnabled();
     fireEvent.change(screen.getByLabelText("To", { exact: true }), { target: { value: "lena@acme.io\ntomas@acme.io, noor@acme.io" } });
     fireEvent.click(screen.getByTestId("dest-save"));
@@ -369,7 +369,7 @@ describe("the email destination setup", () => {
     await waitFor(() => expect(calls.some((c) => c.url === resendCheck)).toBe(true));
     await waitFor(() => expect(screen.getByTestId("dest-email-key-check").textContent).toContain("No key"));
     expect(screen.getByTestId("dest-save")).toBeDisabled();
-    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("Set")).toBeNull();
     fireEvent.click(screen.getByTestId("dest-cancel"));
     await edit(saved.name);
     await waitFor(() => expect(screen.getByTestId("dest-save")).toBeEnabled());
@@ -389,7 +389,7 @@ describe("the email destination setup", () => {
     const failed = await screen.findByTestId("dest-email-key-check");
     await waitFor(() => expect(failed.textContent).toContain(label));
     expect(screen.getByTestId("dest-save")).toBeDisabled();
-    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("Set")).toBeNull();
     routes["POST /api/channels/destinations/[^/]+/check"] = () => ok(checkEmail);
     fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.getByTestId("dest-save")).toBeEnabled());
@@ -404,7 +404,7 @@ describe("the email destination setup", () => {
     fireEvent.change(screen.getByTestId("dest-from"), { target: { value: "other@acme.io" } });
     fireEvent.change(within(form).getByLabelText("Provider"), { target: { value: "resend" } });
     await act(async () => { finish(ok(checkEmail)); });
-    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("Set")).toBeNull();
     expect(screen.getByTestId("dest-save")).toBeDisabled();
     const keyRow = screen.getByTestId("dest-key-row");
     routes["PUT /api/channels/email-keys/.+"] = () => ok(emailKeySaved);

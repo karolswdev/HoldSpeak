@@ -68,7 +68,7 @@ describe("SpeechSetup — the one row", () => {
     render(<Host />);
     expect((await screen.findByTestId("row-line")).textContent).toBe("Speech is not set up");
     expect(screen.getByTestId("row-verb").textContent).toBe("Set up speech · 144 MB");
-    expect(screen.getByText("HUGGINGFACE.CO")).toBeTruthy();
+    expect(screen.getByText("huggingface.co")).toBeTruthy();
     expect(screen.getAllByRole("button")).toHaveLength(1);
   });
 

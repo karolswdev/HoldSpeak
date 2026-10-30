@@ -90,10 +90,10 @@ describe("Slack in the Destination form", () => {
   it("D1/D2a: saves the webhook through the held route, never shows it, and saves the row by key_ref", async () => {
     const form = await slackForm();
     expect(within(form).getByTestId("dest-key-row").textContent).toContain("Webhook");
-    expect(within(form).getByTestId("dest-form-verbs").textContent).toContain("HOOKS.SLACK.COM");
+    expect(within(form).getByTestId("dest-form-verbs").textContent).toContain("hooks.slack.com");
 
     typeWebhook(URL);
-    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("SET")).toBeTruthy());
+    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("Set")).toBeTruthy());
     const held = calls.find((c) => c.path === "/api/channels/slack-webhooks")!;
     expect(held.method).toBe("POST");
     expect(held.json).toMatchObject({ webhook_url: URL });
@@ -128,7 +128,7 @@ describe("Slack in the Destination form", () => {
     expect(refused).toHaveAttribute("data-code", "slack_webhook_invalid");
     expect(refused.textContent).toBe("Could not save the key · Nothing changed · Check the webhook and paste it again");
     expect(refused).toHaveAttribute("title", "WEBHOOK NOT VALID");
-    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("Set")).toBeNull();
     expect(document.body.textContent).not.toContain("example.com/hooks");
   });
 
@@ -149,11 +149,11 @@ describe("Slack in the Destination form", () => {
     expect(row.querySelector(".surface-ledger-cells")?.textContent).toContain("Slack");
     expect(row.textContent).toContain("#leads");
     expect(within(row).getByText("Slack #leads")).toBeVisible();
-    expect(within(row).queryByText("HOOKS.SLACK.COM")).toBeNull();
+    expect(within(row).queryByText("hooks.slack.com")).toBeNull();
     fireEvent.click(within(row).getByRole("button", { name: "Details" }));
     const open = await screen.findByTestId("dest-open");
     expect(open.textContent).toContain("Channel name");
-    expect(within(screen.getByTestId("dest-verbs")).getByText("HOOKS.SLACK.COM")).toBeVisible();
+    expect(within(screen.getByTestId("dest-verbs")).getByText("hooks.slack.com")).toBeVisible();
     expect(document.body.textContent).not.toContain("synthetic-secret");
     fireEvent.click(screen.getByTestId("dest-check"));
     const result = await screen.findByTestId("dest-check-result");
@@ -185,13 +185,13 @@ describe("Slack in the Destination form", () => {
     fireEvent.click(within(await screen.findByTestId("dest-row")).getByText("Slack #leads"));
     fireEvent.click(await screen.findByTestId("dest-edit"));
     const keyRow = await screen.findByTestId("dest-key-row");
-    expect(within(keyRow).queryByText("SET")).toBeNull();
+    expect(within(keyRow).queryByText("Set")).toBeNull();
     expect(screen.getByTestId("dest-form").textContent).not.toContain("WEBHOOK SET");
     // The neutral state offers Check; a Check that finds no webhook says NO WEBHOOK, still no SET.
     fireEvent.click(within(keyRow).getByTestId("dest-key-check"));
     const missing = await screen.findByTestId("dest-key-missing");
     expect(missing.textContent).toContain("No webhook");
-    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("Set")).toBeNull();
     // Save remains unavailable while its required webhook is missing.
     fireEvent.click(screen.getByTestId("dest-save"));
     expect(screen.getByTestId("dest-save")).toBeDisabled();
@@ -204,9 +204,9 @@ describe("Slack in the Destination form", () => {
     fireEvent.click(within(await screen.findByTestId("dest-row")).getByText("Slack #leads"));
     fireEvent.click(await screen.findByTestId("dest-edit"));
     const keyRow = await screen.findByTestId("dest-key-row");
-    expect(within(keyRow).queryByText("SET")).toBeNull();
+    expect(within(keyRow).queryByText("Set")).toBeNull();
     fireEvent.click(within(keyRow).getByTestId("dest-key-check"));
-    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("SET")).toBeTruthy());
+    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("Set")).toBeTruthy());
     expect(screen.queryByTestId("dest-key-check")).toBeNull();
   });
 });

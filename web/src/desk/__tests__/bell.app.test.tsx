@@ -241,7 +241,7 @@ describe("a remote write in the shade's Finished rows (HS-174-04)", () => {
       return node!;
     });
     const chips = within(finished).getAllByTestId("shade-finished-egress").map((slot) => slot.querySelector(".gadget-chip-egress")!);
-    expect(chips.map((c) => [c.textContent, c.getAttribute("data-scope")])).toEqual([[`REMOTE · ${remote.caller}`, "remote"]]);
+    expect(chips.map((c) => [c.textContent, c.getAttribute("data-scope")])).toEqual([[`Remote · ${remote.caller}`, "remote"]]);
     expect(finished.textContent).not.toContain("Service.");
   });
 });

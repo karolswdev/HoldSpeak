@@ -252,7 +252,7 @@ export function isModelTouchingKind(kind: string): boolean {
 /** The external host an effect kind writes to (egress badge on policy row).
  *  Returns null for internal-only kinds. */
 export function effectKindEgressHost(kind: string): string | null {
-  if (kind === "github_comment") return "GITHUB.COM";
+  if (kind === "github_comment") return "github.com";
   return null;
 }
 

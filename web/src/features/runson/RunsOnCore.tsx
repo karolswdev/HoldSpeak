@@ -94,7 +94,7 @@ function hardwareToken(det: RunsOnController["detection"]): string | null {
 
 function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: ServiceTile }) {
   const a = ctrl.add;
-  const host = endpointHostPort(a.url).toUpperCase();
+  const host = endpointHostPort(a.url);
   return (
     <div className="runson-add" data-testid="concierge-add-engine-row">
       {service ? null : (
@@ -729,7 +729,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         if (at >= 0) tokens[at] = `${Math.round(progress)} %`;
       } else {
         // The file comes from the internet: the chip names that host.
-        egress = <EgressChip label={(engine.downloadHost ?? "huggingface.co").toUpperCase()} scope="cloud" />;
+        egress = <EgressChip label={engine.downloadHost ?? "huggingface.co"} scope="cloud" />;
         verb = (
           <Button dense variant="secondary" data-testid={`runson-download-${engine.key}`} onClick={() => void ctrl.download(engine.key)}>
             Download
@@ -770,17 +770,17 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         ),
       };
     }
-    const endpoint = engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "";
+    const endpoint = engine.baseUrl ? endpointHostPort(engine.baseUrl) : "";
     let host = "";
     if (engine.baseUrl) {
       try {
-        host = new URL(engine.baseUrl).hostname.toUpperCase();
+        host = new URL(engine.baseUrl).hostname;
       } catch {
-        host = engine.host.toUpperCase();
+        host = engine.host;
       }
     }
     const tokens = engine.baseUrl
-      ? [endpoint, ...engine.tokens.filter((token) => token.trim().toUpperCase() !== host)].filter(Boolean)
+      ? [endpoint, ...engine.tokens.filter((token) => token.trim().toLowerCase() !== host.toLowerCase())].filter(Boolean)
       : engine.tokens;
     return {
       id: engine.key,

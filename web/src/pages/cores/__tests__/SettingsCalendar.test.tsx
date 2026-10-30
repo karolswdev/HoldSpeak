@@ -371,8 +371,8 @@ describe("calendarSourceEgressChips", () => {
       { id: "s2", kind: "file", host: "", refresh_seconds: 900, egress: false, label: "Local", enabled: true },
     ]);
     expect(chips).toHaveLength(1);
-    expect(chips[0].label).toContain("MAIN");
-    expect(chips[0].label).toContain("CAL.EXAMPLE");
+    expect(chips[0].label).toContain("Main");
+    expect(chips[0].label).toContain("cal.example");
     expect(chips[0].scope).toBe("cloud");
   });
 

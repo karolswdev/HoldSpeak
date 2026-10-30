@@ -121,10 +121,10 @@ export function prRepo(url: string | undefined): string {
   return m ? m[1] : "";
 }
 
-/** The host a URL leaves for (`GITHUB.COM`), for the egress chip. */
+/** The host a URL leaves for (`github.com`), as typed. */
 export function urlHost(url: string | undefined): string {
   try {
-    return new URL(text(url)).host.toUpperCase();
+    return new URL(text(url)).host;
   } catch {
     return "";
   }

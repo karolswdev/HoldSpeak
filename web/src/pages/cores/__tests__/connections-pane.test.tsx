@@ -841,7 +841,7 @@ describe("Accounts recovery", () => {
     expect(within(chooser).queryByRole("button", { name: "Open System Settings" })).toBeNull();
     const field = within(chooser).getByRole("textbox", { name: "Calendar URL" });
     fireEvent.change(field, { target: { value: CALENDAR_CHECK_WIRE.wire.url } });
-    expect(within(chooser).getByText(CALENDAR_CHECK_WIRE.wire.host.toUpperCase())).toBeVisible();
+    expect(within(chooser).getByText(CALENDAR_CHECK_WIRE.wire.host)).toBeVisible();
     const check = within(chooser).getByRole("button", { name: "Check again" });
     fireEvent.click(check);
     await waitFor(() => expect(reads).toBe(2));
@@ -996,7 +996,7 @@ describe("Accounts that say Works (betterment ST2)", () => {
     mockFetchConnections.mockImplementation(async () => decoded(used ? ST2_AFTER_USE : ST2_CONNECTIONS));
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
     const found = await screen.findByTestId(`connections-found-${GAMMA_ID}`);
-    expect(within(found).getByText("gamma.atlassian.net")).toBeInTheDocument();
+    expect(within(found).getAllByText("gamma.atlassian.net")[0]).toBeInTheDocument();
     // Only accounts HoldSpeak does not use yet: the two checked Jira sites are not under Found.
     const list = screen.getByTestId("connections-found");
     expect(within(list).queryByTestId("connections-found-jira:alpha.atlassian.net|owner@example.com")).toBeNull();

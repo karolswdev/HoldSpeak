@@ -178,11 +178,11 @@ class TestDropToHandGlass:
                 assert page.locator(".drag-ghost").count() == 0
                 fact = line.locator(".confirm-line-fact")
                 page.wait_for_function(
-                    "() => /^CLAUDE CODE · OPEN THROTTLE · hs\\//.test(document.querySelector('.drawer-window .confirm-line-fact')?.textContent || '')",
+                    "() => /^Claude Code · Open throttle · hs\\//.test(document.querySelector('.drawer-window .confirm-line-fact')?.textContent || '')",
                     timeout=T,
                 )
                 assert line.locator(".confirm-line-title").inner_text() == ACTION
-                assert "API.ANTHROPIC.COM" in line.inner_text()
+                assert "api.anthropic.com" in line.inner_text()
                 # Nothing launched before the press.
                 assert not (self.rig.repo.parent / f"hs-action-{ACTION_ID}").exists()
                 page.screenshot(path=str(SHOTS / "c3-confirm-1440.png"))

@@ -58,7 +58,7 @@ export function Hooks() {
     const set = Boolean(info && info.latest_session);
     return (
       <span className="gadget-chip" data-set={set || undefined}>
-        {set ? "SET" : "—"}
+        {set ? "Set" : "Not set"}
       </span>
     );
   };

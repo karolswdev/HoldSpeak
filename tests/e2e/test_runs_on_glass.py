@@ -570,7 +570,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                     downloads.locator("summary").click()
                 plate = page.locator("[data-testid='switchboard-engine-preset:preset_glass_vision']")
                 plate.wait_for(state="visible")
-                assert "HUGGINGFACE.CO" in plate.inner_text()
+                assert "huggingface.co" in plate.inner_text()
                 assert "THIS DEVICE" not in plate.inner_text().upper()
                 plate.get_by_role("button", name="Download").click()
                 bar = page.get_by_test_id("switchboard-bar-preset:preset_glass_vision")

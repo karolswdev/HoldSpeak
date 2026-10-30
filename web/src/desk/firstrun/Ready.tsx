@@ -35,7 +35,7 @@ export function readyItems({
   connections: Pick<ConnectionsStep, "providers">;
 }): ReadyStripItem[] {
   const words = countToken(heardWordCount(heardText), "WORD");
-  const sendTo = connections.providers.map((p) => PROVIDER_NAME[p].toUpperCase());
+  const sendTo = connections.providers.map((p) => PROVIDER_NAME[p]);
   return [
     { key: "local-ai", label: "LOCAL AI · ON DEVICE" },
     { key: "heard", label: words ? `HEARD · ${words}` : "HEARD" },

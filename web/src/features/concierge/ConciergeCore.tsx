@@ -169,7 +169,7 @@ function SetGroupRow({
     row.engineId === "OFF" ? "—" : engine?.name ?? row.appliedLabel ?? "—";
   const isOff = row.engineId === "OFF" || row.engineId === null;
   const latency = engine ? latencyToken(engine.latencyMs) : null;
-  const hostLabel = engine ? engineHostLabel(engine) : row.host.toUpperCase() || "";
+  const hostLabel = engine ? engineHostLabel(engine) : row.host || "";
 
   return (
     <SurfaceLedgerRow
@@ -361,7 +361,7 @@ function RepairRow({
           {repair.detail || repair.host ? (
             <span className="concierge-found-line2">
               {repair.host ? (
-                <EgressChip label={repair.host.toUpperCase()} scope={repair.scope} />
+                <EgressChip label={repair.host} scope={repair.scope} />
               ) : null}
               {repair.detail ? (
                 <span
@@ -401,7 +401,7 @@ function ProbeRow({ ctrl }: { ctrl: ConciergeController }) {
       {latency ? <span className="concierge-token">{latency}</span> : null}
       {result?.host ? (
         <EgressChip
-          label={result.host.toUpperCase()}
+          label={result.host}
           scope={result.boundary === "local" ? "local" : "cloud"}
         />
       ) : null}
@@ -436,7 +436,7 @@ function ProbeRow({ ctrl }: { ctrl: ConciergeController }) {
 
 export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: boolean }) {
   // The address the Check will contact, named before he presses it.
-  const checkHost = endpointHostPort(ctrl.addEngineUrl).toUpperCase();
+  const checkHost = endpointHostPort(ctrl.addEngineUrl);
   const checkScope = isLanAddress(ctrl.addEngineUrl) ? "local" : "cloud";
   return (
       <div className="concierge-add-engine-row" data-testid="concierge-add-engine-row">

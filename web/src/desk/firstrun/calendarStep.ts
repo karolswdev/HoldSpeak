@@ -85,7 +85,7 @@ export function cantReadReason(errorClass: string | undefined, redirect?: string
       return "NOT A CALENDAR LINK";
     case "calendar_source_redirect": {
       const host = hostOf(redirect || "");
-      return host ? `MOVED TO ${host.toUpperCase()}` : "LINK MOVED";
+      return host ? `MOVED TO ${host}` : "LINK MOVED";
     }
     case "calendar_source_http_error":
       return "SERVER REFUSED";

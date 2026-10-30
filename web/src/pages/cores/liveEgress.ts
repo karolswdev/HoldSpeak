@@ -1,3 +1,4 @@
+import { nameWord } from "../../desk/surface/words";
 /* HS-202-02 — the Live surface's intelligence badge, read from the hub.
  *
  * `/api/runtime/status` publishes `intel_egress` as
@@ -25,7 +26,7 @@ export function intelEgressBadge(posture: unknown): EgressBadge | null {
     return { label: "THIS DEVICE", scope: "local" };
   const provider = String(read.provider ?? "").trim();
   return {
-    label: (provider || "OFF DEVICE").toUpperCase(),
+    label: provider ? nameWord(provider) : "OFF DEVICE",
     scope: "cloud",
   };
 }

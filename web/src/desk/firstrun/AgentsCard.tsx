@@ -17,6 +17,7 @@ import {
   type AgentsStep,
 } from "./agentsStep";
 import { Token } from "../surface/Token";
+import { nameWord } from "../surface/words";
 
 /** PHILO-17: what the hooks do, in one plain line. */
 export const AGENTS_LINE = "Hooks tell HoldSpeak when Claude Code or Codex works, waits or stops.";
@@ -59,7 +60,7 @@ function Hooks({ row }: { row: AgentRow }) {
 }
 
 function versionToken(tool: string, version?: string | null): string {
-  return version ? `${tool} ${version}`.toUpperCase() : tool.toUpperCase();
+  return version ? `${nameWord(tool)} ${version}` : nameWord(tool);
 }
 
 function AgentLedgerRow({ row, onCopy }: { row: AgentRow; onCopy: (text: string) => void }) {
@@ -78,7 +79,7 @@ function AgentLedgerRow({ row, onCopy }: { row: AgentRow; onCopy: (text: string)
             </>
           ) : (
             <>
-              <Token className="surface-token" data-chip>{row.id.toUpperCase()} NOT INSTALLED</Token>
+              <Token className="surface-token" data-chip>{nameWord(row.id)} NOT INSTALLED</Token>
               <Button
                 dense
                 variant="secondary"
@@ -114,7 +115,7 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
         <span className="firstrun-tokens" data-testid="firstrun-agents-receipt">
           {step.installed.map((row) => (
             <Token key={row.id} className="surface-token" data-chip>
-              {AGENT_NAME[row.id].toUpperCase()} · HOOKS IN
+              {AGENT_NAME[row.id]} · HOOKS IN
             </Token>
           ))}
           {tmux?.installed ? (
@@ -181,7 +182,7 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
           <StateChip state="failure" label="HOOKS NOT IN" />
           {step.refused.map((r) => (
             <Token key={r.agent} className="surface-token" data-tone="danger">
-              {AGENT_NAME[r.agent].toUpperCase()} · {codeWords(r.code ?? "failed")}
+              {AGENT_NAME[r.agent]} · {codeWords(r.code ?? "failed")}
             </Token>
           ))}
         </div>
@@ -203,7 +204,7 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
           ) : null}
           {step.pending.length ? (
             <>
-              <EgressChip label="THIS DEVICE" scope="local" />
+              <EgressChip label="This device" scope="local" />
               <Button
                 dense
                 variant="secondary"

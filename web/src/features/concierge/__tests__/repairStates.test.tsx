@@ -200,7 +200,7 @@ describe("Concierge repair states (HS-200-04)", () => {
         screen.getAllByTestId(`concierge-repair-verb-${token}`),
       ).toHaveLength(1);
     }
-    expect(screen.getByText("API.OPENAI.COM")).toBeInTheDocument();
+    expect(screen.getByText("api.openai.com")).toBeInTheDocument();
     expect(screen.queryAllByText("THIS DEVICE")).toHaveLength(0);
   });
 
