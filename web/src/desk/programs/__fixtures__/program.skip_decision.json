@@ -1,0 +1,487 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "check_command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-30T18:04:55.218627+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 16,
+      "kind": null,
+      "line": "The program runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:55.218217+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 15,
+      "kind": null,
+      "line": "Opened PR #101",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:55.141755+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": "record-3169ecac600b46258fc4a0e6c1495d25",
+      "id": 14,
+      "kind": null,
+      "line": "Skip: sentence case the title",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {
+        "decision_record_id": "record-3169ecac600b46258fc4a0e6c1495d25"
+      }
+    },
+    {
+      "at": "2026-10-30T18:04:55.136092+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": "record-1ba39b4ff41c43489b266897fb1f66d1",
+      "id": 13,
+      "kind": null,
+      "line": "Skip: the old name stays in a comment",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {
+        "decision_record_id": "record-1ba39b4ff41c43489b266897fb1f66d1"
+      }
+    },
+    {
+      "at": "2026-10-30T18:04:55.127317+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 12,
+      "kind": null,
+      "line": "Overturned: NOTE finding on step 1 → Skip: the old name stays in a comment",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:55.026719+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 11,
+      "kind": null,
+      "line": "The program waits on you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:55.026206+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 10,
+      "kind": null,
+      "line": "1 finding for you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:55.025827+00:00",
+      "by": "engine",
+      "choice": "skip",
+      "decision_record_id": null,
+      "id": 9,
+      "kind": "finding_note",
+      "line": "NOTE finding on step 1 → Skip: the old name stays in a comment",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": "2026-10-30T18:04:55.127240+00:00",
+      "rule": "a NOTE finding is skipped and logged",
+      "step_id": "step-2137200d9b3b",
+      "undo": {
+        "finding_id": "n1"
+      }
+    },
+    {
+      "at": "2026-10-30T18:04:54.831918+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 8,
+      "kind": null,
+      "line": "Codex reviews at depth delta",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:54.796656+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 7,
+      "kind": null,
+      "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-2137200d9b3b/.tmp/program-check/step-2137200d9b3b/20261030T180454Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:54.746287+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 6,
+      "kind": null,
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:54.745892+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "New commit abdb3f2e; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:54.643733+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-2137200d9b3b",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2137200d9b3b",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:54.560751+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:54.559419+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:04:54.556317+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Build and review template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "secure",
+  "control_word": "Secure",
+  "created_at": "2026-10-30T18:04:54.555939+00:00",
+  "decided_for_you": [
+    {
+      "at": "2026-10-30T18:04:55.025827+00:00",
+      "choice": "skip",
+      "decision_record_id": null,
+      "id": 9,
+      "kind": "finding_note",
+      "line": "NOTE finding on step 1 → Skip: the old name stays in a comment",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": "2026-10-30T18:04:55.127240+00:00",
+      "rule": "a NOTE finding is skipped and logged",
+      "step_id": "step-2137200d9b3b"
+    }
+  ],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "done": 0,
+  "for_person_id": null,
+  "goal": "Plain words.",
+  "id": "program-00a3f8ffcc7a",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-10-30T18:04:55.218627+00:00",
+    "by": "engine",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 16,
+    "kind": null,
+    "line": "The program runs",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "may_call": false,
+  "may_handoff": false,
+  "note_id": "program-program-00a3f8ffcc7a",
+  "note_window": "pullout:note:program-program-00a3f8ffcc7a",
+  "origin_ref": null,
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "prefer_idle": false,
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "reviewer": {
+    "agent": "Codex",
+    "engine": null,
+    "profile": "codex-default"
+  },
+  "revision": 7,
+  "spend_limit_usd": null,
+  "state": "running",
+  "state_word": "Running",
+  "status_line": "Running · 0 of 1 done · check: fake_program_check.sh · control Secure",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/the-words-wave/1-dock-words",
+      "brief": "Plain words on the Dock.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": "abdb3f2e279c108039c5f78baeba33241b98271e",
+        "log": "/tmp/rig/hs-program-step-2137200d9b3b/.tmp/program-check/step-2137200d9b3b/20261030T180454Z.log",
+        "minutes": 0.0,
+        "reasons": [],
+        "running": false,
+        "sections": [
+          {
+            "name": "build",
+            "state": "green"
+          },
+          {
+            "name": "vitest",
+            "state": "green"
+          },
+          {
+            "name": "pytest",
+            "state": "green"
+          },
+          {
+            "name": "sweep",
+            "state": "green"
+          },
+          {
+            "name": "canon",
+            "state": "green"
+          },
+          {
+            "name": "repo",
+            "state": "green"
+          }
+        ],
+        "verdict": "green"
+      },
+      "contenders": [],
+      "effort": "low",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "engine": null,
+      "findings": [
+        {
+          "core": false,
+          "decided_at": "2026-10-30T18:04:55.140336+00:00",
+          "decision": "skip",
+          "decision_record_id": "record-3169ecac600b46258fc4a0e6c1495d25",
+          "id": "s1",
+          "level": "SHOULD",
+          "text": "sentence case the title",
+          "to_owner": true
+        },
+        {
+          "decided_at": "2026-10-30T18:04:55.134234+00:00",
+          "decided_by": "engine",
+          "decision": "skip",
+          "decision_record_id": "record-1ba39b4ff41c43489b266897fb1f66d1",
+          "id": "n1",
+          "level": "NOTE",
+          "text": "the old name stays in a comment",
+          "to_owner": true
+        }
+      ],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "agent",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "id": "step-2137200d9b3b",
+      "last_checkpoint": {
+        "at": "2026-10-30T18:04:55.218217+00:00",
+        "by": "engine",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 15,
+        "kind": null,
+        "line": "Opened PR #101",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "rule": null,
+        "step_id": "step-2137200d9b3b",
+        "undo": {}
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [
+        "web/src/desk/dock/words.ts"
+      ],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": {
+        "number": 101,
+        "url": "https://github.com/acme/app/pull/101"
+      },
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": "Codex",
+        "round": 1,
+        "verdict": "pass"
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-30T18:04:54.643274+00:00",
+      "state": "pr_open",
+      "state_word": "PR open",
+      "station": 4,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Dock words",
+      "updated_at": "2026-10-30T18:04:55.216861+00:00",
+      "worktree": "hs-program-step-2137200d9b3b"
+    }
+  ],
+  "template": "build-and-review",
+  "title": "The words wave",
+  "total": 1,
+  "updated_at": "2026-10-30T18:04:55.218566+00:00",
+  "usage_warning_share": null,
+  "your_turn": 0,
+  "your_turn_items": []
+}

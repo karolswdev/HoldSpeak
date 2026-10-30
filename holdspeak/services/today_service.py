@@ -187,8 +187,14 @@ def since_morning_read(db: Any, now: datetime.datetime | None = None,
         for row in rows(conn, """SELECT id, task, completed_at FROM action_items
                                  WHERE status = 'done' AND completed_at >= ?"""):
             add("action", f"action_item:{row['id']}", str(row["task"] or "Task"), "Done", row["completed_at"])
-        for row in rows(conn, """SELECT id, decision_text, created_at FROM decision_records
-                                 WHERE deleted = 0 AND kind = 'decision' AND created_at >= ?"""):
+        # A proposed Desk decision (a Program's Skip or merge by rule, PG16)
+        # is not recorded yet: it waits for his Accept.
+        for row in rows(conn, """SELECT r.id, r.decision_text, r.created_at FROM decision_records r
+                                 WHERE r.deleted = 0 AND r.kind = 'decision'
+                                   AND NOT EXISTS (SELECT 1 FROM desk_decisions dd
+                                       WHERE r.source_type = 'desk' AND dd.id = r.source_id
+                                         AND dd.deleted = 0 AND LOWER(dd.status) = 'proposed')
+                                   AND r.created_at >= ?"""):
             add("decision", f"decision_record:{row['id']}", _first_line(row["decision_text"]) or "Decision",
                 "Recorded", row["created_at"])
         for row in rows(conn, """SELECT n.id, n.title, n.body_markdown, d.name, m.last_modified

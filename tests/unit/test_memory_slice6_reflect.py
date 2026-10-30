@@ -433,6 +433,14 @@ def test_with_no_page_and_no_observation_the_chat_payload_is_byte_identical(hub,
         "Freeze its destination and exact preview bytes. Nothing leaves. Only the owner sends or discards. "
         "It waits in the owner's Needs you until he presses Send."
     )
+    # PG16: decision_record.list filters by program; its lower bounds moved to
+    # the service (which clamps them) so the palette does not grow.
+    records = next(tool for tool in expected_tools if tool["function"]["name"] == "decision_record.list")
+    records["function"]["description"] = "List decision records."
+    records["function"]["parameters"]["properties"] = {
+        "limit": {"type": "integer", "maximum": 500}, "offset": {"type": "integer"},
+        "program_id": {"type": "string"},
+    }
     assert json.dumps(tools, sort_keys=True) == json.dumps(expected_tools, sort_keys=True)
 
 

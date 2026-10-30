@@ -459,6 +459,16 @@ export type RoomDecisionItem = {
   was?: { text?: string; owner?: string; due?: string };
 };
 
+/** PG16: a decision a Program proposed (a Skip, a merge by rule), not yet
+ *  accepted: its Program and the step's PRs ride with it. */
+export type RoomProposedDecision = {
+  id: string;
+  text: string;
+  at: string;
+  program: { id: string; title: string };
+  prs: { number: number | null; url: string }[];
+};
+
 /** A commitment row. */
 export type RoomCommitmentItem = {
   id: string;
@@ -537,7 +547,7 @@ export type RoomSnapshot = {
   sources: RoomSection<RoomSourcesData>;
   health: RoomSection<RoomHealthData>;
   sinceRead: RoomSection<RoomSinceReadData>;
-  decisions: RoomSection<{ items: RoomDecisionItem[] }>;
+  decisions: RoomSection<{ items: RoomDecisionItem[]; proposed?: RoomProposedDecision[] }>;
   commitments: RoomSection<{ items: RoomCommitmentItem[] }>;
   target: RoomSection<RoomTargetData>;
   updates: RoomSection<RoomUpdatesData>;
@@ -896,7 +906,25 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
           })).filter((r) => r.id)
         : [],
     })),
-    decisions: decodeSection<{ items: RoomDecisionItem[] }>(raw.decisions, (s) => ({
+    decisions: decodeSection<{ items: RoomDecisionItem[]; proposed?: RoomProposedDecision[] }>(raw.decisions, (s) => ({
+      // PG16: the Program's proposed decisions (the Room's proposed fold).
+      proposed: Array.isArray(s.proposed)
+        ? (s.proposed as Record<string, unknown>[]).map((r) => {
+            const program = (r.program ?? {}) as Record<string, unknown>;
+            return {
+              id: String(r.id ?? ""),
+              text: String(r.text ?? ""),
+              at: String(r.at ?? ""),
+              program: { id: String(program.id ?? ""), title: String(program.title ?? "") },
+              prs: Array.isArray(r.prs)
+                ? (r.prs as Record<string, unknown>[]).map((pr) => ({
+                    number: typeof pr.number === "number" ? pr.number : null,
+                    url: String(pr.url ?? ""),
+                  })).filter((pr) => pr.url)
+                : [],
+            };
+          }).filter((r) => r.id)
+        : [],
       items: Array.isArray(s.items)
         ? (s.items as Record<string, unknown>[]).map((r) => {
             const item: RoomDecisionItem = {
