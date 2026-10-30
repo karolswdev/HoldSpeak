@@ -80,7 +80,10 @@ def _tail(screen: str) -> list[str]:
     return lines[-TAIL_LINES:]
 
 
-def _local_zone(name: Optional[str]):
+def _local_zone(name: Optional[str], now: Optional[datetime] = None):
+    """The zone a bare clock time is read in: the named zone, else the local
+    zone AT ``now`` (never the real clock's: a pinned test clock crossed the
+    DST change on 2026-11-01 and read "2pm" an hour off; found 2026-10-30)."""
     if name:
         try:
             from zoneinfo import ZoneInfo
@@ -88,7 +91,10 @@ def _local_zone(name: Optional[str]):
             return ZoneInfo(name)
         except Exception:
             pass
-    return datetime.now().astimezone().tzinfo
+    moment = now if now is not None else datetime.now()
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.astimezone().tzinfo
 
 
 def reset_moment(line: str, now: datetime) -> Optional[datetime]:
@@ -113,7 +119,7 @@ def reset_moment(line: str, now: datetime) -> Optional[datetime]:
             hour = 0
         if hour > 23 or minute > 59:
             return None
-        zone = _local_zone(at.group(4))
+        zone = _local_zone(at.group(4), now)
         local = now.astimezone(zone)
         moment = local.replace(hour=hour, minute=minute, second=0, microsecond=0)
         if moment <= local:
