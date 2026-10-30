@@ -201,3 +201,175 @@ def test_a_merge_by_rule_is_a_proposed_decision_with_its_rule(tmp_path, monkeypa
     monkeypatch.setattr(mcp_tools, "get_database", lambda: rig.db)
     assert [row["id"] for row in mcp_tools.dispatch("decision_record.list", {"program_id": pid}, OWNER)] == [
         merge["decision_record_id"]]
+
+
+# ── PG20: hidden-ref checkpoints on the rig's real git ───────────────
+
+
+def _tree_of_worktree(path: Path) -> str:
+    """The worktree's tree as git sees it now, read through a scratch index
+    (the worktree's own index is not touched)."""
+    import shutil
+    import subprocess
+    import tempfile
+
+    from tests.integration.program_rig import git
+
+    index = git(path, "rev-parse", "--path-format=absolute", "--git-path", "index")
+    with tempfile.TemporaryDirectory() as scratch:
+        temp = Path(scratch) / "index"
+        shutil.copyfile(index, temp)
+        env = {**os.environ, "GIT_INDEX_FILE": str(temp)}
+        subprocess.run(["git", "-C", str(path), "add", "-A"], env=env, check=True, capture_output=True)
+        return subprocess.run(["git", "-C", str(path), "write-tree"], env=env, check=True, capture_output=True,
+                              text=True).stdout.strip()
+
+
+def _pinned_rig(tmp_path: Path, control: str) -> tuple[Rig, str, dict[str, Any], Path, dict[str, Any]]:
+    """Step 1 is handed; it has a commit and a change it did not commit; his
+    checkpoint pins it."""
+    from tests.integration.program_rig import git
+
+    rig, pid = _rig(tmp_path, control)
+    one = rig.step(pid, 1)
+    tree = Path(rig.ledger.get(one["launch_id"])["worktree_path"])
+    (tree / "web" / "src" / "desk" / "dock").mkdir(parents=True, exist_ok=True)
+    (tree / "web" / "src" / "desk" / "dock" / "words.ts").write_text("export const one = 1;\n", encoding="utf-8")
+    git(tree, "add", "-A")
+    git(tree, "commit", "-m", "first words")
+    (tree / "web" / "src" / "desk" / "dock" / "words.ts").write_text("export const one = 'one';\n", encoding="utf-8")
+    (tree / "notes.md").write_text("half way\n", encoding="utf-8")
+    row = rig.service.checkpoint(OWNER, pid, one["id"], "Half way: the words are plain")["checkpoint"]
+    return rig, pid, rig.step(pid, 1), tree, row
+
+
+def test_a_checkpoint_pins_a_hidden_ref_whose_tree_is_the_worktree(tmp_path, monkeypatch) -> None:
+    from tests.integration.program_rig import git
+
+    rig, pid, one, tree, row = _pinned_rig(tmp_path, "normal")
+    head, branch = git(tree, "rev-parse", "HEAD"), git(tree, "rev-parse", "--abbrev-ref", "HEAD")
+    status = git(tree, "status", "--porcelain")
+    ref = row["ref"]
+    assert re.fullmatch(rf"refs/holdspeak/checkpoints/{one['id']}/\d+", ref), ref
+    # The ref's tree is the worktree at that moment, the change it did not commit and the new file included.
+    assert git(tree, "rev-parse", f"{ref}^{{tree}}") == _tree_of_worktree(tree)
+    assert git(tree, "show", f"{ref}:web/src/desk/dock/words.ts") == "export const one = 'one';"
+    assert git(tree, "show", f"{ref}:notes.md") == "half way"
+    # Its parent is the step's HEAD; its message names the checkpoint.
+    assert git(tree, "rev-parse", f"{ref}^") == head
+    assert "Half way: the words are plain" in git(tree, "log", "-1", "--format=%s", ref)
+    # The working tree, its index and its branch did not change.
+    assert git(tree, "rev-parse", "HEAD") == head and git(tree, "rev-parse", "--abbrev-ref", "HEAD") == branch
+    assert git(tree, "status", "--porcelain") == status and "?? notes.md" in status
+    assert ref not in git(tree, "branch", "--all")
+    # Each checkpoint has its own number; the engine's own lines pin too.
+    rows = [c for c in rig.program(pid)["checkpoints"] if c["step_id"] == one["id"] and c.get("ref")]
+    assert len({c["ref"] for c in rows}) == len(rows) >= 2
+    # program.get over MCP carries the refs.
+    from holdspeak.mcp import tools as mcp_tools
+
+    monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)
+    got = mcp_tools.dispatch("program.get", {"program_id": pid}, OWNER)
+    pinned = next(c for c in got["checkpoints"] if c["id"] == row["id"])
+    assert pinned["ref"] == ref and pinned["ref_commit"] == git(tree, "rev-parse", ref)
+    # A Program-wide line pins nothing; a step with no worktree yet keeps a note.
+    started = next(c for c in got["checkpoints"] if c["line"] == "Started the program")
+    assert started["ref"] is None and started["pin_note"] is None
+
+
+def test_a_checkpoint_without_git_is_a_note_never_a_stop(tmp_path) -> None:
+    import shutil
+
+    rig, pid, one, tree, _row = _pinned_rig(tmp_path, "normal")
+    shutil.rmtree(tree)
+    row = rig.service.checkpoint(OWNER, pid, one["id"], "The worktree went away")["checkpoint"]
+    assert row["ref"] is None
+    pinned = next(c for c in rig.program(pid)["checkpoints"] if c["id"] == row["id"])
+    assert pinned["pin_note"] == "No worktree to pin yet" and pinned["ref"] is None
+
+
+def test_a_handoff_names_the_ref_it_continues_from(tmp_path, monkeypatch) -> None:
+    from tests.integration.program_rig import git
+
+    rig, pid, one, tree, row = _pinned_rig(tmp_path, "normal")
+    # View brief before the move: the preview names the last pinned checkpoint.
+    preview = rig.service.handoff(OWNER, pid, one["id"], "codex", preview=True)
+    last = next(c for c in rig.program(pid)["checkpoints"] if c["step_id"] == one["id"] and c.get("ref"))
+    assert f"- Continues from: `{last['ref']}`" in preview["brief"]
+    (tree / "notes.md").write_text("more\n", encoding="utf-8")
+    answer = rig.service.handoff(OWNER, pid, one["id"], "codex")
+    entry = answer["handoff"]
+    ref = entry["continues_from"]
+    assert ref and ref != row["ref"] and ref.startswith(f"refs/holdspeak/checkpoints/{one['id']}/")
+    # The brief the next agent got names the ref; the ref's tree is the worktree it continues in.
+    step = rig.step(pid, 1)
+    brief = step["handoffs"][-1]["brief"]
+    assert f"- Continues from: `{ref}` (commit {entry['continues_commit'][:12]})" in brief
+    assert rig.ledger.get(entry["launch_to"])["worktree_path"] == str(tree)
+    assert git(tree, "rev-parse", f"{ref}^{{tree}}") == _tree_of_worktree(tree)
+    assert git(tree, "show", f"{ref}:notes.md") == "more"
+    # The handoff's checkpoint row carries the ref (the Checkpoints fold's divider).
+    divider = next(c for c in rig.program(pid)["checkpoints"] if c.get("kind") == "handoff")
+    assert divider["ref"] == ref
+
+
+def test_start_from_here_makes_a_worktree_at_that_tree(tmp_path, monkeypatch) -> None:
+    from tests.integration.program_rig import git
+
+    rig, pid, one, tree, row = _pinned_rig(tmp_path, "normal")
+    client = _client(rig, monkeypatch)
+    pinned_tree = git(tree, "rev-parse", f"{row['ref']}^{{tree}}")
+    # The worktree moves on; the checkpoint stays what it was.
+    (tree / "notes.md").write_text("a wrong turn\n", encoding="utf-8")
+    answer = client.post(f"/api/programs/{pid}/checkpoints/{row['id']}/start-from")
+    assert answer.status_code == 200, answer.text
+    body = answer.json()
+    assert body["ref"] == row["ref"] and body["step_id"]
+    new = next(s for s in body["program"]["steps"] if s["id"] == body["step_id"])
+    assert new["title"].startswith("Dock words (from checkpoint ") and new["ordinal"] == 2
+    # The tick hands it; its worktree starts at the ref's tree, on its own branch.
+    rig.tick()
+    new = rig.step(pid, 2)
+    assert new["launch_id"], new["state"]
+    fresh = Path(rig.ledger.get(new["launch_id"])["worktree_path"])
+    assert fresh != tree
+    assert git(fresh, "rev-parse", "HEAD") == git(tree, "rev-parse", row["ref"])
+    assert git(fresh, "rev-parse", "HEAD^{tree}") == pinned_tree
+    assert (fresh / "notes.md").read_text(encoding="utf-8") == "half way\n"
+    assert git(fresh, "rev-parse", "--abbrev-ref", "HEAD") == new["branch"]
+    lines = [c["line"] for c in rig.program(pid)["checkpoints"]]
+    assert f"Started step 2 from {row['ref']}" in lines
+    # Refused: an unknown checkpoint, and one that pinned nothing.
+    assert client.post(f"/api/programs/{pid}/checkpoints/999999/start-from").status_code == 404
+    started = next(c for c in rig.program(pid)["checkpoints"] if c["line"] == "Started the program")
+    assert client.post(f"/api/programs/{pid}/checkpoints/{started['id']}/start-from").status_code == 400
+    _fixture("program.start_from.json", client.get(f"/api/programs/{pid}").json(), tmp_path)
+
+
+def test_an_agent_asks_to_start_from_a_checkpoint_and_the_ladder_decides(tmp_path, monkeypatch) -> None:
+    from tests.unit.test_program_service import _launch_principal
+
+    # Normal: the agent's ask is his to add.
+    rig, pid, one, _tree, row = _pinned_rig(tmp_path / "normal", "normal")
+    agent = _launch_principal(monkeypatch, one["launch_id"])
+    answer = rig.service.start_from(agent, pid, row["id"])
+    assert answer["step_id"] is None
+    turn = next(item for item in rig.program(pid)["your_turn_items"] if item["kind"] == "add_step")
+    assert turn["title"] == f"Start a step from checkpoint {row['ref'].rsplit('/', 1)[-1]} of step 1 \u201cDock words\u201d"
+    rig.service.decide(OWNER, pid, one["id"], kind="add_step", choice="add", finding_id=turn["proposal"])
+    added = rig.step(pid, 2)
+    assert added["title"].startswith("Dock words (from checkpoint ")
+
+    # YOLO: the engine adds it and says so (Decided for you, overturnable).
+    rig, pid, one, _tree, row = _pinned_rig(tmp_path / "yolo", "yolo")
+    agent = _launch_principal(monkeypatch, one["launch_id"])
+    rig.service.start_from(agent, pid, row["id"])
+    decided = next(r for r in rig.program(pid)["decided_for_you"] if r["kind"] == "add_step")
+    assert f"from {row['ref']} (asked by step 1)" in decided["line"] and decided["overturnable"]
+
+    # Another launch may not ask on this step.
+    stranger = _launch_principal(monkeypatch, "L-stranger")
+    import pytest
+
+    with pytest.raises(program_module.ProgramRefused):
+        rig.service.start_from(stranger, pid, row["id"])

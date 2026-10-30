@@ -18,6 +18,9 @@ POST   /api/programs/{id}/steps/{sid}/decide       {kind, choice, finding_id?, r
 POST   /api/programs/{id}/steps/{sid}/race         {n}
 POST   /api/programs/{id}/steps/{sid}/handoff      {to: profile | {profile, engine}, preview: bool} (owner only;
                                                    PG19: preview returns the brief, nothing moves)
+POST   /api/programs/{id}/checkpoints/{cid}/start-from  PG20, Start from here: a new step from the
+                                                   checkpoint's pinned ref (his press adds it; the step's
+                                                   own agent asks, and the ladder decides)
 POST   /api/programs/{id}/decisions/{did}/overturn undo one engine decision (owner only)
 POST   /api/programs/{id}/close                    he closes a finished Program (Secure)
 
@@ -171,6 +174,11 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         return await _call(lambda: _service().handoff(
             principal, program_id, step_id, body.get("to"), preview=bool(body.get("preview")),
         ))
+
+    @router.post("/api/programs/{program_id}/checkpoints/{checkpoint_id}/start-from")
+    async def api_programs_start_from(program_id: str, checkpoint_id: str, request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().start_from(principal, program_id, checkpoint_id))
 
     @router.post("/api/programs/{program_id}/decisions/{decision_id}/overturn")
     async def api_programs_overturn(program_id: str, decision_id: str, request: Request) -> Any:

@@ -1,0 +1,457 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "check_command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-30T18:43:59.843722+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 7,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-adee721b6d52",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-adee721b6d52/1",
+      "ref_commit": "28eee12e9901292b6cfb505d748d7adb009724b9",
+      "rule": null,
+      "step_id": "step-adee721b6d52",
+      "undo": {
+        "pin": {
+          "commit": "28eee12e9901292b6cfb505d748d7adb009724b9",
+          "head": "e4d4c7cfed1aba54b5c3929ca62c04880b0b3a30",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-adee721b6d52/1",
+          "tree": "38aeb6f9beae885a6b766d40359b6b628d14bc46"
+        }
+      }
+    },
+    {
+      "at": "2026-10-30T18:43:59.782036+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 6,
+      "kind": null,
+      "line": "Started step 2 from refs/holdspeak/checkpoints/step-4d42e4e03061/2",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": "No worktree to pin yet",
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "step-adee721b6d52",
+      "undo": {
+        "pin": {
+          "note": "No worktree to pin yet"
+        }
+      }
+    },
+    {
+      "at": "2026-10-30T18:43:59.671120+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "Half way: the words are plain",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-4d42e4e03061/2",
+      "ref_commit": "e4d4c7cfed1aba54b5c3929ca62c04880b0b3a30",
+      "rule": null,
+      "step_id": "step-4d42e4e03061",
+      "undo": {
+        "pin": {
+          "commit": "e4d4c7cfed1aba54b5c3929ca62c04880b0b3a30",
+          "head": "e1f2e5efbfb4f6abc6840e18181f3df9aa585284",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-4d42e4e03061/2",
+          "tree": "38aeb6f9beae885a6b766d40359b6b628d14bc46"
+        }
+      }
+    },
+    {
+      "at": "2026-10-30T18:43:59.551455+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-4d42e4e03061",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-4d42e4e03061/1",
+      "ref_commit": "ee95f4d13a1e7608f540c0b2b6eec19d9785bc14",
+      "rule": null,
+      "step_id": "step-4d42e4e03061",
+      "undo": {
+        "pin": {
+          "commit": "ee95f4d13a1e7608f540c0b2b6eec19d9785bc14",
+          "head": "8e58e59dc34e4603dd21f5f77d52b7c951741d22",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-4d42e4e03061/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        }
+      }
+    },
+    {
+      "at": "2026-10-30T18:43:59.490742+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:43:59.489490+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T18:43:59.487552+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Build and review template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "normal",
+  "control_word": "Normal",
+  "created_at": "2026-10-30T18:43:59.487292+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "done": 0,
+  "for_person_id": null,
+  "goal": "Plain words.",
+  "id": "program-eeef7efb9770",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-10-30T18:43:59.843722+00:00",
+    "by": "engine",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 7,
+    "kind": null,
+    "line": "Handed to Claude Code in hs-program-step-adee721b6d52",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": "refs/holdspeak/checkpoints/step-adee721b6d52/1",
+    "ref_commit": "28eee12e9901292b6cfb505d748d7adb009724b9",
+    "rule": null,
+    "step_id": "step-adee721b6d52",
+    "undo": {
+      "pin": {
+        "commit": "28eee12e9901292b6cfb505d748d7adb009724b9",
+        "head": "e4d4c7cfed1aba54b5c3929ca62c04880b0b3a30",
+        "n": 1,
+        "ref": "refs/holdspeak/checkpoints/step-adee721b6d52/1",
+        "tree": "38aeb6f9beae885a6b766d40359b6b628d14bc46"
+      }
+    }
+  },
+  "may_call": false,
+  "may_handoff": false,
+  "note_id": "program-program-eeef7efb9770",
+  "note_window": "pullout:note:program-program-eeef7efb9770",
+  "origin_ref": null,
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "prefer_idle": false,
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "reviewer": {
+    "agent": "Codex",
+    "engine": null,
+    "profile": "codex-default"
+  },
+  "revision": 3,
+  "spend_limit_usd": null,
+  "state": "running",
+  "state_word": "Running",
+  "status_line": "Running · 0 of 2 done · check: fake_program_check.sh · control Normal",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/the-words-wave/1-dock-words",
+      "brief": "Plain words on the Dock.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "low",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "agent",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "id": "step-4d42e4e03061",
+      "last_checkpoint": {
+        "at": "2026-10-30T18:43:59.671120+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 5,
+        "kind": null,
+        "line": "Half way: the words are plain",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-4d42e4e03061/2",
+        "ref_commit": "e4d4c7cfed1aba54b5c3929ca62c04880b0b3a30",
+        "rule": null,
+        "step_id": "step-4d42e4e03061",
+        "undo": {
+          "pin": {
+            "commit": "e4d4c7cfed1aba54b5c3929ca62c04880b0b3a30",
+            "head": "e1f2e5efbfb4f6abc6840e18181f3df9aa585284",
+            "n": 2,
+            "ref": "refs/holdspeak/checkpoints/step-4d42e4e03061/2",
+            "tree": "38aeb6f9beae885a6b766d40359b6b628d14bc46"
+          }
+        }
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [
+        "web/src/desk/dock/words.ts"
+      ],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-30T18:43:59.551119+00:00",
+      "state": "working",
+      "state_word": "Working",
+      "station": 1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Dock words",
+      "updated_at": "2026-10-30T18:43:59.783757+00:00",
+      "worktree": "hs-program-step-4d42e4e03061"
+    },
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/the-words-wave/2-dock-words-from-checkpoint-2",
+      "brief": "Plain words on the Dock.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "agent",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "id": "step-adee721b6d52",
+      "last_checkpoint": {
+        "at": "2026-10-30T18:43:59.843722+00:00",
+        "by": "engine",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 7,
+        "kind": null,
+        "line": "Handed to Claude Code in hs-program-step-adee721b6d52",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-adee721b6d52/1",
+        "ref_commit": "28eee12e9901292b6cfb505d748d7adb009724b9",
+        "rule": null,
+        "step_id": "step-adee721b6d52",
+        "undo": {
+          "pin": {
+            "commit": "28eee12e9901292b6cfb505d748d7adb009724b9",
+            "head": "e4d4c7cfed1aba54b5c3929ca62c04880b0b3a30",
+            "n": 1,
+            "ref": "refs/holdspeak/checkpoints/step-adee721b6d52/1",
+            "tree": "38aeb6f9beae885a6b766d40359b6b628d14bc46"
+          }
+        }
+      },
+      "launch_id": "L2",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 2,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-30T18:43:59.843379+00:00",
+      "state": "working",
+      "state_word": "Working",
+      "station": 1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Dock words (from checkpoint 2)",
+      "updated_at": "2026-10-30T18:43:59.929097+00:00",
+      "worktree": "hs-program-step-adee721b6d52"
+    }
+  ],
+  "template": "build-and-review",
+  "title": "The words wave",
+  "total": 2,
+  "updated_at": "2026-10-30T18:43:59.782131+00:00",
+  "usage_warning_share": null,
+  "your_turn": 0,
+  "your_turn_items": []
+}

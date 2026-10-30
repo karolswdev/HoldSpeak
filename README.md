@@ -155,7 +155,7 @@ Saved sources, tool results, run records, and Receipts let you inspect the work.
 
 ## Connect external tools
 
-MCP lets external agents use permitted Desk operations: **306 tools across 52 families**, filtered for each caller.
+MCP lets external agents use permitted Desk operations: **307 tools across 52 families**, filtered for each caller.
 Use the local sidecar, or enable Reach for scoped Streamable HTTP access.
 Configure destinations for folders, GitHub, Jira, Confluence, email, or Slack.
 Extend the system with meeting plugins, connectors, actuators, Modes, and voice commands.

@@ -11,6 +11,8 @@ live in the service, so every transport keeps them:
 - ``program.checkpoint`` / ``program.step_done``: the step's own launch (by
   its credential) and, for checkpoints, the owner; any other caller is
   refused ``not_your_step``;
+- ``program.start_from`` (PG20): the owner (the step is added) or the step's
+  own launch (the ladder decides: Secure and Normal ask him, YOLO adds it);
 - ``program.decide``, ``program.overturn`` and ``program.handoff`` (PG19): the owner only (AUTHORITY in ``tool_authority.py``,
   never in the CONDUCTOR palette).
 """
@@ -126,8 +128,8 @@ TOOLS: list[dict[str, Any]] = [
     {"name": "program.resume", "description": "Resume a parked Program.",
      "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
     {"name": "program.get",
-     "description": "Read one Program: its steps (state, agent, engine, check, review, PR), its checkpoints and what "
-                    "waits on the owner.",
+     "description": "Read one Program: its steps (state, agent, engine, check, review, PR), its checkpoints (each with "
+                    "the hidden ref it pinned the step's worktree to, ref and ref_commit) and what waits on the owner.",
      "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
     {"name": "program.list", "description": "List the Programs, waiting first.",
      "inputSchema": _schema({}, [])},
@@ -166,6 +168,13 @@ TOOLS: list[dict[str, Any]] = [
              "additionalProperties": False}]},
          "preview": {"type": ["boolean", "null"]},
      }, ["program_id", "step_id", "to"])},
+    {"name": "program.start_from",
+     "description": "Start a new step from a checkpoint: its worktree starts at the checkpoint's pinned ref "
+                    "(refs/holdspeak/checkpoints/<step>/<n>, in program.get's checkpoints), with the source step's "
+                    "brief and agent. The owner's call adds the step. The step's own agent may ask: at YOLO the "
+                    "step is added and listed under Decided for you; at Secure and Normal the owner decides.",
+     "inputSchema": _schema({"program_id": _ID, "checkpoint_id": {"type": ["string", "integer"]}},
+                            ["program_id", "checkpoint_id"])},
     {"name": "program.overturn",
      "description": "Undo one of the engine's decisions (Decided for you) while it can still be undone: a Later task, "
                     "a Skip, a parked step, an added step. Never a merge. Owner only.",
@@ -209,6 +218,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                                  follow_ups=list(args.get("follow_ups") or []))
     if name == "program.overturn":
         return service.overturn(principal, str(args["program_id"]), args["decision_id"])
+    if name == "program.start_from":
+        return service.start_from(principal, str(args["program_id"]), args["checkpoint_id"])
     if name == "program.handoff":
         return service.handoff(principal, str(args["program_id"]), str(args["step_id"]), args.get("to"),
                                preview=bool(args.get("preview")))

@@ -52,6 +52,11 @@ export interface ProgramCheckpoint {
   overturned_at?: string | null;
   /** PG16: the proposed decision record this checkpoint made. */
   decision_record_id?: string | null;
+  /** PG20: the hidden ref this checkpoint pinned the step's worktree to
+   *  (`refs/holdspeak/checkpoints/<step>/<n>`), its commit, or why not. */
+  ref?: string | null;
+  ref_commit?: string | null;
+  pin_note?: string | null;
 }
 
 /** The program's Runs on engine (pi only): `null` for Claude Code / Codex. */
@@ -115,6 +120,9 @@ export interface StepHandoff {
   launch_from: string | null;
   launch_to: string | null;
   until?: string | null;
+  /** PG20: the checkpoint ref the next agent continues from. */
+  continues_from?: string | null;
+  continues_commit?: string | null;
 }
 
 export interface ProgramSummary {

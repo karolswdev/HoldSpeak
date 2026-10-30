@@ -221,8 +221,17 @@ class ProgramStore:
                 "overturned_at": row["overturned_at"], "undo": undo,
                 # PG16: the proposed decision record this checkpoint made.
                 "decision_record_id": (undo.get("decision_record_id") or None) if isinstance(undo, dict) else None,
+                # PG20: the hidden ref this checkpoint pinned the step's worktree to.
+                "ref": _pin_of(undo).get("ref") or None,
+                "ref_commit": _pin_of(undo).get("commit") or None,
+                "pin_note": _pin_of(undo).get("note") or None,
             })
         return out
+
+
+def _pin_of(undo: Any) -> dict[str, Any]:
+    pin = undo.get("pin") if isinstance(undo, dict) else None
+    return pin if isinstance(pin, dict) else {}
 
 
 __all__ = ["PROGRAM_COLUMNS", "STEP_COLUMNS", "ProgramStore"]

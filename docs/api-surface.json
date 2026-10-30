@@ -5489,6 +5489,14 @@
       ]
     },
     {
+      "path": "/api/programs/{program_id}/checkpoints/{checkpoint_id}/start-from",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/close",
       "methods": [
         "POST"

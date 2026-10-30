@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import subprocess
 from datetime import datetime, timedelta, timezone
 import tempfile
@@ -86,6 +87,11 @@ _FRAME_GUARD = threading.Lock()
 #: PG19: when a limit notice names no reset time, its agent counts as
 #: limited this long after the handoff (a plan's usage window).
 UNKNOWN_RESET_HOURS = 5
+#: PG20: where a checkpoint pins its worktree (``<prefix>/<step>/<n>``).
+CHECKPOINT_REFS = "refs/holdspeak/checkpoints"
+#: PG20: the pin commit is HoldSpeak's own, not the person's.
+PIN_IDENTITY = {"GIT_AUTHOR_NAME": "HoldSpeak", "GIT_AUTHOR_EMAIL": "holdspeak@localhost",
+                "GIT_COMMITTER_NAME": "HoldSpeak", "GIT_COMMITTER_EMAIL": "holdspeak@localhost"}
 #: PG19: a handoff's reason in the checkpoint's words.
 REASON_WORDS = {"usage_limit": "usage limit", "usage_warning": "usage warning", "by_hand": "by hand"}
 
@@ -214,6 +220,62 @@ class ProgramRunner:
         except Exception as exc:
             log.debug(f"git {args[:1]} failed: {exc}")
             return ""
+        return str(proc.stdout or "").strip() if proc.returncode == 0 else ""
+
+    # ── PG20: a checkpoint pins the worktree to a hidden ref ─────────
+
+    def pin_checkpoint(self, step: Mapping[str, Any], line: str) -> dict[str, Any]:
+        """Pin the step's worktree as it is now (tracked, changed and new
+        files; ignored files stay out) to ``refs/holdspeak/checkpoints/<step>/<n>``.
+
+        A temporary index (a copy of the worktree's own, so only changed
+        files are read again) takes ``git add -A``; ``write-tree`` and
+        ``commit-tree`` (the step's HEAD as parent, one line naming the
+        checkpoint) make the commit; ``update-ref`` names it. The working
+        tree, its index and its branch do not change. A failure is a note
+        (``{"note": …}``), never an exception."""
+        worktree = str(step.get("worktree") or "")
+        step_id = str(step.get("id") or "")
+        if not step_id or not worktree or not Path(worktree).is_dir():
+            return {"note": "No worktree to pin yet"}
+        head = self._git(worktree, "rev-parse", "HEAD")
+        if not head:
+            return {"note": "Not pinned: the worktree has no commit git can read"}
+        index = self._git(worktree, "rev-parse", "--path-format=absolute", "--git-path", "index")
+        prefix = f"{CHECKPOINT_REFS}/{step_id}/"
+        handle, temp = tempfile.mkstemp(prefix="holdspeak-pin-", suffix=".index")
+        os.close(handle)
+        try:
+            if index and Path(index).is_file():
+                shutil.copyfile(index, temp)
+            else:
+                os.unlink(temp)
+            env = {**os.environ, "GIT_INDEX_FILE": temp, **PIN_IDENTITY}
+            added = self._run(["git", "-C", worktree, "add", "-A"], cwd=worktree, env=env)
+            if added.returncode != 0:
+                return {"note": "Not pinned: git could not read the worktree"}
+            tree = self._git_env(worktree, env, "write-tree")
+            numbers = [int(name[len(prefix):]) for name in
+                       self._git(worktree, "for-each-ref", "--format=%(refname)", prefix).splitlines()
+                       if name.startswith(prefix) and name[len(prefix):].isdigit()]
+            n = max(numbers, default=0) + 1
+            message = f"HoldSpeak checkpoint {n} of step {step_id}: {' '.join(str(line or '').split())[:200]}"
+            commit = self._git_env(worktree, env, "commit-tree", tree, "-p", head, "-m", message) if tree else ""
+            ref = f"{prefix}{n}"
+            if not commit or self._run(["git", "-C", worktree, "update-ref", ref, commit], cwd=worktree).returncode != 0:
+                return {"note": "Not pinned: git did not write the ref"}
+        except Exception as exc:  # no git, a full disk: a note, never a stop
+            log.debug(f"checkpoint not pinned: {exc}")
+            return {"note": "Not pinned: git is not available"}
+        finally:
+            try:
+                os.unlink(temp)
+            except OSError:
+                pass
+        return {"ref": ref, "n": n, "commit": commit, "tree": tree, "head": head}
+
+    def _git_env(self, cwd: str, env: Mapping[str, str], *args: str) -> str:
+        proc = self._run(["git", "-C", cwd, *args], cwd=cwd, env=env)
         return str(proc.stdout or "").strip() if proc.returncode == 0 else ""
 
     def prompt_builder(self, step: Mapping[str, Any], text: str) -> Any:
@@ -538,13 +600,20 @@ class ProgramRunner:
         return str(proc.stdout or "").rstrip("\n") if proc.returncode == 0 else ""
 
     def handoff_brief(self, program: Mapping[str, Any], step: Mapping[str, Any], to: Mapping[str, Any], *,
-                      reason: str, by: str) -> Any:
-        """The brief the next agent receives (deterministic, redacted)."""
+                      reason: str, by: str, continues_from: Optional[Mapping[str, Any]] = None) -> Any:
+        """The brief the next agent receives (deterministic, redacted).
+        PG20: it names the checkpoint ref it continues from (the pin made at
+        the handoff; a preview names the step's last pinned checkpoint)."""
         from .program_handoff import brief_of, gather
 
+        if continues_from is None:
+            last = next((row for row in self.service.store.list_checkpoints(program["id"])
+                         if row["step_id"] == step["id"] and row.get("ref")), None)
+            continues_from = {"ref": last["ref"], "commit": last.get("ref_commit")} if last else {}
         current = self.current_agent(program, step)
         inputs = gather(self.service, program, step, to_label=self.service.entry_wire(to)["label"],
-                        from_label=self.service.entry_wire(current)["label"], reason=reason, by=by, git=self._git_out)
+                        from_label=self.service.entry_wire(current)["label"], reason=reason, by=by, git=self._git_out,
+                        continues_from=continues_from)
         return brief_of(inputs)
 
     def handoff(self, program: dict[str, Any], step: dict[str, Any], to: Mapping[str, Any], *, reason: str,
@@ -555,7 +624,12 @@ class ProgramRunner:
         from .agent_hand_service import AgentHandRefused
         from .program_handoff import redacted_words
 
-        brief = self.handoff_brief(program, step, to, reason=reason, by=by)
+        # PG20: pin the worktree as the earlier agent left it; the brief names
+        # the ref, and the next agent continues in that same worktree (its
+        # tree is the ref's tree: nothing to reset).
+        pin = self.service.pin(step, f"Handoff to {self.service.entry_wire(to)['label']}") or {}
+        brief = self.handoff_brief(program, step, to, reason=reason, by=by,
+                                   continues_from=pin if pin.get("ref") else {})
         current = self.current_agent(program, step)
         old_launch = str(step.get("launch_id") or "")
         ledger = self.ledger()
@@ -592,6 +666,7 @@ class ProgramRunner:
             "redacted": dict(brief.redacted), "redacted_words": redacted_words(brief.redacted),
             "earlier_turns": brief.earlier_turns, "launch_from": old_launch or None, "launch_to": answer["launch_id"],
             "until": limit.get("until"),
+            "continues_from": pin.get("ref"), "continues_commit": pin.get("commit"),
         })
         worktree = answer.get("worktree") or {}
         step["handoffs"] = entries
@@ -599,10 +674,11 @@ class ProgramRunner:
         self.service.transition(program, step, "briefed", launch_id=answer["launch_id"], facts=facts,
                                 branch=worktree.get("branch") or step.get("branch"))
         if by == "engine" and outcome is not None:
-            self.service.engine_decision(program, step, "handoff", outcome, line)
+            self.service.engine_decision(program, step, "handoff", outcome, line, undo={"pin": pin} if pin else None)
         else:
             self.service.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self.service._clock(),
-                                              by=by, line=line, kind="handoff", choice=str(len(entries)))
+                                              by=by, line=line, kind="handoff", choice=str(len(entries)),
+                                              undo={"pin": pin} if pin else None)
         return entries[-1]
 
     def _make_contenders(self, program: dict[str, Any], step: dict[str, Any], steps: list[dict[str, Any]]) -> None:

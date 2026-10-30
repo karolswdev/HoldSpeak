@@ -430,7 +430,7 @@ LAUNCH_RULES["calls.hangup"] = (NEVER, "", "")
 LAUNCH_RULES.update({
     name: (CREATE, "", "") for name in (
         "program.create", "program.plan", "program.update", "program.start", "program.park", "program.resume",
-        "program.checkpoint", "program.step_done",
+        "program.checkpoint", "program.step_done", "program.start_from",
     )
 })
 # Phone (2026-10-28): a launch reads the owner's replies, and writes one line

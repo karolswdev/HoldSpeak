@@ -24,6 +24,7 @@ import roomFixture from "../__fixtures__/room.programs.json";
 import personFixture from "../__fixtures__/person.programs.json";
 import skipDecisionFixture from "../__fixtures__/program.skip_decision.json";
 import roomProposedFixture from "../__fixtures__/room.decisions.proposed.json";
+import startFromFixture from "../__fixtures__/program.start_from.json";
 import sinceMorningPrograms from "../../__tests__/fixtures/today-hub/since-morning.programs.json";
 
 type Frame = { type: string; data: unknown };
@@ -425,6 +426,61 @@ describe("PG19: when an agent runs out (canvas handoff-2026-10-28)", () => {
     const first = { profile: drafting.default.profile, engine: drafting.default.engine?.id ?? null };
     await waitFor(() => expect(calls).toContain(
       `PATCH /api/programs/${drafting.id} ${JSON.stringify({ runs_on: [first, { profile: "codex-default", engine: null }] })}`));
+  });
+});
+
+describe("PG20: hidden-ref checkpoints (recorded on the rig's real git)", () => {
+  const started = startFromFixture as unknown as Program;
+
+  it("a pinned row shows its commit and Start from here; a line with no pin shows neither", async () => {
+    hub({ [`GET /api/programs/${started.id}`]: started });
+    render(<ProgramBody programId={started.id} />);
+    const ledger = await screen.findByTestId("programs-checkpoints");
+    const rows = within(ledger).getAllByRole("listitem");
+    const half = rows.find((row) => row.textContent?.includes("Half way: the words are plain"))!;
+    const pinned = started.checkpoints.find((row) => row.line === "Half way: the words are plain")!;
+    const pin = within(half).getByTestId("programs-checkpoint-ref");
+    expect(pin.getAttribute("data-ref")).toBe(pinned.ref);
+    expect(pinned.ref).toMatch(/^refs\/holdspeak\/checkpoints\/step-[0-9a-f]+\/2$/);
+    expect(pin.querySelector("code")!.textContent).toBe(pinned.ref_commit!.slice(0, 7));
+    expect(pin.querySelector("code")!.getAttribute("title")).toBe(pinned.ref);
+    expect(within(half).getByTestId("programs-start-from").textContent).toBe("Start from here");
+    const program = rows.find((row) => row.textContent?.includes("Started the program"))!;
+    expect(within(program).queryByTestId("programs-start-from")).toBeNull();
+    const noted = rows.find((row) => row.textContent?.includes("Started step 2 from"))!;
+    expect(within(noted).queryByTestId("programs-checkpoint-ref")).toBeNull();
+  });
+
+  it("Start from here posts the checkpoint and draws the new step from the hub's answer", async () => {
+    const before = clone(started);
+    const added = started.steps.find((step) => step.ordinal === 2)!;
+    before.steps = before.steps.filter((step) => step.id !== added.id);
+    before.checkpoints = before.checkpoints.filter((row) => row.step_id !== added.id);
+    const pinned = started.checkpoints.find((row) => row.line === "Half way: the words are plain")!;
+    hub({
+      [`GET /api/programs/${started.id}`]: before,
+      [`POST /api/programs/${started.id}/checkpoints/${pinned.id}/start-from`]: { step_id: added.id, ref: pinned.ref, program: started },
+    });
+    render(<ProgramBody programId={started.id} />);
+    const ledger = await screen.findByTestId("programs-checkpoints");
+    expect(screen.getAllByTestId("programs-step")).toHaveLength(1);
+    const half = within(ledger).getAllByRole("listitem").find((row) => row.textContent?.includes("Half way"))!;
+    fireEvent.click(within(half).getByTestId("programs-start-from"));
+    await waitFor(() => expect(screen.getAllByTestId("programs-step")).toHaveLength(2));
+    expect(calls).toContain(`POST /api/programs/${started.id}/checkpoints/${pinned.id}/start-from {}`);
+    expect(stepRow(2).textContent).toContain("Dock words (from checkpoint 2)");
+    expect(screen.getByTestId("programs-checkpoints").textContent).toContain(`Started step 2 from ${pinned.ref}`);
+  });
+
+  it("View brief names the ref the next agent continues from", async () => {
+    hub({ [`GET /api/programs/${limited.id}`]: limited });
+    render(<ProgramBody programId={limited.id} />);
+    const [line] = await screen.findAllByTestId("programs-handoff");
+    fireEvent.click(within(line).getByTestId("programs-view-brief"));
+    const entry = limited.steps[0].handoffs![0];
+    expect(entry.continues_from).toMatch(/^refs\/holdspeak\/checkpoints\/step-[0-9a-f]+\/\d+$/);
+    expect(within(line).getByTestId("programs-handoff-ref").textContent).toBe(`Continues from ${entry.continues_from}`);
+    expect(entry.brief).toContain(`- Continues from: \`${entry.continues_from}\``);
   });
 });
 

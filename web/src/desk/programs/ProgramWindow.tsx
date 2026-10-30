@@ -32,7 +32,7 @@ import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
-import { closeProgram, decide, overturn, planProgram, programVerb, race, updateProgram, useProgram } from "./api";
+import { closeProgram, decide, overturn, planProgram, programVerb, race, startFrom, updateProgram, useProgram } from "./api";
 import { GateFold } from "./GateFold";
 import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
 import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
@@ -206,6 +206,9 @@ function HandoffLine({ row, step, entry }: { row: ProgramCheckpoint; step: Progr
             <span>{entry.from} to {entry.to}</span>
             <span data-testid="programs-handoff-redacted">{entry.redacted_words ? `Redacted: ${entry.redacted_words}` : "Nothing redacted"}</span>
             {entry.earlier_turns ? <span>{`${entry.earlier_turns} earlier ${entry.earlier_turns === 1 ? "turn" : "turns"}, not included`}</span> : null}
+            {entry.continues_from ? (
+              <span data-testid="programs-handoff-ref">Continues from <code className="pg-ref">{entry.continues_from}</code></span>
+            ) : null}
           </p>
           <SurfaceWell>
             <pre className="pg-handoff-brief">{entry.brief}</pre>
@@ -222,10 +225,38 @@ function ProposedWord() {
   return <DotWord tone="ask" className="pg-proposed" data-testid="programs-proposed-decision">Proposed as a decision</DotWord>;
 }
 
-function Checkpoints({ program, open, onToggle }: { program: Program; open: boolean; onToggle(open: boolean): void }) {
+/** PG20: the commit a checkpoint pinned (the short hash git users read; the
+ *  full ref in its title) and Start from here. */
+function PinCell({ row, busy, onStart }: { row: ProgramCheckpoint; busy: string; onStart(row: ProgramCheckpoint): void }) {
+  if (!row.ref) return <span className="pg-ledger-pin" />;
+  return (
+    <span className="pg-ledger-pin" data-testid="programs-checkpoint-ref" data-ref={row.ref}>
+      <code className="pg-ref" title={row.ref}>{(row.ref_commit ?? "").slice(0, 7) || row.ref.split("/").pop()}</code>
+      <Button dense variant="ghost" loading={busy === String(row.id)} disabled={Boolean(busy)} title={`A new step from ${row.ref}`}
+        onClick={() => onStart(row)} data-testid="programs-start-from">Start from here</Button>
+    </span>
+  );
+}
+
+function Checkpoints({ program, open, onToggle, onStarted }: {
+  program: Program; open: boolean; onToggle(open: boolean): void; onStarted(next: Program | null): void;
+}) {
   const rows = program.checkpoints;
   const handoffs = useMemo(() => handoffsOf(program), [program]);
+  const [busy, setBusy] = useState("");
+  const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
   if (!rows.length) return null;
+  const start = async (row: ProgramCheckpoint) => {
+    setBusy(String(row.id));
+    setFailed(null);
+    try {
+      onStarted(await startFrom(program.id, String(row.id)));
+    } catch (cause) {
+      setFailed(plainFail("The step was not started", cause, "The program is unchanged", "Try again"));
+    } finally {
+      setBusy("");
+    }
+  };
   return (
     <FoldGadget className="pg-checkpoints" title="Checkpoints" token={open ? "newest first" : String(rows.length)} open={open} onToggle={onToggle}>
       <ul className="pg-ledger" data-testid="programs-checkpoints">
@@ -243,11 +274,13 @@ function Checkpoints({ program, open, onToggle }: { program: Program; open: bool
                 <span className="pg-ledger-text">{row.line}</span>
                 {row.decision_record_id && !row.overturned_at ? <ProposedWord /> : null}
               </span>
+              <PinCell row={row} busy={busy} onStart={(picked) => void start(picked)} />
               <span className="pg-ledger-at">{clock(row.at)}</span>
             </li>
           );
         })}
       </ul>
+      {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="programs-start-from-failure">{failed.words}</p> : null}
     </FoldGadget>
   );
 }
@@ -624,7 +657,7 @@ export function ProgramBody({ programId }: { programId: string }) {
         ) : null}
         {!drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
         {!drafting ? <ReachLine program={program} /> : null}
-        {!drafting ? <Checkpoints program={program} open={checksOpen} onToggle={setChecksOpen} /> : null}
+        {!drafting ? <Checkpoints program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
       </div>
       <StatusBar data-testid="program-status" items={status} />
       {filing ? (
