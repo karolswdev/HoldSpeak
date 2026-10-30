@@ -2396,7 +2396,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 >
                   <CheckGadget
                     variant="state"
-                    label="DESK SOUNDS"
+                    label="Desk sounds"
                     checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
                     onChange={(next) => {
                       update(["ui", "desk_sounds"], next);

@@ -473,7 +473,7 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
           <CheckGadget
             variant="token"
             /* PHILO-17: the plain words (was "MY SERVER"). */
-            label="I OWN THIS SERVER"
+            label="I own this server"
             checked={ctrl.addEngineMyServer}
             onChange={ctrl.setAddEngineMyServer}
           />

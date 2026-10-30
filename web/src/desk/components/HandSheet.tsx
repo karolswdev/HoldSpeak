@@ -489,7 +489,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
       onClose={close}
     >
       <div className="desk-pullout-body desk-hand-body" data-testid="hand-sheet">
-        <SurfaceSection label="AGENT">
+        <SurfaceSection label="Agent">
           <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Agent" onChange={pick} disabled={frozen}>
             {AGENTS.map((a) => (
               <ChoiceCard
@@ -524,7 +524,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         ) : null}
         {previewError ? (
           <div className="desk-hand-refused" role="alert" data-testid="hand-preview-refused">
-            <StateChip state="failure" label="NO BRIEF" />
+            <StateChip state="failure" label="No brief" />
             <Token className="surface-token" data-tone="danger">{refusalToken(previewError, agent)}</Token>
           </div>
         ) : null}
@@ -556,11 +556,11 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                   <Token className="surface-token" data-chip>ACCEPTANCE · {countToken(preview.acceptance.length, "CHECK")}</Token>
                 ) : null}
               </span>
-              <Disclosure label="BRIEF TEXT" open={briefOpen} onOpenChange={setBriefOpen}>
+              <Disclosure label="Brief text" open={briefOpen} onOpenChange={setBriefOpen}>
                 <pre className="desk-pullout-md desk-hand-text">{preview.text}</pre>
               </Disclosure>
             </SurfaceSection>
-            <SurfaceSection label="ADD A SENTENCE">
+            <SurfaceSection label="Add a sentence">
               <StringGadget
                 label="Add a sentence"
                 value={sentence}
@@ -571,7 +571,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                 inputProps={{ "data-testid": "hand-sentence" } as Record<string, string>}
               />
             </SurfaceSection>
-            <SurfaceSection label="WHERE">
+            <SurfaceSection label="Where">
               <span className="desk-hand-tokens" data-testid="hand-where">
                 {clone ? (
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="cloned">

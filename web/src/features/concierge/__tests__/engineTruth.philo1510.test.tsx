@@ -266,7 +266,7 @@ describe("PHILO-15 10 — the Check asks the server about tool calls", () => {
     await open();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
     fireEvent.change(await screen.findByLabelText("Server address"), { target: { value: LAN_URL } });
-    if (myServer) fireEvent.click(screen.getByLabelText("I OWN THIS SERVER"));
+    if (myServer) fireEvent.click(screen.getByLabelText("I own this server"));
     fireEvent.click(screen.getByTestId("concierge-add-check"));
     if (tools === "unknown") {
       await screen.findByTestId("concierge-add-model");
@@ -285,7 +285,7 @@ describe("PHILO-15 10 — the Check asks the server about tool calls", () => {
   });
 
   // Astra r1 (finding 4): I OWN THIS SERVER (was MY SERVER) is the owner's word; it travels with the Check.
-  it("I OWN THIS SERVER travels with the Check", async () => {
+  it("I own this server travels with the Check", async () => {
     await check("yes", true);
     expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "", true);
   });

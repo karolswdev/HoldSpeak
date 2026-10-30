@@ -266,7 +266,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       ) : null}
       {previewError ? (
         <span className="desk-hand-tokens" role="alert" data-testid="hand-confirm-no-brief">
-          <StateChip state="failure" label="NO BRIEF" />
+          <StateChip state="failure" label="No brief" />
           <Token className="surface-token" data-tone="danger">
             {refusalToken(previewError, agent)}
           </Token>

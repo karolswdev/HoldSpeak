@@ -218,7 +218,7 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
 
   return (
     <div className="desk-dlv-launch">
-      <GadgetGroup label="LAUNCH">
+      <GadgetGroup label="Launch">
         <GadgetRow label="AGENT">
           <CycleGadget
             label="Agent"

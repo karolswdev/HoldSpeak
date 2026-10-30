@@ -14,17 +14,17 @@
 .gadget-group:last-child {
   margin-bottom: 0;
 }
+/* FIELD-LABELS-WORDS (2026-10-30): the group legend is a section caption
+   (Window grammar: sans 12/600, sentence case, a hairline; never mono
+   uppercase). */
 .gadget-group-label {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0 0 4px;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-label-size); /* PHILO-7-02: the 12 px floor (was 10px) */
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font: 600 var(--desk-surface-label-size) / 1.4 var(--font-sans); /* PHILO-7-02: the 12 px floor */
+  letter-spacing: 0;
+  color: var(--wb-text);
 }
 /* The engraved rule: 1px dark over 1px light, running to the edge. */
 .gadget-group-label::after {
@@ -188,9 +188,8 @@
   padding: 0 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font: 600 var(--font-size-xs)/1 var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font: 500 var(--font-size-xs)/1 var(--font-sans);
+  letter-spacing: 0;
   white-space: nowrap;
   user-select: none;
 }
@@ -342,8 +341,9 @@
   border-color: var(--field-focus-border);
   box-shadow: 0 0 0 3px var(--accent-tint);
 }
-/* PHILO-15 02: StringGadget `caption` — the visible name above the well,
-   the caption step (12 px mono uppercase, UX-CANON C). */
+/* PHILO-15 02: StringGadget `caption` — the visible name above the well.
+   FIELD-LABELS-WORDS (2026-10-30): a field label is sans 12 muted in
+   sentence case (Window grammar), not the mono caps caption step. */
 .gadget-string-captioned {
   display: flex;
   flex-direction: column;
@@ -353,11 +353,8 @@
   min-width: 0;
 }
 .gadget-string-caption {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 500 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
   color: var(--text-muted, var(--text));
 }
 .gadget-string input {
@@ -1128,17 +1125,16 @@ button.gadget-chip-egress {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-/* ── HS-111-08: the check + its mono word as one inline pair (a verb
-   bar's boolean — the label is visible, never aria-only). ── */
+/* ── HS-111-08: the check + its word as one inline pair (a verb bar's
+   boolean — the label is visible, never aria-only). ── */
 .gadget-checkline {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 .gadget-checkline-word {
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
+  letter-spacing: 0;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -1195,8 +1191,8 @@ button.gadget-chip-egress {
   padding: 0 6px;
   background: var(--wb-paper);
   color: var(--wb-text);
-  font: 700 12px / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font: 600 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
   text-shadow: none;
 }
 .gadget-group[data-material="inset"] > .gadget-group-label::after { display: none; }

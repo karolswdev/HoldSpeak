@@ -113,7 +113,7 @@ export function CheckGadget({
   checked: boolean;
   onChange(next: boolean): void;
   disabled?: boolean;
-  /** "token" renders a bordered mono-uppercase token with ✓ glyph
+  /** "token" renders a bordered sentence-case token with ✓ glyph
    *  (HS-169-02 Door toggles). Default is the checkbox square. */
   variant?: "default" | "token" | "state";
 }) {
