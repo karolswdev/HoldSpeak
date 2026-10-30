@@ -10,10 +10,11 @@ import { PutEditor } from "./PutEditor";
 import { WhenEditor } from "./WhenEditor";
 import { readNativeAgentOptions, WithEditor, type NativeAgentOption } from "./WithEditor";
 import { eventSubjectWords, type AutomationDetail } from "./model";
+import { FROM_THE_DESK, ProgramAgent, ProgramDo, programDraft, sameProgram, type ProgramDraft } from "./ProgramDo";
 import type { AutomationWhenChoice } from "../../api";
 
 type Step = "do" | "about" | "with" | "when" | "put";
-type DoKind = "run" | "hand_to_agent";
+type DoKind = "run" | "hand_to_agent" | "run_program";
 
 const STEPS: Array<{ key: Step; label: string; kind: string; id: string }> = [
   { key: "do", label: "Do", kind: "artifact", id: "guided-do" },
@@ -79,14 +80,21 @@ function SetupHeading({ step, children }: { step: Step; children?: ReactNode }) 
 function DoStep({
   kind,
   draft,
+  program,
+  agent,
   onKind,
   onDraft,
+  onProgram,
 }: {
   kind: DoKind;
   draft: string;
+  program: ProgramDraft;
+  agent: string | null;
   onKind: (kind: DoKind) => void;
   onDraft: (draft: string) => void;
+  onProgram: (program: ProgramDraft) => void;
 }) {
+  const label = kind === "hand_to_agent" ? "Agent brief" : kind === "run_program" ? "Goal" : "What it does";
   return (
     <div className="automation-setup-step-body" data-testid="automation-setup-do">
       <SetupHeading step="do" />
@@ -97,15 +105,22 @@ function DoStep({
           aria-pressed={kind === "hand_to_agent"} onClick={() => onKind("hand_to_agent")}>
           Hand to an agent
         </Button>
+        <Button dense variant={kind === "run_program" ? "secondary" : "ghost"}
+          aria-pressed={kind === "run_program"} onClick={() => onKind("run_program")}
+          data-testid="automation-do-run-program">
+          Run a program
+        </Button>
       </div>
+      {kind === "run_program" ? <ProgramDo draft={program} fallbackAgent={agent} onChange={onProgram} /> : null}
       <PadGadget
-        label={kind === "hand_to_agent" ? "Agent brief" : "What it does"}
+        label={label}
         value={draft}
         onChange={onDraft}
         rows={5}
         autoGrow
         autoFocus
-        placeholder={kind === "hand_to_agent" ? "Say what the agent should do" : "Say what it should do each time"}
+        placeholder={kind === "hand_to_agent" ? "Say what the agent should do"
+          : kind === "run_program" ? "Say what the program should do" : "Say what it should do each time"}
       />
     </div>
   );
@@ -167,7 +182,7 @@ export function AutomationBuilder({
   pending: boolean;
   whenSaving: string | null;
   saveError: string | null;
-  onSaveDo: (kind: DoKind, instruction: string) => Promise<boolean>;
+  onSaveDo: (kind: DoKind, instruction: string, program?: ProgramDraft) => Promise<boolean>;
   onSaveSources: (sources: string[]) => Promise<boolean>;
   onChooseEngine: (profileId: string) => Promise<boolean>;
   onSpendLimit: (limit: number | null) => Promise<boolean>;
@@ -177,20 +192,28 @@ export function AutomationBuilder({
   onPending: (pending: Promise<unknown>) => void;
   onDone: () => void;
 }) {
-  const initialKind: DoKind = detail.do_kind === "hand_to_agent" ? "hand_to_agent" : "run";
+  const initialKind: DoKind = detail.do_kind === "hand_to_agent" || detail.do_kind === "run_program" ? detail.do_kind : "run";
+  const initialProgram = programDraft(detail);
   const initialInstruction = detail.instruction ?? detail.instruction_shown ?? "";
   const [step, setStep] = useState<Step>("do");
   const [savedKind, setSavedKind] = useState<DoKind>(initialKind);
   const [savedInstruction, setSavedInstruction] = useState(initialInstruction);
   const [draftKind, setDraftKind] = useState<DoKind>(initialKind);
   const [draft, setDraft] = useState(initialInstruction);
+  const [savedProgram, setSavedProgram] = useState(initialProgram);
+  const [program, setProgram] = useState(initialProgram);
   const [navigationError, setNavigationError] = useState<string | null>(null);
-  const doDirty = draftKind !== savedKind || draft.trim() !== savedInstruction.trim();
+  const doDirty = draftKind !== savedKind || draft.trim() !== savedInstruction.trim()
+    || (draftKind === "run_program" && !sameProgram(program, savedProgram));
+  // PG14: From the desk takes its steps from the Project, so its goal may be empty.
+  const doReady = draftKind === "run_program"
+    ? Boolean(program.template) && (program.template === FROM_THE_DESK || Boolean(draft.trim()))
+    : Boolean(draft.trim());
   const blocked = pending || Boolean(whenSaving);
 
   const chooseStep = (next: Step) => {
     if (next === step || blocked || (saveError && step !== "do")) return;
-    if (step === "do" && (doDirty || !draft.trim())) {
+    if (step === "do" && (doDirty || !doReady)) {
       setNavigationError("Save Do before you go to another step.");
       return;
     }
@@ -202,15 +225,19 @@ export function AutomationBuilder({
     setNavigationError(null);
     if (blocked || (saveError && step !== "do")) return;
     if (step === "do") {
-      if (!draft.trim()) {
-        setNavigationError("Add what it should do before Next.");
+      if (!doReady) {
+        setNavigationError(draftKind === "run_program" && !program.template
+          ? "Choose a template before Next." : "Add what it should do before Next.");
         return;
       }
       if (doDirty) {
-        const saved = await onSaveDo(draftKind, draft.trim());
+        const saved = draftKind === "run_program"
+          ? await onSaveDo(draftKind, draft.trim(), program)
+          : await onSaveDo(draftKind, draft.trim());
         if (!saved) return;
         setSavedKind(draftKind);
         setSavedInstruction(draft.trim());
+        setSavedProgram(program);
       }
       setStep("about");
       return;
@@ -234,11 +261,12 @@ export function AutomationBuilder({
   return (
     <div className="automation-setup" data-testid="automation-setup">
       <StepRail current={step}
-        disabled={blocked || Boolean(saveError && step !== "do") || (step === "do" && (doDirty || !draft.trim()))}
+        disabled={blocked || Boolean(saveError && step !== "do") || (step === "do" && (doDirty || !doReady))}
         onChoose={chooseStep} />
       <div className="automation-setup-well surface-group-well">
         {step === "do" ? (
-          <DoStep kind={draftKind} draft={draft} onKind={setDraftKind} onDraft={setDraft} />
+          <DoStep kind={draftKind} draft={draft} program={program} agent={detail.program?.runs_on_words ?? null}
+            onKind={setDraftKind} onDraft={setDraft} onProgram={setProgram} />
         ) : null}
         {step === "about" ? (
           <div className="automation-setup-step-body" data-testid="automation-setup-about">
@@ -258,6 +286,17 @@ export function AutomationBuilder({
         {step === "with" ? (
           <div className="automation-setup-step-body" data-testid="automation-setup-with">
             <SetupHeading step="with" />
+            {detail.do_kind === "run_program" ? (
+              // PG14: a Program runs on agents, not on an engine assignment.
+              <div className="automation-setup-choice-row">
+                <ProgramAgent draft={savedProgram} fallback={detail.program?.runs_on_words}
+                  onChange={(next) => {
+                    void onSaveDo("run_program", savedInstruction.trim(), next).then((saved) => {
+                      if (saved) { setSavedProgram(next); setProgram(next); }
+                    });
+                  }} />
+              </div>
+            ) : (
             <WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
               onUse={async (profileId) => {
                 if (!(await onChooseEngine(profileId))) throw new Error("Engine choice not saved. Automation stays open. Choose again.");
@@ -266,6 +305,7 @@ export function AutomationBuilder({
                 if (!(await onSpendLimit(limit))) throw new Error("Spend limit not saved. Automation stays open. Try again.");
               }}
               onPending={onPending} />
+            )}
             {detail.do_kind === "hand_to_agent" ? (
               <ReviewStep value={detail.review_by || "none"} onChoose={onChooseReview} />
             ) : null}

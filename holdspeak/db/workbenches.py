@@ -53,6 +53,7 @@ class WorkbenchRepository(BaseRepository):
         do_kind: Optional[str] = None,
         agent_profile: Optional[str] = None,
         review_by: Optional[str] = None,
+        **program: Any,
     ) -> WorkbenchRecord:
         clean_id = str(workbench_id or "").strip()
         if not clean_id:
@@ -60,12 +61,13 @@ class WorkbenchRepository(BaseRepository):
         now = _now_iso()
         with self._connection() as conn:
             existing = conn.execute(
-                "SELECT created_at, instruction, sources_json, output_target, do_kind, agent_profile, review_by FROM workbenches WHERE id = ?",
+                "SELECT * FROM workbenches WHERE id = ?",
                 (clean_id,),
             ).fetchone()
             created = created_at or (existing["created_at"] if existing else now)
             a2 = self._a2_values(existing, instruction, sources, output_target)
             ag14 = self._ag14_values(existing, do_kind, agent_profile, review_by)
+            pg14 = self._program_values(existing, program)
             conn.execute(
                 """
                 INSERT INTO workbenches (id, name, recipe_id, profile_id,
@@ -73,8 +75,10 @@ class WorkbenchRepository(BaseRepository):
                                         schedule_enabled, schedule_revision, item_order_json,
                                         created_at, last_modified, deleted,
                                         instruction, sources_json, output_target,
-                                        do_kind, agent_profile, review_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                        do_kind, agent_profile, review_by,
+                                        program_template, program_control, program_runs_on_json,
+                                        program_may_call, program_may_handoff)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     recipe_id = excluded.recipe_id,
@@ -91,7 +95,12 @@ class WorkbenchRepository(BaseRepository):
                     output_target = excluded.output_target,
                     do_kind = excluded.do_kind,
                     agent_profile = excluded.agent_profile,
-                    review_by = excluded.review_by
+                    review_by = excluded.review_by,
+                    program_template = excluded.program_template,
+                    program_control = excluded.program_control,
+                    program_runs_on_json = excluded.program_runs_on_json,
+                    program_may_call = excluded.program_may_call,
+                    program_may_handoff = excluded.program_may_handoff
                 """,
                 (
                     clean_id,
@@ -108,6 +117,7 @@ class WorkbenchRepository(BaseRepository):
                     1 if deleted else 0,
                     *a2,
                     *ag14,
+                    *pg14,
                 ),
             )
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
@@ -141,6 +151,27 @@ class WorkbenchRepository(BaseRepository):
             str(review_by) if review_by is not None else (str(existing["review_by"] or "") if keep and "review_by" in keys else ""),
         )
 
+    _PROGRAM_KEYS = ("program_template", "program_control", "program_runs_on", "program_may_call", "program_may_handoff")
+
+    def _program_values(self, existing: Any, given: dict[str, Any]) -> tuple[str, str, str, int, int]:
+        """PG14 run_program configuration; omitted fields keep their stored value."""
+        unknown = set(given) - set(self._PROGRAM_KEYS)
+        if unknown:
+            raise TypeError(f"unknown workbench fields: {', '.join(sorted(unknown))}")
+        keys = set(existing.keys()) if existing is not None else set()
+
+        def stored(column: str, default: Any) -> Any:
+            return existing[column] if column in keys and existing[column] is not None else default
+
+        runs_on = given.get("program_runs_on")
+        return (
+            str(given["program_template"] or "") if given.get("program_template") is not None else str(stored("program_template", "")),
+            str(given["program_control"] or "") if given.get("program_control") is not None else str(stored("program_control", "")),
+            self._json_dumps(list(runs_on), fallback="[]") if runs_on is not None else str(stored("program_runs_on_json", "[]")),
+            (1 if given["program_may_call"] else 0) if given.get("program_may_call") is not None else int(stored("program_may_call", 0)),
+            (1 if given["program_may_handoff"] else 0) if given.get("program_may_handoff") is not None else int(stored("program_may_handoff", 0)),
+        )
+
     def upsert_in_transaction(
         self, conn: Any, **kwargs: Any,
     ) -> WorkbenchRecord:
@@ -151,18 +182,20 @@ class WorkbenchRepository(BaseRepository):
             raise ValueError("workbench id is required")
         now = _now_iso()
         existing = conn.execute(
-            "SELECT created_at, instruction, sources_json, output_target, do_kind, agent_profile, review_by FROM workbenches WHERE id = ?",
+            "SELECT * FROM workbenches WHERE id = ?",
             (clean_id,),
         ).fetchone()
         created = kwargs.get("created_at") or (existing["created_at"] if existing else now)
         a2 = self._a2_values(existing, kwargs.get("instruction"), kwargs.get("sources"), kwargs.get("output_target"))
         ag14 = self._ag14_values(existing, kwargs.get("do_kind"), kwargs.get("agent_profile"), kwargs.get("review_by"))
+        pg14 = self._program_values(existing, {key: kwargs[key] for key in self._PROGRAM_KEYS if key in kwargs})
         conn.execute(
             """INSERT INTO workbenches (id, name, recipe_id, profile_id, resolver_profile_id,
                schedule, schedule_enabled, schedule_revision, item_order_json, created_at,
                last_modified, deleted, instruction, sources_json, output_target,
-               do_kind, agent_profile, review_by)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               do_kind, agent_profile, review_by, program_template, program_control,
+               program_runs_on_json, program_may_call, program_may_handoff)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(id) DO UPDATE SET name=excluded.name, recipe_id=excluded.recipe_id,
                profile_id=excluded.profile_id, resolver_profile_id=excluded.resolver_profile_id,
                schedule=excluded.schedule, schedule_enabled=excluded.schedule_enabled,
@@ -170,7 +203,10 @@ class WorkbenchRepository(BaseRepository):
                last_modified=excluded.last_modified, deleted=excluded.deleted,
                instruction=excluded.instruction, sources_json=excluded.sources_json,
                output_target=excluded.output_target, do_kind=excluded.do_kind,
-               agent_profile=excluded.agent_profile, review_by=excluded.review_by""",
+               agent_profile=excluded.agent_profile, review_by=excluded.review_by,
+               program_template=excluded.program_template, program_control=excluded.program_control,
+               program_runs_on_json=excluded.program_runs_on_json, program_may_call=excluded.program_may_call,
+               program_may_handoff=excluded.program_may_handoff""",
             (clean_id, str(kwargs.get("name") or ""),
              str(kwargs.get("recipe_id")).strip() if kwargs.get("recipe_id") else None,
              str(kwargs.get("profile_id")).strip() if kwargs.get("profile_id") else None,
@@ -179,7 +215,7 @@ class WorkbenchRepository(BaseRepository):
              1 if kwargs.get("schedule_enabled", False) else 0,
              int(kwargs.get("schedule_revision") if kwargs.get("schedule_revision") is not None else 1),
              self._json_dumps(kwargs.get("item_order") or [], fallback="[]"), created,
-             kwargs.get("last_modified") or now, 1 if kwargs.get("deleted", False) else 0, *a2, *ag14),
+             kwargs.get("last_modified") or now, 1 if kwargs.get("deleted", False) else 0, *a2, *ag14, *pg14),
         )
         return self._row(conn.execute("SELECT * FROM workbenches WHERE id = ?", (clean_id,)).fetchone())
 
@@ -251,6 +287,11 @@ class WorkbenchRepository(BaseRepository):
             do_kind=str(row["do_kind"] or "run") if "do_kind" in row.keys() else "run",
             agent_profile=str(row["agent_profile"] or "") if "agent_profile" in row.keys() else "",
             review_by=str(row["review_by"] or "") if "review_by" in row.keys() else "",
+            program_template=str(row["program_template"] or "") if "program_template" in row.keys() else "",
+            program_control=str(row["program_control"] or "") if "program_control" in row.keys() else "",
+            program_runs_on_json=str(row["program_runs_on_json"] or "[]") if "program_runs_on_json" in row.keys() else "[]",
+            program_may_call=bool(row["program_may_call"]) if "program_may_call" in row.keys() else False,
+            program_may_handoff=bool(row["program_may_handoff"]) if "program_may_handoff" in row.keys() else False,
         )
 
     def set_when_json(self, workbench_id: str, when: dict[str, Any]) -> bool:

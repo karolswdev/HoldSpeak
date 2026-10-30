@@ -88,6 +88,33 @@
      "output_target": "today",
      "blanks": {},
      "schedule": "30 7 * * 1-5"
+    },
+    {
+     "id": "overnight-program",
+     "name": "Overnight on the home box",
+     "description": "Each weekday at 23:30, starts a program: pi builds on the home engine when it is idle, Claude Code reviews, YOLO merges a green step.",
+     "instruction": "Work through the open briefs of this project, one step for each.",
+     "sources": [],
+     "when": {
+      "kind": "schedule",
+      "every": "weekday",
+      "time": "23:30"
+     },
+     "output_target": "today",
+     "do_kind": "run_program",
+     "program_template": "overnight",
+     "program_control": "yolo",
+     "program_runs_on": [
+      {
+       "profile": "pi-default",
+       "engine": "legacy-stub-profile"
+      }
+     ],
+     "program_may_call": false,
+     "program_may_handoff": false,
+     "needs": "pi_engine",
+     "blanks": {},
+     "schedule": "30 23 * * 1-5"
     }
    ]
   },

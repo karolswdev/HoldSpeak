@@ -1,5 +1,7 @@
 """Admitted manual Workbench execution."""
 from __future__ import annotations
+
+from holdspeak.db.models import _json_list
 import asyncio, hashlib, json, time, uuid
 from holdspeak.timestamps import utc_now_iso
 from typing import Any
@@ -431,6 +433,111 @@ class WorkbenchRunner:
             })
         return answer
 
+    def _run_program(
+        self, principal: Principal, wb: Any, *, parent: Any = None,
+        scheduler_authorized: bool = False,
+    ) -> dict[str, Any]:
+        """PG14: make and start one Program from the template; one result
+        links it. While the last Program still runs, start nothing."""
+        from .automation_program import result_words, run_program
+
+        if principal.kind is PrincipalKind.SCHEDULER and not scheduler_authorized:
+            raise ServiceError(
+                "schedule_delegation_required",
+                "A scheduled program needs its live owner delegation",
+                context={"status": 409},
+            )
+        run_id = "wbrun_" + uuid.uuid4().hex[:12]
+        with self.db._connection() as conn:
+            conn.execute(
+                "INSERT INTO workbench_runs(id,workbench_id,started_at,parent_operation_id,parent_receipt_id,child_links_json,status) VALUES(?,?,?,?,'','[]','running')",
+                (run_id, wb.id, utc_now_iso(), parent.operation_id if parent is not None else ""),
+            )
+        program_principal = principal
+        if scheduler_authorized:
+            program_principal = Principal(PrincipalKind.OWNER, "local-automation-conductor")
+        started_at = utc_now_iso()
+        failed = 0
+        try:
+            ran = run_program(self.db, program_principal, wb)
+        except ServiceError as exc:
+            failed = 1
+            ran = {"started": False, "error": str(getattr(exc, "detail", None) or exc)}
+        recorded = bool(ran.get("started")) or failed
+        if recorded:
+            # The run's one result: the occurrence item names the Program.
+            now = utc_now_iso()
+            program = ({"program_id": ran["program_id"], "title": ran["title"], "steps": ran.get("steps", 0)}
+                       if ran.get("started") else {})
+            context = {"occurrence": True, "run_id": run_id, "program": program}
+            text = result_words(ran) if ran.get("started") else f"Error: {ran['error']}"
+            with self.db._connection() as conn:
+                conn.execute(
+                    """INSERT INTO workbench_items
+                       (id, workbench_id, title, body, priority, status, result, grounding_json, context_json,
+                        created_at, claimed_at, completed_at, last_modified)
+                       VALUES (?, ?, ?, ?, 3, ?, ?, '{}', ?, ?, ?, ?, ?)""",
+                    ("wbprog_" + run_id.removeprefix("wbrun_"), wb.id,
+                     str(ran.get("title") or getattr(wb, "name", "") or "Program"),
+                     str(getattr(wb, "instruction", "") or ""), "failed" if failed else "done", text,
+                     json.dumps(context, sort_keys=True), started_at, started_at, now, now),
+                )
+        with self.db._connection() as conn:
+            conn.execute(
+                """UPDATE workbench_runs SET completed_at=?, items_attempted=?, items_completed=?,
+                   items_failed=?, status=? WHERE id=?""",
+                (utc_now_iso(), 1 if recorded else 0, 1 if ran.get("started") else 0, failed,
+                 "failed" if failed else "completed", run_id),
+            )
+        answer = {
+            "run_id": run_id, "status": "failed" if failed else "completed",
+            "program_started": bool(ran.get("started")),
+            "program_id": ran.get("program_id"), "program_window": ran.get("window"),
+            "items_attempted": 1 if recorded else 0, "items_completed": 1 if ran.get("started") else 0,
+            "items_failed": failed,
+        }
+        if ran.get("reason"):
+            answer.update({"skipped": True, "reason": ran["reason"]})
+        if failed:
+            answer["error"] = ran["error"]
+        if parent is not None:
+            receipt = self._close_or_adopt(parent, "failed" if failed else "succeeded", principal=principal)
+            if receipt.get("outcome") != ("failed" if failed else "succeeded"):
+                return self._adopt_terminal(run_id, parent)
+            self._record_terminal(run_id, parent, receipt, attempted=answer["items_attempted"],
+                                  completed=answer["items_completed"], failed=failed)
+            answer.update({
+                "parent_operation_id": parent.operation_id,
+                "receipt_id": receipt["receipt_id"],
+                "parent_receipt_id": receipt["receipt_id"],
+                "terminal_disposition": receipt.get("outcome"),
+            })
+        return answer
+
+    @staticmethod
+    def _native_terms(wb: Any) -> dict[str, Any]:
+        """The Do kind's own terms in a parent snapshot (hand or program)."""
+        kind = str(getattr(wb, "do_kind", "run") or "run")
+        if kind == "run_program":
+            return {
+                "do_kind": "run_program",
+                "program_template": str(getattr(wb, "program_template", "") or ""),
+                "program_control": str(getattr(wb, "program_control", "") or ""),
+                "program_runs_on": _json_list(wb.program_runs_on_json),
+            }
+        return {
+            "do_kind": "hand_to_agent",
+            "agent_profile": str(getattr(wb, "agent_profile", "") or ""),
+            "review_by": str(getattr(wb, "review_by", "") or ""),
+        }
+
+    def _run_native(self, principal: Principal, wb: Any, *, item_ids: list[str] | None = None,
+                    parent: Any = None, scheduler_authorized: bool = False) -> dict[str, Any]:
+        if str(getattr(wb, "do_kind", "run") or "run") == "run_program":
+            return self._run_program(principal, wb, parent=parent, scheduler_authorized=scheduler_authorized)
+        return self._run_hand(principal, wb, item_ids=item_ids, parent=parent,
+                              scheduler_authorized=scheduler_authorized)
+
     def _run_event_hand(
         self, principal: Principal, wb: Any, request_id: str,
         *, source_event: dict[str, str], item_ids: list[str] | None = None,
@@ -438,9 +545,7 @@ class WorkbenchRunner:
         """Use the existing owner parent admission for an event hand."""
         snapshot = {
             "workbench_id": wb.id,
-            "do_kind": "hand_to_agent",
-            "agent_profile": str(getattr(wb, "agent_profile", "") or ""),
-            "review_by": str(getattr(wb, "review_by", "") or ""),
+            **self._native_terms(wb),
             "source_event": dict(source_event),
             "items": list(item_ids or []),
         }
@@ -456,7 +561,7 @@ class WorkbenchRunner:
         )
         if parent.replayed:
             return self._replayed_result(parent.operation_id)
-        return self._run_hand(principal, wb, item_ids=item_ids, parent=parent)
+        return self._run_native(principal, wb, item_ids=item_ids, parent=parent)
 
     def _run_scheduled_hand(
         self, principal: Principal, wb: Any, delegation: dict[str, Any],
@@ -465,7 +570,8 @@ class WorkbenchRunner:
         """Admit a scheduled native hand through the durable parent path."""
         from . import automation_runs as automation
 
-        candidates = automation.materialize_hand_items(self.db, wb)
+        program = str(getattr(wb, "do_kind", "run") or "run") == "run_program"
+        candidates = [] if program else automation.materialize_hand_items(self.db, wb)
         if item_ids is not None:
             wanted = {str(value) for value in item_ids if str(value)}
             candidates = [item for item in candidates if item.id in wanted]
@@ -474,9 +580,7 @@ class WorkbenchRunner:
             "workbench_id": wb.id,
             "items": [item.id for item in candidates],
             "item_scope": "explicit" if item_ids is not None else "pending_batch",
-            "do_kind": "hand_to_agent",
-            "agent_profile": str(getattr(wb, "agent_profile", "") or ""),
-            "review_by": str(getattr(wb, "review_by", "") or ""),
+            **self._native_terms(wb),
             "request_id": request_id,
             "due_minute": due_minute,
             "delegation_id": delegation["id"],
@@ -496,7 +600,7 @@ class WorkbenchRunner:
         )
         if parent.replayed:
             return self._replayed_result(parent.operation_id)
-        return self._run_hand(
+        return self._run_native(
             principal, wb, item_ids=item_ids, parent=parent,
             scheduler_authorized=True,
         )
@@ -507,7 +611,7 @@ class WorkbenchRunner:
             raise KernelRefused("principal_authentication_required")
         wb=self.db.workbenches.get(workbench_id)
         if wb is None: raise ServiceError("not_found","Unknown automation",context={"status":404})
-        if str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent":
+        if str(getattr(wb, "do_kind", "run") or "run") in ("hand_to_agent", "run_program"):
             if delegation is not None:
                 return await asyncio.to_thread(
                     self._run_scheduled_hand, principal, wb, delegation,
@@ -529,7 +633,7 @@ class WorkbenchRunner:
                     self._run_event_hand, principal, wb, request_id,
                     source_event=source_event, item_ids=item_ids,
                 )
-            return await asyncio.to_thread(self._run_hand, principal, wb, item_ids=item_ids)
+            return await asyncio.to_thread(self._run_native, principal, wb, item_ids=item_ids)
         recipe=self.db.recipes.get(wb.recipe_id) if wb.recipe_id else None
         # Betterment A2: an automation with an instruction needs no agent.
         from . import automation_runs as automation

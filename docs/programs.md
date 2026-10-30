@@ -41,6 +41,21 @@ Choose the **From the desk** template and a project. HoldSpeak makes one step fo
 
 On a note, open the toolbar fold and press **Run as a program**. The note becomes the goal.
 
+### Programs on a schedule
+
+An automation can start a program. In the automation window, press **Edit**, and under **Do** press **Run a program**. Choose the template, the level (Secure, Normal or YOLO; no choice keeps the template's level) and the agent. Type the goal. Then choose **When**: a time ("Every weekday at 23:30"), an event, or only **Run now**.
+
+Each run makes one program and starts it:
+
+- **From the desk** takes the automation's project (a project under **About**) and makes one step for each open action of that project.
+- The other templates take the goal from **Do**. They make one step for each item under **About** (a note, an action, a decision). With no items, the goal is the one step.
+
+The run's result is the program: its row in **Results** shows the program and its state now, and a press opens the Program window. The Program window says "From the automation Nightly fixes". While the last program that the automation made still runs, a new run starts nothing and says so.
+
+When the model library has an engine that pi can run on, **New automation** also offers **Overnight on the home box**: each weekday at 23:30, pi builds on that engine when it is idle, Claude Code reviews, and the program runs at YOLO. Its schedule stays off until you turn it on. Phone calls are off for it.
+
+Tools and agents use `automation.create` with `do: "run_program"` and the fields `program_template`, `program_control`, `program_runs_on`, `program_may_call` and `program_may_handoff`. Only you can set the level, the agents and the two permissions.
+
 ## Templates
 
 | Template | Steps | Gate | Review |

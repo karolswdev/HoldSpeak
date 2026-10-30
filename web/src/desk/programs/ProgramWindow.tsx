@@ -426,12 +426,15 @@ function placeItems(program: Program, fileTo: (anchor: HTMLElement) => void, com
     });
   }
   if (place.origin) {
-    const kind = place.origin.kind === "meeting" ? "the meeting" : place.origin.kind === "note" ? "the note" : place.origin.kind === "decision" ? "the decision" : "";
-    const words = place.origin.title ? `From ${place.origin.title}` : `From ${kind || "its origin"}`;
+    const kind = place.origin.kind === "meeting" ? "the meeting" : place.origin.kind === "note" ? "the note" : place.origin.kind === "decision" ? "the decision" : place.origin.kind === "automation" ? "the automation" : "";
+    // PG14: an automation names itself: "From the automation Nightly fixes".
+    const words = place.origin.kind === "automation"
+      ? `From the automation${place.origin.title ? ` ${place.origin.title}` : ""}`
+      : place.origin.title ? `From ${place.origin.title}` : `From ${kind || "its origin"}`;
     items.push({
       key: "origin", testId: "programs-place-origin",
       text: <Button dense variant="ghost" className="pg-place" onClick={() => openRef(place.origin!.ref)}>
-        <img src={spriteUrl(place.origin.kind, place.origin.id, "rest", null, 20)} alt="" width={14} height={14} />
+        <img src={spriteUrl(place.origin.kind === "automation" ? "workbench" : place.origin.kind, place.origin.id, "rest", null, 20)} alt="" width={14} height={14} />
         <span>{words}</span>
       </Button>,
     });

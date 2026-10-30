@@ -926,7 +926,8 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
         rows = conn.execute(
             """SELECT i.id, i.title, i.status, i.result, i.result_artifact_id, i.completed_at,
                       i.created_at, i.claimed_at, i.result_egress_json, a.status AS artifact_status,
-                      r.model AS run_model
+                      r.model AS run_model,
+                      json_extract(i.context_json, '$.program.program_id') AS program_id
                FROM workbench_items i LEFT JOIN artifacts a ON a.id = i.result_artifact_id
                LEFT JOIN workbench_runs r ON r.id = a.source_run_id
                WHERE i.workbench_id = ? AND i.parked = 0
@@ -940,6 +941,7 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
     item_ids = [str(row["id"]) for row in rows]
     costs = cost_by_item(db, item_ids)
     uses = use_by_item(db, item_ids)
+    programs = _program_links(db, [str(row["program_id"]) for row in rows if row["program_id"]])
     results = []
     for row in rows:
         status = str(row["status"])
@@ -969,8 +971,35 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
             "note_id": note_id,
             "cost_usd": costs.get(str(row["id"])),
             "used": uses.get(str(row["id"])),
+            # PG14: a run_program run's result links the Program it started.
+            **({"program": programs[str(row["program_id"])]} if row["program_id"] in programs else {}),
         })
     return results
+
+
+def _program_links(db: Any, program_ids: list[str]) -> dict[str, dict[str, Any]]:
+    """PG14: each Program a result names, with its state now and its window."""
+    if not program_ids:
+        return {}
+    from .program_service import default_program_service
+
+    service = default_program_service(db)
+    links: dict[str, dict[str, Any]] = {}
+    for program_id in dict.fromkeys(program_ids):
+        try:
+            program = service.store.get_program(program_id)
+            if program is None:
+                continue
+            summary = service._summary(program, service.store.list_steps(program_id))
+        except Exception as exc:  # a Program read never fails the results
+            log.debug("program link %s: %s", program_id, exc)
+            continue
+        links[program_id] = {
+            "id": program_id, "title": summary["title"], "state": summary["state"],
+            "state_word": summary["state_word"], "done": summary["done"], "total": summary["total"],
+            "window": f"pullout:program:{program_id}",
+        }
+    return links
 
 
 def source_names(db: Any, refs: list[str]) -> list[dict[str, Any]]:

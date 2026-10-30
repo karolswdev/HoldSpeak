@@ -102,3 +102,12 @@ describe("pullout identity across bare and qualified doors", () => {
     expect(useDesk.getState().drafts).toBe(drafts);
   });
 });
+
+describe("a pullout family opens by its key (Programs)", () => {
+  it("program:<id> opens pullout:program:<id> once, in front", () => {
+    useDesk.getState().openPullout("program:program-1");
+    useDesk.getState().openPullout("program:program-1");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["program:program-1"]);
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("pullout:program:program-1");
+  });
+});

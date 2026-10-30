@@ -10,6 +10,15 @@ from datetime import datetime
 import json
 from typing import Optional, Any
 
+
+def _json_list(text: Any) -> list[Any]:
+    """A stored JSON list, else ``[]``."""
+    try:
+        value = json.loads(text or "[]")
+    except (TypeError, ValueError):
+        return []
+    return value if isinstance(value, list) else []
+
 # Validation constants shared across the persistence layer.
 VALID_ACTION_ITEM_STATUSES = frozenset({"pending", "done", "dismissed"})
 VALID_ACTION_ITEM_REVIEW_STATES = frozenset({"pending", "accepted"})
@@ -1154,6 +1163,25 @@ class WorkbenchRecord:
     agent_profile: str = ""
     #: Betterment AG14: optional installed reviewer profile.
     review_by: str = ""
+    #: Programs PG14: the Program a ``run_program`` run makes (template id,
+    #: control level, Runs on as JSON, may call, may hand off).
+    program_template: str = ""
+    program_control: str = ""
+    program_runs_on_json: str = "[]"
+    program_may_call: bool = False
+    program_may_handoff: bool = False
+
+    def _program_fields(self) -> dict[str, Any]:
+        """PG14: the Program fields, on a run_program automation only."""
+        if self.do_kind != "run_program":
+            return {}
+        return {
+            "program_template": self.program_template,
+            "program_control": self.program_control,
+            "program_runs_on": _json_list(self.program_runs_on_json),
+            "program_may_call": self.program_may_call,
+            "program_may_handoff": self.program_may_handoff,
+        }
 
     def to_dict(self) -> dict[str, Any]:
         try:
@@ -1170,6 +1198,7 @@ class WorkbenchRecord:
             "do_kind": self.do_kind,
             "agent_profile": self.agent_profile,
             "review_by": self.review_by,
+            **self._program_fields(),
             "recipe_id": self.recipe_id,
             "profile_id": self.profile_id,
             "resolver_profile_id": self.resolver_profile_id,

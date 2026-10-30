@@ -273,6 +273,9 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
+        # Programs PG14: an automation that runs a Program (Do: Run a
+        # program; its one result is the seeded Program, Running).
+        ("automation-program", "workbench:{automation_program}", None),
         # Not applications, opened the same way: the Chair's Needs-you window
         # (its seed rows: accepted requests, a failed summary) ...
         ("needs", "chair:needs", None),
@@ -481,8 +484,9 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             ctx.close()
             _seed_finished_receipts()
             automation = _seed_automation(note_id)
+            automation_program = _seed_program_automation(program_id)
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
-                   "automation": automation, "program": program_id}
+                   "automation": automation, "program": program_id, "automation_program": automation_program}
         finally:
             server.stop()
 
@@ -553,6 +557,26 @@ def _seed_automation(note_id: str) -> str:
             ("artifact_sweep_friday", "Friday team update, Fri 16 Oct 2026", answer, _json.dumps({}),
              "wbrun_sweep_friday", "wbocc_sweep_new"))
         conn.commit()
+    return wb.id
+
+
+def _seed_program_automation(program_id: str) -> str:
+    """Programs PG14: a run_program automation (Fast cycle, YOLO, Codex) and
+    the one result its run writes: the seeded Program it started."""
+    from holdspeak.db import get_database
+
+    db = get_database()
+    wb = db.workbenches.upsert(
+        workbench_id="wb-sweep-nightly", name="Nightly fixes", instruction="Fix each bug with a test.",
+        sources=[], output_target="today", do_kind="run_program", program_template="fast-cycle",
+        program_control="yolo", program_runs_on=[{"profile": "codex-default", "engine": None}])
+    db.workbench_items.upsert(
+        item_id="wbprog_sweep_nightly", workbench_id=wb.id, title="The hub stops stalling",
+        body=wb.instruction, status="done",
+        context={"occurrence": 1, "run_id": "wbrun_sweep_nightly",
+                 "program": {"program_id": program_id, "title": "The hub stops stalling", "steps": 3}},
+        result="Started the program The hub stops stalling · 3 steps",
+        claimed_at="2026-10-29T23:30:00+00:00", completed_at="2026-10-29T23:30:02+00:00")
     return wb.id
 
 
