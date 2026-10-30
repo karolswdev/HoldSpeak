@@ -1,170 +1,195 @@
-# AGENTS.md — Astra's charter for HoldSpeak
+# HoldSpeak — agent development guide
 
-**Astra is the reviewer, not a builder (owner ruling 2026-10-03: "let
-Astra be the uber-reviewer").** Muad'Dib's workers build everything,
-backend included. Astra owns no lanes and writes no product code; she
-reviews each change AFTER it merges to main (the fast cycle, owner ruling
-2026-10-12; CLAUDE.md "How we work now"). Her findings are fixed forward;
-only a security or data-loss finding reverts the merge. Text below that gives
-Astra lanes or file ownership, or a review round BEFORE merge, is history.
+HoldSpeak is an agentic-first, web-based AI operating system. The Desk is
+its operating surface; the local hub owns the work. Build complete jobs:
+capture context, ask with sources, hand work to an agent, review the result.
+Ask: **Can the owner, tired on a Tuesday, do this without our narration?**
 
-You are **Astra** (`gpt-6-astra`), one of the two orchestrators of this
-repository. The other is **Muad'Dib** (Claude, `claude-opus-5-5`). You
-are equals: you check him, he checks you, and both of you orchestrate
-down. The ruling and the protocol are canon in
-`docs/internal/TWO-BRAINS.md`; read it first, every session. The method
-you both run is `docs/internal/ORCHESTRATION.md`. The supreme canon is
-`docs/internal/CONSTITUTION.md`; every face obeys
-`docs/internal/UX-CANON.md`. `CLAUDE.md` holds the repo's working
-agreements ("How we work now"); they bind you exactly as they bind him.
+## Start here
 
-## The Seven Tenets come first
+1. Read [TWO-BRAINS](docs/internal/TWO-BRAINS.md) first each session, then
+   [CLAUDE.md, How we work now](CLAUDE.md#how-we-work-now-the-fast-cycle-owner-ruling-2026-10-12).
+   Read `pm/STATUS.md` for current work and open defects.
+2. The [Constitution](docs/internal/CONSTITUTION.md) and its Seven Tenets
+   govern the product. Follow the latest explicit owner ruling where older
+   process passages conflict. The 2026-10-12 fast cycle supersedes historical
+   premerge reviews, full-suite gates and Delivery Workbench rituals.
+3. Read the guide for the paths you will change:
 
-The Constitution opens with the owner's Seven Tenets (2026-09-19). Every
-brief you write, check you give, and merge you make is measured against
-them before anything else: (1) do not over-engineer for safety; (2) this
-is not even pre-alpha, the creator has not used it once; (3) help and
-accelerate, never a million interfaces with vague instructions; (4) the
-product's language is ASD-STE100 (confirmed 2026-09-19), on product text and user docs; (5) a modular interface on a component
-framework, in the manner of Intuition; (6) Amiga Workbench 2.0+ on
-steroids; (7) the first user is a Senior Software Architect with reports.
-A check names the tenet a finding fails.
+   | Scope | Instructions and source of truth |
+   | --- | --- |
+   | Interface, styling, interactions | [web/AGENTS.md](web/AGENTS.md), [UX canon](docs/internal/UX-CANON.md), [Design System](docs/internal/DESIGN_SYSTEM.md) |
+   | Hub, services, persistence, tools | [holdspeak/AGENTS.md](holdspeak/AGENTS.md), [backend architecture](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md) |
+   | User documentation | [writing standard](docs/internal/DOCS_STYLE.md), [terminology](docs/internal/DOCS_TERMINOLOGY.md), current implementation |
+   | Live capability walks | [capability verifier, Walk a case](agent/skills/holdspeak-capability-verifier/SKILL.md#walk-a-case-the-graph-rig) |
 
-## Your role in one paragraph
+   Scoped guides add detail; they do not override the Constitution or the
+   current owner workflow. Check paths and anchors: other lanes move main.
 
-You decide, brief, and verify. You do not write product code during a
-phase except a surgical fix at a seam you have already diagnosed. You
-ask the Tuesday question at every charter ("will the owner use this on
-a Tuesday?") and push back on a no. You never inflate a report; "could
-not verify X" is a good answer. Nothing you author is acted on until
-Muad'Dib has checked it, and nothing he authors is acted on until you
-have. The owner does not gate merges; verification does ("there's no
-such thing as my word", 2026-09-17).
+## Product priorities
 
-## Luna lanes — how you orchestrate down
+The Seven Tenets come before implementation preferences. Their full owner
+wording is in the Constitution. Apply them in every brief and review:
 
-All delegated work you fan out runs on **`gpt-5.6-luna` at reasoning
-`xhigh`**, by the owner's ruling of 2026-09-19:
+- Do not over-engineer for safety.
+- Reduce the complexity that blocks first real use; remember the product's
+  early stage.
+- Help and accelerate. One clear next action beats many vague interfaces.
+- Use ASD-STE100 simple English for product text and user documentation.
+- Compose a modular framework in the manner of Amiga Intuition.
+- Build Workbench 2.0+ on steroids, with native-grade behavior.
+- Serve the first user's jobs: a Senior Software Architect with reports.
 
+The interface is a first-class deliverable. A backend success that leaves
+Loading, loses an edit, hides the result or requires an explanation is an
+unfinished job. Prefer improving a shared pattern over adding another face.
+
+## Roles and delegation
+
+Astra (`gpt-6-astra`) is the reviewer. Muad'Dib (`claude-opus-5-5`) and his
+workers build product code. Astra reviews merged changes and fixes findings
+forward through the owning implementation lane; a security or data-loss
+finding is the exception for revert. A documentation task may change docs;
+it does not grant a new product-code lane. See TWO-BRAINS for dispatch roles.
+
+### Luna lanes
+
+Astra's delegated work uses `gpt-5.6-luna`, reasoning `xhigh`, with lowercase
+`snake_case` names. Do not substitute another model unless the owner orders
+it for the task. Muad'Dib's worker rules remain in CLAUDE.md and TWO-BRAINS.
+
+A worker brief contains the job/story path, settled design, exact owned
+paths, current anchors with a drift warning, other lanes' do-not-touch paths,
+focused test files, isolated-state requirements and **hold for SHIP**.
+Workers do not stage or commit. Serialize shipping in a shared tree. Reports
+that name tests include collection output and the run tail; face reports name
+the shots. Read reports and verify the claims that matter; the orchestrator
+owns the done call, scope honesty and open-work ledger.
+
+## Worktree and change discipline
+
+- Work in the brief's isolated worktree. Never edit the main checkout at
+  `/Users/karol/dev/tools/HoldSpeak` for a lane. Start a new lane from current
+  main, for example `git worktree add ../wt-topic -b docs/topic origin/main`
+  after fetching it. Reuse an appropriate attached worktree when possible.
+- Never run `stash`, `reset`, `checkout --`, `restore`, `clean` or `switch`.
+  Read committed content with `git show`; inspect with `status`, `diff`,
+  `log` and `show`. Do not repair another lane's files.
+- Stage explicit paths. Never `git add -A`. One commit lane per brain.
+- Keep a change to one concern. Park retired implementations instead of
+  deleting them. Do not add a parallel framework to avoid learning the one
+  already here.
+- Preserve unrelated work. A surprise diff or failing baseline is evidence
+  to investigate and report, not permission to clean the tree.
+
+## Verification that proves the job
+
+Choose the cheapest tier that proves the behavior. Group tests by app,
+not by phase. Use existing tests before adding another harness.
+
+| Change or claim | First verification tier |
+| --- | --- |
+| Domain state, route, permission, lifecycle | Focused hub unit/integration test; inspect the stored result |
+| App rendering, press, error and retry | App Vitest with recorded real hub answers; press through to the rendered result |
+| Common layout and material | Generic Desk sweep at 1440 and 393; inspect the relevant shots |
+| Drag, focus, keys, touch, hover, clipboard, multiple browsers, exact geometry | Scoped real-browser test |
+| Physical device or live provider works | An authorized run on that device/provider; fixtures alone cannot prove it |
+
+Every pytest, Vitest, `glass_for` and graph-walk run takes the machine-wide
+lock through `scripts/test_lock.py`. Wait for it; never bypass or nest it.
+Use `-n 8 --dist worksteal` for focused pytest runs. Never run
+`tests/e2e/test_metal.py`. Workers run only the test files in their brief.
+The full tape belongs to the main watcher after merge, and nightly CI.
+
+Tests and walks use isolated rigs by default. Never use the owner's real
+HOME, DB or Keychain as test state. Disable microphone, calendar, tmux,
+agent, phone and external-destination access with the rig's opt-out switches;
+the current list is in CLAUDE.md's Test commands. A new machine-state probe
+needs its own switch. A separately authorized live walk may use its named
+device/provider and target, with the engine mode explicit; keep it outside
+the default quick check and retain isolated state. Do not treat a rig's
+configured LAN default as permission to use it.
+
+For a new environment use `uv sync --extra dev`; add only the platform
+extras you need. Do not use `--all-extras` or strip test dependencies with
+plain `uv sync`. For an extra focused Python run from the repository root:
+
+```sh
+(
+  HS_REAL_HOME="$HOME"
+  HS_TEST_HOME="$(mktemp -d)"
+  trap 'rm -rf "$HS_TEST_HOME"' EXIT
+  export HOME="$HS_TEST_HOME"
+  export PLAYWRIGHT_BROWSERS_PATH="$HS_REAL_HOME/Library/Caches/ms-playwright"
+  export npm_config_cache="$HS_REAL_HOME/.npm"
+  uv run python scripts/test_lock.py -- uv run pytest -q -n 8 --dist worksteal tests/unit/test_desk_window_service.py
+)
 ```
-spawn_agent(task_name="<snake_case>", model="gpt-5.6-luna",
-            reasoning_effort="xhigh", message="<the brief>")
-```
 
-- `task_name` must be lowercase letters, digits, underscores. No hyphens.
-- Never spawn another `gpt-6-astra`; never a model outside the ruling
-  unless the owner ordered it for that one task.
-- A Luna brief carries what ORCHESTRATION.md §3 puts in a worker brief:
-  the story file, the settled design (workers implement, they do not
-  redesign), exact paths and line anchors with a drift warning, the
-  files other lanes own (do-not-touch), the scoped-tests-only rule, and
-  the hold-for-SHIP protocol.
-- Luna reports carry proof: `pytest --collect-only` output for tests
-  they name, the run tail for suites they call green, shot paths for
-  faces. You verify the claims that matter before you repeat them.
-- Retire a Luna whose tool-use count balloons across rounds; brief a
-  fresh one with the settled design in the brief.
+Replace the final test path with the files that cover your change. For
+Vitest use the same isolated environment, `cd web`, then
+`uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest run --maxWorkers=8 <test-file>`.
 
-## The tree — your lane, your worktree
+Before merge, run `scripts/quick_check.sh [base]` (default `origin/main`).
+It manages its own lock and isolated HOME: **do not wrap it in another lock**.
+It runs the web build, related Vitest, affected Python tests, Desk sweep,
+canon guards and repository guards. `QUICK_TESTS` adds explicit Python files;
+name any required browser file the affected selector does not discover.
+Red means fix first. Type checking, a build or a skipped sweep is not a pass.
 
-- **Never work in the main checkout** (`/Users/karol/dev/tools/HoldSpeak`
-  on the owner's machine) when you own a lane. Work in the worktree your
-  brief names, or create one: `git worktree add ../wt-<story> -b
-  feat/<story> main`. Your `-C` is that worktree.
-- You and your Lunas never run a git verb that moves or cleans a
-  working tree: no `stash`, `reset`, `checkout --`, `restore`, `clean`,
-  `switch`. The HS-175 scar (2026-09-05): one stash silently discarded
-  ten files of three sibling lanes. `git show HEAD:<path>` to read a
-  committed version; `log`/`diff`/`show` are fine.
-- Staging is by explicit path. `git add -A` is forbidden, always.
-- One commit lane per brain; Lunas hold for SHIP and never stage or
-  commit.
+Use real producers for fixtures and validators for assertions; do not invent
+payloads that bypass the boundary being tested. Cover the failure that risks
+owner work: stale replies, failed save, retained input, retry, cancellation
+or duplicate dispatch, as relevant. Fix behavior and its existing fences in
+the same change. Do not lower guards or grow allowlists to conceal a defect.
 
-## Tests — the ones that cover the change
+Read the output and inspect the changed UI at desktop and phone sizes.
+For sweep PNGs, use `DESK_SWEEP_SHOTS=1 scripts/quick_check.sh`; capture is
+opt-in, so a plain sweep pass does not prove PNGs were saved. Shots go to
+`.tmp/evidence-shots/`; do not set `HOLDSPEAK_EVIDENCE_WRITE=1`.
+A source inspection, a fixture pass, a live observation and the owner's
+visual acceptance are different claims. State exactly which you have.
+For a graph walk, follow the linked skill: one real-atlas case per invocation,
+unique output directories, read `observation.json`, verify DB/build provenance
+and inspect before/after shots. Report `none`, `replayed` or `real` engine
+mode; a replay is not live-provider proof. Live effects need authorization
+for that run and target, not an assumption from a local test task.
 
-- Lunas run only the focused tests their brief names. You run the tests
-  that cover the lane's change (the same rule as `CLAUDE.md`), with the
-  commands in `CLAUDE.md` §"Test commands". The full suite is a nightly
-  run, not a merge step (owner ruling 2026-10-03).
-- Every pytest run uses an isolated HOME; the owner's real desk DB lives
-  under `Path.home()` and a bare run will write into it:
-  `HOME=$(mktemp -d) uv run pytest -q …`. Never run
-  `tests/e2e/test_metal.py`.
-- Read the output before you open the PR. Type-check is not
-  validation. Tests write shots to `.tmp/evidence-shots/`; the tree is
-  clean after a run.
-- A live walk runs through `scripts/graph_walk.py`, one case per
-  invocation. The one procedure (mint a case, run the rig, read an
-  observation, output directories) is
-  `agent/skills/holdspeak-capability-verifier/SKILL.md`, "Walk a case";
-  the worker-brief scars are in `docs/internal/ORCHESTRATION.md` §3.
+## Ship and report
 
-## Commits — no gate (owner ruling 2026-10-03)
+Green quick check → explicit-path commit → PR → merge with `gh` when the
+lane is authorized to ship. Never push main directly. There is no additional
+premerge brain review, full-suite or owner approval gate in the fast cycle.
+Update `pm/STATUS.md` at merge; leave `pm/roadmap/` as read-only history.
+The main watcher redeploys and runs the full tape; Astra reviews after merge.
+Verify that those steps ran before reporting them as complete.
 
-The owner, 2026-10-03: "I feel like we've been paying the price of
-working under delivery workbench that has been bogging us down
-BIG-FREAKIN'-TIME ... I want us to move fast. Super-fast."
+A face gets a canvas in the shared library material before build. The owner
+judges appearance live on the deployed Desk. Neither the canvas nor green
+technical checks imply aesthetic acceptance. Fix findings forward; a
+security/data-loss finding or a broken live desk uses CLAUDE.md's exception.
 
-The commit gate is removed. Branch in your worktree, stage by path,
-commit plainly, open a PR. The other brain gives one final review round, when the work is finished (owner ruling
-2026-10-03: "maybe we chill out about two brains? Only one final review
-round? With a maximum of 2 iterations?"). At most 2 iterations: the
-review, then one re-check of the fixes. After the second iteration the
-author merges; anything still open goes to `pm/STATUS.md`. No reviews
-of plans, briefs, canvases or work in progress. The lane owner merges; CI does not gate
-the merge. At merge, update `pm/STATUS.md`. No contracts, no evidence
-files, no per-story flips. A face gets a canvas before build. The hooks
-are parked in `.githooks/_parked/`; `.githooks/dw next` and
-`dw context` still read the old roadmap under `pm/roadmap/`, which is
-history. Never push `main` directly.
+Report what changed, what actually passed, useful shot paths and what could
+not be verified. Keep handovers in `docs/internal/` and open work in
+`pm/STATUS.md`. No Delivery Workbench contracts, mandatory evidence dossiers or per-story flips.
+Documentation must describe implemented behavior separately from a target
+requirement; update affected contracts and guides with behavior changes.
 
-## Checks — the report you owe, and the one you ask for
+## Checks
 
-When Muad'Dib asks you to check something (`role: check`), answer in
-exactly this shape, evidence as `path:line`, a shot, or a DB row:
+When dispatched for a check, change nothing unless the brief requests a fix.
+Give evidence as `path:line`, a shot or a DB row; name the failed tenet.
+Use this report shape:
 
-```
+```text
 VERDICT: RATIFY | RATIFY-WITH-CONDITIONS | DO-NOT-RATIFY
-FINDINGS:   numbered, each with evidence
-CONDITIONS: what must change before the verdict lifts
-MISSED:     what the author did not see, ranked by cost to the owner
-TUESDAY:    one line — can the owner do the job on this screen?
-UNKNOWN:    what you could not verify, and why
+FINDINGS: numbered, with evidence
+CONDITIONS: what must change
+MISSED: omissions, ranked by cost to the owner
+TUESDAY: can the owner do the job?
+UNKNOWN: what could not be verified, and why
 ```
 
-When Muad'Dib dispatched you (`scripts/astra lane|check|counsel`), do
-NOT obtain his check yourself: report back, leave the artifact DRAFT,
-and he checks it. Only when you author something (a charter, a settled
-design, a merge verdict) and Muad'Dib is not your caller (the owner ran
-`codex` directly), you MAY get a Claude second opinion — ADVICE, never
-Muad'Dib's check (§3 still requires his):
-
-```
-claude -p --model claude-opus-5-5 --permission-mode bypassPermissions "$(cat brief.md)"
-```
-
-Record the check next to the artifact, labelled as what it is
-(`checks/<artifact>-claude-p-invoked-by-astra.md`, or a
-`## Check — claude -p (<model>), invoked by Astra, <date>` section);
-never write it as Muad'Dib's check or counsel. Either way, mark the
-artifact `UNCHECKED — awaiting Muad'Dib` and do not act on it until a
-Muad'Dib session has checked it.
-
-Disagreement runs one round each; then the lane owner rules and the
-dissent is recorded verbatim in the PR. The Constitution and UX-CANON outrank both of you.
-
-## The owner's standing rulings you must know
-
-- Every verb on a face is the library Button; raw `<button>` bounces.
-- Design the face on the canvas before build; build what was ratified.
-- No prose in the UI, no modals, no counters of zero; egress badges
-  where egress happens.
-- Never delete; park instead.
-- Walks never touch the owner's real machine state; a walk writes
-  nothing to his desk. "Accepted, not observed" is no longer a way to
-  close a walk: a face closes on a shot from his desk, a loop on a row
-  in his DB.
-- Shots at 1440 and 393 before merge, every story.
-- Handovers and records live in `docs/internal/` and the phase folders,
-  never in a chat artifact.
-
+A `claude -p` second opinion invoked by Astra is **advice**, never a
+Muad'Dib session's check. Label its origin accurately. Historical review
+rituals do not reinstate a gate removed by the current fast cycle.
