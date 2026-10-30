@@ -72,6 +72,7 @@ class DeliveryService:
             attempts=self._db.work_attempts,
             ledger=LaunchLedger(launches_path),
             local_node_id=local_node_id,
+            db=self._db,
         )
 
     def attempt_service(

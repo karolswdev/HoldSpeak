@@ -91,6 +91,46 @@ def mode_for_launch(
     return DESK_WORDS[level_of(found[0].get("control"))]
 
 
+def program_of_step(step_id: Any, *, db: Any = None) -> Optional[dict[str, Any]]:
+    """The Program of a step id, else ``None``."""
+    step_id = str(step_id or "").strip()
+    if not step_id:
+        return None
+    try:
+        from ..db.programs import ProgramStore
+
+        store = ProgramStore(_db_or_default(db))
+        step = store.get_step(step_id)
+        if not isinstance(step, dict) or not step.get("program_id"):
+            return None
+        program = store.get_program(str(step["program_id"]))
+        return program if isinstance(program, dict) else None
+    except Exception:
+        return None
+
+
+def mode_for_request(
+    request: Any, *, db: Any = None, desk: Optional[Callable[[], Any]] = None,
+) -> str:
+    """The desk's Control mode word a NEW launch runs at (PG13b), read from
+    the server-side request the hand builds, before the launch has an id on
+    its step: a helper (``helper_of``) inherits its parent launch's level; a
+    Program step's launch (``origin_ref`` ``program_step``) runs at its
+    Program's control; every other launch at the desk's Control mode."""
+    request = request if isinstance(request, Mapping) else {}
+    helper_of = str(request.get("helper_of") or "").strip()
+    if helper_of:
+        return mode_for_launch(helper_of, db=db, desk=desk)
+    origin = request.get("origin_ref") if isinstance(request.get("origin_ref"), Mapping) else {}
+    if str(origin.get("kind") or "") == "program_step":
+        program = program_of_step(origin.get("id"), db=db)
+        if program is not None:
+            from .program_rules import level_of
+
+            return DESK_WORDS[level_of(program.get("control"))]
+    return str((desk or _desk_mode)() or "yolo").lower()
+
+
 def record_decision(
     launch_id: Any, kind: str, line: str, *, facts: Optional[Mapping[str, Any]] = None,
     db: Any = None, dedupe: bool = False,
@@ -126,4 +166,7 @@ def record_decision(
         return None
 
 
-__all__ = ["DESK_WORDS", "level_for_launch", "mode_for_launch", "record_decision", "step_of_launch"]
+__all__ = [
+    "DESK_WORDS", "level_for_launch", "mode_for_launch", "mode_for_request", "program_of_step",
+    "record_decision", "step_of_launch",
+]

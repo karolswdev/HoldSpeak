@@ -365,6 +365,13 @@ class AgentHandService:
         #: ``None``: the setting, read at each hand (a change applies at once).
         self._max_live = None if max_live is None else int(max_live)
 
+    def _launch_mode(self, kind: str, item_id: str, helper_of: Optional[str] = None) -> str:
+        """The Control mode word of this hand's launch (``control_level.mode_for_request``)."""
+        from .control_level import mode_for_request
+
+        request = {"origin_ref": {"kind": kind, "id": item_id}, **({"helper_of": helper_of} if helper_of else {})}
+        return mode_for_request(request, db=self._db, desk=self._control_mode)
+
     @property
     def working_at_once(self) -> int:
         """The limit now: the set override, else ``agents.working_at_once``."""
@@ -529,7 +536,8 @@ class AgentHandService:
                     raise AgentHandRefused.from_launch(exc) from exc
                 return self._answer(
                     {"launch": record, "operation_id": record.get("operation_id")},
-                    spec, source, None, kind, item_id, project_id, self._control_mode(),
+                    spec, source, None, kind, item_id, project_id,
+                    str(record.get("control_mode") or self._launch_mode(kind, item_id, helper_of)),
                     resumed=True,
                 )
             again_of = _hand_again_of(existing)
@@ -569,7 +577,10 @@ class AgentHandService:
                 f"{working} agents work now; the limit is {limit}",
             )
 
-        mode = self._control_mode()
+        # Programs PG13b: a step's launch runs at its Program's control and a
+        # helper at its parent's level (the brief says the same mode the
+        # launch flags carry); every other hand at the desk's Control mode.
+        mode = self._launch_mode(kind, item_id, helper_of)
         try:
             if kind == "program_step" and not helper_of:
                 from .program_brief import compose as compose_program_step

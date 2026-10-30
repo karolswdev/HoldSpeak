@@ -275,7 +275,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | PG10 | The seams on the faces | Shipped #1602 (2026-10-28) | Person line, Room fold, Note verb pinned in app tests only. |
 | PG11 | The documents | Shipped #1602 (2026-10-28) |  |
 | PG12 | Tick on the coder frame | Open |  |
-| PG13 | The Program's level drives the desk's answers | Shipped (2026-10-29) | Launch flags (acceptEdits, Codex sandbox) still follow the desk's mode at launch. |
+| PG13 | The Program's level drives the desk's answers | Shipped (2026-10-29) | PG13b: the launch flags and a helper follow the level too; the words say YOLO. Per-step levels are left. |
 | PG14 | Automations run a program | Open |  |
 | PG15 | Start a program on a call | Open |  |
 | PG16 | Decisions from a Program | Open |  |
