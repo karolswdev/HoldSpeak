@@ -1,0 +1,9 @@
+{
+  "status": 502,
+  "body": {
+    "reason": "key_refused",
+    "kept": "Your key is kept. Nothing was made at Telnyx.",
+    "next": "Check the key in the Telnyx portal, then save it again.",
+    "error": "Telnyx did not take the key while it made the SIP connection."
+  }
+}

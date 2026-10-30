@@ -220,9 +220,42 @@ keystore control. The settings file keeps a secret reference, not the secret
 value. The status can say Stored in your keystore, From the environment, or
 Missing.
 
-Provider-specific setup and pricing are not verified by this repository guide.
-Use the provider's current instructions and read the Line status before a
-call.
+### A real number from Telnyx
+
+With a Telnyx API key, HoldSpeak makes the SIP account and gets the number
+for you. Open **Settings > Calls > Line**, set **The line** to **A Telnyx
+number**, and open **Set up Telnyx**. There are three presses:
+
+1. **Your key.** Paste your Telnyx API key into **Telnyx API key** and press
+   **Save**. The key goes into the hub's keystore (the macOS Keychain or the
+   Linux Secret Service). HoldSpeak never writes the key into a file. A key
+   that is only in your shell (`TELNYX_API_KEY` in `~/.zshrc`) is not in the
+   hub's environment, so save it here.
+2. **Connect.** The hub makes an outbound voice profile and a SIP credential
+   connection named "HoldSpeak Line" at Telnyx, with a new random SIP
+   password. The row then says "Connected · sip.telnyx.com · user hs…".
+   A second press uses the same connection again.
+3. **A number.** Type an area code (for example `212`) and press **Find
+   numbers**. Up to 10 numbers show, each with its monthly and its upfront
+   cost from Telnyx. Press **Buy** on one number. The button then asks
+   "Buy +1 212 555 0100 for $1.00 a month?". Only that second press buys
+   the number. The hub then points the number at the line, and the row says
+   "Yours: +1 212 555 0100 · assigned to the line".
+
+**Costs.** The number costs what the row says, every month, plus the upfront
+cost once, to your Telnyx account. Each call minute is charged by Telnyx as
+well. The fold shows your Telnyx balance. The buy is a kernel operation
+(`calls.line.buy_number`): its receipt names the number and the cost. An agent
+cannot buy a number.
+
+**Where the password lives.** The SIP password is in the hub's keystore
+(`calls.line.sip_password`). The hub sends it to the Line node when the node
+connects, and the node writes it only into its own `accounts` file (mode
+0600). The Settings read never shows it.
+
+If a press fails, the row says what failed, what is kept, and the next
+action. For example, a wrong key: "Telnyx did not take the key… Your key is
+kept. Nothing was made at Telnyx."
 
 ### Test call
 
@@ -274,6 +307,11 @@ runs. There is no fixed response-time guarantee in the source.
 | `POST /api/calls/line/enrol` | Redeem the code for a scoped node credential. |
 | `GET /api/calls/line/nodes` | List enrolled nodes and their reported state. |
 | `DELETE /api/calls/line/nodes/{node}` | Revoke one node credential. |
+| `GET /api/calls/line/telnyx/status` | Where the Telnyx key is, the connection, the number, and the Telnyx balance. |
+| `POST /api/calls/line/telnyx/connect` | Make (or use again) the "HoldSpeak Line" SIP connection; the password goes to the keystore. |
+| `GET /api/calls/line/telnyx/numbers?area=212` | Up to 10 numbers with their cost and a quote each. |
+| `POST /api/calls/line/telnyx/buy` | `{phone_number, quote}`: buys the number (money). Refused without the quote of the owner's confirm press; the kernel operation `calls.line.buy_number`. |
+| `POST /api/calls/line/telnyx/assign` | `{phone_number}`: point the number at the line. |
 
 MCP calls tools have their own principal and authority checks. A route's
 existence does not grant permission to use it. Read the response and receipt.

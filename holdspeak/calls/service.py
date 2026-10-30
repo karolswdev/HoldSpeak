@@ -131,6 +131,7 @@ def line_config(node: str) -> dict[str, Any]:
     config = Config.load()
     account = dict((config.calls.line or {}).get("account") or {})
     account.pop("password_ref", None)
+    account.pop("connection_id", None)  # the hub's own note of the Telnyx connection
     password = line_secrets.read(line_secrets.SIP_PASSWORD) if account.get("kind") == "telnyx" else ""
     return {"account": account, "password": password, "daily_limit": int(config.calls.daily_limit),
             "owner": str(getattr(config.owner, "name", "") or "")}

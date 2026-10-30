@@ -1,0 +1,9 @@
+{
+  "status": 403,
+  "body": {
+    "reason": "press_required",
+    "kept": "Nothing was bought.",
+    "next": "Press Buy on the number, then confirm.",
+    "error": "A number is bought only on your press."
+  }
+}

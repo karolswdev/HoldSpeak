@@ -84,9 +84,61 @@ export interface LineSettings {
     domain: string;
     outbound: string;
     password_ref: string;
+    /** LINE-3b: the Telnyx credential connection and the number pointed at it. */
+    connection_id?: string;
+    number?: string;
     codecs: string[];
   };
   secrets?: { sip_password?: SecretPlace; telnyx_api_key?: SecretPlace };
+}
+
+/** `GET /api/calls/line/telnyx/status` (LINE-3b): where the key is, the
+ *  connection, the number, the balance (one read when a key is there). */
+export interface TelnyxStatus {
+  key: SecretPlace;
+  password: SecretPlace;
+  connection: { id: string; user: string; domain: string } | null;
+  number: string;
+  balance: { balance: string; available: string; currency: string } | null;
+  error: string;
+}
+
+/** `POST /api/calls/line/telnyx/connect`. */
+export interface TelnyxConnected {
+  connected: boolean;
+  created: boolean;
+  connection_id: string;
+  user: string;
+  domain: string;
+}
+
+/** One row of `GET /api/calls/line/telnyx/numbers`: the hub's quote is
+ *  what the confirm press sends to buy at that cost. */
+export interface TelnyxNumber {
+  phone_number: string;
+  monthly_cost: string;
+  upfront_cost: string;
+  currency: string;
+  quote: string;
+}
+
+/** `POST /api/calls/line/telnyx/buy` (the kernel's receipt beside it). */
+export interface TelnyxBought {
+  phone_number: string;
+  order_id: string;
+  order_status: string;
+  monthly_cost: string;
+  upfront_cost: string;
+  currency: string;
+  operation_id?: string;
+}
+
+/** A refused Telnyx press: what failed (`error`), what is kept, the next action. */
+export interface TelnyxRefusal {
+  error: string;
+  reason: string;
+  kept?: string;
+  next?: string;
 }
 
 export interface CallResult {

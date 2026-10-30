@@ -1,0 +1,9 @@
+{
+  "status": 409,
+  "body": {
+    "reason": "no_key",
+    "kept": "Your key is kept. Nothing was made at Telnyx.",
+    "next": "Save your Telnyx API key in step 1.",
+    "error": "There is no Telnyx API key."
+  }
+}

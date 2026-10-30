@@ -1,0 +1,23 @@
+{
+  "phone_number": "+12125550100",
+  "order_id": "fde651c4-ec99-4be7-8b0f-51ddbd58ee40",
+  "order_status": "success",
+  "monthly_cost": "1.00",
+  "upfront_cost": "1.00",
+  "currency": "USD",
+  "operation_id": "op_00793e8d9a924df898cf81976421e130",
+  "receipt": {
+    "receipt_id": "rcpt_70e680730da440acaf50b3b6fb272917",
+    "operation_id": "op_00793e8d9a924df898cf81976421e130",
+    "state": "succeeded",
+    "outcome": "succeeded",
+    "result_ref": "phone_number:12125550100/monthly-1.00-USD/upfront-1.00-USD",
+    "created_at": 1793325219.2338371,
+    "actor_kind": "owner",
+    "actor_identity": "line-owner",
+    "delegator_kind": "",
+    "delegator_identity": "",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "target_ref": "phone_number:12125550100/monthly-1.00-USD/upfront-1.00-USD"
+  }
+}

@@ -23,7 +23,9 @@ phone half) and owns each turn of a call.
   ``adapter`` (``line`` | ``ai-phone``; empty: the Line when baresip is
   found, else ai-phone when it is), ``where`` (``this_mac`` | ``node:<name>``)
   and ``account`` (``kind`` ``sip`` | ``telnyx``, ``user``, ``domain``,
-  ``outbound``, ``password_ref``, ``codecs``). The SIP password and the
+  ``outbound``, ``password_ref``, ``codecs``; a Telnyx line also keeps
+  ``connection_id``, its credential connection, and ``number``, the E.164
+  number pointed at it: LINE-3b, ``holdspeak/line/setup.py``). The SIP password and the
   Telnyx key are kept in the hub's keystore (``holdspeak/line/secrets.py``),
   never in this file; ``password_ref`` names the keystore slot.
 """
@@ -69,7 +71,7 @@ DEFAULT_DAILY_LIMIT = 20
 def default_line() -> dict:
     return {"adapter": "", "where": "this_mac", "account": {
         "kind": "sip", "user": "holdspeak", "domain": "", "outbound": "", "password_ref": "",
-        "codecs": ["opus", "PCMU", "PCMA"]}}
+        "connection_id": "", "number": "", "codecs": ["opus", "PCMU", "PCMA"]}}
 
 
 def _line(value: object) -> dict:
@@ -84,7 +86,7 @@ def _line(value: object) -> dict:
     account = value.get("account") if isinstance(value.get("account"), dict) else {}
     kind = str(account.get("kind") or "sip").strip().lower()
     out["account"]["kind"] = kind if kind in LINE_ACCOUNT_KINDS else "sip"
-    for key in ("user", "domain", "outbound", "password_ref"):
+    for key in ("user", "domain", "outbound", "password_ref", "connection_id", "number"):
         text = str(account.get(key) or "").strip()
         if text or key != "user":
             out["account"][key] = text

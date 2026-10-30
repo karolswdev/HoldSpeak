@@ -13,7 +13,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 877 (plus static mounts). iOS-consumed: 89. Web-consumed: 682.
+Routes: 882 (plus static mounts). iOS-consumed: 89. Web-consumed: 687.
 
 ## device_audio_ws
 
@@ -215,6 +215,11 @@ Routes: 877 (plus static mounts). iOS-consumed: 89. Web-consumed: 682.
 | GET | `/api/calls/line/nodes` | web |
 | DELETE | `/api/calls/line/nodes/{node}` | web |
 | GET | `/api/calls/line/status` | web |
+| POST | `/api/calls/line/telnyx/assign` | web |
+| POST | `/api/calls/line/telnyx/buy` | web |
+| POST | `/api/calls/line/telnyx/connect` | web |
+| GET | `/api/calls/line/telnyx/numbers` | web |
+| GET | `/api/calls/line/telnyx/status` | web |
 | POST | `/api/calls/line/test` | web |
 | POST | `/api/calls/place` | web |
 | GET | `/api/calls/status` | web |

@@ -134,6 +134,10 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     from . import phone_ops
 
     specs = specs + phone_ops.specs()
+    # The Line (LINE-3b): buying a Telnyx number is his press.
+    from . import line_ops
+
+    specs = specs + line_ops.specs()
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Phase 143's capability/retry law is pure composition truth.  Building it
     # here makes malformed, duplicate, confusable, or schema-drifted definitions
