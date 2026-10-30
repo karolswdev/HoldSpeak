@@ -1,8 +1,13 @@
 # Firefox companion extension
 
-The extension sends the URL and title of your active Firefox tab to your local HoldSpeak runtime. Activity pre-briefing uses this data to see your browsing as it happens.
+The repository contains a temporary Firefox companion. It builds a small active-tab event (URL, title, time, and tab/window identifiers) and posts it to the configured HoldSpeak runtime. When ingestion is admitted, Activity pre-briefing uses the accepted records to see your browsing as it happens.
 
 The extension is not on addons.mozilla.org. It lives in this repository. You load it as a temporary add-on.
+
+## Current limitation
+
+The current add-on sends no `Authorization` or `X-HoldSpeak-Token` header. The web edge normally requires the runtime credential for `/api` routes, so source inspection does not establish a working authenticated extension path in this checkout. The sections below describe the payload and privacy contract.
+Successful ingestion requires working authentication and an accepted runtime response.
 
 ## Install
 
@@ -15,19 +20,26 @@ The extension is not on addons.mozilla.org. It lives in this repository. You loa
 
 Firefox removes a temporary add-on when it restarts. Load it again each session.
 
+
 ## Check that it works
 
-Open the Activity page of HoldSpeak. A row with the source `firefox_ext` appears after your next tab change.
+The add-on attempts a POST after the next tab change. If the request is admitted, the Activity page shows a row with source `firefox_ext`.
 
 If no row appears:
 
-- Open the browser console (`Ctrl+Shift+J`) and enable the Debug level. The message `[holdspeak-companion] runtime not reachable` means the runtime URL is wrong.
+- Open the browser console (`Ctrl+Shift+J`) and enable the Debug level. The message `[holdspeak-companion] runtime not reachable` means the configured URL could not be reached. `runtime rejected batch` includes the HTTP status; check the runtime credential and route admission before changing the browser setup.
 - Check that HoldSpeak runs on the port in the options.
 - Use a normal window. The extension ignores private windows.
 
 ## What the extension sends
 
-The extension listens for tab activation and for a finished page load. For each event it posts to `/api/activity/extension/events`:
+The extension listens for tab activation and for a finished page load. For each event it posts this body to `/api/activity/extension/events`:
+
+```json
+{"events": [{"url": "https://example.com", "title": "Example", "visited_at": "2026-10-29T12:00:00Z", "tab_id": 1, "window_id": 1}]}
+```
+
+The event fields are:
 
 - `url`
 - `title`
@@ -47,7 +59,8 @@ The runtime enforces this also. The parser in `holdspeak/activity_extension.py` 
 
 ## Trust and storage
 
-- The runtime binds to `127.0.0.1` by default. If you bind it to another address, you own that risk.
+- The runtime binds to `127.0.0.1` by default. The options page accepts another runtime URL.
+The add-on does not add remote API authentication, so that field does not establish supported remote access.
 - The extension stores only the runtime URL, in `browser.storage.local`. It does not buffer or replay events.
 - The extension uses the `tabs`, `activeTab`, and `storage` permissions.
 

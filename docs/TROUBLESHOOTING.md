@@ -1,12 +1,8 @@
 # Troubleshooting
 
-Use this guide when HoldSpeak refuses work, stops after a restart, or shows a
-state you do not expect. Start with `holdspeak doctor`. See
-[Operations](OPERATIONS.md) for the doctor and the backup commands.
-
-The kernel records every operation with a state, a journal and a receipt.
-Read these records before you retry anything. A client timeout does not prove
-that the provider did or did not finish.
+Start with `holdspeak doctor`. Read the operation state, journal, and Receipt
+before you retry a request. A client timeout does not prove whether a provider
+finished.
 
 ## After a restart
 
@@ -24,100 +20,118 @@ flowchart TD
   DECIDE -->|no| UNKNOWN --> RETRY
 ```
 
-At start, the hub repairs the database shape, recovers parent work, checks
-liveness and then repairs projections. A projection never publishes before
-liveness recovery.
+The hub recovers parent work, checks liveness, and repairs projections when it
+starts. It does not invent a success result for work it cannot prove.
 
 ## Operation states
 
-Terminal states are `succeeded`, `failed`, `refused`, `cancelled` and
-`indeterminate`. One operation has one terminal receipt. A retry is a new
-child operation. It never overwrites the first outcome.
+Terminal states are `succeeded`, `failed`, `refused`, `cancelled`, and
+`indeterminate`. A retry is a new child operation.
 
-| State or symptom | Meaning | Action |
+| State | Meaning | Action |
 | --- | --- | --- |
-| `admitting` after restart | Admission stopped before a decision. | Read the journal. Recovery can end it. Do not dispatch from this state. |
-| `awaiting_decision` after restart | The pending decision is no longer safe. | Expect `indeterminate` with `hub_restart_during_decision`. Inspect the destination, then make a new request. |
-| `awaiting_execution` expired | No executor claimed the work before the deadline. | Expect `execution_claim_expired`. Do not reuse the warrant. |
-| `claimed` expired | An executor claimed the work but sent no receipt. | Expect `execution_liveness_expired`. Inspect external effects before you compensate. |
-| `refused` | Admission, authority, destination or liveness blocked the work. | Read the refusal and the journal event. Fix the named cause. |
-| `cancelled` | Cancellation of the parent won. | Do not publish late provider output. |
-| `indeterminate` | The result cannot be proved. | Inspect the receipt and the destination. Never call it success. |
-| `succeeded` | A success receipt exists. | Confirm the native result. |
-| `failed` | The executor wrote a failure receipt. | Read the outcome. A new operation may be needed. |
+| `admitting` | Admission stopped before a final decision. | Read the journal. Do not dispatch from this state. |
+| `awaiting_decision` | A pending decision was interrupted. | Expect `indeterminate` or a restart refusal. Inspect the destination. |
+| `awaiting_execution` | No executor claimed the work before its deadline. | Confirm that no external work started, then make a new operation. |
+| `claimed` | An executor claimed work but supplied no receipt. | Treat any external result as unknown. |
+| `refused` | Admission, authority, destination, or liveness blocked work. | Fix the named cause. |
+| `cancelled` | The parent cancellation won. | Do not publish late provider output. |
+| `indeterminate` | HoldSpeak cannot prove the outcome. | Inspect the destination before any retry. |
+| `succeeded` | A success Receipt exists. | Read the native result and affected record. |
+| `failed` | The executor wrote a failure Receipt. | Read the error and decide whether a new operation is safe. |
 
 ## Refusal codes
 
 | Code | Cause | Action |
 | --- | --- | --- |
-| `principal_right_required` | The credential lacks the right for the route. | Check the principal kind in `holdspeak/principals.py`. |
-| `unknown_operation` | No operation or policy family is registered. | Use a registered operation. YOLO does not change this. |
-| `idempotency_payload_mismatch` | An idempotency key came back with a changed request. | Use the original request, or a new key. |
-| `parent_operation_unknown`, `parent_operation_not_running`, `parent_operation_not_live` | The parent operation is missing, not running or no longer live. | Inspect the parent operation and its warrant. |
-| `execution_claim_expired` | No claim before the deadline. | Check that no external work started. Then make a new request. |
-| `execution_liveness_expired` | The executor sent no receipt. | Treat the external result as unknown. |
-| `hub_restart_during_decision` | A restart cancelled an open decision. | Decide if a new operation is safe. |
-| `kernel_parent_publication_in_progress` | Another path is publishing the parent. | Wait and read again. Do not force a state write. |
-| `delegation_missing`, `delegation_revoked`, `delegation_expired` | The schedule has no live authority. | Inspect the delegation and the schedule. |
-| `delegation_target_changed` | The schedule target differs from the approved terms. | Approve the new terms again. |
-| `duplicate_tick` | The schedule already ran for this minute. | Inspect the receipt ledger before a retry. |
-| `mic_floor_held`, `missed` | A scheduled recording could not start in its window. | Read the receipt for the holder or the missed window. |
-| `owner_rejected` | The owner rejected the operation. | Make a new proposal if the intent changed. |
+| `principal_right_required` | The credential lacks the route right. | Use the correct principal or owner surface. |
+| `unknown_operation` | The operation is not registered. | Use a documented operation. Control mode does not add one. |
+| `idempotency_payload_mismatch` | A key was reused with changed arguments. | Repeat the original request or use a new key. |
+| `parent_operation_unknown`, `parent_operation_not_running`, `parent_operation_not_live` | The parent is missing or no longer live. | Read the parent and its Receipt. |
+| `execution_claim_expired`, `execution_liveness_expired` | The executor did not prove work in time. | Inspect external effects before retry. |
+| `hub_restart_during_decision` | A restart canceled an open decision. | Make a new request only after destination review. |
+| `delegation_missing`, `delegation_revoked`, `delegation_expired` | A scheduled task has no live authority. | Inspect the delegation and Automation terms. |
+| `delegation_target_changed` | Schedule terms differ from approved terms. | Approve the new terms again. |
+| `duplicate_tick` | The same scheduled minute already ran. | Read the run ledger. |
+| `owner_rejected` | The owner rejected the operation. | Make a new proposal when intent changes. |
 
 ## An agent gets a forbidden response
 
-1. Check that the agent credential is current. Agent credentials expire and
-   an owner can revoke them.
-2. Check the route. Routes for `decide`, `posture`, `delegate` and
-   `node.link` need more than an agent right.
-3. Remember that an agent cannot become an owner or a node.
+1. Check that the agent credential is current.
+2. Check the MCP palette and the selected agent profile.
+3. Check whether the operation is `work`, `egress`, `authority`, or `config`.
+4. Remember that an agent cannot become the owner or a mesh node.
 
-Agent credentials are held in memory. A hub restart clears them.
+A Thread receives only tools classified as work. A launched CLI run receives
+only its scoped HoldSpeak MCP credential when that preset supports Desk tools.
+The Gemini CLI can retain its own read-only tools. Do not diagnose every tool
+absence as a global tool-off setting.
+
+## A coding handoff will not start
+
+Read the preview and launch record. Common named refusals are:
+
+| Refusal | Action |
+| --- | --- |
+| `no_repository` | Register or connect a local Project repository. |
+| `repository_not_registered` | Register the repository watched by the Project Room. |
+| `profile_unknown` | Choose an installed Claude Code, Codex, or pi profile. |
+| `executable_absent` | Put the selected CLI on PATH. |
+| `tmux_absent` | Install and expose tmux. |
+| `launch_cap_reached` | Queue the hand with **Start when one is free**. |
+| `brief_over_cap` | Reduce source scope or instruction length. |
+| `hooks_missing` or `codex_hooks_untrusted` | Install or trust the relevant rider hooks, then resume the held brief. |
+| `worktree_duplicate` | Inspect the earlier launch. Hand again resumes stopped work only when its worktree is eligible. |
+
+## An Automation did not run
+
+Check the saved **When**, its enabled state, and the local time zone. A
+schedule can be saved but off when **With** has no ready engine or agent. A
+full handoff queue can return `queued` instead of starting a process. Read the
+run record, item result, and Receipt.
+
+For a destination result, distinguish **Prepared** from **Sent**. A saved
+destination waits for your **Send** press.
+
+## An MCP client cannot connect
+
+The local sidecar needs a running `holdspeak web`. It proxies to the hub and
+does not open the database itself. Start the hub, then retry. For Reach, check
+the remote flag, `Authorization: Bearer` credential, palette, listener, and
+network path. Do not put the token in a URL.
 
 ## An approval did not run
 
-Read three things separately: the proposal review, the authorization state
-and the execution state. Then read the operation and its receipt. An approved
-proposal can wait for a claim, fail at its adapter, be cancelled or be
-`indeterminate`. [Authority](AUTHORITY.md) defines the terms.
+Read the proposal, authorization, execution, operation, and Receipt as
+separate records. An approved proposal can wait for a claim, fail at its
+adapter, be canceled, or become indeterminate.
 
 ## YOLO refused the work
 
-YOLO sets the mode for future operations. It is not a bypass. These cases
-still refuse:
-
-- an unsupported operation family
-- an unknown destination
-- a missing fixed-destination registration
-- secret custody and payload binding
-- a missing receipt requirement
-
-Read the refusal before you change the mode or a grant. The rules are in
-`holdspeak/operation_policy.py`.
+YOLO is the default Control mode, not a bypass. It still refuses unsupported
+operations, unknown destinations, missing fixed-destination registrations,
+secret-custody violations, and missing Receipt requirements.
 
 ## Database problems
 
-1. Run `holdspeak doctor`. The database check reads the file and counts
-   tables. The hub repairs the shape when it opens the database.
-2. Stop the hub. Copy the file together with its `-wal` and `-shm` files.
-3. Do not edit schema rows. Do not delete journal events.
-4. Restore only from a validated backup, and only with the hub stopped. See
-   [Operations](OPERATIONS.md).
-5. Run the doctor again. Check your records and receipts.
+1. Run `holdspeak doctor`.
+2. Stop the hub before copying or restoring its database.
+3. Copy the database together with its `-wal` and `-shm` files.
+4. Restore only from a validated backup. Do not edit schema rows or journal
+   events.
+5. Start the hub, run the doctor again, and inspect records and Receipts.
 
-Shape repair only adds. It does not drop tables, columns or rows. A newer
-informational `schema_version` alone is not a failure.
+The hub's shape repair adds missing structures. It does not drop tables,
+columns, or rows. See [Operations](OPERATIONS.md).
 
 ## Search or a card shows old data
 
-Transcript search reads `segments_fts`. Triggers keep it in step with
-`segments`. If a card disagrees with a receipt, trust the operation, journal
-and receipt. Then let the owning repair path run.
-
-Never write a fake success receipt to fix a projection.
+Trust the operation, journal, and Receipt when a projection disagrees with a
+result. Let the owning repair path rebuild the projection. Never write a fake
+success Receipt.
 
 ## What the records cannot tell you
 
-The records cannot show whether a provider acted after a lost response, or
-whether a person saw a control. Mark these facts unknown. Keep the operation
-id. Do not replace the gap with a success status.
+The records cannot prove that an external provider acted after a lost
+response, or that a person saw a control. Mark those facts unknown and keep
+the operation id.

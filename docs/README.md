@@ -1,114 +1,134 @@
 # HoldSpeak documentation
 
-This index lists every guide and reference by reader task.
-The product overview and install steps are in the [root README](../README.md).
-A line marked "(overlaps X)" repeats part of X. Read X first.
+HoldSpeak is an agentic-first, web-based AI operating system backed by a local hub.
+Use these guides to take work from context to a result you can inspect.
+Start with [What is HoldSpeak?](WHAT_IS_HOLDSPEAK.md) or the [root README](../README.md).
+
+## Choose a complete flow
+
+| You want to | Start here | Continue with |
+| --- | --- | --- |
+| Turn an idea into useful work | [Notes and thought development](USER_GUIDE.md#develop-a-thought) | [Architecture work](ARCHITECTURE_WORK.md) |
+| Take a meeting through follow-up | [Meeting mode](MEETING_MODE_GUIDE.md) | [Intelligence](MEETING_INTELLIGENCE.md), [Aftercare](MEETING_AFTERCARE.md) |
+| Ask about records and use tools | [The Desk](WEB_DESK.md#ask-about-your-work) | [Agents and Threads](AGENTS_AND_THREADS.md) |
+| Hand a task to a coding agent | [Coder integration](CODER_INTEGRATION.md) | [Agent hooks](AGENT_HOOK_INSTALL.md), [Gate](GATE.md) |
+| Run a multi-step implementation goal | [Programs](programs.md) | [Coder integration](CODER_INTEGRATION.md) |
+| Work by phone or receive a work call | [Calls and The Line](calls.md) | [Phone](phone.md) |
+| Make a useful job repeat | [Automation](AUTOMATION.md) | [Project Watches](PROJECT_ROOMS.md), [Cadence](CADENCE.md) |
+| Lead a Project or prepare for a 1:1 | [Project Rooms](PROJECT_ROOMS.md) | [People](PEOPLE_INTEGRATION.md), [Memory](RELATIONSHIP_AWARE_MEMORY.md) |
+| Put spoken words in another app | [Voice typing](USER_GUIDE.md#voice-typing) | [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
+| Repair a failed run | [Troubleshooting](TROUBLESHOOTING.md) | [Operations](OPERATIONS.md), [Models](MODELS.md) |
+
+The [Use cases](USE_CASES.md) guide connects starts, actions, results, and completion checks.
+A model answer, queued job, proposal, agent launch, and completed effect have different meanings.
+The owning guide explains how to inspect the result.
 
 ## Use
 
-| You want to | Read |
+| Task | Guide |
 | --- | --- |
-| See what HoldSpeak does | [What is HoldSpeak?](WHAT_IS_HOLDSPEAK.md) |
-| Choose a workflow by the result you need | [Use cases](USE_CASES.md) |
-| Install HoldSpeak and keep a first sentence | [Getting Started](GETTING_STARTED.md) |
-| Do a daily task or find a control | [User Guide](USER_GUIDE.md) |
-| Learn a product term | [Glossary](GLOSSARY.md) |
-| Dictate into another app | [Voice typing](USER_GUIDE.md#voice-typing) |
-| Set up the dictation pipeline | [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
-| See one enriched dictation run | [Dictation Copilot](DICTATION_COPILOT.md) |
-| Map spoken keywords to actions | [Voice commands](VOICE_COMMANDS.md) |
-| Review recent activity before you dictate | [Activity pre-briefing](ACTIVITY_PREBRIEFING.md) |
-| Record, import, and review a meeting | [Meeting mode](MEETING_MODE_GUIDE.md) |
-| Read the follow-up digest of a meeting | [Meeting aftercare](MEETING_AFTERCARE.md) |
-| Describe your goals, Projects, and decisions | [Interview](INTERVIEW.md) |
-| Prepare a decision brief or agent brief | [Architecture work](ARCHITECTURE_WORK.md) |
-| Work with Desk objects and windows | [The Desk](WEB_DESK.md) |
-| Read the attention and receipt model (its face is parked) | [Missed](DESK_MEMORY.md) |
-| Find earlier work across your records | [Memory](RELATIONSHIP_AWARE_MEMORY.md) |
-| Connect sources to a Project | [Project Rooms](PROJECT_ROOMS.md) |
-| Select a wallpaper | [Places](ENVIRONMENTS.md) |
-| Use confidential relationship records | [People integration](PEOPLE_INTEGRATION.md) |
-| Use Ask, Threads, Agents, and Workflows | [Agents and Threads](AGENTS_AND_THREADS.md) |
-| Use HoldSpeak on an iPad | [iPad](IPAD.md) |
-| Use the AIPI-Lite device | [AIPI-Lite](AIPI_LITE.md) |
-| Install the browser activity connector | [Firefox extension](FIREFOX_EXTENSION_GUIDE.md) |
+| Install and try the Desk | [Getting Started](GETTING_STARTED.md) |
+| Find a daily control or task | [User Guide](USER_GUIDE.md) |
+| Open tools, arrange windows, and file records | [The Desk](WEB_DESK.md) |
+| Understand a product term | [Glossary](GLOSSARY.md) |
+| Develop goals, Projects, and working context | [Interview](INTERVIEW.md) |
+| Prepare a decision or implementation brief | [Architecture work](ARCHITECTURE_WORK.md) |
+| Review current work and retained attention | [Desk Memory](DESK_MEMORY.md) |
+| Find earlier records and source evidence | [Memory](RELATIONSHIP_AWARE_MEMORY.md) |
+| Prepare with confidential People context | [People integration](PEOPLE_INTEGRATION.md), [People security](PEOPLE_SECURITY.md) |
+| Choose wallpaper and presentation preferences | [Environments](ENVIRONMENTS.md) |
+| Correct, enrich, and replay dictation | [Dictation Copilot](DICTATION_COPILOT.md), [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
+| Use spoken commands | [Voice commands](VOICE_COMMANDS.md) |
+| Attach recent activity to dictation | [Activity prebriefing](ACTIVITY_PREBRIEFING.md) |
 
 ## Configure
 
-| You want to | Read |
+| Task | Guide |
 | --- | --- |
-| Select engines and assign models | [Models](MODELS.md) |
-| Understand models versus assignments | [Inference targets](INFERENCE_TARGETS.md) (overlaps [Models](MODELS.md)) |
-| Choose a manual, event, or scheduled run | [Automation](AUTOMATION.md) |
-| Review open loops on a schedule | [Cadence](CADENCE.md) |
-| Set a Control mode | [Control modes](AUTHORITY.md) |
-| Guard coding agent tool calls | [Gate](GATE.md) |
-| Connect Claude Code or Codex sessions | [Agent hooks](AGENT_HOOK_INSTALL.md) |
-| Steer coder sessions from the Desk | [Coder integration](CODER_INTEGRATION.md) |
-| Run a goal as steps, each done by an agent | [Programs](programs.md) |
-| Call your desk from your phone | [Calls](calls.md) |
-| Run HoldSpeak's own phone line | [The Line](calls.md#the-line) |
-| Let the desk message or call your phone | [Phone](phone.md) |
-| Connect an MCP client (306 tools across 52 families) | [MCP sidecar](MCP_SIDECAR.md) |
-| Run a remote sweep and steward | [Reach Runner](REACH_RUNNER.md) |
-| Set up connectors and actuators | [Integrations](INTEGRATIONS.md) |
-| Place work on a destination | [Execution destinations](EXECUTION_DESTINATIONS.md) |
+| Select engines and assign jobs | [Models](MODELS.md), [Inference targets](INFERENCE_TARGETS.md) |
+| Configure recurring work and result placement | [Automation](AUTOMATION.md) |
+| Configure Project sources and Steward behavior | [Project Rooms](PROJECT_ROOMS.md) |
+| Choose operation authority | [Control modes](AUTHORITY.md) |
+| Set up installed coding-agent hooks | [Agent hooks](AGENT_HOOK_INSTALL.md) |
+| Understand held agent tool calls | [Gate](GATE.md) |
+| Connect an MCP client, 306 tools across 52 families | [MCP sidecar](MCP_SIDECAR.md) |
+| Run a remote Project sweep | [Reach Runner](REACH_RUNNER.md) |
+| Configure sources and outgoing destinations | [Integrations](INTEGRATIONS.md) |
+| Understand execution placement | [Execution destinations](EXECUTION_DESTINATIONS.md) |
 | Look up a configuration field | [Configuration reference](CONFIGURATION_REFERENCE.md) |
+
+The full MCP catalogue is larger than any individual caller's allowed palette.
+A tool's presence does not grant permission to execute it.
 
 ## Extend
 
-| You want to | Read |
+| Task | Guide |
 | --- | --- |
-| Write a meeting plugin | [Plugin authoring](PLUGIN_AUTHORING.md) |
-| Write an activity connector | [Connector development](CONNECTOR_DEVELOPMENT.md) |
-| Write an actuator | [Actuator development](ACTUATOR_DEVELOPMENT.md) |
-| Build for a portable device | [AIPI-Lite workflow](AIPI_LITE_DEV_WORKFLOW.md) and [Device protocol](DEVICE_PROTOCOL.md) |
-| Find an HTTP route | [API surface](API_SURFACE.md) and [API reference](API_REFERENCE.md) (overlaps [API surface](API_SURFACE.md)) |
-| Find a capability and its evidence | [Capabilities](CAPABILITIES.md) |
-| Build or change a Web surface | [Design author map](../web/README.md#design-author-map), [UX Canon](internal/UX-CANON.md), and [Design System](internal/DESIGN_SYSTEM.md) |
-| Follow shared component APIs | [Surface contract](../web/src/desk/surface/contract.md); executable examples in the desk's Components window |
-| Change the code | [Contributing](../CONTRIBUTING.md) |
+| Add a typed meeting output | [Plugin authoring](PLUGIN_AUTHORING.md) |
+| Read activity from another tool | [Connector development](CONNECTOR_DEVELOPMENT.md) |
+| Add a supported external effect | [Actuator development](ACTUATOR_DEVELOPMENT.md) |
+| Find HTTP operations | [API surface](API_SURFACE.md), [API reference](API_REFERENCE.md) |
+| Find implementation and evidence metadata | [Capabilities](CAPABILITIES.md) |
+| Change the web surface | [Design author map](../web/README.md#design-author-map), [Desk architecture](DESK_ARCHITECTURE.md) |
+| Compose shared controls and document patterns | [Surface contract](../web/src/desk/surface/contract.md), [UI contract](WEB_UI_UX_SYSTEM_AUDIT.md) |
+| Set up and submit a development change | [Contributing](../CONTRIBUTING.md) |
 
 ## Operate
 
-| You want to | Read |
+| Task | Guide |
 | --- | --- |
-| Run the doctor, back up, and restore | [Operations](OPERATIONS.md) |
-| Fix a failed job or refusal | [Troubleshooting](TROUBLESHOOTING.md) |
-| Upgrade and release | [Releasing](RELEASING.md) |
-| Repair the database | [Storage and migrations](STORAGE_AND_MIGRATIONS.md) |
-| Read the security contract | [Security and privacy](SECURITY.md) |
-| Protect People records | [People security](PEOPLE_SECURITY.md) |
-| Check platform support | [Platform matrix](PLATFORMS.md) |
+| Diagnose, back up, and restore | [Operations](OPERATIONS.md) |
+| Recover a failed job or named refusal | [Troubleshooting](TROUBLESHOOTING.md) |
+| Upgrade or prepare a release | [Releasing](RELEASING.md) |
+| Understand schema reconciliation and storage | [Storage and migrations](STORAGE_AND_MIGRATIONS.md) |
+| Understand data boundaries | [Security and privacy](SECURITY.md), [Security model](SECURITY_MODEL.md) |
+| Check platform-specific metadata | [Platform matrix](PLATFORMS.md) |
 
 ## Architecture
 
-| You want to | Read |
+| Question | Reference |
 | --- | --- |
-| See the system on one page | [System architecture](SYSTEM_ARCHITECTURE.md) |
-| Read the runtime map | [Architecture](ARCHITECTURE.md) |
-| See the deployment and job owners | [System integration map](SYSTEM_INTEGRATION_MAP.md) (overlaps [System architecture](SYSTEM_ARCHITECTURE.md) and [Kernel](KERNEL.md)) |
-| Read the operation runtime | [Kernel](KERNEL.md) |
-| Read the domain terms | [Domain model](DOMAIN_MODEL.md) |
-| Read the tables and keys | [Data model](DATA_MODEL.md) (overlaps [Domain model](DOMAIN_MODEL.md)) |
-| Trace a model call | [Model runtime](MODEL_RUNTIME.md) |
-| Trace authority to code | [Authority model](AUTHORITY_MODEL.md) |
-| Read the security controls | [Security model](SECURITY_MODEL.md) |
-| Read the dictation code path | [Dictation architecture](DICTATION_ARCHITECTURE.md) |
-| Read the meeting code path | [Meeting architecture](MEETING_ARCHITECTURE.md) and [Meeting intelligence](MEETING_INTELLIGENCE.md) |
-| Read the Desk code | [Desk architecture](DESK_ARCHITECTURE.md) and [Desk object model](DESK_OBJECT_MODEL.md) |
-| Read the companion topology | [Companions architecture](COMPANIONS_ARCHITECTURE.md) |
+| How do the parts fit? | [System architecture](SYSTEM_ARCHITECTURE.md) |
+| How does a work flow execute? | [Architecture](ARCHITECTURE.md) |
+| Which process and boundary owns it? | [System integration map](SYSTEM_INTEGRATION_MAP.md) |
+| Which record owns the content or result? | [Domain model](DOMAIN_MODEL.md), [Data model](DATA_MODEL.md) |
+| How do model choices become attempts? | [Model runtime](MODEL_RUNTIME.md) |
+| How are operations admitted and recovered? | [Kernel](KERNEL.md), [Authority model](AUTHORITY_MODEL.md) |
+| How do windows and objects work? | [Desk architecture](DESK_ARCHITECTURE.md), [Desk object model](DESK_OBJECT_MODEL.md) |
+| How does speech become typed text? | [Dictation architecture](DICTATION_ARCHITECTURE.md) |
+| How does meeting intelligence persist? | [Meeting architecture](MEETING_ARCHITECTURE.md), [Intelligence](MEETING_INTELLIGENCE.md) |
+| How do other clients reach the hub? | [Companion architecture](COMPANIONS_ARCHITECTURE.md) |
+
+## Calls, Phone, and optional clients
+
+[Calls](calls.md) documents phone conversations and The Line adapter.
+[Phone](phone.md) documents attention rules, configured number calls, and the incomplete iPhone-app transport.
+
+<a id="optional-clients-and-devices"></a>
+
+The browser Desk is the main product surface.
+These integrations have their own installation, transport, and availability limits.
+
+| Integration | Guide |
+| --- | --- |
+| Swift iPad client | [iPad](IPAD.md) |
+| ESP32-S3 audio device | [AIPI-Lite](AIPI_LITE.md), [development workflow](AIPI_LITE_DEV_WORKFLOW.md) |
+| Compatible audio bridge | [Device protocol](DEVICE_PROTOCOL.md) |
+| Firefox activity extension | [Firefox extension](FIREFOX_EXTENSION_GUIDE.md) |
 
 ## Internal records
 
-The [native-experience research](internal/betterment/native-experience/README.md)
-records the React-stack direction, source audit, browser capabilities and
-proposed production-pattern delivery plan. It distinguishes research from
-shipped behavior and aesthetic acceptance.
+[Internal documentation](internal/) holds canon, source audits, plans, and historical verification.
+A plan describes intended work. A release record establishes only its named revision and observed scope.
+Neither is a substitute for the current public procedure or implementation source.
 
-Files under [internal](internal/) hold canon, plans, and history.
-Canon states the current rules. Plans can describe behavior that is not built;
-release records describe their named revision and observed scope. Use the
-[design author map](../web/README.md#design-author-map) for current interface
-ownership and the [modernization record](internal/betterment/MODERNIZATION-IMPLEMENTATION-2026-10-22.md)
-for this implementation's adoption and verification.
+The [native-experience package](internal/betterment/native-experience/README.md) records the React-stack direction and delivery research.
+The [modernization record](internal/betterment/MODERNIZATION-IMPLEMENTATION-2026-10-22.md) records its implementation scope and verification.
+The [documentation writing standard](internal/DOCS_STYLE.md) defines language and source-review requirements.
+
+Generated inventories keep their recorded snapshot and evidence labels.
+The API surface lists reference-app routes, including compatibility handlers that can return a named refusal.
+Consumer tags are static source matches and can include parked clients.
+The capability and platform tables cover a pinned metadata baseline, not every current feature.
+Read each task guide for its active controls and required setup.
+Source review, passing fixture tests, and a working physical deployment are different evidence.

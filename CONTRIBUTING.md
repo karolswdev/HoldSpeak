@@ -1,7 +1,8 @@
 # Contributing to HoldSpeak
 
-Use this guide to prepare, verify, and submit a change. For an installation
-without development tools, read [Getting Started](docs/GETTING_STARTED.md).
+Use this guide to change the HoldSpeak Desk, domain services, agent integrations, or documentation.
+The product is an agentic-first browser workspace backed by a local hub.
+For a normal installation, read [Getting Started](docs/GETTING_STARTED.md).
 
 ## Set up a checkout
 
@@ -11,13 +12,12 @@ platform audio dependencies listed in Getting Started.
 ```sh
 git clone https://github.com/karolswdev/HoldSpeak.git
 cd HoldSpeak
-uv venv
+uv sync --extra dev
 source .venv/bin/activate
-uv pip install -e '.[dev]'
 ```
 
 The build hook installs the web dependencies and builds the bundled app. On
-Linux, add the `linux` extra to get transcription. Add other extras only for
+Linux, use `uv sync --extra dev --extra linux` to include transcription. Add other extras only for
 the capabilities you work on. See [Models](docs/MODELS.md).
 
 ## Read the contract for your change
@@ -26,7 +26,8 @@ the capabilities you work on. See [Models](docs/MODELS.md).
 | --- | --- |
 | Product behavior | [Constitution](docs/internal/CONSTITUTION.md) and the feature guide |
 | Web interface | [Design author map](web/README.md#design-author-map), [UX canon](docs/internal/UX-CANON.md), and [frontend architecture](docs/internal/ARCHITECTURE_WEB_FRONTEND.md) |
-| Runtime or meeting session | [Backend architecture](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md) |
+| Domain service or runtime | [System architecture](docs/SYSTEM_ARCHITECTURE.md), [backend architecture](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md) |
+| Agent, tool loop, or automation | [Agents and Threads](docs/AGENTS_AND_THREADS.md), [Automation](docs/AUTOMATION.md), [Model runtime](docs/MODEL_RUNTIME.md) |
 | Documentation | [Writing standard](docs/internal/DOCS_STYLE.md) and [terminology register](docs/internal/DOCS_TERMINOLOGY.md) |
 | API or MCP contract | [API surface](docs/API_SURFACE.md) and [MCP sidecar](docs/MCP_SIDECAR.md) |
 
@@ -85,14 +86,20 @@ of the automated checks.
 
 ```sh
 python scripts/check_docs.py
-python -m unittest discover -s tests/unit -p test_docs_navigation.py
-python docs/internal/architect-assistant/proof/run_tests.py -q --tb=short tests/unit/test_doc_drift_guard.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_api_surface.py
+HOME="$(mktemp -d)" uv run python scripts/test_lock.py -- uv run pytest -q -n 8 --dist worksteal tests/unit/test_docs_navigation.py tests/unit/test_doc_drift_guard.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_api_surface.py tests/unit/test_phase200_doc_claims.py
 ```
 
-The proof driver isolates the Python home before it imports pytest. The
+The lock serializes the run with other lanes.
+The command sets HOME before the test process starts. The
 navigation check verifies local links and heading targets. The drift guards
 compare documented counts, terms and generated contracts with their sources.
+Registered-claim checks bind documented statements to implementation probes.
+If you change a registered statement, update its evidence and anchor in the same change.
 These checks do not certify STE vocabulary. Review it by hand.
+
+Preserve generated regions and incoming heading links.
+Keep a target requirement separate from implemented behavior and a source inspection separate from a successful live run.
+Describe the source, trigger, executor, authority, output, and failure path when you document an agentic flow.
 
 After you change HTTP routes or MCP tools, regenerate the references:
 

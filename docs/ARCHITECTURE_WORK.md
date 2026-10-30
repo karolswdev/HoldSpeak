@@ -1,153 +1,146 @@
 # Architecture work recipes
 
-Use these recipes to prepare decisions and direct work during an architecture
-change. Each recipe produces a manual draft from the records that HoldSpeak
-holds. A recipe is a working method. HoldSpeak does not discover your
-organization and does not run your transformation.
+Use these recipes to turn existing context into a decision brief, meeting agenda, implementation task, or recurring review.
+Each recipe names its inputs, current Desk path, and result to inspect.
+Models can help prepare work. Your organization's decision rights remain yours to establish.
 
 ## Prepare the working context
 
-1. Open an [Interview](INTERVIEW.md) Thread.
-2. Describe one outcome in **Goals**.
-3. Select the Project in **Projects**.
-4. Write your constraints in **What matters**.
-5. Check the facts saved under **Context**.
+1. Keep the goal and constraints as a Note.
+2. Open the relevant Project or source records.
+3. Select **Ask about this**, or open Ask and choose records through the toolbar scope menu.
+4. Describe the output and identify unknown facts.
+5. Inspect the returned sources before using the draft.
 
-Example outcome: "Make architecture decisions easier to review and revisit."
+Example: “Make architecture decisions easier to review and revisit.”
+Add the evidence you require, a deadline when known, and the work that can be delegated.
+Ask one follow-up at a time when the constraints are unclear.
+Use **Save as note** for the working brief.
 
-Useful constraints are a decision deadline, the evidence you require, and the
-work you can delegate. Mark uncertain information as an assumption.
+About supplies a starting point for retrieval.
+A tool-capable engine can inspect additional permitted Desk records.
+A Project-specific service can enforce a narrower scope.
 
 ## Recipe: prepare a decision review
 
-**Input:** a Project, its decision records and the question under review.
-**Output:** a draft review brief with sources and open questions.
+**Input:** A Project, relevant decision records, and the question under review.
+**Output:** A review brief with evidence, open questions, and review conditions.
 
-1. Select **Decision log** in Interview.
-2. Send this request:
+1. Open Ask from the Project or selected decision.
+2. Enter this request:
 
-   > Prepare a decision review for the selected Project.
-   > Separate recorded facts from assumptions.
-   > Include the rationale, open questions and conditions for review.
-   > Identify missing evidence. Do not invent records.
+   > Prepare a decision review from these records.
+   > Separate facts from assumptions and new options.
+   > Include rationale, open questions, and review conditions.
+   > Cite evidence and name missing information.
 
-3. Inspect the returned sources.
-4. Ask for corrections to each unsupported claim.
-5. Keep the final reply as a Note or an Artifact.
+3. Open the sources returned with the answer.
+4. Correct unsupported claims through a follow-up.
+5. Select **Save as note** for the reviewed draft.
 
-Check the draft against this outline.
-
-| Field | Required content |
+| Field | Content to check |
 | --- | --- |
-| Question | The decision, in one sentence |
-| Context | Facts and their source references |
-| Options | Recorded options and labeled new proposals |
-| Constraints | Stated requirements and open assumptions |
-| Rationale | The reasons for the choice |
-| Authority | The decision owner, if known |
-| Review condition | The change that needs another review |
-| Gaps | Evidence or input you still need |
+| Question | The decision in one sentence |
+| Context | Facts with source references |
+| Options | Recorded alternatives and labeled new proposals |
+| Constraints | Requirements and explicit assumptions |
+| Rationale | Reasons supported by the available evidence |
+| Decision owner | Named authority, or an explicit unknown |
+| Review condition | A change that should trigger another review |
+| Gaps | Evidence or input still needed |
 
-A saved brief does not approve a decision. Use your organization's process for
-acceptance and decision rights. HoldSpeak does not infer those rights from a
-job title or a Project name.
+A saved brief does not establish organizational acceptance.
+Confirm the decision through the applicable decision process and record its outcome.
 
 ## Recipe: prepare a transformation meeting
 
-**Input:** a meeting purpose and chosen Notes, decisions or earlier Meetings.
-**Output:** an agenda and questions that the records support.
+**Input:** A meeting purpose and relevant Notes, decisions, or Meetings.
+**Output:** An agenda and questions linked to that evidence.
 
-1. Open a Thread.
-2. Attach the records with `@`.
-3. Send this request:
+1. Open Ask and choose the starting records through the toolbar scope menu.
+2. Describe the meeting's purpose and participants when known.
+3. Ask for an agenda with open decisions, changed assumptions, and owner questions.
+4. Inspect its sources and replace guessed dates or owners with explicit unknowns.
+5. Select **Save as note** for the agenda.
 
-   > Prepare an agenda for this review.
-   > Identify open decisions, changed assumptions and questions that need an owner.
-   > Cite the attached records.
-   > Leave unknown dates and owners as placeholders.
+Record or import the meeting through [Meeting mode](MEETING_MODE_GUIDE.md).
+Review its transcript and intelligence before confirming a decision or commitment.
+Use the prior agenda as context for an Ask about what changed.
 
-4. Check each question against its source.
-5. Keep the agenda as a Note.
-
-After the meeting, review the transcript and results in
-[Meeting mode](MEETING_MODE_GUIDE.md). Compare them with the agenda before you
-change a decision or send a follow-up. Use [People](PEOPLE_INTEGRATION.md) for
-confidential relationship context.
+Confidential relationship editing belongs in [People](PEOPLE_INTEGRATION.md).
+Its protected store and access rules differ from an ordinary Note.
 
 ## Recipe: prepare an agent brief
 
-**Input:** a task, a Project and the limits of the work.
-**Output:** a brief that you review before you give it to a Coder session or
-another agent.
+**Input:** A task, its Project, repository, constraints, and acceptance evidence.
+**Output:** A reviewed brief and a launched coding session when the prerequisites are ready.
 
-1. Select **Delegation** in Interview.
-2. Describe the task and its allowed scope.
-3. Send this request:
+1. Create a task from a Note or an Ask answer using its supported task control.
+2. Associate the work with the Project and repository.
+3. Select **Hand to agent** on the supported source item.
+4. Inspect the brief, source context, repository, branch, and worktree.
+5. Choose the installed agent and optional reviewer.
+6. Launch the work, or queue it when the concurrency limit is full.
 
-   > Prepare a brief to investigate the stated architecture question.
-   > Include the sources, the expected output and the validation method.
-   > List assumptions and missing prerequisites.
-   > Keep execution and configuration changes as proposals.
-
-4. Add the repository, branch and paths if the task needs code access.
-5. Name the actions that need your decision.
-6. Keep the reviewed brief.
-
-Check these fields before you deliver the brief.
-
-| Field | Question |
+| Brief element | Question to answer |
 | --- | --- |
-| Objective | What result must the worker produce? |
-| Scope | Which systems, repositories and files are in scope? |
-| Sources | Which records can the worker use? |
-| Authority | Which actions can the worker do? |
-| Checkpoint | When must the worker return for a decision? |
-| Validation | What evidence shows that the result works? |
-| Completion | What must exist before you accept the result? |
+| Outcome | What must be true when the task is done? |
+| Scope | Which systems, files, and changes are allowed? |
+| Constraints | What must the implementation preserve? |
+| Sources | Which records support the task? |
+| Validation | Which result or check shows that the change works? |
+| Completion | What artifact and review result must return? |
 
-Interview prepares the brief. It does not start a worker. To deliver the brief,
-use [Coder steering](USER_GUIDE.md#steer-a-session-from-the-desk) or your own
-agent client. Check the [authority rules](AUTHORITY.md) first.
+The launch creates an execution attempt, not a completed implementation.
+Review the agent's result and repository changes before accepting the task.
+A CLI engine used to answer an Ask is a separate path from that repository session.
+Read [Coder integration](CODER_INTEGRATION.md) for dependencies, queueing, and session replies.
 
 ## Recipe: test a recurring review by hand
 
-**Input:** an output that helped once, a frequency and its sources.
-**Output:** a repeatable recipe and a decision on whether to automate it.
+**Input:** A useful output, the records it needs, and a desired frequency.
+**Output:** A tested instruction that can become an Automation.
 
-1. Select **Cadences** in Interview.
-2. Describe the result you want to repeat.
-3. State the day, time and time zone.
-4. Request a manual trial with the available sources.
-5. Review the draft and record corrections.
-6. Keep the recipe if the trial helps.
+1. Use Ask to prepare the output once from known records.
+2. Check its evidence and correct the instruction.
+3. Create an Automation with that instruction in **Do**.
+4. Choose **About**, **With**, and **Put it in**.
+5. Run a manual trial and inspect its retained result.
+6. Enable a supported **When** trigger only after the trial is useful.
 
-Example: "Every Friday, prepare open decisions for my Monday architecture
-review." This sentence describes a wanted cadence. It does not install one.
-Read [Automation](AUTOMATION.md) to find an execution path that supports it.
+Example: draft open architecture decisions each Friday and put the result in My Inbox.
+This becomes recurring work only when the saved trigger, executor, and authority are configured.
+The hub must be running when the job is due.
+Read [Automation](AUTOMATION.md) for source sets, agent handoffs, and result placement.
 
-Before you automate, check the trigger, the source scope, the destination, the
-authority and the stop control. If a capability is missing, keep the manual
-recipe and name the gap.
+The separate prepared-procedure catalogue has its own current trigger limits.
+Do not infer scheduling support from a recipe descriptor or a model's suggested cadence.
 
 ## Assess usefulness
 
-After each trial, write a short Note. Record the task, the source coverage,
-your corrections and whether the result helped. Compare preparation time only
-if you measured it. Use **Keep idea** on suggestions that help. Defer or
-dismiss the others.
+Record the trial's source coverage, corrections, and practical value as a Note.
+Compare preparation time only when you measured it.
+Check whether the next action is clear and whether the output reduces work for its intended reader.
+A plausible answer without evidence is a draft that still needs correction.
+
+The retained [Interview mode](INTERVIEW.md) can also store structured facts and suggestions through its services.
+Its parked browser controls are not required for these current Desk recipes.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| The Project has few records | Add or attach sources. Ask for a template with explicit gaps. |
-| The draft sounds right but has no evidence | Ask for source references. Remove unsupported claims. |
-| The workflow needs a tool HoldSpeak lacks | Keep it as a manual recipe. |
-| A recurring result creates too much work | Narrow **What matters** and **Cadences** before you automate. |
+| The Project has few sources | Add relevant records or ask for a template with explicit gaps. |
+| The draft has no evidence | Ask for references, then inspect and correct the claims. |
+| About omits related work | Check retrieval tools and the actual service scope. |
+| A workflow needs an unavailable adapter | Keep a manual instruction and name the missing execution path. |
+| Recurring output creates noise | Narrow the instruction, source set, and trigger. |
+| The coding agent cannot start | Repair the named repository, CLI, tmux, hook, or engine prerequisite. |
+| A launch finished without a useful change | Inspect the agent result and review the repository state before accepting it. |
 
 ## See also
 
-- [Interview](INTERVIEW.md)
-- [Project Rooms](PROJECT_ROOMS.md)
-- [Automation](AUTOMATION.md)
-- [Meeting mode](MEETING_MODE_GUIDE.md)
+- [Project Rooms](PROJECT_ROOMS.md): connected project work.
+- [Automation](AUTOMATION.md): recurring execution and results.
+- [Coder integration](CODER_INTEGRATION.md): handoffs and session controls.
+- [Meeting mode](MEETING_MODE_GUIDE.md): capture and intelligence.

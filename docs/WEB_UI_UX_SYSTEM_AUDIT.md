@@ -15,7 +15,8 @@ Those two files win when they differ from this page.
 3. **Show state, not debug text.** Show a status only when it confirms a finished task, explains a block, or offers a recovery. Do not repeat a count that the screen already shows. Do not show raw HTTP status, route names, or polling output.
 4. **A label stays visible.** Every field has a visible label. A placeholder is not a label.
 5. **Align an action with its control.** An action beside a field lines up with the field, not with its label.
-6. **Match the control to the choice count.** Use direct choices for a few options, a select for a moderate list, and a searchable combobox for a long or remote list.
+6. **Match the control to the choice count.** Use direct choices for a few options and a select for a moderate list.
+   Use a searchable combobox for a long or remote list.
 7. **Keep native semantics.** Use real inputs, buttons, labels, and disclosure elements. Styling must not remove keyboard or screen reader support.
 8. **Show where data goes at the act.** Name the destination where the data leaves: the Send preview, Destinations, Engines, Accounts, Setup. Do not put a host, address or scope chip on the rows, toolbars or status bars of working windows (owner ruling 2026-10-25, UX-CANON A.9). A hover title on the verb is allowed. Never show a secret.
 9. **A state uses more than color.** Use an icon and text. The closed state set is `idle`, `active`, `working`, `success`, `warning`, `failure`, and `unreachable`.
@@ -34,15 +35,20 @@ Do not show a message that repeats a visible fact, such as `Found 1 model.` unde
 
 ## Shared controls
 
-| Control | Where it lives |
+| Control | Supported implementation |
 | --- | --- |
-| Button (primary, ghost, dense) | `Button` in `web/src/components/signal/Signal.tsx` |
-| Text, number, and URL fields | `Field`, `TextInput`, `TextArea` (`Signal.tsx`), and `StringGadget` (`desk/surface/gadgets.tsx`) |
-| Select | `Select` and `.hs-select` |
-| Checkbox | `CheckGadget` |
-| Choice cards | `ChoiceCard` and `ChoiceCardGroup` |
-| Disclosure | `Disclosure` |
-| Notice | `ActionNotice` and `StateChip` |
+| Verb | Library `Button`, exported by `components/signal/Signal.tsx` from `Button.tsx` |
+| Text or number field | `StringGadget` from `desk/surface` |
+| Multiline field | `PadGadget` from `desk/surface` |
+| Finite choice | `CycleGadget` or `MxRadio` from `desk/surface` |
+| Checkbox | `CheckGadget` from `desk/surface` |
+| Choice cards | `ChoiceCard` and `ChoiceCardGroup` from `desk/surface` |
+| Disclosure | `Disclosure` or `FoldGadget` from `desk/surface` |
+| Notice and status | `ActionNotice`, `StateChip`, and the kit `StatusBar` from `desk/surface` |
+
+Feature code uses the surface barrel instead of private implementation imports.
+The surviving `Field`, `TextInput`, `TextArea`, and `Select` exports in `Signal.tsx` support the legacy InlineEditor cluster.
+They are not the input controls for new Desk faces. The former Signal versions of ChoiceCard and Disclosure are retired; use the surface exports above.
 
 The component gallery is at `/design/components`.
 It opens the **Components** window.
@@ -50,21 +56,26 @@ Show every new reusable pattern there.
 
 ## Run the audit
 
-`scripts/web_ui_audit.py` opens each web route at 1440 by 1000 and at 430 by 932 pixels.
-It reports controls that are smaller than 24 or 44 pixels, controls with no name, native selects, mixed style signatures, horizontal overflow, and console errors.
+The current pre-merge check is `scripts/quick_check.sh`. It builds the web app and runs related web tests and affected pytest files.
+It then runs the generic desk sweep, canon checks, and repository guards. It uses
+the machine test lock and an isolated `HOME`.
 
-1. Start the hub.
-2. Run `uv run python scripts/web_ui_audit.py --base-url http://127.0.0.1:8788 --out <directory>`.
-3. Read the JSON report and the screenshots in the output directory.
+For a web control change, read the desk-sweep output at both 1440 and 393
+pixels. The sweep covers every application in `web/src/desk/applications.ts`,
+every wing, the palette, `chair:needs`, and each page route. It checks fit,
+visibility, console errors, readable text, contrast, target size, clipping,
+overlap, library Buttons, stillness, and egress.
 
-The script names its narrow viewport `compact_web`. It never names it iPad or iOS.
+The older standalone `scripts/web_ui_audit.py` is not the merge gate. Its route
+list and 430-pixel viewport can drift from the active Desk; do not use it to
+replace the quick check or the generic sweep.
 
 ## Before you merge a control change
 
 1. Show a new reusable pattern in `/design/components`.
-2. Build the web app and run the tests that cover the change.
-3. Run the audit against a live hub.
-4. Add no raw native select, unnamed control, control smaller than 24 pixels, or console error.
+2. Run `scripts/quick_check.sh`; it is the current pre-merge web build, related-test, affected-test, desk-sweep, and guard procedure.
+3. Read the sweep at 1440 and 393 pixels. Do not accept a skipped sweep.
+4. Add no raw native select, unnamed control, console error, or undersized press target. At 393 pixels, interactive controls need their 44 × 44 pixel owned hit area.
 5. Check a Swift change on the native target separately.
 
 ## See also

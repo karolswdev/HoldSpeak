@@ -11,11 +11,6 @@
   ],
   "offenders": [
     {
-      "path": "docs/MODELS.md",
-      "rule_id": "legacy-product-nouns",
-      "text": "For headless provisioning, remains an environment fallback for the identified model profile."
-    },
-    {
       "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
       "rule_id": "failure-missing-facts",
       "text": "Could not open. Note unchanged."

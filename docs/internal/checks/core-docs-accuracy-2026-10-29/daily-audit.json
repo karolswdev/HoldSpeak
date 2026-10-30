@@ -1,0 +1,404 @@
+{
+  "audit": "core-docs-accuracy-2026-10-29",
+  "lane": "daily",
+  "source_base": "4dce2796d",
+  "rows": [
+    {
+      "path": "docs/GETTING_STARTED.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "95-105",
+          "claim": "The first-run setup uses Keep as note and Say one sentence, while speech is configured separately.",
+          "source": "web/src/desk/firstrun/SetupFace.tsx:646-672; web/src/features/runson/RunsOnCore.tsx:923-948",
+          "result": "Matches the active SetupFace and RunsOn speech setup. Parked readiness components were not treated as current UI."
+        },
+        {
+          "document_lines": "132-145,215",
+          "claim": "Engine setup is under This Mac and the current actions are Use it, Use, and Try it.",
+          "source": "web/src/pages/cores/settingsPrefs.tsx:75-85,124-130; web/src/features/runson/RunsOnCore.tsx:273-311,594-608,1030-1058",
+          "result": "Corrected the stale Settings > Engines path and retired Use these/Test labels; Try it sends a real capability request."
+        }
+      ],
+      "changes": [
+        "Updated the engine Settings path and active engine action labels.",
+        "Updated the troubleshooting path for a Thread that does not run."
+      ],
+      "unknowns": [
+        "No live Desk or browser walk was performed under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "14,207,492",
+          "claim": "Engine, connection, and project-source setup paths use the active Settings hierarchy.",
+          "source": "web/src/pages/cores/settingsPrefs.tsx:75-85,116-130",
+          "result": "Corrected Engines to Settings > This Mac > Engines and Connections to Settings > Accounts > Connections."
+        },
+        {
+          "document_lines": "552-553",
+          "claim": "A capability request is sent with Try it.",
+          "source": "web/src/features/runson/RunsOnCore.tsx:594-608; web/src/features/runson/__tests__/runsOn.test.tsx:276-279",
+          "result": "Corrected retired Test wording; source test also records the retired picker/Adjust/Use these controls."
+        },
+        {
+          "document_lines": "709-711,734-736",
+          "claim": "Memory exposes the current find/ask field and recall rows; Window uses current verb labels.",
+          "source": "web/src/pages/cores/MemoryCore.tsx:164-219,264-414; web/src/desk/verbRegistry.ts:798-943",
+          "result": "Corrected parked RAW wording and replaced the generic, stale raise/cycle description with the registered Window verbs."
+        }
+      ],
+      "changes": [
+        "Updated active Settings paths, Try it, Memory, and Window-menu wording."
+      ],
+      "unknowns": [
+        "No live Desk or browser walk was performed under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/WEB_DESK.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "54-60",
+          "claim": "Window actions have the registered labels Close, Minimize, Next window, Tile left/right, Zoom, To back, Stage, Arrange all, and Back.",
+          "source": "web/src/desk/verbRegistry.ts:798-943",
+          "result": "Replaced the stale generic list, including the unsupported raise label, with the current registered verbs."
+        },
+        {
+          "document_lines": "115-120",
+          "claim": "Wallpaper is under Desk and Engines is under This Mac.",
+          "source": "web/src/pages/cores/settingsPrefs.tsx:75-85,124-130",
+          "result": "Corrected the canonical Wallpaper path and the Ask troubleshooting Engines path."
+        },
+        {
+          "document_lines": "122-137",
+          "claim": "Desk shortcut labels match the active application registry and verb registry.",
+          "source": "web/src/desk/applications.ts:98-106,121-128,156-163,182-191,199-207,533-542; web/src/desk/verbRegistry.ts:195-227,345-443,987-1002",
+          "result": "Checked the existing table against source; no shortcut correction was needed in this file."
+        }
+      ],
+      "changes": [
+        "Updated Window verbs, Wallpaper path, and Engines troubleshooting path."
+      ],
+      "unknowns": [
+        "No live Desk or browser walk was performed under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/USE_CASES.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {
+          "document_lines": "6-23",
+          "claim": "The journey table separates stored results from execution, includes Calls and Phone limits, and distinguishes coding-agent sessions from inference routes.",
+          "source": "holdspeak/calls/service.py:644-663; holdspeak/phone/service.py:419-427; holdspeak/services/program_service.py:262-352",
+          "result": "The source services support the stated result/failure distinctions and transport boundaries."
+        },
+        {
+          "document_lines": "25-36",
+          "claim": "Meeting capture/import, job state, transcript evidence, and retained results are separate checks.",
+          "source": "holdspeak/services/meeting_service.py:122-163,231-260; holdspeak/services/meeting_intel_service.py:42-70",
+          "result": "Source review supports the separate source, job, result, and receipt claims."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "No live capture, call, phone, or provider flow was run; availability remains configuration-dependent."
+      ]
+    },
+    {
+      "path": "docs/ARCHITECTURE_WORK.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {
+          "document_lines": "7-22",
+          "claim": "Ask about this supplies an About starting point while tools and Project services can impose additional scope.",
+          "source": "web/src/desk/askAbout.ts:1-5,20-27,60-74; web/src/desk/components/AskPanel.tsx:1300-1328",
+          "result": "Active Ask code exposes Ask about this and the answer actions described; source scope remains distinct."
+        },
+        {
+          "document_lines": "73-97",
+          "claim": "Handing work to an agent creates an execution attempt and requires repository/session prerequisites; a CLI engine is a separate route.",
+          "source": "web/src/desk/drawer/DrawerWindow.tsx:327-334; holdspeak/services/agent_hand_service.py:1-25,62-80",
+          "result": "The active drawer exposes Hand to agent and source service separates handoff state from model inference."
+        },
+        {
+          "document_lines": "99-117",
+          "claim": "Automation requires a saved trigger, executor, authority, and running hub; a recipe descriptor does not establish scheduling.",
+          "source": "web/src/desk/components/automation/AutomationWindow.tsx:660-688; holdspeak/services/program_service.py:107-110",
+          "result": "Active Automation controls and service gate semantics support the prepare/execute distinction."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "No agent launch, Automation run, or model request was executed."
+      ]
+    },
+    {
+      "path": "docs/INTERVIEW.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {
+          "document_lines": "3-25",
+          "claim": "Ordinary Ask and Note-refinement are active paths; structured Interview is a retained Thread service and its old Desk controls are parked.",
+          "source": "holdspeak/services/interview_contracts.py:1-15; web/src/desk/components/AskPanel.tsx:1303-1328",
+          "result": "The service contract and active Ask actions support the distinction; no parked picker was used as evidence of UI availability."
+        },
+        {
+          "document_lines": "42-54,73-75",
+          "claim": "The Thread and Interview HTTP/MCP examples require authenticated hub use and do not bypass model setup or authority.",
+          "source": "holdspeak/web/routes/threads.py:91-105,123-155; holdspeak/mcp/families/interview.py:28-49",
+          "result": "Routes and MCP dispatch enforce the retained service boundary and owner principal."
+        },
+        {
+          "document_lines": "77-119",
+          "claim": "Facts, suggestions, dispositions, promotion, and revisions are separate retained state and do not themselves authorize execution.",
+          "source": "holdspeak/services/interview_contracts.py:54-77; holdspeak/mcp/families/interview.py:35-40,44-69",
+          "result": "Source wording explicitly keeps suggestions/manual work separate from installed automation and authority."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "No authenticated Thread API or MCP call was made."
+      ]
+    },
+    {
+      "path": "docs/PROJECT_ROOMS.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "15-22,132-134",
+          "claim": "Provider connections are reached through Accounts > Connections and a provider check does not put credentials in a Project.",
+          "source": "web/src/pages/cores/settingsPrefs.tsx:75-85,116-118; holdspeak/web/routes/projects.py:76-84",
+          "result": "Corrected the stale Settings path; the Project Room route remains a hub-backed project boundary."
+        },
+        {
+          "document_lines": "23-96",
+          "claim": "A Project Room is scoped, and empty sections/counts do not prove absence outside the selected source scope.",
+          "source": "holdspeak/web/routes/projects.py:76-84,123-164; holdspeak/services/project_service.py:1-45",
+          "result": "Source routes and service preserve project-scoped reads and explicit source boundaries."
+        }
+      ],
+      "changes": [
+        "Updated both provider-connection paths to Settings > Accounts > Connections."
+      ],
+      "unknowns": [
+        "No provider account or live Project Room was opened."
+      ]
+    },
+    {
+      "path": "docs/DESK_MEMORY.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "3-25",
+          "claim": "Memory currently exposes What I owe, What changed this week, Find or ask your desk, links, and recall rows; RAW is not a current control.",
+          "source": "web/src/pages/cores/MemoryCore.tsx:1-15,89-100,164-219,264-414; web/src/desk/standingPages.tsx:34-35",
+          "result": "Corrected the parked Ask your desk/RAW wording to the active field and recall-row controls."
+        },
+        {
+          "document_lines": "27-65",
+          "claim": "Standing pages are reads and only show sentences with live cited inputs; querying the field sends work to Ask without an About chip.",
+          "source": "web/src/pages/cores/MemoryCore.tsx:164-219,264-414",
+          "result": "The current Memory flow supports the read/query distinction and whole-Desk Ask behavior."
+        }
+      ],
+      "changes": [
+        "Updated the active Memory field label, query instruction, and recall-row instruction."
+      ],
+      "unknowns": [
+        "No live Memory search or Desk query was run."
+      ]
+    },
+    {
+      "path": "docs/PEOPLE_INTEGRATION.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {
+          "document_lines": "1-26",
+          "claim": "People is a protected local relationship surface with explicit relationship kinds and no general inference/sync/search role.",
+          "source": "web/src/pages/cores/PeopleCore.tsx:50-60; holdspeak/people/__init__.py:1-4",
+          "result": "Active People labels and package boundary support the documented scope."
+        },
+        {
+          "document_lines": "27-90",
+          "claim": "Context, calendar links, aliases, and 1:1 preparation have explicit storage and policy limits; participant matching is unavailable.",
+          "source": "web/src/pages/cores/PeopleCore.tsx:1576-1664; holdspeak/people/policy.py:42-60",
+          "result": "Source supports encrypted/local-only notes, owner policy, shared-intent-only preparation, and no automatic participant identity."
+        },
+        {
+          "document_lines": "98-111",
+          "claim": "Send to automation and Mark satisfied are distinct actions and history is not a performance score.",
+          "source": "web/src/pages/cores/PeopleCore.tsx:1640-1644; holdspeak/mcp/families/people.py:145-192",
+          "result": "Active controls and People operations preserve the documented distinction."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "No People store, calendar, or protected relationship was opened."
+      ]
+    },
+    {
+      "path": "docs/ENVIRONMENTS.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "1-41",
+          "claim": "Atmospheres are selected under Desk > Wallpaper and are local visual preferences.",
+          "source": "web/src/pages/cores/settingsWallpaper.tsx:20-140; web/src/pages/cores/settingsPrefs.tsx:124-129; web/src/desk/gl/atmospherePreference.ts:8-79",
+          "result": "Corrected the missing Desk settings segment; source stores the atmosphere preference locally."
+        },
+        {
+          "document_lines": "58-66,82-85",
+          "claim": "Desk sounds are enabled under Desk > Sounds & Presence; hidden tabs, recording, and reduced motion affect atmosphere behavior.",
+          "source": "web/src/pages/cores/SettingsCore.tsx:2387-2417,2834-2840; web/src/desk/gl/atmosphereRuntime.ts:96-155; web/src/desk/gl/atmosphereSound.ts:49-137",
+          "result": "Corrected the sound path/control and retained the source-backed pause/mute conditions."
+        },
+        {
+          "document_lines": "69-85",
+          "claim": "Settle in has no current dedicated keyboard shortcut; Escape restores the Desk.",
+          "source": "web/src/desk/verbRegistry.ts:332-343,928-943",
+          "result": "Removed the unsupported Command/Ctrl+Shift+F claim and preserved the current Back/Escape behavior."
+        }
+      ],
+      "changes": [
+        "Updated Wallpaper and Desk sounds navigation and removed the unsupported Settle shortcut."
+      ],
+      "unknowns": [
+        "No live atmosphere, sound, reduced-motion, or hidden-tab behavior was observed."
+      ]
+    },
+    {
+      "path": "docs/GLOSSARY.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "54,77",
+          "claim": "Places and Wallpaper point to Desk > Wallpaper.",
+          "source": "web/src/pages/cores/settingsPrefs.tsx:75-85,124-130; web/src/pages/cores/settingsWallpaper.tsx:20-140",
+          "result": "Corrected both stale Settings paths."
+        },
+        {
+          "document_lines": "4-87",
+          "claim": "Desk terms distinguish active records, tools, receipts, and parked/compatibility names.",
+          "source": "web/src/desk/applications.ts:405-414,531-563; web/src/desk/verbRegistry.ts:332-343,520-531",
+          "result": "The definitions remain consistent with the active application and verb registries after the path correction."
+        }
+      ],
+      "changes": [
+        "Updated Places and Wallpaper definitions to the active Desk settings path."
+      ],
+      "unknowns": [
+        "No live Glossary links or Desk aliases were opened."
+      ]
+    },
+    {
+      "path": "docs/WHAT_IS_HOLDSPEAK.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {
+          "document_lines": "3-27,31-57",
+          "claim": "HoldSpeak joins Desk records, Ask, engines, agents, Programs, Calls, Phone, and Automation while each path retains separate prerequisites.",
+          "source": "web/src/desk/applications.ts:96-207,405-414,531-563; holdspeak/phone/service.py:419-427; holdspeak/program_templates.py:26-70",
+          "result": "Application registrations and service/template boundaries support the product model; the guide does not collapse distinct paths."
+        },
+        {
+          "document_lines": "62-100",
+          "claim": "Desk and MCP use the service layer but credentials and authority can differ; prepared sends wait for Send.",
+          "source": "web/src/desk/components/AskPanel.tsx:1303-1328; holdspeak/mcp/families/people.py:52-80",
+          "result": "Active Ask controls and MCP principal checks support the documented authority distinction."
+        },
+        {
+          "document_lines": "102-118",
+          "claim": "Selected engines and control modes do not make a queued/proposed/launch state a completed result.",
+          "source": "holdspeak/services/program_service.py:107-110,1176-1186; pyproject.toml:40-79",
+          "result": "Source supports configured engine routes, gate normalization, and the guide's result/receipt caution."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "No model, call, Phone, or Automation execution was performed."
+      ]
+    },
+    {
+      "path": "docs/programs.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "1-70",
+          "claim": "The listed program templates and pi/engine roles are current, and the desk assignment is under This Mac > Engines.",
+          "source": "holdspeak/program_templates.py:26-70; web/src/pages/cores/settingsPrefs.tsx:75-85,124-130",
+          "result": "Corrected the stale assignment path; template names and role wording match source."
+        },
+        {
+          "document_lines": "183-248",
+          "claim": "MCP gate_merge uses owner/auto/none while the service normalizes auto to level; these are distinct wire/API labels.",
+          "source": "holdspeak/mcp/families/program.py:46-63,74-174; holdspeak/services/program_service.py:107-110,1176-1186",
+          "result": "The documented distinction is source-backed and the exact identifiers were preserved."
+        }
+      ],
+      "changes": [
+        "Updated the desk-assignment path to Settings > This Mac > Engines."
+      ],
+      "unknowns": [
+        "No Program was launched and no agent or provider call was made."
+      ]
+    },
+    {
+      "path": "docs/calls.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document_lines": "50-64",
+          "claim": "The current Calls setup label is Your numbers while the stored configuration key remains allowed_numbers.",
+          "source": "web/src/desk/calls/CallsSettings.tsx:122-149,315-355; holdspeak/config/calls.py:10-29",
+          "result": "Corrected only the visible label/path and preserved the exact configuration key."
+        },
+        {
+          "document_lines": "1-49,65-124",
+          "claim": "Calls requires adapter/passphrase gates, records turns/transcripts/receipts, and has explicit provider/egress boundaries.",
+          "source": "web/src/desk/calls/CallsSettings.tsx:261-265,315-355; holdspeak/calls/service.py:370-415,551-663; holdspeak/web/routes/calls.py:1-22",
+          "result": "The active settings flow, service gates, and routes support the existing wording."
+        }
+      ],
+      "changes": [
+        "Updated Allowed numbers to the active Your numbers label and path; kept allowed_numbers as the wire key."
+      ],
+      "unknowns": [
+        "No Calls adapter, provider, passphrase, or phone line was used."
+      ]
+    },
+    {
+      "path": "docs/phone.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {
+          "document_lines": "3-25,27-42",
+          "claim": "Phone service and pairing routes exist, but no paired-phone client is delivered; number fallback is voice-only.",
+          "source": "holdspeak/phone/service.py:189-247,419-427; holdspeak/web/routes/phone.py:1-25,109-221",
+          "result": "Service and routes support the incomplete-client and paired-first/number-fallback statements."
+        },
+        {
+          "document_lines": "44-88",
+          "claim": "Reach rules distinguish Secure/Normal/YOLO, row settings, quiet hours, authority, pending, ringing, and answered states.",
+          "source": "holdspeak/phone/phone_rules.py:6-25,36-48,84-168; holdspeak/phone/service.py:43-52,654-670",
+          "result": "The rule defaults and retry/fallback limits support the guide's explicit state distinctions."
+        },
+        {
+          "document_lines": "106-153",
+          "claim": "Phone tool limits and HTTP routes are bounded and route existence does not grant authority.",
+          "source": "holdspeak/mcp/families/phone.py:7-15,25-75; holdspeak/web/routes/phone.py:109-221",
+          "result": "Tool schemas, limits, routes, and the service-off setting match the documented API-only details."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "No phone client, paired device, Calls transport, or live delivery was available for observation."
+      ]
+    }
+  ]
+}

@@ -1287,7 +1287,7 @@
         "holdspeak/services/inference_assignment_service.py",
         "holdspeak/services/inference_assignment_service.py",
         "web/src/features/concierge/ConciergeCore.tsx",
-        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/needsYou.ts",
         "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
@@ -1301,7 +1301,7 @@
         "holdspeak/services/inference_assignment_service.py",
         "holdspeak/services/inference_assignment_service.py",
         "web/src/features/concierge/ConciergeCore.tsx",
-        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/needsYou.ts",
         "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
@@ -1315,7 +1315,7 @@
         "holdspeak/services/inference_assignment_service.py",
         "holdspeak/services/inference_assignment_service.py",
         "web/src/features/concierge/ConciergeCore.tsx",
-        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/needsYou.ts",
         "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
@@ -1329,7 +1329,7 @@
         "holdspeak/services/inference_assignment_service.py",
         "holdspeak/services/inference_assignment_service.py",
         "web/src/features/concierge/ConciergeCore.tsx",
-        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/needsYou.ts",
         "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
@@ -1343,7 +1343,7 @@
         "holdspeak/services/inference_assignment_service.py",
         "holdspeak/services/inference_assignment_service.py",
         "web/src/features/concierge/ConciergeCore.tsx",
-        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/needsYou.ts",
         "web/src/desk/chair/meetingPathBlocker.ts"
       ],
       "status": "internal"
@@ -2999,7 +2999,7 @@
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
         "web/src/desk/pullouts/DecisionPullout.tsx",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
@@ -3025,7 +3025,7 @@
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
         "web/src/desk/pullouts/DecisionPullout.tsx",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
@@ -3051,7 +3051,7 @@
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
         "web/src/desk/pullouts/DecisionPullout.tsx",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
@@ -3077,7 +3077,7 @@
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
         "web/src/desk/pullouts/DecisionPullout.tsx",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
@@ -3103,7 +3103,7 @@
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
         "web/src/desk/pullouts/DecisionPullout.tsx",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
@@ -3925,9 +3925,9 @@
       "platform": "aipi",
       "source_ids": [
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx",
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3938,9 +3938,9 @@
       "platform": "ipad",
       "source_ids": [
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx",
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3951,9 +3951,9 @@
       "platform": "linux_wayland",
       "source_ids": [
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx",
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3964,9 +3964,9 @@
       "platform": "linux_x11",
       "source_ids": [
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx",
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3977,9 +3977,9 @@
       "platform": "macos",
       "source_ids": [
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx",
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
         "holdspeak/services/follow_through_service.py",
-        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+        "web/src/desk/pullouts/_parked/FollowThroughView.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3992,7 +3992,7 @@
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/threadComposerDrafts.ts"
@@ -4008,7 +4008,7 @@
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/threadComposerDrafts.ts"
@@ -4024,7 +4024,7 @@
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/threadComposerDrafts.ts"
@@ -4040,7 +4040,7 @@
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/threadComposerDrafts.ts"
@@ -4056,7 +4056,7 @@
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
-        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/components/ThreadComposer.tsx",
         "web/src/desk/threadComposerDrafts.ts"

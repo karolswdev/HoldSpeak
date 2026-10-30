@@ -1,29 +1,29 @@
 # Reach Runner
 
-Use Reach Runner to request a Heartbeat sweep and Steward runs from another machine.
-The script uses the HoldSpeak remote MCP endpoint and Python's standard library.
+Reach Runner is a standard-library Python client for a remote HoldSpeak hub.
+It calls the Streamable HTTP MCP endpoint, requests one Heartbeat sweep, then
+starts the configured Steward run for each selected Project Room. It does not
+run a second hub, own a Desk database, or install a scheduler.
 
 ## Before you start
 
-- Install Python 3 on the runner machine.
-- Keep the HoldSpeak hub running and reachable.
-- Enable Reach and issue a scoped credential for the required tools.
-- Configure the Projects and Steward policies that the run will use.
+- Run Python 3 on the runner machine.
+- Keep the hub running and reachable at its MCP address.
+- Enable the remote Streamable HTTP listener on the hub.
+- Issue a scoped agent credential with the palette required by the runner.
+- Configure the Project Watches and Steward policy on the hub.
 
-The script does not wake an unavailable hub or configure its model assignments.
-An external scheduler is required when you want the script to repeat.
-See [Reach](USER_GUIDE.md#reach) for remote access setup.
+The runner cannot wake a stopped hub, configure assignments, or widen its
+palette. Use HTTPS when the deployment terminates TLS.
 
 ## Install the script
 
-Copy [reach_runner.py](../scripts/reach_runner.py) to the runner machine.
-For example, replace `RUNNER_HOST` with your SSH host:
+Copy [reach_runner.py](../scripts/reach_runner.py) to the runner machine. It
+uses only Python's standard library:
 
 ```sh
 scp scripts/reach_runner.py user@RUNNER_HOST:~/reach_runner.py
 ```
-
-No additional Python packages are required by the script.
 
 ## Store the scoped credential
 
@@ -36,84 +36,82 @@ No additional Python packages are required by the script.
    chmod 600 ~/.holdspeak-token
    ```
 
-The command examples below pass the file path, not the token value.
-The token appears only once when issued.
-The hub keeps credentials in memory. A hub restart clears them, so issue a new one.
+The hub stores only the token hash. Live credentials are reloaded from the
+credential ledger after a hub restart; revoke the credential or issue a new
+one when its scope or lifetime must change.
 
 ## Run once
 
-Replace `HUB_ADDRESS` and `PORT` with your reachable hub address and port.
-Replace `PROJECT_ID` with the Project you intend to run.
+Replace `HUB_ADDRESS`, `PORT`, and `PROJECT_ID`:
 
 ```sh
-python3 ~/reach_runner.py --hub http://HUB_ADDRESS:PORT --token-file ~/.holdspeak-token --rooms PROJECT_ID --poll 5 --timeout 900
+python3 ~/reach_runner.py \
+  --hub https://HUB_ADDRESS:PORT \
+  --token-file ~/.holdspeak-token \
+  --rooms PROJECT_ID \
+  --poll 5 \
+  --timeout 900
 ```
 
-Use HTTPS when your configured deployment terminates TLS.
-The access boundary is the one configured for Reach.
-See [Security & Privacy](SECURITY.md) for remote transport requirements.
+Use `--rooms all` to list active, non-archived Projects through the caller's
+palette. The runner sends the credential only as
+`Authorization: Bearer <token>`. It refuses a token in the URL.
 
 | Argument | Default | Meaning |
 | --- | --- | --- |
-| `--hub` | Required | Reachable hub base URL |
+| `--hub` | Required | Hub base URL |
 | `--token-file` | Required | File containing the scoped credential |
-| `--rooms` | `all` | Comma-separated Project IDs, or all Projects returned to the caller |
+| `--rooms` | `all` | Comma-separated Project IDs, or all active Projects |
 | `--poll` | `5` | Seconds between Steward status reads |
-| `--timeout` | `900` | Maximum wait for each Steward run, in seconds |
+| `--timeout` | `900` | Maximum wait for one Steward run |
 
-The runner first calls `heartbeat.run_now` for a Heartbeat sweep.
-Its console label for that call is `cadence_run_now`.
-That label does not mean it invoked the separate Cadence system.
-It then requests the applicable Steward runs and polls their results.
-Each service still applies its own policy and permissions.
+The console label `cadence_run_now` refers to the Heartbeat tool call used by
+the script. It does not invoke the separate Cadence engine. The hub still
+applies the Heartbeat, Project, Steward, and operation policies.
 
 ## Inspect the result
 
-The script prints timestamped steps and the terminal outcome.
-Its exit code identifies the broad failure class:
+The script prints a timestamped transcript. The terminal outcome is also in
+the hub's run and Receipt records. The exit codes are:
 
 | Code | Meaning |
 | --- | --- |
-| `0` | All requested calls completed successfully |
-| `1` | A tool call failed or a Steward run exceeded the timeout |
-| `2` | The connection or initialization failed, including an unavailable hub |
-| `3` | The credential was missing or refused |
-| `4` | The tool palette was refused |
+| `0` | All requested calls completed, a run was already active, or a configured Steward was disabled or in cooldown |
+| `1` | A tool failed, or a Steward run failed or timed out |
+| `2` | Connection or MCP initialization failed |
+| `3` | Credential was missing or refused |
+| `4` | The credential palette refused a required tool |
 
-Inspect the terminal output for the specific reason.
-Use the hub's run and Receipt records to inspect the underlying work.
-A remote call carries its remote origin in the execution record.
+An exit code does not prove an external effect. Read the operation and
+destination record before repeating an uncertain run.
 
 ## Schedule repeated runs
 
-After a successful manual trial, configure your operating system's scheduler.
-The schedule uses the runner machine's time zone unless you configure a different one.
-The hub must remain available at the scheduled time.
-
-Example cron entry for 22:00 each day:
+Run one manual trial first. Then configure cron, a system timer, or another
+scheduler on the runner machine. The runner machine's time zone controls the
+schedule unless your scheduler says otherwise.
 
 ```cron
-0 22 * * * python3 /home/user/reach_runner.py --hub http://HUB_ADDRESS:PORT --token-file /home/user/.holdspeak-token --rooms PROJECT_ID >> /home/user/reach.log 2>&1
+0 22 * * * python3 /home/user/reach_runner.py --hub https://HUB_ADDRESS:PORT --token-file /home/user/.holdspeak-token --rooms PROJECT_ID >> /home/user/reach.log 2>&1
 ```
 
-Replace the paths, address, port, and Project ID before installing the entry.
-Remove or disable that scheduler entry to stop future starts.
-Disabling the scheduler does not cancel a run that already started.
-Use the relevant run control on the hub for that operation.
+Disable that scheduler entry to stop future starts. It does not cancel a run
+already admitted on the hub. Use the hub's run control for that run.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| The hub cannot be reached | Check the process, network path, listener, and machine sleep state. |
-| The credential fails after restart | Issue a new scoped credential and replace the private token file. |
-| The palette is refused | Check that the credential permits the required tools. |
-| A Steward run is refused | Inspect the Project policy and the named service refusal. |
-| A timed-out run has an uncertain outcome | Inspect the run record before you repeat it. |
+| Hub cannot be reached | Check the hub process, listener, network path, TLS, and machine sleep state. |
+| Credential fails after restart | Issue a new credential and replace the token file. |
+| Palette is refused | Issue a credential with the required palette, or remove the unsupported call from the job. |
+| Steward run is refused | Read the Project policy and the typed refusal. |
+| Polling reaches the timeout | Read `project.get_steward_run` and the Receipt before retrying. |
+| Scheduled runs stop | Check the external scheduler and whether the hub was running at the scheduled time. |
 
 ## See also
 
 - [Automation](AUTOMATION.md): manual and recurring execution paths.
-- [Reach](USER_GUIDE.md#reach): transport and credential setup.
-- [MCP sidecar](MCP_SIDECAR.md): tool names and permission boundaries.
-- [Control modes](AUTHORITY.md): operation authority.
+- [MCP sidecar](MCP_SIDECAR.md): transport, tools, and palette rules.
+- [Control mode](SECURITY.md#control-mode): authority and grants.
+- [Operations](OPERATIONS.md): hub health and recovery.

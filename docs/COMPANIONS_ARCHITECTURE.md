@@ -1,8 +1,9 @@
 # Companion architecture
 
 A companion is a client or presence surface that uses the hub's typed
-boundaries. A companion is not a second database, a second authority kernel or
-a second model router. The hub owns the records and the operation receipts.
+boundaries. A companion does not replace the hub's database, authority kernel or
+model router. A native client can keep a local cache or store for capture and
+sync, but the hub owns shared records and operation receipts.
 
 For setup steps, read [iPad](IPAD.md), [AIPI-Lite](AIPI_LITE.md),
 [Firefox extension](FIREFOX_EXTENSION_GUIDE.md) and
@@ -13,20 +14,21 @@ For setup steps, read [iPad](IPAD.md), [AIPI-Lite](AIPI_LITE.md),
 ```mermaid
 graph LR
     Web[Web Desk] -->|HTTP and RuntimeBus| Hub[HoldSpeak hub]
-    iPad[iPad and iPhone Swift client] -->|HTTP and Bearer token| Hub
+    iPad[iPad and iPhone Swift client] -->|HTTP and runtime Bearer token| Hub
     AIPI[AIPI-Lite bridge] -->|device bridge and audio WebSocket| Hub
-    Coder[Claude Code or Codex hook] -->|loopback HTTP and agent credential| Hub
+    Coder[Claude Code or Codex hook] -->|loopback hook HTTP| Hub
     Firefox[Firefox extension] -->|loopback event POST| Hub
     Hub -->|approved connector| GitHub[GitHub]
     Hub -->|approved connector| Slack[Slack or webhook]
     Hub --> Presence[Qlippy presence]
 ```
 
-Authentication and authority are separate. A paired Bearer token or a device
-key proves who the client is. An owner action, a control posture or a bounded
+Authentication and authority are separate. The configured runtime Bearer token authenticates the native HTTP request.
+It does not identify a unique physical device. The device audio socket has its own PSK handshake. An
+owner action, a control posture or a bounded
 grant admits an effect. A local dismiss, a presence card or physical nearness
-is never approval. External effects use the same actuator policy and receipts
-as the Web Desk. See [Authority](AUTHORITY_MODEL.md) and [Kernel](KERNEL.md).
+is never approval. External actions use their owning hub service, authority policy, and receipts.
+A channel send and an actuator proposal have different execution contracts. See [Authority](AUTHORITY_MODEL.md) and [Kernel](KERNEL.md).
 
 ## Companions
 
@@ -44,19 +46,21 @@ See `apple/README.md`.
 
 ## The native hub client
 
-`HTTPDesktopClient` is the only HTTP client in the Swift package. A feature
-adds an extension file, such as `HTTPDesktopClient+Proposals.swift`. A feature
-does not add its own HTTP stack.
+`HTTPDesktopClient` is the shared hub API client in the Swift package.
+A hub feature adds an extension file, such as `HTTPDesktopClient+Proposals.swift`.
+Separate sync, model-endpoint, and download providers also use HTTP.
+Those provider paths are not extensions of the hub API client.
 
-- It builds URLs from a base URL and adds the Bearer token to each request.
+- It builds URLs from a base URL and adds the configured Bearer token when present.
 - The default timeout is 8 seconds.
 - The WebSocket uses the `holdspeak.v1` subprotocol. The token is not in the
   URL.
 - A failed request becomes `DesktopClientError.http`. A malformed peer URL
   counts as offline.
 
-The iPad keeps a local SQLite store. A selection on the Coder board does not
-send anything. Sending needs an explicit answer action.
+The native client can keep a local SQLite store for on-device capture and sync.
+That store is a client cache/store, not a second hub authority. A selection on
+the Coder board does not send anything. Sending needs an explicit answer action.
 
 The routes the iPad calls are listed in [API surface](API_SURFACE.md). Each
 route there names its consumers.

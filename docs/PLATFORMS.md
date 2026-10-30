@@ -4,6 +4,8 @@
 
 Source snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`.
 
+This matrix covers the capabilities in the pinned metadata baseline.
+It is not an exhaustive current support matrix. Regeneration does not verify a device or deployment.
 Missing shards: **none**.
 
 | Capability | Platform | Availability | Status |

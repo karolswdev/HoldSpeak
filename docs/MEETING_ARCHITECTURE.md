@@ -1,160 +1,106 @@
 # Meeting architecture
 
-This document is for contributors. It describes how HoldSpeak captures a meeting, saves it,
-imports one, and hands it to intelligence. For the user workflow, see the [Meeting Mode guide](MEETING_MODE_GUIDE.md).
+This contributor reference follows the meeting path from capture to saved
+records and later intelligence. The Web runtime composes one set of services;
+the browser and MCP transports do not create a second meeting database.
 
 ## Modules
 
-| Module | Role |
+| Concern | Source |
 | --- | --- |
-| `holdspeak/meeting_session/session.py` | `MeetingSession`: start, stop, and the session lifecycle. |
-| `holdspeak/meeting_session/transcribe_loop.py` | The one transcription path for microphone, system, and device audio. |
-| `holdspeak/meeting_session/persistence.py` | Saves the meeting and enqueues the summary job. |
-| `holdspeak/meeting_session/models.py` | `MeetingState`, segments, and their serialized form. |
-| `holdspeak/meeting_recorder.py` | Records microphone and system audio. |
-| `holdspeak/meeting_capture_journal.py` | `MeetingCaptureJournal`: crash-safe audio journal. |
-| `holdspeak/meeting_import.py` | Imports recordings and transcripts as meetings. |
-| `holdspeak/intel_queue.py` | Runs queued summary jobs. |
-| `holdspeak/meeting_plugins.py` | Runs the plugin chain on a saved meeting. |
-| `holdspeak/meeting_aftercare.py` | Computes the aftercare digest. See [Meeting aftercare](MEETING_AFTERCARE.md). |
-| `holdspeak/runtime/meeting_glue.py` | Builds the session for the web runtime. |
+| Web route composition | `holdspeak/web/routes/meetings/__init__.py` |
+| Live start, stop, and bookmarks | `holdspeak/web/routes/meetings/live.py` |
+| Saved meeting and recovery routes | `holdspeak/web/routes/meetings/crud.py` |
+| Import and transcription | `holdspeak/web/routes/meeting_import.py` |
+| Capture service | `holdspeak/services/meeting_service.py` |
+| Dual-stream recorder | `holdspeak/meeting_recorder.py` |
+| Capture process | `holdspeak/capture_process.py` |
+| Capture journal | `holdspeak/meeting_capture_journal.py` |
+| Intelligence queue | `holdspeak/web/routes/meetings/intel.py` and `holdspeak/services/meeting_intel_service.py` |
+| Deterministic aftercare | `holdspeak/meeting_aftercare.py` |
 
 ## Live capture
 
 ```mermaid
 flowchart LR
-    A[start] --> B[create MeetingState]
-    B --> C[admit intelligence parent]
-    C --> D[save provisional meeting]
-    D --> E[open capture journal]
-    E --> F[start recorder]
-    F --> G{transcriber ready?}
-    G -->|yes| H[transcribe loop]
-    G -->|no| I[record-only]
-    H --> J[stop and join]
-    I --> J
-    J --> K[final transcription pass]
-    K --> L[enqueue deferred summary]
-    L --> M[finalize state and journal]
+    A[POST /api/meeting/start] --> B[MeetingService]
+    B --> C[meeting row and capture state]
+    C --> D[MeetingCaptureJournal]
+    D --> E[MeetingRecorder]
+    E --> F[microphone and system streams]
+    E --> G[segments and audio checkpoints]
+    H[POST /api/meeting/stop] --> B
+    B --> I[terminal capture state]
 ```
 
-`MeetingSession.start` runs these steps in order:
+The service creates a meeting before the first chunk. The recorder accepts
+microphone and system audio. Native capture can run in a child process so a
+driver failure does not take down the hub. The parent commits accepted chunks
+to the journal and records a terminal status.
 
-1. It creates the meeting id and a `MeetingState` with `capture_status` set to `provisional`.
-2. It admits the intelligence parent session. A refusal sets a named intelligence status. Recording continues.
-3. It saves the meeting row before any audio device opens. A failed save stops the start.
-4. It opens `MeetingCaptureJournal` and starts the recorder.
-5. It builds the transcriber. With no transcriber, the meeting runs in record-only mode.
-
-The web runtime starts a session with `intel_enabled=False`. Recording does not run live analysis.
-Text intelligence runs after the meeting, as the summary.
-
-`TranscribeLoopMixin._transcribe_audio` is the only transcription seam. It needs an admitted speech session.
-The loop works on chunks about every 10 seconds. It keeps a short audio tail between passes so that a sentence
-across a boundary stays whole. For each segment, it labels the speaker when diarization is on,
-broadcasts a `segment` event, and writes a journal checkpoint.
-
-`MeetingSession.stop` joins the capture threads and transcribes the audio that the loop has not yet seen.
-It cancels the live intelligence parent and enqueues the deferred summary job. It runs no new analysis itself.
-
-Record-only mode keeps the audio but makes no transcript text. `_transcribe_audio` returns `None`
-when no transcriber exists. Do not show a record-only meeting as a successful transcription.
+Transcription is a separate operation. `Transcriber` uses the selected local
+Whisper backend and records one admitted inference child for each non-empty
+decode. An assigned model for meeting intelligence is a later route and can be
+remote.
 
 ## Capture journal and recovery
 
-The journal is the write-ahead log for audio. It appends 32-bit float samples per source.
-It publishes a manifest with only the byte counts that were synced to disk. A checkpoint happens
-every five seconds, so a crash loses at most five seconds of audio.
+The capture journal is a write-ahead record under
+`~/.local/share/holdspeak/meeting-captures/<meeting_id>`. It stores accepted
+audio checkpoints and the source label. `recoverable` means the process ended
+before a terminal capture record was trusted. It does not mean that every
+sample reached SQLite.
 
-The journal lives in `~/.local/share/holdspeak/meeting-captures/<meeting_id>`.
-`MeetingCaptureJournal.recoverable` lists captures that did not finalize.
-`POST /api/meetings/{meeting_id}/capture/recover` keeps the last checkpoint as a partial meeting.
-The original meeting stays if recovery fails. Recovery keeps the same meeting id.
+`POST /api/meetings/{meeting_id}/capture/recover` keeps the last accepted
+checkpoint as a partial meeting. Recovery does not create missing audio or claim
+that a stopped native stream delivered bytes that were not journaled.
 
 ## States
 
-A meeting has three state axes on `MeetingState`:
-
-| Field | Values |
+| State | Meaning |
 | --- | --- |
-| `capture_status` | `provisional`, `recording`, `finalized`, `capture_failed`, `recoverable` |
-| `transcription_status` | `active`, `record_only`, `complete` |
-| `intel_status` | `disabled`, `queued`, `running`, `ready`, `partial`, `skipped`, `error` |
+| `provisional` | Meeting row exists before capture is ready. |
+| `recording` | Capture is active. |
+| `finalized` | Capture ended with a trusted terminal status. |
+| `capture_failed` | Capture ended with a named failure. |
+| `recoverable` | The journal has an accepted checkpoint without a trusted terminal status. |
 
-The face names `intel_status` as the summary state.
-
-```mermaid
-stateDiagram-v2
-    [*] --> provisional
-    provisional --> recording: recorder starts
-    recording --> finalized: owner stops
-    recording --> capture_failed: capture error
-    recording --> recoverable: journal or final save failed
-    recoverable --> finalized: recover
-```
-
-`persistence.py` saves the database row and a JSON copy in `~/.local/share/holdspeak/meetings`.
-After a stop, `queue_after_save` in `holdspeak/services/meeting_backlog_service.py` enqueues the summary job.
-It does so when the meeting has segments, the summary route is ready, the `intelligence_auto` setting allows it,
-and the owner chose the engine (or it runs on this machine). The job carries the disclosed route and its selection hash.
-With no ready route, or an engine the owner did not choose, the meeting waits in the summary backlog.
-The `aftercare_ready` event goes out when the digest has content. That happens at save and when a summary job finishes.
+The database state and the journal are both evidence. A process view alone does
+not prove that audio was saved.
 
 ## Summary job
 
-```mermaid
-flowchart LR
-    A[queued job] --> B[claim and freeze route plan]
-    B --> C[run summary on assigned model]
-    C --> D[run routed plugin members]
-    D --> E[save artifacts and runs]
-    E --> F[bridge artifacts to proposals]
-    F --> G[mark ready, emit aftercare_ready]
-```
-
-- Two triggers enqueue a job. `intelligence_auto` enqueues after a stop or an import. The **Run summary** verb, `POST /api/meetings/{meeting_id}/intelligence/run`, enqueues on request.
-- The hub drains the queue (`intel_queue_conductor`). It checks the queue every 15 seconds. A new job wakes it at once.
-- A job freezes its route plan when it starts. A run request carries `expected_selection_hash`.
-  The hub refuses with `409` when the route changed. No provider is contacted before that check.
-- Failure retries with a growing delay up to `intel_retry_max_attempts`. Then the job is `failed`.
-- A plugin result is `success`, `proposed`, `error`, `timeout`, `deduped`, `blocked`, `queued`, or `skipped`.
-- A partial plugin chain keeps the finished artifacts and queues a retry for the rest.
-
-See [Meeting intelligence](MEETING_INTELLIGENCE.md) for the plugin path.
+After capture, `MeetingIntelService` queues the summary and plugin jobs. Each
+physical model attempt freezes the selected route and receives a child receipt.
+The route may use a local model, an OpenAI-compatible endpoint, a supported CLI
+inference engine, or a mesh node. A CLI inference engine is not a launched
+coding-agent session.
 
 ## Import
 
-```mermaid
-flowchart TD
-    A[audio file] --> B[validate suffix and decoder]
-    B --> C[decode, resample, downmix]
-    C --> D[30 second windows]
-    D --> E[admitted speech transcription]
-    E --> F[persist MeetingState]
-    G[VTT / SRT / TXT] --> H[parse cues and timestamps]
-    H --> F
-```
-
-`import_meeting` and `import_transcript` share one persistence tail, `_persist_import`.
-
-- The tail builds a normal `MeetingState` and saves it. Then it queues the summary by the same rule as a stop
-  (`queue_after_save`). When that rule does not hold, the meeting arrives with `intel_status` set to `disabled`
-  and the **Run summary** verb.
-- Audio import uses one speaker label (`Recording` by default). It does not keep the source audio.
-  WAV decodes in Python. Other formats need `ffmpeg`.
-- Transcript import keeps cue times and speaker names from the file. A `.txt` file gets evenly spaced times.
-  The default speaker label is `Transcript`.
-- The meeting ends at the import time and starts its length earlier, unless the caller passes `started_at`.
-- The tail sets `transcription_status` to `complete`.
+`POST /api/meetings/import` accepts WAV and formats that `ffmpeg` can decode,
+plus VTT, SRT, and text transcripts. Import creates normal meeting and segment
+rows. It uses one speaker label for an audio file unless transcript metadata
+provides names. Source audio is not retained by the meeting database.
 
 ## Handoff to intelligence
 
-The meeting record is complete before any plugin runs. Plugin runs and artifacts are separate rows.
-A saved meeting can have a full transcript while its summary is queued, failed, or ready.
-Do not treat a saved meeting as proof that every artifact exists.
+The intelligence route receives the saved meeting id and an expected selection
+hash. A stale selection is refused instead of silently switching hosts. The
+queue and attempts record the selected host, result, and recovery state. The
+aftercare service reads the saved result and does not call a model.
 
 ## Known limits
 
-- Recovery behavior depends on the recorder backend and the device.
-- A record-only stop has no transcript. The face shows the transcription state.
-- An import cannot be transcribed again, because HoldSpeak does not keep the source audio.
+- Native audio driver behavior depends on operating-system permissions and devices.
+- The journal is not a complete copy of an audio device buffer.
+- The local database is not encrypted by the meeting layer.
+- A model output is not evidence until its transcript source is inspected.
+- Browser, CLI, and MCP calls still require route authentication and rights.
+
+## See also
+
+- [Meeting Mode guide](MEETING_MODE_GUIDE.md)
+- [Meeting intelligence](MEETING_INTELLIGENCE.md)
+- [Storage and migrations](STORAGE_AND_MIGRATIONS.md)
+- [Security model](SECURITY_MODEL.md)

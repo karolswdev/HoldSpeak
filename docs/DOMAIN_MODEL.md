@@ -1,7 +1,8 @@
 # Domain model
 
-This page names the main records in HoldSpeak and says which table owns each one.
-Use it to pick the right term.
+HoldSpeak joins retained work, conversations, delegated implementation, and recurring jobs on one Desk.
+This page names their records and storage owners.
+Use it to distinguish a task, its execution attempts, and the output you keep.
 The [Data model](DATA_MODEL.md) shows the table layout.
 [AUTHORITY.md](AUTHORITY.md) and [SECURITY.md](SECURITY.md) own the rules for control and data protection.
 
@@ -20,9 +21,19 @@ The [Data model](DATA_MODEL.md) shows the table layout.
 | Receipt | Proof that an operation ended | `kernel_receipts` |
 | Operation | One bounded unit of runtime work | `kernel_operations` |
 | Parent run | An outer run that holds a bounded set of child operations | `kernel_parent_runs` |
-| Route attempt | One physical model call | `inference_route_attempts` |
+| Route attempt | One core-routed model call | `inference_route_attempts` |
 | Project | A context you define, with its meetings and resources | `projects` |
-| Desk object | A note, recipe, chain, workflow, workbench, or directory | `notes`, `recipes`, `chains`, `workflows`, `workbenches`, `directories` |
+| Note | Editable working text | `notes` |
+| Thread | Saved conversation, messages, and tool activity | `threads` and Thread child tables |
+| Mode | Reusable instructions for a Thread conversation | `recipes` |
+| Automation | A job definition with sources, trigger, executor, and output | `workbenches` |
+| Automation occurrence | One task and output produced by a run | `workbench_items`, `workbench_runs` |
+| Drawer | A container for filed work, addressed as a Zone | `directories` and membership records |
+| Program | A goal coordinated across bounded agent steps | `programs` |
+| Program step | One worktree task, its gate, review, and PR state | `program_steps` |
+| Program checkpoint | A recorded change, question, decision, or handoff | `program_checkpoints` |
+| Phone communication | Paired devices, messages, calls, and attention events | `phone_devices`, `phone_messages`, `phone_calls`, `phone_events` |
+| Registered Desk window | Shared window identity, geometry, depth, and presentation state | `desk_windows`, `desk_window_desk` |
 
 Do not use "job", "run", and "task" as the same word.
 `intel_jobs` is the queue of deferred meeting analysis.
@@ -116,6 +127,55 @@ Each operation has at most one kernel receipt.
 Effect-specific receipts add detail: `desktop_type_receipts`, `delivery_command_receipts`, and `remote_dictation_deliveries`.
 They do not replace the kernel receipt.
 
+### Conversations and tool activity
+
+A Thread keeps messages, message parts, source references, and conversation state.
+Tool calls have their own requested, held, admitted, and terminal states.
+The current Ask surface can use Thread services for a tool-capable HTTP turn.
+A saved Thread record does not require a separate Thread window.
+
+An Ask answer, a kept Artifact, and a tool-created Note can all result from one request.
+They are distinct records and need their own identities.
+The trace records what the run read, wrote, and prepared.
+A prepared send remains separate from delivery.
+
+### Agent handoff and execution
+
+A handoff starts with a qualified source item and its Project repository.
+The brief can include the item, source meeting, project decisions, commitments, memory, and repository facts.
+Launch services create the worktree and session and link the launch to its origin.
+A later attempt on the same task can have a different launch and worktree.
+
+The launch ledger and work-attempt projection describe session execution.
+They do not establish that a pull request merged or that the requested change is correct.
+Read the agent result, repository state, and relevant effect evidence separately.
+
+### Programs, Calls, and Phone
+
+A Program owns a goal, repository, Control level, and ordered or dependent steps.
+A step binds its brief, owned files, agent choices, worktree, check evidence, review, and pull request.
+Checkpoints record engine decisions and owner actions.
+The Program's handover Note is a derived, retained description of current state.
+
+Usage-limit handoffs continue the same step on its branch and worktree.
+They retain a deterministic redacted handoff brief rather than copying the earlier agent's full conversation.
+A launch, a check verdict, and a reported merge remain separate evidence.
+
+Calls owns active call state and authenticated conversation turns.
+A completed call becomes an ordinary Note through the Calls contract.
+Phone owns pairing, attention rules, messages, call attempts, and returned decisions.
+Its store uses the four `phone_*` tables.
+A paired device record does not establish delivery through the incomplete iPhone-app transport.
+
+### Window and editor state
+
+`desk_windows` stores registered windows shared by browser views of one hub.
+`desk_window_desk` stores desk-level presentation state and revision counters.
+`holdspeak/services/desk_window_service.py` owns their operations and registry.
+Some context-dependent windows remain local to the view, as listed by `NOT_ON_HUB`.
+Browser workspace storage is a presentation cache and a store for local preferences and drafts.
+It is not canonical Note content or proof of a completed operation.
+
 ### Runtime work
 
 [KERNEL.md](KERNEL.md) describes the kernel.
@@ -145,7 +205,8 @@ They are derived from your meetings, notes, and decisions.
 | Runtime operation | `kernel_operations` | Process view |
 | Event history | `kernel_journal` | kernel event stream |
 | Terminal evidence | `kernel_receipts` | receipt view |
-| Window layout | browser storage | Desk windows |
+| Registered window arrangement | `desk_windows`, `desk_window_desk` | Browser presentation and initial workspace cache |
+| Local editor draft and view preference | Its browser/editor contract | Workspace cache |
 
 Rebuild a derived view from its owner rows.
 Do not use a Desk layout as proof that a meeting or an effect happened.
@@ -157,3 +218,11 @@ Do not use a Desk layout as proof that a meeting or an effect happened.
 - A kernel operation has one terminal receipt. A late result cannot change it.
 - Append-only triggers protect inference evidence, kernel attestations, queue attempts, and tool-turn history.
 - Some tables use `deleted` or `archived` as a state. These states do not erase the row.
+
+
+## See also
+
+- [Data model](DATA_MODEL.md): table groups and storage boundaries.
+- [Agents and Threads](AGENTS_AND_THREADS.md): conversations and tool results.
+- [Automation](AUTOMATION.md): definitions, occurrences, and outputs.
+- [Desk architecture](DESK_ARCHITECTURE.md): hub windows and browser presentation.

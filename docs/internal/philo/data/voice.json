@@ -1174,7 +1174,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "data-testid=\"arrival-aftercare-slot\"",
-          "line": 1451,
+          "line": 129,
           "claim": "Arrival provides the aftercare slot immediately before the capture bar."
         },
         {
@@ -1456,10 +1456,10 @@
           "claim": "The Models window add-engine verb \"Use\" writes the summary assignment (useConciergeController.useNewEngineForSummaries)."
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "Arrival",
-          "line": 953,
-          "claim": "The arrival draws a SETUP row while the meeting path has no summary engine; its verb opens Models."
+          "path": "web/src/desk/needsYou.ts",
+          "symbol": "meetingPathBlockers",
+          "line": 792,
+          "claim": "Needs-you membership includes meeting-path setup blockers from the assignment projection."
         },
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",

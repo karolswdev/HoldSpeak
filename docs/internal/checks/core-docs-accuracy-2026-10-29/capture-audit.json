@@ -1,0 +1,208 @@
+{
+  "audit": "core-docs-accuracy-2026-10-29",
+  "lane": "capture",
+  "source_base": "4dce2796d",
+  "documents": [
+    {
+      "path": "docs/MEETING_MODE_GUIDE.md",
+      "disposition": "corrected",
+      "claims": [
+        {"document": "L102-L105 route selection", "source": "holdspeak/intel/providers.py:640-738", "result": "Corrected: an adopted destination wins; otherwise intel_provider selects local/auto/cloud against the hub default."},
+        {"document": "L236-L255 settings table", "source": "holdspeak/config/meeting.py:19-51,91-99; holdspeak/main.py:854-880", "result": "Corrected terminal export behavior, the concrete local model default, intel_provider purpose, and intent_router_enabled=true."},
+        {"document": "L266-L276 HTTP API", "source": "holdspeak/web/routes/meetings/intel.py:111-143; holdspeak/web/routes/meetings/crud.py:202-206", "result": "Confirmed registered meeting routes and recovery route."},
+        {"document": "L286 recovery troubleshooting", "source": "holdspeak/web/routes/meetings/crud.py:202-206", "result": "Corrected the abbreviated path to POST /api/meetings/{id}/capture/recover."}
+      ],
+      "changes": ["Clarified terminal srt fallback, local model path, provider precedence, intent-router default, and full recovery route."],
+      "unknowns": ["No physical audio-device or model-endpoint run was performed; readiness and host availability remain deployment facts."]
+    },
+    {
+      "path": "docs/MEETING_INTELLIGENCE.md",
+      "disposition": "corrected",
+      "claims": [
+        {"document": "L9-L20 durable queue and route selection", "source": "holdspeak/services/meeting_intel_service.py:142-150; holdspeak/intel/providers.py:222-243", "result": "Corrected the claim that intel_provider is only legacy; the deferred queue reads it unless an adopted destination wins."},
+        {"document": "L29-L34 route dry run", "source": "holdspeak/commands/intel.py:138-236", "result": "Confirmed CLI preview and reroute paths are callable without claiming a provider result."},
+        {"document": "L51-L55 actuator boundary", "source": "holdspeak/web/routes/meetings/aftercare.py:45-61; holdspeak/services/meeting_aftercare_service.py:1-80", "result": "Confirmed intelligence/aftercare do not silently confirm or send external effects."}
+      ],
+      "changes": ["Aligned route-selection paragraph with active placement precedence."],
+      "unknowns": ["No provider, mesh, or deferred queue execution was observed; queue/recovery behavior is source-checked only."]
+    },
+    {
+      "path": "docs/MEETING_AFTERCARE.md",
+      "disposition": "corrected",
+      "claims": [
+        {"document": "L16-L73 deterministic digest and boundaries", "source": "holdspeak/services/meeting_aftercare_service.py:1-80; holdspeak/web/routes/meetings/aftercare.py:35-65", "result": "Confirmed aftercare reads saved data and has separate proposal/file-issue operations."},
+        {"document": "L82 Slack API row", "source": "holdspeak/web/routes/meetings/aftercare.py:53-61; holdspeak/web/routes/channels.py:136-139", "result": "Corrected: the legacy route returns slack_moved_to_channel; channel.send is the active operation route."}
+      ],
+      "changes": ["Replaced the unsupported Slack-send description with the actual parked refusal and channel-operation direction."],
+      "unknowns": ["No channel credential, destination, or provider send was exercised."]
+    },
+    {
+      "path": "docs/MEETING_ARCHITECTURE.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L9-L20 module table", "source": "holdspeak/web/routes/meetings/__init__.py:1-44; holdspeak/meeting_recorder.py:1-40", "result": "Confirmed active route composition and recorder/journal module names."},
+        {"document": "L36-L56 live capture and recovery", "source": "holdspeak/meeting_recorder.py:136-218; holdspeak/web/routes/meetings/crud.py:202-206", "result": "Confirmed dual-stream capture and partial-checkpoint recovery semantics."},
+        {"document": "L81-L91 import and handoff", "source": "holdspeak/web/routes/meeting_import.py:58-146; holdspeak/services/meeting_intel_service.py:142-150", "result": "Confirmed import formats, saved meeting IDs, and later intelligence queue handoff."}
+      ],
+      "changes": [],
+      "unknowns": ["Native driver failure modes and physical stream delivery were not observed."]
+    },
+    {
+      "path": "docs/DICTATION_PIPELINE_GUIDE.md",
+      "disposition": "corrected",
+      "claims": [
+        {"document": "L17-L18 failure behavior", "source": "holdspeak/plugins/dictation/pipeline.py:127-157; holdspeak/plugins/dictation/pipeline.py:27-46", "result": "Corrected: non-fatal failures fail open, while fatal speech-session signals stop publication."},
+        {"document": "L61-L66 backend table", "source": "holdspeak/plugins/dictation/runtime.py:66-142; holdspeak/config/model.py:56-64", "result": "Corrected auto selection to require MLX availability and an MLX model before choosing MLX; otherwise llama.cpp is used."},
+        {"document": "L102-L103 and L179-L181 stage fallback", "source": "holdspeak/plugins/dictation/pipeline.py:124-157", "result": "Corrected failed-stage fallback from prior text to original utterance text; skipped stages leave current text unchanged."},
+        {"document": "L163-L164 WAV transcribe route", "source": "holdspeak/web/routes/system/voice.py:106-118", "result": "Confirmed the bounded one-WAV route and no raw-audio retention claim in the route path."}
+      ],
+      "changes": ["Corrected fatal/non-fatal failure wording, auto backend prerequisites, and stage fallback wording."],
+      "unknowns": ["No model backend, real microphone, desktop typing, or remote delivery was run."]
+    },
+    {
+      "path": "docs/DICTATION_COPILOT.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L24-L30 shared pipeline, dry run, remote delivery", "source": "holdspeak/web/routes/dictation/pipeline.py:475-552,556-620; holdspeak/dictation_runner.py:51-75", "result": "Confirmed the routes use the staged pipeline and delivery-id contract; CLI inference is distinct from agent launch."},
+        {"document": "L41-L77 settings and readiness", "source": "holdspeak/web/routes/dictation/pipeline.py:242-272; holdspeak/web/routes/dictation/blocks.py:38-56", "result": "Confirmed active readiness, pipeline, project-knowledge, and block API surfaces."},
+        {"document": "L79-L84 fixture/physical distinction", "source": "holdspeak/web/routes/dictation/pipeline.py:475-552; holdspeak/web/routes/system/voice.py:106-118", "result": "Confirmed dry-run is non-delivery; source review does not convert fixture behavior into a physical observation."}
+      ],
+      "changes": [],
+      "unknowns": ["No live microphone, keyboard, endpoint, or agent destination was observed."]
+    },
+    {
+      "path": "docs/DICTATION_ARCHITECTURE.md",
+      "disposition": "corrected",
+      "claims": [
+        {"document": "L20-L27 entry points", "source": "holdspeak/web/routes/system/voice.py:71-118; holdspeak/web/routes/system/voice_stream.py:96-100; holdspeak/runtime/dictation_capture.py:102-121", "result": "Confirmed browser, streaming, and desktop capture entry paths."},
+        {"document": "L48-L49 unavailable-stage behavior", "source": "holdspeak/plugins/dictation/pipeline.py:127-157", "result": "Corrected failure wording: skipped stage preserves current text; non-fatal failure returns original utterance text."},
+        {"document": "L64-L70 commit and delivery", "source": "holdspeak/web/routes/dictation/pipeline.py:751-779; holdspeak/operation_policy.py:15-31", "result": "Confirmed preview is not typing and committed effects use delivery/policy boundaries."}
+      ],
+      "changes": ["Corrected unavailable-stage fallback wording."],
+      "unknowns": ["No physical capture or delivery effect was observed."]
+    },
+    {
+      "path": "docs/VOICE_COMMANDS.md",
+      "disposition": "corrected",
+      "claims": [
+        {"document": "L3-L5 complete-match behavior", "source": "holdspeak/config/ui.py:103-130; holdspeak/dictation_runner.py:61-82", "result": "Confirmed deterministic whole-utterance matching and prose fallback."},
+        {"document": "L13-L15 test route", "source": "holdspeak/web/routes/system/voice.py:339-382", "result": "Corrected: the route validates submitted kind/payload; open_url, launch_app, and shell can execute through the bounded connector, while type_text and desk_verb are preview-only."},
+        {"document": "L18-L25 dispatch boundary", "source": "holdspeak/plugins/voice_macro_connector.py:125-187; holdspeak/web/routes/system/voice_stream.py:46-86", "result": "Confirmed configured actions use the guarded connector and a macro failure does not block plain dictation."}
+      ],
+      "changes": ["Removed the false claim that every command test has no live effect; documented action-specific behavior and payload."],
+      "unknowns": ["No host application, shell, URL opener, or configured macro was fired."]
+    },
+    {
+      "path": "docs/ACTIVITY_PREBRIEFING.md",
+      "disposition": "corrected",
+      "claims": [
+        {"document": "L14-L19 Activity navigation", "source": "web/src/pages/cores/ActivityCore.tsx:50-73,245-277; holdspeak/web/routes/activity/ledger.py:19-34", "result": "Corrected nonexistent pre-briefing-note selection to the active Records face and Candidates and connectors wing."},
+        {"document": "L21-L29 candidate controls", "source": "web/src/pages/cores/ActivityCore.tsx:199-209,329-367; holdspeak/web/routes/activity/candidates.py:29-65", "result": "Corrected nonexistent Use/Dismiss controls; active UI offers Start meeting and Dry run, while status update is an API operation."},
+        {"document": "L54-L58 clear/settings", "source": "holdspeak/web/routes/activity/ledger.py:23-47", "result": "Confirmed settings and delete-records routes and their source-record boundary."}
+      ],
+      "changes": ["Rewrote navigation and candidate-use instructions to match the registered UI and API."],
+      "unknowns": ["Connector readiness and external refresh outcomes were not exercised; no provider data was requested."]
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L43-L64 kernel boundary and effect census", "source": "holdspeak/kernel/effect_ledger.json:1-22; holdspeak/kernel/project.py:1-16", "result": "Confirmed cooperating-process limitation and the pinned empty transitional ledger."},
+        {"document": "L102-L117 storage classes", "source": "holdspeak/db/core.py:90-116; holdspeak/people/store.py:19-30", "result": "Confirmed plaintext main DB posture, bounded recovery stores, and separate People sidecar."},
+        {"document": "L152-L159 remote boundary", "source": "holdspeak/web_server.py:1125-1129; holdspeak/web_auth.py:169-193", "result": "Confirmed device audio has its own PSK route and non-loopback web/MCP auth remains separate."},
+        {"document": "L255-L258 speech egress", "source": "holdspeak/meeting_session/session.py:217-220; holdspeak/web/routes/system/voice.py:106-118", "result": "Confirmed local speech capture/transcription is distinct from later assigned model work."}
+      ],
+      "changes": [],
+      "unknowns": ["Security claims were source-checked only; no adversarial, network, provider, or deployment test was run."]
+    },
+    {
+      "path": "docs/PEOPLE_SECURITY.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L19-L29 encryption and custody", "source": "holdspeak/people/crypto.py:15-86; holdspeak/people/store.py:19-119; holdspeak/people/keys.py:62-88", "result": "Confirmed AES-256-GCM payloads, sidecar path, native key store, private-permission checks, and fail-closed readiness."},
+        {"document": "L31-L52 MCP access", "source": "holdspeak/config/people.py:6-26; holdspeak/mcp/families/people.py:245-287; holdspeak/services/onboarding_service.py:471-516", "result": "Confirmed write default, environment override, off/read/write modes, shared-intent boundary, and read-only launched-agent scope."},
+        {"document": "L77-L82 lost key recovery", "source": "holdspeak/people/store.py:95-119; holdspeak/people/__init__.py:1-17", "result": "Confirmed no plaintext or empty-store fallback and no main-DB backup of the sidecar."}
+      ],
+      "changes": [],
+      "unknowns": ["Native keychain/Secret Service availability and recovery were not exercised on a host."]
+    },
+    {
+      "path": "docs/AUTHORITY.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L17-L41 modes and precedence", "source": "holdspeak/operation_policy.py:15-37; holdspeak/services/authority_service.py:36-65", "result": "Confirmed safe/neutral/yolo wire values, YOLO default, supported families, and refusal of unknown families."},
+        {"document": "L50-L64 grants and hard limits", "source": "holdspeak/operation_policy.py:21-31,161-180; holdspeak/services/authority_service.py:141-178", "result": "Confirmed fixed-destination grant binding and invariants that modes cannot weaken."},
+        {"document": "L66-L79 Calls/Phone/Programs", "source": "holdspeak/phone/service.py:1-45; holdspeak/services/program_service.py:1-45", "result": "Source paths establish the separate Phone reach and Programs services; no live call or message was attempted."}
+      ],
+      "changes": [],
+      "unknowns": ["No authority decision, grant, call, Phone transport, or Program run was executed."]
+    },
+    {
+      "path": "docs/AUTHORITY_MODEL.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L45-L53 policy resolution and TTLs", "source": "holdspeak/operation_policy.py:15-37; holdspeak/services/authority_service.py:36-65", "result": "Confirmed policy order and five/fifteen/sixty-minute steering TTL constants."},
+        {"document": "L57-L84 kernel layers and cancellation", "source": "holdspeak/kernel/desk_broker.py:1-45; holdspeak/kernel/runtime.py:1-110", "result": "Confirmed envelope/warrant/claim/revocation layers and parent-child execution boundary."},
+        {"document": "L86-L101 receipts and limits", "source": "holdspeak/kernel/project.py:1-16; holdspeak/db/schema.py:1590-1605", "result": "Confirmed terminal receipt vocabulary and application-boundary limits."}
+      ],
+      "changes": [],
+      "unknowns": ["No live cancellation, restart, executor, or receipt replay was performed."]
+    },
+    {
+      "path": "docs/SECURITY_MODEL.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L6-L23 limits and trust map", "source": "holdspeak/principals.py:1-110; holdspeak/kernel/runtime.py:1-110", "result": "Confirmed cooperating-process boundary and caller/edge/kernel/executor/receipt sequence."},
+        {"document": "L25-L53 identity, credentials, and policy", "source": "holdspeak/principals.py:1-110; holdspeak/operation_policy.py:21-37", "result": "Confirmed principal derivation, in-memory agent credentials, hard invariants, and YOLO scope."},
+        {"document": "L68-L88 recovery and gate preview", "source": "holdspeak/web_server.py:1883-1915,1931-1935; holdspeak/kernel/liveness.py:86-95; holdspeak/kernel/parent_run.py:323-350; holdspeak/coder_gate.py:191-236", "result": "Confirmed active startup recovery orchestration, liveness/refusal behavior, abandoned parent reconciliation, and gate preview redaction/truncation limitation."}
+      ],
+      "changes": [],
+      "unknowns": ["No restart, compromised-process, or external provider retention scenario was tested."]
+    },
+    {
+      "path": "docs/STORAGE_AND_MIGRATIONS.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L7-L23 backup/restore boundary", "source": "holdspeak/db/core.py:74-205", "result": "Confirmed backup/restore commands, safety backup, open-database refusal, WAL cleanup, and non-atomic replacement."},
+        {"document": "L25-L42 paths and store split", "source": "holdspeak/db/core.py:210-285; holdspeak/people/store.py:19-30", "result": "Confirmed default main DB path and encrypted People sidecar separation."},
+        {"document": "L44-L64 additive reconcile", "source": "holdspeak/db/reconcile.py:610-854", "result": "Confirmed shape-based reconciliation, preservation limits, and post-repair automatic backup ordering."},
+        {"document": "L84-L95 startup recovery", "source": "holdspeak/db/core.py:263-285; holdspeak/web_server.py:1883-1915,1931-1935; holdspeak/kernel/liveness.py:86-95", "result": "Confirmed schema reconciliation occurs during database construction, then active startup recovery runs inference/desk/projection recovery; unfinished work does not become assumed success."}
+      ],
+      "changes": [],
+      "unknowns": ["No backup, restore, corrupt database, or restart recovery was run."]
+    },
+    {
+      "path": "docs/PLATFORMS.md",
+      "disposition": "generated_checked",
+      "claims": [
+        {"document": "L3-L5 generated marker and source snapshot", "source": "scripts/generate_capability_docs.py:18-29,38-54,73-95; docs/internal/philo/snapshot.json:1-10", "result": "Confirmed generated ownership and the pinned snapshot 675401a857b85336d4acaa8c65383dfc9636e4c8."},
+        {"document": "L7 onward availability table", "source": "scripts/generate_capability_docs.py:57-78", "result": "Confirmed rows are source-backed classifications, not release or owner-observation proof."}
+      ],
+      "changes": [],
+      "unknowns": ["The snapshot is older than the current documentation branch; the generated file was read-only and not regenerated in this lane. Root must decide whether to regenerate and inspect resulting drift."]
+    },
+    {
+      "path": "docs/RELEASING.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {"document": "L7-L29 versions and upgrade data", "source": "holdspeak/__init__.py:1-30; holdspeak/db/reconcile.py:610-854; holdspeak/people/store.py:19-30", "result": "Confirmed package/config/schema roles, additive reconcile, and People/config/capture exclusions from main backup."},
+        {"document": "L31-L63 checks and hardware distinction", "source": "scripts/install.sh:21-42; pyproject.toml:153-160; scripts/phase93_meeting_longrun.py:15-18", "result": "Confirmed documented critical/Web commands and that hardware checks require physical prerequisites distinct from synthetic tests."},
+        {"document": "L65-L92 model evaluation and release steps", "source": "scripts/phase200_eval.py:1-40; scripts/install.sh:21-42; .github/workflows/release.yml:1-120", "result": "Confirmed evaluation harness and install/tag workflow references."}
+      ],
+      "changes": [],
+      "unknowns": ["No release, package build, hardware lane, endpoint evaluation, or clean install was run."]
+    },
+    {
+      "path": "docs/DEVICE_PROTOCOL.md",
+      "disposition": "corrected",
+      "claims": [
+        {"document": "L9-L60 endpoint, handshake, PSK and close codes", "source": "holdspeak/device_audio_ws.py:115-163,252-285; holdspeak/device_audio.py:425-583", "result": "Confirmed endpoint, first-frame handshake, constant-time PSK check, config persistence, rotation-on-reconnect, and close codes."},
+        {"document": "L62-L133 controls, health and queries", "source": "holdspeak/device_audio_ws.py:343-543; holdspeak/runtime/device_glue.py:294-339", "result": "Confirmed start/stop/heartbeat/event/health/query handling, attached-meeting behavior, and query TTLs/caps."},
+        {"document": "L135-L146 PCM and buffer protocol", "source": "holdspeak/device_audio.py:84-153,198-241", "result": "Confirmed int16 mono PCM, odd-byte drop, pre/post-session drop, 2-second cap, oldest-frame drop, and one warning per overflow burst."},
+        {"document": "L154-L179 status frames", "source": "holdspeak/device_status.py:73-90,239-299; holdspeak/runtime/device_glue.py:186-192; holdspeak/runtime/meeting_stop.py:20-27", "result": "Corrected broad 150-character claim: LCD helpers truncate at 150, low-level emitter passes through, and runtime query responses cap at 500."}
+      ],
+      "changes": ["Narrowed status-text length claim to the actual helper/emitter/query behavior."],
+      "unknowns": ["No paired device, firmware LCD, Wi-Fi link, or physical audio stream was used; protocol source and test seams were not converted into hardware observation."]
+    }
+  ]
+}

@@ -1,109 +1,162 @@
 # HoldSpeak architecture
 
-This is the map for a contributor. It shows how the pieces of HoldSpeak fit
-and how one utterance flows through them. It is the runtime view. For the code
-layout, read the
-[web frontend decomposition](internal/ARCHITECTURE_WEB_FRONTEND.md) and the
-[backend runtime decomposition](internal/ARCHITECTURE_BACKEND_RUNTIME.md).
-For a shorter map, read [System architecture](SYSTEM_ARCHITECTURE.md).
+HoldSpeak is an agentic-first, web-based AI operating system with a local hub.
+The browser Desk, native inputs, and MCP clients reach a shared service layer.
+That layer connects saved context to model work, tool effects, coding sessions, and recurring jobs.
 
-The diagrams are Mermaid. A test (`tests/e2e/test_mermaid_renders.py`) renders
-every block in the docs, so a broken diagram fails the test.
+Read this document to trace a request through the runtime.
+Use [System architecture](SYSTEM_ARCHITECTURE.md) for the short map and [System integration map](SYSTEM_INTEGRATION_MAP.md) for process boundaries.
+The [frontend map](internal/ARCHITECTURE_WEB_FRONTEND.md) and [backend map](internal/ARCHITECTURE_BACKEND_RUNTIME.md) describe source decomposition.
 
 ## The shape of it
 
-The Web runtime is the main process. `WebRuntime` (`holdspeak/web_runtime.py`
-and `holdspeak/runtime/`) owns the hardware-facing components and the local
-FastAPI server (`MeetingWebServer`). The server serves the Web app and the
-API. Two supporting processes exist: the MCP sidecar and the isolated desktop
-typing executor.
+`WebRuntime` in `holdspeak/web_runtime.py` and `holdspeak/runtime/` composes the host services.
+`MeetingWebServer` serves the browser bundle, FastAPI routes, and live event transport.
+The hub owns its main database through the runtime ownership contract.
 
-- **Dictation** turns held-key or wake-word speech into typed text. Capture and
-  transcription always run. The pipeline stages follow the `dictation.pipeline`
-  config.
-- **Meetings** turn live or imported audio into a transcript, typed artifacts
-  and an aftercare digest. Actions out are proposals that you approve.
+| Work | Execution path | Result |
+| --- | --- | --- |
+| Read and develop context | Domain repositories, grounding, Ask, conversation services | Answers, saved Notes, Artifacts, and tool activity |
+| Delegate implementation | Item brief, repository resolution, worktree, CLI launch | Agent session linked to the source item |
+| Repeat work | Automation definition, trigger, occurrence, runner | Saved output, run history, trace, and optional working memory |
+| Capture speech | Speech session, local transcription, dictation or meeting services | Typed text, retained transcript, or meeting intelligence |
+| Send prepared work | Channel preview, preparation, owner send | Destination outcome and Receipt |
 
-Transcription is local (`Transcriber`, MLX or faster-whisper). The Model
-Library lists the model profiles. Assignments hold the ordered choices for each
-capability. The inference runner freezes the chosen route before each attempt.
-State lives in one SQLite database behind repositories. An outbound action
-needs audited authority: the control posture, a scoped grant or a decision for
-that action. See [The trust boundary](#the-trust-boundary) and
-[Security](SECURITY.md).
-
-The iPad app joins over your own network. It is a typed client of the same
-FastAPI routes as the web UI. It is not a second runtime. See
-[Companion architecture](COMPANIONS_ARCHITECTURE.md).
+The stdio MCP sidecar proxies to the live hub.
+It does not create another database writer.
+CLI engines, coding sessions, and native typing helpers are separate process paths with distinct contracts.
+A CLI engine can use a cloud provider even though its process runs on this machine.
 
 ## The components
 
-Boxes are subsystems. The label names the owning module.
-
 ```mermaid
 flowchart TB
-  subgraph entry["Audio entry"]
-    HK["Hotkey<br/>(hotkey.py)"]
-    WW["Wake word<br/>(wake_word.py)"]
-    DEV["Device bridge<br/>(device_audio_ws.py)"]
-  end
-
-  subgraph runtime["WebRuntime (web_runtime.py, runtime/*)"]
-    VS["Voice session<br/>(voice_typing.py)"]
-    TR["Transcriber<br/>(transcribe.py)"]
-    DR["Dictation pipeline<br/>(dictation_runner.py)"]
-    MS["Meeting session<br/>(meeting_session/)"]
-    PH["Plugin host and router<br/>(plugins/host.py, router.py)"]
-    RUN["Capability runs<br/>(web/routes/primitives/)"]
-    IR["Inference runner<br/>(kernel/inference_runner.py)"]
-    AX["Actuator executor<br/>(plugins/actuator_executor.py)"]
-    SRV["Web server and API<br/>(web_server.py, web/routes/*)"]
-  end
-
-  subgraph out["Outputs"]
-    TY["Keyboard inject<br/>(typer.py)"]
-    DESK["The Desk<br/>(web/src/desk/)"]
-    BUS["Runtime bus, one /ws per page<br/>(web/src/runtime/RuntimeBus.tsx)"]
-    CN["Gated connectors<br/>(plugins/gated_connector.py)"]
-  end
-
-  DB[("SQLite<br/>(db/*)")]
-  MODEL(["Model adapters<br/>(Whisper, GGUF, MLX, endpoint, mesh)"])
-
-  HK --> VS
-  WW --> VS
-  DEV --> VS
-  VS --> TR
-  TR --> DR
-  TR --> MS
-  TR -. "transcribe attempt" .-> IR
-  DR --> TY
-  DR -. "optional rewrite" .-> IR
-  MS --> PH
-  PH -. "intel" .-> IR
-  IR --> MODEL
-  PH --> AX
-  AX --> CN
-  CN -. "approved egress" .-> EXT(["GitHub, Slack, webhooks"])
-  SRV --> DESK
-  SRV -. "live frames" .-> BUS
-  BUS --> DESK
-  RUN -. "prompt" .-> IR
-  RUN --> DB
-  runtime <--> DB
+    Desk["Browser Desk: React"] --> HTTP["FastAPI routes"]
+    MCP["MCP proxy or remote scoped client"] --> Dispatch["MCP dispatch and rights"]
+    Input["Native voice and device input"] --> Capture["Speech and meeting services"]
+    HTTP --> Services["Records, Projects, People, and Memory"]
+    Dispatch --> Services
+    HTTP --> Ask["Ask and Thread tool loops"]
+    HTTP --> Agents["Agent handoff and session services"]
+    HTTP --> Auto["Automation and recurring services"]
+    Capture --> Data["Domain stores"]
+    Services --> Data
+    Ask --> Services
+    Ask --> Runtime["Kernel and inference runtime"]
+    Agents --> Runtime
+    Auto --> Runtime
+    Capture --> Runtime
+    Runtime --> Adapter["Local, endpoint, mesh, or CLI adapters"]
+    Runtime --> Effects["Native and external effect executors"]
+    Runtime --> Journal["Operation and attempt evidence"]
+    Data --> Bus["Shared live event transport"]
+    Bus --> Desk
 ```
+
+Each service owns its domain validation and projection.
+The transport authenticates callers and validates its wire contract.
+The operation runtime binds authority and execution evidence for consequential work.
+The browser renders those records through the shared Desk framework.
+
+## Agentic execution
+
+### Ask and tool calls
+
+`holdspeak/services/ask_service.py` owns Ask invocations and saved results.
+`ask_desk.py` selects the tool path for the assigned Answers engine.
+A compatible HTTP engine can run through Thread services with the Ask palette.
+A supported CLI engine can receive a run-scoped credential for the hub's MCP tools.
+An engine without tools answers from its supplied grounding.
+
+The **About** selection supplies a retrieval starting point.
+A tool-capable Ask can read additional permitted Desk context.
+It is not a general access boundary or a guarantee that no other source is read.
+Narrow service scopes, such as project-update runs, have separate enforced rules.
+
+Tool calls use the caller's rights, palette, classification, and the called service's checks.
+They can create permitted Desk records and prepare sends.
+The run trace supplies source references, writes, and prepared actions.
+A final external send stays with the owner.
+
+`thread_service.py` retains conversation turns and tool activity.
+`thread_tools.py` owns tool classification and decision handling.
+A saved Thread is a domain record even when the current browser uses Ask as its conversation surface.
+
+### Automations
+
+`holdspeak/services/workbench_service.py` stores Automation configuration.
+`automation_runs.py` turns an instruction and source selection into an occurrence item and routes its output.
+The source selection can include supported relative sets resolved at run time.
+The configured trigger determines when a run starts.
+
+`services/workbench_runner.py` owns the bounded run, admitted children, output publication, and optional memory writeback.
+Tool-capable HTTP engines use `engine_tool_loop.py` inside the item's run.
+CLI engines use their scoped MCP path.
+The run retains outputs and the trace of reads, writes, and prepared sends.
+
+Output targets include retained Desk work and prepared destinations.
+A configured destination target prepares content for the owner's **Send** press.
+Changing a delegated schedule's bound terms can invalidate its prior authority.
+The configured runtime must be available when the trigger is due.
+Read [Automation](AUTOMATION.md) for user setup and failure recovery.
+
+### Coding handoffs
+
+`holdspeak/services/agent_brief.py` composes the source item, meeting, project decisions and commitments, memory, and repository facts.
+It applies the brief size and secret-redaction contracts.
+`agent_hand_preview.py` reads the intended launch without starting it.
+`agent_hand_service.py` resolves the repository and starts the selected installed profile in its worktree.
+
+The launch records its origin and work attempt.
+A configured concurrency limit can queue a handoff until a slot is available.
+Reviewer launches use their own review profile and restrictions.
+Hooks and session readers bring progress and questions back to the Desk.
+
+A launch is not a completed implementation.
+The source task, attempt, worktree, pull request, and review result retain separate identities.
+Read [Coder integration](CODER_INTEGRATION.md) and [Agent hooks](AGENT_HOOK_INSTALL.md) for operational requirements.
+
+### Programs
+
+`holdspeak/services/program_service.py` owns the Program and step state machines and the owner-decision contract.
+`program_runner.py` advances eligible steps from dependency readiness through agent work, check, review, pull request, and merge.
+`program_verifier.py` interprets the repository's check log.
+`program_rules.py` applies the Program's Control level and identifies core questions.
+`program_handoff.py` prepares usage-limit continuations.
+
+The runner observes repository and execution evidence before advancing a step.
+An agent's report alone does not establish a green check or merged pull request.
+A usage handoff keeps the existing branch and worktree and supplies a deterministic redacted brief to the next eligible agent.
+Program checkpoints and the handover Note expose progress and decisions.
+Configured Phone rules can escalate a Program's owner question through the permitted transport.
+Read [Programs](programs.md) for dependencies, templates, gates, and the Control ladder.
+
+### Calls, The Line, and Phone
+
+`holdspeak/calls/` owns authenticated call sessions and their tool-using turns.
+The adapter can be HoldSpeak's Line or the optional ai-phone process.
+`holdspeak/line/` implements the SIP adapter, enrolled-node control path, supervised audio process, and speech components.
+The hub and line node exchange heard/said/end events and bounded control commands.
+A completed call is saved as a Note.
+
+`holdspeak/phone/` adds devices, messages, call attempts, attention rules, and decision replies.
+Program events use those rules to contact the owner when configured.
+Number calls and the incomplete iPhone-app transport have different availability.
+Do not infer a working app delivery path from the presence of pairing endpoints.
+Read [Calls](calls.md) and [Phone](phone.md) for setup, access, and transport limits.
 
 ## Inference admission: one path, one receipt per attempt
 
 This section is the integration contract for model work.
 
-Every provider attempt enters `InferenceRunner.invoke()` and becomes one
-`inference.invoke@1` operation. The runner admits and claims that child before
-an adapter can call a provider. The child names one immutable
-`DeploymentRevision`, captured before admission. It ends in exactly one
-immutable terminal receipt. The reviewed adapters accept a single-use
-`DispatchContext` from the runner. No route, service, plugin, command, local
-Whisper backend or mesh worker is an alternate entrance.
+Every core inference provider attempt enters `InferenceRunner.invoke()` or
+`invoke_stream()` and becomes one `inference.invoke@1` operation. The runner
+admits and claims that child before a core adapter can call a provider. The
+child names one immutable `DeploymentRevision`, captured before admission. It
+ends in exactly one immutable terminal receipt. The reviewed core adapters
+accept a single-use `DispatchContext` from the runner. The Line's separate
+speech process is an exception: it loads Parakeet ASR and Pocket TTS directly,
+so those calls do not enter this core inference contract.
 
 - A parent run or session is causation and a finite budget. It does not replace
   the receipt of each attempt.
@@ -113,7 +166,7 @@ Whisper backend or mesh worker is an alternate entrance.
 - A parent receipt says how the run ended. A child receipt says how that
   attempt ended.
 - Ask uses the service contract `holdspeak.ask` (`services/ask_service.py`).
-  Saved Agents use `recipe:<id>` and the Agent's `last_modified` revision.
+  Saved Modes use `recipe:<id>` and the Mode's `last_modified` revision.
 - Both freeze the destination as a `DeploymentRevision` before dispatch. A
   later **Engines** edit cannot retarget a child in flight.
 - Provider output waits behind the terminal election. The receipt carries the
@@ -131,8 +184,11 @@ A live Meeting, dictation or wake session has one authenticated parent
 Whisper call is a linked child. A child checks the parent for liveness,
 revocation, deadline, budget and revision. Whisper preload needs a narrow
 preload authority and its own receipt. Prompt, transcript, text and audio stay
-in the dispatch path. Kernel records carry only refs, hashes, authority,
-placement and outcomes.
+in the dispatch path. Child and receipt records carry refs, hashes, authority,
+placement and outcomes. Parent run input snapshots are a deliberate exception:
+`kernel_parent_runs.input_json` stores the caller snapshot and can include
+prompt text. Its filter blocks named audio, PCM and token keys, but it is not a
+semantic content classifier.
 
 A scheduled Workbench run is not owner impersonation. Enabling a schedule
 mints one bounded delegation over the exact Workbench, Agent and schedule
@@ -206,9 +262,10 @@ correction.
   `empty`, `secret` or `one_word`. The one-word refusal applies only to the
   routing kinds.
 
-The routes are under `/api/dictation/`: `dry-run`, `remote`, `journal`,
-`journal/{entry_id}/correct`, `corrections`, `corrections/{id}` (delete) and
-`readiness`. See [API reference](API_REFERENCE.md).
+The pipeline and learning routes under `/api/dictation/` include `dry-run`,
+`remote`, `journal`, `journal/{entry_id}/correct`, `corrections`,
+`corrections/{id}` (delete) and `readiness`. Capture and preview routes are
+separate. See [API reference](API_REFERENCE.md).
 
 ### The device path
 
@@ -388,17 +445,18 @@ triggers keep them current. `holdspeak memory rebuild-index` rebuilds them.
 Search normalizes BM25 scores within each kind before it merges the kinds.
 
 The native memory engine (`holdspeak/memory/`) adds chunks, embeddings, facts,
-entities, consolidation and pages. The memory conductor runs it. It needs a
-model assignment for the capabilities `memory.embed`, `memory.extract` and
-`memory.page`. Without an assignment, memory still builds chunks. Recall falls
-back to keyword and relation search. It yields to a live Meeting and to a live
-local model call.
+entities, consolidation and pages. The memory conductor runs it. `memory.embed`
+uses its own assignment. `memory.extract`, `memory.consolidate` and
+`memory.page` can use their own assignment or a supported `LOCAL` or owner-made
+default. Without a semantic engine, extraction, consolidation and page writes
+do not run, but memory still builds chunks and recall falls back to keyword and
+relation search. It yields to a live Meeting and to a live local model call.
 
 The grounding hydrator turns a project reference into citable source blocks,
 each with a `[REF: kind:id]` line. The hydration receipt carries
 `matched_count` and `overflow_count`.
 
-The **Process** window shows live work. It polls `/api/kernel/events` and
+The **Processes** window shows live work. It polls `/api/kernel/events` and
 `/api/kernel/read?view=process` and folds the journal into fixed sections. It
 reads and shows. It admits no operation and has no execution controls.
 
@@ -406,10 +464,13 @@ reads and shows. It admits no operation and has no execution controls.
 
 Interview uses the Thread conversation, the model routing and the MCP
 services. It does not add a model runtime or an automation engine.
+The Thread pullout and its older controls are parked. Opening a saved Thread
+loads it into Ask, the active browser conversation surface. Interview state
+remains a Thread-backed service and API contract, not a separate active window.
 
 | Component | Job |
 | --- | --- |
-| Thread window and store | Show messages, streamed replies, references and tool activity |
+| Thread store and Ask surface | Store messages, streamed replies, references and tool activity. Ask renders the active conversation surface |
 | Thread service | Run the conversation and its tool loop |
 | Interview section descriptors | Declare the purpose, tool set and handoff of each section |
 | Interview service | Validate and save facts, suggestion choices, section changes and revisions |
@@ -430,9 +491,9 @@ Code: `holdspeak/services/interview_contracts.py`,
 
 ## Coder sessions
 
-A live Claude Code or Codex session is an object on the desk. Hooks report its
-state. Nothing here acts alone. An AI can draft a reply. Only an explicit human
-send delivers it. See [Coder integration](CODER_INTEGRATION.md).
+A live coding session can report its state through hooks.
+HoldSpeak-launched sessions also keep their source item, brief, worktree, and work attempt.
+The Desk can show the selected session and deliver an explicit reply to its verified pane. See [Coder integration](CODER_INTEGRATION.md).
 
 ```mermaid
 flowchart LR
@@ -515,7 +576,7 @@ chain, workflow, profile) is a primitive under one contract. See
 The hub owns the canonical store. The iPad and the web desk are authoring
 ports.
 
-Sync keeps four classes apart:
+Sync keeps five classes apart:
 
 - **Content** (Meetings, Artifacts): the canonical record. It syncs.
 - **Organization** (directories, knowledge bases, membership): shared truth.
@@ -523,7 +584,10 @@ Sync keeps four classes apart:
 - **Capability** (recipes, chains, workflows, runtime profiles): the
   definitions sync. A workflow made on the iPad runs on the hub. For models,
   only a small manifest syncs. The model binary never moves.
-- **Layout** (where a card sits): per-device. It never syncs.
+- **Object placement**: browser view state, separate from the portable content-sync contract.
+- **Registered window state**: hub-owned geometry, depth, seat, and revisions shared by browser views of one desk.
+  The browser cache is replaced by newer hub rows through `compositor/hubWindows.ts`.
+  Some contextual windows remain view-local under the `NOT_ON_HUB` registry.
 
 ```mermaid
 flowchart LR
@@ -538,10 +602,11 @@ flowchart LR
   SY <--> DB
 ```
 
-A run over a few roped objects is grounded in the canonical record. Nothing is
-stored unless you keep the answer. A kept answer becomes an Artifact whose
-lineage names every object it read and the exact instruction. The badge on the
-card names where the run went.
+A grounded run resolves the selected records through the shared hydrator.
+The run and its execution evidence can be retained before you keep an output as an Artifact.
+A kept Artifact adds a reusable domain record with the result and its source information.
+Tool-created records and prepared sends also have their own persistence contracts.
+The trace and Receipt identify actual work and its execution route.
 
 The mission-control belt is a read path. The hub runs each mapped repository's
 own `dw` command for the documents the Delivery Workbench contract allows. It
@@ -572,9 +637,10 @@ migrates.
 
 ## The trust boundary
 
-Everything inside the box runs on your machine. Every arrow that leaves it is a
-crossing you opened. The gate on each crossing is named. This diagram mirrors
-the egress table in [Security](SECURITY.md). If they disagree, Security wins.
+The local hub can use local runtimes, configured endpoints, CLI providers, connectors, and remote clients.
+Each path has its own data boundary and authority rules.
+The diagram summarizes major crossings.
+Read [Security](SECURITY.md) for the full contract and current limitations.
 
 ```mermaid
 flowchart LR
@@ -597,3 +663,11 @@ flowchart LR
   DEVCE(["Paired device, same LAN"]) -->|"audio in, status out"| RT
   IPAD(["iPad app, LAN or Tailscale, Bearer token"]) -->|"route calls"| RT
 ```
+
+
+## See also
+
+- [Desk architecture](DESK_ARCHITECTURE.md): shared windows, local presentation, and recovery.
+- [Model runtime](MODEL_RUNTIME.md): assignments, frozen routes, CLI adapters, and attempts.
+- [Domain model](DOMAIN_MODEL.md): record identities and storage owners.
+- [MCP sidecar](MCP_SIDECAR.md): transports and scoped tool access.

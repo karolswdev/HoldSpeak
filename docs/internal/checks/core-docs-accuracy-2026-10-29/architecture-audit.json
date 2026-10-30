@@ -1,0 +1,233 @@
+{
+  "lane": "architecture",
+  "audited_at": "2026-10-29",
+  "base": "4dce2796d",
+  "scope": "architecture-owned guides; no product, test, package, generated-region, canon, history, staging, or commit edits",
+  "documents": [
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/ARCHITECTURE.md:152-159",
+          "source": "holdspeak/kernel/inference_runner.py:82-127; holdspeak/line/speech.py:123-185; holdspeak/line/node.py:674-690",
+          "result": "Scoped the one-receipt inference contract to core InferenceRunner paths and named the Line's direct Parakeet and Pocket calls as an exception."
+        },
+        {
+          "document": "docs/ARCHITECTURE.md:168-171",
+          "source": "holdspeak/db/schema.py:1435-1439; holdspeak/services/thread_service.py:499-513",
+          "result": "Changed the saved conversation capability from Agent to Mode while preserving the wire identifier recipe:<id> and the kind=mode storage contract."
+        },
+        {
+          "document": "docs/ARCHITECTURE.md:182-191",
+          "source": "holdspeak/kernel/parent_run.py:105-107; holdspeak/db/schema.py:3480-3496; holdspeak/kernel/model.py:9-12,83-91",
+          "result": "Corrected the kernel content boundary. Child and receipt records carry refs and hashes, but parent input_json stores caller snapshots and can retain prompt text; filtering is by named keys."
+        },
+        {
+          "document": "docs/ARCHITECTURE.md:209-234,265-268",
+          "source": "holdspeak/config/meeting.py:356-391; holdspeak/plugins/dictation/assembly.py:93-139; holdspeak/web/routes/dictation/pipeline.py:475-570,1079-1210,1260-1347",
+          "result": "The default dictation pipeline and stages match the config and assembly path. The route list now says it is a relevant pipeline and learning subset, not an exhaustive capture-route roster."
+        },
+        {
+          "document": "docs/ARCHITECTURE.md:447-453",
+          "source": "holdspeak/memory/engine.py:1-17,155-205; holdspeak/memory/consolidate.py:31-32; holdspeak/memory/pages.py:37-40",
+          "result": "Corrected memory assignment scope. Embedding requires its own assignment. Extract, consolidate, and page can use supported local or owner-made defaults; chunk indexing and keyword or relation recall remain without a semantic engine."
+        },
+        {
+          "document": "docs/ARCHITECTURE.md:463-484",
+          "source": "web/src/desk/store/compositorSlice.ts:300-304; web/src/desk/store/types.ts:433-435; web/src/desk/components/AskPanel.tsx:11-17,26-28; holdspeak/services/interview_service.py:67-73; holdspeak/web/routes/threads.py:91-105",
+          "result": "Marked the Thread pullout and older controls parked, identified Ask as the active conversation surface, and retained Interview as the Thread-backed service and API contract."
+        },
+        {
+          "document": "docs/ARCHITECTURE.md:579-588",
+          "source": "holdspeak/services/sync_service.py:32-80; holdspeak/services/desk_window_service.py:93-113",
+          "result": "Corrected the sync taxonomy count from four to five and kept registered window state distinct from the SYNC_REGISTRY."
+        }
+      ],
+      "changes": [
+        "Scoped the core inference admission claim and documented the direct Line speech exception.",
+        "Renamed saved conversation terminology to Mode without changing recipe wire IDs.",
+        "Documented the parent-run input snapshot exception to the kernel content boundary.",
+        "Clarified dictation route scope, memory defaults, active Ask versus parked Thread controls, and the five sync classes."
+      ],
+      "unknowns": [
+        "No live Desk, provider, Line process, microphone, scheduled run, or external destination was started."
+      ]
+    },
+    {
+      "path": "docs/KERNEL.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/KERNEL.md:41-46,164-177",
+          "source": "holdspeak/kernel/parent_run.py:105-121; holdspeak/db/schema.py:3480-3504; holdspeak/kernel/model.py:9-12,83-91; holdspeak/line/speech.py:123-185",
+          "result": "The existing parent-snapshot warning was retained and the inference section was corrected to scope one inference child to the core runtime, with the direct Line speech exception."
+        },
+        {
+          "document": "docs/KERNEL.md:99-131,195-201",
+          "source": "holdspeak/db/schema.py:2302-2342",
+          "result": "Operation and terminal receipt states, compare-and-swap revisions, idempotency, and one receipt per operation match the active schema."
+        },
+        {
+          "document": "docs/KERNEL.md:133-148",
+          "source": "holdspeak/kernel/journal.py:82-99; holdspeak/kernel/model.py:9-12,83-91",
+          "result": "Journal event filtering, named content-key rejection, cursor cap, hash-chain verification, and single-use warrant language match the implementation."
+        },
+        {
+          "document": "docs/KERNEL.md:152-162,203-245",
+          "source": "holdspeak/db/schema.py:3483-3504,2268-2270; holdspeak/kernel/runtime.py:154-191",
+          "result": "Parent kind and state enums, delivery unknown states, startup reconciliation order, and indeterminate recovery claims match source."
+        }
+      ],
+      "changes": [
+        "Scoped the physical model-attempt statement to attempts admitted by the core inference runtime and named the Line exception."
+      ],
+      "unknowns": [
+        "No live operation, restart, claim, receipt, or recovery flow was exercised."
+      ]
+    },
+    {
+      "path": "docs/DATA_MODEL.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {
+          "document": "docs/DATA_MODEL.md:10-13,102-118",
+          "source": "holdspeak/db/schema.py:2302-2348,3480-3504; holdspeak/kernel/parent_run.py:105-107; holdspeak/kernel/model.py:9-12,83-91",
+          "result": "The schema-inventory provenance, kernel table grouping, receipt references, and parent input snapshot warning match the declared schema and writers."
+        },
+        {
+          "document": "docs/DATA_MODEL.md:63-77,170-177",
+          "source": "holdspeak/db/schema.py:2109-2137; holdspeak/services/desk_window_service.py:93-113; web/src/desk/compositor/hubWindows.ts:1-21,88-90",
+          "result": "Thread, workbench, registered-window, browser-cache, and local-draft storage boundaries match the active stores and compositor."
+        },
+        {
+          "document": "docs/DATA_MODEL.md:147-162",
+          "source": "holdspeak/kernel/runtime.py:154-191; holdspeak/db/core.py:90-205; holdspeak/commands/backup.py:3-14,41-78",
+          "result": "Derived-view recovery and database-only backup and restore boundaries are source-supported."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "The generated schema inventory was not regenerated, and no live database backup or restore was run."
+      ]
+    },
+    {
+      "path": "docs/DOMAIN_MODEL.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/DOMAIN_MODEL.md:20-30",
+          "source": "holdspeak/db/schema.py:1435-1439; holdspeak/services/thread_service.py:499-513",
+          "result": "Renamed the saved conversation term from Agent persona to Mode while keeping recipes as the owner and preserving the kind=mode wire contract."
+        },
+        {
+          "document": "docs/DOMAIN_MODEL.md:45-70,83-128",
+          "source": "holdspeak/db/schema.py:156-225,2302-2348; holdspeak/db/meetings.py:39-41; holdspeak/db/actuators.py:1-20",
+          "result": "Meeting, deferred-intel, artifact, decision, proposal, grant, and receipt relationships and retention statements match the active table definitions and writers."
+        },
+        {
+          "document": "docs/DOMAIN_MODEL.md:130-188",
+          "source": "holdspeak/db/schema.py:2205-2225,3332-3355; holdspeak/services/desk_window_service.py:147-169",
+          "result": "Thread-on-Ask storage, launch/work-attempt separation, route-attempt identity, work-attempt states, and window registry terminology are source-supported."
+        }
+      ],
+      "changes": [
+        "Changed the domain term Agent persona to Mode and scoped Route attempt to core-routed model calls."
+      ],
+      "unknowns": [
+        "The schema comment still uses the historical persona word, so this audit follows the active mode kind and service validation. No live domain rows were inspected."
+      ]
+    },
+    {
+      "path": "docs/RELATIONSHIP_AWARE_MEMORY.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/RELATIONSHIP_AWARE_MEMORY.md:37-45",
+          "source": "holdspeak/memory/admission.py:26-90; holdspeak/db/memory.py:420-449; holdspeak/memory/defense.py:1-30",
+          "result": "Admission exclusions, parent-context search behavior, secret defense, and the separate dictation correction store match the active memory readers."
+        },
+        {
+          "document": "docs/RELATIONSHIP_AWARE_MEMORY.md:60-68",
+          "source": "holdspeak/db/memory.py:452-475,579-600",
+          "result": "The documented relationship expansion caps of 32 seeds, two neighbors per seed, and 64 total results match code."
+        },
+        {
+          "document": "docs/RELATIONSHIP_AWARE_MEMORY.md:82-96",
+          "source": "holdspeak/memory/pages.py:8-40,101-134; holdspeak/memory/engine.py:155-205; holdspeak/memory/consolidate.py:23-32",
+          "result": "Corrected the desk page count to three and separated semantic-job assignment requirements from model-free chunk indexing and keyword or relationship recall."
+        },
+        {
+          "document": "docs/RELATIONSHIP_AWARE_MEMORY.md:135-159",
+          "source": "holdspeak/grounding.py:320-365; holdspeak/services/memory_grounding.py:46-65; holdspeak/db/memory.py:962-985",
+          "result": "Grounding, bounded excerpt, Desk-reference, and search-limit claims match the active hydration and memory service constants. Mode now names the reusable Thread capability."
+        }
+      ],
+      "changes": [
+        "Corrected desk page inventory, semantic-default behavior, and persona terminology."
+      ],
+      "unknowns": [
+        "The pages module docstring still describes the older two-page desk set, while active PAGE_SET contains three pages. Product code was out of scope, so the guide follows PAGE_SET and records the source inconsistency here.",
+        "No live memory rebuild, semantic model call, or page read was run."
+      ]
+    },
+    {
+      "path": "docs/SYSTEM_ARCHITECTURE.md",
+      "disposition": "corrected",
+      "claims": [
+        {
+          "document": "docs/SYSTEM_ARCHITECTURE.md:37-40,62-79",
+          "source": "holdspeak/db/schema.py:2109-2137; holdspeak/services/desk_window_service.py:93-113; web/src/desk/compositor/hubWindows.ts:1-21,88-90; holdspeak/kernel/parent_run.py:105-107",
+          "result": "The map distinguishes presentation state from runtime evidence and now notes that a parent input snapshot can retain caller prompt text."
+        },
+        {
+          "document": "docs/SYSTEM_ARCHITECTURE.md:11-34,42-60",
+          "source": "holdspeak/web_runtime.py:18-55; holdspeak/web_server.py:1488-1516; web/src/runtime/RuntimeBus.tsx:27-60",
+          "result": "The browser, transport, service, execution, evidence, and runtime-bus ownership map remains source-supported."
+        },
+        {
+          "document": "docs/SYSTEM_ARCHITECTURE.md:71-82",
+          "source": "holdspeak/kernel/inference_runner.py:82-127; holdspeak/line/speech.py:123-185; holdspeak/line/node.py:674-690",
+          "result": "Scoped the state-lifetime row to core model attempts and documented that direct Line Parakeet and Pocket calls do not use the core receipt contract."
+        }
+      ],
+      "changes": [
+        "Scoped model-attempt evidence to the core runtime, added the Line exception, and qualified the parent-snapshot content boundary."
+      ],
+      "unknowns": [
+        "No live browser, runtime-bus, Line, provider, or external-effect flow was exercised."
+      ]
+    },
+    {
+      "path": "docs/SYSTEM_INTEGRATION_MAP.md",
+      "disposition": "source_checked_unchanged",
+      "claims": [
+        {
+          "document": "docs/SYSTEM_INTEGRATION_MAP.md:7-47",
+          "source": "holdspeak/mcp/server.py:1-39,107-115,191-220; holdspeak/line/node.py:674-700; holdspeak/web/routes/system/voice.py:44-106",
+          "result": "The deployment boundaries, sidecar proxy, native input, Line enrollment path, and incomplete iPhone transport statements are source-supported."
+        },
+        {
+          "document": "docs/SYSTEM_INTEGRATION_MAP.md:49-70,105-114",
+          "source": "holdspeak/kernel/runtime.py:154-191; holdspeak/db/schema.py:2302-2342; holdspeak/kernel/inference_runner.py:122-140",
+          "result": "The admitted-operation, receipt, recovery, and cooperating-code limits match the kernel runtime."
+        },
+        {
+          "document": "docs/SYSTEM_INTEGRATION_MAP.md:72-103",
+          "source": "holdspeak/web/routes/dictation/pipeline.py:475-570; holdspeak/services/thread_service.py:1-40; holdspeak/services/desk_window_service.py:93-113; web/src/desk/compositor/hubWindows.ts:1-21",
+          "result": "The job-owner table and frontend state boundary remain current. The model-run row describes the core assignment and route path without claiming that every local speech call is a routed attempt."
+        }
+      ],
+      "changes": [],
+      "unknowns": [
+        "No network, paired device, Line node, iPhone transport, provider, browser, or external destination was contacted."
+      ]
+    }
+  ],
+  "verification": {
+    "navigation": "python3 scripts/check_docs.py docs/ARCHITECTURE.md docs/KERNEL.md docs/DATA_MODEL.md docs/DOMAIN_MODEL.md docs/RELATIONSHIP_AWARE_MEMORY.md docs/SYSTEM_ARCHITECTURE.md docs/SYSTEM_INTEGRATION_MAP.md -> Documentation navigation: 7 files checked; local targets and Markdown headings resolve.",
+    "diff_check": "git diff --check -> passed",
+    "tests": "not run; prohibited by the lane brief"
+  },
+  "status": "DRAFT — hold for SHIP"
+}

@@ -1,0 +1,41 @@
+{
+  "source_base": "4dce2796d",
+  "claims": [
+    {
+      "path": "docs/ACTUATOR_DEVELOPMENT.md",
+      "claim": "Meeting approval records a decision without executing an effect.",
+      "source": "holdspeak/services/meeting_aftercare_service.py:106-135",
+      "result": "Corrected after independent advisory and re-checked."
+    },
+    {
+      "path": "docs/ACTUATOR_DEVELOPMENT.md",
+      "claim": "Stored meeting actuator flags do not gate current production executors.",
+      "source": "holdspeak/web/routes/actuator_shared.py:263-269,291-298; holdspeak/services/mission_control_service.py:221-229; holdspeak/setup_status.py:223",
+      "result": "Documented the implementation gap; no product policy was changed."
+    },
+    {
+      "path": "docs/ACTUATOR_DEVELOPMENT.md",
+      "claim": "Kernel receipts are optional for a bare SDK executor.",
+      "source": "holdspeak/plugins/actuator_executor.py:239-266",
+      "result": "Qualified the earlier universal receipt wording."
+    },
+    {
+      "path": "docs/INTEGRATIONS.md",
+      "claim": "Slack actuator paths refuse; prepared document channel sends are a separate path.",
+      "source": "holdspeak/services/actuator_service.py:85-107",
+      "result": "Labeled the compatibility route and linked the actual send path."
+    },
+    {
+      "path": "docs/MEETING_MODE_GUIDE.md",
+      "claim": "meeting.allow_actuators and meeting.allowed_actuators are stored fields, not active gates on Desk/MissionControl effects.",
+      "source": "holdspeak/config/meeting.py:124-125,225-239; holdspeak/web/routes/actuator_shared.py:263-269,291-298",
+      "result": "Corrected the settings table."
+    },
+    {
+      "path": "docs/calls.md",
+      "claim": "Calls auto-selection is ordered and node: does not imply enrollment or readiness.",
+      "source": "holdspeak/calls/service.py:80-98; holdspeak/calls/aiphone.py:69",
+      "result": "Documented off-switch precedence, explicit choice, command override, detection and fallback."
+    }
+  ]
+}

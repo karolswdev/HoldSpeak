@@ -1,174 +1,164 @@
 # Models
 
-Open **HoldSpeak > Engines** to choose the engine for each AI job.
-Open **Settings > Accounts** to connect GitHub, Jira, Confluence or a calendar.
+Open **Settings > Engines** to make an engine available and assign it to an AI
+job. An engine is an inference destination. A launched Claude Code, Codex, or
+pi coding session is a different path with its own repository, worktree, and
+brief. See [Coder integration](CODER_INTEGRATION.md).
 
 ## Choose an engine
 
-1. Open **HoldSpeak > Engines**.
-2. Use **Find on LAN**, **Add an engine**, or **Download a local model**.
-3. Select a job and choose its engine.
-4. Use **Default engine** for jobs that do not need a separate assignment.
+1. Open **Settings > Engines**.
+2. Select **Find on LAN**, **Add an engine**, or **Download a local model**.
+3. Select the job and choose an engine.
+4. Use **Default engine** when the job has no more specific assignment.
 
-**Custom tasks** covers saved Agents and Workflow steps.
-**Background work** covers automatic drafts, summaries and memory work.
-These are routing groups. They can share the default engine.
+**Custom tasks** routes saved Agents and Workflow steps. **Background work**
+routes automatic drafts, summaries, and memory work. These are capability
+groups, not separate provider accounts.
+
+The current **Engines** window names the job rows for the work they serve:
+
+| Row | Capability group |
+| --- | --- |
+| **Speech to text** | `speech_recognition` |
+| **Dictation clean-up** | `writing_dictation` |
+| **Answers and notes** | `thoughts_notes` |
+| **Meeting summaries** | `meetings` |
+| **Custom tasks** | `agents_tools` |
+| **Background work** | `background` |
+| **Default engine** | `default` |
 
 ## Add or check an engine
 
-Use **Add an engine** for a keyless compatible endpoint.
-Enter its base URL in the **Server address** field.
-Select **Check** to inspect it.
+Use **Add an engine** for an OpenAI-compatible endpoint and enter its **Server
+address**. Use **Check** to inspect current readiness. A catalog model can
+show **Download** when its local artifact is missing. An assignment that
+depends on that artifact stays **WAITING** until the acquisition is ready.
 
-A catalog preset shows **Download** and its file size when the model is absent.
-Selecting **Download** starts acquisition through the Model Library service.
-Dependent assignments remain **WAITING** until the model is ready.
+Cloud rows show **KEY SET** or **NOT SET**. A paid probe requires the explicit
+check control. A key belongs to the owner-only secret field and is not copied
+into Notes, Threads, Receipts, or model payloads.
 
-Cloud rows show **KEY SET** when a key is set.
-The **Check** control on those rows shows `1 TOKEN · $` before a paid probe.
-Engines requires that explicit action for a paid cloud check.
-Normal model work can also incur provider charges.
+The environment fallback `HOLDSPEAK_PROFILE_<ID>_KEY` is for headless setup of a
+known engine. It does not replace the owner secret boundary.
 
-For a keyed provider, enter its key in the engine form
-or use the owner Model Library API with its write-only secret field.
-The [Model Library contract](MCP_SIDECAR.md#model-library) describes the underlying owner operations.
-The [API surface](API_SURFACE.md) lists their HTTP routes.
+## Agent CLI engines
 
-For headless provisioning, `HOLDSPEAK_PROFILE_<ID>_KEY` remains an environment fallback for the identified model profile.
-Do not place credentials in a Thread, Note, or shared model record.
-A cloud row showing **NOT SET** requires credential setup before a paid check can succeed.
+The supported CLI presets are Claude Code, Codex, pi, and Gemini CLI. A CLI
+engine is an inference destination that starts one process for a prompt. It is
+not a coding handoff and does not receive a repository task unless that is the
+separate Coder flow.
+
+The engine settings store `base_url=cli:<preset>` and a `model` value. `default`
+means the CLI's own default. The CLI uses its own sign-in; HoldSpeak does not
+read or copy that sign-in. `HOLDSPEAK_CLI_ENGINES=off` disables all CLI-engine
+discovery and runs.
+
+Each preset has different controls:
+
+| Preset | Process behavior | Tool boundary |
+| --- | --- | --- |
+| Claude Code | JSON output. HoldSpeak uses strict MCP configuration and no permission prompts. | Built-in tools are off for a plain run. A run with Desk tools receives HoldSpeak's scoped MCP server. Folder mode enables only `Read`, `Glob`, and `Grep`. |
+| Codex | JSON event output. HoldSpeak disables unrelated configured MCP servers and feature paths. | The default is a read-only sandbox. With Desk tools, the run receives HoldSpeak's scoped MCP server. Folder mode keeps read-only shell access for that folder. |
+| pi | `--print` one-shot text output, no session, extensions, skills, templates, context files, MCP, approval, and offline startup. | No Desk tools are wired into this CLI engine path yet. Its own provider config decides the endpoint. |
+| Gemini CLI | JSON output with default approval mode, no extensions, and an allow-list naming no MCP server. | Shell, edit, and write tools that need approval stay out. Gemini's read-only tools can remain available; do not describe this preset as all tools off. |
+
+The CLI subprocess runs with a bounded timeout and a temporary run context.
+For Claude and Codex Desk-tool runs, HoldSpeak issues a run credential and
+revokes it after the process exits. It never exposes the credential in argv or
+the generated config file. A provider or CLI can still send the prompt to its
+own cloud or LAN destination. Inspect the egress host in the engine row and
+Receipt.
+
+An Automation **spend_limit** applies per run where the chosen preset
+enforces a provider limit. A preset that does not enforce one cannot be made
+to report a provider cost by this setting.
 
 ## Understand readiness
 
 | State | Meaning |
 | --- | --- |
-| **READY** | The engine passed the applicable readiness check. |
+| **READY** | The engine passed its current readiness check. |
 | **CHECKING** | A check is in progress. |
-| **WAITING** | A download or prerequisite has not completed. |
-| **NOT SET** | The cloud engine needs a configured key. |
-| **UNREACHABLE** | The engine did not respond as required. |
-| **OFF** | You explicitly disabled a capability group. |
+| **WAITING** | A download or prerequisite is incomplete. |
+| **NOT SET** | A required cloud key is absent. |
+| **UNREACHABLE** | The endpoint or runtime did not answer. |
+| **OFF** | The capability group is explicitly disabled. |
 
-The picker changes the selected job. A missing or incompatible engine cannot run that job.
-A successful check establishes current availability. It does not guarantee future availability or model quality.
+Readiness is a point-in-time fact. It does not promise future availability,
+provider success, or model quality.
 
 ## Try a job
 
-Select **Try it** beside a job. A text trial sends a fixed sample through
-that job's assigned route. The destination is shown beside the button before
-you press it. The button shows progress, then the row shows the tested task,
-serving model, time, sample and returned text. One press starts the trial.
+Select **Try it** beside a job. A text trial uses a fixed sample. **Speech to
+text** uses the microphone and **Stop**. The destination appears before the
+trial. A successful call with no text reads **Completed · No text returned**.
 
-**Speech to text** uses the microphone: speak, then select **Stop**.
-The browser can request microphone access. Text trials use a fixed sample.
-A successful inference with no text reads **Completed · No text returned**.
-A failure stays on the job and names its cause.
+A trial checks one capability. It does not test every Agent, Workflow, memory,
+or tool operation, and a provider can charge for it.
 
-A sample checks one task in the group. It does not test every Agent, Workflow
-or memory operation. **Default engine** supplies other jobs and has no
-separate trial. A provider can charge for a trial on its service.
+## Assignments and frozen routes
+
+An assignment selects one to four compatible models in order. More specific
+scope wins over a group default. At run start, HoldSpeak freezes the ordered
+route and deployment revisions. A later Settings change affects the next run
+only. No hidden provider is substituted when all selected legs fail.
+
+The Receipt records the frozen primary model, attempted legs, fallback reason,
+host, boundary, and result. [Inference targets](INFERENCE_TARGETS.md) explains
+the destination identity and readiness model.
 
 ## Repair states
+The current **Engines** window resolves the applicable assignment when work
+starts. A later catalog or assignment change affects later work only. It does
+not move a run that has already started. The advanced setup surface exposes
+**Model Library** and **Assignments** when you select **Set up my own** and
+open **Table**.
 
-When something the assigned set depends on is not usable, Engines lists it
-under **NEEDS YOU**. Each row names the state, the host where the repair
-happens, the capability groups affected, and one control.
-
-| State | Meaning | Control |
+| State | Meaning | Action |
 | --- | --- | --- |
-| **MODEL FILE MISSING** | An assigned local model is not on disk. | **Download** opens the Model Library acquisition. |
-| **ENDPOINT UNREACHABLE** | An assigned endpoint did not answer. | **Check** opens the **Server address** field on that address. |
-| **TOOL INCOMPATIBLE** | The assigned model cannot serve that capability. | **Choose** opens that group's engine list. |
-| **CREDENTIAL EXPIRED** | A required key or source credential is absent or rejected. | **Connections** opens Settings, Connections. |
-
-The list is derived from assigned routes and connected sources.
-An engine several groups share appears once and names those groups.
-No row appears when nothing needs you.
-
-## Failure and fallback
-
-An assignment can hold up to four models in order. A request uses them in that
-order and stops at the first one that completes.
-
-The order is fixed when the request starts. A later assignment change does not
-move a request that has already started, and no model outside that order is
-ever used in its place. When every model in the order fails, the request fails
-and the Receipt names the route and each model it tried. HoldSpeak does not
-substitute a different provider.
-
-## Adjust individual capabilities
-
-Select **Adjust** below the proposed set to open the capability table.
-Each row shows its group, assignment, and engine host.
-Use an individual assignment when the group choice does not suit that capability.
-
-The service resolves the applicable assignment when work starts.
-Changes to the model catalog or assignments affect later work.
-They do not move a run that has already started.
-
-## Model Library and assignments
-
-**Model Library** names the underlying availability service.
-It records models, deployment information, and readiness observations.
-An **assignment** selects the compatible model list for a capability or eligible saved item.
-These are separate service contracts beneath Engines.
-
-**HoldSpeak > Engines** and the assignment entry points open the engine picker.
-Use the [MCP reference](MCP_SIDECAR.md) or [API surface](API_SURFACE.md) for programmatic access to those services.
-
-The assignment service supports complete ordered lists of one to four compatible models.
-More specific assignment scope takes precedence over a group default.
-A missing or incompatible assignment produces a named failure when work starts.
+| **MODEL FILE MISSING** | A local assigned model is absent. | Select **Download**. |
+| **ENDPOINT UNREACHABLE** | The assigned endpoint did not answer. | Check **Server address** and select **Check**. |
+| **TOOL INCOMPATIBLE** | The engine cannot serve the capability. | Select **Choose** for that group. |
+| **CREDENTIAL EXPIRED** | A required key or provider connection is missing. | Open **Connections** or the engine secret field. |
 
 ## Local runtimes and endpoints
 
-Install the optional runtime that your chosen capability needs.
-From an active source environment:
+Use the optional runtime required by the assigned capability:
 
-| Runtime | Command |
+| Runtime | Install |
 | --- | --- |
-| GGUF through llama.cpp | Included in the base install (`uv pip install -e .`) |
+| GGUF through llama.cpp | `uv pip install -e .` |
 | MLX text models on Apple Silicon | `uv pip install -e '.[dictation-mlx]'` |
-| OpenAI-compatible dictation endpoint | Included in the base install (`uv pip install -e .`) |
-| Optional meeting analysis dependencies | `uv pip install -e '.[meeting]'` |
+| OpenAI-compatible endpoint | `uv pip install -e .` |
+| Meeting analysis extras | `uv pip install -e '.[meeting]'` |
 
-For a package installation, use the equivalent `holdspeak[extra]` package.
-See [Getting Started](GETTING_STARTED.md) for environment setup.
-
-Capability requirements include supported input types, tool use, structured output, and context size.
-A model that works for writing can still be unsuitable for Interview or meeting analysis.
-An available MLX artifact also requires a capability path that supports its runtime.
-
-Engines proposes local speech recognition.
-Other groups can use a local engine, LAN endpoint, or selected cloud service.
-Check each host before you apply the set.
-Model requests can send source context to that host.
+The model must also satisfy the capability's input, tool, structured-output,
+and context requirements. A model suitable for writing can be unsuitable for
+Interview or meeting analysis.
 
 ## Meeting output compatibility
 
-Meeting intelligence expects structured fields for topics, action items, and a summary.
-An endpoint must support the applicable request and response format.
-A server-wide schema setting can conflict with the requested meeting schema.
-
-For field definitions and compatibility behavior, see the [meeting output schema](internal/MEETING_OUTPUT_SCHEMA.md).
-Use the returned error and Receipt when you diagnose a failed request.
+Meeting intelligence needs the applicable structured topic, action, and
+summary fields. An endpoint can be reachable and still reject the requested
+format. Read the returned error and Receipt.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| No engine is available | Add a compatible endpoint or download a supported preset. |
-| A local model remains unavailable | Check the model file, optional runtime, and capability requirements. |
-| An endpoint is unreachable | Check its address, required credential, and network path. Repeat **Check**. |
-| An assignment cannot run | Use **Adjust** to select a compatible engine for that capability. |
-| A repair state is shown | Use the control on that row. Each state has one. |
-| **Test** reports UNREACHABLE | Read the Receipt. It names the route and each model that was tried. |
-| **Use these** remains disabled | No group is ready or off. Resolve a waiting group or set an unneeded group to off. |
-| Tool results are unreliable | Review the sources and model output. A readiness check does not evaluate recommendation quality. |
+| No engine is available | Add a compatible endpoint or download a supported local artifact. |
+| CLI engine is missing | Check its executable on PATH and `HOLDSPEAK_CLI_ENGINES`. |
+| CLI run has no Desk tools | Confirm the preset. pi and Gemini do not receive the M1 Desk-tool path. |
+| Local model is unavailable | Check the file, runtime extra, and capability requirements. |
+| Endpoint is unreachable | Check the address, key, and network route. |
+| Assignment cannot run | Open **Settings > Engines**, read the named refusal, and choose a compatible engine or repair the named prerequisite. |
+| Trial says **UNREACHABLE** | Read the Receipt for the attempted route and refusal. |
+| Tool results are weak | Review sources and model output. Readiness does not measure quality. |
 
 ## See also
 
-- [Getting Started](GETTING_STARTED.md): install the required environment.
-- [Interview](INTERVIEW.md): tool-based conversation and current quality limits.
-- [Security & Privacy](SECURITY.md): model data and credential boundaries.
-- [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md): service routing and admission.
+- [Inference targets](INFERENCE_TARGETS.md): destination identity and routing.
+- [Execution destinations](EXECUTION_DESTINATIONS.md): frozen execution routes.
+- [Coder integration](CODER_INTEGRATION.md): coding-agent launches.
+- [Security and privacy](SECURITY.md): provider data boundaries.

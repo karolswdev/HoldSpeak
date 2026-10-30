@@ -1,0 +1,896 @@
+{
+  "source_base": "4dce2796d",
+  "method": "source audit plus separately named fixture checks; no exhaustive deployment certification",
+  "document_count": 73,
+  "dispositions": {
+    "corrected": 40,
+    "source_checked_unchanged": 28,
+    "generated_checked": 5
+  },
+  "invalid_source_anchors": [],
+  "documents": [
+    {
+      "path": "CONTRIBUTING.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "No fresh source install or package build is claimed."
+      ]
+    },
+    {
+      "path": "README.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 1,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "No new visual redesign; existing sample screenshots are retained."
+      ]
+    },
+    {
+      "path": "docs/ACTIVITY_PREBRIEFING.md",
+      "lane": "capture",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "Connector readiness and external refresh outcomes were not exercised; no provider data was requested."
+      ]
+    },
+    {
+      "path": "docs/ACTUATOR_DEVELOPMENT.md",
+      "lane": "sdk",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "sdk-audit.json",
+        "integration-addenda.json"
+      ],
+      "unknowns": [
+        "No live Desk, provider, webhook, GitHub, or device flow was run under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/AGENTS_AND_THREADS.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No live Ask stream or provider call was run; the brief prohibits live Desk/provider actions."
+      ]
+    },
+    {
+      "path": "docs/AGENT_HOOK_INSTALL.md",
+      "lane": "agents",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No native Claude, Codex, or pi hook was installed or exercised."
+      ]
+    },
+    {
+      "path": "docs/AIPI_LITE.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "No board, ESPHome firmware, UDP network, microphone, or LCD run."
+      ]
+    },
+    {
+      "path": "docs/AIPI_LITE_DEV_WORKFLOW.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "No setup install, firmware compilation, flash, or physical bridge check was run."
+      ]
+    },
+    {
+      "path": "docs/API_REFERENCE.md",
+      "lane": "root",
+      "disposition": "generated_checked",
+      "claim_count": 2,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "No endpoint-by-endpoint semantic certification or full HTTP run."
+      ]
+    },
+    {
+      "path": "docs/API_SURFACE.md",
+      "lane": "root",
+      "disposition": "generated_checked",
+      "claim_count": 3,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "Reference-app route membership does not prove every endpoint authorization or successful service execution."
+      ]
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "lane": "architecture",
+      "disposition": "corrected",
+      "claim_count": 7,
+      "evidence": [
+        "architecture-audit.json"
+      ],
+      "unknowns": [
+        "No live Desk, provider, Line process, microphone, scheduled run, or external destination was started."
+      ]
+    },
+    {
+      "path": "docs/ARCHITECTURE_WORK.md",
+      "lane": "daily",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No agent launch, Automation run, or model request was executed."
+      ]
+    },
+    {
+      "path": "docs/AUTHORITY.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No authority decision, grant, call, Phone transport, or Program run was executed."
+      ]
+    },
+    {
+      "path": "docs/AUTHORITY_MODEL.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No live cancellation, restart, executor, or receipt replay was performed."
+      ]
+    },
+    {
+      "path": "docs/AUTOMATION.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No scheduled run was started; external scheduler behavior remains unobserved."
+      ]
+    },
+    {
+      "path": "docs/CADENCE.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No cadence loop, Telegram delivery, or external destination was run."
+      ]
+    },
+    {
+      "path": "docs/CAPABILITIES.md",
+      "lane": "root",
+      "disposition": "generated_checked",
+      "claim_count": 2,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "Historical capability evidence was not rerun individually."
+      ]
+    },
+    {
+      "path": "docs/CODER_INTEGRATION.md",
+      "lane": "agents",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No coder process, worktree, or reviewer launch was started."
+      ]
+    },
+    {
+      "path": "docs/COMPANIONS_ARCHITECTURE.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "Native clients and network transports were source-checked only."
+      ]
+    },
+    {
+      "path": "docs/CONFIGURATION_REFERENCE.md",
+      "lane": "agents",
+      "disposition": "generated_checked",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "The table is declaration-only and does not establish migrated/effective runtime values, as its own warning states."
+      ]
+    },
+    {
+      "path": "docs/CONNECTOR_DEVELOPMENT.md",
+      "lane": "sdk",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "sdk-audit.json"
+      ],
+      "unknowns": [
+        "No runtime restart, Activity view, CLI, provider, or live connector preview was run under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/DATA_MODEL.md",
+      "lane": "architecture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "architecture-audit.json"
+      ],
+      "unknowns": [
+        "The generated schema inventory was not regenerated, and no live database backup or restore was run."
+      ]
+    },
+    {
+      "path": "docs/DESK_ARCHITECTURE.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "No new owner Desk session or live multi-browser reconciliation was performed."
+      ]
+    },
+    {
+      "path": "docs/DESK_MEMORY.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No live Memory search or Desk query was run."
+      ]
+    },
+    {
+      "path": "docs/DESK_OBJECT_MODEL.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "Keyboard and window claims are source-checked; the general fixture Desk sweep is separate runtime evidence."
+      ]
+    },
+    {
+      "path": "docs/DEVICE_PROTOCOL.md",
+      "lane": "capture",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No paired device, firmware LCD, Wi-Fi link, or physical audio stream was used; protocol source and test seams were not converted into hardware observation."
+      ]
+    },
+    {
+      "path": "docs/DICTATION_ARCHITECTURE.md",
+      "lane": "capture",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No physical capture or delivery effect was observed."
+      ]
+    },
+    {
+      "path": "docs/DICTATION_COPILOT.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No live microphone, keyboard, endpoint, or agent destination was observed."
+      ]
+    },
+    {
+      "path": "docs/DICTATION_PIPELINE_GUIDE.md",
+      "lane": "capture",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No model backend, real microphone, desktop typing, or remote delivery was run."
+      ]
+    },
+    {
+      "path": "docs/DOMAIN_MODEL.md",
+      "lane": "architecture",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "architecture-audit.json"
+      ],
+      "unknowns": [
+        "The schema comment still uses the historical persona word, so this audit follows the active mode kind and service validation. No live domain rows were inspected."
+      ]
+    },
+    {
+      "path": "docs/ENVIRONMENTS.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No live atmosphere, sound, reduced-motion, or hidden-tab behavior was observed."
+      ]
+    },
+    {
+      "path": "docs/EXECUTION_DESTINATIONS.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 2,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No local, private-network, paired, or cloud destination was probed."
+      ]
+    },
+    {
+      "path": "docs/FIREFOX_EXTENSION_GUIDE.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "No Firefox add-on installation or authenticated ingestion was observed."
+      ]
+    },
+    {
+      "path": "docs/GATE.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No gate hook was armed and no tool call was held."
+      ]
+    },
+    {
+      "path": "docs/GETTING_STARTED.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No live Desk or browser walk was performed under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/GLOSSARY.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No live Glossary links or Desk aliases were opened."
+      ]
+    },
+    {
+      "path": "docs/INFERENCE_TARGETS.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No target readiness check or execution attempt was performed."
+      ]
+    },
+    {
+      "path": "docs/INTEGRATIONS.md",
+      "lane": "agents",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json",
+        "integration-addenda.json"
+      ],
+      "unknowns": [
+        "No provider sign-in, connector command, or external actuator was invoked."
+      ]
+    },
+    {
+      "path": "docs/INTERVIEW.md",
+      "lane": "daily",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No authenticated Thread API or MCP call was made."
+      ]
+    },
+    {
+      "path": "docs/IPAD.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "No Swift build, signing, installed iPad app, mesh serving, or physical dictation delivery."
+      ]
+    },
+    {
+      "path": "docs/KERNEL.md",
+      "lane": "architecture",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "architecture-audit.json"
+      ],
+      "unknowns": [
+        "No live operation, restart, claim, receipt, or recovery flow was exercised."
+      ]
+    },
+    {
+      "path": "docs/MCP_SIDECAR.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "The generated roster was not regenerated; no live MCP client handshake was run."
+      ]
+    },
+    {
+      "path": "docs/MEETING_AFTERCARE.md",
+      "lane": "capture",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No channel credential, destination, or provider send was exercised."
+      ]
+    },
+    {
+      "path": "docs/MEETING_ARCHITECTURE.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "Native driver failure modes and physical stream delivery were not observed."
+      ]
+    },
+    {
+      "path": "docs/MEETING_INTELLIGENCE.md",
+      "lane": "capture",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No provider, mesh, or deferred queue execution was observed; queue/recovery behavior is source-checked only."
+      ]
+    },
+    {
+      "path": "docs/MEETING_MODE_GUIDE.md",
+      "lane": "capture",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "capture-audit.json",
+        "integration-addenda.json"
+      ],
+      "unknowns": [
+        "No physical audio-device or model-endpoint run was performed; readiness and host availability remain deployment facts."
+      ]
+    },
+    {
+      "path": "docs/MODELS.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No engine readiness probe, download, paid probe, or CLI process was run."
+      ]
+    },
+    {
+      "path": "docs/MODEL_RUNTIME.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "The guide describes the governed inference path; SIP/phone speech adapters were not treated as InferenceRunner evidence in this audit."
+      ]
+    },
+    {
+      "path": "docs/OPERATIONS.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No production hub, backup, restore, or hardware state was touched."
+      ]
+    },
+    {
+      "path": "docs/PEOPLE_INTEGRATION.md",
+      "lane": "daily",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No People store, calendar, or protected relationship was opened."
+      ]
+    },
+    {
+      "path": "docs/PEOPLE_SECURITY.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "Native keychain/Secret Service availability and recovery were not exercised on a host."
+      ]
+    },
+    {
+      "path": "docs/PLATFORMS.md",
+      "lane": "capture",
+      "disposition": "generated_checked",
+      "claim_count": 2,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "The snapshot is older than the current documentation branch; the generated file was read-only and not regenerated in this lane. Root must decide whether to regenerate and inspect resulting drift."
+      ]
+    },
+    {
+      "path": "docs/PLUGIN_AUTHORING.md",
+      "lane": "sdk",
+      "disposition": "corrected",
+      "claim_count": 5,
+      "evidence": [
+        "sdk-audit.json"
+      ],
+      "unknowns": [
+        "No model call, runtime launch, pack discovery, live meeting, or provider flow was run under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/PROJECT_ROOMS.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No provider account or live Project Room was opened."
+      ]
+    },
+    {
+      "path": "docs/REACH_RUNNER.md",
+      "lane": "agents",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No remote hub, credential, or external scheduler was contacted."
+      ]
+    },
+    {
+      "path": "docs/README.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "The index is navigation, not an independently executed end-to-end workflow."
+      ]
+    },
+    {
+      "path": "docs/RELATIONSHIP_AWARE_MEMORY.md",
+      "lane": "architecture",
+      "disposition": "corrected",
+      "claim_count": 4,
+      "evidence": [
+        "architecture-audit.json"
+      ],
+      "unknowns": [
+        "The pages module docstring still describes the older two-page desk set, while active PAGE_SET contains three pages. Product code was out of scope, so the guide follows PAGE_SET and records the source inconsistency here.",
+        "No live memory rebuild, semantic model call, or page read was run."
+      ]
+    },
+    {
+      "path": "docs/RELEASING.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No release, package build, hardware lane, endpoint evaluation, or clean install was run."
+      ]
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 4,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "Security claims were source-checked only; no adversarial, network, provider, or deployment test was run."
+      ]
+    },
+    {
+      "path": "docs/SECURITY_MODEL.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No restart, compromised-process, or external provider retention scenario was tested."
+      ]
+    },
+    {
+      "path": "docs/STORAGE_AND_MIGRATIONS.md",
+      "lane": "capture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 4,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No backup, restore, corrupt database, or restart recovery was run."
+      ]
+    },
+    {
+      "path": "docs/SYSTEM_ARCHITECTURE.md",
+      "lane": "architecture",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "architecture-audit.json"
+      ],
+      "unknowns": [
+        "No live browser, runtime-bus, Line, provider, or external-effect flow was exercised."
+      ]
+    },
+    {
+      "path": "docs/SYSTEM_INTEGRATION_MAP.md",
+      "lane": "architecture",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "architecture-audit.json"
+      ],
+      "unknowns": [
+        "No network, paired device, Line node, iPhone transport, provider, browser, or external destination was contacted."
+      ]
+    },
+    {
+      "path": "docs/TROUBLESHOOTING.md",
+      "lane": "agents",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "agents-audit.json"
+      ],
+      "unknowns": [
+        "No fault recovery, provider retry, or live hub restart was exercised."
+      ]
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No live Desk or browser walk was performed under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/USE_CASES.md",
+      "lane": "daily",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 2,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No live capture, call, phone, or provider flow was run; availability remains configuration-dependent."
+      ]
+    },
+    {
+      "path": "docs/VOICE_COMMANDS.md",
+      "lane": "capture",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "capture-audit.json"
+      ],
+      "unknowns": [
+        "No host application, shell, URL opener, or configured macro was fired."
+      ]
+    },
+    {
+      "path": "docs/WEB_DESK.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No live Desk or browser walk was performed under the audit brief."
+      ]
+    },
+    {
+      "path": "docs/WEB_UI_UX_SYSTEM_AUDIT.md",
+      "lane": "root",
+      "disposition": "corrected",
+      "claim_count": 3,
+      "evidence": [
+        "root-audit.json"
+      ],
+      "unknowns": [
+        "Exact component coverage and visual behavior rely on the separately reported fixture sweep."
+      ]
+    },
+    {
+      "path": "docs/WHAT_IS_HOLDSPEAK.md",
+      "lane": "daily",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No model, call, Phone, or Automation execution was performed."
+      ]
+    },
+    {
+      "path": "docs/calls.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "daily-audit.json",
+        "integration-addenda.json"
+      ],
+      "unknowns": [
+        "No Calls adapter, provider, passphrase, or phone line was used."
+      ]
+    },
+    {
+      "path": "docs/phone.md",
+      "lane": "daily",
+      "disposition": "source_checked_unchanged",
+      "claim_count": 3,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No phone client, paired device, Calls transport, or live delivery was available for observation."
+      ]
+    },
+    {
+      "path": "docs/programs.md",
+      "lane": "daily",
+      "disposition": "corrected",
+      "claim_count": 2,
+      "evidence": [
+        "daily-audit.json"
+      ],
+      "unknowns": [
+        "No Program was launched and no agent or provider call was made."
+      ]
+    }
+  ],
+  "integration_addenda": "integration-addenda.json",
+  "integration_claim_count": 6
+}

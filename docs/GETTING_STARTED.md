@@ -1,33 +1,38 @@
 # Getting Started
 
-Install HoldSpeak and keep your first sentence as text.
-Then set up models for Ask and other AI work.
-This guide is for a new user on macOS or Linux. It describes `main`.
+Install HoldSpeak, open its web Desk, and keep one useful sentence as a Note.
+Then choose engines for Ask, Threads, voice typing, and meeting work.
 
 ## Requirements
 
 - Python 3.10 or later.
-- A microphone and permission to use it.
-- For a source installation: Git, `uv`, npm, and Node.js 22.12 or later.
+- A microphone for voice typing or recording.
+- For a source install: Git, `uv`, npm, and Node.js 22.12 or later.
+- For local text work: CMake and a C++ compiler.
 
-The base install includes the transcription backend for Apple Silicon (MLX Whisper), the local GGUF text runtime, and the OpenAI-compatible client.
-Linux needs the `linux` extra for faster-whisper.
-Use **Set up local AI** to download the speech model before dictation.
-The local text runtime builds from source, so it needs CMake and a C++ compiler.
+The base install includes the Apple Silicon speech backend, a local GGUF text
+runtime, and an OpenAI-compatible client. Linux needs the `linux` extra for
+`faster-whisper`. The web Desk needs a browser that can reach the local hub.
 
-On macOS, install PortAudio if it is missing: `brew install portaudio`.
+On macOS, install PortAudio when it is missing:
+
+```sh
+brew install portaudio
+```
+
 On Debian or Ubuntu, install the system audio packages:
 
 ```sh
 sudo apt-get install portaudio19-dev ffmpeg xclip pulseaudio-utils
 ```
 
-Linux packages and desktop permissions differ by distribution.
-Wayland can block global hotkeys and direct text insertion.
+Linux permissions and global hotkeys depend on the desktop session. Wayland
+can block a global key or direct text insertion. Use the clipboard fallback
+when the focused application does not accept direct insertion.
 
 ## Install from source
 
-The Python build hook installs the Web dependencies and builds the Web app.
+The Python build hook installs the web dependencies and builds the web app.
 
 1. Clone the repository.
 
@@ -43,7 +48,7 @@ The Python build hook installs the Web dependencies and builds the Web app.
    source .venv/bin/activate
    ```
 
-3. Install HoldSpeak. Run only the command for your platform.
+3. Install one platform variant.
 
    ```sh
    # Apple Silicon
@@ -53,11 +58,11 @@ The Python build hook installs the Web dependencies and builds the Web app.
    uv pip install -e '.[linux]'
    ```
 
-Keep this environment active for the commands in this guide.
+Keep the environment active when you run `holdspeak`.
 
 ## Install a published package
 
-A published package can differ from `main`.
+A published package can differ from the repository branch.
 
 ```sh
 python3 -m venv .venv
@@ -65,12 +70,12 @@ source .venv/bin/activate
 python -m pip install holdspeak
 ```
 
-On Linux, install `'holdspeak[linux]'` instead.
-A prebuilt wheel includes the Web app. A source package needs npm to build it.
+On Linux, install `holdspeak[linux]`. A wheel includes the web app. A source
+package needs npm to build it.
 
 ## Start HoldSpeak
 
-1. Start the hub.
+1. Start the local hub.
 
    ```sh
    holdspeak
@@ -78,71 +83,78 @@ A prebuilt wheel includes the Web app. A source package needs npm to build it.
 
 2. Open the URL printed in the terminal.
 
-The hub listens on loopback (`127.0.0.1`).
-Use the printed URL, because the port and access parameters can differ.
-Read [Security & Privacy](SECURITY.md) before you enable remote access.
+The hub listens on loopback by default. Use the printed URL because its port
+and access parameters can differ. Read [Security & Privacy](SECURITY.md)
+before you enable remote access.
+
+The hub is the service host for the Desk. The browser is the user interface.
+MCP clients and paired clients use the same service boundary when configured.
 
 ## Keep your first sentence
 
-1. In **Local AI**, select **Set up local AI** if the speech model is missing.
-2. Wait until **First words** shows **SPEECH READY**.
-3. Select **Dictate one sentence** and allow microphone access.
-4. Speak, then select **Stop**.
-5. Select **Keep as note** to save the result. Select **Again** to repeat it.
+1. Open **Go > Setup** (or **Settings > This Mac > Setup**) and read the
+   **Readiness** list.
+2. If the **Speech** row is not ready, select **Set up speech** and wait for
+   its state to become **Ready**.
+3. Select **Say one sentence**, allow microphone access, and speak.
+4. Select **Keep as note**.
 
-Without a microphone, select **Continue later**, then **Desk > New Note**.
-Enter your text in the Note.
-A setup state of `needs_attention` or `blocked` affects later AI work only.
+Without a microphone or a ready speech model, write the sentence in **New
+Note** instead. Setup can remain pending or blocked while text Notes still
+work. The active setup flow uses **Readiness**, **Set up speech**, and
+**Say one sentence**; an older first-run screen is parked.
 
-Entering the Desk from setup creates six drawers: Inbox, Personal, Work, Meetings, Decisions, and Reference.
-It also creates a Note named Start here and the **Everyday context** prompts.
-The prompts hold questions and examples. They hold no guessed personal facts.
+The result is an editable Note. **Thought** is an older domain name for the
+same refinement path. The current window label is **Note**. A setup state of
+`needs_attention` or `blocked` affects later AI work. It does not prevent you
+from writing a Note.
 
-Everyday context starts unused.
-Attach it when you want a model to use it.
-See [Develop a thought](USER_GUIDE.md#develop-a-thought) for the controls.
+The first Desk setup can create the standard drawers and a Start here Note.
+The **Everyday context** prompts are examples. They contain no guessed facts.
+Attach a prompt only when you want an engine to use it.
 
 ## Find your work
 
-The Desk shows your drawers and Notes as icons.
-The dock at the bottom opens **Today**, **Meetings**, **People**, **Agents** and **Speak**. Its red button records a meeting.
-**Today** shows what needs you, the day ahead, and your next 1:1.
-Use the **Desk** menu to create records and the **Go** menu to open every app.
-**Go > Archive** opens the records that you put away. You can restore them from there.
+Open **Today** for current work and **Needs you** for items that need an
+action. Open **Memory** to search retained records and standing pages. Open a
+Project for its Project Room. Use **Go** or Search to open another app.
 
-| Address | Opens |
-| --- | --- |
-| `/` | The Desk, with first capture on a new installation |
-| `/dictation` | Speak |
-| `/history` | Meetings |
-| `/studio` | Settings (an older address) |
-| `/settings` | Settings |
-| `/setup` | Setup checks and recovery |
-
-Each address opens its window on the Desk.
-See [The Desk](WEB_DESK.md) for windows and navigation.
+Open **Go > Ask AI** (the window is labelled **Ask**), or press **⌘I**. Ask
+and Thread use one window. To start a new conversation, select the first row
+in **Recent** or press **⌘N**. The first question becomes a saved Thread, and
+follow-up questions continue it.
+Select **Ask about this** on a record to start with that record in **About**.
+About is a retrieval starting point. It is not a promise that other permitted
+Desk records are excluded.
 
 ## Set up models
 
-1. Open **HoldSpeak > Engines**, or the `/models` address.
-2. Read the list. Each engine shows **Where** it runs, what it is **Used for**, and its **State**.
-3. If no engine fits, select **Add an engine** or **Find on LAN**, or open **Download a local model**.
-4. Under **What runs where**, select the engine for each job.
-5. Select **Check all** to read every engine again.
+1. Open **Settings > This Mac > Engines**.
+2. Read the engine and host for each capability.
+3. Add an endpoint or download a model when no engine is ready.
+4. Select **Use it** on a found engine, or select **Use** when you change a
+   capability assignment.
+5. Select **Try it** on a capability only when you want to send a real request.
 
-A cloud check can make a paid request. Engines shows where each job sends its data.
-See [Models](MODELS.md) for requirements and readiness failures.
+A CLI engine is an inference route. It is not a coding-agent session. A
+coding-agent handoff starts a separate agent session with its own repository
+and worktree. A persona supplies instructions. It is not an engine or a live
+agent.
+
+See [Models](MODELS.md) for readiness and [Control modes](AUTHORITY.md) for
+approval rules. A cloud **Check** can make a paid request. Read the route and
+host before a run.
 
 ## Ask your first question
 
-1. Press **⌘I**, or select **Go > Ask AI**.
-2. Enter a question about your work, for example "What did we decide about the ledger?"
-3. Select **Ask**.
+For a guided discussion in the current Desk, start an Ask with a specific request.
+For example: “Help me prepare a weekly architecture decision review. Ask one useful question at a time.”
+Use follow-up questions and **Save as note** to keep a separate working brief.
 
-With nothing in **About**, Ask reads your whole desk.
-The answer shows **Looked at** with the records it read.
-Select **Save as note** to keep it.
-[Interview](INTERVIEW.md) runs through the hub API and MCP; the Desk has no Interview window at present.
+The retained Interview mode has sectioned facts and suggestions through the Thread services.
+Its older browser mode tabs and section controls are parked.
+The current Ask does not expose an **Interview** mode picker.
+Read [Interview](INTERVIEW.md) for the available service path and the separate Note-refinement pane.
 
 ## Dictate into another app
 
@@ -151,51 +163,35 @@ Select **Save as note** to keep it.
 3. Speak.
 4. Release the key.
 
-These are the default keys. Settings can change the key.
-The Control mode and the preview setting decide if HoldSpeak types at once or shows a preview.
-See [Voice typing](USER_GUIDE.md#voice-typing) for punctuation, clipboard insertion, and the wake word.
+These are the default keys. Settings can change them. The control mode and
+preview setting decide whether HoldSpeak types directly or shows a preview.
+See [Voice typing](USER_GUIDE.md#voice-typing) for punctuation, clipboard
+insertion, and the wake word.
 
 ## Grant macOS permissions
 
-Voice typing needs three permissions. Each one covers a different part of the path.
+Voice typing needs three permissions. Each permission covers a different step.
 
-| Permission | What it allows | Without it |
+| Permission | Allows | Without it |
 | --- | --- | --- |
-| Microphone | Audio capture | Nothing is heard |
-| Input Monitoring | The global hotkey | The key is never noticed |
-| Accessibility | Typing into the focused app | Words are transcribed but do not arrive |
+| Microphone | Audio capture | HoldSpeak hears no audio. |
+| Input Monitoring | Global hotkey | The key is not detected. |
+| Accessibility | Insertion into the focused app | Text is transcribed but not inserted. |
 
-Grant each one in **System Settings > Privacy & Security**.
+Grant permissions in **System Settings > Privacy & Security**. Grant them to
+the application that launches HoldSpeak. If a terminal starts the hub, grant
+the terminal. Restart that launcher after a grant.
 
-Grant them to the application that launches HoldSpeak.
-If you start the hub from a terminal, enable that terminal, not HoldSpeak.
-A different launcher needs its own grants.
+Speak shows the permission state. Select **Re-check** after a change. macOS
+can also ask to control **System Events** so HoldSpeak can identify the
+frontmost application.
 
-Quit and reopen the launching application after you grant.
-macOS can show a permission as granted and still ignore it until the process restarts.
-
-macOS can also ask to control **System Events**.
-HoldSpeak uses it to find the frontmost application, so it knows where the words go.
-
-Speak shows which permission is missing.
-The hotkey state reads:
-
-- `ACTIVE`: the key is up and all grants are held.
-- `BLOCKED`: the key is up and a grant is missing.
-- `UNAVAILABLE`: the key listener did not start.
-
-Each missing permission shows its own row: `DENIED`, `NOT ASKED`, or `UNKNOWN`.
-`NOT ASKED` means the launching application is not in that pane yet.
-`UNKNOWN` means HoldSpeak could not read the state.
-After you change a permission, select **Re-check**. You do not need to restart the hub.
-
-Linux has no such panes.
-A global hotkey needs an active GUI session.
-Where Wayland blocks typing, use the clipboard paste fallback.
+Linux has no matching permission panes. A global hotkey needs an active GUI
+session. Use clipboard paste when the desktop blocks direct typing.
 
 ## Add optional capabilities
 
-Install only the extras that you need:
+Install only the extra that you need:
 
 | Capability | Command |
 | --- | --- |
@@ -204,25 +200,28 @@ Install only the extras that you need:
 | Local wake word | `uv pip install -e '.[wakeword]'` |
 | Server-side speech output | `uv pip install -e '.[tts]'` |
 
-For a package install, use `holdspeak[extra]` and omit `-e`.
-See [Meeting mode](MEETING_MODE_GUIDE.md) for system audio setup.
-See [Project Rooms](PROJECT_ROOMS.md) for source-provider requirements.
+For a package install, use `holdspeak[extra]` and omit `-e`. Provider setup
+and source scope are separate from package installation. See [Project
+Rooms](PROJECT_ROOMS.md) for provider prerequisites.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| The Web app does not build | Check `node --version`. Install Node.js 22.12 or later. Repeat the install. |
-| Capture does not start | Check the browser microphone permission and the macOS Microphone pane. Run `holdspeak doctor`. |
-| Transcription fails | Read the backend error. Install the platform extra if it is missing. |
-| The key works but no text appears | Grant Accessibility to the launching application. Restart it. Check the preview setting. On Wayland, try clipboard paste. |
+| The web app does not build | Check `node --version`. Install Node.js 22.12 or later. Repeat the install. |
+| Capture does not start | Check browser microphone permission and the macOS Microphone pane. Run `holdspeak doctor`. |
 | The key does nothing | Grant Input Monitoring to the launching application. Restart it. Select **Re-check** in Speak. |
-| Ask does not answer | Open **HoldSpeak > Engines**. Repair the named engine or job. |
-| You need to restore data | Read [Release and recovery](RELEASING.md). Then run `holdspeak restore`. |
+| Text is transcribed but not inserted | Grant Accessibility to the launching application. Check the preview setting. Use clipboard paste on Wayland. |
+| A Thread does not run | Open **Settings > This Mac > Engines**. Repair the named assignment or engine. |
+| Ask has no tool result | Check the selected engine, its tool support, source permission, and any held **Allow once** request. |
+| You need to restore data | Read [Release and recovery](RELEASING.md), then run `holdspeak restore`. |
 
 ## See also
 
-- [User Guide](USER_GUIDE.md): daily tasks and controls.
-- [The Desk](WEB_DESK.md): windows, menus and keys.
-- [Models](MODELS.md): engines and capability assignments.
+- [User Guide](USER_GUIDE.md): daily Desk tasks and controls.
+- [The Desk](WEB_DESK.md): navigation, windows, Ask, and records.
+- [Calls](calls.md): phone-number calls, the Line, and call controls.
+- [Phone](phone.md): the future paired-phone client path and current fallback.
+- [Interview](INTERVIEW.md): repeatable context discovery.
+- [Models](MODELS.md): engines, availability, and assignments.
 - [Control modes](AUTHORITY.md): approval rules and action limits.

@@ -1,191 +1,182 @@
 # Desk architecture
 
-This page is for contributors.
-It describes how the HoldSpeak web app renders the Desk and where each kind of state lives.
-For object kinds, verbs, keys, and window geometry, see [Desk object model](DESK_OBJECT_MODEL.md).
-For the full frontend design, see `docs/internal/ARCHITECTURE_WEB_FRONTEND.md`.
+The Desk is the browser operating surface of HoldSpeak.
+It presents saved work, agent sessions, model requests, and automation through one application and window framework.
+This reference explains rendering, state ownership, and recovery for contributors.
 
-When this page and the source disagree, the source in `web/src/` is correct.
-Face rules are in `docs/internal/UX-CANON.md`, `docs/internal/DESK_GRAMMAR.md`, and `web/src/desk/surface/contract.md`.
+Read [The Desk](WEB_DESK.md) for user tasks.
+Read [Desk object model](DESK_OBJECT_MODEL.md) for object declarations, verbs, and window behavior.
+The [frontend map](internal/ARCHITECTURE_WEB_FRONTEND.md), [UX canon](internal/UX-CANON.md), and [surface contract](../web/src/desk/surface/contract.md) own implementation rules.
 
 ## Render and data flow
 
 ```mermaid
-flowchart TD
-  Browser[Browser] --> Main[main.tsx]
-  Main --> Auth[bootstrapAuth]
-  Main --> Router[BrowserRouter]
-  Main --> Bus[RuntimeBusProvider]
-  Router --> App[App]
-  App --> Routes["PRODUCT_ROUTES / DEMOTED_ROUTES"]
-  Routes --> Desk[DeskApp]
-  Desk --> Store[Zustand useDesk]
-  Store --> Chair[ChairHome]
-  Chair --> Screen["Screen: icons, drawers and phone Go"]
-  Screen --> Atmosphere["Selected lazy Three.js atmosphere"]
-  Store --> Windows["SurfaceWindows and DeskWindowFrame"]
-  Windows --> Surface["desk/surface components"]
-  Store --> HTTP["desk/api and lib/api"]
-  Bus --> Refresh[DeskChangedRefresh]
-  HTTP --> Hub[FastAPI hub]
-  Bus --> WS["/ws"]
+flowchart TB
+    Entry["main.tsx"] --> Auth["Authentication bootstrap"]
+    Entry --> Router["Routes and deep links"]
+    Entry --> Bus["RuntimeBusProvider"]
+    Router --> Desk["DeskApp and ChairHome"]
+    Desk --> Screen["Screen, icons, drawers, and phone Go"]
+    Desk --> Windows["Application and contextual window hosts"]
+    Windows --> Framework["Shared surface and window components"]
+    Desk --> Store["Zustand Desk projections"]
+    Store --> HTTP["Shared HTTP client"]
+    HTTP --> Hub["FastAPI and domain services"]
+    Hub --> WindowService["Hub window service"]
+    Hub --> Bus
+    Bus --> Follow["Desk refresh and window reconciliation"]
+    Follow --> Store
 ```
 
-`bootstrapAuth` reads the hub token from the URL and keeps it in session storage.
-It then removes the token from the URL (`web/src/lib/auth.ts`).
-`main.tsx` mounts `BrowserRouter`, one `RuntimeBusProvider`, `DeskChangedRefresh`, and `App`.
+`web/src/main.tsx` mounts the route and runtime providers.
+`web/src/lib/auth.ts` handles the browser's hub authentication bootstrap.
+`DeskApp.tsx` composes the active Desk and its contextual windows.
+`chair/ChairHome` and `screen/Screen` provide the desktop entry and compact navigation.
+
+The current shell is React and DOM-based.
+Selected atmosphere scenes use the existing lazy Three.js host behind the controls.
+The parked spatial Floor and its rendering path do not define the active Desk.
 
 ## Routes
 
-Three routes render a page: `/` (the Desk), `/welcome`, and `/presence`.
-They are the `PRODUCT_ROUTES` in `web/src/routes.tsx`.
+`web/src/routes.tsx` defines `/`, `/welcome`, and `/presence` as page routes.
+Other supported addresses are deep links that open the matching Desk window and preserve its scope.
+For example, `/history` opens Meetings and `/models` opens Engines.
+The legacy `/studio` address opens Settings.
 
-Every other product address is in `DEMOTED_ROUTES`.
-A demoted route stages a window open, keeps the query string, and navigates to `/`.
-`/desk` and unknown paths also navigate to `/`.
-To add a tool, add a row to `DESK_APPLICATIONS` in `web/src/desk/applications.ts`.
-Add a demoted route only when the tool needs its own address.
+`web/src/desk/applications.ts` defines the application registry.
+Add a deep link only when the application needs an address.
+A saved domain object and its open window retain separate identities.
 
 ## What the Desk renders
 
-`DeskApp` renders one Desk through `ChairHome` and `screen/Screen`.
-The Screen draws root Directory folders, Project doors, loose work and live agents.
-Phone Go includes the same root drawers. Child folders and members open in the existing Directory pullout.
-Directory identities remain `zone:<id>` in selection, menus and windows.
-The previous spatial Floor and list view are parked.
+The Screen presents root drawers, Projects, unfiled Notes, and supported items explicitly kept on the Desk.
+Per-agent floor icons are parked. Agents, their Dock tile, and Needs you carry session work.
+Drawer contents open through the existing drawer hosts.
+`zone:<id>` remains the qualified reference for a stored directory.
+Phone Go exposes the available apps, drawers, and Projects through compact navigation.
 
-The selected existing `gl/Atmosphere` renders behind Screen controls. Its still image stays visible until the first successful render, and remains the fallback when WebGL is unavailable. Quiet Desk allocates no scene. Motion is a browser preference exposed in Wallpaper settings; the runtime honors reduced motion and suspends hidden documents. Sound remains a separate opt-in.
+`DeskApp` also hosts Ask, agent handoffs, agent lanes, delivery readers, repository windows, object editors, and other contextual surfaces.
+Programs and Calls are registered applications with their own shared-framework windows.
+An individual Program opens a goal and step board; Phone also contributes attention rows and Calls controls.
+Application windows load through `SurfaceWindows` and the shared registry.
+The delete/Undo host stays above the Desk render branches so refresh failures do not remove a pending recovery action.
 
-The Jupiter choice lazily loads its own scene and local NASA cloud/sky maps.
-Its cloud shader adds bounded flow to the slowly turning planet. Four moon
-meshes and rare visitors use the host's active elapsed time. No wall-clock
-timer or new persistence is added; scene geometry and textures are disposed
-with the host. Scale, travel and weather are authored rather than ephemerides.
-
-Above the Screen, `DeskApp` mounts the shared drop layer, the dock, inspectors, delivery windows, object windows, and `SurfaceWindows`.
+Atmosphere, motion, and wallpaper are presentation preferences.
+A scene failure does not authorize a replacement domain action.
+Reduced motion and hidden-document handling belong to the existing atmosphere and motion runtime.
 
 ## State ownership
 
-| State | Owner | Persistence |
+| State | Owner | Browser role |
 | --- | --- | --- |
-| Records, profiles, projects, models, status | Hub, projected into `useDesk` | Hub database |
-| Object positions | `useDesk.positions` | Browser storage |
-| Open tool windows, window rects, order, zoom, iconified windows | `useDesk` window slices | `hs.desk.workspace.v1` |
-| Zone view, sort, and open Zones | `zoneViewPrefs`, `zoneWindows` | `hs.desk.workspace.v1` |
-| Chair window state, unsent drafts, window places | `useDesk` | `hs.desk.workspace.v1` |
-| Selection, hover, drag, editor, Ask, cards | `useDesk` | Memory |
-| Connection state and latest frame | `RuntimeBusProvider` | Memory |
-| Scene choice and motion | Atmosphere preference/controls | Browser storage |
-| Animation progress | React and the existing atmosphere runtime | Never authoritative |
+| Notes, Meetings, Projects, outputs, and model configuration | Hub domain services and repositories | Read and edit through supported APIs |
+| Registered windows, geometry, depth, seat, and revision | `holdspeak/services/desk_window_service.py` | Present and anticipate changes |
+| Desk-level window counters and Stage shelf | `desk_window_desk` | Resolve against the view's work area |
+| Contextual windows listed in `NOT_ON_HUB` | Their browser host | Keep view-local opening context |
+| Initial workspace snapshot | `store/workspaceStorage.ts` | Cache first presentation, then follow hub rows |
+| Field drafts and view preferences | Their editor or browser contract | Preserve local work without executing it |
+| Selection, hover, and drag candidates | Browser state | Transient presentation |
+| Domain operation outcome | Owning service and Receipt | Show evidence and supported recovery |
 
-`workspaceStorage.ts` owns the workspace document.
-It validates the version, window IDs, rects, and Zone preferences.
-It keeps at most 100 ordered IDs.
-It returns an empty document for corrupt or unknown data.
-A storage failure leaves the live window state in charge.
+`compositor/hubWindows.ts` loads registered windows from `/api/desk/windows`.
+The local workspace document, `hs.desk.workspace.v1`, is a cache for those windows.
+Newer hub state replaces that cached arrangement.
+Its other sections keep local drafts, places, and view preferences under their own contracts.
+
+A window that needs opening context absent from the hub row can remain view-local.
+Read the service's `NOT_ON_HUB` registry before promising cross-browser behavior for a contextual surface.
 
 ## Applications and windows
 
-`DESK_APPLICATIONS` is the one list of tools.
-The window hosts, the dock, **Go** menu entries, shortcuts, and aliases all derive from it.
-Do not add a second list.
-`SurfaceWindows` turns each row with a `surface` into a lazy-loaded window.
+`DESK_APPLICATIONS` supplies app identities, openers, menus, shortcuts, aliases, and surface declarations.
+`PRIMITIVES` supplies object kinds and declared capabilities.
+`verbRegistry.ts` supplies the common verbs and their availability checks.
+These registries have different roles and must agree at their integration points.
 
-These object windows open from the store: `Pullout`, `ZoneWindow`, `InfoWindow`, `RoadmapWindow`, `RepoWindow`, and `WorkbenchWindow`.
+The shared window frame owns focus, title controls, movement, resize, iconify, zoom, and close behavior.
+The active host composes domain content inside it.
+New faces use the shared surface library and its Button.
 
-`DeskWindowFrame` is the one window frame.
-It owns identity, minimum and default size, the head menu, focus return, minimize, zoom, close, and resize.
-Ordinary windows are regions. They do not trap focus.
+Registered window changes use one desk revision sequence.
+A stale expected revision is refused and the client rereads current hub state.
+Depth is a monotonically increased ordering value, with the front window derived from shown windows.
+Geometry supports share-plus-pixel values resolved against each view's work area.
 
 ## HTTP and RuntimeBus
 
-All Desk HTTP goes through `apiRequest`, `apiFetch`, or `apiBlob` in `web/src/lib/api.ts`.
-A failed request throws `ApiError`. `readableError` gives a plain message.
-`desk/api.ts` maps wire records to typed `Primitive` objects.
-Provider secrets never enter web state.
+`web/src/lib/api.ts` owns `apiRequest`, `apiFetch`, and `apiBlob`.
+Transport failures become `ApiError`; display code uses the shared readable error mapping.
+`desk/api.ts` maps wire records into typed primitives.
+Feature components do not create another HTTP stack.
 
-`RuntimeBusProvider` owns one `/ws` socket.
-It reports `connecting`, `connected`, `reconnecting`, or `offline`.
-It accepts JSON frames that have a string `type` and ignores other frames.
-It sends a ping every 15 seconds.
-It reconnects after `min(12000, 500 * 2^(attempt-1))` milliseconds, with the attempt count capped at 8.
-`DeskChangedRefresh` reloads the Desk when the hub sends a `desk_changed` frame, from any caller.
+`web/src/runtime/RuntimeBus.tsx` owns the product `/ws` connection.
+It exposes connection state and typed frames and handles reconnects.
+`DeskChangedRefresh` refreshes domain projections after relevant changes.
+The compositor follows `desk_changed` frames whose kind is `windows`.
+A no-op window write does not emit another change frame.
+
+An anticipated window change stays visible while its request is pending.
+Its response then reconciles the presentation with the hub.
+The follower avoids replacing a pending write with an older read.
+A stale-write conflict recovers by reading the current row.
 
 ## Rules for new work
 
-- Use the one store, the one HTTP client, and the one runtime bus.
-- Compose faces from `desk/surface`. Do not add a raw `<button>`.
-- Do not add a second route for a tool.
-- Treat animation as presentation only.
+1. Find the domain record, window identity, and source-return context for the task.
+2. Use the existing application, primitive, verb, and window registries.
+3. Use the shared API client and runtime bus.
+4. Compose controls from the surface library.
+5. Keep a draft with the exact editor and object that owns it.
+6. Distinguish a failed read from a failed write before offering Retry.
+7. Validate the rendered outcome and the affected stored record.
+
+Do not save a domain result only in workspace storage.
+Do not infer execution success from a window closing or a loading indicator ending.
 
 ## Known gaps
 
-- Cross-window re-filing, multi-object drops, and Record orb drops do not exist. See `docs/internal/DESK_GRAMMAR.md`.
-- Per-object receipts in Info need hub support.
-- There is no locale catalog.
-- The tokens give a dark theme only.
+Backend capabilities and current browser affordances have separate exposure.
+The Thread data model and modes remain in services while the separate Thread window is parked.
+New Thread opens the current Ask surface.
+The old Floor file-drop layer is also parked; use active import controls for supported ingestion.
+
+A registered primitive can have capabilities that the current host exposes differently.
+For example, the Meetings host opens meeting records and the Automation host replaces the old queue editor for ordinary automations.
+Check the active opener and host as well as the static descriptor.
 
 ## Current workflow recovery
 
-Workbench item instructions keep a durable local draft, including an empty
-instruction. Closing flushes the pending pause. Per-item writes run in order
-across close and reopen; a refused save keeps the draft. Add and its exact Retry
-share one pending guard. Coder replies clear only the draft that was sent.
+Editors retain the draft associated with the object and request that owns it.
+A completed save must not clear a newer edit.
+A retry must repeat the failed operation's identity and scope where the service supports that contract.
+A successful write followed by a failed read needs read recovery, not another write.
 
-A gate decision distinguishes the named already-decided race from refusal.
-Conductor and the opened lane show failed decisions. Once accepted, a failed
-read offers read recovery and does not repeat the decision. Project source
-changes settle every watch in a merged row, then reread; Retry sends only the
-failed watches. People calendar and meeting owner reads distinguish pending,
-failed and empty states and offer real read recovery.
+Notes use the active document pattern, CodeMirror selection, source references, and editor-specific save behavior.
+Ask source return preserves the source identity and selection context.
+Saved outputs retain their source links through the owning service.
+Closing or reopening an editor does not transfer its pending work to another Note.
 
-Get Info resolves canonical qualified source identities and legacy IDs through
-the existing object resolver. It opens the resolved kind; an unavailable source
-has a disabled library action. The active owned Thought uses the workspace
-Add a note well. Its local retry identity survives unavailable browser storage;
-accepted receipts still apply if storage cleanup fails. The older Note picker
-is a separate compatibility path, not the normal owned-Thought window.
-
-An account Recheck sends that account's ref to the existing provider route.
-One check owns the pending state, and old reads cannot replace newer results.
-Calendar Save completion applies only to its submitted editor identity and
-values, preserving a newer calendar draft. Speech test capture cleanup owns
-only its listening hold; Stop hands ownership off before transcription waits.
-
-Search has an explicit library Close that restores its launcher focus. Meeting
-choices show local day/time and attendee context while preserving exact kind/ID
-identity. The portalled shelf names the shared surface container so StringGadget
-keeps its real mic touch target. Empty Context usage/revision counters are absent;
-nonzero revisions, History and save outcomes remain. Needs phone action rows
-declare their already-painted44px height to the existing hit-spacing formula.
-
-Calendar screenshot review gives event title/location readable fields, keeps
-stable local row identities through editing/removal, and strips those IDs from
-the writer payload. Confirm keeps the review mounted while pending and guards
-duplicate writes. Refusal retains the reviewed anchor/events for exact Retry;
-editing creates a new Confirm draft. The receipt uses the returned source/count.
-Extraction review fixtures do not establish OCR/model execution.
+Project source controls, People preparation, provider checks, and channel sends each retain their own failure and retry states.
+A generic refresh cannot replace their exact result or establish external delivery.
 
 ### Conditional work controls (2026-10-16)
 
-Thread replay and Rails/dossier actions compose the library Button; Rails
-selection compares repo/project/Story. Desk furniture positions above the
-measured Dock. Ask retains actual grounding arithmetic and shows an explicit
-ungrounded state without zero meters. Resourcefulness uses visible library
-routine choices with the same consent, policy payload and pending Retry owner.
-Capability material composes the multiline Pad; late mic callbacks use its
-current value/writer. PR results retain action identity and disclose technical
-receipts; their existing reflow follows the760px table floor. Desktop footer
-content reserves the bottom resize edge while keeping resize handlers; Review
-wraps armed date/action groups with natural labels. No new service/public API.
-
+Conditional controls depend on the stored object's identity, state, and applicable service operation.
+A held tool call, a prepared send, and a session reply have different decision and execution paths.
+Use their owning app contracts rather than a shared boolean named success.
+The [workflow record](internal/COHESIVE-WORKFLOWS-2026-10-15/README.md) retains historical verification and its stated limits.
 
 ### Desk entry composition (2026-10-16)
 
-Compact GoHome groups the existing phoneGo actions, Projects and qualified
-root Drawers on the shared Workbench menu material. SurfaceSection supplies
-captions; chrome Buttons retain native activation, context and ghost refusal.
-Rows own their phone target and wrap names/reasons. Desktop Screen is unchanged.
-Standalone Presence uses the same floor/steel/paper tokens and existing block
-LampGadget; its library Desk action preserves query context. Runtime bus/state
-expressions and the Get ready handoff writers stay unchanged. No new API.
+Desktop Screen and phone Go reach the same retained work through their respective layouts.
+A compact layout is still a browser view of the hub.
+It does not establish native-device support or a separate runtime.
+Historical entry verification lives in the [entry record](internal/COHESIVE-DESK-ENTRY-2026-10-16/README.md).
+
+## See also
+
+- [Desk object model](DESK_OBJECT_MODEL.md): declarations and interactions.
+- [System architecture](SYSTEM_ARCHITECTURE.md): services and lifetimes.
+- [Domain model](DOMAIN_MODEL.md): records and execution identities.
+- [Contributing](../CONTRIBUTING.md): focused verification and submission.
