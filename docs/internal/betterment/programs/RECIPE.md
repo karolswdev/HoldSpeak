@@ -275,17 +275,33 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   second trigger (the coder frame covers a turn end; the 30 s tick covers
   the rest).
 
-## PG13. The Program's level drives the desk's answers (Left)
+## PG13. The Program's level drives the desk's answers (Shipped)
 
 - **Goal**: a Program at YOLO on a desk at Secure gets YOLO's answers for
   its own agents.
-- **Files**: `hs/services/agent_responder.py`, the gate's decision path.
-- **Changes**: `AgentResponder` and the gate read the Program's level for a
-  launch that belongs to a step; every other launch keeps the desk's mode.
+- **Files**: `hs/services/control_level.py` (`level_for_launch`,
+  `mode_for_launch`, `step_of_launch`, `record_decision`),
+  `hs/services/agent_responder.py` (`_policy`), `hs/kernel/tool_call.py`
+  (`launch_mode`), `hs/kernel/runtime.py`, `hs/services/gate_service.py`
+  (`_decide_by_mode`, `_decide_mcp`).
+- **Changes**: one resolver: the Program's control for a launch that is a
+  step's (`program_steps.launch_id`), else the desk's Control mode. The
+  responder reads it per launch: a step at Secure drafts nothing and waits
+  in Needs you; a step at Normal or YOLO gets its ROUTINE draft typed
+  (design §6; the desk's own Normal still only stores the draft). The
+  kernel's `tool.call` codec resolves the policy at the launch's level, and
+  a step's MCP pre-approval follows the level too. A typed answer and an
+  allowed call are Decided-for-you lines (`program.checkpoint` by engine,
+  the §6 rule): "Answered for you: <draft>", "Allowed: <tool>" (once per
+  tool and rule on a step). Every other launch keeps the desk's mode.
 - **Done when**: the rows of design §6 for routine questions and
   approvals hold per Program.
-- **Tests**: T1 the responder's and the gate's tests.
-- **Not in this slice**: per-step levels.
+- **Tests**: T1 `tests/unit/test_program_control_level.py` (the resolver,
+  the responder and the gate over the K5 rig, the Decided-for-you lines,
+  the Programs rig's three-step Program at Secure).
+- **Not in this slice**: per-step levels; the launch flags (Claude's
+  `acceptEdits`, Codex's approval and sandbox) still follow the desk's mode
+  at launch; a reviewer helper's launch keeps the desk's mode.
 
 ## PG14. Automations run a program (Left)
 
