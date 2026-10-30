@@ -198,6 +198,10 @@ def program_step_spec(db: Any, step_id: str) -> Optional[dict[str, str]]:
     spec = {"mode": "new", "name": name, "branch": branch}
     if program.get("base_branch"):
         spec["start_point"] = str(program["base_branch"])
+    # PG20: a step started from a checkpoint starts at its pinned ref.
+    start_from = ((step.get("facts") or {}).get("start_from") or {}).get("ref")
+    if start_from:
+        spec["start_point"] = str(start_from)
     return spec
 
 

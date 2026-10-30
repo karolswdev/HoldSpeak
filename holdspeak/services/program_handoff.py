@@ -16,6 +16,7 @@ HoldSpeak builds WITHOUT a model from what it already holds:
   base commit;
 - the last red check's log tail, the open asks, the limit line;
 - the repository's CLAUDE.md or AGENTS.md (clipped);
+- PG20: the checkpoint ref it continues from (``refs/holdspeak/checkpoints/…``);
 - how to continue.
 
 :func:`gather` reads the database and git; :func:`build` is pure: the
@@ -74,6 +75,8 @@ class HandoffInputs:
     worktree: str = ""
     earlier_turns: int = 0
     gate: str = ""
+    continues_from: str = ""                                   # PG20: the checkpoint ref
+    continues_commit: str = ""
 
 
 @dataclass(frozen=True)
@@ -134,6 +137,10 @@ def build(inputs: HandoffInputs) -> str:
         f"- Worktree: {inputs.worktree or 'the step worktree'} (the same one; continue here)",
         f"- Branch: {inputs.branch or 'the step branch'} (from {inputs.base_branch or 'main'}; do not make a new branch)",
     ]
+    if inputs.continues_from:
+        commit = f" (commit {inputs.continues_commit[:12]})" if inputs.continues_commit else ""
+        parts.append(f"- Continues from: `{inputs.continues_from}`{commit}: the worktree as the earlier agent left it, "
+                     "with the changes it did not commit")
     if inputs.earlier_turns:
         parts.append(f"- Earlier turns on this step: {inputs.earlier_turns} (not included)")
     if inputs.goal.strip():
@@ -254,6 +261,7 @@ def gather(
     service: Any, program: Mapping[str, Any], step: Mapping[str, Any], *, to_label: str, from_label: str,
     reason: str, by: str = "engine", git: Optional[Callable[..., str]] = None,
     facts_reader: Optional[Callable[[str, str], Mapping[str, Any]]] = None,
+    continues_from: Optional[Mapping[str, Any]] = None,
 ) -> HandoffInputs:
     """Read the step's record and its worktree into :class:`HandoffInputs`.
 
@@ -312,6 +320,8 @@ def gather(
         worktree=Path(worktree).name if worktree else "",
         earlier_turns=int((step.get("facts") or {}).get("turns") or 0),
         gate=str(program.get("check_command") or "") if step.get("gate_check") else "",
+        continues_from=str((continues_from or {}).get("ref") or ""),
+        continues_commit=str((continues_from or {}).get("commit") or ""),
     )
 
 

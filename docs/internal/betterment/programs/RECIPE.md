@@ -481,7 +481,7 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   a limited agent (the flight carries `limit`, its state word is unchanged);
   a real capture of either notice (the wordings are the documented ones).
 
-## PG20. Hidden-ref checkpoints (Left)
+## PG20. Hidden-ref checkpoints (Built)
 
 - **Goal**: each checkpoint of a step also pins the worktree's state to a
   hidden ref (`refs/holdspeak/checkpoints/<step>/<n>`), so a handoff or a
@@ -492,6 +492,26 @@ State: **Shipped** means in this PR. **Left** means a later slice.
 - **Done when**: a handoff names the ref it continues from.
 - **Tests**: T1 on the rig's real git.
 - **Not in this slice**: pruning old refs.
+- **Built (2026-10-31)**: `ProgramRunner.pin_checkpoint` (a copy of the
+  worktree's index as `GIT_INDEX_FILE`, `add -A`, `write-tree`,
+  `commit-tree -p HEAD`, `update-ref`; HoldSpeak's own identity on the pin
+  commit) runs for every checkpoint row of a step (`ProgramService.pin`
+  from `_checkpoint` and `engine_decision`); the row's `undo_json.pin`
+  holds `ref`, `commit`, `tree` or a `note`; `list_checkpoints` reads them
+  as `ref`, `ref_commit`, `pin_note` (so `program.get` carries them). A
+  handoff pins first; the brief's Where names "Continues from: `<ref>`";
+  the entry keeps `continues_from`. The next agent continues in the same
+  worktree (the Hand again path), whose tree is the ref's tree, so nothing
+  is reset. Start from here: `POST /api/programs/{id}/checkpoints/{cid}/start-from`
+  and `program.start_from`; his press adds the step at once (his press is
+  the consent; no second ask); the step's own agent's ask goes through the
+  `add_step` rule (YOLO adds and says so; Secure and Normal ask him). The
+  new step has no `after` and `facts.start_from`; `program_step_spec` makes
+  the ref its `start_point`. No new kernel operation: the press writes only
+  hub tables; the worktree is made by the hand at dispatch (`program.step`).
+  Tests: `tests/integration/test_desk_programs.py` (PG20 section),
+  `programs.app.test.tsx` (PG20 describe), fixtures `program.start_from.json`
+  and `program.limited.json`.
 
 ## PG21. The verified provider matrix in Engines (Left)
 

@@ -335,7 +335,9 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) ->
                 continue
             items.append({**base, "id": f"{step['id']}:add_step:{index}", "kind": "add_step", "proposal": index,
                           "choices": list(DECIDE_CHOICES["add_step"]),
-                          "title": f"Add a step after {label}: {proposal.get('title')}"})
+                          "title": (f"Start a step from checkpoint {str(proposal['start_from'].get('ref') or '').rsplit('/', 1)[-1]} of {label}"
+                                    if isinstance(proposal.get("start_from"), Mapping)
+                                    else f"Add a step after {label}: {proposal.get('title')}")})
         if state in ("pr_open", "merge_ask") and step.get("gate_review") == "person" and not facts.get("person_approved"):
             name = (facts.get("person") or {}).get("name") or "the reviewer"
             number = step.get("pr_number")
@@ -1363,30 +1365,88 @@ class ProgramService:
         if not title:
             return
         brief = str((item or {}).get("brief") or title) if isinstance(item, Mapping) else title
+        start_from = dict((item or {}).get("start_from") or {}) if isinstance(item, Mapping) else {}
         outcome = decide(program.get("control"), "add_step", {})
         if outcome.to_owner:
             facts = step.setdefault("facts", {})
-            facts.setdefault("proposed_steps", []).append({"title": title, "brief": brief, "decision": None})
+            proposal = {"title": title, "brief": brief, "decision": None}
+            if start_from:
+                proposal["start_from"] = start_from
+            facts.setdefault("proposed_steps", []).append(proposal)
             self._save(step)
-            self._checkpoint(program, step, "engine", f"The agent names a missing step: {title}; it is yours to add")
+            self._checkpoint(program, step, "engine",
+                             f"The agent asks to start a step from {start_from['ref']}; it is yours to add" if start_from
+                             else f"The agent names a missing step: {title}; it is yours to add")
             return
+        added = self._added_step(program, step, title, brief, start_from=start_from)
+        line = (f"Added step {added['ordinal']} \u201c{title}\u201d from {start_from['ref']} (asked by step {step['ordinal']})"
+                if start_from else f"Added step {added['ordinal']} \u201c{title}\u201d (named by step {step['ordinal']})")
+        self.engine_decision(program, added, "add_step", outcome, line, undo={"step_id": added["id"]})
+
+    def _added_step(self, program: Mapping[str, Any], step: Mapping[str, Any], title: str, brief: str, *,
+                    start_from: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
+        """A step the plan lacked, with the source step's agent and gates.
+        PG20: one that starts from a checkpoint ref has no ``after``: its
+        worktree starts at the ref (``program_step_spec``)."""
         ordinal = max((int(row["ordinal"]) for row in self.store.list_steps(program["id"])), default=0) + 1
         now = self._clock()
+        facts: dict[str, Any] = {"added_by_engine": True}
+        if start_from:
+            facts = {"start_from": dict(start_from)}
         added = {
             "id": _new_id("step"), "program_id": program["id"], "ordinal": ordinal, "title": title,
-            "brief_markdown": brief, "owns": [], "after": [int(step["ordinal"])], "profile": step.get("profile"),
+            "brief_markdown": brief, "owns": [], "after": [] if start_from else [int(step["ordinal"])], "profile": step.get("profile"),
             "engine": step.get("engine"), "prefer_idle": bool(step.get("prefer_idle")), "effort": triage_effort(brief, []),
             "race": 0, "race_of": None, "gate_check": True, "gate_review": step.get("gate_review") or "none",
             "review_depth": step.get("review_depth") or "delta", "gate_merge": "level", "state": "planned",
             "held_reason": None, "launch_id": None, "worktree": None, "branch": None, "head_commit": None,
             "checked_commit": None, "pr_url": None, "pr_number": None, "check_log": None, "check_verdict": None,
-            "facts": {"added_by_engine": True}, "review_verdict": None, "findings": [], "report": None, "rounds": 0,
+            "facts": facts, "review_verdict": None, "findings": [], "report": None, "rounds": 0,
             "parked_reason": None, "parked_by": None, "origin_ref": None, "for_person_id": step.get("for_person_id"),
             "started_at": None, "ended_at": None, "updated_at": now,
         }
         self.store.save_step(added)
-        self.engine_decision(program, added, "add_step", outcome, f"Added step {ordinal} \u201c{title}\u201d (named by step {step['ordinal']})",
-                             undo={"step_id": added["id"]})
+        return added
+
+    def start_from(self, principal: Any, program_id: str, checkpoint_id: Any) -> dict[str, Any]:
+        """PG20, Start from here: a new step whose worktree starts at the
+        checkpoint's pinned ref, with the source step's brief and agent.
+        His press adds it at once (his press is the consent). The step's own
+        agent may ask too; then the ladder decides (``add_step``): Secure and
+        Normal ask him, YOLO adds it and says so (Decided for you)."""
+        program = self._program(program_id)
+        row = next((item for item in self.store.list_checkpoints(program["id"])
+                    if str(item["id"]) == str(checkpoint_id)), None)
+        if row is None:
+            raise ProgramRefused("checkpoint_unknown", "There is no such checkpoint on this program.", status=404)
+        if not row.get("ref"):
+            raise ProgramRefused("checkpoint_not_pinned", "This checkpoint did not pin the worktree.", status=400)
+        source = self.store.get_step(str(row["step_id"] or ""))
+        if source is None:
+            raise NotFound("program_step", str(row["step_id"]))
+        if program.get("closed_at"):
+            raise ProgramRefused("program_closed", "The program is closed.")
+        owner = _is_owner(principal)
+        if not owner and _launch_of(principal) != source.get("launch_id"):
+            raise ProgramRefused("not_your_step", "Only this step's own agent, or the owner, may start from its checkpoint.",
+                                 status=403)
+        ref = str(row["ref"])
+        n = ref.rsplit("/", 1)[-1]
+        start = {"ref": ref, "commit": row.get("ref_commit"), "checkpoint_id": row["id"], "step_id": source["id"]}
+        title = f"{source['title']} (from checkpoint {n})"[:200]
+        brief = str(source.get("brief_markdown") or source["title"])
+        added_id = None
+        with _LOCK:
+            if owner:
+                added = self._added_step(program, source, title, brief, start_from=start)
+                added_id = added["id"]
+                self._checkpoint(program, added, "owner", f"Started step {added['ordinal']} from {ref}")
+            else:
+                self.propose_step(program, source, {"title": title, "brief": brief, "start_from": start})
+            self._touch(program)
+            self.changed(program["id"], added_id or source["id"], verb="start_from")
+        self._tick_now(program["id"])
+        return {"step_id": added_id, "ref": ref, "program": self.get(principal, program["id"])}
 
     def _own_step(self, principal: Any, program_id: Optional[str], step_id: str, verb: str) -> tuple[dict[str, Any], dict[str, Any]]:
         step = self.store.get_step(str(step_id or ""))
@@ -1550,6 +1610,12 @@ class ProgramService:
         proposal["decision"] = choice
         facts["proposed_steps"] = proposals
         self._save(step)
+        if choice == "add" and proposal.get("start_from"):
+            # PG20: an agent's Start from here, added on his press.
+            added = self._added_step(program, step, proposal["title"], proposal.get("brief") or proposal["title"],
+                                     start_from=proposal["start_from"])
+            self._checkpoint(program, added, "owner", f"Started step {added['ordinal']} from {proposal['start_from']['ref']}")
+            return {"added": added["id"]}
         if choice == "add":
             made = self.plan(principal, program["id"], steps=[{"title": proposal["title"],
                                                                "brief": proposal.get("brief") or proposal["title"],
@@ -1611,11 +1677,16 @@ class ProgramService:
         engine``, a kernel operation, and a row of Decided for you."""
         operation_id = self._kernel_record(program, step, line)
         at = self._clock()
+        undo = dict(undo or {})
+        if "pin" not in undo:
+            pin = self.pin(step, line)
+            if pin:
+                undo["pin"] = pin
         ident = self.store.add_checkpoint(
             step_id=str((step or {}).get("id") or ""), program_id=program["id"], at=at, by="engine", line=line,
             operation_id=operation_id, kind=kind, choice=getattr(outcome, "choice", None),
             rule=getattr(outcome, "rule", None), overturnable=bool(getattr(outcome, "overturnable", False)),
-            undo=undo,
+            undo=undo or None,
         )
         return {"id": ident, "at": at, "kind": kind, "choice": getattr(outcome, "choice", None),
                 "rule": getattr(outcome, "rule", None)}
@@ -1902,11 +1973,29 @@ class ProgramService:
         if kernel and by == "engine":
             operation_id = self._kernel_record(program, step, line)
         at = self._clock()
+        undo: dict[str, Any] = {"decision_record_id": decision_record_id} if decision_record_id else {}
+        pin = self.pin(step, line)
+        if pin:
+            undo["pin"] = pin
         ident = self.store.add_checkpoint(step_id=str((step or {}).get("id") or ""), program_id=program["id"],
-                                          at=at, by=by, line=line, operation_id=operation_id,
-                                          undo={"decision_record_id": decision_record_id} if decision_record_id else None)
+                                          at=at, by=by, line=line, operation_id=operation_id, undo=undo or None)
         return {"id": ident, "step_id": (step or {}).get("id") or "", "at": at, "by": by, "line": line,
-                "operation_id": operation_id, "decision_record_id": decision_record_id}
+                "operation_id": operation_id, "decision_record_id": decision_record_id,
+                "ref": (pin or {}).get("ref")}
+
+    def pin(self, step: Optional[Mapping[str, Any]], line: str) -> Optional[dict[str, Any]]:
+        """PG20: a checkpoint on a step pins its worktree to a hidden ref
+        (the runner's git). ``None`` for a Program-wide line; a failure is a
+        note on the row, never a stop."""
+        if not step or not step.get("id"):
+            return None
+        if not step.get("worktree"):
+            return {"note": "No worktree to pin yet"}
+        try:
+            return dict(self.runner().pin_checkpoint(step, line) or {}) or None
+        except Exception as exc:
+            log.debug(f"checkpoint not pinned: {exc}")
+            return {"note": "Not pinned: git is not available"}
 
     def _kernel_record(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], line: str) -> Optional[str]:
         """The engine decision as a kernel operation ``program.step``."""

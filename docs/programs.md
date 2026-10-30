@@ -123,6 +123,8 @@ may receive this repository's context. An empty list means every agent that the
 desk has. Turn an agent off for a repository whose code must stay with one
 company.
 
+**Checkpoint refs.** Each checkpoint on a step also keeps the step's worktree as it is at that moment: the commits, the changes that are not committed and the new files (git's ignored files stay out). HoldSpeak writes it to a hidden ref, `refs/holdspeak/checkpoints/<step>/<n>`, through a temporary index. Your working tree, its index and its branch do not change. If git cannot write the ref, the checkpoint keeps a note and the step continues. In the Checkpoints fold, a row with a ref shows its short commit; the full ref is in its title. A handoff brief names the ref that the next agent continues from, and **View brief** shows it. Press **Start from here** on a row to add a new step that has the same brief and agent; its worktree starts at that ref, on a new branch. The step's own agent can ask for the same thing (`program.start_from`): at YOLO, HoldSpeak adds the step and shows it under Decided for you; at Secure and Normal, you decide. HoldSpeak does not remove old refs yet.
+
 **By hand.** A tool or the API can move a running step to another agent (`program.handoff`, or `POST /api/programs/{id}/steps/{sid}/handoff` with `preview: true` to read the brief first). Only you can do this; an agent cannot.
 
 ## The steps and their states
@@ -277,6 +279,7 @@ The MCP tools are in the `program` family:
 | `program.step_done` | The step's agent says that it is done, with its report. HoldSpeak still waits for the commit. | The step's own agent |
 | `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. | You only |
 | `program.overturn` | Undo a decision of HoldSpeak. | You only |
+| `program.start_from` | Add a step whose worktree starts at a checkpoint's ref. When an agent asks, the control level decides. | You, the step's own agent |
 | `program.handoff` | Move a running step to another agent, with the handoff brief. `preview: true` shows the brief and sends nothing. The next agent uses the same worktree and branch. | You only |
 
 An agent can make and start a program, but it cannot decide for you, and it does not prompt a step's agent: HoldSpeak does that. The skill `agent/skills/holdspeak-programs/SKILL.md` tells an agent how to drive a program.

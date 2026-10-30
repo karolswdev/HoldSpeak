@@ -326,7 +326,7 @@
 .pg-ledger { margin: 4px 0 8px; padding: 0; list-style: none; }
 .pg-ledger-row {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) 48px;
+  grid-template-columns: 180px minmax(0, 1fr) auto 48px;
   align-items: center;
   gap: 12px;
   min-height: 28px;
@@ -347,6 +347,10 @@
 }
 .pg-ledger-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pg-ledger-at { color: var(--wb-muted); font-variant-numeric: tabular-nums; text-align: right; }
+/* PG20: the pinned commit (an id: mono, quiet) and Start from here. */
+.pg-ledger-pin { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; min-width: 0; }
+.pg-ref { font: 12px / 1.35 var(--font-mono); color: var(--wb-muted); white-space: nowrap; }
+.pg-handoff-head .pg-ref { color: var(--wb-ink); }
 
 /* ── Drafting ── */
 .pg-goal { padding: 10px 12px 4px; }
@@ -427,8 +431,10 @@
   .pg-toolbar-trailing { display: none; }
   .pg-gate-facts { grid-template-columns: minmax(0, 1fr); }
   .pg-gate-facts dt { display: none; }
-  .pg-ledger-row { grid-template-columns: minmax(0, 1fr) 44px; }
+  .pg-ledger-row { grid-template-columns: minmax(0, 1fr) auto 44px; }
   .pg-ledger-by { display: none; }
+  .pg-ledger-pin .pg-ref { display: none; }
+  .desk-next .pg-ledger-pin .btn { min-height: 44px; }
 
   .desk-next .kit-listrow.pg-draft,
   .pg-draft-head { grid-template-columns: 24px minmax(0, 1fr); row-gap: 6px; padding: 6px 12px 8px 0; }

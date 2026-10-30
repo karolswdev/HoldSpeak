@@ -368,6 +368,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "program.resume": ("effect_proposal", False),
     "program.checkpoint": ("effect_proposal", False),
     "program.step_done": ("effect_proposal", False),
+    "program.start_from": ("effect_proposal", False),
     "project.mark_update_delivered": ("effect_proposal", False),
     # Phone (2026-10-28): his phone.
     "phone.status": ("evidence_read", False),

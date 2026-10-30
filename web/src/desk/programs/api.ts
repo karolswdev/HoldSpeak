@@ -80,6 +80,13 @@ export async function overturn(programId: string, decisionId: string): Promise<P
     `${base(programId)}/decisions/${encodeURIComponent(decisionId)}/overturn`, { method: "POST", json: {} }));
 }
 
+/** PG20, Start from here: a new step whose worktree starts at the
+ *  checkpoint's pinned ref (`refs/holdspeak/checkpoints/<step>/<n>`). */
+export async function startFrom(programId: string, checkpointId: string): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/checkpoints/${encodeURIComponent(checkpointId)}/start-from`, { method: "POST", json: {} }));
+}
+
 /** Secure: he closes a Program whose steps are all finished. */
 export async function closeProgram(programId: string): Promise<Program | null> {
   return unwrap(await apiFetch<Program | { program?: Program }>(`${base(programId)}/close`, { method: "POST", json: {} }));
