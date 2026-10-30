@@ -36,7 +36,7 @@ describe("the Live Intelligence badge reads the hub (HS-202-02)", () => {
         can_transmit_offmachine: true,
         provider: "openai",
       }),
-    ).toEqual({ label: "OPENAI", scope: "cloud" });
+    ).toEqual({ label: "OpenAI", scope: "cloud" });
   });
 
   it("never wears a hardcoded home glyph", () => {

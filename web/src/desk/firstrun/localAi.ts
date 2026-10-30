@@ -112,13 +112,13 @@ export function missingBytes(status: LocalAiStatus | null): number {
     .reduce((sum, file) => sum + (file.size_bytes || 0), 0);
 }
 
-/** The host the files come from, upper case (the egress chip). */
+/** The host the files come from, as typed (the egress chip). */
 export function sourceHost(status: LocalAiStatus | null): string {
   const named = status?.egress?.destination;
-  if (named) return named.toUpperCase();
+  if (named) return named;
   const file = (status?.files ?? []).find((item) => item.url);
   try {
-    return file?.url ? new URL(file.url).host.toUpperCase() : "";
+    return file?.url ? new URL(file.url).host : "";
   } catch {
     return "";
   }
@@ -192,7 +192,7 @@ export function useLocalAi() {
   const accept = useCallback((status: LocalAiStatus) => {
     if (!mounted.current) return;
     const now = Date.now();
-    if (status.egress?.destination) host.current = status.egress.destination.toUpperCase();
+    if (status.egress?.destination) host.current = status.egress.destination;
     if (status.state === "downloading") {
       sawRun.current = true;
       const next = rateOf(last.current, now, status.bytes_done || 0);

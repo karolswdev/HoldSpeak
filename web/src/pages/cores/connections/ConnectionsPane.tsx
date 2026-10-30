@@ -459,7 +459,7 @@ function ServiceGlyph({ provider }: { provider: string }) {
 }
 
 function HostChip({ site }: { site: string }) {
-  return <EgressChip label={site.toUpperCase()} scope="cloud" title={site}/>;
+  return <EgressChip label={site} scope="cloud" title={site}/>;
 }
 
 /** The account, cut with an ellipsis when the row is narrow (the row's

@@ -487,7 +487,7 @@ describe("A4: With, the engine in place", () => {
     const editor = await screen.findByTestId("automation-with-editor");
     const found = await within(editor).findByRole("button", { name: "Add Claude Code" });
     const row = found.closest("li")!;
-    expect(row).toHaveTextContent("ANTHROPIC");
+    expect(row).toHaveTextContent("Anthropic");
     // 2: Add (the Engines app's own path), then this automation uses it.
     hub.afterEngine = [withClaude as Step];
     fireEvent.click(found);
@@ -499,7 +499,7 @@ describe("A4: With, the engine in place", () => {
     expect(hub.calls[1].body).toEqual({ profile_id: "agent-claude" });
     await waitFor(() => expect(line("with")).toHaveTextContent("Claude Code"));
     // A10: an agent engine's egress chip names its vendor.
-    expect(line("with")).toHaveTextContent("ANTHROPIC");
+    expect(line("with")).toHaveTextContent("Anthropic");
     // The engine in use offers this automation's own Spend limit per run.
     await waitFor(() => expect(within(screen.getByTestId("automation-with-editor")).getByText("In use")).toBeInTheDocument());
     expect(screen.getByTestId("automation-spend")).toBeInTheDocument();
@@ -1051,7 +1051,7 @@ describe("an agent works in a folder (A10)", () => {
     await screen.findByTestId("automation-about-editor");
     expect(screen.queryByTestId("automation-folders")).toBeNull();
     // ... and its egress chip says where the prompt goes, not a vendor.
-    expect(line("with")).not.toHaveTextContent("ANTHROPIC");
+    expect(line("with")).not.toHaveTextContent("Anthropic");
   });
 
   it("names the folder and the vendor; the result names the folder's files; a folder adds in place", async () => {

@@ -177,7 +177,7 @@ export function MeaningSearchRow() {
                   title={`Turn on downloads the model file from ${status.model.source}`}
                 />
               ) : (
-                <EgressChip label="THIS DEVICE" scope="local" />
+                <EgressChip label="This device" scope="local" />
               )}
             </span>
           ) : null}

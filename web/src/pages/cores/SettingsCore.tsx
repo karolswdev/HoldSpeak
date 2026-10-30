@@ -188,8 +188,8 @@ export function calendarSourceEgressChips(
     if (!fact.egress || !fact.host || !fact.refresh_seconds || !fact.enabled) continue;
     const minutes = Math.round(fact.refresh_seconds / 60);
     if (minutes < 1) continue;
-    const host = fact.host.toUpperCase();
-    const name = fact.label ? fact.label.toUpperCase() : host;
+    const host = fact.host;
+    const name = fact.label || host;
     chips.push({
       id: fact.id ?? host,
       label: `FETCHES ${name} · ${host} · ${minutes} MIN`,

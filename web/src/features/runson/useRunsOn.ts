@@ -797,7 +797,7 @@ export function useRunsOn(scope?: string) {
         return next;
       });
       setDownloads((prev) => ({ ...prev, [key]: 0 }));
-      setEgress({ label: (engine.downloadHost ?? "huggingface.co").toUpperCase(), scope: "cloud" });
+      setEgress({ label: engine.downloadHost ?? "huggingface.co", scope: "cloud" });
       try {
         const started = await conciergeDownload(engine.presetId);
         if (!started.jobId) throw new Error("no job");

@@ -31,8 +31,8 @@ describe("the provider words", () => {
 
   it("shows the provider's host as the egress and its activity page as the far side", () => {
     expect(egressOf({ channel: "email", account: { provider: "resend" } })).toEqual(
-      { label: "API.RESEND.COM", scope: "cloud", title: "api.resend.com" });
-    expect(egressOf({ channel: "email", account: { provider: "sendgrid" } }).label).toBe("API.SENDGRID.COM");
+      { label: "api.resend.com", scope: "cloud", title: "api.resend.com" });
+    expect(egressOf({ channel: "email", account: { provider: "sendgrid" } }).label).toBe("api.sendgrid.com");
     expect(farSide("email", {}, { provider: "resend" })).toBe("https://resend.com/emails");
     expect(farSide("email", {}, { provider: "sendgrid" })).toBe("https://app.sendgrid.com/email_activity");
   });
@@ -81,7 +81,7 @@ describe("the Destination form", () => {
     const keyRow = screen.getByTestId("dest-key-row");
     expect(keyRow.textContent).toContain("Resend key");
     expect(keyRow.textContent).not.toContain("SendGrid");
-    expect(screen.getByTestId("dest-form-verbs").textContent).toContain("API.RESEND.COM");
+    expect(screen.getByTestId("dest-form-verbs").textContent).toContain("api.resend.com");
 
     fireEvent.click(within(keyRow).getByRole("button", { name: "Replace" }));
     const secret = within(keyRow).getByLabelText("Replacement Resend key");
@@ -91,7 +91,7 @@ describe("the Destination form", () => {
     const put = calls.find((c) => c.method === "PUT")!;
     expect(put.path).toBe("/api/channels/email-keys/resend-karol%40example.com");
     expect(put.json).toMatchObject({ api_key: "re_synthetic_key", provider: "resend" });
-    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("SET")).toBeTruthy());
+    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("Set")).toBeTruthy());
 
     fireEvent.click(screen.getByTestId("dest-save"));
     await waitFor(() => expect(calls.some((c) => c.method === "POST")).toBe(true));

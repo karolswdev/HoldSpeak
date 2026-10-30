@@ -148,7 +148,7 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       expect(words).toContain(NAME);
       expect(words).toContain("Folder");
       expect(words).not.toContain("This device");
-      expect(words.includes("ICLOUD")).toBe(icloud);
+      expect(words.includes("iCloud")).toBe(icloud);
       // The open destination leaves its target to the exact preview field.
       expect(pv.textContent).toContain("HoldSpeak/Sent");
       expect(words).not.toContain("~/");
@@ -159,7 +159,7 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       expect(posted).toEqual([expect.objectContaining({ document_ref: REF, destination_id: "holdspeak-folder", preview_digest: DIGEST })]);
       const said = line(receipt);
       expect(said).toContain("Saved");
-      expect(said.includes("ICLOUD")).toBe(icloud);
+      expect(said.includes("iCloud")).toBe(icloud);
     },
   );
 });

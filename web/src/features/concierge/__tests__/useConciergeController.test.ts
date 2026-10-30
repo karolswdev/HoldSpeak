@@ -99,9 +99,9 @@ describe("engineHostLabel", () => {
     const e = makeEngine({ kind: "local", host: "THIS DEVICE" });
     expect(engineHostLabel(e)).toBe("THIS DEVICE");
   });
-  it("uppercases cloud hosts", () => {
+  it("shows cloud hosts as typed", () => {
     const e = makeEngine({ kind: "cloud", host: "openrouter.ai" });
-    expect(engineHostLabel(e)).toBe("OPENROUTER.AI");
+    expect(engineHostLabel(e)).toBe("openrouter.ai");
   });
 });
 

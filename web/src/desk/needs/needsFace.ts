@@ -271,7 +271,7 @@ function toneOf(severity: unknown, why: string): ObjectTone {
 
 function urlHost(url: string): string {
   try {
-    return new URL(url).host.toUpperCase();
+    return new URL(url).host;
   } catch {
     return "";
   }

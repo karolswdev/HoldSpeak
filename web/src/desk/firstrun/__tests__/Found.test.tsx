@@ -64,7 +64,7 @@ describe("FOUND", () => {
     expect(rows[0].querySelector(".gadget-chip-egress")?.textContent).toBe("192.168.1.43 · LAN");
     expect(rows[1].textContent).toContain("KEY SET");
     expect(rows[1].textContent).toContain("$");
-    expect(rows[1].querySelector(".gadget-chip-egress")?.textContent).toBe("API.OPENAI.COM");
+    expect(rows[1].querySelector(".gadget-chip-egress")?.textContent).toBe("api.openai.com");
     expect(rows[1].querySelector(".gadget-chip-egress")?.getAttribute("data-scope")).toBe("cloud");
   });
 

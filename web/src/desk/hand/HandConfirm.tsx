@@ -39,6 +39,7 @@ import { useDropHand, type HandPending } from "./store";
 import { branchFace } from "../lane/laneWire";
 import "./hand.css";
 import { Token } from "../surface/Token";
+import { stateWords } from "../surface/words";
 
 const DELIVERY_POLL_MS = 2000;
 /** Astra P1 on #946: after Hand, the flights are re-read until the launch's
@@ -198,7 +199,9 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
   }, [launched, launching]);
 
   const delivery = launched ? deliveryToken(launched) : null;
-  const fact = [preview ? modeWord(preview.control_mode) : "", branchFace(preview?.branch)].filter(Boolean).join(" · ");
+  // EGRESS-CHIP-WORDS: the agent's name as typed, the mode in sentence case
+  // beside it (`Claude Code · Open throttle · hs/…`); the branch is an id.
+  const fact = [preview ? stateWords(modeWord(preview.control_mode)) : "", branchFace(preview?.branch)].filter(Boolean).join(" · ");
   const frozen = launching || launched !== null;
   const agentToken = (
     <Button
@@ -211,7 +214,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       data-agent={actual}
       onClick={flip}
     >
-      {AGENT_NAME[actual].toUpperCase()}
+      {AGENT_NAME[actual]}
     </Button>
   );
   // PHILO-15 16 (B38): the first hand clones the Project's repository from
@@ -228,23 +231,23 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     <>
       {passedOver ? (
         <Token className="surface-token" data-chip data-testid="hand-confirm-skipped">
-          {AGENT_NAME[passedOver].toUpperCase()} · SIGN-IN UNKNOWN
+          {AGENT_NAME[passedOver]} · SIGN-IN UNKNOWN
         </Token>
       ) : null}
       {selectedUnknown ? (
         <Token className="surface-token" data-chip data-tone="warn" data-testid="hand-confirm-selected-unknown">
-          {AGENT_NAME[selectedUnknown].toUpperCase()} · SIGN-IN UNKNOWN
+          {AGENT_NAME[selectedUnknown]} · SIGN-IN UNKNOWN
         </Token>
       ) : null}
       {toClone ? (
         <span className="desk-hand-tokens" data-testid="hand-confirm-clone" data-state="to_clone">
-          <EgressChip label={toClone.host.toUpperCase()} scope="cloud" />
+          <EgressChip label={toClone.host} scope="cloud" />
           <Token className="surface-token" data-chip data-wrap>CLONES {toClone.repository}</Token>
         </span>
       ) : null}
       {clone ? (
         <span className="desk-hand-tokens" data-testid="hand-confirm-clone" data-state="cloned">
-          <EgressChip label={clone.host.toUpperCase()} scope="cloud" />
+          <EgressChip label={clone.host} scope="cloud" />
           <Token className="surface-token" data-tone="ok" data-chip data-wrap>
             {cloneWords(clone)}
           </Token>
@@ -257,7 +260,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       ) : null}
       {tracker ? (
         <span className="desk-hand-tokens" data-testid="hand-confirm-tracker" data-state={tracker.state}>
-          <EgressChip label={tracker.host ? tracker.host.toUpperCase() : undefined} scope="cloud" />
+          <EgressChip label={tracker.host || undefined} scope="cloud" />
           <StateChip state={tracker.state} label={tracker.label} />
         </span>
       ) : null}

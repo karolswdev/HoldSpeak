@@ -224,13 +224,13 @@ describe("gadget kit", () => {
         onReplace={onReplace}
       />,
     );
-    expect(screen.getByText("SET")).toBeInTheDocument();
+    expect(screen.getByText("Set")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Replace" }));
     const input = screen.getByLabelText("Replacement Web pairing token");
     await user.type(input, "new-secret{Enter}");
     expect(onReplace).toHaveBeenCalledWith("new-secret");
     // the chip returns after the commit
-    expect(screen.getByText("SET")).toBeInTheDocument();
+    expect(screen.getByText("Set")).toBeInTheDocument();
   });
 
   it("SecretRow Escape reverts the armed replace without committing", async () => {
@@ -239,12 +239,12 @@ describe("gadget kit", () => {
     render(
       <SecretRow label="Device audio key" configured={false} onReplace={onReplace} />,
     );
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByText("Not set")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Replace" }));
     const input = screen.getByLabelText("Replacement Device audio key");
     await user.type(input, "draft{Escape}");
     expect(onReplace).not.toHaveBeenCalled();
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByText("Not set")).toBeInTheDocument();
   });
 
   it("GadgetRow carries the label and a token fact", () => {

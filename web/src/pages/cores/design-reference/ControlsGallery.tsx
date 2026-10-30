@@ -223,7 +223,7 @@ export function ControlsGallery({ hero }: CoreProps) {
           <LampGadget on={false} label="off" />
           <span className="gadget-chip">ctx 16k</span>
           <span className="gadget-chip" data-set="">
-            SET
+            Set
           </span>
           <EgressChip />
         </div>

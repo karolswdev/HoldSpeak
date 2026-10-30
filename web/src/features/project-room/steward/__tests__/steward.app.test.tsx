@@ -387,14 +387,14 @@ describe("HS-173-04: the Reviewer nudge row, checked and saved", () => {
   const putKey = `PUT /api/projects/${pid}/steward/policy`;
   const boxes = () => Array.from(screen.getByTestId("steward-policy-effects").querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
 
-  it("a new project: Reviewer nudge unchecked with GITHUB.COM and PER-NUDGE APPROVAL; checked, Save, Back, Policy: still checked with its text", async () => {
+  it("a new project: Reviewer nudge unchecked with github.com and PER-NUDGE APPROVAL; checked, Save, Back, Policy: still checked with its text", async () => {
     replay(before, { [putKey]: () => { hubGets = { ...before, ...after }; return save.answer; } });
     await enterSteward(pid);
     await enterPolicy();
     expect(screen.getByTestId("steward-policy-kind-label-github_comment").textContent).toBe("Reviewer nudge");
     const egress = Array.from(screen.getByTestId("steward-policy-effects").querySelectorAll(".gadget-chip-egress"))
       .map((c) => c.textContent ?? "");
-    expect(egress.some((t) => t.includes("GITHUB.COM"))).toBe(true);
+    expect(egress.some((t) => t.includes("github.com"))).toBe(true);
     expect(screen.getByTestId("steward-policy-nudge-approval").textContent).toContain("Per-nudge approval");
     expect(boxes().length).toBeGreaterThanOrEqual(6);
     expect(boxes()[5].checked).toBe(false);

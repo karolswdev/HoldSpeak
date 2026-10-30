@@ -890,10 +890,16 @@
   background: var(--wb-well);
   box-shadow: none;
   color: var(--wb-muted);
-  font: 600 12px / 16px var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  /* EGRESS-CHIP-WORDS (2026-10-30): the chip says its word in sentence
+     case (`This device`, `Set`), quiet sans. A chip that carries a host
+     or an id draws it exact in mono (`data-literal`, the Token `code`
+     rule); no caps rule on this species (tests/unit/test_lamp_words_guard.py). */
+  font: 500 12px / 16px var(--font-sans);
+  letter-spacing: 0;
   white-space: nowrap;
+}
+.gadget-chip[data-literal] {
+  font-family: var(--font-mono);
 }
 /* PHILO-4-01 r4: truncation is opt-in, ONLY where the full value shows
    elsewhere on the same row (the Jira host chip: the row label names the

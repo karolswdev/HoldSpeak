@@ -1376,7 +1376,6 @@
 /* Window grammar: the setup row's egress chip in sentence case (a host is
    lower case), never a mono caps chip. */
 .desk-next .speak-face .speak-setup .gadget-chip-egress {
-  text-transform: lowercase;
   letter-spacing: 0;
   font: 500 12px / 18px var(--font-sans);
 }

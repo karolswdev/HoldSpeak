@@ -139,7 +139,7 @@ export function enginePlace(engine: BoardEngine): ReturnType<typeof hostPlace> {
 export function hostLabel(engine: BoardEngine): string {
   const place = enginePlace(engine);
   if (place.place === "mac") return "THIS DEVICE";
-  return (place.host || engine.host || "NOT SET").toUpperCase();
+  return place.host || engine.host || "NOT SET";
 }
 
 /** The summary route while it is not known yet: still being read, or the

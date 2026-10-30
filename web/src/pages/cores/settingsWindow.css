@@ -185,7 +185,6 @@
   border-radius: var(--radius-sm);
   font: 500 12px / 1.4 var(--font-sans);
   letter-spacing: 0;
-  text-transform: lowercase;
 }
 .desk-next .pref-window .settings-page-section-body .surface-columns,
 .desk-next .pref-window .settings-page-section-body .prefs-groups {

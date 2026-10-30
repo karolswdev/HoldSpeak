@@ -389,7 +389,7 @@ describe("Engines — Add an engine, by kind (Betterment E4)", () => {
     // No address to know: the tile carries it, and the chip names the host.
     expect(screen.queryByLabelText("Server address")).toBeNull();
     expect(screen.queryByTestId("concierge-add-my-server")).toBeNull();
-    expect(within(screen.getByTestId("concierge-add-egress")).getByText("OPENROUTER.AI")).toBeTruthy();
+    expect(within(screen.getByTestId("concierge-add-egress")).getByText("openrouter.ai")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("OpenRouter key"), { target: { value: OR_KEY } });
     await act(async () => {
       press(presses, screen.getByTestId("concierge-add-check"));
@@ -430,7 +430,7 @@ describe("Engines — Add an engine, by kind (Betterment E4)", () => {
     fireEvent.click(await screen.findByTestId("concierge-add-engine"));
     fireEvent.click(screen.getByTestId("runson-kind-service"));
     fireEvent.click(screen.getByRole("button", { name: "Anthropic" }));
-    expect(within(screen.getByTestId("concierge-add-egress")).getByText("API.ANTHROPIC.COM")).toBeTruthy();
+    expect(within(screen.getByTestId("concierge-add-egress")).getByText("api.anthropic.com")).toBeTruthy();
     expect(screen.getByLabelText("Anthropic key")).toBeTruthy();
     expect(screen.getByTestId("runson-root").textContent).not.toMatch(/NOT SUPPORTED/);
     fireEvent.change(screen.getByLabelText("Anthropic key"), { target: { value: "sk-ant" } });
@@ -450,7 +450,7 @@ describe("Engines — Add an engine, by kind (Betterment E4)", () => {
     expect(within(codex).getByTestId("runson-agent-install-codex").textContent).toBe("npm install -g @openai/codex");
     expect(within(codex).queryByRole("button")).toBeNull();
     const claude = screen.getByTestId("runson-agent-tile-claude");
-    expect(within(claude).getByText("ANTHROPIC")).toBeTruthy();
+    expect(within(claude).getByText("Anthropic")).toBeTruthy();
     await act(async () => {
       fireEvent.click(within(claude).getByRole("button", { name: "Add" }));
     });

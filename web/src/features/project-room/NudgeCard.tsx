@@ -193,7 +193,7 @@ export function NudgeCard({
           ) : null}
           <div className="room-nudge-card-footer">
             {/* The preview before Send: it names where the comment goes. */}
-            <EgressChip label="GITHUB.COM" scope="cloud" data-testid="nudge-card-egress" />
+            <EgressChip label="github.com" scope="cloud" data-testid="nudge-card-egress" />
             <span className="room-nudge-card-verbs">
               <Button dense variant="primary" loading={card.phase === "open" && card.busy} onClick={() => void handleSend()} data-testid="nudge-send">
                 Send

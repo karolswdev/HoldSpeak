@@ -40,9 +40,9 @@ export function globalProfile(summary: AssignmentSummary | null): string {
 
 /** The egress chip of a proposal: the host the work goes to. */
 export function proposalEgress(proposal: DefaultProposal): { label: string; scope: "local" | "cloud" | "remote" | undefined } {
-  if (proposal.lamp === "mesh") return { label: (proposal.host || "MESH").toUpperCase(), scope: "remote" };
+  if (proposal.lamp === "mesh") return { label: proposal.host || "Mesh", scope: "remote" };
   const egress = egressFor(proposal.host);
-  return { label: egress.label.toUpperCase(), scope: egress.scope };
+  return { label: egress.label, scope: egress.scope };
 }
 
 export function useProposals() {

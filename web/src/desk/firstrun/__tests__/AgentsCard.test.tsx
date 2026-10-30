@@ -73,7 +73,7 @@ describe("the Agents card", () => {
     expect(within(claude).getByRole("status", { name: "Signed in" })).toBeTruthy();
     expect(within(claude).getByRole("status", { name: "Hooks" }).getAttribute("data-state")).toBe("idle");
     const tmux = within(card).getAllByTestId("firstrun-agent-row").find((r) => r.dataset.agent === "tmux")!;
-    expect(tmux.textContent).toContain("tmux 3.5A");
+    expect(tmux.textContent).toContain("tmux 3.5a");
     expect(within(tmux).getByTestId("firstrun-tool-token").textContent).toBe("Tool");
     expect(within(card).queryByText("This device")).toBeNull();
     expect(within(card).getByRole("button", { name: "Install hooks: Claude Code and Codex" })).toBeTruthy();
@@ -110,7 +110,7 @@ describe("the Agents card", () => {
     const receipt = within(card).getByTestId("firstrun-agents-receipt").textContent ?? "";
     expect(receipt).toContain("Claude Code · Hooks in");
     expect(receipt).toContain("Codex · Hooks in");
-    expect(receipt).toContain("tmux 3.5A");
+    expect(receipt).toContain("tmux 3.5a");
     expect(within(card).queryByTestId("firstrun-agent-row")).toBeNull();
   });
 

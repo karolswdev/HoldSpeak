@@ -377,7 +377,7 @@ describe("HS-173-04: Nudge unfolds the card; Send leaves a SENT receipt", () => 
 
   // replaces: tests/e2e/test_hs173_health_glass.py::test_nudge_card_1440
   // replaces: tests/e2e/test_hs173_health_glass.py::test_nudge_card_393
-  it("the bottleneck row has Nudge; the card names who, PR #612, GITHUB.COM, Send and Dismiss", async () => {
+  it("the bottleneck row has Nudge; the card names who, PR #612, github.com, Send and Dismiss", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
     expect(await screen.findByTestId("bottleneck-row")).toBeTruthy();
@@ -385,7 +385,7 @@ describe("HS-173-04: Nudge unfolds the card; Send leaves a SENT receipt", () => 
     const card = await screen.findByTestId("nudge-card");
     expect(screen.getByTestId("nudge-card-who").textContent).toBe("Ania Kowalska");
     expect(screen.getByTestId("nudge-card-pr").textContent).toContain("#612");
-    expect(card.textContent).toContain("GITHUB.COM");
+    expect(card.textContent).toContain("github.com");
     expect(screen.getByTestId("nudge-send")).toBeTruthy();
     expect(screen.getByTestId("nudge-dismiss")).toBeTruthy();
     expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
@@ -403,7 +403,7 @@ describe("HS-173-04: Nudge unfolds the card; Send leaves a SENT receipt", () => 
     expect(text).toContain("SENT");
     expect(text).toContain("ANIA KOWALSKA");
     expect(receipt.textContent).toContain("#612");
-    expect(text).not.toContain("GITHUB.COM");
+    expect(text).not.toContain("github.com");
     expect(text).not.toContain("UNDO");
     expect(screen.getByTestId("nudge-cooldown").textContent).toBe("Nudged just now");
     expect(calls.find((c) => c.key === "POST /api/nudges/step1/send")?.json).toEqual({ text: STEP.comment_text });
@@ -1054,7 +1054,7 @@ describe("PHILO-10-02: a nudge whose answer never came back is never offered aga
     const text = (row.textContent ?? "").toUpperCase();
     expect(text).toContain("RESULT UNKNOWN");
     expect(text).toContain("CHECK #612");
-    expect(text).not.toContain("GITHUB.COM");
+    expect(text).not.toContain("github.com");
     expect(screen.queryByTestId("nudge-send")).toBeNull();
   }
 

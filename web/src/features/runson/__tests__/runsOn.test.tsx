@@ -664,7 +664,7 @@ describe("Runs on — Try it", () => {
     m.readRoster.mockResolvedValue(routed);
     await board();
     const row = screen.getByTestId("switchboard-job-thoughts_notes");
-    expect(within(row).getAllByTestId("runson-trial-egress-thoughts_notes").map((chip) => chip.textContent)).toEqual(["192.168.1.43", "OPENROUTER.AI"]);
+    expect(within(row).getAllByTestId("runson-trial-egress-thoughts_notes").map((chip) => chip.textContent)).toEqual(["192.168.1.43", "openrouter.ai"]);
     fireEvent.click(within(row).getByTestId("runson-try-thoughts_notes"));
     await waitFor(() => expect(m.taskProbe).toHaveBeenCalledWith("ask.answer", true, ["q4b", "q27", "openrouter"]));
   });
@@ -675,7 +675,7 @@ describe("Runs on — Try it", () => {
     det.summaryAssignment = { ...det.summaryAssignment!, profileId: "openrouter", profileRevision: 1, label: "OpenRouter", boundary: "cloud" };
     m.readDetection.mockResolvedValue(det);
     await board();
-    expect(screen.getByTestId("runson-trial-egress-meetings").textContent).toBe("OPENROUTER.AI");
+    expect(screen.getByTestId("runson-trial-egress-meetings").textContent).toBe("openrouter.ai");
     fireEvent.click(screen.getByTestId("runson-try-meetings"));
     await waitFor(() => expect(m.taskProbe).toHaveBeenCalledWith("meeting.deferred_analysis", true, ["openrouter"]));
   });
@@ -994,7 +994,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
       .mockResolvedValue({ state: "ready", percent: 100 });
     await board();
     const plate = screen.getByTestId("switchboard-engine-preset:vision");
-    expect(plate.textContent).toContain("HUGGINGFACE.CO");
+    expect(plate.textContent).toContain("huggingface.co");
     expect(plate.textContent?.toLowerCase()).not.toContain("this device");
     fireEvent.click(within(plate).getByRole("button", { name: "Download" }));
     await waitFor(() => expect(m.download).toHaveBeenCalledWith("vision"));
