@@ -64,3 +64,13 @@ if (typeof Range !== "undefined") {
     };
   }
 }
+
+// jsdom has no canvas: its getContext logs a "Not implemented" error with a
+// full stack, then returns null. Return the same null without the log, so a
+// face that measures text (DeskIcon, the mermaid preview) does not fill the
+// vitest log. A test that needs a context still spies on the prototype.
+if (typeof HTMLCanvasElement !== "undefined") {
+  HTMLCanvasElement.prototype.getContext = function getContext() {
+    return null;
+  } as HTMLCanvasElement["getContext"];
+}
