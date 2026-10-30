@@ -13,7 +13,9 @@ answer through the REAL routes (``web/routes/programs.py`` on a FastAPI
 It writes ``web/src/desk/programs/__fixtures__/``:
 programs.list.json, program.running.json, program.your_turn.json,
 program.done.json, program.parked.json, program.drafting.json,
-program.limited.json (PG19), needs_you.program.json, room.programs.json, person.programs.json.
+program.limited.json (PG19), program.race.json (a race of 2: Codex wins in
+34 min, Claude Code parks), needs_you.program.json, room.programs.json,
+person.programs.json. ``--only program.race.json`` writes one file.
 """
 from __future__ import annotations
 
@@ -119,6 +121,31 @@ def record_limited(root: Path) -> Any:
     rig.tick()
 
     return _get(client, f"/api/programs/{limited}")
+
+
+def record_race(root: Path) -> Any:
+    """A race of 2 at Normal, in a rig of its own: Claude Code and Codex get
+    one brief each; Codex is green 34 minutes in and wins; Claude Code parks
+    as "Lost the race to Codex". The rig's clock is the service's seam (the
+    34 minutes are its clock, never a typed field)."""
+    from datetime import datetime, timedelta, timezone
+
+    moment = {"at": datetime.now(timezone.utc).replace(microsecond=0) - timedelta(minutes=34)}
+    rig = Rig(root / "rig-race", clock=lambda: moment["at"].isoformat())
+    with rig.db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
+    client = _client(rig)
+    race = _create(rig, "The fast path", template="race", control="normal", project_id="proj-holdspeak")
+    rig.service.plan(OWNER, race, steps=[
+        {"title": "Fast read path", "brief": "Make the read path fast.", "owns": ["holdspeak/web/routes/read.py"]},
+    ])
+    rig.service.start(OWNER, race)
+    lead = rig.step(race, 1)
+    codex = lead["contenders"][0]
+    moment["at"] += timedelta(minutes=34)
+    rig.agent.finish(codex["launch_id"], {"holdspeak/web/routes/read.py": "# fast\n"})
+    rig.tick(3)  # checked, PR, merged (Normal); Claude Code loses
+    return _get(client, f"/api/programs/{race}")
 
 
 def record(root: Path) -> dict[str, Any]:
@@ -235,6 +262,7 @@ def record(root: Path) -> dict[str, Any]:
     fixtures["room.programs.json"] = ProjectService(rig.db).room(OWNER, "proj-holdspeak")["programs"]
     fixtures["person.programs.json"] = {"programs": rig.service.for_person("p-alice", since="2026-01-01T00:00:00+00:00")}
     fixtures["program.limited.json"] = record_limited(root)
+    fixtures["program.race.json"] = record_race(root)
     return fixtures
 
 
@@ -256,18 +284,26 @@ def _check(fixtures: dict[str, Any]) -> None:
     assert limited["steps"][0]["handoffs"] and limited["steps"][0]["handoffs"][0]["redacted_words"], limited["steps"][0]
     assert limited["steps"][1]["state"] == "limited", limited["steps"][1]["state"]
     assert any(item["kind"] == "limited" for item in limited["your_turn_items"])
+    race = fixtures["program.race.json"]["steps"][0]
+    assert race["race"] == 2 and len(race["contenders"]) == 1, race
+    assert race["state"] == "parked" and race["parked_reason"] == "Lost the race to Codex", race
+    assert race["elapsed"] == "34 min", race["elapsed"]
+    assert race["contenders"][0]["state"] in ("merged", "done"), race["contenders"][0]["state"]
 
 
-def main() -> int:
+def main(argv: list[str]) -> int:
+    only = argv[argv.index("--only") + 1:] if "--only" in argv else []
     with tempfile.TemporaryDirectory(prefix="program-fixtures-") as tmp:
         fixtures = record(Path(tmp))
     _check(fixtures)
     OUT.mkdir(parents=True, exist_ok=True)
     for name, value in fixtures.items():
+        if only and name not in only:
+            continue
         (OUT / name).write_text(json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
         print(f"wrote {(OUT / name).relative_to(REPO)}")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

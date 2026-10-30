@@ -2,7 +2,8 @@
 
 ``GET /api/today/since-morning``: what got done today (tasks ticked,
 decisions recorded, notes filed, sends sent, meetings held), newest first.
-Today draws it after 17:00 as Since this morning. The read goes through the
+Today draws it after 17:00 as Since this morning; its ``programs`` block (PG18)
+feeds the Programs line at any hour. The read goes through the
 one Today service; the router builds a service only when the context has
 none (a route test)."""
 from __future__ import annotations

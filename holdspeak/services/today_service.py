@@ -21,8 +21,20 @@ class TodayService:
                            principal=principal, door_service=door_service)
 
     def since_morning(self, principal: Principal, *, now: datetime.datetime | None = None) -> dict[str, Any]:
-        """DELIGHT slice 5: Today's Since this morning (``GET /api/today/since-morning``)."""
-        return since_morning_read(self._db, now)
+        """DELIGHT slice 5: Today's Since this morning (``GET /api/today/since-morning``),
+        with the Programs block (PG18: ``ProgramService.since_morning``; ``None``
+        when the Programs could not be read, never a count of zero that lies)."""
+        read = since_morning_read(self._db, now)
+        try:
+            from holdspeak.services.program_service import ProgramService
+
+            read["programs"] = ProgramService(self._db).since_morning(principal, now=now)
+        except Exception as exc:
+            from holdspeak.logging_config import get_logger
+
+            get_logger("today_service").warning(f"programs not read for Since this morning: {exc}")
+            read["programs"] = None
+        return read
 
 
 def _today_brief(ops: operations.OperationRegistry, db: Any, principal: Principal) -> dict[str, Any] | None:

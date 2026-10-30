@@ -8,7 +8,8 @@ the reviewer fake passes; at Secure the merge ask lands in Needs you and
 the engine merges without a press and says so under Decided for you; the
 third step dispatches; the handover note is rewritten at each change. A red
 gate goes to round 2, then parks; a race of 2 parks the loser;
-``HOLDSPEAK_PROGRAMS=off`` ticks nothing.
+``HOLDSPEAK_PROGRAMS=off`` ticks nothing. PG12: a coder frame for a step's
+launch ticks its Program at once (a debounce, never the 30 s tick).
 """
 from __future__ import annotations
 
@@ -252,6 +253,121 @@ def test_programs_off_ticks_nothing(tmp_path, monkeypatch) -> None:
     from holdspeak.services.program_runner import tick
 
     assert tick() == []
+
+
+def _bind(rig: Rig, launch_id: str, session_key: str) -> None:
+    """The launch's work attempt bound to its agent session, as the real
+    hand binds it (``factory_launch._bind_session``)."""
+    attempt = rig.db.work_attempts.create(
+        source_id="src", worktree_id="wt", project="app", story_id=launch_id, kind="launch", exact=True,
+        session_id=session_key, claimed_by="launch:claude-default", state="working",
+    )
+    rig.ledger.update(launch_id, attempt_id=attempt.attempt_id)
+
+
+def _wait_for(predicate, seconds: float) -> float:
+    import time
+
+    start = time.monotonic()
+    while time.monotonic() - start < seconds:
+        if predicate():
+            return time.monotonic() - start
+        time.sleep(0.02)
+    raise AssertionError(f"not within {seconds} s")
+
+
+def test_pg12_a_coder_frame_moves_the_step_to_checking_at_once(tmp_path) -> None:
+    from holdspeak.services.program_runner import TICK_SECONDS, programs_of_sessions, tick_on_frames
+
+    rig = Rig(tmp_path)
+    pid = _program(rig, title="Frames", template="fast-cycle", control="normal")
+    rig.service.plan(OWNER, pid, steps=[{"title": "One", "brief": "x"}])
+    rig.service.start(OWNER, pid)
+    step = rig.step(pid, 1)
+    _bind(rig, step["launch_id"], "claude:s-frame")
+    assert programs_of_sessions(rig.db, ["claude:s-frame", "codex:other"], ledger=rig.ledger) == [pid]
+    assert programs_of_sessions(rig.db, ["codex:other"], ledger=rig.ledger) == []
+    rig.agent.finish(step["launch_id"], {"one.txt": "1\n"})
+    import time
+
+    start = time.monotonic()
+    assert tick_on_frames(["claude:s-frame"], runner=rig.runner, ledger=rig.ledger, delay=0.2) == [pid]
+    lines = lambda: [row["line"] for row in rig.service.store.list_checkpoints(pid)]  # noqa: E731
+    _wait_for(lambda: any(line.startswith("New commit") for line in lines()), 5)
+    elapsed = time.monotonic() - start
+    # The frame's tick, not the conductor's: well inside one second.
+    assert elapsed < 1.0 < TICK_SECONDS, elapsed
+    assert rig.step(pid, 1)["state"] != "working"
+
+
+def test_pg12_frames_inside_the_window_give_one_tick(tmp_path, monkeypatch) -> None:
+    from holdspeak.services import program_runner
+
+    rig = Rig(tmp_path)
+    pid = _program(rig, title="Debounce", template="fast-cycle", control="normal")
+    rig.service.plan(OWNER, pid, steps=[{"title": "One", "brief": "x"}])
+    rig.service.start(OWNER, pid)
+    _bind(rig, rig.step(pid, 1)["launch_id"], "claude:s-deb")
+    ticks: list[str] = []
+    real = rig.runner._tick_program
+    monkeypatch.setattr(rig.runner, "_tick_program", lambda program_id: (ticks.append(program_id), real(program_id))[1])
+    first = program_runner.tick_on_frames(["claude:s-deb"], runner=rig.runner, ledger=rig.ledger, delay=0.3)
+    second = program_runner.tick_on_frames(["claude:s-deb"], runner=rig.runner, ledger=rig.ledger, delay=0.3)
+    third = program_runner.tick_on_frames(["claude:s-deb"], runner=rig.runner, ledger=rig.ledger, delay=0.3)
+    assert (first, second, third) == ([pid], [], [])
+    _wait_for(lambda: ticks == [pid] and pid not in program_runner._FRAME_TIMERS, 3)
+    # After the window a new frame schedules a new tick.
+    assert program_runner.tick_on_frames(["claude:s-deb"], runner=rig.runner, ledger=rig.ledger, delay=0.05) == [pid]
+    _wait_for(lambda: ticks == [pid, pid], 3)
+
+
+def test_pg12_a_frame_waits_for_a_tick_in_flight(tmp_path) -> None:
+    from holdspeak.services import program_runner
+
+    rig = Rig(tmp_path)
+    pid = _program(rig, title="One at a time", template="fast-cycle", control="normal")
+    rig.service.plan(OWNER, pid, steps=[{"title": "One", "brief": "x"}])
+    rig.service.start(OWNER, pid)
+    step = rig.step(pid, 1)
+    _bind(rig, step["launch_id"], "claude:s-lock")
+    rig.agent.finish(step["launch_id"], {"one.txt": "1\n"})
+    lock = program_runner._program_lock(pid)
+    lock.acquire()  # a tick of this Program is in flight
+    try:
+        assert program_runner.tick_on_frames(["claude:s-lock"], runner=rig.runner, ledger=rig.ledger, delay=0.05) == [pid]
+        import time
+
+        time.sleep(0.4)
+        assert rig.step(pid, 1)["state"] in ("briefed", "working")  # never two ticks at once
+    finally:
+        lock.release()
+    _wait_for(lambda: rig.step(pid, 1)["state"] not in ("briefed", "working"), 5)
+
+
+def test_pg12_programs_off_schedules_nothing(tmp_path, monkeypatch) -> None:
+    from holdspeak.services import program_runner
+
+    rig = Rig(tmp_path)
+    pid = _program(rig, title="Off frames", template="fast-cycle", control="normal")
+    rig.service.plan(OWNER, pid, steps=[{"title": "One", "brief": "x"}])
+    rig.service.start(OWNER, pid)
+    _bind(rig, rig.step(pid, 1)["launch_id"], "claude:s-off")
+    monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")
+    assert program_runner.tick_on_frames(["claude:s-off"], runner=rig.runner, ledger=rig.ledger, delay=0.01) == []
+    assert program_runner.schedule_tick(pid, runner=rig.runner, delay=0.01) is False
+    assert pid not in program_runner._FRAME_TIMERS
+
+
+def test_pg12_the_hub_coder_watcher_hands_its_frames_to_the_programs(monkeypatch) -> None:
+    from holdspeak import web_server
+    from holdspeak.services import program_runner
+
+    seen: list[list[str]] = []
+    monkeypatch.setattr(program_runner, "tick_on_frames", lambda keys: (seen.append(list(keys)), ["p-1"])[1])
+    assert web_server._program_frame_ticks(["claude:s1"]) == ["p-1"]
+    assert seen == [["claude:s1"]]
+    monkeypatch.setattr(program_runner, "tick_on_frames", lambda keys: 1 / 0)
+    assert web_server._program_frame_ticks(["claude:s1"]) == []
 
 
 def test_a_person_review_holds_the_merge_until_their_approval(tmp_path) -> None:

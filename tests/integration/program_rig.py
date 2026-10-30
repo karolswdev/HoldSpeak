@@ -175,7 +175,7 @@ class FakeGitHub:
 
 class Rig:
     def __init__(self, tmp_path: Path, *, kernel: bool = False, people: Any = None,
-                 engines: Any = None, idle: Any = None, working_at_once: int = 6) -> None:
+                 engines: Any = None, idle: Any = None, working_at_once: int = 6, clock: Any = None) -> None:
         self.db = Database(tmp_path / "hub.db")
         self.repo = make_repo(tmp_path)
         self.ledger = Ledger()
@@ -188,7 +188,7 @@ class Rig:
         self.service = ProgramService(
             self.db, broadcast=self._frame, people=people, engines=engines,
             kernel=None if kernel else (lambda **_kw: None),
-            runner=lambda: self.runner,
+            runner=lambda: self.runner, **({"clock": clock} if clock is not None else {}),
         )
         self.frames: list[tuple[str, dict[str, Any]]] = []
         self.review = AgentReviewLoop(

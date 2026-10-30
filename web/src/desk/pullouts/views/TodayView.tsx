@@ -12,7 +12,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../shell";
-import { useProgramsToday } from "../../programs/lamp";
+import { programsTodayLine, type ProgramsSinceMorning } from "../../programs/lamp";
+import { useProgramFrames } from "../../programs/api";
 import { openSourceRef } from "../../surface/citations";
 import { calendarOpener, openDecisionRecord, openRef } from "../../openObject";
 import { useDesk } from "../../store";
@@ -153,7 +154,7 @@ function writeDaySaid(key: string): void {
 export const EVENING_HOUR = 17;
 export const EVENING_SAID_KEY = "holdspeak.today.eveningSaid";
 export type DoneRow = { kind: string; ref: string; title: string; word: string; at: string };
-type DoneRead = { since?: string; items?: DoneRow[] };
+type DoneRead = { since?: string; items?: DoneRow[]; programs?: ProgramsSinceMorning | null };
 function readEveningSaid(): string | null {
   try { return window.localStorage.getItem(EVENING_SAID_KEY); } catch { return null; }
 }
@@ -169,6 +170,18 @@ const DONE_SPRITE: Record<string, string> = {
 export function openDone(ref: string): void {
   if (ref.startsWith("decision_record:")) openDecisionRecord(ref.slice("decision_record:".length));
   else openRef(ref);
+}
+
+/** Programs (PG18): `Programs: 1 running, 1 waits on you`, one object row
+ *  that opens the Programs window. */
+function ProgramsLine({ words }: { words: string }) {
+  return (
+    <Button variant="chrome" className="today-done-row today-programs" data-kind="program" data-testid="today-programs"
+      onClick={() => openSurfaceOr("open-programs", "/")}>
+      <img src={`${GLYPHS}program.png`} alt="" width={20} height={20} draggable={false} />
+      <span className="today-done-title">{words}</span>
+    </Button>
+  );
 }
 
 function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs = "", phone = "" }: {
@@ -196,13 +209,7 @@ function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs
           {rows.length ? `${rows.length} done` : "Nothing done yet"}
         </span>
       </Button>
-      {programs ? (
-        <Button variant="chrome" className="today-done-row today-programs" data-kind="program" data-testid="today-programs"
-          onClick={() => openSurfaceOr("open-programs", "/")}>
-          <img src={`${GLYPHS}program.png`} alt="" width={20} height={20} draggable={false} />
-          <span className="today-done-title">{programs}</span>
-        </Button>
-      ) : null}
+      {programs ? <ProgramsLine words={programs} /> : null}
       {phone ? (
         <Button variant="chrome" className="today-done-row today-phone" data-kind="phone" data-testid="today-phone"
           onClick={() => openPhoneWing()}>
@@ -395,8 +402,10 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     [agentSessions, agentFlights]);
   const finishedAgents = useMemo(() => agentFlights.filter((f) => f.state === "done" && f.isNew && f.launchId), [agentFlights]);
   const agentsWords = agentsLine(agentCounts.needYou, finishedAgents.length);
-  // Programs (2026-10-28): one Since this morning line when any moved today.
-  const programsToday = useProgramsToday(now);
+  // Programs (PG18): one line when any Program moved today, at any hour,
+  // from the hub's `programs` block of the Since this morning read.
+  const [programsBlock, setProgramsBlock] = useState<ProgramsSinceMorning | null>(null);
+  const programsToday = programsTodayLine(programsBlock);
   // Phone (2026-10-28): one Since this morning line when the desk reached him.
   const phoneToday = usePhoneToday(now.getHours() >= EVENING_HOUR);
   // Betterment A6: an automation's NEW result ("<name> has a new result").
@@ -405,11 +414,24 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   // MUST 1 (Astra r1 on #1111): the last summary made from here keeps its
   // receipt (every place the run reached) after its row leaves the spine.
   const [justMade, setJustMade] = useState<{ id: string; title: string } | null>(null);
-  // DELIGHT slice 5: Since this morning, read after 17:00 only.
+  // DELIGHT slice 5: Since this morning, drawn after 17:00 only. The read
+  // runs at any hour: its Programs block (PG18) feeds the Programs line.
   const evening = now.getHours() >= EVENING_HOUR;
   const eveningRef = useRef(evening);
   eveningRef.current = evening;
   const [done, setDone] = useState<{ rows: DoneRow[]; failed: boolean } | null>(null);
+  const readSince = useCallback(async () => {
+    const doneRead = await apiFetch<DoneRead>("/api/today/since-morning")
+      .then((v) => ({ ok: true as const, v }), () => ({ ok: false as const }));
+    // A failed read keeps the last Programs line (never invents none).
+    if (doneRead.ok) setProgramsBlock(doneRead.v?.programs ?? null);
+    if (eveningRef.current) {
+      // A read that fails says so; one that answers keeps the hub's order (newest first).
+      setDone((current) => doneRead.ok ? { rows: doneRead.v?.items ?? [], failed: false }
+        : { rows: current?.rows ?? [], failed: !current?.rows.length });
+    }
+  }, []);
+  useProgramFrames(() => void readSince());
 
   // PHILO-17 (Astra r1 on #1110, MUST 3): a source that could not be read
   // says so (with Retry); it never reads as empty.
@@ -441,20 +463,14 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         if (briefRead.ok) setBrief(briefRead.v ?? null);
         // A Prepared read that fails keeps the last block (never invents none).
         if (preparedRead.ok) setPrepared(preparedRead.v ?? null);
-        if (eveningRef.current) {
-          const doneRead = await apiFetch<DoneRead>("/api/today/since-morning")
-            .then((v) => ({ ok: true as const, v }), () => ({ ok: false as const }));
-          // A read that fails says so; one that answers keeps the hub's order (newest first).
-          setDone((current) => doneRead.ok ? { rows: doneRead.v?.items ?? [], failed: false }
-            : { rows: current?.rows ?? [], failed: !current?.rows.length });
-        }
+        await readSince();
         setFailed({ door: !doorRead.ok, meetings: !meetingRead.ok, brief: !briefRead.ok });
         setLoaded(true);
       } while (again.current);
     } finally {
       loading.current = false;
     }
-  }, []);
+  }, [readSince]);
   useEffect(() => { void load(); }, [load]);
   useOnDeskChanged(() => void load(), [
     ...MEETING_CHANGE_KINDS,
@@ -827,6 +843,10 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           {evening && done ? (
             <SinceThisMorning rows={done.rows} failed={done.failed} open={sinceShown} now={now} programs={programsToday} phone={phoneToday}
               onToggle={() => setSinceOpen(!sinceShown)} onRetry={retry} />
+          ) : programsToday ? (
+            /* PG18: before 17:00 the fold is not drawn; the Programs line
+               heads the day instead. */
+            <div className="today-programs-head" data-testid="today-programs-head"><ProgramsLine words={programsToday} /></div>
           ) : null}
           <PreparedBlock read={prepared} events={door?.upcoming ?? []} />
           <div className="today-grid">
