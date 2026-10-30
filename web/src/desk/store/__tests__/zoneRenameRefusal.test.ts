@@ -50,7 +50,7 @@ describe("renameZone — the chip while the field is open", () => {
   it("a network failure → NOT SAVED", async () => {
     vi.mocked(apiRequest).mockImplementation(() => Promise.reject(new TypeError("Failed to fetch")));
     await useDesk.getState().renameZone("dir_a", "Offline");
-    expect(useDesk.getState().zoneRenameError).toMatchObject({ code: "not_saved", label: "NOT SAVED", detail: "HUB UNREACHABLE" });
+    expect(useDesk.getState().zoneRenameError).toMatchObject({ code: "not_saved", label: "NOT SAVED", detail: "Hub unreachable" });
     expect(nameNow()).toBe("New zone");
   });
 
@@ -84,7 +84,7 @@ describe("renameZone — the write receipt after the field closed", () => {
     vi.mocked(apiRequest).mockImplementation(() => reply(409, { error: "zone_name_taken", existing_name: "Inbox" }));
     await useDesk.getState().renameZone("dir_a", "Inbox");
     const failure = currentWriteFailure();
-    expect(failure).toMatchObject({ verb: "RENAME ZONE", reason: "NAME TAKEN" });
+    expect(failure).toMatchObject({ verb: "RENAME ZONE", reason: "Name taken" });
     expect(useDesk.getState().zoneRenameError).toBeNull();
     expect(nameNow()).toBe("New zone");
     vi.mocked(apiRequest).mockClear();

@@ -71,7 +71,7 @@ describe("Send to from the canonical Meetings record before its Send well mounts
     answer({ id: "scoped-ready", intel: { summary: "Saved summary." } });
     await settle();
     expect(sub(sendToEntry("surface-meetings")).label).toBe(SEND_TO.label);
-    expect(labels(sendToEntry("surface-meetings"))).toEqual(["Team updates · FILE", "PAY-118 · JIRA"]);
+    expect(labels(sendToEntry("surface-meetings"))).toEqual(["Team updates · File", "PAY-118 · Jira"]);
   });
 
   it("withholds Send to for a scoped meeting whose stored summary is empty", async () => {
@@ -123,7 +123,7 @@ describe("one composition: Send to ▸ with the saved destinations", () => {
     await readDestinations();
     const e = sendToEntry("pullout:decision:dec-1");
     expect(sub(e).label).toBe(SEND_TO.label);
-    expect(labels(e)).toEqual(["Team updates · FILE", "PAY-118 · JIRA"]);
+    expect(labels(e)).toEqual(["Team updates · File", "PAY-118 · Jira"]);
   });
 
   it("the window menu: Send to ▸ leads, its own group, above Iconify", async () => {
@@ -159,7 +159,7 @@ describe("PHILO-17 U08: a Thought window sends its working note", () => {
     await readDestinations();
     render(<WindowIdContext.Provider value="pullout:thought-7"><Seat /></WindowIdContext.Provider>);
     expect(windowDoc("pullout:thought-7")).toEqual({ kind: "note", id: "note-7" });
-    expect(labels(sendToEntry("pullout:thought-7"))).toEqual(["Team updates · FILE", "PAY-118 · JIRA"]);
+    expect(labels(sendToEntry("pullout:thought-7"))).toEqual(["Team updates · File", "PAY-118 · Jira"]);
     const opened = vi.fn();
     window.addEventListener(SEND_OPEN, opened);
     const focus = vi.spyOn(useDesk.getState(), "restorePanel").mockImplementation(() => {});
@@ -178,7 +178,7 @@ describe("the reads: CHECKING, CAN'T CHECK, OFFLINE, a known absence", () => {
     await readDestinations();
     primeSendTo("pullout:meeting:m1");
     expect(sub(sendToEntry("pullout:meeting:m1")).label).toBe(SEND_TO.checking);
-    expect(labels(sendToEntry("pullout:meeting:m1"))).toContain("Team updates · FILE");
+    expect(labels(sendToEntry("pullout:meeting:m1"))).toContain("Team updates · File");
     answer({ id: "m1", intel: { summary: "We agreed." } });
     await settle();
     expect(sub(sendToEntry("pullout:meeting:m1")).label).toBe(SEND_TO.label);
@@ -201,7 +201,7 @@ describe("the reads: CHECKING, CAN'T CHECK, OFFLINE, a known absence", () => {
     await settle();
     const e = sendToEntry("surface-project-memory");
     expect(sub(e).label).toBe(SEND_TO.cantCheck);
-    expect(labels(e)).toEqual(["Team updates · FILE", "PAY-118 · JIRA"]);
+    expect(labels(e)).toEqual(["Team updates · File", "PAY-118 · Jira"]);
   });
 
   it("the Room with no published update: withheld", async () => {
@@ -223,7 +223,7 @@ describe("the reads: CHECKING, CAN'T CHECK, OFFLINE, a known absence", () => {
     await readDestinations();
     const e = sendToEntry("pullout:decision:dec-1");
     expect(sub(e).label).toBe(SEND_TO.offline);
-    expect(labels(e)).toEqual(["Team updates · FILE"]);
+    expect(labels(e)).toEqual(["Team updates · File"]);
   });
 
   // H-C5 (#752): the hub names the latest published update in the read

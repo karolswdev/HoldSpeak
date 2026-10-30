@@ -140,7 +140,7 @@ const EXPECTED = [
 
 async function renderDrawer() {
   const view = render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
-  await screen.findByRole("button", { name: /^Jordan Patel, PERSON/ });
+  await screen.findByRole("button", { name: /^Jordan Patel, Person/ });
   return view;
 }
 
@@ -173,10 +173,10 @@ describe("PHILO-14 A2 the drawer", () => {
 
   it("icons wear their lamps: the agent asks, the item names its agent", async () => {
     await renderDrawer();
-    expect(screen.getByRole("button", { name: "Write the rollback runbook, ACTION ITEM, Claude Code asks" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Claude Code: Write the rollback runbook, AGENT, ASKS" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "#412 Add the freeze flag, PULL REQUEST, OPEN" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add the freeze flag, ACTION ITEM, PR #412 open" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Write the rollback runbook, Action item, Claude Code asks" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Claude Code: Write the rollback runbook, Agent, ASKS" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "#412 Add the freeze flag, Pull request, OPEN" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add the freeze flag, Action item, PR #412 open" })).toBeInTheDocument();
   });
 
   it("Icons | List is remembered per drawer", async () => {
@@ -215,7 +215,7 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(footer()).not.toMatch(/selected/i);
     // PHILO-15 16: nothing selected, Get Info is the Project's own Info.
     expect(screen.getByRole("button", { name: "Get Info" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, MEETING/ }), { detail: 1 });
+    fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, Meeting/ }), { detail: 1 });
     const row = document.querySelector('.object-list-row[data-object-id="meeting:m-standup"]')!;
     expect(row).toHaveAttribute("aria-selected", "true");
     expect(footer()).toContain(`${EXPECTED.length} objects`);
@@ -224,13 +224,13 @@ describe("PHILO-14 A2 the drawer", () => {
 
   it("Get Info opens the object's Info window; Open opens the object", async () => {
     await renderDrawer();
-    fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, MEETING/ }), { detail: 1 });
+    fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, Meeting/ }), { detail: 1 });
     fireEvent.click(screen.getByRole("button", { name: "Get Info" }), { detail: 1 });
     expect(useDrawers.getState().infos.map((i) => i.ref)).toEqual(["meeting:m-standup"]);
     fireEvent.click(screen.getByRole("button", { name: "Open" }), { detail: 1 });
     expect(opened.refs).toEqual(["meeting:m-standup"]);
     // Enter on an icon opens it too.
-    fireEvent.keyDown(screen.getByRole("button", { name: /^Jordan Patel, PERSON/ }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Jordan Patel, Person/ }), { key: "Enter" });
     expect(opened.refs).toEqual(["meeting:m-standup", "people:rel-j"]);
   });
 
@@ -244,7 +244,7 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(document.querySelector(".surface-footer-verbs")).toBeNull();
     const status = screen.getByTestId("drawer-status");
     expect(within(status).queryAllByRole("button")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, MEETING/ }), { detail: 1 });
+    fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, Meeting/ }), { detail: 1 });
     expect(within(toolbar).getByRole("button", { name: "Open" })).toBeEnabled();
     // On a narrow window the quiet verbs fold into More: the menu holds them.
     fireEvent.click(within(toolbar).getByRole("button", { name: "More" }));
@@ -277,7 +277,7 @@ describe("PHILO-14 A2 the drawer", () => {
     const before = apiFetch.mock.calls.map(([u]) => String(u));
     peopleFails = false;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }), { detail: 1 });
-    await screen.findByRole("button", { name: /^Jordan Patel, PERSON/ });
+    await screen.findByRole("button", { name: /^Jordan Patel, Person/ });
     const retried = apiFetch.mock.calls.slice(before.length).map(([u]) => String(u));
     expect(retried.every((u) => u.includes("/people"))).toBe(true);
     expect(screen.queryByTestId("drawer-partial")).toBeNull();
@@ -512,7 +512,7 @@ describe("PHILO-14 A2 Get Info window", () => {
     }) }} />);
     const info = document.querySelector(".object-info")!;
     expect(info).toHaveTextContent("Write the rollback runbook");
-    expect(info).toHaveTextContent("ACTION ITEM");
+    expect(info).toHaveTextContent("Action item");
     for (const word of ["Where", "From", "Owner", "State"]) expect(within(info as HTMLElement).getByText(word)).toBeInTheDocument();
     expect(within(info as HTMLElement).queryByText("Due")).toBeNull(); // no "None" filler
     // No rename path and no park path for an action item: no such verbs.

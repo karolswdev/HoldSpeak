@@ -17,23 +17,23 @@ describe("PHILO-9-03: every receipt outcome is drawn as what happened", () => {
       expect(drawn[o].state === "success", o).toBe(success);
       expect(drawn[o].word === null, o).toBe(success);
     }
-    expect(drawn.refused).toMatchObject({ state: "failure", icon: "✗", word: "REFUSED" });
-    expect(drawn.indeterminate.word).toBe("RESULT UNKNOWN");
+    expect(drawn.refused).toMatchObject({ state: "failure", icon: "✗", word: "Refused" });
+    expect(drawn.indeterminate.word).toBe("Result unknown");
     expect(receiptFace("something-new").state).toBe("failure");
   });
 
   it("a mark that did not happen is not labelled MARKED", () => {
-    expect(receiptLabel({ op: "mark_update_delivered", outcome: "ok" })).toBe("MARKED DELIVERED");
-    expect(receiptLabel({ op: "mark_update_delivered", outcome: "succeeded" })).toBe("MARKED DELIVERED");
+    expect(receiptLabel({ op: "mark_update_delivered", outcome: "ok" })).toBe("Marked delivered");
+    expect(receiptLabel({ op: "mark_update_delivered", outcome: "succeeded" })).toBe("Marked delivered");
     for (const o of OUTCOMES.filter((x) => x !== "ok" && x !== "succeeded")) {
-      expect(receiptLabel({ op: "mark_update_delivered", outcome: o }), o).toBe("MARK DELIVERED");
+      expect(receiptLabel({ op: "mark_update_delivered", outcome: o }), o).toBe("Mark delivered");
     }
   });
 
   it("the refusal reasons read as plain words", () => {
-    expect(refusalWord("update_not_published")).toBe("NOT PUBLISHED");
-    expect(refusalWord("steward_policy_required")).toBe("NO SAVED POLICY");
-    expect(refusalWord("brand_new_code")).toBe("BRAND NEW CODE");
+    expect(refusalWord("update_not_published")).toBe("Not published");
+    expect(refusalWord("steward_policy_required")).toBe("No saved policy");
+    expect(refusalWord("brand_new_code")).toBe("Brand new code");
   });
 });
 
@@ -43,10 +43,10 @@ describe("PHILO-9-03: every receipt outcome is drawn as what happened", () => {
 // the Settings grant row's own word (SettingsCore GRANT_REFUSAL_TOKEN).
 describe("PHILO-9-06: the Room's refusal words match the grant row's", () => {
   it("names the owner for an owner-only code and the grant for a grant code", () => {
-    expect(refusalWord("owner_principal_required")).toBe("OWNER ONLY");
-    expect(refusalWord("project_delegation_required")).toBe("NO GRANT");
-    expect(refusalWord("project_delegation_revoked")).toBe("GRANT STOPPED");
-    expect(refusalWord("project_delegation_expired")).toBe("GRANT EXPIRED");
+    expect(refusalWord("owner_principal_required")).toBe("Owner only");
+    expect(refusalWord("project_delegation_required")).toBe("No grant");
+    expect(refusalWord("project_delegation_revoked")).toBe("Grant stopped");
+    expect(refusalWord("project_delegation_expired")).toBe("Grant expired");
   });
 });
 
@@ -54,7 +54,7 @@ describe("PHILO-9-06: the Room's refusal words match the grant row's", () => {
 // act words, never the kernel's dotted name.
 describe("PHILO-9-06: the project grant's receipts use the grant row's words", () => {
   it("draws delegation.grant and delegation.revoke as ALLOW and STOP RUN AND PUBLISH", () => {
-    expect(receiptLabel({ op: "delegation.grant", outcome: "ok" })).toBe("ALLOW RUN AND PUBLISH");
-    expect(receiptLabel({ op: "delegation.revoke", outcome: "ok" })).toBe("STOP RUN AND PUBLISH");
+    expect(receiptLabel({ op: "delegation.grant", outcome: "ok" })).toBe("Allow run and publish");
+    expect(receiptLabel({ op: "delegation.revoke", outcome: "ok" })).toBe("Stop run and publish");
   });
 });

@@ -22,11 +22,11 @@ import { Destinations, keyRef } from "../../../pages/cores/connections/Destinati
 
 describe("the provider words", () => {
   it("names the provider that accepted the email", () => {
-    expect(sentWord("email", { provider: "resend", message_id: "4ef9" })).toBe("ACCEPTED BY RESEND");
-    expect(sentWord("email", { provider: "sendgrid", message_id: "sg-1" })).toBe("ACCEPTED BY SENDGRID");
-    expect(sentWord("email", null, { provider: "resend" })).toBe("ACCEPTED BY RESEND");
-    expect(sentWord("email")).toBe("ACCEPTED BY SENDGRID");
-    expect(sentWord("github")).toBe("POSTED");
+    expect(sentWord("email", { provider: "resend", message_id: "4ef9" })).toBe("Accepted by Resend");
+    expect(sentWord("email", { provider: "sendgrid", message_id: "sg-1" })).toBe("Accepted by SendGrid");
+    expect(sentWord("email", null, { provider: "resend" })).toBe("Accepted by Resend");
+    expect(sentWord("email")).toBe("Accepted by SendGrid");
+    expect(sentWord("github")).toBe("Posted");
   });
 
   it("shows the provider's host as the egress and its activity page as the far side", () => {

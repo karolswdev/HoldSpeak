@@ -195,7 +195,7 @@ describe("the SEND well", () => {
     const list = await screen.findByTestId("prepared-list");
     expect(within(list).getAllByTestId("prepared-row")).toHaveLength(2);
     expect(within(list).getAllByTestId("prepared-open")).toHaveLength(1);
-    expect(within(list).getAllByTestId("prepared-by").map((e) => e.textContent)).toEqual(["By Remote-agent", "By you", "By you"]);
+    expect(within(list).getAllByTestId("prepared-by").map((e) => e.textContent)).toEqual(["By remote-agent", "By you", "By you"]);
     expect(within(list).getByTestId("prepared-result").textContent).toContain("Discarded");
     expect(list.textContent).toContain("Rev 3");
     // The prepared well precedes the destinations.
@@ -329,7 +329,7 @@ describe("the one DELIVERY history (A2)", () => {
     const r = screen.getAllByTestId("delivery-row");
     expect(r[0].textContent).toContain("Saved");
     expect(r[0].textContent).toContain(`${FOLDER}/a.md`);
-    expect(r[1].textContent).toContain("RESULT UNKNOWN · CHECK Long path folder");
+    expect(r[1].textContent).toContain("Result unknown · Check Long path folder");
     expect(r[2].textContent).toContain("Sent by hand");
     expect(r[2].textContent).toContain("Manual");
     expect(section.textContent).not.toContain("Delivered 2");

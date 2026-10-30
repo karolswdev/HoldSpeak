@@ -3,9 +3,11 @@
  * text (`detail` strings, error codes, model paths): that text stays out of
  * the face. The face beside it carries the verb (Try again, Retry, OK).
  *
- * Label grammar: `<WHAT DID NOT HAPPEN> · <WHY>`, for example
- * `BRIEF DID NOT LOAD · HUB FAILED`. */
+ * Label grammar: `<what did not happen> · <why>`, for example
+ * `Brief did not load · Hub failed` (WORDS-VOCAB 2026-10-30: the words are
+ * said in sentence case here; no caller re-cases them). */
 import { ApiError } from "../../lib/api";
+import { stateWords } from "./words";
 
 function statusOf(cause: unknown): number {
   if (cause instanceof ApiError) return cause.status;
@@ -19,33 +21,33 @@ function statusOf(cause: unknown): number {
 
 /** Why it failed, in plain words. */
 export function plainReason(cause: unknown): string {
-  if (cause instanceof TypeError) return "HUB UNREACHABLE";
-  if (cause instanceof Error && cause.name === "AbortError") return "STOPPED";
+  if (cause instanceof TypeError) return "Hub unreachable";
+  if (cause instanceof Error && cause.name === "AbortError") return "Stopped";
   const status = statusOf(cause);
-  if (status === 401 || status === 403) return "ACCESS REFUSED";
-  if (status === 404) return "NOT FOUND";
-  if (status === 408 || status === 504) return "TIMED OUT";
-  if (status === 409 || status === 412) return "CHANGED ELSEWHERE";
-  if (status === 413) return "TOO LARGE";
-  if (status === 423) return "LOCKED";
-  if (status === 429) return "TOO MANY TRIES";
-  if (status === 400 || status === 422) return "NOT ACCEPTED";
-  if (status === 501 || status === 503) return "NOT AVAILABLE NOW";
-  if (status >= 500) return "HUB FAILED";
-  return "DID NOT WORK";
+  if (status === 401 || status === 403) return "Access refused";
+  if (status === 404) return "Not found";
+  if (status === 408 || status === 504) return "Timed out";
+  if (status === 409 || status === 412) return "Changed elsewhere";
+  if (status === 413) return "Too large";
+  if (status === 423) return "Locked";
+  if (status === 429) return "Too many tries";
+  if (status === 400 || status === 422) return "Not accepted";
+  if (status === 501 || status === 503) return "Not available now";
+  if (status >= 500) return "Hub failed";
+  return "Did not work";
 }
 
-/** `<what> · <why>` — what did not happen, then why. */
+/** `<what> · <why>` — what did not happen, then why. A caller's caps key
+ *  (`NOT SAVED`) reads in sentence case (`Not saved · Hub failed`). */
 export function plainFailure(what: string, cause: unknown): string {
-  return `${what.toUpperCase()} · ${plainReason(cause)}`;
+  return `${stateWords(what)} · ${plainReason(cause)}`;
 }
 
 /** W6-G words: why it failed, for a hover title only (`Hub unreachable`,
  *  `Not available now · HTTP 503`). The face never shows it. */
 export function failureTitle(cause: unknown): string {
-  const reason = plainReason(cause);
+  const said = plainReason(cause);
   const status = statusOf(cause);
-  const said = reason.charAt(0) + reason.slice(1).toLowerCase();
   return status ? `${said} · HTTP ${status}` : said;
 }
 

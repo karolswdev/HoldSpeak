@@ -142,10 +142,10 @@ describe("the People caption belongs to the Dock", () => {
   });
 
   it("the icon draws the caption and says it in its name; no caption, no line", () => {
-    const { rerender } = render(<DeskIcon id="drawer:people" kind="person" kindWord="DRAWER" name="People" caption="1:1 15:00" />);
+    const { rerender } = render(<DeskIcon id="drawer:people" kind="person" kindWord="Drawer" name="People" caption="1:1 15:00" />);
     expect(screen.getByTestId("desk-icon-caption-drawer:people")).toHaveTextContent("1:1 15:00");
-    expect(screen.getByRole("button", { name: "People, DRAWER, 1:1 15:00" })).toBeTruthy();
-    rerender(<DeskIcon id="drawer:people" kind="person" kindWord="DRAWER" name="People" />);
+    expect(screen.getByRole("button", { name: "People, Drawer, 1:1 15:00" })).toBeTruthy();
+    rerender(<DeskIcon id="drawer:people" kind="person" kindWord="Drawer" name="People" />);
     expect(screen.queryByTestId("desk-icon-caption-drawer:people")).toBeNull();
   });
 });

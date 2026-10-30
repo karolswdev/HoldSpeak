@@ -875,7 +875,7 @@ Shared vocabulary (`objects/kinds.ts`):
 
 - `ObjectKind`: project, meeting, decision, action, note, artifact,
   repository, agent, pr, person, conductor, smart, parked.
-  `objectKindWord(kind)` is the KIND word (`ACTION ITEM`).
+  `objectKindWord(kind)` is the KIND word (`Action item`).
 - `objectSprite(kind, id, state?)`: the one sprite from the mold (the A
   boards' mapping; a project/repository/drawer is the drawer, an agent the
   automaton). Every species also takes `sprite` (a URL) so lane A0's new

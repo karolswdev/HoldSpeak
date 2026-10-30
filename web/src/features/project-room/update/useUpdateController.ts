@@ -79,7 +79,7 @@ export function useUpdateController(
   // keeps the verb that failed, so the face can offer it again.
   const [retryFailed, setRetryFailed] = useState<(() => void) | null>(null);
   // W6-F words: the face says what failed and what stayed in a plain
-  // sentence; the label-grammar reason (`NOT SAVED · HUB FAILED`) is the
+  // sentence; the label-grammar reason (`Not saved · Hub failed`) is the
   // hover title only. The verb beside it (Try again) is the next action.
   const [errorTitle, setErrorTitle] = useState("");
   const fail = (what: keyof typeof UPDATE_FAILURE_WORDS, reason: unknown, again?: () => void) => {

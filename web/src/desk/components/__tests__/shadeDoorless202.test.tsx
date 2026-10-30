@@ -52,8 +52,8 @@ vi.mock("../../shell", async (original) => ({
 describe("SystemShade — a verb only where a door exists (sitting defect 1)", () => {
   it("draws Open for the sweep (Rhythm face) and no Open for a doorless receipt", () => {
     render(<SystemShade open onClose={vi.fn()} onOpenMemory={vi.fn()} />);
-    expect(screen.getByText("SWEEP")).toBeTruthy();
-    expect(screen.getByText("READ PROJECT_LIST")).toBeTruthy();
+    expect(screen.getByText("Sweep")).toBeTruthy();
+    expect(screen.getByText("Read project list")).toBeTruthy();
     const open = screen.getAllByRole("button", { name: "Open" });
     expect(open).toHaveLength(1);
     // Pressing it goes somewhere: the Rhythm face, never the pull-out opener.

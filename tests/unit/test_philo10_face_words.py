@@ -75,7 +75,9 @@ def test_slack_codes_are_derived_from_the_backend_source(code: str, kind: str) -
 
 
 def test_every_face_word_is_plain() -> None:
-    """ASD-STE100 on the face: capital words, no code, no underscore."""
+    """ASD-STE100 on the face: plain words in sentence case (WORDS-VOCAB
+    2026-10-30), no code, no underscore. A later word keeps its capitals only
+    as an acronym or a product name."""
     ts = (REPO / "web/src/features/channels/channels.ts").read_text()
     lib = (REPO / "web/src/desk/surface/egress.ts").read_text()
     blocks = [re.search(rf"const {n}[^=]*=\s*\{{(.*?)\n\}};", ts, re.S).group(1) for n in ("REFUSED", "FAILED", "UNKNOWN")]
@@ -84,15 +86,19 @@ def test_every_face_word_is_plain() -> None:
                for n in ("REFUSED_PREFIX", "FAILED_PREFIX", "UNKNOWN_PREFIX")]
     words = [w for b in blocks for w in re.findall(r':\s*"([^"]+)",|, "([^"]+)"\]', b) for w in w if w]
     assert len(words) > 100
+    kept = {"ID", "OK", "GitHub", "SendGrid", "Resend", "Slack"}
     for word in words:
-        assert re.fullmatch(r"[A-Z0-9 ]+", word), word
+        assert re.fullmatch(r"[A-Za-z0-9 ]+", word), word
+        first, *rest = word.split(" ")
+        assert first[0].isupper() or first in {"gh", "acli"}, word
+        assert all(w in kept or not any(c.isupper() for c in w) for w in rest), word
 
 
 @pytest.mark.parametrize("code, word", [
-    ("github_target_not_found", "ISSUE NOT FOUND"),
-    ("github_permission_denied", "NO PERMISSION"),
-    ("jira_cannot_be_edited", "CANNOT COMMENT"),
-    ("atlassian_unauthorized", "NOT SIGNED IN"),
+    ("github_target_not_found", "Issue not found"),
+    ("github_permission_denied", "No permission"),
+    ("jira_cannot_be_edited", "Cannot comment"),
+    ("atlassian_unauthorized", "Not signed in"),
 ])
 def test_the_census_codes_have_their_words(code, word) -> None:
     ts = (REPO / "web/src/features/channels/channels.ts").read_text()

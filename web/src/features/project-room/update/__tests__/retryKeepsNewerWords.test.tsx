@@ -28,7 +28,7 @@ describe("Room Try again keeps his newer words", () => {
     saveUpdate.mockRejectedValueOnce(new ApiError(500, "injected", {}));
     await act(async () => { await result.current.save(); });
     expect(result.current.error).toBe("Could not save the update · Your words stay here");
-    expect(result.current.errorTitle).toBe("NOT SAVED · HUB FAILED");
+    expect(result.current.errorTitle).toBe("Not saved · Hub failed");
 
     act(() => result.current.handleEditBody("first edit and newer words"));
     saveUpdate.mockImplementationOnce(async (_id: string, body: string) => saved(body));

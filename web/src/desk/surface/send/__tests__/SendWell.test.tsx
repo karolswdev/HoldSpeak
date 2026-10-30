@@ -578,7 +578,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(unknown.textContent).toContain("No answer");
     const history = screen.getByTestId("send-history");
     expect(history.querySelector("h3")?.textContent).toBe("Sent");
-    expect(within(history).getByTestId("history-row").textContent).toContain("RESULT UNKNOWN · CHECK Team folder");
+    expect(within(history).getByTestId("history-row").textContent).toContain("Result unknown · Check Team folder");
   });
 
   it("PREPARED, refused PREVIEW CHANGED: the row shows the word, Send goes, Discard stays", async () => {
@@ -606,7 +606,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     render(<><PreparedChip docRef={REF} /><SendWells doc={BRIEF} /></>);
     const row = await screen.findByTestId("prepared-row");
     expect(within(row).getByTestId("prepared-label").textContent).toBe("Brief Sep 29");
-    expect(within(row).getByTestId("prepared-by").textContent).toBe("By Steward");
+    expect(within(row).getByTestId("prepared-by").textContent).toBe("By steward");
     expect(row.textContent).not.toContain("Rev");
     expect(screen.getByTestId("prepared-send").textContent).toBe("Send");
     expect(screen.getByTestId("prepared-discard").textContent).toBe("Discard");
@@ -885,7 +885,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     const row = await screen.findByTestId("prepared-row");
     expect(within(row).getByTestId("prepared-label").textContent).toBe("D-85F927");
-    expect(within(row).getByTestId("prepared-by").textContent).toBe("By Remote-project-agent");
+    expect(within(row).getByTestId("prepared-by").textContent).toBe("By remote-project-agent");
     fireEvent.click(screen.getByTestId("prepared-send"));
     await screen.findByTestId("prepared-result");
     expect(sent).toHaveLength(1);

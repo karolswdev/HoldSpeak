@@ -278,7 +278,7 @@ describe("the email destination setup", () => {
     const refused = await screen.findByTestId("dest-key-refused");
     expect(refused).toHaveAttribute("data-code", "email_key_store_not_native");
     expect(refused.textContent).toBe("Could not save the key · Nothing changed · Try again");
-    expect(refused).toHaveAttribute("title", "NO SAFE KEY STORE");
+    expect(refused).toHaveAttribute("title", "No safe key store");
     expect(document.body.innerHTML).not.toContain("glassKEY");
   });
 

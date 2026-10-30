@@ -236,7 +236,7 @@ export function claimAcceptanceToken(claim: UpdateClaim): ClaimToken {
   return libraryAcceptanceToken(claim.acceptance);
 }
 
-/** A typed unknown the cited source cannot carry: `NAME Priya · NO SOURCE`. */
+/** A typed unknown the cited source cannot carry: `Name Priya · No source`. */
 export function claimUnknownToken(unknown: ClaimUnknown): string {
   return libraryUnknownToken(unknown);
 }

@@ -6,6 +6,7 @@
 // the repair rows instead — never the all-clear line.
 
 import { wireDate } from "./surface/format";
+import { wireWords } from "./surface/words";
 
 export type CoverageState =
   | "available"
@@ -162,7 +163,7 @@ export function readCoverage(
 
 /** The row's visible name — never the raw source id (162's law). */
 export function sourceLabel(record: CoverageRecord): string {
-  return record.label || record.kind.toUpperCase();
+  return record.label || wireWords(record.kind);
 }
 
 /** `LAST SEEN 09-06 08:12` — the observation time, or the honest absence. */

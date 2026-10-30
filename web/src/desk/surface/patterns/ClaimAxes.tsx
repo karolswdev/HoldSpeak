@@ -10,22 +10,23 @@
 import { StateChip, type ChipState } from "./StateChip";
 import "./claim-axes.css";
 import { Token } from "../Token";
+import { wireWords } from "../words";
 
 export type ClaimAxisToken = { label: string; state: ChipState };
 export type ClaimUnknownValue = { type: string; value: string };
 
 const KIND_TOKENS: Record<string, string> = {
-  observation: "OBSERVATION",
-  inference: "INFERENCE",
-  proposal: "PROPOSAL",
-  decision: "DECISION",
-  execution_result: "EXECUTION RESULT",
-  outcome_measure: "OUTCOME MEASURE",
+  observation: "Observation",
+  inference: "Inference",
+  proposal: "Proposal",
+  decision: "Decision",
+  execution_result: "Execution result",
+  outcome_measure: "Outcome measure",
 };
 
 /** The lead emblem: what the sentence asserts. */
 export function claimKindToken(kind: string): string {
-  return KIND_TOKENS[kind] ?? kind.replace(/_/g, " ").toUpperCase();
+  return KIND_TOKENS[kind] ?? wireWords(kind);
 }
 
 /** What the evidence establishes — with the honest history suffix:
@@ -36,27 +37,27 @@ export function claimSupportToken(axis: {
   edited?: boolean;
   migrated?: boolean;
 }): ClaimAxisToken {
-  if (axis.support === "supported") return { label: "SUPPORTED", state: "success" };
-  if (axis.support === "disputed") return { label: "DISPUTED", state: "failure" };
+  if (axis.support === "supported") return { label: "Supported", state: "success" };
+  if (axis.support === "disputed") return { label: "Disputed", state: "failure" };
   if (axis.support === "source_linked") {
-    if (axis.edited) return { label: "LINKED · EDITED", state: "warning" };
-    if (axis.migrated) return { label: "LINKED · MIGRATED", state: "idle" };
-    return { label: "LINKED", state: "idle" };
+    if (axis.edited) return { label: "Linked · Edited", state: "warning" };
+    if (axis.migrated) return { label: "Linked · Migrated", state: "idle" };
+    return { label: "Linked", state: "idle" };
   }
-  return { label: "UNSUPPORTED", state: "warning" };
+  return { label: "Unsupported", state: "warning" };
 }
 
 /** Applicable domain or reviewer judgment. Never inferred from a score. */
 export function claimAcceptanceToken(acceptance: string): ClaimAxisToken {
-  if (acceptance === "accepted") return { label: "ACCEPTED", state: "success" };
-  if (acceptance === "rejected") return { label: "REJECTED", state: "failure" };
-  if (acceptance === "superseded") return { label: "SUPERSEDED", state: "warning" };
-  return { label: "UNREVIEWED", state: "idle" };
+  if (acceptance === "accepted") return { label: "Accepted", state: "success" };
+  if (acceptance === "rejected") return { label: "Rejected", state: "failure" };
+  if (acceptance === "superseded") return { label: "Superseded", state: "warning" };
+  return { label: "Unreviewed", state: "idle" };
 }
 
-/** A typed unknown the cited source cannot carry: `DEADLINE 2026-12-31 · NO SOURCE`. */
+/** A typed unknown the cited source cannot carry: `Deadline 2026-12-31 · No source`. */
 export function claimUnknownToken(unknown: ClaimUnknownValue): string {
-  return `${unknown.type.toUpperCase()} ${unknown.value} · NO SOURCE`;
+  return `${wireWords(unknown.type)} ${unknown.value} · No source`;
 }
 
 export interface ClaimAxesProps {

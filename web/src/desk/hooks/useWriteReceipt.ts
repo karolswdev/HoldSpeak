@@ -21,12 +21,14 @@ import {
 } from "react";
 import { Button } from "../../components/signal/Signal";
 import "./write-receipt.css";
+import { stateWords } from "../surface/words";
 
 export interface WriteFailure {
   /** The verb that failed, upper case ("ADD ITEM"). It is the failure's
-   *  identity (callers compare it); the face says it as a sentence. */
+   *  identity, a compare key (callers compare it); the face never draws it,
+   *  it says the verb's phrase as a sentence. */
   verb: string;
-  /** Why it failed, in label grammar ("HUB UNREACHABLE", "HTTP 422"). It is
+  /** Why it failed, in short words ("Hub unreachable", "HTTP 422"). It is
    *  shown only in the hover title, never on the face. */
   reason: string;
   /** Re-issues the exact same write, or null when it cannot be replayed. */
@@ -63,9 +65,14 @@ export type WriteAttempt = <T>(
   opts?: { retry?: boolean; subject?: string },
 ) => Promise<WriteResult<T>>;
 
-/** Name the cause in label grammar — never prose, never a sentence. */
+/** The failure's identity: the verb as a compare key (`add item` → `ADD
+ *  ITEM`). Never drawn; the face says `writeFailurePhrase`. */
+const verbKey = (verb: string): string => verb.trim().toUpperCase();
+
+/** Name the cause in short words, sentence case — never prose. A caller's
+ *  caps cause (`EMPTY PAYLOAD`) reads `Empty payload`. */
 export function writeFailureReason(cause: unknown): string {
-  if (typeof cause === "string" && cause.trim()) return cause.trim().toUpperCase();
+  if (typeof cause === "string" && cause.trim()) return stateWords(cause.trim());
   if (typeof Response !== "undefined" && cause instanceof Response)
     return `HTTP ${cause.status}`;
   if (cause && typeof cause === "object") {
@@ -74,10 +81,10 @@ export function writeFailureReason(cause: unknown): string {
   }
   if (cause instanceof Error) {
     if (cause.name === "TypeError" || /fetch|network|failed to fetch/i.test(cause.message))
-      return "HUB UNREACHABLE";
-    if (cause.name === "AbortError") return "ABORTED";
+      return "Hub unreachable";
+    if (cause.name === "AbortError") return "Stopped";
   }
-  return "WRITE REFUSED";
+  return "Write refused";
 }
 
 /** The hub's own refusal words (an ApiError's message), when it sent any:
@@ -126,7 +133,7 @@ function writeNoun(token: string | undefined): string | null {
 }
 
 /* W6-E words — each write verb's own phrase: the face reads
-   `Could not <phrase>`. Keys are the verb in upper case. A verb that is not
+   `Could not <phrase>`. Keys are the verb's compare key (`verbKey`). A verb that is not
    here is said in lower case (`Could not <verb>`). */
 const WRITE_PHRASES: Record<string, string | ((noun: string | null) => string)> = {
   SAVE: (noun) => (noun ? `save the ${noun}` : "save it"),
@@ -196,7 +203,7 @@ const WRITE_PHRASES: Record<string, string | ((noun: string | null) => string)> 
 
 /** The phrase after `Could not` for one failed verb (`save the note`). */
 export function writeFailurePhrase(verb: string, subject?: string): string {
-  const key = verb.trim().toUpperCase();
+  const key = verbKey(verb);
   const known = WRITE_PHRASES[key];
   if (typeof known === "function") return known(writeNoun(subject));
   if (known) return known;
@@ -286,7 +293,7 @@ export function useWriteReceipt() {
       run: () => Promise<T>,
       opts: { retry?: boolean; subject?: string } = {},
     ): Promise<WriteResult<T>> {
-      const label = verb.toUpperCase();
+      const label = verbKey(verb);
       const seat = (reason: string, detail?: string) => {
         setFailure({
           verb: label,
@@ -327,7 +334,7 @@ export function useWriteReceipt() {
   const fail = useCallback(
     (verb: string, cause: unknown, retry?: () => void) => {
       setFailure({
-        verb: verb.toUpperCase(),
+        verb: verbKey(verb),
         reason: writeFailureReason(cause),
         retry: retry ?? null,
         detail: writeFailureDetail(cause),
@@ -365,7 +372,7 @@ export function reportWriteFailure(
   face?: { plain?: boolean; mono?: boolean; retryLabel?: string },
 ): WriteFailure {
   const failure: WriteFailure = {
-    verb: verb.toUpperCase(),
+    verb: verbKey(verb),
     reason: writeFailureReason(cause),
     retry: retry ?? null,
     detail: writeFailureDetail(cause),

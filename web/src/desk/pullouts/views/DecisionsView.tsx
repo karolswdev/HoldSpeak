@@ -821,8 +821,7 @@ function DecisionReader({
       void useDesk.getState().refresh();
       onRetry();
     } catch (cause) {
-      const why = plainReason(cause);
-      setAcceptFailure(`Could not accept it · ${why.charAt(0)}${why.slice(1).toLowerCase()}`);
+      setAcceptFailure(`Could not accept it · ${plainReason(cause)}`);
     } finally {
       setAccepting(false);
     }

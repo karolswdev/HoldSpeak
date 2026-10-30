@@ -64,7 +64,7 @@ describe("DeskIcon + IconLamp", () => {
         badge="/badge.png"
       />,
     );
-    const icon = screen.getByRole("button", { name: "Payments ledger cutover, PROJECT, 3 need you" });
+    const icon = screen.getByRole("button", { name: "Payments ledger cutover, Project, 3 need you" });
     expect(icon.className).toContain("btn--chrome");
     expect(icon.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
     expect(icon.querySelector(".desk-icon-count")?.textContent).toBe("3");
@@ -381,7 +381,7 @@ describe("ObjectList", () => {
     render(<ListHost />);
     const grid = screen.getByRole("grid");
     const fold = grid.querySelector('[data-object-id="r3"] .object-list-fold');
-    expect(fold?.textContent).toBe("NOTEOCT 5");
+    expect(fold?.textContent).toBe("NoteOCT 5");
     expect(fold).toHaveAttribute("aria-hidden", "true");
     const headers = within(grid).getAllByRole("columnheader").map((h) => h.getAttribute("data-col"));
     for (const row of within(grid).getAllByRole("row").slice(1))
@@ -442,7 +442,7 @@ describe("GetInfo", () => {
       />,
     );
     expect(screen.getByRole("heading", { name: "Write the rollback runbook" })).toBeInTheDocument();
-    expect(screen.getByText("ACTION ITEM")).toBeInTheDocument();
+    expect(screen.getByText("Action item")).toBeInTheDocument();
     const terms = [...container.querySelectorAll("dt")].map((dt) => dt.textContent);
     expect(terms).toEqual(["Where", "From", "Made", "Owner", "State", "Branch"]);
     expect(container.querySelector('[data-fact="due"]')).toBeNull();

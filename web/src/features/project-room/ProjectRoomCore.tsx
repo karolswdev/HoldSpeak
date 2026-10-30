@@ -1505,12 +1505,6 @@ function UpdateLine({ room, updateCtrl, onReload }: {
 
 /* ── FILES section (PHILO-17 U30: the drawer's objects, in the Room) ── */
 
-/** A wire token in sentence case (`CREATE ITEM` → `Create item`). */
-function sentenceWord(token: string): string {
-  const words = token.trim().toLowerCase();
-  return words ? words[0].toUpperCase() + words.slice(1) : words;
-}
-
 const RECEIPT_TONE: Record<string, "ok" | "fail" | "warn" | "idle"> = {
   success: "ok", failure: "fail", warning: "warn", idle: "idle",
 };
@@ -1527,7 +1521,7 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
     <ListView label="Writes" className="room-writes">
       <ul className="kit-listrows">
         {items.map((item) => {
-          const label = sentenceWord(receiptLabel({ op: item.op, title: item.title, outcome: item.outcome }));
+          const label = receiptLabel({ op: item.op, title: item.title, outcome: item.outcome });
           const face = receiptFace(item.outcome);
           return (
             <ListRow
@@ -1538,8 +1532,8 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
                   {label}
                 </span>
               }
-              meta={face.word && item.reason ? <span data-testid="receipt-reason">{sentenceWord(refusalWord(item.reason))}</span> : undefined}
-              state={face.word ? { word: sentenceWord(face.word), tone: RECEIPT_TONE[face.state], testId: "receipt-outcome" } : undefined}
+              meta={face.word && item.reason ? <span data-testid="receipt-reason">{refusalWord(item.reason)}</span> : undefined}
+              state={face.word ? { word: face.word, tone: RECEIPT_TONE[face.state], testId: "receipt-outcome" } : undefined}
               age={item.timestamp ? humanTime(item.timestamp) : undefined}
             />
           );

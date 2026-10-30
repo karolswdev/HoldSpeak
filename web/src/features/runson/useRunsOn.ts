@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../../lib/api";
 import { plainWords } from "../../desk/surface/plainFailure";
+import { wireWords } from "../../desk/surface/words";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import {
   checkEndpoint,
@@ -156,12 +157,12 @@ export function probeReason(code: string | undefined): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/** A stopped download's reason as a token (`model_download_network` →
- *  `NETWORK`); a cancel is CANCELLED; no code is NO ANSWER. */
+/** A stopped download's reason in words (`model_download_network` →
+ *  `Network`); a cancel is Cancelled; no code is No answer. */
 export function downloadReason(state: string, code: string | null): string {
-  if (state === "cancelled") return "CANCELLED";
-  if (!code) return "NO ANSWER";
-  return code.replace(/^(model_download_|model_|inference_)/, "").replace(/_/g, " ").toUpperCase();
+  if (state === "cancelled") return "Cancelled";
+  if (!code) return "No answer";
+  return wireWords(code.replace(/^(model_download_|model_|inference_)/, ""));
 }
 
 function scopeFor(job: string): AssignmentScope {
@@ -171,12 +172,12 @@ function scopeFor(job: string): AssignmentScope {
 function codeToken(err: unknown): string {
   if (err instanceof ApiError && err.payload && typeof err.payload === "object") {
     const code = String((err.payload as Record<string, unknown>).code ?? "");
-    if (code === "inference_assignment_incompatible") return "INCOMPATIBLE";
-    if (code === "inference_assignment_binding_missing") return "NO BINDING";
-    if (code === "inference_assignment_profile_missing") return "NO MODEL RECORD";
-    if (code) return code.replace(/^inference_assignment_/, "").replace(/_/g, " ").toUpperCase();
+    if (code === "inference_assignment_incompatible") return "Incompatible";
+    if (code === "inference_assignment_binding_missing") return "No binding";
+    if (code === "inference_assignment_profile_missing") return "No model record";
+    if (code) return wireWords(code.replace(/^inference_assignment_/, ""));
   }
-  return "NOT SAVED";
+  return "Not saved";
 }
 
 /** W6-I words: a caps reason token (`TEXT ENGINES ONLY`) said in sentence
@@ -189,7 +190,7 @@ function sentence(token: string): string {
 /** W6-I words: a failed write in plain words; the code token goes in the
  *  hover title (`plainWords`, desk/surface/plainFailure.ts). */
 function notChanged(name: string, err: unknown): Receipt {
-  return { text: plainWords(`Could not change ${name}`, "Nothing changed", "Try again"), tone: "danger", title: sentence(codeToken(err)) };
+  return { text: plainWords(`Could not change ${name}`, "Nothing changed", "Try again"), tone: "danger", title: codeToken(err) };
 }
 
 function endpointKey(url: string | undefined): string {
@@ -641,7 +642,7 @@ export function useRunsOn(scope?: string) {
     } catch (err) {
       if (mounted.current) {
         if (isConflict(err)) setReceipt({ text: plainWords(`Could not undo ${label}`, "It changed elsewhere first"), tone: "danger" });
-        else setReceipt({ text: plainWords(`Could not undo ${label}`, "Nothing changed"), tone: "danger", title: sentence(codeToken(err)) });
+        else setReceipt({ text: plainWords(`Could not undo ${label}`, "Nothing changed"), tone: "danger", title: codeToken(err) });
       }
     } finally {
       if (mounted.current) setBusy(false);
@@ -820,7 +821,7 @@ export function useRunsOn(scope?: string) {
                 // V3: the failure and its reason stay on the plate.
                 const reason = downloadReason(acquisition.state, acquisition.error);
                 setFailedDownloads((prev) => ({ ...prev, [key]: reason }));
-                setReceipt({ text: `Download stopped · ${engine.name} · ${sentence(reason)}`, tone: "danger" });
+                setReceipt({ text: `Download stopped · ${engine.name} · ${reason}`, tone: "danger" });
               }
               // The repairs say which wire it mends; read both again.
               void loadDetection();
@@ -839,7 +840,7 @@ export function useRunsOn(scope?: string) {
         });
         const reason = codeToken(err);
         setFailedDownloads((prev) => ({ ...prev, [key]: reason }));
-        setReceipt({ text: `Download stopped · ${engine.name} · ${sentence(reason)}`, tone: "danger" });
+        setReceipt({ text: `Download stopped · ${engine.name} · ${reason}`, tone: "danger" });
       }
     },
     [engineByKey, loadDetection, loadRoster],
