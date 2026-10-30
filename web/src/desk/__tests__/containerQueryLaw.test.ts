@@ -34,6 +34,10 @@ const viewportWidthMediaAllowlist = new Set([
   // W3-A (#1526): the feedback sheet is a desk-level fixed sheet outside
   // every named `surface` container, like the dock and the menu bar.
   "/src/desk/feedback/feedback.css",
+  // W3-A (#1526, "phone floor bleed"): screen.css:199 hides the desk floor's
+  // Go list under a standing phone sheet. The floor is the desk root, outside
+  // every named `surface` container, so a container query cannot reach it.
+  "/src/desk/screen/screen.css",
   "/src/styles/global.css",
 ]);
 

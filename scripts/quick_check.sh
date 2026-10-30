@@ -6,7 +6,8 @@
 #
 # It runs, under the one-run-at-a-time lock and an isolated HOME:
 #   1. the web build;
-#   2. vitest on the tests RELATED to the changed web files (vitest related);
+#   2. vitest on the tests RELATED to the changed web files (vitest related),
+#      then the web guards (vitest censuses, every run);
 #   3. pytest -m "not slow" on the affected test files
 #      (scripts/quick_check_affected.py: changed test files, tests/uat and
 #      tests/e2e included; tests that import a changed holdspeak module or
@@ -94,6 +95,40 @@ if [ -n "$web" ]; then
       fail=1
     fi
   fi
+fi
+
+# ── 3b. the web guards (2026-10-31): vitest censuses that read sources by
+#      glob, walk or path, so `vitest related` never picks them for the file
+#      they judge (two reached main unseen: containerQueryLaw, settingsWriters).
+#      They run on every quick check, whatever changed; about 7 s.
+web_guards=(
+  src/desk/__tests__/containerQueryLaw.test.ts           # viewport media only on shell exceptions (every CSS file)
+  src/pages/cores/__tests__/settingsWriters.test.ts      # one writer per settings subtree (every source file)
+  src/desk/__tests__/writeReceiptGuard.test.ts           # a desk write leaves a receipt (every desk source)
+  src/desk/__tests__/emojiGuard.test.ts                  # no emoji in glyph and label sources
+  src/desk/systemSprites.test.ts                         # every Dock item and launcher has its sprite file
+  src/desk/__tests__/illustratedIcons.test.ts            # every illustrated icon has its SVG and PNG
+  src/desk/__tests__/sprites32.test.ts                   # the 32 px world sprites (web/public)
+  src/desk/__tests__/philo13FacesDoNotLie.test.tsx       # faces show no raw error or raw title (named sources)
+  src/desk/components/__tests__/agentWordsFence.test.tsx # agent words come from AgentWords only
+  src/desk/surface/__tests__/fence.test.ts               # the surface fence ratchet (fence-baseline.json)
+  src/desk/surface/__tests__/kitDelight.test.tsx         # the kit motion and material rules (kit.css, react-app.css)
+  src/desk/components/window/__tests__/workBand.test.ts  # the work band tokens (tokens.css)
+  src/desk/__tests__/memoryRefsOpen.test.ts              # memory refs match the hub (holdspeak/services/memory_grounding.py)
+  src/lib/productLanguage.test.ts                        # product words match docs/product-language.json
+  src/desk/attention.test.ts                             # attention ranking matches tests/fixtures (the hub's twin)
+  src/desk/surface/__tests__/egress.test.ts              # loopback spellings match tests/fixtures (the hub's twin)
+  src/desk/surface/__tests__/fieldLabelWords.test.tsx    # field labels in sentence case (gadgets.css, surface.css)
+  src/desk/surface/__tests__/chipWords.test.tsx          # no host on a chip (gadgets.css)
+  src/desk/surface/__tests__/lampWords.test.tsx          # lamp words (gadgets.css, recordings.css, DeskChrome)
+)
+echo "== web guards (${#web_guards[@]} files)"
+out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest run --maxWorkers=8 "${web_guards[@]}" 2>&1)"; grc=$?
+printf '%s\n' "$out" >"$H/web-guards.log"
+printf '%s\n' "$out" | grep -E '^ FAIL|×|Test Files|Tests ' | sort -u | sed 's/^/   /'
+if [ "$grc" != 0 ] || ! printf '%s\n' "$out" | grep -qE 'Tests .*[0-9]+ passed' \
+   || printf '%s\n' "$out" | grep -qE '^ FAIL|Tests .*[0-9]+ failed|Test Files .*[0-9]+ failed'; then
+  echo "   the web guards failed (rc=$grc): RED"; fail=1
 fi
 
 # ── 4. pytest on the affected test files ─────────────────────────────────────
