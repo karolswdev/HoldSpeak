@@ -524,6 +524,14 @@ import { phoneTodayLine } from "../calls/phoneApi";
 import type { PhoneMessage, PhoneStatus } from "../calls/phoneTypes";
 import { needFace } from "../needs/needsFace";
 import { useState, type ReactNode } from "react";
+import phoneStatusNoKey from "../calls/__fixtures__/phone.settings.noKey.json";
+import pushMissing from "../calls/__fixtures__/phone.push.missing.json";
+import pushPut from "../calls/__fixtures__/phone.push.put.json";
+import pushStored from "../calls/__fixtures__/phone.push.stored.json";
+import pushNotP8 from "../calls/__fixtures__/phone.push.notP8.json";
+import pushAccepted from "../calls/__fixtures__/phone.push.test.accepted.json";
+import pushStale from "../calls/__fixtures__/phone.push.test.stale.json";
+import pushRefused from "../calls/__fixtures__/phone.push.test.refused.json";
 
 const P = {
   status: phoneStatus as unknown as PhoneStatus,
@@ -794,6 +802,95 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     fireEvent.click(screen.getByTestId("phone-reach-reset"));
     await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"phone_reach":{}}}'));
     await waitFor(() => expect(row.getAttribute("data-channel")).toBe("message"));
+  });
+});
+
+// PHONE-APNS-KEY: the hub's own answers, recorded through the real routes
+// with the fake APNs server (scripts/record_phone_fixtures.py --push).
+describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
+  const PEM = "-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg\n-----END PRIVATE KEY-----";
+
+  it("no_key: the key, the Key ID and the Team ID each get their Save; the bundle ID is prefilled; Test push waits", async () => {
+    let key: unknown = pushMissing;
+    const order: string[] = [];
+    hub({
+      "GET /api/settings": phoneOn,
+      "GET /api/phone/status": () => (key === pushStored ? P.status : phoneStatusNoKey),
+      "GET /api/phone/push": () => key,
+      "PUT /api/phone/push": (init?: { json?: unknown }) => {
+        const part = Object.keys(init?.json as object)[0];
+        order.push(part);
+        key = part === "p8" ? pushPut : part === "team_id" ? pushStored : key;
+        return key;
+      },
+    });
+    render(<PhoneSettingsPane />);
+    const device = await screen.findByTestId("phone-device-row");
+    await waitFor(() => expect(within(device).getByTestId("phone-device-push").textContent).toBe("Push not ready: no Apple push key on the hub"));
+    const p8 = await screen.findByTestId("phone-push-p8");
+    expect(within(p8).getByTestId("phone-push-p8-place").textContent).toBe("Missing");
+    expect((screen.getByLabelText("App bundle ID") as HTMLInputElement).value).toBe(pushMissing.bundle_id);
+    expect(screen.getByTestId("phone-push-test-press")).toBeDisabled();
+    expect(screen.getByTestId("phone-push-test").textContent).toContain("Save the key, the Key ID and the Team ID");
+    // The pad carries its mic; a paste and Save writes the key, the field clears, the row says where it is.
+    expect(within(p8).getByRole("button", { name: /Speak Apple push key/ })).toBeInTheDocument();
+    fireEvent.change(within(p8).getByLabelText("Apple push key (.p8)"), { target: { value: PEM } });
+    fireEvent.click(within(p8).getByTestId("phone-push-p8-save"));
+    await waitFor(() => expect(within(screen.getByTestId("phone-push-p8")).getByTestId("phone-push-p8-place").textContent).toBe("Stored in your keystore"));
+    expect(calls).toContain(`PUT /api/phone/push ${JSON.stringify({ p8: PEM })}`);
+    expect(within(screen.getByTestId("phone-push-p8")).queryByLabelText("Apple push key (.p8)")).toBeNull();
+    expect(screen.getByTestId("phone-push").textContent).not.toContain("PRIVATE KEY");
+    for (const [testId, label, value] of [["phone-push-key-id", "Key ID", "KEY1234567"], ["phone-push-team-id", "Team ID", "TEAM123456"]]) {
+      const row = screen.getByTestId(testId);
+      fireEvent.change(within(row).getByLabelText(label), { target: { value } });
+      fireEvent.click(within(row).getByTestId(`${testId}-save`));
+      await waitFor(() => expect(calls.some((call) => call.startsWith(`PUT /api/phone/push {"${testId === "phone-push-key-id" ? "key_id" : "team_id"}"`))).toBe(true));
+    }
+    expect(order).toEqual(["p8", "key_id", "team_id"]);
+    await waitFor(() => expect(screen.getByTestId("phone-push-test-press")).not.toBeDisabled());
+    for (const testId of ["phone-push-p8", "phone-push-key-id", "phone-push-team-id"]) {
+      expect(within(screen.getByTestId(testId)).getByTestId(`${testId}-place`).textContent).toBe("Stored in your keystore");
+    }
+    // Saving reads the status again: the device row no longer says no_key.
+    await waitFor(() => expect(within(screen.getByTestId("phone-device-row")).queryByTestId("phone-device-push")).toBeNull());
+  });
+
+  it("a paste that is not a .p8 says so in place; nothing changes", async () => {
+    hub({
+      "GET /api/settings": phoneOn,
+      "GET /api/phone/status": phoneStatusNoKey,
+      "GET /api/phone/push": pushMissing,
+      "PUT /api/phone/push": () => { throw new ApiError(400, "Bad Request", pushNotP8); },
+    });
+    render(<PhoneSettingsPane />);
+    const p8 = await screen.findByTestId("phone-push-p8");
+    fireEvent.change(within(p8).getByLabelText("Apple push key (.p8)"), { target: { value: "hello" } });
+    fireEvent.click(within(p8).getByTestId("phone-push-p8-save"));
+    const refusal = await screen.findByTestId("phone-push-refusal");
+    expect(refusal.textContent).toContain("The key was not saved");
+    expect(within(screen.getByTestId("phone-push-p8")).getByTestId("phone-push-p8-place").textContent).toBe("Missing");
+  });
+
+  it.each([
+    ["accepted", pushAccepted, "Apple accepted it", "ok"],
+    ["stale", pushStale, "This phone's token is stale: open the app once", "warn"],
+    ["refused", pushRefused, "Apple refused the key: check the Key ID and Team ID", "fail"],
+  ])("Test push: Apple's %s answer is its word", async (_name, answer, words, tone) => {
+    hub({
+      "GET /api/settings": phoneOn,
+      "GET /api/phone/status": P.status,
+      "GET /api/phone/push": pushStored,
+      "POST /api/phone/push/test": answer,
+    });
+    render(<PhoneSettingsPane />);
+    const press = await screen.findByTestId("phone-push-test-press");
+    await waitFor(() => expect(press).not.toBeDisabled());
+    expect(press.classList.contains("btn")).toBe(true);
+    fireEvent.click(press);
+    const word = await screen.findByTestId("phone-push-answer");
+    expect(word.textContent).toBe(words);
+    expect(word.getAttribute("data-tone")).toBe(tone);
+    expect(calls).toContain("POST /api/phone/push/test {}");
   });
 });
 

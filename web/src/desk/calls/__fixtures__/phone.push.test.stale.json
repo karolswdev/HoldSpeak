@@ -1,0 +1,6 @@
+{
+  "answer": "stale",
+  "status": 400,
+  "reason": "BadDeviceToken",
+  "device_id": "dev_d8280665f842297a"
+}

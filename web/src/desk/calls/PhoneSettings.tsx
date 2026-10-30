@@ -10,15 +10,15 @@
  * prefilled by the Control level; a choice is his own word over the
  * level's. Quiet hours are the desk's Rhythm hours, read here and changed
  * in Rhythm. Egress is said here once (UX-CANON A.9). */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type DragEvent, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { plainFail } from "../surface/plainFailure";
 import { openSurfaceOr } from "../shell";
-import { CheckGadget, GadgetGroup, MxRadio } from "../surface/gadgets";
+import { CheckGadget, GadgetGroup, MxRadio, PadGadget, StringGadget } from "../surface/gadgets";
 import { DotWord } from "../surface/kit";
 import { stateWords } from "../surface/words";
-import { removePhoneDevice, startPairing, usePhone, writeReach } from "./phoneApi";
-import type { PhonePairing, PhoneStatus, ReachChannel } from "./phoneTypes";
+import { readPushKey, removePhoneDevice, savePushKey, startPairing, testPush, usePhone, writeReach } from "./phoneApi";
+import type { PhoneDevice, PhonePairing, PhonePushKey, PhonePushTest, PhoneStatus, ReachChannel } from "./phoneTypes";
 import { deviceFact, pushNotReady } from "./PhoneWing";
 import { PhoneQr } from "./PhoneQr";
 import "./phone.css";
@@ -98,6 +98,131 @@ function PairSheet({ pairing, now, busy, onNew }: { pairing: PhonePairing; now: 
         </span>
       </div>
     </div>
+  );
+}
+
+type Tone = "ok" | "info" | "warn" | "idle" | "fail";
+
+/** The Test push's answer in his words (`POST /api/phone/push/test`). */
+export function pushTestWords(result: PhonePushTest): { word: string; tone: Tone } {
+  if (result.answer === "accepted") return { word: "Apple accepted it", tone: "ok" };
+  if (result.answer === "stale") return { word: "This phone's token is stale: open the app once", tone: "warn" };
+  if (result.answer === "refused") return { word: "Apple refused the key: check the Key ID and Team ID", tone: "fail" };
+  if (!result.status) return { word: "The hub could not reach Apple", tone: "fail" };
+  return { word: `Apple answered ${result.status}${result.reason ? `: ${result.reason}` : ""}`, tone: "fail" };
+}
+
+/** A .p8 file dropped on the pad: its text. */
+async function droppedText(event: DragEvent): Promise<string> {
+  const file = event.dataTransfer?.files?.[0];
+  return file ? (await file.text()).trim() : "";
+}
+
+/** One write-only part of the key: where it is, never its value; Change
+ *  opens the field again. The .p8 is a pad that takes a paste or a drop. */
+function PushSecret({ label, present, pad = false, busy, onSave, testId }: {
+  label: string; present: boolean; pad?: boolean; busy: boolean; onSave(value: string): void; testId: string;
+}) {
+  const [draft, setDraft] = useState("");
+  const [changing, setChanging] = useState(false);
+  const open = !present || changing;
+  const save = () => {
+    if (!draft.trim()) return;
+    onSave(draft.trim());
+    setDraft("");
+    setChanging(false);
+  };
+  return (
+    <div className="phone-secret" data-testid={testId} data-present={present || undefined}>
+      <Row name={label}
+        fact={<DotWord tone={present ? "ok" : "idle"} data-testid={`${testId}-place`}>{present ? "Stored in your keystore" : "Missing"}</DotWord>}
+        verb={present && !changing
+          ? <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid={`${testId}-change`}>Change</Button>
+          : null} />
+      {open ? (
+        <div className="phone-field">
+          {pad ? (
+            <span className="phone-drop" data-testid={`${testId}-drop`}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => { event.preventDefault(); void droppedText(event).then((text) => { if (text) setDraft(text); }); }}>
+              <PadGadget label={label} value={draft} onChange={setDraft} rows={4}
+                placeholder="Paste the .p8 file here, or drop it here" inputProps={{ spellCheck: false }} />
+            </span>
+          ) : (
+            <StringGadget label={label} value={draft} onChange={setDraft} placeholder="Kept in your keystore"
+              onKeyDown={(event) => { if (event.key === "Enter") save(); }} inputProps={{ autoComplete: "off", spellCheck: false }} />
+          )}
+          <Button dense variant="primary" loading={busy} disabled={!draft.trim()} onClick={save} data-testid={`${testId}-save`}>Save</Button>
+          {changing ? <Button dense variant="ghost" onClick={() => { setChanging(false); setDraft(""); }}>Cancel</Button> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Settings ▸ Calls ▸ Phone ▸ Push (PHONE-APNS-KEY): his Apple push key,
+ *  its Key ID and Team ID (write only, in the hub's keystore), the app's
+ *  bundle id, and Test push with Apple's answer. */
+function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged(): void }) {
+  const [key, setKey] = useState<PhonePushKey | null>(null);
+  const [busy, setBusy] = useState("");
+  const [bundle, setBundle] = useState("");
+  const [result, setResult] = useState<PhonePushTest | null>(null);
+  const [refusal, setRefusal] = useState<{ words: string; title: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    readPushKey().then((next) => { if (alive) { setKey(next); setBundle(next.bundle_id); } }).catch(() => undefined);
+    return () => { alive = false; };
+  }, []);
+  if (!key) return null;
+  const save = (part: string, value: string) => {
+    setBusy(part);
+    setRefusal(null);
+    setResult(null);
+    savePushKey({ [part]: value })
+      .then((next) => { setKey(next); setBundle(next.bundle_id); onChanged(); })
+      .catch((cause) => setRefusal(plainFail("The key was not saved", cause, "Nothing changed", "Try again")))
+      .finally(() => setBusy(""));
+  };
+  const test = () => {
+    setBusy("test");
+    setRefusal(null);
+    setResult(null);
+    testPush()
+      .then(setResult)
+      .catch((cause) => setRefusal(plainFail("No test push", cause, "Nothing was sent", "Try again")))
+      .finally(() => setBusy(""));
+  };
+  const ready = key.push_state === "ready";
+  const reachable = devices.some((device) => device.has_push);
+  const words = result ? pushTestWords(result) : null;
+  return (
+    <GadgetGroup material="inset" label="Push">
+      <div data-testid="phone-push">
+        <PushSecret label="Apple push key (.p8)" present={key.present.p8} pad busy={busy === "p8"}
+          onSave={(value) => save("p8", value)} testId="phone-push-p8" />
+        <PushSecret label="Key ID" present={key.present.key_id} busy={busy === "key_id"}
+          onSave={(value) => save("key_id", value)} testId="phone-push-key-id" />
+        <PushSecret label="Team ID" present={key.present.team_id} busy={busy === "team_id"}
+          onSave={(value) => save("team_id", value)} testId="phone-push-team-id" />
+        <div className="phone-secret" data-testid="phone-push-bundle">
+          <Row name="App bundle ID" fact="The HoldSpeak app on your phone" />
+          <div className="phone-field">
+            <StringGadget label="App bundle ID" value={bundle} onChange={setBundle}
+              inputProps={{ autoComplete: "off", spellCheck: false }} />
+            <Button dense variant="secondary" loading={busy === "bundle_id"} disabled={!bundle.trim() || bundle.trim() === key.bundle_id}
+              onClick={() => save("bundle_id", bundle.trim())} data-testid="phone-push-bundle-save">Save</Button>
+          </div>
+        </div>
+        <Row testId="phone-push-test" name="Test push"
+          fact={words ? <DotWord tone={words.tone} data-testid="phone-push-answer" title={result?.reason || undefined}>{words.word}</DotWord>
+            : refusal ? <DotWord tone="fail" data-testid="phone-push-refusal" title={refusal.title}>{refusal.words}</DotWord>
+              : ready ? <DotWord tone="ok">{reachable ? "Ready" : "No phone sent a push token"}</DotWord>
+                : <DotWord tone="idle">Save the key, the Key ID and the Team ID</DotWord>}
+          verb={<Button dense variant="secondary" loading={busy === "test"} disabled={!ready || !reachable} onClick={test}
+            title="A silent push to your phone through Apple's push service" data-testid="phone-push-test-press">Test push</Button>} />
+      </div>
+    </GadgetGroup>
   );
 }
 
@@ -188,6 +313,7 @@ export function PhoneSettingsPane() {
           )}
         </div>
       </GadgetGroup>
+      {status ? <PushGroup devices={paired} onChanged={() => void phone.reload()} /> : null}
       <GadgetGroup material="inset" label="Reach you">
         <div className="phone-reach" data-testid="phone-reach">
           <span className="phone-reach-head">When</span>

@@ -16,6 +16,7 @@ first and the number rings when the app does not answer.
 from __future__ import annotations
 
 import hashlib
+import os
 import secrets
 import threading
 import time
@@ -128,11 +129,17 @@ class PhoneService:
         broadcast: Optional[Callable[[str, Any], None]] = None, ring_seconds: float = RING_SECONDS,
         rering_seconds: float = RERING_SECONDS, kernel: Optional[Callable[[Mapping[str, Any]], Optional[str]]] = None,
         hub_urls: Optional[Callable[[], list[str]]] = None, settings: Optional[Callable[[], Any]] = None,
+        apns_host: Optional[str] = None,
     ) -> None:
         self.db = db
         self.store = PhoneStore(db)
         self.events = PhoneEvents(self.store)
         self._push = push
+        #: A push the caller gave (a rig) stays; else his saved key is read
+        #: again after he changes it.
+        self._push_given = push is not None
+        #: Replaces Apple's host (a rig's fake APNs server).
+        self._apns_host = apns_host
         self.number = number or NumberTransport()
         self._bus = broadcast
         self._kernel = kernel
@@ -159,7 +166,7 @@ class PhoneService:
             from .push import apns_from_keystore
 
             try:
-                self._push = apns_from_keystore() or NullPush(state=PUSH_NO_KEY)
+                self._push = apns_from_keystore(host=self._apns_host) or NullPush(state=PUSH_NO_KEY)
             except Exception as exc:
                 log.info(f"phone push: no APNs key ({exc})")
                 self._push = NullPush(state=PUSH_NO_KEY)
@@ -176,6 +183,57 @@ class PhoneService:
 
     def device_wire(self, row: Mapping[str, Any]) -> dict[str, Any]:
         return device_wire(row, self.push_state() if row.get("push_token") else None)
+
+    # ── his Apple push key (Settings ▸ Calls ▸ Phone ▸ Push) ─────────
+
+    def push_key(self, principal: Any) -> dict[str, Any]:
+        """Where each part of his key is (``present``), never the key."""
+        if not _is_owner(principal):
+            raise PhoneRefused("owner_principal_required", "Only the owner reads the push key.", 403)
+        from .push import saved_key_presence
+
+        return {**saved_key_presence(), "push_state": self.push_state()}
+
+    def save_push_key(self, principal: Any, body: Mapping[str, Any]) -> dict[str, Any]:
+        """Keep the given parts (``p8``, ``key_id``, ``team_id``, ``bundle_id``)
+        in the key store; the answer says ``present``, never the key."""
+        if not _is_owner(principal):
+            raise PhoneRefused("owner_principal_required", "Only the owner saves the push key.", 403)
+        from .push import APNS_FIELDS, save_key_fields
+
+        fields = {name: body[name] for name in APNS_FIELDS if name in body}
+        if not fields:
+            raise PhoneRefused("nothing_to_save", "Send p8, key_id, team_id or bundle_id.", 400)
+        try:
+            save_key_fields(fields)
+        except ValueError:
+            raise PhoneRefused("not_a_p8", "This is not an Apple push key. Paste the whole .p8 file.", 400) from None
+        except Exception as exc:
+            log.warning(f"phone push key not saved: {exc}")
+            raise PhoneRefused("keystore_unavailable", "The keystore did not take the key. Nothing changed.", 503) from exc
+        if not self._push_given:
+            self._push = None  # the next push reads the saved key again
+        return self.push_key(principal)
+
+    def test_push(self, principal: Any) -> dict[str, Any]:
+        """One silent push to the newest paired phone; Apple's answer as a code
+        (``accepted`` | ``stale`` | ``refused`` | ``failed``) with its status."""
+        if not _is_owner(principal):
+            raise PhoneRefused("owner_principal_required", "Only the owner sends a test push.", 403)
+        from .push import answer_code
+
+        provider = self.push()
+        if not callable(getattr(provider, "answer", None)):
+            raise PhoneRefused(PUSH_NO_KEY, "Save your Apple push key, its Key ID and Team ID first.", 409)
+        rows = sorted((row for row in self.paired() if row.get("push_token")),
+                      key=lambda row: str(row.get("paired_at") or ""), reverse=True)
+        if not rows:
+            raise PhoneRefused("no_push_token", "No paired phone sent a push token. Open the app once.", 409)
+        row = rows[0]
+        event = {"seq": 0, "type": "push.test", "ts": self._stamp(), "data": {}}
+        payload = build_payload(self.hub(), devs.push_secret(self._secret(), row["jwt_kid"]), event)
+        status, reason = provider.answer(Target(row["id"], str(row["push_token"]), "silent"), payload, 60, False)
+        return {"answer": answer_code(status, reason), "status": status, "reason": reason, "device_id": row["id"]}
 
     def _secret(self) -> bytes:
         return devs.hub_secret()
@@ -1059,7 +1117,7 @@ def default_phone_service(db: Any = None) -> PhoneService:
         if _DEFAULT is None or _DEFAULT_DB is not db:
             if _DEFAULT is not None:
                 _DEFAULT.stop()
-            _DEFAULT = PhoneService(db)
+            _DEFAULT = PhoneService(db, apns_host=os.environ.get("HOLDSPEAK_APNS_HOST") or None)
             _DEFAULT_DB = db
         return _DEFAULT
 

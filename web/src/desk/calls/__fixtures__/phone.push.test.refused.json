@@ -1,0 +1,6 @@
+{
+  "answer": "refused",
+  "status": 403,
+  "reason": "InvalidProviderToken",
+  "device_id": "dev_d8280665f842297a"
+}

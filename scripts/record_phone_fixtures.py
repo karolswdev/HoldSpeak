@@ -14,6 +14,13 @@ It writes ``web/src/desk/calls/__fixtures__/``: phone.pair.json,
 phone.settings.json (``GET /api/phone/status``), phone.devices.json,
 phone.thread.json (``GET /api/phone/messages``), phone.calls.json,
 phone.events.json, needs_you.phone.json.
+
+    HOME=$(mktemp -d) uv run python scripts/record_phone_fixtures.py --push
+
+records only the Apple push key answers (PHONE-APNS-KEY), with the fake APNs
+server (``tests/fixtures/fake_apns.py``) in Apple's place: phone.push.missing.json,
+phone.settings.noKey.json, phone.push.put.json, phone.push.stored.json,
+phone.push.notP8.json and phone.push.test.{accepted,stale,refused}.json.
 """
 from __future__ import annotations
 
@@ -136,9 +143,51 @@ def record(root: Path) -> dict[str, Any]:
     return out
 
 
+def record_push(root: Path) -> dict[str, Any]:
+    os.environ.setdefault("HOLDSPEAK_CHANNEL_KEYSTORE_FILE", str(root / "keys.json"))
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from fastapi.testclient import TestClient
+
+    from holdspeak.db import Database
+    from holdspeak.phone.service import PhoneService
+    from tests.fixtures.fake_apns import FakeApns
+    from tests.fixtures.fake_phone_device import FakePhoneDevice
+
+    pem = ec.generate_private_key(ec.SECP256R1()).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()).decode()
+    out: dict[str, Any] = {}
+    with FakeApns() as apns:
+        service = PhoneService(Database(root / "phone.db"), number=_NoNumber(), apns_host=apns.url)
+        service._quiet = lambda at=None: False  # type: ignore[method-assign]
+        client = TestClient(_app(service), base_url="https://karol-mac.tail1234.ts.net")
+        pair = client.post("/api/phone/pair")
+        device = FakePhoneDevice(client, name="Karol's iPhone", platform="ios")
+        device.pair(pair.json()["token"])
+        out["phone.push.missing.json"] = _get(client, "/api/phone/push")
+        out["phone.settings.noKey.json"] = _get(client, "/api/phone/status")
+        put = client.put("/api/phone/push", json={"p8": pem})
+        assert put.status_code == 200, put.text
+        out["phone.push.put.json"] = put.json()
+        refused = client.put("/api/phone/push", json={"p8": "not a key"})
+        assert refused.status_code == 400, refused.text
+        out["phone.push.notP8.json"] = refused.json()
+        for body in ({"key_id": "KEY1234567"}, {"team_id": "TEAM123456"}):
+            assert client.put("/api/phone/push", json=body).status_code == 200
+        out["phone.push.stored.json"] = _get(client, "/api/phone/push")
+        for name, answer in (("accepted", (200, {})), ("stale", (400, {"reason": "BadDeviceToken"})),
+                             ("refused", (403, {"reason": "InvalidProviderToken"}))):
+            apns.answers[device.push_token or ""] = answer
+            tested = client.post("/api/phone/push/test")
+            assert tested.status_code == 200, tested.text
+            out[f"phone.push.test.{name}.json"] = tested.json()
+        service.stop()
+    return out
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
-        recorded = record(Path(tmp))
+        recorded = record_push(Path(tmp)) if "--push" in sys.argv[1:] else record(Path(tmp))
     OUT.mkdir(parents=True, exist_ok=True)
     for name, body in recorded.items():
         (OUT / name).write_text(json.dumps(body, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

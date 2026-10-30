@@ -5287,6 +5287,36 @@
       ]
     },
     {
+      "path": "/api/phone/push",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/push",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/phone/push/test",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/phone/status",
       "methods": [
         "GET"

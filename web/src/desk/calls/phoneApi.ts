@@ -9,7 +9,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
-import type { PhoneCall, PhoneChangedFrame, PhoneDevice, PhoneMessage, PhonePairing, PhoneStatus, ReachChannel } from "./phoneTypes";
+import type {
+  PhoneCall, PhoneChangedFrame, PhoneDevice, PhoneMessage, PhonePairing, PhonePushKey, PhonePushTest, PhoneStatus, ReachChannel,
+} from "./phoneTypes";
 
 function notFound(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404;
@@ -68,6 +70,21 @@ export function startPairing(): Promise<PhonePairing> {
 
 export function removePhoneDevice(id: string): Promise<unknown> {
   return apiFetch(`/api/phone/devices/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** His Apple push key: where each part is (never the key). */
+export function readPushKey(): Promise<PhonePushKey> {
+  return apiFetch<PhonePushKey>("/api/phone/push");
+}
+
+/** Keep one part of his Apple push key in the hub's keystore. */
+export function savePushKey(part: Partial<{ p8: string; key_id: string; team_id: string; bundle_id: string }>): Promise<PhonePushKey> {
+  return apiFetch<PhonePushKey>("/api/phone/push", { method: "PUT", json: part });
+}
+
+/** One silent push to the paired phone; Apple's answer. */
+export function testPush(): Promise<PhonePushTest> {
+  return apiFetch<PhonePushTest>("/api/phone/push/test", { method: "POST", json: {} });
 }
 
 /** Reach you writes his own words (`calls.phone_reach`, the whole map: a

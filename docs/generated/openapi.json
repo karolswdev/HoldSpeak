@@ -22408,6 +22408,58 @@
         "summary": "Api Phone Pair"
       }
     },
+    "/api/phone/push": {
+      "get": {
+        "operationId": "api_phone_push_api_phone_push_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Push Api Phone Push Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Push"
+      },
+      "put": {
+        "operationId": "api_phone_push_save_api_phone_push_put",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Push Save Api Phone Push Put"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Push Save"
+      }
+    },
+    "/api/phone/push/test": {
+      "post": {
+        "operationId": "api_phone_push_test_api_phone_push_test_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Push Test Api Phone Push Test Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Phone Push Test"
+      }
+    },
     "/api/phone/status": {
       "get": {
         "operationId": "api_phone_status_api_phone_status_get",

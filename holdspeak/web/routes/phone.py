@@ -16,6 +16,9 @@ POST   /api/phone/calls/{id}/ring              owner: a held call rings (Call no
 POST   /api/phone/calls/{id}/again             owner: a missed call, again (Call again)
 GET    /api/phone/events?after_seq=            owner, device: the event log
 GET    /api/phone/status                       owner
+GET    /api/phone/push                         owner: where each part of his Apple push key is (never the key)
+PUT    /api/phone/push                         owner: {p8?, key_id?, team_id?, bundle_id?} → the key store
+POST   /api/phone/push/test                    owner: one silent push to the paired phone; Apple's answer
 WS     /api/phone/ws?after_seq=                device (or owner): replay from after_seq, then live
 
 The device principal is its JWT (``Authorization: Bearer <device token>``;
@@ -217,6 +220,22 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
     async def api_phone_status(request: Request) -> Any:
         principal = _principal(request)
         return await _call(lambda: _service().status(principal))
+
+    @router.get("/api/phone/push")
+    async def api_phone_push(request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().push_key(principal))
+
+    @router.put("/api/phone/push")
+    async def api_phone_push_save(request: Request) -> Any:
+        principal = _principal(request)
+        body = await _body(request)
+        return await _call(lambda: _service().save_push_key(principal, body))
+
+    @router.post("/api/phone/push/test")
+    async def api_phone_push_test(request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().test_push(principal))
 
     @router.websocket("/api/phone/ws")
     async def api_phone_ws(websocket: WebSocket) -> None:

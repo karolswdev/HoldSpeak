@@ -184,6 +184,18 @@ function ProgramsLine({ words }: { words: string }) {
   );
 }
 
+/** Phone (PH16): `Reached you 3 times: 1 answered`, one object row that
+ *  opens the Phone wing. */
+function PhoneLine({ words }: { words: string }) {
+  return (
+    <Button variant="chrome" className="today-done-row today-phone" data-kind="phone" data-testid="today-phone"
+      onClick={() => openPhoneWing()}>
+      <img src={`${GLYPHS}call.png`} alt="" width={20} height={20} draggable={false} />
+      <span className="today-done-title">{words}</span>
+    </Button>
+  );
+}
+
 function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs = "", phone = "" }: {
   rows: readonly DoneRow[]; failed: boolean; open: boolean; onToggle: () => void; onRetry: () => void; now: Date;
   /** Programs (2026-10-28): `Programs: 1 running, 1 waits on you`, or "". */
@@ -210,13 +222,7 @@ function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs
         </span>
       </Button>
       {programs ? <ProgramsLine words={programs} /> : null}
-      {phone ? (
-        <Button variant="chrome" className="today-done-row today-phone" data-kind="phone" data-testid="today-phone"
-          onClick={() => openPhoneWing()}>
-          <img src={`${GLYPHS}call.png`} alt="" width={20} height={20} draggable={false} />
-          <span className="today-done-title">{phone}</span>
-        </Button>
-      ) : null}
+      {phone ? <PhoneLine words={phone} /> : null}
       {shown ? (
         <ul className="today-done-list" data-testid="today-done-rows">
           {rows.map((row) => {
@@ -406,8 +412,9 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   // from the hub's `programs` block of the Since this morning read.
   const [programsBlock, setProgramsBlock] = useState<ProgramsSinceMorning | null>(null);
   const programsToday = programsTodayLine(programsBlock);
-  // Phone (2026-10-28): one Since this morning line when the desk reached him.
-  const phoneToday = usePhoneToday(now.getHours() >= EVENING_HOUR);
+  // Phone (PH16): one line when the desk reached him in the last day, at any
+  // hour (the Programs pattern, PG18); never a line of zero.
+  const phoneToday = usePhoneToday(true);
   // Betterment A6: an automation's NEW result ("<name> has a new result").
   const news = useAutomationNews();
   const [loaded, setLoaded] = useState(false);
@@ -843,10 +850,13 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           {evening && done ? (
             <SinceThisMorning rows={done.rows} failed={done.failed} open={sinceShown} now={now} programs={programsToday} phone={phoneToday}
               onToggle={() => setSinceOpen(!sinceShown)} onRetry={retry} />
-          ) : programsToday ? (
-            /* PG18: before 17:00 the fold is not drawn; the Programs line
-               heads the day instead. */
-            <div className="today-programs-head" data-testid="today-programs-head"><ProgramsLine words={programsToday} /></div>
+          ) : programsToday || phoneToday ? (
+            /* PG18, PH16: before 17:00 the fold is not drawn; the Programs
+               and Phone lines head the day instead. */
+            <div className="today-programs-head" data-testid="today-programs-head">
+              {programsToday ? <ProgramsLine words={programsToday} /> : null}
+              {phoneToday ? <PhoneLine words={phoneToday} /> : null}
+            </div>
           ) : null}
           <PreparedBlock read={prepared} events={door?.upcoming ?? []} />
           <div className="today-grid">

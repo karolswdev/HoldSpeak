@@ -51,6 +51,19 @@ PUSH_HTTP2_UNAVAILABLE = "http2_unavailable"
 PUSH_UNREGISTERED = "unregistered"
 PUSH_STATES = (PUSH_READY, PUSH_NO_KEY, PUSH_HTTP2_UNAVAILABLE, PUSH_UNREGISTERED)
 APNS_HOSTS = {"production": "https://api.push.apple.com", "sandbox": "https://api.sandbox.push.apple.com"}
+#: The phone key store's slot for his APNs key (one JSON text: ``p8``,
+#: ``key_id``, ``team_id``, ``bundle_id``, ``environment``).
+APNS_SLOT = "apns-key"
+#: The HoldSpeak app's bundle id (``apple/scripts/gen-device-project.rb``,
+#: ``apple/App/Info.plist``): the APNs topic when he saves no other.
+DEFAULT_BUNDLE_ID = "dev.holdspeak.mobile"
+#: The fields of the saved key; ``p8`` is never read back to a face.
+APNS_FIELDS = ("p8", "key_id", "team_id", "bundle_id")
+#: The Test push's answer codes (``POST /api/phone/push/test``).
+TEST_ACCEPTED = "accepted"
+TEST_STALE = "stale"
+TEST_REFUSED = "refused"
+TEST_FAILED = "failed"
 
 
 def sign(secret: str, event_json: str) -> str:
@@ -153,6 +166,10 @@ def apns_request(key: ApnsKey, target: Target, payload: Mapping[str, str], ttl: 
     if call:
         body: dict[str, Any] = {"aps": {}, **dict(payload)}
         push_type = "voip"
+    elif target.kind == "silent":  # the Test push: wakes nothing, shows nothing
+        body = {"aps": {"content-available": 1}, **dict(payload)}
+        push_type = "background"
+        high_priority = False  # Apple takes a background push at priority 5 only
     else:
         body = {"aps": {"alert": {"title": "HoldSpeak", "body": _alert_text(payload)},
                         "category": REPLY_CATEGORY, "mutable-content": 1, "sound": "default"}, **dict(payload)}
@@ -191,10 +208,12 @@ class ApnsPush:
     def push_state(self) -> str:
         return PUSH_READY if http2_ready() else PUSH_HTTP2_UNAVAILABLE
 
-    def send(self, target: Target, payload: Mapping[str, str], ttl: int, high_priority: bool) -> str:
+    def answer(self, target: Target, payload: Mapping[str, str], ttl: int,
+               high_priority: bool) -> tuple[int, str]:
+        """Apple's HTTP status and its ``reason`` (status 0: no answer came)."""
         if not http2_ready():  # APNs is HTTP/2 only
             log.warning("APNs push not sent: http2_unavailable (install httpx[http2])")
-            return ERROR
+            return 0, PUSH_HTTP2_UNAVAILABLE
         import httpx
 
         url, headers, body = apns_request(self._key, target, payload, ttl, high_priority, host=self._host)
@@ -203,33 +222,110 @@ class ApnsPush:
                 response = client.post(url, headers=headers, json=body)
         except Exception as exc:
             log.warning(f"APNs push failed: {exc}")
-            return ERROR
-        if response.status_code == 200:
+            return 0, str(exc)[:200]
+        reason = ""
+        if response.status_code != 200:
+            try:
+                reason = str((response.json() or {}).get("reason") or "")
+            except ValueError:
+                reason = response.text[:200]
+        return response.status_code, reason
+
+    def send(self, target: Target, payload: Mapping[str, str], ttl: int, high_priority: bool) -> str:
+        status, reason = self.answer(target, payload, ttl, high_priority)
+        if status == 200:
             return OK
-        if response.status_code == 410 or (response.status_code == 400 and "BadDeviceToken" in response.text):
+        if status == 410 or (status == 400 and reason == "BadDeviceToken"):
             return UNREGISTERED
-        log.warning(f"APNs answered {response.status_code}: {response.text[:200]}")
+        if status:
+            log.warning(f"APNs answered {status}: {reason}")
         return ERROR
 
 
-def apns_from_keystore() -> Optional[ApnsPush]:
-    """His APNs key when he saved it (Settings ▸ Calls ▸ Phone); else None."""
+def answer_code(status: int, reason: str) -> str:
+    """The Test push's code for Apple's answer."""
+    if status == 200:
+        return TEST_ACCEPTED
+    if status == 410 or (status == 400 and reason == "BadDeviceToken"):
+        return TEST_STALE
+    if status == 403:
+        return TEST_REFUSED
+    return TEST_FAILED
+
+
+def read_saved_key() -> dict[str, Any]:
+    """The saved key's fields as stored (``{}`` when none). Never on the wire."""
     from .devices import _store_for
 
-    raw = _store_for("apns-key").get()
+    raw = _store_for(APNS_SLOT).get()
     if not raw:
-        return None
+        return {}
     try:
         data = json.loads(raw)
+    except ValueError:
+        log.warning("the saved APNs key is not readable")
+        return {}
+    return dict(data) if isinstance(data, dict) else {}
+
+
+def saved_key_presence() -> dict[str, Any]:
+    """What Settings ▸ Calls ▸ Phone ▸ Push reads: each field ``present`` or
+    not, and the bundle id (not a secret). The key itself never leaves."""
+    data = read_saved_key()
+    return {"present": {name: bool(str(data.get(name) or "").strip()) for name in ("p8", "key_id", "team_id")},
+            "bundle_id": str(data.get("bundle_id") or DEFAULT_BUNDLE_ID)}
+
+
+def save_key_fields(fields: Mapping[str, Any]) -> dict[str, Any]:
+    """Merge the given fields into the saved key (an empty value forgets
+    one). A ``p8`` that is not an EC private key raises ``ValueError``."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    from .devices import _store_for
+
+    data = read_saved_key()
+    for name in APNS_FIELDS:
+        if name not in fields:
+            continue
+        value = str(fields.get(name) or "").strip()
+        if name == "p8" and value:
+            try:
+                private = serialization.load_pem_private_key(value.encode("utf-8"), password=None)
+            except (ValueError, TypeError) as exc:
+                raise ValueError("not_a_p8") from exc
+            if not isinstance(private, ec.EllipticCurvePrivateKey):
+                raise ValueError("not_a_p8")
+            value += "\n"
+        elif name in ("key_id", "team_id"):
+            value = value.upper()
+        if value:
+            data[name] = value
+        else:
+            data.pop(name, None)
+    data.setdefault("bundle_id", DEFAULT_BUNDLE_ID)
+    _store_for(APNS_SLOT).put(json.dumps(data, separators=(",", ":")))
+    return saved_key_presence()
+
+
+def apns_from_keystore(*, host: Optional[str] = None) -> Optional[ApnsPush]:
+    """His APNs key when he saved all of it (Settings ▸ Calls ▸ Phone); else
+    None. ``host`` replaces Apple's (a rig's fake APNs server)."""
+    data = read_saved_key()
+    if not all(str(data.get(name) or "").strip() for name in APNS_FIELDS):
+        return None
+    try:
         return ApnsPush(ApnsKey(team_id=str(data["team_id"]), key_id=str(data["key_id"]), p8=str(data["p8"]),
                                 bundle_id=str(data["bundle_id"]),
-                                environment=str(data.get("environment") or "production")))
-    except (ValueError, KeyError, TypeError):
+                                environment=str(data.get("environment") or "production")), host=host)
+    except (KeyError, TypeError):
         log.warning("the saved APNs key is not readable")
         return None
 
 
 __all__ = [
+    "APNS_FIELDS", "APNS_SLOT", "DEFAULT_BUNDLE_ID", "TEST_ACCEPTED", "TEST_FAILED", "TEST_REFUSED", "TEST_STALE",
+    "answer_code", "read_saved_key", "save_key_fields", "saved_key_presence",
     "ApnsKey", "ApnsPush", "ERROR", "MAX_EVENT_BYTES", "NullPush", "OK", "PUSH_HTTP2_UNAVAILABLE", "PUSH_NO_KEY",
     "PUSH_READY", "PUSH_STATES", "PUSH_UNREGISTERED", "PushProvider", "REPLY_CATEGORY", "Target", "UNREGISTERED",
     "apns_from_keystore", "apns_jwt", "apns_request", "build_payload", "http2_ready", "sign",
