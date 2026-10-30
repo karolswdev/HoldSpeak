@@ -18,6 +18,14 @@ EgressChip sends its word through ``stateWords``; a host is shown as typed.
 - no ``.toUpperCase()`` on a host, a site, a vendor or an agent name;
 - no host literal is written in caps (``"GITHUB.COM"``).
 
+ENGINES-WORDS-LAST (2026-10-30) extends it to the Engines window
+(``RunsOnCore.tsx``, ``ModelLibraryCore.tsx``): StateChip and Token send
+their words through ``stateWords``, and the source says the word too.
+
+- no ``<StateChip label="...">`` literal there is written in caps
+  (``label="Added"``, never ``label="ADDED"``);
+- no ``<Token>`` there holds a caps literal (``No model matches``).
+
 Parked files (``_parked``) and tests are not product faces.
 """
 from __future__ import annotations
@@ -133,3 +141,27 @@ def test_no_host_literal_is_written_in_caps():
         if CAPS_HOST.search(line)
     ]
     assert not hits, "write a host as typed (github.com, not GITHUB.COM):\n" + "\n".join(hits)
+
+
+ENGINES_FILES = (
+    WEB / "features" / "runson" / "RunsOnCore.tsx",
+    WEB / "pages" / "cores" / "ModelLibraryCore.tsx",
+)
+STATE_LITERAL = re.compile(r"<StateChip\b[^>]*?\blabel=\"([^\"]*)\"", re.S)
+TOKEN_LITERAL = re.compile(r"<Token\b[^>]*>([^<{]*)<")
+
+
+def _shout(word: str) -> bool:
+    return bool(re.search(r"\b[A-Z]{3,}\b", word)) and word == word.upper()
+
+
+def test_no_engines_chip_or_token_literal_is_written_in_caps():
+    hits = []
+    for path in ENGINES_FILES:
+        text = path.read_text(encoding="utf-8")
+        for pattern in (STATE_LITERAL, TOKEN_LITERAL):
+            for m in pattern.finditer(text):
+                word = m.group(1).strip()
+                if word and _shout(word):
+                    hits.append(f"{path.relative_to(ROOT)}: {word!r}")
+    assert not hits, "write the Engines window's words in sentence case:\n" + "\n".join(hits)

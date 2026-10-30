@@ -115,7 +115,7 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
       </span>
       {service ? null : (
         <span data-testid="concierge-add-my-server">
-          <CheckGadget variant="token" label="MY SERVER" checked={a.mine} onChange={a.setMine} />
+          <CheckGadget variant="token" label="My server" checked={a.mine} onChange={a.setMine} />
         </span>
       )}
       <span className="runson-add-verbs">
@@ -138,10 +138,10 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
       {a.state === "READY" ? (
         <>
           <span className="runson-add-answer">
-            <StateChip state="success" label="READY" icon="●" />
+            <StateChip state="success" label="Ready" icon="●" />
             {a.tools ? (
               <Token className="surface-token" data-testid="concierge-add-tools">
-                {a.tools === "yes" ? "TOOLS" : a.tools === "no" ? "NO TOOLS" : "TOOLS UNKNOWN"}
+                {a.tools === "yes" ? "Tools" : a.tools === "no" ? "No tools" : "Tools unknown"}
               </Token>
             ) : null}
           </span>
@@ -150,26 +150,26 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
       ) : null}
       {a.state === "KEY_REQUIRED" ? (
         <span className="runson-add-answer" role="alert" data-testid="concierge-add-key-answer">
-          <StateChip state="failure" label="KEY REQUIRED" />
+          <StateChip state="failure" label="Key required" />
         </span>
       ) : null}
       {a.state === "KEY_INVALID" ? (
         <span className="runson-add-answer" role="alert" data-testid="concierge-add-key-answer">
-          <StateChip state="failure" label="KEY INVALID" />
-          <Token className="surface-token">BAD CHARACTERS</Token>
+          <StateChip state="failure" label="Key invalid" />
+          <Token className="surface-token">Bad characters</Token>
         </span>
       ) : null}
       {/* A.3: the answer is tokens (the word and the host), never the
           server's sentence. */}
       {a.state === "UNREACHABLE" ? (
         <span className="runson-add-answer" role="alert" data-testid="concierge-add-unreachable">
-          <StateChip state="failure" label="UNREACHABLE" />
-          <Token code={Boolean(host)} className="surface-token" data-testid="concierge-add-reason">{host || "NO ADDRESS"}</Token>
+          <StateChip state="failure" label="Unreachable" />
+          <Token code={Boolean(host)} className="surface-token" data-testid="concierge-add-reason">{host || "No address"}</Token>
         </span>
       ) : null}
       {a.state === "NOT_ADDED" ? (
         <span className="runson-add-answer" role="alert">
-          <StateChip state="failure" label="NOT ADDED" />
+          <StateChip state="failure" label="Not added" />
           <Token className="surface-token" data-testid="concierge-add-reason">{a.reason}</Token>
         </span>
       ) : null}
@@ -369,9 +369,9 @@ function ModelPicker({ ctrl, presets = [] }: { ctrl: RunsOnController; presets?:
               <li key={model} className="runson-picker-row" data-testid="concierge-add-pick" data-model={model} data-preset={preset ? "" : undefined}>
                 {preset ? <Token className="surface-token runson-picker-preset">{preset}</Token> : null}
                 <Token className="surface-token runson-picker-model">{model}</Token>
-                {context ? <Token className="surface-token">{context.toLocaleString("en-US")} TOKENS</Token> : null}
+                {context ? <Token className="surface-token">{context.toLocaleString("en-US")} tokens</Token> : null}
                 {used ? (
-                  <StateChip state="success" label="ADDED" icon="●" />
+                  <StateChip state="success" label="Added" icon="●" />
                 ) : (
                   <Button dense variant="primary" disabled={ctrl.busy} onClick={() => void a.save(model)} data-testid="concierge-add-use">
                     Use
@@ -382,7 +382,7 @@ function ModelPicker({ ctrl, presets = [] }: { ctrl: RunsOnController; presets?:
           })}
         </ul>
       ) : (
-        <Token className="surface-token" data-testid="concierge-add-no-match">NO MODEL MATCHES</Token>
+        <Token className="surface-token" data-testid="concierge-add-no-match">No model matches</Token>
       )}
     </div>
   );
@@ -492,7 +492,7 @@ function AddByKind({
                 <span className="runson-kind-row-name">{agent.name}</span>
                 <EgressChip {...agentChip(agent.vendor, agent.vendorScope)} />
                 {agent.added ? (
-                  <StateChip state="success" label="ADDED" icon="●" />
+                  <StateChip state="success" label="Added" icon="●" />
                 ) : found ? (
                   <Button dense variant="primary" disabled={ctrl.busy} data-testid={`runson-agent-add-${agent.preset}`} onClick={() => void ctrl.useFound(found.key)}>
                     Add
@@ -554,11 +554,11 @@ function AddByKind({
           {meshEngines.map((engine) => (
             <span key={engine.key} className="runson-kind-row">
               <span className="runson-kind-row-name">{engine.name}</span>
-              <StateChip state="success" label="ADDED" icon="●" />
+              <StateChip state="success" label="Added" icon="●" />
             </span>
           ))}
           <span className="runson-kind-install">
-            <Token className="surface-token">ON THE OTHER MAC, RUN</Token>
+            <Token className="surface-token">On the other Mac, run</Token>
             <code data-testid="runson-mesh-command">{`holdspeak mesh serve --hub ${typeof window === "undefined" ? "http://<this-mac>:8765" : window.location.origin}`}</code>
           </span>
         </div>
