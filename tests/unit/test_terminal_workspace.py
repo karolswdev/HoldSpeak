@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from holdspeak.delivery.terminal import TerminalTargetRegistry
 from holdspeak.principals import PrincipalRight, required_right
+from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.services.terminal_workspace import TerminalWorkspaceService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_terminal import build_delivery_terminal_router
@@ -243,6 +244,43 @@ def test_sessions_route_uses_injected_workspace_service() -> None:
     assert response.json()["status"] == "ok"
     assert response.json()["sessions"][0]["pane_id"] == "%5"
     assert required_right("GET", "/api/delivery/terminal/sessions") is PrincipalRight.OWNER
+
+
+def test_delivery_service_composes_workspace_with_shared_targets() -> None:
+    targets = object()
+    service = DeliveryService(None)
+    workspace = service.terminal_workspace_service(targets=targets, local_node_id="node-a")
+    assert workspace.targets is targets
+    assert workspace.local_node_id == "node-a"
+
+
+def test_sessions_route_delegates_workspace_composition_and_shared_targets() -> None:
+    tmux = IdentityTmux()
+    targets = TerminalTargetRegistry(runner=tmux)
+    seen: dict[str, object] = {}
+
+    class ComposedDelivery:
+        def terminal_workspace_service(self, *, targets, local_node_id):
+            seen.update({"targets": targets, "local_node_id": local_node_id})
+            return TerminalWorkspaceService(
+                targets,
+                local_node_id=local_node_id,
+                pane_loader=lambda: {"status": "ok", "panes": [_pane(tmux)]},
+                session_loader=lambda: [],
+            )
+
+    app = FastAPI()
+    app.include_router(
+        build_delivery_terminal_router(
+            WebContext(get_state=lambda: {}, delivery_service=ComposedDelivery()),
+            targets=targets,
+            local_node_id="node-a",
+        )
+    )
+    response = TestClient(app).get("/api/delivery/terminal/sessions")
+    assert response.status_code == 200
+    assert response.json()["sessions"][0]["target"]["node_id"] == "node-a"
+    assert seen == {"targets": targets, "local_node_id": "node-a"}
 
 
 def test_missing_tmux_is_typed_and_empty() -> None:

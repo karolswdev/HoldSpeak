@@ -367,7 +367,13 @@ export function createTerminalSession(
         commandError = null;
         const wasEnabled = get().canType;
         set({ canType: false, busy: sendEpoch === lifecycle, error: null });
-        if (wasEnabled) await disarmTerminal(controllerDescriptor);
+        if (wasEnabled) {
+          const result = await disarmTerminal(controllerDescriptor);
+          if (!result.ok) {
+            commandError = `Disarm failed: ${result.error}`;
+            set({ error: commandError });
+          }
+        }
       },
       sendData(data) {
         if (!activity.focused || !get().canType) return false;
@@ -404,7 +410,12 @@ export function createTerminalSession(
         });
       },
       async sendKeys(keys, _label) {
-        if (!keys.length || !get().canType) return false;
+        if (!keys.length) return false;
+        if (!get().canType) {
+          commandError = "Enable typing first";
+          set({ error: commandError });
+          return false;
+        }
         const normalized = normalizeTerminalKeys(keys);
         if (normalized.rejected) {
           commandError = `Unsupported key: ${normalized.rejected}`;

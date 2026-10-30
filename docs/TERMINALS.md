@@ -12,6 +12,8 @@ Each window has its own output, input and typing control.
    terminals together. Other application windows keep their placement.
 
 **Focus** brings an open terminal to the front.
+Agent state updates when HoldSpeak receives its session events. Press
+**Refresh** to discover shells you started outside the Desk.
 The Desk keeps open windows and their placement in the hub, so a reload can
 restore them. A terminal that has ended stays unavailable; its old window does
 not become a different shell with a reused pane number.

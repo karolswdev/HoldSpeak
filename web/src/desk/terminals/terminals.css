@@ -98,7 +98,7 @@
 }
 
 .desk-next .terminals-row-copy strong,
-.desk-next .terminals-row-copy small,
+.desk-next .terminals-row-copy .kit-listrow-meta,
 .desk-next .terminals-toolbar-path {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -109,7 +109,7 @@
   font: 650 var(--font-size-sm) / var(--line-height-tight) var(--font-sans);
 }
 
-.desk-next .terminals-row-copy small,
+.desk-next .terminals-row-copy .kit-listrow-meta,
 .desk-next .terminals-row-state {
   color: var(--text-muted);
   font: var(--font-size-xs) / var(--line-height-tight) var(--font-sans);
@@ -173,6 +173,14 @@
   overflow: hidden;
   padding: 0 var(--terminals-gap);
   background: var(--wb-paper);
+}
+
+/* Shared PaneWell keeps a generous standalone terminal floor. Native terminal
+ * frames also need to fit their bounded compositor rect, so let this instance
+ * inherit the allocated flex height and keep scrolling inside xterm. */
+.desk-next .terminals-window .terminal-well-screen {
+  min-height: 0;
+  max-height: none;
 }
 
 .desk-next .terminals-screen > .terminal-well,

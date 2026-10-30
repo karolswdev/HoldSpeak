@@ -207,17 +207,31 @@ export async function armTerminal(descriptorValue: TerminalDescriptor): Promise<
   }
 }
 
-export async function disarmTerminal(descriptorValue: TerminalDescriptor): Promise<void> {
+export async function disarmTerminal(descriptorValue: TerminalDescriptor): Promise<
+  | { ok: true; status: "disarmed"; receipt?: TerminalReceipt | null }
+  | { ok: false; error: string; status?: string; receipt?: TerminalReceipt | null }
+> {
   const targetValue = steeringUrl(descriptorValue.key, descriptorValue.target.node_id, "disarm");
   try {
-    await apiRequest(targetValue.url, {
+    const response = await apiRequest(targetValue.url, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(targetValue.body),
     });
+    const data = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const status = asText(data.status);
+    const receipt = data.receipt && typeof data.receipt === "object"
+      ? data.receipt as TerminalReceipt
+      : null;
+    if (response.ok && status === "disarmed") return { ok: true, status, receipt };
+    return {
+      ok: false,
+      error: asText(data.detail, asText(data.error, status || `HTTP ${response.status}`)),
+      status: status || undefined,
+      receipt,
+    };
   } catch {
-    // The next read will report the authoritative posture.  Close is local and
-    // must not turn a disarm transport failure into a retry loop.
+    return { ok: false, error: "hub unreachable" };
   }
 }
 

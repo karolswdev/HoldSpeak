@@ -17,7 +17,10 @@ export function openTerminalWindow(
     set({ terminalWindows: [...windows, terminalWindowEntry(id, origin)] });
   }
   get().restorePanel(terminalWindowId(id));
-  get().recordRecentOpen(`terminal:${id}`);
+  // Terminal descriptor frames are dynamic and are not a DeskToolShelf
+  // recent-ref family. Record the canonical hosted application instead of
+  // consuming recent slots with an unsupported terminal:<id> reference.
+  get().recordRecentOpen("app:open-terminals");
 }
 
 export function closeTerminalWindow(

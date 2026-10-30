@@ -62,6 +62,9 @@ def _inventory(page: Any, base: str) -> Any:
 
 def _type(frame: Any, words: str) -> None:
     frame.get_by_test_id("terminal-enable-typing").click()
+    # The press requests a grant. Keyboard input is permitted only after the
+    # rendered acknowledgement, which can take longer under the broad rig.
+    frame.get_by_role("button", name="View only", exact=True).wait_for(state="visible")
     helper = frame.locator("textarea.xterm-helper-textarea")
     helper.focus()
     helper.type(words, delay=45)
@@ -139,12 +142,42 @@ def test_independent_input_persistent_views_and_close_without_kill(
             # An Escape belongs to the TUI. It must not dismiss the frame.
             first.locator("textarea.xterm-helper-textarea").press("Escape")
             assert first.is_visible()
+            if width == 1440:
+                # Reflow follows this window's width, even on a wide Desk.
+                # The physical pane stays wide/tall and must scroll within
+                # the smaller well rather than hiding below clipped chrome.
+                frame_box = first.bounding_box()
+                grip = first.locator(".desk-window-grip").bounding_box()
+                assert frame_box and grip
+                start_x, start_y = grip["x"] + grip["width"] / 2, grip["y"] + grip["height"] / 2
+                page.mouse.move(start_x, start_y)
+                page.mouse.down()
+                page.mouse.move(start_x + 480 - frame_box["width"], start_y + 360 - frame_box["height"], steps=8)
+                page.mouse.up()
+                _settle(page)
+                small = first.bounding_box()
+                assert small and small["width"] <= 520 and small["height"] <= 400, small
+                well = first.locator(".terminal-well")
+                screen = first.locator(".terminal-well-screen")
+                well_box, screen_box = well.bounding_box(), screen.bounding_box()
+                assert well_box and screen_box and screen_box["y"] + screen_box["height"] <= well_box["y"] + well_box["height"] + 1
+                assert screen.evaluate("element => element.scrollHeight > element.clientHeight")
+                screen.evaluate("element => element.scrollTop = element.scrollHeight")
+                assert screen.evaluate("element => element.scrollTop > 0")
+                screen.evaluate("element => element.scrollTop = 0")
+                SHOTS.mkdir(parents=True, exist_ok=True)
+                page.screenshot(path=str(SHOTS / "workspace-narrow-desktop.png"))
 
             _inventory(page, base)
             second = _open(page, b)
             marker_b = f"observed-B-{width}"
             _type(second, f"printf '{marker_b}\\n'")
-            _eventually(lambda: marker_b in [line.strip() for line in _capture(pane_b).splitlines()])
+            try:
+                _eventually(lambda: marker_b in [line.strip() for line in _capture(pane_b).splitlines()])
+            except AssertionError as error:
+                SHOTS.mkdir(parents=True, exist_ok=True)
+                page.screenshot(path=str(SHOTS / f"failed-input-{width}.png"))
+                raise AssertionError(f"Independent input not observed. A={_capture(pane_a)!r}; B={_capture(pane_b)!r}; view={second.inner_text()!r}") from error
             assert marker_b not in _capture(pane_a)
             assert marker_a not in _capture(pane_b)
             assert page.locator('[id^="terminal:"]').count() == 2

@@ -499,3 +499,40 @@ The key Tuesday test is simple: the owner can open pane A, open pane B, see and
 control both without either window changing identity, reload the Desk and find
 both windows again, and receive an honest reattach/refusal when a pane was
 recycled. Anything less is still a singleton with better paint.
+
+
+## Final implementation and review (2026-10-30)
+
+The settled implementation is described in DESIGN.md and RESULT.md. Discovery
+uses the live target registry, the factory validates and forwards optional cwd,
+and the existing hub window registry accepts the inventory and terminal family.
+The direct `/terminals` page is served by the production SPA allowlist.
+
+A second review found two real gaps and fixed them in this lane. Arm grants now
+pin the rich process fingerprint; `require_grant` refuses and revokes a grant
+when the same pane number belongs to a new process. Hook matching rejects
+conflicting available coordinates (including integer zero), ignores ended and
+effectively dead records, and renders the existing registry's age-decayed state.
+
+Final focused command, under the machine lock and isolated HOME:
+
+```sh
+uv run python scripts/test_lock.py -- uv run pytest -q -n 8 --dist worksteal \
+  tests/unit/test_coder_steering_panes.py \
+  tests/unit/test_terminal_workspace.py
+```
+
+```text
+12 tests collected in 0.75s
+12 passed in 2.64s
+```
+
+Logs: `.tmp/terminal-workspace/respawn.collect.log` and `respawn.run.log`.
+The earlier five-file backend run passed 101 cases; the direct-page regression
+passed six. The root lane owns the final integrated quick check.
+
+Hook records have no process fingerprint. A non-ended historical hook with
+matching pane number and coordinates remains correlated metadata until normal
+decay; it is not process proof. Live target generation and the typing grant
+provide independent process checks. Legacy `%N`-only injected test runners keep
+their explicit compatibility behavior. No owner process or provider was used.

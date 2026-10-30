@@ -46,7 +46,7 @@ describe("per-instance terminal session", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.mocked(armTerminal).mockResolvedValue({ ok: true });
-    vi.mocked(disarmTerminal).mockResolvedValue(undefined);
+    vi.mocked(disarmTerminal).mockResolvedValue({ ok: true, status: "disarmed" });
     vi.mocked(sendTerminalCommand).mockResolvedValue({
       ok: true,
       receipt: { receipt_id: "receipt-1", state: "succeeded", outcome: "delivered" },
@@ -126,6 +126,14 @@ describe("per-instance terminal session", () => {
     expect(vi.mocked(sendTerminalCommand).mock.calls[1][2]).toMatchObject({ text: "two\nthree", submit: false });
   });
 
+  it("makes a view-only key action explain how to enable typing", async () => {
+    const session = createTerminalSession(descriptor("view-only-key"));
+    session.getState().start();
+    await flush();
+    expect(await session.getState().sendKeys(["Enter"], "ENTER")).toBe(false);
+    expect(session.getState().error).toBe("Enable typing first");
+  });
+
   it("sends natural single-line keyboard text, including a standalone space, as literal keys", async () => {
     const session = createTerminalSession(descriptor("typing"));
     session.getState().start();
@@ -157,6 +165,26 @@ describe("per-instance terminal session", () => {
     expect(sendTerminalCommand).not.toHaveBeenCalled();
     expect(session.getState().canType).toBe(false);
     expect(disarmTerminal).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a disarm failure visible after local typing is disabled", async () => {
+    const session = createTerminalSession(descriptor("disarm-failure"));
+    session.getState().start();
+    await flush();
+    expect(await session.getState().enableTyping()).toBe(true);
+    vi.mocked(disarmTerminal).mockResolvedValueOnce({ ok: false, error: "hub unreachable" });
+
+    await session.getState().disableTyping();
+    expect(session.getState().canType).toBe(false);
+    expect(session.getState().error).toBe("Disarm failed: hub unreachable");
+
+    vi.mocked(readTerminalSubscription).mockResolvedValueOnce(
+      response({ status: "not_modified", sequence: 1, hash: "h1" }),
+    );
+    vi.advanceTimersByTime(1_200);
+    await flush();
+    expect(session.getState().status).toBe("live");
+    expect(session.getState().error).toBe("Disarm failed: hub unreachable");
   });
 
   it("resolves text only after the receipt, so a draft cannot clear at enqueue", async () => {

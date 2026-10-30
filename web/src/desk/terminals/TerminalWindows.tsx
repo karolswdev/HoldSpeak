@@ -6,6 +6,7 @@ import { DeskWindowFrame } from "../components/DeskWindow";
 import { useFrontWindowId } from "../components/window/windowRegistry";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
+import { AGENT_CHANGE_KINDS, useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { createTerminalSession } from "./terminalSession";
 import type { TerminalDescriptor, TerminalKey, TerminalSessionState } from "./types";
 import {
@@ -13,6 +14,7 @@ import {
   terminalDescriptorId,
   terminalInventorySnapshot,
   subscribeTerminalInventory,
+  TERMINALS_WINDOW_ID,
   terminalWindowId,
   type TerminalInventoryState,
 } from "./windows";
@@ -20,18 +22,26 @@ import "./terminals.css";
 
 const EMPTY_SESSION: TerminalSessionState | null = null;
 
-function useTerminalInventory(hasOpenWindows: boolean) {
+function useTerminalInventory(hasOpenWindows: boolean, inventoryOpen: boolean) {
   const snapshot = useSyncExternalStore(
     subscribeTerminalInventory,
     terminalInventorySnapshot,
     terminalInventorySnapshot,
   );
+  const refreshWhenOpen = () => {
+    if (hasOpenWindows || inventoryOpen) void refreshTerminalInventory();
+  };
+  // TerminalWindows is the one desk-level owner of live inventory refreshes.
+  // The terminal frames themselves only consume this projection; they do not
+  // create one bus subscription per controller.
+  useOnCoderFrame(refreshWhenOpen);
+  useOnDeskChanged(refreshWhenOpen, AGENT_CHANGE_KINDS);
   useEffect(() => {
     // Restored terminal frames may be the only mounted terminal surface after
     // reload. They must hydrate their own inventory instead of relying on the
     // inventory app having been opened first.
-    if (hasOpenWindows && snapshot.status === "idle") void refreshTerminalInventory();
-  }, [hasOpenWindows, snapshot.status]);
+    if ((hasOpenWindows || inventoryOpen) && snapshot.status === "idle") void refreshTerminalInventory();
+  }, [hasOpenWindows, inventoryOpen, snapshot.status]);
   return snapshot;
 }
 
@@ -75,6 +85,14 @@ function keyFace(key: TerminalKey): string {
   return keyLabel(key) === "C-c" ? "Ctrl-C" : keyLabel(key);
 }
 
+const terminalInventoryError = "Cannot read terminals. Draft kept. Open Terminals and press Refresh.";
+const terminalTmuxAbsent = "Terminal inventory unavailable. Draft kept. Open Terminals and press Refresh.";
+const terminalDescriptorAbsent = "Terminal ended or was removed. Draft kept. Open Terminals and press Refresh.";
+
+function withTerminalDetail(message: string, detail: string | null): string {
+  return detail ? `${message} · ${detail}` : message;
+}
+
 function TerminalWindow({
   descriptor,
   id,
@@ -91,6 +109,7 @@ function TerminalWindow({
   const minimized = useDesk((state) => state.panelMin.includes(id));
   const [focusSignal, setFocusSignal] = useState(0);
   const [findOpen, setFindOpen] = useState(false);
+  const [typingPending, setTypingPending] = useState(false);
   const draftKey = `terminal:${descriptorId}`;
   const draft = useDesk((state) => state.drafts[draftKey] ?? "");
   const setDraft = useDesk((state) => state.setDraft);
@@ -103,9 +122,14 @@ function TerminalWindow({
     if (ok && useDesk.getState().drafts[draftKey] === capturedDraft) setDraft(draftKey, null);
   };
   const toggleTyping = async () => {
-    if (!session) return;
-    if (session.canType) await session.disableTyping();
-    else await session.enableTyping();
+    if (!session || typingPending) return;
+    setTypingPending(true);
+    try {
+      if (session.canType) await session.disableTyping();
+      else await session.enableTyping();
+    } finally {
+      setTypingPending(false);
+    }
   };
   const keys: TerminalKey[] = ["C-c", "Escape", "Tab", "Up", "Down", "Left", "Right", "Enter"];
   const title = descriptor ? `${descriptor.agent !== "pane" ? descriptor.agent : "Shell"} · ${descriptor.label}` : `Terminal · ${descriptorId}`;
@@ -118,12 +142,12 @@ function TerminalWindow({
       : inventory.status === "idle" || inventory.status === "loading"
         ? "Connecting to terminal inventory…"
         : inventory.status === "error"
-          ? `Unable to read terminal inventory${inventory.detail ? ` · ${inventory.detail}` : ""}`
+          ? withTerminalDetail(terminalInventoryError, inventory.detail)
           : inventory.status === "tmux_absent"
-            ? `Terminal inventory unavailable${inventory.detail ? ` · ${inventory.detail}` : ""}`
+            ? withTerminalDetail(terminalTmuxAbsent, inventory.detail)
             : descriptor
               ? "Terminal unavailable"
-              : "This terminal is no longer in the inventory.";
+              : terminalDescriptorAbsent;
   useEffect(() => {
     if (!setActivity || typeof document === "undefined") return;
     const update = () => setActivity({
@@ -169,7 +193,14 @@ function TerminalWindow({
         onPointerDown={() => useDesk.getState().focusPanel(id)}
       >
         <Toolbar label="Terminal controls" data-testid="terminal-toolbar">
-          <Button dense variant={session?.canType ? "secondary" : "ghost"} onClick={() => void toggleTyping()} data-testid="terminal-enable-typing">
+          <Button
+            dense
+            variant={session?.canType ? "secondary" : "ghost"}
+            loading={typingPending}
+            disabled={typingPending}
+            onClick={() => void toggleTyping()}
+            data-testid="terminal-enable-typing"
+          >
             {session?.canType ? "View only" : "Enable typing"}
           </Button>
           <ToolbarFold
@@ -230,7 +261,8 @@ function TerminalWindow({
 
 export function TerminalWindows() {
   const terminalWindows = useDesk((state) => state.terminalWindows);
-  const inventory = useTerminalInventory(terminalWindows.length > 0);
+  const inventoryOpen = useDesk((state) => Boolean(state.windowsById[TERMINALS_WINDOW_ID]));
+  const inventory = useTerminalInventory(terminalWindows.length > 0, inventoryOpen);
   const descriptorById = useMemo(() => new Map(inventory.sessions.map((session) => [session.id, session])), [inventory.sessions]);
   return (
     <>

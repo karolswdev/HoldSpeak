@@ -299,7 +299,7 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
   // Betterment P4 (projects): Projects ▸ (All projects, then each) and Decisions.
   // Floor lane (2026-10-26): Archive left the floor; Go ▸ Archive is its door.
   const DAILY_WORK = ["Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents",
-    "Ask AI", "Speak", "Automations", "Memory", "Calls", "Voice commands", "Archive"];
+    "Ask AI", "Speak", "Automations", "Memory", "Calls", "Voice commands", "Terminals", "Archive"];
   // Programs and Recordings (2026-10-28) are on the desktop Go only: a Program
   // is driven from the desk (its asks reach the phone through Needs you) and a
   // phone cannot film its screen; the phone's Go is at its 852 px limit.
@@ -359,7 +359,7 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     // Work declares eight rows, including the opt-in feedback verb,
     // Archive (off the floor 2026-10-26), Calls and Recordings (2026-10-28).
     // Daily gained Programs (2026-10-28), after Agents.
-    expect(fromManifest).toBe(11 + 8 + 8);
+    expect(fromManifest).toBe(11 + 9 + 8);
   });
 
   // Betterment P4 (projects): Projects and Decisions are one press from Go,

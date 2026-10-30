@@ -69,10 +69,22 @@ export function refreshTerminalInventory(): Promise<void> {
   inventoryRead = readTerminalSessions()
     .then((answer: TerminalSessionsResponse) => {
       const status = answer.status === "tmux_absent" || answer.status === "error" ? answer.status : "ok";
-      publishTerminalInventory({ status, detail: answer.detail ?? null, sessions: answer.sessions });
+      // A failed read is not permission to tear down healthy terminal
+      // controllers. Keep the last successful descriptors on the glass while
+      // exposing the new failure and its detail; only a successful inventory
+      // replaces the descriptor projection.
+      publishTerminalInventory({
+        status,
+        detail: answer.detail ?? null,
+        sessions: status === "ok" ? answer.sessions : inventory.sessions,
+      });
     })
     .catch((error: unknown) => {
-      publishTerminalInventory({ status: "error", detail: error instanceof Error ? error.message : "terminal inventory unavailable", sessions: [] });
+      publishTerminalInventory({
+        status: "error",
+        detail: error instanceof Error ? error.message : "terminal inventory unavailable",
+        sessions: inventory.sessions,
+      });
     })
     .finally(() => {
       inventoryRead = null;

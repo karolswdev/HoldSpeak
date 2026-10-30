@@ -157,3 +157,23 @@ Duration    1.98s
 `tsc --noEmit` and `git diff --check` passed. The token gate still reports its existing repository-wide baseline of 183 raw values; none are in the terminal additions. The architecture guard remains red on existing baseline findings; no terminal, Conductor, lane, or parked picker finding remains after using the surface barrel imports.
 
 The native fit pass is now in place: terminal frames use the existing `desk-pullout` material/positioning, their body is flex-bounded so the terminal screen scrolls internally, and the default frame height is 560px. The toolbar keeps the existing shared Keys menu (with the transport token `C-c` presented as `Ctrl-C`) and a shared Find toggle; the interactive pane sets `copyOnSelect={false}` and uses the landed `PaneWell` `header="find" | "none"` contract. Root's real-browser walk is green at 1440 and 393: two independent terminal windows, readable output, quiet menu/Find behavior, and composer/status regions remain inside the viewport above the phone dock. The browser walk also proved the new-shell cwd, independent keyboard input, reload without opening inventory, and close-with-process-alive behavior. The focused Vitest tail above predates only the final native-fit CSS/toolbar polish; the root lane owns the required final quick check and browser rerun.
+
+Final bounded integration verification ran under the machine lock after the live-inventory, copy, menu, metadata, resize-fit, and recent-reference fixes:
+
+```text
+uv run --no-project python ../scripts/test_lock.py -- ./node_modules/.bin/vitest run --maxWorkers=8 \
+  src/desk/terminals/__tests__/terminals.app.test.tsx \
+  src/desk/__tests__/menuGlyphs.test.tsx \
+  src/desk/__tests__/applicationManifest.test.ts \
+  src/desk/__tests__/menus.app.test.tsx \
+  src/desk/__tests__/palette.app.test.tsx \
+  src/desk/__tests__/phoneDoors.test.tsx \
+  src/desk/components/DeskMenuBar.test.tsx \
+  src/desk/components/window/phoneRing.test.tsx
+
+Test Files  8 passed (8)
+Tests       125 passed (125)
+Duration    10.28s
+```
+
+`tsc --noEmit -p tsconfig.json` passed with no output. The live inventory owner now refreshes only when its app or terminal frames are open, preserves descriptors on failed reads, and reports retained work plus a retry path. The canonical Terminals app is the only recent reference (`app:open-terminals`); dynamic `terminal:<id>` references are not recorded.

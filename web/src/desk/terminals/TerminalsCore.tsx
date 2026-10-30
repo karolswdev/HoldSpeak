@@ -11,6 +11,7 @@ import {
   subscribeTerminalInventory,
   terminalInventorySnapshot,
   terminalWindowId,
+  type TerminalInventoryState,
 } from "./windows";
 import type { TerminalDescriptor } from "./types";
 import "./terminals.css";
@@ -31,6 +32,14 @@ function stateWord(descriptor: TerminalDescriptor): string {
   if (state === "waiting" || state === "awaiting_response" || state === "needs_you") return "Needs you";
   if (state === "done" || state === "checked") return "Done";
   return state.replaceAll("_", " ");
+}
+
+const terminalInventoryError = "Cannot read terminals. Open views kept. Press Retry.";
+const terminalTmuxAbsent = "Terminal inventory unavailable. Open views kept. Press Retry.";
+
+function inventoryFailure(status: TerminalInventoryState["status"], detail: string | null): string {
+  const message = status === "tmux_absent" ? terminalTmuxAbsent : terminalInventoryError;
+  return detail ? `${message} · ${detail}` : message;
 }
 
 function tileTerminals(): void {
@@ -65,10 +74,10 @@ function TerminalRow({
       <span className="terminals-row-glyph" aria-hidden="true"><ToolGlyph kind="engine" /></span>
       <span className="terminals-row-copy">
         <strong>{descriptor.label || descriptor.session || "Terminal"}</strong>
-        <small>
+        <span className="kit-listrow-meta">
           {[descriptor.agent !== "pane" ? descriptor.agent : "Shell", descriptor.command].filter(Boolean).join(" · ")}
           {descriptor.current_path ? <><span aria-hidden="true"> · </span><span className="terminals-row-path">{descriptor.current_path}</span></> : null}
-        </small>
+        </span>
       </span>
       <DotWord className="terminals-row-state" tone={tone} live={tone === "info"} title={descriptor.state}>
         {stateWord(descriptor)}
@@ -215,8 +224,8 @@ export function TerminalsCore() {
 
       <div className="terminals-list" role="region" aria-label="Terminal sessions">
         {inventoryLoading && !inventory.sessions.length ? <SurfaceState loading /> : null}
-        {inventory.status === "error" ? <SurfaceState error={inventory.detail || "Terminal inventory unavailable."} onRetry={refresh} retryLabel="Retry" /> : null}
-        {inventory.status === "tmux_absent" ? <SurfaceState error={inventory.detail || "tmux is not available."} onRetry={refresh} retryLabel="Retry" /> : null}
+        {inventory.status === "error" ? <SurfaceState error={inventoryFailure(inventory.status, inventory.detail)} onRetry={refresh} retryLabel="Retry" /> : null}
+        {inventory.status === "tmux_absent" ? <SurfaceState error={inventoryFailure(inventory.status, inventory.detail)} onRetry={refresh} retryLabel="Retry" /> : null}
         {inventory.status !== "error" && inventory.status !== "tmux_absent" && !rows.length && !inventoryLoading ? (
           <SurfaceState empty emptyLabel={queryText ? "No matching terminals" : "No terminal sessions"} emptyHint="Create a shell or start an agent to see it here." />
         ) : null}

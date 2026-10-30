@@ -284,20 +284,20 @@ Focused Vitest command (machine-wide lock, disposable `HOME`; no owner tmux
 socket or provider access):
 
 ```sh
-HS_REAL_HOME="$HOME"; HS_TEST_HOME="$(mktemp -d)"; export HOME="$HS_TEST_HOME"; export npm_config_cache="$HS_REAL_HOME/.npm"; /usr/bin/python3 ../scripts/test_lock.py -- /Users/karol/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run --maxWorkers=8 src/desk/terminals/__tests__/input.test.ts src/desk/terminals/__tests__/terminalSession.test.ts src/desk/surface/__tests__/terminalWell.test.tsx
+HS_REAL_HOME="$HOME"; HS_TEST_HOME="$(mktemp -d)"; export HOME="$HS_TEST_HOME"; export npm_config_cache="$HS_REAL_HOME/.npm"; /usr/bin/python3 ../scripts/test_lock.py -- /Users/karol/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run --maxWorkers=8 src/desk/terminals/__tests__/input.test.ts src/desk/terminals/__tests__/terminalSession.test.ts src/desk/surface/__tests__/terminalWell.test.tsx src/desk/__tests__/writeReceiptGuard.test.ts
 ```
 
 Collection and run tail:
 
 ```text
-test_lock: acquired after 110 s
+test_lock: acquired after 133 s
 
  RUN  v4.1.9 /Users/karol/.codex/worktrees/terminal-workspace/HoldSpeak/web
 
- Test Files  3 passed (3)
-      Tests  24 passed (24)
-   Start at  16:20:23
-   Duration 1.74s (transform 615ms, setup 310ms, import 821ms, tests 493ms, environment 980ms)
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+   Start at  16:31:25
+   Duration 3.74s (transform 3.80s, setup 428ms, import 4.49s, tests 470ms, environment 1.35s)
 ```
 
 Typecheck command (exit 0, no diagnostics):
@@ -308,7 +308,8 @@ Typecheck command (exit 0, no diagnostics):
 
 The same locked run covered the terminal input decoder, per-instance
 terminal-session lifecycle/receipt/queue behavior, shared xterm wiring,
-quiet-header modes, contrast fallback, sticky failed-delivery messaging, and
-sticky arm-refusal messaging.
+quiet-header modes, contrast fallback, sticky failed-delivery messaging, sticky
+arm-refusal messaging, explicit disarm-failure reporting, and the swallowed-
+write guard.
 Owned-path `git diff --check` also exited 0. No files were staged or committed;
 the worktree remained shared with the other implementation lanes.

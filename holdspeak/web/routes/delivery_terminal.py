@@ -115,10 +115,10 @@ def build_delivery_terminal_router(
 
     def _workspace() -> Any:
         if holder["workspace"] is None:
-            from ...services.terminal_workspace import TerminalWorkspaceService
-
-            holder["workspace"] = TerminalWorkspaceService(
-                _targets(), local_node_id=local_node_id
+            if delivery_service is None:
+                raise RuntimeError("DeliveryService must be supplied at application composition")
+            holder["workspace"] = delivery_service.terminal_workspace_service(
+                targets=_targets(), local_node_id=local_node_id
             )
         return holder["workspace"]
 
