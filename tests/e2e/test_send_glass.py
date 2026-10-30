@@ -636,7 +636,7 @@ class TestSendGlass:
         label = self._send_to(MEET)
         assert label == "Send to", label
         rows = self._rows()
-        assert "Team updates · FILE" in rows and "Slack #leads · SLACK" in rows, rows
+        assert "Team updates · File" in rows and "Slack #leads · Slack" in rows, rows
         self._glass("C5-1")
         self._shot("C5-1-window-menu-send-to")
         self._pick("Slack #leads")
