@@ -15,7 +15,7 @@ answers this test records in fixtures/daily-week/today-prepared.json
 from __future__ import annotations
 
 import json
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +43,14 @@ class _HttpHub:
         from holdspeak.db import get_database
 
         return get_database()
+
+    @property
+    def root(self) -> Any:
+        """The hub's composition root (this process's): the Door service the
+        route reads, so ``pin_wire_day`` pins its clock."""
+        from holdspeak.runtime import composition
+
+        return composition.current()
 
 
 @pytest.fixture()
@@ -92,18 +100,25 @@ def _answer(mira_at: str) -> str:
     ])
 
 
-def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(hub: _HttpHub) -> None:
+def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(
+    hub: _HttpHub, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Done when (D9): with an engine that has the desk's tools, Morning prep
     exists, On, weekdays 07:30, made once; Run now (Prepare now) makes ONE
     result whose Put it in is Today; Today's read names the engine and what
     the agent looked at; Add on a suggested point puts it on Mira's agenda."""
     from holdspeak.services.automation_runs import ensure_morning_prep
     from holdspeak.workbench_templates import MORNING_PREP_ID
-    from tests.fixtures.daily_week import WEEK, seed
+    from tests.fixtures.daily_week import WEEK, WIRE_DAY, pin_wire_day, seed
     from tests.unit.test_desk_brief import _calendar_today
     from tests.unit.test_desk_speak import _record
 
-    seeded = seed(hub, monday=date.today(), engine=True)
+    # The wire day's clock (Tue 2026-10-20 10:00) for every reader of "today"
+    # and "upcoming": _calendar_today seeds the 1:1 with Mira on that day, so
+    # on the real clock the Door's upcoming list lost her once the day passed.
+    assert hub.root.door_service is not None
+    pin_wire_day(hub, monkeypatch)
+    seeded = seed(hub, monday=WIRE_DAY, engine=True)
     _calendar_today(hub, seeded["Mira"])  # type: ignore[arg-type]
     db = hub.db
 
