@@ -144,7 +144,8 @@ describe("Terminals inventory", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Find a session or folder" }), { target: { value: "scratch" } });
     expect(screen.queryByTestId(`terminal-row-${sessions[0].id}`)).toBeNull();
     const row = screen.getByTestId(`terminal-row-${sessions[1].id}`);
-    expect(row).toHaveTextContent("/work/scratch");
+    expect(row).toHaveClass("kit-listrow");
+    expect(screen.getByTitle("/work/scratch")).toBeTruthy();
     fireEvent.click(screen.getByTestId(`terminal-open-${sessions[1].id}`));
     expect(useDesk.getState().terminalWindows).toEqual([{ id: sessions[1].id, origin: null }]);
   });
@@ -178,6 +179,8 @@ describe("Terminals inventory", () => {
     await refreshTerminalInventory();
     render(<TerminalsCore />);
     expect(await screen.findByText("No terminal sessions")).toBeTruthy();
+    expect(screen.getByTestId("terminal-new")).toBeTruthy();
+    expect(screen.getByTestId("terminal-start-agent")).toBeTruthy();
   });
 
   it("follows coder and agent producers from one inventory owner, not window-only frames", async () => {
@@ -233,7 +236,7 @@ describe("Terminals inventory", () => {
     });
   });
 
-  it("keeps Enable typing pending until the arm receipt, then leaves focus to the pane click", async () => {
+  it("focuses on Type before the arm receipt and does not steal focus again on ACK", async () => {
     serveInventory();
     await refreshTerminalInventory();
     useDesk.setState({
@@ -255,13 +258,77 @@ describe("Terminals inventory", () => {
     expect(enable).toBeDisabled();
     expect(enable).toHaveAttribute("aria-busy", "true");
     expect(terminalHarness.enableTyping).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("mock-terminal-pane")).not.toHaveAttribute("data-focus-signal", "1");
+    expect(screen.getByTestId("mock-terminal-pane")).toHaveAttribute("data-focus-signal", "1");
 
     resolveArm?.(true);
     await waitFor(() => expect(enable).toHaveTextContent("View only"));
     const pane = screen.getByTestId("mock-terminal-pane");
-    expect(pane).not.toHaveAttribute("data-focus-signal", "1");
-    fireEvent.click(pane);
     expect(pane).toHaveAttribute("data-focus-signal", "1");
+  });
+
+  it("keeps a Message draft through hide, reopen and a failed send", async () => {
+    serveInventory();
+    await refreshTerminalInventory();
+    useDesk.setState({ terminalWindows: [{ id: sessions[0].id, origin: null }] });
+    render(<TerminalWindows />);
+
+    const message = await screen.findByTestId("terminal-message-toggle");
+    expect(screen.queryByTestId("terminal-composer")).toBeNull();
+    fireEvent.click(message);
+    const input = screen.getByRole("textbox", { name: "Message" });
+    fireEvent.change(input, { target: { value: "keep this" } });
+    fireEvent.click(message);
+    expect(screen.queryByTestId("terminal-composer")).toBeNull();
+    expect(screen.getByTestId("mock-terminal-pane")).toHaveAttribute("data-focus-signal", "1");
+    expect(useDesk.getState().drafts[`terminal:${sessions[0].id}`]).toBe("keep this");
+
+    fireEvent.click(message);
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("keep this");
+    fireEvent.click(screen.getByTestId("terminal-find"));
+    fireEvent.click(screen.getByTestId("terminal-find"));
+    expect(screen.getByTestId("mock-terminal-pane")).toHaveAttribute("data-focus-signal", "2");
+    const sendText = vi.fn(async () => false);
+    act(() => terminalHarness.setSnapshot({ canType: true, sendText }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Send" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => expect(sendText).toHaveBeenCalledWith("keep this", true));
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("keep this");
+  });
+
+  it.each([
+    { status: "live", canType: false, error: "Typing grant expired", words: "View only · Typing grant expired" },
+    { status: "live", canType: false, error: "Disarm failed: hub unreachable", words: "View only · Disarm failed: hub unreachable" },
+    { status: "live", canType: false, error: "Press Type first", words: "View only · Press Type first" },
+    { status: "live", canType: true, error: "pane refused the command", words: "Not sent · pane refused the command" },
+    { status: "unreachable", canType: false, error: "hub unreachable", words: "Not connected · hub unreachable" },
+  ])("names the current posture for $error", async ({ status, canType, error, words }) => {
+    serveInventory();
+    await refreshTerminalInventory();
+    useDesk.setState({ terminalWindows: [{ id: sessions[0].id, origin: null }] });
+    terminalHarness.setSnapshot({ status, canType, error });
+    render(<TerminalWindows />);
+    expect(screen.getByTestId("terminal-status")).toHaveTextContent(words);
+  });
+
+  it("shows one creation form at a time and replaces the inventory while open", async () => {
+    serveInventory();
+    render(<TerminalsCore />);
+    await screen.findByTestId(`terminal-row-${sessions[0].id}`);
+
+    fireEvent.click(screen.getByTestId("terminal-new"));
+    expect(screen.getByTestId("terminal-new-shell")).toBeTruthy();
+    expect(screen.queryByTestId(`terminal-row-${sessions[0].id}`)).toBeNull();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    fireEvent.change(screen.getByRole("textbox", { name: "Shell name" }), { target: { value: "keep-shell" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Folder (optional)" }), { target: { value: "/work/keep" } });
+
+    fireEvent.click(screen.getByTestId("terminal-start-agent"));
+    expect(screen.queryByTestId("terminal-new-shell")).toBeNull();
+    expect(screen.getByTestId("conductor-start-form")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("terminal-new"));
+    expect(screen.getByRole("textbox", { name: "Shell name" })).toHaveValue("keep-shell");
+    expect(screen.getByRole("textbox", { name: "Folder (optional)" })).toHaveValue("/work/keep");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByTestId(`terminal-row-${sessions[0].id}`)).toBeTruthy();
   });
 });

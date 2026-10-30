@@ -39,94 +39,18 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  padding: 0 var(--terminals-gap) var(--terminals-gap);
 }
 
 .desk-next .terminals-group {
-  margin: var(--space-2) 0 0;
-}
-
-.desk-next .terminals-group h3 {
-  margin: 0;
-  padding: var(--space-2) var(--space-1);
-  color: var(--text-muted);
-  font: 650 var(--font-size-xs) / var(--line-height-tight) var(--font-sans);
-}
-
-.desk-next .terminals-group ul {
-  display: grid;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.desk-next .terminals-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
   min-width: 0;
-  padding: var(--space-2);
-  border: var(--wb-frame) solid transparent;
-  border-radius: var(--radius-xs);
-}
-
-.desk-next .terminals-row:hover,
-.desk-next .terminals-row:focus-within {
-  border-color: var(--line-strong);
-  background: var(--wb-well);
-}
-
-.desk-next .terminals-row-glyph {
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  width: var(--wb-row-dense);
-  height: var(--wb-row-dense);
-  border-radius: var(--radius-xs);
-  background: var(--wb-well);
-  color: var(--wb-sel);
-  font: 700 var(--font-size-xs) / var(--line-height-tight) var(--font-mono);
-}
-
-.desk-next .terminals-row-copy {
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.desk-next .terminals-row-copy strong,
-.desk-next .terminals-row-copy .kit-listrow-meta,
-.desk-next .terminals-toolbar-path {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.desk-next .terminals-row-copy strong {
-  font: 650 var(--font-size-sm) / var(--line-height-tight) var(--font-sans);
-}
-
-.desk-next .terminals-row-copy .kit-listrow-meta,
-.desk-next .terminals-row-state {
-  color: var(--text-muted);
-  font: var(--font-size-xs) / var(--line-height-tight) var(--font-sans);
-}
-
-.desk-next .terminals-row-path {
-  font-family: var(--font-mono);
 }
 
 .desk-next .terminals-toolbar-path {
   color: var(--text-muted);
   font: var(--font-size-xs) / var(--line-height-tight) var(--font-mono);
-}
-
-.desk-next .terminals-row-state {
-  flex: none;
-  font-size: var(--font-size-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .desk-next .terminals-new-shell,
@@ -138,6 +62,12 @@
   padding: var(--space-2);
   border: var(--wb-frame) solid var(--line);
   background: var(--wb-well);
+}
+
+.desk-next .terminals-form-verbs {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 .desk-next .terminals-start-agent .cw-start {
@@ -171,8 +101,8 @@
   min-height: 0;
   display: flex;
   overflow: hidden;
-  padding: 0 var(--terminals-gap);
-  background: var(--wb-paper);
+  padding: 0;
+  background: var(--desk-terminal-screen);
 }
 
 /* Shared PaneWell keeps a generous standalone terminal floor. Native terminal
@@ -205,19 +135,6 @@
 }
 
 @container surface (max-width: 520px) {
-  .desk-next .terminals-row {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .desk-next .terminals-row-state {
-    margin-left: calc(var(--wb-row-dense) + var(--space-2));
-  }
-
-  .desk-next .terminals-row > .btn {
-    margin-left: auto;
-  }
-
   .desk-next .terminals-toolbar-path {
     display: none;
   }

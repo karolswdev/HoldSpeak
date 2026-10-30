@@ -78,6 +78,7 @@ export function createTerminalSession(
   let lifecycle = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let pollEpoch: number | null = null;
+  let refreshRequested = false;
   let pending: PendingItem[] = [];
   let batchTimer: ReturnType<typeof setTimeout> | null = null;
   let sendEpoch: number | null = null;
@@ -209,9 +210,26 @@ export function createTerminalSession(
       } finally {
         if (pollEpoch === atLifecycle) {
           pollEpoch = null;
+          const followUp = refreshRequested;
+          refreshRequested = false;
+          if (followUp && running && atLifecycle === lifecycle && activity.visible) {
+            clearTimer();
+            void poll(atLifecycle);
+            return;
+          }
           schedule(atLifecycle);
         }
       }
+    };
+
+    const requestPromptRead = (atLifecycle = lifecycle) => {
+      if (!running || atLifecycle !== lifecycle || !activity.visible) return;
+      if (pollEpoch === atLifecycle) {
+        refreshRequested = true;
+        return;
+      }
+      clearTimer();
+      void poll(atLifecycle);
     };
 
     const deliver = async (items: PendingItem[], atLifecycle = lifecycle): Promise<void> => {
@@ -253,6 +271,7 @@ export function createTerminalSession(
           const captured = new Set(items);
           pending = pending.filter((candidate) => !captured.has(candidate));
           resolveItems(items, true);
+          if (!pending.length) requestPromptRead(atLifecycle);
         }
         if (running && atLifecycle === lifecycle && sendEpoch === null && pending.length) {
           const firstKind = pending[0].kind;
@@ -312,6 +331,7 @@ export function createTerminalSession(
         if (running) return;
         lifecycle += 1;
         running = true;
+        refreshRequested = false;
         commandError = null;
         set({ status: "loading", error: null });
         void poll(lifecycle);
@@ -319,6 +339,7 @@ export function createTerminalSession(
       stop() {
         lifecycle += 1;
         running = false;
+        refreshRequested = false;
         commandError = null;
         clearTimer();
         clearTypingTimer();
@@ -332,8 +353,10 @@ export function createTerminalSession(
         if (activity.focused === nextActivity.focused && activity.visible === nextActivity.visible) return;
         activity = nextActivity;
         set(activity);
-        if (!activity.visible) clearTimer();
-        else if (running) void poll(lifecycle);
+        if (!activity.visible) {
+          clearTimer();
+          refreshRequested = false;
+        } else if (running) void poll(lifecycle);
       },
       async enableTyping() {
         if (!running || !["live", "not_modified"].includes(get().status)) return false;
@@ -412,7 +435,7 @@ export function createTerminalSession(
       async sendKeys(keys, _label) {
         if (!keys.length) return false;
         if (!get().canType) {
-          commandError = "Enable typing first";
+          commandError = "Press Type first";
           set({ error: commandError });
           return false;
         }

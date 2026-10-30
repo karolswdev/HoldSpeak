@@ -3,7 +3,7 @@ import { Button } from "../../components/signal/Signal";
 import { apiRequest } from "../../lib/api";
 import { StartAgent } from "../conductor/StartAgent";
 import { useConductor } from "../conductor/store";
-import { DotWord, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar } from "../surface";
+import { ListDay, ListRow, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, ToolbarFold, countWords, useWindowInterior } from "../surface";
 import { useDesk } from "../store";
 import { gatherFront } from "../compositor/useCompositor";
 import {
@@ -52,6 +52,18 @@ function tileTerminals(): void {
   gatherFront();
 }
 
+function terminalRowState(descriptor: TerminalDescriptor) {
+  const state = descriptor.state.trim().toLowerCase();
+  const tone = state === "waiting" || state === "awaiting_response" || state === "needs_you"
+    ? "warn" as const
+    : state === "done" || state === "checked"
+      ? "ok" as const
+      : state === "live" || state === "working"
+        ? "info" as const
+        : "idle" as const;
+  return { word: stateWord(descriptor), tone, live: tone === "info" };
+}
+
 function TerminalRow({
   descriptor,
   open,
@@ -61,37 +73,17 @@ function TerminalRow({
   open: boolean;
   onOpen(): void;
 }) {
-  const state = descriptor.state.trim().toLowerCase();
-  const tone = state === "waiting" || state === "awaiting_response" || state === "needs_you"
-    ? "warn" as const
-    : state === "done" || state === "checked"
-      ? "ok" as const
-      : state === "live" || state === "working"
-        ? "info" as const
-        : "idle" as const;
-  return (
-    <li className="terminals-row" data-testid={`terminal-row-${descriptor.id}`}>
-      <span className="terminals-row-glyph" aria-hidden="true"><ToolGlyph kind="engine" /></span>
-      <span className="terminals-row-copy">
-        <strong>{descriptor.label || descriptor.session || "Terminal"}</strong>
-        <span className="kit-listrow-meta">
-          {[descriptor.agent !== "pane" ? descriptor.agent : "Shell", descriptor.command].filter(Boolean).join(" · ")}
-          {descriptor.current_path ? <><span aria-hidden="true"> · </span><span className="terminals-row-path">{descriptor.current_path}</span></> : null}
-        </span>
-      </span>
-      <DotWord className="terminals-row-state" tone={tone} live={tone === "info"} title={descriptor.state}>
-        {stateWord(descriptor)}
-      </DotWord>
-      <Button
-        dense
-        variant={open ? "secondary" : "ghost"}
-        onClick={onOpen}
-        data-testid={`terminal-open-${descriptor.id}`}
-      >
-        {open ? "Focus" : "Open"}
-      </Button>
-    </li>
-  );
+  const rowState = terminalRowState(descriptor);
+  return <ListRow
+    glyph={<ToolGlyph kind="engine" />}
+    name={descriptor.label || descriptor.session || "Terminal"}
+    meta={[descriptor.agent !== "pane" ? descriptor.agent : "Shell", descriptor.command].filter(Boolean).join(" · ")}
+    state={{ word: rowState.word, tone: rowState.tone, live: rowState.live }}
+    onOpen={onOpen}
+    openLabel={`${open ? "Focus" : "Open"}: ${descriptor.label || descriptor.session || "Terminal"}`}
+    openTestId={`terminal-open-${descriptor.id}`}
+    data-testid={`terminal-row-${descriptor.id}`}
+  />;
 }
 
 interface SpawnShellAnswer {
@@ -112,9 +104,21 @@ async function spawnShell(name: string, cwd: string): Promise<SpawnShellAnswer> 
   return body;
 }
 
-function NewShell({ onCreated }: { onCreated(descriptorId?: string): void }) {
-  const [name, setName] = useState("");
-  const [cwd, setCwd] = useState("");
+function NewShell({
+  name,
+  cwd,
+  onNameChange,
+  onCwdChange,
+  onCreated,
+  onCancel,
+}: {
+  name: string;
+  cwd: string;
+  onNameChange(next: string): void;
+  onCwdChange(next: string): void;
+  onCreated(descriptorId?: string): void;
+  onCancel(): void;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const spawn = async () => {
@@ -129,8 +133,6 @@ function NewShell({ onCreated }: { onCreated(descriptorId?: string): void }) {
         row.session === clean || row.label.includes(clean) || row.pane_id === answer.pane_id,
       );
       setBusy(false);
-      setName("");
-      setCwd("");
       onCreated(descriptor?.id);
     } catch (caught) {
       setBusy(false);
@@ -140,23 +142,29 @@ function NewShell({ onCreated }: { onCreated(descriptorId?: string): void }) {
   };
   return (
     <div className="terminals-new-shell" data-testid="terminal-new-shell">
-      <StringGadget label="Shell name" value={name} onChange={setName} placeholder="Name this shell" />
-      <StringGadget label="Folder (optional)" value={cwd} onChange={setCwd} placeholder="Local folder" />
+      <StringGadget label="Shell name" value={name} onChange={onNameChange} placeholder="Name this shell" />
+      <StringGadget label="Folder (optional)" value={cwd} onChange={onCwdChange} placeholder="Local folder" />
       {error ? <p className="terminals-inline-error" role="alert">{error}</p> : null}
-      <Button variant="primary" loading={busy} disabled={!name.trim() || busy} onClick={() => void spawn()}>
-        <ToolGlyph kind="new" />
-        Create shell
-      </Button>
+      <div className="terminals-form-verbs">
+        <Button dense variant="ghost" disabled={busy} onClick={onCancel}>Cancel</Button>
+        <Button dense variant="primary" loading={busy} disabled={!name.trim() || busy} onClick={() => void spawn()}>
+          <ToolGlyph kind="new" />
+          Create shell
+        </Button>
+      </div>
     </div>
   );
 }
 
 export function TerminalsCore() {
+  useWindowInterior("list");
   const inventory = useTerminalInventory();
   const terminalWindows = useDesk((state) => state.terminalWindows);
   const [query, setQuery] = useState("");
   const [newShell, setNewShell] = useState(false);
   const [startingAgent, setStartingAgent] = useState(false);
+  const [newShellName, setNewShellName] = useState("");
+  const [newShellCwd, setNewShellCwd] = useState("");
   const queryText = query.trim().toLowerCase();
   const rows = useMemo(() => inventory.sessions.filter((descriptor) => {
     if (!queryText) return true;
@@ -179,69 +187,112 @@ export function TerminalsCore() {
   const refresh = () => { void refreshTerminalInventory(); };
   const inventoryLoading = inventory.status === "idle" || inventory.status === "loading";
 
+  const formOpen = newShell || startingAgent;
+  const secondaryActions = [
+    { key: "refresh", label: "Refresh", glyph: "retry" as const, onSelect: refresh, testId: "terminal-refresh" },
+    ...(terminalWindows.length > 1 ? [{ key: "tile", label: "Tile terminals", onSelect: tileTerminals, testId: "terminal-tile" }] : []),
+  ];
+  const inventoryStatusText = inventory.status === "ok"
+    ? countWords(rows.length, "terminal")
+    : inventoryLoading
+      ? "Connecting"
+      : inventory.status === "tmux_absent"
+        ? "Terminal inventory unavailable"
+        : "Cannot read terminals";
+  const inventoryStatus = inventory.status === "ok" ? "ok" as const : inventoryLoading ? "info" as const : "warn" as const;
+
   return (
     <div className="terminals-core" data-testid="terminals-inventory" data-interior="list">
       <Toolbar label="Terminals" data-testid="terminals-toolbar">
-        <Button variant="primary" dense onClick={() => setNewShell((value) => !value)} data-testid="terminal-new">
+        <Button
+          variant="primary"
+          dense
+          onClick={() => {
+            setNewShell((value) => !value);
+            setStartingAgent(false);
+          }}
+          data-testid="terminal-new"
+        >
           <ToolGlyph kind="new" />
           New terminal
         </Button>
-        <Button variant={startingAgent ? "secondary" : "ghost"} dense onClick={() => setStartingAgent((value) => !value)} data-testid="terminal-start-agent">
+        <Button
+          variant={startingAgent ? "secondary" : "ghost"}
+          dense
+          onClick={() => {
+            setStartingAgent((value) => !value);
+            setNewShell(false);
+          }}
+          data-testid="terminal-start-agent"
+        >
           <ToolGlyph kind="run" />
           Start an agent
         </Button>
-        <Button variant="ghost" dense onClick={refresh} data-testid="terminal-refresh">
-          <ToolGlyph kind="retry" />
-          Refresh
-        </Button>
-        <Button variant="ghost" dense disabled={terminalWindows.length < 2} onClick={tileTerminals} data-testid="terminal-tile">
-          Tile terminals
-        </Button>
+        <ToolbarFold label="More" foldAt="medium" verbs={secondaryActions} data-testid="terminal-more" />
       </Toolbar>
 
+      {formOpen ? (
+        newShell ? <NewShell
+          name={newShellName}
+          cwd={newShellCwd}
+          onNameChange={setNewShellName}
+          onCwdChange={setNewShellCwd}
+          onCancel={() => setNewShell(false)}
+          onCreated={(descriptorId) => {
+            setNewShell(false);
+            setNewShellName("");
+            setNewShellCwd("");
+            if (descriptorId) useDesk.getState().openTerminalWindow(descriptorId);
+            refresh();
+          }}
+        /> : (
+          <div className="terminals-start-agent">
+            <StartAgent
+              onCancel={() => setStartingAgent(false)}
+              onStarted={(row) => {
+                setStartingAgent(false);
+                if (row) useConductor.getState().openWindow(null, row);
+                void useConductor.getState().readFlights();
+                refresh();
+              }}
+            />
+          </div>
+        )
+      ) : <>
       <div className="terminals-search">
         <StringGadget label="Find a session or folder" value={query} onChange={setQuery} placeholder="Find a session or folder" />
       </div>
-
-      {newShell ? <NewShell onCreated={(descriptorId) => {
-        setNewShell(false);
-        if (descriptorId) useDesk.getState().openTerminalWindow(descriptorId);
-        refresh();
-      }} /> : null}
-      {startingAgent ? (
-        <div className="terminals-start-agent">
-          <StartAgent
-            onCancel={() => setStartingAgent(false)}
-            onStarted={(row) => {
-              setStartingAgent(false);
-              if (row) useConductor.getState().openWindow(null, row);
-              void useConductor.getState().readFlights();
-              refresh();
-            }}
-          />
-        </div>
-      ) : null}
 
       <div className="terminals-list" role="region" aria-label="Terminal sessions">
         {inventoryLoading && !inventory.sessions.length ? <SurfaceState loading /> : null}
         {inventory.status === "error" ? <SurfaceState error={inventoryFailure(inventory.status, inventory.detail)} onRetry={refresh} retryLabel="Retry" /> : null}
         {inventory.status === "tmux_absent" ? <SurfaceState error={inventoryFailure(inventory.status, inventory.detail)} onRetry={refresh} retryLabel="Retry" /> : null}
         {inventory.status !== "error" && inventory.status !== "tmux_absent" && !rows.length && !inventoryLoading ? (
-          <SurfaceState empty emptyLabel={queryText ? "No matching terminals" : "No terminal sessions"} emptyHint="Create a shell or start an agent to see it here." />
+          <SurfaceState
+            empty
+            emptyLabel={queryText ? "No matching terminals" : "No terminal sessions"}
+            emptyHint={queryText ? undefined : "Create a shell or start an agent to see it here."}
+          />
         ) : null}
-        {groups.map(([group, descriptors]) => (
-          <section className="terminals-group" key={group} aria-label={group}>
-            <h3>{group}</h3>
-            <ul>
-              {descriptors.map((descriptor) => (
-                <TerminalRow key={descriptor.id} descriptor={descriptor} open={openIds.has(descriptor.id)} onOpen={() => openTerminal(descriptor)} />
-              ))}
-            </ul>
-          </section>
-        ))}
+        {groups.length ? (
+          <ListView label="Terminal sessions">
+            {groups.map(([group, descriptors]) => (
+              <div className="terminals-group" key={group} title={group} data-folder-path={group}>
+                <ListDay label={group === "Local shells" ? group : group.split(/[\\/]/).filter(Boolean).pop() || group}>
+                  {descriptors.map((descriptor) => (
+                    <TerminalRow key={descriptor.id} descriptor={descriptor} open={openIds.has(descriptor.id)} onOpen={() => openTerminal(descriptor)} />
+                  ))}
+                </ListDay>
+              </div>
+            ))}
+          </ListView>
+        ) : null}
       </div>
-      <StatusBar items={[{ lamp: inventory.status === "ok" ? "ok" : inventoryLoading ? "info" : "warn", text: inventory.status === "ok" ? `${rows.length} terminal${rows.length === 1 ? "" : "s"}` : inventoryLoading ? "Connecting" : inventory.detail || inventory.status }]}
-        trailing={terminalWindows.length ? `${terminalWindows.length} open` : undefined} />
+      </>}
+      <StatusBar
+        items={[inventoryStatusText ? { lamp: inventoryStatus, text: inventoryStatusText } : null]}
+        trailing={terminalWindows.length ? `${terminalWindows.length} open` : undefined}
+      />
     </div>
   );
 }
