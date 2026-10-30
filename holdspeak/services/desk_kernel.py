@@ -98,6 +98,15 @@ def _target(name: str, args: Mapping[str, Any]) -> str:
     if name == "phone.reach":
         # Phone: the message or call the Reach made (its origin when none).
         return target_ref("phone", args.get("ref"))
+    if name == "calls.line.buy_number":
+        # The Line (LINE-3b): the number he bought and its cost as Telnyx
+        # quoted it; the journal keeps only the payload's hash, so the ref
+        # (and so the receipt's result_ref) names both.
+        digits = "".join(ch for ch in str(args.get("phone_number") or "") if ch.isdigit())
+        currency = re.sub(r"[^A-Za-z]", "", str(args.get("currency") or "USD"))[:3] or "USD"
+        monthly = re.sub(r"[^0-9.]", "", str(args.get("monthly_cost") or "")) or "0"
+        upfront = re.sub(r"[^0-9.]", "", str(args.get("upfront_cost") or "")) or "0"
+        return target_ref("phone_number", f"{digits}/monthly-{monthly}-{currency}/upfront-{upfront}-{currency}")
     return target_ref("desk", name)
 
 

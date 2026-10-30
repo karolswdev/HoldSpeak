@@ -1,0 +1,35 @@
+{
+  "enabled": true,
+  "aiphone_dir": "",
+  "greeting": "Hello. What can I do?",
+  "allowed_numbers": [
+    "sip:karol@karol-iphone"
+  ],
+  "phone_reach": {},
+  "phone_urgent_dnd": false,
+  "daily_limit": 20,
+  "line": {
+    "adapter": "line",
+    "where": "this_mac",
+    "account": {
+      "kind": "telnyx",
+      "user": "holdspeak",
+      "domain": "",
+      "outbound": "",
+      "password_ref": "",
+      "connection_id": "",
+      "number": "",
+      "codecs": [
+        "opus",
+        "PCMU",
+        "PCMA"
+      ]
+    },
+    "secrets": {
+      "sip_password": "missing",
+      "telnyx_api_key": "missing"
+    }
+  },
+  "passphrase_set": true,
+  "phone_on": true
+}

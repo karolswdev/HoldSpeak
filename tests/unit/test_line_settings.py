@@ -53,7 +53,7 @@ def test_the_line_keys_round_trip_and_both_secrets_go_to_the_keystore_only(home,
     assert fresh["daily_limit"] == 20
     assert fresh["line"] == {"adapter": "", "where": "this_mac", "account": {
         "kind": "sip", "user": "holdspeak", "domain": "", "outbound": "", "password_ref": "",
-        "codecs": ["opus", "PCMU", "PCMA"]}, "secrets": {"sip_password": "missing", "telnyx_api_key": "missing"}}
+        "connection_id": "", "number": "", "codecs": ["opus", "PCMU", "PCMA"]}, "secrets": {"sip_password": "missing", "telnyx_api_key": "missing"}}
     result = service.update_settings(OWNER, {"calls": {"daily_limit": 5, "line": {
         "adapter": "line", "where": "node:karol", "telnyx_api_key": "KEY-abc",
         "account": {"kind": "telnyx", "user": "hsline", "password": "sip-pass-1", "codecs": "PCMU,PCMA"}}}})
@@ -154,7 +154,7 @@ def test_the_wire_routes_carry_hello_events_and_the_long_poll(home, monkeypatch)
         config = hello.json()["config"]
         # The node gets the SIP password (for its 0600 accounts file) and never the Telnyx key.
         assert config == {"account": {"kind": "telnyx", "user": "hsline", "domain": "", "outbound": "",
-                                      "codecs": ["opus", "PCMU", "PCMA"]},
+                                      "number": "", "codecs": ["opus", "PCMU", "PCMA"]},
                           "password": "sip-pass-2", "daily_limit": 20, "owner": "Karol"}
         assert secrets.read(secrets.TELNYX_API_KEY) == ""
         empty = client.post("/api/calls/line/next", json={"node": "this-mac", "after": 0, "wait_s": 0})

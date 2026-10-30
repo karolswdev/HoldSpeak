@@ -346,7 +346,7 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
           calls and Phone. */}
       {absent || !settings?.line ? null : <section className="calls-phone" aria-label="Line" data-testid="calls-line-section" data-highlight={highlight === "line" || undefined}>
         <h3 className="calls-phone-title">Line</h3>
-        <LineSettingsPane settings={settings!} onWrite={(key, value) => write(key, value, true)} />
+        <LineSettingsPane settings={settings!} onWrite={(key, value) => write(key, value, true)} onReload={load} />
       </section>}
       {/* Phone (PHONE-DESIGN §9): Settings ▸ Calls ▸ Phone. A hub without
           the Calls slice has no Phone either: nothing more is read. */}

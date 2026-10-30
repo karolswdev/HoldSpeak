@@ -6749,6 +6749,118 @@
         "summary": "Api Line Status"
       }
     },
+    "/api/calls/line/telnyx/assign": {
+      "post": {
+        "operationId": "api_line_telnyx_assign_api_calls_line_telnyx_assign_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Telnyx Assign Api Calls Line Telnyx Assign Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Telnyx Assign"
+      }
+    },
+    "/api/calls/line/telnyx/buy": {
+      "post": {
+        "operationId": "api_line_telnyx_buy_api_calls_line_telnyx_buy_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Telnyx Buy Api Calls Line Telnyx Buy Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Telnyx Buy"
+      }
+    },
+    "/api/calls/line/telnyx/connect": {
+      "post": {
+        "operationId": "api_line_telnyx_connect_api_calls_line_telnyx_connect_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Telnyx Connect Api Calls Line Telnyx Connect Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Telnyx Connect"
+      }
+    },
+    "/api/calls/line/telnyx/numbers": {
+      "get": {
+        "operationId": "api_line_telnyx_numbers_api_calls_line_telnyx_numbers_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "area",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Area",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Telnyx Numbers Api Calls Line Telnyx Numbers Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Line Telnyx Numbers"
+      }
+    },
+    "/api/calls/line/telnyx/status": {
+      "get": {
+        "operationId": "api_line_telnyx_status_api_calls_line_telnyx_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Line Telnyx Status Api Calls Line Telnyx Status Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Line Telnyx Status"
+      }
+    },
     "/api/calls/line/test": {
       "post": {
         "operationId": "api_line_test_api_calls_line_test_post",

@@ -9,7 +9,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
-import type { Call, CallStateFrame, CallStep, CallSummary, CallsSettings, CallsStatus, LineCode, LineNode, LineStatus, LineTestResult } from "./types";
+import type {
+  Call, CallStateFrame, CallStep, CallSummary, CallsSettings, CallsStatus, LineCode, LineNode, LineStatus, LineTestResult,
+  TelnyxBought, TelnyxConnected, TelnyxNumber, TelnyxRefusal, TelnyxStatus,
+} from "./types";
 
 /** The checklist in its order, every step open: what the faces draw when
  *  the hub has no Calls slice or its status read fails. */
@@ -109,6 +112,50 @@ export function mintLineCode(node: string): Promise<LineCode> {
 /** Revoke a Line node's credential. */
 export function revokeLineNode(node: string): Promise<unknown> {
   return apiFetch(`/api/calls/line/nodes/${encodeURIComponent(node)}`, { method: "DELETE" });
+}
+
+/* ── The Telnyx setup (LINE-3b) ── */
+
+/** The Telnyx status; a hub without the route (or the Line off) answers null. */
+export async function readTelnyxStatus(): Promise<TelnyxStatus | null> {
+  try {
+    const status = await apiFetch<TelnyxStatus>("/api/calls/line/telnyx/status");
+    return status && typeof status.key === "string" ? status : null;
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 404 || error.status === 409)) return null;
+    throw error;
+  }
+}
+
+export function connectTelnyx(): Promise<TelnyxConnected> {
+  return apiFetch<TelnyxConnected>("/api/calls/line/telnyx/connect", { method: "POST", json: {} });
+}
+
+export async function findTelnyxNumbers(area: string): Promise<TelnyxNumber[]> {
+  const body = await apiFetch<{ numbers?: TelnyxNumber[] }>(`/api/calls/line/telnyx/numbers?area=${encodeURIComponent(area)}`);
+  return Array.isArray(body?.numbers) ? body.numbers : [];
+}
+
+/** BUY (money): only the confirm press calls this, with the hub's quote. */
+export function buyTelnyxNumber(row: TelnyxNumber): Promise<TelnyxBought> {
+  return apiFetch<TelnyxBought>("/api/calls/line/telnyx/buy", {
+    method: "POST", json: { phone_number: row.phone_number, quote: row.quote },
+  });
+}
+
+export function assignTelnyxNumber(phoneNumber: string): Promise<unknown> {
+  return apiFetch("/api/calls/line/telnyx/assign", { method: "POST", json: { phone_number: phoneNumber } });
+}
+
+/** A refused Telnyx press in his words: what failed, what is kept, the next action. */
+export function telnyxRefusal(error: unknown): TelnyxRefusal {
+  if (error instanceof ApiError && error.payload && typeof error.payload === "object") {
+    const body = error.payload as Partial<TelnyxRefusal>;
+    if (typeof body.error === "string") {
+      return { error: body.error, reason: String(body.reason ?? ""), kept: body.kept, next: body.next };
+    }
+  }
+  return { error: readableError(error), reason: "" };
 }
 
 /** The Line is the phone on this hub (its block is not `off`). */

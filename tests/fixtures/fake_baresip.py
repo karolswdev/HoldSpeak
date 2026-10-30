@@ -137,6 +137,7 @@ class Fake:
         self.say_path = conf["audio_source"].strip().split(",", 1)[1]
         self.heard_path = conf["audio_player"].strip().split(",", 1)[1]
         account = (home / "accounts").read_text().strip()
+        self.account = account
         self.aor = account.split(">", 1)[0].lstrip("<")
         script = os.environ.get("FAKE_BARESIP_SCRIPT")
         self.scenario = json.loads(Path(script).read_text()) if script else {}
@@ -187,6 +188,7 @@ class Fake:
             with self.lock:
                 self.client = conn
             threading.Thread(target=self.read_ctrl, args=(conn,), daemon=True).start()
+            threading.Timer(0.05, self.register).start()
             incoming = self.scenario.get("incoming")
             if incoming and not self.scenario.get("_incoming_done"):
                 self.scenario["_incoming_done"] = True
@@ -249,6 +251,20 @@ class Fake:
         elif name == "listcalls":
             reply["data"] = _response("listcalls").get("data", "")
         self.send(reply)
+
+    def register(self) -> None:
+        """A carrier account (``regint`` > 0) registers: the fake registrar
+        answers REGISTER 200 when the account has ``auth_pass``, else 401.
+        The event shape is baresip 4.12.0's ``ua_event`` for the ``register``
+        class (``src/event.c``), written from the source, NOT recorded: the
+        recorded steps have no registrar."""
+        if "regint=0" in self.account or "regint=" not in self.account:
+            return
+        ok = ";auth_pass=" in self.account
+        self.log({"register": self.aor, "answer": 200 if ok else 401})
+        self.send({"event": True, "class": "register", "type": "REGISTERING", "accountaor": self.aor, "param": ""})
+        self.send({"event": True, "class": "register", "type": "REGISTER_OK" if ok else "REGISTER_FAIL",
+                   "accountaor": self.aor, "param": "200 OK" if ok else "401 Unauthorized"})
 
     def ring_in(self, incoming: dict[str, Any]) -> None:
         self.seq += 1

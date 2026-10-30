@@ -1145,3 +1145,124 @@ describe("the Calls window on the Line", () => {
     await waitFor(() => expect(status()).toContain("No line: set one in Settings ▸ Calls ▸ Line"));
   });
 });
+
+/* ── Set up Telnyx (LINE-3b, 2026-10-29): every answer below is RECORDED from
+   the hub's own routes against the fake Telnyx
+   (scripts/record_telnyx_fixtures.py → calls/__fixtures__/line.telnyx.*.json). ── */
+import tSettingsKey from "../calls/__fixtures__/line.telnyx.settings.keySaved.json";
+import tSettingsConnected from "../calls/__fixtures__/line.telnyx.settings.connected.json";
+import tSettingsAssigned from "../calls/__fixtures__/line.telnyx.settings.assigned.json";
+import tStatusKey from "../calls/__fixtures__/line.telnyx.status.keySaved.json";
+import tStatusConnected from "../calls/__fixtures__/line.telnyx.status.connected.json";
+import tStatusAssigned from "../calls/__fixtures__/line.telnyx.status.assigned.json";
+import tConnect from "../calls/__fixtures__/line.telnyx.connect.json";
+import tConnectRefused from "../calls/__fixtures__/line.telnyx.connect.keyRefused.json";
+import tNumbers from "../calls/__fixtures__/line.telnyx.numbers.212.json";
+import tBuy from "../calls/__fixtures__/line.telnyx.buy.json";
+import tBuyNoPress from "../calls/__fixtures__/line.telnyx.buy.noPress.json";
+import tAssign from "../calls/__fixtures__/line.telnyx.assign.json";
+
+describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
+  /** The hub as the recording left it at each press. */
+  function telnyxHub(start: "key" | "connected", extra: Record<string, Answer> = {}) {
+    const at = { stage: start as "key" | "connected" | "assigned" };
+    hub({
+      "GET /api/settings": () => ({ calls: { key: tSettingsKey, connected: tSettingsConnected, assigned: tSettingsAssigned }[at.stage] }),
+      "GET /api/calls/status": lineCallsReady,
+      "GET /api/calls/line/status": lineTelnyxStored,
+      "GET /api/calls/line/telnyx/status": () => ({ key: tStatusKey, connected: tStatusConnected, assigned: tStatusAssigned }[at.stage]),
+      "POST /api/calls/line/telnyx/connect": () => { at.stage = "connected"; return tConnect; },
+      "GET /api/calls/line/telnyx/numbers?area=212": tNumbers,
+      "POST /api/calls/line/telnyx/buy": tBuy,
+      "POST /api/calls/line/telnyx/assign": () => { at.stage = "assigned"; return tAssign; },
+      ...extra,
+    });
+    return at;
+  }
+  const findNumbers = async () => {
+    const field = within(await screen.findByTestId("telnyx-step-number")).getByLabelText("Area code");
+    await waitFor(() => expect(field).not.toBeDisabled());
+    fireEvent.change(field, { target: { value: "212" } });
+    fireEvent.click(screen.getByTestId("telnyx-find"));
+    await waitFor(() => expect(screen.getAllByTestId("telnyx-number")).toHaveLength(tNumbers.numbers.length));
+  };
+
+  it("Connect: the hub makes the SIP account; the row says Connected · sip.telnyx.com · user hs…, the balance is a muted fact", async () => {
+    telnyxHub("key");
+    render(<CallsSettingsPane />);
+    expect((await screen.findByTestId("telnyx-step-key")).textContent).toContain("Stored in your keystore");
+    await waitFor(() => expect(screen.getByTestId("telnyx-connect")).not.toBeDisabled());
+    expect(screen.queryByTestId("telnyx-connected")).toBeNull();
+    fireEvent.click(screen.getByTestId("telnyx-connect"));
+    const connected = await screen.findByTestId("telnyx-connected");
+    expect(connected.textContent).toBe(`Connected · sip.telnyx.com · user ${tConnect.user}`);
+    expect(tConnect.user).toMatch(/^hs/);
+    expect(calls).toContain("POST /api/calls/line/telnyx/connect {}");
+    // The pane reads the account again: User shows the connection's user.
+    await waitFor(() => expect(within(screen.getByTestId("line-user")).getByLabelText("User")).toHaveValue(tConnect.user));
+    expect(screen.getByTestId("telnyx-balance").textContent).toBe("Telnyx balance: $20.00");
+    expect(lineText()).not.toContain("KEY0123456789");
+  });
+
+  it("Find numbers: the area code finds the hub's 10 rows, each with the monthly and upfront cost as Tokens", async () => {
+    telnyxHub("connected");
+    render(<CallsSettingsPane />);
+    await findNumbers();
+    const first = screen.getAllByTestId("telnyx-number")[0];
+    expect(first.getAttribute("data-number")).toBe("+12125550100");
+    expect(first.textContent).toContain("+1 212 555 0100");
+    expect(within(first).getByTestId("telnyx-monthly").textContent).toBe("$1.00 a month");
+    expect(within(first).getByTestId("telnyx-upfront").textContent).toBe("$1.00 upfront");
+    expect(within(first).getByTestId("telnyx-monthly").className).toBe("surface-token");
+  });
+
+  it("Buy: the first press only asks; the confirm sends the hub's quote; then Yours · assigned to the line", async () => {
+    const at = telnyxHub("connected");
+    render(<CallsSettingsPane />);
+    await findNumbers();
+    const buy = within(screen.getAllByTestId("telnyx-number")[0]).getByTestId("telnyx-buy");
+    fireEvent.click(buy);
+    expect(buy.textContent).toBe("Buy +1 212 555 0100 for $1.00 a month?");
+    expect(calls.some((line) => line.startsWith("POST /api/calls/line/telnyx/buy"))).toBe(false);
+    fireEvent.click(buy);
+    const yours = await screen.findByTestId("telnyx-yours");
+    expect(yours.textContent).toBe("Yours: +1 212 555 0100 · assigned to the line");
+    const row = tNumbers.numbers[0];
+    expect(calls).toContain(`POST /api/calls/line/telnyx/buy ${JSON.stringify({ phone_number: row.phone_number, quote: row.quote })}`);
+    expect(calls).toContain(`POST /api/calls/line/telnyx/assign ${JSON.stringify({ phone_number: row.phone_number })}`);
+    expect(at.stage).toBe("assigned");
+    expect(screen.queryByTestId("telnyx-number")).toBeNull();
+    expect(screen.getByTestId("telnyx-setup").hasAttribute("data-done")).toBe(true);
+  });
+
+  it("a refused buy: without the confirm nothing is sent; the hub's refusal says what failed, what is kept, the next action", async () => {
+    telnyxHub("connected", {
+      "POST /api/calls/line/telnyx/buy": () => { throw new ApiError(tBuyNoPress.status, "Forbidden", tBuyNoPress.body); },
+    });
+    render(<CallsSettingsPane />);
+    await findNumbers();
+    const buy = within(screen.getAllByTestId("telnyx-number")[0]).getByTestId("telnyx-buy");
+    fireEvent.click(buy);
+    expect(calls.some((line) => line.startsWith("POST /api/calls/line/telnyx/buy"))).toBe(false);
+    fireEvent.click(buy);
+    const failure = await screen.findByTestId("telnyx-failure");
+    expect(failure.textContent).toBe(`${tBuyNoPress.body.error} ${tBuyNoPress.body.kept} ${tBuyNoPress.body.next}`);
+    expect(failure.textContent).toContain("Nothing was bought.");
+    expect(screen.queryByTestId("telnyx-yours")).toBeNull();
+    expect(screen.getAllByTestId("telnyx-number")).toHaveLength(tNumbers.numbers.length);
+  });
+
+  it("a refused key on Connect: the hub's words, and the key row stays", async () => {
+    telnyxHub("key", {
+      "POST /api/calls/line/telnyx/connect": () => { throw new ApiError(tConnectRefused.status, "Bad Gateway", tConnectRefused.body); },
+    });
+    render(<CallsSettingsPane />);
+    await waitFor(() => expect(screen.getByTestId("telnyx-connect")).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId("telnyx-connect"));
+    const failure = await screen.findByTestId("telnyx-failure");
+    expect(failure.textContent).toBe(
+      "Telnyx did not take the key while it made the SIP connection. Your key is kept. Nothing was made at Telnyx. Check the key in the Telnyx portal, then save it again.");
+    expect(screen.queryByTestId("telnyx-connected")).toBeNull();
+    expect(screen.getByTestId("line-telnyx-key")).toBeInTheDocument();
+  });
+});

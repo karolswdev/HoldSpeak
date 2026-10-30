@@ -56,6 +56,8 @@ PROCESS_WORDS: dict[str, str] = {
     "channel.save_slack_webhook": "Saved a Slack webhook",
     "nudge.send": "Sent a nudge",
     "nudge.dismiss": "Dismissed a nudge",
+    # Calls
+    "calls.line.buy_number": "Bought a phone number",
     # Projects
     "project.create": "Made a project",
     "project.door.create": "Made a project",

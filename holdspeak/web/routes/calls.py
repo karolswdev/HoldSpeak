@@ -20,6 +20,13 @@ POST   /api/calls/line/codes          {node}: a one-time code (10 minutes, once)
 POST   /api/calls/line/enrol          {code}: public at the edge; the code is the authority → {node, token}
 GET    /api/calls/line/nodes          the enrolled Line nodes and each one's word from its last hello
 DELETE /api/calls/line/nodes/{node}   revoke that node's credential
+The Telnyx setup (LINE-3b, ``holdspeak/line/setup.py``; his key in the keystore):
+GET  /api/calls/line/telnyx/status    key? connection? number? balance
+POST /api/calls/line/telnyx/connect   the SIP connection (idempotent); the password to the keystore
+GET  /api/calls/line/telnyx/numbers   ?area=212: up to 10 numbers with their cost and a quote each
+POST /api/calls/line/telnyx/buy       {phone_number, quote}: BUYS (money); refused without his
+                                      press's quote; the kernel operation calls.line.buy_number
+POST /api/calls/line/telnyx/assign    {phone_number}: point it at the line; calls.line.account.number
 """
 from __future__ import annotations
 
@@ -32,8 +39,10 @@ from fastapi.responses import JSONResponse
 from ...calls.service import CALLS, line_config, line_status
 from ...line import line_on
 from ...line.enrol import CODES, EnrolError, enrolled, redeem, revoke, wire_node
+from ...line import setup as line_setup
 from ...line.hub import LINE_HUB
 from ...logging_config import get_logger
+from ...principals import UNAUTHENTICATED
 from ...services.errors import ServiceError, ValidationError
 from ..context import WebContext
 from ..runtime_support import error_500
@@ -226,6 +235,44 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
             return _refused(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to place the test call")
+
+    # ── the Telnyx setup (LINE-3b): each press off the loop ──────────
+
+    async def _telnyx(request: Request, work: Any, what: str) -> Any:
+        off = _line_off()
+        if off is not None:
+            return off
+        try:
+            return JSONResponse(await asyncio.to_thread(work))
+        except ServiceError as exc:
+            return _refused(exc)
+        except Exception as exc:
+            return error_500(exc, log, what)
+
+    @router.get("/api/calls/line/telnyx/status")
+    async def api_line_telnyx_status(request: Request) -> Any:
+        return await _telnyx(request, lambda: line_setup.TELNYX_SETUP.status(), "Failed to read Telnyx")
+
+    @router.post("/api/calls/line/telnyx/connect")
+    async def api_line_telnyx_connect(request: Request) -> Any:
+        return await _telnyx(request, lambda: line_setup.TELNYX_SETUP.connect(), "Failed to connect to Telnyx")
+
+    @router.get("/api/calls/line/telnyx/numbers")
+    async def api_line_telnyx_numbers(request: Request, area: str = "") -> Any:
+        return await _telnyx(request, lambda: line_setup.TELNYX_SETUP.numbers(area), "Failed to find numbers")
+
+    @router.post("/api/calls/line/telnyx/buy")
+    async def api_line_telnyx_buy(request: Request) -> Any:
+        body = await _body(request)
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        return await _telnyx(request, lambda: line_setup.TELNYX_SETUP.buy(
+            principal, str(body.get("phone_number") or ""), str(body.get("quote") or "")), "Failed to buy the number")
+
+    @router.post("/api/calls/line/telnyx/assign")
+    async def api_line_telnyx_assign(request: Request) -> Any:
+        body = await _body(request)
+        return await _telnyx(request, lambda: line_setup.TELNYX_SETUP.assign(str(body.get("phone_number") or "")),
+                             "Failed to assign the number")
 
     @router.get("/api/calls")
     def api_calls_list() -> Any:

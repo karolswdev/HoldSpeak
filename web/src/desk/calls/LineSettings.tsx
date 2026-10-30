@@ -18,6 +18,7 @@ import { spriteUrl } from "../sprites";
 import { GadgetGroup, MxRadio, StringGadget } from "../surface/gadgets";
 import { ConfirmVerb } from "../surface/Surface";
 import { DotWord } from "../surface/kit";
+import { TelnyxSetup } from "./TelnyxSetup";
 import { LINE_OFF, mintLineCode, readLineNodes, readLineStatus, revokeLineNode, testLine } from "./api";
 import type { CallsSettings, LineCode, LineNode, LineState, LineStatus, SecretPlace } from "./types";
 import "./calls.css";
@@ -217,9 +218,11 @@ function CopyAddress({ address }: { address: string }) {
 /** The pane. `settings` is the `calls` section the Calls pane read; a write
  *  goes through `onWrite` (the Calls pane's own write) and the status is
  *  read again. */
-export function LineSettingsPane({ settings, onWrite }: {
+export function LineSettingsPane({ settings, onWrite, onReload }: {
   settings: CallsSettings;
   onWrite(key: "line", value: unknown): Promise<void>;
+  /** Read the `calls` settings again (the Telnyx setup wrote the account). */
+  onReload?(): Promise<void>;
 }) {
   const [status, setStatus] = useState<LineStatus>(LINE_OFF);
   const [loaded, setLoaded] = useState(false);
@@ -426,14 +429,16 @@ export function LineSettingsPane({ settings, onWrite }: {
               verb={<CopyAddress address={status.address} />} />
           ) : (
             <>
+              <TelnyxSetup onChanged={async () => { await onReload?.(); await load(); }} keyRow={(
+                <SecretRow label="Telnyx API key" place={secrets.telnyx_api_key ?? "missing"} busy={busy === "telnyx_api_key"}
+                  onSave={(value) => void write("telnyx_api_key", { telnyx_api_key: value })} testId="line-telnyx-key" />
+              )} />
               <AccountField label="User" value={acct.user} placeholder="Your Telnyx SIP user" busy={busy === "user"}
                 onSave={(next) => void write("user", { account: { user: next } })} testId="line-user" />
               <AccountField label="Domain" value={acct.domain} placeholder="sip.telnyx.com" busy={busy === "domain"}
                 onSave={(next) => void write("domain", { account: { domain: next } })} testId="line-domain" />
               <SecretRow label="SIP password" place={secrets.sip_password ?? "missing"} busy={busy === "password"}
                 onSave={(value) => void write("password", { account: { password: value } })} testId="line-password" />
-              <SecretRow label="Telnyx API key" place={secrets.telnyx_api_key ?? "missing"} busy={busy === "telnyx_api_key"}
-                onSave={(value) => void write("telnyx_api_key", { telnyx_api_key: value })} testId="line-telnyx-key" />
             </>
           )}
           {acct.codecs?.length ? <p className="line-quiet" data-testid="line-codecs">Codecs: {acct.codecs.join(", ")}</p> : null}

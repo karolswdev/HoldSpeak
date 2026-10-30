@@ -1,0 +1,16 @@
+{
+  "key": "keystore",
+  "password": "keystore",
+  "connection": {
+    "id": "1684641123236054200",
+    "user": "hsffdlz4ew2x",
+    "domain": "sip.telnyx.com"
+  },
+  "number": "",
+  "balance": {
+    "balance": "20.00",
+    "available": "20.00",
+    "currency": "USD"
+  },
+  "error": ""
+}

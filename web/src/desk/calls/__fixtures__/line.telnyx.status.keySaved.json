@@ -1,0 +1,12 @@
+{
+  "key": "keystore",
+  "password": "missing",
+  "connection": null,
+  "number": "",
+  "balance": {
+    "balance": "20.00",
+    "available": "20.00",
+    "currency": "USD"
+  },
+  "error": ""
+}

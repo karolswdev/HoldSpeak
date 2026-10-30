@@ -1258,6 +1258,56 @@
       ]
     },
     {
+      "path": "/api/calls/line/telnyx/assign",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calls/line/telnyx/buy",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calls/line/telnyx/connect",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calls/line/telnyx/numbers",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calls",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calls/line/telnyx/status",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calls",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/calls/line/test",
       "methods": [
         "POST"
