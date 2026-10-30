@@ -1,12 +1,10 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
-
-import { recordBuild } from "./scripts/prune-builds.mjs";
 
 /**
  * HS-200-02 (contract C1): the build id this bundle was made from.
@@ -66,7 +64,7 @@ const BUILD_ID = computeBuildId();
 function buildStamp() {
   return {
     name: "holdspeak-build-stamp",
-    writeBundle(options: { dir?: string }, bundle: Record<string, unknown>) {
+    async writeBundle(options: { dir?: string }, bundle: Record<string, unknown>) {
       const dir = options.dir;
       if (!dir) return;
       // 2026-10-28: keep the last three builds' assets, so a desk tab opened
@@ -74,6 +72,10 @@ function buildStamp() {
       const assets = Object.keys(bundle)
         .filter((name) => name.startsWith("assets/"))
         .map((name) => name.slice("assets/".length));
+      // Loaded from the web root (the build's working directory), not beside
+      // this file: a copy of this config elsewhere still finds the helper.
+      const pruneBuilds = pathToFileURL(resolve(process.cwd(), "scripts", "prune-builds.mjs")).href;
+      const { recordBuild } = await import(pruneBuilds);
       recordBuild(dir, assets, { buildId: BUILD_ID });
       writeFileSync(
         join(dir, "build-id.json"),

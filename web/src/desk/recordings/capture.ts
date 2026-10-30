@@ -10,6 +10,7 @@
  * and can Stop it. */
 import { useSyncExternalStore } from "react";
 import { ApiError, apiFetch, apiRequest, readableError } from "../../lib/api";
+import { openMicStream } from "../../lib/micSession";
 import type { Recording } from "./types";
 
 export type CapturePhase = "idle" | "asking" | "recording" | "stopping";
@@ -131,7 +132,7 @@ export async function startCapture(options: { projectId?: string } = {}): Promis
   let note = "";
   if (state.voice) {
     try {
-      mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mic = await openMicStream();
     } catch {
       note = "No microphone; recording without voice";
     }

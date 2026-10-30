@@ -57,7 +57,7 @@ function copy(text: string): Promise<boolean> {
   }
 }
 
-function LinkRow({ label, href, testId }: { label: string; href: string; testId: string }) {
+function ShareUrlRow({ label, href, testId }: { label: string; href: string; testId: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="recordings-link" data-testid={testId}>
@@ -107,8 +107,8 @@ function RecordingDocument({ row }: { row: Recording }) {
       )}
       {ready && row.shared ? (
         <section className="recordings-links" aria-label="Links" data-testid="recordings-links">
-          {row.links.tailnet ? <LinkRow label="On your phone" href={row.links.tailnet} testId="recordings-link-tailnet" /> : null}
-          {row.links.local ? <LinkRow label="On this Mac" href={row.links.local} testId="recordings-link-local" /> : null}
+          {row.links.tailnet ? <ShareUrlRow label="On your phone" href={row.links.tailnet} testId="recordings-link-tailnet" /> : null}
+          {row.links.local ? <ShareUrlRow label="On this Mac" href={row.links.local} testId="recordings-link-local" /> : null}
         </section>
       ) : null}
       {ready && row.encoder === "webm" ? (

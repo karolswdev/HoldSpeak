@@ -84,6 +84,9 @@ KNOWN_CODE = re.compile(
     r"|^inbox_unavailable$"  # thought.create: no inbox on a fresh HOME
     r"|^cli_engines_off$"  # model_library.connect_cli_engine: tests/conftest.py turns agent engines off
     r"|^model_library_not_agent_engine$"  # model_library.set_spend_limit: no engine "x" (404; Betterment M4)
+    r"|^calls_no_number$"  # calls.place: a fresh HOME has no number in Settings > Calls (409; #1608)
+    r"|^no_line$"  # phone.call: no paired phone and no number on a fresh HOME; nothing is sent (409; #1608)
+    r"|^repository_required$"  # program.create: the placeholders name no repository or project (400; #1602)
 )
 KNOWN_MESSAGE = re.compile(
     r"^people_store_unavailable$"  # no People keystore on a fresh HOME

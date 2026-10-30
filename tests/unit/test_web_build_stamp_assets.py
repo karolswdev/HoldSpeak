@@ -39,7 +39,7 @@ if (!stamp || typeof stamp.writeBundle !== "function") {
 
 const output = join(fixture, `output-${runName}`);
 mkdirSync(output, { recursive: true });
-await stamp.writeBundle({ dir: output });
+await stamp.writeBundle({ dir: output }, {});
 process.stdout.write(readFileSync(join(output, "build-id.json"), "utf8"));
 """
 

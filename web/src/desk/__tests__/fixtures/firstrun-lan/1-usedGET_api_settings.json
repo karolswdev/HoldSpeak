@@ -86,9 +86,35 @@
     "calls": {
       "aiphone_dir": "",
       "allowed_numbers": [],
+      "daily_limit": 20,
       "enabled": false,
       "greeting": "Hello. What can I do?",
-      "passphrase_set": false
+      "line": {
+        "account": {
+          "codecs": [
+            "opus",
+            "PCMU",
+            "PCMA"
+          ],
+          "connection_id": "",
+          "domain": "",
+          "kind": "sip",
+          "number": "",
+          "outbound": "",
+          "password_ref": "",
+          "user": "holdspeak"
+        },
+        "adapter": "",
+        "secrets": {
+          "sip_password": "missing",
+          "telnyx_api_key": "missing"
+        },
+        "where": "this_mac"
+      },
+      "passphrase_set": false,
+      "phone_on": false,
+      "phone_reach": {},
+      "phone_urgent_dnd": false
     },
     "config_version": 1,
     "control_mode": "yolo",

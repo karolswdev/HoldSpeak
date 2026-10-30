@@ -293,6 +293,14 @@ Default tests use an isolated home. They do not open a real microphone or type
 through a real keyboard. Hardware walks are separate and must state their
 machine, model, and destination.
 
+The hardware lane needs microphone permission, PortAudio, and the local
+Whisper and model files. It can type into the active app. Close sensitive
+apps and use a disposable document.
+
+```bash
+.venv/bin/pytest -q tests/e2e/test_metal.py -m metal --run-metal -s
+```
+
 ## See also
 
 - [Dictation architecture](DICTATION_ARCHITECTURE.md)
