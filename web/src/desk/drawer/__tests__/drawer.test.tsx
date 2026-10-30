@@ -444,6 +444,25 @@ describe("PHILO-15 16 the Project knows its repository", () => {
     expect(within(fact as HTMLElement).getByText(`${REPO} · Not cloned`)).toBeTruthy();
   });
 
+  it("Get Info pressed before the Room read landed names the Project once the desk knows it (test_windows_glass C5)", async () => {
+    // The Room read is slow: the drawer's name is still the stand-in.
+    apiFetch.mockImplementation((url: string, init?: { method?: string; json?: unknown }) =>
+      url.includes("/room") ? new Promise(() => undefined) : Promise.resolve(route(url, init)));
+    render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Get Info" }), { detail: 1 });
+    const info = useDrawers.getState().infos[0];
+    expect(info.member.name).toBe("Project");
+    render(<DrawerInfoWindow info={info} />);
+    act(() => {
+      useDesk.setState((s) => ({
+        items: { ...s.items, project: [{ kind: "project", id: "p-ledger", name: "Payments ledger cutover" } as never] },
+      }));
+    });
+    await waitFor(() =>
+      expect(document.querySelector(".drawer-info-window")?.getAttribute("aria-label")).toBe("Info: Payments ledger cutover"),
+    );
+  });
+
   it("a store the hub cannot read is Not read with Retry, never NOT REGISTERED (Astra r1 on #1000)", async () => {
     repo.state = { project_id: "p-ledger", repository: null, registered: false, cloned: false, watched: [REPO], host: "github.com", store: "not_read" };
     await renderDrawer();
