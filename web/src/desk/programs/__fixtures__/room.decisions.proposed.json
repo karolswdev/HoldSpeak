@@ -1,0 +1,40 @@
+{
+  "items": [],
+  "proposed": [
+    {
+      "at": "2026-10-30T18:04:55.140577+00:00",
+      "id": "record-3169ecac600b46258fc4a0e6c1495d25",
+      "program": {
+        "id": "program-00a3f8ffcc7a",
+        "title": "The words wave"
+      },
+      "prs": [
+        {
+          "number": 101,
+          "url": "https://github.com/acme/app/pull/101"
+        }
+      ],
+      "source_ref": "decision_record:record-3169ecac600b46258fc4a0e6c1495d25",
+      "status": "proposed",
+      "text": "Skip: sentence case the title"
+    },
+    {
+      "at": "2026-10-30T18:04:55.134645+00:00",
+      "id": "record-1ba39b4ff41c43489b266897fb1f66d1",
+      "program": {
+        "id": "program-00a3f8ffcc7a",
+        "title": "The words wave"
+      },
+      "prs": [
+        {
+          "number": 101,
+          "url": "https://github.com/acme/app/pull/101"
+        }
+      ],
+      "source_ref": "decision_record:record-1ba39b4ff41c43489b266897fb1f66d1",
+      "status": "proposed",
+      "text": "Skip: the old name stays in a comment"
+    }
+  ],
+  "state": "ok"
+}

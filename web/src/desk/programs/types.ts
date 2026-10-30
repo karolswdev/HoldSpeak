@@ -33,6 +33,8 @@ export interface DecidedRow {
   /** When he overturned it; null while it stands. */
   overturned_at?: string | null;
   operation_id?: string | null;
+  /** PG16: the proposed decision record this decision made (a Skip, a merge by rule). */
+  decision_record_id?: string | null;
 }
 
 export interface ProgramCheckpoint {
@@ -48,6 +50,8 @@ export interface ProgramCheckpoint {
   rule?: string | null;
   overturnable?: boolean;
   overturned_at?: string | null;
+  /** PG16: the proposed decision record this checkpoint made. */
+  decision_record_id?: string | null;
 }
 
 /** The program's Runs on engine (pi only): `null` for Claude Code / Codex. */
@@ -148,6 +152,8 @@ export interface ProgramFinding {
   level?: "required" | "should" | "note" | string;
   text: string;
   decision?: "fix_now" | "later" | "skip" | null;
+  /** PG16: a Skip's proposed decision record. */
+  decision_record_id?: string | null;
 }
 
 export interface CheckSection {

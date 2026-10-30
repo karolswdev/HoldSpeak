@@ -481,8 +481,14 @@ TOOLS.extend([
     ),
     _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
-        "decision_record.list", "List decision records, newest first.",
-        {"limit": {"type": "integer", "minimum": 1, "maximum": 500}, "offset": {"type": "integer", "minimum": 0}},
+        "decision_record.list", "List decision records.",
+        # Newest first. PG16: program_id = a Program's proposed records (a
+        # Skip, a merge by rule). The thread palettes may not grow
+        # (test_memory_slice6_reflect MAIN_PALETTE_BYTES), so the words are
+        # short and the lower bounds are the service's (it clamps limit to
+        # 1..500 and offset to 0 or more).
+        {"limit": {"type": "integer", "maximum": 500}, "offset": {"type": "integer"},
+         "program_id": {"type": "string"}},
     ),
     _mcp_tool(
         "decision_record.get", "Get a decision record with sources, work, revisions.",
@@ -1366,6 +1372,11 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
 
         return _room_tool(name, args, principal)
     if name == "decision_record.list":
+        program_id = str(args.get("program_id") or "").strip()
+        if program_id:  # PG16: the records a Program proposed
+            rows = [row for row in records.records_for_work(principal, "program", program_id) if not row.get("deleted")]
+            offset = max(0, int(args.get("offset") or 0))
+            return rows[offset:offset + max(1, min(int(args.get("limit") or 50), 500))]
         allowed = ("limit", "offset")
         return records.list_records(principal, **{key: args[key] for key in allowed if key in args})
     if name == "decision_record.get":

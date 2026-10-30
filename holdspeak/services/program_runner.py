@@ -1225,6 +1225,9 @@ class ProgramRunner:
         facts = dict(step.get("facts") or {})
         if pr.get("number") and not step.get("pr_number"):
             step["pr_number"], step["pr_url"] = pr.get("number"), pr.get("url")
+            from . import program_decisions
+
+            program_decisions.link_pr(self.service.db, step)  # PG16: the step's proposed records
         if str(pr.get("state") or "") == "merged" or follow.get("pr_state") == "pr_merged":
             self.service.transition(program, step, "merged", facts=facts,
                                     line=f"Merged #{step.get('pr_number') or pr.get('number')}")
@@ -1297,8 +1300,10 @@ class ProgramRunner:
             self.service._checkpoint(program, step, "owner", f"Merged PR #{number} on his press")
         else:
             review = ", review passed" if step.get("review_verdict") == "pass" else ""
+            record_id = self.service.propose_merge(program, step, outcome)
             self.service.engine_decision(program, step, "merge", outcome,
-                                         f"Merged PR #{number} of step {step['ordinal']} (check green{review})")
+                                         f"Merged PR #{number} of step {step['ordinal']} (check green{review})",
+                                         undo={"decision_record_id": record_id} if record_id else None)
         return {"merge": {"pr_number": number, "by": by}}
 
 

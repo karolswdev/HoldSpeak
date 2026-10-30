@@ -59,6 +59,7 @@ import {
 } from "../hand";
 import type { DrawerHead, DrawerMember } from "./members";
 import { RoomPrograms } from "../programs/RoomPrograms";
+import { RoomDecisions } from "../programs/RoomDecisions";
 import { plainReason } from "../surface/plainFailure";
 import { registerProjectRepository, registrable, useProjectRepository } from "../projectRepository";
 import "./drawer.css";
@@ -404,6 +405,10 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
                 </SurfaceLedger>
               ) : null}
             </SurfaceSection>
+          ) : null}
+          {/* PG16: the decisions a Program proposed (a Skip, a merge by rule). */}
+          {data.room?.decisions.state === "ok" && data.room.decisions.proposed?.length ? (
+            <RoomDecisions proposed={data.room.decisions.proposed} />
           ) : null}
           {/* Programs (2026-10-28, §9b): the Room's Programs fold. */}
           {data.room?.programs?.state === "ok" ? <RoomPrograms programs={data.room.programs.programs} /> : null}

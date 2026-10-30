@@ -443,7 +443,12 @@
 .pg-decided-at { text-align: left; }
 .pg-decided-rule { color: var(--wb-muted); }
 .pg-decided-row[data-overturned] .pg-ledger-line { color: var(--wb-muted); }
-.pg-decided-verb { display: inline-flex; justify-content: flex-end; }
+.pg-decided-verb { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+/* PG16: "Proposed as a decision" on a checkpoint row: the line keeps its
+   ellipsis, the word keeps its width. */
+.pg-ledger-line[data-proposed] { display: flex; align-items: center; gap: 8px; }
+.pg-ledger-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-proposed { flex: none; white-space: nowrap; }
 @container surface (max-width: 520px) {
   .pg-decided-row { grid-template-columns: minmax(0, 1fr) auto; }
   .pg-decided-at { display: none; }
