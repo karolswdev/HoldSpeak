@@ -138,10 +138,10 @@ export function TrustWindow() {
                 tone="warn"
                 label={
                   destination.enabled
-                    ? "SENDS OUT"
+                    ? "Sends out"
                     : destination.saved
-                      ? "THIS DEVICE"
-                      : "SENDS NOTHING"
+                      ? "This device"
+                      : "Sends nothing"
                 }
               />
             }

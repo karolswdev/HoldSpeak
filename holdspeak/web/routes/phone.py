@@ -17,7 +17,7 @@ POST   /api/phone/calls/{id}/again             owner: a missed call, again (Call
 GET    /api/phone/events?after_seq=            owner, device: the event log
 GET    /api/phone/status                       owner
 GET    /api/phone/push                         owner: where each part of his Apple push key is (never the key)
-PUT    /api/phone/push                         owner: {p8?, key_id?, team_id?, bundle_id?} → the key store
+PUT    /api/phone/push                         owner: {p8?, key_id?, team_id?, bundle_id?, host?} → the key store
 POST   /api/phone/push/test                    owner: one silent push to the paired phone; Apple's answer
 WS     /api/phone/ws?after_seq=                device (or owner): replay from after_seq, then live
 

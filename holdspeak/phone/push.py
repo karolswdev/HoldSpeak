@@ -50,9 +50,17 @@ PUSH_NO_KEY = "no_key"
 PUSH_HTTP2_UNAVAILABLE = "http2_unavailable"
 PUSH_UNREGISTERED = "unregistered"
 PUSH_STATES = (PUSH_READY, PUSH_NO_KEY, PUSH_HTTP2_UNAVAILABLE, PUSH_UNREGISTERED)
-APNS_HOSTS = {"production": "https://api.push.apple.com", "sandbox": "https://api.sandbox.push.apple.com"}
+#: Where the app on his phone was built from decides Apple's host: an App
+#: Store or TestFlight build has a production token, an Xcode build a
+#: development token (Apple's development host, ``api.sandbox.push.apple.com``).
+HOST_APP_STORE = "app_store"
+HOST_DEVELOPMENT = "development"
+APNS_HOST_CHOICES = (HOST_APP_STORE, HOST_DEVELOPMENT)
+APNS_HOSTS = {HOST_APP_STORE: "https://api.push.apple.com", HOST_DEVELOPMENT: "https://api.sandbox.push.apple.com"}
+#: Older saved keys said ``environment`` (``production`` | ``sandbox``).
+_LEGACY_ENVIRONMENTS = {"production": HOST_APP_STORE, "sandbox": HOST_DEVELOPMENT}
 #: The phone key store's slot for his APNs key (one JSON text: ``p8``,
-#: ``key_id``, ``team_id``, ``bundle_id``, ``environment``).
+#: ``key_id``, ``team_id``, ``bundle_id``, ``host``).
 APNS_SLOT = "apns-key"
 #: The HoldSpeak app's bundle id (``apple/scripts/gen-device-project.rb``,
 #: ``apple/App/Info.plist``): the APNs topic when he saves no other.
@@ -138,7 +146,7 @@ class ApnsKey:
     key_id: str
     p8: str
     bundle_id: str
-    environment: str = "production"
+    host: str = HOST_APP_STORE
 
 
 def apns_jwt(key: ApnsKey, *, now: Optional[float] = None) -> str:
@@ -179,7 +187,7 @@ def apns_request(key: ApnsKey, target: Target, payload: Mapping[str, str], ttl: 
         "apns-priority": "10" if high_priority else "5",
         "apns-expiration": str(int(time.time()) + max(0, int(ttl))),
     }
-    base = host or APNS_HOSTS.get(key.environment, APNS_HOSTS["production"])
+    base = host or APNS_HOSTS.get(key.host, APNS_HOSTS[HOST_APP_STORE])
     url = f"{base.rstrip('/')}/3/device/{target.token}"
     return url, headers, body
 
@@ -268,23 +276,40 @@ def read_saved_key() -> dict[str, Any]:
     return dict(data) if isinstance(data, dict) else {}
 
 
+def saved_host(data: Mapping[str, Any]) -> str:
+    """The saved host choice (``app_store`` when none was saved)."""
+    host = str(data.get("host") or "")
+    if host in APNS_HOST_CHOICES:
+        return host
+    return _LEGACY_ENVIRONMENTS.get(str(data.get("environment") or ""), HOST_APP_STORE)
+
+
 def saved_key_presence() -> dict[str, Any]:
     """What Settings ▸ Calls ▸ Phone ▸ Push reads: each field ``present`` or
-    not, and the bundle id (not a secret). The key itself never leaves."""
+    not, the bundle id and the host choice (not secrets). The key itself
+    never leaves."""
     data = read_saved_key()
     return {"present": {name: bool(str(data.get(name) or "").strip()) for name in ("p8", "key_id", "team_id")},
-            "bundle_id": str(data.get("bundle_id") or DEFAULT_BUNDLE_ID)}
+            "bundle_id": str(data.get("bundle_id") or DEFAULT_BUNDLE_ID), "host": saved_host(data)}
 
 
 def save_key_fields(fields: Mapping[str, Any]) -> dict[str, Any]:
     """Merge the given fields into the saved key (an empty value forgets
-    one). A ``p8`` that is not an EC private key raises ``ValueError``."""
+    one). ``host`` is ``app_store`` or ``development``. A ``p8`` that is not
+    an EC private key raises ``ValueError("not_a_p8")``; another host,
+    ``ValueError("bad_host")``."""
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric import ec
 
     from .devices import _store_for
 
     data = read_saved_key()
+    if "host" in fields:
+        host = str(fields.get("host") or "").strip()
+        if host not in APNS_HOST_CHOICES:
+            raise ValueError("bad_host")
+        data["host"] = host
+        data.pop("environment", None)
     for name in APNS_FIELDS:
         if name not in fields:
             continue
@@ -317,14 +342,14 @@ def apns_from_keystore(*, host: Optional[str] = None) -> Optional[ApnsPush]:
     try:
         return ApnsPush(ApnsKey(team_id=str(data["team_id"]), key_id=str(data["key_id"]), p8=str(data["p8"]),
                                 bundle_id=str(data["bundle_id"]),
-                                environment=str(data.get("environment") or "production")), host=host)
+                                host=saved_host(data)), host=host)
     except (KeyError, TypeError):
         log.warning("the saved APNs key is not readable")
         return None
 
 
 __all__ = [
-    "APNS_FIELDS", "APNS_SLOT", "DEFAULT_BUNDLE_ID", "TEST_ACCEPTED", "TEST_FAILED", "TEST_REFUSED", "TEST_STALE",
+    "APNS_FIELDS", "APNS_HOST_CHOICES", "APNS_HOSTS", "APNS_SLOT", "HOST_APP_STORE", "HOST_DEVELOPMENT", "saved_host", "DEFAULT_BUNDLE_ID", "TEST_ACCEPTED", "TEST_FAILED", "TEST_REFUSED", "TEST_STALE",
     "answer_code", "read_saved_key", "save_key_fields", "saved_key_presence",
     "ApnsKey", "ApnsPush", "ERROR", "MAX_EVENT_BYTES", "NullPush", "OK", "PUSH_HTTP2_UNAVAILABLE", "PUSH_NO_KEY",
     "PUSH_READY", "PUSH_STATES", "PUSH_UNREGISTERED", "PushProvider", "REPLY_CATEGORY", "Target", "UNREGISTERED",

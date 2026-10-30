@@ -482,8 +482,15 @@ def test_the_push_key_saves_through_the_routes_never_comes_back_and_the_test_pus
             assert "PRIVATE KEY" not in saved.text
         after = hub.client.get("/api/phone/push")
         assert after.json() == {"present": {"p8": True, "key_id": True, "team_id": True},
-                                "bundle_id": "dev.holdspeak.mobile", "push_state": "ready"}
+                                "bundle_id": "dev.holdspeak.mobile", "host": "app_store", "push_state": "ready"}
         assert "PRIVATE KEY" not in after.text
+        # Builds from: the choice is stored beside the key and comes back on the wire
+        chosen = hub.client.put("/api/phone/push", json={"host": "development"})
+        assert chosen.status_code == 200 and chosen.json()["host"] == "development", chosen.text
+        assert hub.client.get("/api/phone/push").json()["host"] == "development"
+        wrong = hub.client.put("/api/phone/push", json={"host": "testflight"})
+        assert wrong.status_code == 400 and wrong.json()["code"] == "bad_host"
+        assert hub.client.get("/api/phone/push").json()["host"] == "development"
         assert hub.client.get("/api/phone/status").json()["devices"][0]["push_state"] == "ready"
         refused = hub.client.put("/api/phone/push", json={"p8": "hello"})
         assert refused.status_code == 400 and refused.json()["code"] == "not_a_p8"

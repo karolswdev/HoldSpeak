@@ -309,6 +309,29 @@ describe("the dock tile and the lamp", () => {
   });
 });
 
+/* PHONE-APNS-HOST (2026-10-30): the lamp read RECORDING ON ANOTHER VIEW: the
+ * lamp species' mono caps (gadgets.css .gadget-lamp) beat the sentence-case
+ * word. LAMPS-WORDS (2026-10-30): the species itself draws sentence case
+ * (lampWords.test.tsx), so recordings.css carries no override. */
+import gadgetsCss from "../../surface/gadgets.css?raw";
+import { stateWords } from "../../surface/words";
+
+describe("The Record lamp says its word in sentence case", () => {
+  it("the menu-bar lamp's text is sentence case and its CSS does not uppercase it", () => {
+    hub({ "GET /api/recordings": recordingsEmpty });
+    render(<ScreenRecordLamp />);
+    emit("recording_state", frameRemoteStarted);
+    const lamp = screen.getByTestId("desk-screen-lamp").querySelector(".gadget-lamp");
+    expect(lamp?.textContent).toBe("Recording on another view");
+    expect(lamp?.textContent).toBe(stateWords(lamp?.textContent ?? ""));
+    expect(lamp?.textContent).not.toBe(lamp?.textContent?.toUpperCase());
+    const rule = /\n\.gadget-lamp \{([^}]*)\}/.exec(gadgetsCss)?.[1] ?? "";
+    expect(rule).not.toBe("");
+    expect(rule).not.toMatch(/text-transform:\s*uppercase/);
+    expect(rule).toMatch(/letter-spacing:\s*0/);
+  });
+});
+
 describe("Settings ▸ Desk ▸ Recordings", () => {
   it("says the keep and the space used, and Open folder asks the hub", async () => {
     hub({ "GET /api/recordings": recordingsList, "POST /api/recordings/folder/open": { opened: true } });

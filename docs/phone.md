@@ -67,11 +67,18 @@ Then give the key to the hub:
 3. Type the **Key ID** and the **Team ID**, and save each one.
 4. Keep the **App bundle ID** as `dev.holdspeak.mobile`, unless you build the
    app with a different bundle ID.
-5. Select **Test push**. The hub sends one silent push to your paired phone
+5. Set **Builds from** to the place your phone's app came from. **App Store**
+   is the default: an App Store or TestFlight build gets a production token,
+   and the hub sends to `api.push.apple.com`. An app that you build and run
+   from Xcode gets a development token. Apple takes that token only on its
+   development host, so pick **Xcode** while you test: the hub then sends to
+   `api.sandbox.push.apple.com`. The hub keeps this choice beside the key.
+6. Select **Test push**. The hub sends one silent push to your paired phone
    and shows Apple's answer:
    - **Apple accepted it**: pushes work.
    - **This phone's token is stale: open the app once**: open HoldSpeak on the
-     phone, then test again.
+     phone, then test again. If this is an Xcode build, pick **Xcode** under
+     **Builds from**.
    - **Apple refused the key: check the Key ID and Team ID**: one of them, or
      the key, is wrong. Save them again.
 
@@ -190,7 +197,7 @@ Revoking a paired device does not delete Desk records.
 | `POST /api/phone/calls/{id}/again` | Ask for the permitted retry after a missed call. |
 | `GET /api/phone/events?after_seq=` | Read Phone event frames. |
 | `GET /api/phone/push` | Owner only: which parts of the Apple push key are stored (never the key) and the push state. |
-| `PUT /api/phone/push` | Owner only: store the `.p8` key, the Key ID, the Team ID or the bundle ID in the keystore. |
+| `PUT /api/phone/push` | Owner only: store the `.p8` key, the Key ID, the Team ID, the bundle ID or the host (`app_store` or `development`) in the keystore. |
 | `POST /api/phone/push/test` | Owner only: send one silent push to the paired phone and return Apple's answer. |
 | WebSocket `/api/phone/ws?after_seq=` | Paired-client event and message channel. |
 

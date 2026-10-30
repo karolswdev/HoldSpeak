@@ -21,7 +21,7 @@ const NAMES: Record<string, string> = {
   HOLDSPEAK: "HoldSpeak", GITHUB: "GitHub", GH: "gh", JIRA: "Jira", CONFLUENCE: "Confluence", SLACK: "Slack",
   CLAUDE: "Claude", CODEX: "Codex", OLLAMA: "Ollama", WHISPER: "Whisper", TMUX: "tmux", OPENAI: "OpenAI",
   ANTHROPIC: "Anthropic", GEMINI: "Gemini", MACOS: "macOS", ICLOUD: "iCloud", GOOGLE: "Google",
-  TAILSCALE: "Tailscale", PYNPUT: "pynput", PYTHON: "Python", KEYCHAIN: "Keychain", ACLI: "acli", GIT: "git", MLXLM: "mlx-lm", LMSTUDIO: "LM Studio",
+  TAILSCALE: "Tailscale", TELNYX: "Telnyx", PYNPUT: "pynput", PYTHON: "Python", KEYCHAIN: "Keychain", ACLI: "acli", GIT: "git", MLXLM: "mlx-lm", LMSTUDIO: "LM Studio",
   QWEN: "Qwen", LLAMA: "Llama", MISTRAL: "Mistral", PARAKEET: "Parakeet", OUTLOOK: "Outlook", GMAIL: "Gmail",
   ...Object.fromEntries(
     ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "SEPT", "OCT", "NOV", "DEC",
