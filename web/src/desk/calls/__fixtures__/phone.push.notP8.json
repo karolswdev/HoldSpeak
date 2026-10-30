@@ -1,0 +1,5 @@
+{
+  "error": "not_a_p8",
+  "code": "not_a_p8",
+  "detail": "This is not an Apple push key. Paste the whole .p8 file."
+}

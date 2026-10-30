@@ -431,6 +431,30 @@ describe("DELIGHT slice 5: Since this morning", () => {
     usePhoneFocus.setState({ pending: false, replyTo: null, callId: null });
   });
 
+  it("Phone (PH16): at 09:00 the recorded day's line heads the day, like the Programs line; a day of zero adds none", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 9, 0, 0));
+    const routes = (status: unknown) => hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+      "/api/today/since-morning": () => json(recorded),
+      "/api/settings": () => json({ calls: { phone_on: true } }),
+      "/api/phone/status": () => json(status),
+    });
+    routes(phoneStatus);
+    const { unmount } = render(<TodayView />);
+    const row = await screen.findByTestId("today-phone");
+    expect(row.textContent).toBe("Reached you 3 times: 1 answered");
+    expect(screen.getByTestId("today-programs-head").contains(row)).toBe(true);
+    expect(screen.queryByTestId("today-done")).toBeNull();
+    unmount();
+    routes({ ...phoneStatus, today: { reaches: 0, calls: 0, answered: 0 } });
+    render(<TodayView />);
+    await waitFor(() => expect(screen.getByTestId("today-body").getAttribute("aria-busy")).toBeNull());
+    expect(screen.queryByTestId("today-phone")).toBeNull();
+    expect(screen.queryByTestId("today-programs-head")).toBeNull();
+  });
+
   it("Phone: a hub without the Phone slice adds no line", async () => {
     vi.setSystemTime(new Date(2026, 9, 28, 18, 0, 0));
     day(() => json(recorded));

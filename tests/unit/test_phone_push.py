@@ -180,3 +180,129 @@ def test_the_hub_without_a_saved_key_says_no_key(tmp_path: Path, monkeypatch: py
     assert hub.push_state() == PUSH_NO_KEY
     rig = PhoneService(Database(tmp_path / "q.db"), push=NullPush())
     assert rig.push_state() == PUSH_READY
+
+
+# ── PHONE-APNS-KEY: his Apple push key in Settings ▸ Calls ▸ Phone ▸ Push ──
+
+from holdspeak.phone.push import DEFAULT_BUNDLE_ID, answer_code, saved_key_presence  # noqa: E402
+from holdspeak.principals import Principal, PrincipalKind  # noqa: E402
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
+AGENT = Principal(PrincipalKind.AGENT, "agent-test")
+
+
+def _hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, host: str | None = None):
+    from holdspeak.db import Database
+    from holdspeak.phone import devices
+    from holdspeak.phone.service import PhoneService
+
+    monkeypatch.setenv("HOLDSPEAK_CHANNEL_KEYSTORE_FILE", str(tmp_path / "keys.json"))
+    devices.forget_cached_secret()
+    return PhoneService(Database(tmp_path / "p.db"), apns_host=host)
+
+
+def _pair(hub, token: str = "tok") -> dict:
+    row = {"id": "dev_1", "name": "iPhone", "platform": "ios", "state": "paired", "jwt_kid": "kid-1",
+           "push_token": token, "push_kind": "apns", "paired_at": "2026-10-29T10:00:00+00:00"}
+    hub.store.save_device(row)
+    return row
+
+
+def test_the_key_store_round_trip_says_present_and_never_returns_the_key(tmp_path, monkeypatch) -> None:
+    hub = _hub(tmp_path, monkeypatch)
+    key = _key()
+    first = hub.push_key(OWNER)
+    assert first == {"present": {"p8": False, "key_id": False, "team_id": False},
+                     "bundle_id": DEFAULT_BUNDLE_ID, "push_state": PUSH_NO_KEY}
+    saved = hub.save_push_key(OWNER, {"p8": key.p8})
+    assert saved["present"] == {"p8": True, "key_id": False, "team_id": False}
+    assert saved["push_state"] == PUSH_NO_KEY  # the ids are still missing
+    text = json.dumps(saved) + json.dumps(hub.push_key(OWNER)) + json.dumps(saved_key_presence())
+    assert "PRIVATE KEY" not in text and key.p8.splitlines()[1] not in text
+    # the key is in the keystore, whole, under the phone key store's slot
+    from holdspeak.phone.devices import _store_for
+
+    assert json.loads(_store_for("apns-key").get())["p8"].strip() == key.p8.strip()
+
+
+def test_push_state_turns_ready_when_the_key_the_ids_and_the_topic_are_saved(tmp_path, monkeypatch) -> None:
+    hub = _hub(tmp_path, monkeypatch)
+    key = _key()
+    assert hub.push_state() == PUSH_NO_KEY
+    hub.save_push_key(OWNER, {"p8": key.p8, "key_id": "key1234567"})
+    assert hub.push_state() == PUSH_NO_KEY
+    after = hub.save_push_key(OWNER, {"team_id": "team123456"})
+    assert after["present"] == {"p8": True, "key_id": True, "team_id": True}
+    assert after["bundle_id"] == DEFAULT_BUNDLE_ID and after["push_state"] == PUSH_READY
+    provider = apns_from_keystore()
+    assert isinstance(provider, ApnsPush)
+    assert (provider._key.key_id, provider._key.team_id) == ("KEY1234567", "TEAM123456")
+    # forgetting a part turns it back to no_key
+    assert hub.save_push_key(OWNER, {"team_id": ""})["push_state"] == PUSH_NO_KEY
+
+
+def test_a_paste_that_is_not_a_p8_is_refused_and_nothing_changes(tmp_path, monkeypatch) -> None:
+    from holdspeak.phone.service import PhoneRefused
+
+    hub = _hub(tmp_path, monkeypatch)
+    with pytest.raises(PhoneRefused) as refused:
+        hub.save_push_key(OWNER, {"p8": "-----BEGIN PRIVATE KEY-----\nnot a key\n-----END PRIVATE KEY-----"})
+    assert refused.value.code == "not_a_p8"
+    assert hub.push_key(OWNER)["present"]["p8"] is False
+
+
+def test_only_the_owner_reads_saves_or_tests_the_push_key(tmp_path, monkeypatch) -> None:
+    from holdspeak.phone.service import PhoneRefused
+
+    hub = _hub(tmp_path, monkeypatch)
+    for call in (lambda: hub.push_key(AGENT), lambda: hub.save_push_key(AGENT, {"key_id": "K"}),
+                 lambda: hub.test_push(AGENT)):
+        with pytest.raises(PhoneRefused) as refused:
+            call()
+        assert refused.value.code == "owner_principal_required"
+
+
+@pytest.mark.parametrize(("answer", "code"), [
+    ((200, {}), "accepted"),
+    ((400, {"reason": "BadDeviceToken"}), "stale"),
+    ((410, {"reason": "Unregistered"}), "stale"),
+    ((403, {"reason": "InvalidProviderToken"}), "refused"),
+    ((429, {"reason": "TooManyRequests"}), "failed"),
+])
+def test_the_test_push_says_apples_answer_from_the_fake_apns(tmp_path, monkeypatch, answer, code) -> None:
+    key = _key()
+    with FakeApns(answers={"tok": answer}) as apns:
+        hub = _hub(tmp_path, monkeypatch, host=apns.url)
+        _pair(hub)
+        hub.save_push_key(OWNER, {"p8": key.p8, "key_id": key.key_id, "team_id": key.team_id})
+        got = hub.test_push(OWNER)
+    assert got["answer"] == code and got["status"] == answer[0] and got["device_id"] == "dev_1"
+    assert got["reason"] == answer[1].get("reason", "")
+    [request] = apns.requests
+    assert request["path"] == "/3/device/tok"
+    assert request["headers"]["apns-topic"] == DEFAULT_BUNDLE_ID
+    assert request["headers"]["apns-push-type"] == "background" and request["headers"]["apns-priority"] == "5"
+    assert request["body"]["aps"] == {"content-available": 1}
+    assert json.loads(request["body"]["event"])["type"] == "push.test"
+    assert _verify_es256(key, request["headers"]["authorization"].split(" ")[1])["header"]["kid"] == key.key_id
+    # a test push never forgets the token (the phone re-sends it when the app opens)
+    assert hub.store.get_device("dev_1")["push_token"] == "tok"
+
+
+def test_the_test_push_without_a_key_or_a_token_is_refused(tmp_path, monkeypatch) -> None:
+    from holdspeak.phone.service import PhoneRefused
+
+    hub = _hub(tmp_path, monkeypatch, host="http://127.0.0.1:9")
+    with pytest.raises(PhoneRefused) as refused:
+        hub.test_push(OWNER)
+    assert refused.value.code == PUSH_NO_KEY
+    key = _key()
+    hub.save_push_key(OWNER, {"p8": key.p8, "key_id": key.key_id, "team_id": key.team_id})
+    with pytest.raises(PhoneRefused) as refused:
+        hub.test_push(OWNER)
+    assert refused.value.code == "no_push_token"
+
+
+def test_answer_codes() -> None:
+    assert answer_code(200, "") == "accepted" and answer_code(403, "BadCertificate") == "refused"
+    assert answer_code(400, "BadTopic") == "failed" and answer_code(0, "refused") == "failed"

@@ -344,3 +344,19 @@
   color: var(--wb-ink);
 }
 .desk-next .calls-phone-title::after { content: ""; flex: 1; border-top: 1px solid var(--wb-rule-soft); }
+
+/* Settings ▸ Calls ▸ Phone ▸ Push (PHONE-APNS-KEY): a write-only part is a
+   row (name · where it is · Change) and, while open, its field and Save. */
+.desk-next .phone-secret { border-bottom: 1px solid var(--wb-rule-soft); }
+.desk-next .phone-secret:last-of-type { border-bottom: 0; }
+.desk-next .phone-field { display: flex; align-items: flex-start; gap: 6px; min-width: 0; padding: 2px 8px 8px; }
+.desk-next .phone-field > .gadget-string,
+.desk-next .phone-field > .phone-drop { flex: 1 1 auto; min-width: 0; max-width: 520px; }
+.desk-next .phone-drop { display: block; }
+.desk-next .phone-drop textarea { font: 400 12px / 1.4 var(--font-mono); }
+.desk-next .phone-field > .btn { flex: none; }
+@container surface (max-width: 560px) {
+  .desk-next .phone-field { flex-wrap: wrap; }
+  .desk-next .phone-field > .gadget-string,
+  .desk-next .phone-field > .phone-drop { flex-basis: 100%; max-width: none; }
+}

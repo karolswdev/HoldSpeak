@@ -41,6 +41,49 @@ The pair endpoint is owner-authorized. The QR payload names the hub that
 issued it. Keep it on the intended private network and do not paste the token
 into a general client setting.
 
+## Your Apple push key
+
+A paired iPhone gets a message or a call through Apple's push service (APNs).
+The hub needs your own Apple push key to send these pushes. Without the key,
+the phone row in **Settings > Calls > Phone** says **Push not ready: no Apple
+push key on the hub**.
+
+Make the key one time in the Apple developer portal:
+
+1. Sign in to [developer.apple.com/account](https://developer.apple.com/account).
+2. Open **Certificates, Identifiers & Profiles > Keys** and add a key.
+3. Turn on **Apple Push Notifications service (APNs)** for the key, then
+   register it.
+4. Download the `.p8` file. Apple lets you download it one time only. Keep it
+   in a safe place.
+5. Write down the **Key ID** (on the key's page) and your **Team ID** (under
+   **Membership details**).
+
+Then give the key to the hub:
+
+1. Open **Settings > Calls > Phone > Push**.
+2. Paste the text of the `.p8` file into **Apple push key (.p8)**, or drop the
+   file on the field. Select **Save**.
+3. Type the **Key ID** and the **Team ID**, and save each one.
+4. Keep the **App bundle ID** as `dev.holdspeak.mobile`, unless you build the
+   app with a different bundle ID.
+5. Select **Test push**. The hub sends one silent push to your paired phone
+   and shows Apple's answer:
+   - **Apple accepted it**: pushes work.
+   - **This phone's token is stale: open the app once**: open HoldSpeak on the
+     phone, then test again.
+   - **Apple refused the key: check the Key ID and Team ID**: one of them, or
+     the key, is wrong. Save them again.
+
+What the hub does with the key:
+
+- It keeps the key, the Key ID and the Team ID in your keystore (the macOS
+  Keychain, or the Secret Service on Linux). Each row says only **Stored in
+  your keystore** or **Missing**. No page and no route shows the key again.
+- It uses the key only to sign a short token for each push to Apple. It sends
+  the push only to Apple's push service.
+- It never sends the key to a phone, an agent, an engine or a log.
+
 ## Reach you: when the desk sends a message or calls
 
 Phone applies the control level **Secure**, **Normal**, or **YOLO**, the
@@ -146,6 +189,9 @@ Revoking a paired device does not delete Desk records.
 | `POST /api/phone/calls/{id}/ring` | Ring an eligible held call. |
 | `POST /api/phone/calls/{id}/again` | Ask for the permitted retry after a missed call. |
 | `GET /api/phone/events?after_seq=` | Read Phone event frames. |
+| `GET /api/phone/push` | Owner only: which parts of the Apple push key are stored (never the key) and the push state. |
+| `PUT /api/phone/push` | Owner only: store the `.p8` key, the Key ID, the Team ID or the bundle ID in the keystore. |
+| `POST /api/phone/push/test` | Owner only: send one silent push to the paired phone and return Apple's answer. |
 | WebSocket `/api/phone/ws?after_seq=` | Paired-client event and message channel. |
 
 MCP Phone tools have their own principal and authority checks. Route existence

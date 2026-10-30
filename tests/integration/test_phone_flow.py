@@ -459,6 +459,43 @@ def test_a_revoked_phone_gets_401_and_its_socket_closes(hub, monkeypatch) -> Non
     assert device.post("/api/phone/pair").status_code in (401, 403)
 
 
+# ── PHONE-APNS-KEY: his Apple push key through the real routes ──────────
+
+def test_the_push_key_saves_through_the_routes_never_comes_back_and_the_test_push_reaches_the_fake_apns(
+        hub, monkeypatch) -> None:
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    from tests.fixtures.fake_apns import FakeApns
+
+    pem = ec.generate_private_key(ec.SECP256R1()).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()).decode()
+    with FakeApns(answers={"fake-push-token": (403, {"reason": "InvalidProviderToken"})}) as apns:
+        _phone(hub, monkeypatch, push=None, apns_host=apns.url, number=_NoNumber())
+        device = _paired(hub)
+        before = hub.client.get("/api/phone/push")
+        assert before.status_code == 200 and before.json()["push_state"] == "no_key", before.text
+        assert hub.client.get("/api/phone/status").json()["devices"][0]["push_state"] == "no_key"
+        for body in ({"p8": pem}, {"key_id": "KEY1234567"}, {"team_id": "TEAM123456"}):
+            saved = hub.client.put("/api/phone/push", json=body)
+            assert saved.status_code == 200, saved.text
+            assert "PRIVATE KEY" not in saved.text
+        after = hub.client.get("/api/phone/push")
+        assert after.json() == {"present": {"p8": True, "key_id": True, "team_id": True},
+                                "bundle_id": "dev.holdspeak.mobile", "push_state": "ready"}
+        assert "PRIVATE KEY" not in after.text
+        assert hub.client.get("/api/phone/status").json()["devices"][0]["push_state"] == "ready"
+        refused = hub.client.put("/api/phone/push", json={"p8": "hello"})
+        assert refused.status_code == 400 and refused.json()["code"] == "not_a_p8"
+        tested = hub.client.post("/api/phone/push/test")
+        assert tested.status_code == 200, tested.text
+        assert tested.json()["answer"] == "refused" and tested.json()["status"] == 403
+        assert [request["path"] for request in apns.requests] == ["/3/device/fake-push-token"]
+        # a phone may not read, save or test the key
+        assert device.get("/api/phone/push").status_code in (401, 403)
+        assert device.post("/api/phone/push/test").status_code in (401, 403)
+
+
 @pytest.fixture
 def hub_off(tmp_path, monkeypatch):
     from holdspeak.db import reset_database

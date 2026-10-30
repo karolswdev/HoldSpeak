@@ -250,9 +250,34 @@ a text.
 APNs `interruption-level: critical` needs the critical-alerts entitlement
 from Apple. Until he has it, urgent means "ring once more after 60 s".
 
-## PH16. Today counts the reaches (Left, unless PH-FACES ships it)
+## PH16. Today counts the reaches (Shipped 2026-10-29, lane PHONE-APNS-KEY)
 
-Today's Since morning says "Reached you 2 times: 1 answered" (design §9).
+Today says "Reached you 2 times: 1 answered" (design §9) from the
+`today` block of `GET /api/phone/status`, at any hour (the Programs pattern,
+PG18): before 17:00 the line heads the day, after 17:00 it is a row in Since
+this morning. No line when the desk did not reach him.
+
+## PH17. His Apple push key (Shipped 2026-10-29, lane PHONE-APNS-KEY)
+
+- **Goal**: the `no_key` state gets its Save.
+- **Files**: `hs/phone/push.py` (`save_key_fields`, `saved_key_presence`,
+  `ApnsPush.answer`, the `silent` push kind), `hs/phone/service.py`
+  (`push_key`, `save_push_key`, `test_push`), `hs/web/routes/phone.py`
+  (`GET|PUT /api/phone/push`, `POST /api/phone/push/test`, owner only),
+  `web/src/desk/calls/PhoneSettings.tsx` (the Push group), `docs/phone.md`.
+- **Changes**: Settings ▸ Calls ▸ Phone ▸ Push keeps the `.p8` (a pad with its
+  mic, a paste or a file drop), the Key ID and the Team ID write only in the
+  phone key store's `apns-key` slot, each row "Stored in your keystore" or
+  "Missing"; the bundle ID is prefilled `dev.holdspeak.mobile` (the app's
+  identifier, `apple/App/Info.plist`). `push_state` is `ready` when all four
+  are saved. Test push sends one silent (background) push to the newest
+  paired phone and says Apple's answer: 200 "Apple accepted it"; 400
+  BadDeviceToken or 410 "This phone's token is stale: open the app once"; 403
+  "Apple refused the key: check the Key ID and Team ID".
+- **Proof**: `tests/unit/test_phone_push.py` (the round trip says `present`
+  only; the answers against the fake APNs server), `tests/integration/test_phone_flow.py`
+  (the routes through the real hub), `web/src/desk/__tests__/calls.app.test.tsx`
+  (the recorded answers, `scripts/record_phone_fixtures.py --push`).
 
 ---
 

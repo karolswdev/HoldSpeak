@@ -1,0 +1,9 @@
+{
+  "present": {
+    "p8": true,
+    "key_id": true,
+    "team_id": true
+  },
+  "bundle_id": "dev.holdspeak.mobile",
+  "push_state": "ready"
+}

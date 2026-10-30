@@ -101,3 +101,19 @@ export interface PhoneChangedFrame {
   id: string;
   state?: string;
 }
+
+/** `GET|PUT /api/phone/push` (PHONE-APNS-KEY): where each part of his Apple
+ *  push key is. The key itself never comes back: only `present`. */
+export interface PhonePushKey {
+  present: { p8: boolean; key_id: boolean; team_id: boolean };
+  bundle_id: string;
+  push_state: PhonePushState;
+}
+
+/** `POST /api/phone/push/test`: Apple's answer to one silent push. */
+export interface PhonePushTest {
+  answer: "accepted" | "stale" | "refused" | "failed";
+  status: number;
+  reason: string;
+  device_id: string;
+}
