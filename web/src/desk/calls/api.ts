@@ -46,7 +46,9 @@ export async function readCallsSettings(): Promise<CallsSettings | null> {
   return calls && typeof calls === "object" ? calls : null;
 }
 
-export async function writeCallsSetting(key: keyof CallsSettings | "passphrase", value: unknown): Promise<CallsSettings | null> {
+/** The ONE writer of the `calls` settings subtree (the Calls pane, the
+ *  Line, the Phone's Reach you): one key per PUT. */
+export async function writeCallsSetting(key: keyof CallsSettings | "passphrase" | "phone_reach", value: unknown): Promise<CallsSettings | null> {
   const body = await apiFetch<{ settings?: { calls?: CallsSettings } }>("/api/settings", {
     method: "PUT",
     json: { calls: { [key]: value } },

@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
+import { writeCallsSetting } from "./api";
 import type {
   PhoneCall, PhoneChangedFrame, PhoneDevice, PhoneMessage, PhonePairing, PhonePushKey, PhonePushTest, PhoneStatus, ReachChannel,
 } from "./phoneTypes";
@@ -88,9 +89,10 @@ export function testPush(): Promise<PhonePushTest> {
 }
 
 /** Reach you writes his own words (`calls.phone_reach`, the whole map: a
- *  kind not named follows the level). */
+ *  kind not named follows the level), through the one writer of the
+ *  `calls` subtree (desk/calls/api.ts). */
 export async function writeReach(own: Record<string, ReachChannel>): Promise<void> {
-  await apiFetch("/api/settings", { method: "PUT", json: { calls: { phone_reach: own } } });
+  await writeCallsSetting("phone_reach", own);
 }
 
 /** The paired phone (the newest paired), or none. */
