@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+from urllib.parse import quote
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,7 @@ from tests._evidence import evidence_dir
 pytest.importorskip("playwright.sync_api")
 pytestmark = [pytest.mark.e2e, pytest.mark.skipif(shutil.which("tmux") is None, reason="tmux is required")]
 TOKEN = "terminal-workspace-glass"
-SHOTS = evidence_dir("terminal-workspace")
+SHOTS = evidence_dir("terminal-flow")
 
 
 def _tmux(*args: str) -> str:
@@ -60,13 +61,25 @@ def _inventory(page: Any, base: str) -> Any:
     return frame
 
 
+def _tile(inventory: Any, page: Any) -> None:
+    tile = inventory.get_by_test_id("terminal-tile")
+    if tile.is_visible():
+        tile.click()
+    else:
+        inventory.get_by_role("button", name="More", exact=True).click()
+        page.get_by_role("menuitem", name="Tile terminals", exact=True).click()
+
+
 def _type(frame: Any, words: str) -> None:
     frame.get_by_test_id("terminal-enable-typing").click()
     # The press requests a grant. Keyboard input is permitted only after the
     # rendered acknowledgement, which can take longer under the broad rig.
     frame.get_by_role("button", name="View only", exact=True).wait_for(state="visible")
+    from playwright.sync_api import expect
     helper = frame.locator("textarea.xterm-helper-textarea")
-    helper.focus()
+    # Type owns focus at the press, without a second screen click or a test
+    # helper doing work the interface should do itself.
+    expect(helper).to_be_focused()
     helper.type(words, delay=45)
     helper.press("Enter")
 
@@ -118,6 +131,9 @@ def test_independent_input_persistent_views_and_close_without_kill(
             a = next(row for row in sessions["sessions"] if row["session"] == name_a)
             b = next(row for row in sessions["sessions"] if row["session"] == name_b)
             assert a["id"] != b["id"] and a["target"]["target_id"] != b["target"]["target_id"]
+            SHOTS.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(SHOTS / f"inventory-{width}.png"))
+            assert inventory.locator(".kit-listrow").count() == 2
             working = tmp_path / "shell-folder"
             working.mkdir()
             inventory.get_by_test_id("terminal-new").click()
@@ -142,6 +158,10 @@ def test_independent_input_persistent_views_and_close_without_kill(
             # An Escape belongs to the TUI. It must not dismiss the frame.
             first.locator("textarea.xterm-helper-textarea").press("Escape")
             assert first.is_visible()
+            # In bash Escape is a real Readline prefix: the later `printf`
+            # would become Meta-p (history search). Cancel that shell mode
+            # through the same input seam before continuing the workflow.
+            first.locator("textarea.xterm-helper-textarea").press("Control+c")
             if width == 1440:
                 # Reflow follows this window's width, even on a wide Desk.
                 # The physical pane stays wide/tall and must scroll within
@@ -183,7 +203,7 @@ def test_independent_input_persistent_views_and_close_without_kill(
             assert page.locator('[id^="terminal:"]').count() == 2
             if width == 1440:
                 _inventory(page, base)
-                inventory.get_by_test_id("terminal-tile").click()
+                _tile(inventory, page)
                 _eventually(lambda: len(_api(page, "GET", "/api/desk/windows", token=TOKEN)["windows"]) >= 3)
             before = _api(page, "GET", "/api/desk/windows", token=TOKEN)
             terminal_rows = {row["id"]: row for row in before["windows"] if row["id"].startswith("terminal:")}
@@ -212,8 +232,61 @@ def test_independent_input_persistent_views_and_close_without_kill(
             _inventory(page, base)
             reopened = _open(page, a)
             reopened.locator(".xterm").wait_for(state="visible")
-            # The default face stays quiet, and its shared menus/search remain
-            # reachable by keyboard without dismissing the terminal itself.
+            # The screen owns the default face; the optional voice/message
+            # composer does not occupy space until the owner asks for it.
+            assert reopened.get_by_test_id("terminal-composer").count() == 0
+            from playwright.sync_api import expect
+            arm_url = f"**/api/coders/{quote(a['key'], safe='')}/arm"
+            pending_arm: list[Any] = []
+            page.route(arm_url, lambda route: pending_arm.append(route))
+            with page.expect_request(arm_url):
+                reopened.get_by_test_id("terminal-enable-typing").click()
+            expect(reopened.locator("textarea.xterm-helper-textarea")).to_be_focused()
+            assert len(pending_arm) == 1
+            reopened.get_by_test_id("terminal-find").click()
+            finder = reopened.get_by_role("textbox", name="Find in scrollback", exact=True)
+            finder.fill(marker_a)
+            # A real hub answer is withheld, then released after the owner has
+            # chosen another input. Its arrival must never steal that focus.
+            reply = pending_arm[0].fetch()
+            pending_arm[0].fulfill(response=reply)
+            page.unroute(arm_url)
+            reopened.get_by_role("button", name="View only", exact=True).wait_for(state="visible")
+            expect(finder).to_be_focused()
+            reopened.get_by_test_id("terminal-find").click()
+            expect(reopened.locator("textarea.xterm-helper-textarea")).to_be_focused()
+            message = reopened.get_by_role("button", name="Message", exact=True)
+            message.click()
+            composer = reopened.get_by_test_id("terminal-composer")
+            field = composer.get_by_role("textbox", name="Message", exact=True)
+            field.fill("keep this draft")
+            message.click()
+            expect(composer).to_have_count(0)
+            expect(reopened.locator("textarea.xterm-helper-textarea")).to_be_focused()
+            message.click()
+            expect(field).to_have_value("keep this draft")
+            marker_message = f"observed-message-{width}"
+            field.fill(f"printf '{marker_message}\\n'")
+            with page.expect_response("**/api/delivery/terminal/commands") as sent_message:
+                composer.get_by_role("button", name="Send", exact=True).click()
+            message_response = sent_message.value
+            message_wire = {
+                "request": message_response.request.post_data_json,
+                "response": message_response.json(),
+            }
+            try:
+                _eventually(lambda: marker_message in [line.strip() for line in _capture(pane_a).splitlines()])
+            except AssertionError as error:
+                SHOTS.mkdir(parents=True, exist_ok=True)
+                page.screenshot(path=str(SHOTS / f"failed-message-{width}.png"))
+                raise AssertionError(f"Message output not observed. A={_capture(pane_a)!r}; B={_capture(pane_b)!r}; wire={message_wire!r}; view={reopened.inner_text()!r}; draft={field.input_value()!r}") from error
+            expect(field).to_have_value("")
+            SHOTS.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(SHOTS / f"message-{width}.png"))
+            message.click()
+            expect(composer).to_have_count(0)
+            # Shared menus/search remain reachable by keyboard without
+            # dismissing the terminal itself.
             keys = reopened.get_by_role("button", name="Keys", exact=True)
             keys.click()
             page.get_by_role("menuitem", name="Ctrl-C", exact=True).wait_for(state="visible")
@@ -225,10 +298,22 @@ def test_independent_input_persistent_views_and_close_without_kill(
             finder.press("Enter")
             reopened.get_by_test_id("terminal-find").click()
             finder.wait_for(state="detached")
+            expect(reopened.locator("textarea.xterm-helper-textarea")).to_be_focused()
             if width == 393:
-                for button in (keys, reopened.get_by_test_id("terminal-enable-typing"), reopened.get_by_test_id("terminal-find")):
+                for button in (keys, reopened.get_by_test_id("terminal-enable-typing"), reopened.get_by_test_id("terminal-find"), message):
                     box = button.bounding_box()
                     assert box and box["width"] >= 44 and box["height"] >= 44, box
+                    assert button.evaluate("""button => {
+                        const r = button.getBoundingClientRect();
+                        return [
+                            [r.x + r.width / 2, r.y + r.height / 2],
+                            [r.left + 2, r.top + 2], [r.right - 2, r.top + 2],
+                            [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2],
+                        ].every(([x, y]) => {
+                            const hit = document.elementFromPoint(x, y);
+                            return hit === button || button.contains(hit);
+                        });
+                    }"""), f"Overlapping compact target: {button.inner_text()}"
                 screen = reopened.locator(".terminal-well-screen")
                 assert screen.evaluate("element => element.scrollWidth > element.clientWidth")
                 screen.evaluate("element => element.scrollLeft = 100")
@@ -236,12 +321,13 @@ def test_independent_input_persistent_views_and_close_without_kill(
                 screen.evaluate("element => element.scrollLeft = 0")
             if width == 1440:
                 inventory = _inventory(page, base)
-                inventory.get_by_test_id("terminal-tile").click()
+                _tile(inventory, page)
             _settle(page)
             SHOTS.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(SHOTS / f"workspace-{width}.png"))
             layout = page.evaluate("""() => {
                 const rect = (element) => {
+                    if (!element) return null;
                     const r = element.getBoundingClientRect();
                     return {x:r.x, y:r.y, width:r.width, height:r.height,
                         right:r.right, bottom:r.bottom};
@@ -266,13 +352,19 @@ def test_independent_input_persistent_views_and_close_without_kill(
                         .filter(element => element.getBoundingClientRect().width > 0)
                         .map(element => ({id:element.id, frame:rect(element),
                             composer:rect(element.querySelector('[data-testid="terminal-composer"]')),
+                            body:rect(element.querySelector('.terminals-window-body')),
+                            toolbar:rect(element.querySelector('[data-testid="terminal-toolbar"]')),
+                            screen:rect(element.querySelector('.terminals-screen')),
                             status:rect(element.querySelector('[data-testid="terminal-status"]'))})),
                 };
             }""")
             (SHOTS / f"observation-{width}.json").write_text(json.dumps({
                 "viewport": width, "source": "production browser + isolated hub + private real tmux",
                 "db": str(tmp_path / "holdspeak.db"), "socket": socket_path,
-                "targets": [a["id"], b["id"]], "observed": [marker_a, marker_b],
+                "targets": [a["id"], b["id"]], "observed": [marker_a, marker_b, marker_message],
+                "type_focused_without_second_click": True,
+                "late_grant_kept_find_focus": True,
+                "message_draft_survived_disclosure": True,
                 "close_kept_session": True, "restored_geometry": True, "page_errors": errors,
                 "layout": layout,
             }, indent=2))
@@ -281,11 +373,19 @@ def test_independent_input_persistent_views_and_close_without_kill(
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
             assert layout["terminals"], layout
             for terminal in layout["terminals"]:
-                frame, composer, status = (terminal[key] for key in ("frame", "composer", "status"))
+                frame, body, toolbar, screen, status = (
+                    terminal[key] for key in ("frame", "body", "toolbar", "screen", "status")
+                )
+                assert terminal["composer"] is None, terminal
                 assert -1 <= frame["x"] and frame["right"] <= width + 1, terminal
                 assert 0 <= frame["y"] and frame["bottom"] <= height + 1, terminal
-                assert frame["y"] <= composer["y"] < composer["bottom"] <= frame["bottom"] + 1, terminal
-                assert composer["bottom"] <= status["bottom"] <= layout["dock"]["y"] + 1, terminal
+                # The terminal is the window's working surface, with no pale
+                # page inset or empty gap between the shared strips.
+                assert abs(screen["x"] - body["x"]) <= 1, terminal
+                assert abs(screen["right"] - body["right"]) <= 1, terminal
+                assert abs(screen["y"] - toolbar["bottom"]) <= 1, terminal
+                assert abs(screen["bottom"] - status["y"]) <= 1, terminal
+                assert status["bottom"] <= layout["dock"]["y"] + 1, terminal
             browser.close()
     finally:
         if server is not None:

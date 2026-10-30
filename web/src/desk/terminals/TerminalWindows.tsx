@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import type { StoreApi } from "zustand/vanilla";
 import { Button } from "../../components/signal/Signal";
 import { PaneWell, StatusBar, StringGadget, ToolGlyph, Toolbar, ToolbarFold } from "../surface";
@@ -68,7 +69,11 @@ function useSession(descriptor: TerminalDescriptor | null): TerminalSessionState
 
 function statusWords(session: TerminalSessionState | null): string {
   if (!session) return "Not connected";
-  if (session.error) return `Not sent · ${session.error}`;
+  if (session.error) {
+    const disconnected = ["error", "unreachable", "unauthorized", "target_gone", "generation_mismatch", "stream_unavailable", "tmux_absent"].includes(session.status);
+    const posture = disconnected ? "Not connected" : session.canType ? "Not sent" : "View only";
+    return `${posture} · ${session.error}`;
+  }
   if (session.receipt) return "Sent";
   if (session.canType) return "Typing enabled";
   if (session.status === "live" || session.status === "not_modified") return "Live · View only";
@@ -113,6 +118,7 @@ function TerminalWindow({
   const draftKey = `terminal:${descriptorId}`;
   const draft = useDesk((state) => state.drafts[draftKey] ?? "");
   const setDraft = useDesk((state) => state.setDraft);
+  const [messageOpen, setMessageOpen] = useState(() => Boolean(draft.trim()));
   const close = () => useDesk.getState().closeTerminalWindow(descriptorId);
   const backToInventory = () => useDesk.getState().openSurfaceWindow("open-terminals");
   const sendText = async () => {
@@ -121,8 +127,16 @@ function TerminalWindow({
     const ok = await session.sendText(capturedDraft, true);
     if (ok && useDesk.getState().drafts[draftKey] === capturedDraft) setDraft(draftKey, null);
   };
+  const focusTerminal = () => {
+    flushSync(() => setFocusSignal((value) => value + 1));
+  };
   const toggleTyping = async () => {
     if (!session || typingPending) return;
+    if (!session.canType) {
+      // The operator's Type press owns focus. Flush the signal before asking
+      // the hub for its scoped grant so a delayed ACK can never move focus.
+      focusTerminal();
+    }
     setTypingPending(true);
     try {
       if (session.canType) await session.disableTyping();
@@ -131,9 +145,18 @@ function TerminalWindow({
       setTypingPending(false);
     }
   };
+  useEffect(() => {
+    // A draft recovered from the Desk is an explicit request to show Message.
+    // Hiding the disclosure never discards it, so it remains available when
+    // this window is restored or the user opens Message again.
+    if (draft.trim()) setMessageOpen(true);
+  }, [draft]);
   const keys: TerminalKey[] = ["C-c", "Escape", "Tab", "Up", "Down", "Left", "Right", "Enter"];
   const title = descriptor ? `${descriptor.agent !== "pane" ? descriptor.agent : "Shell"} · ${descriptor.label}` : `Terminal · ${descriptorId}`;
   const live = Boolean(session && ["live", "not_modified", "resyncing"].includes(session.status));
+  const typingActionDisabled = typingPending
+    || !session
+    || (!session.canType && !["live", "not_modified"].includes(session.status));
   const setActivity = session?.setActivity;
   const absence = session?.error
     ? `Terminal unavailable · ${session.error}`
@@ -181,6 +204,7 @@ function TerminalWindow({
     >
       <div
         className="desk-pullout-body terminals-window-body"
+        data-interior="editor"
         data-testid={`terminal-window-${descriptorId}`}
         onFocusCapture={(event) => {
           const target = event.target as HTMLElement;
@@ -197,11 +221,11 @@ function TerminalWindow({
             dense
             variant={session?.canType ? "secondary" : "ghost"}
             loading={typingPending}
-            disabled={typingPending}
+            disabled={typingActionDisabled}
             onClick={() => void toggleTyping()}
             data-testid="terminal-enable-typing"
           >
-            {session?.canType ? "View only" : "Enable typing"}
+            {session?.canType ? "View only" : "Type"}
           </Button>
           <ToolbarFold
             label="Keys"
@@ -216,10 +240,26 @@ function TerminalWindow({
             dense
             variant={findOpen ? "secondary" : "ghost"}
             aria-pressed={findOpen}
-            onClick={() => setFindOpen((open) => !open)}
+            onClick={() => {
+              if (findOpen) focusTerminal();
+              setFindOpen((open) => !open);
+            }}
             data-testid="terminal-find"
           >
             Find
+          </Button>
+          <Button
+            dense
+            variant={messageOpen ? "secondary" : "ghost"}
+            aria-expanded={messageOpen}
+            aria-controls={`terminal-composer-${descriptorId}`}
+            onClick={() => {
+              if (messageOpen) focusTerminal();
+              setMessageOpen((open) => !open);
+            }}
+            data-testid="terminal-message-toggle"
+          >
+            Message
           </Button>
           <span className="terminals-toolbar-spacer" />
           {descriptor ? <span className="terminals-toolbar-path" title={descriptor.current_path}>{descriptor.current_path || descriptor.session}</span> : null}
@@ -240,12 +280,14 @@ function TerminalWindow({
             onFocus={() => session?.setActivity({ focused: true, visible: true })}
           />
         </div>
-        <div className="terminals-composer" data-testid="terminal-composer">
-          <StringGadget label="Message" value={draft} onChange={(value) => setDraft(draftKey, value)} placeholder="Say or type a message" />
-          <Button dense variant="secondary" disabled={!draft.trim() || !session?.canType || session.busy} loading={session?.busy} onClick={() => void sendText()}>
-            Send
-          </Button>
-        </div>
+        {messageOpen ? (
+          <div className="terminals-composer" id={`terminal-composer-${descriptorId}`} data-testid="terminal-composer">
+            <StringGadget label="Message" value={draft} onChange={(value) => setDraft(draftKey, value)} placeholder="Say or type a message" />
+            <Button dense variant="secondary" disabled={!draft.trim() || !session?.canType || session.busy} loading={session?.busy} onClick={() => void sendText()}>
+              Send
+            </Button>
+          </div>
+        ) : null}
         <StatusBar
           data-testid="terminal-status"
           items={[{

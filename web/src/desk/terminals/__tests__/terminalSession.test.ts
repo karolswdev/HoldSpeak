@@ -131,7 +131,7 @@ describe("per-instance terminal session", () => {
     session.getState().start();
     await flush();
     expect(await session.getState().sendKeys(["Enter"], "ENTER")).toBe(false);
-    expect(session.getState().error).toBe("Enable typing first");
+    expect(session.getState().error).toBe("Press Type first");
   });
 
   it("sends natural single-line keyboard text, including a standalone space, as literal keys", async () => {
@@ -149,6 +149,64 @@ describe("per-instance terminal session", () => {
     vi.advanceTimersByTime(30);
     await flush();
     expect(vi.mocked(sendTerminalCommand).mock.calls[1][2]).toMatchObject({ keys: [{ literal: " " }] });
+  });
+
+  it("reads the screen immediately after the final acknowledged input batch", async () => {
+    const session = createTerminalSession(descriptor("prompt-read"));
+    session.getState().setActivity({ focused: true, visible: true });
+    session.getState().start();
+    await flush();
+    vi.mocked(readTerminalSubscription).mockResolvedValueOnce(
+      response({ status: "deltas", sequence: 2, deltas: [{ sequence: 2, data: " after" }] }),
+    );
+
+    expect(await session.getState().enableTyping()).toBe(true);
+    const sent = session.getState().sendText("echo", true);
+    vi.advanceTimersByTime(30);
+    expect(await sent).toBe(true);
+
+    expect(readTerminalSubscription).toHaveBeenCalledTimes(2);
+    await flush();
+    expect(session.getState().raw).toBe("initial after");
+  });
+
+  it("coalesces a prompt read behind an in-flight poll while queued keys drain", async () => {
+    const session = createTerminalSession(descriptor("prompt-coalesce"));
+    session.getState().setActivity({ focused: true, visible: true });
+    session.getState().start();
+    await flush();
+    expect(await session.getState().enableTyping()).toBe(true);
+
+    let resolvePoll: ((value: ReturnType<typeof response>) => void) | undefined;
+    vi.mocked(readTerminalSubscription).mockReturnValueOnce(
+      new Promise((done) => { resolvePoll = done; }),
+    );
+    vi.advanceTimersByTime(350);
+    await flush();
+    expect(readTerminalSubscription).toHaveBeenCalledTimes(2);
+
+    let resolveFirstSend: ((value: { ok: true; receipt: { receipt_id: string; state: string; outcome: string } }) => void) | undefined;
+    vi.mocked(sendTerminalCommand).mockReturnValueOnce(
+      new Promise((done) => { resolveFirstSend = done; }),
+    );
+    const first = session.getState().sendKeys([{ literal: "a" }], "A");
+    vi.advanceTimersByTime(30);
+    await flush();
+    const second = session.getState().sendKeys([{ literal: "b" }], "B");
+    vi.advanceTimersByTime(30);
+    await flush();
+    expect(sendTerminalCommand).toHaveBeenCalledTimes(1);
+
+    resolveFirstSend?.({ ok: true, receipt: { receipt_id: "keys-1", state: "succeeded", outcome: "delivered" } });
+    await flush();
+    expect(sendTerminalCommand).toHaveBeenCalledTimes(2);
+    expect(await first).toBe(true);
+    expect(await second).toBe(true);
+    expect(readTerminalSubscription).toHaveBeenCalledTimes(2);
+
+    resolvePoll?.(response({ status: "not_modified", sequence: 1, hash: "h1" }));
+    await flush();
+    expect(readTerminalSubscription).toHaveBeenCalledTimes(3);
   });
 
   it("cancels unsent input when disarmed and does not auto-retry refusal", async () => {
@@ -231,6 +289,41 @@ describe("per-instance terminal session", () => {
     expect(vi.mocked(sendTerminalCommand).mock.calls[1][2]).toMatchObject({ text: "new", submit: true });
     await flush();
     expect(await newPending).toBe(true);
+    expect(readTerminalSubscription).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not start a prompt read after a send is stopped before its receipt", async () => {
+    let resolveCommand: ((value: { ok: true; receipt: { receipt_id: string; state: string; outcome: string } }) => void) | undefined;
+    vi.mocked(sendTerminalCommand).mockReturnValueOnce(
+      new Promise((done) => { resolveCommand = done; }),
+    );
+    const session = createTerminalSession(descriptor("stopped-send"));
+    session.getState().setActivity({ focused: true, visible: true });
+    session.getState().start();
+    await flush();
+    expect(await session.getState().enableTyping()).toBe(true);
+    const pending = session.getState().sendText("stopped", true);
+    vi.advanceTimersByTime(30);
+    await flush();
+    session.getState().stop();
+    expect(await pending).toBe(false);
+    resolveCommand?.({ ok: true, receipt: { receipt_id: "stopped-1", state: "succeeded", outcome: "delivered" } });
+    await flush();
+    expect(readTerminalSubscription).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not start a prompt read while the terminal is hidden", async () => {
+    const session = createTerminalSession(descriptor("hidden-send"));
+    session.getState().start();
+    await flush();
+    expect(await session.getState().enableTyping()).toBe(true);
+    session.getState().setActivity({ focused: false, visible: false });
+    const pending = session.getState().sendText("hidden", true);
+    vi.advanceTimersByTime(30);
+    await flush();
+    expect(await pending).toBe(true);
+    expect(readTerminalSubscription).toHaveBeenCalledTimes(1);
+    session.getState().stop();
   });
 
   it("keeps a failed delivery visible through a successful screen poll", async () => {
@@ -249,6 +342,7 @@ describe("per-instance terminal session", () => {
     await flush();
     expect(await pending).toBe(false);
     expect(session.getState().error).toBe("Not sent: pane refused the command");
+    expect(readTerminalSubscription).toHaveBeenCalledTimes(1);
 
     vi.mocked(readTerminalSubscription).mockResolvedValueOnce(
       response({ status: "not_modified", sequence: 1, hash: "h1" }),
