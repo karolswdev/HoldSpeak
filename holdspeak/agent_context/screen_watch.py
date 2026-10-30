@@ -358,8 +358,28 @@ def tick(
         if store.observe(target.key, agent=target.agent, target=target.target, verdict=verdict,
                          screen=screen, title=title, now=clock, aliases=target.aliases):
             changed.append(target.key)
+        db = _keep_stop(store.get(target.key), db, clock)
     store.forget(read)
     return changed
+
+
+def _keep_stop(row: Optional[ScreenRecord], db: Any, now: datetime) -> Any:
+    """PG21: a usage-limit stop on the screen is kept as the harness's last
+    stop (``limit_stops``), the Engines window's verified notice. Returns the
+    database it used (opened once, only when a stop shows)."""
+    if row is None or row.limit is None or not row.limit.stopped:
+        return db
+    from . import limit_stops
+
+    if db is None:
+        try:
+            from ..db import get_database
+
+            db = get_database()
+        except Exception:
+            return None
+    limit_stops.record(db, row.agent, row.limit, now)
+    return db
 
 
 # ── explain (coder.explain, "Why this state") ─────────────────────────

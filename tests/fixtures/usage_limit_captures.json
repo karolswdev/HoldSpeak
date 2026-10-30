@@ -1,0 +1,21 @@
+{
+  "about": "Programs PG21: one usage-limit stop per harness, replayed through holdspeak/agent_context/usage_limit.py by tests/unit/test_usage_limit_matrix.py. 'real' says whether the line was printed by the harness on this Mac. The screen around the line is a reconstruction of the harness's prompt; only 'line' is the capture.",
+  "claude": {
+    "real": true,
+    "source": "Claude Code transcripts on the owner's Mac (~/.claude/projects/-Users-karol-dev-tools-HoldSpeak/*.jsonl): an assistant message with isApiErrorMessage true, error rate_limit, apiErrorStatus 429. Read 2026-10-30 for PG21.",
+    "seen_at": ["2026-10-19T13:17:36.532Z", "2026-10-19T16:38:35.406Z"],
+    "line": "You've hit your weekly limit · resets Oct 24 at 2am (America/Denver)",
+    "also_seen": {
+      "seen_at": ["2026-10-09T16:11:33.468Z", "2026-10-09T16:30:26.946Z"],
+      "line": "You've hit your weekly limit · resets 2am (America/Denver)"
+    },
+    "screen": "> fix the people routes\n● Read holdspeak/web/routes/people.py\n  ⎿  You've hit your weekly limit · resets Oct 24 at 2am (America/Denver)\n\n╭──────────────────────────────────────────╮\n│ >                                        │\n╰──────────────────────────────────────────╯"
+  },
+  "codex": {
+    "real": false,
+    "source": "No Codex usage-limit stop is on the owner's Mac (searched ~/.codex/sessions and ~/.codex/logs_2.sqlite on 2026-10-30). The line is Codex's documented wording, the same as tests/unit/test_program_handoff.py pins.",
+    "seen_at": [],
+    "line": "■ You've hit your usage limit. Upgrade to Pro (https://openai.com/chatgpt/pricing) or try again in 2 hours 13 minutes.",
+    "screen": "› write the people route tests\n■ You've hit your usage limit. Upgrade to Pro (https://openai.com/chatgpt/pricing) or try again in 2 hours 13 minutes.\n\n› "
+  }
+}

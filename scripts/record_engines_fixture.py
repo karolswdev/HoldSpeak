@@ -145,6 +145,39 @@ def codex_added() -> dict[str, Any]:
             _close()
 
 
+def limit_notice() -> dict[str, Any]:
+    """Programs PG21: Claude Code and Codex added; then the real Claude Code
+    stop (tests/fixtures/usage_limit_captures.json) through the screen
+    watcher's tick. Claude Code reads verified, Codex documented."""
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+
+    from holdspeak.agent_context import screen_watch
+    from holdspeak.db import get_database
+
+    capture = json.loads((REPO / "tests" / "fixtures" / "usage_limit_captures.json").read_text())
+
+    def runner(argv: list[str]) -> SimpleNamespace:
+        out = "" if argv[1] == "display-message" else capture["claude"]["screen"]
+        return SimpleNamespace(returncode=0, stdout=out + "\n", stderr="")
+
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _hub(mp, "limit", claude=True, codex=True)
+        try:
+            for preset in ("claude", "codex"):
+                _post(hub, CONNECT, {"draft": {"request_id": f"record-{preset}", "profile_id": f"agent-{preset}",
+                                               "expected_profile_revision": 0, "preset": preset}})
+            before = _gets(hub)
+            mp.setenv(screen_watch.SCREEN_RULES_ENV, "on")
+            screen_watch.tick(screen_watch.ScreenStore(), records=[
+                {"launch_id": "L1", "state": "launched", "session": "hs-L1", "profile_id": "claude-default"},
+            ], sessions=[], db=get_database(), runner=runner,
+                now=datetime(2026, 10, 19, 13, 17, 36, tzinfo=timezone.utc))
+            return {"steps": [{"name": "documented", "gets": before}, {"name": "stopped", "gets": _gets(hub)}]}
+        finally:
+            _close()
+
+
 def pi_added() -> dict[str, Any]:
     """Betterment E7: a fake pi whose own config sends its model to the LAN
     box: found with that host, then added as an engine on his network."""
@@ -365,6 +398,7 @@ def main() -> None:
         "claude": found_then_added,
         "codex": codex_added,
         "pi": pi_added,
+        "limitNotice": limit_notice,
         "threeModels": three_models,
         "openRouter": open_router,
         "whatRunsWhere": what_runs_where,

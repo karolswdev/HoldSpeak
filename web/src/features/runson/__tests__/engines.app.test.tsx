@@ -239,6 +239,45 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
   });
 });
 
+/* ── Programs PG21: the limit notice, verified or documented ── */
+
+const LIMIT = (recorded as unknown as { limitNotice: { steps: Step[] } }).limitNotice.steps;
+const limitStep = (name: string) => LIMIT.find((s) => s.name === name)!;
+/** The Limit notice fact of one opened engine row (its DotWord). */
+function limitFact(testId: string, key: string) {
+  const row = pick(testId);
+  return within(row).getByTestId(`runson-fold-limit-${key}`).querySelector(".kit-dotword") as HTMLElement;
+}
+
+describe("Engines — the limit notice per harness (Programs PG21)", () => {
+  it.each([1440, 393])("at %i a real Claude Code stop reads verified; Codex reads documented", async (px) => {
+    width(px);
+    hub(limitStep("stopped").gets);
+    render(<RunsOnCore />);
+    await screen.findByTestId(ROW);
+
+    const claude = limitFact(ROW, "agent-claude");
+    // Stopped 2026-10-19 13:17 UTC; the reset it named (Oct 24 08:00 UTC) is past.
+    expect(claude.textContent).toMatch(/^Verified · last stop [A-Z][a-z]{2} \d\d:\d\d · reset [A-Z][a-z]{2} \d\d:\d\d$/);
+    expect(claude.getAttribute("data-tone")).toBe("ok");
+    expect(claude.getAttribute("title")).toBe("You've hit your weekly limit · resets <date> at <time> (<zone>)");
+
+    const codex = limitFact("runson-engine-agent-codex", "agent-codex");
+    expect(codex.textContent).toBe("Documented · never read here");
+    expect(codex.getAttribute("data-tone")).toBe("idle");
+    expect(codex.getAttribute("title")).toMatch(/^You've hit your usage limit\./);
+  });
+
+  it("before any stop both harnesses read documented", async () => {
+    width(1440);
+    hub(limitStep("documented").gets);
+    render(<RunsOnCore />);
+    await screen.findByTestId(ROW);
+    expect(limitFact(ROW, "agent-claude").textContent).toBe("Documented · never read here");
+    expect(limitFact("runson-engine-agent-codex", "agent-codex").textContent).toBe("Documented · never read here");
+  });
+});
+
 /* ── Betterment E3: the model picker, one engine for each model ── */
 
 type ThreeStep = { name: string; gets?: Gets; post?: string; body?: Record<string, unknown>; answer?: unknown };

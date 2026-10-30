@@ -43,6 +43,7 @@ import {
   agentChip,
   checkedWords,
   costTokens,
+  limitNoticeWords,
   enginePlace,
   foundAgentName,
   hostLabel,
@@ -297,6 +298,19 @@ function EngineFold({
           <div className="runson-fact-row">
             <dt>Last check</dt>
             <dd><DotWord tone={state.tone} data-testid="runson-fold-state">{checked ? `${state.label} · ${checked}` : state.label}</DotWord></dd>
+          </div>
+        ) : null}
+        {engine.kind === "agent" && engine.limitNotice ? (
+          <div className="runson-fact-row" data-testid={`runson-fold-limit-${engine.key}`}>
+            <dt>Limit notice</dt>
+            <dd>
+              <DotWord
+                tone={engine.limitNotice.verified ? "ok" : "idle"}
+                title={engine.limitNotice.notice}
+              >
+                {limitNoticeWords(engine.limitNotice)}
+              </DotWord>
+            </dd>
           </div>
         ) : null}
         {engine.kind === "agent" && engine.spend ? (

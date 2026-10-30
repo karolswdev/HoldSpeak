@@ -539,6 +539,16 @@ def _agent_signed_in(preset_id: str, home: Path) -> str:
     return cli_signed_in(preset_id, home=home)
 
 
+def _limit_notice(db: Any, preset_id: str) -> dict[str, Any]:
+    """Programs PG21: ``limitNotice`` on a Claude Code or Codex engine row:
+    verified (a stop was read on this desk, with its time and reset) or
+    documented. Absent for the other agents."""
+    from ..agent_context.limit_stops import notice_wire
+
+    wire = notice_wire(db, preset_id)
+    return {"limitNotice": wire} if wire is not None else {}
+
+
 def _agent_engine_row(db: Any, profile: Any, home: Path) -> dict[str, Any]:
     """Betterment E2: one agent CLI engine (a ``cli:<preset>`` profile).
 
@@ -588,6 +598,7 @@ def _agent_engine_row(db: Any, profile: Any, home: Path) -> dict[str, Any]:
             "todayUsd": runs["todayUsd"],
             "weekUsd": runs["weekUsd"],
         },
+        **_limit_notice(db, preset.id),
         **fields,
     }
 
@@ -634,6 +645,7 @@ def _found_agent_engines(db: Any, home: Path) -> list[dict[str, Any]]:
             # yes · unknown (try once) · not_read; never no.
             "signedIn": _agent_signed_in(preset.id, home),
             "state": STATE_READY,
+            **_limit_notice(db, preset.id),
         })
     return rows
 
