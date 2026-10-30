@@ -192,8 +192,8 @@ differs from the text above, and why. The faces (§9) are the PH-FACES lane's.
   `holdspeak/services/heartbeat_service.py`; default 22:00–08:00), not a
   second setting under Settings ▸ Calls ▸ Phone with 23:00–07:00. A message
   in quiet hours is written and its push waits ("Reached you: a message, held
-  for the morning"). **No push releases the queued messages in the morning**:
-  the phone reads them from the event log the next time it connects.
+  for the morning"). When quiet hours end, the phone's runner pushes each
+  held message, one push each, its line "Held overnight: …" (RECIPE PH14).
 - **No SMS.** ai-phone's commands (`call`, `listen`, `say`, `hangup`) have no
   SMS (`holdspeak/phone/transport_number.py`, `sms_available` is false). A
   message with no paired phone is a Needs you row, "No phone is paired", with
@@ -202,13 +202,16 @@ differs from the text above, and why. The faces (§9) are the PH-FACES lane's.
   rings, times out, re-rings an urgent call once and falls back to the number;
   the audio of an app call and its transcript are the Apple Program's (§11
   step 6). Today a call with words is a call on the number.
-- **Only the Programs rows of §6 reach him today.** The Programs engine asks
+- **Every row of §6 has a caller.** The Programs engine asks
   `phone_rules.reach` for `core_question`, `step_red` and `program_done`
-  (`ProgramService.reach_phone`, `holdspeak/services/program_service.py`;
-  the callers in `holdspeak/services/program_runner.py`). The rules for
-  `heartbeat_security`, `aftercare` and `agent_question` are in the table
-  and tested, but no heartbeat, aftercare or agent-question path calls them
-  yet (RECIPE PH12).
+  (`ProgramService.reach_phone`, `holdspeak/services/program_service.py`).
+  The heartbeat (a Needs you row about security or data loss), the meeting
+  aftercare (the asks of a recorded meeting) and the agent responder (a
+  question the desk could not draft) call it through
+  `holdspeak/phone/reach_sites.py` (RECIPE PH12). A heartbeat "finding" is a
+  Needs you row tagged security or data loss, or a Program finding whose
+  words the Programs rules call so: the heartbeat itself makes no tagged
+  findings.
 - **Two `may_call` columns:** `programs.may_call` and `program_steps.may_call`
   (default 0; a step may call when it or its Program may). The Overnight
   template sets it on (`holdspeak/program_templates.py`).

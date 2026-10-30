@@ -97,6 +97,10 @@ def _on_meeting_ready(meeting_id: str) -> None:
         event = build_aftercare_ready_event(db, meeting_id)
         if event:
             broadcast("aftercare_ready", event)
+            # Phone PH12: the meeting's asks reach his phone by the rules.
+            from .phone.reach_sites import reach_aftercare
+
+            reach_aftercare(db, event)
         broadcast("runtime_queue", build_runtime_queue_frame(db))
     except Exception as exc:
         log.debug(f"aftercare_ready broadcast skipped: {exc}")

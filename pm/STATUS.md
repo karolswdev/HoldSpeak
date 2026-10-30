@@ -4,7 +4,9 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-29. Extended documentation accuracy, PR #1614. Source-audited 71 top-level guides plus README and CONTRIBUTING; corrected 43 public documents. Fixed actual control/command, SDK, retention, and availability claims; two documentation generators now select their own checkout, with two regression cases. Focused contracts: 129 passed; final tooling checks: 21 passed. Required quick check GREEN: build, 104 affected tests, 124 Desk sweep cases, 27 canon checks, 1,156 repository guards. No product behavior/default changed. Audit and limits: `docs/internal/checks/core-docs-accuracy-2026-10-29/result.md`. Open work: wire or retire the stored actuator config flags (not enforced by Desk/Mission Control), the Firefox credential path, stale helper/page-set comments, physical/live validation, and the existing remote CSS token gate. An initial bare-Desk stillness failure passed on the full repeat without changing tests.
+**Last updated:** 2026-10-29. Phone PH12 and PH14 (this PR, lane PHONE-NEXT): the heartbeat (a Needs you row about security or data loss), a recorded meeting's aftercare asks and an agent question the desk could not draft now reach his phone through `PhoneService.reach` (the rules by level and quiet hours; a `phone.reach` kernel operation each; once per thing; nothing when no phone is paired and no number is set); the phone's runner releases the messages held in quiet hours when they end, one push each, "Held overnight: …". Tests: 12 new hub cases in `tests/integration/test_phone_flow.py`. Open work: Phone PH11, PH13, PH15, PH16; the Line LINE-5, LINE-6, the LICENCE slice.
+
+**Before it (2026-10-29):** Extended documentation accuracy, PR #1614. Source-audited 71 top-level guides plus README and CONTRIBUTING; corrected 43 public documents. Fixed actual control/command, SDK, retention, and availability claims; two documentation generators now select their own checkout, with two regression cases. Focused contracts: 129 passed; final tooling checks: 21 passed. Required quick check GREEN: build, 104 affected tests, 124 Desk sweep cases, 27 canon checks, 1,156 repository guards. No product behavior/default changed. Audit and limits: `docs/internal/checks/core-docs-accuracy-2026-10-29/result.md`. Open work: wire or retire the stored actuator config flags (not enforced by Desk/Mission Control), the Firefox credential path, stale helper/page-set comments, physical/live validation, and the existing remote CSS token gate. An initial bare-Desk stillness failure passed on the full repeat without changing tests.
 
 **Before it (2026-10-29):** README three-judge panel, PR #1613, owner-requested merge with `gh`. Applied independent product, editorial, and visual findings: explicit context-to-agent loop, Quick start near the opening, 31% less text, consistent image presentation, seven screenshots retained. Panel means after revision: modernity 8.7/10, concision 7.7, attractiveness 8.0, potential 8.7. Reports and decisions: `docs/internal/checks/readme-panel-2026-10-29/`. Required quick check GREEN: build, 60 affected tests, 124 Desk sweep cases, 27 canon checks, 1,156 repository guards; isolated HOME and machine lock. Corrected prior documentation vocabulary regressions and removed one fixed debt entry. Product source and test assertions are unchanged. Open work: the existing remote web-quality CSS token gate (184 raw values in unchanged product files); live owner aesthetic acceptance is not claimed.
 
@@ -24,11 +26,11 @@ text-only wire. Design `docs/internal/betterment/line/LINE-DESIGN-2026-10-29.md`
 docs in the LINE-4b PR (Settings ▸ Calls ▸ Line, the Calls window's Line words,
 `docs/calls.md` "The Line", `NOTICE`), recipe `line/RECIPE.md`. His hub today:
 Not running; the Line needs its own Python 3.13 venv (onnxruntime has no cp314
-wheel). Left (open work): LINE-3 the home box (node credential, units, build
-script, `holdspeak line install`), LINE-3b Telnyx (his account), LINE-5
-barge-in measured, LINE-6 the Engines speech rows, the LICENCE slice (Kokoro and
-faster-whisper's PyAV pull GPL into the hub; his ruling); his word on the SIP
-password custody (CONFIG); his live verdict on the faces.
+wheel). Merged since: LINE-3 the home box #1610, Install the Line on karol
+#1615, LINE-3b Telnyx #1617. Left (open work): LINE-5 barge-in measured, LINE-6
+the Engines speech rows, the LICENCE slice (Kokoro and faster-whisper's PyAV
+pull GPL into the hub; his ruling); his word on the SIP password custody
+(CONFIG); his live verdict on the faces.
 
 **Phone — 2026-10-28 (owner: "Do it. And definitely swallow the paradigm and
 'vendor' it… we literally absorb and rewrite and refactor it into HoldSpeak").**
@@ -45,9 +47,10 @@ pushes (NullPush until his Apple key), the number transport through Calls with
 answer-later, `phone_rules.reach` by control level with quiet hours, the kernel
 op `phone.reach`, 15 routes, 4 `phone.*` MCP tools (305 in 52 families;
 `phone.call` EGRESS, not offered to launches), Needs you rows, `may_call` on
-Programs (on in Overnight), `HOLDSPEAK_PHONE=off`. Left (open work): PH11 SMS,
-PH12 the heartbeat / aftercare / agent-question reaches, PH13 `httpx[http2]`,
-PH14 the morning release, PH15 urgent through Do Not Disturb, PH16 Today; the
+Programs (on in Overnight), `HOLDSPEAK_PHONE=off`. Shipped since (lane
+PHONE-NEXT): PH12 the heartbeat / aftercare / agent-question reaches and PH14
+the morning release. Left (open work): PH11 SMS, PH13 `httpx[http2]`, PH15
+urgent through Do Not Disturb, PH16 Today; the
 iPhone app is the Program `program-29a6d2ef5d55` in Drafting (his Start); his
 Telnyx line for calls on the number; his live verdict on the faces.
 
@@ -2580,6 +2583,16 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **This PR — Phone PH12 + PH14 (lane PHONE-NEXT):** the heartbeat, meeting aftercare and agent-question reaches through `PhoneService.reach`; the morning release of held messages ("Held overnight: …", one push each). Recipe `docs/internal/betterment/phone/RECIPE.md` marks both shipped.
+- **#1617 — A real number from Telnyx:** Connect makes the SIP credential connection and keeps its password in the keystore, Find numbers lists ten with their costs, Buy moves money only on his press through a quote and a kernel receipt, Assign points the number at the Line.
+- **#1616 — The bell slot:** the bell reserves its count's width before the Needs you read lands, so the menu bar's right cluster no longer shifts 27 px after the desk settles.
+- **#1615 — Install the Line on karol:** add a machine, a one-time code sheet with the whole command and Copy, the row reads Ready on the first hello, pick it as the place, Revoke.
+- **#1614 — docs:** reconcile extended guides with current behavior.
+- **#1613 — docs:** make the README a concise visual product tour.
+- **#1612 — docs:** represent HoldSpeak's agentic Desk and core work flows.
+- **#1611 — Engines reads again:** assignment copies carry their own material, the owner's three bad rows are repaired at startup, and a read never refuses an internal capability's row.
+- **#1610 — The Line on the home box:** enrolment by a one-time code into a scoped node credential, the pinned Linux build, the systemd and launchd units, readiness from the last hello; one real call Mac → rig hub → karol measured.
 
 - **#1437 — Meeting stopped/save truth:** runtime facts survive HTTP and both Stop doors; non-clean outcomes persist when the live window becomes the record. 40 focused web cases, two native response cases, nine integration cases and final quick green: 4,187 related web, 40 affected Python/browser, 110 sweep, 27 canon, 1,126 repo guards. API consumer docs regenerated. Broader recovery/hardware/UX acceptance stays open; strategy-first #1435 is the next work.
 

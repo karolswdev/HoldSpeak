@@ -146,6 +146,11 @@ class MeetingIntelService:
         def ready(meeting_id: str) -> None:
             event = build_aftercare_ready_event(self._db, meeting_id)
             if event and self._notify: self._notify("aftercare_ready", event)
+            if event:
+                # Phone PH12: the meeting's asks reach his phone by the rules.
+                from ..phone.reach_sites import reach_aftercare
+
+                reach_aftercare(self._db, event)
         processed = drain_intel_queue(cfg.intel_realtime_model, on_meeting_ready=ready, provider=cfg.intel_provider, retry_base_seconds=cfg.intel_retry_base_seconds, retry_max_seconds=cfg.intel_retry_max_seconds, retry_max_attempts=cfg.intel_retry_max_attempts, include_scheduled=mode == "retry_now", max_jobs=payload.get("max_jobs"))
         self._broadcast_queue(); return {"success": True, "processed": processed, "mode": mode}
     def _route_for_gesture(self, meeting_id: str, expected_selection_hash: str | None) -> dict[str, Any]:

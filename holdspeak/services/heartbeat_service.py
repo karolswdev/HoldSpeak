@@ -798,7 +798,22 @@ class HeartbeatService:
                 merged_receipt = {"kind": "merged_prs", "error": str(exc)}
 
         # M3: Refresh the aggregate cache via the canonical builder
-        self.refresh_aggregate(principal, sweep_id=sweep_id)
+        aggregate = self.refresh_aggregate(principal, sweep_id=sweep_id)
+
+        # Phone PH12: a Needs you row about security or data loss reaches
+        # his phone by the rules (design §6, heartbeat_security), once per
+        # row. Quiet hours are the rules' own fact (a message waits for the
+        # morning; only an urgent call rings), so a held sweep asks too.
+        phone_reaches: list[dict[str, Any]] = []
+        try:
+            from holdspeak.phone.reach_sites import reach_safety_findings
+
+            phone_reaches = reach_safety_findings(self._db, [
+                item for item in aggregate.get("items", []) or []
+                if isinstance(item, dict) and not item.get("muted")
+            ])
+        except Exception as exc:
+            log.error("heartbeat phone reach failed: %s", exc)
 
         duration_ms = (time.time() - t0) * 1000
 
@@ -846,6 +861,11 @@ class HeartbeatService:
             receipt["merged_prs"] = merged_receipt
         if quiet_hold is not None:
             receipt["quiet_hold"] = quiet_hold
+        if phone_reaches:
+            receipt["phone_reaches"] = [
+                {key: reach.get(key) for key in ("kind", "channel", "held", "queued", "origin_ref")}
+                for reach in phone_reaches
+            ]
 
         # Write kernel receipt (Article XI.2)
         self._write_receipt(receipt)

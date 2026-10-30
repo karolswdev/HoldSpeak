@@ -794,14 +794,15 @@ class TestRoomRowClocks:
         tokens = ProjectService(db)._read_room_sources(project_id)["items"][0]["tokens"]
         assert not any(t.startswith("NEXT") for t in tokens)
 
-        # A linked event 2 days out at 14:00 UTC = 08:00 Denver
+        # A linked event 2 days out at 14:00 UTC = 08:00 Denver (07:00 once
+        # daylight time ended: the expected words come from the local clock).
         future = (_dt.now(_tz.utc) + _td(days=2)).replace(hour=14, minute=0, second=0, microsecond=0)
         eid = _seed_calendar_event(db, starts_at=future.isoformat().replace("+00:00", "Z"))
         _link_event(db, eid, project_id)
 
         tokens = ProjectService(db)._read_room_sources(project_id)["items"][0]["tokens"]
-        expected_day = future.astimezone().strftime("%a").upper()
-        assert f"NEXT {expected_day} 08:00" in tokens, tokens
+        local = future.astimezone()
+        assert f"NEXT {local.strftime('%a').upper()} {local.strftime('%H:%M')}" in tokens, tokens
 
     def test_this_week_counts_linked_events_in_the_local_week(self, db, denver):
         """A Sunday 23:00 Denver event (Monday 05:00 UTC) is THIS week here."""

@@ -482,3 +482,300 @@ def test_phone_off_registers_nothing(hub_off) -> None:
     from holdspeak.phone.service import default_phone_service
 
     assert default_phone_service(_db(hub)).needs_you_items() == []
+
+
+# ── PH12: the other reach kinds, at the places that write their rows ─────
+
+def _level(monkeypatch: pytest.MonkeyPatch, level: str) -> None:
+    """The desk's Control level, as the reach sites read it."""
+    from holdspeak.phone import service as phone_module
+
+    monkeypatch.setattr(phone_module, "_desk_level", lambda: level)
+
+
+def _security_finding(hub: Any, tmp_path: Path) -> str:
+    """A Program step whose review left a security finding for him: the
+    Needs you row the heartbeat reads ("Finding on step 1 …")."""
+    from holdspeak.services.program_service import default_program_service
+    from tests.integration.program_rig import make_repo
+
+    programs = default_program_service(_db(hub))
+    made = programs.create(OWNER, title="Night work", repository=str(make_repo(tmp_path / "git")),
+                           control="normal", check_command="true")
+    programs.plan(OWNER, made["id"], steps=[{"title": "Login", "brief": "Fix the login form."}])
+    program = programs.store.get_program(made["id"])
+    program["state"] = "running"
+    programs.store.save_program(program)
+    step = programs.store.list_steps(made["id"])[0]
+    step["state"] = "findings"
+    step["findings"] = [{"id": "f1", "level": "REQUIRED", "text": "The admin route skips the security check",
+                         "decision": None, "to_owner": True, "core": True}]
+    step["facts"] = {**dict(step.get("facts") or {}), "findings_open": True}
+    programs.save_step(step)
+    return step["id"]
+
+
+def _run_heartbeat(hub: Any) -> dict[str, Any]:
+    response = hub.client.post("/api/settings/heartbeat/run-now")
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_a_security_finding_rings_urgent_at_yolo_from_the_heartbeat(hub, monkeypatch, tmp_path) -> None:
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    _level(monkeypatch, "yolo")
+    step_id = _security_finding(hub, tmp_path)
+    receipt = _run_heartbeat(hub)
+    [reach] = receipt["phone_reaches"]
+    assert reach["kind"] == "heartbeat_security" and reach["channel"] == "call" and not reach["held"]
+    [call] = phone.store.list_calls()
+    assert call["urgent"] and call["reason"].startswith("A security finding needs you: Finding on step 1")
+    assert [p["kind"] for p in phone.push().sent] == ["call"]
+    assert reach["origin_ref"].startswith("heartbeat:program:") and step_id in reach["origin_ref"]
+    # Once per row: the next sweep does not ring again.
+    assert "phone_reaches" not in _run_heartbeat(hub)
+    with _db(hub)._connection() as conn:
+        names = [row[0] for row in conn.execute("SELECT name FROM kernel_operations").fetchall()]
+    assert names.count("phone.reach") == 1
+
+
+def test_a_security_finding_is_a_call_not_urgent_at_normal(hub, monkeypatch, tmp_path) -> None:
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    _level(monkeypatch, "normal")
+    _security_finding(hub, tmp_path)
+    [reach] = _run_heartbeat(hub)["phone_reaches"]
+    assert reach["channel"] == "call"
+    [call] = phone.store.list_calls()
+    assert not call["urgent"]
+    [event] = phone.store.events_of_type("reach", "2000-01-01")
+    assert event["data"]["rule"] == "Normal: a security or data-loss finding rings"
+
+
+def test_a_security_finding_is_a_message_at_secure(hub, monkeypatch, tmp_path) -> None:
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    _level(monkeypatch, "secure")
+    _security_finding(hub, tmp_path)
+    [reach] = _run_heartbeat(hub)["phone_reaches"]
+    assert reach["channel"] == "message" and phone.store.list_calls() == []
+    [message] = [row for row in phone.store.recent_messages() if row["origin_ref"].startswith("heartbeat:")]
+    assert message["text"].startswith("A security finding needs you: Finding on step 1")
+    assert [p["kind"] for p in phone.push().sent] == ["message"]
+
+
+def test_a_row_about_nothing_unsafe_reaches_nobody(hub, monkeypatch, tmp_path) -> None:
+    from holdspeak.phone.reach_sites import safety_of
+
+    _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    assert safety_of({"title": "Finding on step 1: rename the helper", "program": {"kind": "finding"}}) == ""
+    assert safety_of({"title": "Review the token budget"}) == ""  # not a finding, no tags
+    assert safety_of({"title": "Rows", "tags": ["data-loss"]}) == "data loss"
+    assert "phone_reaches" not in _run_heartbeat(hub)
+
+
+def _meeting_with_asks(hub: Any) -> str:
+    from datetime import datetime, timedelta
+
+    from holdspeak.intel.models import ActionItem
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState
+
+    start = datetime.now().replace(microsecond=0) - timedelta(hours=2)
+    _db(hub).meetings.save_meeting(MeetingState(
+        id="m-phone-asks", started_at=start, ended_at=start + timedelta(minutes=30), title="Planning",
+        intel=IntelSnapshot(timestamp=0.0, summary="Planned.", action_items=[
+            ActionItem(task="Draft the migration runbook", owner="Priya"), ActionItem(task="Book the dry run")]),
+        intel_status="completed"))
+    return "m-phone-asks"
+
+
+def test_a_meetings_asks_message_at_normal_once(hub, monkeypatch) -> None:
+    from holdspeak.intel_queue_conductor import _on_meeting_ready
+
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    _level(monkeypatch, "normal")
+    meeting_id = _meeting_with_asks(hub)
+    _on_meeting_ready(meeting_id)  # the hub's own callback when a meeting's intel is done
+    [message] = [row for row in phone.store.recent_messages() if row["origin_ref"] == f"meeting:{meeting_id}:aftercare"]
+    assert message["text"] == "Planning: 2 open items wait for you on the desk."
+    assert [p["kind"] for p in phone.push().sent] == ["message"]
+    reaches = phone.store.events_of_type("reach", "2000-01-01")
+    assert [(e["data"]["kind"], e["data"]["rule"]) for e in reaches] == [
+        ("aftercare", "Normal: a meeting's asks are a message")]
+    _on_meeting_ready(meeting_id)  # a second ready reaches nothing
+    assert len(phone.push().sent) == 1
+
+
+def test_a_meetings_asks_wait_on_the_desk_at_secure(hub, monkeypatch) -> None:
+    from holdspeak.intel_queue_conductor import _on_meeting_ready
+
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    _level(monkeypatch, "secure")
+    _on_meeting_ready(_meeting_with_asks(hub))
+    assert phone.store.recent_messages() == [] and phone.push().sent == []
+    assert phone.store.events_of_type("reach", "2000-01-01") == []
+    with _db(hub)._connection() as conn:
+        names = [row[0] for row in conn.execute("SELECT name FROM kernel_operations").fetchall()]
+    assert "phone.reach" not in names
+
+
+def test_no_paired_phone_and_no_number_reaches_nothing(hub, monkeypatch) -> None:
+    from holdspeak.intel_queue_conductor import _on_meeting_ready
+
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _level(monkeypatch, "normal")
+    _on_meeting_ready(_meeting_with_asks(hub))
+    assert phone.store.recent_messages() == [] and _needs_phone(hub) == []
+
+
+AGENT_KEY = "claude:phone-session"
+AGENT_QUESTION = "Which branch is the release on, main or release/2026-10?"
+
+
+class _Waits:
+    """A HoldSpeak-launched agent at its process edge: its launch record and
+    its session in the registry, waiting with a question."""
+
+    def __init__(self) -> None:
+        from types import SimpleNamespace
+
+        self.session = SimpleNamespace(
+            agent="claude", session_id="phone-session", wait_id="wait-1", question=AGENT_QUESTION,
+            awaiting_response=True, lifecycle="active", hook_event_name="Stop", notification_type=None)
+        self.ledger = SimpleNamespace(list=lambda: [{
+            "session_key": AGENT_KEY, "state": "launched", "launch_id": "launch-phone",
+            "brief_text": "Fix the release notes.", "target": {}}])
+
+    def sessions(self) -> list[Any]:
+        return [self.session] if self.session is not None else []
+
+    def launches(self) -> Any:
+        from types import SimpleNamespace
+
+        return SimpleNamespace(_ledger=self.ledger)
+
+
+def _responder(hub: Any, tmp_path: Path, mode: str, waits: _Waits) -> Any:
+    from holdspeak.services.agent_responder import AgentResponder, AnswerStore
+
+    return AgentResponder(
+        _db(hub), launches=waits.launches, sessions=waits.sessions, control_mode=lambda: mode,
+        drafter=lambda **_kw: None,  # no model answered: the desk could not draft it
+        store=AnswerStore(tmp_path / "agent_answers.json"), notify=lambda keys: None)
+
+
+@pytest.fixture
+def away():
+    from holdspeak import desk_presence
+
+    desk_presence.clear()  # no desk view said it was in front of him
+    yield
+    desk_presence.clear()
+
+
+def test_an_undraftable_agent_question_messages_then_calls_after_10_minutes_away_at_normal(
+        hub, monkeypatch, tmp_path, away) -> None:
+    from datetime import timedelta
+
+    from holdspeak.timestamps import utc_now
+
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    waits = _Waits()
+    responder = _responder(hub, tmp_path, "neutral", waits)
+    assert responder.triage([AGENT_KEY]) == {"notify": [AGENT_KEY], "decide": [AGENT_KEY]}
+    assert responder.decide(AGENT_KEY)["draft"]["verdict"] == "real"
+    [message] = [row for row in phone.store.recent_messages() if row["origin_ref"] == f"agent:{AGENT_KEY}:wait-1"]
+    assert message["text"] == f"Claude asks: {AGENT_QUESTION}"
+    assert [p["kind"] for p in phone.push().sent] == ["message"]
+    assert phone.sweep() == []  # not 10 minutes yet
+    later = utc_now() + timedelta(minutes=11)
+    monkeypatch.setattr(phone, "_now", lambda: later)
+    [called] = phone.sweep()
+    assert called["channel"] == "call" and called["rule"].startswith("Normal: no reply in 10 minutes and he is away")
+    assert [p["kind"] for p in phone.push().sent] == ["message", "call"]
+
+
+def test_the_sweep_does_not_call_about_a_wait_he_answered_at_the_desk(hub, monkeypatch, tmp_path, away) -> None:
+    from datetime import timedelta
+
+    from holdspeak.timestamps import utc_now
+
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    waits = _Waits()
+    responder = _responder(hub, tmp_path, "neutral", waits)
+    responder.triage([AGENT_KEY])
+    responder.decide(AGENT_KEY)
+    waits.session = None  # he answered in the agent's pane: the wait ended
+    later = utc_now() + timedelta(minutes=11)
+    monkeypatch.setattr(phone, "_now", lambda: later)
+    assert phone.sweep() == []
+    assert [p["kind"] for p in phone.push().sent] == ["message"]
+
+
+def test_an_undraftable_agent_question_rings_at_yolo(hub, monkeypatch, tmp_path, away) -> None:
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    responder = _responder(hub, tmp_path, "yolo", _Waits())
+    assert responder.triage([AGENT_KEY]) == {"notify": [], "decide": [AGENT_KEY]}
+    responder.decide(AGENT_KEY)
+    [call] = phone.store.list_calls()
+    assert call["reason"] == "Claude has a question for you" and not call["urgent"]
+    assert [p["kind"] for p in phone.push().sent] == ["call"]
+
+
+def test_an_agent_question_at_secure_is_a_message(hub, monkeypatch, tmp_path, away) -> None:
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    _paired(hub)
+    responder = _responder(hub, tmp_path, "safe", _Waits())
+    assert responder.triage([AGENT_KEY]) == {"notify": [AGENT_KEY], "decide": []}
+    [reach] = phone.store.events_of_type("reach", "2000-01-01")
+    assert reach["data"]["channel"] == "message" and reach["data"]["rule"] == "Secure: an agent's question is a message"
+    assert phone.store.list_calls() == []
+
+
+# ── PH13: the morning release ───────────────────────────────────────────
+
+def test_a_message_queued_at_23_30_goes_out_when_quiet_hours_end_and_not_before(hub, monkeypatch, away) -> None:
+    from datetime import datetime, timedelta, timezone
+
+    from holdspeak.services.heartbeat_service import HeartbeatService
+
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    device = _paired(hub)
+    HeartbeatService(_db(hub)).update_settings({"quiet_hours": {"start": 23, "end": 7}})
+    night = datetime.now().replace(hour=23, minute=30, second=0, microsecond=0).astimezone()
+    clock = [night.astimezone(timezone.utc)]
+    monkeypatch.setattr(phone, "_now", lambda: clock[0])
+
+    first = phone.reach("agent_question", level="normal", text="Which branch is the release on?",
+                        origin_ref="agent:night:1")
+    clock[0] += timedelta(minutes=15)
+    second = phone.reach("aftercare", level="normal", text="Planning: 2 open items wait for you on the desk.",
+                         origin_ref="meeting:night:aftercare")
+    assert first["queued"] and second["queued"] and phone.push().sent == []
+
+    clock[0] = (night + timedelta(hours=7, minutes=29)).astimezone(timezone.utc)  # 06:59
+    phone.tick()
+    assert phone.push().sent == []
+    assert phone.store.get_message(first["msg_id"])["delivered_at"] is None
+
+    clock[0] = (night + timedelta(hours=7, minutes=30)).astimezone(timezone.utc)  # 07:00
+    phone.tick()
+    pushed = [json.loads(p["payload"]["event"]) for p in phone.push().sent]
+    assert [p["kind"] for p in phone.push().sent] == ["message", "message"]  # one push each, in order
+    assert [e["data"]["message"]["text"] for e in pushed] == [
+        "Held overnight: Which branch is the release on?",
+        "Held overnight: Planning: 2 open items wait for you on the desk.",
+    ]
+    assert [e["data"]["message"]["id"] for e in pushed] == [first["msg_id"], second["msg_id"]]
+    delivered = [e for e in device.events() if e["type"] == "message.delivered"]
+    assert [e["data"]["msg_id"] for e in delivered] == [first["msg_id"], second["msg_id"]]
+    assert phone.store.list_calls() == []  # the 10 minutes start at the release, not at 23:30
+    phone.tick()
+    assert len(phone.push().sent) == 2  # once
