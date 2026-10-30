@@ -13,6 +13,7 @@ import "./recordings.css";
 import { useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { LampGadget } from "../surface/gadgets";
+import { stateWords } from "../surface/words";
 import { useDesk } from "../store";
 import { frontWindowId } from "../components/window/windowRegistry";
 import { SYSTEM_48 } from "../systemSprites";
@@ -96,7 +97,8 @@ export function ScreenRecordLamp() {
   const compact = useCompactViewport();
   if (!isLive(capture)) return null;
   // At 393 the bar has no room for the long words: the lamp and Stop say it.
-  const words = compact ? "Recording" : capture.remote ? "Recording on another view" : `Recording${clock ? ` ${clock}` : ""}`;
+  // Sentence case through stateWords; recordings.css lifts the lamp's caps.
+  const words = stateWords(compact ? "Recording" : capture.remote ? "Recording on another view" : `Recording${clock ? ` ${clock}` : ""}`);
   return (
     <span className="desk-mic-lamp desk-screen-lamp" role="status" data-testid="desk-screen-lamp">
       <LampGadget label={words} on tone="fail" />

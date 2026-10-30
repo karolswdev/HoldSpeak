@@ -2,15 +2,15 @@
   "on": true,
   "devices": [
     {
-      "id": "dev_d8280665f842297a",
+      "id": "dev_b076152da844ac20",
       "name": "Karol's iPhone",
       "platform": "ios",
       "state": "paired",
       "has_push": true,
       "push_kind": "null",
       "push_state": "no_key",
-      "paired_at": "2026-10-30T03:59:33.884771+00:00",
-      "last_seen_at": "2026-10-30T03:59:33.884771+00:00"
+      "paired_at": "2026-10-30T04:27:13.572884+00:00",
+      "last_seen_at": "2026-10-30T04:27:13.572884+00:00"
     }
   ],
   "line": {

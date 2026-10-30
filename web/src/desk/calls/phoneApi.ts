@@ -78,7 +78,7 @@ export function readPushKey(): Promise<PhonePushKey> {
 }
 
 /** Keep one part of his Apple push key in the hub's keystore. */
-export function savePushKey(part: Partial<{ p8: string; key_id: string; team_id: string; bundle_id: string }>): Promise<PhonePushKey> {
+export function savePushKey(part: Partial<{ p8: string; key_id: string; team_id: string; bundle_id: string; host: string }>): Promise<PhonePushKey> {
   return apiFetch<PhonePushKey>("/api/phone/push", { method: "PUT", json: part });
 }
 
