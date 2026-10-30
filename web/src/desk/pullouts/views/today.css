@@ -745,3 +745,10 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .today .today-done-row { transition: none; }
 }
+/* Programs PG18: before 17:00 the Programs line heads the day (the Since
+   this morning fold is an evening fold); a hairline under it, like a fold. */
+.desk-next .today-programs-head {
+  display: flex;
+  min-width: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}

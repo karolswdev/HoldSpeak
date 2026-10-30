@@ -33,7 +33,8 @@ the record; the engine drives the agents. Read first:
    `program-<id>` ("Program: <title>") says the same in prose; read it
    first after a break.
 5. Tell the owner what waits on him. Do not wait in a loop on a step: the
-   engine ticks every 30 s and after each press.
+   engine ticks every 30 s, after each press, and about 1 s after a step's
+   agent ends its turn.
 
 ## Be a step's agent (you build one step)
 

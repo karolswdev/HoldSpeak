@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PERSON_OPEN_EVENT } from "../../objectWindows";
 import { useDesk } from "../../store";
 import sinceMorning from "../../__tests__/fixtures/today-hub/since-morning.json";
+import sinceMorningPrograms from "../../__tests__/fixtures/today-hub/since-morning.programs.json";
 import phoneStatus from "../../calls/__fixtures__/phone.settings.json";
 import { usePhoneFocus } from "../../calls/phoneFocus";
 import { DAY_SAID_KEY, EVENING_SAID_KEY, TodayView, countdown, currentStep, dayGreeting, dayLight, dayPart, toFinish } from "./TodayView";
@@ -456,12 +457,49 @@ describe("DELIGHT slice 5: Since this morning", () => {
     expect(failed[0].textContent).toContain("Could not read today's work");
   });
 
-  it("at 09:00 there is no evening list and no read for it", async () => {
+  it("at 09:00 there is no evening list (the read feeds the Programs line only)", async () => {
     vi.setSystemTime(new Date(2026, 9, 28, 9, 0, 0));
-    const calls = day(() => json(recorded));
+    day(() => json(recorded));
     render(<TodayView />);
     await waitFor(() => expect(screen.getByTestId("today-body").getAttribute("aria-busy")).toBeNull());
     expect(screen.queryByTestId("today-done")).toBeNull();
-    expect(calls.some(([url]) => url === "/api/today/since-morning")).toBe(false);
+    // The recorded desk ran no Program today: no line, no zero.
+    expect(screen.queryByTestId("today-programs")).toBeNull();
+  });
+});
+
+// Programs PG18: the Programs line, from the `programs` block of the hub's
+// Since this morning answer (recorded by tests/unit/test_desk_today.py over
+// the Programs rig: one running, one waiting on his merge, one PR merged).
+describe("PG18: the Programs line on Today", () => {
+  const recorded = (sinceMorningPrograms as Record<string, unknown>)["/api/today/since-morning"];
+  const words = "Programs: 1 running, 1 waits on you, 1 PR merged";
+  const day = () => hub({
+    "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+    "/api/meetings?limit=40": () => json({ meetings: [] }),
+    "/api/desk/needs-you": () => json({ items: [] }),
+    "/api/today/since-morning": () => json(recorded),
+  });
+
+  it("at 18:00 it is a line of Since this morning; it opens the Programs window", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 18, 0, 0));
+    day();
+    render(<TodayView />);
+    const row = await screen.findByTestId("today-programs");
+    expect(row.textContent).toBe(words);
+    expect(within(screen.getByTestId("today-done")).getByTestId("today-programs")).toBe(row);
+    expect(screen.queryByTestId("today-programs-head")).toBeNull();
+    expect(row.classList.contains("btn--chrome")).toBe(true);
+    fireEvent.click(row);
+    expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-programs", "/");
+  });
+
+  it("at 09:00 the fold is not drawn: the line heads the day", async () => {
+    vi.setSystemTime(new Date(2026, 9, 28, 9, 0, 0));
+    day();
+    render(<TodayView />);
+    const head = await screen.findByTestId("today-programs-head");
+    expect(within(head).getByTestId("today-programs").textContent).toBe(words);
+    expect(screen.queryByTestId("today-done")).toBeNull();
   });
 });

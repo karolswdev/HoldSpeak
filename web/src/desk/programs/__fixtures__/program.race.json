@@ -1,0 +1,591 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "check_command": "sh /Users/karol/dev/tools/wt-ng-prog2/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 17,
+      "kind": null,
+      "line": "The program is done",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": "close",
+      "id": 16,
+      "kind": "program_done",
+      "line": "Closed the program: every step is finished",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal: the engine closes a finished program",
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": "message",
+      "id": 15,
+      "kind": "reach",
+      "line": "Reached you: a message, held for the morning",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "quiet hours queue messages",
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 14,
+      "kind": null,
+      "line": "Merged #101",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804-r2",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": "merge",
+      "id": 13,
+      "kind": "merge",
+      "line": "Merged PR #101 of step 1 (check green)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal merges on a green check and a passed review",
+      "step_id": "step-828726b98804-r2",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 12,
+      "kind": null,
+      "line": "Opened PR #101",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804-r2",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": "pick",
+      "id": 11,
+      "kind": "race_winner",
+      "line": "Codex won the race in 34 min",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal: the first green, reviewed contender wins",
+      "step_id": "step-828726b98804-r2",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 10,
+      "kind": null,
+      "line": "Lost the race to Codex",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 9,
+      "kind": null,
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-advzwo_3/rig-race/hs-program-step-828726b98804-r2/.tmp/program-check/step-828726b98804-r2/20261030T022332Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804-r2",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 8,
+      "kind": null,
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-prog2/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804-r2",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 7,
+      "kind": null,
+      "line": "New commit 4e633747; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804-r2",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T01:49:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 6,
+      "kind": null,
+      "line": "Handed to Codex in hs-program-step-828726b98804-r2",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804-r2",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T01:49:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 5,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-828726b98804",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T01:49:31+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 4,
+      "kind": null,
+      "line": "A race: Claude Code, Codex",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-828726b98804",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T01:49:31+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T01:49:31+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-30T01:49:31+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Race template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": "2026-10-30T02:23:31+00:00",
+  "control": "normal",
+  "control_word": "Normal",
+  "created_at": "2026-10-30T01:49:31+00:00",
+  "decided_for_you": [
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "choice": "close",
+      "id": 16,
+      "kind": "program_done",
+      "line": "Closed the program: every step is finished",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal: the engine closes a finished program",
+      "step_id": null
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "choice": "message",
+      "id": 15,
+      "kind": "reach",
+      "line": "Reached you: a message, held for the morning",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "quiet hours queue messages",
+      "step_id": null
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "choice": "merge",
+      "id": 13,
+      "kind": "merge",
+      "line": "Merged PR #101 of step 1 (check green)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal merges on a green check and a passed review",
+      "step_id": "step-828726b98804-r2"
+    },
+    {
+      "at": "2026-10-30T02:23:31+00:00",
+      "choice": "pick",
+      "id": 11,
+      "kind": "race_winner",
+      "line": "Codex won the race in 34 min",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal: the first green, reviewed contender wins",
+      "step_id": "step-828726b98804-r2"
+    }
+  ],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "done": 1,
+  "done_in": "34 min",
+  "for_person_id": null,
+  "goal": "The fast path.",
+  "id": "program-f07cc67fbdc8",
+  "in_state_seconds": 1,
+  "last_checkpoint": {
+    "at": "2026-10-30T02:23:31+00:00",
+    "by": "engine",
+    "choice": null,
+    "id": 17,
+    "kind": null,
+    "line": "The program is done",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "may_call": false,
+  "may_handoff": false,
+  "note_id": "program-program-f07cc67fbdc8",
+  "note_window": "pullout:note:program-program-f07cc67fbdc8",
+  "origin_ref": null,
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "prefer_idle": false,
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-advzwo_3/rig-race/app"
+  },
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 3,
+  "spend_limit_usd": null,
+  "state": "done",
+  "state_word": "Done",
+  "status_line": "Done · 1 of 1 done · check: fake_program_check.sh · control Normal",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/the-fast-path/1-fast-read-path",
+      "brief": "Make the read path fast.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-prog2/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [
+        {
+          "after": [],
+          "agent": "Codex",
+          "branch": "program/the-fast-path/1-fast-read-path-804-r2",
+          "brief": "Make the read path fast.",
+          "check": {
+            "command": "sh /Users/karol/dev/tools/wt-ng-prog2/tests/fixtures/fake_program_check.sh",
+            "commit": "4e63374747b5694a48fb0a29684b7a837ae24435",
+            "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-advzwo_3/rig-race/hs-program-step-828726b98804-r2/.tmp/program-check/step-828726b98804-r2/20261030T022332Z.log",
+            "minutes": 0.0,
+            "reasons": [],
+            "running": false,
+            "sections": [
+              {
+                "name": "build",
+                "state": "green"
+              },
+              {
+                "name": "vitest",
+                "state": "green"
+              },
+              {
+                "name": "pytest",
+                "state": "green"
+              },
+              {
+                "name": "sweep",
+                "state": "green"
+              },
+              {
+                "name": "canon",
+                "state": "green"
+              },
+              {
+                "name": "repo",
+                "state": "green"
+              }
+            ],
+            "verdict": "green"
+          },
+          "effort": "low",
+          "elapsed": "34 min",
+          "elapsed_seconds": 2040,
+          "ended_at": "2026-10-30T02:23:31+00:00",
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "none",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "id": "step-828726b98804-r2",
+          "last_checkpoint": {
+            "at": "2026-10-30T02:23:31+00:00",
+            "by": "engine",
+            "choice": null,
+            "id": 14,
+            "kind": null,
+            "line": "Merged #101",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "rule": null,
+            "step_id": "step-828726b98804-r2",
+            "undo": {}
+          },
+          "launch_id": "L2",
+          "limit": null,
+          "may_call": false,
+          "ordinal": 1,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/web/routes/read.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": {
+            "number": 101,
+            "url": "https://github.com/acme/app/pull/101"
+          },
+          "prefer_idle": false,
+          "profile": "codex-default",
+          "race": 0,
+          "race_of": "step-828726b98804",
+          "report": null,
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Codex",
+              "engine": null,
+              "label": "Codex",
+              "profile": "codex-default"
+            },
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": "2026-10-30T01:49:31+00:00",
+          "state": "done",
+          "state_word": "Done",
+          "station": 5,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "Fast read path",
+          "updated_at": "2026-10-30T02:23:31+00:00",
+          "worktree": "hs-program-step-828726b98804-r2"
+        }
+      ],
+      "effort": "low",
+      "elapsed": "34 min",
+      "elapsed_seconds": 2040,
+      "ended_at": "2026-10-30T02:23:31+00:00",
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "id": "step-828726b98804",
+      "last_checkpoint": {
+        "at": "2026-10-30T02:23:31+00:00",
+        "by": "engine",
+        "choice": null,
+        "id": 10,
+        "kind": null,
+        "line": "Lost the race to Codex",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "rule": null,
+        "step_id": "step-828726b98804",
+        "undo": {}
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [
+        "holdspeak/web/routes/read.py"
+      ],
+      "parked_by": "race",
+      "parked_reason": "Lost the race to Codex",
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 2,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-30T01:49:31+00:00",
+      "state": "parked",
+      "state_word": "Parked",
+      "station": -1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Fast read path",
+      "updated_at": "2026-10-30T02:23:31+00:00",
+      "worktree": "hs-program-step-828726b98804"
+    }
+  ],
+  "template": "race",
+  "title": "The fast path",
+  "total": 1,
+  "updated_at": "2026-10-30T02:23:31+00:00",
+  "usage_warning_share": null,
+  "your_turn": 0,
+  "your_turn_items": []
+}

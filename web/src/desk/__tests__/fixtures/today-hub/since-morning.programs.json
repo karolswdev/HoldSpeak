@@ -1,0 +1,14 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_today.py (the Programs rig) (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "/api/today/since-morning": {
+  "since": "2026-10-29T04:00:00Z",
+  "items": [],
+  "programs": {
+   "moved": 2,
+   "running": 1,
+   "waiting": 1,
+   "done": 0,
+   "merged": 1
+  }
+ }
+}
