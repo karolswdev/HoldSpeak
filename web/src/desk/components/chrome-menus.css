@@ -906,6 +906,17 @@
     visibility: visible;
   }
 }
+/* MENUBAR-STILL (2026-10-29): the bell's count slot keeps its width before
+   and after the Needs-you read, so the bell and everything left of it hold
+   still when the count lands (1 to 99; DeskChrome.tsx AttentionBell). */
+.desk-next .desk-menubar .desk-bell-slot {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--desk-badge-slot-w);
+  height: var(--desk-badge-h);
+}
 /* the bell's count: the one badge (floor icons and the Dock wear it too) */
 .desk-next .desk-menubar .desk-bell strong {
   box-sizing: border-box;

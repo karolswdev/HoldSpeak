@@ -291,3 +291,39 @@ describe("Bell: the daily week's one number", () => {
     expect(icon?.lamp?.count).toBe(4);
   });
 });
+
+/* ── MENUBAR-STILL (2026-10-29): the count's slot is there before the read ──
+ * The desk sweep's desk-1440 still fence saw the bell and the hub dot move
+ * 27 px under load: the Needs-you read landed inside the 1.5 s watch and its
+ * count mounted, so the bell grew. The slot is drawn before the read, the
+ * count lands IN it, and the CSS gives the slot its full width at once. */
+import chromeMenusCss from "../components/chrome-menus.css?raw";
+import tokensCss from "../../styles/tokens.css?raw";
+
+describe("Bell: the count's slot holds the bar still", () => {
+  it("draws the empty slot before the Needs-you read and the count lands in the same slot", async () => {
+    resetNeedsYou();
+    let answer: (value: unknown) => void = () => undefined;
+    const held = new Promise((resolve) => { answer = resolve; });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (path.startsWith("/api/desk/needs-you")) return (await held) as never;
+      return recordedGet({}, path) as never;
+    });
+    render(<DeskChrome />);
+    const bell = await screen.findByTestId("desk-bell");
+    const slot = within(bell).getByTestId("desk-bell-slot");
+    expect(slot.querySelector("strong")).toBeNull();
+    expect(slot.textContent).toBe("");
+
+    await act(async () => { answer(dailyWeek.needsYou); await held; });
+    await waitFor(() => expect(slot.querySelector("strong")?.textContent).toBe("4"));
+    expect(within(bell).getByTestId("desk-bell-slot")).toBe(slot);
+  });
+
+  it("gives the slot its two-digit width from the badge token, empty or full", () => {
+    const rule = chromeMenusCss.match(/\.desk-menubar \.desk-bell-slot \{([^}]*)\}/);
+    expect(rule?.[1]).toMatch(/min-width:\s*var\(--desk-badge-slot-w\)/);
+    expect(rule?.[1]).toMatch(/flex:\s*0 0 auto/);
+    expect(tokensCss).toMatch(/--desk-badge-slot-w:\s*calc\(var\(--desk-badge-h\) \+ 6px\)/);
+  });
+});
