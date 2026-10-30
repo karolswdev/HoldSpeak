@@ -170,7 +170,7 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     expect(screen.getByTestId("summary-route-unavailable").textContent).toBe(
       "No engine for summaries",
     );
-    expect(screen.getByTestId("summary-route-unavailable").getAttribute("title")).toBe("NO ASSIGNMENT");
+    expect(screen.getByTestId("summary-route-unavailable").getAttribute("title")).toBe("No assignment");
     // Never the word the old face invented for an unresolved route.
     expect(screen.queryByText(/local/i)).toBeNull();
   });
@@ -280,7 +280,7 @@ describe("HS-201-04 the record's Retry", () => {
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
     // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
     expect(screen.getByTestId("recovery-route-unavailable").textContent).toBe("No engine for summaries");
-    expect(screen.getByTestId("recovery-route-unavailable").getAttribute("title")).toContain("NO ASSIGNMENT");
+    expect(screen.getByTestId("recovery-route-unavailable").getAttribute("title")).toContain("No assignment");
   });
 });
 
@@ -335,7 +335,7 @@ describe("HS-201-04 the ledger's Retry", () => {
     expect(screen.queryByTestId("retry-intelligence-btn")).toBeNull();
     // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
     expect(screen.getByTestId("row-route-unavailable").textContent).toBe("No engine for summaries");
-    expect(screen.getByTestId("row-route-unavailable").getAttribute("title")).toContain("NO ASSIGNMENT");
+    expect(screen.getByTestId("row-route-unavailable").getAttribute("title")).toContain("No assignment");
   });
 
   it("shows the destinations contacted after the run", () => {
@@ -374,7 +374,7 @@ describe("HS-201-04 the record's NEEDS YOU verbs", () => {
     expect(screen.queryByTestId("detail-run-intelligence-btn")).toBeNull();
     // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
     expect(screen.getByTestId("detail-route-unavailable").textContent).toBe("No engine for summaries");
-    expect(screen.getByTestId("detail-route-unavailable").getAttribute("title")).toContain("NO ASSIGNMENT");
+    expect(screen.getByTestId("detail-route-unavailable").getAttribute("title")).toContain("No assignment");
   });
 });
 

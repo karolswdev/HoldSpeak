@@ -490,7 +490,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     ] as never[];
     expect(rows.map((r) => canRun(r))).toEqual([true, false, true]);
     expect(canRun({ ...claude, signed_in: "no" } as never)).toBe(false);
-    expect(readyMember(rows[2]).facts.more?.find((f) => f.key === "signin")?.value).toBe("NOT CHECKED");
+    expect(readyMember(rows[2]).facts.more?.find((f) => f.key === "signin")?.value).toBe("Not checked");
     expect(headFact({ atWork: 0, ask: 0 }, rows.map((r) => readyMember(r)))).toBe("2 ready");
     expect(headFact({ atWork: 0, ask: 0 }, rows.slice(1, 2).map((r) => readyMember(r)))).toBe("No agent ready");
     expect(headFact({ atWork: 0, ask: 0 }, [])).toBe("No agent");
@@ -559,8 +559,8 @@ describe("PHILO-14 C4 the Conductor window", () => {
     render(<ConductorInfoWindow member={claude} />);
     const info = await screen.findByTestId("conductor-info");
     expect(within(info).getByText("Version").nextSibling?.textContent).toBe("2.1.0");
-    expect(within(info).getByText("Hooks").nextSibling?.textContent).toBe("IN");
-    expect(within(info).getByText("Sign-in").nextSibling?.textContent).toBe("SIGNED IN");
+    expect(within(info).getByText("Hooks").nextSibling?.textContent).toBe("In");
+    expect(within(info).getByText("Sign-in").nextSibling?.textContent).toBe("Signed in");
   });
 
   it("a launched agent's Get Info: the item, Project, branch, launched, control from the lane route", async () => {

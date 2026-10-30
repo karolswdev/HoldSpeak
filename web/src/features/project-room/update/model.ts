@@ -6,6 +6,7 @@
 /* ── Wire update shape (from project_updates table rows) ── */
 
 import type { ChipState } from "../../../desk/surface";
+import { wireWords } from "../../../desk/surface/words";
 import {
   claimKindToken as libraryKindToken,
   claimSupportToken as librarySupportToken,
@@ -427,8 +428,7 @@ export function refIdentityLabel(ref: string): string {
   // hashed ids real Projects carry) shows its kind word, never the
   // raw hash -- 162's no-raw-ids law.
   if (OPAQUE_ID_RE.test(id)) {
-    const kindWord = REF_PREFIX_LABELS[prefix];
-    return (kindWord ?? prefix).toUpperCase();
+    return REF_PREFIX_LABELS[prefix] ?? wireWords(prefix);
   }
 
   // Fallback: uppercase the id

@@ -21,6 +21,7 @@ import { useUndoReceipt } from "../hooks/useUndoReceipt";
 import { useDesk } from "../store";
 import { sendWords, usedWords, type AgentUse, type UsedRow } from "../used";
 import { restoreWindowUndo } from "../windowUndo";
+import { wireWords } from "../surface/words";
 
 /** The document a prepared send carries, for its send fold. */
 function preparedDoc(row: UsedRow): DocRef {
@@ -29,7 +30,7 @@ function preparedDoc(row: UsedRow): DocRef {
   if (kind === "note") return noteDoc(id, row.label);
   if (kind === "artifact") return artifactDoc(id, row.label, "automation result");
   if (kind === "decision") return deskDecisionDoc(id, row.label);
-  return { ref: row.ref, title: row.label, label: kind.toUpperCase() };
+  return { ref: row.ref, title: row.label, label: wireWords(kind) };
 }
 
 /** A task the agent added is set aside (dismissed): Undo of a task. */

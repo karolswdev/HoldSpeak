@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { openSurfaceOr } from "../../../desk/shell";
+import { wireWords } from "../../../desk/surface/words";
 import { apiFetch } from "../../../lib/api";
 import { asRows, rowId, useResource } from "../../pageSupport";
 import type {
@@ -121,9 +122,9 @@ export function Nudges() {
       presentValue(citation?.domain) ||
       presentValue(row.title ?? row.text) ||
       "recent work";
-    const kind = String(
-      citation?.entity_type ?? row.kind ?? "activity",
-    ).toUpperCase();
+    const kind = wireWords(
+      String(citation?.entity_type ?? row.kind ?? "activity"),
+    );
     return [time, where, kind].filter(Boolean).join(" · ");
   };
   return (

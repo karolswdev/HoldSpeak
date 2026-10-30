@@ -131,7 +131,7 @@ describe("ProcessCore: a long operation name wraps in its cell (PHILO-17 desk sw
   it("may break after each dot and underscore, and reads whole", async () => {
     const { breakableKind } = await import("../ProcessCore");
     const { container } = render(<span>{breakableKind("channel.save_destination")}</span>);
-    expect(container.textContent).toBe("CHANNEL.SAVE_DESTINATION");
+    expect(container.textContent).toBe("channel.save_destination");
     expect(container.querySelectorAll("wbr")).toHaveLength(2);
   });
 });

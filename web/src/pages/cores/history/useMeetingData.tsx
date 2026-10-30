@@ -578,15 +578,14 @@ export function useMeetingData(
       const effect = String(operation.effect_class ?? row.action ?? "");
       const destination = String(operation.destination ?? row.target ?? "");
       const facts = [
-        effect ? `EFFECT: ${effectClassLabel(effect)}` : null,
-        destination ? `DEST: ${humanizeWireValue(destination)}` : null,
-        `BASIS: ${authorityBasisLabel(
+        effect ? `Effect: ${effectClassLabel(effect)}` : null,
+        destination ? `Destination: ${humanizeWireValue(destination)}` : null,
+        `Basis: ${authorityBasisLabel(
           String(policy.authority_basis ?? "per_action_required"),
         )}`,
       ]
         .filter((fact): fact is string => Boolean(fact))
-        .join(" · ")
-        .toUpperCase();
+        .join(" · ");
       const commitment = row.commitment as Record<string, unknown> | undefined;
       return {
         cells: [

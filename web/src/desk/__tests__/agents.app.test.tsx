@@ -943,7 +943,7 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       ["/api/agent/hand", "POST", { kind: "note", id: noteId, profile: "claude-default", project_id: "p-platform", queue: true, review_by: "none" }],
     ]);
     // The hub's own refusal, in words, where he pressed.
-    await waitFor(() => expect(screen.getByTestId("conductor-start-form").textContent).toMatch(/Not started · (NO REPOSITORY|REPOSITORY NOT REGISTERED)/));
+    await waitFor(() => expect(screen.getByTestId("conductor-start-form").textContent).toMatch(/Not started · (No repository|Repository not registered)/));
   });
 
   it("a hand that waits for a free agent has Cancel; one press takes it out of the queue", async () => {

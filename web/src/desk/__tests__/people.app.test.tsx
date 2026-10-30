@@ -96,7 +96,7 @@ describe("People: the Prep card (HS-172-05)", () => {
     expect(lens.querySelectorAll("button").length).toBeGreaterThan(0);
     expect(rawButtons(lens)).toEqual([]);
     const summary = screen.getByTestId("prep-summary-rows").textContent ?? "";
-    expect(summary).toContain("2 PRS WAITING ON ANIA");
+    expect(summary).toContain("2 PRs waiting on Ania");
     expect(summary).not.toMatch(/\b0\s+(PRS?|ASSIGNMENTS?|COMMITMENTS?|ITEMS?)\b/);
     expect(summary).not.toMatch(/\b(her|him|she|he)\b/i);
   });

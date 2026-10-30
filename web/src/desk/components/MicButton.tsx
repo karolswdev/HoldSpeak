@@ -44,20 +44,20 @@ import { openSurfaceOr } from "../shell";
  * on the face and on its title alike; the recoveries are library Buttons
  * (J5-02: `Open Setup` was text inside a sentence). */
 const FAILURE_LABEL: Record<DictationFailure, string> = {
-  permission_denied: "MICROPHONE BLOCKED",
-  no_microphone: "NO MICROPHONE",
-  microphone_unavailable: "MICROPHONE DID NOT START",
-  missing_model: "TRANSCRIPTION UNAVAILABLE",
-  rejected_token: "HUB REFUSED ACCESS",
-  unreachable_hub: "HUB UNREACHABLE",
-  delivery_conflict: "NOT DELIVERED",
-  transcription_failed: "TRANSCRIPTION FAILED",
-  timeout: "TIMED OUT",
-  no_speech: "NO SPEECH HEARD",
-  mic_interval_closed: "MIC SESSION CLOSED",
-  provider_failure: "SPEECH PROVIDER FAILED",
-  audio_floor_held: "MICROPHONE IN USE",
-  unknown: "DICTATION DID NOT FINISH",
+  permission_denied: "Microphone blocked",
+  no_microphone: "No microphone",
+  microphone_unavailable: "Microphone did not start",
+  missing_model: "Transcription unavailable",
+  rejected_token: "Hub refused access",
+  unreachable_hub: "Hub unreachable",
+  delivery_conflict: "Not delivered",
+  transcription_failed: "Transcription failed",
+  timeout: "Timed out",
+  no_speech: "No speech heard",
+  mic_interval_closed: "Mic session closed",
+  provider_failure: "Speech provider failed",
+  audio_floor_held: "Microphone in use",
+  unknown: "Dictation did not finish",
 };
 
 export type MicState = "idle" | "listening" | "busy" | "failed";
@@ -240,7 +240,7 @@ export function MicButton({
     // the title and the accessible name alike (Tenet 4).
     const unsupportedName = /secure origin/i.test(speakToFillUnsupportedReason() ?? "")
       ? "NEEDS LOCALHOST OR HTTPS"
-      : "NO MICROPHONE IN THIS BROWSER";
+      : "No microphone in this browser";
     return (
       <Button
         variant="chrome"

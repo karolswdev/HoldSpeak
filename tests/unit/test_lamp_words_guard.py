@@ -258,48 +258,31 @@ UPPER_HARMLESS = re.compile(
     r"|slice\(0,\s*[23]\)\.toUpperCase\(\)"
     r"|toUpperCase\(\)\s*(?:===|!==|\.startsWith|\])"
 )
-# The words wave's debt: the files that still uppercase a word for the face,
+# The words wave's debt: the files that still call `.toUpperCase()` on a word,
 # with the count of such lines. Strict: a line fixed means the count here goes
 # down (or the file leaves); a new file or a higher count fails. The species
 # (Token, StateChip, StatusStrip, FoldGadget, StatusBar) send their text through
 # `stateWords`, so most of these draw sentence case already; the source should
 # say the word.
 UPPER_DEBT: dict[str, int] = {
-    "desk/attention.ts": 3,
-    "desk/components/DeskToolShelf.tsx": 1,
-    "desk/components/MissionControlConveyor.tsx": 3,
-    "desk/components/UsedLines.tsx": 1,
-    "desk/conductor/store.ts": 1,
-    "desk/documentSends.tsx": 2,
-    "desk/firstrun/AgentsCard.tsx": 1,
+    # The words wave ended 2026-10-30 (56 -> 21). Every line left is a compare
+    # or lookup key, an id or ref plate, initials, or an acronym; none draws
+    # a word in caps. A new face word goes through `stateWords`/`wireWords`.
+    "desk/attention.ts": 2,  # the rank-class compare; a ref key (KAN-7)
+    "desk/documentSends.tsx": 1,  # the short id plate (85F927)
     "desk/hooks/useWriteReceipt.ts": 1,  # verbKey: the failure's compare key, never drawn
-    "desk/lane/LaneWindow.tsx": 1,
-    "desk/lane/laneWire.ts": 2,
-    "desk/missioncontrol.ts": 1,
-    "desk/needsYou.ts": 4,
-    "desk/pullouts/editors/NoteEditor.tsx": 2,
-    "desk/surface/kit.tsx": 1,
-    "desk/zoneName.ts": 1,
-    "features/concierge/useConciergeController.ts": 3,
-    "features/project-room/ProjectRoomCore.tsx": 2,
-    "features/project-room/RoomPeopleSection.tsx": 1,
-    "features/project-room/prepare/PreparePosture.tsx": 2,
-    "features/project-room/prepare/model.ts": 1,
-    "features/project-room/recall/BeliefCard.tsx": 1,
-    "features/project-room/steward/StewardPosture.tsx": 2,
-    "features/project-room/update/model.ts": 4,
-    "features/runson/RunsOnCore.tsx": 1,
-    "features/runson/stateWord.ts": 1,
-    "lib/dictationRecovery.ts": 1,
-    "meetings/MeetingIntelRecovery.tsx": 1,
-    "meetings/summaryRoute.ts": 1,
-    "pages/cores/PeopleCore.tsx": 3,
-    "pages/cores/ProcessCore.tsx": 1,
-    "pages/cores/ProjectsCore.tsx": 1,
-    "pages/cores/dictation/DictationSections.tsx": 1,
-    "pages/cores/history/MeetingRecord.tsx": 2,
-    "pages/cores/history/PreparedResults.tsx": 1,
-    "pages/cores/history/useMeetingData.tsx": 1,
+    "desk/lane/LaneWindow.tsx": 1,  # the review-decision compare
+    "desk/lane/laneWire.ts": 2,  # the wait-kind and review-decision compares
+    "desk/missioncontrol.ts": 1,  # the CI-conclusion compare
+    "desk/needsYou.ts": 2,  # waitingOn: the head-part compare, both sides
+    "desk/surface/kit.tsx": 1,  # initialsOf: initials
+    "desk/zoneName.ts": 1,  # the hub's casefold rule (upper then lower)
+    "features/project-room/ProjectRoomCore.tsx": 1,  # plainWord: a two-letter acronym (PR, CI)
+    "features/project-room/RoomPeopleSection.tsx": 1,  # monogram: initials
+    "features/project-room/update/model.ts": 3,  # ref plates: MTG id, Jira key, a raw id
+    "features/runson/RunsOnCore.tsx": 1,  # the engine-state compare key
+    "features/runson/stateWord.ts": 1,  # the state-map lookup key
+    "pages/cores/history/MeetingRecord.tsx": 2,  # the export format acronym (PDF, JSON)
 }
 
 

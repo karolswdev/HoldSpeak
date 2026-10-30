@@ -73,7 +73,7 @@ function draftText(result: PreparedResult): string {
 function docOf(result: PreparedResult) {
   const title = String(result.title || result.label);
   if (result.artifact_id) return artifactDoc(result.artifact_id, title, result.kind);
-  if (result.document_ref) return { ref: result.document_ref, title, label: result.label.toUpperCase() };
+  if (result.document_ref) return { ref: result.document_ref, title, label: result.label };
   return null;
 }
 

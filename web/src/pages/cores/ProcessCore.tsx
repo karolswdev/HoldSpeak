@@ -80,11 +80,11 @@ export function placementWords(placement: string): string {
 }
 
 /** PHILO-17 (the desk sweep): an operation name is one long word
- * (`CHANNEL.SAVE_DESTINATION`, 225 px in a 160 px cell); it may break after
- * each `.` and `_`, so it wraps in its cell and never runs over the facts. */
+ * (`channel.save_destination`, a code shown as written, 225 px in a 160 px
+ * cell); it may break after each `.` and `_`, so it wraps in its cell and
+ * never runs over the facts. */
 export function breakableKind(kind: string): ReactNode[] {
   return kind
-    .toUpperCase()
     .split(/(?<=[._])/)
     .flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]));
 }

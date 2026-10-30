@@ -215,11 +215,11 @@ describe("the words", () => {
   it("modes, sizes, facts and refusals are tokens", () => {
     expect([modeWord("safe"), modeWord("neutral"), modeWord("yolo")]).toEqual(["Secure", "Normal", "Open throttle"]);
     expect(kb(4300)).toBe("4.2 KB");
-    expect(sourceFact({ kind: "decision", ref: "d", title: "", lines: null })).toBe("DECISION");
-    expect(sourceFact({ kind: "project_decisions", ref: "p", title: "", lines: 1 })).toBe("1 DECISION");
+    expect(sourceFact({ kind: "decision", ref: "d", title: "", lines: null })).toBe("Decision");
+    expect(sourceFact({ kind: "project_decisions", ref: "p", title: "", lines: 1 })).toBe("1 decision");
     expect(sourceFact({ kind: "memory", ref: "p", title: "", lines: 0 })).toBeNull();
-    expect(refusalToken("executable_absent", "codex")).toBe("Codex NOT INSTALLED");
-    expect(refusalToken("some_new_reason", "claude")).toBe("SOME NEW REASON");
+    expect(refusalToken("executable_absent", "codex")).toBe("Codex not installed");
+    expect(refusalToken("some_new_reason", "claude")).toBe("Some new reason");
   });
 });
 

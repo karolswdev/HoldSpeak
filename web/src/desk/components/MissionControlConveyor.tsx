@@ -41,7 +41,7 @@ import {
 import { FoldGadget, GadgetRow, MxRadio } from "../surface/gadgets";
 import { countLabel } from "../surface";
 import { Token } from "../surface/Token";
-import { wireWords } from "../surface/words";
+import { nameWord, wireWords } from "../surface/words";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
@@ -55,11 +55,11 @@ const GLYPH_GATE = String.fromCodePoint(0x25A3);
 /** Honest repo states as axis-named tokens, never a sentence. */
 function repoStateToken(value: string): string {
   const tokens: Record<string, string> = {
-    unreachable: "REPO UNREACHABLE",
-    schema_drift: "REPO SCHEMA MISMATCH",
-    unauthorized: "REPO UNAUTHORIZED",
+    unreachable: "Repo unreachable",
+    schema_drift: "Repo schema mismatch",
+    unauthorized: "Repo unauthorized",
   };
-  return tokens[value] || `REPO ${value.replace(/_/g, " ").toUpperCase()}`;
+  return tokens[value] || `Repo ${wireWords(value, false)}`;
 }
 
 interface PickTarget {
@@ -454,9 +454,7 @@ export function censusByAgent(sessions: McSession[]): AgentCensus[] {
     .map(([agent, list]) => {
       const counts = new Map<string, number>();
       for (const s of list) {
-        const token = s.stale
-          ? "IDLE"
-          : s.correlation.replace(/_/g, " ").toUpperCase() || "UNKNOWN";
+        const token = s.stale ? "Idle" : wireWords(s.correlation) || "Unknown";
         counts.set(token, (counts.get(token) || 0) + 1);
       }
       return {
@@ -495,7 +493,7 @@ function OffBeltPanel({ sessions }: { sessions: McSession[] }) {
       {census.map((row) => (
         <FoldGadget
           key={row.agent}
-          title={`${row.agent.toUpperCase()} ${row.total} · ${row.buckets
+          title={`${nameWord(row.agent)} ${row.total} · ${row.buckets
             .map((b) => `${b.token} ${b.count}`)
             .join(" · ")}`}
         >

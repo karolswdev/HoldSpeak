@@ -6,6 +6,7 @@
 // Its own surface window (not inside Settings). Every verb is the library Button.
 
 import { wireDate } from "../../desk/surface/format";
+import { stateWords } from "../../desk/surface/words";
 import { useContext, useEffect } from "react";
 import {
   SurfaceLedgerRow,
@@ -221,7 +222,7 @@ function SetGroupRow({
           {/* A failed group keeps its reason token until the next press. */}
           {row.state === "UNREACHABLE" && row.failToken ? (
             <span className="concierge-set-line2" data-testid={`concierge-set-fail-${row.group}`}>
-              <span className="concierge-token" data-tone="danger">{row.failToken}</span>
+              <span className="concierge-token" data-tone="danger">{stateWords(row.failToken)}</span>
             </span>
           ) : null}
         </span>
@@ -637,7 +638,8 @@ export function ConciergeCore({ scope }: CoreProps) {
     if (unknownToken) receiptParts.push(unknownToken);
     if (waitingToken) receiptParts.push(waitingToken);
   }
-  const receiptText = receiptParts.length > 0 ? receiptParts.join(" · ") : "NO ENGINE · SET UP NOTHING";
+  // The words wave: the receipt reads in sentence case whatever its source.
+  const receiptText = stateWords(receiptParts.length > 0 ? receiptParts.join(" · ") : "No engine · Set up nothing");
 
   return (
     <div className="concierge-root" data-testid="concierge-root">

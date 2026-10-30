@@ -263,12 +263,17 @@ export function receiptLabel(event: {
 const REFUSAL_WORDS: Record<string, string> = {
   update_not_published: "Not published",
   idempotency_conflict: "Already used",
-  // PHILO-9-06: the grant row's own words (SettingsCore GRANT_REFUSAL_TOKEN).
+  // PHILO-9-06: the grant row's words too (SettingsCore GRANT_REFUSAL_TOKEN
+  // reads this table, so the Room and Settings say one word).
   // Outside the grant's bound the hub answers owner_principal_required.
   owner_principal_required: "Owner only",
   project_delegation_required: "No grant",
   project_delegation_revoked: "Grant stopped",
   project_delegation_expired: "Grant expired",
+  desk_delegation_required: "No grant",
+  desk_delegation_revoked: "Grant stopped",
+  desk_delegation_expired: "Grant expired",
+  invalid_arguments: "Bad request",
   steward_policy_required: "No saved policy",
   steward_disabled: "Steward off",
   cooldown_active: "Cooling down",
