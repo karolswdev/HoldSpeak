@@ -1186,7 +1186,11 @@ describe("Settings ▸ Calls ▸ Line", () => {
       render(<CallsSettingsPane />);
       const add = await screen.findByTestId("line-add");
       fireEvent.change(within(add).getByLabelText("Add a machine"), { target: { value: "karol" } });
-      fireEvent.click(within(add).getByTestId("line-install-node"));
+      // The press runs inside act: the code arrives in a promise, and the
+      // sheet's poll is armed by an effect after it draws. Outside act the
+      // sheet could show before React ran that effect, so the advance below
+      // fired no poll (the red of 2026-10-30; alone it was red every time).
+      await act(async () => { fireEvent.click(within(add).getByTestId("line-install-node")); });
       await screen.findByTestId("line-code-sheet");
       // karol redeemed the code; the Line there has not said hello yet.
       nodes = lineNodesEnrolled;

@@ -74,8 +74,11 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
     // permitted. First run C1: the You card writes ONLY the `owner`
     // subtree (his name and aliases), from desk/firstrun/ownerName.ts.
     // Betterment C7 explicitly projects meeting.auto_record on Record as
-    // well as Settings; RecordHome owns that narrow projection.
+    // well as Settings; RecordHome owns that narrow projection. Calls
+    // (2026-10-28): desk/calls/api.ts is the ONE writer of the `calls`
+    // subtree; the Line and the Phone's Reach you write through it.
     expect(writers).toEqual([
+      "desk/calls/api.ts",
       "desk/components/DeliveryBoard.tsx",
       "desk/firstrun/ownerName.ts",
       "pages/cores/CommandsCore.tsx",
