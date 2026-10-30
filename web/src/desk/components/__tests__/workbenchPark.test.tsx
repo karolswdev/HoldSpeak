@@ -171,16 +171,16 @@ describe("PHILO-13-02 the Workbench window's Park", () => {
     mockHub();
     render(<WorkbenchWindow workbenchId="wb1" />);
     await screen.findByText("First item");
-    expect(screen.queryByText(/^PARKED \d+$/)).toBeNull();
+    expect(screen.queryByText(/^Parked \d+$/)).toBeNull();
     await parkItem("First item");
-    fireEvent.click(await screen.findByText("PARKED 1"));
+    fireEvent.click(await screen.findByText("Parked 1"));
     const row = await screen.findByTestId("parked-row");
     expect(row.textContent).toContain("First item");
     expect(screen.queryByText("Second item")).toBeNull();
     fireEvent.click(within(row.closest("li")!).getByRole("button", { name: "Restore" }));
     await screen.findByText("Second item");
     await screen.findByText("First item");
-    await waitFor(() => expect(screen.queryByText(/^PARKED \d+$/)).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/^Parked \d+$/)).toBeNull());
   });
 
   it("a claimed item is refused in place: Could not park · A run holds it, no Restore", async () => {
@@ -264,7 +264,7 @@ describe("PHILO-13-02 the Workbench window after a reload", () => {
     vi.restoreAllMocks();
   });
 
-  it("a fresh mount over parked rows: PARKED 2, no done item in the list, Restore each from the filter until the token goes", async () => {
+  it("a fresh mount over parked rows: Parked 2, no done item in the list, Restore each from the filter until the token goes", async () => {
     const hub = mockHub({ i1: "done", i3: "done" });
     // Before the reload: Clear done parked both on the hub.
     await fetch("/api/workbenches/wb1/items/park", { method: "POST", body: JSON.stringify({ item_ids: ["i1", "i3"] }) });
@@ -275,15 +275,15 @@ describe("PHILO-13-02 the Workbench window after a reload", () => {
     expect(screen.queryByText("Third item")).toBeNull();
     expect(screen.queryByRole("button", { name: "Clear done" })).toBeNull();
     for (const left of [2, 1]) {
-      fireEvent.click(await screen.findByText(`PARKED ${left}`));
+      fireEvent.click(await screen.findByText(`Parked ${left}`));
       const row = (await screen.findAllByTestId("parked-row"))[0];
       fireEvent.click(within(row.closest("li")!).getByRole("button", { name: "Restore" }));
       await waitFor(async () => expect((await receipt()).textContent).toMatch(/^Restored at/));
-      await waitFor(() => expect(screen.queryByText(`PARKED ${left}`)).toBeNull());
+      await waitFor(() => expect(screen.queryByText(`Parked ${left}`)).toBeNull());
     }
     await screen.findByText("First item");
     await screen.findByText("Third item");
-    expect(screen.queryByText(/^PARKED \d+$/)).toBeNull();
+    expect(screen.queryByText(/^Parked \d+$/)).toBeNull();
     expect(hub.requests.every((r) => r.method === "POST" && /\/restore$/.test(r.url))).toBe(true);
     expect(hub.requests).toHaveLength(2);
   });

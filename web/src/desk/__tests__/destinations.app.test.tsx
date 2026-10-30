@@ -114,7 +114,7 @@ describe("the Destinations group", () => {
     await screen.findByTestId("dest-form");
     fireEvent.change(screen.getByTestId("dest-folder"), { target: { value: "/Users/owner/Drive" } });
     expect(screen.getByTestId("dest-form-verbs").querySelector(".gadget-chip-egress")).toBeNull();
-    fireEvent.click(within(screen.getByTestId("dest-form")).getByText("SYNCED"));
+    fireEvent.click(within(screen.getByTestId("dest-form")).getByRole("checkbox", { name: "Synced" }));
     expect(egress().textContent).toBe("Synced folder");
     expect(egress()).toHaveAttribute("data-scope", "cloud");
   });

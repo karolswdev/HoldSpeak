@@ -144,7 +144,7 @@ export function ControlsGallery({ hero }: CoreProps) {
         </TransportRow>
       </SurfaceSection>
       <SurfaceSection label="The gadget sheet">
-        <GadgetGroup label="EVERY CONTROL IS A GADGET">
+        <GadgetGroup label="Every control is a gadget">
           <GadgetRow label="Boolean" fact="CheckGadget">
             <CheckGadget
               label="Gallery boolean"

@@ -415,15 +415,13 @@
   min-width: 140px;
   max-width: 100%;
 }
-/* A filter in the toolbar is a quiet toggle in sentence case, never a
-   mono caps chip; on, it wears the selection blue. */
+/* A filter in the toolbar is a quiet toggle (the species draws sentence
+   case); on, it wears the selection blue. */
 .kit-toolbar .gadget-check-token-face {
   height: 28px;
   padding: 0 10px;
   border-radius: 14px;
   font: 500 13px / 1 var(--font-sans);
-  letter-spacing: 0;
-  text-transform: none;
   transition: background-color var(--duration-short) var(--ease-standard), color var(--duration-short) var(--ease-standard);
 }
 .kit-toolbar .gadget-check-token.is-off .gadget-check-token-face {

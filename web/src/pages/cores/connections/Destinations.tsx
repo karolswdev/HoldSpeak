@@ -280,7 +280,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
       )}
       {d.channel === "file" ? (<>
         <GadgetRow wide controlWidth="full" label="Folder"><StringGadget label="Folder" value={d.folder} onChange={(v) => set({ folder: v })} placeholder="/Users/you/Reports" inputProps={{ "data-testid": "dest-folder" } as never} /></GadgetRow>
-        <GadgetRow controlWidth="standard" label="Synced"><CheckGadget variant="token" label="SYNCED" checked={d.synced} onChange={(v) => set({ synced: v })} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Synced"><CheckGadget variant="token" label="Synced" checked={d.synced} onChange={(v) => set({ synced: v })} /></GadgetRow>
       </>) : null}
       {d.channel === "github" ? (<>
         <GadgetRow wide controlWidth="full" label="Account">

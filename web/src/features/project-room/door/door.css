@@ -193,8 +193,6 @@
    on, it wears a soft selection tint. */
 .door-row .gadget-check-token-face {
   font: 500 12px / 22px var(--font-sans);
-  letter-spacing: 0;
-  text-transform: none;
   padding: 0 8px;
   border-radius: 11px;
 }

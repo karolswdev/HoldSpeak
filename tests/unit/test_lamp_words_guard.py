@@ -26,6 +26,9 @@ their words through ``stateWords``, and the source says the word too.
   (``label="Added"``, never ``label="ADDED"``);
 - no ``<Token>`` there holds a caps literal (``No model matches``).
 
+FIELD-LABELS-WORDS (2026-10-30) extends it to the field and check-box
+labels (see the last two tests).
+
 Parked files (``_parked``) and tests are not product faces.
 """
 from __future__ import annotations
@@ -165,3 +168,40 @@ def test_no_engines_chip_or_token_literal_is_written_in_caps():
                 if word and _shout(word):
                     hits.append(f"{path.relative_to(ROOT)}: {word!r}")
     assert not hits, "write the Engines window's words in sentence case:\n" + "\n".join(hits)
+
+
+# FIELD-LABELS-WORDS (2026-10-30) extends the ratchet to the field and
+# check-box label species: the StringGadget caption (``.gadget-string-caption``),
+# the token check (``.gadget-check-token-face``), the check and its word
+# (``.gadget-checkline-word``), the plain check (``.gadget-check``) and the
+# group legend (``.gadget-group-label``). The Window grammar: a label is sans
+# in sentence case; sections are "never mono uppercase". The caption step's
+# caps (UX-CANON C) stays for the eyebrow species (``.surface-eyebrow``) only.
+
+FIELD_LABEL = re.compile(
+    r"\.gadget-(?:string-caption|check-token(?:-face)?|checkline-word|check|group-label)(?![\w-])"
+)
+
+
+def test_no_css_rule_uppercases_a_field_or_check_label():
+    hits = []
+    for path in _product_files(".css"):
+        text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.S)
+        for m in RULE.finditer(text):
+            selector, body = m.group(1), m.group(2)
+            if FIELD_LABEL.search(selector) and re.search(r"text-transform:\s*uppercase", body):
+                hits.append(f"{path.relative_to(ROOT)}: {' '.join(selector.split())}")
+    assert not hits, "a field or check label rule uppercases its word:\n" + "\n".join(hits)
+
+
+FIELD_LITERAL = re.compile(r"<(?:CheckGadget|StringGadget|GadgetGroup|PadGadget)\b[^>]*?\blabel=\"([^\"]*)\"", re.S)
+
+
+def test_no_field_or_check_label_literal_is_written_in_caps():
+    hits = []
+    for path in _product_files(".tsx"):
+        for m in FIELD_LITERAL.finditer(path.read_text(encoding="utf-8")):
+            word = m.group(1)
+            if _shout(word):
+                hits.append(f"{path.relative_to(ROOT)}: label=\"{word}\"")
+    assert not hits, "write the field or check label in sentence case:\n" + "\n".join(hits)

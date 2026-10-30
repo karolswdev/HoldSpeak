@@ -34,7 +34,7 @@ export function parkClock(at: Date = new Date()): string {
 
 /** The PARKED token: none at zero (UX-CANON A.8). */
 export function parkedToken(n: number): string | null {
-  return n > 0 ? `PARKED ${n}` : null;
+  return n > 0 ? `Parked ${n}` : null;
 }
 
 export function parkedOutcome(ids: string[], at = parkClock()): ParkOutcome {

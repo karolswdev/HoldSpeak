@@ -77,6 +77,4 @@
 }
 .rhythm-section .gadget-check-token-face {
   font: 500 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
-  letter-spacing: normal;
-  text-transform: none;
 }
