@@ -69,7 +69,13 @@ function AttentionBell() {
       {/* HS-111-09 — 16px source renders at 16 CSS px (integer-true). */}
       <img src={SYSTEM.menuBell} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
       {ready ? <span className="desk-bell-ready" role="status">READY</span> : null}
-      {badge ? <strong>{badge}</strong> : null}
+      {/* MENUBAR-STILL (2026-10-29): the count's slot is drawn before the
+          Needs-you read lands, at its full width, so a late count never
+          moves the bar (the sweep saw the bell and the hub dot move 27 px).
+          The slot is empty while nothing is counted: no counter of zero. */}
+      <span className="desk-bell-slot" data-testid="desk-bell-slot">
+        {badge ? <strong>{badge}</strong> : null}
+      </span>
     </Button>
   );
 }

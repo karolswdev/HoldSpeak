@@ -383,6 +383,7 @@
   --desk-floor-label-halo: 0 1px 2px rgba(12, 20, 32, 0.9), 0 0 1px rgba(12, 20, 32, 0.95), 0 0 8px rgba(12, 20, 32, 0.55); /* a floor label's soft dark halo: paper ink reads on the slate floor and on a wallpaper, with no plate */
   --desk-floor-icon-lift: drop-shadow(0 3px 6px rgba(8, 14, 24, 0.45)); /* a floor icon lifted under the pointer (a filter, never a transform) */
   --desk-badge-h: 16px; /* the one count badge height (floor icons, dock, bell) */
+  --desk-badge-slot-w: calc(var(--desk-badge-h) + 6px); /* the bell's count slot: two digits fit, drawn before the count is read so the menu bar holds still */
   --desk-badge-ring: 0 0 0 1.5px var(--wb-paper), 0 1px 3px rgba(12, 20, 32, 0.35); /* the count badge's paper ring and soft drop */
   --desk-lamp-ring: 0 0 0 1.5px var(--wb-paper), 0 1px 2px rgba(12, 20, 32, 0.4); /* a state lamp dot's paper ring and soft drop */
   --desk-dock-plate: linear-gradient(180deg, #fbfcfe 0%, #eef2f7 100%); /* the dock: a warm paper plate, light falling from its top edge */
