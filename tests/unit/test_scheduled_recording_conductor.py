@@ -854,6 +854,34 @@ def test_deadline_persisted_before_start(tmp_path):
     assert deadline_at_on_start[0] == clock() + 30 * 60
 
 
+def test_a_fire_writes_recording_and_its_outcome_in_one_write(tmp_path):
+    """No reader sees `recording` without `recording_started` (2026-10-30 flake).
+
+    The fire wrote `recording`, then the receipt, then the outcome. Under load
+    the receipt write was slow, and a read in that gap got a half-done row."""
+    clock = FakeClock(1_000_000_000.0)
+    db = make_db(tmp_path)
+    seen: list[tuple[str, Any]] = []
+    set_state = db.scheduled_recordings.set_state
+
+    def watching_set_state(schedule_id, state, **kwargs):
+        result = set_state(schedule_id, state, **kwargs)
+        row = db.scheduled_recordings.get(schedule_id)
+        seen.append((row.state, row.last_outcome))
+        return result
+
+    db.scheduled_recordings.set_state = watching_set_state  # type: ignore[method-assign]
+    conductor = make_conductor(db, clock, countdown_seconds=0.0)
+    sched = create_schedule(db, next_fire_at=clock() - 1)
+
+    conductor._tick()
+    for thread in [t for t in threading.enumerate() if t.name == f"sr-countdown-{sched.id}"]:
+        thread.join(timeout=5)
+
+    recording = [outcome for state, outcome in seen if state == "recording"]
+    assert recording == ["recording_started"], seen
+
+
 # -- I7: restart durability --
 
 
