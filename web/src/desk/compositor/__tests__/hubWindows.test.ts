@@ -48,7 +48,7 @@ beforeAll(() => {
 const REGISTRY = {
   static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", "drawer:parked": "drawer", lane: "lane", conductor: "conductor",
     "surface-project-memory": "surface", "surface-calendar-snapshot": "surface", "surface-concierge": "open-concierge", "surface-engines": "configure-runs-on" },
-  families: { "zone:": "zone", "drawer:project:": "drawer", "pullout:": "pullout", "repository:": "repository" },
+  families: { "zone:": "zone", "drawer:project:": "drawer", "pullout:": "pullout", "repository:": "repository", terminal: "terminal" },
   retired: { zone: "no face", "surface-concierge": "Settings owns Engines", "open-concierge": "Settings owns Engines" },
   // (lane is static on the hub)
 };
@@ -140,7 +140,7 @@ beforeEach(() => {
   forgetLoadRaises();
   useDesk.setState({
     panelDepth: {}, panelOrder: [], panelMin: [], panelRects: {}, panelSaved: [], panelMax: [],
-    panelZoom: {}, windowsById: {}, zoneWindows: [], pullouts: [], repositoryWindows: [],
+    panelZoom: {}, windowsById: {}, zoneWindows: [], pullouts: [], repositoryWindows: [], terminalWindows: [],
   });
   useChairWindows.setState({
     closed: { "chair:needs": true, "chair:capture": true },
@@ -174,6 +174,23 @@ function start(rows: HubWindowRow[], adopted = true, cacheOpen: string[] = [], b
 const CHAIR = ["chair:capture", "drawer:parked", "chair:needs"];
 
 describe("hubWindows", () => {
+  it("restores a terminal descriptor as one native frame and closes only that view", async () => {
+    const descriptorId = "terminal_a";
+    const { fake, hub } = start([
+      row(`terminal:${descriptorId}`, { app: "terminal", object_ref: descriptorId, depth: 3 }),
+    ]);
+    await hub.start();
+    await flush(hub);
+
+    expect(useDesk.getState().terminalWindows).toEqual([{ id: descriptorId, origin: null }]);
+    expect(useDesk.getState().panelOrder).toContain(`terminal:${descriptorId}`);
+
+    useDesk.getState().closeTerminalWindow(descriptorId);
+    await flush(hub);
+    expect(useDesk.getState().terminalWindows).toEqual([]);
+    expect(fake.calls.some((call) => call.verb === "close" && call.id === `terminal:${descriptorId}`)).toBe(true);
+  });
+
   it("keeps two repository views on one resource distinct through hub open and close", async () => {
     const extra = "view:remote-1";
     const { fake, hub } = start([

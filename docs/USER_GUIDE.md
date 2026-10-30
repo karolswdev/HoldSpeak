@@ -765,6 +765,11 @@ repository result before you merge.
 The Desk can show a coding-agent session and its terminal output. A session
 needs a configured agent CLI, repository, worktree, and authority.
 
+Open **Go > Work > Terminals** to keep local terminals in separate Desk windows.
+You can find, open and tile sessions, or start a shell in a chosen local folder.
+Closing a terminal view leaves its process running. See [Terminals](TERMINALS.md)
+for typing, messages and current limits.
+
 ### Send keys, any pane, any machine
 
 Use the supported session control to send text or a key. Check the target pane,

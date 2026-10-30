@@ -35,6 +35,7 @@ import { anticipate, createPresentations, type Change, type Presentations } from
 import { bandFor, record, resolveRect, type Rect, type Value, type ValueRect } from "./geometry";
 import { orderFromDepth } from "./planes";
 import { frameChanges } from "./windowFrames";
+import { terminalDescriptorId, terminalWindowId } from "../terminals/windows";
 
 export { isWindowsOnlyFrame } from "./windowFrames";
 
@@ -254,6 +255,16 @@ export function adapterFor(id: string): Adapter | null {
       close: () => useConductor.getState().closeWindow(),
     };
   }
+  if (id.startsWith("terminal:")) {
+    const descriptorId = terminalDescriptorId(id);
+    if (!descriptorId) return null;
+    return {
+      isOpen: () => d().terminalWindows.some((window) => window.id === descriptorId),
+      open: () => d().openTerminalWindow(descriptorId),
+      close: () => d().closeTerminalWindow(descriptorId),
+      object: () => descriptorId,
+    };
+  }
   // An application window carries its scope as the row's object (PHILO-17
   // U28c): Desk memory scoped to a project is that project's Room. Without
   // it, every other view (a reload with no cache, the iPad) opened the Room
@@ -309,6 +320,7 @@ export function adapterOpenIds(): string[] {
   return [
     ...CHAIR_WINDOW_IDS.filter((id) => !chair[id]),
     ...Object.keys(s.windowsById),
+    ...s.terminalWindows.map((window) => terminalWindowId(window.id)),
     ...s.pullouts.map((w) => `pullout:${w.id}`),
     ...s.infoWindows.map((w) => `info:${w.ref}`),
     ...s.roadmapWindows.map((w) => `roadmap:${w.slug}`),

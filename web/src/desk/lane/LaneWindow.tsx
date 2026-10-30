@@ -30,6 +30,7 @@ import { AgentWords, cutAtWord } from "../components/AgentWords";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
 import { useFrontWindowId } from "../components/window/windowRegistry";
+import { openSurfaceWhenReady } from "../shell";
 import { useGate } from "../gate";
 import { spriteUrl } from "../sprites";
 import { useSteering } from "../steering";
@@ -40,13 +41,17 @@ import {
   FoldGadget,
   PaneWell,
   StringGadget,
+  SurfaceWings,
+  DotWord,
+  StatusBar,
+  ToolGlyph,
+  Toolbar,
   TransportKey,
+  wireClock,
+  wireDate,
 } from "../surface";
-import { SurfaceWings } from "../surface/wings";
 import { stateWords } from "../surface/words";
 import { StepList, type StepEntry } from "./StepList";
-import { wireClock, wireDate } from "../surface/format";
-import { DotWord, StatusBar, ToolGlyph, Toolbar } from "../surface/kit";
 import { controlModeLabel } from "../../lib/productLanguage";
 import { useCompactViewport } from "../useCompactViewport";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
@@ -1171,6 +1176,16 @@ function LaneToolbar({ lane, agent, gone = null, shared = null }: { lane: LaneWi
       <ToolGlyph kind="ask" />Tell it
     </Button>
   ) : null;
+  const terminalsDoor = sessionKey ? (
+    <Button
+      dense
+      variant="ghost"
+      data-testid="lane-terminals"
+      onClick={() => openSurfaceWhenReady("open-terminals")}
+    >
+      <ToolGlyph kind="open" />Terminals
+    </Button>
+  ) : null;
   return (
     <Toolbar
       label="Agent"
@@ -1185,7 +1200,7 @@ function LaneToolbar({ lane, agent, gone = null, shared = null }: { lane: LaneWi
         </span>
       ) : undefined}
     >
-      {prPrimary || doneVerb ? <>{doneVerb && !prUrl ? doneVerb : null}{openPr}{tellIt}{doneVerb && prUrl ? doneVerb : null}</> : <>{tellIt}{openPr}</>}
+      {prPrimary || doneVerb ? <>{doneVerb && !prUrl ? doneVerb : null}{openPr}{tellIt}{terminalsDoor}{doneVerb && prUrl ? doneVerb : null}</> : <>{tellIt}{openPr}{terminalsDoor}</>}
     </Toolbar>
   );
 }

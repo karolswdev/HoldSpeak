@@ -74,6 +74,7 @@ def build_delivery_terminal_router(
     service: Any = None,
     stream: Any = None,
     targets: Any = None,
+    workspace: Any = None,
     link: Any = None,
     hub_db: Any = None,
     ledger_path: Optional[Path] = None,
@@ -94,6 +95,7 @@ def build_delivery_terminal_router(
         "service": service,
         "stream": stream,
         "targets": targets,
+        "workspace": workspace,
         "link": link,
     }
 
@@ -110,6 +112,15 @@ def build_delivery_terminal_router(
 
             holder["stream"] = TerminalStreamService(_targets())
         return holder["stream"]
+
+    def _workspace() -> Any:
+        if holder["workspace"] is None:
+            from ...services.terminal_workspace import TerminalWorkspaceService
+
+            holder["workspace"] = TerminalWorkspaceService(
+                _targets(), local_node_id=local_node_id
+            )
+        return holder["workspace"]
 
     def _service() -> Any:
         if holder["service"] is None:
@@ -151,6 +162,24 @@ def build_delivery_terminal_router(
             return JSONResponse(issued, status_code=status)
         issued["node_id"] = local_node_id
         return issued
+
+    @router.get("/api/delivery/terminal/sessions")
+    async def api_terminal_sessions() -> Any:
+        """List current local terminal sessions from live tmux panes.
+
+        Discovery is a read-only projection. Blocking tmux and hook-registry
+        reads run off the event loop; an unclassified shell is still a useful
+        ``live`` pane and is never presented as an agent state.
+        """
+        try:
+            out = await asyncio.to_thread(_workspace().discover)
+        except Exception as exc:
+            log.error(f"terminal session discovery failure: {exc}")
+            return JSONResponse(
+                {"status": "error", "detail": "terminal session discovery failed", "sessions": []},
+                status_code=500,
+            )
+        return JSONResponse(out)
 
     @router.post("/api/delivery/terminal/subscriptions")
     async def api_terminal_subscribe(body: _SubscriptionRequest) -> Any:

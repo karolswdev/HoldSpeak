@@ -7,6 +7,7 @@ import type {
   Status,
 } from "../api";
 import type { SetupStatus } from "../setup";
+import type { TerminalWindowEntry } from "../terminals/windows";
 
 export interface UnitPos {
   x: number;
@@ -317,6 +318,9 @@ export interface DeskState {
   panelZoom: Record<string, PanelRect>;
   /** Normalized, compositor-owned application windows keyed by window id. */
   windowsById: Record<string, WindowInstance>;
+  /** Native terminal views. The descriptor id is stable and opaque; its
+   * metadata comes from the terminal inventory, never from this cache. */
+  terminalWindows: TerminalWindowEntry[];
   /** HS-93-08 -- which expression of the Desk renders (spatial or list). */
   viewMode: DeskView | "unset";
 
@@ -380,6 +384,10 @@ export interface DeskState {
   closeWorkbenchWindow(id: string): void;
   /** Open/focus or close a first-class application through the compositor. */
   openSurfaceWindow(key: string, scope?: string): void;
+  /** Open/focus one descriptor-backed native terminal window. */
+  openTerminalWindow(id: string, origin?: { x: number; y: number }): void;
+  /** Close a terminal view only; never kills the underlying session. */
+  closeTerminalWindow(id: string): void;
   /** The last six successful object/application opens, in newest-first order. */
   recentOpened: string[];
   recordRecentOpen(ref: string): void;

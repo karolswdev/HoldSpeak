@@ -2508,6 +2508,16 @@
       "consumers": []
     },
     {
+      "path": "/api/delivery/terminal/sessions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/delivery/terminal/subscriptions",
       "methods": [
         "POST"
@@ -8534,6 +8544,14 @@
     },
     {
       "path": "/studio",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.pages",
+      "consumers": []
+    },
+    {
+      "path": "/terminals",
       "methods": [
         "GET"
       ],

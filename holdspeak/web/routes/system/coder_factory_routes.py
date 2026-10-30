@@ -18,10 +18,16 @@ def register_factory_routes(router: APIRouter) -> None:
         body = payload if isinstance(payload, dict) else {}
         name = str(body.get("name", "")).strip()
         command = body.get("command")
+        cwd = body.get("cwd")
         result = await asyncio.to_thread(
-            coder_factory.spawn, name, command=(str(command) if command else None)
+            coder_factory.spawn,
+            name,
+            command=(str(command) if command else None),
+            cwd=(str(cwd) if cwd else None),
         )
-        code = 200 if result["status"] == "spawned" else 409
+        code = 200 if result["status"] == "spawned" else (
+            400 if result["status"] == "cwd_invalid" else 409
+        )
         return JSONResponse(result, status_code=code)
 
     @router.post("/api/coders/factory/rename")

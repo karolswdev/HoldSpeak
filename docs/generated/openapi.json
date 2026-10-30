@@ -11613,6 +11613,25 @@
         "summary": "Api Terminal Node Results"
       }
     },
+    "/api/delivery/terminal/sessions": {
+      "get": {
+        "description": "List current local terminal sessions from live tmux panes.\n\nDiscovery is a read-only projection. Blocking tmux and hook-registry\nreads run off the event loop; an unclassified shell is still a useful\n``live`` pane and is never presented as an agent state.",
+        "operationId": "api_terminal_sessions_api_delivery_terminal_sessions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Terminal Sessions Api Delivery Terminal Sessions Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Terminal Sessions"
+      }
+    },
     "/api/delivery/terminal/subscriptions": {
       "post": {
         "operationId": "api_terminal_subscribe_api_delivery_terminal_subscriptions_post",

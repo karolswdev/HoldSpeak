@@ -1,0 +1,220 @@
+.desk-next .terminals-core,
+.desk-next .terminals-window-body {
+  --terminals-gap: var(--space-3);
+  container: surface / inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--wb-paper);
+}
+
+.desk-next .terminals-core .kit-toolbar,
+.desk-next .terminals-window-body .kit-toolbar {
+  flex: none;
+}
+
+/* The terminal has one quiet key menu even on a wide frame. Eight literal
+ * key verbs would crowd the live target path; ToolbarFold still supplies the
+ * shared menu and keyboard semantics. */
+.desk-next .terminals-window .kit-toolbar-fold .kit-toolbar-fold-verb {
+  display: none;
+}
+
+.desk-next .terminals-window .kit-toolbar-fold .kit-toolbar-more {
+  display: inline-flex;
+}
+
+.desk-next .terminals-search {
+  flex: none;
+  padding: var(--terminals-gap) var(--terminals-gap) var(--space-1);
+}
+
+.desk-next .terminals-search .gadget-string {
+  width: 100%;
+}
+
+.desk-next .terminals-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 var(--terminals-gap) var(--terminals-gap);
+}
+
+.desk-next .terminals-group {
+  margin: var(--space-2) 0 0;
+}
+
+.desk-next .terminals-group h3 {
+  margin: 0;
+  padding: var(--space-2) var(--space-1);
+  color: var(--text-muted);
+  font: 650 var(--font-size-xs) / var(--line-height-tight) var(--font-sans);
+}
+
+.desk-next .terminals-group ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-next .terminals-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border: var(--wb-frame) solid transparent;
+  border-radius: var(--radius-xs);
+}
+
+.desk-next .terminals-row:hover,
+.desk-next .terminals-row:focus-within {
+  border-color: var(--line-strong);
+  background: var(--wb-well);
+}
+
+.desk-next .terminals-row-glyph {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--wb-row-dense);
+  height: var(--wb-row-dense);
+  border-radius: var(--radius-xs);
+  background: var(--wb-well);
+  color: var(--wb-sel);
+  font: 700 var(--font-size-xs) / var(--line-height-tight) var(--font-mono);
+}
+
+.desk-next .terminals-row-copy {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.desk-next .terminals-row-copy strong,
+.desk-next .terminals-row-copy small,
+.desk-next .terminals-toolbar-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-next .terminals-row-copy strong {
+  font: 650 var(--font-size-sm) / var(--line-height-tight) var(--font-sans);
+}
+
+.desk-next .terminals-row-copy small,
+.desk-next .terminals-row-state {
+  color: var(--text-muted);
+  font: var(--font-size-xs) / var(--line-height-tight) var(--font-sans);
+}
+
+.desk-next .terminals-row-path {
+  font-family: var(--font-mono);
+}
+
+.desk-next .terminals-toolbar-path {
+  color: var(--text-muted);
+  font: var(--font-size-xs) / var(--line-height-tight) var(--font-mono);
+}
+
+.desk-next .terminals-row-state {
+  flex: none;
+  font-size: var(--font-size-xs);
+}
+
+.desk-next .terminals-new-shell,
+.desk-next .terminals-start-agent {
+  flex: none;
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 var(--terminals-gap) var(--terminals-gap);
+  padding: var(--space-2);
+  border: var(--wb-frame) solid var(--line);
+  background: var(--wb-well);
+}
+
+.desk-next .terminals-start-agent .cw-start {
+  margin: 0;
+}
+
+.desk-next .terminals-inline-error {
+  margin: 0;
+  color: var(--danger, var(--wb-danger));
+  font: var(--font-size-xs) / var(--line-height-normal) var(--font-sans);
+}
+
+.desk-next .terminals-window-body {
+  min-height: 0;
+  height: auto;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.desk-next .terminals-toolbar-spacer {
+  flex: 1 1 auto;
+  min-width: var(--space-2);
+}
+
+.desk-next .terminals-toolbar-path {
+  max-width: 35%;
+}
+
+.desk-next .terminals-screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  padding: 0 var(--terminals-gap);
+  background: var(--wb-paper);
+}
+
+.desk-next .terminals-screen > .terminal-well,
+.desk-next .terminals-screen > .desk-session-state {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.desk-next .terminals-composer {
+  flex: none;
+  display: flex;
+  gap: var(--space-2);
+  align-items: end;
+  padding: var(--space-2) var(--terminals-gap);
+  border-top: var(--wb-frame) solid var(--line);
+  background: var(--wb-paper);
+}
+
+.desk-next .terminals-composer .gadget-string {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@container surface (max-width: 520px) {
+  .desk-next .terminals-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .desk-next .terminals-row-state {
+    margin-left: calc(var(--wb-row-dense) + var(--space-2));
+  }
+
+  .desk-next .terminals-row > .btn {
+    margin-left: auto;
+  }
+
+  .desk-next .terminals-toolbar-path {
+    display: none;
+  }
+
+  .desk-next .terminals-composer {
+    align-items: stretch;
+  }
+}

@@ -28,6 +28,7 @@ describe("single-instance-per-surface window rule", () => {
       zoneWindows: [],
       workbenchWindows: [],
       infoWindows: [],
+      terminalWindows: [],
       panelOrder: [],
     });
   });
@@ -63,6 +64,17 @@ describe("single-instance-per-surface window rule", () => {
 
     const { zoneWindows } = useDesk.getState();
     expect(zoneWindows).toHaveLength(2);
+  });
+
+  it("opening the same terminal descriptor twice yields one native frame", () => {
+    const state = useDesk.getState();
+    state.openTerminalWindow("terminal_a");
+    state.openTerminalWindow("terminal_a");
+
+    const { terminalWindows, panelOrder } = useDesk.getState();
+    expect(terminalWindows).toEqual([{ id: "terminal_a", origin: null }]);
+    expect(panelOrder.filter((id) => id === "terminal:terminal_a")).toHaveLength(1);
+    expect(panelOrder[panelOrder.length - 1]).toBe("terminal:terminal_a");
   });
 
   it("re-opening an already-open window moves it to the top of panelOrder", () => {

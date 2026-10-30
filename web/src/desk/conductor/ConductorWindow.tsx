@@ -19,13 +19,13 @@ import {
   ToolGlyph,
   Toolbar,
   countWords,
+  FootSlotContext,
   objectSprite,
   type ObjectListRow,
   type ObjectListSort,
   type ObjectListTone,
   type StatusBarItem,
 } from "../surface";
-import { FootSlotContext } from "../surface/foot";
 import { ObjectList } from "../surface/objects/ObjectList";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { reviewResult, useAgentFlights } from "../agentFlights";
@@ -53,7 +53,7 @@ import { StartAgent } from "./StartAgent";
 import { handRefOf, openHand } from "../agentHand";
 import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
 import { ReviewResult } from "./ReviewResult";
-import { openAgentLane } from "../shell";
+import { openAgentLane, openSurfaceWhenReady } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
 import "./conductor.css";
@@ -826,6 +826,15 @@ export function ConductorWindow() {
           >
             <ToolGlyph kind="new" />
             Start an agent
+          </Button>
+          <Button
+            dense
+            variant="ghost"
+            onClick={() => openSurfaceWhenReady("open-terminals")}
+            data-testid="conductor-terminals"
+          >
+            <ToolGlyph kind="open" />
+            Terminals
           </Button>
           {stopped.length >= 2 ? (
             <Button

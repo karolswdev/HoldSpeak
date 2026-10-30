@@ -80,6 +80,7 @@ The conversation is saved as a Thread from its first answer, ready for a follow-
 Select **Hand to agent** on a task or Desk item.
 Inspect the brief, repository, branch, and worktree before launching Claude Code, Codex, or pi in a separate Git worktree.
 Follow progress, read terminal output, answer questions by text or voice, and review the result.
+Use [Terminals](docs/TERMINALS.md) to work with several live sessions side by side.
 This needs a project repository, the installed agent CLI, and tmux.
 
 [Coder integration](docs/CODER_INTEGRATION.md) · [Agent hook setup](docs/AGENT_HOOK_INSTALL.md)

@@ -60,6 +60,14 @@ def test_query_token_deep_link_keeps_the_shell_available(
     assert '<div id="root"></div>' in response.text
 
 
+def test_terminals_deep_link_keeps_the_react_shell_available(
+    test_client: TestClient,
+) -> None:
+    response = test_client.get("/terminals", follow_redirects=False)
+    assert response.status_code == 200
+    assert '<div id="root"></div>' in response.text or "npm run build" in response.text
+
+
 def test_missing_build_has_one_honest_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     from holdspeak.web.routes import pages
 

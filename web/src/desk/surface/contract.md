@@ -3,6 +3,35 @@
 ## Import path
 Feature code imports from `desk/surface` (the barrel). Private paths are fenced.
 
+## PaneWell and XtermPane input seam
+
+`PaneWell` remains the shared terminal material and is read-only by default.
+Existing callers that pass only `live`, `lines`, `raw`, `pane` and `changedAt`
+keep the existing viewer behavior, including copy-on-select and honest stripped
+fallback. A terminal controller may additionally pass:
+
+- `header?: "inspect" | "find" | "none"` — defaults to `"inspect"`, which
+  keeps the existing RAW/Lines/Delta facts and Finder. `"find"` renders only
+  the Finder gadget when raw output exists. `"none"` renders no well head for
+  a quiet xterm or stripped absence.
+
+- `onData?: (data: string) => void` — the controller's already target-bound
+  xterm input callback;
+- `inputEnabled?: boolean` — enables stdin only after that controller has a
+  grant/posture; it does not discover or select a terminal;
+- `focusSignal?: number | string` — a non-zero change focuses the mounted xterm
+  without remounting its emulator (zero/undefined means no automatic focus);
+- `copyOnSelect?: boolean` — defaults to `true`;
+- `onFocus?: () => void` — reports focus to the owning controller.
+
+`XtermPane` keeps a stable emulator and callback refs while these props change.
+It does not repaint an unchanged frame, follows the tail only when the user is
+already at the bottom, and uses `ResizeObserver` to fit when no physical pane
+geometry is supplied. Escape is stopped at the enabled xterm so a TUI key does
+not bubble into DeskWindow's close behavior. The controller owns focus policy,
+target identity, input decoding, grant posture, and receipts; the renderer owns
+only xterm presentation.
+
 ## States vocabulary
 The closed state set: idle, active, working, success, warning, failure, unreachable.
 Every state renders icon + text; never color alone.
