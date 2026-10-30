@@ -49,8 +49,8 @@ describe("Trust counts a saved destination and says where data goes", () => {
     expect(settingValue(window, "Enabled destinations")).toBe("2");
     expect(window.textContent).toContain("All data stays on this device");
     expect(settingValue(window, "Current scope")).toBe("this device");
-    expect(within(section("Team updates")).getByText("THIS DEVICE")).toBeTruthy();
-    expect(within(section("HoldSpeak folder")).getByText("THIS DEVICE")).toBeTruthy();
+    expect(section("Team updates").querySelector(".gadget-lamp")?.textContent).toBe("This device");
+    expect(section("HoldSpeak folder").querySelector(".gadget-lamp")?.textContent).toBe("This device");
     expect(window.textContent).not.toMatch(/\/Users\/|\/private\//);
   });
 
@@ -63,7 +63,7 @@ describe("Trust counts a saved destination and says where data goes", () => {
     expect(window.textContent).toContain("External destinations configured");
     expect(window.textContent).not.toContain("All data stays on this device");
     expect(settingValue(window, "Current scope")).toContain("this device + external");
-    const lamp = within(section("Synced updates")).getByText("SENDS OUT");
+    const lamp = within(section("Synced updates")).getByText("Sends out");
     expect(lamp.closest(".gadget-lamp")).toHaveAttribute("data-on", "true");
   });
 });
@@ -79,7 +79,7 @@ describe("Trust on a virgin desk", () => {
     // (the browser test's "None" matched the folder's "None recorded" receipt).
     expect(settingValue(window, "Enabled destinations")).toBe("1");
     expect(settingValue(window, "Current scope")).toBe("this device");
-    expect(within(section("HoldSpeak folder")).getByText("THIS DEVICE")).toBeTruthy();
+    expect(section("HoldSpeak folder").querySelector(".gadget-lamp")?.textContent).toBe("This device");
     expect(window.textContent).not.toContain("External destinations configured");
   });
 });

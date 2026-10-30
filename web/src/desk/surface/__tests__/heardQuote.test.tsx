@@ -23,7 +23,7 @@ describe("HeardQuote", () => {
     expect(quote.getAttribute("data-size")).toBe("display");
     expect(screen.getByRole("status", { name: "Heard" })).toBeTruthy();
     expect(screen.getByText("8 words · 0:04 · 14:03")).toBeTruthy();
-    expect(screen.getByText("ON DEVICE")).toBeTruthy();
+    expect(screen.getByText("On device")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
   });
 
@@ -37,6 +37,6 @@ describe("HeardQuote", () => {
   it("has a primary echo size", () => {
     render(<HeardQuote text="Hi" size="primary" />);
     expect(screen.getByTestId("heard-quote").getAttribute("data-size")).toBe("primary");
-    expect(screen.queryByText("ON DEVICE")).toBeNull();
+    expect(screen.queryByText("On device")).toBeNull();
   });
 });

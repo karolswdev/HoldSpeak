@@ -813,7 +813,7 @@ export function SessionPullout() {
       title={sessionName}
       actions={
         <>
-          {live && <LampGadget label="LIVE" on tone="ok" />}
+          {live && <LampGadget label="Live" on tone="ok" />}
         </>
       }
       open={Boolean(openKey)}

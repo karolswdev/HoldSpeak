@@ -740,20 +740,23 @@
   }
 }
 
-/* ── HS-111-02: LampGadget — square lamp + mono axis label, one species ── */
+/* ── HS-111-02: LampGadget — square lamp + its word, one species ──
+   LAMPS-WORDS (2026-10-30): a state is a dot and a word (the Window
+   grammar: metadata is sans, mono only for code and ids). The word draws
+   in sentence case: no caps transform, no wide tracking; LampGadget sends
+   its label through stateWords, so acronyms and names keep their case. */
 .gadget-lamp {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 500 var(--font-size-xs) / 1 var(--font-sans);
+  letter-spacing: 0;
   color: var(--text);
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* The line is 1em high and the mono glyph box is higher (about 1.33em), so
+  /* The line is 1em high and the glyph box is higher (about 1.33em), so
      the hidden overflow cut the top and the descenders ("No engine"). The
      clip box takes the glyph box; the negative margin keeps the lamp's
      1em footprint in every row. In em, so a zero-size lamp stays zero. */
