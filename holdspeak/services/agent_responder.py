@@ -645,6 +645,10 @@ class AgentResponder:
             return "none"
         launch = self._launch_for(key)
         if launch is None or wait_kind(session) == "approve" or mode == "safe":
+            if launch is not None and mode == "safe" and wait_kind(session) != "approve":
+                # Secure drafts nothing: the question is his, and it reaches
+                # his phone by the rules (Phone §6, agent_question).
+                self._reach_phone(key, session, mode)
             return "notify"
         wait_id = str(getattr(session, "wait_id", "") or "")
         entry = self._store.wait(key)
@@ -742,6 +746,8 @@ class AgentResponder:
                 "reason": reason, "draft": "", "withheld": False, "at": self._clock(),
             })
             self._reveal(key, wait_id, state)
+            if mode == "safe" and wait_kind(session) != "approve":
+                self._reach_phone(key, session, mode)
             return {"outcome": ESCALATED, "draft": Draft(REAL, reason).to_dict()}
         if mode == "neutral" and state["held_back"]:
             self._write(key, wait_id, {
@@ -769,6 +775,7 @@ class AgentResponder:
             self._receipt(key, session, draft, "answer_drafted", mode, launch_id)
             if not turn:
                 self._reveal(key, wait_id, state)
+                self._reach_phone(key, session, mode)
             return {"outcome": final, "draft": draft.to_dict(), "silent": True}
 
         # Betterment AG3: the choices the question (or the agent's menu on its
@@ -845,7 +852,38 @@ class AgentResponder:
         })
         self._receipt(key, session, draft, "answer_drafted", mode, launch_id)
         self._reveal(key, wait_id, state)  # held back while deciding: the owner hears now
+        if draft.verdict != ROUTINE:
+            # The desk could not draft it: the question reaches his phone.
+            self._reach_phone(key, session, mode)
         return {"outcome": final, "draft": draft.to_dict(), "source": source}
+
+    # the phone (Phone PH12) ------------------------------------------------
+
+    def _reach_phone(self, key: str, session: Any, mode: str) -> None:
+        """A question the desk could not draft reaches his phone by the
+        rules (``agent_question``), once per wait. The phone's sweep asks
+        again (a call after 10 minutes away at Normal) only while the wait
+        is still open (:meth:`wait_open`)."""
+        try:
+            from ..phone.reach_sites import reach_agent_question
+
+            reach_agent_question(
+                self._db, key=key, wait_id=str(getattr(session, "wait_id", "") or ""),
+                agent=str(getattr(session, "agent", "") or ""),
+                question=str(getattr(session, "question", "") or ""), level=mode, still_open=self.wait_open,
+            )
+        except Exception as exc:
+            log.warning("agent responder phone reach failed for %s: %s", key, exc)
+
+    def wait_open(self, origin: str) -> bool:
+        """Does the wait ``agent:<key>:<wait_id>`` still wait on him?"""
+        from ..agent_context.models import is_blocked
+
+        body = str(origin or "")[len("agent:"):]
+        key, _, wait_id = body.rpartition(":")
+        session = next((s for s in self._sessions() if self._key(s) == key), None)
+        return bool(session is not None and is_blocked(session)
+                    and str(getattr(session, "wait_id", "") or "") == wait_id)
 
     def _recheck(self, key: str, wait_id: str, question: str, mode: str) -> tuple[str, str]:
         """``(mode now, why the draft is stale)``: ``""`` when the same wait

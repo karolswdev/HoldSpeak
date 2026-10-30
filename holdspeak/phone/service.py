@@ -25,7 +25,7 @@ from typing import Any, Callable, Mapping, Optional
 from ..logging_config import get_logger
 from ..principals import Principal, PrincipalKind
 from ..services.errors import ServiceError
-from ..timestamps import local_now, parse_stamp, utc_iso, utc_now
+from ..timestamps import parse_stamp, utc_iso, utc_now
 from . import devices as devs
 from . import phone_on
 from .calls import FINAL, RERING_SECONDS, RING_SECONDS, RingTimers, can_move, missed_words
@@ -50,6 +50,8 @@ STEP_MESSAGES_PER_HOUR = 3
 SWEEP_SECONDS = 60.0
 #: Reaches older than this are not followed up, and leave Needs you.
 FOLLOW_HOURS = 24
+#: The line of a message released when quiet hours end.
+HELD_OVERNIGHT = "Held overnight: "
 
 SILENCE = ("No reply yet. Silence is never consent: keep the safe default, and do not act as if he agreed. "
            "Wait again with wait_s, or carry on with the parts that need no answer.")
@@ -141,6 +143,9 @@ class PhoneService:
         self._replies = threading.Condition()
         self._sweeper: Optional[threading.Thread] = None
         self._stop = threading.Event()
+        #: origin prefix -> "is the thing still waiting on him?" (the sweep
+        #: does not ask again about a thing he settled elsewhere).
+        self._open_checks: dict[str, Callable[[str], bool]] = {}
 
     # ── wiring ────────────────────────────────────────────────────────
 
@@ -293,12 +298,14 @@ class PhoneService:
                 self.store.save_device(row)
         return took
 
-    def _quiet(self) -> bool:
+    def _quiet(self, at: Any = None) -> bool:
+        """Inside quiet hours at ``at`` (default now, from :meth:`_now`)?"""
         from ..cadence.scheduler import in_quiet_hours
         from ..services.heartbeat_service import read_quiet_hours
 
         start, end = read_quiet_hours(self.db)
-        return in_quiet_hours(local_now(), start, end)
+        moment = at if at is not None else self._now()
+        return in_quiet_hours(moment.astimezone(), start, end)
 
     # ── messages ──────────────────────────────────────────────────────
 
@@ -758,8 +765,11 @@ class PhoneService:
                 message_id = next((e["data"].get("msg_id") for e in reversed(earlier) if e["data"].get("msg_id")), None)
                 if message_id:
                     facts["messaged"] = True
-                    message = self.store.get_message(message_id)
-                    facts["minutes_without_reply"] = _minutes_since((message or {}).get("created_at"), self._now())
+                    message = self.store.get_message(message_id) or {}
+                    # From when it reached him: a message held overnight
+                    # waits from the morning release, not from 23:30.
+                    facts["minutes_without_reply"] = _minutes_since(
+                        message.get("delivered_at") or message.get("created_at"), self._now())
                     facts["replied"] = bool(self.store.replies_to(message_id))
         facts.update({key: value for key, value in dict(extra or {}).items() if value is not None})
         return facts
@@ -840,7 +850,7 @@ class PhoneService:
             if not message_id or self.store.replies_to(str(message_id)):
                 continue
             message = self.store.get_message(str(message_id))
-            if message is None:
+            if message is None or not self._still_open(origin):
                 continue
             facts = self._facts(origin, str(data["kind"]), {"may_call": bool(data.get("may_call"))})
             outcome = reach_rule(data.get("level"), str(data["kind"]), facts)
@@ -851,18 +861,79 @@ class PhoneService:
                                    program_step_id=message.get("program_step_id")))
         return done
 
+    def open_check(self, prefix: str, check: Callable[[str], bool]) -> None:
+        """Name how the sweep reads whether a thing (an ``origin_ref`` that
+        starts with ``prefix``) still waits on him."""
+        self._open_checks[str(prefix)] = check
+
+    def _still_open(self, origin: str) -> bool:
+        for prefix, check in list(self._open_checks.items()):
+            if origin.startswith(prefix):
+                try:
+                    return bool(check(origin))
+                except Exception as exc:
+                    log.debug(f"phone open check failed for {origin}: {exc}")
+                    return True
+        return True
+
+    # ── the morning release (PH14) ────────────────────────────────────
+
+    def release_held(self) -> list[dict[str, Any]]:
+        """Quiet hours ended: each message written in them and not yet on
+        his phone goes out now, in order, one push each, its line "Held
+        overnight: …", and one ``message.delivered`` event each."""
+        from ..cadence.scheduler import in_quiet_hours
+        from ..services.heartbeat_service import read_quiet_hours
+
+        if not phone_on() or self._quiet():
+            return []
+        start, end = read_quiet_hours(self.db)
+        if start == end or not any(row.get("push_token") for row in self.paired()):
+            return []
+        since = utc_iso(self._now() - timedelta(hours=FOLLOW_HOURS))
+        held = []
+        for row in self.store.recent_messages(limit=200):
+            if row["direction"] != "to_phone" or row.get("delivered_at") or str(row["created_at"]) < since:
+                continue
+            made = parse_stamp(row["created_at"])
+            if made is None or not in_quiet_hours(made.astimezone(), start, end) or self.store.replies_to(row["id"]):
+                continue
+            held.append(row)
+        released: list[dict[str, Any]] = []
+        for row in sorted(held, key=lambda item: (int(item.get("seq") or 0), str(item["id"]))):
+            wire = {**message_wire(row), "text": f"{HELD_OVERNIGHT}{row['text']}"[:MAX_TEXT]}
+            event = {"seq": row["seq"], "type": "message.new", "ts": self._stamp(), "data": {"message": wire}}
+            if not self._push_event(event, "message", 28 * 24 * 3600):
+                continue
+            with self._lock:
+                row["delivered_at"] = self._stamp()
+                self.store.save_message(row)
+            self.events.append("message.delivered", {"msg_id": row["id"], "at": row["delivered_at"]})
+            self._frame("message", row["id"], "delivered")
+            released.append(message_wire(row))
+        return released
+
+    def tick(self) -> None:
+        """One minute of the phone's runner: the morning release, then the
+        follow-up (a message released now waits its 10 minutes from now)."""
+        try:
+            self.release_held()
+        except Exception as exc:
+            log.warning(f"phone morning release failed: {exc}")
+        try:
+            self.sweep()
+        except Exception as exc:
+            log.warning(f"phone sweep failed: {exc}")
+
     def start(self) -> None:
-        """The follow-up sweep, once a minute, off the loop."""
+        """The follow-up sweep and the morning release, once a minute, off the loop."""
         if not phone_on() or (self._sweeper is not None and self._sweeper.is_alive()):
             return
         self._stop.clear()
 
         def loop() -> None:
             while not self._stop.wait(SWEEP_SECONDS):
-                try:
-                    self.sweep()
-                except Exception as exc:
-                    log.warning(f"phone sweep failed: {exc}")
+                self.tick()
 
         self._sweeper = threading.Thread(target=loop, name="phone-sweep", daemon=True)
         self._sweeper.start()

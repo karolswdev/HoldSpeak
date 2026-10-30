@@ -122,6 +122,10 @@ class PersistenceMixin:
                 if event is not None:
                     ready_db.meetings.mark_ready_unseen(state.id)
                     self._emit_broadcast("aftercare_ready", event)
+                    # Phone PH12: the meeting's asks reach his phone by the rules.
+                    from ..phone.reach_sites import reach_aftercare
+
+                    reach_aftercare(ready_db, event)
             except Exception as exc:  # observational only
                 log.debug(f"aftercare_ready broadcast skipped: {exc}")
 

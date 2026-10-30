@@ -174,13 +174,35 @@ Needs you row ("No phone is paired"). When ai-phone (or the line) can send
 SMS, `transport_number.sms_available` turns true and the message goes out as
 a text.
 
-## PH12. The other reach kinds (Left)
+## PH12. The other reach kinds (Shipped 2026-10-29, lane PHONE-NEXT)
 
-The rules for `heartbeat_security`, `aftercare` and `agent_question` are in
-`phone_rules.py`, but no path calls them. Wire the heartbeat's security and
-data-loss findings, a meeting's aftercare asks, and an agent question the
-desk could not draft (with "away": no desk presence for 30 minutes) to
-`PhoneService.reach`.
+- **Goal**: the rules for `heartbeat_security`, `aftercare` and
+  `agent_question` have callers, at the places that write their Needs you rows.
+- **Files**: `hs/phone/reach_sites.py` (new), `hs/services/heartbeat_service.py`,
+  `hs/intel_queue_conductor.py`, `hs/meeting_session/persistence.py`,
+  `hs/services/meeting_intel_service.py`, `hs/services/agent_responder.py`,
+  `hs/phone/service.py`.
+- **Changes**: after a heartbeat sweep builds Needs you, each row tagged
+  security or data loss, or a Program finding whose words the Programs rules
+  call security or data loss (`is_core`), reaches him once per row
+  (`heartbeat:<row id>`; the sweep receipt lists the reaches). Where a
+  recorded meeting's aftercare is ready (the three `aftercare_ready` emitters),
+  its open items and proposals to review reach him once
+  (`meeting:<id>:aftercare`). The agent responder reaches him for a question
+  the desk could not draft (a REAL verdict, and every question at Secure),
+  once per wait (`agent:<key>:<wait id>`); "away" is a fact of every reach
+  (no desk presence for 30 minutes). The phone's sweep asks the responder
+  whether the wait still waits before it calls (`PhoneService.open_check`).
+  Each reach is `PhoneService.reach`, so the rules decide and each one is a
+  `phone.reach` kernel operation. A site reaches nothing when no phone is
+  paired and no number is set (a message there would only be a second Needs
+  you row about the first).
+- **Tests**: `tests/integration/test_phone_flow.py` (the PH12 block): the
+  real hub and the fake device; a security finding rings urgent at YOLO, rings
+  at Normal, is a message at Secure; a meeting's asks are a message at Normal
+  once and nothing at Secure; an undraftable agent question is a message, then
+  a call after 10 minutes away at Normal, no call when the wait ended, a call
+  at YOLO, a message at Secure.
 
 ## PH13. The APNs HTTP/2 dependency (Left)
 
@@ -188,11 +210,18 @@ desk could not draft (with "away": no desk presence for 30 minutes) to
 when the app reaches its push step (PH-APP4), and prove one push to a
 TestFlight build.
 
-## PH14. The morning release of queued messages (Left)
+## PH14. The morning release of queued messages (Shipped 2026-10-29, lane PHONE-NEXT)
 
-In quiet hours a message is kept and its push waits; no push goes out when
-quiet hours end. The phone gets the message when it next connects. Send one
-push at the end of quiet hours that names the waiting messages.
+- **Goal**: a message kept in quiet hours reaches his phone when they end.
+- **Files**: `hs/phone/service.py` (`release_held`, `tick`).
+- **Changes**: the phone's runner tick (once a minute) first releases, then
+  follows up. Outside quiet hours, each message to his phone written inside
+  them in the last day and not yet on his phone goes out in order, one push
+  each, its line "Held overnight: …", and one `message.delivered` event each.
+  The stored message keeps its own words; only the push line says it was held.
+  The 10 minutes before a follow-up call count from the release.
+- **Tests**: `tests/integration/test_phone_flow.py::test_a_message_queued_at_23_30_goes_out_when_quiet_hours_end_and_not_before`
+  (clock pinned: nothing at 06:59, both at 07:00 in order, once).
 
 ## PH15. Urgent through Do Not Disturb (Left)
 
