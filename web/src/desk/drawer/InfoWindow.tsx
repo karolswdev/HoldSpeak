@@ -74,7 +74,11 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
   const [failure, setFailure] = useState<PlainFail | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const project = useProjectFacts(member, setFailure);
-  const name = desk?.title ?? member.name;
+  // The Project's own Info reads its name from the desk, live: Get Info
+  // pressed before the drawer's Room read landed carries the stand-in
+  // `Project`, and the window must not keep it.
+  const live = desk ?? (member.kind === "project" ? objectByRef(items, member.ref) : null);
+  const name = live?.title ?? member.name;
   const title = windowName({ kind: "info", name });
   const close = () => useDrawers.getState().closeInfo(member.ref);
 
