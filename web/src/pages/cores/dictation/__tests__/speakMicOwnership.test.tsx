@@ -77,10 +77,10 @@ describe("microphone ownership on the Speak face", () => {
     render(<SpeakFace />);
     await openDetails();
 
-    expect(await screen.findByText("CLOSED")).toBeTruthy();
+    expect(await screen.findByText("Closed")).toBeTruthy();
 
     mocks.phaseListener?.("open");
-    await waitFor(() => expect(screen.getByText("OPEN")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Open")).toBeTruthy());
   });
 
   it("names the OWNER when another source holds the floor", async () => {

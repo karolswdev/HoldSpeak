@@ -290,8 +290,10 @@ describe("gadget kit", () => {
     const longMsg =
       "DESTINATION SELECTION IGNORED · OPENAICOMPATIBLE-KIND DECIDES";
     render(<LampGadget label={longMsg} on tone="fail" />);
-    const lamp = screen.getByText(longMsg);
-    expect(lamp).toHaveAttribute("title", longMsg);
+    // LAMPS-WORDS: the lamp draws (and titles) its word in sentence case.
+    const words = "Destination selection ignored · Openaicompatible-kind decides";
+    const lamp = screen.getByText(words);
+    expect(lamp).toHaveAttribute("title", words);
   });
 
   it("LampGadget default (inline) truncates via CSS class contract", () => {
@@ -305,9 +307,10 @@ describe("gadget kit", () => {
   it("LampGadget block variant adds is-block for wrap behavior", () => {
     const longMsg = "PROVIDER SELECTION IGNORED · DESTINATION HUB DECIDES";
     render(<LampGadget label={longMsg} on tone="fail" block />);
-    const lamp = screen.getByText(longMsg);
+    const words = "Provider selection ignored · Destination hub decides";
+    const lamp = screen.getByText(words);
     expect(lamp.className).toContain("is-block");
-    expect(lamp).toHaveAttribute("title", longMsg);
+    expect(lamp).toHaveAttribute("title", words);
   });
 
   it("TransportKey: held = pressed (inverted video is the CSS contract)", () => {

@@ -68,7 +68,7 @@ function AttentionBell() {
     >
       {/* HS-111-09 — 16px source renders at 16 CSS px (integer-true). */}
       <img src={SYSTEM.menuBell} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
-      {ready ? <span className="desk-bell-ready" role="status">READY</span> : null}
+      {ready ? <span className="desk-bell-ready" role="status">Ready</span> : null}
       {/* MENUBAR-STILL (2026-10-29): the count's slot is drawn before the
           Needs-you read lands, at its full width, so a late count never
           moves the bar (the sweep saw the bell and the hub dot move 27 px).
@@ -309,9 +309,9 @@ export function DeskChrome({
           data-testid="chrome-hub-dot"
         />
         {runtimeState === "reconnecting" ? (
-          <LampGadget label="RECONNECTING" on tone="warn" />
+          <LampGadget label="Reconnecting" on tone="warn" />
         ) : runtimeState === "offline" ? (
-          <LampGadget label="OFFLINE" on tone="fail" />
+          <LampGadget label="Offline" on tone="fail" />
         ) : null}
         {/* Window Program W4 (A.9 as amended 2026-10-25): no scope chip at
             rest. The bar keeps the hub's lamp; the device and trust word is

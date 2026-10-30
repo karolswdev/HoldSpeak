@@ -201,7 +201,7 @@ export function ReadinessFooter({
   if (resource.loading) {
     return (
       <SurfaceFooter
-        egress={<LampGadget label="PIPELINE" on={false} tone="warn" />}
+        egress={<LampGadget label="Pipeline" on={false} tone="warn" />}
         receipt={receiptSlot || <span className="surface-footer-readiness">CHECKING PIPELINE</span>}
         verbs={exportVerb}
       />
@@ -210,7 +210,7 @@ export function ReadinessFooter({
   if (resource.error) {
     return (
       <SurfaceFooter
-        egress={<LampGadget label="PIPELINE UNAVAILABLE" on={false} tone="fail" />}
+        egress={<LampGadget label="Pipeline unavailable" on={false} tone="fail" />}
         receipt={receiptSlot || <span className="surface-footer-readiness" role="alert">READINESS UNAVAILABLE</span>}
         verbs={<>{exportVerb}<Button dense variant="ghost" onClick={onOpenDoor}>Review</Button></>}
       />

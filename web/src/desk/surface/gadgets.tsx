@@ -20,7 +20,7 @@ import { WorkbenchSelect } from "../../components/signal/WorkbenchSelect";
 import { MicButton } from "../components/MicButton";
 import { ConfirmVerb } from "./Surface";
 import { useRovingRows } from "./roving";
-import { sentenceChildren } from "./words";
+import { sentenceChildren, stateWords } from "./words";
 import "./gadgets.css";
 
 /* ── the sheet: two aligned columns, 26px rows, engraved groups ── */
@@ -786,15 +786,18 @@ export function LampGadget({
   /** HS-135-02 L6 — block system messages wrap instead of truncating. */
   block?: boolean;
 }) {
+  /* LAMPS-WORDS (2026-10-30): the word in sentence case; a caller's caps
+     token (`SENDS OUT`) draws `Sends out`, `PR OPEN` draws `PR open`. */
+  const words = stateWords(label);
   return (
     <span
       className={`gadget-lamp${block ? " is-block" : ""}`}
       data-on={on}
       data-tone={tone}
-      title={label}
+      title={words}
     >
       <span className="gadget-lamp-dot" aria-hidden="true" />
-      {label}
+      {words}
     </span>
   );
 }

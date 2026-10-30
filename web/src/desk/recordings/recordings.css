@@ -108,12 +108,6 @@
   .desk-next .recordings-link-url { grid-area: url; }
   .desk-next .recordings-link > :last-child { grid-area: copy; }
 }
-/* The menu-bar lamp: the mic lamp's species, the record red. Its word is a
-   state word in sentence case ("Recording on another view"), not the lamp
-   species' mono caps. */
+/* The menu-bar lamp: the mic lamp's species, the record red. The species
+   draws its word in sentence case (gadgets.css .gadget-lamp, LAMPS-WORDS). */
 .desk-next .desk-screen-lamp { white-space: nowrap; }
-.desk-next .desk-screen-lamp .gadget-lamp {
-  font-family: var(--font-sans);
-  letter-spacing: 0;
-  text-transform: none;
-}

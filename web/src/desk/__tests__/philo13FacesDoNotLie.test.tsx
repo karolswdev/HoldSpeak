@@ -129,7 +129,7 @@ describe("each face names its fact", () => {
     const { TrustWindow, useTrustWindow } = await import("../components/TrustWindow");
     useTrustWindow.setState({ open: true });
     render(<TrustWindow />);
-    const lamp = await screen.findByText("SENDS NOTHING");
+    const lamp = await screen.findByText("Sends nothing");
     expect(lamp.closest(".gadget-lamp")).toHaveAttribute("data-on", "false");
     expect(screen.queryByText("Off")).toBeNull();
     vi.doUnmock("../../lib/api");

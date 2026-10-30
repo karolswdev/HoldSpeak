@@ -311,8 +311,9 @@ describe("the dock tile and the lamp", () => {
 
 /* PHONE-APNS-HOST (2026-10-30): the lamp read RECORDING ON ANOTHER VIEW: the
  * lamp species' mono caps (gadgets.css .gadget-lamp) beat the sentence-case
- * word. The word goes through stateWords and recordings.css lifts the caps. */
-import recordingsCss from "../recordings.css?raw";
+ * word. LAMPS-WORDS (2026-10-30): the species itself draws sentence case
+ * (lampWords.test.tsx), so recordings.css carries no override. */
+import gadgetsCss from "../../surface/gadgets.css?raw";
 import { stateWords } from "../../surface/words";
 
 describe("The Record lamp says its word in sentence case", () => {
@@ -324,8 +325,9 @@ describe("The Record lamp says its word in sentence case", () => {
     expect(lamp?.textContent).toBe("Recording on another view");
     expect(lamp?.textContent).toBe(stateWords(lamp?.textContent ?? ""));
     expect(lamp?.textContent).not.toBe(lamp?.textContent?.toUpperCase());
-    const rule = /\.desk-next \.desk-screen-lamp \.gadget-lamp \{([^}]*)\}/.exec(recordingsCss)?.[1] ?? "";
-    expect(rule).toMatch(/text-transform:\s*none/);
+    const rule = /\n\.gadget-lamp \{([^}]*)\}/.exec(gadgetsCss)?.[1] ?? "";
+    expect(rule).not.toBe("");
+    expect(rule).not.toMatch(/text-transform:\s*uppercase/);
     expect(rule).toMatch(/letter-spacing:\s*0/);
   });
 });

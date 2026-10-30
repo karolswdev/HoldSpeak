@@ -39,7 +39,7 @@ it("routes a ready meeting through the one attention bell", async () => {
     name: "Meeting ready: Weekly review",
   });
   expect(document.querySelectorAll('[data-testid="desk-bell"]')).toHaveLength(1);
-  expect(bell).toHaveTextContent("READY");
+  expect(bell).toHaveTextContent("Ready");
   expect(document.querySelector(".ambient-aftercare")).toBeNull();
 });
 

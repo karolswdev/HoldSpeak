@@ -81,7 +81,7 @@ export function HeardQuote({
       <figcaption className="surface-heard-facts">
         <StateChip state="success" label="HEARD" icon="●" />
         {facts ? <Token className="surface-token surface-heard-token">{facts}</Token> : null}
-        {local ? <LampGadget label="ON DEVICE" on /> : null}
+        {local ? <LampGadget label="On device" on /> : null}
       </figcaption>
       {verbs ? <div className="surface-heard-verbs">{verbs}</div> : null}
     </figure>

@@ -365,7 +365,7 @@ describe("ObjectList", () => {
   it("the state cell is one lamp and its word", () => {
     render(<ListHost />);
     const lamp = screen.getByRole("grid").querySelector('[data-object-id="r1"] .gadget-lamp');
-    expect(lamp?.textContent).toBe("CLAUDE CODE ASKS");
+    expect(lamp?.textContent).toBe("Claude Code asks");
   });
 
   it("one object, one colour: the row's lamp carries the icon's tone (ask, info), not a lossy map", () => {
@@ -637,7 +637,7 @@ describe("NeedsRow + DropTarget + DragGhost", () => {
     );
     const row = within(screen.getByRole("list", { name: "Needs you" })).getByRole("listitem");
     expect(row.querySelectorAll(".gadget-lamp")).toHaveLength(1);
-    expect(within(row).getByText("ASKS · 6 MIN")).toBeInTheDocument();
+    expect(within(row).getByText("Asks · 6 min")).toBeInTheDocument();
     expect(within(row).getAllByRole("button").map((b) => b.textContent)).toEqual(["Open", "Answer"]);
     noTextMarks(container);
     await a11y(container);
