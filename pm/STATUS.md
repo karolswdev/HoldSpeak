@@ -2434,11 +2434,10 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-- **Words (2026-10-30):** left after #1625/#1628/#1631/#1632: `.surface-section-head h3`
-  mono caps (its own species), six window-local caps labels (`.desk-pr-compose > label`,
-  `.runs-on-picker label`, `.review-edit-label`, ProjectRoomCore OWNER/DUE,
-  `.topology-repoint-label`, `.automation-line-label`), the AskWell caps caption, the
-  agentFlights caps table, `stateWords`' one-letter "A".
+- **Words (2026-10-30):** CSS closed (#1634); sources at UPPER_DEBT 56 lines (#1637,
+  #1640). Left: AgentsCard codeWords with the HandSheet lines, SettingsCore's grant
+  words, `agents_lane_rig.py` "ASKS" (lane WORDS-LAST in flight).
+- **Desk stacking (2026-10-30):** the seed posts only this load's real raises (#1639).
 - **Programs (2026-10-28):** PG15, PG16, PG20 and PG21 in
   `docs/internal/betterment/programs/RECIPE.md` (PG12, PG13, PG13b, PG14, PG18 and the race shot
   #1618, PG13 #1620 and PG13b #1621 shipped); his live verdict on the Programs
@@ -2606,6 +2605,14 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1640 — Words: the caps vocabularies say their words at the source** (egress receipts and refusals, about 200 channel words, plain failures, object kinds, Runs on, settings prefs, the send well's "By you"); the ObjectList Kind cell no longer draws PROJECT raw; UPPER_DEBT 86 → 56.
+- **#1639 — The seed sends the hub only real raises:** the Chair's mount reorder is a local view rule; a reload with a slow window read no longer changes the stacking; the hub stays the one authority.
+- **#1638 — The Project's Info window reads its name live:** Get Info pressed before the Room read landed no longer stays "Info: Project" (the compositor 1440 flake, fixed at cause).
+- **#1637 — The toUpperCase debt 136 → 86:** `wireWords`; the lane window's receipts and the Engines chip's host in words; text the user typed shows as typed.
+- **#1636 — A scheduled fire writes "recording" and its outcome in one write;** the rig waits for the fire thread (the week's FAST flake, fixed at cause).
+- **#1635 — (owner) Practical agent guidance:** root `AGENTS.md`, `web/AGENTS.md`, `holdspeak/AGENTS.md`; CLAUDE.md links them.
+- **#1634 — The words wave closes in CSS:** 190 caps rules in 48 files gone; caps only on the eyebrow, the key caps and two first letters; a ratchet freezes `toUpperCase()` so it can only shrink.
+- **#1633 — STATUS through #1632.**
 - **#1632 — Words: field and check-box labels in sentence case at the species** (gadgets.css: caption, token check, check word, group legend); the eyebrow keeps its caps by UX-CANON §C; the Hand sheet's caps words become words; two ratchet tests on the label species.
 - **#1631 — Engines words:** the Add picker's chip and token sources in sentence case, "On the other Mac" keeps its Mac, the Wiring fold's label is a quiet caption; a guard keeps caps out of the Engines sources.
 - **#1630 — Engines under the window grammar (direction B):** two lists (what HoldSpeak does, with the engine picker in the row · the engines in words), hosts in the engine's fold, Builder tools no longer swaps the face for the parked switchboard; ListRow gains selected/lit/expanded/progress/fold.
