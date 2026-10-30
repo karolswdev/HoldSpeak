@@ -956,7 +956,7 @@ function PlateRow({ title, onTitle, meta, verb, testId }: { title: string; onTit
 function DuePill({ due }: { due?: string | null }) {
   if (!due) return null;
   const day = shortDay(due);
-  const words = `by ${day.charAt(0)}${day.slice(1).toLowerCase()}`;
+  const words = `by ${day}`;
   return isOverdue(due)
     ? <span className="people-state" data-tone="danger"><span className="kit-dot" data-tone="fail" aria-hidden="true" />{`Overdue · ${words}`}</span>
     : <span>{words}</span>;
@@ -1187,7 +1187,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
     ...lastTime.points.map((a) => ({ key: `a-${a.id}`, kind: "action" as const, text: a.task, meta: [a.owner, a.status === "done" ? "Done" : null].filter(Boolean).join(" · ") || null })),
   ] : last ? [
     ...last.decisions.map((d) => ({ key: `d-${d.id}`, kind: "decision" as const, text: d.decision_text })),
-    ...last.open_action_items.map((a) => ({ key: `a-${a.id}`, kind: "action" as const, text: a.task, meta: [a.owner, a.due ? `BY ${shortDay(a.due)}` : null].filter(Boolean).join(" · ") || null })),
+    ...last.open_action_items.map((a) => ({ key: `a-${a.id}`, kind: "action" as const, text: a.task, meta: [a.owner, a.due ? `By ${shortDay(a.due)}` : null].filter(Boolean).join(" · ") || null })),
   ] : [];
   const showLast = Boolean(lastId && (lastTime || lastLines.length || (lm && lm.item_count > 0)));
   const lastStarted = lastTime?.started_at ?? last?.started_at ?? null;
@@ -1383,18 +1383,17 @@ function shortWhen(isoDate: string): string {
     const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); // calendar days, not 24 h blocks
     const diffDays = Math.round((startOf(d) - startOf(now)) / 86_400_000);
     const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-    if (diffDays === 0) return `TODAY ${time}`;
-    if (diffDays === 1) return `TOMORROW ${time}`;
-    const day = d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
-    return `${day} ${time}`;
+    if (diffDays === 0) return `Today ${time}`;
+    if (diffDays === 1) return `Tomorrow ${time}`;
+    return `${d.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
   } catch { return ""; }
 }
 
-/** HS-172-05: build the `N PRS WAITING ON {name}` summary label.
- * If the name will not fit at 393, falls back to `N PRS WAITING`. */
+/** HS-172-05: build the `N PRs waiting on {name}` summary label (the name as
+ * typed). If the name will not fit at 393, falls back to `N PRs waiting`. */
 export function prsSummaryLabel(count: number, displayName: string): string {
-  const label = `${count} ${count === 1 ? "PR" : "PRS"} WAITING ON ${displayName.toUpperCase()}`;
-  if (label.length > 30) return `${count} ${count === 1 ? "PR" : "PRS"} WAITING`;
+  const label = `${count} ${count === 1 ? "PR" : "PRs"} waiting on ${displayName}`;
+  if (label.length > 30) return `${count} ${count === 1 ? "PR" : "PRs"} waiting`;
   return label;
 }
 
@@ -1407,13 +1406,13 @@ export function capTokens(items: string[], max: number = 3): string {
   return rest > 0 ? `${parts} +${rest}` : parts;
 }
 
-/** A due date as a short day (`FRI`); never the raw ISO string. A date-only
+/** A due date as a short day (`Fri`); never the raw ISO string. A date-only
  * value (`YYYY-MM-DD`, the `Set a date` producer's calendar day) stays that
  * calendar day in the desk's zone; `new Date("2026-10-06")` would read it as
  * UTC midnight and show the day before west of UTC. */
 function shortDay(isoDate: string): string {
   const d = wireDate(isoDate);
-  return !d ? isoDate : d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
+  return !d ? isoDate : d.toLocaleDateString(undefined, { weekday: "short" });
 }
 
 /** The relationship's linked series, as one key: a change re-reads the brief. */

@@ -151,9 +151,9 @@ describe("named server refusals (HS-132-05)", () => {
   it("states the refusal by name, never as prose", () => {
     expect(
       refusalCode({ reason: "speech_child_budget_exhausted" }),
-    ).toBe("SPEECH CHILD BUDGET EXHAUSTED");
+    ).toBe("Speech child budget exhausted");
     expect(refusalCode({ failure_category: "audio_floor_lost" })).toBe(
-      "AUDIO FLOOR LOST",
+      "Audio floor lost",
     );
     expect(refusalCode({ error: "Connection lost." })).toBeNull();
   });

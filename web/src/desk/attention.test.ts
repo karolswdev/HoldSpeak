@@ -178,7 +178,7 @@ describe("the tokens the face draws", () => {
     expect(reasonToken(item("n", { why: "CI RED", since: "2026-09-07T08:32" }), NOW)).toBe("NO DUE DATE · CI RED · CHANGED 40 MIN AGO");
     expect(reasonToken(item("w", { why: "WAITING ON YOUR REVIEW · 3d", since: "2026-09-04T09:00" }), NOW)).toBe("WAITING ON YOUR REVIEW · 3 DAYS");
     expect(reasonToken(item("w2", { why: "WAITING", since: "2026-09-04T09:00" }), NOW)).toBe("WAITING · 3 DAYS");
-    expect(reasonToken(item("p", { why: "PROPOSED · Standup", since: "2026-09-07T09:00" }), NOW)).toBe("NO DUE DATE · PROPOSED · STANDUP · CHANGED 12 MIN AGO");
+    expect(reasonToken(item("p", { why: "PROPOSED · Standup", since: "2026-09-07T09:00" }), NOW)).toBe("NO DUE DATE · PROPOSED · Standup · CHANGED 12 MIN AGO");
   });
 
   it("ages and observation stamps", () => {

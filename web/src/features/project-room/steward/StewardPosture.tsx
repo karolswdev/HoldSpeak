@@ -6,6 +6,7 @@
 import { useCallback, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { spriteUrl } from "../../../desk/sprites";
+import { wireWords } from "../../../desk/surface/words";
 import {
   EgressChip,
   SurfaceFooter,
@@ -64,17 +65,17 @@ import { Token } from "../../../desk/surface/Token";
 /* ── Grant vocabulary (coordinator's uppercase tokens) ── */
 
 const GRANT_TOKENS: Record<string, string> = {
-  refresh_sources: "REFRESH SOURCES",
-  create_proposals: "CREATE PROPOSALS",
-  apply_proposal_effects: "APPLY EFFECTS",
-  draft_update: "DRAFT UPDATE",
-  create_door_item: "DOOR ITEM",
-  github_comment: "REVIEWER NUDGE",
-  prepare_send: "PREPARE SEND",
+  refresh_sources: "Refresh sources",
+  create_proposals: "Create proposals",
+  apply_proposal_effects: "Apply effects",
+  draft_update: "Draft update",
+  create_door_item: "Door item",
+  github_comment: "Reviewer nudge",
+  prepare_send: "Prepare send",
 };
 
 function grantToken(kind: string): string {
-  return GRANT_TOKENS[kind] ?? kind.replace(/_/g, " ").toUpperCase();
+  return GRANT_TOKENS[kind] ?? wireWords(kind);
 }
 
 /* ── Ref human label (no raw IDs on glass) ── */
@@ -466,11 +467,12 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
 
 /* ── Policy editor (in-world, no modals) ── */
 
-/** The footer word of the chosen preset (`OFF`, `TELL ME`, `DO IT`, `CUSTOM`). */
+/** The footer word of the chosen preset (`Off`, `Tell me`, `Do it`, `Custom`):
+ *  the preset's own label. */
 function presetWord(draft: Parameters<typeof presetOf>[0] | null): string {
-  if (!draft) return "OFF";
+  if (!draft) return "Off";
   const preset = presetOf(draft);
-  return preset === "custom" ? "CUSTOM" : STEWARD_PRESETS.find((p) => p.value === preset)!.label.toUpperCase();
+  return preset === "custom" ? "Custom" : STEWARD_PRESETS.find((p) => p.value === preset)!.label;
 }
 
 function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
@@ -898,7 +900,7 @@ export function StewardPosture({
         <SurfaceFooter
           receipt={
             <Token className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
-              {`WATCH SOURCES · ${presetWord(ctrl.policyDraft)}`}
+              {`Watch sources · ${presetWord(ctrl.policyDraft)}`}
             </Token>
           }
         />

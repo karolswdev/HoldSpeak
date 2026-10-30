@@ -284,7 +284,7 @@ function doorItems(
         why = dueWord;
         severity = "warning";
       } else if (column === "waiting") {
-        why = owner ? `WAITING ON ${String(owner).toUpperCase()}` : "WAITING";
+        why = owner ? `WAITING ON ${String(owner).trim()}` : "WAITING"; // the name as typed
       } else if (hasOwner) {
         // The `unassigned` column also holds an item that HAS an owner and
         // is not reviewed yet. It reads "To review"; only an item with no
@@ -540,7 +540,8 @@ function isSelf(owner: unknown, selfNames: readonly string[]): boolean {
 
 function waitingOn(row: { owner?: unknown; why?: unknown }): boolean {
   const owner = String(row.owner ?? "").trim();
-  // The head part decides: `WAITING ON BEA · DUE TOMORROW` waits on Bea.
+  // The head part decides: `WAITING ON Bea · DUE TOMORROW` waits on Bea
+  // (compared in caps: a hub row may say `WAITING ON BEA`).
   const head = String(row.why ?? "").split(" · ", 1)[0].trim().toUpperCase();
   return owner !== "" && head === `WAITING ON ${owner.toUpperCase()}`;
 }
@@ -710,11 +711,11 @@ export function computeNeedsYou(
   // `WAITING ON ME`, and it is counted.
   // The Door's two-day window and its overdue column: another person's item
   // there is a wait on that person, with its due word beside it
-  // (`WAITING ON ADA · OVERDUE`); his own keeps the word.
+  // (`WAITING ON Ada · OVERDUE`, the name as typed); his own keeps the word.
   const windowed = [...doorItems(asBoard(input), covered, now), ...room].map((row) => {
     const word = String((row as { _dueWord?: unknown })._dueWord ?? "");
     const owner = String(row.owner ?? "").trim();
-    return word && owner && !isSelf(owner, selfNames) ? { ...row, why: `WAITING ON ${owner.toUpperCase()} · ${word}` } : row;
+    return word && owner && !isSelf(owner, selfNames) ? { ...row, why: `WAITING ON ${owner} · ${word}` } : row;
   });
   const combined = windowed.map((row) =>
     waitingOn(row) && isSelf(row.owner, selfNames) ? { ...row, why: YOURS } : row,

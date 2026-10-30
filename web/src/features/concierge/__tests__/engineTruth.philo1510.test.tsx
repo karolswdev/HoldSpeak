@@ -109,7 +109,7 @@ describe("PHILO-15 10 — READY means ready", () => {
     expect(limit).toBe("WithoutCalendar");
     expect(background.textContent).not.toContain("structured result");
     expect(within(screen.getByTestId("concierge-set-agents_tools")).getByText("Unknown · Try")).toBeTruthy();
-    expect(screen.getByTestId("concierge-receipt").textContent).toContain("1 LIMITED");
+    expect(screen.getByTestId("concierge-receipt").textContent).toContain("1 limited");
   });
 
   // Astra r1 (finding 1): a pick reads the authority, never reachability.
@@ -193,15 +193,15 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
     fireEvent.click(screen.getByTestId("concierge-apply"));
     await waitFor(() =>
       expect(screen.getByTestId("concierge-receipt").textContent).toBe(
-        "USING · QWEN3.8 27B · 1 GROUP · NOW THE DEFAULT · THOUGHTS & NOTES · NO MODEL RECORD · AGENTS & TOOLS · INCOMPATIBLE",
+        "Using · Qwen3.8 27B · 1 group · Now the default · Thoughts & notes · No model record · Agents & tools · Incompatible",
       ),
     );
     expect(mocks.closeSurfaceWindow).not.toHaveBeenCalled();
     await waitFor(() => expect(mocks.propose).toHaveBeenCalledTimes(2));
     await waitFor(() =>
-      expect(screen.getByTestId("concierge-set-fail-thoughts_notes").textContent).toBe("NO MODEL RECORD"),
+      expect(screen.getByTestId("concierge-set-fail-thoughts_notes").textContent).toBe("No model record"),
     );
-    expect(screen.getByTestId("concierge-set-fail-agents_tools").textContent).toBe("INCOMPATIBLE");
+    expect(screen.getByTestId("concierge-set-fail-agents_tools").textContent).toBe("Incompatible");
   });
 
   // Astra r2 (finding 4): one cause is said once, with its count.
@@ -213,7 +213,7 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
           { group: "b", label: "Meetings", token: "NO MODEL RECORD" },
           { group: "c", label: "Agents & tools", token: "INCOMPATIBLE" },
         ] }),
-    ).toBe("2 GROUPS · NO MODEL RECORD · AGENTS & TOOLS · INCOMPATIBLE");
+    ).toBe("2 groups · No model record · Agents & tools · Incompatible");
   });
 
   // Astra r2 (finding 3): the failures are the hub's record; a fresh mount
@@ -229,9 +229,9 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
     mocks.propose.mockResolvedValue(proposal());
     render(<ConciergeCore scope="" />);
     await screen.findByTestId("concierge-set-list");
-    expect(screen.getByTestId("concierge-set-fail-thoughts_notes").textContent).toBe("NO MODEL RECORD");
-    expect(screen.getByTestId("concierge-set-fail-background").textContent).toBe("NO MODEL RECORD");
-    expect(screen.getByTestId("concierge-receipt").textContent).toBe("2 GROUPS · NO MODEL RECORD");
+    expect(screen.getByTestId("concierge-set-fail-thoughts_notes").textContent).toBe("No model record");
+    expect(screen.getByTestId("concierge-set-fail-background").textContent).toBe("No model record");
+    expect(screen.getByTestId("concierge-receipt").textContent).toBe("2 groups · No model record");
   });
 
   it("the waiting-group refusal is a token, not the server's sentence", async () => {
@@ -245,7 +245,7 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
     fireEvent.click(screen.getByTestId("concierge-apply"));
     await waitFor(() =>
       expect(screen.getByTestId("concierge-receipt").textContent).toBe(
-        "SPEECH RECOGNITION · WAITS · SPEECH DOWNLOAD",
+        "Speech recognition · Waits · Speech download",
       ),
     );
     // The server's sentence is not shown anywhere on the face.
@@ -256,7 +256,7 @@ describe("PHILO-15 10 — receipts, not surprises (B10, Astra r1 finding 3)", ()
     expect(
       receiptLine({ kind: "summaries", engine: "qwen3.8-27b", host: "192.168.1.43:8080",
         ready: 1, limited: 0, failed: 0, off: 0, defaultSet: true, failures: [] }),
-    ).toBe("USING · QWEN3.8-27B · SUMMARIES · NOW THE DEFAULT");
+    ).toBe("Using · qwen3.8-27b · Summaries · Now the default");
   });
 });
 

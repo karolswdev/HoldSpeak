@@ -151,7 +151,7 @@ describe("the one needs-you membership", () => {
     expect(result.members.map(({ ref }) => ref).sort()).toEqual(["label", "mine", "room-mine"]);
     expect(result.waitingItems.map((item) => item.ref)).toEqual(["priya"]);
     const why = Object.fromEntries(result.unmutedItems.map((item) => [item.ref, item.why]));
-    expect(why).toEqual({ mine: "YOURS", label: "YOURS", "room-mine": "YOURS", priya: "WAITING ON PRIYA" });
+    expect(why).toEqual({ mine: "YOURS", label: "YOURS", "room-mine": "YOURS", priya: "WAITING ON Priya" });
   });
 
   it("says the day of the two-day now window, and lists another person's item under Waiting", () => {
@@ -170,15 +170,15 @@ describe("the one needs-you membership", () => {
     const words = ["DUE TODAY", "DUE TOMORROW", "DUE Sat"];
     words.forEach((word, days) => {
       expect(rows[`mine-${days}`]).toMatchObject({ why: word, waiting: false, direction: "mine" });
-      expect(rows[`bea-${days}`]).toMatchObject({ why: `WAITING ON BEA · ${word}`, waiting: true, direction: "theirs" });
+      expect(rows[`bea-${days}`]).toMatchObject({ why: `WAITING ON Bea · ${word}`, waiting: true, direction: "theirs" });
     });
     expect(rows["mine-late"]).toMatchObject({ waiting: false, direction: "mine" });
     expect(String(rows["mine-late"].why)).toMatch(/^OVERDUE/);
-    expect(rows["bea-late"]).toMatchObject({ why: "WAITING ON BEA · OVERDUE", waiting: true, direction: "theirs" });
+    expect(rows["bea-late"]).toMatchObject({ why: "WAITING ON Bea · OVERDUE", waiting: true, direction: "theirs" });
     expect(result.waitingItems.map((item) => item.ref).sort()).toEqual(["bea-0", "bea-1", "bea-2", "bea-late"]);
     // His own counts on its day (and when late); Bea's never counts.
     expect(result.members.map(({ ref }) => ref).sort()).toEqual(["mine-0", "mine-late"]);
-    expect(stateWords("WAITING ON BEA · OVERDUE")).toBe("Waiting on Bea · Overdue");
+    expect(stateWords("WAITING ON Bea · OVERDUE")).toBe("Waiting on Bea · Overdue");
     // The row says it in sentence case (NeedsRow `stateWords`).
     expect(stateWords("WAITING ON BEA · DUE TOMORROW")).toBe("Waiting on Bea · Due tomorrow");
     expect(stateWords("DUE Sat")).toBe("Due Sat");

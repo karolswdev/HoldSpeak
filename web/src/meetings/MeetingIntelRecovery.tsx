@@ -116,8 +116,7 @@ function remainingWords(label: string): string {
     .replace(/routed\s+meeting\s+intelligence/i, "artifacts")
     .replace(/remaining\s+meeting\s+intelligence/i, "the rest of the summary")
     .replace(/intelligence/gi, "summary")
-    .trim()
-    .toUpperCase();
+    .trim();
 }
 
 /** HS-201-06 (audit row 5): the hub's refusal is one sentence and the

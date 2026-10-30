@@ -246,7 +246,7 @@ const TOKEN_WORDS: Record<string, string> = {
   mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
 };
 export function sentenceToken(token: string): string {
-  if (!/[A-Z]/.test(token) || token !== token.toUpperCase()) return token;
+  if (!/[A-Z]/.test(token) || /\p{Ll}/u.test(token)) return token; // mixed case: written as meant
   const words = token.toLowerCase().replace(/\p{L}+/gu, (word) => TOKEN_WORDS[word] ?? word);
   return words.replace(/^\p{Ll}/u, (c) => c.toUpperCase());
 }

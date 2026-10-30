@@ -48,9 +48,9 @@ describe("censusByAgent (the pin-flood fold)", () => {
     ]);
     const claude = census[0];
     expect(claude.buckets).toEqual([
-      { token: "OFF RAILS", count: 2 },
-      { token: "AMBIGUOUS", count: 1 },
-      { token: "IDLE", count: 1 },
+      { token: "Off rails", count: 2 },
+      { token: "Ambiguous", count: 1 },
+      { token: "Idle", count: 1 },
     ]);
   });
 });

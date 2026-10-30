@@ -123,13 +123,13 @@ export function cloneOf(error: unknown): HandClone | null {
   return clone && typeof clone.repository === "string" ? clone : null;
 }
 
-/** `CLONED · owner/name · 18:06`. */
+/** `Cloned · owner/name · 18:06`. */
 export function cloneWords(clone: HandClone): string {
   const at = clone.cloned_at ? new Date(clone.cloned_at) : null;
   const clock = at && !Number.isNaN(at.getTime())
     ? `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`
     : "";
-  return ["CLONED", clone.repository, clock].filter(Boolean).join(" · ");
+  return ["Cloned", clone.repository, clock].filter(Boolean).join(" · ");
 }
 
 export const HAND_LAUNCH_PATH = (id: string) => `/api/agent/launches/${encodeURIComponent(id)}`;
@@ -156,7 +156,7 @@ export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" |
   if (state === "hooks_missing") return { label: "Launched · Brief held · No hooks", tone: "warning", done: true };
   // W6-H words: what failed, what stayed, what next, in sentence case; the
   // hub's reason code rides the hover title.
-  return { label: "Brief not sent to the agent · It stays on the hub · Send again", tone: "danger", done: true, title: codeWords(state).toLowerCase() };
+  return { label: "Brief not sent to the agent · It stays on the hub · Send again", tone: "danger", done: true, title: wireWords(state, false) };
 }
 
 const AGENTS: AgentId[] = ["claude", "codex", "pi"];
@@ -195,20 +195,20 @@ const LEAD: Record<string, string> = {
   hs_context: ".HS",
 };
 const KIND_WORD: Record<string, string> = {
-  action: "ACTION ITEM",
-  meeting: "MEETING",
-  decision: "DECISION",
-  decision_record: "DECISION",
-  desk_decision: "DECISION",
-  note: "NOTE",
-  artifact: "ARTIFACT",
-  project_item: "PROJECT ITEM",
+  action: "Action item",
+  meeting: "Meeting",
+  decision: "Decision",
+  decision_record: "Decision",
+  desk_decision: "Decision",
+  note: "Note",
+  artifact: "Artifact",
+  project_item: "Project item",
 };
 const LINE_UNIT: Record<string, [string, string]> = {
-  project_decisions: ["DECISION", "DECISIONS"],
-  project_commitments: ["OPEN", "OPEN"],
-  memory: ["LINE", "LINES"],
-  hs_context: ["LINE", "LINES"],
+  project_decisions: ["decision", "decisions"],
+  project_commitments: ["open", "open"],
+  memory: ["line", "lines"],
+  hs_context: ["line", "lines"],
 };
 
 /** One source's fact token: the item's kind, or the count a composed part holds. */
@@ -222,36 +222,36 @@ export function sourceFact(source: HandPreview["sources"][number]): string | nul
 export function refusalToken(code: string, agent: AgentId): string {
   switch (code) {
     case "no_repository":
-      return "NO REPOSITORY";
+      return "No repository";
     case "repository_not_registered":
-      return "REPOSITORY NOT REGISTERED";
+      return "Repository not registered";
     case "clone_failed":
-      return "CLONE FAILED";
+      return "Clone failed";
     case "clone_timed_out":
-      return "CLONE TIMED OUT";
+      return "Clone timed out";
     case "gh_not_installed":
-      return "GH NOT INSTALLED";
+      return "gh not installed";
     case "item_unknown":
-      return "ITEM NOT FOUND";
+      return "Item not found";
     case "executable_absent":
-      return `${AGENT_NAME[agent]} NOT INSTALLED`;
+      return `${AGENT_NAME[agent]} not installed`;
     case "tmux_absent":
-      return "TMUX NOT INSTALLED";
+      return "tmux not installed";
     case "worktree_duplicate":
-      return "WORKTREE EXISTS";
+      return "Worktree exists";
     case "brief_over_cap":
-      return "BRIEF OVER 32 KB";
+      return "Brief over 32 KB";
     case "item_kind_unsupported":
-      return "KIND NOT SUPPORTED";
+      return "Kind not supported";
     case "owner_required":
-      return "OWNER ONLY";
+      return "Owner only";
     case "launch_cap_reached":
-      return "AGENT LIMIT REACHED";
+      return "Agent limit reached";
     case "launch_profile_mismatch":
       // `agent` is the HELD launch's agent here (the sheet passes it).
-      return `HELD FOR ${AGENT_NAME[agent]}`;
+      return `Held for ${AGENT_NAME[agent]}`;
     case "hub_unreachable":
-      return "HUB UNREACHABLE";
+      return "Hub unreachable";
     default:
       return codeWords(code);
   }
@@ -290,14 +290,14 @@ function AgentSummary({ agent, detect }: { agent: AgentId; detect: AgentsDetect 
   const row = detect?.agents.find((a) => a.id === agent);
   if (!row) return null;
   const words = !row.installed
-    ? "NOT INSTALLED"
-    : [row.hooks === "installed" ? "HOOKS IN" : row.hooks === "not_read" ? "HOOKS UNKNOWN" : "NO HOOKS", row.version].filter(Boolean).join(" · ");
+    ? "Not installed"
+    : [row.hooks === "installed" ? "Hooks in" : row.hooks === "not_read" ? "Hooks unknown" : "No hooks", row.version].filter(Boolean).join(" · ");
   return (
     <>
       <Token className="surface-token" data-chip>{words}</Token>
       {/* PHILO-15 B36: the reason the default passed this agent over. */}
       {row.installed && row.signed_in !== "yes" ? (
-        <Token className="surface-token" data-chip data-tone="warn" data-testid="hand-signin-unknown">SIGN-IN UNKNOWN</Token>
+        <Token className="surface-token" data-chip data-tone="warn" data-testid="hand-signin-unknown">Sign-in unknown</Token>
       ) : null}
     </>
   );
@@ -324,11 +324,11 @@ export function trackerToken(
   const host = preview?.tracker?.host || origin.trackerHost || null;
   if (preview) {
     return preview.tracker?.state === "read"
-      ? { host, state: "success", label: "READ" }
-      : { host, state: "failure", label: "NOT READ" };
+      ? { host, state: "success", label: "Read" }
+      : { host, state: "failure", label: "Not read" };
   }
-  if (previewError) return { host, state: "failure", label: "NOT READ" };
-  return { host, state: "working", label: "READING" };
+  if (previewError) return { host, state: "failure", label: "Not read" };
+  return { host, state: "working", label: "Reading" };
 }
 
 function Sheet({ origin }: { origin: HandOrigin }) {
@@ -532,7 +532,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         {preview ? (
           <>
             <SurfaceSection
-              label={["BRIEF", countToken(sources.length, "SOURCE"), kb(preview.bytes)].filter(Boolean).join(" · ")}
+              label={["Brief", countToken(sources.length, "source", "sources"), kb(preview.bytes)].filter(Boolean).join(" · ")}
             >
               <SurfaceLedger count={null} cols="room">
                 {sources.map((s) => {
@@ -551,10 +551,10 @@ function Sheet({ origin }: { origin: HandOrigin }) {
               </SurfaceLedger>
               <span className="desk-hand-tokens" data-testid="hand-brief-tokens">
                 {preview.people_cut > 0 ? (
-                  <Token className="surface-token" data-chip>PEOPLE CUT · {countToken(preview.people_cut, "PART")}</Token>
+                  <Token className="surface-token" data-chip>People cut · {countToken(preview.people_cut, "part", "parts")}</Token>
                 ) : null}
                 {preview.acceptance.length ? (
-                  <Token className="surface-token" data-chip>ACCEPTANCE · {countToken(preview.acceptance.length, "CHECK")}</Token>
+                  <Token className="surface-token" data-chip>Acceptance · {countToken(preview.acceptance.length, "check", "checks")}</Token>
                 ) : null}
               </span>
               <Disclosure label="Brief text" open={briefOpen} onOpenChange={setBriefOpen}>
@@ -585,7 +585,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                 ) : preview.clone ? (
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="to_clone">
                     <EgressChip label={preview.clone.host} scope="cloud" />
-                    <Token className="surface-token" data-chip data-wrap>CLONES {preview.clone.repository}</Token>
+                    <Token className="surface-token" data-chip data-wrap>Clones {preview.clone.repository}</Token>
                     <Token code className="surface-token" data-chip>{branchFace(preview.branch)}</Token>
                   </span>
                 ) : null}
@@ -600,12 +600,12 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                     </span>
                     {preview.resume ? (
                       <Token className="surface-token" data-chip data-testid="hand-resume">
-                        RESUMES · BRIEF {codeWords(preview.resume.instruction_state || "pending")}
+                        Resumes · Brief {wireWords(preview.resume.instruction_state || "pending", false)}
                       </Token>
                     ) : null}
                   </>
                 ) : null}
-                <Token className="surface-token" data-chip data-testid="hand-control">CONTROL · {mode}</Token>
+                <Token className="surface-token" data-chip data-testid="hand-control">Control · {mode}</Token>
               </span>
               {blocked.length ? (
                 <span className="desk-hand-refused" role="alert" data-testid="hand-refused">

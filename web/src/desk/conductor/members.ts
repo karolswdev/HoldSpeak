@@ -304,11 +304,11 @@ export function canRun(row: AgentRow): boolean {
 /** The ready rows: version, hooks, sign-in from the detect read. */
 export function readyMember(row: AgentRow): ConductorMember {
   const id = `agent:${row.id}`;
-  const hooks = row.hooks === "installed" ? "IN" : codeWords(row.hooks);
+  const hooks = row.hooks === "installed" ? "in" : codeWords(row.hooks, false);
   const state = !row.installed
     ? { tone: "fail" as const, label: "NOT INSTALLED" }
     : row.hooks !== "installed"
-      ? { tone: "warn" as const, label: row.hooks === "missing" ? "NO HOOKS" : `HOOKS ${hooks}` }
+      ? { tone: "warn" as const, label: row.hooks === "missing" ? "No hooks" : `Hooks ${hooks}` }
       : undefined;
   return {
     id,
@@ -328,8 +328,8 @@ export function readyMember(row: AgentRow): ConductorMember {
       more: row.installed
         ? [
             { key: "version", word: "Version", value: row.version ?? "" },
-            { key: "hooks", word: "Hooks", value: hooks },
-            { key: "signin", word: "Sign-in", value: row.signed_in === "yes" ? "SIGNED IN" : "NOT CHECKED" },
+            { key: "hooks", word: "Hooks", value: row.hooks === "installed" ? "In" : codeWords(row.hooks) },
+            { key: "signin", word: "Sign-in", value: row.signed_in === "yes" ? "Signed in" : "Not checked" },
           ]
         : [],
     },

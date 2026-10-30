@@ -17,14 +17,16 @@ import {
   type AgentsStep,
 } from "./agentsStep";
 import { Token } from "../surface/Token";
-import { nameWord } from "../surface/words";
+import { nameWord, wireWords } from "../surface/words";
 
 /** PHILO-17: what the hooks do, in one plain line. */
 export const AGENTS_LINE = "Hooks tell HoldSpeak when Claude Code or Codex works, waits or stops.";
 
-/** A wire code as words for a token (never raw snake_case on a face). */
-export function codeWords(code: string): string {
-  return code.replace(/_/g, " ").toUpperCase();
+/** A wire code as words for a token (never raw snake_case on a face), in
+ *  sentence case (`agent_settings_path_changed` → `Agent settings path
+ *  changed`). With `lead: false` the words continue a line. */
+export function codeWords(code: string, lead = true): string {
+  return wireWords(code, lead);
 }
 
 function Lamp({ on, label }: { on: boolean; label: string }) {

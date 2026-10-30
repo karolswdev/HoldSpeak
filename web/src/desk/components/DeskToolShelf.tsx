@@ -58,6 +58,7 @@ import { openProjectRoom } from "../shell";
 import { wireDayClock } from "../surface/format";
 import { rankRow } from "../searchRank";
 import { objectMenuEntries } from "../objectMenu";
+import { stateWords, wireWords } from "../surface/words";
 
 // Re-exported so existing imports keep one source (the data moved to
 // desk/tools.ts so the registry never imports a component).
@@ -400,7 +401,7 @@ export function DeskToolShelf() {
         for (const row of payload?.coverage ?? []) {
           if (row.state === "available" || !row.project_id) continue;
           if (!gaps[row.project_id]) {
-            gaps[row.project_id] = row.repair?.token ?? row.state.toUpperCase();
+            gaps[row.project_id] = row.repair?.token ? stateWords(row.repair.token) : wireWords(row.state);
           }
         }
         setProjectCoverage(gaps);

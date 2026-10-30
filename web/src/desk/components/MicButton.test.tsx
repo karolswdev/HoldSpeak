@@ -56,9 +56,9 @@ describe("MicButton honest states (HS-100-06)", () => {
   it("renders disabled with the browser reason when capture APIs are missing", () => {
     support.reason = "This browser cannot capture microphone audio.";
     render(<MicButton onText={vi.fn()} />);
-    const mic = screen.getByRole("button", { name: "Speak · NO MICROPHONE IN THIS BROWSER" });
+    const mic = screen.getByRole("button", { name: "Speak · No microphone in this browser" });
     expect(mic).toBeDisabled();
-    expect(mic.title).toBe("NO MICROPHONE IN THIS BROWSER");
+    expect(mic.title).toBe("No microphone in this browser");
     expect(document.body.innerHTML).not.toMatch(/cannot capture/);
   });
 
@@ -572,7 +572,7 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
     expect(screen.getByRole("status")).not.toHaveAttribute("title");
     expect(document.body.innerHTML).not.toMatch(/Click the mic again to continue/);
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
-    expect(screen.getByText("SPEECH CHILD BUDGET EXHAUSTED")).toBeVisible();
+    expect(screen.getByText("Speech child budget exhausted")).toBeVisible();
   });
 
   it("names a provider failure and offers another Runs-on", async () => {
@@ -590,7 +590,7 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
     await waitFor(() =>
       expect(onFailure).toHaveBeenCalledWith("provider_failure"),
     );
-    expect(screen.getByText("MODEL UNREACHABLE")).toBeVisible();
+    expect(screen.getByText("Model unreachable")).toBeVisible();
   });
 
   it("names a lost audio floor", async () => {
@@ -663,7 +663,7 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
 
     await speakAndStop();
 
-    await waitFor(() => expect(screen.getByText("TRANSCRIPTION FAILED")).toBeVisible());
+    await waitFor(() => expect(screen.getByText("Transcription failed")).toBeVisible());
     expect(document.body.innerHTML).not.toMatch(/Retry or type below/);
     expect(screen.queryByText(/AUDIO KEPT/)).toBeNull();
   });

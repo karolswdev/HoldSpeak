@@ -1,3 +1,4 @@
+import { wireWords } from "../desk/surface/words";
 /** HS-201-04 — the ONE place the face reads the disclosed summary route
  *  and starts a summary run.
  *
@@ -221,7 +222,7 @@ export function routeOff(route: PlannedRoute | null | undefined): boolean {
 
 export function routeReasonToken(route: PlannedRoute | null | undefined): string {
   const reason = String(route?.reason_code ?? "").trim();
-  return (reason || "route unavailable").toUpperCase();
+  return wireWords(reason || "route unavailable");
 }
 
 /** The refusal as ONE short fact line, in the product's own words.

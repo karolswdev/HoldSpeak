@@ -452,9 +452,9 @@ describe("the single gesture finishes setup (counsel 1)", () => {
   it("keeps the Models window and shows the receipt", async () => {
     await useTheEngine();
     await waitFor(() =>
-      expect(screen.getByTestId("concierge-receipt").textContent).toContain("SUMMARIES"),
+      expect(screen.getByTestId("concierge-receipt").textContent).toContain("Summaries"),
     );
-    expect(screen.getByTestId("concierge-receipt").textContent).toMatch(/^USING · /);
+    expect(screen.getByTestId("concierge-receipt").textContent).toMatch(/^Using · /);
     expect(mocks.closeSurfaceWindow).not.toHaveBeenCalledWith("surface-concierge");
   });
 });
