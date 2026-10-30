@@ -67,6 +67,7 @@ import { useMemoryChanges } from "../../../desk/memoryChanges";
 import "./recall.css";
 import { openProjectRoom } from "../../../desk/shell";
 import { Token } from "../../../desk/surface/Token";
+import { wireWords } from "../../../desk/surface/words";
 
 /** Render the trusted FTS marker grammar without injecting result HTML. */
 export function MemorySnippet({ value }: { value: string }) {
@@ -398,7 +399,7 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
             {searched ? (
               <>
                 {result.query.trim() ? <>
-                  <Token className="surface-token" data-testid="recall-ref-token">REF · {result.query.toUpperCase()}</Token>
+                  <Token className="surface-token" data-testid="recall-ref-token">REF · {result.query}</Token>
                   <Token className="surface-token recall-dot" aria-hidden="true">·</Token>
                 </> : null}
                 <Token className="surface-token" data-testid="recall-searched-token">{searchedToken(result.searched_at)}</Token>
@@ -410,7 +411,7 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
             {status === "failed" ? (
               <>
                 <Token className="surface-token" data-tone="danger" data-testid="recall-failed-token">
-                  CANT SEARCH · {ctrl.error.toUpperCase()}
+                  CANT SEARCH · {wireWords(ctrl.error)}
                 </Token>
                 <Button dense variant="ghost" onClick={() => void ctrl.search()} aria-label="Retry the search">
                   Retry

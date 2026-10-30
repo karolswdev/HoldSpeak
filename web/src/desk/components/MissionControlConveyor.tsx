@@ -41,6 +41,7 @@ import {
 import { FoldGadget, GadgetRow, MxRadio } from "../surface/gadgets";
 import { countLabel } from "../surface";
 import { Token } from "../surface/Token";
+import { wireWords } from "../surface/words";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
@@ -398,7 +399,7 @@ function ProposalCard() {
       <Token className="surface-token" data-tone="ok">
         {proposal.status === "executed"
           ? "EXECUTED"
-          : proposal.status.toUpperCase()}
+          : wireWords(proposal.status)}
       </Token>
       <Button dense variant="ghost" onClick={dismissProposal}>
         Dismiss
@@ -509,7 +510,7 @@ function OffBeltPanel({ sessions }: { sessions: McSession[] }) {
                       <Token className="surface-token">
                         {s.stale
                           ? "IDLE"
-                          : s.correlation.replace(/_/g, " ").toUpperCase()}
+                          : wireWords(s.correlation)}
                       </Token>
                     </span>
                   }
@@ -554,7 +555,7 @@ function EventLedger({ events }: { events: McEvent[] }) {
                   data-tone={refusal ? "danger" : undefined}
                 >
                   {refusal ? <><span aria-hidden="true">{GLYPH_CLOSE}</span>{" "}</> : ""}
-                  {e.event.replace(/_/g, " ").toUpperCase()}
+                  {wireWords(e.event)}
                 </Token>
               }
               cells={
@@ -683,7 +684,7 @@ export function MissionControlConveyor() {
               value={flipStatus}
               options={FLIP_STATUSES.map((st) => ({
                 value: st,
-                label: st.toUpperCase(),
+                label: wireWords(st),
               }))}
               onChange={setFlipStatus}
             />

@@ -284,7 +284,7 @@ export function refusalReceipt(route: BriefRoute): { sent: boolean; host: string
     route.state === "stopped" ? "REQUEST HAD LEFT"
     : answered ? "NOTHING USABLE RECEIVED"
     : "NOT ANSWERED";
-  const engine = (route.model || "the engine").toUpperCase();
+  const engine = route.model || "the engine";
   return { sent: true, host, line: `SENT · ${engine} · ${what}` };
 }
 

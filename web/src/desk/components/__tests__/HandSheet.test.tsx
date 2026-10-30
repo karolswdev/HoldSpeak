@@ -213,7 +213,7 @@ describe("the launch sheet", () => {
 
 describe("the words", () => {
   it("modes, sizes, facts and refusals are tokens", () => {
-    expect([modeWord("safe"), modeWord("neutral"), modeWord("yolo")]).toEqual(["SECURE", "NORMAL", "OPEN THROTTLE"]);
+    expect([modeWord("safe"), modeWord("neutral"), modeWord("yolo")]).toEqual(["Secure", "Normal", "Open throttle"]);
     expect(kb(4300)).toBe("4.2 KB");
     expect(sourceFact({ kind: "decision", ref: "d", title: "", lines: null })).toBe("DECISION");
     expect(sourceFact({ kind: "project_decisions", ref: "p", title: "", lines: 1 })).toBe("1 DECISION");

@@ -32,7 +32,7 @@ describe("MeaningSearchRow", () => {
     expect(row.textContent).toContain("Off");
     expect(row.textContent).toContain("146 MB");
     expect(row.textContent).toContain("To download");
-    expect(row.textContent).toContain("HUGGINGFACE.CO");
+    expect(row.textContent).toContain("huggingface.co");
     expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Turn on");
     // A read makes no command request.
     expect(mocks.apiFetch.mock.calls.map((call) => call[0])).toEqual(["/api/memory/meaning-search"]);
@@ -43,7 +43,7 @@ describe("MeaningSearchRow", () => {
     render(<ul><MeaningSearchRow /></ul>);
     const row = await screen.findByTestId("concierge-meaning-search");
     expect(row.textContent).not.toContain("THIS DEVICE");
-    expect(row.textContent).not.toContain("HUGGINGFACE.CO");
+    expect(row.textContent).not.toContain("huggingface.co");
     expect(row.textContent).not.toContain("To download");
   });
 

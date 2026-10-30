@@ -88,7 +88,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                     </strong>
                     <FoldGadget title="RAW · SELECTED TEXT">
                       <SurfaceWell
-                        head={`RAW · ${contextualCoderAction.source.title.toUpperCase()}`}
+                        head={`Raw · ${contextualCoderAction.source.title}`}
                       >
                         <SurfaceCode>
                           {contextualCoderAction.source.text}

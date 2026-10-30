@@ -13,6 +13,7 @@ import { EgressChip } from "../../surface";
 import { useDestinations } from "../../surface/send";
 import { targetName, type Destination } from "../../../features/channels/channels";
 import { putWords } from "./model";
+import { wireWords } from "../../surface/words";
 
 const DESTINATION = "destination:";
 
@@ -31,7 +32,7 @@ function DestinationValue({ id }: { id: string }) {
 
 function placeOf(d: Destination): { label: string; scope: "local" | "cloud" } {
   if (d.channel === "file") return { label: targetName(d.channel, d.target) || "Folder", scope: "local" };
-  return { label: d.channel.toUpperCase(), scope: "cloud" };
+  return { label: wireWords(d.channel), scope: "cloud" };
 }
 
 export function PutEditor({

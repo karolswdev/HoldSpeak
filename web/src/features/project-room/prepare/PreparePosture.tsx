@@ -110,7 +110,7 @@ function RouteChip({ ctrl }: { ctrl: PrepareController }) {
     <span className="prepare-route" data-testid="prepare-route" data-state={route.state}>
       <StateChip state={ready ? "success" : "failure"} label={route.token} icon={"●"} />
       {route.model ? (
-        <Token testId={ready ? "prepare-route-model" : "prepare-route-detail"}>{route.model.toUpperCase()}</Token>
+        <Token testId={ready ? "prepare-route-model" : "prepare-route-detail"}>{route.model}</Token>
       ) : null}
     </span>
   );
@@ -334,7 +334,7 @@ function CarriedForwardSection({ manifest, onOpenRef }: { manifest: BriefManifes
                 primary={<span className="surface-primary">{commitment.text}</span>}
                 cells={
                   <span className="prepare-source-cells">
-                    {commitment.owner ? <Token>{`OWNER ${commitment.owner.toUpperCase()}`}</Token> : null}
+                    {commitment.owner ? <Token>{`Owner ${commitment.owner}`}</Token> : null}
                     {due ? <Token>{due}</Token> : null}
                   </span>
                 }
@@ -617,7 +617,7 @@ export function PreparePosture({
   const prepared = brief ? clockToken("PREPARED", brief.createdAt) : null;
   const elapsed = brief ? elapsedToken(brief.elapsedMs) : null;
   const receipt = brief
-    ? [brief.generator.startsWith("model:") ? (brief.generatorModel || "MODEL").toUpperCase() : "DETERMINISTIC", elapsed]
+    ? [brief.generator.startsWith("model:") ? (brief.generatorModel || "Model") : "DETERMINISTIC", elapsed]
         .filter(Boolean)
         .join(" · ")
     : "";

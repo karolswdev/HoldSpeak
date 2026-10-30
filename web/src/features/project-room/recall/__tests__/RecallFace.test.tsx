@@ -133,7 +133,7 @@ describe("RecallFace (HS-200-13)", () => {
 
     expect(screen.getByTestId("recall-display").textContent).toBe("3 remembered");
     expect(screen.getByTestId("recall-display").getAttribute("data-accent")).toBe("true");
-    expect(screen.getByTestId("recall-ref-token").textContent).toBe("Ref · Freeze window");
+    expect(screen.getByTestId("recall-ref-token").textContent).toBe("Ref · freeze window");
     expect(screen.getByTestId("recall-searched-token").textContent).toBe("Searched 09:20");
 
     const cards = screen.getAllByTestId("recall-card");

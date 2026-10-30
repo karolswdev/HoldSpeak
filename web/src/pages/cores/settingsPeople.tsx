@@ -16,6 +16,7 @@ import { useOwnerName, type OwnerFieldStatus, type OwnerNameAdapter } from "../.
 import { OwnerAliasField } from "../../desk/firstrun/OwnerAliasField";
 import type { PrefSaveState } from "./settingsWindow";
 import { Token } from "../../desk/surface/Token";
+import { wireWords } from "../../desk/surface/words";
 
 export type PeopleAccess = {
   mode: string;
@@ -197,7 +198,7 @@ export function PeopleAccessModule({ highlight }: { highlight?: string | null } 
         <GadgetRow label="Access">
           <span data-testid="people-access-read-failed" data-code={readError}>
             <StateChip state="failure" label="READ FAILED" />{" "}
-            <Token className="surface-token" data-chip>{readError.toUpperCase()}</Token>{" "}
+            <Token className="surface-token" data-chip>{wireWords(readError)}</Token>{" "}
             <Button variant="secondary" dense onClick={() => void reload()}>Retry</Button>
           </span>
         </GadgetRow>

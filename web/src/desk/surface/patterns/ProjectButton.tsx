@@ -55,7 +55,7 @@ export function ProjectButton({
         onClick={onOpen}
         data-testid={dataTestId}
       >
-        {plain ? label : label.toUpperCase()}
+        {label}
       </Button>
     </span>
   );

@@ -31,7 +31,7 @@ import { useWindowInterior } from "../surface/interior";
 import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
-import { stateWords } from "../surface/words";
+import { stateWords, wireWords } from "../surface/words";
 import { closeProgram, decide, overturn, planProgram, programVerb, race, updateProgram, useProgram } from "./api";
 import { GateFold } from "./GateFold";
 import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
@@ -66,7 +66,7 @@ function verbWord(item: YourTurnItem, verb: { choice: string; word: string }): s
 /** The quiet fact beside an item's verbs (`Check green · review passed`). */
 function itemFact(item: YourTurnItem, step: ProgramStep | undefined): string {
   if (item.kind === "merge") return step?.review.verdict === "pass" ? "Check green · review passed" : "Check green";
-  if (item.kind === "finding") return [item.level ? stateWords(item.level.toUpperCase()) : "", step?.rounds ? `after ${step.rounds} rounds` : ""].filter(Boolean).join(" · ");
+  if (item.kind === "finding") return [item.level ? wireWords(item.level) : "", step?.rounds ? `after ${step.rounds} rounds` : ""].filter(Boolean).join(" · ");
   if (item.kind === "answer") return "Asks you";
   if (item.kind === "parked") return step?.parked_reason ? "Parked" : "";
   if (item.kind === "core") return "A core question";

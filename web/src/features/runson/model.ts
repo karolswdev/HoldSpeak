@@ -332,7 +332,7 @@ export function usd(value: number): string {
  *  counter (UX canon A8). */
 export function costTokens(spend: AgentSpend | undefined, label: string): string[] {
   if (!spend) return [];
-  if (!spend.reportsCost) return [`${label.toUpperCase()} REPORTS NO COST`];
+  if (!spend.reportsCost) return [`${label} REPORTS NO COST`];
   if (!(spend.weekUsd > 0)) return ["NOTHING SPENT THIS WEEK"];
   const tokens: string[] = [];
   if (spend.todayUsd > 0) tokens.push(`TODAY ${usd(spend.todayUsd)}`);
@@ -370,7 +370,7 @@ export function accepts(job: string, engine: BoardEngine | undefined): Accept {
   if (job === DEFAULT_JOB) return { ok: true };
   const fit = engine.fits?.[job];
   if (fit && stateWord(fit.state) === "BROKEN") {
-    const blocked = (fit.blocked ?? []).map((name) => name.toUpperCase());
+    const blocked = fit.blocked ?? [];
     return { ok: false, reason: blocked.length ? `WITHOUT ${blocked.join(" · ")}` : "INCOMPATIBLE" };
   }
   return { ok: true };
@@ -380,7 +380,7 @@ export function accepts(job: string, engine: BoardEngine | undefined): Accept {
 export function limitTokens(job: string, engine: BoardEngine | undefined): string[] {
   const fit = engine?.fits?.[job];
   if (!fit || stateWord(fit.state) !== "LIMITED") return [];
-  return (fit.blocked ?? []).map((name) => `WITHOUT ${name.toUpperCase()}`);
+  return (fit.blocked ?? []).map((name) => `WITHOUT ${name}`);
 }
 
 /** One job's word: the roster's status, the binding of its first engine,

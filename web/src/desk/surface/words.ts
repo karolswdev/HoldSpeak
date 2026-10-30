@@ -96,6 +96,16 @@ export function stateWords(label: string, keep: ReadonlySet<string> = KEEP_CAPS,
     .join(" · ");
 }
 
+/** A wire code or a raw state in sentence case (`changes_requested` →
+ *  `Changes requested`, `open` → `Open`, `FAILED` → `Failed`): the code's
+ *  `_` are spaces, then `stateWords`. UPPER-DEBT: the one way to say a wire
+ *  code without a caller's `.toUpperCase()`. With `lead: false` the words
+ *  continue a line (no lead capital). */
+export function wireWords(code: string | null | undefined, lead = true): string {
+  const text = String(code ?? "").replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+  return text ? stateWords(text.toUpperCase(), KEEP_CAPS, lead) : "";
+}
+
 /** The species' children in sentence case: each run of plain text (strings
  *  and numbers, joined) goes through `stateWords`; elements stay as they
  *  are. A run that follows other text takes no lead capital (`3 MORE` →

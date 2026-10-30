@@ -33,6 +33,7 @@ import { keptPlace } from "./deskMemory";
 import {
   CHANNEL_WORD, DEST_CHANGED, requestDestinationsFocus, wire, type Destination,
 } from "../features/channels/channels";
+import { wireWords } from "./surface/words";
 
 /* ── the words (ASD-STE100; the canvas's own) ─────────────────────────── */
 
@@ -226,7 +227,7 @@ export function sendToEntry(winId: string | null): WorkMenuEntry | null {
     : S.dests.length ? S.dests.map((x) => ({
       type: "item" as const,
       id: `send-to.${x.id}`,
-      label: `${x.name} · ${CHANNEL_WORD[x.channel] ?? String(x.channel).toUpperCase()}`,
+      label: `${x.name} · ${CHANNEL_WORD[x.channel] ?? wireWords(String(x.channel))}`,
       onSelect: () => pickFor(winId, x.id),
     }))
     : S.destsFailed ? []
@@ -248,7 +249,7 @@ export function sendChoices(winId: string | null): SendChoice[] | null {
   return S.dests.map((x) => ({
     id: x.id,
     name: x.name,
-    channel: CHANNEL_WORD[x.channel] ?? String(x.channel).toUpperCase(),
+    channel: CHANNEL_WORD[x.channel] ?? wireWords(String(x.channel)),
     pick: () => pickFor(winId, x.id),
   }));
 }

@@ -319,7 +319,7 @@ describe("Runs on — the Meaning search row sits in the window", () => {
     expect(screen.getByTestId("runson-root").contains(row)).toBe(true);
     await waitFor(() => expect(within(row).getByTestId("meaning-search-state").getAttribute("data-state")).toBe("off"));
     expect(row.textContent).toContain("Meaning search");
-    expect(row.textContent).toContain("HUGGINGFACE.CO");
+    expect(row.textContent).toContain("huggingface.co");
     expect(row.textContent).toContain("To download");
     expect(within(row).getByTestId("meaning-search-verb").textContent).toBe("Turn on");
     expect(document.querySelectorAll("[role='dialog']")).toHaveLength(0);

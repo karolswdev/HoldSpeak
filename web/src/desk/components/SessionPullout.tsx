@@ -54,6 +54,7 @@ import { AgentWords } from "./AgentWords";
 import { useLaneOwnsSteering } from "../lane/laneStore";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
 import { Token } from "../surface/Token";
+import { wireWords } from "../surface/words";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -568,7 +569,7 @@ export function SteeringPolicyFacts() {
       : "ARMED PANE GRANT";
   return (
     <span className="desk-session-policy" data-testid="session-policy">
-      <Token className="surface-token" data-chip>{`AUTHORITY · ${authority.toUpperCase()}`}</Token>
+      <Token className="surface-token" data-chip>{`Authority · ${wireWords(authority)}`}</Token>
       <Token className="surface-token" data-chip>RECEIPT · EVERY ATTEMPT</Token>
     </span>
   );

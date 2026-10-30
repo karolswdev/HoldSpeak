@@ -43,6 +43,7 @@ import { CycleGadget, GadgetRow, StringGadget } from "../surface/gadgets";
 import { useConductor } from "../conductor/store";
 import "./hand-sheet.css";
 import { Token } from "../surface/Token";
+import { wireWords } from "../surface/words";
 
 export interface HandPreview {
   text: string;
@@ -167,11 +168,11 @@ const REVIEW_BY = [
 ] as const;
 
 /** The Control mode as the owner names it (Settings: Secure, Normal, Open
- *  throttle — the registry's words, CONTROL_MODE_LABELS), in this sheet's caps. */
+ *  throttle — the registry's words, CONTROL_MODE_LABELS), as the registry says them. */
 export function modeWord(mode: string | null | undefined): string {
   const m = String(mode ?? "").toLowerCase();
   const label = (CONTROL_MODE_LABELS as Record<string, string>)[m];
-  return (label ?? m).toUpperCase();
+  return label ?? wireWords(m);
 }
 
 /** The brief's size, as the canvas reads it (4.2 KB). */

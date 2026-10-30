@@ -19,7 +19,7 @@ function rowEgress(row: CalendarCandidate): { label: string; scope: "local" | "c
 export function calendarReceipt(week: number, next: { title: string; starts_at: string } | null): string {
   return [
     countToken(week, "EVENT"),
-    next ? `NEXT ${next.title.toUpperCase()} ${meetingClock(next.starts_at)}`.trim() : null,
+    next ? `NEXT ${next.title} ${meetingClock(next.starts_at)}`.trim() : null,
   ]
     .filter(Boolean)
     .join(" · ");

@@ -19,6 +19,7 @@ import { ProjectButton } from "../../../desk/surface/patterns";
 import type { BeliefCardData } from "./model";
 import { openProjectRoom } from "../../../desk/shell";
 import { Token } from "../../../desk/surface/Token";
+import { wireWords } from "../../../desk/surface/words";
 
 const STATE_TONE: Record<string, "ok" | "danger" | "warn"> = {
   current: "ok",
@@ -53,7 +54,7 @@ export function BeliefCard({
       <div className="recall-card-chips">
         <Token className="surface-token" data-chip>BELIEF</Token>
         <Token className="surface-token" data-chip data-tone={STATE_TONE[belief.state]} data-testid="recall-belief-state">
-          {belief.state.toUpperCase()}
+          {wireWords(belief.state)}
         </Token>
         {belief.state === "superseded" && belief.since ? (
           <Token className="surface-token recall-superseded-by" data-testid="recall-belief-since">

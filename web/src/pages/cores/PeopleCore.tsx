@@ -46,6 +46,7 @@ import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
 import { openProjectRoom } from "../../desk/shell";
 import { Token } from "../../desk/surface/Token";
+import { wireWords } from "../../desk/surface/words";
 
 type ReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "no_key_store" | "ready";
 type Visibility = "shared_intent" | "leader_private";
@@ -968,7 +969,7 @@ function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>;
     <SurfaceLedger count={`PRS WAITING ${ws.prs_waiting.length}`} cols="room">
       {ws.prs_waiting.map((pr) => <SurfaceLedgerRow key={`pr-${pr.pr_number}`} wrap expands={false}
         primary={<span className="surface-primary">{`#${pr.pr_number} · ${pr.title}`}</span>}
-        cells={<span className="people-now-caption"><span className={pr.days_waiting >= 3 ? "people-now-caption-warning" : ""}>{pr.days_waiting} {pr.days_waiting === 1 ? "DAY" : "DAYS"}</span>{pr.repo ? <> · <span>{pr.repo.toUpperCase()}</span></> : null}</span>}
+        cells={<span className="people-now-caption"><span className={pr.days_waiting >= 3 ? "people-now-caption-warning" : ""}>{pr.days_waiting} {pr.days_waiting === 1 ? "day" : "days"}</span>{pr.repo ? <> · <span>{pr.repo}</span></> : null}</span>}
         trailing={pr.url ? <Button dense variant="ghost" onClick={() => window.open(pr.url, "_blank", "noopener")}>Open PR</Button> : undefined} />)}
     </SurfaceLedger>
   </div>;
@@ -976,7 +977,7 @@ function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>;
     <SurfaceLedger count={`ASSIGNMENTS OPEN ${ws.open_assignments.length}`} cols="room">
       {ws.open_assignments.map((a) => <SurfaceLedgerRow key={a.key} wrap expands={false}
         primary={<span className="surface-primary">{`${a.key} · ${a.summary}`}</span>}
-        cells={<span className="people-now-caption"><span>{a.status.toUpperCase()}</span>{a.overdue ? <> · <span className="people-now-caption-warning">OVERDUE</span></> : null}</span>}
+        cells={<span className="people-now-caption"><span>{wireWords(a.status)}</span>{a.overdue ? <> · <span className="people-now-caption-warning">Overdue</span></> : null}</span>}
         trailing={a.url ? <Button dense variant="ghost" onClick={() => window.open(a.url, "_blank", "noopener")}>Open issue</Button> : undefined} />)}
     </SurfaceLedger>
   </div>;

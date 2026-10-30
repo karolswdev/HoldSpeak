@@ -69,7 +69,7 @@ export function generatorChipBoundary(update: {
   generator: string; generatorModel?: string | null; generatorHost?: string | null;
 }): string | undefined {
   if (!update.generator.startsWith("model:")) return undefined;
-  const model = String(update.generatorModel ?? "").trim().toUpperCase();
+  const model = String(update.generatorModel ?? "").trim();
   return model || undefined;
 }
 
@@ -677,7 +677,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
             ctrl.current && ctrl.current.generator !== "deterministic" && ctrl.current.generatorModel
               ? (
                   <Token className="surface-token" data-chip data-testid="update-footer-model">
-                    {ctrl.current.generatorModel.toUpperCase()}
+                    {ctrl.current.generatorModel}
                   </Token>
                 )
               : undefined

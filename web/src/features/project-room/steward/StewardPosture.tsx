@@ -881,7 +881,7 @@ export function StewardPosture({
           receipt={
             <Token className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
               {run
-                ? `RUN ${runNumber} · ${runStateLabel(run.state).toUpperCase()} · ${phaseCount} PHASE${phaseCount === 1 ? "" : "S"}`
+                ? `RUN ${runNumber} · ${runStateLabel(run.state)} · ${phaseCount} PHASE${phaseCount === 1 ? "" : "S"}`
                 : "WATCH SOURCES"}
             </Token>
           }

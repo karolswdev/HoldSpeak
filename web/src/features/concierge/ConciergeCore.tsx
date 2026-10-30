@@ -212,9 +212,9 @@ function SetGroupRow({
               (Astra r1, finding 5: no sentence, no internal labels). */}
           {!isOff && (row.state === "LIMITED" || row.state === "INCOMPATIBLE") && row.blocked?.length ? (
             <span className="concierge-set-line2 concierge-set-limit" data-testid={`concierge-set-limit-${row.group}`}>
-              <span className="concierge-limit-caption">WITHOUT</span>
+              <span className="concierge-limit-caption">Without</span>
               {row.blocked.map((name) => (
-                <span className="concierge-token" key={name}>{name.toUpperCase()}</span>
+                <span className="concierge-token" key={name}>{name}</span>
               ))}
             </span>
           ) : null}
@@ -334,7 +334,7 @@ function RepairRow({
         <span className="concierge-found-cells">
           {repair.groupLabels.map((label) => (
             <span className="concierge-token" key={label}>
-              {label.toUpperCase()}
+              {label}
             </span>
           ))}
           <span className="concierge-cloud-actions">

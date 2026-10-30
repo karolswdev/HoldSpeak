@@ -504,7 +504,7 @@ function ProjectGrantSummary({ grants }: { grants: ProjectDelegation[] }) {
     <span data-testid="project-grant-summary">
       <StateChip state="success" label={PROJECT_GRANT_WORDS.live} />{" "}
       <Token className="surface-token" data-chip>
-        {live.length === 1 ? live[0].project_name.toUpperCase() : countToken(live.length, "PROJECT", "PROJECTS")}
+        {live.length === 1 ? live[0].project_name : countToken(live.length, "PROJECT", "PROJECTS")}
       </Token>
     </span>
   );
@@ -1256,7 +1256,7 @@ export function RemoteAccessModule({
                 cells={<>
                   <ProjectGrantChip grant={grant} />
                   <GrantRefusalChip refusal={refusals[key]} />
-                  <Token className="surface-token" data-chip>{grant.project_name.toUpperCase()}</Token>
+                  <Token className="surface-token" data-chip>{grant.project_name}</Token>
                   {grant.project_archived ? (
                     <Token className="surface-token" data-chip data-testid="project-archived">{PROJECT_GRANT_WORDS.archived}</Token>
                   ) : null}

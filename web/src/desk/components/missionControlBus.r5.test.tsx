@@ -115,8 +115,8 @@ describe("Rails conditional action controls", () => {
     expect(storyB).toHaveAttribute("aria-pressed", "false");
     expect(screen.queryByText("FLIP ARC-12-01")).toBeNull();
     await user.click(storyB);
-    await user.click(screen.getByText("READY"));
-    expect(screen.getByRole("radio", { name: "READY" })).toBeChecked();
+    await user.click(screen.getByText("Ready"));
+    expect(screen.getByRole("radio", { name: "Ready" })).toBeChecked();
     await user.click(screen.getByRole("button", { name: "PROPOSE" }));
     await user.click(screen.getByRole("button", { name: "PROPOSE?" }));
     expect(proposeFlip).toHaveBeenCalledOnce();

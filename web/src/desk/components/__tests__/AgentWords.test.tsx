@@ -49,7 +49,7 @@ describe("AgentWords: the subset", () => {
   it("a fenced block: monospace, its language as a token, the text kept", () => {
     const el = draw("Run:\n\n```bash\nls -la\n**not bold**\n```\nDone.");
     const pre = el.querySelector("pre")!;
-    expect(pre.querySelector(".aw-lang")?.textContent).toBe("BASH");
+    expect(pre.querySelector(".aw-lang")?.textContent).toBe("bash");
     expect(pre.querySelector("code")?.textContent).toBe("ls -la\n**not bold**");
     expect(el.querySelector("p:last-child")?.textContent).toBe("Done.");
   });

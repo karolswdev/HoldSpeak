@@ -14,6 +14,7 @@ import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../surface/Surfac
 import { humanTime } from "../surface/format";
 import { StringGadget } from "../surface/gadgets";
 import { Token } from "../surface/Token";
+import { wireWords } from "../surface/words";
 
 /** A wire word in sentence case (`needs_review` → `Needs review`). */
 function wireWord(word: string): string {
@@ -156,7 +157,7 @@ function AutomationRow({
           {baselineMessage ? <p className="wb-automation-test" role="status">{baselineMessage}</p> : null}
           {automation.last_error ? <SurfaceState error={automation.last_error} /> : null}
           {lastGoodAt ? <Token className="wb-automation-last surface-token">{`LAST GOOD ${humanTime(lastGoodAt)}`}</Token> : null}
-          {!adapterReady ? <Token className="wb-automation-adapter surface-token" data-tone="warn">{`ADAPTER ${(adapterStatus || "").replace("_", " ").toUpperCase()}`}</Token> : null}
+          {!adapterReady ? <Token className="wb-automation-adapter surface-token" data-tone="warn">{`Adapter ${wireWords(adapterStatus, false)}`}</Token> : null}
           <AutomationHistory workbenchId={workbenchId} automationId={automation.id} />
         </div>
       ) : null}

@@ -44,6 +44,7 @@ import {
   type RoomUnresolvedOwner,
 } from "./api";
 import { Token } from "../../desk/surface/Token";
+import { wireWords } from "../../desk/surface/words";
 
 /* ── Monogram ── */
 
@@ -247,7 +248,7 @@ function PersonDetail({
           cells={
             <span className="room-people-cells">
               <Token className="surface-token room-people-tok room-people-warn" data-testid="room-people-omitted-token">
-                {`${o.state.toUpperCase()} · OMITTED`}
+                {`${wireWords(o.state)} · OMITTED`}
               </Token>
             </span>
           }

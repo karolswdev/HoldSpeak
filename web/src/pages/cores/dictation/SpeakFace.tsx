@@ -56,6 +56,7 @@ import { openSurfaceOr } from "../../../desk/shell";
 import { useDesk } from "../../../desk/store";
 import type { VoiceCommandFired } from "../../../lib/micStreamSession";
 import { Token } from "../../../desk/surface/Token";
+import { wireWords } from "../../../desk/surface/words";
 
 /** Extract hostname from a URL string. */
 function hostnameOf(url: string): string {
@@ -684,7 +685,7 @@ function AppliedRule({
       </div>
       <div className="speak-applied-fact">
         <Token className="surface-token" data-chip="">
-          {(rule.kind || "rule").toUpperCase()}
+          {wireWords(rule.kind || "rule")}
         </Token>
       </div>
     </div>

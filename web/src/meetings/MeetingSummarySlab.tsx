@@ -98,7 +98,7 @@ export function MeetingSummarySlab({
             // PHILO-15 lane 12 (B28): a long topic wraps inside the window
             // (the chip species' wrap variant); it never runs past its edge.
             <Token key={topic} className="surface-token" data-chip data-wrap>
-              {topic.toUpperCase()}
+              {topic}
             </Token>
           ))}
         </span>

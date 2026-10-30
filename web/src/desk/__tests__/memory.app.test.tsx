@@ -334,7 +334,7 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
     expect(cards.map((c) => c.getAttribute("data-state"))).toEqual(["current", "superseded"]);
     expect((screen.getByTestId("recall-display").textContent ?? "").trim()).toBe("5 remembered");
     expect(screen.getByTestId("recall-display").getAttribute("data-accent")).toBe("true");
-    expect(screen.getByTestId("recall-ref-token").textContent).toBe("Ref · Freeze window");
+    expect(screen.getByTestId("recall-ref-token").textContent).toBe("Ref · freeze window");
     expect(screen.getByTestId("recall-searched-token").textContent ?? "").toMatch(/^Searched /);
 
     const current = cards[0];

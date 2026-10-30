@@ -203,7 +203,7 @@ describe("the station track (C-4's borrow)", () => {
       }],
     });
     const held = laneEntries(lane, lane.events as never).find((e) => e.word === "HELD");
-    expect(held?.text).toBe("OUTSIDE THE WORKTREE · /tmp/hs_write_probe.txt");
+    expect(held?.text).toBe("Outside the worktree · /tmp/hs_write_probe.txt");
     expect(held?.code).toBe("echo x > /tmp/hs_write_probe.txt");
   });
 
@@ -816,10 +816,10 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     ];
     await openLane(fixture({ wait: null, launch: { ...fixture().launch, rebriefs: rebriefs as never } }));
     const rail = screen.getByTestId("lane-rail");
-    expect(within(rail).getByText(`SENT · ${wireClock("2026-10-07T16:52:00Z")} · BY YOUR PRESS ${wireClock("2026-10-07T16:40:00Z")}`)).toBeTruthy();
+    expect(within(rail).getByText(`Sent · ${wireClock("2026-10-07T16:52:00Z")} · by your press ${wireClock("2026-10-07T16:40:00Z")}`)).toBeTruthy();
     expect(within(rail).getByText("command c0ffee00-0000-5000-8000-000000000001")).toBeTruthy();
-    expect(within(rail).getByText(`EXPIRED · ${wireClock("2026-10-07T16:01:00Z")} · AGENT NEVER RETURNED · BY YOUR PRESS ${wireClock("2026-10-07T14:00:00Z")}`)).toBeTruthy();
-    expect(within(rail).getByText(/^SUPERSEDED · .* · A NEWER RE-BRIEF · BY YOUR PRESS/)).toBeTruthy();
+    expect(within(rail).getByText(`Expired · ${wireClock("2026-10-07T16:01:00Z")} · Agent never returned · by your press ${wireClock("2026-10-07T14:00:00Z")}`)).toBeTruthy();
+    expect(within(rail).getByText(/^Superseded · .* · A newer re-brief · by your press/)).toBeTruthy();
     expect(within(rail).getByText("press p3")).toBeTruthy();
   });
 
@@ -868,7 +868,7 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
     fireEvent.click(within(screen.getByTestId("lane-approve-well")).getByTestId("lane-raw-cut"));
     const held = await screen.findByTestId("lane-raw-held");
     await waitFor(() => expect(within(held).getByTestId("lane-raw-command").textContent).toBe(whole));
-    expect(within(held).getByText("HELD · OUTSIDE THE WORKTREE")).toBeTruthy();
+    expect(within(held).getByText("Held · Outside the worktree")).toBeTruthy();
     expect(within(held).getByTestId("lane-raw-deny")).toBeTruthy();
     fireEvent.click(within(held).getByTestId("lane-raw-approve"));
     await waitFor(() => expect(api.fetch.mock.calls.some(([url, init]) =>
@@ -902,7 +902,7 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
     const held = await screen.findByTestId("lane-raw-held");
     await waitFor(() => expect(within(held).getByTestId("lane-raw-command").textContent).toBe(head));
     // Astra r1 on #1011 (P1-2): a part says how much of the call is there.
-    expect(within(held).getByText(`HELD · OUTSIDE THE WORKTREE · CUT · ${head.length} OF ${whole.length} CHARS`)).toBeTruthy();
+    expect(within(held).getByText(`Held · Outside the worktree · Cut · ${head.length} of ${whole.length} chars`)).toBeTruthy();
     expect(within(held).queryByTestId("lane-raw-approve")).toBeNull();
     expect(within(held).getByTestId("lane-raw-deny")).toBeTruthy();
   });
@@ -948,7 +948,7 @@ describe("PHILO-15 20: Raw approves a cut call; Take back", () => {
         at: "2026-10-07T21:31:00Z", press_id: "p9", command_id: null, detail: "BY YOU" },
     ] as never } }));
     expect(within(screen.getByTestId("lane-rail")).getByText(
-      `TAKEN BACK · ${wireClock("2026-10-07T21:31:00Z")} · BY YOU · BY YOUR PRESS ${wireClock("2026-10-07T21:30:00Z")}`,
+      `Taken back · ${wireClock("2026-10-07T21:31:00Z")} · By you · by your press ${wireClock("2026-10-07T21:30:00Z")}`,
     )).toBeTruthy();
   });
 });

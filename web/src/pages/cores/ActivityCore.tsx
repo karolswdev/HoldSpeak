@@ -16,7 +16,7 @@ import {
   StringGadget,
 } from "../../desk/surface/gadgets";
 import { DotWord, Toolbar, ToolGlyph } from "../../desk/surface/kit";
-import { stateWords } from "../../desk/surface/words";
+import { stateWords, wireWords } from "../../desk/surface/words";
 import { spriteUrl } from "../../desk/sprites";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { apiFetch } from "../../lib/api";
@@ -179,7 +179,7 @@ export function ActivityCore({ hero }: CoreProps) {
                   off ? (
                     <LampGadget on tone="warn" label={token} />
                   ) : (
-                    <span className="gadget-chip">{stateWords(token.replace(/_/g, " ").toUpperCase())}</span>
+                    <span className="gadget-chip">{wireWords(token)}</span>
                   )
                 }
                 verbs={
