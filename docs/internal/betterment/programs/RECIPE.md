@@ -513,7 +513,7 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   `programs.app.test.tsx` (PG20 describe), fixtures `program.start_from.json`
   and `program.limited.json`.
 
-## PG21. The verified provider matrix in Engines (Left)
+## PG21. The verified provider matrix in Engines (Built)
 
 - **Goal**: Settings ▸ Engines shows, per agent, whether its usage-limit
   notice was read on this desk (verified from a real stop) or only from the
@@ -525,3 +525,24 @@ State: **Shipped** means in this PR. **Left** means a later slice.
 - **Done when**: a real stop of Claude Code or Codex turns its row verified.
 - **Tests**: T1 on a recorded capture; T2 the Engines app file.
 - **Not in this slice**: other harnesses (gemini, opencode).
+- **Built (2026-10-31)**: one real capture. The owner's Claude Code
+  transcripts on this Mac hold its stop (`isApiErrorMessage`, 429
+  `rate_limit`, 2026-10-09 and 2026-10-19): "You've hit your weekly limit ·
+  resets Oct 24 at 2am (America/Denver)". The parser missed it twice ("hit
+  your weekly limit"; a reset with a date): `usage_limit._CLAUDE` and the
+  new `_ON` read it now. No Codex stop is on this Mac (`~/.codex/sessions`,
+  `logs_2.sqlite`); its row is documented until one is read.
+  `tests/fixtures/usage_limit_captures.json` holds both (`real` says which).
+  Hub: table `agent_limit_stops` (one row per harness: first seen, the
+  notice's shape from `usage_limit.notice_shape`, the reset, the rule);
+  `screen_watch.tick` keeps each stop it reads (`limit_stops.record`; the
+  same notice and reset keep the first time). The Engines read
+  (`/api/concierge/detect`) carries `limitNotice` {verified, notice,
+  stoppedAt, resetsAt} on each Claude Code and Codex engine row (added or
+  found); documented rows carry `usage_limit.DOCUMENTED`. Face: a "Limit
+  notice" fact in the engine's fold, a DotWord ("Verified · last stop Mon
+  15:17 · reset Sat 02:00" ok; "Documented · never read here" idle), the
+  notice on hover. No route added. Tests: `tests/unit/test_usage_limit_matrix.py`,
+  `tests/integration/test_desk_engines.py` (the real stop through tick and
+  the route), `engines.app.test.tsx` (PG21 describe) on the recorded
+  `limitNotice` scenario of `scripts/record_engines_fixture.py`.

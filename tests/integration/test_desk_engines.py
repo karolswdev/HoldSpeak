@@ -357,6 +357,45 @@ def test_a_codex_run_is_recorded_through_its_json_parser(
     assert engine["spend"]["reportsCost"] is False and engine["spend"]["weekUsd"] == 0.0, engine
 
 
+def test_a_real_claude_code_stop_on_the_screen_turns_its_engine_row_verified(
+    hub: str, fake_bin: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Programs PG21: the real Claude Code capture (tests/fixtures/
+    usage_limit_captures.json) through the watcher's tick, then the Engines
+    read: Claude Code verified with its stop and reset; Codex documented."""
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+
+    from holdspeak.agent_context import screen_watch
+    from holdspeak.db import get_database
+
+    capture = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "usage_limit_captures.json").read_text())
+    for preset in ("claude", "codex"):
+        _ok(hub, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+            "request_id": f"connect-{preset}", "profile_id": f"agent-{preset}",
+            "expected_profile_revision": 0, "preset": preset,
+        }})
+    before = {e["agentPreset"]: e.get("limitNotice") for e in _agent_rows(hub)}
+    assert before["claude"]["verified"] is False and before["codex"]["verified"] is False, before
+
+    def runner(argv: list[str]) -> SimpleNamespace:
+        out = "" if argv[1] == "display-message" else capture["claude"]["screen"]
+        return SimpleNamespace(returncode=0, stdout=out + "\n", stderr="")
+
+    monkeypatch.setenv(screen_watch.SCREEN_RULES_ENV, "on")
+    seen = datetime(2026, 10, 19, 13, 17, 36, tzinfo=timezone.utc)
+    screen_watch.tick(screen_watch.ScreenStore(), records=[
+        {"launch_id": "L1", "state": "launched", "session": "hs-L1", "profile_id": "claude-default"},
+    ], sessions=[], db=get_database(), runner=runner, now=seen)
+
+    after = {e["agentPreset"]: e.get("limitNotice") for e in _agent_rows(hub)}
+    assert after["claude"] == {
+        "verified": True, "notice": "You've hit your weekly limit · resets <date> at <time> (<zone>)",
+        "stoppedAt": "2026-10-19T13:17:36Z", "resetsAt": "2026-10-24T08:00:00Z",
+    }, after
+    assert after["codex"]["verified"] is False, after
+
+
 # ── Betterment E3: the model picker, one engine for each model ──────────────
 
 # The shape the owner's LAN llama.cpp server really answers on /v1/models
