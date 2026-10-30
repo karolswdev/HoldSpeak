@@ -2432,8 +2432,13 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-- **Programs (2026-10-28):** PG14, PG15, PG16, PG20 and PG21 in
-  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG18 and the race shot
+- **Words (2026-10-30):** left after #1625/#1628/#1631/#1632: `.surface-section-head h3`
+  mono caps (its own species), six window-local caps labels (`.desk-pr-compose > label`,
+  `.runs-on-picker label`, `.review-edit-label`, ProjectRoomCore OWNER/DUE,
+  `.topology-repoint-label`, `.automation-line-label`), the AskWell caps caption, the
+  agentFlights caps table, `stateWords`' one-letter "A".
+- **Programs (2026-10-28):** PG15, PG16, PG20 and PG21 in
+  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG13, PG13b, PG14, PG18 and the race shot
   #1618, PG13 #1620 and PG13b #1621 shipped); his live verdict on the Programs
   window and the Program window.
 
@@ -2599,7 +2604,15 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **This PR — Phone push host (lane PHONE-APNS-HOST):** Builds from: App Store · Xcode on the Push group (`host` `app_store` | `development` beside the key parts; `ApnsPush` sends to Apple's production or development host); the stale Test push answer names the Xcode choice; the Record lamp in sentence case.
+- **#1632 — Words: field and check-box labels in sentence case at the species** (gadgets.css: caption, token check, check word, group legend); the eyebrow keeps its caps by UX-CANON §C; the Hand sheet's caps words become words; two ratchet tests on the label species.
+- **#1631 — Engines words:** the Add picker's chip and token sources in sentence case, "On the other Mac" keeps its Mac, the Wiring fold's label is a quiet caption; a guard keeps caps out of the Engines sources.
+- **#1630 — Engines under the window grammar (direction B):** two lists (what HoldSpeak does, with the engine picker in the row · the engines in words), hosts in the engine's fold, Builder tools no longer swaps the face for the parked switchboard; ListRow gains selected/lit/expanded/progress/fold.
+- **#1629 — Eight FAST guards fixed at cause;** every guard file runs on every quick check (the always-run list in `scripts/quick_check.sh`).
+- **#1628 — The egress chip** says its words in sentence case and shows hosts as typed; no caller uppercases a host or a vendor; the ratchet covers chips.
+- **#1627 — Three clock reds:** tests pin every clock the hub reads; `usage_limit._local_zone` takes the zone from the pinned moment; Phone flow tests start outside quiet hours.
+- **#1626 — Programs PG14:** the Do kind `run_program` on automations; the Overnight starter is real; `openPullout('program:<id>')` fixed.
+- **#1625 — Lamp words:** every lamp in sentence case (Listening, Reconnecting, Offline); `tests/unit/test_lamp_words_guard.py` is the ratchet.
+- **#1624 — Phone push host (lane PHONE-APNS-HOST):** Builds from: App Store · Xcode on the Push group (`host` `app_store` | `development` beside the key parts; `ApnsPush` sends to Apple's production or development host); the stale Test push answer names the Xcode choice; the Record lamp in sentence case.
 - **#1623 — Phone: save the Apple push key in Settings ▸ Calls ▸ Phone ▸ Push, Test push with Apple's answer in plain words, and the "Reached you" line on Today (PH16, PH17).**
 - **#1622 — Phone PH13 and Line LINE-6:** APNs sends over HTTP/2 and says why a push would not go; the Line's two speech models are Engines rows with their licences and a Download press.
 - **#1621 — Programs PG13b:** the launch flags follow the Program's level, a helper inherits its step's level, and every printed level says Secure · Normal · YOLO.
