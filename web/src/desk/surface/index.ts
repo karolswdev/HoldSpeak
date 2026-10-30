@@ -36,7 +36,10 @@ export {
   useScrollHint,
   computeScrollHint,
   type ScrollHintState,
+  type PaneHeaderMode,
 } from "./Surface";
+
+export type { PaneGeometry } from "./XtermPane";
 
 export {
   GadgetGroup,

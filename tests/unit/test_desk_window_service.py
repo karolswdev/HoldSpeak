@@ -76,6 +76,17 @@ def test_object_window_carries_its_app_and_object_ref(svc: Any) -> None:
     assert svc.open("surface-people", app="open-people")["app"] == "open-people"
 
 
+def test_terminal_family_is_a_native_hub_window(svc: Any) -> None:
+    assert window_app("surface-terminals") == ("open-terminals", None)
+    assert window_app("terminal:terminal_abc123") == ("terminal", "terminal_abc123")
+    first = svc.open("terminal:terminal_a", object_ref="terminal_a")
+    second = svc.open("terminal:terminal_b", object_ref="terminal_b")
+    assert first["app"] == second["app"] == "terminal"
+    assert [row["id"] for row in svc.list()["windows"]] == [
+        "terminal:terminal_a", "terminal:terminal_b"
+    ]
+
+
 def test_raise_is_plus_plus_highest_and_a_no_op_when_front(svc: Any) -> None:
     for wid in ("chair:brief", "chair:week", "chair:needs"):
         svc.open(wid)

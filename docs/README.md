@@ -12,6 +12,7 @@ Start with [What is HoldSpeak?](WHAT_IS_HOLDSPEAK.md) or the [root README](../RE
 | Take a meeting through follow-up | [Meeting mode](MEETING_MODE_GUIDE.md) | [Intelligence](MEETING_INTELLIGENCE.md), [Aftercare](MEETING_AFTERCARE.md) |
 | Ask about records and use tools | [The Desk](WEB_DESK.md#ask-about-your-work) | [Agents and Threads](AGENTS_AND_THREADS.md) |
 | Hand a task to a coding agent | [Coder integration](CODER_INTEGRATION.md) | [Agent hooks](AGENT_HOOK_INSTALL.md), [Gate](GATE.md) |
+| Work with several live terminals | [Terminals](TERMINALS.md) | [Coder integration](CODER_INTEGRATION.md) |
 | Run a multi-step implementation goal | [Programs](programs.md) | [Coder integration](CODER_INTEGRATION.md) |
 | Work by phone or receive a work call | [Calls and The Line](calls.md) | [Phone](phone.md) |
 | Make a useful job repeat | [Automation](AUTOMATION.md) | [Project Watches](PROJECT_ROOMS.md), [Cadence](CADENCE.md) |

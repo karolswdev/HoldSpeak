@@ -500,9 +500,9 @@ export function SurfaceWell({
  * through xterm.js (lazy chunk — the desk's first paint never pays
  * for an emulator) with scrollback search and copy-on-select; when
  * the wire cannot give raw (older hub, stripped-only consumer) the
- * mono pre face stays, named honestly in the head. The terminal is a
- * VIEWER — no keystroke here ever reaches a pane; typing goes through
- * the armed steer composer only (Article XI / Phase 87 law). */
+ * mono pre face stays, named honestly in the head. The terminal is read-only
+ * by default; an owning controller may opt into input without moving target,
+ * grant or focus authority into this shared material seam. */
 
 const XtermPane = lazy(() => import("./XtermPane"));
 
@@ -522,6 +522,8 @@ function AgeToken({ changedAt }: { changedAt: number }) {
   return <Token className="surface-token">Δ {face}</Token>;
 }
 
+export type PaneHeaderMode = "inspect" | "find" | "none";
+
 export function PaneWell({
   live,
   lines,
@@ -529,7 +531,12 @@ export function PaneWell({
   raw,
   pane,
   changedAt,
+  header = "inspect",
   onData,
+  focusSignal,
+  copyOnSelect,
+  inputEnabled,
+  onFocus,
 }: {
   /** The pane renders while the peek is live/resyncing. */
   live: boolean;
@@ -543,8 +550,18 @@ export function PaneWell({
   pane?: PaneGeometry | null;
   /** Epoch ms of the last content change — the Δ fact in the head. */
   changedAt?: number | null;
+  /** Inspector facts by default; Finder only or no head for quiet terminal windows. */
+  header?: PaneHeaderMode;
   /** Optional live input for an embedded owner pane. */
   onData?: (data: string) => void;
+  /** Ask the mounted xterm to focus without remounting it. */
+  focusSignal?: number | string;
+  /** Copy selection when true (the shared read-only default). */
+  copyOnSelect?: boolean;
+  /** Enable xterm stdin only when the owner has granted this controller. */
+  inputEnabled?: boolean;
+  /** Called when the xterm receives focus. */
+  onFocus?: () => void;
 }) {
   const preRef = useRef<HTMLPreElement | null>(null);
   const [query, setQuery] = useState("");
@@ -557,15 +574,19 @@ export function PaneWell({
   if (!live) return <p className="desk-session-state">{absence}</p>;
   const hasRaw = raw !== null && raw !== undefined;
   const lineCount = hasRaw ? raw.split("\n").length : lines.length;
+  const showHead = header !== "none" && (header === "inspect" || hasRaw);
+  const showFinder = showHead && hasRaw;
   return (
     <div className="terminal-well">
-      <div className="terminal-well-head">
-        <Token className="surface-token">
-          {hasRaw ? "RAW" : "STRIPPED · RAW UNAVAILABLE"}
-        </Token>
-        <Token className="surface-token">LINES {lineCount}</Token>
-        {changedAt ? <AgeToken changedAt={changedAt} /> : null}
-        {hasRaw ? (
+      {showHead ? <div className="terminal-well-head">
+        {header === "inspect" ? <>
+          <Token className="surface-token">
+            {hasRaw ? "RAW" : "STRIPPED · RAW UNAVAILABLE"}
+          </Token>
+          <Token className="surface-token">LINES {lineCount}</Token>
+          {changedAt ? <AgeToken changedAt={changedAt} /> : null}
+        </> : null}
+        {showFinder ? (
           <span className="terminal-well-find">
             <StringGadget
               label="Find in scrollback"
@@ -578,12 +599,21 @@ export function PaneWell({
             />
           </span>
         ) : null}
-      </div>
+      </div> : null}
       {hasRaw ? (
         // The screen tone is set on the frame BEFORE xterm opens — the
         // suspense gap and the mount both paint the same opaque well.
         <Suspense fallback={<div className="terminal-well-screen" />}>
-          <XtermPane raw={raw} pane={pane} search={{ query, seq }} onData={onData} />
+          <XtermPane
+            raw={raw}
+            pane={pane}
+            search={{ query, seq }}
+            onData={onData}
+            focusSignal={focusSignal}
+            copyOnSelect={copyOnSelect}
+            inputEnabled={inputEnabled ?? Boolean(onData)}
+            onFocus={onFocus}
+          />
         </Suspense>
       ) : (
         <pre ref={preRef} className="desk-session-pane">

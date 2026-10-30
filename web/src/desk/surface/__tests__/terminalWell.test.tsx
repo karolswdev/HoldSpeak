@@ -106,6 +106,7 @@ describe("PaneWell xterm interior (HS-111-11)", () => {
     expect(term.onDataCalls).toBe(0);
     // Signal Workbench material: opaque screen, mono, steady block.
     expect(term.options.theme.background).toBe("#0f1115");
+    expect(term.options.theme.foreground).toBe("#f7f9fc"); // light ink on the dark screen
     expect(term.options.cursorStyle).toBe("block");
     expect(term.options.cursorBlink).toBe(false);
     expect(term.options.fontFamily).toContain("Mono");
@@ -175,5 +176,35 @@ describe("PaneWell xterm interior (HS-111-11)", () => {
     );
     expect(screen.getByText(/pane gone/)).toBeTruthy();
     expect(container.querySelector(".terminal-well")).toBeNull();
+  });
+
+  it("keeps one emulator when the controller callback changes", async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const view = render(
+      <PaneWell live lines={[]} raw={COLORED} onData={first} inputEnabled />,
+    );
+    const term = await mountedTerminal();
+    expect(term.onDataCalls).toBe(1);
+    view.rerender(
+      <PaneWell live lines={[]} raw={COLORED} onData={second} inputEnabled />,
+    );
+    await waitFor(() => expect(FakeTerminal.instances.length).toBe(1));
+    expect(term.disposed).toBe(false);
+    expect(term.onDataCalls).toBe(1);
+  });
+
+  it("supports quiet terminal heads without changing the inspector default", async () => {
+    const view = render(<PaneWell live lines={[]} raw={COLORED} header="none" />);
+    await mountedTerminal();
+    expect(screen.queryByText("Raw")).toBeNull();
+    expect(screen.queryByLabelText("Find in scrollback")).toBeNull();
+
+    view.rerender(<PaneWell live lines={[]} raw={COLORED} header="find" />);
+    expect(screen.queryByText("Raw")).toBeNull();
+    expect(screen.getByLabelText("Find in scrollback")).toBeInTheDocument();
+
+    view.rerender(<PaneWell live lines={[]} raw={COLORED} />);
+    expect(screen.getByText("Raw")).toBeInTheDocument();
   });
 });

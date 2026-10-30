@@ -4,7 +4,7 @@ This reference supplements [API surface](API_SURFACE.md). The existing real-app
 generator owns the route roster; this census adds static handler evidence.
 It does not invent request/response schemas for raw `Request` handlers.
 
-Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **877 method/route entries**.
+Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **889 method/route entries**.
 
 **Verification boundary:** inspect the full endpoint ledger, `docs/generated/api-reference.json` (not in git; run `scripts/gen_docs.sh` to write it),
 and the [declared OpenAPI schemas](generated/openapi.json) for transport models.
@@ -46,9 +46,9 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.calendar_events` | 3 |
 | `web.routes.calendar_snapshot` | 2 |
 | `web.routes.calendar_sources` | 1 |
-| `web.routes.calls` | 15 |
+| `web.routes.calls` | 20 |
 | `web.routes.channels` | 11 |
-| `web.routes.concierge` | 7 |
+| `web.routes.concierge` | 8 |
 | `web.routes.connections` | 4 |
 | `web.routes.constitutional` | 3 |
 | `web.routes.core` | 2 |
@@ -60,7 +60,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.delivery_factory` | 3 |
 | `web.routes.delivery_node` | 5 |
 | `web.routes.delivery_prs` | 9 |
-| `web.routes.delivery_terminal` | 5 |
+| `web.routes.delivery_terminal` | 6 |
 | `web.routes.desk_actuators` | 7 |
 | `web.routes.desk_parked` | 1 |
 | `web.routes.desk_seed` | 2 |
@@ -91,9 +91,9 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.model_library` | 8 |
 | `web.routes.monday_brief` | 5 |
 | `web.routes.onboarding` | 13 |
-| `web.routes.pages` | 21 |
+| `web.routes.pages` | 22 |
 | `web.routes.people` | 31 |
-| `web.routes.phone` | 15 |
+| `web.routes.phone` | 18 |
 | `web.routes.primitives.ask` | 7 |
 | `web.routes.primitives.chains` | 7 |
 | `web.routes.primitives.decisions` | 6 |
@@ -108,7 +108,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.primitives.thoughts` | 21 |
 | `web.routes.primitives.workbenches` | 32 |
 | `web.routes.primitives.workflows` | 7 |
-| `web.routes.programs` | 16 |
+| `web.routes.programs` | 17 |
 | `web.routes.project_briefs` | 8 |
 | `web.routes.project_door` | 3 |
 | `web.routes.project_reviews` | 5 |

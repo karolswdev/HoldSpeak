@@ -88,6 +88,9 @@ STATIC_WINDOWS: dict[str, str] = {
     # The agent lane (lane/laneStore.ts): one window, on one launch at a time;
     # its row's object is the launch (``launch:<id>``).
     "lane": "lane",
+    # Native Terminals inventory (terminal:<stable session id> is the
+    # per-session window family; this static door is the inventory face).
+    "surface-terminals": "open-terminals",
 }
 
 #: Windows no view can open from a hub row yet (their opener needs state the
@@ -122,6 +125,7 @@ WINDOW_FAMILIES: dict[str, str] = {
     "roadmap:": "roadmap",
     "repository:": "repository",
     "workbench:": "workbench",
+    "terminal:": "terminal",
 }
 
 #: Retired families: their rows still close, a new window is refused.

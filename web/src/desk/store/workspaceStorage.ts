@@ -62,6 +62,9 @@ export interface DeskWorkspaceDocumentV1 {
   /** Extra repository view id -> resource. Default views still restore from
    * the legacy `windows.repository` string list without a mapping. */
   repositoryViews?: Record<string, { resourceId: string; initialPath?: string }>;
+  /** Open native terminal descriptor ids. The corresponding session may be
+   * absent on restore; absence is rendered honestly and never substituted. */
+  terminals?: string[];
 }
 
 export interface DeskWorkspaceWindows {
@@ -271,6 +274,7 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
       zoneWindows: compactIds(candidate.zoneWindows),
       zoneViewPrefs,
       windows: parseWindowLists(candidate.windows),
+      terminals: compactRefs(candidate.terminals),
       ...(repositoryViews && Object.keys(repositoryViews).length ? { repositoryViews } : {}),
       ...(chair ? { chair } : {}),
       ...(candidate.screen === "chair" || candidate.screen === "floor"
@@ -307,6 +311,7 @@ type WorkspaceState = Pick<
   drafts?: Record<string, string>;
   places?: Record<string, string>;
   recentOpened?: string[];
+  terminalWindows?: Array<{ id: string; origin: { x: number; y: number } | null }>;
 };
 
 /** PHILO-16 (16b) — the hub owns the desk's windows; this document is the
@@ -410,6 +415,7 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
       repository: compactRefs((state.repositoryWindows ?? []).map((w) => w.id)),
       workbench: compactRefs((state.workbenchWindows ?? []).map((w) => w.id)),
     },
+    terminals: compactRefs((state.terminalWindows ?? []).map((window) => window.id)),
     repositoryViews: Object.fromEntries((state.repositoryWindows ?? [])
       .filter((w) => w.id.startsWith("view:") && isPanelId(w.id) &&
         typeof w.resourceId === "string" && w.resourceId.length > 0)

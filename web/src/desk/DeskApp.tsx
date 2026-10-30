@@ -70,6 +70,15 @@ const AutomationHost = lazy(() =>
     default: module.AutomationHost,
   })),
 );
+// Terminal frames import the live compositor selector. Keep that family behind
+// the same runtime boundary as the other heavyweight window families so the
+// Desk arrival shell (and its lightweight test doubles) does not initialize a
+// live compositor before the real Desk store is ready.
+const TerminalWindows = lazy(() =>
+  import("./terminals/TerminalWindows").then((module) => ({
+    default: module.TerminalWindows,
+  })),
+);
 
 /** HS-148-02: the root attribute gate for the glyph column.
  * Reads from localStorage so story-03's rig can flip it;
@@ -112,6 +121,10 @@ function DeskFaces() {
   const editingId = useDesk((s) => s.editingId);
   const pullouts = useDesk((s) => s.pullouts);
   const infoWindows = useDesk((s) => s.infoWindows);
+  // Terminal frames require the compositor's canonical depth map. This also
+  // keeps the arrival/test shell from importing a live frame before the Desk
+  // store has finished its first snapshot.
+  const panelDepth = useDesk((s) => s.panelDepth);
   const askOpen = useDesk((s) => s.askOpen);
   const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
@@ -270,6 +283,11 @@ function DeskFaces() {
       {!arrivalRequired && builder && <DeliveryBoard />}
       {!arrivalRequired && <DeliveryDossierWindow />}
       {!arrivalRequired && <DeliveryTerminalWindow />}
+      {!arrivalRequired && panelDepth && (
+        <Suspense fallback={null}>
+          <TerminalWindows />
+        </Suspense>
+      )}
       {!arrivalRequired && roadmapWindows.map((roadmap) => (
         <ApplicationBoundary key={roadmap.slug} label="Roadmap">
           <Suspense fallback={null}>

@@ -26,6 +26,7 @@ _SHELL_PATH = _HOLDSPEAK_DIR / "static" / "_built" / "index.html"
 SPA_ROUTES = (
     "/",
     "/desk",
+    "/terminals",
     "/welcome",
     "/setup",
     "/dictation",

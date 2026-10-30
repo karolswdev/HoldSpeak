@@ -294,7 +294,7 @@ def resolve_pane_identity(
     run = runner or _default_runner
     try:
         completed = run(
-            ["tmux", "display-message", "-p", "-t", str(target), "#{pane_id}"]
+            ["tmux", "display-message", "-p", "-t", str(target), _PANE_IDENTITY_FIELDS]
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {"status": "error", "detail": str(exc)}
@@ -307,13 +307,144 @@ def resolve_pane_identity(
         # expansion when the server is otherwise alive — an
         # unprovable pane is a gone pane, never a transient error.
         return {"status": "pane_gone", "detail": "target does not resolve to a pane"}
-    return {"status": "ok", "pane_id": pane_id}
+    fields = _parse_identity_fields(pane_id)
+    # Existing injected runners return only ``%N``. Preserve that tiny
+    # resolver contract; real tmux emits the richer tab-separated identity.
+    if "\t" not in pane_id:
+        return {"status": "ok", "pane_id": pane_id}
+    identity = {
+        "status": "ok",
+        "pane_id": fields.get("pane_id") or pane_id,
+    }
+    for name in (
+        "pane_pid",
+        "pane_tty",
+        "current_path",
+        "session_id",
+        "window_id",
+        "window_index",
+        "pane_index",
+        "pane_start_command",
+        "socket_path",
+        "server_pid",
+    ):
+        if fields.get(name):
+            identity[name] = fields[name]
+    geometry_fields = ("pane_width", "pane_height", "cursor_x", "cursor_y")
+    if all(fields.get(name) not in (None, "") for name in geometry_fields):
+        try:
+            identity["pane"] = {
+                "width": int(fields["pane_width"]),
+                "height": int(fields["pane_height"]),
+                "cursor_x": int(fields["cursor_x"]),
+                "cursor_y": int(fields["cursor_y"]),
+            }
+        except (TypeError, ValueError):
+            pass
+    fingerprint = _identity_fingerprint(fields)
+    if fingerprint:
+        identity["fingerprint"] = fingerprint
+    return identity
 
 
+# The first six fields are the long-standing discovery contract. The suffix
+# gives the terminal workspace enough identity to distinguish a respawned pane
+# that keeps the same %N. ``#{pid}`` is tmux's server pid on supported tmux
+# versions; socket_path remains useful when a build does not expose it.
 _PANE_FIELDS = (
     "#{pane_id}\t#{session_name}\t#{window_index}\t"
-    "#{pane_current_command}\t#{pane_title}\t#{pane_active}"
+    "#{pane_current_command}\t#{pane_title}\t#{pane_active}\t"
+    "#{pane_pid}\t#{pane_tty}\t#{pane_current_path}\t#{session_id}\t"
+    "#{window_id}\t#{pane_index}\t#{pane_start_command}\t#{socket_path}\t#{pid}"
 )
+
+_PANE_IDENTITY_FIELDS = (
+    "#{pane_id}\t#{pane_pid}\t#{pane_tty}\t#{pane_current_path}\t"
+    "#{session_id}\t#{window_id}\t#{window_index}\t#{pane_index}\t"
+    "#{pane_current_command}\t#{pane_title}\t#{pane_active}\t"
+    "#{pane_start_command}\t#{socket_path}\t#{pid}\t"
+    "#{pane_width}\t#{pane_height}\t#{cursor_x}\t#{cursor_y}"
+)
+
+
+def _identity_fingerprint(fields: Mapping[str, str]) -> Optional[str]:
+    """Hash tmux process identity, excluding mutable labels and cwd."""
+    pane_id = str(fields.get("pane_id") or "")
+    pane_pid = str(fields.get("pane_pid") or "")
+    server_pid = str(fields.get("server_pid") or "")
+    socket_path = str(fields.get("socket_path") or "")
+    if not pane_id or not pane_pid or not (server_pid or socket_path):
+        return None
+    stable = "\x1f".join(
+        str(fields.get(name) or "")
+        for name in (
+            "pane_id",
+            "pane_pid",
+            "pane_tty",
+            "session_id",
+            "window_id",
+            "pane_start_command",
+            "socket_path",
+            "server_pid",
+        )
+    )
+    return "sha256:" + hashlib.sha256(stable.encode("utf-8", "replace")).hexdigest()
+
+
+def _parse_pane_fields(raw: str) -> dict[str, str]:
+    parts = raw.split("\t")
+    names = (
+        "pane_id",
+        "session",
+        "window",
+        "command",
+        "title",
+        "active",
+        "pane_pid",
+        "pane_tty",
+        "current_path",
+        "session_id",
+        "window_id",
+        "pane_index",
+        "pane_start_command",
+        "socket_path",
+        "server_pid",
+    )
+    return {
+        name: parts[index]
+        for index, name in enumerate(names)
+        if index < len(parts)
+    }
+
+
+def _parse_identity_fields(raw: str) -> dict[str, str]:
+    """Parse the separate, identity-ordered display-message format."""
+    parts = raw.split("\t")
+    names = (
+        "pane_id",
+        "pane_pid",
+        "pane_tty",
+        "current_path",
+        "session_id",
+        "window_id",
+        "window_index",
+        "pane_index",
+        "command",
+        "title",
+        "active",
+        "pane_start_command",
+        "socket_path",
+        "server_pid",
+        "pane_width",
+        "pane_height",
+        "cursor_x",
+        "cursor_y",
+    )
+    return {
+        name: parts[index]
+        for index, name in enumerate(names)
+        if index < len(parts)
+    }
 
 
 def list_panes(*, runner: Optional[Runner] = None) -> dict[str, Any]:
@@ -344,16 +475,32 @@ def list_panes(*, runner: Optional[Runner] = None) -> dict[str, Any]:
         if len(parts) < 6:
             continue
         pane_id, session, window, command, title, active = parts[:6]
-        panes.append(
-            {
-                "pane_id": pane_id,
-                "session": session,
-                "window": window,
-                "command": command,
-                "title": title,
-                "active": active == "1",
-            }
-        )
+        pane = {
+            "pane_id": pane_id,
+            "session": session,
+            "window": window,
+            "command": command,
+            "title": title,
+            "active": active == "1",
+        }
+        fields = _parse_pane_fields(line)
+        for name in (
+            "pane_pid",
+            "pane_tty",
+            "current_path",
+            "session_id",
+            "window_id",
+            "pane_index",
+            "pane_start_command",
+            "socket_path",
+            "server_pid",
+        ):
+            if fields.get(name):
+                pane[name] = fields[name]
+        fingerprint = _identity_fingerprint(fields)
+        if fingerprint:
+            pane["fingerprint"] = fingerprint
+        panes.append(pane)
     return {"status": "ok", "panes": panes}
 
 
@@ -388,6 +535,14 @@ def arm(
     with _GRANTS_LOCK:
         _GRANTS[key] = {
             "pane_id": identity["pane_id"],
+            # Rich tmux identities pin the process as well as the recycled
+            # `%N` address. Legacy injected runners may return only `%N`; in
+            # that compatibility mode the pane-id check remains authoritative.
+            **(
+                {"fingerprint": identity["fingerprint"]}
+                if identity.get("fingerprint")
+                else {}
+            ),
             "target": str(target),
             "granted_at": now,
             "issued_at": utc_now_iso(),
@@ -512,6 +667,18 @@ def require_grant(
                 f"pane {identity['pane_id']!r} is not the armed "
                 f"{grant['pane_id']!r} — nothing was typed"
             ),
+            "revoked": True,
+        }
+    # A tmux pane can retain the same `%N` after its process is respawned.
+    # Rich identities therefore invalidate the old arm even when the mutable
+    # pane address still resolves to the same slot. A legacy `%N`-only fake
+    # runner has no fingerprint and keeps the historical compatibility path.
+    grant_fingerprint = str(grant.get("fingerprint") or "")
+    if grant_fingerprint and str(identity.get("fingerprint") or "") != grant_fingerprint:
+        disarm(key)
+        return {
+            "status": "pane_mismatch",
+            "detail": "the pane process identity changed — nothing was typed",
             "revoked": True,
         }
     return {

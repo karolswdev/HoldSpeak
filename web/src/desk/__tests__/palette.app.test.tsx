@@ -459,20 +459,24 @@ describe("S0: Search lists no dead row", () => {
     expect(opts.map((o) => o.id)).not.toContain("desk-palette-option-object.hand-to-agent");
   });
 
-  // Betterment shell S1 (supersedes the S0 Terminals rule): the launchers
-  // are builder rows, listed only when Builder tools is on.
-  it("the launchers (Delivery, Terminals) are rows only when Builder tools is on", async () => {
+  // Betterment shell S1: the canonical Terminals app is a normal Work door;
+  // the parked PanePicker launcher remains a compatibility door only and is
+  // deduplicated by the palette when Builder tools is on.
+  it("lists canonical Terminals without Builder and never duplicates the legacy panes launcher", async () => {
     announceLauncher({ id: "panes", label: "Terminals", glyph: "⧉", open: false, activate: () => {} });
     announceLauncher({ id: "delivery-board", label: "Delivery", glyph: "▤", open: false, activate: () => {} });
     try {
       const input = await deck();
       await type(input, "terminals");
+      expect(rows().map((o) => o.id)).toContain("desk-palette-option-go.open-terminals");
       expect(rows().map((o) => o.id)).not.toContain("desk-palette-option-drawer:panes");
       await type(input, "delivery");
       expect(rows().map((o) => o.id)).not.toContain("desk-palette-option-drawer:delivery-board");
       act(() => useBuilderTools.getState().setOn(true));
       await type(input, "terminals");
-      expect(rows().map((o) => o.id)).toContain("desk-palette-option-drawer:panes");
+      expect(rows().map((o) => o.id).filter((id) => id.includes("terminals") || id.includes(":panes"))).toEqual([
+        "desk-palette-option-go.open-terminals",
+      ]);
       await type(input, "delivery");
       expect(rows().map((o) => o.id)).toContain("desk-palette-option-drawer:delivery-board");
     } finally {

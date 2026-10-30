@@ -44,6 +44,12 @@ of truth after the press.
 
 ## Observe, draft, reply
 
+Open **Go > Work > Terminals** for local shells and coding-agent terminals.
+Each terminal opens in its own Desk window, with separate output and input.
+Use **Enable typing** in the window you want to control. Closing its view
+leaves the process running. See [Terminals](TERMINALS.md) for arrangement,
+message input and the current screen-capture limits.
+
 The Desk reads live session state from:
 
 | Action | Route |

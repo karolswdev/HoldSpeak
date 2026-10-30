@@ -176,7 +176,10 @@ describe("Go menu grouping separator (HS-148-02)", () => {
     // Betterment P4: + Decisions (Projects is Go ▸ Projects ▸ All projects).
     // Calls (2026-10-28): + Calls (Go ▸ Work ▸ Calls); + Recordings.
     // Programs (2026-10-28): + Programs (Go ▸ Daily, after Agents).
-    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(18);
+    // Terminals: the canonical inventory is a Work door; the old PanePicker
+    // launcher remains a compatibility path and is not another verb.
+    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(19);
+    expect(goVerbs.some((v) => v.id === "go.open-terminals")).toBe(true);
     for (const id of ["go.configure-settings", "go.configure-runs-on", "go.configure-integrations", "go.configure-setup", "go.change-places"])
       expect(goVerbs.some((v) => v.id === id), id).toBe(false);
   });

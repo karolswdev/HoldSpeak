@@ -10,9 +10,12 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from fastapi import APIRouter, FastAPI
+from fastapi.testclient import TestClient
 import pytest
 
 from holdspeak import coder_factory, coder_steering
+from holdspeak.web.routes.system.coder_factory_routes import register_factory_routes
 
 
 @pytest.fixture(autouse=True)
@@ -97,6 +100,61 @@ def test_spawn_creates_and_returns_the_pane() -> None:
     r = coder_factory.spawn("work", command="htop", runner=_runner(script), audit=rec.audit)
     assert r["status"] == "spawned" and r["session"] == "work" and r["pane_id"] == "%7"
     assert rec.rows[0]["outcome"] == "spawned" and "spawn work" in rec.rows[0]["text"]
+
+
+def test_spawn_accepts_a_validated_cwd_and_passes_it_to_tmux(tmp_path) -> None:
+    rec = _Rec()
+    seen: list[list[str]] = []
+
+    def script(argv):
+        seen.append(argv)
+        if argv[:2] == ["tmux", "new-session"]:
+            from tests.unit._spawn_env import consume
+
+            consume(argv)
+            return ("", 0, "")
+        if argv[:2] == ["tmux", "list-panes"]:
+            return ("%8\n", 0, "")
+        return ("", 0, "")
+
+    result = coder_factory.spawn(
+        "work-cwd", cwd=str(tmp_path), runner=_runner(script), audit=rec.audit
+    )
+    assert result["status"] == "spawned"
+    assert result["cwd"] == str(tmp_path.resolve())
+    assert ["-c", str(tmp_path.resolve())] == seen[0][3:5]
+
+
+def test_spawn_refuses_a_missing_cwd_before_tmux() -> None:
+    rec = _Rec()
+    calls: list[list[str]] = []
+    result = coder_factory.spawn(
+        "work-cwd", cwd="/definitely/not/a/holdspeak-directory",
+        runner=_runner(lambda argv: (calls.append(argv), ("", 0, ""))[1]),
+        audit=rec.audit,
+    )
+    assert result["status"] == "cwd_invalid"
+    assert calls == []
+
+
+def test_factory_route_forwards_cwd_to_the_audited_spawn(monkeypatch, tmp_path) -> None:
+    seen: dict[str, object] = {}
+
+    def fake_spawn(name, *, command=None, cwd=None, **kwargs):
+        seen.update({"name": name, "command": command, "cwd": cwd})
+        return {"status": "spawned", "session": name, "pane_id": "%9", "cwd": cwd}
+
+    monkeypatch.setattr(coder_factory, "spawn", fake_spawn)
+    app = FastAPI()
+    router = APIRouter()
+    register_factory_routes(router)
+    app.include_router(router)
+    response = TestClient(app).post(
+        "/api/coders/factory/spawn",
+        json={"name": "work-cwd", "cwd": str(tmp_path)},
+    )
+    assert response.status_code == 200
+    assert seen == {"name": "work-cwd", "command": None, "cwd": str(tmp_path)}
 
 
 def test_rename_relabels_with_the_same_guard() -> None:

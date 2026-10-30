@@ -111,18 +111,40 @@ class TerminalTargetRegistry:
                     "pane_ref": pane_ref,
                     "pane_id": pane_id,
                 }
+                if identity.get("fingerprint"):
+                    record["fingerprint"] = identity["fingerprint"]
+                if identity.get("pane"):
+                    record["pane"] = dict(identity["pane"])
                 self._by_id[record["target_id"]] = record
                 self._by_ref[pane_ref] = record["target_id"]
-            elif record["pane_id"] != pane_id:
+            elif (
+                record["pane_id"] != pane_id
+                or (
+                    record.get("fingerprint")
+                    and identity.get("fingerprint")
+                    and record["fingerprint"] != identity["fingerprint"]
+                )
+            ):
                 # The ref now names a DIFFERENT pane: same target handle,
-                # new generation — old-generation holders refuse.
+                # or the pane process/server changed under the same %N. A
+                # new generation makes old holders refuse.
                 record["pane_id"] = pane_id
                 record["target_generation"] = _new_generation()
+                if identity.get("fingerprint"):
+                    record["fingerprint"] = identity["fingerprint"]
+                if identity.get("pane"):
+                    record["pane"] = dict(identity["pane"])
             return {
                 "status": "issued",
                 "target_id": record["target_id"],
                 "target_generation": record["target_generation"],
                 "pane_id": record["pane_id"],
+                **(
+                    {"fingerprint": record["fingerprint"]}
+                    if record.get("fingerprint")
+                    else {}
+                ),
+                **({"pane": dict(record["pane"])} if record.get("pane") else {}),
             }
 
     def verify(self, target_id: Any, target_generation: Any) -> dict[str, Any]:
@@ -142,21 +164,40 @@ class TerminalTargetRegistry:
         if identity["status"] != "ok":
             return dict(identity)  # transient: tmux_absent / error
         with self._lock:
-            if identity["pane_id"] != record["pane_id"]:
-                # Recycled: the address survived, the pane did not.
+            if identity.get("pane"):
+                record["pane"] = dict(identity["pane"])
+            if identity["pane_id"] != record["pane_id"] or (
+                record.get("fingerprint")
+                and identity.get("fingerprint")
+                and identity["fingerprint"] != record["fingerprint"]
+            ):
+                # Recycled: the address survived, the pane did not. A tmux
+                # server restart or pane respawn can also keep %N while
+                # changing the process fingerprint.
                 record["pane_id"] = identity["pane_id"]
                 record["target_generation"] = _new_generation()
+                if identity.get("fingerprint"):
+                    record["fingerprint"] = identity["fingerprint"]
+                if identity.get("pane"):
+                    record["pane"] = dict(identity["pane"])
             if str(target_generation or "") != record["target_generation"]:
                 return {
                     "status": "generation_mismatch",
                     "current_generation": record["target_generation"],
                     "detail": "the pane behind this target changed identity",
+                    **({"pane": dict(record["pane"])} if record.get("pane") else {}),
                 }
             return {
                 "status": "ok",
                 "target_id": record["target_id"],
                 "target_generation": record["target_generation"],
                 "pane_id": record["pane_id"],
+                **(
+                    {"fingerprint": record["fingerprint"]}
+                    if record.get("fingerprint")
+                    else {}
+                ),
+                **({"pane": dict(record["pane"])} if record.get("pane") else {}),
             }
 
     def view(self, target_id: Any) -> Optional[dict[str, Any]]:
@@ -440,6 +481,8 @@ class TerminalStreamService:
         out = capture.read(resume_sequence, last_hash=last_hash)
         out["target_id"] = verified["target_id"]
         out["target_generation"] = verified["target_generation"]
+        if verified.get("pane"):
+            out["pane"] = dict(verified["pane"])
         return out
 
     def capture_metrics(self) -> dict[str, dict[str, Any]]:
