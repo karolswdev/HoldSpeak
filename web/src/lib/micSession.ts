@@ -170,6 +170,15 @@ export function micCaptureReason(): string | null {
   return "This browser cannot capture microphone audio.";
 }
 
+/** A plain microphone stream for a SCREEN RECORDING's voice (the desk's
+ *  Recordings app, #1601): the browser films its own screen, so its voice is
+ *  the browser's too. It is not the dictation session above: the caller owns
+ *  the stream and stops its tracks when the recording ends. Every browser-mic
+ *  call stays in web/src/lib (tests/unit/test_desk_locks.py). */
+export function openMicStream(): Promise<MediaStream> {
+  return navigator.mediaDevices.getUserMedia({ audio: true });
+}
+
 /* ── the session itself ── */
 
 /** Await an AudioContext verb that a stubbed context may not have. */

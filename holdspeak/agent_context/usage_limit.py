@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+from holdspeak.timestamps import utc_now
+
 #: The lines of the screen's foot the notice is read from.
 TAIL_LINES = 24
 
@@ -91,7 +93,7 @@ def _local_zone(name: Optional[str], now: Optional[datetime] = None):
             return ZoneInfo(name)
         except Exception:
             pass
-    moment = now if now is not None else datetime.now()
+    moment = now if now is not None else utc_now()
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
     return moment.astimezone().tzinfo

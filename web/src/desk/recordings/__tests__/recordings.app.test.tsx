@@ -134,7 +134,7 @@ beforeEach(() => {
   getDisplayMedia.mockImplementation(async () => new FakeStream([screenTrack]));
   Object.defineProperty(navigator, "mediaDevices", {
     configurable: true,
-    value: { getDisplayMedia, getUserMedia: vi.fn(async () => new FakeStream([new FakeTrack("audio")])) },
+    value: { getDisplayMedia },
   });
   vi.stubGlobal("MediaRecorder", FakeRecorder);
   vi.stubGlobal("MediaStream", FakeStream);
