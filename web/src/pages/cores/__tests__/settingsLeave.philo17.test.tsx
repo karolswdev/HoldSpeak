@@ -49,6 +49,14 @@ vi.mock("../core-hooks", () => ({
 }));
 vi.mock("../ContextualAssignment", () => ({ ContextualAssignment: () => null }));
 
+// The queries stay cheap. A role query by name computes the accessible name
+// of EVERY element of that role on the whole Settings face, and each name
+// reads getComputedStyle against every stylesheet (vitest css: true): the
+// case "reconciles an old 409 ..." spent 2.4 s of its 2.7 s in those queries
+// and went over the 5 s limit under load. A label finds the one control; the
+// Retry query looks only in the status bar, where the save refusal puts it.
+const control = (label: string) => screen.getByLabelText(label);
+const retryButtons = () => within(screen.getByTestId("settings-status")).getAllByRole("button", { name: "Retry" });
 const puts = () => apiFetch.mock.calls.filter(([url, init]) => url === "/api/settings" && init?.method === "PUT");
 const settingsWithMeeting = (revision: string, meeting: Record<string, unknown>): SettingsResponse => ({
   ...settings,
@@ -70,12 +78,12 @@ describe("Settings leave send", () => {
     // Betterment setup ST1: the calendar rows moved to Accounts; the first
     // (in-flight) edit is Auto export, the newer one summary timing (Auto-record lives in Meetings).
     render(<SettingsCore scope="meetings" />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
     expect(puts()).toHaveLength(1); // in flight, never answers
 
     // An unsent edit (debounced), then the page hides before the delay ends.
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    fireEvent.change(control("Auto-run the summary"), { target: { value: "every" } });
     window.dispatchEvent(new Event("pagehide"));
 
     expect(puts()).toHaveLength(2);
@@ -115,7 +123,7 @@ describe("Settings leave send", () => {
     });
 
     render(<SettingsCore scope="meetings" />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     await act(async () => {
       window.dispatchEvent(new Event("pagehide"));
       await Promise.resolve();
@@ -125,12 +133,12 @@ describe("Settings leave send", () => {
     expect(puts()[0][1].keepalive).toBe(true);
 
     window.dispatchEvent(new Event("pageshow"));
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    fireEvent.change(control("Auto-run the summary"), { target: { value: "every" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
 
     expect(puts()).toHaveLength(2);
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
-    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+    expect(control("Auto-run the summary")).toHaveValue("every");
+    expect(retryButtons().length).toBeGreaterThan(0);
   });
 
   it("does not duplicate a successful leave patch across repeated hide/show", async () => {
@@ -140,7 +148,7 @@ describe("Settings leave send", () => {
     });
 
     render(<SettingsCore scope="meetings" />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     await act(async () => {
       window.dispatchEvent(new Event("pagehide"));
       await Promise.resolve();
@@ -179,9 +187,9 @@ describe("Settings leave send", () => {
     });
 
     render(<SettingsCore scope="meetings" />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    fireEvent.change(control("Auto-run the summary"), { target: { value: "every" } });
     await act(async () => {
       window.dispatchEvent(new Event("pagehide"));
       await Promise.resolve();
@@ -191,11 +199,11 @@ describe("Settings leave send", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
-    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+    expect(control("Auto-run the summary")).toHaveValue("every");
+    expect(retryButtons().length).toBeGreaterThan(0);
 
     await act(async () => {
-      fireEvent.click(screen.getAllByRole("button", { name: "Retry" })[0]);
+      fireEvent.click(retryButtons()[0]);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -221,9 +229,9 @@ describe("Settings leave send", () => {
     });
 
     render(<SettingsCore scope="meetings" />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    fireEvent.change(control("Auto-run the summary"), { target: { value: "every" } });
     await act(async () => {
       window.dispatchEvent(new Event("pagehide"));
       await Promise.resolve();
@@ -233,7 +241,7 @@ describe("Settings leave send", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
+    expect(control("Auto-run the summary")).toHaveValue("every");
     expect(screen.queryByTestId("settings-save-failure")).toBeNull();
   });
 
@@ -265,12 +273,12 @@ describe("Settings leave send", () => {
     });
 
     render(<SettingsCore scope="meetings" />);
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    fireEvent.change(control("Auto-run the summary"), { target: { value: "every" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
     window.dispatchEvent(new Event("pagehide"));
     // A distinct local write with the same value is still a newer draft.  Its
     // refusal must survive the older leave response's value-equality cleanup.
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    fireEvent.change(control("Auto-run the summary"), { target: { value: "every" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
 
     authoritative = settingsWithMeeting("same-value-r2", { intelligence_auto: "manual" });
@@ -282,23 +290,23 @@ describe("Settings leave send", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
-    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+    expect(control("Auto-run the summary")).toHaveValue("every");
+    expect(retryButtons().length).toBeGreaterThan(0);
 
     resolveLeave({ settings: settingsWithMeeting("same-value-r3", { intelligence_auto: "every" }) });
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
 
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
-    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+    expect(control("Auto-run the summary")).toHaveValue("every");
+    expect(retryButtons().length).toBeGreaterThan(0);
 
     await act(async () => {
-      fireEvent.click(screen.getAllByRole("button", { name: "Retry" })[0]);
+      fireEvent.click(retryButtons()[0]);
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
     });
     expect(puts()[2][1].json._revision).toBe("same-value-r2");
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
+    expect(control("Auto-run the summary")).toHaveValue("every");
     expect(screen.queryByTestId("settings-save-failure")).toBeNull();
   });
 
@@ -322,16 +330,16 @@ describe("Settings leave send", () => {
     });
 
     render(<SettingsCore scope="meetings" />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     window.dispatchEvent(new Event("pagehide"));
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    fireEvent.change(control("Auto-run the summary"), { target: { value: "every" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
+    expect(control("Auto-run the summary")).toHaveValue("every");
 
     resolveLeave({ settings: settingsWithMeeting("order-r3", { auto_export: true, intelligence_auto: "manual" }) });
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
 
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
+    expect(control("Auto-run the summary")).toHaveValue("every");
   });
 
   it("reconciles an old 409 before leave success, then keeps a later conflict visible", async () => {
@@ -354,27 +362,27 @@ describe("Settings leave send", () => {
     });
 
     render(<SettingsCore scope="meetings" />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    fireEvent.change(control("Auto-run the summary"), { target: { value: "every" } });
     window.dispatchEvent(new Event("pagehide"));
     await act(async () => {
       rejectOld(new ApiError(409, "Settings changed in another session"));
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+    expect(retryButtons().length).toBeGreaterThan(0);
 
     authoritative = settingsWithMeeting("before-r3", { auto_export: true, intelligence_auto: "every", export_format: "txt" });
     resolveLeave({ settings: authoritative });
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(screen.queryByTestId("settings-save-failure")).toBeNull();
-    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
+    expect(control("Auto-run the summary")).toHaveValue("every");
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Export format" }), { target: { value: "json" } });
+    fireEvent.change(control("Export format"), { target: { value: "json" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    expect(screen.getByRole("combobox", { name: "Export format" })).toHaveValue("json");
-    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+    expect(control("Export format")).toHaveValue("json");
+    expect(retryButtons().length).toBeGreaterThan(0);
   });
 
   it("does not reintroduce an old leave value when a newer same-path save succeeds", async () => {
@@ -397,15 +405,15 @@ describe("Settings leave send", () => {
     });
 
     render(<SettingsCore scope="meetings" />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     window.dispatchEvent(new Event("pagehide"));
-    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
+    fireEvent.click(control("Auto export"));
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    expect(screen.getByRole("checkbox", { name: "Auto export" })).not.toBeChecked();
+    expect(control("Auto export")).not.toBeChecked();
 
     rejectLeave(new ApiError(503, "Leave save failed"));
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    expect(screen.getByRole("checkbox", { name: "Auto export" })).not.toBeChecked();
+    expect(control("Auto export")).not.toBeChecked();
     expect(screen.queryByTestId("settings-save-failure")).toBeNull();
   });
 });
