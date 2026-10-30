@@ -87,9 +87,7 @@
   border-radius: var(--radius-xs);
   background: var(--surface-2);
   border: 1px solid var(--accent-tint);
-  font: 600 var(--font-size-xs) / 1.2 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1.2 var(--font-sans);
   color: var(--text);
   white-space: nowrap;
   pointer-events: none;
@@ -179,9 +177,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   /* PHILO-17 (the desk sweep): 1.3, not 1: the clip cut the glyphs. */
-  font: 600 var(--desk-surface-detail-size, 12px) / 1.3 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1.3 var(--font-sans);
   color: var(--text);
 }
 

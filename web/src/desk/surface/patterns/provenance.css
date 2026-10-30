@@ -13,9 +13,7 @@
   border-radius: 0;
   background: var(--desk-window-well);
   box-shadow: var(--desk-window-etch);
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-wide);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   color: var(--text-muted);
   white-space: nowrap;
   cursor: default;
@@ -63,9 +61,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font: 600 var(--desk-surface-label-size) / 1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-label-size) / 1 var(--font-sans); /* PHILO-7-02: the 12 px floor (was 10px) */
   color: var(--text-muted);
   white-space: nowrap;
   cursor: default;

@@ -155,8 +155,6 @@
 
 .firstrun-caption {
   font: 600 12px/1 "JetBrains Mono", "JetBrains Mono Fallback", monospace;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 

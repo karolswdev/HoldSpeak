@@ -560,10 +560,10 @@ function ProposalRow({
   if (accepted) return <SurfaceLedgerRow data-testid="proposal-accepted" lead="MTG" wrap primary={accepted.text} cells={<>{accepted.owner ? <Token className="surface-token">{accepted.owner}</Token> : null}{accepted.due ? <Token className="surface-token">BY {formatDueShort(accepted.due)}</Token> : null}<StateChip state="success" label="Confirmed" /></>} />;
 
   if (editing) {
-    // Board: RoomProposalEdit — text StringGadget + OWNER + DUE + was: caption + Save & confirm + Cancel
+    // Board: RoomProposalEdit — text StringGadget + Owner + Due + Was: caption + Save & confirm + Cancel
     const origText = proposal?.originalText || proposal?.text || item.title;
     const origDue = proposal?.dueHint || item.dueHint || "";
-    const wasCaption = `WAS: ${origText.toUpperCase()}${origDue ? ` · BY ${origDue.toUpperCase()}` : ""}`;
+    const wasCaption = `Was: ${origText}${origDue ? ` · by ${origDue}` : ""}`;
 
     return (
       <li className={`surface-ledger-row room-proposal-edit-row${isNewest ? " room-needs-you-new" : ""}`} data-testid="proposal-edit-row" data-open>
@@ -577,11 +577,11 @@ function ProposalRow({
           <div className="room-proposal-edit-fields">
             <StringGadget label="Text" value={editText} onChange={setEditText} disabled={ctrl.proposalBusy === proposalId} autoFocus />
             <label className="room-proposal-edit-label">
-              <span className="room-proposal-edit-label-text">OWNER</span>
+              <span className="room-proposal-edit-label-text">Owner</span>
               <StringGadget label="Owner" value={editOwner} onChange={setEditOwner} placeholder="Owner" disabled={ctrl.proposalBusy === proposalId} />
             </label>
             <label className="room-proposal-edit-label">
-              <span className="room-proposal-edit-label-text">DUE</span>
+              <span className="room-proposal-edit-label-text">Due</span>
               <StringGadget label="Due" value={editDue} onChange={setEditDue} placeholder="Due" disabled={ctrl.proposalBusy === proposalId} />
             </label>
           </div>
@@ -602,7 +602,7 @@ function ProposalRow({
 
   // Caption parts
   const captionParts: string[] = [];
-  if (dueHint) captionParts.push(`BY ${dueHint.toUpperCase()}`);
+  if (dueHint) captionParts.push(`By ${dueHint}`);
   if (meetingTitle) {
     // HS-200-16: the date belongs to the MEETING this came from, not to the
     // moment the proposal row was written.  They agree on a same-day desk and
@@ -637,7 +637,7 @@ function ProposalRow({
             </span>
           ) : null}
           {speaker ? (
-            <span className="room-proposal-caption room-proposal-speaker">{speaker.toUpperCase()}</span>
+            <span className="room-proposal-caption room-proposal-speaker">{speaker}</span>
           ) : null}
           {failure ? <Token className="surface-token" role="alert">{failure}</Token> : null}
         </>

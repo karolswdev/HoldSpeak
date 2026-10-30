@@ -44,10 +44,10 @@ describe("PR follow-through desk object", () => {
     };
     usePrReceipts.setState({ sources: [{ source_id: "src_1", label: "HoldSpeak", status: "live", detail: "", observed_at: row.observed_at, prs: [ungated] }], loaded: true });
     render(<PrReceiptsSection />);
-    expect(screen.getByText("UNGATED")).toBeInTheDocument();
+    expect(screen.getByText("Ungated")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Info" }));
-    expect(screen.getByText("Agent").nextSibling).toHaveTextContent("UNGATED");
+    expect(screen.getByText("Agent").nextSibling).toHaveTextContent("Ungated");
     fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
     expect(screen.queryByRole("menuitem", { name: /^Send agent/ })).toBeNull();
   });
@@ -63,7 +63,7 @@ describe("PR follow-through desk object", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Post comment" }));
     fireEvent.change(screen.getByLabelText("Comment"), { target: { value: "Complete review\n\nFinding one." } });
     fireEvent.click(screen.getByRole("button", { name: "Propose" }));
-    expect(await screen.findByText("PROPOSED")).toBeInTheDocument();
+    expect(await screen.findByText("Proposed")).toBeInTheDocument();
     expect(screen.getByText(/Finding one/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Post to GitHub" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Deny" })).toBeInTheDocument();

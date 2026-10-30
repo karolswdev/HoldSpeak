@@ -264,10 +264,8 @@
 .arrival-next {
   margin: 0;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--desk-surface-detail-size, 12px);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 /* ── Armed countdown (lost door 2) ─────────────────────────────────── */
@@ -339,11 +337,9 @@
 }
 
 .arrival-week-day-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .arrival-week-day[data-today] .arrival-week-day-label {
@@ -370,22 +366,18 @@
 
 .arrival-meeting-room {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   white-space: nowrap;
   opacity: 0.7;
 }
 
 .arrival-meeting-source {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -430,11 +422,9 @@
 
 .arrival-orphan-from {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -508,11 +498,9 @@
 }
 .arrival-checked-token {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -568,11 +556,9 @@
   display: block;
   padding: 10px 0;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .arrival-source-emblem {
@@ -593,11 +579,9 @@
 
 .arrival-why-token {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 .arrival-why-token[data-tone="failure"] {
@@ -609,10 +593,8 @@
 
 .arrival-project-token {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   white-space: nowrap;
   opacity: 0.6;
 }
@@ -648,11 +630,9 @@
 /* ── Thoughts ──────────────────────────────────────────────────────── */
 .arrival-thought-state {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -661,18 +641,14 @@
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .arrival-meeting-badge {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 .arrival-meeting-badge[data-badge="off"] {
@@ -703,9 +679,7 @@
   flex-wrap: wrap;
   gap: 6px 12px;
   color: var(--text-muted);
-  font: 600 12px / 1.35 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 600 12px / 1.35 var(--font-sans);
 }
 
 .arrival-meeting-status-fact[data-tone="danger"],
@@ -714,9 +688,7 @@
 }
 
 .arrival-meeting-read-error {
-  font: 600 12px / 1.35 var(--font-mono);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font: 600 12px / 1.35 var(--font-sans);
 }
 
 /* ── Proposal prefix (HS-172-03) ───────────────────────────────────── */

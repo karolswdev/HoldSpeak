@@ -98,11 +98,9 @@
   align-items: center;
   gap: 8px;
   color: var(--text);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 .desk-next .desk-mc-project {
   margin-top: var(--space-1);
@@ -189,8 +187,6 @@
 .desk-next .desk-mc-pin {
   gap: 2px;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 .desk-next .desk-mc-pin.awaiting {
@@ -217,9 +213,7 @@
 .desk-next .desk-mc-needs {
   background: var(--warn);
   color: var(--bg);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -304,8 +298,6 @@
   font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
   font-weight: 600;
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
 }
 
 /* the Ask panel rides the pull-out posture (docked, desk alive behind) */
@@ -440,11 +432,9 @@
   padding: 9px 11px;
   border-radius: 0;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 .desk-next .desk-ground .gadget-fold > summary:focus-visible {
   outline: none;
@@ -555,11 +545,9 @@
 .desk-next .desk-ground-sect {
   margin: 6px 0 0;
   color: var(--text-faint);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 .desk-next .desk-ground-refusal {
   margin: 0;
@@ -571,10 +559,8 @@
 }
 /* HS-88-02: the rail object's kind, a quiet monospace tag before its title. */
 .desk-next .desk-rails-kind {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--text-faint);
   border: 1px solid var(--surface-3);
   border-radius: 2px;
@@ -642,10 +628,8 @@
 }
 /* The Runs-on caption reads as mono tokens, not a sentence. */
 .desk-next .runs-on-facts {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 /* ── Station lights + evidence in place (HS-86-04) ─────────────── */
@@ -658,8 +642,6 @@
 .desk-next .desk-mc-repo-name {
   color: var(--text-faint);
   font-size: var(--font-size-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 .desk-next .desk-mc-lights {
   display: inline-flex;

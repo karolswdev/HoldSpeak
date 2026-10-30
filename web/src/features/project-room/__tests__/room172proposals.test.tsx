@@ -288,8 +288,8 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
 
     const captions = screen.getAllByTestId("proposal-caption");
     expect(captions.length).toBeGreaterThanOrEqual(1);
-    // First proposal has due "Fri" -> caption includes "BY FRI"
-    expect(captions[0].textContent).toContain("BY FRI");
+    // First proposal has due "Fri" -> caption includes "By Fri"
+    expect(captions[0].textContent).toContain("By Fri");
     expect(captions[0].textContent).toContain("from Standup");
   });
 
@@ -333,7 +333,7 @@ describe("HS-172-03: Edit unfolds EditInPlace", () => {
 
     // The was: caption should be visible
     const wasCaption = screen.getByTestId("proposal-was-caption");
-    expect(wasCaption.textContent).toContain("WAS:");
+    expect(wasCaption.textContent).toContain("Was:");
 
     // Save & confirm and Cancel buttons exist
     expect(screen.getByTestId("proposal-save-confirm")).toBeTruthy();

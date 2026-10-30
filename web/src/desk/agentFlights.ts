@@ -250,10 +250,11 @@ export interface CoderSessionRow {
   raw: Record<string, unknown>;
 }
 
-const AGENT_WORD: Record<AgentName, string> = { claude: "CLAUDE CODE", codex: "CODEX", pi: "PI" };
+/** WORDS-LEFTOVERS: the agents' names as they are spelled (never a caps table). */
+const AGENT_WORD: Record<AgentName, string> = { claude: "Claude Code", codex: "Codex", pi: "pi" };
 
 export function agentWord(agent: string): string {
-  return AGENT_WORD[agent as AgentName] ?? agent.toUpperCase();
+  return AGENT_WORD[agent as AgentName] ?? (agent ? agent.charAt(0).toUpperCase() + agent.slice(1) : "Agent");
 }
 
 const FLIGHT_STATES: readonly string[] = [
@@ -348,18 +349,20 @@ export function fromWireSessionRow(row: any): CoderSessionRow {
   };
 }
 
-/** The chip's words: once a PR exists the PR is the fact, else the agent's state. */
+/** The chip's words: once a PR exists the PR is the fact, else the agent's
+ *  state, in sentence case (`Claude Code · Waiting`, `PR #412 · Open`). */
 export function flightLabel(flight: AgentFlight): string | null {
   if ((flight.state === "pr_open" || flight.state === "merged") && flight.pr?.number) {
-    return `PR #${flight.pr.number} · ${flight.state === "pr_open" ? "OPEN" : "MERGED"}`;
+    return `PR #${flight.pr.number} · ${flight.state === "pr_open" ? "Open" : "Merged"}`;
   }
-  if (flight.state === "starting") return `${agentWord(flight.agent)} · STARTING`;
-  if (flight.state === "queued") return `${agentWord(flight.agent)} · WAITS FOR A FREE AGENT`;
-  if (flight.state === "resuming") return `${agentWord(flight.agent)} · RESUMING`;
-  if (flight.state === "working") return `${agentWord(flight.agent)} · WORKING`;
-  if (flight.state === "done") return `${agentWord(flight.agent)} · ${flight.isNew ? "DONE · NEW" : "DONE"}`;
-  if (flight.state === "waiting") return `${agentWord(flight.agent)} · ${flight.turnEnd === "idle" ? "IDLE" : "WAITING"}`;
-  if (flight.state === "no_signal") return `${agentWord(flight.agent)} · NO SIGNAL`;
+  const name = agentWord(flight.agent);
+  if (flight.state === "starting") return `${name} · Starting`;
+  if (flight.state === "queued") return `${name} · Waits for a free agent`;
+  if (flight.state === "resuming") return `${name} · Resuming`;
+  if (flight.state === "working") return `${name} · Working`;
+  if (flight.state === "done") return `${name} · ${flight.isNew ? "Done · New" : "Done"}`;
+  if (flight.state === "waiting") return `${name} · ${flight.turnEnd === "idle" ? "Idle" : "Waiting"}`;
+  if (flight.state === "no_signal") return `${name} · No signal`;
   return null;
 }
 

@@ -106,9 +106,7 @@
 }
 .desk-next .desk-session-activity-label {
   color: var(--text-muted);
-  font: 600 var(--font-size-xs) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1.4 var(--font-sans);
 }
 .desk-next .desk-session-activity-value {
   min-width: 0;
@@ -195,10 +193,8 @@
   flex-wrap: wrap;
 }
 .desk-next .desk-keypad-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 /* HS-111-04 — the keys are TransportKey species (glyph over mono word);
@@ -313,10 +309,8 @@
   flex-wrap: wrap;
 }
 .desk-next .desk-factory-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .desk-next .desk-factory-row {
@@ -343,12 +337,10 @@
 }
 /* HS-111: section labels — mono, 10px, 600 */
 .desk-next .desk-classify-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--text-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 .desk-next .desk-classify-row {
   display: flex;

@@ -259,9 +259,7 @@
   white-space: pre-wrap;
 }
 .desk-next .cw-ask-why {
-  font: 700 12px / 1.2 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 12px / 1.2 var(--font-sans);
   color: var(--wb-warn-ink);
 }
 

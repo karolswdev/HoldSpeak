@@ -150,8 +150,7 @@ export function flightWord(flight: AgentFlight): { label: string; tone: ObjectTo
 
 /** `Claude Code` / `Codex` (the agent's name in a sentence). */
 function agentName(agent: string): string {
-  const word = agentWord(agent);
-  return word.charAt(0) + word.slice(1).toLowerCase().replace(/ (\w)/g, (_m, c: string) => ` ${c.toUpperCase()}`);
+  return agentWord(agent);
 }
 
 export interface DrawerReads {
@@ -187,13 +186,13 @@ export function drawerHead(room: RoomSnapshot | null): DrawerHead {
 }
 
 /** The agent's word on its item (`CLAUDE CODE ASKS`); once a PR exists
- *  the PR is the fact (`PR #412 OPEN`), as flightLabel says it. */
+ *  the PR is the fact (`PR #412 open`), as flightLabel says it. */
 function flightState(flight: AgentFlight | null): { label: string; tone: ObjectTone } | undefined {
   const word = flight ? flightWord(flight) : null;
   if (!word || !flight) return undefined;
   return flight.pr?.number
-    ? { label: `PR #${flight.pr.number} ${word.label === "MERGED" ? "MERGED" : "OPEN"}`, tone: word.tone }
-    : { label: `${agentWord(flight.agent)} ${word.label}`, tone: word.tone };
+    ? { label: `PR #${flight.pr.number} ${word.label === "MERGED" ? "merged" : "open"}`, tone: word.tone }
+    : { label: `${agentWord(flight.agent)} ${word.label.toLowerCase()}`, tone: word.tone };
 }
 
 function flightOwner(flight: AgentFlight | null): string | undefined {

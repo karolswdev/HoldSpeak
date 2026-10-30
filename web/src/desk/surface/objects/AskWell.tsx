@@ -85,7 +85,9 @@ export function AskWell({
   plate = false,
   "data-testid": testId,
 }: AskWellProps) {
-  const caption = [`${agent.toUpperCase()} ${word}`, age?.toUpperCase()].filter(Boolean).join(" · ");
+  // WORDS-LEFTOVERS: the caption is words (`Claude Code asks · 6 min`), the
+  // agent's name as it is spelled, never a mono caps line.
+  const caption = [`${agent} ${word.toLowerCase()}`, age].filter(Boolean).join(" · ");
   const field = useRef<HTMLInputElement | null>(null);
   // An empty answer is never sent: the press takes you to the field.
   const send = () => {

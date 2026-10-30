@@ -16,11 +16,9 @@
   padding: 1px 6px;
   border-radius: 0;
   box-shadow: var(--bevel-raised-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   white-space: nowrap;
   /* A long Project name ellipsizes inside its line; it never pushes the

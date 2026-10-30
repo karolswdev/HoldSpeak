@@ -63,6 +63,10 @@ export function stateWords(label: string, keep: ReadonlySet<string> = KEEP_CAPS,
       let first = lead || index > 0;
       let afterLink = false;
       let prev = "";
+      // A caps wire part: its one-letter article `A` is a word too
+      // (`NEEDS A DECISION` → `Needs a decision`); in a mixed-case part
+      // (`Plan A`) a lone `A` is a name and stays.
+      const capsPart = part === part.toUpperCase() && /[A-Z]{2,}/.test(part);
       return part.replace(/[^\s]+/g, (word, offset: number) => {
         const prevWord = prev;
         prev = word;
@@ -70,6 +74,7 @@ export function stateWords(label: string, keep: ReadonlySet<string> = KEEP_CAPS,
         const named = afterLink && !COMMON_AFTER_LINK.has(word);
         first = false;
         afterLink = LINK_WORDS.has(word);
+        if (word === "A" && capsPart && !leadWord) return "a";
         // Punctuation around a word stays (`(PR)`, `FAILED,`, `“NOW”`).
         const m = /^([^A-Za-z0-9]*)([A-Z][A-Z'’-]*[A-Z])([^A-Za-z0-9]*)$/.exec(word);
         if (!m) return word;

@@ -470,7 +470,7 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     result = await land(AGAIN);
     expect(result.querySelector(".speak-result-text")!.textContent).toBe("Ship the Q4 platform in October");
     const chip = await within(result).findByRole("button", { name: "Corrections applied" });
-    expect(chip.textContent?.trim()).toBe("APPLIED");
+    expect(chip.textContent?.trim()).toBe("Applied");
     expect(container.querySelector(".speak-well .desk-mic")).toBeNull();
     await userEvent.click(chip);
     const disclosed = await waitFor(() => {

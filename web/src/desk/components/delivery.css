@@ -34,10 +34,8 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--desk-surface-label-size);
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
 }
 .desk-next .desk-dlv-project {
   margin: 4px 0 4px 8px;
@@ -60,11 +58,9 @@
   border-radius: 0;
   border: 1px solid var(--surface-3);
   color: var(--text-faint);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 .desk-next .desk-dlv-fresh.is-live {
   color: var(--ok);
@@ -276,8 +272,6 @@
 .desk-next .desk-pr-detail dt {
   color: var(--text-muted);
   font-size: var(--font-size-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 .desk-next .desk-pr-detail dd {
   margin: 3px 0 0;
@@ -290,9 +284,7 @@
 .desk-next .desk-pr-compose > label {
   color: var(--text-muted);
   font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
 }
 .desk-next .desk-pr-compose-actions {
   display: flex;
@@ -402,7 +394,5 @@
 .desk-next .desk-dlv-list h2 {
   font-size: var(--desk-surface-label-size);
   font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }

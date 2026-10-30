@@ -94,11 +94,9 @@
 /* Module/pane title: 12px 700 uppercase, tracking 0.08em. */
 .gadget-pane-title {
   margin: 2px 0 8px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -614,11 +612,9 @@
   box-shadow: none;
 }
 .gadget-table-head span {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .gadget-table-row {
@@ -651,9 +647,7 @@
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   cursor: pointer;
 }
 .gadget-table-add:hover {
@@ -689,9 +683,7 @@
   min-width: 0;
 }
 .gadget-ledmeter-label {
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   color: var(--text-faint);
 }
 .gadget-ledmeter-track {

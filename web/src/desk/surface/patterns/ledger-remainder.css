@@ -14,8 +14,6 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   white-space: nowrap;
 }

@@ -24,12 +24,10 @@
   border-radius: var(--radius-xs);
   background: transparent;
   color: var(--text-faint);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.055em;
+  font-weight: 600;
   line-height: 1;
-  text-transform: uppercase;
   transition:
     background-color var(--duration-short) var(--ease-standard),
     border-color var(--duration-short) var(--ease-standard),
@@ -223,9 +221,7 @@
 .receipt-fields dt {
   color: var(--text-faint);
   font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .receipt-fields dd { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -424,13 +420,11 @@
   background: var(--desk-window-well);
   box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
   color: var(--text-faint);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: 600;
   line-height: 1.2;
   overflow-wrap: anywhere;
-  text-transform: uppercase;
 }
 
 .intelligence-brief-shelf-state {
@@ -478,11 +472,9 @@
 .intelligence-brief-section-caption {
   margin: 0 0 var(--space-1);
   color: var(--text-faint);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   line-height: 1;
 }
 
@@ -557,12 +549,10 @@
 }
 
 .intelligence-brief-sf-kind {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  letter-spacing: 0.06em;
   color: var(--text-muted);
-  text-transform: uppercase;
 }
 
 .intelligence-brief-sf-body {

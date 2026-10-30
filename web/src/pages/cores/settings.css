@@ -32,9 +32,7 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px 14px;
-  font: 600 12px / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 12px / 1.4 var(--font-sans);
   color: var(--wb-muted, var(--text-muted));
   font-variant-numeric: tabular-nums;
 }
@@ -148,9 +146,7 @@
 /* ── More settings: the fold ── */
 .desk-next .settings-home .settings-more {
   align-self: flex-start;
-  font: 700 12px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font: 600 12px / 1 var(--font-sans);
 }
 .desk-next .settings-more-caret {
   display: inline-block;

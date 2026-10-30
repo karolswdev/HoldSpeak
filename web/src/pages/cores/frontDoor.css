@@ -39,9 +39,7 @@
   border: none;
   background: none;
   color: var(--text-muted);
-  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
   cursor: pointer;
 }
 
@@ -75,9 +73,7 @@
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
   cursor: pointer;
 }
 

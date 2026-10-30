@@ -26,13 +26,13 @@
   border: 1px solid var(--wb-ink);
 }
 
-.lw-caption { font: 600 12px/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 0; }
+.lw-caption { font: 600 12px/1.2 var(--font-sans); color: var(--text-muted); margin: 0; }
 .lw-fact { font: 12px/1.3 var(--font-sans); color: var(--text-muted); }
 .lw-fact b { color: var(--text); font-weight: 600; }
 .lw-verbs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 /* An honest line: a part that could not be read, said once. */
 .lw-notread { margin: 0; font: 12px/1.4 var(--font-sans); color: var(--text-muted); }
-.lw-word { font: 700 12px/18px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; flex: none; }
+.lw-word { font: 600 12px/18px var(--font-sans); color: var(--text-muted); flex: none; }
 .lw-ev-text { font: 13px/18px var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
 .lw-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; }
 .lw-more { align-self: flex-start; }
@@ -193,9 +193,7 @@
   overflow-wrap: anywhere;
 }
 .desk-next .is-lane .lw-plate-why {
-  font: 700 12px / 1.2 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 12px / 1.2 var(--font-sans);
   color: var(--wb-warn-ink);
 }
 .desk-next .is-lane .lw-plate-verbs { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 0 12px; }
@@ -229,7 +227,7 @@
 
 /* Betterment AG10: the Result of a turn leads the Story. */
 .desk-next .is-lane .desk-pullout-body section.lw-result { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--wb-ink); background: var(--alive-paper, #f8f5ee); box-shadow: var(--wb-sunken); min-width: 0; }
-.desk-next .is-lane .lw-result-cap, .lw-result-cap { margin: 0; font: 800 12px / 1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--wb-muted); }
+.desk-next .is-lane .lw-result-cap, .lw-result-cap { margin: 0; font: 600 12px / 1 var(--font-sans); color: var(--wb-muted); }
 .lw-result-facts { font: 600 12px / 1.4 var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
 .lw-result-list { margin: 0; padding-left: 18px; font: 500 13px / 1.4 var(--font-sans); color: var(--text); }
 

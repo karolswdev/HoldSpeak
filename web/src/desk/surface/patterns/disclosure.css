@@ -94,11 +94,9 @@
 /* ── RAW variant: no chrome, just the body ── */
 
 .desk-next .surface-disclosure[data-variant="raw"] .surface-disclosure-trigger {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--desk-surface-label-size);
   font-weight: 600;
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 
@@ -115,10 +113,8 @@
   max-width: 100%;
   margin: 0;
   padding: 1px 6px 1px 4px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 

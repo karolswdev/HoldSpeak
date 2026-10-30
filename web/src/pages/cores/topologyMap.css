@@ -10,9 +10,7 @@
 /* ── Node content inside the TopologySurface node cards ── */
 
 .topology-node-kind {
-  font: 400 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-wide);
-  text-transform: uppercase;
+  font: 400 var(--font-size-xs) / 1 var(--font-sans);
   color: var(--text-faint);
 }
 
@@ -49,9 +47,7 @@
 }
 
 .topology-inspector-label {
-  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
   color: var(--text);
   min-width: 0;
   overflow: hidden;
@@ -60,9 +56,7 @@
 }
 
 .topology-inspector-kind {
-  font: 400 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-wide);
-  text-transform: uppercase;
+  font: 400 var(--font-size-xs) / 1 var(--font-sans);
   color: var(--text-faint);
 }
 
@@ -103,9 +97,7 @@
   border: none;
   background: none;
   color: var(--accent);
-  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
   cursor: pointer;
 }
 
@@ -126,9 +118,7 @@
 }
 
 .topology-repoint-label {
-  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
   color: var(--text);
 }
 
@@ -175,9 +165,7 @@
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--text-muted);
-  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -198,9 +186,7 @@
 
 .topology-add-title {
   display: block;
-  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
-  letter-spacing: var(--letter-spacing-label-compact);
-  text-transform: uppercase;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-sans);
   color: var(--text);
   margin-bottom: var(--space-2);
 }
@@ -264,7 +250,6 @@
   border: none;
   background: none;
   color: var(--text-muted);
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  text-transform: uppercase;
+  font: 600 var(--font-size-xs) / 1 var(--font-sans);
   cursor: pointer;
 }
