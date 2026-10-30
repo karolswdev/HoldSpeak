@@ -299,9 +299,25 @@ State: **Shipped** means in this PR. **Left** means a later slice.
 - **Tests**: T1 `tests/unit/test_program_control_level.py` (the resolver,
   the responder and the gate over the K5 rig, the Decided-for-you lines,
   the Programs rig's three-step Program at Secure).
-- **Not in this slice**: per-step levels; the launch flags (Claude's
-  `acceptEdits`, Codex's approval and sandbox) still follow the desk's mode
-  at launch; a reviewer helper's launch keeps the desk's mode.
+- **PG13b (2026-10-29), the items PG13 left out**: the launch flags
+  follow the level too. `control_level.mode_for_request` reads the level
+  of a new launch from the request the hand builds (a `program_step`
+  origin: its Program's control; `helper_of`: the parent launch's level;
+  else the desk's Control mode). `LaunchService._launch_mode` uses it for
+  a launch and a Resume, so Claude Code's `acceptEdits` and Codex's
+  approval and sandbox come from the Program's level (a Secure Program on
+  a YOLO desk: no `acceptEdits`, Codex `on-request`, no `workspace-write`;
+  a YOLO Program on a Normal desk: Codex `never` and `workspace-write`
+  inside its own worktree). The hand's brief says the same mode. A helper
+  (a reviewer too) inherits its step's level: `start_helper` asks
+  `mode_for_launch(caller)`, so a Secure step's reviewer waits for his
+  press on a YOLO desk and then runs at Secure. Every printed level is
+  `program_rules.level_word` (Secure · Normal · YOLO): the §6 rules, the
+  Decided-for-you lines, the wire's `control_word` and the status line.
+  Tests: T1 `tests/unit/test_program_control_level.py` (the argv per level
+  for Claude Code and Codex, a step launch and a plain launch; the helper's
+  level; the words); `program.running.json` re-recorded.
+- **Not in this slice**: per-step levels.
 
 ## PG14. Automations run a program (Left)
 

@@ -215,7 +215,12 @@ def start_helper(
         state = state_reader(launch_id) if state_reader and launch_id else row.get("state")
         if str(state or "") in {"starting", "launched", "registered", "working", "waiting"}:
             raise HelperRefused("helper_exists", "this agent already has its one helper")
-    if str(control_mode() or "").strip().lower() in ("safe", "secure"):
+    # Programs PG13b: the helper inherits its parent's level (a Program
+    # step's launch: the Program's control), not the desk's Control mode.
+    from .control_level import mode_for_launch
+
+    level = mode_for_launch(caller, db=getattr(hand_service, "_db", None), desk=control_mode)
+    if str(level or "").strip().lower() in ("safe", "secure"):
         # Decision 22 is an owner question, not a permanent refusal.  Keep the
         # request on the parent launch so the owner's one press can continue
         # through AgentHandService and its normal process.spawn admission.

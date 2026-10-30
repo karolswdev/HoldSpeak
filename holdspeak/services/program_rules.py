@@ -77,6 +77,16 @@ def level_of(value: Any) -> str:
     return DESK_MODES.get(str(value or "").strip().lower(), "normal")
 
 
+#: The words a level is printed with, everywhere (rules, Decided for you,
+#: the faces' ``control_word``): Secure · Normal · YOLO.
+LEVEL_WORDS = {"secure": "Secure", "normal": "Normal", "yolo": "YOLO"}
+
+
+def level_word(value: Any) -> str:
+    """The printed word of a level or a desk Control mode word."""
+    return LEVEL_WORDS[level_of(value)]
+
+
 def is_core(facts: Mapping[str, Any]) -> str:
     """The core question these facts raise, or ``""``. Each one goes to him
     at every level:
@@ -148,31 +158,31 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
             return CoreQuestion("the check is not green or the review did not pass", "no merge without green and PASS")
         if level == "secure":
             return CoreQuestion("Secure: he merges", "Secure: merge is his press")
-        return Decision("merge", f"{level.capitalize()} merges on a green check and a passed review")
+        return Decision("merge", f"{level_word(level)} merges on a green check and a passed review")
     if kind == "finding_required":
         allowed = ROUNDS[level]
         if rounds < allowed:
             return Decision("fix", f"a REQUIRED finding goes back to the builder (round {rounds + 1} of {allowed})")
-        return CoreQuestion(f"REQUIRED findings are left after {allowed} rounds", f"{level.capitalize()}: {allowed} rounds, then him")
+        return CoreQuestion(f"REQUIRED findings are left after {allowed} rounds", f"{level_word(level)}: {allowed} rounds, then him")
     if kind == "finding_should":
         if level == "secure":
             return CoreQuestion("Secure: he decides a SHOULD finding", "Secure: SHOULD findings are his")
         if level == "yolo" and facts.get("round_open"):
             return Decision("fix", "YOLO: a SHOULD finding is fixed while the builder's round is open")
-        return Decision("later", f"{level.capitalize()}: a SHOULD finding becomes a Later task", overturnable=True)
+        return Decision("later", f"{level_word(level)}: a SHOULD finding becomes a Later task", overturnable=True)
     if kind == "finding_note":
         return Decision("skip", "a NOTE finding is skipped and logged", overturnable=True)
     if kind == "agent_question":
         if level == "secure":
             return CoreQuestion("Secure: he answers the agent", "Secure: agent questions are his")
         if facts.get("routine"):
-            return Decision("type_draft", f"{level.capitalize()}: the desk's ROUTINE draft is typed (AgentResponder)")
+            return Decision("type_draft", f"{level_word(level)}: the desk's ROUTINE draft is typed (AgentResponder)")
         return CoreQuestion("the desk's draft is not routine", "a NON-ROUTINE draft waits for him", core=True)
     if kind == "gate_approval":
         if level == "secure":
             return CoreQuestion("Secure: he allows each held call", "Secure: approvals are his")
         if facts.get("gate_allows"):
-            return Decision("allow", f"{level.capitalize()}: the gate allows a read, a build or a test by its own rules")
+            return Decision("allow", f"{level_word(level)}: the gate allows a read, a build or a test by its own rules")
         return CoreQuestion("the gate holds the call", "authority stays with him", core=True)
     if kind == "check_failed":
         allowed = ROUNDS[level]
@@ -186,15 +196,15 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
             return CoreQuestion("Secure: a failed step is his", "Secure: failures are his")
         if level == "yolo" and not facts.get("replanned"):
             return Decision("replan", "YOLO: one re-plan of a failed step with a smaller brief")
-        return Decision("park", f"{level.capitalize()}: a failed step is parked and the rest carries on", overturnable=True)
+        return Decision("park", f"{level_word(level)}: a failed step is parked and the rest carries on", overturnable=True)
     if kind == "race_winner":
         if level == "secure":
             return CoreQuestion("Secure: he picks the race winner", "Secure: the winner is his pick")
-        return Decision("pick", f"{level.capitalize()}: the first green, reviewed contender wins")
+        return Decision("pick", f"{level_word(level)}: the first green, reviewed contender wins")
     if kind == "add_step":
         if level == "yolo":
             return Decision("add", "YOLO: the engine adds a missing step and says so", overturnable=True)
-        return CoreQuestion(f"{level.capitalize()}: he adds a step the plan lacked", f"{level.capitalize()}: the plan is his")
+        return CoreQuestion(f"{level_word(level)}: he adds a step the plan lacked", f"{level_word(level)}: the plan is his")
     if kind == "limited":
         # PG19 (Moonfold's provider handoff): the agent stopped at its usage
         # limit. Facts: ``next`` (a next agent is free), ``handed`` (this
@@ -211,12 +221,12 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
         if level == "normal" and facts.get("may_handoff") and float(facts.get("minutes") or 0) >= HANDOFF_AFTER_MINUTES:
             return Decision("handoff", f"Normal: the program may hand off; {HANDOFF_AFTER_MINUTES} minutes passed")
         return CoreQuestion("continue in the next agent now, or wait for the reset?",
-                            f"{level.capitalize()}: a limited step waits for his press")
+                            f"{level_word(level)}: a limited step waits for his press")
     if kind == "program_done":
         if level == "secure":
             return CoreQuestion("Secure: he closes the program", "Secure: Done is his")
-        return Decision("close", f"{level.capitalize()}: the engine closes a finished program")
+        return Decision("close", f"{level_word(level)}: the engine closes a finished program")
     return CoreQuestion("the engine has no rule for this choice", "no rule", core=True)  # pragma: no cover
 
 
-__all__ = ["CoreQuestion", "DESK_MODES", "Decision", "HANDOFF_AFTER_MINUTES", "KINDS", "LEVELS", "ROUNDS", "decide", "is_core", "level_of"]
+__all__ = ["CoreQuestion", "DESK_MODES", "Decision", "HANDOFF_AFTER_MINUTES", "KINDS", "LEVELS", "LEVEL_WORDS", "ROUNDS", "decide", "is_core", "level_of", "level_word"]

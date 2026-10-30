@@ -850,8 +850,12 @@ class LaunchService:
         mcp_config_dir: Optional[Path] = None,
         codex_trust: Optional[Callable[[list[str]], list[str]]] = None,
         pi_engine: Optional[Callable[[], Any]] = None,
+        db: Any = None,
     ) -> None:
         self._profiles = profiles
+        # Programs PG13b: the database a launch's Program is read from (its
+        # control level picks the launch flags); None: the hub's own.
+        self._db = db
         # pi (pi spike #1020): the hub's engine for coding work, resolved at
         # launch (``pi_launch.coding_engine``); None: no engine is known.
         self._pi_engine = pi_engine
@@ -889,6 +893,16 @@ class LaunchService:
 
         self._first = FirstMessage(self)
         self._reconciled = False
+
+    def _launch_mode(self, request: Mapping[str, Any]) -> str:
+        """The Control mode word one launch runs at (Programs PG13b): a
+        Program step's launch at its Program's control, a helper at its
+        parent's level, every other launch at the desk's Control mode. It
+        picks Claude Code's permission mode and Codex's approvals and
+        sandbox below."""
+        from ..services.control_level import mode_for_request
+
+        return mode_for_request(request, db=self._db, desk=self._control_mode)
 
     def bind_kernel(self, broker: Any) -> None:
         """Bind the existing launch driver to the kernel executor plane."""
@@ -1397,7 +1411,7 @@ class LaunchService:
         launch_id = launch_id or "launch_" + uuid.uuid4().hex[:16]
         from . import agent_mcp
 
-        mode = self._control_mode()
+        mode = self._launch_mode(request)
         review = request.get("review") if isinstance(request.get("review"), Mapping) else {}
         role = "reviewer" if str(review.get("role") or "").strip().lower() == "reviewer" else "builder"
         if role == "reviewer" and review.get("read_only") is False:
@@ -1837,7 +1851,7 @@ class LaunchService:
         if parent:
             self._require_process_gate(profile, worktree_path)
         executable = str(profile.get("executable") or "")
-        mode = self._control_mode()
+        mode = self._launch_mode(record)
         role = str(record.get("role") or "builder")
         read_only = role == "reviewer"
         composed = self._agent_argv(
@@ -2197,6 +2211,7 @@ def default_launch_service(database: Any) -> LaunchService:
         pi_engine=lambda engine_id="": (
             engine_for_profile(database, engine_id) if engine_id else coding_engine(database)
         ),
+        db=database,
     )
     _DEFAULT_SERVICES[key] = service
     return service

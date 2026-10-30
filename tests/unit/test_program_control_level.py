@@ -13,6 +13,7 @@ step's routine question waiting at Secure.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -128,7 +129,7 @@ def test_program_yolo_on_a_normal_desk_types_the_routine_draft(launched, tmp_pat
     [line] = _decided(service, pid)
     assert line["kind"] == "agent_question" and line["choice"] == "type_draft"
     assert line["line"] == ("Answered for you: The desk: " + ROUTINE_ANSWER)[:200]
-    assert line["rule"] == "Yolo: the desk's ROUTINE draft is typed (AgentResponder)"
+    assert line["rule"] == "YOLO: the desk's ROUTINE draft is typed (AgentResponder)"
     assert line["step_id"] == service.store.list_steps(pid)[0]["id"]
 
 
@@ -182,7 +183,7 @@ def test_program_yolo_on_a_normal_desk_allows_what_yolo_allows(launched, tmp_pat
     assert _call(launched, "cat /etc/passwd").proposal.state == HELD
     [line] = _decided(service, pid)
     assert line["kind"] == "gate_approval" and line["line"] == "Allowed: Bash"
-    assert line["rule"] == "Yolo: the gate allows a read, a build or a test by its own rules"
+    assert line["rule"] == "YOLO: the gate allows a read, a build or a test by its own rules"
     # A second allowed call of the same tool under the same rule: one line.
     assert _call(launched, "pytest -q").proposal.state == APPROVED
     assert len(_decided(service, pid)) == 1
@@ -236,3 +237,169 @@ def test_the_rigs_secure_program_shows_its_steps_routine_question_waiting(tmp_pa
     assert responder.decide(key)["outcome"] == ESCALATED
     assert drafts == []  # Secure drafts nothing: the question is his
     assert rig.service.get(OWNER, pid)["decided_for_you"] == []
+
+
+# ── PG13b: the launch flags follow the Program's level ───────────────
+
+
+def _step_launch(
+    tmp_path, database, monkeypatch, *, agent: str, desk: str, control: str = "", helper: bool = False,
+    review: Any = None,
+):
+    """Hand a Program step at ``control`` (or the plain item ``action:ai_1``
+    when ``control`` is empty) on a desk at ``desk``; the agent's argv as
+    tmux receives it. ``helper``: then a helper of that launch, by the
+    agent's own Start helper (``agent_helpers.start_helper``)."""
+    import shlex
+
+    from tests.unit._spawn_env import command_of
+    from tests.unit.test_agent_hand import _rig
+
+    rig = _rig(tmp_path, database, monkeypatch, agent=agent)
+    rig.service._control_mode = lambda: desk
+    rig.service._db = database
+    rig.hand._control_mode = lambda: desk
+    profile = f"{agent}-default"
+    if control:
+        service = ProgramService(database, kernel=lambda **_kw: None)
+        pid = service.create(OWNER, title="The hub stops stalling", repository=str(rig.repo), control=control)["id"]
+        service.plan(OWNER, pid, steps=[{"title": "Indexes", "brief": "Add the three indexes."}])
+        [step] = service.store.list_steps(pid)
+        kind, item_id = "program_step", step["id"]
+    else:
+        kind, item_id = "action", "ai_1"
+    result = rig.hand.hand(OWNER, kind, item_id, profile=profile)
+    assert result["status"] == "launched", result
+    if control:
+        step.update(launch_id=result["launch_id"], state="working")
+        service.store.save_step(step)
+    if helper:
+        from holdspeak.services.agent_helpers import start_helper
+
+        before = len([c for c in rig.tmux.calls if c[1] == "new-session"])
+        answer = start_helper(
+            result["launch_id"], instruction="Read the diff.", profile=profile,
+            hand_service=rig.hand, control_mode=lambda: desk, ledger=rig.launches, review=review,
+        )
+        spawns = [c for c in rig.tmux.calls if c[1] == "new-session"]
+        rig.tmux.ended = True
+        if answer.get("status") == "awaiting_owner":
+            assert len(spawns) == before
+            return rig, result, answer, None
+        result = answer
+        spawn = spawns[-1]
+    else:
+        spawn = next(c for c in rig.tmux.calls if c[1] == "new-session")
+        rig.tmux.ended = True
+    command = command_of(spawn)
+    return rig, result, None, shlex.split(command.split(" exec ", 1)[1])
+
+
+def _codex_mode_flags(argv: list[str]) -> list[str]:
+    at = argv.index("--ask-for-approval")
+    return argv[at:at + 2] + (argv[argv.index("--sandbox"):argv.index("--sandbox") + 2] if "--sandbox" in argv else [])
+
+
+@pytest.mark.parametrize("control, desk, edits", [
+    ("secure", "yolo", False), ("normal", "safe", True), ("yolo", "neutral", True),
+])
+def test_a_step_launch_of_claude_code_takes_its_programs_level(tmp_path, db, monkeypatch, control, desk, edits) -> None:  # noqa: F811
+    from holdspeak.delivery.agent_mcp import CLAUDE_ALLOW_RULE
+
+    rig, result, _, argv = _step_launch(tmp_path, db, monkeypatch, agent="claude", desk=desk, control=control)
+    assert ("acceptEdits" in argv) is edits
+    assert (CLAUDE_ALLOW_RULE in argv) is edits  # the holdspeak tools: pre-approved at Normal and YOLO only
+    record = rig.launches.get(result["launch_id"])
+    assert record["control_mode"] == {"secure": "safe", "normal": "neutral", "yolo": "yolo"}[control]
+    assert result["control_mode"] == record["control_mode"]
+
+
+@pytest.mark.parametrize("control, desk, flags", [
+    ("secure", "yolo", ["--ask-for-approval", "on-request"]),
+    ("normal", "yolo", ["--ask-for-approval", "on-request"]),
+    ("yolo", "neutral", ["--ask-for-approval", "never", "--sandbox", "workspace-write"]),
+])
+def test_a_step_launch_of_codex_takes_its_programs_level(tmp_path, db, monkeypatch, control, desk, flags) -> None:  # noqa: F811
+    rig, result, _, argv = _step_launch(tmp_path, db, monkeypatch, agent="codex", desk=desk, control=control)
+    assert _codex_mode_flags(argv) == flags
+    if control == "yolo":
+        # YOLO writes inside its own worktree and that worktree's git folder only.
+        worktree = rig.launches.get(result["launch_id"])
+        dirs = [argv[i + 1] for i, a in enumerate(argv) if a == "--add-dir"]
+        assert dirs and all(os.path.realpath(rig.repo / ".git") in d for d in dirs), (dirs, worktree)
+        assert "-c" in argv and "sandbox_workspace_write.network_access=true" in argv
+    else:
+        assert "--sandbox" not in argv and "--add-dir" not in argv
+
+
+@pytest.mark.parametrize("agent, desk, word", [
+    ("claude", "safe", None), ("claude", "yolo", "acceptEdits"),
+    ("codex", "safe", "on-request"), ("codex", "yolo", "never"),
+])
+def test_a_plain_launch_keeps_the_desks_flags(tmp_path, db, monkeypatch, agent, desk, word) -> None:  # noqa: F811
+    rig, result, _, argv = _step_launch(tmp_path, db, monkeypatch, agent=agent, desk=desk)
+    if agent == "claude":
+        assert ("acceptEdits" in argv) is (word is not None)
+    else:
+        assert _codex_mode_flags(argv)[1] == word
+    assert rig.launches.get(result["launch_id"])["control_mode"] == desk
+
+
+def test_a_helper_of_a_yolo_step_on_a_secure_desk_starts_at_yolo(tmp_path, db, monkeypatch) -> None:  # noqa: F811
+    rig, helper, pending, argv = _step_launch(
+        tmp_path, db, monkeypatch, agent="codex", desk="safe", control="yolo", helper=True,
+    )
+    assert pending is None, pending  # the desk's Secure would wait for his press
+    assert _codex_mode_flags(argv) == ["--ask-for-approval", "never", "--sandbox", "workspace-write"]
+    assert rig.launches.get(helper["launch_id"])["control_mode"] == "yolo"
+
+
+def test_a_helper_of_a_secure_step_on_a_yolo_desk_waits_for_him(tmp_path, db, monkeypatch) -> None:  # noqa: F811
+    _rig_, _parent, pending, argv = _step_launch(
+        tmp_path, db, monkeypatch, agent="claude", desk="yolo", control="secure", helper=True,
+    )
+    assert argv is None and pending["status"] == "awaiting_owner"
+
+
+def test_a_reviewer_helper_inherits_the_steps_level_after_his_press(tmp_path, db, monkeypatch) -> None:  # noqa: F811
+    """A Secure step on a YOLO desk: the reviewer helper waits for his press
+    (the desk's YOLO would start it at once), and then it runs at Secure,
+    read-only (Claude Code's plan mode, the holdspeak tools not pre-approved)."""
+    from holdspeak.services.agent_helpers import allow_helper
+
+    review = {"role": "reviewer", "requested": "claude", "round": 1, "read_only": True}
+    rig, parent, pending, _argv = _step_launch(
+        tmp_path, db, monkeypatch, agent="claude", desk="yolo", control="secure", helper=True, review=review,
+    )
+    rig.tmux.ended = False
+    answer = allow_helper(
+        parent["launch_id"], request_id=pending["owner_action"]["request_id"], principal=OWNER,
+        hand_service=rig.hand, ledger=rig.launches,
+    )
+    assert answer["status"] == "launched", answer
+    record = rig.launches.get(answer["launch_id"])
+    assert record["control_mode"] == "safe" and record["role"] == "reviewer" and record["read_only"] is True
+    assert record["mcp"]["pre_approved"] is False
+
+
+# ── PG13b: the words ─────────────────────────────────────────────────
+
+
+def test_a_level_is_printed_secure_normal_yolo() -> None:
+    from holdspeak.services.program_rules import decide, level_word
+
+    assert [level_word(word) for word in ("secure", "normal", "yolo", "safe", "neutral", "", None)] == [
+        "Secure", "Normal", "YOLO", "Secure", "Normal", "Normal", "Normal",
+    ]
+    assert decide("yolo", "merge", {"check_green": True}).rule == "YOLO merges on a green check and a passed review"
+    assert decide("yolo", "agent_question", {"routine": True}).rule.startswith("YOLO: ")
+    for control, word in (("secure", "Secure"), ("normal", "Normal"), ("yolo", "YOLO")):
+        assert decide(control, "step_failed", {}).rule.startswith(f"{word}: ")
+
+
+def test_the_programs_wire_says_yolo(tmp_path) -> None:
+    database = Database(tmp_path / "hub.db")
+    service, pid = _bind(database, _repo(tmp_path), "launch_step", "yolo")
+    program = service.get(OWNER, pid)
+    assert program["control_word"] == "YOLO"
+    assert program["status_line"].endswith("control YOLO")
