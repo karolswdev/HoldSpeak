@@ -215,7 +215,7 @@ TRUTH_DIR = REPO / "web" / "src" / "desk" / "__tests__" / "fixtures" / "runs-on-
 STUB_HOST = "127.0.0.1:8099"
 #: The reads Runs on makes when it opens and after each write (useRunsOn).
 FACE_READS = ("/api/inference/assignments", "/api/concierge/detect", "/api/memory/meaning-search",
-              "/api/setup/local-ai")
+              "/api/setup/local-ai", "/api/concierge/speech")  # speech: RECIPE LINE-6's Phone speech group
 TOOLS_MODEL = "stub-qwen"
 
 

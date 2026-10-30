@@ -8981,6 +8981,28 @@
         ]
       }
     },
+    "/api/concierge/speech": {
+      "get": {
+        "description": "The Line's speech models (RECIPE LINE-6): the Engines window's\n\"Phone speech\" rows, with each download's progress.",
+        "operationId": "get_speech_api_concierge_speech_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Get Speech Api Concierge Speech Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Speech",
+        "tags": [
+          "concierge"
+        ]
+      }
+    },
     "/api/concierge/summary-selection": {
       "post": {
         "description": "Commit the owner's one explicit summary-engine selection.",

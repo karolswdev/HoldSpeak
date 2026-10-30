@@ -215,7 +215,9 @@ function DeviceRow({ device }: { device: PhoneDevice | null }) {
         <span className="phone-device-name">{device.name}</span>
         <span className="phone-device-fact">{deviceFact(device)}</span>
       </span>
-      <DotWord tone="ok">{stateWords("PAIRED")}</DotWord>
+      {pushNotReady(device)
+        ? <DotWord tone="warn" data-testid="phone-device-push" title={pushNotReady(device)!}>Push not ready</DotWord>
+        : <DotWord tone="ok">{stateWords("PAIRED")}</DotWord>}
     </div>
   );
 }
@@ -226,6 +228,19 @@ export function transcriptOf(call: PhoneCall): { callsId?: string; ref?: string 
   const ref = String(call.transcript_ref ?? "");
   if (!ref) return null;
   return ref.startsWith("call:") ? { callsId: ref.slice("call:".length) } : { ref };
+}
+
+/** The push word of a paired phone (`push_state`, RECIPE PH13): null when
+ *  a push will go (or the hub did not say), else "Push not ready" and why. */
+const PUSH_REASONS: Record<string, string> = {
+  no_key: "no Apple push key on the hub",
+  http2_unavailable: "the hub has no HTTP/2",
+  unregistered: "the phone sent no push token",
+};
+
+export function pushNotReady(device: PhoneDevice): string | null {
+  const reason = device.push_state ? PUSH_REASONS[device.push_state] : undefined;
+  return reason ? `Push not ready: ${reason}` : null;
 }
 
 /** `Paired 21 Oct · seen 2 min ago`. */

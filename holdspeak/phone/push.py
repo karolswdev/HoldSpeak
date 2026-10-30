@@ -7,9 +7,14 @@
   the key store, ``team_id`` and ``key_id`` beside it). A call is a VoIP push
   (topic ``<bundle>.voip``, PushKit wakes the app for CallKit); a message is
   an alert push with the reply category (``HOLDSPEAK_REPLY``) so he answers
-  from the lock screen. APNs speaks HTTP/2 only: the provider answers
-  ``error`` (``http2_unavailable``) until ``httpx[http2]`` is installed.
+  from the lock screen. APNs speaks HTTP/2 only (``httpx[http2]`` is a core
+  dependency, RECIPE PH13); without h2 the provider answers ``error``.
 - :class:`NullPush`: logs and keeps what it would have sent (the rig).
+
+Each provider says whether it can send (:func:`http2_ready`, ``push_state``):
+``ready``, ``no_key`` (no APNs key saved: the hub's fallback NullPush) or
+``http2_unavailable``. The device row adds ``unregistered`` (no push token),
+so the Phone section says why a push will not go.
 
 Every payload carries the event as JSON text and its signature: HMAC-SHA256
 with the device's own push secret, base64url. The app checks it before it
@@ -39,6 +44,12 @@ ERROR = "error"
 #: APNs takes 4 KB for an alert (5 KB for VoIP); leave room for the rest.
 MAX_EVENT_BYTES = 3000
 REPLY_CATEGORY = "HOLDSPEAK_REPLY"
+#: The device row's push word (``push_state`` on the wire).
+PUSH_READY = "ready"
+PUSH_NO_KEY = "no_key"
+PUSH_HTTP2_UNAVAILABLE = "http2_unavailable"
+PUSH_UNREGISTERED = "unregistered"
+PUSH_STATES = (PUSH_READY, PUSH_NO_KEY, PUSH_HTTP2_UNAVAILABLE, PUSH_UNREGISTERED)
 APNS_HOSTS = {"production": "https://api.push.apple.com", "sandbox": "https://api.sandbox.push.apple.com"}
 
 
@@ -76,6 +87,17 @@ class PushProvider(Protocol):
 
     def send(self, target: Target, payload: Mapping[str, str], ttl: int, high_priority: bool) -> str: ...
 
+    def push_state(self) -> str: ...
+
+
+def http2_ready() -> bool:
+    """True when h2 imports (``httpx[http2]``)."""
+    try:
+        import h2  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
 
 @dataclass
 class NullPush:
@@ -83,6 +105,12 @@ class NullPush:
 
     name: str = "null"
     sent: list[dict[str, Any]] = field(default_factory=list)
+    #: ``ready`` for a rig; the hub's fallback when no APNs key is saved is
+    #: ``NullPush(state="no_key")``.
+    state: str = PUSH_READY
+
+    def push_state(self) -> str:
+        return self.state
 
     def send(self, target: Target, payload: Mapping[str, str], ttl: int, high_priority: bool) -> str:
         self.sent.append({"device_id": target.device_id, "kind": target.kind, "payload": dict(payload),
@@ -118,8 +146,8 @@ def apns_jwt(key: ApnsKey, *, now: Optional[float] = None) -> str:
 
 
 def apns_request(key: ApnsKey, target: Target, payload: Mapping[str, str], ttl: int,
-                 high_priority: bool) -> tuple[str, dict[str, str], dict[str, Any]]:
-    """The URL, headers and body of one APNs push."""
+                 high_priority: bool, *, host: Optional[str] = None) -> tuple[str, dict[str, str], dict[str, Any]]:
+    """The URL, headers and body of one APNs push (``host`` replaces Apple's for a test server)."""
     call = target.kind == "call"
     topic = key.bundle_id + (".voip" if call else "")
     if call:
@@ -134,7 +162,8 @@ def apns_request(key: ApnsKey, target: Target, payload: Mapping[str, str], ttl: 
         "apns-priority": "10" if high_priority else "5",
         "apns-expiration": str(int(time.time()) + max(0, int(ttl))),
     }
-    url = f"{APNS_HOSTS.get(key.environment, APNS_HOSTS['production'])}/3/device/{target.token}"
+    base = host or APNS_HOSTS.get(key.environment, APNS_HOSTS["production"])
+    url = f"{base.rstrip('/')}/3/device/{target.token}"
     return url, headers, body
 
 
@@ -147,24 +176,30 @@ def _alert_text(payload: Mapping[str, str]) -> str:
 
 
 class ApnsPush:
-    """APNs, token-based, with his key from the key store."""
+    """APNs, token-based, with his key from the key store.
+
+    ``host`` replaces Apple's host (a test's fake HTTP/2 server). The client
+    speaks HTTP/2 only (``http1=False``): over TLS it offers only h2, and over
+    plain ``http://`` it speaks h2 with prior knowledge."""
 
     name = "apns"
 
-    def __init__(self, key: ApnsKey) -> None:
+    def __init__(self, key: ApnsKey, *, host: Optional[str] = None) -> None:
         self._key = key
+        self._host = host
+
+    def push_state(self) -> str:
+        return PUSH_READY if http2_ready() else PUSH_HTTP2_UNAVAILABLE
 
     def send(self, target: Target, payload: Mapping[str, str], ttl: int, high_priority: bool) -> str:
-        try:
-            import h2  # noqa: F401  (APNs is HTTP/2 only)
-        except ImportError:
+        if not http2_ready():  # APNs is HTTP/2 only
             log.warning("APNs push not sent: http2_unavailable (install httpx[http2])")
             return ERROR
         import httpx
 
-        url, headers, body = apns_request(self._key, target, payload, ttl, high_priority)
+        url, headers, body = apns_request(self._key, target, payload, ttl, high_priority, host=self._host)
         try:
-            with httpx.Client(http2=True, timeout=10.0) as client:
+            with httpx.Client(http1=False, http2=True, timeout=10.0) as client:
                 response = client.post(url, headers=headers, json=body)
         except Exception as exc:
             log.warning(f"APNs push failed: {exc}")
@@ -195,6 +230,7 @@ def apns_from_keystore() -> Optional[ApnsPush]:
 
 
 __all__ = [
-    "ApnsKey", "ApnsPush", "ERROR", "MAX_EVENT_BYTES", "NullPush", "OK", "PushProvider", "REPLY_CATEGORY",
-    "Target", "UNREGISTERED", "apns_from_keystore", "apns_jwt", "apns_request", "build_payload", "sign",
+    "ApnsKey", "ApnsPush", "ERROR", "MAX_EVENT_BYTES", "NullPush", "OK", "PUSH_HTTP2_UNAVAILABLE", "PUSH_NO_KEY",
+    "PUSH_READY", "PUSH_STATES", "PUSH_UNREGISTERED", "PushProvider", "REPLY_CATEGORY", "Target", "UNREGISTERED",
+    "apns_from_keystore", "apns_jwt", "apns_request", "build_payload", "http2_ready", "sign",
 ]

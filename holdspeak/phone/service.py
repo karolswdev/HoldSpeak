@@ -31,7 +31,7 @@ from . import phone_on
 from .calls import FINAL, RERING_SECONDS, RING_SECONDS, RingTimers, can_move, missed_words
 from .events import PhoneEvents
 from .phone_rules import KINDS, Hold, level_of, reach as reach_rule
-from .push import ERROR, NullPush, OK, UNREGISTERED, Target, build_payload
+from .push import ERROR, PUSH_NO_KEY, PUSH_READY, PUSH_UNREGISTERED, NullPush, OK, UNREGISTERED, Target, build_payload
 from .store import PhoneStore
 from .transport_number import CALL_WAIT_SECONDS, NumberTransport
 
@@ -105,10 +105,15 @@ def call_wire(row: Mapping[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in out.items() if value is not None or key in ("reason",)}
 
 
-def device_wire(row: Mapping[str, Any]) -> dict[str, Any]:
+def device_wire(row: Mapping[str, Any], provider_state: Optional[str] = None) -> dict[str, Any]:
+    """One device on the wire. ``push_state`` (RECIPE PH13) says why a push
+    will not go: ``unregistered`` (no push token) first, else the provider's
+    word (``ready`` | ``no_key`` | ``http2_unavailable``) when it is known."""
+    has_push = bool(row.get("push_token"))
     out = {
         "id": row["id"], "name": row.get("name") or "", "platform": row.get("platform") or "",
-        "state": row["state"], "has_push": bool(row.get("push_token")), "push_kind": row.get("push_kind"),
+        "state": row["state"], "has_push": has_push, "push_kind": row.get("push_kind"),
+        "push_state": provider_state if has_push else PUSH_UNREGISTERED,
         "sip_identity": row.get("sip_identity"), "paired_at": row["paired_at"],
         "last_seen_at": row.get("last_seen_at"), "revoked_at": row.get("revoked_at"),
     }
@@ -154,11 +159,23 @@ class PhoneService:
             from .push import apns_from_keystore
 
             try:
-                self._push = apns_from_keystore() or NullPush()
+                self._push = apns_from_keystore() or NullPush(state=PUSH_NO_KEY)
             except Exception as exc:
                 log.info(f"phone push: no APNs key ({exc})")
-                self._push = NullPush()
+                self._push = NullPush(state=PUSH_NO_KEY)
         return self._push
+
+    def push_state(self) -> str:
+        """The provider's push word (``ready`` | ``no_key`` | ``http2_unavailable``)."""
+        try:
+            word = getattr(self.push(), "push_state", None)
+            return str(word()) if callable(word) else PUSH_READY
+        except Exception as exc:
+            log.info(f"phone push state: {exc}")
+            return PUSH_NO_KEY
+
+    def device_wire(self, row: Mapping[str, Any]) -> dict[str, Any]:
+        return device_wire(row, self.push_state() if row.get("push_token") else None)
 
     def _secret(self) -> bytes:
         return devs.hub_secret()
@@ -231,7 +248,7 @@ class PhoneService:
                         "sip_identity": request.sip_identity, "jwt_kid": kid, "state": "paired",
                         "paired_at": now, "last_seen_at": now})
             self.store.save_device(row)
-        self.events.append("device.paired", {"device": device_wire(row)})
+        self.events.append("device.paired", {"device": self.device_wire(row)})
         self._frame("device", row["id"], "paired")
         secret = self._secret()
         return {"device_id": row["id"], "device_jwt": devs.issue_jwt(secret, row["id"], kid),
@@ -253,7 +270,7 @@ class PhoneService:
 
     def devices(self, principal: Any) -> dict[str, Any]:
         rows = [row for row in self.store.list_devices() if row["state"] != "pairing"]
-        return {"devices": [device_wire(row) for row in rows]}
+        return {"devices": [self.device_wire(row) for row in rows]}
 
     def paired(self) -> list[dict[str, Any]]:
         return [row for row in self.store.list_devices() if row["state"] == "paired"]
@@ -271,7 +288,7 @@ class PhoneService:
                 self.events.append("device.revoked", {"device_id": device_id, "at": row["revoked_at"]})
         closed = self.events.close_device(device_id)
         self._frame("device", device_id, "revoked")
-        return {"device": device_wire(row), "sockets_closed": closed}
+        return {"device": self.device_wire(row), "sockets_closed": closed}
 
     # ── push ──────────────────────────────────────────────────────────
 
@@ -963,7 +980,7 @@ class PhoneService:
         reaches = self.store.events_of_type("reach", today)
         calls = [row for row in self.store.list_calls() if str(row["created_at"]) >= today]
         return {
-            "on": phone_on(), "devices": [device_wire(row) for row in self.paired()],
+            "on": phone_on(), "devices": [self.device_wire(row) for row in self.paired()],
             "line": {"number_set": bool(self.number.number()), "ready": ready,
                      "words": "Ready" if ready else (why[:1].upper() + why[1:])},
             "quiet_hours": {"start": start, "end": end, "now": self._quiet()},

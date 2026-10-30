@@ -91,16 +91,47 @@ State: **Shipped** means merged to main. **Left** means a later slice.
   filler.
 - **Proof**: the numbers in the design's "Built" section, from a real call.
 
-## LINE-6. The concierge rows (Left)
+## LINE-6. The concierge rows (Shipped 2026-10-29, lane LINE-6)
 
 - **Goal**: the two speech models come through the Engines window's
-  download path, each with its CC-BY-4.0 line: "Phone speech in · Parakeet"
-  (0.6 GB) and "Phone voice · Pocket TTS" (0.2 GB).
-- **Why left**: the Engines catalog is the signed preset envelope of
-  `hs/inference_setup_catalog.py` (LLM presets, formats `gguf` and
-  `mlx_safetensors` only). A speech row needs a new preset kind, its
-  validator and a new signature: that is the catalog's core, not a row.
-  Until then `holdspeak line models` fetches the models from Hugging Face.
+  download path, each with its licences: "Phone speech in · Parakeet (int8,
+  onnx-asr)" (661 MB) and "Phone voice · Pocket TTS" (226 MB); weights
+  CC-BY-4.0, code MIT.
+- **Files**: `hs/inference_setup_catalog.py` (kind `speech_model_preset`,
+  its validator, revision 6 signed with a new key `holdspeak_catalog_2026_10_29`;
+  the old trust roots stay; no private key is kept), `hs/line/models.py`
+  (new: the fetch, the state, the jobs), `hs/line/node.py`
+  (`holdspeak line models` and the hello read it), `hs/line/speech.py` (the
+  engines load from the Line's model folder when it is Ready),
+  `hs/services/concierge_service.py`, `hs/web/routes/concierge.py`
+  (`GET /api/concierge/speech`; `POST /api/concierge/download` with a speech
+  preset starts the Line's fetch), `web/src/features/runson/PhoneSpeech.tsx`
+  (new), `RunsOnCore.tsx`, `scripts/record_speech_fixture.py` (new).
+- **Changes**: each model pins a Hugging Face revision and every file its
+  engine loads (onnx-asr's int8 Parakeet: config, vocab, encoder, decoder;
+  pocket-tts 4.0.1's English model, tokenizer and the `alba` voice), each
+  with its size and SHA-256. The fetch streams each file into
+  `<the Line's folder>/models/<id>/`, hashes it as it comes and keeps it only
+  when it matches. Ready = every pinned file is there and matches;
+  `.verified.json` keeps the digest by size and time, so a read does not hash
+  650 MB again. The Engines window draws the two in their own fold, "Phone
+  speech" (name, size, licence, state, Download with the host in its hover
+  title); the row polls while it downloads. Speech models are not inference
+  presets: `applicable_presets` leaves them out.
+- **Tests**: T1 `tests/unit/test_line_models.py` (the signed envelope
+  round-trips; a changed pin breaks the signature; the validator refuses a
+  mutable revision, a path out of the folder, a wrong total; the fetch with
+  a fake: the pinned URLs, progress, Ready, a wrong digest kept nowhere, a
+  changed file hashed again; the job to Ready and to failed; `holdspeak line
+  models` and the hello share the state; the routes); T2
+  `features/runson/__tests__/engines.app.test.tsx` (Phone speech at 1440 and
+  393: one Ready and one Not downloaded row; the press through to progress
+  and Ready, on the recorded answers); T3 the sweep's Engines case.
+- **Left**: the rows say this machine's folder. A Line node on another
+  machine still runs `holdspeak line models` there (its hello reports its own
+  state). The engines' load from the folder (onnx-asr `path=`, a pocket-tts
+  config pointed at the local files) is not proven on real metal in this
+  lane: onnx-asr and pocket-tts are not installed in the dev venv.
 
 ## LICENCE. The hub's own GPL pulls (Left; needs his ruling)
 

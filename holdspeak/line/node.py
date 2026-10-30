@@ -587,40 +587,24 @@ def _hub_token() -> str:
 
 def machine_block(*, models_state: str = "") -> dict[str, Any]:
     """The hello's ``machine``: the name, the platform, baresip's version and
-    each model's state (``ready`` once loaded; else ``downloaded`` or
-    ``missing`` from the Hugging Face cache)."""
+    each model's state (``ready`` once loaded; else ``downloaded`` when its
+    pinned files are verified in the Line's model folder, or ``missing``;
+    ``line/models.py``)."""
     import platform
 
+    from . import models as line_models
     from .install import default_node_name
-    from .speech import MODELS
     from .supervisor import baresip_version
 
     binary = find_baresip()
-    models = []
-    for model in MODELS:
-        state = models_state or ("downloaded" if _cached(model["repo"]) else "missing")
-        models.append({"id": model["id"], "name": model["name"], "state": state})
+    models = line_models.hello_models(loaded=models_state == "ready")
     return {"name": default_node_name(), "platform": f"{platform.system()} {platform.machine()}",
             "baresip": baresip_version(binary) if binary else "", "models": models}
 
 
-def _cached(repo: str) -> bool:
-    try:
-        from huggingface_hub import try_to_load_from_cache
-
-        return isinstance(try_to_load_from_cache(repo, "config.json"), str) or _cache_dir_has(repo)
-    except Exception:
-        return _cache_dir_has(repo)
-
-
-def _cache_dir_has(repo: str) -> bool:
-    base = Path(os.environ.get("HF_HOME") or Path.home() / ".cache" / "huggingface") / "hub"
-    return (base / ("models--" + repo.replace("/", "--")) / "snapshots").is_dir()
-
-
 def check() -> dict[str, Any]:
     """What the Line needs on this machine, and what is there."""
-    from .speech import MODELS
+    from . import models as line_models
 
     binary = find_baresip()
     out: dict[str, Any] = {"baresip": binary or "", "version": "", "aupipe": "", "speech": {}, "models": []}
@@ -636,22 +620,34 @@ def check() -> dict[str, Any]:
             out["speech"][module] = True
         except ImportError:
             out["speech"][module] = False
-    out["models"] = [dict(m) for m in MODELS]
+    out["models"] = line_models.rows()
     return out
 
 
-def fetch_models() -> list[str]:
+def fetch_models(*, fetch: Any = None) -> list[str]:
     """Fetch the two speech models from huggingface.co (the one host the
-    Engines window's downloads reach); each is named with its licence."""
-    from huggingface_hub import snapshot_download
-
-    from .speech import MODELS
+    Engines window's downloads reach) into the Line's model folder, each
+    named with its licences. The Engines window's "Phone speech" rows call
+    the same fetch (``line/models.py``), so both say one state."""
+    from . import models as line_models
 
     done = []
-    for model in MODELS:
-        print(f"{model['name']}: {model['repo']} (~{model['size_mb']} MB). Code {model['code']}; weights {model['weights']}.")
-        snapshot_download(model["repo"])
-        done.append(model["repo"])
+    for row in line_models.presets():
+        source = row["source"]
+        mb = round(source["download_bytes"] / 1_000_000)
+        print(f"{row['label']}: {source['repository']}@{source['revision'][:8]} (~{mb} MB). "
+              f"Code {source['code_license']}; weights {source['license']} ({source['attribution']}).", flush=True)
+        shown = [-1]
+
+        def progress(received: int, total: int) -> None:
+            step = int(received * 10 / total) if total else 10
+            if step != shown[0]:
+                shown[0] = step
+                print(f"  {step * 10}%", flush=True)
+
+        after = line_models.fetch(row, fetch=fetch, progress=progress)
+        print(f"  {'Ready' if after['state'] == line_models.READY else after['state']}", flush=True)
+        done.append(row["id"])
     return done
 
 

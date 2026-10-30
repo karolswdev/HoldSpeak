@@ -183,8 +183,9 @@ differs from the text above, and why. The faces (§9) are the PH-FACES lane's.
   his press in Needs you, unless the Program may call and the level is not
   Secure.
 - **APNs needs `httpx[http2]`.** `ApnsPush` answers `error`
-  (`http2_unavailable`) until the HTTP/2 extra is installed; the extra is not
-  added to `pyproject.toml` in this PR. Until his Apple key is in the
+  (`http2_unavailable`) until the HTTP/2 extra is installed; PH13
+  (2026-10-29) added it to the core dependencies, and the device row's
+  `push_state` says why a push would not go. Until his Apple key is in the
   keystore the hub runs `NullPush`, which logs and keeps what it would have
   sent (`holdspeak/phone/push.py`).
 - **Quiet hours come from the desk's one quiet-hours store,** the one

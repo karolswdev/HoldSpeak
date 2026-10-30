@@ -40,6 +40,9 @@ class _Wire(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+PushState = Literal["ready", "no_key", "http2_unavailable", "unregistered"]
+
+
 class Device(_Wire):
     """A paired phone (``phone_devices``); the push token is never on the wire."""
 
@@ -49,6 +52,9 @@ class Device(_Wire):
     state: DeviceState
     has_push: bool = False
     push_kind: Optional[str] = None
+    #: Why a push will or will not go (RECIPE PH13): ``ready``, ``no_key``
+    #: (no APNs key saved), ``http2_unavailable`` or ``unregistered`` (no token).
+    push_state: Optional[PushState] = None
     sip_identity: Optional[str] = None
     paired_at: str
     last_seen_at: Optional[str] = None

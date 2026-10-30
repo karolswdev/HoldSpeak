@@ -76,10 +76,21 @@ this tree:
 - The Parakeet TDT 0.6B v2 model weights (NVIDIA; the ONNX export
   istupakov/parakeet-tdt-0.6b-v2-onnx), licensed under the Creative Commons
   Attribution 4.0 International License (CC-BY-4.0). Downloaded by
-  `holdspeak line models`; not in this tree.
+  `holdspeak line models` or Engines ▸ Phone speech; not in this tree.
 - The Pocket TTS model weights (Kyutai, kyutai/pocket-tts-without-voice-cloning),
-  licensed under CC-BY-4.0. Downloaded by `holdspeak line models`; not in
-  this tree.
+  licensed under CC-BY-4.0. Downloaded by `holdspeak line models` or
+  Engines ▸ Phone speech; not in this tree.
+
+The phone's push to Apple (holdspeak/phone/push.py) speaks HTTP/2 through
+httpx's `http2` extra, a Python dependency; no source of theirs is copied
+into this tree:
+
+- h2 (https://github.com/python-hyper/h2), Copyright (c) 2015-2020 Cory
+  Benfield and contributors, licensed under the MIT License.
+- hpack (https://github.com/python-hyper/hpack), Copyright (c) 2014 Cory
+  Benfield, licensed under the MIT License.
+- hyperframe (https://github.com/python-hyper/hyperframe), Copyright (c)
+  2014 Cory Benfield, licensed under the MIT License.
 
 The BSD 3-Clause License text, for baresip and libre:
 
@@ -107,7 +118,8 @@ The BSD 3-Clause License text, for baresip and libre:
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
-The MIT License text, for Moonfold, qrcode-generator, onnx-asr and pocket-tts:
+The MIT License text, for Moonfold, qrcode-generator, onnx-asr, pocket-tts, h2,
+hpack and hyperframe:
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to

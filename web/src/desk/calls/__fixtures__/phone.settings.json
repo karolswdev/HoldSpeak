@@ -2,14 +2,15 @@
   "on": true,
   "devices": [
     {
-      "id": "dev_80f62fa66da831a2",
+      "id": "dev_ba1376a3f12d19c3",
       "name": "Karol's iPhone",
       "platform": "ios",
       "state": "paired",
       "has_push": true,
       "push_kind": "null",
-      "paired_at": "2026-10-28T23:40:23.922903+00:00",
-      "last_seen_at": "2026-10-28T23:40:23.922903+00:00"
+      "push_state": "ready",
+      "paired_at": "2026-10-30T02:58:56.163768+00:00",
+      "last_seen_at": "2026-10-30T02:58:56.163768+00:00"
     }
   ],
   "line": {
@@ -59,7 +60,7 @@
   "last_reach": {
     "seq": 9,
     "type": "reach",
-    "ts": "2026-10-28T23:40:23.933049+00:00",
+    "ts": "2026-10-30T02:58:56.174929+00:00",
     "data": {
       "kind": "agent_question",
       "channel": "message",
@@ -68,7 +69,7 @@
       "may_call": false,
       "reason": "Which branch is the release: main or release/1.4?",
       "origin_ref": "agent:lane-runbook:1",
-      "msg_id": "msg_3cb69bff4b330a30",
+      "msg_id": "msg_b6178b38a2403fcf",
       "urgent": false,
       "queued": false
     }

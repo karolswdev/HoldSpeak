@@ -623,3 +623,70 @@ describe("Engines — What runs where (Betterment E5)", () => {
     }) });
   });
 });
+
+/* RECIPE LINE-6: the Line's two speech models in their own group, on the
+   hub's recorded answers (`scripts/record_speech_fixture.py`: the real
+   concierge routes and the Line's real fetch, a fake that serves no
+   network). The press goes through to progress and Ready. */
+import speech from "./fixtures/speech.recorded.json";
+
+describe("Engines — Phone speech (RECIPE LINE-6)", () => {
+  const GET = "/api/concierge/speech";
+  function speechHub() {
+    let step: "start" | "downloading" | "ready" = "start";
+    let reads = 0;
+    const posts: Array<{ path: string; json: unknown }> = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+      if (path === "/api/inference/assignments/editor") throw new Error("not recorded");
+      if (init?.method === "POST") {
+        posts.push({ path, json: init.json });
+        if (path !== speech.download.post) throw new Error(`unrecorded POST ${path}`);
+        step = "downloading";
+        return structuredClone(speech.download.answer) as never;
+      }
+      const at = String(path).split("?")[0];
+      if (at === GET) {
+        // The hub moves on while the face polls: one read mid-way, then Ready.
+        if (step === "downloading" && ++reads > 1) step = "ready";
+        return structuredClone(speech[step][GET]) as never;
+      }
+      return recordedGet(recorded.nothingFound.gets as Gets, at) as never;
+    });
+    return posts;
+  }
+  const row = (role: string) => screen.getByTestId(`runson-speech-state-${role}`);
+
+  it.each([1440, 393])("at %i the group shows speech in Ready and the voice Not downloaded, with licences and sizes", async (px) => {
+    width(px);
+    speechHub();
+    render(<RunsOnCore />);
+    const group = await screen.findByTestId("runson-phone-speech");
+    expect(group.querySelector(".kit-listday-label")?.textContent).toBe("Phone speech");
+    const [stt, tts] = speech.start[GET].rows;
+    expect(screen.getByTestId("runson-speech-name-stt").textContent).toBe(stt.label);
+    expect(screen.getByTestId("runson-speech-name-tts").textContent).toBe(tts.label);
+    expect(row("stt").textContent).toBe("Ready");
+    expect(row("tts").textContent).toBe("Not downloaded");
+    const meta = [...group.querySelectorAll(".kit-listrow-meta")].map((m) => m.textContent);
+    expect(meta).toEqual(["661 MB · Weights CC-BY-4.0 · code MIT", "226 MB · Weights CC-BY-4.0 · code MIT"]);
+    // Only the missing model has a verb; its egress is the hover title.
+    expect(screen.queryByTestId("runson-speech-download-stt")).toBeNull();
+    expect(screen.getByTestId("runson-speech-download-tts").getAttribute("title")).toBe("Downloads 226 MB from huggingface.co");
+  });
+
+  it("Download goes through the concierge's path to progress, then Ready", async () => {
+    width(1440);
+    const posts = speechHub();
+    render(<RunsOnCore />);
+    await screen.findByTestId("runson-phone-speech");
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("runson-speech-download-tts"));
+    });
+    expect(posts).toEqual([{ path: "/api/concierge/download", json: { presetId: speech.download.body.presetId } }]);
+    await waitFor(() => expect(row("tts").textContent).toMatch(/^Downloading · \d+%$/));
+    expect(screen.queryByTestId("runson-speech-download-tts")).toBeNull();
+    await waitFor(() => expect(row("tts").textContent).toMatch(/^Downloading · 4\d%$/), { timeout: 3000 });
+    await waitFor(() => expect(row("tts").textContent).toBe("Ready"), { timeout: 3000 });
+    expect(row("stt").textContent).toBe("Ready");
+  });
+});

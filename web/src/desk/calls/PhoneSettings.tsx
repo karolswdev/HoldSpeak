@@ -19,7 +19,7 @@ import { DotWord } from "../surface/kit";
 import { stateWords } from "../surface/words";
 import { removePhoneDevice, startPairing, usePhone, writeReach } from "./phoneApi";
 import type { PhonePairing, PhoneStatus, ReachChannel } from "./phoneTypes";
-import { deviceFact } from "./PhoneWing";
+import { deviceFact, pushNotReady } from "./PhoneWing";
 import { PhoneQr } from "./PhoneQr";
 import "./phone.css";
 
@@ -168,7 +168,9 @@ export function PhoneSettingsPane() {
           {paired.map((device) => (
             <Row key={device.id} testId="phone-device-row"
               name={<><span className="phone-handset" aria-hidden="true"><i /></span>{device.name}</>}
-              fact={<DotWord tone="ok">{deviceFact(device) || stateWords("PAIRED")}</DotWord>}
+              fact={pushNotReady(device)
+                ? <DotWord tone="warn" data-testid="phone-device-push" title={deviceFact(device)}>{pushNotReady(device)}</DotWord>
+                : <DotWord tone="ok">{deviceFact(device) || stateWords("PAIRED")}</DotWord>}
               verb={<Button dense variant="secondary" loading={busy === `remove-${device.id}`} onClick={() => remove(device.id)}
                 data-testid="phone-device-remove">Remove</Button>} />
           ))}
