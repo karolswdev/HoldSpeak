@@ -76,8 +76,10 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect((await screen.findByTestId("today-status-day")).textContent).toContain("That is the day");
     expect(screen.queryByTestId("today-status-ahead")).toBeNull();
     // DELIGHT slice 3: said once per day, per viewer. Today opened again the
-    // same day shows the count; the next day says it again.
-    expect(window.localStorage.getItem(DAY_SAID_KEY)).toBe("2026-10-12");
+    // same day shows the count; the next day says it again. The flag is
+    // written by an effect after the line is drawn: under load the line can
+    // show before React runs that effect, so the case waits for the flag.
+    await waitFor(() => expect(window.localStorage.getItem(DAY_SAID_KEY)).toBe("2026-10-12"));
     first.unmount();
     const again = render(<TodayView />);
     await waitFor(() => expect(screen.getByTestId("today-body").getAttribute("aria-busy")).toBeNull());
@@ -396,8 +398,8 @@ describe("DELIGHT slice 5: Since this morning", () => {
     fireEvent.click(rows[decision]);
     expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions",
       `record:${recorded.items[decision].ref.slice("decision_record:".length)}`);
-    // Said once per day: the flag is the local date.
-    expect(window.localStorage.getItem(EVENING_SAID_KEY)).toBe("2026-10-28");
+    // Said once per day: the flag is the local date (written by an effect).
+    await waitFor(() => expect(window.localStorage.getItem(EVENING_SAID_KEY)).toBe("2026-10-28"));
   });
 
   it("is said once per day: a later open the same evening folds it to one line", async () => {
