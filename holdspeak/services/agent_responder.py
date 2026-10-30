@@ -28,6 +28,12 @@ here. No model, a model error or a reply off the contract: REAL (never a
 guess). At most :data:`MAX_AUTO_ANSWERS_PER_HOUR` answers per launch per
 hour, and never the same question twice in a row: past that, REAL.
 
+Programs PG13: the level is the launch's (``control_level``). A launch that
+belongs to a Program's step follows the Program's own control, and there a
+ROUTINE draft is typed at Normal and YOLO (design §6); every other launch
+follows the desk's Control mode as above. A typed answer on a step is a
+Decided-for-you line on its Program ("Answered for you: ...").
+
 A permission prompt (``TO APPROVE``) is not answered here; tool calls are the
 tool gate's (``tool_gate_rules``).
 """
@@ -43,6 +49,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Optional
 
 from ..logging_config import get_logger
+from .control_level import DESK_WORDS, record_decision, step_of_launch
 
 log = get_logger("agent_responder")
 
@@ -644,6 +651,10 @@ class AgentResponder:
                     self.record_turn(key, session, launch)
             return "none"
         launch = self._launch_for(key)
+        types = mode == "yolo"
+        if launch is not None:
+            # Programs PG13: a step's launch follows its Program's level.
+            mode, types = self._policy(str(launch.get("launch_id") or ""), desk=mode)
         if launch is None or wait_kind(session) == "approve" or mode == "safe":
             if launch is not None and mode == "safe" and wait_kind(session) != "approve":
                 # Secure drafts nothing: the question is his, and it reaches
@@ -667,7 +678,7 @@ class AgentResponder:
             return "notify"  # escalated, drafted or drafting: the notified set dedupes
         # A new wait: its record replaces any older wait's record. ``withheld``
         # remembers that THIS triage held the wait back from Needs you.
-        withheld = mode == "yolo"
+        withheld = types
         self._store.put_wait(key, {
             "wait_id": wait_id, "state": DECIDING if withheld else DRAFTING,
             "launch_id": launch["launch_id"], "mode": mode, "withheld": withheld,
@@ -735,7 +746,7 @@ class AgentResponder:
 
         question = str(getattr(session, "question", "") or "").strip()
         launch_id = str(launch["launch_id"])
-        mode = str(self._mode() or "yolo").lower()
+        mode, types = self._policy(launch_id)
 
         # Before the model: Secure never drafts and a permission prompt is
         # the owner's; a wait held back by a YOLO triage is shown at once.
@@ -749,7 +760,7 @@ class AgentResponder:
             if mode == "safe" and wait_kind(session) != "approve":
                 self._reach_phone(key, session, mode)
             return {"outcome": ESCALATED, "draft": Draft(REAL, reason).to_dict()}
-        if mode == "neutral" and state["held_back"]:
+        if not types and state["held_back"]:
             self._write(key, wait_id, {
                 "state": DRAFTING, "launch_id": launch_id, "mode": mode, "withheld": False,
                 "at": self._clock(),
@@ -795,7 +806,7 @@ class AgentResponder:
             draft = Draft(REAL, "no model answered" + (f" ({error})" if error else ""))
         else:
             draft = guard(question, parse_answer(raw), brief, choices)
-        if mode == "yolo" and draft.verdict == ROUTINE:
+        if types and draft.verdict == ROUTINE:
             draft = self._rate_limit(launch_id, question, draft)
         # What the draft used (the decision or memory line it quotes), and
         # what the desk would type: a choice is typed as its number only.
@@ -805,7 +816,7 @@ class AgentResponder:
         # The model can be slow: before anything is typed or shown, read the
         # wait and the mode again. The owner may have answered, the agent may
         # ask something else or ask for a permission, the mode may be changed.
-        mode, stale = self._recheck(key, wait_id, question, mode)
+        mode, types, stale = self._recheck(key, wait_id, question, mode, launch_id)
         if stale == SUPERSEDED:
             self._write(key, wait_id, {
                 "state": SUPERSEDED, "launch_id": launch_id, "mode": mode, "withheld": False,
@@ -816,7 +827,7 @@ class AgentResponder:
         if stale:
             draft = Draft(REAL, stale, draft.answer)
 
-        if mode == "yolo" and draft.verdict == ROUTINE:
+        if types and draft.verdict == ROUTINE:
             # PHILO-15 15 (B47): what the desk types, it says as the desk. A
             # choice is the choice itself (AG3): the agent reads the number,
             # and a menu on its screen takes the key with no Enter.
@@ -836,6 +847,9 @@ class AgentResponder:
                     "at": self._clock(), "operation_id": sent.get("operation_id"),
                 })
                 self._receipt(key, session, draft, "auto_answered", mode, launch_id)
+                # Programs PG13: a step's answer is a Decided-for-you line.
+                record_decision(launch_id, "agent_question", f"Answered for you: {typed}"[:200],
+                                facts={"routine": True}, db=self._db)
                 return {
                     "outcome": ANSWERED, "draft": draft.to_dict(), "source": source,
                     "operation_id": sent.get("operation_id"),
@@ -885,23 +899,41 @@ class AgentResponder:
         return bool(session is not None and is_blocked(session)
                     and str(getattr(session, "wait_id", "") or "") == wait_id)
 
-    def _recheck(self, key: str, wait_id: str, question: str, mode: str) -> tuple[str, str]:
-        """``(mode now, why the draft is stale)``: ``""`` when the same wait
-        still asks the same question for an answer; ``superseded`` when the
-        wait ended (answered); otherwise the REAL reason."""
+    def _recheck(
+        self, key: str, wait_id: str, question: str, mode: str, launch_id: str = "",
+    ) -> tuple[str, bool, str]:
+        """``(mode now, types now, why the draft is stale)``: ``""`` when the
+        same wait still asks the same question for an answer; ``superseded``
+        when the wait ended (answered); otherwise the REAL reason."""
         from ..agent_context.models import is_blocked, wait_kind
 
-        now_mode = str(self._mode() or "yolo").lower()
+        now_mode, types = self._policy(launch_id)
         session = next((s for s in self._sessions() if self._key(s) == key), None)
         if session is None or not is_blocked(session) or str(getattr(session, "wait_id", "") or "") != wait_id:
-            return now_mode, SUPERSEDED
+            return now_mode, types, SUPERSEDED
         if wait_kind(session) == "approve":
-            return now_mode, "the agent now asks for a permission"
+            return now_mode, types, "the agent now asks for a permission"
         if str(getattr(session, "question", "") or "").strip() != question:
-            return now_mode, "the question changed while the draft was made"
+            return now_mode, types, "the question changed while the draft was made"
         if now_mode != mode:
-            return now_mode, f"the Control mode changed to {now_mode} while the draft was made"
-        return now_mode, ""
+            return now_mode, types, f"the Control mode changed to {now_mode} while the draft was made"
+        return now_mode, types, ""
+
+    def _policy(self, launch_id: str, *, desk: Optional[str] = None) -> tuple[str, bool]:
+        """``(mode, types)`` for one launch (Programs PG13). ``mode`` is the
+        Control mode word (``safe`` · ``neutral`` · ``yolo``); ``types`` is
+        whether a ROUTINE draft is typed. A launch that is not a Program
+        step: the desk's mode, typed at YOLO only (as built). A step: its
+        Program's level, typed at Normal and YOLO (design §6, the routine
+        agent question row). ``desk``: the desk's mode already read."""
+        found = step_of_launch(launch_id, db=getattr(self, "_db", None))
+        if found is None:
+            mode = str(desk if desk is not None else (self._mode() or "yolo")).lower()
+            return mode, mode == "yolo"
+        from .program_rules import decide, level_of
+
+        level = level_of(found[0].get("control"))
+        return DESK_WORDS[level], not decide(level, "agent_question", {"routine": True}).to_owner
 
     def _rate_limit(self, launch_id: str, question: str, draft: Draft) -> Draft:
         sent = list(self._store.read()["sent"].get(launch_id) or [])
@@ -960,15 +992,16 @@ class AgentResponder:
         wait_id = str(getattr(session, "wait_id", "") or "")
         launch_id = str(launch.get("launch_id") or "")
         turn, why = self._turn_end_of(launch_id, message_kind(question))
+        mode = self._policy(launch_id)[0]
         # A new wait at triage: its record replaces any older one. It names
         # the words it read, so a new question on the same wait is not hidden.
         self._store.put_wait(key, {
             "wait_id": wait_id, "state": turn, "launch_id": launch_id,
-            "mode": str(self._mode() or "yolo").lower(), "withheld": False, "verdict": REAL,
+            "mode": mode, "withheld": False, "verdict": REAL,
             "reason": why, "draft": "", "silent": True, "at": self._clock(),
             "question": question_sha(question),
         })
-        self._receipt(key, session, Draft(REAL, why), "answer_drafted", str(self._mode() or "yolo").lower(), launch_id)
+        self._receipt(key, session, Draft(REAL, why), "answer_drafted", mode, launch_id)
         return turn
 
     def _mark_done(self, launch_id: str) -> None:

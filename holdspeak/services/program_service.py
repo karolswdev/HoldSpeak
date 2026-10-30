@@ -35,6 +35,7 @@ from ..db.programs import ProgramStore
 from ..logging_config import get_logger
 from ..timestamps import local_now, utc_now_iso
 from .errors import NotFound, ServiceError
+from .program_rules import LEVEL_WORDS, level_word
 
 log = get_logger("program_service")
 
@@ -102,7 +103,8 @@ _STATE_LINES = {
 PROGRAM_BAND = {"waiting": 0, "failed": 1, "running": 2, "drafting": 3, "done": 4, "parked": 5}
 
 CONTROLS = ("secure", "normal", "yolo")
-CONTROL_WORDS = {"secure": "Secure", "normal": "Normal", "yolo": "YOLO"}
+#: The printed words of the levels: one source (``program_rules.level_word``).
+CONTROL_WORDS = LEVEL_WORDS
 #: ``level``: the Program's Control level decides (Secure asks him, Normal
 #: and YOLO merge); ``owner``: his press for this step at any level;
 #: ``none``: no PR (a research step; its result note is the work).
@@ -786,7 +788,7 @@ class ProgramService:
             "steps": top, "checkpoints": checkpoints[:200],
             "your_turn_items": your_turn(program, steps),
             "decided_for_you": self.decided_for_you(program["id"]),
-            "control_word": CONTROL_WORDS.get(str(program.get("control") or "normal"), "Normal"),
+            "control_word": level_word(program.get("control")),
             "spend_limit_usd": program.get("spend_limit_usd"), "closed_at": program.get("closed_at"),
             "revision": int(program.get("revision") or 0),
             "status_line": self._status_line(program, summary),
@@ -798,7 +800,7 @@ class ProgramService:
             parts.append(f"{summary['your_turn']} waits on you")
         if program.get("check_command"):
             parts.append(f"check: {_check_name(str(program['check_command']))}")
-        parts.append(f"control {CONTROL_WORDS.get(str(program['control']), str(program['control']))}")
+        parts.append(f"control {level_word(program['control'])}")
         return " · ".join(parts)
 
     # ── authority ────────────────────────────────────────────────────
@@ -1093,7 +1095,7 @@ class ProgramService:
             if control not in CONTROLS:
                 raise ProgramRefused("control_invalid", "Control is secure, normal or yolo.", status=400)
             program["control"] = control
-            changed.append(f"control {control.capitalize()}")
+            changed.append(f"control {level_word(control)}")
         if fields.get("prefer_idle") is not None:
             program["prefer_idle"] = bool(fields["prefer_idle"])
             changed.append("when idle")

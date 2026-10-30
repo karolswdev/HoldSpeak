@@ -275,16 +275,48 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   second trigger (the coder frame covers a turn end; the 30 s tick covers
   the rest).
 
-## PG13. The Program's level drives the desk's answers (Left)
+## PG13. The Program's level drives the desk's answers (Shipped)
 
 - **Goal**: a Program at YOLO on a desk at Secure gets YOLO's answers for
   its own agents.
-- **Files**: `hs/services/agent_responder.py`, the gate's decision path.
-- **Changes**: `AgentResponder` and the gate read the Program's level for a
-  launch that belongs to a step; every other launch keeps the desk's mode.
+- **Files**: `hs/services/control_level.py` (`level_for_launch`,
+  `mode_for_launch`, `step_of_launch`, `record_decision`),
+  `hs/services/agent_responder.py` (`_policy`), `hs/kernel/tool_call.py`
+  (`launch_mode`), `hs/kernel/runtime.py`, `hs/services/gate_service.py`
+  (`_decide_by_mode`, `_decide_mcp`).
+- **Changes**: one resolver: the Program's control for a launch that is a
+  step's (`program_steps.launch_id`), else the desk's Control mode. The
+  responder reads it per launch: a step at Secure drafts nothing and waits
+  in Needs you; a step at Normal or YOLO gets its ROUTINE draft typed
+  (design §6; the desk's own Normal still only stores the draft). The
+  kernel's `tool.call` codec resolves the policy at the launch's level, and
+  a step's MCP pre-approval follows the level too. A typed answer and an
+  allowed call are Decided-for-you lines (`program.checkpoint` by engine,
+  the §6 rule): "Answered for you: <draft>", "Allowed: <tool>" (once per
+  tool and rule on a step). Every other launch keeps the desk's mode.
 - **Done when**: the rows of design §6 for routine questions and
   approvals hold per Program.
-- **Tests**: T1 the responder's and the gate's tests.
+- **Tests**: T1 `tests/unit/test_program_control_level.py` (the resolver,
+  the responder and the gate over the K5 rig, the Decided-for-you lines,
+  the Programs rig's three-step Program at Secure).
+- **PG13b (2026-10-29), the items PG13 left out**: the launch flags
+  follow the level too. `control_level.mode_for_request` reads the level
+  of a new launch from the request the hand builds (a `program_step`
+  origin: its Program's control; `helper_of`: the parent launch's level;
+  else the desk's Control mode). `LaunchService._launch_mode` uses it for
+  a launch and a Resume, so Claude Code's `acceptEdits` and Codex's
+  approval and sandbox come from the Program's level (a Secure Program on
+  a YOLO desk: no `acceptEdits`, Codex `on-request`, no `workspace-write`;
+  a YOLO Program on a Normal desk: Codex `never` and `workspace-write`
+  inside its own worktree). The hand's brief says the same mode. A helper
+  (a reviewer too) inherits its step's level: `start_helper` asks
+  `mode_for_launch(caller)`, so a Secure step's reviewer waits for his
+  press on a YOLO desk and then runs at Secure. Every printed level is
+  `program_rules.level_word` (Secure · Normal · YOLO): the §6 rules, the
+  Decided-for-you lines, the wire's `control_word` and the status line.
+  Tests: T1 `tests/unit/test_program_control_level.py` (the argv per level
+  for Claude Code and Codex, a step launch and a plain launch; the helper's
+  level; the words); `program.running.json` re-recorded.
 - **Not in this slice**: per-step levels.
 
 ## PG14. Automations run a program (Left)
