@@ -14,7 +14,7 @@ import { useEffect, useState, type DragEvent, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { plainFail } from "../surface/plainFailure";
 import { openSurfaceOr } from "../shell";
-import { CheckGadget, GadgetGroup, MxRadio, PadGadget, StringGadget } from "../surface/gadgets";
+import { CheckGadget, CycleGadget, GadgetGroup, MxRadio, PadGadget, StringGadget } from "../surface/gadgets";
 import { DotWord } from "../surface/kit";
 import { stateWords } from "../surface/words";
 import { readPushKey, removePhoneDevice, savePushKey, startPairing, testPush, usePhone, writeReach } from "./phoneApi";
@@ -103,10 +103,18 @@ function PairSheet({ pairing, now, busy, onNew }: { pairing: PhonePairing; now: 
 
 type Tone = "ok" | "info" | "warn" | "idle" | "fail";
 
+/** Where the app on his phone was built from: Apple's host for its token. */
+export const PUSH_HOSTS: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "app_store", label: "App Store" },
+  { value: "development", label: "Xcode" },
+];
+
 /** The Test push's answer in his words (`POST /api/phone/push/test`). */
 export function pushTestWords(result: PhonePushTest): { word: string; tone: Tone } {
   if (result.answer === "accepted") return { word: "Apple accepted it", tone: "ok" };
-  if (result.answer === "stale") return { word: "This phone's token is stale: open the app once", tone: "warn" };
+  if (result.answer === "stale") {
+    return { word: "This phone's token is stale: open the app once. If this is an Xcode build, pick Xcode under Builds from", tone: "warn" };
+  }
   if (result.answer === "refused") return { word: "Apple refused the key: check the Key ID and Team ID", tone: "fail" };
   if (!result.status) return { word: "The hub could not reach Apple", tone: "fail" };
   return { word: `Apple answered ${result.status}${result.reason ? `: ${result.reason}` : ""}`, tone: "fail" };
@@ -214,6 +222,10 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
               onClick={() => save("bundle_id", bundle.trim())} data-testid="phone-push-bundle-save">Save</Button>
           </div>
         </div>
+        <Row testId="phone-push-host" name="Builds from"
+          fact="An app built from Xcode has a development token; pick Xcode while you test"
+          verb={<CycleGadget label="Builds from" value={key.host ?? "app_store"} options={[...PUSH_HOSTS]}
+            disabled={busy === "host"} onChange={(next) => save("host", next)} />} />
         <Row testId="phone-push-test" name="Test push"
           fact={words ? <DotWord tone={words.tone} data-testid="phone-push-answer" title={result?.reason || undefined}>{words.word}</DotWord>
             : refusal ? <DotWord tone="fail" data-testid="phone-push-refusal" title={refusal.title}>{refusal.words}</DotWord>

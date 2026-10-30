@@ -17,6 +17,7 @@ import { openRef } from "../openObject";
 import { useWindowInterior } from "../surface/interior";
 import { CheckGadget } from "../surface/gadgets";
 import { DotWord, StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface/kit";
+import { stateWords } from "../surface/words";
 import { ObjectList, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../surface/objects/ObjectList";
 import { SurfaceState } from "../surface/Surface";
 import { SPRITE_BASE } from "../sprites";
@@ -173,7 +174,7 @@ export function RecordingsCore(_props: CoreProps) {
   ] : capture.error ? [
     { key: "capture", lamp: "warn", text: capture.error, testId: "recordings-capture-error" },
   ] : live ? [
-    { key: "live", lamp: "fail", live: true, text: capture.remote ? "Recording on another view" : "Recording", testId: "recordings-status-live" },
+    { key: "live", lamp: "fail", live: true, text: stateWords(capture.remote ? "Recording on another view" : "Recording"), testId: "recordings-status-live" },
     clock ? { key: "clock", text: <span className="recordings-clock">{clock}</span> } : null,
   ] : shown ? [
     { key: "state", lamp: stateOf(shown).tone === "idle" ? undefined : (stateOf(shown).tone as StatusBarItem["lamp"]), text: stateOf(shown).word, testId: "recordings-status-row" },

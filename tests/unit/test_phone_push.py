@@ -213,7 +213,7 @@ def test_the_key_store_round_trip_says_present_and_never_returns_the_key(tmp_pat
     key = _key()
     first = hub.push_key(OWNER)
     assert first == {"present": {"p8": False, "key_id": False, "team_id": False},
-                     "bundle_id": DEFAULT_BUNDLE_ID, "push_state": PUSH_NO_KEY}
+                     "bundle_id": DEFAULT_BUNDLE_ID, "host": "app_store", "push_state": PUSH_NO_KEY}
     saved = hub.save_push_key(OWNER, {"p8": key.p8})
     assert saved["present"] == {"p8": True, "key_id": False, "team_id": False}
     assert saved["push_state"] == PUSH_NO_KEY  # the ids are still missing
@@ -306,3 +306,51 @@ def test_the_test_push_without_a_key_or_a_token_is_refused(tmp_path, monkeypatch
 def test_answer_codes() -> None:
     assert answer_code(200, "") == "accepted" and answer_code(403, "BadCertificate") == "refused"
     assert answer_code(400, "BadTopic") == "failed" and answer_code(0, "refused") == "failed"
+
+
+# ── PHONE-APNS-HOST: Builds from (App Store · Xcode) picks Apple's host ──
+
+@pytest.mark.parametrize(("choice", "url"), [
+    ("app_store", "https://api.push.apple.com/3/device/tok"),
+    ("development", "https://api.sandbox.push.apple.com/3/device/tok"),
+])
+def test_each_host_choice_names_its_apple_host(choice: str, url: str) -> None:
+    key = _key()
+    key.host = choice
+    assert apns_request(key, Target("d", "tok", "silent"), {"v": "1"}, 30, False)[0] == url
+
+
+@pytest.mark.parametrize("choice", ["app_store", "development"])
+def test_the_saved_host_choice_sends_to_its_host_on_the_fake_apns(tmp_path, monkeypatch, choice) -> None:
+    key = _key()
+    with FakeApns(answers={"tok": (200, {})}) as store, FakeApns(answers={"tok": (200, {})}) as xcode:
+        # Apple's two hosts point at two fake servers: no push leaves the machine.
+        monkeypatch.setitem(push_module.APNS_HOSTS, "app_store", store.url)
+        monkeypatch.setitem(push_module.APNS_HOSTS, "development", xcode.url)
+        hub = _hub(tmp_path, monkeypatch)
+        _pair(hub)
+        hub.save_push_key(OWNER, {"p8": key.p8, "key_id": key.key_id, "team_id": key.team_id})
+        saved = hub.save_push_key(OWNER, {"host": choice})
+        assert saved["host"] == choice
+        got = hub.test_push(OWNER)
+    assert got["answer"] == "accepted"
+    took, idle = (store, xcode) if choice == "app_store" else (xcode, store)
+    assert [request["path"] for request in took.requests] == ["/3/device/tok"] and idle.requests == []
+
+
+def test_the_host_choice_is_stored_beside_the_key_and_a_wrong_one_is_refused(tmp_path, monkeypatch) -> None:
+    from holdspeak.phone.devices import _store_for
+    from holdspeak.phone.service import PhoneRefused
+
+    hub = _hub(tmp_path, monkeypatch)
+    assert hub.push_key(OWNER)["host"] == "app_store"
+    hub.save_push_key(OWNER, {"host": "development"})
+    assert json.loads(_store_for("apns-key").get())["host"] == "development"
+    assert hub.push_key(OWNER)["host"] == "development"
+    with pytest.raises(PhoneRefused) as refused:
+        hub.save_push_key(OWNER, {"host": "testflight"})
+    assert refused.value.code == "bad_host"
+    assert hub.push_key(OWNER)["host"] == "development"
+    # an older saved key's environment reads as its choice
+    _store_for("apns-key").put(json.dumps({"environment": "sandbox"}))
+    assert hub.push_key(OWNER)["host"] == "development"

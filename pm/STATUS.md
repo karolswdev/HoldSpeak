@@ -4,7 +4,9 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-29. Phone PH12 and PH14 (this PR, lane PHONE-NEXT): the heartbeat (a Needs you row about security or data loss), a recorded meeting's aftercare asks and an agent question the desk could not draft now reach his phone through `PhoneService.reach` (the rules by level and quiet hours; a `phone.reach` kernel operation each; once per thing; nothing when no phone is paired and no number is set); the phone's runner releases the messages held in quiet hours when they end, one push each, "Held overnight: …". Tests: 12 new hub cases in `tests/integration/test_phone_flow.py`. Open work: Phone PH11, PH13, PH15, PH16; the Line LINE-5, LINE-6, the LICENCE slice.
+**Last updated:** 2026-10-30. Phone push host (this PR, lane PHONE-APNS-HOST): Settings ▸ Calls ▸ Phone ▸ Push gets **Builds from: App Store · Xcode** (`host` `app_store` | `development`, stored beside the key parts in the keystore; `ApnsPush` sends to `api.push.apple.com` or Apple's development host `api.sandbox.push.apple.com`); the Test push's stale answer adds "If this is an Xcode build, pick Xcode under Builds from"; `docs/phone.md` one paragraph. The Record lamp reads "Recording on another view" in sentence case (the lamp species' mono caps lifted for it). Open work: Programs PG14, PG15, PG16, PG20, PG21; Phone PH11, PH15; the Line LINE-5 and the LICENCE slice (awaiting his ruling).
+
+**Before it (2026-10-29):** Phone PH12 and PH14 (#1619, lane PHONE-NEXT): the heartbeat (a Needs you row about security or data loss), a recorded meeting's aftercare asks and an agent question the desk could not draft now reach his phone through `PhoneService.reach` (the rules by level and quiet hours; a `phone.reach` kernel operation each; once per thing; nothing when no phone is paired and no number is set); the phone's runner releases the messages held in quiet hours when they end, one push each, "Held overnight: …". Tests: 12 new hub cases in `tests/integration/test_phone_flow.py`. Open work: Phone PH11, PH13, PH15, PH16; the Line LINE-5, LINE-6, the LICENCE slice.
 
 **Before it (2026-10-29):** Extended documentation accuracy, PR #1614. Source-audited 71 top-level guides plus README and CONTRIBUTING; corrected 43 public documents. Fixed actual control/command, SDK, retention, and availability claims; two documentation generators now select their own checkout, with two regression cases. Focused contracts: 129 passed; final tooling checks: 21 passed. Required quick check GREEN: build, 104 affected tests, 124 Desk sweep cases, 27 canon checks, 1,156 repository guards. No product behavior/default changed. Audit and limits: `docs/internal/checks/core-docs-accuracy-2026-10-29/result.md`. Open work: wire or retire the stored actuator config flags (not enforced by Desk/Mission Control), the Firefox credential path, stale helper/page-set comments, physical/live validation, and the existing remote CSS token gate. An initial bare-Desk stillness failure passed on the full repeat without changing tests.
 
@@ -27,9 +29,9 @@ docs in the LINE-4b PR (Settings ▸ Calls ▸ Line, the Calls window's Line wor
 `docs/calls.md` "The Line", `NOTICE`), recipe `line/RECIPE.md`. His hub today:
 Not running; the Line needs its own Python 3.13 venv (onnxruntime has no cp314
 wheel). Merged since: LINE-3 the home box #1610, Install the Line on karol
-#1615, LINE-3b Telnyx #1617. Left (open work): LINE-5 barge-in measured, LINE-6
-the Engines speech rows, the LICENCE slice (Kokoro and faster-whisper's PyAV
-pull GPL into the hub; his ruling); his word on the SIP password custody
+#1615, LINE-3b Telnyx #1617, LINE-6 the Engines speech rows #1622. Left (open work):
+LINE-5 barge-in measured, the LICENCE slice (Kokoro and faster-whisper's PyAV
+pull GPL into the hub; awaiting his ruling); his word on the SIP password custody
 (CONFIG); his live verdict on the faces.
 
 **Phone — 2026-10-28 (owner: "Do it. And definitely swallow the paradigm and
@@ -49,8 +51,10 @@ op `phone.reach`, 15 routes, 4 `phone.*` MCP tools (305 in 52 families;
 `phone.call` EGRESS, not offered to launches), Needs you rows, `may_call` on
 Programs (on in Overnight), `HOLDSPEAK_PHONE=off`. Shipped since (lane
 PHONE-NEXT): PH12 the heartbeat / aftercare / agent-question reaches and PH14
-the morning release. Left (open work): PH11 SMS, PH13 `httpx[http2]`, PH15
-urgent through Do Not Disturb, PH16 Today; the
+the morning release #1619, PH13 APNs over HTTP/2 #1622, PH16 and PH17 his
+Apple push key in Settings and "Reached you" on Today #1623, the push host
+(Builds from: App Store · Xcode, this PR). Left (open work): PH11 SMS, PH15
+urgent through Do Not Disturb; the
 iPhone app is the Program `program-29a6d2ef5d55` in Drafting (his Start); his
 Telnyx line for calls on the number; his live verdict on the faces.
 
@@ -65,9 +69,10 @@ review, a PR and a merge by the control level (Secure · Normal · YOLO); only
 core questions reach him; Decided for you with Overturn; a handover note on
 the desk. 12 `program.*` MCP tools (301 tools in 51 families), 15 routes, the
 `program_changed` frame, `HOLDSPEAK_PROGRAMS=off` for rig hubs. Left (open
-work): PG13 the Program's level drives `AgentResponder` and the gate, PG14
-Automations, PG15 Calls, PG16 decisions, PG17 the refactor program re-created
-on his desk; his live verdict on the two windows. Shipped 2026-10-29 (lane
+work): PG14 Automations, PG15 Calls, PG16 decisions, PG20 hidden-ref
+checkpoints, PG21 the verified provider matrix in Engines; his live verdict on
+the two windows. PG13 and PG13b (the Program's level drives the answers, the
+gate and the launch flags) shipped #1620, #1621. Shipped 2026-10-29 (lane
 PROGRAMS-NEXT): PG12 a coder frame ticks its Program (1 s debounce, one tick
 at a time per Program), the race fixture and shot (`program.race.json`),
 PG18 the Programs line on Today at any hour (`/api/today/since-morning`
@@ -2427,10 +2432,16 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-- **Programs (2026-10-28):** PG13–PG17 and PG20 in
+- **Programs (2026-10-28):** PG14, PG15, PG16, PG20 and PG21 in
   `docs/internal/betterment/programs/RECIPE.md` (PG12, PG18 and the race shot
-  shipped 2026-10-29); his live verdict on the Programs window and the Program
-  window.
+  #1618, PG13 #1620 and PG13b #1621 shipped); his live verdict on the Programs
+  window and the Program window.
+
+- **Phone (2026-10-28):** PH11 SMS and PH15 urgent through Do Not Disturb in
+  `docs/internal/betterment/phone/RECIPE.md`; his live verdict on the faces.
+
+- **The Line (2026-10-29):** LINE-5 barge-in measured; the LICENCE slice
+  (Kokoro and faster-whisper's PyAV pull GPL into the hub) awaits his ruling.
 
 - **Adversarial review follow-through:** the 47 records and shared delivery
   priorities are in `docs/internal/betterment/native-experience/adversarial/README.md`.
@@ -2588,7 +2599,13 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **This PR — Phone PH12 + PH14 (lane PHONE-NEXT):** the heartbeat, meeting aftercare and agent-question reaches through `PhoneService.reach`; the morning release of held messages ("Held overnight: …", one push each). Recipe `docs/internal/betterment/phone/RECIPE.md` marks both shipped.
+- **This PR — Phone push host (lane PHONE-APNS-HOST):** Builds from: App Store · Xcode on the Push group (`host` `app_store` | `development` beside the key parts; `ApnsPush` sends to Apple's production or development host); the stale Test push answer names the Xcode choice; the Record lamp in sentence case.
+- **#1623 — Phone: save the Apple push key in Settings ▸ Calls ▸ Phone ▸ Push, Test push with Apple's answer in plain words, and the "Reached you" line on Today (PH16, PH17).**
+- **#1622 — Phone PH13 and Line LINE-6:** APNs sends over HTTP/2 and says why a push would not go; the Line's two speech models are Engines rows with their licences and a Download press.
+- **#1621 — Programs PG13b:** the launch flags follow the Program's level, a helper inherits its step's level, and every printed level says Secure · Normal · YOLO.
+- **#1620 — Programs PG13:** a step's agents follow their Program's control level, not the desk's mode; the desk's routine answers and the tool gate resolve the level per launch and log what they decided under Decided for you.
+- **#1619 — Phone PH12 + PH14 (lane PHONE-NEXT):** the heartbeat, meeting aftercare and agent-question reaches through `PhoneService.reach`; the morning release of held messages ("Held overnight: …", one push each). Recipe `docs/internal/betterment/phone/RECIPE.md` marks both shipped.
+- **#1618 — Programs:** a coder frame ticks its Program at once (PG12), the race fixture and shot (PG9's leftover), and the Programs line on Today at any hour (PG18).
 - **#1617 — A real number from Telnyx:** Connect makes the SIP credential connection and keeps its password in the keystore, Find numbers lists ten with their costs, Buy moves money only on his press through a quote and a kernel receipt, Assign points the number at the Line.
 - **#1616 — The bell slot:** the bell reserves its count's width before the Needs you read lands, so the menu bar's right cluster no longer shifts 27 px after the desk settles.
 - **#1615 — Install the Line on karol:** add a machine, a one-time code sheet with the whole command and Copy, the row reads Ready on the first hello, pick it as the place, Revoke.

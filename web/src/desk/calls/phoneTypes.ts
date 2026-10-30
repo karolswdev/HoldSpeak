@@ -107,8 +107,13 @@ export interface PhoneChangedFrame {
 export interface PhonePushKey {
   present: { p8: boolean; key_id: boolean; team_id: boolean };
   bundle_id: string;
+  /** Where the app was built from: Apple's production host or its
+   *  development host (an Xcode build's token). */
+  host: PhonePushHost;
   push_state: PhonePushState;
 }
+
+export type PhonePushHost = "app_store" | "development";
 
 /** `POST /api/phone/push/test`: Apple's answer to one silent push. */
 export interface PhonePushTest {

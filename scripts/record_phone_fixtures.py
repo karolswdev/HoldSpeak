@@ -20,7 +20,8 @@ phone.events.json, needs_you.phone.json.
 records only the Apple push key answers (PHONE-APNS-KEY), with the fake APNs
 server (``tests/fixtures/fake_apns.py``) in Apple's place: phone.push.missing.json,
 phone.settings.noKey.json, phone.push.put.json, phone.push.stored.json,
-phone.push.notP8.json and phone.push.test.{accepted,stale,refused}.json.
+phone.push.notP8.json, phone.push.development.json and
+phone.push.test.{accepted,stale,refused}.json.
 """
 from __future__ import annotations
 
@@ -175,6 +176,10 @@ def record_push(root: Path) -> dict[str, Any]:
         for body in ({"key_id": "KEY1234567"}, {"team_id": "TEAM123456"}):
             assert client.put("/api/phone/push", json=body).status_code == 200
         out["phone.push.stored.json"] = _get(client, "/api/phone/push")
+        xcode = client.put("/api/phone/push", json={"host": "development"})
+        assert xcode.status_code == 200, xcode.text
+        out["phone.push.development.json"] = xcode.json()
+        assert client.put("/api/phone/push", json={"host": "app_store"}).status_code == 200
         for name, answer in (("accepted", (200, {})), ("stale", (400, {"reason": "BadDeviceToken"})),
                              ("refused", (403, {"reason": "InvalidProviderToken"}))):
             apns.answers[device.push_token or ""] = answer

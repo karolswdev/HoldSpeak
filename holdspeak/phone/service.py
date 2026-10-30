@@ -195,18 +195,20 @@ class PhoneService:
         return {**saved_key_presence(), "push_state": self.push_state()}
 
     def save_push_key(self, principal: Any, body: Mapping[str, Any]) -> dict[str, Any]:
-        """Keep the given parts (``p8``, ``key_id``, ``team_id``, ``bundle_id``)
-        in the key store; the answer says ``present``, never the key."""
+        """Keep the given parts (``p8``, ``key_id``, ``team_id``, ``bundle_id``,
+        ``host``) in the key store; the answer says ``present``, never the key."""
         if not _is_owner(principal):
             raise PhoneRefused("owner_principal_required", "Only the owner saves the push key.", 403)
         from .push import APNS_FIELDS, save_key_fields
 
-        fields = {name: body[name] for name in APNS_FIELDS if name in body}
+        fields = {name: body[name] for name in (*APNS_FIELDS, "host") if name in body}
         if not fields:
-            raise PhoneRefused("nothing_to_save", "Send p8, key_id, team_id or bundle_id.", 400)
+            raise PhoneRefused("nothing_to_save", "Send p8, key_id, team_id, bundle_id or host.", 400)
         try:
             save_key_fields(fields)
-        except ValueError:
+        except ValueError as exc:
+            if str(exc) == "bad_host":
+                raise PhoneRefused("bad_host", "Builds from is app_store or development.", 400) from None
             raise PhoneRefused("not_a_p8", "This is not an Apple push key. Paste the whole .p8 file.", 400) from None
         except Exception as exc:
             log.warning(f"phone push key not saved: {exc}")

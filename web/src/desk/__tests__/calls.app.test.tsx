@@ -531,6 +531,7 @@ import pushStored from "../calls/__fixtures__/phone.push.stored.json";
 import pushNotP8 from "../calls/__fixtures__/phone.push.notP8.json";
 import pushAccepted from "../calls/__fixtures__/phone.push.test.accepted.json";
 import pushStale from "../calls/__fixtures__/phone.push.test.stale.json";
+import pushDevelopment from "../calls/__fixtures__/phone.push.development.json";
 import pushRefused from "../calls/__fixtures__/phone.push.test.refused.json";
 
 const P = {
@@ -873,7 +874,7 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
 
   it.each([
     ["accepted", pushAccepted, "Apple accepted it", "ok"],
-    ["stale", pushStale, "This phone's token is stale: open the app once", "warn"],
+    ["stale", pushStale, "This phone's token is stale: open the app once. If this is an Xcode build, pick Xcode under Builds from", "warn"],
     ["refused", pushRefused, "Apple refused the key: check the Key ID and Team ID", "fail"],
   ])("Test push: Apple's %s answer is its word", async (_name, answer, words, tone) => {
     hub({
@@ -891,6 +892,30 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
     expect(word.textContent).toBe(words);
     expect(word.getAttribute("data-tone")).toBe(tone);
     expect(calls).toContain("POST /api/phone/push/test {}");
+  });
+});
+
+describe("Settings ▸ Calls ▸ Phone ▸ Push ▸ Builds from", () => {
+  it("App Store is the stored default; picking Xcode writes host development and the row reads Xcode", async () => {
+    let key: unknown = pushStored;
+    hub({
+      "GET /api/settings": phoneOn,
+      "GET /api/phone/status": P.status,
+      "GET /api/phone/push": () => key,
+      "PUT /api/phone/push": () => { key = pushDevelopment; return key; },
+    });
+    render(<PhoneSettingsPane />);
+    const row = await screen.findByTestId("phone-push-host");
+    expect(pushStored.host).toBe("app_store");
+    expect(row.textContent).toContain("Builds from");
+    expect(row.textContent).toContain("An app built from Xcode has a development token; pick Xcode while you test");
+    const choice = within(row).getByLabelText("Builds from") as HTMLSelectElement;
+    expect(choice.value).toBe("app_store");
+    expect([...choice.options].map((option) => option.textContent)).toEqual(["App Store", "Xcode"]);
+    fireEvent.change(choice, { target: { value: "development" } });
+    await waitFor(() => expect(calls).toContain('PUT /api/phone/push {"host":"development"}'));
+    expect(pushDevelopment.host).toBe("development");
+    await waitFor(() => expect((within(screen.getByTestId("phone-push-host")).getByLabelText("Builds from") as HTMLSelectElement).value).toBe("development"));
   });
 });
 
