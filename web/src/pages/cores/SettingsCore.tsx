@@ -1049,11 +1049,15 @@ export function RemoteAccessModule({
   const allCredentials = wire?.credentials ?? [];
   // PHILO-7-02: a grant is authority, whatever the transport switch says.
   // ON: every credential row. OFF: the credential rows with a LIVE desk or
-  // (PHILO-9-07) a LIVE project grant. Always: every grant row with no credential.
+  // (PHILO-9-07) a LIVE project grant, and (GRANT-ROW 2026-10-30) an active
+  // credential with a stopped grant: Stop filing keeps its row, which says
+  // "Filing stopped" and offers Allow filing in the same place. A credential
+  // never granted stays hidden. Always: every grant row with no credential.
   const credentials = enabled
     ? allCredentials
     : allCredentials.filter((c) => c.delegation?.state === "LIVE"
-        || (c.project_delegations ?? []).some((g) => g.state === "LIVE"));
+        || (c.project_delegations ?? []).some((g) => g.state === "LIVE")
+        || (c.active && (Boolean(c.delegation) || (c.project_delegations ?? []).length > 0)));
   const delegations = wire?.delegations ?? [];
   const projectOrphans = wire?.project_delegations ?? [];
   const toggleRow = (identity: string, open: boolean) => {
