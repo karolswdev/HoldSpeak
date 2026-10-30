@@ -2434,12 +2434,14 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-- **Words (2026-10-30):** CSS closed (#1634); sources at UPPER_DEBT 56 lines (#1637,
-  #1640). Left: AgentsCard codeWords with the HandSheet lines, SettingsCore's grant
-  words, `agents_lane_rig.py` "ASKS" (lane WORDS-LAST in flight).
+- **Words (2026-10-30/31): DONE.** CSS closed (#1634); sources at UPPER_DEBT 21 lines, all
+  compare keys, ids, initials and acronyms (#1637, #1640, #1643). Left only: caps literals
+  that never call `toUpperCase()` (the AgentsCard HOOKS family, the "AGENTS · n" caption).
+- **Watch (vitest under load):** `TodayView.test.tsx` ("That is the day", "DELIGHT slice 2")
+  red once each in two lanes on 2026-10-30; green alone.
 - **Desk stacking (2026-10-30):** the seed posts only this load's real raises (#1639).
-- **Programs (2026-10-28):** PG15, PG16, PG20 and PG21 in
-  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG13, PG13b, PG14, PG18 and the race shot
+- **Programs (2026-10-28):** PG15, PG17, PG20 and PG21 in
+  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG13, PG13b, PG14, PG16, PG18 and the race shot
   #1618, PG13 #1620 and PG13b #1621 shipped); his live verdict on the Programs
   window and the Program window.
 
@@ -2605,6 +2607,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1645 — Settings ▸ This Mac: a stopped grant keeps its row with remote access off;** "Filing stopped" and Allow filing stay in the same place (the whole Agents list used to vanish).
+- **#1644 — Programs PG16:** his Skip, a rule's Skip above NOTE and a merge by rule propose a decision record linked to the Program and its PR; the Project drawer's Proposed decisions fold; "Proposed as a decision" on the checkpoint row; never auto-confirmed; a NOTE-rule Skip proposes nothing.
+- **#1643 — The words wave ends at the source:** the Hand sheet and the agents card say their words together; the grant row uses the egress table's words; UPPER_DEBT 56 → 21, none of which draws a word.
+- **#1642 — The Send glass pin follows #1640** (File · Slack).
+- **#1641 — STATUS through #1640.**
 - **#1640 — Words: the caps vocabularies say their words at the source** (egress receipts and refusals, about 200 channel words, plain failures, object kinds, Runs on, settings prefs, the send well's "By you"); the ObjectList Kind cell no longer draws PROJECT raw; UPPER_DEBT 86 → 56.
 - **#1639 — The seed sends the hub only real raises:** the Chair's mount reorder is a local view rule; a reload with a slow window read no longer changes the stacking; the hub stays the one authority.
 - **#1638 — The Project's Info window reads its name live:** Get Info pressed before the Room read landed no longer stays "Info: Project" (the compositor 1440 flake, fixed at cause).
