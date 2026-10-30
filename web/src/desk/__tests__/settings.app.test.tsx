@@ -863,12 +863,14 @@ describe("Settings › System › Remote access grants", () => {
     expect(orphan.textContent).toContain("No credential");
     expect(within(orphan).getByTestId("grant-chip").textContent).toContain(W.live);
     expect(within(orphan).getByTestId("grant-verb").textContent).toBe(W.stop);
-    // Remote OFF hides a credential row with no LIVE grant, and offers no Issue credential.
-    expect(screen.queryByText("desk-agent")).toBeNull();
+    // GRANT-ROW 2026-10-30: remote OFF keeps the active credential whose grant
+    // is stopped, with Allow in its place; it offers no Issue credential.
+    expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.stopped);
+    expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.allow);
     expect(screen.queryByTestId("issue-credential-btn")).toBeNull();
     fireEvent.click(within(orphan).getByTestId("grant-verb"));
     await waitFor(() => expect(screen.queryByText("orphan-agent")).toBeNull());
-    expect(document.querySelector('[data-settings-section="this-mac"] .surface-ledger')).toBeNull();
+    expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.stopped);
     await waitFor(() => expect(foot().textContent).toContain("Stopped"));
   });
 
@@ -881,16 +883,43 @@ describe("Settings › System › Remote access grants", () => {
     expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.allow);
   });
 
-  it("remote OFF keeps the credential whose grant is LIVE, with Stop and Revoke; a credential with no grant is hidden", async () => {
+  it("remote OFF keeps the credential whose grant is LIVE, with Stop and Revoke; a credential never granted is hidden", async () => {
     // replaces: tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlassRoundTwo::test_remote_off_keeps_a_credential_with_a_live_grant
     hub.state.remote = grant("remote-off-live");
     expect(hub.state.remote.enabled).toBe(false);
+    // sweep-runner as never granted (the recorded answer holds its stopped project grant).
+    hub.state.remote.credentials[0].project_delegations = [];
     render(<SettingsCore scope="system" />);
     await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.live));
     expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.stop);
     expect(within(row("desk-agent")).getByTestId("credential-revoke").textContent).toBe("Revoke credential");
     expect(screen.queryByText("sweep-runner")).toBeNull();
     expect(screen.queryByTestId("issue-credential-btn")).toBeNull();
+  });
+
+  it("remote OFF: Stop filing keeps the row; it says Filing stopped and Allow filing starts it again", async () => {
+    // GRANT-ROW 2026-10-30: the press emptied the Agents list (the row had no LIVE grant left).
+    hub.state.remote = grant("remote-off-live");
+    const stopped: Json = { ...grant("remote-orphan-off"), delegations: [] };
+    expect(stopped.enabled).toBe(false);
+    expect(stopped.credentials[0].delegation.state).toBe("REVOKED");
+    grantRoutes({
+      "DELETE /api/settings/remote/delegations/desk-agent": () => ({ status: 200, body: grant("stop"), remote: stopped }),
+      "PUT /api/settings/remote/delegations/desk-agent": () => ({ status: 200, body: grant("allow"), remote: grant("remote-off-live") }),
+    });
+    render(<SettingsCore scope="system" />);
+    await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.stop));
+    fireEvent.click(within(row("desk-agent")).getByTestId("grant-verb"));
+    await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.stopped));
+    expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.allow);
+    expect(within(row("desk-agent")).getByTestId("credential-revoke").textContent).toBe("Revoke credential");
+    expect(document.querySelector(".surface-ledger-count")?.textContent).toContain("AGENTS");
+    await waitFor(() => expect(foot().textContent).toContain("Stopped"));
+
+    fireEvent.click(within(row("desk-agent")).getByTestId("grant-verb"));
+    await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.live));
+    expect(within(row("desk-agent")).getByTestId("grant-verb").textContent).toBe(W.stop);
+    await waitFor(() => expect(foot().textContent).toContain("Allowed"));
   });
 
   it("project grants: a PROJECT credential has Projects and no desk grant; Allow on one project, the other stays Allow", async () => {
