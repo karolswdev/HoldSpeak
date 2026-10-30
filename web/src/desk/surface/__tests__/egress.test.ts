@@ -97,14 +97,14 @@ describe("hostPlace — the one helper for host words (PHILO-17 U16)", () => {
 });
 
 describe("egressForEvent", () => {
-  it("returns REMOTE + caller IP with scope remote for origin=remote", () => {
+  it("returns Remote + caller IP with scope remote for origin=remote", () => {
     const result = egressForEvent({ origin: "remote", caller: "100.64.0.5" });
-    expect(result).toEqual({ label: "REMOTE · 100.64.0.5", scope: "remote" });
+    expect(result).toEqual({ label: "Remote · 100.64.0.5", scope: "remote" });
   });
 
-  it("returns REMOTE + caller IP for a tailnet address", () => {
+  it("returns Remote + caller IP for a tailnet address", () => {
     const result = egressForEvent({ origin: "remote", caller: "192.168.1.43" });
-    expect(result).toEqual({ label: "REMOTE · 192.168.1.43", scope: "remote" });
+    expect(result).toEqual({ label: "Remote · 192.168.1.43", scope: "remote" });
   });
 
   it("falls through to egressFor for local origin", () => {
@@ -131,32 +131,32 @@ describe("egressForEvent", () => {
 /* ── HS-174-04: receiptLabel — human grammar for pipeline methods ── */
 
 describe("receiptLabel", () => {
-  it("maps run_sweep to SWEEP", () => {
-    expect(receiptLabel({ op: "run_sweep" })).toBe("SWEEP");
+  it("maps run_sweep to Sweep", () => {
+    expect(receiptLabel({ op: "run_sweep" })).toBe("Sweep");
   });
 
-  it("maps project_run_steward to STEWARD RUN", () => {
-    expect(receiptLabel({ op: "project_run_steward" })).toBe("STEWARD RUN");
+  it("maps project_run_steward to Steward run", () => {
+    expect(receiptLabel({ op: "project_run_steward" })).toBe("Steward run");
   });
 
-  it("maps list_meetings to READ MEETINGS", () => {
-    expect(receiptLabel({ op: "list_meetings" })).toBe("READ MEETINGS");
+  it("maps list_meetings to Read meetings", () => {
+    expect(receiptLabel({ op: "list_meetings" })).toBe("Read meetings");
   });
 
-  it("maps get_delta to READ DELTA", () => {
-    expect(receiptLabel({ op: "get_delta" })).toBe("READ DELTA");
+  it("maps get_delta to Read delta", () => {
+    expect(receiptLabel({ op: "get_delta" })).toBe("Read delta");
   });
 
-  it("maps room to READ", () => {
-    expect(receiptLabel({ op: "room" })).toBe("READ");
+  it("maps room to Read", () => {
+    expect(receiptLabel({ op: "room" })).toBe("Read");
   });
 
-  it("unmapped op renders in caps with spaces", () => {
-    expect(receiptLabel({ op: "evaluate_due" })).toBe("EVALUATE DUE");
+  it("unmapped op renders in words with spaces", () => {
+    expect(receiptLabel({ op: "evaluate_due" })).toBe("Evaluate due");
   });
 
   it("strips Service. from title when op is missing", () => {
-    expect(receiptLabel({ title: "ProjectService.list_meetings" })).toBe("LIST MEETINGS");
+    expect(receiptLabel({ title: "ProjectService.list_meetings" })).toBe("List meetings");
   });
 
   it("never contains Service.", () => {

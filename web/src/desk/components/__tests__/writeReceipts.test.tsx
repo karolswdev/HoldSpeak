@@ -215,7 +215,7 @@ describe("HS-132-06 workbench write receipts", () => {
     );
     // The reason is in the hover title only, never on the face.
     await waitFor(() =>
-      expect(q(".write-receipt-label")?.getAttribute("title")).toBe("Could not add it to the work · BAD PAYLOAD"),
+      expect(q(".write-receipt-label")?.getAttribute("title")).toBe("Could not add it to the work · Bad payload"),
     );
   });
 

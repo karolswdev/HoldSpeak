@@ -10,8 +10,8 @@
  *
  *  Three rules the species enforces so no face has to remember them:
  *
- *  - **The reason is the source's own words, uppercased, never composed**
- *    (`JIRA REJECTED THE QUERY`); a row with no reason draws no reason
+ *  - **The reason is the source's own words, as the source said them,
+ *    never composed** (`Jira rejected the query`); a row with no reason draws no reason
  *    token (UX-CANON A.8).
  *  - **`stale` is a warning; every other gap is a failure** — the same
  *    ink `web/src/desk/coverage.ts` orders gaps by.
@@ -29,6 +29,7 @@ import { observedAtToken } from "../../attention";
 import { sourceLabel, type CoverageRecord } from "../../coverage";
 import { SurfaceLedger, SurfaceLedgerRow } from "../Surface";
 import { StateChip } from "./StateChip";
+import { wireWords } from "../words";
 import "./coverage-row.css";
 
 /** Plain words only (162's no-raw-ids law): an error code such as
@@ -38,7 +39,7 @@ const PLAIN_WORDS = /^[A-Za-z][A-Za-z0-9 ,'’.-]{0,59}$/;
 export function plainReason(reason: string | null | undefined): string {
   const text = (reason || "").trim();
   if (!text || !PLAIN_WORDS.test(text) || text.includes("_") || /\w\.\w/.test(text)) return "";
-  return text.toUpperCase();
+  return text;
 }
 
 /** The emblem for a coverage row: what KIND of source went unobserved. */
@@ -90,7 +91,7 @@ export function CoverageRow({
           <StateChip
             state={tone}
             icon="●"
-            label={repair?.token ?? gap.state.toUpperCase()}
+            label={repair?.token ?? wireWords(gap.state)}
             className="surface-coverage-token"
             data-testid="arrival-coverage-token"
           />

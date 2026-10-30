@@ -1,4 +1,5 @@
 import type { RuntimeFrame } from "../../../runtime/RuntimeBus";
+import { wireWords } from "../../surface/words";
 
 export const WORKBENCH_RUN_FRAME_TYPES = [
   "workbench.run_start",
@@ -140,7 +141,7 @@ export function workbenchRunReducer(
         runId: state.runId,
         progress: null,
         terminalPhase: null,
-        reason: "RUN TIMEOUT",
+        reason: "Timed out",
       };
     case "detail_observed":
       if (action.hasClaimedItem && state.phase === "idle") {
@@ -234,7 +235,7 @@ export function planWorkbenchRunFrame(
         type: "run_ended",
         runId,
         terminalPhase: disposition === "succeeded" ? "complete" : "failed",
-        reason: disposition === "succeeded" ? null : disposition.toUpperCase(),
+        reason: disposition === "succeeded" ? null : wireWords(disposition),
       },
       refresh: TERMINAL_REFRESH,
       clearRequestTimeout: true,
@@ -256,13 +257,13 @@ export function planWorkbenchRunFrame(
 }
 
 export function workbenchRunRequestFailure(reason: string): WorkbenchRunAction {
-  const normalized = reason.trim().toUpperCase() || "WRITE REFUSED";
-  const refused =
-    normalized === "WRITE REFUSED" ||
-    /^HTTP 4\d\d$/.test(normalized);
+  // WORDS-VOCAB: the reason is said in words (`Write refused`, `HTTP 409`);
+  // the compare ignores case.
+  const said = reason.trim() || "Write refused";
+  const refused = /^write refused$/i.test(said) || /^HTTP 4\d\d$/i.test(said);
   return {
     type: refused ? "request_refused" : "request_failed",
-    reason: normalized,
+    reason: said,
   };
 }
 

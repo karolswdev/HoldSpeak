@@ -159,11 +159,11 @@ async function renderDesk() {
       <DragLayer />
     </>,
   );
-  await screen.findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
+  await screen.findByRole("button", { name: /^Write the cutover comms, Action item/ });
   return view;
 }
 
-const comms = () => screen.getByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
+const comms = () => screen.getByRole("button", { name: /^Write the cutover comms, Action item/ });
 const conductor = () => screen.getByRole("button", { name: /^Agents(?:,|$)/ });
 const drawer = () => document.querySelector<HTMLElement>(".drawer-window")!;
 
@@ -298,7 +298,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
 
   it("Betterment AG8: no agent icon on the floor; the Agents drawer is the one drop target", async () => {
     await renderDesk();
-    expect(screen.queryByRole("button", { name: /^Codex: reconciliation job, AGENT/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Codex: reconciliation job, Agent/ })).toBeNull();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "Claude Code · Open throttle · hs/write-the-cutover-comms");
@@ -339,7 +339,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
 
   it("a drop from the screen draws the line at the screen's head", async () => {
     await renderDesk();
-    const note = await screen.findByRole("button", { name: /^Questions for Avery, NOTE/ });
+    const note = await screen.findByRole("button", { name: /^Questions for Avery, Note/ });
     dragOnto(note, conductor());
     const line = await screen.findByTestId("hand-confirm");
     expect(line.closest(".desk-screen-hand")).toBeTruthy();
@@ -374,7 +374,7 @@ describe("PHILO-14 C3 Astra r1 on #946", () => {
         <HandSheet />
       </>,
     );
-    await screen.findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
+    await screen.findByRole("button", { name: /^Write the cutover comms, Action item/ });
     dragOnto(comms(), conductor());
     await screen.findByTestId("hand-sheet");
     expect(screen.getByRole("radio", { name: /Claude Code/ })).toBeChecked();
@@ -399,7 +399,7 @@ describe("PHILO-14 C3 Astra r1 on #946", () => {
     setCompact(true);
     useDesk.setState({ zoneViewPrefs: { "project:p-ledger": { view: "icons" } } as never });
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
-    await screen.findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
+    await screen.findByRole("button", { name: /^Write the cutover comms, Action item/ });
     expect(document.querySelectorAll(".drawer-window .desk-icon").length).toBeGreaterThan(0);
     expect(document.querySelectorAll(".drawer-window .desk-icon[draggable='true']")).toHaveLength(0);
   });
@@ -464,7 +464,7 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
         <DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />
       </>,
     );
-    const row = await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
+    const row = await within(drawer()).findByRole("button", { name: /^Write the cutover comms, Action item/ });
     for (const el of document.querySelectorAll(".desk-screen .desk-icon")) expect(el).not.toHaveAttribute("draggable", "true");
     // The verb is withheld until a handable object is selected.
     expect(within(drawer()).queryByRole("button", { name: "Hand to agent" })).toBeNull();
@@ -505,7 +505,7 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
   it("393: the drawer's Hand to coder verb reaches the same token", async () => {
     setCompact(true);
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
-    fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ }));
+    fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, Action item/ }));
     fireEvent.click(within(drawer()).getByRole("button", { name: "More" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Hand to agent" }));
     const line = await within(drawer()).findByTestId("hand-confirm");

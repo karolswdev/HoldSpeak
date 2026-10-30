@@ -231,8 +231,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
       await registerProjectRepository(projectId, toRegister);
       repository.reload();
     } catch (reason) {
-      const why = plainReason(reason);
-      setRegisterFailure(`Not registered · ${why.charAt(0)}${why.slice(1).toLowerCase()}`);
+      setRegisterFailure(`Not registered · ${plainReason(reason)}`);
     } finally {
       setRegistering(false);
     }

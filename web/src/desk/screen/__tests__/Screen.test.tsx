@@ -186,8 +186,8 @@ describe("PHILO-14 A1 — the screen of objects", () => {
       expect(keys()).toContain(qualifiedRef("directory", orphan.id));
       expect(keys()).not.toContain(qualifiedRef("directory", childFolder.id));
       expect(keys()).not.toContain(qualifiedRef("note", filedNote.id));
-      expect(icon(/^Platform, DRAWER$/)).toBeTruthy();
-      fireEvent.click(icon(/^Platform, DRAWER$/));
+      expect(icon(/^Platform, Drawer$/)).toBeTruthy();
+      fireEvent.click(icon(/^Platform, Drawer$/));
       expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("directory", folder.id)]);
       // Betterment shell S0: the Object menu is titled by the kind in front.
       fireEvent.click(screen.getByRole("button", { name: /^Drawer$/ }));
@@ -195,12 +195,12 @@ describe("PHILO-14 A1 — the screen of objects", () => {
       fireEvent.click(within(objectMenu).getByRole("menuitem", { name: /^Open/ }));
       expect(open).toHaveBeenCalledWith(qualifiedRef("directory", folder.id), undefined);
       open.mockClear();
-      fireEvent.contextMenu(icon(/^Platform, DRAWER$/), { clientX: 100, clientY: 100 });
+      fireEvent.contextMenu(icon(/^Platform, Drawer$/), { clientX: 100, clientY: 100 });
       const contextMenu = screen.getByRole("menu", { name: "Platform menu" });
       fireEvent.click(within(contextMenu).getByRole("menuitem", { name: /^Open/ }));
       expect(open).toHaveBeenCalledWith(qualifiedRef("directory", folder.id), undefined);
       open.mockClear();
-      fireEvent.keyDown(icon(/^Platform, DRAWER$/), { key: "Enter" });
+      fireEvent.keyDown(icon(/^Platform, Drawer$/), { key: "Enter" });
       expect(open).toHaveBeenCalledWith(qualifiedRef("directory", folder.id));
       expect(screen.queryByTestId("desk-screen-empty")).toBeNull();
     } finally {
@@ -213,11 +213,11 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     // People, Agents and Needs you have their own homes and do not become
     // Floor icons.
-    const ledger = icon(/^Payments ledger cutover, PROJECT/);
-    expect(ledger.getAttribute("aria-label")).toBe("Payments ledger cutover, PROJECT, 2 open here");
+    const ledger = icon(/^Payments ledger cutover, Project/);
+    expect(ledger.getAttribute("aria-label")).toBe("Payments ledger cutover, Project, 2 open here");
     expect(within(ledger).getByText("2", { selector: ".desk-icon-count" })).toBeTruthy();
     expect(ledger.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
-    expect(icon(/^Platform observability, PROJECT, 1 open here/)).toBeTruthy();
+    expect(icon(/^Platform observability, Project, 1 open here/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^People/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Agents/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Needs you/ })).toBeNull();
@@ -318,7 +318,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     });
     render(<Screen />);
     await waitFor(() => expect(screen.getByTestId("desk-screen-notread-project:p-ledger")).toBeTruthy());
-    const ledger = icon(/^Payments ledger cutover, PROJECT/);
+    const ledger = icon(/^Payments ledger cutover, Project/);
     expect(ledger.getAttribute("aria-label")).toContain("NOT READ");
     expect(ledger.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("fail");
     // Unknown automatic content stays withheld while the project read is

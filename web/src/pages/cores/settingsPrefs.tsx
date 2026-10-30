@@ -1,3 +1,4 @@
+import { wireWords } from "../../desk/surface/words";
 import { wireClock } from "../../desk/surface/format";
 import { PeopleHubCells } from "./settingsPeople";
 import { spriteUrl } from "../../desk/sprites";
@@ -207,7 +208,7 @@ export type MeetingPlacementWire = {
 
 /** The precedence rule, rendered where the placement is set. */
 export const MEETING_PLACEMENT_RULE =
-  "DESTINATION WINS · PROVIDER DECIDES WHEN NO DESTINATION";
+  "Destination wins · Provider decides when no destination";
 
 export function meetingPlacement(
   settings: Record<string, unknown> | undefined,
@@ -218,23 +219,20 @@ export function meetingPlacement(
   return block && typeof block === "object" ? block : null;
 }
 
-/** WHERE meetings run right now, as one fact line. */
+/** WHERE meetings run right now, as one fact line. Names stay as typed;
+ *  the boundary code is said in words (`same_device` → `Same device`). */
 export function placementLine(placement: MeetingPlacementWire): string {
-  const target = String(
-    placement.target_name || placement.node || "HUB DEFAULT",
-  ).toUpperCase();
-  const parts = ["ENGINE", target, String(placement.boundary ?? "").toUpperCase()];
-  if (placement.model) parts.push(String(placement.model).toUpperCase());
+  const target = String(placement.target_name || placement.node || "Hub default");
+  const parts = ["Engine", target, wireWords(String(placement.boundary ?? ""))];
+  if (placement.model) parts.push(String(placement.model));
   return parts.filter(Boolean).join(" · ");
 }
 
 /** WHY the Provider dial did not decide. Empty string when it did. */
 export function providerIgnoredReason(placement: MeetingPlacementWire): string {
   if (placement.provider_honored !== false) return "";
-  const target = String(
-    placement.target_name || placement.node || placement.target_id || "DESTINATION",
-  ).toUpperCase();
-  return `PROVIDER SELECTION IGNORED · DESTINATION ${target} DECIDES`;
+  const target = String(placement.target_name || placement.node || placement.target_id || "");
+  return `Provider selection ignored · ${target ? `Destination ${target}` : "The destination"} decides`;
 }
 export const MIR_PROFILE_OPTIONS = [
   "balanced",
@@ -590,7 +588,7 @@ export function PrefsFace({
     : ["hard invariants", "grants", "mode", "feature default"]
   )
     .join(" → ")
-    .toUpperCase();
+    .replace(/^./, (c) => c.toUpperCase());
 
   const [atmosphereId] = useAtmospherePreference();
   const connected = hub.connections.connected;

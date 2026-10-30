@@ -87,8 +87,8 @@ describe("B25: an empty Project reads NEW", () => {
     expect(roomHealthWord(room({ health: { state: "degraded", error_code: "x" } }))).toBeNull();
   });
 
-  it("the Door's create receipt reads CREATE", () => {
-    expect(receiptLabel({ op: "create_from_setup" })).toBe("CREATE");
+  it("the Door's create receipt reads Create", () => {
+    expect(receiptLabel({ op: "create_from_setup" })).toBe("Create");
   });
 });
 

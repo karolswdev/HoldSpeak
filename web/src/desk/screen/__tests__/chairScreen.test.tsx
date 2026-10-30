@@ -94,7 +94,7 @@ describe("PHILO-14 A1 — the Chair is the screen", () => {
       expect(screen.queryByRole("region", { name })).toBeNull();
     }
     expect(screen.queryByTestId("chair-reopen-needs")).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Needs you, SMART DRAWER/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Needs you, Smart drawer/ })).toBeNull();
   });
 
   it("keeps the first-run path: no screen while arrival is required", async () => {

@@ -127,7 +127,7 @@ describe("Slack in the Destination form", () => {
     const refused = await screen.findByTestId("dest-key-refused");
     expect(refused).toHaveAttribute("data-code", "slack_webhook_invalid");
     expect(refused.textContent).toBe("Could not save the key · Nothing changed · Check the webhook and paste it again");
-    expect(refused).toHaveAttribute("title", "WEBHOOK NOT VALID");
+    expect(refused).toHaveAttribute("title", "Webhook not valid");
     expect(within(screen.getByTestId("dest-key-row")).queryByText("Set")).toBeNull();
     expect(document.body.textContent).not.toContain("example.com/hooks");
   });

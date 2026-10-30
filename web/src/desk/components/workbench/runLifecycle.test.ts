@@ -68,7 +68,7 @@ describe("Workbench run lifecycle", () => {
     });
     const reconciling = workbenchRunReducer(initialWorkbenchRunState, end!.action);
     const failed = workbenchRunReducer(reconciling, { type: "reconciled" });
-    expect(failed).toMatchObject({ phase: "failed", reason: "EXPIRED" });
+    expect(failed).toMatchObject({ phase: "failed", reason: "Expired" });
   });
 
   it("reconciles from the completed request when the runtime bus was silent", () => {

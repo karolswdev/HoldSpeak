@@ -69,7 +69,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                   return (
                     <SurfaceLedgerRow key={r.id} data-testid="delivery-row" wrap expands={false}
                       lead={<span data-outcome={r.outcome}><StateChip state="warning" label="" wordless /></span>}
-                      primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{`${SEND_WORDS.unknownChip} · CHECK ${r.deliveredTo ?? "—"}`}</span>}
+                      primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{`${SEND_WORDS.unknownChip} · Check ${r.deliveredTo ?? "—"}`}</span>}
                       cells={<>
                         {reason ? <Token className="surface-token" data-chip data-code={reason}>{unknownWord(reason)}</Token> : null}
                         {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}

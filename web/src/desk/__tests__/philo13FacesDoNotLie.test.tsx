@@ -38,16 +38,16 @@ afterEach(() => vi.unstubAllGlobals());
 describe("plain failure words (A.3, A.10, Tenet 4)", () => {
   it("names the failure and never carries the hub's own text", () => {
     const cause = new ApiError(503, "people_store_unavailable", { detail: "people_store_unavailable" });
-    expect(plainFailure("PEOPLE STORE", cause)).toBe("PEOPLE STORE · NOT AVAILABLE NOW");
+    expect(plainFailure("PEOPLE STORE", cause)).toBe("People store · Not available now");
     // W6-G words: the plain sentence face, and the reason for the hover only.
     expect(plainWords("Could not load people")).toBe("Could not load people · Nothing changed");
     expect(plainWords("Could not park it", "It stays here", "Try again")).toBe("Could not park it · It stays here · Try again");
     expect(failureTitle(cause)).toBe("Not available now · HTTP 503");
     expect(failureTitle(new TypeError("Failed to fetch"))).toBe("Hub unreachable");
     expect(plainFailure("NOT PUBLISHED", new ApiError(500, "injected failure", {}))).toBe(
-      "NOT PUBLISHED · HUB FAILED",
+      "Not published · Hub failed",
     );
-    expect(plainReason(new TypeError("Failed to fetch"))).toBe("HUB UNREACHABLE");
+    expect(plainReason(new TypeError("Failed to fetch"))).toBe("Hub unreachable");
     expect(plainFailure("BRIEF DID NOT LOAD", new ApiError(500, "injected", {}))).not.toMatch(/injected/);
   });
 

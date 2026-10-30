@@ -39,14 +39,14 @@ function DeskHarness() {
 describe("HS-132-06 write-receipt channel", () => {
   beforeEach(() => clearWriteFailure());
 
-  it("names the cause in label grammar", () => {
+  it("names the cause in short words", () => {
     expect(writeFailureReason(new Response("", { status: 503 }))).toBe("HTTP 503");
     expect(writeFailureReason(Object.assign(new Error("nope"), { status: 422 }))).toBe(
       "HTTP 422",
     );
-    expect(writeFailureReason(new TypeError("Failed to fetch"))).toBe("HUB UNREACHABLE");
-    expect(writeFailureReason("bad payload")).toBe("BAD PAYLOAD");
-    expect(writeFailureReason(new Error("weird"))).toBe("WRITE REFUSED");
+    expect(writeFailureReason(new TypeError("Failed to fetch"))).toBe("Hub unreachable");
+    expect(writeFailureReason("bad payload")).toBe("bad payload");
+    expect(writeFailureReason(new Error("weird"))).toBe("Write refused");
   });
 
   it("stays quiet when the write lands", async () => {

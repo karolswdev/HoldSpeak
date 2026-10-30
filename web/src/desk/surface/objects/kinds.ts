@@ -7,6 +7,7 @@
  *  own `sprite` URL), so the redraw lands here once.
  */
 import { spriteUrl, type SpriteSize, type SpriteState } from "../../sprites";
+import { wireWords } from "../words";
 
 export type ObjectKind =
   | "project"
@@ -26,26 +27,28 @@ export type ObjectKind =
 /** The KIND word of an object (the caption step: Get Info, the list's Kind
  *  column, an icon's accessible name). */
 export const OBJECT_KIND_WORD: Readonly<Record<ObjectKind, string>> = {
-  project: "PROJECT",
-  meeting: "MEETING",
-  decision: "DECISION",
-  action: "ACTION ITEM",
-  note: "NOTE",
-  artifact: "ARTIFACT",
-  repository: "REPOSITORY",
-  agent: "AGENT",
-  pr: "PULL REQUEST",
-  person: "PERSON",
-  conductor: "DRAWER",
-  smart: "SMART DRAWER",
-  parked: "DRAWER",
+  project: "Project",
+  meeting: "Meeting",
+  decision: "Decision",
+  action: "Action item",
+  note: "Note",
+  artifact: "Artifact",
+  repository: "Repository",
+  agent: "Agent",
+  pr: "Pull request",
+  person: "Person",
+  conductor: "Drawer",
+  smart: "Smart drawer",
+  parked: "Drawer",
 };
 
 /** Betterment A1: a desk kind whose stored name is not its word. */
-const STORED_KIND_WORD: Readonly<Record<string, string>> = { workbench: "AUTOMATION" };
+const STORED_KIND_WORD: Readonly<Record<string, string>> = { workbench: "Automation" };
 
+/** WORDS-VOCAB 2026-10-30: the kind word in sentence case (`Action item`);
+ *  a kind the table does not know is said in words (`wireWords`). */
 export function objectKindWord(kind: string): string {
-  return OBJECT_KIND_WORD[kind as ObjectKind] ?? STORED_KIND_WORD[kind] ?? kind.toUpperCase();
+  return OBJECT_KIND_WORD[kind as ObjectKind] ?? STORED_KIND_WORD[kind] ?? wireWords(kind);
 }
 
 /** The one sprite for an object of `kind`, at the icon size (64) or the

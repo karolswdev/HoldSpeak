@@ -447,7 +447,7 @@ describe("PHILO-10-01: an UNKNOWN send is not counted as a delivery", () => {
     expect(rows[0].textContent).toContain("Team folder");
     expect(rows[0].textContent).toContain("Saved");
     expect(rows[0].textContent).toContain("/tmp/rig/out/2026-10-11-payments-ledger-cutover-rev-1-a7c54e99.md");
-    expect(rows[1].textContent).toContain("RESULT UNKNOWN · CHECK Long path folder");
+    expect(rows[1].textContent).toContain("Result unknown · Check Long path folder");
     expect(rows[1].textContent).toContain("File not confirmed");
     expect(rows[1].textContent).not.toContain("Saved");
     expect(rawButtons(section)).toEqual([]);

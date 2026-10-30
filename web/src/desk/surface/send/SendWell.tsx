@@ -231,7 +231,7 @@ export function accountChip(
     state = (d.connection?.state ?? tool?.state ?? "not_configured") as ConnectionState;
     const login = tool?.account?.login;
     if (state === "connected" && login && d.account.login && login !== d.account.login) {
-      return { state: "failure", label: "ACCOUNT CHANGED", code: "github_identity_changed" };
+      return { state: "failure", label: "Account changed", code: "github_identity_changed" };
     }
   } else {
     const conn = tool?.connections?.find((x) => x.account.site === d.account.site && x.account.email === d.account.email);
@@ -242,7 +242,7 @@ export function accountChip(
   const map: Record<string, "warning" | "failure"> = {
     owner_action_required: "warning", unavailable: "failure", degraded: "warning",
   };
-  return { state: map[state] ?? "warning", label: chipLabel(state, d.channel, words ?? {}).toUpperCase(), code: state };
+  return { state: map[state] ?? "warning", label: chipLabel(state, d.channel, words ?? {}), code: state };
 }
 
 /* ── pieces ────────────────────────────────────────────────────────── */
@@ -352,7 +352,7 @@ function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
     return (
       <span className="send-line" data-testid="send-last-unknown">
         <StateChip state="warning" label={SEND_WORDS.lastUnknown} />
-        <Token className="surface-token" data-chip>{last.reason ? unknownWord(last.reason) : "NO ANSWER"}</Token>
+        <Token className="surface-token" data-chip>{last.reason ? unknownWord(last.reason) : "No answer"}</Token>
       </span>
     );
   }
@@ -387,7 +387,7 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
   if (s.state === "unknown") return (
     <span className="send-line" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
       <StateChip state="warning" label={SEND_WORDS.unknownChip} />
-      <Token className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</Token>
+      <Token className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "No answer")}</Token>
       <ReceiptEgress s={s} />
     </span>
   );
@@ -576,7 +576,7 @@ function PreviewFailed({ pv, eg, onRetry }: {
   return (
     <div className="send-verbs" data-testid="preview-failed">
       <StateChip state="failure" label={SEND_WORDS.noPreview} />
-      <Token className="surface-token" data-chip>NO ANSWER</Token>
+      <Token className="surface-token" data-chip>No answer</Token>
       <Button dense variant="ghost" data-testid="preview-retry" onClick={onRetry}>{SEND_WORDS.retry}</Button>
     </div>
   );
@@ -963,9 +963,10 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
 
 function byWord(s: Send): string {
   const kind = s.prepared_by?.kind ?? "";
-  if (kind === "owner") return "BY YOU";
-  if (kind === "steward" || kind === "scheduler") return "BY STEWARD";
-  return `BY ${String(s.prepared_by?.identity || kind).toUpperCase()}`;
+  // WORDS-VOCAB: said in sentence case here; the name stays as typed.
+  if (kind === "owner") return "By you";
+  if (kind === "steward" || kind === "scheduler") return "By steward";
+  return `By ${String(s.prepared_by?.identity || kind)}`;
 }
 
 /** A prepared send. While it waits: Send and Discard (one row open at a
@@ -997,7 +998,7 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
     : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
     : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /><ReceiptEgress s={s} /></>
     : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><Token className="surface-token" data-chip>{failedWord(s.reason ?? "")}</Token><Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token></>
-    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><Token className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</Token><ReceiptEgress s={s} /></>
+    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><Token className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "No answer")}</Token><ReceiptEgress s={s} /></>
     : <StateChip state="idle" label={SEND_WORDS.discarded} />;
 
   return (
@@ -1087,7 +1088,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                 return (
                   <SurfaceLedgerRow key={r.id} data-testid="history-row" wrap expands={false}
                     lead={<span data-outcome="unknown"><StateChip state="warning" label="" wordless /></span>}
-                    primary={<span className="surface-primary" data-to={name}>{`${SEND_WORDS.unknownChip} · CHECK ${name}`}</span>}
+                    primary={<span className="surface-primary" data-to={name}>{`${SEND_WORDS.unknownChip} · Check ${name}`}</span>}
                     cells={<span className="send-cells">
                       {formChip}
                       {r.reason ? <Token className="surface-token" data-chip>{unknownWord(r.reason)}</Token> : null}

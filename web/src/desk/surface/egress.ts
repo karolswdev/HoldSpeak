@@ -4,8 +4,10 @@
 // SettingsCore, SystemShade) collapsed here; the vocabulary is:
 //   (empty)            (local/LOCAL/this_device, and loopback: 127.x, localhost)
 //   <ip> · LAN         (RFC-1918 private IPs)
-//   REMOTE · <ip>      (origin=remote with a caller IP)
+//   Remote · <ip>      (origin=remote with a caller IP)
 //   <host>             (everything else — cloud hosts show as-is)
+
+import { wireWords } from "./words";
 
 const PRIVATE_IP_RE = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/;
 
@@ -164,7 +166,7 @@ export function egressFor(host: string | null | undefined): {
 /**
  * HS-174-04 — Derive the egress label and scope for a pipeline event
  * that carries `origin`.  A remote-triggered call shows
- * `REMOTE · <caller ip>` with scope "remote"; a locally spawned
+ * `Remote · <caller ip>` with scope "remote"; a locally spawned
  * operation from a remote trigger shows the host's egress via egressFor.
  *
  * The time is a SEPARATE token after the chip, never inside it.
@@ -175,7 +177,7 @@ export function egressForEvent(event: {
   host?: string | null;
 }): { label: string; scope: EgressScope } {
   if (event.origin === "remote" && event.caller) {
-    return { label: `REMOTE · ${event.caller}`, scope: "remote" };
+    return { label: `Remote · ${event.caller}`, scope: "remote" };
   }
   // Local origin or missing origin: fall through to host-based egress
   return egressFor(event.host ?? event.caller ?? null);
@@ -185,12 +187,12 @@ export function egressForEvent(event: {
  * HS-174-04 — Map a pipeline event's service.method to the human grammar
  * the board uses.  Never shows the class name on a face.
  *
- * Vocabulary:
- *   run_sweep           -> SWEEP (+ ` . N ENTITIES` when summary has a count)
- *   project_run_steward -> STEWARD RUN (+ draft/phase token when present)
- *   list_*, get_*       -> READ . <noun> (noun = method minus prefix, spaces for _)
- *   room                -> READ
- *   unmapped            -> METHOD IN CAPS (underscores as spaces, never the class)
+ * Vocabulary (WORDS-VOCAB 2026-10-30: sentence case at the source):
+ *   run_sweep           -> Sweep
+ *   project_run_steward -> Steward run
+ *   list_*, get_*       -> Read <noun> (noun = method minus prefix, spaces for _)
+ *   room                -> Read
+ *   unmapped            -> the method in words (underscores as spaces, never the class)
  */
 export function receiptLabel(event: {
   op?: string | null;
@@ -203,79 +205,77 @@ export function receiptLabel(event: {
     const raw = event.title ?? "";
     const dot = raw.indexOf(".");
     if (dot >= 0 && raw.slice(0, dot).endsWith("Service")) {
-      return raw.slice(dot + 1).replace(/_/g, " ").toUpperCase();
+      return wireWords(raw.slice(dot + 1));
     }
-    return raw.toUpperCase();
+    return wireWords(raw);
   }
 
   // PHILO-15 lane 12 (B25): the Door's create verb reads Create, never
-  // the method name (`CREATE FROM SETUP`).
+  // the method name (`Create from setup`).
   if (op === "create_from_setup") {
-    return "CREATE";
+    return "Create";
   }
 
   // Sweep
   if (op === "run_sweep") {
-    return "SWEEP";
+    return "Sweep";
   }
 
   // Steward run
   if (op === "project_run_steward" || op === "run_steward") {
-    return "STEWARD RUN";
+    return "Steward run";
   }
 
   // PHILO-9-03 (F7): the owner's confirmation that he delivered an update.
   // Past tense only when it happened (Codex Astra r1 finding 1): a refused
-  // or failed mark is the attempt, never "MARKED".
+  // or failed mark is the attempt, never "Marked".
   if (op === "mark_update_delivered") {
-    return receiptFace(event.outcome).state === "success" ? "MARKED DELIVERED" : "MARK DELIVERED";
+    return receiptFace(event.outcome).state === "success" ? "Marked delivered" : "Mark delivered";
   }
 
   // PHILO-9-06: the owner's project grant, in the grant row's act words
   // (SettingsCore PROJECT_GRANT_WORDS actAllow / actStop).
   if (op === "delegation.grant") {
-    return "ALLOW RUN AND PUBLISH";
+    return "Allow run and publish";
   }
   if (op === "delegation.revoke") {
-    return "STOP RUN AND PUBLISH";
+    return "Stop run and publish";
   }
 
   // Reads: list_*, get_*, room
   if (op.startsWith("list_")) {
-    const noun = op.slice(5).replace(/_/g, " ").toUpperCase();
-    return `READ ${noun}`;
+    return `Read ${wireWords(op.slice(5), false)}`;
   }
   if (op.startsWith("get_")) {
-    const noun = op.slice(4).replace(/_/g, " ").toUpperCase();
-    return `READ ${noun}`;
+    return `Read ${wireWords(op.slice(4), false)}`;
   }
   if (op === "room") {
-    return "READ";
+    return "Read";
   }
 
-  // Unmapped: method in caps, underscores as spaces
-  return op.replace(/_/g, " ").toUpperCase();
+  // Unmapped: the method in words, underscores as spaces
+  return wireWords(op);
 }
 
 /** PHILO-9-03: the hub's refusal codes in plain words, one table for every
  *  face that names a refusal (the delivery line, the steward's start, the
  *  Room's RECEIPTS). An unknown code is said in its own words. */
 const REFUSAL_WORDS: Record<string, string> = {
-  update_not_published: "NOT PUBLISHED",
-  idempotency_conflict: "ALREADY USED",
+  update_not_published: "Not published",
+  idempotency_conflict: "Already used",
   // PHILO-9-06: the grant row's own words (SettingsCore GRANT_REFUSAL_TOKEN).
   // Outside the grant's bound the hub answers owner_principal_required.
-  owner_principal_required: "OWNER ONLY",
-  project_delegation_required: "NO GRANT",
-  project_delegation_revoked: "GRANT STOPPED",
-  project_delegation_expired: "GRANT EXPIRED",
-  steward_policy_required: "NO SAVED POLICY",
-  steward_disabled: "STEWARD OFF",
-  cooldown_active: "COOLING DOWN",
+  owner_principal_required: "Owner only",
+  project_delegation_required: "No grant",
+  project_delegation_revoked: "Grant stopped",
+  project_delegation_expired: "Grant expired",
+  steward_policy_required: "No saved policy",
+  steward_disabled: "Steward off",
+  cooldown_active: "Cooling down",
 };
 
 export function refusalWord(code: string): string {
-  return REFUSAL_WORDS[code] ?? code.toUpperCase().replace(/_/g, " ");
+  return REFUSAL_WORDS[code] ?? wireWords(code);
 }
 
 /** PHILO-9-03 (Codex Astra r1 finding 1, closed as a class): every receipt
@@ -290,12 +290,12 @@ export function receiptFace(outcome: string | null | undefined): ReceiptFace {
     case "succeeded":
       return { state: "success", icon: "●", word: null };
     case "refused":
-      return { state: "failure", icon: "✗", word: "REFUSED" };
+      return { state: "failure", icon: "✗", word: "Refused" };
     case "cancelled":
-      return { state: "idle", icon: "—", word: "CANCELLED" };
+      return { state: "idle", icon: "—", word: "Cancelled" };
     case "indeterminate":
-      return { state: "warning", icon: "⚠", word: "RESULT UNKNOWN" };
+      return { state: "warning", icon: "⚠", word: "Result unknown" };
     default: // "error", "failed", and anything the face does not know
-      return { state: "failure", icon: "✗", word: "FAILED" };
+      return { state: "failure", icon: "✗", word: "Failed" };
   }
 }

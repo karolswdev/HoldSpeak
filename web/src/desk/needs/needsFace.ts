@@ -15,6 +15,7 @@ import { flightForItem, isInFlight } from "../agentFlights";
 import type { ObjectTone } from "../surface/objects";
 import { gapGroupKey, sourceLabel, type CoverageRecord } from "../coverage";
 import { wireDate } from "../surface/format";
+import { wireWords } from "../surface/words";
 import { needYouWords } from "../surface/count";
 import { commandForDoorVerb, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
 
@@ -214,18 +215,18 @@ export function passesChips(face: NeedFace, chips: NeedsChips, now: Date = new D
 }
 
 /** PHILO-15-09 (B12): every member row says what it is. A proposal from a
- *  meeting is a PROPOSAL (decision or action); an agent's row and its PR are
- *  AGENT. A setup blocker and a source row are not objects: no word. */
+ *  meeting is a Proposal (decision or action); an agent's row and its PR are
+ *  Agent. A setup blocker and a source row are not objects: no word. */
 export function kindWordOf(face: Pick<NeedFace, "kind" | "verbs" | "source">): string | undefined {
   if (face.source) return undefined;
   if (face.verbs.kind === "confirm" || face.verbs.kind === "decide"
-    || face.verbs.kind === "decision-confirm" || face.verbs.kind === "whose") return "PROPOSAL";
+    || face.verbs.kind === "decision-confirm" || face.verbs.kind === "whose") return "Proposal";
   switch (face.kind) {
-    case "decision": return "DECISION";
-    case "action": return "ACTION";
-    case "meeting": return "MEETING";
+    case "decision": return "Decision";
+    case "action": return "Action";
+    case "meeting": return "Meeting";
     case "agent":
-    case "pr": return "AGENT";
+    case "pr": return "Agent";
     default: return undefined;
   }
 }
@@ -401,7 +402,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       group: "rest", direction: "decide",
       verbs: { kind: "phone", item: phone.kind, verbs: [...(phone.verbs ?? [])], msgId: phone.msgId ? String(phone.msgId) : null },
       openRef: undefined,
-      kindWord: "PHONE",
+      kindWord: "Phone",
     };
   }
 
@@ -422,7 +423,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
         itemKind: String(program.kind ?? ""), choices: [...(program.choices ?? [])], findingId: program.findingId ?? null,
       },
       openRef: `program:${program.programId}`,
-      kindWord: "PROGRAM",
+      kindWord: "Program",
       ...(item.projectId ? { projectId: String(item.projectId) } : {}),
     };
   }
@@ -827,7 +828,7 @@ export function coverageFace(gap: CoverageRecord, now?: Date): NeedFace {
     name: sourceLabel(gap),
     fact: [cause, observedAt(gap.observed_at, now)].filter(Boolean).join(" · "),
     lamp: {
-      label: repair?.token || gap.state.toUpperCase(),
+      label: repair?.token || wireWords(gap.state),
       tone: quiet ? "info" : gap.state === "stale" ? "warn" : "fail",
     },
     group: "rest",
@@ -902,7 +903,7 @@ export function armingFace(
     // W6-H words: the hub's reason for a refused Cancel rides the hover; Retry is beside it.
     factTitle: !failed && refusal ? refusal : undefined,
     lamp: { label: failed ? "FAILED" : `ARMS · ${word}`, tone: failed || refusal ? "fail" : "ask" },
-    kindWord: "MEETING",
+    kindWord: "Meeting",
     group: "agents",
     verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal), failed, calendarEventId: arming.calendarEventId },
   };
