@@ -219,6 +219,8 @@ class ProgramStore:
                 "line": row["line"], "operation_id": row["operation_id"], "kind": row["kind"],
                 "choice": row["choice"], "rule": row["rule"], "overturnable": bool(row["overturnable"]),
                 "overturned_at": row["overturned_at"], "undo": undo,
+                # PG16: the proposed decision record this checkpoint made.
+                "decision_record_id": (undo.get("decision_record_id") or None) if isinstance(undo, dict) else None,
             })
         return out
 

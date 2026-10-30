@@ -378,16 +378,46 @@ State: **Shipped** means in this PR. **Left** means a later slice.
 - **Tests**: T1 the Calls rig.
 - **Not in this slice**: decide on a call.
 
-## PG16. Decisions from a Program (Left)
+## PG16. Decisions from a Program (Built)
 
 - **Goal**: a skipped finding or an engine merge may become a proposed
   decision record.
-- **Files**: `hs/services/program_service.py`, the decision record service.
-- **Changes**: a Skip's reason and a merge's rule become a proposed record
-  linked to the PRs (`decision_record.link_work`).
+- **Files**: `hs/services/program_decisions.py` (new), `hs/services/program_service.py`
+  (`_propose_skip`, `propose_merge`, the overturn's withdraw, the PR link on
+  `pr_open`), `hs/services/program_runner.py` (the merge by rule; the PR the
+  follow-through names), `hs/db/programs.py` (a checkpoint's
+  `decision_record_id`), `hs/services/project_service.py` (the Room's
+  `decisions.proposed`), `hs/mcp/tools.py` (`decision_record.list`
+  `program_id`), `web/src/features/project-room/model.ts`,
+  `web/src/desk/programs/RoomDecisions.tsx` (new), `desk/drawer/DrawerWindow.tsx`,
+  `desk/programs/ProgramWindow.tsx`, `types.ts`, `programs.css`.
+- **Changes**: his Skip (with his reason), a rule's Skip of a finding above
+  NOTE (a judgement, the rule named) and a merge by rule (Normal, YOLO)
+  write ONE Desk decision in status `proposed`
+  per checkpoint (`program-skip-<step>-<finding>`, `program-merge-<step>`)
+  and its record (`create_from_desk`): the title from the finding, the
+  context names the reason, the rule, the Control level, who decided and the
+  step; `link_work` to `program` and to the step's `pr` (now, or when the PR
+  opens); filed to the Program's Project; announced as `decision_record`. A
+  second resolve updates the same record; an accepted record keeps its
+  words; an Overturn of the Skip withdraws it. The NOTE rule's Skip is the
+  noise filter: it proposes nothing (its note line and Decided for you row
+  stay). The finding, the checkpoint
+  and the Decided for you row carry `decision_record_id`; `program.decide`
+  answers it. The Room's decisions section carries `proposed` (each with its
+  Program and PRs); the Project drawer draws the **Proposed decisions** fold
+  (Open: the record in the Decisions window, where he accepts it); the
+  Program window's checkpoint and Decided for you rows say "Proposed as a
+  decision".
 - **Done when**: a Skip shows as a proposed decision in the Room.
-- **Tests**: T1.
-- **Not in this slice**: auto-confirm.
+- **Tests**: T1 `tests/integration/test_desk_programs.py` (2: the NOTE
+  rule's Skip proposes nothing, his Skips do, the Room, MCP by program; the
+  merge by rule, its fixed id and a withdrawn record coming back; records `program.skip_decision.json` and
+  `room.decisions.proposed.json`, `HOLDSPEAK_WIRE_WRITE=1`); T2
+  `programs.app.test.tsx` (3 PG16 cases from those recordings).
+- **Not in this slice**: auto-confirm; the main Room window
+  (`surface-project-memory`) does not draw the fold (the drawer holds the
+  Programs fold, as PG8 built it).
 
 ## PG17. The first Program is the engine's own history (Left)
 

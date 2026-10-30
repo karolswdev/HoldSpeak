@@ -22,6 +22,8 @@ import raceFixture from "../__fixtures__/program.race.json";
 import needsFixture from "../__fixtures__/needs_you.program.json";
 import roomFixture from "../__fixtures__/room.programs.json";
 import personFixture from "../__fixtures__/person.programs.json";
+import skipDecisionFixture from "../__fixtures__/program.skip_decision.json";
+import roomProposedFixture from "../__fixtures__/room.decisions.proposed.json";
 import sinceMorningPrograms from "../../__tests__/fixtures/today-hub/since-morning.programs.json";
 
 type Frame = { type: string; data: unknown };
@@ -34,6 +36,7 @@ const mocks = vi.hoisted(() => ({
   openSurfaceOr: vi.fn(),
   openProjectRoom: vi.fn(),
   openPullout: vi.fn(),
+  openDecisionRecord: vi.fn(),
 }));
 
 vi.mock("../../../lib/api", async (importOriginal) => ({
@@ -48,6 +51,7 @@ vi.mock("../../../runtime/RuntimeBus", () => ({
 vi.mock("../../openObject", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../openObject")>()),
   openRef: mocks.openRef,
+  openDecisionRecord: mocks.openDecisionRecord,
 }));
 vi.mock("../../shell", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../shell")>()),
@@ -60,6 +64,8 @@ import { ApiError } from "../../../lib/api";
 import { ProgramsCore } from "../ProgramsWindow";
 import { ProgramBody } from "../ProgramWindow";
 import { RoomPrograms } from "../RoomPrograms";
+import { RoomDecisions } from "../RoomDecisions";
+import { decodeRoomSnapshot } from "../../../features/project-room/model";
 import { PersonPrograms, personProgramsOf } from "../PersonPrograms";
 import { ProgramStepLine, flightProgramOf } from "../StepLine";
 import { programsLampOf, programsTodayLine, worseLamp } from "../lamp";
@@ -111,6 +117,7 @@ beforeEach(() => {
   mocks.openSurfaceOr.mockReset();
   mocks.openProjectRoom.mockReset();
   mocks.openPullout.mockReset();
+  mocks.openDecisionRecord.mockReset();
 });
 afterEach(() => cleanup());
 
@@ -511,5 +518,43 @@ describe("Phone: the Reach line under Decided for you (PHONE-DESIGN §9)", () =>
     render(<ProgramBody programId={running.id} />);
     await screen.findByTestId("programs-decided");
     expect(screen.queryByTestId("programs-reach")).toBeNull();
+  });
+});
+
+describe("PG16: decisions from a Program (the recorded Skip)", () => {
+  const skipped = skipDecisionFixture as unknown as Program;
+
+  it("the checkpoint row of his Skip says Proposed as a decision; an overturned row does not", async () => {
+    hub({ [`GET /api/programs/${skipped.id}`]: skipped });
+    render(<ProgramBody programId={skipped.id} />);
+    const checks = await screen.findByTestId("programs-checkpoints");
+    const rows = within(checks).getAllByRole("listitem");
+    const skip = rows.find((row) => row.textContent?.startsWith("You") && row.textContent.includes("Skip: sentence case the title"))!;
+    expect(within(skip).getByTestId("programs-proposed-decision").textContent).toBe("Proposed as a decision");
+    const plain = rows.find((row) => row.textContent?.includes("Opened PR #"))!;
+    expect(within(plain).queryByTestId("programs-proposed-decision")).toBeNull();
+    // The engine's NOTE Skip was overturned: no word on its Decided for you row.
+    const decided = screen.getByTestId("programs-decided");
+    const overturned = within(decided).getAllByTestId("programs-decided-row").find((row) => row.hasAttribute("data-overturned"))!;
+    expect(within(overturned).queryByTestId("programs-proposed-decision")).toBeNull();
+  });
+
+  it("the Room's proposed decisions: each Skip with its Program and PR; Open opens the record", () => {
+    const room = decodeRoomSnapshot({ decisions: roomProposedFixture } as Record<string, unknown>);
+    if (room.decisions.state !== "ok") throw new Error("decisions not read");
+    const proposed = room.decisions.proposed ?? [];
+    render(<RoomDecisions proposed={proposed} />);
+    const rows = screen.getAllByTestId("room-proposed-decision");
+    expect(rows).toHaveLength(roomProposedFixture.proposed.length);
+    expect(rows[0].textContent).toContain("Skip: sentence case the title");
+    expect(rows[0].textContent).toContain("Proposed");
+    expect(within(rows[0]).getByTestId("room-proposed-from").textContent).toBe("The words wave · PR #101");
+    fireEvent.click(within(rows[0]).getByTestId("room-proposed-open"));
+    expect(mocks.openDecisionRecord).toHaveBeenCalledWith(roomProposedFixture.proposed[0].id);
+  });
+
+  it("no proposed decision, no fold", () => {
+    const { container } = render(<RoomDecisions proposed={[]} />);
+    expect(container.textContent).toBe("");
   });
 });

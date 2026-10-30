@@ -216,6 +216,12 @@ function HandoffLine({ row, step, entry }: { row: ProgramCheckpoint; step: Progr
   );
 }
 
+/** PG16: a Skip or a merge by rule became a proposed decision record (he
+ *  accepts it in the Decisions window). A row word, never a chip of zero. */
+function ProposedWord() {
+  return <DotWord tone="ask" className="pg-proposed" data-testid="programs-proposed-decision">Proposed as a decision</DotWord>;
+}
+
 function Checkpoints({ program, open, onToggle }: { program: Program; open: boolean; onToggle(open: boolean): void }) {
   const rows = program.checkpoints;
   const handoffs = useMemo(() => handoffsOf(program), [program]);
@@ -233,7 +239,10 @@ function Checkpoints({ program, open, onToggle }: { program: Program; open: bool
                 {by.sprite ? <img src={by.sprite} alt="" width={20} height={20} /> : <span className="pg-ledger-you" aria-hidden="true">You</span>}
                 <span>{by.who}</span>
               </span>
-              <span className="pg-ledger-line">{row.line}</span>
+              <span className="pg-ledger-line" data-proposed={row.decision_record_id && !row.overturned_at ? "" : undefined}>
+                <span className="pg-ledger-text">{row.line}</span>
+                {row.decision_record_id && !row.overturned_at ? <ProposedWord /> : null}
+              </span>
               <span className="pg-ledger-at">{clock(row.at)}</span>
             </li>
           );
@@ -333,6 +342,7 @@ function DecidedFold({ program, open, onToggle, onOverturned }: {
                 {row.rule ? <span className="pg-decided-rule"> · {row.rule}</span> : null}
               </span>
               <span className="pg-decided-verb">
+                {row.decision_record_id && !overturned ? <ProposedWord /> : null}
                 {overturned ? <DotWord data-testid="programs-decided-overturned">Overturned</DotWord>
                   : row.overturnable ? (
                     <Button dense variant="secondary" loading={busy === String(row.id)} disabled={Boolean(busy)} onClick={() => void press(row)}

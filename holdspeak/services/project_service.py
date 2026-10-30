@@ -3017,7 +3017,11 @@ class ProjectService:
                     item["was"] = was
 
             items.append(item)
-        return {"items": items}
+        # PG16: a Program's Skip or merge by rule, proposed and not yet
+        # accepted, with its Program and its PR (the Room's proposed fold).
+        from .program_decisions import room_proposed
+
+        return {"items": items, "proposed": room_proposed(self._db, project_id)}
 
     def _read_room_commitments(self, project_id: str) -> dict[str, Any]:
         """COMMITMENTS: via their decision (whose source meeting is linked).

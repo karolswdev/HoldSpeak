@@ -1625,7 +1625,8 @@ class ProgramService:
             {"id": row["id"], "at": row["at"], "step_id": row["step_id"] or None, "kind": row["kind"],
              "choice": row["choice"], "rule": row["rule"], "line": row["line"],
              "overturnable": bool(row["overturnable"]) and not row["overturned_at"],
-             "overturned_at": row["overturned_at"], "operation_id": row["operation_id"]}
+             "overturned_at": row["overturned_at"], "operation_id": row["operation_id"],
+             "decision_record_id": row.get("decision_record_id")}
             for row in self.store.list_checkpoints(program_id) if row.get("rule")
         ]
 
@@ -1648,6 +1649,14 @@ class ProgramService:
                 for finding in step.get("findings") or []:
                     if finding.get("id") == undo.get("finding_id"):
                         finding.update({"decision": None, "decided_at": None, "to_owner": True})
+                        finding.pop("decision_record_id", None)
+                if undo.get("decision_record_id"):
+                    from . import program_decisions
+
+                    program_decisions.withdraw(self.db, str(undo["decision_record_id"]))
+                    records = (step.get("facts") or {}).get("decision_records") or []
+                    if undo["decision_record_id"] in records:
+                        records.remove(undo["decision_record_id"])
                 if undo.get("door_item_id"):
                     self._dismiss_door_item(str(undo["door_item_id"]))
                 step.setdefault("facts", {})["findings_open"] = True
@@ -1705,12 +1714,14 @@ class ProgramService:
             finding["door_item_id"] = (answer["door_item"] or {}).get("id")
         elif choice == "skip":
             notes = step.setdefault("facts", {}).setdefault("skips", [])
-            notes.append({"finding": finding.get("text"), "reason": str(reason or "").strip() or None,
-                          "at": self._clock()})
+            typed = str(reason or "").strip() or None
+            notes.append({"finding": finding.get("text"), "reason": typed, "at": self._clock()})
+            answer["decision_record_id"] = self._propose_skip(program, step, finding, reason=typed, rule=None, by="owner")
         step["findings"] = findings
         self._save(step)
         self._checkpoint(program, step, "owner", {"fix_now": "Fix now", "later": "Later", "skip": "Skip"}[choice]
-                         + f": {finding.get('text', '')}"[:300])
+                         + f": {finding.get('text', '')}"[:300],
+                         decision_record_id=answer.get("decision_record_id"))
         if all(item.get("decision") or not item.get("to_owner", True) for item in findings):
             step.setdefault("facts", {})["findings_open"] = False
             fix = [item for item in findings if item.get("decision") == "fix_now"]
@@ -1743,8 +1754,59 @@ class ProgramService:
             step.setdefault("facts", {}).setdefault("skips", []).append(
                 {"finding": finding.get("text"), "reason": outcome.rule, "at": self._clock()})
             line = f"{finding.get('level')} finding on step {step['ordinal']} \u2192 Skip: {finding.get('text')}"
+            # PG16: a rule's Skip of a NOTE is the noise filter, never a
+            # proposal; a rule's Skip above NOTE is a judgement and is one.
+            if str(finding.get("level") or "NOTE").upper() != "NOTE":
+                record_id = self._propose_skip(program, step, finding, reason=None, rule=outcome.rule, by="engine")
+                if record_id:
+                    undo["decision_record_id"] = record_id
         self.engine_decision(program, step, f"finding_{str(finding.get('level') or 'note').lower()}", outcome,
                              line[:400], undo=undo)
+
+    # ── PG16: decisions from a Program ───────────────────────────────
+
+    def _propose_skip(self, program: Mapping[str, Any], step: dict[str, Any], finding: dict[str, Any], *,
+                      reason: Optional[str], rule: Optional[str], by: str) -> Optional[str]:
+        """A Skip becomes a proposed decision record (one per finding)."""
+        from . import program_decisions
+
+        text = str(finding.get("text") or "")
+        level = str(finding.get("level") or "note").lower()
+        record_id = program_decisions.propose(
+            self.db, self.store, program, step, kind="skip", finding_id=str(finding.get("id") or ""),
+            title=f"Skip: {text}", decision=f"Skip this {level} finding on step {step['ordinal']}: {text}",
+            reason=reason, rule=rule, by=by, now=self._clock(),
+        )
+        if record_id:
+            finding["decision_record_id"] = record_id
+            self._remember_record(step, record_id)
+        return record_id
+
+    def propose_merge(self, program: Mapping[str, Any], step: dict[str, Any], outcome: Any) -> Optional[str]:
+        """A merge the engine made by rule becomes a proposed decision record."""
+        from . import program_decisions
+
+        number = step.get("pr_number")
+        review = ", review passed" if step.get("review_verdict") == "pass" else ""
+        record_id = program_decisions.propose(
+            self.db, self.store, program, step, kind="merge",
+            title=f"Merge PR #{number}: {step.get('title')}",
+            decision=f"The engine merged PR #{number}, step {step['ordinal']} of {program.get('title')}, "
+                     "with no press from you.",
+            reason=f"Check green{review}", rule=getattr(outcome, "rule", None), by="engine", now=self._clock(),
+        )
+        if record_id:
+            facts = step.setdefault("facts", {})
+            facts["merge_decision_record_id"] = record_id
+            self._remember_record(step, record_id)
+            self._save(step)
+        return record_id
+
+    @staticmethod
+    def _remember_record(step: dict[str, Any], record_id: str) -> None:
+        records = step.setdefault("facts", {}).setdefault("decision_records", [])
+        if record_id not in records:
+            records.append(record_id)
 
     def _later_task(self, program: Mapping[str, Any], step: Mapping[str, Any], finding: Mapping[str, Any]) -> Optional[dict[str, Any]]:
         """A finding decided Later: a Door task for him, filed to the Project
@@ -1814,6 +1876,10 @@ class ProgramService:
         elif to in ("ready", "planned"):
             step["ended_at"] = None
         self._save(step)
+        if to == "pr_open" and current != "pr_open" and step.get("pr_url"):
+            from . import program_decisions
+
+            program_decisions.link_pr(self.db, step)
         if line:
             self._checkpoint(program, step, by, line)
         return step
@@ -1831,15 +1897,16 @@ class ProgramService:
         self.store.save_program(program)
 
     def _checkpoint(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], by: str, line: str,
-                    *, kernel: bool = True) -> dict[str, Any]:
+                    *, kernel: bool = True, decision_record_id: Optional[str] = None) -> dict[str, Any]:
         operation_id = None
         if kernel and by == "engine":
             operation_id = self._kernel_record(program, step, line)
         at = self._clock()
         ident = self.store.add_checkpoint(step_id=str((step or {}).get("id") or ""), program_id=program["id"],
-                                          at=at, by=by, line=line, operation_id=operation_id)
+                                          at=at, by=by, line=line, operation_id=operation_id,
+                                          undo={"decision_record_id": decision_record_id} if decision_record_id else None)
         return {"id": ident, "step_id": (step or {}).get("id") or "", "at": at, "by": by, "line": line,
-                "operation_id": operation_id}
+                "operation_id": operation_id, "decision_record_id": decision_record_id}
 
     def _kernel_record(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], line: str) -> Optional[str]:
         """The engine decision as a kernel operation ``program.step``."""
