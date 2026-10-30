@@ -3,6 +3,12 @@
 This file is loaded automatically by Claude Code when it opens this
 repo. It tells you (the agent) the rules of the road.
 
+Practical instructions for both brains and their workers: read [AGENTS.md](AGENTS.md)
+for the common development flow, [web/AGENTS.md](web/AGENTS.md) before interface
+work, and [holdspeak/AGENTS.md](holdspeak/AGENTS.md) before hub work. These guides
+summarize the current agreements; older passages below do not restore a gate
+superseded by the fast cycle.
+
 ## How we work now: the fast cycle (owner ruling 2026-10-12)
 
 The owner, 2026-10-12: "I am still very unhappy with how rigidly we have been
