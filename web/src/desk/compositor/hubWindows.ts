@@ -28,7 +28,7 @@ import { workBand } from "../components/window/windowGeometry";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
 import { useLane } from "../lane/laneStore";
 import { PARKED_WINDOW_ID, drawerWindowId, useDrawers } from "../drawer/store";
-import { markRehydratedMinimized, useDesk, type PanelRect } from "../store";
+import { forgetLoadRaises, markRehydratedMinimized, raisesThisLoad, useDesk, type PanelRect } from "../store";
 import { COMPACT_VIEWPORT_QUERY } from "../useCompactViewport";
 import { bootDeskWorkspace, onWorkspaceSaved, saveDeskWorkspace } from "../store/workspaceStorage";
 import { anticipate, createPresentations, type Change, type Presentations } from "./anticipate";
@@ -1108,10 +1108,16 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
           }
           // A window this load raised before the hub answered (a route that
           // opens the Conductor, a link) keeps its place in front: the
-          // hub's order is applied, then those raises go to the hub.
+          // hub's order is applied, then those raises go to the hub. A
+          // window the cache restored counts only when a raise moved it: a
+          // local order rule (the Chair's mount order) is not a raise, and
+          // the hub keeps its order (a reload keeps the stacking).
           const now = useDesk.getState().panelDepth;
+          const byRaise = new Set(raisesThisLoad());
+          forgetLoadRaises();
           const raised = Object.keys(now)
             .filter((id) => now[id] > (bootDepth[id] ?? -Infinity))
+            .filter((id) => !(id in bootDepth) || byRaise.has(id))
             .sort((a, b) => now[a] - now[b]);
           seeding = true;
           try {

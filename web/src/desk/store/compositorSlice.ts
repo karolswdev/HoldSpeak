@@ -29,6 +29,22 @@ import {
 
 const PANEL_ORDER_LIMIT = 100;
 
+/** The windows a raise (`focusPanel`) moved to the front before the hub
+ * seeded this desk, oldest first. The seed sends only these raises to the
+ * hub: a local order rule (the Chair's Needs-you mount order) also changes
+ * depths, but it is a view rule, not a raise, and the hub keeps the order. */
+const loadRaises = new Set<string>();
+
+/** The windows this load raised before the hub seeded it (oldest first). */
+export function raisesThisLoad(): string[] {
+  return [...loadRaises];
+}
+
+/** The seed took the raises (also the test seam). */
+export function forgetLoadRaises(): void {
+  loadRaises.clear();
+}
+
 /** Seat a new repository view beside its opener. The source rect stays as
  * arranged; only the new rect is fitted to this screen's working band. */
 function siblingRepositoryRect(source: PanelRect): PanelRect {
@@ -591,6 +607,8 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   focusPanel(id) {
     // PHILO-16 (L3): a raise is `depth = ++highest`; nothing is spliced.
     const depth = raiseDepth({ depth: get().panelDepth, seated: [] }, id).depth;
+    loadRaises.delete(id);
+    loadRaises.add(id);
     set(stack(depth));
     saveDeskWorkspace(get());
   },
