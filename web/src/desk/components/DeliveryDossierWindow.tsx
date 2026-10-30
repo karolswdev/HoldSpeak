@@ -27,6 +27,7 @@ import {
 } from "../surface/Surface";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Token } from "../surface/Token";
+import { wireWords } from "../surface/words";
 
 const REFUSAL_RECOVERY: Record<
   DossierRefusalCode,
@@ -226,7 +227,7 @@ export function DeliveryDossierWindow() {
                 {dossier.title || `Phase ${dossier.phase}`}
               </Token>
               <Token className="surface-token">
-                {(dossier.status || "open").toUpperCase()}
+                {wireWords(dossier.status || "open")}
               </Token>
               <Token className="surface-token">
                 {`${dossier.storiesDone ?? "?"}/${dossier.storiesTotal ?? "?"}`}

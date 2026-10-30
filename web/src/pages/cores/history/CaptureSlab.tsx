@@ -5,6 +5,7 @@ import {
   GadgetRow,
 } from "../../../desk/surface/gadgets";
 import { Token } from "../../../desk/surface/Token";
+import { wireWords } from "../../../desk/surface/words";
 
 export function CaptureSlab({
   detail,
@@ -24,7 +25,7 @@ export function CaptureSlab({
             className="surface-token"
             data-tone={stateToken(detail ?? meeting).tone ?? "warn"}
           >
-            {String(detail?.capture_status ?? "").replace(/_/g, " ").toUpperCase()}
+            {wireWords(String(detail?.capture_status ?? ""))}
           </Token>
         }
         fact={

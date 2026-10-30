@@ -624,7 +624,7 @@ export function useMeetingData(
             >
               {refused
                 ? "REFUSED"
-                : proposalStatusLabel(String(row.status ?? "")).toUpperCase()}
+                : proposalStatusLabel(String(row.status ?? ""))}
             </Token>
           ),
       };

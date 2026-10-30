@@ -6,6 +6,7 @@
  * `NotRead` here and the face says so in one line; a failed read is never
  * an empty list. */
 import { wireClock, wireDate } from "../surface/format";
+import { stateWords, wireWords } from "../surface/words";
 import { windowName } from "../windowName";
 import type { ObjectTone, Station, TimelineEntry } from "../surface";
 import type { AgentReview } from "../agentFlights";
@@ -480,7 +481,7 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
   for (const call of heldCalls(lane)) {
     const held = HELD_STATES.has(call.state);
     const reason = String(call.hold_reason ?? "").trim();
-    const text = [held ? "" : decidedWord(call), reason].filter(Boolean).join(" · ");
+    const text = stateWords([held ? "" : decidedWord(call), reason].filter(Boolean).join(" · "));
     timed.push({
       id: `held-${call.id}`,
       at: at(call.created_at),
@@ -536,7 +537,7 @@ function prStateWord(state: string | null | undefined): string {
 }
 
 function decidedWord(call: LaneGated): string {
-  const state = String(call.state).toUpperCase();
+  const state = wireWords(String(call.state));
   return call.decided_by ? `${state} · ${call.decided_by}` : state;
 }
 
@@ -575,15 +576,15 @@ export function briefLine(brief: string | null | undefined): string {
 /* ── the Re-brief receipts ───────────────────────────────────────── */
 
 const REBRIEF_STATE_WORD: Record<string, string> = {
-  sent: "SENT", superseded: "SUPERSEDED", expired: "EXPIRED", taken_back: "TAKEN BACK",
+  sent: "Sent", superseded: "Superseded", expired: "Expired", taken_back: "Taken back",
 };
 
-/** `SENT · 17:22 · BY YOUR PRESS 17:13`; `SUPERSEDED · …`; `EXPIRED · AGENT
- * NEVER RETURNED · BY YOUR PRESS …`. */
+/** `Sent · 17:22 · by your press 17:13`; `Superseded · …`; `Expired · Agent
+ * never returned · by your press …` (the hub's detail in sentence case). */
 export function rebriefWords(receipt: LaneRebriefReceipt): string {
-  const word = REBRIEF_STATE_WORD[receipt.state] ?? String(receipt.state).toUpperCase();
+  const word = REBRIEF_STATE_WORD[receipt.state] ?? wireWords(String(receipt.state));
   const pressed = wireClock(receipt.approved_at);
-  return [word, wireClock(receipt.at), receipt.detail || "", pressed ? `BY YOUR PRESS ${pressed}` : ""].filter(Boolean).join(" · ");
+  return [word, wireClock(receipt.at), receipt.detail ? stateWords(receipt.detail) : "", pressed ? `by your press ${pressed}` : ""].filter(Boolean).join(" · ");
 }
 
 /** The rail entry of one Re-brief receipt; its code line names the

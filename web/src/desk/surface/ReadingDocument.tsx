@@ -155,7 +155,7 @@ function renderNode(node: SyntaxNode, context: Context): ReactNode {
       const body = code.length ? source.slice(code[0].from, code.at(-1)!.to) : "";
       const info = node.getChild("CodeInfo");
       const lang = info ? source.slice(info.from, info.to) : "";
-      return <ReadingOverflow key={key} label="Code"><pre className="reading-code aw-pre">{lang && <span className="reading-language aw-lang">{lang.toUpperCase()}</span>}<code>{body}</code></pre></ReadingOverflow>;
+      return <ReadingOverflow key={key} label="Code"><pre className="reading-code aw-pre">{lang && <span className="reading-language aw-lang">{lang}</span>}<code>{body}</code></pre></ReadingOverflow>;
     }
     case "Table": return <ReadingOverflow key={key} label="Table"><table className="reading-table"><thead>{children.filter((child) => child.name === "TableHeader").map((row) => renderNode(row, context))}</thead><tbody>{children.filter((child) => child.name === "TableRow").map((row) => renderNode(row, context))}</tbody></table></ReadingOverflow>;
     case "TableHeader":

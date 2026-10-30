@@ -106,7 +106,7 @@ describe("PHILO-15 10 — READY means ready", () => {
     const background = screen.getByTestId("concierge-set-background");
     expect(within(background).getByText("Limited")).toBeTruthy();
     const limit = screen.getByTestId("concierge-set-limit-background").textContent ?? "";
-    expect(limit).toBe("WITHOUTCALENDAR");
+    expect(limit).toBe("WithoutCalendar");
     expect(background.textContent).not.toContain("structured result");
     expect(within(screen.getByTestId("concierge-set-agents_tools")).getByText("Unknown · Try")).toBeTruthy();
     expect(screen.getByTestId("concierge-receipt").textContent).toContain("1 LIMITED");
@@ -119,7 +119,7 @@ describe("PHILO-15 10 — READY means ready", () => {
     fireEvent.click(await screen.findByTestId("concierge-pick-agents_tools-lan:box"));
     const row = screen.getByTestId("concierge-set-agents_tools");
     await waitFor(() => expect(within(row).getByText("Limited")).toBeTruthy());
-    expect(screen.getByTestId("concierge-set-limit-agents_tools").textContent).toContain("AGENTS");
+    expect(screen.getByTestId("concierge-set-limit-agents_tools").textContent).toContain("Agents");
     await waitFor(() => expect(mocks.probe).toHaveBeenCalled());
     await new Promise((r) => setTimeout(r, 20));
     expect(within(row).queryByText("READY")).toBeNull();

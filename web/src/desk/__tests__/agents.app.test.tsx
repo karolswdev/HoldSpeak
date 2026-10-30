@@ -273,15 +273,15 @@ describe("Raw reads a cut call whole (PHILO-15 20)", () => {
     expect(PART.wire.whole).toBe(false);
     await openRaw();
     const whole = cardFor(WHOLE.wire.command)!;
-    expect(whole.querySelector(".lw-caption")?.textContent).toMatch(/^HELD · OUTSIDE THE WORKTREE/);
+    expect(whole.querySelector(".lw-caption")?.textContent).toMatch(/^Held · Outside the worktree/);
     expect(within(whole).getByTestId("lane-raw-approve")).toBeTruthy();
     expect(within(whole).getByTestId("lane-raw-deny")).toBeTruthy();
     const headOnly = cardFor(HEAD_ONLY.wire.command)!;
-    expect(headOnly.querySelector(".lw-caption")?.textContent).toContain("CUT ·");
+    expect(headOnly.querySelector(".lw-caption")?.textContent).toContain("Cut ·");
     expect(within(headOnly).queryByTestId("lane-raw-approve")).toBeNull();
     expect(within(headOnly).getByTestId("lane-raw-deny")).toBeTruthy();
     const part = screen.getAllByTestId("lane-raw-held")
-      .find((el) => (el.querySelector(".lw-caption")?.textContent ?? "").includes(`CUT · ${PART.wire.shown_chars} OF ${PART.wire.declared_chars} CHARS`))!;
+      .find((el) => (el.querySelector(".lw-caption")?.textContent ?? "").includes(`Cut · ${PART.wire.shown_chars} of ${PART.wire.declared_chars} chars`))!;
     expect(part).toBeTruthy();
     expect(within(part).queryByTestId("lane-raw-approve")).toBeNull();
     expect(within(part).getByTestId("lane-raw-deny")).toBeTruthy();

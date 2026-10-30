@@ -16,7 +16,7 @@ import { plainFail } from "../surface/plainFailure";
 import { openSurfaceOr } from "../shell";
 import { CheckGadget, CycleGadget, GadgetGroup, MxRadio, PadGadget, StringGadget } from "../surface/gadgets";
 import { DotWord } from "../surface/kit";
-import { stateWords } from "../surface/words";
+import { stateWords, wireWords } from "../surface/words";
 import { readPushKey, removePhoneDevice, savePushKey, startPairing, testPush, usePhone, writeReach } from "./phoneApi";
 import type { PhoneDevice, PhonePairing, PhonePushKey, PhonePushTest, PhoneStatus, ReachChannel } from "./phoneTypes";
 import { deviceFact, pushNotReady } from "./PhoneWing";
@@ -47,7 +47,7 @@ const LEVEL_WORDS: Record<string, string> = { secure: "Secure", normal: "Normal"
 
 export function levelWord(level: string | undefined): string {
   const key = String(level ?? "normal").toLowerCase();
-  return LEVEL_WORDS[key] ?? stateWords(key.toUpperCase());
+  return LEVEL_WORDS[key] ?? wireWords(key);
 }
 
 /** `22:00 to 08:00` from the Rhythm hours. */

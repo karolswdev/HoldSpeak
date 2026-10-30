@@ -28,6 +28,7 @@ import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../surfa
 import type { ObjectTone } from "../../surface/objects/kinds";
 import "../attention-records.css";
 import { Token } from "../../surface/Token";
+import { wireWords } from "../../surface/words";
 
 type ReceiptSource = {
   source_type: string;
@@ -107,7 +108,7 @@ function stateWord(row: DeskDecision): string {
   if (CURRENT.has(lifecycle) || !lifecycle) return "";
   if (lifecycle === "superseded") return "REPLACED";
   if (lifecycle === "deprecated") return "RETIRED";
-  return lifecycle.toUpperCase();
+  return wireWords(lifecycle);
 }
 
 function fromReceipt(receipt: Receipt & { created_at?: string | null }): DeskDecision {

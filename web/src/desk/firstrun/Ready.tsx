@@ -139,7 +139,7 @@ export function Ready({
         <div className="firstrun-fail" role="alert">
           <StateChip state="failure" label="NOT ARMED" />
           <Token className="surface-token" data-tone="danger">
-            {next ? next.title.toUpperCase() : ""}
+            {next ? next.title : ""}
           </Token>
         </div>
       ) : null}

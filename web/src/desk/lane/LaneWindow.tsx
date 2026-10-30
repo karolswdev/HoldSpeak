@@ -43,6 +43,7 @@ import {
   TransportKey,
 } from "../surface";
 import { SurfaceWings } from "../surface/wings";
+import { stateWords } from "../surface/words";
 import { StepList, type StepEntry } from "./StepList";
 import { wireClock, wireDate } from "../surface/format";
 import { DotWord, StatusBar, ToolGlyph, Toolbar } from "../surface/kit";
@@ -1011,7 +1012,7 @@ function RawHeldCall({ call }: { call: LaneGated }) {
     } catch (err: unknown) {
       const standing = err instanceof ApiError ? String((err.payload as { state?: string } | undefined)?.state ?? "") : "";
       useLane.getState().setReceipt({
-        word: "NOT DECIDED", at: Date.now(), text: standing ? `ALREADY ${standing.toUpperCase()}` : "HUB UNREACHABLE", tone: "fail",
+        word: "NOT DECIDED", at: Date.now(), text: standing ? `Already ${standing.replace(/_/g, " ")}` : "Hub unreachable", tone: "fail",
       });
     } finally {
       setBusy(false);
@@ -1024,7 +1025,7 @@ function RawHeldCall({ call }: { call: LaneGated }) {
   const part = full && !full.whole
     ? `CUT · ${full.shown_chars ?? full.command.length} OF ${full.declared_chars ?? "?"} CHARS`
     : "";
-  const caption = ["HELD", reason, part].filter(Boolean).join(" · ");
+  const caption = stateWords(["HELD", reason, part].filter(Boolean).join(" · "));
   return (
     <section className="lw-ask lw-raw-held" aria-label="Held call" data-testid="lane-raw-held">
       <p className="lw-caption">{caption}</p>

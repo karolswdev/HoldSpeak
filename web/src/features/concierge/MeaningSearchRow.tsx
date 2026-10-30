@@ -172,7 +172,7 @@ export function MeaningSearchRow() {
               {off && leaves ? <span className="concierge-token">To download</span> : null}
               {leaves ? (
                 <EgressChip
-                  label={status.model.source.toUpperCase()}
+                  label={status.model.source}
                   scope="cloud"
                   title={`Turn on downloads the model file from ${status.model.source}`}
                 />
