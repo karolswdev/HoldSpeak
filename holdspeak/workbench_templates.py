@@ -146,6 +146,26 @@ AGENT_STARTERS = [
         "review_by": "none",
         "blanks": {},
     },
+    {
+        # Programs PG14: the Overnight template as an automation. Offered
+        # only when the model library has an engine pi can run on; the
+        # engine of its Runs on is that engine (the home engine first).
+        "id": "overnight-program",
+        "name": "Overnight on the home box",
+        "description": "Each weekday at 23:30, starts a program: pi builds on the home engine when it is idle, Claude Code reviews, YOLO merges a green step.",
+        "instruction": "Work through the open briefs of this project, one step for each.",
+        "sources": [],
+        "when": {"kind": "schedule", "every": "weekday", "time": "23:30"},
+        "output_target": "today",
+        "do_kind": "run_program",
+        "program_template": "overnight",
+        "program_control": "yolo",
+        "program_runs_on": [{"profile": "pi-default", "engine": None}],
+        "program_may_call": False,
+        "program_may_handoff": False,
+        "needs": "pi_engine",
+        "blanks": {},
+    },
 ]
 
 TEMPLATES = [
@@ -277,6 +297,11 @@ def list_templates(db: Any = None) -> list[dict]:
 
     available = []
     for starter in AGENT_STARTERS:
+        if starter.get("needs") == "pi_engine":
+            engine = pi_engine(db)
+            if engine:
+                available.append(_with_engine(starter, engine))
+            continue
         try:
             refs, _about = expand_sources(db, list(starter["sources"]))
             if refs:
@@ -293,6 +318,44 @@ def list_templates(db: Any = None) -> list[dict]:
         except Exception:
             continue
     return [*STARTERS, *available]
+
+
+def _with_engine(starter: dict, engine: str) -> dict:
+    """The starter with its pi Runs on bound to ``engine``."""
+    candidate = dict(starter)
+    candidate["program_runs_on"] = [
+        {**row, "engine": engine} if row.get("profile") == "pi-default" else dict(row)
+        for row in starter.get("program_runs_on") or []
+    ]
+    return candidate
+
+
+def pi_engine(db: Any) -> str:
+    """PG14: an engine of the model library that pi can run on (the home
+    engine first), else ``""``."""
+    from holdspeak.delivery.pi_launch import library_engine
+    from holdspeak.program_templates import HOME_ENGINE_PROFILE
+
+    try:
+        with db._connection() as conn:
+            ids = [str(row[0]) for row in conn.execute(
+                "SELECT DISTINCT profile_id FROM model_profile_revisions ORDER BY profile_id")]
+            try:
+                ids += ["legacy-" + str(row[0]) for row in conn.execute(
+                    "SELECT id FROM profiles WHERE deleted=0 ORDER BY id")]
+            except Exception:
+                pass
+    except Exception:
+        return ""
+    ordered = [HOME_ENGINE_PROFILE] + [pid for pid in ids if pid != HOME_ENGINE_PROFILE]
+    for profile_id in ordered:
+        try:
+            found = library_engine(db, profile_id)
+        except Exception:
+            continue
+        if found is not None and found.engine is not None:
+            return profile_id
+    return ""
 
 
 def _review_repository(db: Any) -> str:

@@ -1,5 +1,7 @@
 """Device-local bounded authority for Workbench schedules (HS-131-06)."""
 from __future__ import annotations
+
+from holdspeak.db.models import _json_list
 import hashlib
 import json
 import time
@@ -14,6 +16,35 @@ def _terms(
     db: Any, wb: Any, *, principal: Principal, delegation_id: str, conn: Any,
 ) -> dict[str, Any]:
     """Freeze owner-approved placement once, rather than re-resolving at fire."""
+    if str(getattr(wb, "do_kind", "run") or "run") == "run_program":
+        # PG14: a Program is native too. Its template, level and Runs on
+        # are the terms of this approval; a changed one is approved again.
+        template = str(getattr(wb, "program_template", "") or "").strip()
+        if not template:
+            raise ServiceError("delegation_stale_work", "Choose a template before turning on the schedule", context={"status": 409})
+        from .automation_runs import sources_of
+
+        native_terms = {
+            "do_kind": "run_program",
+            "program_template": template,
+            "program_control": str(getattr(wb, "program_control", "") or ""),
+            "program_runs_on": _json_list(wb.program_runs_on_json),
+            "program_may_call": bool(getattr(wb, "program_may_call", False)),
+            "program_may_handoff": bool(getattr(wb, "program_may_handoff", False)),
+            "instruction": str(getattr(wb, "instruction", "") or "").strip(),
+            "sources": sources_of(wb),
+            "output_target": str(getattr(wb, "output_target", "") or "inbox"),
+        }
+        return {
+            "recipe_id": "",
+            "recipe_revision": "",
+            "workbench_revision": str(wb.last_modified),
+            "schedule_revision": str(wb.schedule_revision),
+            "cadence": str(wb.schedule or ""),
+            "deployment_revision_id": f"program:{template}",
+            "route_plan_sha256": _hash(native_terms, None),
+            "native_terms": native_terms,
+        }
     if str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent":
         # Hand has a native profile authority of its own.  It must not ask the
         # inference planner for a route or fail because workbench.item has no

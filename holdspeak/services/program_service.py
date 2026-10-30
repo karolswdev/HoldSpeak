@@ -744,9 +744,14 @@ class ProgramService:
             kind, _, ident = str(program["origin_ref"]).partition(":")
             title = ""
             try:
-                from .agent_hand_service import item_title
+                if kind == "automation":
+                    # PG14: an automation made it; its place line names it.
+                    wb = self.db.workbenches.get(ident, include_deleted=True)
+                    title = str(getattr(wb, "name", "") or "")
+                else:
+                    from .agent_hand_service import item_title
 
-                title = item_title(self.db, kind, ident)
+                    title = item_title(self.db, kind, ident)
             except Exception:
                 title = ""
             origin = {"ref": program["origin_ref"], "kind": kind, "id": ident, "title": title}

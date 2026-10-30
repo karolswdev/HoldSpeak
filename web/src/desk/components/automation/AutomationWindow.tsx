@@ -71,6 +71,8 @@ import { PutEditor, PutValue } from "./PutEditor";
 import { useDropHand } from "../../hand";
 import { useBuilderTools } from "../../builderTools";
 import { ResultBody, ResultCard } from "./ResultCard";
+import { ProgramAgent, ProgramDo, programDraft, programFields, sameProgram, type ProgramDraft } from "./ProgramDo";
+import { openProgram } from "../../programs/open";
 import {
   canMakeOne,
   engineWords,
@@ -81,6 +83,7 @@ import {
   isOn,
   lessonWords,
   nextWords,
+  programDoWords,
   queueTasks,
   resultDay,
   resultLine,
@@ -108,22 +111,34 @@ const RESULT_COLUMNS = [
   { key: "state", word: "State", track: "104px" },
 ] as const;
 
+type DoKind = "run" | "hand_to_agent" | "run_program";
+
 function DoEditor({
   kind,
   instruction,
+  program,
+  agent,
   saving,
   onSave,
   onCancel,
 }: {
-  kind: "run" | "hand_to_agent";
+  kind: DoKind;
   instruction: string;
+  program: ProgramDraft;
+  agent: string | null;
   saving: boolean;
-  onSave: (kind: "run" | "hand_to_agent", instruction: string) => void;
+  onSave: (kind: DoKind, instruction: string, program?: ProgramDraft) => void;
   onCancel: () => void;
 }) {
   const [draftKind, setDraftKind] = useState(kind);
   const [draft, setDraft] = useState(instruction);
-  const changed = draftKind !== kind || draft.trim() !== instruction.trim();
+  const [programDraftNow, setProgramDraft] = useState(program);
+  const changed = draftKind !== kind || draft.trim() !== instruction.trim()
+    || (draftKind === "run_program" && !sameProgram(programDraftNow, program));
+  // PG14: a program needs its template; From the desk needs no goal.
+  const ready = draftKind === "run_program"
+    ? Boolean(programDraftNow.template) && (programDraftNow.template === "from-the-desk" || Boolean(draft.trim()))
+    : Boolean(draft.trim());
   return (
     <div className="automation-do-editor" data-testid="automation-do-editor">
       <div className="automation-editor-verbs" aria-label="Do kind">
@@ -135,19 +150,29 @@ function DoEditor({
           aria-pressed={draftKind === "hand_to_agent"} onClick={() => setDraftKind("hand_to_agent")}>
           Hand to an agent
         </Button>
+        <Button dense variant={draftKind === "run_program" ? "secondary" : "ghost"}
+          aria-pressed={draftKind === "run_program"} onClick={() => setDraftKind("run_program")}
+          data-testid="automation-do-run-program">
+          Run a program
+        </Button>
       </div>
+      {draftKind === "run_program" ? (
+        <ProgramDo draft={programDraftNow} fallbackAgent={agent} onChange={setProgramDraft} />
+      ) : null}
       <PadGadget
-        label={draftKind === "hand_to_agent" ? "Agent brief" : "What it does"}
+        label={draftKind === "hand_to_agent" ? "Agent brief" : draftKind === "run_program" ? "Goal" : "What it does"}
         value={draft}
         onChange={setDraft}
         rows={4}
         autoGrow
         autoFocus
-        placeholder={draftKind === "hand_to_agent" ? "Say what the agent should do" : "Say what it should do each time"}
+        placeholder={draftKind === "hand_to_agent" ? "Say what the agent should do"
+          : draftKind === "run_program" ? "Say what the program should do" : "Say what it should do each time"}
       />
       <div className="automation-editor-verbs">
-        <Button dense variant="secondary" disabled={!changed || !draft.trim()} loading={saving}
-          onClick={() => onSave(draftKind, draft.trim())} data-testid="automation-do-save">
+        <Button dense variant="secondary" disabled={!changed || !ready} loading={saving}
+          onClick={() => onSave(draftKind, draft.trim(), draftKind === "run_program" ? programDraftNow : undefined)}
+          data-testid="automation-do-save">
           Save
         </Button>
         <Button dense variant="ghost" onClick={onCancel}>Cancel</Button>
@@ -265,6 +290,8 @@ export function AutomationWindow({
   const [readError, setReadError] = useState<string | null>(null);
   const [runStart, setRunStart] = useState<number | null>(null);
   const [runRefusal, setRunRefusal] = useState<string | null>(null);
+  // PG14: a run that started nothing says why ("still running").
+  const [runNotice, setRunNotice] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [enginePending, setEnginePending] = useState(false);
@@ -370,10 +397,12 @@ export function AutomationWindow({
   const runNow = async () => {
     if (runStart) return;
     setRunRefusal(null);
+    setRunNotice(null);
     setRunStart(Date.now());
     try {
       if (engineSave.current) await engineSave.current;
-      await triggerWorkbenchRun(workbenchId);
+      const ran = await triggerWorkbenchRun(workbenchId);
+      if (ran?.program_id && ran.skipped && typeof ran.reason === "string") setRunNotice(ran.reason);
     } catch (error) {
       setRunRefusal(readableError(error));
     } finally {
@@ -382,11 +411,11 @@ export function AutomationWindow({
     }
   };
 
-  const saveDo = async (kind: "run" | "hand_to_agent", instruction: string): Promise<boolean> => {
+  const saveDo = async (kind: DoKind, instruction: string, program?: ProgramDraft): Promise<boolean> => {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateWorkbenchField(workbenchId, { do_kind: kind, instruction });
+      await updateWorkbenchField(workbenchId, { do_kind: kind, instruction, ...(program ? programFields(program) : {}) });
       setEditing(null);
       await load();
       return true;
@@ -561,6 +590,8 @@ export function AutomationWindow({
   // NEW result reads it on the hub (it keeps NEW while this window is open).
   const showResult = (id: string) => {
     const result = results.find((r) => r.item_id === id);
+    // PG14: a program run's row opens its Program window.
+    if (result?.program) openProgram(result.program.id);
     setShownId(id);
     setSendOpen(false);
     if (result?.new && result.artifact_id) {
@@ -575,9 +606,10 @@ export function AutomationWindow({
   // tools is on.
   const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
+  const isProgram = detail?.do_kind === "run_program";
   const doText = detail?.do_kind === "hand_to_agent"
     ? "Hand to an agent"
-    : detail?.instruction_shown ?? "";
+    : detail && isProgram ? programDoWords(detail) : detail?.instruction_shown ?? "";
   const doLong = doText.split("\n").length > 3 || doText.length > 180;
   const sources = detail?.sources_shown ?? [];
   const happened = detail ? eventSubjectWords(detail) : null;
@@ -600,6 +632,24 @@ export function AutomationWindow({
     const failed = result.status === "failed";
     const at = result.completed_at ? new Date(result.completed_at).getTime() : 0;
     const fresh = isNew(result);
+    const program = result.program;
+    if (program && !failed) {
+      // PG14: the row is the Program it started, in its state now.
+      return {
+        id: result.item_id,
+        kind: "program",
+        name: program.total ? `${program.title} · ${program.done} of ${program.total}` : program.title,
+        when: resultWhen(result.completed_at),
+        whenSort: Number.isFinite(at) ? at : 0,
+        cells: { engine: "" },
+        state: {
+          label: program.state_word,
+          tone: program.state === "failed" ? "fail" : program.state === "waiting" ? "ask"
+            : program.state === "done" ? "ok" : "info",
+          testId: "automation-result-state",
+        },
+      };
+    }
     return {
       id: result.item_id,
       kind: "artifact",
@@ -735,9 +785,11 @@ export function AutomationWindow({
                   </Button>
                 ) : undefined}
                 editor={
-                  <DoEditor key={`${detail.do_kind}:${detail.instruction ?? ""}`} kind={detail.do_kind === "hand_to_agent" ? "hand_to_agent" : "run"}
-                    instruction={detail.instruction ?? ""} saving={saving}
-                    onSave={(kind, next) => void saveDo(kind, next)} onCancel={() => setEditing(null)} />
+                  <DoEditor key={`${detail.do_kind}:${detail.instruction ?? ""}:${detail.program_template ?? ""}`}
+                    kind={detail.do_kind === "hand_to_agent" || detail.do_kind === "run_program" ? detail.do_kind : "run"}
+                    instruction={detail.instruction ?? ""} program={programDraft(detail)}
+                    agent={detail.program?.runs_on_words ?? null} saving={saving}
+                    onSave={(kind, next, program) => void saveDo(kind, next, program)} onCancel={() => setEditing(null)} />
                 }
               >
                 <span className="automation-do-text" data-clamped={doLong && !doExpanded ? "" : undefined}>
@@ -798,7 +850,12 @@ export function AutomationWindow({
                 blank={!engine}
                 open={editing === "with"}
                 onPress={() => toggle("with")}
-                editor={<WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
+                editor={isProgram ? (
+                  <div className="automation-editor-verbs" data-testid="automation-program-with">
+                    <ProgramAgent draft={programDraft(detail)} fallback={detail.program?.runs_on_words}
+                      onChange={(next) => void saveDo("run_program", detail.instruction ?? "", next)} />
+                  </div>
+                ) : <WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
                   onUse={async (profileId) => {
                     if (!(await chooseEngine(profileId))) throw new Error("Engine choice not saved. Automation stays open. Choose again.");
                   }}
@@ -807,7 +864,7 @@ export function AutomationWindow({
                   }}
                   onPending={savingEngine} />}
               >
-                {detail.do_kind === "hand_to_agent"
+                {detail.do_kind === "hand_to_agent" || isProgram
                   ? engine ?? "Choose an agent"
                   : engine ?? "Choose an engine"}
               </SentenceLine>
@@ -826,6 +883,7 @@ export function AutomationWindow({
                     : "No review"}
                 </SentenceLine>
               ) : null}
+              {isProgram ? null : (
               <SentenceLine
                 name="put"
                 label="Put it in"
@@ -839,6 +897,7 @@ export function AutomationWindow({
               >
                 <PutValue target={detail.output_target} />
               </SentenceLine>
+              )}
               </div>
               </div>
             </header>
@@ -847,6 +906,9 @@ export function AutomationWindow({
             ) : null}
 
             <section className="automation-results" aria-label="Results" data-testid="automation-results">
+              {runNotice ? (
+                <p className="automation-refusal automation-pane" role="status" data-testid="automation-run-notice">{runNotice}</p>
+              ) : null}
               {runRefusal ? (
                 <div className="automation-failure automation-pane" data-testid="automation-refusal">
                   <p className="automation-failure-words">{failureWords(runRefusal)}</p>

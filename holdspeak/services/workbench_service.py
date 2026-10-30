@@ -1,5 +1,7 @@
 """Transport-neutral Workbench operations (HS-122-02)."""
 from __future__ import annotations
+
+from holdspeak.db.models import _json_list
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import hashlib
@@ -34,6 +36,16 @@ def _spend_limit(limit: Any) -> float | None:
 #: the stored field each content word writes. ``when``, ``with`` and
 #: ``spend_limit`` go through set_when and set_engine (the owner's).
 SENTENCE_WORDS = frozenset({"do", "about", "when", "with", "put_in", "spend_limit", "review_by"})
+#: The Do kinds: ``run`` (make a result), AG14 ``hand_to_agent`` and PG14
+#: ``run_program`` (each run makes and starts one Program).
+DO_KINDS = ("run", "hand_to_agent", "run_program")
+#: The Do kinds that run natively (no inference route of their own).
+NATIVE_DO_KINDS = frozenset({"hand_to_agent", "run_program"})
+#: PG14: the Program a run_program automation makes.
+PROGRAM_FIELDS = ("program_template", "program_control", "program_runs_on", "program_may_call", "program_may_handoff")
+#: Only the owner chooses who works and how far it may go alone.
+_OWNER_FIELDS = frozenset({"agent_profile", "review_by", "program_control", "program_runs_on",
+                           "program_may_call", "program_may_handoff"})
 _SENTENCE_CONTENT = {"do": "instruction", "about": "sources", "put_in": "output_target"}
 
 
@@ -122,10 +134,10 @@ class WorkbenchService:
     def create_workbench(self, principal: Principal, *, name: str, **fields: Any) -> dict[str, Any]:
         if not name.strip():
             raise ValidationError("Automation name is required")
-        if principal.kind is not PrincipalKind.OWNER and ({"agent_profile", "review_by"} & set(fields)):
+        if principal.kind is not PrincipalKind.OWNER and (_OWNER_FIELDS & set(fields)):
             raise ServiceError(
                 "owner_principal_required",
-                "Only the owner can choose the agent or reviewer",
+                "Only the owner can choose the agent, the reviewer or the control level",
                 context={"status": 403},
             )
         self._refuse_post_marker_pointer_write(principal, fields)
@@ -172,10 +184,10 @@ class WorkbenchService:
         self._refuse_post_marker_pointer_write(principal, fields)
         self._clean_automation_fields(fields)
         proposed = self._wb_fields(fields, existing)
-        if principal.kind is not PrincipalKind.OWNER and ({"agent_profile", "review_by"} & set(fields)):
+        if principal.kind is not PrincipalKind.OWNER and (_OWNER_FIELDS & set(fields)):
             raise ServiceError(
                 "owner_principal_required",
-                "Only the owner can choose the agent or reviewer",
+                "Only the owner can choose the agent, the reviewer or the control level",
                 context={"status": 403},
             )
         # A scheduled hand is approved for its complete sentence and native
@@ -183,17 +195,21 @@ class WorkbenchService:
         # makes the owner approve it again through When.
         from .automation_runs import sources_of
 
-        native_hand = "hand_to_agent" in {
-            str(getattr(existing, "do_kind", "run") or "run"),
-            str(proposed["do_kind"] or "run"),
-        }
+        kinds = {str(getattr(existing, "do_kind", "run") or "run"), str(proposed["do_kind"] or "run")}
+        native_hand = bool(NATIVE_DO_KINDS & kinds)
         bound_keys = ("schedule", "schedule_enabled", "recipe_id", "profile_id")
         if native_hand:
-            bound_keys += ("do_kind", "agent_profile", "review_by", "instruction", "sources", "output_target")
-        bound_changed = any(
-            proposed[key] != (sources_of(existing) if key == "sources" else getattr(existing, key))
-            for key in bound_keys
-        )
+            bound_keys += ("do_kind", "agent_profile", "review_by", "instruction", "sources", "output_target",
+                           *PROGRAM_FIELDS)
+
+        def stored(key: str) -> Any:
+            if key == "sources":
+                return sources_of(existing)
+            if key == "program_runs_on":
+                return _json_list(existing.program_runs_on_json)
+            return getattr(existing, key)
+
+        bound_changed = any(proposed[key] != stored(key) for key in bound_keys)
         if native_hand and bound_changed and existing.schedule_enabled and "schedule_enabled" not in fields:
             # A changed binding must be visibly reapproved through When.  Keep
             # the persisted schedule off while its old authority is fenced.
@@ -282,7 +298,10 @@ class WorkbenchService:
                 stop_events()
                 self._db.workbenches.set_when_json(workbench_id, {"kind": "schedule"})
                 message = "The schedule is saved but off: choose an agent under With, then turn it on."
-                if str(getattr(self._require_workbench(workbench_id), "do_kind", "run") or "run") != "hand_to_agent":
+                kind_now = str(getattr(self._require_workbench(workbench_id), "do_kind", "run") or "run")
+                if kind_now == "run_program":
+                    message = "The schedule is saved but off: choose a template under Do, then turn it on."
+                elif kind_now != "hand_to_agent":
                     message = "The schedule is saved but off: choose an engine under With, then turn it on."
                 raise ValidationError(
                     message,
@@ -488,8 +507,8 @@ class WorkbenchService:
             raise ValidationError("with is an installed agent profile id")
         if "do" in sentence:
             do = str(sentence["do"] or "").strip()
-            if do not in {"hand_to_agent", "run"} and not do:
-                raise ValidationError("do must be hand_to_agent or run")
+            if do not in DO_KINDS and not do:
+                raise ValidationError("do must be hand_to_agent, run_program or run")
         if "review_by" in sentence:
             from .agent_review import normalize_review_by
 
@@ -510,8 +529,11 @@ class WorkbenchService:
         content = {stored: sentence[word] for word, stored in _SENTENCE_CONTENT.items() if word in sentence}
         if "do" in sentence:
             do = str(sentence["do"] or "").strip()
-            if do in {"hand_to_agent", "run"}:
+            if do in DO_KINDS:
                 content["do_kind"] = do
+            if do == "run_program":
+                # PG14: the goal is the instruction field, never the kind word.
+                content.pop("instruction", None)
                 # A hand's source item is the agent's brief.  Keep an
                 # explicit Do sentence in its own instruction field so the
                 # owner can edit it on the face and scheduled terms can bind
@@ -532,8 +554,12 @@ class WorkbenchService:
     ) -> dict[str, Any]:
         engine: dict[str, Any] = {}
         wb = self._require_workbench(workbench_id)
-        hand_mode = str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent"
-        if "with" in sentence and not hand_mode:
+        do_kind = str(getattr(wb, "do_kind", "run") or "run")
+        hand_mode = do_kind == "hand_to_agent"
+        if "with" in sentence and do_kind == "run_program":
+            # PG14: With names the agent the Program runs on.
+            self.update_workbench(principal, workbench_id, program_runs_on=[str(sentence["with"]).strip()])
+        elif "with" in sentence and not hand_mode:
             engine["profile_id"] = str(sentence["with"]).strip()
         elif "with" in sentence:
             self.update_workbench(principal, workbench_id, agent_profile=str(sentence["with"]).strip())
@@ -789,7 +815,7 @@ class WorkbenchService:
         self._require_workbench(workbench_id)
         from holdspeak.workbench_conductor import run_workbench
         wb = self._require_workbench(workbench_id)
-        if request_id or source_event or item_ids or str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent":
+        if request_id or source_event or item_ids or str(getattr(wb, "do_kind", "run") or "run") in NATIVE_DO_KINDS:
             from holdspeak.kernel.runtime import _service
             from holdspeak.services.workbench_runner import WorkbenchRunner
             result = await WorkbenchRunner(self._db, _service()).run(
@@ -928,6 +954,7 @@ class WorkbenchService:
             do_kind=str(starter.get("do_kind") or "run"),
             agent_profile=str(starter.get("agent_profile") or ""),
             review_by=str(starter.get("review_by") or ""),
+            **{key: starter[key] for key in PROGRAM_FIELDS if key in starter},
             schedule=cron_for(when) if when["kind"] == "schedule" else None, schedule_enabled=False,
         )
         self._db.workbenches.set_when_json(made["id"], {"kind": when["kind"]})
@@ -945,6 +972,14 @@ class WorkbenchService:
             self._refuse_post_marker_pointer_write(
                 principal, {"profile_id": profile_id}
             )
+        if starter is not None and starter.get("needs") == "pi_engine":
+            # PG14: the Overnight starter runs pi on an engine of the library.
+            from holdspeak.workbench_templates import _with_engine, pi_engine
+
+            engine = pi_engine(self._db)
+            if not engine:
+                raise ValidationError("Add an engine that pi can run on first (Engines).")
+            starter = _with_engine(starter, engine)
         if starter is not None:
             return {"workbench": self.make_from_starter(principal, starter)}
         # A retired template (hidden from New automation): the old path.
@@ -1209,7 +1244,12 @@ class WorkbenchService:
         from .automation_runs import effective_instruction, results_of, source_names, sources_of
 
         shown, source = effective_instruction(self._db, wb)
-        payload["instruction_shown"] = "Hand to an agent" if str(getattr(wb, "do_kind", "run")) == "hand_to_agent" else shown
+        do_kind = str(getattr(wb, "do_kind", "run") or "run")
+        payload["instruction_shown"] = "Hand to an agent" if do_kind == "hand_to_agent" else shown
+        if do_kind == "run_program":
+            from .automation_program import program_payload
+
+            payload["program"] = program_payload(self._db, wb)
         payload["instruction_from"] = source
         payload["results"] = results_of(self._db, wb.id)
         # Betterment A3: the About line names each source (never its ref).
@@ -1241,7 +1281,14 @@ class WorkbenchService:
         payload["when_events"] = [{"id": c["id"], "words": c["words"], "needs": c["needs"],
                                    "subject": c["subject"], "event_pattern": c["event_pattern"]}
                                   for c in event_choices()]
-        if principal.kind is PrincipalKind.OWNER and str(getattr(wb, "do_kind", "run") or "run") != "hand_to_agent":
+        if principal.kind is PrincipalKind.OWNER and do_kind == "run_program":
+            words = payload["program"]["runs_on_words"]
+            payload["assignment_summary"] = {
+                "status": "assigned" if payload["program"]["template"] else "no_assignment",
+                "source": "program", "chain": [words] if words else [], "profile_id": None,
+                "boundary": None,
+            }
+        elif principal.kind is PrincipalKind.OWNER and do_kind != "hand_to_agent":
             from .inference_assignment_service import InferenceAssignmentService
 
             effective = InferenceAssignmentService(self._db).resolve_effective(
@@ -1313,6 +1360,11 @@ class WorkbenchService:
             "do_kind": str(pick("do_kind", existing.do_kind if existing else "run") or "run"),
             "agent_profile": str(pick("agent_profile", existing.agent_profile if existing else "") or ""),
             "review_by": str(pick("review_by", existing.review_by if existing else "") or ""),
+            "program_template": str(pick("program_template", existing.program_template if existing else "") or ""),
+            "program_control": str(pick("program_control", existing.program_control if existing else "") or ""),
+            "program_runs_on": list(pick("program_runs_on", _json_list(existing.program_runs_on_json) if existing else []) or []),
+            "program_may_call": bool(pick("program_may_call", existing.program_may_call if existing else False)),
+            "program_may_handoff": bool(pick("program_may_handoff", existing.program_may_handoff if existing else False)),
         }
 
     def _clean_automation_fields(self, fields: dict[str, Any]) -> None:
@@ -1329,8 +1381,11 @@ class WorkbenchService:
             fields["output_target"] = clean_output_target(self._db, fields["output_target"])
         if "do_kind" in fields:
             fields["do_kind"] = str(fields["do_kind"] or "run").strip()
-            if fields["do_kind"] not in {"run", "hand_to_agent"}:
-                raise ValidationError("do_kind must be hand_to_agent or run")
+            if fields["do_kind"] not in DO_KINDS:
+                raise ValidationError("do_kind must be run, hand_to_agent or run_program")
+        from .automation_program import clean_program_fields
+
+        clean_program_fields(fields)
         if "agent_profile" in fields:
             fields["agent_profile"] = str(fields["agent_profile"] or "").strip()
         if "review_by" in fields:

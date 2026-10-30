@@ -292,6 +292,19 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   // ---- pullouts (hand-written: custom close with optional id) -----------
 
   openPullout(id, origin, navigation) {
+    // Programs: a pullout family (pullouts/families.ts) is the hub's object,
+    // not a desk item, so no item list names it; its key is its window
+    // (`program:<id>` → `pullout:program:<id>`). Without this an open from a
+    // face (a Programs row, an automation's result) warned and drew nothing.
+    if (PULLOUT_FAMILY_REF.test(id)) {
+      const open = get().pullouts;
+      if (!open.some((p) => p.id === id)) set({ pullouts: [...open, { id, origin: origin ?? null, projectReturn: null }] });
+      set({ editingId: null });
+      saveDeskWorkspace(get());
+      get().recordRecentOpen(id);
+      get().restorePanel(`pullout:${id}`);
+      return;
+    }
     const resolved = resolveKindFromId(id, get);
     if (!resolved) {
       console.warn(`openPullout: unknown id "${id}"`);
@@ -657,6 +670,10 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
 import { PRIMITIVES, type PrimitiveKind } from "../../lib/primitives";
 
 /** Reverse the display-name mapping from qualifiedRef back to PrimitiveKind. */
+/** The pullout families' keys (pullouts/families.ts PULLOUT_FAMILIES; that
+ *  module draws the windows, so it is not imported here). */
+const PULLOUT_FAMILY_REF = /^program:[^:]+$/;
+
 const REF_PREFIX_TO_KIND: Record<string, PrimitiveKind> = {
   knowledge: "kb",
   zone: "directory",

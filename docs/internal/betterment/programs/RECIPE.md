@@ -319,14 +319,53 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   level; the words); `program.running.json` re-recorded.
 - **Not in this slice**: per-step levels.
 
-## PG14. Automations run a program (Left)
+## PG14. Automations run a program (Shipped)
 
 - **Goal**: a schedule or a Watch event starts a Program from a template.
-- **Files**: the Automations Do kinds, `hs/program_templates.py`.
-- **Changes**: a Do kind **Run a program** (template + Project).
+- **Files**: `hs/services/automation_program.py` (new: the fields, the
+  payload, `run_program`), `hs/services/workbench_runner.py`
+  (`_run_program`, `_run_native`; the event and schedule parents carry the
+  kind's own terms), `hs/services/workbench_service.py` (Do kinds,
+  owner-only fields, With names the agent), `hs/services/schedule_delegation.py`
+  (the Program terms of a schedule approval), `hs/services/automation_runs.py`
+  (a result links its Program), `hs/services/program_service.py` (the place
+  line names the automation), `hs/workbench_templates.py` (the Overnight
+  starter), `hs/db/schema.py` + `hs/db/workbenches.py` + the model,
+  `hs/mcp/tools.py`; faces `automation/ProgramDo.tsx` (new),
+  `AutomationBuilder.tsx`, `AutomationWindow.tsx`, `model.ts`,
+  `programs/RunsOn.tsx` (When idle is optional), `programs/ProgramWindow.tsx`,
+  `openObject.ts` (`automation:<id>`), `api.ts` (Run now returns its answer).
+- **Changes**: a Do kind `run_program` on workbenches (columns
+  `program_template`, `program_control`, `program_runs_on_json`,
+  `program_may_call`, `program_may_handoff`; additive). Each run makes one
+  Program (`origin_ref = automation:<id>`, the automation's Project, its
+  control and Runs on), plans it (From the desk: one step per open action;
+  the others: the instruction as the goal and one step per source item, or
+  one step from the instruction), starts it, and writes one occurrence result
+  whose context names the Program and the run id. A run while that Program
+  is running or waiting starts nothing and answers its reason. The Overnight
+  starter ("Overnight on the home box", weekdays 23:30, YOLO, pi on the
+  first engine pi can run on, the home engine first, may_call off) is offered
+  only when such an engine exists. MCP `automation.create` takes `do:
+  run_program` and the five fields (the level, agents and permissions are the
+  owner's). Faces: Do gains **Run a program** with the template, control and
+  Agent pickers; With names the agent; a program has no Put it in line; a
+  Results row is the Program in its state now and opens `pullout:program:<id>`;
+  a run that started nothing says so under the toolbar.
 - **Done when**: a schedule starts a From the desk Program on a project.
-- **Tests**: T1 the Automations kind tests.
-- **Not in this slice**: Watch-driven templates other than From the desk.
+- **Tests**: T1 `tests/unit/test_automation_run_program.py` (9: idempotent
+  while running, the goal path, From the desk, a refusal, the payload, bad
+  values, the starter's visibility, MCP create, and the Done when: a
+  scheduled tick under the owner's delegation starts a From the desk
+  Program once) and
+  `tests/integration/test_desk_automation_program.py` (records
+  `automation-hub/program-*.json`); T2 `automation.app.test.tsx` (4 PG14
+  cases from those recordings, and the 7th starter); T3 the sweep's
+  automation case.
+- **Not in this slice**: Watch-driven templates other than From the desk;
+  the Put it in step of the guided setup still shows for a program (its
+  results are the Programs); the Program id is on the run's result item, not
+  a column of `workbench_runs`.
 
 ## PG15. Start a program on a call (Left)
 

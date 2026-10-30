@@ -1191,13 +1191,14 @@ export async function deleteWorkbenchItem(
 }
 
 /** Run the pending queue, or only the named items (an item's Re-run). */
-export async function triggerWorkbenchRun(workbenchId: string, itemIds?: string[]): Promise<void> {
-  await apiFetch<Record<string, unknown>>(
+export async function triggerWorkbenchRun(workbenchId: string, itemIds?: string[]): Promise<Record<string, unknown> | null> {
+  const answer = await apiFetch<{ run?: Record<string, unknown> }>(
     `/api/workbenches/${encodeURIComponent(workbenchId)}/run`,
     itemIds && itemIds.length
       ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ item_ids: itemIds }) }
       : { method: "POST" },
   );
+  return answer && typeof answer === "object" && answer.run && typeof answer.run === "object" ? answer.run : null;
 }
 
 export async function updateSkill(

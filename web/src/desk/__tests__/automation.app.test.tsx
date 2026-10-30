@@ -44,6 +44,10 @@ import folderRan from "./fixtures/automation-hub/folder-ran.json";
 import folderEvent from "./fixtures/automation-hub/folder-event.json";
 import putNew from "./fixtures/automation-hub/put-new.json";
 import putFolder from "./fixtures/automation-hub/put-folder.json";
+// Programs PG14 (tests/integration/test_desk_automation_program.py).
+import programNew from "./fixtures/automation-hub/program-new.json";
+import programRan from "./fixtures/automation-hub/program-ran.json";
+import programStill from "./fixtures/automation-hub/program-still.json";
 import { WorkbenchesHomeCore } from "../../pages/cores/WorkbenchesHomeCore";
 import { NewWorkbenchChooser } from "../components/NewWorkbenchChooser";
 import { AutomationBuilder } from "../components/automation/AutomationBuilder";
@@ -54,6 +58,11 @@ import type { Directory, Note } from "../../lib/primitives";
 import { openPrimitive, openSurfaceOr } from "../shell";
 import { seatMounted, seatUnmounted } from "../deleteSeat";
 import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
+
+// PG14: a program run's row opens the Program window (its own tests:
+// programs/__tests__/programs.app.test.tsx).
+vi.mock("../programs/open", () => ({ openProgram: vi.fn() }));
+import { openProgram } from "../programs/open";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -129,7 +138,8 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   if (method === "POST" && url === `${detail}/run`) {
     const next = hub.afterRun.shift();
     if (!next) throw new Error("an unrecorded run");
-    const answer = () => { hub.step = next; return json({ run: {} }); };
+    // PG14: a recorded step may carry the run answer that led to it.
+    const answer = () => { hub.step = next; return json({ run: (next as { ran?: unknown }).ran ?? {} }); };
     if (hub.hold === null) return Promise.resolve(answer());
     return new Promise((resolve) => { hub.hold = () => resolve(answer()); });
   }
@@ -803,7 +813,10 @@ describe("A7: home, New automation and starters", () => {
     // The starter reads in words: never cron, never "Agent".
     expect(friday).toHaveTextContent("Every Friday at 15:00 · My Inbox");
     expect(chooser.textContent).not.toMatch(/\* \* \*|0 15|Agent|TODO|Triage|Morning Brief/);
-    expect(within(chooser).getAllByRole("button").filter((b) => b.className.includes("automation-starter"))).toHaveLength(6);
+    // PG14: the rig's engine is one pi can run on, so the Overnight program
+    // starter is offered too.
+    expect(within(chooser).getAllByRole("button").filter((b) => b.className.includes("automation-starter"))).toHaveLength(7);
+    expect(within(chooser).getByTestId("automation-starter-overnight-program")).toHaveTextContent("Every weekday at 23:30");
 
     hub.afterCreate = [withStarters(fridayNew)];
     fireEvent.click(friday); presses += 1;
@@ -1086,5 +1099,75 @@ describe("an agent works in a folder (A10)", () => {
     fireEvent.click(within(line("about")).getByRole("button"));
     expect(await screen.findByTestId("automation-folders")).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "Find by name" })).toBeNull();
+  });
+});
+
+/* ── Programs PG14: an automation runs a Program ─────────────────────────
+ * The hub's answers from tests/integration/test_desk_automation_program.py:
+ * a Fast cycle automation at YOLO on Codex, after its first run (one
+ * Program started, 2 steps) and after a second run while it still runs. */
+describe("PG14: Run a program", () => {
+  const programOf = (step: unknown) => ((step as { ran: { program_id: string } }).ran.program_id);
+
+  it("the Do line reads the template and the level, With the agent; Run now starts it and its row opens the Program", async () => {
+    await open(programNew as Step);
+    expect(line("do")).toHaveTextContent("Run a program · Fast cycle · YOLO");
+    expect(line("with")).toHaveTextContent("Codex");
+    // A program's results are its Programs: no Put it in line.
+    expect(within(sentence()).queryByTestId("automation-line-put")).toBeNull();
+    expect(sentence().textContent).not.toMatch(/program-|fast-cycle|codex-default/);
+
+    hub.afterRun = [programRan as Step];
+    fireEvent.click(screen.getByTestId("automation-run-now"));
+    const [row] = await within(await screen.findByTestId("automation-result-list")).findAllByTestId("automation-result-row");
+    expect(row).toHaveTextContent(/Nightly fixes · .* · 0 of 2/);
+    expect(within(row).getByTestId("automation-result-state")).toHaveTextContent("Running");
+    expect(screen.queryByTestId("automation-run-notice")).toBeNull();
+
+    fireEvent.click(within(row).getAllByRole("button")[0]);
+    await waitFor(() => expect(openProgram).toHaveBeenCalledWith(programOf(programRan)));
+  });
+
+  it("a second run while the Program runs starts nothing and says so", async () => {
+    await open(programRan as Step);
+    hub.afterRun = [programStill as Step];
+    fireEvent.click(screen.getByTestId("automation-run-now"));
+    expect(await screen.findByTestId("automation-run-notice")).toHaveTextContent(/is still running\. Nothing started\./);
+    expect(within(screen.getByTestId("automation-result-list")).getAllByTestId("automation-result-row")).toHaveLength(1);
+  });
+
+  it("Do edits the template, the level and the agent in place; Save writes them in one press", async () => {
+    await open(programNew as Step);
+    fireEvent.click(within(line("do")).getByRole("button"));
+    const editor = await screen.findByTestId("automation-do-editor");
+    expect(within(editor).getByTestId("automation-do-run-program")).toHaveAttribute("aria-pressed", "true");
+    expect(within(editor).getByTestId("automation-program-template-fast-cycle")).toHaveAttribute("aria-pressed", "true");
+    expect(within(editor).getByTestId("automation-program-control-yolo")).toHaveAttribute("aria-pressed", "true");
+    expect(within(editor).getByTestId("automation-program-agent")).toHaveTextContent("Agent: Codex");
+    fireEvent.click(within(editor).getByTestId("automation-program-template-from-the-desk"));
+    fireEvent.click(within(editor).getByTestId("automation-program-control-normal"));
+    fireEvent.click(screen.getByTestId("automation-do-save"));
+    await waitFor(() => expect(hub.calls).toContainEqual({
+      method: "PUT", url: `/api/workbenches/${(programNew as Step).workbench_id}`, body: {
+        do_kind: "run_program", instruction: "Fix each bug with a test.",
+        program_template: "from-the-desk", program_control: "normal",
+        program_runs_on: [{ profile: "codex-default", engine: null }],
+      },
+    }));
+  });
+
+  it("the guided Do step offers Run a program and needs a template before Next", async () => {
+    const callbacks = renderBuilder();
+    fireEvent.click(screen.getByTestId("automation-do-run-program"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Goal" }), { target: { value: "Clear the bug list." } });
+    fireEvent.click(screen.getByTestId("automation-setup-next"));
+    expect(await screen.findByText("Choose a template before Next.")).toBeInTheDocument();
+    expect(callbacks.onSaveDo).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("automation-program-template-race"));
+    fireEvent.click(screen.getByTestId("automation-program-control-secure"));
+    fireEvent.click(screen.getByTestId("automation-setup-next"));
+    await waitFor(() => expect(callbacks.onSaveDo).toHaveBeenCalledWith(
+      "run_program", "Clear the bug list.", { template: "race", control: "secure", runsOn: [] }));
+    expect(await screen.findByTestId("automation-setup-about")).toBeInTheDocument();
   });
 });

@@ -193,6 +193,14 @@ export function refOpener(ref: string | null | undefined, navigation?: DeskNavig
   // PHILO-14 C2: a launched agent is `launch:<launch_id>`; it opens its lane.
   // Programs (2026-10-28): a Program is `program:<id>`; it opens the
   // Program window `pullout:program:<id>`.
+  // Programs PG14: an automation that started a Program is
+  // `automation:<workbench id>`; it opens the automation window.
+  if (clean.startsWith("automation:")) {
+    const id = clean.slice("automation:".length);
+    return id ? () => {
+      void import("./store").then(({ useDesk }) => useDesk.getState().openWorkbenchWindow(id));
+    } : null;
+  }
   if (clean.startsWith("program:")) {
     const id = clean.slice("program:".length).split(":", 1)[0];
     return id ? () => {

@@ -243,9 +243,14 @@ _WORKBENCH_FIELDS_SCHEMA: dict[str, Any] = {
         "instruction": {"type": "string", "description": "The Do text. With it, each run makes one result; empty keeps the item queue."},
         "sources": {"type": "array", "items": {"type": "string"}, "description": "Refs the run reads, for example note:<id>, meeting:<id>, zone:<id> (a drawer), person:<id>, or a set: meetings:this_week, notes:this_week."},
         "output_target": {"type": "string", "description": "Where a result goes: inbox (default), needs_you, today, project_updates:<project_id>, or destination:<id> (prepared only; the owner presses Send)."},
-        "do_kind": {"type": "string", "enum": ["run", "hand_to_agent"]},
+        "do_kind": {"type": "string", "enum": ["run", "hand_to_agent", "run_program"]},
         "agent_profile": {"type": "string", "description": "Installed agent profile for hand_to_agent."},
         "review_by": {"type": "string", "enum": ["none", "codex", "claude", "pi"]},
+        "program_template": {"type": "string", "enum": ["fast-cycle", "build-and-review", "race", "from-the-desk", "overnight"], "description": "run_program: the template each run's Program is made from."},
+        "program_control": {"type": "string", "enum": ["secure", "normal", "yolo"], "description": "run_program: the Program's control level; omitted, the template's or the desk's."},
+        "program_runs_on": {"type": "array", "items": {"type": ["string", "object"]}, "description": "run_program: the agents in order, names or {profile, engine} (engine for pi only)."},
+        "program_may_call": {"type": "boolean", "description": "run_program: the engine may call the owner where the Reach rules allow it."},
+        "program_may_handoff": {"type": "boolean", "description": "run_program: a step at a usage limit may continue in the next agent."},
     },
     "additionalProperties": False,
 }
@@ -263,7 +268,7 @@ def _workbench_fields(value: Any) -> dict[str, Any]:
 #: (``WorkbenchService.create_automation``). ``when``, ``with`` and
 #: ``spend_limit`` are the owner's: a Thread or a run stops for his press.
 _SENTENCE_PROPERTIES: dict[str, Any] = {
-    "do": {"type": "string", "description": "What each run does (the Do text), or hand_to_agent to hand each source item once."},
+    "do": {"type": "string", "description": "What each run does (the Do text), hand_to_agent to hand each source item once, or run_program to make and start one Program each run (fields.program_template)."},
     "about": {"type": "array", "items": {"type": "string"}, "description": "What it reads: refs as fields.sources."},
     "when": {
         "type": "object",

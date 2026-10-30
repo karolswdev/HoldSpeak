@@ -80,11 +80,13 @@ export function RunsOnPicker({
   /** The Button's words (`Runs on: Claude Code`). */
   label: string;
   value: RunsOnChoice | null;
-  idle: boolean;
+  idle?: boolean;
   /** `When idle, for every pi step` / `When idle, for this step`. */
-  idleLabel: string;
+  idleLabel?: string;
   onPick(choice: RunsOnChoice): void;
-  onIdle(next: boolean): void;
+  /** Absent: the picker has no When idle row (an automation's Program
+   *  takes its template's). */
+  onIdle?(next: boolean): void;
   disabled?: boolean;
   /** PG19: the agents that take over at a usage limit, in order ("then"
    *  rows under the first choice). Absent: the picker has no then rows. */
@@ -118,7 +120,7 @@ export function RunsOnPicker({
     { type: "item", id: "assignment", label: "pi · the desk's assignment", glyph: sprite("pi"), checked: is("pi-default", null) ? "exclusive" : undefined, onSelect: () => onPick({ profile: "pi-default", engine: null }) },
     ...(onThen ? thenEntries(value, then ?? [], engines ?? [], onThen) : []),
     { type: "sep", id: "foot" },
-    { type: "item", id: "idle", label: idleLabel, checked: idle, onSelect: () => onIdle(!idle) },
+    ...(onIdle ? [{ type: "item" as const, id: "idle", label: idleLabel ?? "When idle", checked: Boolean(idle), onSelect: () => onIdle(!idle) }] : []),
     { type: "item", id: "engines", label: "Engines…", onSelect: () => openSurfaceOr("configure-runs-on", "/models") },
   ];
   return (

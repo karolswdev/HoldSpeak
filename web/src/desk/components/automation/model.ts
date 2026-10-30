@@ -27,6 +27,20 @@ export interface AutomationResult {
   /** What the run's agent looked at, wrote and prepared (MCP M2); null when
    *  it touched nothing. */
   used?: AgentUse | null;
+  /** Programs PG14: the Program a run_program run started; absent otherwise. */
+  program?: AutomationProgramLink;
+}
+
+/** PG14: a Program an automation run started, with its state now. */
+export interface AutomationProgramLink {
+  id: string;
+  title: string;
+  state: string;
+  state_word: string;
+  done: number;
+  total: number;
+  /** `pullout:program:<id>`. */
+  window: string;
 }
 
 export type { UsedRow, AgentUse as AutomationUse } from "../../used";
@@ -51,8 +65,28 @@ export interface AutomationEventChoice {
 }
 
 export interface AutomationDetail extends WorkbenchDetail {
-  /** Betterment AG14: Do kind and installed agent hand configuration. */
-  do_kind?: "run" | "hand_to_agent" | string;
+  /** Betterment AG14: Do kind and installed agent hand configuration;
+   *  Programs PG14: `run_program`. */
+  do_kind?: "run" | "hand_to_agent" | "run_program" | string;
+  /** PG14 (a run_program automation only): the Program each run makes. */
+  program_template?: string;
+  program_control?: string;
+  program_runs_on?: Array<{ profile: string; engine?: string | null }>;
+  program_may_call?: boolean;
+  program_may_handoff?: boolean;
+  program?: {
+    template: string | null;
+    template_name: string | null;
+    control: string | null;
+    control_word: string | null;
+    runs_on: Array<{ profile: string; engine: string | null; label: string }>;
+    runs_on_words: string;
+    own_runs_on: boolean;
+    may_call: boolean;
+    may_handoff: boolean;
+    project_id: string | null;
+    latest: { id: string; title: string; state: string; state_word: string; window: string } | null;
+  };
   agent_profile?: string;
   agent_profile_label?: string | null;
   agent_binding?: {
@@ -208,7 +242,16 @@ export function putWords(target: string | null | undefined, destinationName?: st
   return "My Inbox";
 }
 
+/** PG14: the Do line of a run_program automation: `Run a program · From
+ *  the desk · YOLO`. */
+export function programDoWords(detail: AutomationDetail): string {
+  const program = detail.program;
+  const parts = ["Run a program", program?.template_name, program?.control_word].filter(Boolean);
+  return parts.join(" · ");
+}
+
 export function engineWords(detail: AutomationDetail): string | null {
+  if (detail.do_kind === "run_program") return detail.program?.runs_on_words || null;
   if (detail.do_kind === "hand_to_agent") {
     if (!detail.agent_profile) return null;
     const label = detail.agent_profile_label || detail.agent_binding?.label || "";

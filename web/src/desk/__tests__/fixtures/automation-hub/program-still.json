@@ -1,0 +1,218 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_automation_program.py (TestClient, isolated database, the Programs rig). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "workbench_id": "wb-nightly",
+ "gets": {
+  "/api/workbenches/wb-nightly": {
+   "workbench": {
+    "id": "wb-nightly",
+    "name": "Nightly fixes",
+    "instruction": "Fix each bug with a test.",
+    "sources": [
+     "project:proj-app",
+     "note:note-timeout",
+     "note:note-retry"
+    ],
+    "output_target": "inbox",
+    "spend_limit_usd": null,
+    "do_kind": "run_program",
+    "agent_profile": "",
+    "review_by": "",
+    "program_template": "fast-cycle",
+    "program_control": "yolo",
+    "program_runs_on": [
+     {
+      "engine": null,
+      "profile": "codex-default"
+     }
+    ],
+    "program_may_call": false,
+    "program_may_handoff": false,
+    "recipe_id": null,
+    "profile_id": null,
+    "resolver_profile_id": null,
+    "schedule": null,
+    "schedule_enabled": false,
+    "schedule_revision": 2,
+    "item_order": [],
+    "created_at": "2026-10-30T04:46:53Z",
+    "last_modified": "2026-10-30T04:46:53Z",
+    "deleted": false,
+    "items": [
+     {
+      "id": "wbprog_8b24758b105b",
+      "workbench_id": "wb-nightly",
+      "title": "Nightly fixes · Fri 30 Oct",
+      "body": "Fix each bug with a test.",
+      "priority": 3,
+      "status": "done",
+      "grounding": {},
+      "context": {
+       "occurrence": true,
+       "program": {
+        "program_id": "program-9ec843c11245",
+        "steps": 2,
+        "title": "Nightly fixes · Fri 30 Oct"
+       },
+       "run_id": "wbrun_8b24758b105b"
+      },
+      "result": "Started the program Nightly fixes · Fri 30 Oct · 2 steps",
+      "result_artifact_id": null,
+      "result_egress": null,
+      "mint_attempted": false,
+      "tokens_consumed": 0,
+      "created_at": "2026-10-30T04:46:53.468312+00:00",
+      "last_modified": "2026-10-30T04:46:53.621797+00:00",
+      "claimed_at": "2026-10-30T04:46:53.468312+00:00",
+      "completed_at": "2026-10-30T04:46:53.621797+00:00",
+      "parked": false
+     }
+    ],
+    "item_count": 1,
+    "pending_count": 0,
+    "last_run": {
+     "id": "wbrun_8c063354db58",
+     "workbench_id": "wb-nightly",
+     "started_at": "2026-10-30T04:46:53.631423+00:00",
+     "completed_at": "2026-10-30T04:46:53.631716+00:00",
+     "items_attempted": 0,
+     "items_completed": 0,
+     "items_failed": 0,
+     "mint_failures": 0,
+     "total_tokens": 0,
+     "egress_boundary": "",
+     "model": "",
+     "constitutional_context_revision": 0,
+     "constitutional_context_hash": "",
+     "skills_injected": [],
+     "status": "completed"
+    },
+    "instruction_shown": "Fix each bug with a test.",
+    "program": {
+     "template": "fast-cycle",
+     "template_name": "Fast cycle",
+     "control": "yolo",
+     "control_word": "YOLO",
+     "runs_on": [
+      {
+       "profile": "codex-default",
+       "engine": null,
+       "agent": "Codex",
+       "label": "Codex"
+      }
+     ],
+     "runs_on_words": "Codex",
+     "own_runs_on": true,
+     "may_call": false,
+     "may_handoff": false,
+     "project_id": "proj-app",
+     "latest": {
+      "id": "program-9ec843c11245",
+      "title": "Nightly fixes · Fri 30 Oct",
+      "state": "running",
+      "state_word": "Running",
+      "window": "pullout:program:program-9ec843c11245"
+     }
+    },
+    "instruction_from": "automation",
+    "results": [
+     {
+      "item_id": "wbprog_8b24758b105b",
+      "title": "Nightly fixes · Fri 30 Oct",
+      "status": "done",
+      "artifact_id": null,
+      "new": false,
+      "error": null,
+      "text": "Started the program Nightly fixes · Fri 30 Oct · 2 steps",
+      "completed_at": "2026-10-30T04:46:53.621797+00:00",
+      "seconds": 0,
+      "model": "",
+      "boundary": "",
+      "note_id": null,
+      "cost_usd": null,
+      "used": null,
+      "program": {
+       "id": "program-9ec843c11245",
+       "title": "Nightly fixes · Fri 30 Oct",
+       "state": "running",
+       "state_word": "Running",
+       "done": 0,
+       "total": 2,
+       "window": "pullout:program:program-9ec843c11245"
+      }
+     }
+    ],
+    "sources_shown": [
+     {
+      "ref": "project:proj-app",
+      "kind": "project",
+      "label": "Program: Nightly fixes · Fri 30 Oct",
+      "missing": false
+     },
+     {
+      "ref": "note:note-timeout",
+      "kind": "note",
+      "label": "Login timeout",
+      "missing": false
+     },
+     {
+      "ref": "note:note-retry",
+      "kind": "note",
+      "label": "Retry the upload",
+      "missing": false
+     }
+    ],
+    "blanks": {},
+    "when_kind": null,
+    "event_starts": [],
+    "next_run_at": null,
+    "when_events": [
+     {
+      "id": "github-review-requested",
+      "words": "GitHub asks me to review",
+      "needs": "repository",
+      "subject": "the review request that came in",
+      "event_pattern": "github.pr.review_requested"
+     },
+     {
+      "id": "github-checks-failed",
+      "words": "A pull request's checks fail",
+      "needs": "repository",
+      "subject": "the pull request whose checks failed",
+      "event_pattern": "github.pr.checks_changed"
+     },
+     {
+      "id": "github-pr-merged",
+      "words": "A pull request is merged",
+      "needs": "repository",
+      "subject": "the pull request that was merged",
+      "event_pattern": "github.pr.merged"
+     }
+    ],
+    "assignment_summary": {
+     "status": "assigned",
+     "source": "program",
+     "chain": [
+      "Codex"
+     ],
+     "profile_id": null,
+     "boundary": null
+    }
+   }
+  },
+  "/api/workbenches/wb-nightly/memory": {
+   "entries": []
+  }
+ },
+ "ran": {
+  "run_id": "wbrun_8c063354db58",
+  "status": "completed",
+  "program_started": false,
+  "program_id": "program-9ec843c11245",
+  "program_window": "pullout:program:program-9ec843c11245",
+  "items_attempted": 0,
+  "items_completed": 0,
+  "items_failed": 0,
+  "skipped": true,
+  "reason": "The program Nightly fixes · Fri 30 Oct is still running. Nothing started."
+ }
+}
