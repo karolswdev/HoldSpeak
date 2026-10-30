@@ -354,3 +354,15 @@
 @container surface (max-width: 520px) {
   .runson-used { display: inline; white-space: normal; }
 }
+
+/* RECIPE LINE-6: the Phone speech group (the ListView species), set in
+   the body like the Download a local model fold. */
+.runson-body > .runson-phone-speech { margin: 0 16px 12px; }
+/* At phone width the name and its licence line take the row; the state and
+   Download sit on the line under them. */
+@container surface (max-width: 520px) {
+  .runson-phone-speech .kit-listrow { flex-wrap: wrap; row-gap: 0; padding-bottom: 6px; }
+  .runson-phone-speech .kit-listrow-main { flex: 1 0 100%; }
+  .runson-phone-speech .kit-listrow-state { margin-left: 42px; }
+  .runson-phone-speech .kit-listrow-verbs { margin-left: auto; }
+}

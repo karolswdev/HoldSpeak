@@ -3,6 +3,12 @@
 The catalogue is code/data shipped with HoldSpeak.  Reading it performs no
 network access and no row/config mutation.  Local candidates deliberately do
 not appear here until their immutable source and runtime qualification exist.
+
+Revision 6 (RECIPE LINE-6) adds a third kind, ``speech_model_preset``: the
+Line's two speech models (Parakeet in, Pocket TTS out), each a pinned
+Hugging Face revision with every file's path, size and SHA-256 and its
+licences. They are not inference presets, so :func:`applicable_presets`
+leaves them out; :func:`speech_presets` reads them (``holdspeak/line/models.py``).
 """
 from __future__ import annotations
 
@@ -23,16 +29,20 @@ _EXPERIENCES = frozenset({"quick", "balanced", "deep"})
 
 
 PACKAGED_CATALOG_SCHEMA_VERSION = 1
-PACKAGED_CATALOG_MIN_REVISION = 5
-_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_10_13"
+PACKAGED_CATALOG_MIN_REVISION = 6
+_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_10_29"
 _PACKAGED_CATALOG_TRUST_ROOTS = {
     "holdspeak_catalog_2026_08_02": bytes.fromhex(
         "dc6956be38eb49dc0c0f4c1e993bfc911ccea50632f8e742231e5cade38d809c"
     ),
-    _PACKAGED_CATALOG_KEY_ID: bytes.fromhex(
+    "holdspeak_catalog_2026_10_13": bytes.fromhex(
         "b6c0d32ff01baf7df5b403f83f68965af5fb87a1586ca1912e695d9ba9324605"
     ),
+    _PACKAGED_CATALOG_KEY_ID: bytes.fromhex(
+        "07daac564bd2f90aee6521f516e32d3c8c4db065201eadff40ea8a7611be4e9d"
+    ),
 }
+_SPEECH_ROLES = {"stt": "onnx_asr", "tts": "pocket_tts"}
 _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
     {
         "kind": "local_artifact_preset",
@@ -244,7 +254,106 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
             "requires_key": True,
         },
     },
+    # RECIPE LINE-6: the Line's speech models. The pins are the Hugging Face
+    # revisions and the files the Line's engines load (onnx-asr's int8
+    # Parakeet files; pocket-tts 4.0.1's English config, its tokenizer and
+    # the voice it speaks with), each with its SHA-256 (LFS digests; the
+    # small text files hashed at pinning, 2026-10-29).
+    {
+        "kind": "speech_model_preset",
+        "id": "speech_line_parakeet_tdt_06b_v2_int8",
+        "role": "stt",
+        "label": "Phone speech in · Parakeet (int8, onnx-asr)",
+        "summary": "Hears your words on a phone call, on this machine.",
+        "runtime_id": "onnx_asr",
+        "target": "line",
+        "source": {
+            "repository": "istupakov/parakeet-tdt-0.6b-v2-onnx",
+            "revision": "0bbb45a3365852604aef28b538a8f066f4ccaa85",
+            "files": [
+                {"path": "config.json", "bytes": 97,
+                 "sha256": "sha256:666903c76b9798caf2c210afd4f6cd60b08a8dbf9800ec8d7a3bc0d2148ac466"},
+                {"path": "vocab.txt", "bytes": 9_384,
+                 "sha256": "sha256:ec182b70dd42113aff6c5372c75cac58c952443eb22322f57bbd7f53977d497d"},
+                {"path": "decoder_joint-model.int8.onnx", "bytes": 8_998_286,
+                 "sha256": "sha256:a449f49acd68979d418651dd2dcb737cc0f1bf0225e009e29ee326354edbf7d3"},
+                {"path": "encoder-model.int8.onnx", "bytes": 652_184_014,
+                 "sha256": "sha256:3e0581fda6ab843888b51e56d7ee78b6d5bc3237ec113af1f732d1d5286aa155"},
+            ],
+            "download_bytes": 661_191_781,
+            "license": "CC-BY-4.0",
+            "code_license": "MIT",
+            "attribution": "NVIDIA Parakeet TDT 0.6B v2 (ONNX export by istupakov)",
+        },
+        "applicability": {"state": "applicable", "reason": None},
+    },
+    {
+        "kind": "speech_model_preset",
+        "id": "speech_line_pocket_tts_en",
+        "role": "tts",
+        "label": "Phone voice · Pocket TTS",
+        "summary": "Speaks the desk's answers on a phone call, on this machine.",
+        "runtime_id": "pocket_tts",
+        "target": "line",
+        "source": {
+            "repository": "kyutai/pocket-tts-without-voice-cloning",
+            "revision": "a7056f505a4a8ca72d8b5fb1440071d6f1a35739",
+            "files": [
+                {"path": "languages/english/tokenizer.json", "bytes": 245_020,
+                 "sha256": "sha256:f498428e1eafee50492f7be13dc9bfafcfc12e508cd0eb1b01c92ecd5d8c6687"},
+                {"path": "languages/english/embeddings/alba.safetensors", "bytes": 6_244_152,
+                 "sha256": "sha256:5850f417028fb2bf6de31e5e395e56ee7a21ac0e52ef31aebd4a6a2847d72e9c"},
+                {"path": "languages/english/model.safetensors", "bytes": 219_029_196,
+                 "sha256": "sha256:4c56cbd171c63e8a26ea61f5d48b8a0cd8f3c51f4652c0ab9a19bfcced8c931d"},
+            ],
+            "download_bytes": 225_518_368,
+            "license": "CC-BY-4.0",
+            "code_license": "MIT",
+            "attribution": "Kyutai Pocket TTS",
+        },
+        "applicability": {"state": "applicable", "reason": None},
+    },
 )
+
+
+def _validate_speech(raw: dict[str, Any], ordinal: int) -> None:
+    """``speech_model_preset``: a pinned multi-file Hugging Face source."""
+    where = f"preset[{ordinal}]"
+    _exact(raw, {"kind", "id", "role", "label", "summary", "runtime_id", "target", "source", "applicability"}, where)
+    if raw["role"] not in _SPEECH_ROLES or raw["runtime_id"] != _SPEECH_ROLES[raw["role"]] or raw["target"] != "line":
+        raise ValueError(f"{where} has an invalid speech role/runtime/target")
+    source = raw["source"]
+    _exact(source, {"repository", "revision", "files", "download_bytes", "license", "code_license", "attribution"}, f"{where}.source")
+    if not isinstance(source["repository"], str) or not _MODEL_ID.fullmatch(source["repository"]):
+        raise ValueError(f"{where}.source.repository is invalid")
+    if not isinstance(source["revision"], str) or not re.fullmatch(r"[0-9a-f]{40,64}", source["revision"]):
+        raise ValueError(f"{where}.source.revision is mutable")
+    files = source["files"]
+    if not isinstance(files, list) or not 1 <= len(files) <= 16:
+        raise ValueError(f"{where}.source.files is invalid")
+    paths: set[str] = set()
+    total = 0
+    for index, item in enumerate(files):
+        _exact(item, {"path", "bytes", "sha256"}, f"{where}.source.files[{index}]")
+        path = item["path"]
+        if (
+            not isinstance(path, str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,95}(/[A-Za-z0-9][A-Za-z0-9_.-]{0,95}){0,3}", path)
+            or ".." in path.split("/")
+            or path in paths
+        ):
+            raise ValueError(f"{where}.source.files[{index}].path is invalid")
+        paths.add(path)
+        if type(item["bytes"]) is not int or item["bytes"] <= 0:
+            raise ValueError(f"{where}.source.files[{index}].bytes is invalid")
+        if not isinstance(item["sha256"], str) or not _SHA256.fullmatch(item["sha256"]):
+            raise ValueError(f"{where}.source.files[{index}].sha256 is invalid")
+        total += item["bytes"]
+    if type(source["download_bytes"]) is not int or source["download_bytes"] != total:
+        raise ValueError(f"{where}.source.download_bytes is inconsistent")
+    for text_field in ("license", "code_license"):
+        _safe_text(source[text_field], f"{where}.source.{text_field}", limit=64)
+    _safe_text(source["attribution"], f"{where}.source.attribution", limit=120)
 
 
 def _exact(value: dict[str, Any], keys: set[str], where: str) -> None:
@@ -268,7 +377,9 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
         if not isinstance(raw, dict):
             raise ValueError(f"preset[{ordinal}] must be an object")
         kind = raw.get("kind")
-        if kind == "hosted_profile_preset":
+        if kind == "speech_model_preset":
+            _validate_speech(raw, ordinal)
+        elif kind == "hosted_profile_preset":
             _exact(raw, {"kind", "id", "experience", "label", "summary", "provider_adapter", "model_id", "boundary", "secret_requirement", "context", "applicability", "existing_profile"}, f"preset[{ordinal}]")
             if raw["provider_adapter"] != "openai_compatible" or raw["boundary"] != "external_service" or raw["secret_requirement"] != "profile_key":
                 raise ValueError(f"preset[{ordinal}] has unsupported hosted authority")
@@ -337,7 +448,7 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
         if not isinstance(preset_id, str) or not _ID.fullmatch(preset_id) or preset_id in seen:
             raise ValueError(f"preset[{ordinal}].id is invalid or duplicated")
         seen.add(preset_id)
-        if raw.get("experience") not in _EXPERIENCES:
+        if kind != "speech_model_preset" and raw.get("experience") not in _EXPERIENCES:
             raise ValueError(f"preset[{ordinal}].experience is invalid")
         _safe_text(raw.get("label"), f"preset[{ordinal}].label")
         _safe_text(raw.get("summary"), f"preset[{ordinal}].summary", limit=200)
@@ -353,13 +464,13 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
 
 _PACKAGED_CATALOG_BODY = {
     "schema_version": 1,
-    "catalog_revision": 5,
-    "generated_at": "2026-10-13T00:00:00Z",
-    "expires_at": "2036-10-13T00:00:00Z",
+    "catalog_revision": 6,
+    "generated_at": "2026-10-29T00:00:00Z",
+    "expires_at": "2036-10-29T00:00:00Z",
     "signing_key_id": _PACKAGED_CATALOG_KEY_ID,
     "entries": _PACKAGED_PRESETS_SOURCE,
 }
-_PACKAGED_CATALOG_SIGNATURE = "49cf2c7d81b22f93c8ebad794e86661c4027f13128c418431f76fd53d93f6da8d515afcee50d76f05d1da1573f856f992b649c3c181e7a6a582ee499ef5b2a0e"
+_PACKAGED_CATALOG_SIGNATURE = "8e2a04c218a57a872a3b64d00a1e29173a490154c10d19b6d566e8e1f308ad54995c11d54f0f04f4ea06098049b507b72be22a5600f32b2db94dbc931cb5110c"
 _PACKAGED_CATALOG_JSON = json.dumps(
     {**_PACKAGED_CATALOG_BODY, "signature": _PACKAGED_CATALOG_SIGNATURE},
     sort_keys=True,
@@ -435,10 +546,15 @@ def applicable_presets(*, platform_id: str, runtime_ids: set[str], entries: Iter
     """Return only packaged entries whose declared prerequisites are proven."""
     result: list[dict[str, Any]] = []
     for row in validate_catalog(packaged_presets() if entries is None else entries):
-        if row["applicability"]["state"] != "applicable":
+        if row["applicability"]["state"] != "applicable" or row["kind"] == "speech_model_preset":
             continue
         if row["kind"] == "local_artifact_preset":
             if platform_id not in row["platforms"] or row["runtime_id"] not in runtime_ids:
                 continue
         result.append(row)
     return result
+
+
+def speech_presets(*, now: datetime | None = None) -> tuple[dict[str, Any], ...]:
+    """The Line's speech models from the signed catalogue (RECIPE LINE-6)."""
+    return tuple(row for row in packaged_presets(now=now) if row["kind"] == "speech_model_preset")

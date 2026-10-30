@@ -1,14 +1,15 @@
 {
   "devices": [
     {
-      "id": "dev_80f62fa66da831a2",
+      "id": "dev_ba1376a3f12d19c3",
       "name": "Karol's iPhone",
       "platform": "ios",
       "state": "paired",
       "has_push": true,
       "push_kind": "null",
-      "paired_at": "2026-10-28T23:40:23.922903+00:00",
-      "last_seen_at": "2026-10-28T23:40:23.922903+00:00"
+      "push_state": "ready",
+      "paired_at": "2026-10-30T02:58:56.163768+00:00",
+      "last_seen_at": "2026-10-30T02:58:56.163768+00:00"
     }
   ]
 }

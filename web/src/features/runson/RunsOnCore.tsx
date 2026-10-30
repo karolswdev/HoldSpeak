@@ -59,6 +59,7 @@ import {
 } from "./model";
 import { stateClass, stateWord } from "./stateWord";
 import { useRunsOn, type AddKind, type RunsOnController } from "./useRunsOn";
+import { PhoneSpeech, useSpeechModels } from "./PhoneSpeech";
 import type { ServicePreset, ServiceTile } from "./api";
 import { SPEECH_SETUP_EVENT, SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { useBuilderTools } from "../../desk/builderTools";
@@ -506,6 +507,8 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   // Betterment E5 (DECISIONS #8): the drag switchboard is parked behind
   // Builder tools; What runs where is the face.
   const builder = useBuilderTools((state) => state.on);
+  // RECIPE LINE-6: the Line's speech models (their own group below the list).
+  const speechModels = useSpeechModels();
   const setTitle = useContext(TitleSlotContext);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const layout = useSwitchboardLayout(rootRef);
@@ -1019,7 +1022,8 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   // while its initial reads can still add the strip, engines or speech row.
   const reading = (!roster && !ctrl.error)
     || (!detection && !ctrl.detectionFailed)
-    || speech.ai.read.kind === "loading";
+    || speech.ai.read.kind === "loading"
+    || speechModels.reading;
   return (
     <div className="runson-root" ref={rootRef} data-testid="runson-root" aria-busy={reading || undefined}>
       {/* Window grammar (2026-10-24): title bar → Toolbar [Add an engine]
@@ -1105,6 +1109,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
               <WhatRunsWhere ctrl={ctrl} selected={selectedEngine?.profileId ?? null} />
             </div>
           ) : null}
+          {roster ? <PhoneSpeech models={speechModels} /> : null}
           {(localDownloads.length || roster) && !localInKind ? (
             <FoldGadget title="Download a local model" className="runson-downloads">
               {localContent}

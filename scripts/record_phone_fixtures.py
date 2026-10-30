@@ -94,6 +94,9 @@ def record(root: Path) -> dict[str, Any]:
 
     service = PhoneService(Database(root / "phone.db"), push=NullPush(), number=_NoNumber(),
                            ring_seconds=0.3, rering_seconds=0.3)
+    # The faces draw a day-time desk: a run at night would hold every message
+    # for quiet hours (PH12), so the recording does not follow the wall clock.
+    service._quiet = lambda at=None: False  # type: ignore[method-assign]
     client = TestClient(_app(service), base_url="https://karol-mac.tail1234.ts.net")
     out: dict[str, Any] = {}
 

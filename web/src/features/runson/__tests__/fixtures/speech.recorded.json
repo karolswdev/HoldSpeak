@@ -1,0 +1,139 @@
+{
+  "start": {
+    "/api/concierge/speech": {
+      "rows": [
+        {
+          "id": "speech_line_parakeet_tdt_06b_v2_int8",
+          "role": "stt",
+          "label": "Phone speech in \u00b7 Parakeet (int8, onnx-asr)",
+          "summary": "Hears your words on a phone call, on this machine.",
+          "bytes": 661191781,
+          "license": "CC-BY-4.0",
+          "code_license": "MIT",
+          "attribution": "NVIDIA Parakeet TDT 0.6B v2 (ONNX export by istupakov)",
+          "host": "huggingface.co",
+          "revision": "0bbb45a3365852604aef28b538a8f066f4ccaa85",
+          "state": "ready",
+          "received": 661191781,
+          "total": 661191781
+        },
+        {
+          "id": "speech_line_pocket_tts_en",
+          "role": "tts",
+          "label": "Phone voice \u00b7 Pocket TTS",
+          "summary": "Speaks the desk's answers on a phone call, on this machine.",
+          "bytes": 225518368,
+          "license": "CC-BY-4.0",
+          "code_license": "MIT",
+          "attribution": "Kyutai Pocket TTS",
+          "host": "huggingface.co",
+          "revision": "a7056f505a4a8ca72d8b5fb1440071d6f1a35739",
+          "state": "missing",
+          "received": 0,
+          "total": 225518368
+        }
+      ]
+    }
+  },
+  "download": {
+    "post": "/api/concierge/download",
+    "body": {
+      "presetId": "speech_line_pocket_tts_en"
+    },
+    "answer": {
+      "jobId": "line:speech_line_pocket_tts_en",
+      "presetId": "speech_line_pocket_tts_en",
+      "progress": {
+        "received": 0,
+        "total": 225518368
+      },
+      "row": {
+        "id": "speech_line_pocket_tts_en",
+        "role": "tts",
+        "label": "Phone voice \u00b7 Pocket TTS",
+        "summary": "Speaks the desk's answers on a phone call, on this machine.",
+        "bytes": 225518368,
+        "license": "CC-BY-4.0",
+        "code_license": "MIT",
+        "attribution": "Kyutai Pocket TTS",
+        "host": "huggingface.co",
+        "revision": "a7056f505a4a8ca72d8b5fb1440071d6f1a35739",
+        "state": "downloading",
+        "received": 0,
+        "total": 225518368
+      }
+    }
+  },
+  "downloading": {
+    "/api/concierge/speech": {
+      "rows": [
+        {
+          "id": "speech_line_parakeet_tdt_06b_v2_int8",
+          "role": "stt",
+          "label": "Phone speech in \u00b7 Parakeet (int8, onnx-asr)",
+          "summary": "Hears your words on a phone call, on this machine.",
+          "bytes": 661191781,
+          "license": "CC-BY-4.0",
+          "code_license": "MIT",
+          "attribution": "NVIDIA Parakeet TDT 0.6B v2 (ONNX export by istupakov)",
+          "host": "huggingface.co",
+          "revision": "0bbb45a3365852604aef28b538a8f066f4ccaa85",
+          "state": "ready",
+          "received": 661191781,
+          "total": 661191781
+        },
+        {
+          "id": "speech_line_pocket_tts_en",
+          "role": "tts",
+          "label": "Phone voice \u00b7 Pocket TTS",
+          "summary": "Speaks the desk's answers on a phone call, on this machine.",
+          "bytes": 225518368,
+          "license": "CC-BY-4.0",
+          "code_license": "MIT",
+          "attribution": "Kyutai Pocket TTS",
+          "host": "huggingface.co",
+          "revision": "a7056f505a4a8ca72d8b5fb1440071d6f1a35739",
+          "state": "downloading",
+          "received": 111346772,
+          "total": 225518368
+        }
+      ]
+    }
+  },
+  "ready": {
+    "/api/concierge/speech": {
+      "rows": [
+        {
+          "id": "speech_line_parakeet_tdt_06b_v2_int8",
+          "role": "stt",
+          "label": "Phone speech in \u00b7 Parakeet (int8, onnx-asr)",
+          "summary": "Hears your words on a phone call, on this machine.",
+          "bytes": 661191781,
+          "license": "CC-BY-4.0",
+          "code_license": "MIT",
+          "attribution": "NVIDIA Parakeet TDT 0.6B v2 (ONNX export by istupakov)",
+          "host": "huggingface.co",
+          "revision": "0bbb45a3365852604aef28b538a8f066f4ccaa85",
+          "state": "ready",
+          "received": 661191781,
+          "total": 661191781
+        },
+        {
+          "id": "speech_line_pocket_tts_en",
+          "role": "tts",
+          "label": "Phone voice \u00b7 Pocket TTS",
+          "summary": "Speaks the desk's answers on a phone call, on this machine.",
+          "bytes": 225518368,
+          "license": "CC-BY-4.0",
+          "code_license": "MIT",
+          "attribution": "Kyutai Pocket TTS",
+          "host": "huggingface.co",
+          "revision": "a7056f505a4a8ca72d8b5fb1440071d6f1a35739",
+          "state": "ready",
+          "received": 225518368,
+          "total": 225518368
+        }
+      ]
+    }
+  }
+}

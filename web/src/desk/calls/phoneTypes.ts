@@ -7,6 +7,8 @@
 
 export type PhoneDeviceState = "pairing" | "paired" | "revoked";
 
+export type PhonePushState = "ready" | "no_key" | "http2_unavailable" | "unregistered";
+
 export interface PhoneDevice {
   id: string;
   name: string;
@@ -14,6 +16,8 @@ export interface PhoneDevice {
   state: PhoneDeviceState;
   has_push?: boolean;
   push_kind?: string | null;
+  /** Why a push will or will not go (RECIPE PH13, `device_wire`). */
+  push_state?: PhonePushState | null;
   paired_at: string;
   last_seen_at?: string | null;
   revoked_at?: string | null;

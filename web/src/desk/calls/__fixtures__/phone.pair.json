@@ -1,6 +1,6 @@
 {
-  "token": "pt_hv9qjnXD8cfaZY7tqVFXcj6fl9V7pdan",
-  "qr_payload": "{\"v\":1,\"hub_id\":\"hub_65b64b5c397fdadd\",\"hub_urls\":[\"https://karol-mac.tail1234.ts.net\"],\"pair_token\":\"pt_hv9qjnXD8cfaZY7tqVFXcj6fl9V7pdan\",\"expires_at\":\"2026-10-28T23:50:23.912075+00:00\"}",
+  "token": "pt_HN1vAjP_vMNUFHFC9mQR8NrF7P9T4IwO",
+  "qr_payload": "{\"v\":1,\"hub_id\":\"hub_0184eda270b19028\",\"hub_urls\":[\"https://karol-mac.tail1234.ts.net\"],\"pair_token\":\"pt_HN1vAjP_vMNUFHFC9mQR8NrF7P9T4IwO\",\"expires_at\":\"2026-10-30T03:08:56.153171+00:00\"}",
   "qr_png_base64": null,
-  "expires_at": "2026-10-28T23:50:23.912075+00:00"
+  "expires_at": "2026-10-30T03:08:56.153171+00:00"
 }

@@ -204,11 +204,33 @@ a text.
   a call after 10 minutes away at Normal, no call when the wait ended, a call
   at YOLO, a message at Secure.
 
-## PH13. The APNs HTTP/2 dependency (Left)
+## PH13. The APNs HTTP/2 dependency (Shipped 2026-10-29, lane PHONE-PH13)
 
-`ApnsPush` needs `httpx[http2]` (`h2`). Add the extra to `pyproject.toml`
-when the app reaches its push step (PH-APP4), and prove one push to a
-TestFlight build.
+- **Goal**: `ApnsPush` sends for real, and the Phone section says why a push
+  would not go.
+- **Files**: `pyproject.toml` + `uv.lock` (`httpx[http2]` in the core
+  dependencies: h2, hpack, hyperframe, all MIT), `NOTICE`,
+  `hs/phone/push.py`, `hs/phone/service.py`, `hs/phone/contract.py`,
+  `tests/fixtures/fake_apns.py` (new), `scripts/record_phone_fixtures.py`,
+  `desk/calls/PhoneSettings.tsx`, `desk/calls/PhoneWing.tsx`,
+  `desk/calls/phoneTypes.ts`, `desk/calls/__fixtures__/phone.*.json`.
+- **Changes**: the client speaks HTTP/2 only (`http1=False`: h2 over TLS to
+  Apple; h2 with prior knowledge to a test server on `http://`). Each device
+  row carries `push_state`: `ready`, `no_key` (no APNs key saved: the hub's
+  fallback `NullPush(state="no_key")`), `http2_unavailable` (h2 does not
+  import) or `unregistered` (the phone sent no push token). The Phone
+  section and the Phone wing draw "Push not ready: <the reason>" (warn) in
+  place of the paired fact; a ready phone reads as before. The phone
+  recorder pins quiet hours off, so a night run records the day-time desk.
+- **Tests**: T1 `tests/unit/test_phone_push.py` (the ES256 provider token
+  verified with the public key; a call and a message sent over HTTP/2 to the
+  fake APNs: VoIP topic and priority 10, alert topic with the reply
+  category, the bearer token, the signed payload; 410 and BadDeviceToken are
+  `unregistered`; the saved key in the key store; the four push words on the
+  wire through the `Device` contract); T2 `desk/__tests__/calls.app.test.tsx`
+  (the three reasons and a ready phone).
+- **Left**: no face saves his APNs key yet (Settings ▸ Calls ▸ Phone has no
+  key row; `no_key` says so). One push to a TestFlight build (PH-APP4).
 
 ## PH14. The morning release of queued messages (Shipped 2026-10-29, lane PHONE-NEXT)
 

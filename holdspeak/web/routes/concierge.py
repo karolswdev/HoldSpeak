@@ -6,7 +6,8 @@ POST /api/concierge/probe     -- reachability for an engine, or `task: true` for
                                  one REAL request through the assigned route
 POST /api/concierge/apply     -- write the assignment set
 POST /api/concierge/summary-selection -- select one summary engine
-POST /api/concierge/download  -- start a preset download
+GET  /api/concierge/speech    -- the Line's two speech models, their state and progress (LINE-6)
+POST /api/concierge/download  -- start a preset download (a speech model: the Line's fetch)
 POST /api/concierge/discover-lan -- find transient private-LAN engines
 """
 from __future__ import annotations
@@ -425,6 +426,20 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to select summary engine")
 
+    @router.get("/speech")
+    async def get_speech(request: Request) -> Any:
+        """The Line's speech models (RECIPE LINE-6): the Engines window's
+        "Phone speech" rows, with each download's progress."""
+        try:
+            _owner(request)
+            from ...services.concierge_service import speech_rows
+
+            return JSONResponse({"rows": await asyncio.to_thread(speech_rows)})
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read the speech models")
+
     @router.post("/download")
     async def post_download(request: Request) -> Any:
         try:
@@ -445,7 +460,11 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
                     context={"status": 400},
                 )
 
-            from ...services.concierge_service import download
+            from ...services.concierge_service import download, download_speech, is_speech_preset
+
+            if is_speech_preset(preset_id):
+                return JSONResponse(download_speech(preset_id), status_code=202)
+
             from ...inference_setup_catalog import (
                 packaged_catalog_envelope_json,
                 verify_catalog_envelope,

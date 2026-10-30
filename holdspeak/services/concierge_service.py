@@ -2749,8 +2749,13 @@ def download(
 ) -> dict[str, Any]:
     """Delegate to the library's existing acquisition (model_library download job).
 
-    Returns the job id + a progress shape the face can poll.
+    Returns the job id + a progress shape the face can poll. A speech model
+    of the Line (``speech_model_preset``, RECIPE LINE-6) is fetched by the
+    Line's own fetch (``holdspeak/line/models.py``) into its model folder;
+    its job id is ``line:<preset id>`` and :func:`speech_rows` reads it.
     """
+    if is_speech_preset(preset_id):
+        return download_speech(preset_id)
     body = {
         "request_id": uuid.uuid4().hex,
         "catalog_id": preset_id,
@@ -2770,4 +2775,33 @@ def download(
             "total": int(acquisition.get("bytes_total") or 0),
         },
         "result": result,
+    }
+
+
+# ---- The Line's speech models (RECIPE LINE-6) --------------------------------
+
+def is_speech_preset(preset_id: str) -> bool:
+    from ..line import models as line_models
+
+    return any(row["id"] == preset_id for row in line_models.presets())
+
+
+def speech_rows() -> list[dict[str, Any]]:
+    """The Engines window's "Phone speech" rows: each model, its licences,
+    its size, and its state on this machine (``ready`` | ``missing`` |
+    ``partial`` | ``downloading`` | ``failed``)."""
+    from ..line import models as line_models
+
+    return line_models.rows()
+
+
+def download_speech(preset_id: str, *, fetch: Any = None) -> dict[str, Any]:
+    from ..line import models as line_models
+
+    row = line_models.start(preset_id, fetch_fn=fetch)
+    return {
+        "jobId": f"line:{preset_id}",
+        "presetId": preset_id,
+        "progress": {"received": int(row.get("received") or 0), "total": int(row.get("total") or row["bytes"])},
+        "row": row,
     }

@@ -77,6 +77,9 @@ dependencies = [
     # "-DGGML_CUDA=on") to choose another backend. The `meeting` and
     # `dictation-llama` extras still name it, so old install commands work.
     "llama-cpp-python>=0.3.34",
+    # RECIPE PH13: APNs speaks HTTP/2 only, so the phone's push needs httpx's
+    # `http2` extra (h2, hpack, hyperframe; all MIT).
+    "httpx[http2]>=0.26",
 ]
 
 [project.optional-dependencies]

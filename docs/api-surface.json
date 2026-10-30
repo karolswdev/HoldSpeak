@@ -1900,6 +1900,16 @@
       ]
     },
     {
+      "path": "/api/concierge/speech",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/concierge/summary-selection",
       "methods": [
         "POST"

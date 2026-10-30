@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 import threading
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Iterator, Optional, Protocol
 
@@ -44,13 +45,9 @@ STT_REPO = "istupakov/parakeet-tdt-0.6b-v2-onnx"
 STT_MODEL = "nemo-parakeet-tdt-0.6b-v2"
 TTS_REPO = "kyutai/pocket-tts-without-voice-cloning"
 TTS_VOICE = "alba"
-#: The models, with their licences (the Line names them where it fetches them).
-MODELS = (
-    {"id": "line-stt", "name": "Phone speech in (Parakeet)", "repo": STT_REPO, "size_mb": 631,
-     "code": "onnx-asr (MIT), onnxruntime (MIT)", "weights": "CC-BY-4.0 (NVIDIA Parakeet TDT 0.6B v2)"},
-    {"id": "line-tts", "name": "Phone voice (Pocket)", "repo": TTS_REPO, "size_mb": 215,
-     "code": "pocket-tts (MIT)", "weights": "CC-BY-4.0 (Kyutai Pocket TTS)"},
-)
+# The models, their pinned files and their licences are the signed
+# catalogue's (``speech_model_preset``, RECIPE LINE-6); ``line/models.py``
+# fetches them into the Line's model folder and says their state.
 #: Modules the Line's process must never load (design §2).
 GPL_MODULES = ("kokoro_onnx", "phonemizer", "espeakng_loader", "faster_whisper", "piper")
 
@@ -130,8 +127,9 @@ class Parakeet:
         options = rt.SessionOptions()
         options.intra_op_num_threads = threads or _threads()
         options.add_session_config_entry("session.intra_op.allow_spinning", "0")
-        self._model = onnx_asr.load_model(STT_MODEL, quantization="int8", providers=["CPUExecutionProvider"],
-                                          sess_options=options)
+        folder = _ready_folder("stt")
+        self._model = onnx_asr.load_model(STT_MODEL, str(folder) if folder else None, quantization="int8",
+                                          providers=["CPUExecutionProvider"], sess_options=options)
         self._lock = threading.Lock()
         # Warm on an utterance-sized input, twice: the first real-sized pass
         # after a short warm-up cost about 200 ms more (measured on this Mac).
@@ -161,8 +159,16 @@ class Pocket:
         from pocket_tts import TTSModel  # MIT
 
         torch.set_num_threads(threads or _threads())
-        self._model = TTSModel.load_model()
-        self._state = self._model.get_state_for_audio_prompt(voice)
+        folder = _ready_folder("tts")
+        local_voice = folder / "languages" / "english" / "embeddings" / f"{voice}.safetensors" if folder else None
+        config = _pocket_config(folder) if folder and local_voice and local_voice.is_file() else None
+        if config is not None and local_voice is not None:
+            # The pinned files in the Line's model folder (RECIPE LINE-6).
+            self._model = TTSModel.load_model(config=config)
+            self._state = self._model.get_state_for_audio_prompt(local_voice)
+        else:
+            self._model = TTSModel.load_model()
+            self._state = self._model.get_state_for_audio_prompt(voice)
         self._rate = int(getattr(self._model, "sample_rate", 24000))
         self._lock = threading.Lock()
         for _ in self.stream("Warm up."):
@@ -181,6 +187,51 @@ class Pocket:
                 yield pcm
                 if stop is not None and stop.is_set():
                     return
+
+
+def _ready_folder(role: str) -> Optional[Path]:
+    """The Line's model folder for ``role`` when its pinned files are verified."""
+    try:
+        from . import models as line_models
+
+        for row in line_models.presets():
+            if row["role"] == role and line_models.ready(row):
+                return line_models.model_dir(row)
+    except Exception as exc:
+        log.info(f"line speech: model folder not read ({exc})")
+    return None
+
+
+def _pocket_config(folder: Path) -> Optional[Path]:
+    """pocket-tts's English config with its Hugging Face paths pointed at the
+    pinned files in ``folder``; None when a path has no local file (the
+    engine then loads as before)."""
+    import re
+
+    try:
+        from pocket_tts.utils.config import CONFIGS_DIR
+
+        text = (Path(CONFIGS_DIR) / "english.yaml").read_text(encoding="utf-8")
+    except Exception as exc:
+        log.info(f"line speech: pocket config not read ({exc})")
+        return None
+    missing: list[str] = []
+
+    def local(match: "re.Match[str]") -> str:
+        path = folder / match.group(1)
+        if not path.is_file():
+            missing.append(match.group(1))
+        return str(path)
+
+    text = re.sub(r"hf://kyutai/pocket-tts-without-voice-cloning/([^@\s]+)@[0-9a-f]+", local, text)
+    # The voice-cloning weights are gated: load the open ones only.
+    text = re.sub(r"(?m)^weights_path: hf://\S+$", f"weights_path: {folder / 'languages/english/model.safetensors'}", text)
+    if missing or "hf://" in text:
+        log.info(f"line speech: pocket config keeps a Hugging Face path ({missing or 'hf://'})")
+        return None
+    out = folder / "pocket-english.yaml"
+    out.write_text(text, encoding="utf-8")
+    return out
 
 
 def say_once(tts: TTS, text: str) -> np.ndarray:

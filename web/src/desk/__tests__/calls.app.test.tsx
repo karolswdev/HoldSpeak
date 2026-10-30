@@ -730,6 +730,31 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     await waitFor(() => expect(calls).toContain(`DELETE /api/phone/devices/${P.status.devices[0].id}`));
   });
 
+  it("the device row says why a push will not go (push_state on the wire); a ready phone says its paired fact", async () => {
+    expect(P.status.devices[0].push_state).toBe("ready");
+    const reasons: Record<string, string> = {
+      no_key: "Push not ready: no Apple push key on the hub",
+      http2_unavailable: "Push not ready: the hub has no HTTP/2",
+      unregistered: "Push not ready: the phone sent no push token",
+    };
+    for (const [state, words] of Object.entries(reasons)) {
+      const device = { ...P.status.devices[0], push_state: state as "no_key" };
+      hub({ "GET /api/settings": phoneOn, "GET /api/phone/status": { ...P.status, devices: [device] } });
+      const { unmount } = render(<PhoneSettingsPane />);
+      const row = await screen.findByTestId("phone-device-row");
+      const push = within(row).getByTestId("phone-device-push");
+      expect(push.textContent).toBe(words);
+      expect(push.getAttribute("data-tone")).toBe("warn");
+      expect(push.getAttribute("title")).toMatch(/Paired \d+ Oct/);
+      unmount();
+    }
+    hub({ "GET /api/settings": phoneOn, "GET /api/phone/status": P.status });
+    render(<PhoneSettingsPane />);
+    const row = await screen.findByTestId("phone-device-row");
+    expect(within(row).queryByTestId("phone-device-push")).toBeNull();
+    expect(row.textContent).toMatch(/Paired \d+ Oct/);
+  });
+
   it("Pair a phone draws the QR from the recorded pair payload in place; a device frame that pairs it closes the sheet", async () => {
     let paired = false;
     hub({
