@@ -2437,11 +2437,12 @@ committing generated docs and line-number test maps; split the tests.
 - **Words (2026-10-30/31): DONE.** CSS closed (#1634); sources at UPPER_DEBT 21 lines, all
   compare keys, ids, initials and acronyms (#1637, #1640, #1643). Left only: caps literals
   that never call `toUpperCase()` (the AgentsCard HOOKS family, the "AGENTS · n" caption).
-- **Watch (vitest under load):** `TodayView.test.tsx` ("That is the day", "DELIGHT slice 2")
-  red once each in two lanes on 2026-10-30; green alone.
+- **Quick check time:** `vitest related` runs all 431 web files on a CSS or shared-API change
+  (6 min); lane VITEST-RELATED in flight. Slow desk vitest = whole-face role-name lookups
+  on big faces with all CSS loaded (#1650): scope the query.
 - **Desk stacking (2026-10-30):** the seed posts only this load's real raises (#1639).
-- **Programs (2026-10-28):** PG15, PG17, PG20 and PG21 in
-  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG13, PG13b, PG14, PG16, PG18 and the race shot
+- **Programs (2026-10-28):** PG15, PG17 and PG21 in
+  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG13, PG13b, PG14, PG16, PG18, PG20 and the race shot
   #1618, PG13 #1620 and PG13b #1621 shipped); his live verdict on the Programs
   window and the Program window.
 
@@ -2607,6 +2608,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1650 — The Settings leave vitest** scopes its lookups (5.4 s → 1.1 s under load); a no-canvas shim ends the jsdom getContext error storm.
+- **#1649 — Programs PG20:** every checkpoint pins the worktree to `refs/holdspeak/checkpoints/<step>/<n>`; a handoff names the ref it continues from; "Start from here" on a checkpoint row (REST + MCP `program.start_from`, ladder-gated for agents).
+- **#1648 — Every web census runs on every quick check** (19 files, ~7 s); screen.css on the shell exceptions; the Phone reach write through the one Calls writer; the calls app press inside act.
+- **#1647 — The Today vitest** waits for the once-per-day flag the effect writes (the two reds of 2026-10-30).
+- **#1646 — STATUS through #1645.**
 - **#1645 — Settings ▸ This Mac: a stopped grant keeps its row with remote access off;** "Filing stopped" and Allow filing stay in the same place (the whole Agents list used to vanish).
 - **#1644 — Programs PG16:** his Skip, a rule's Skip above NOTE and a merge by rule propose a decision record linked to the Program and its PR; the Project drawer's Proposed decisions fold; "Proposed as a decision" on the checkpoint row; never auto-confirmed; a NOTE-rule Skip proposes nothing.
 - **#1643 — The words wave ends at the source:** the Hand sheet and the agents card say their words together; the grant row uses the egress table's words; UPPER_DEBT 56 → 21, none of which draws a word.
