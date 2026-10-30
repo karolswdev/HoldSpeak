@@ -250,7 +250,9 @@ def _assignment_board(page: Any) -> Any:
 
 
 def _found_board(page: Any) -> Any:
-    return page.get_by_test_id("runson-found-engines").get_by_test_id("switchboard")
+    """Engines grammar (2026-10-30): Found on this Mac is a ListDay of the
+    Engines list (no switchboard catalog); its rows are kit ListRows."""
+    return page.get_by_test_id("runson-found")
 
 
 def _open_runs_on(page: Any) -> None:
@@ -261,6 +263,11 @@ def _open_runs_on(page: Any) -> None:
     page.reload(wait_until="load")
     _normal_chair(page)
     page.get_by_test_id("runson-root").wait_for(timeout=15_000)
+    # Engines grammar (2026-10-30): Builder tools never swap the face; the
+    # parked switchboard these tests drive sits in the closed Wiring fold.
+    wiring = page.locator(".runson-wiring")
+    wiring.wait_for(state="attached", timeout=15_000)
+    wiring.evaluate("d => { d.open = true; }")
     _assignment_board(page).wait_for(timeout=15_000)
 
 
@@ -320,7 +327,7 @@ def _seed(page: Any, local_port: int) -> tuple[tuple[str, int], tuple[str, int]]
 
 
 def _no_raw_buttons(page: Any) -> None:
-    raw = page.get_by_test_id("runson-root").locator("button:not(.btn):not(.gadget-chip-egress)")
+    raw = page.get_by_test_id("runson-root").locator("button:not(.btn):not(.btn--chrome):not(.gadget-chip-egress)")
     assert raw.count() == 0, f"raw <button>: {raw.count()}"
 
 
@@ -460,7 +467,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
             if width == 1440:
                 _ensure_wide_runs_on(page)
             # The engines fill in once detection lands.
-            _found_board(page).get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
+            _found_board(page).wait_for(timeout=15_000)
             assert page.locator('[role="dialog"]').count() == 0
             _no_raw_buttons(page)
             fact = page.get_by_test_id("runson-fact").inner_text()
@@ -537,7 +544,8 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                     "() => /^Changed at .* · Meeting summaries → /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                 )
                 page.get_by_test_id("runson-undo").wait_for()
-                assert "192.168.77.43" in page.get_by_test_id("runson-egress").inner_text()
+                # UX-CANON A.9: no host chip on the status bar.
+                assert page.get_by_test_id("runson-egress").count() == 0
                 # The meeting queue reads only the exact capability row: it is written too.
                 tasks = _api(page, "GET", "/api/inference/assignments", token=TOKEN)["task_overrides"]
                 summaries = next(t for t in tasks if t["id"] == "meeting.deferred_analysis")
@@ -552,7 +560,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 _shot(page, "c3-try-it", width)
 
                 # FOUND → Use it: the engine joins the column with no wire.
-                found = _found_board(page).locator(".switchboard-engine.is-found")
+                found = _found_board(page).locator(".kit-listrow").first
                 found.wait_for()
                 _shot(page, "c4-found", width)
                 with page.expect_response(lambda r: r.url.endswith("/define-endpoint")) as used:
@@ -568,15 +576,17 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 downloads = page.locator(".runson-downloads")
                 if downloads.get_attribute("open") is None:
                     downloads.locator("summary").click()
-                plate = page.locator("[data-testid='switchboard-engine-preset:preset_glass_vision']")
+                # Engines grammar: a row of the fold; its own fold names the host.
+                plate = page.locator("[data-testid='runson-engine-preset:preset_glass_vision']")
                 plate.wait_for(state="visible")
-                assert "huggingface.co" in plate.inner_text()
+                plate.locator(".kit-listrow-main").click()
+                assert "huggingface.co" in plate.get_by_test_id("runson-fold-goes").inner_text()
                 assert "THIS DEVICE" not in plate.inner_text().upper()
                 plate.get_by_role("button", name="Download").click()
-                bar = page.get_by_test_id("switchboard-bar-preset:preset_glass_vision")
-                bar.wait_for(timeout=10_000)
+                # In flight it is a row of the Engines list with its bar.
                 page.wait_for_function(
-                    "() => Number(document.querySelector(\"[data-testid='switchboard-bar-preset:preset_glass_vision']\")?.getAttribute('aria-valuenow')) >= 40"
+                    "() => parseFloat(document.querySelector(\"[data-testid='runson-engine-preset:preset_glass_vision'] .kit-listrow-progress\")?.style.width || '0') >= 40",
+                    timeout=10_000,
                 )
                 _shot(page, "c6-download-mid-bar", width)
                 ticks["hold"] = 0
@@ -671,7 +681,7 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
             lan, local = _seed(page, fakes[2].server_address[1])
             _open_runs_on(page)
             _ensure_wide_runs_on(page)
-            _found_board(page).get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
+            _found_board(page).wait_for(timeout=15_000)
             receipt = "() => document.querySelector('[data-testid=runson-receipt]')?.textContent || ''"
 
             if case == "stale_confirmation":
@@ -892,7 +902,7 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
 
             # Detection found no new LAN row. The row below must come from the
             # explicit scanner request and its real model response.
-            assert page.get_by_test_id("runson-found-engines").get_by_test_id(f"switchboard-engine-{expected_key}").count() == 0
+            assert page.get_by_test_id(f"runson-engine-{expected_key}").count() == 0
             with page.expect_response(
                 lambda response: response.url.endswith("/api/concierge/discover-lan"),
                 timeout=30_000,
@@ -901,10 +911,13 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
             discovery_response = discovery.value
             assert discovery_response.ok, discovery_response.text()
 
-            found = _found_board(page).get_by_test_id(f"switchboard-engine-{expected_key}")
+            found = _found_board(page).get_by_test_id(f"runson-engine-{expected_key}")
             found.wait_for(timeout=30_000)
             found_text = found.inner_text()
             assert expected_model in found_text, found_text
+            # UX-CANON A.9: the address is a fact row of the row's fold.
+            found.locator(".kit-listrow-main").click()
+            found_text = found.inner_text()
             assert "192.168.77.44:8080" in found_text, found_text
             assert page.get_by_test_id("runson-receipt").inner_text() == "Found on the LAN"
             assert expected_url in probe_urls

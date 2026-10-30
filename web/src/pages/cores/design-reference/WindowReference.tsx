@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   FootSlotContext,
-  EgressChip,
   ObjectList,
   ReadingDocument,
   StatusBar,
@@ -17,9 +16,10 @@ import {
 import { SYSTEM } from "../../../desk/systemSprites";
 import { DotWord } from "../../../desk/surface/kit";
 import { spriteUrl } from "../../../desk/sprites";
-import { PrefSection } from "../settingsWindow";
+import { ListDay, ListRow, ListView } from "../../../desk/surface/objects/ListView";
+import { Token } from "../../../desk/surface/Token";
 import { NewDecisionForm } from "../NewDecisionCore";
-// The list + inspector shape is the Engines window's own composition.
+// The two-lists shape is the Engines window's own composition.
 import "../../../features/runson/runson.css";
 
 export type WindowPreset = "populated" | "empty" | "busy" | "failed" | "reader" | "inspector" | "decision-new" | "decision-filled";
@@ -156,46 +156,32 @@ export function WindowReference({ preset }: { preset: WindowPreset }) {
   return <ListWindow preset={preset} />;
 }
 
-/* The list + inspector shape (window grammar, the Engines window): a dense
- * list, and under it the selected object's label/control grid. Fixture
- * engines and jobs only; a choice changes this specimen and nothing else. */
+/* The two-lists shape (Engines grammar, 2026-10-30, canvas direction B):
+ * the jobs beside the engines; a row names its partner and a selection
+ * lights its partners in the other list; an engine opens its facts in
+ * place. Fixture engines and jobs only; a choice changes this specimen and
+ * nothing else. */
 const SPEC_ENGINES = [
-  { id: "e-1", name: "qwen3.8 27B", where: { word: "LAN", tone: "idle" as const }, state: { label: "Ready", tone: "ok" as const }, egress: "studio.local · LAN" },
-  { id: "e-2", name: "Claude Code", where: { word: "Cloud", tone: "ask" as const }, state: { label: "Ready", tone: "ok" as const }, egress: "Anthropic" },
-  { id: "e-3", name: "whisper-base-mlx", where: { word: "This Mac", tone: "ok" as const }, state: { label: "Downloading 43 %", tone: "info" as const }, egress: "" },
+  { id: "e-1", name: "qwen3.8 27B", where: "Your network", state: { word: "Ready", tone: "ok" as const }, address: "http://studio.local:8080/v1" },
+  { id: "e-2", name: "Claude Code", where: "Agent on this Mac · Anthropic", state: { word: "Ready", tone: "ok" as const }, address: "" },
+  { id: "e-3", name: "whisper-base-mlx", where: "This Mac", state: { word: "Downloading 43 %", tone: "info" as const, live: true }, address: "", progress: 43 },
 ];
 const SPEC_JOBS = ["Everything else", "Meeting summaries", "Answers (Ask)", "Automations"];
 const NOT_SET = "Not assigned";
 
 function InspectorWindow() {
-  const [selected, setSelected] = useState("e-1");
+  const [selected, setSelected] = useState<string | null>("e-1");
+  const [job, setJob] = useState<string | null>(null);
   const [did, setDid] = useState<string | null>(null);
-  const [sort, setSort] = useState<ObjectListSort>({ key: "order", dir: "asc" });
   const [runs, setRuns] = useState<Record<string, string>>({ "Everything else": "e-1", "Meeting summaries": "e-1", "Answers (Ask)": "e-2" });
   const nameOf = (id: string | undefined) => SPEC_ENGINES.find((engine) => engine.id === id)?.name ?? NOT_SET;
-  const rows: ObjectListRow[] = SPEC_ENGINES.map((engine, index) => {
-    const used = SPEC_JOBS.filter((job) => runs[job] === engine.id);
-    return {
-      id: engine.id,
-      kind: "model",
-      name: engine.name,
-      sprite: spriteUrl("model", engine.id, "rest", null, 20),
-      state: engine.state,
-      cells: {
-        where: <DotWord tone={engine.where.tone}>{engine.where.word}</DotWord>,
-        used: used.length ? <span className="runson-used">{used.join(", ")}</span> : <DotWord>{NOT_SET}</DotWord>,
-      },
-      sortValues: { order: index, used: used.join(", ") },
-    };
-  });
-  const pick = SPEC_ENGINES.find((engine) => engine.id === selected) ?? SPEC_ENGINES[0];
-  const cycle = (job: string) => {
+  const cycle = (name: string) => {
     const order = [undefined, ...SPEC_ENGINES.map((engine) => engine.id)];
-    const next = order[(order.indexOf(runs[job]) + 1) % order.length];
+    const next = order[(order.indexOf(runs[name]) + 1) % order.length];
     setRuns((current) => {
       const copy = { ...current };
-      if (next) copy[job] = next;
-      else delete copy[job];
+      if (next) copy[name] = next;
+      else delete copy[name];
       return copy;
     });
   };
@@ -213,39 +199,60 @@ function InspectorWindow() {
           </Button>
         </Toolbar>
         <div className="runson-body">
-          <div className="runson-list">
-            <ObjectList
-              label="Specimen engines"
-              density="dense"
-              rows={rows}
-              columns={[
-                { key: "name", word: "Engine" },
-                { key: "where", word: "Where", track: "112px" },
-                { key: "used", word: "Used for", track: "minmax(0, 1fr)" },
-                { key: "state", word: "State", track: "152px" },
-              ]}
-              sort={sort}
-              onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
-              selectedId={selected}
-              onSelect={setSelected}
-            />
-          </div>
-          <div className="runson-inspector">
-            <PrefSection id="reference-inspector" label="What runs where">
-              <ul className="runson-what-list">
-                {SPEC_JOBS.map((job) => (
-                  <li key={job} className="runson-what-row" data-runs-selected={runs[job] === pick.id ? "" : undefined}>
-                    <span className="runson-what-job">{job}</span>
-                    <span className="runson-what-engine">
-                      <Button dense variant="secondary" className="runson-what-pick" aria-label={`${job}: ${nameOf(runs[job])}`} onClick={() => cycle(job)}>
-                        {runs[job] ? <span className="runson-what-name">{nameOf(runs[job])}</span> : <DotWord className="runson-what-name">{NOT_SET}</DotWord>}
-                        <span className="runson-what-caret" aria-hidden="true">▾</span>
-                      </Button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </PrefSection>
+          <div className="runson-split" data-jobs="">
+            <div className="runson-pane runson-pane-jobs">
+              <ListView label="Specimen jobs">
+                <ListDay label="What HoldSpeak does">
+                  {SPEC_JOBS.map((name) => (
+                    <ListRow
+                      key={name}
+                      name={name}
+                      onOpen={() => { setJob(job === name ? null : name); setSelected(null); }}
+                      openLabel={name}
+                      selected={job === name}
+                      lit={Boolean(selected && runs[name] === selected)}
+                      verbs={
+                        <Button dense variant="secondary" className="runson-what-pick" aria-label={`${name}: ${nameOf(runs[name])}`} onClick={() => cycle(name)}>
+                          <span className="runson-what-name">{nameOf(runs[name])}</span>
+                          <span className="runson-what-caret" aria-hidden="true">▾</span>
+                        </Button>
+                      }
+                    />
+                  ))}
+                </ListDay>
+              </ListView>
+            </div>
+            <div className="runson-pane runson-pane-engines">
+              <ListView label="Specimen engines">
+                <ListDay label="Engines">
+                  {SPEC_ENGINES.map((engine) => {
+                    const used = SPEC_JOBS.filter((name) => runs[name] === engine.id);
+                    const open = selected === engine.id;
+                    return (
+                      <ListRow
+                        key={engine.id}
+                        glyph={spriteUrl("model", engine.id, "rest", null, 20)}
+                        name={engine.name}
+                        meta={engine.where}
+                        state={engine.state}
+                        progress={engine.progress ?? null}
+                        onOpen={() => { setSelected(open ? null : engine.id); setJob(null); }}
+                        openLabel={engine.name}
+                        expanded={open}
+                        selected={open}
+                        lit={Boolean(job && runs[job] === engine.id)}
+                        fold={open ? (
+                          <dl className="runson-facts">
+                            <div className="runson-fact-row"><dt>{engine.address ? "Address" : "Where"}</dt><dd>{engine.address ? <Token code>{engine.address}</Token> : engine.where}</dd></div>
+                            <div className="runson-fact-row"><dt>Used for</dt><dd>{used.length ? used.join(", ") : <DotWord>{NOT_SET}</DotWord>}</dd></div>
+                          </dl>
+                        ) : undefined}
+                      />
+                    );
+                  })}
+                </ListDay>
+              </ListView>
+            </div>
           </div>
         </div>
         <FootSlotContext.Provider value={null}>
@@ -255,8 +262,6 @@ function InspectorWindow() {
               { key: "checked", text: "Checked 23:11" },
               did ? { key: "did", text: <span data-testid="reference-window-opened">Pressed locally · {did}</span> } : null,
             ]}
-            verbs={<Button dense variant="secondary" onClick={() => setDid(`Check ${pick.name}`)}><ToolGlyph kind="retry" />Check</Button>}
-            egress={pick.egress ? <EgressChip label={pick.egress} scope={pick.where.word === "Cloud" ? "cloud" : "local"} /> : undefined}
           />
         </FootSlotContext.Provider>
       </div>

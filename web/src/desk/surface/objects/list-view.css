@@ -136,3 +136,39 @@
   border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
 }
 .kit-listrows > li:not(.kit-listrow) .surface-state { padding: 8px 0; }
+
+/* Engines (2026-10-30): the selected row is the vivid blue plate with paper
+   ink; a partner of the selection in another list wears a blue edge (the
+   job lights its engine). A row's own fold (`li.kit-listfold`) sits under it
+   on the field. A download or a run draws a 2 px bar along the row's foot. */
+.kit-listrow[data-selected] { background: var(--wb-sel-vivid, var(--wb-sel)); }
+.kit-listrow[data-selected][data-open]:hover { background: var(--wb-sel-vivid, var(--wb-sel)); }
+.kit-listrow[data-selected] .kit-listrow-main,
+.kit-listrow[data-selected] .kit-listrow-name,
+.kit-listrow[data-selected] .kit-listrow-meta,
+.kit-listrow[data-selected] .kit-listrow-state .kit-dotword { color: var(--wb-paper, #fafbfc); }
+.kit-listrow[data-lit] {
+  background: color-mix(in srgb, var(--wb-sel-vivid, var(--wb-sel)) 9%, var(--wb-paper));
+  box-shadow: inset 3px 0 0 var(--wb-sel-vivid, var(--wb-sel));
+}
+.kit-listrow-progress {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--lamp-info);
+  pointer-events: none;
+}
+.kit-listrow[data-folded] { flex-wrap: wrap; padding-bottom: 0; }
+.kit-listrow-fold {
+  flex: 1 0 100%;
+  margin-right: -12px;
+  min-width: 0;
+  padding: 4px 12px 10px 42px;
+  background: color-mix(in srgb, var(--wb-field) 55%, var(--wb-paper));
+  border-top: 1px solid var(--wb-rule-soft);
+  color: var(--wb-ink);
+}
+@container surface (max-width: 520px) {
+  .kit-listrow-fold { padding-left: 12px; }
+}

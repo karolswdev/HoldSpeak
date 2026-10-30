@@ -54,7 +54,7 @@ export function ListRows({ children }: { children: ReactNode }) {
   return <ul className="kit-listrows">{children}</ul>;
 }
 
-export type ListRowState = { word: string; tone?: ObjectTone | "idle"; testId?: string };
+export type ListRowState = { word: string; tone?: ObjectTone | "idle"; testId?: string; live?: boolean };
 
 export function ListRow({
   glyph,
@@ -67,6 +67,11 @@ export function ListRow({
   openLabel,
   openTestId,
   nameTestId,
+  selected,
+  lit,
+  expanded,
+  progress,
+  fold,
   "data-testid": testId,
 }: {
   /** A 20 px sprite URL, or a node. */
@@ -82,6 +87,17 @@ export function ListRow({
   openLabel?: string;
   openTestId?: string;
   nameTestId?: string;
+  /** The row is the selection (the vivid blue plate). */
+  selected?: boolean;
+  /** The row is a partner of the selection in another list (a blue edge). */
+  lit?: boolean;
+  /** The row's own fold is open (`aria-expanded` on the open Button). */
+  expanded?: boolean;
+  /** A download or a run in the row: 0–100, a 2 px bar along its foot. */
+  progress?: number | null;
+  /** The row's own fold, open under it inside the same item (an engine's
+   *  facts, a job's choices). The row keeps its 32 px line above it. */
+  fold?: ReactNode;
   "data-testid"?: string;
 }) {
   const lead = glyph == null ? null : typeof glyph === "string" ? (
@@ -99,9 +115,24 @@ export function ListRow({
     </>
   );
   return (
-    <li className="kit-listrow" data-open={onOpen ? "" : undefined} data-testid={testId}>
+    <li
+      className="kit-listrow"
+      data-open={onOpen ? "" : undefined}
+      data-selected={selected ? "" : undefined}
+      data-lit={lit ? "" : undefined}
+      data-folded={fold ? "" : undefined}
+      aria-current={selected ? "true" : undefined}
+      data-testid={testId}
+    >
       {onOpen ? (
-        <Button variant="chrome" className="kit-listrow-main" aria-label={openLabel} data-testid={openTestId} onClick={onOpen}>
+        <Button
+          variant="chrome"
+          className="kit-listrow-main"
+          aria-label={openLabel}
+          aria-expanded={expanded}
+          data-testid={openTestId}
+          onClick={onOpen}
+        >
           {body}
         </Button>
       ) : (
@@ -109,11 +140,15 @@ export function ListRow({
       )}
       {state ? (
         <span className="kit-listrow-state">
-          <DotWord tone={state.tone} data-testid={state.testId}>{state.word}</DotWord>
+          <DotWord tone={state.tone} live={state.live} data-testid={state.testId}>{state.word}</DotWord>
         </span>
       ) : null}
       {age ? <span className="kit-listrow-age">{age}</span> : null}
       {verbs ? <span className="kit-listrow-verbs">{verbs}</span> : null}
+      {progress != null ? (
+        <span className="kit-listrow-progress" aria-hidden="true" style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
+      ) : null}
+      {fold ? <div className="kit-listrow-fold">{fold}</div> : null}
     </li>
   );
 }

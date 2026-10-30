@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
-import { ListDay, ListRow, ListView } from "../../desk/surface/objects/ListView";
+import { ListDay, ListRow } from "../../desk/surface/objects/ListView";
 import type { ObjectTone } from "../../desk/surface/objects/kinds";
 import { spriteUrl } from "../../desk/sprites";
 import { stateWords } from "../../desk/surface/words";
@@ -103,35 +103,39 @@ export function useSpeechModels() {
 
 export type SpeechModels = ReturnType<typeof useSpeechModels>;
 
-export function PhoneSpeech({ models }: { models: SpeechModels }) {
+/** Engines grammar (2026-10-30): the Phone speech group as one ListDay of
+ *  the Engines window's own list. */
+export function PhoneSpeechDay({ models }: { models: SpeechModels }) {
   const { rows, download, pressed } = models;
   if (!rows?.length) return null;
   return (
-    <ListView label="Phone speech" className="runson-phone-speech" data-testid="runson-phone-speech">
-      <ListDay label="Phone speech">
-        {rows.map((row) => {
-          const state = speechStateWord(row);
-          const canDownload = row.state === "missing" || row.state === "partial" || row.state === "failed";
-          return (
-            <ListRow
-              key={row.id}
-              data-testid={`runson-speech-${row.id}`}
-              glyph={spriteUrl("model", row.id, "rest", null, 20)}
-              name={row.label}
-              nameTestId={`runson-speech-name-${row.role}`}
-              meta={<span title={row.attribution}>{`${formatBytes(row.bytes)} · ${licenceWords(row)}`}</span>}
-              state={{ word: state.label, tone: state.tone, testId: `runson-speech-state-${row.role}` }}
-              verbs={canDownload ? (
-                <Button dense variant="secondary" loading={pressed === row.id} disabled={Boolean(pressed)}
-                  title={`Downloads ${formatBytes(row.bytes)} from ${row.host}`}
-                  data-testid={`runson-speech-download-${row.role}`} onClick={() => void download(row.id)}>
-                  {row.state === "failed" ? "Try again" : "Download"}
-                </Button>
-              ) : null}
-            />
-          );
-        })}
-      </ListDay>
-    </ListView>
+    <ListDay label="Phone speech" data-testid="runson-phone-speech">
+      {rows.map((row) => {
+        const state = speechStateWord(row);
+        const canDownload = row.state === "missing" || row.state === "partial" || row.state === "failed";
+        const pct = row.state === "downloading" && (row.total || row.bytes)
+          ? Math.min(100, ((row.received ?? 0) * 100) / (row.total || row.bytes))
+          : null;
+        return (
+          <ListRow
+            key={row.id}
+            data-testid={`runson-speech-${row.id}`}
+            glyph={spriteUrl("model", row.id, "rest", null, 20)}
+            name={row.label}
+            nameTestId={`runson-speech-name-${row.role}`}
+            meta={<span title={row.attribution}>{`${formatBytes(row.bytes)} · ${licenceWords(row)}`}</span>}
+            state={{ word: state.label, tone: state.tone, testId: `runson-speech-state-${row.role}`, live: row.state === "downloading" }}
+            progress={pct}
+            verbs={canDownload ? (
+              <Button dense variant="secondary" loading={pressed === row.id} disabled={Boolean(pressed)}
+                title={`Downloads ${formatBytes(row.bytes)} from ${row.host}`}
+                data-testid={`runson-speech-download-${row.role}`} onClick={() => void download(row.id)}>
+                {row.state === "failed" ? "Try again" : "Download"}
+              </Button>
+            ) : null}
+          />
+        );
+      })}
+    </ListDay>
   );
 }

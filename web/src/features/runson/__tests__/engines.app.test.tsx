@@ -28,6 +28,7 @@ vi.mock("../../../desk/firstrun/SpeechSetup", () => ({
 vi.mock("../../../desk/shell", () => ({ openSurfaceOr: vi.fn() }));
 
 import { RunsOnCore } from "../RunsOnCore";
+import { useBuilderTools } from "../../../desk/builderTools";
 
 type Step = { name: string; gets: Gets; post?: string; body?: Record<string, unknown>; answer?: unknown };
 const STEPS = recorded.claude.steps as Step[];
@@ -59,16 +60,19 @@ function width(px: number) {
   });
 }
 
-// Window grammar (2026-10-24): an engine is a row of the dense engine list;
-// the selected row's verbs and egress chip are in the status bar.
+// Engines grammar (2026-10-30, canvas direction B): an engine is a row of
+// the Engines ListView; a press opens its fold in place, where its facts
+// (where the prompt goes, as words: no host chip on a row, UX-CANON A.9)
+// and its verbs sit. The status bar carries no egress chip.
 const ROW = "runson-engine-agent-claude";
 const status = () => document.querySelector(".kit-statusbar") as HTMLElement;
-/** Select one engine row (a press on its name). */
+/** Open one engine row (a press on its name); its fold opens under it. */
 function pick(testId: string) {
   const row = screen.getByTestId(testId);
-  fireEvent.click(row.querySelector(".object-list-open") as HTMLElement);
+  fireEvent.click(row.querySelector(".kit-listrow-main") as HTMLElement);
   return row;
 }
+const goes = (row: HTMLElement) => within(row).getByTestId("runson-fold-goes").querySelector("dd")?.textContent;
 
 beforeEach(() => {
   vi.mocked(apiFetch).mockReset();
@@ -86,16 +90,17 @@ describe("Engines — Found on this Mac (Betterment E2)", () => {
     const found = await screen.findByTestId("runson-found-engines");
     expect(found.textContent).toBe("1 found on this Mac");
     const plate = within(screen.getByTestId("runson-engines")).getByTestId("runson-engine-agent:found:claude");
-    expect(plate.querySelector(".object-list-name-word")?.textContent).toBe("Claude Code · signed in");
+    expect(plate.querySelector(".kit-listrow-name")?.textContent).toBe("Claude Code · signed in");
     expect(within(plate).getByTestId("runson-engine-state-agent:found:claude").textContent).toBe("Found");
-    expect(within(plate).getByText("Cloud")).toBeTruthy();
-    // The selected row's egress chip and its verb are in the status bar.
+    expect(plate.querySelector(".kit-listrow-meta")?.textContent).toBe("Agent on this Mac · Anthropic");
+    // The found row carries its one verb; its fold says where the prompt goes.
     pick("runson-engine-agent:found:claude");
-    expect(plate.getAttribute("aria-selected")).toBe("true");
-    expect(within(status()).getByText("Anthropic")).toBeTruthy();
+    expect(plate.hasAttribute("data-selected")).toBe(true);
+    expect(goes(plate)).toBe("Anthropic");
+    expect(within(status()).queryByText("Anthropic")).toBeNull();
 
     await act(async () => {
-      fireEvent.click(within(status()).getByRole("button", { name: "Add" }));
+      fireEvent.click(within(plate).getByRole("button", { name: "Add" }));
     });
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({ preset: "claude", profile_id: "agent-claude", expected_profile_revision: 0 });
@@ -104,9 +109,9 @@ describe("Engines — Found on this Mac (Betterment E2)", () => {
     await waitFor(() => expect(screen.queryByTestId("runson-found-engines")).toBeNull());
     const engine = await within(screen.getByTestId("runson-engines")).findByTestId(ROW);
     pick(ROW);
-    expect(engine.querySelector(".object-list-name-word")?.textContent).toBe("Claude Code");
+    expect(engine.querySelector(".kit-listrow-name")?.textContent).toBe("Claude Code");
     expect(within(engine).getByTestId("runson-engine-state-agent-claude").textContent).toBe("Ready");
-    expect(within(status()).getByText("Anthropic")).toBeTruthy();
+    expect(goes(engine)).toBe("Anthropic");
     expect(engine.textContent).not.toContain("Not signed in");
     expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Added at \d\d:\d\d · Claude Code$/);
   });
@@ -153,16 +158,16 @@ describe("Engines — pi on his LAN model (Betterment E7)", () => {
     render(<RunsOnCore />);
     await screen.findByTestId("runson-found-engines");
     const plate = pick("runson-engine-agent:found:pi");
-    // pi's own config sends its model to 192.168.1.43: a LAN chip, never a vendor's cloud.
-    expect(within(plate).getByText("LAN")).toBeTruthy();
-    expect(within(status()).getByText("192.168.1.43 · LAN")).toBeTruthy();
+    // pi's own config sends its model to 192.168.1.43: his network, never a vendor's cloud.
+    expect(plate.querySelector(".kit-listrow-meta")?.textContent).toBe("Agent on this Mac · your network");
+    expect(goes(plate)).toBe("192.168.1.43 · your network");
     await act(async () => {
-      fireEvent.click(within(status()).getByRole("button", { name: "Add" }));
+      fireEvent.click(within(plate).getByRole("button", { name: "Add" }));
     });
     expect(sent[0]).toMatchObject({ preset: "pi" });
     await within(screen.getByTestId("runson-engines")).findByTestId("runson-engine-agent-pi");
-    pick("runson-engine-agent-pi");
-    expect(within(status()).getByText("192.168.1.43 · LAN")).toBeTruthy();
+    const added = pick("runson-engine-agent-pi");
+    expect(goes(added)).toBe("192.168.1.43 · your network");
   });
 });
 
@@ -172,8 +177,7 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
     const sent = hub(step("spent").gets, { limit: step("limit") });
     render(<RunsOnCore />);
     await screen.findByTestId(ROW);
-    pick(ROW);
-    fireEvent.click(within(status()).getByRole("button", { name: "Spend" }));
+    fireEvent.click(within(pick(ROW)).getByRole("button", { name: "Spend" }));
 
     const detail = screen.getByTestId("runson-inspector-spend-agent-claude");
     const field = within(detail).getByLabelText("Spend limit per run") as HTMLInputElement;
@@ -203,8 +207,7 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
     const sent = hub(step("spent").gets);
     render(<RunsOnCore />);
     await screen.findByTestId(ROW);
-    pick(ROW);
-    fireEvent.click(within(status()).getByRole("button", { name: "Spend" }));
+    fireEvent.click(within(pick(ROW)).getByRole("button", { name: "Spend" }));
     const engine = screen.getByTestId("runson-inspector-spend-agent-claude");
     fireEvent.change(within(engine).getByLabelText("Spend limit per run"), { target: { value: "0" } });
     fireEvent.click(within(engine).getByRole("button", { name: "Save" }));
@@ -217,9 +220,9 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
     hub(recorded.codex.gets as Gets);
     render(<RunsOnCore />);
     await screen.findByTestId("runson-engine-agent-codex");
-    pick("runson-engine-agent-codex");
-    expect(within(status()).getByText("Openai")).toBeTruthy();
-    fireEvent.click(within(status()).getByRole("button", { name: "Spend" }));
+    const codex = pick("runson-engine-agent-codex");
+    expect(goes(codex)).toBe("OpenAI");
+    fireEvent.click(within(codex).getByRole("button", { name: "Spend" }));
     const engine = screen.getByTestId("runson-inspector-spend-agent-codex");
     expect(within(engine).queryByLabelText("Spend limit per run")).toBeNull();
     expect(within(engine).getByTestId("runson-agent-no-limit-agent-codex").textContent).toBe("No spend limit in Codex");
@@ -536,8 +539,45 @@ describe("Engines — What runs where (Betterment E5)", () => {
     });
     expect(sent[1].json).toMatchObject({ scope: { kind: "capability", capability_id: "ask.answer" }, entries: [{ profile_id: "agent-claude", profile_revision: 1 }] });
     await waitFor(() => expect(within(whatRow("answers")).getByTestId("runson-what-pick-answers").textContent).toContain("Claude Code"));
-    expect(within(whatRow("answers")).getByText("Anthropic")).toBeTruthy();
+    // No host chip on a job row (UX-CANON A.9): the engine's fold names it.
+    expect(within(whatRow("answers")).queryByText("Anthropic")).toBeNull();
+    expect(whatRow("answers").querySelector(".gadget-chip-egress")).toBeNull();
     expect(screen.getByTestId("runson-undo")).toBeTruthy();
+  });
+
+  it("a job pressed lights the engine it runs on; an engine opened lights its jobs (canvas B)", async () => {
+    width(1440);
+    whatHub();
+    render(<RunsOnCore />);
+    await screen.findByTestId("runson-what");
+    fireEvent.click(await within(whatRow("answers")).findByTestId("runson-what-pick-answers"));
+    await act(async () => {
+      fireEvent.click(within(whatRow("answers")).getByTestId("runson-what-option-answers-agent-claude"));
+    });
+    await waitFor(() => expect(within(whatRow("answers")).getByTestId("runson-what-pick-answers").textContent).toContain("Claude Code"));
+    fireEvent.click(screen.getByTestId("runson-what-open-answers"));
+    expect(whatRow("answers").hasAttribute("data-selected")).toBe(true);
+    expect(screen.getByTestId("runson-engine-agent-claude").hasAttribute("data-lit")).toBe(true);
+    const claude = pick("runson-engine-agent-claude");
+    expect(claude.hasAttribute("data-selected")).toBe(true);
+    expect(whatRow("answers").hasAttribute("data-lit")).toBe(true);
+    expect(within(claude).getByTestId("runson-fold-used").textContent).toContain("Answers (Ask)");
+  });
+
+  it("Builder tools never swap the face: the lists stay, the switchboard folds away under them", async () => {
+    width(1440);
+    useBuilderTools.getState().setOn(true);
+    try {
+      whatHub();
+      render(<RunsOnCore />);
+      await screen.findByTestId("runson-what");
+      expect(screen.getByTestId("runson-engines")).toBeTruthy();
+      const wiring = document.querySelector(".runson-wiring") as HTMLDetailsElement;
+      expect(wiring.tagName).toBe("DETAILS");
+      expect(wiring.open).toBe(false);
+    } finally {
+      useBuilderTools.getState().setOn(false);
+    }
   });
 
   it("Speech to text lists no agent and no chat server; Everything else lists no speech engine", async () => {

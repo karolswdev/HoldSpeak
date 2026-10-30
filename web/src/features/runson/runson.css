@@ -260,100 +260,18 @@
   background: var(--wb-paper);
 }
 .runson-body > .runson-choice { padding: 12px 16px; border-bottom: 1px solid var(--wb-rule-soft); }
-.runson-list { flex: none; min-width: 0; border-bottom: 1px solid var(--wb-rule-soft); }
-.runson-list > .object-list { max-height: none; }
-.runson-used {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .runson-quiet { font: 400 12px / 1.4 var(--font-sans); color: var(--wb-muted); overflow-wrap: anywhere; }
 .runson-empty { flex: none; display: grid; place-items: center; min-height: 220px; padding: 24px 16px; }
 .runson-empty .surface-state-sprite { width: 64px; height: 64px; image-rendering: pixelated; }
 .runson-empty .surface-state { font: 500 14px / 1.4 var(--font-sans); color: var(--wb-ink); }
-.runson-inspector { flex: none; min-width: 0; padding: 14px 16px 16px; }
-.runson-inspector + .runson-inspector { padding-top: 0; }
-.runson-inspector .settings-page-section { min-width: 0; }
-/* W1-TRUTH: the inspector follows the selected engine: name, state, model id. */
-.runson-inspector-head {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
-  min-width: 0; margin: 0 0 12px;
-}
-.runson-inspector-name { font: 600 14px / 1.3 var(--font-sans); color: var(--wb-ink); overflow-wrap: anywhere; }
-.runson-inspector-head .kit-dotword { font-size: 12px; }
-.runson-inspector-meta { font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); overflow-wrap: anywhere; }
-.runson-inspector .settings-page-section-title {
-  margin: 0 0 4px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--wb-rule-soft);
-  font: 600 12px / 1.3 var(--font-display, var(--font-sans));
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--wb-ink);
-}
-.runson-inspector .settings-page-section-body { display: flex; flex-direction: column; gap: 0; min-width: 0; }
-.runson-body > .runson-downloads { margin: 0 16px 16px; }
 
-/* What runs where: one row for each job: its name, then its chooser (a
-   press unfolds the choices in place, no modal), where the prompt goes and
-   Try it; the answer sits under the row. */
-.runson-what { display: flex; flex-direction: column; min-width: 0; }
-.runson-what-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; min-width: 0; }
-.runson-what-row {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
-  align-items: center;
-  gap: 4px 16px;
-  min-height: 40px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--wb-rule-soft);
-  min-width: 0;
-  transition: background-color 140ms var(--desk-ease, ease);
-}
-.runson-what-row:last-child { border-bottom: 0; }
-.runson-what-job { font: 400 13px / 1.4 var(--font-sans); color: var(--wb-ink); min-width: 0; overflow-wrap: anywhere; }
-.runson-what-engine { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
-.runson-what-pick { max-width: 100%; min-width: 0; display: inline-flex; align-items: center; gap: 8px; }
-.runson-what-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.runson-what-caret { color: var(--wb-muted); font-size: 12px; }
-/* The selected engine runs this job: its name in the accent ink. */
-.runson-what-row[data-runs-selected] .runson-what-job { font-weight: 600; }
-.runson-what-row[data-runs-selected] .runson-what-name { color: var(--wb-info-ink); font-weight: 600; }
-.runson-what-options,
-.runson-what-result { grid-column: 2 / -1; }
-.runson-what-options {
-  margin: 0 0 4px;
-  padding: 4px 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.runson-what-options li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
-.runson-what-more { align-self: flex-start; margin-top: 6px; }
-.runson-what .gadget-chip-egress,
 .runson-agent-spend .gadget-chip-egress {
   text-transform: none;
   letter-spacing: 0;
   font: 500 12px / 18px var(--font-sans);
 }
-@container (max-width: 520px) {
-  .runson-what-row { grid-template-columns: minmax(0, 1fr); }
-  .runson-what-options, .runson-what-result { grid-column: 1 / -1; }
-  .runson-inspector { padding-inline: 12px; }
-}
-
 /* Betterment E5: Your engines has no wires, so its plates show no plug. */
 .runson-engine-list .switchboard-plug { display: none; }
-
-/* The selected row is the vivid blue with paper ink: its dot words keep
-   their dot and take the row's ink (a green word on blue is unreadable). */
-.runson-list .object-list-row[data-selected] .kit-dotword { color: inherit; }
-@container surface (max-width: 520px) {
-  .runson-used { display: inline; white-space: normal; }
-}
 
 /* RECIPE LINE-6: the Phone speech group (the ListView species), set in
    the body like the Download a local model fold. */
@@ -365,4 +283,90 @@
   .runson-phone-speech .kit-listrow-main { flex: 1 0 100%; }
   .runson-phone-speech .kit-listrow-state { margin-left: 42px; }
   .runson-phone-speech .kit-listrow-verbs { margin-left: auto; }
+}
+
+/* ── Engines grammar (2026-10-30, canvas engines-2026-10-30.html, direction
+   B): What HoldSpeak does | Engines, two ListViews edge to edge; side by
+   side from 880 px of window width, stacked (jobs first) under it. A row
+   opens its fold in place; the address is a fact row there, never a chip
+   on a row (A.9). ── */
+.runson-split {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-width: 0;
+}
+.runson-pane { display: flex; flex-direction: column; min-width: 0; }
+.runson-pane + .runson-pane { border-top: 1px solid var(--wb-rule-soft); }
+@container (min-width: 880px) {
+  .runson-split[data-jobs] {
+    display: grid;
+    grid-template-columns: minmax(0, 43fr) minmax(0, 57fr);
+    align-items: start;
+  }
+  .runson-split[data-jobs] > .runson-pane + .runson-pane {
+    border-top: 0;
+    box-shadow: inset 1px 0 0 var(--wb-rule-soft);
+    align-self: stretch;
+  }
+}
+.runson-pane > .runson-downloads { margin: 10px 12px 12px; }
+.runson-pane > .surface-speech-setup, .runson-pane > [data-testid="runson-speech-setup"] { margin: 10px 12px 0; }
+.runson-body > .runson-wiring { margin: 12px; }
+.runson-catalog { margin: 4px 0 0; }
+
+/* The jobs: the chooser is a plated Button that names the engine. */
+.runson-what-pick { max-width: 220px; min-width: 0; display: inline-flex; align-items: center; gap: 8px; }
+.runson-what-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; line-height: 18px; padding-block: 1px; }
+.runson-what-caret { color: var(--wb-muted); font-size: 12px; }
+.kit-listrow[data-selected] .runson-what-caret { color: inherit; }
+.runson-what-options {
+  margin: 0;
+  padding: 6px 0 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.runson-what-option { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; min-height: 30px; }
+.runson-what-glyph { flex: none; width: 20px; height: 20px; }
+.runson-what-result { padding-top: 8px; }
+.kit-listrows > li.runson-what-more-row { padding: 2px 6px; }
+
+/* An engine's fold: label/value rows with a soft rule between them. */
+.runson-fold { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.runson-facts { margin: 0; display: flex; flex-direction: column; min-width: 0; }
+.runson-fact-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 70%, transparent);
+}
+.runson-fact-row:last-child { border-bottom: 0; }
+.runson-fact-row dt { font: 400 12px / 1.35 var(--font-sans); color: var(--wb-muted); }
+.runson-fact-row dd { margin: 0; min-width: 0; font: 400 13px / 1.4 var(--font-sans); color: var(--wb-ink); overflow-wrap: anywhere; }
+.runson-address { overflow-wrap: anywhere; }
+.runson-fold-verbs { display: flex; flex-wrap: wrap; gap: 6px; }
+.runson-fold-spend { padding-top: 4px; }
+@container (max-width: 520px) {
+  .runson-fact-row { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 4px 0; }
+  .runson-what-pick { max-width: 160px; }
+}
+/* At phone width every verb in a row is a 44 px target. */
+@container (max-width: 719px) {
+  .runson-split .kit-listrow .btn { min-height: 44px; }
+}
+.runson-body > .runson-downloads { margin: 10px 12px 12px; }
+/* A name keeps its room before its quiet meta does. */
+.runson-pane-engines .kit-listrow-name { flex-shrink: 0; max-width: 62%; }
+/* At phone width an engine row with a verb puts its state and verb on a
+   second line under the name (the Phone speech rows: licence, Download). */
+@container surface (max-width: 520px) {
+  .runson-pane-engines .kit-listrow:has(> .kit-listrow-verbs) { flex-wrap: wrap; row-gap: 0; padding-bottom: 6px; }
+  .runson-pane-engines .kit-listrow:has(> .kit-listrow-verbs) > .kit-listrow-main { flex: 1 0 100%; }
+  .runson-pane-engines .kit-listrow:has(> .kit-listrow-verbs) > .kit-listrow-state { margin-left: 42px; }
+  .runson-pane-engines .kit-listrow:has(> .kit-listrow-verbs) > .kit-listrow-verbs { margin-left: auto; }
+  .runson-pane-engines .kit-listrow-name { max-width: 100%; }
 }

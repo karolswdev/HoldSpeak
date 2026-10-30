@@ -288,7 +288,8 @@ describe("Runs on — each repair state is drawn on its job with one verb", () =
     // No raw <button> in the face (UX-CANON A1).
     const raw = [...root.querySelectorAll("button")].filter((b) => {
       const c = b.className.split(" ");
-      return !c.includes("btn") && !c.includes("desk-mic") && !c.includes("gadget-chip-egress");
+      // The kit ListRow's open is the library Button's chrome form.
+      return !c.includes("btn") && !c.includes("btn--chrome") && !c.includes("desk-mic") && !c.includes("gadget-chip-egress");
     });
     expect(raw.map((b) => b.textContent)).toEqual([]);
 
@@ -298,6 +299,14 @@ describe("Runs on — each repair state is drawn on its job with one verb", () =
     if (repair.detail) expect(screen.getByTestId("runson-assignments").querySelector(".switchboard")!.textContent).not.toContain(repair.detail);
   });
 });
+
+/** The jobs list reads its rows through the editor (a POST that writes
+ *  nothing); a write is any other non-GET. */
+const EDITOR_READ = "/api/inference/assignments/editor";
+/** These recordings were taken before the jobs list read its rows under
+ *  Builder tools: an editor read is unrecorded there (its rows say Not
+ *  read); every other miss still fails. */
+const unrecorded = (rec: { misses: string[] }) => rec.misses.filter((miss) => miss !== `POST ${EDITOR_READ}`);
 
 /* ── the rows that live under the board ── */
 
@@ -322,10 +331,12 @@ describe("Runs on — speech not set up", () => {
     // replaces: tests/e2e/test_philo17_speech_glass.py::test_every_speech_face_says_speech_is_not_set_up (the Runs on face)
     hub.speechReady = false;
     await open();
-    const row = await screen.findByTestId("runson-speech-setup");
-    expect(screen.getByTestId("runson-speech-setup-line").textContent).toBe("Speech is not set up");
-    expect(screen.getByTestId("runson-speech-setup-verb").textContent).toMatch(/^Set up speech · \d+ MB$/);
-    expect(row.textContent?.toUpperCase()).toContain("HUGGINGFACE.CO");
+    // Engines grammar (2026-10-30): the status bar says it and carries the
+    // one sized verb; its host is the verb's hover title (UX-CANON A.9).
+    expect((await screen.findByTestId("runson-speech-setup-line")).textContent).toBe("Speech is not set up");
+    const verb = screen.getByTestId("runson-speech-setup-verb");
+    expect(verb.textContent).toMatch(/^Set up speech · \d+ MB$/);
+    expect(verb.getAttribute("title")?.toUpperCase()).toContain("HUGGINGFACE.CO");
   });
 });
 
@@ -562,7 +573,7 @@ describe("Runs on — the engine tells the truth (recorded hub)", () => {
     expect(screen.getByTestId("switchboard-job-thoughts_notes").getAttribute("data-state")).toBe("ready");
     expect(screen.getByTestId("runson-assignments").querySelector(".switchboard")!.textContent).not.toContain("structured result");
     expect(screen.queryByTestId("switchboard-job-chat_practice")).toBeNull();
-    expect(rec.misses).toEqual([]);
+    expect(unrecorded(rec)).toEqual([]);
   });
 });
 
@@ -580,16 +591,17 @@ describe("Runs on — an engine whose server stopped (recorded hub, W1-TRUTH)", 
     replay(rec);
     render(<RunsOnCore />);
     const row = await screen.findByTestId(`runson-engine-${KEY}`);
-    fireEvent.click(row.querySelector(".object-list-open") as HTMLElement);
+    fireEvent.click(row.querySelector(".kit-listrow-main") as HTMLElement);
     await waitFor(() => expect(screen.getByTestId(`runson-engine-state-${KEY}`).textContent).toBe("Not answering"));
     // One name: his, never the model id; the model id is quiet meta.
-    expect(row.textContent).toContain("Studio engine");
+    expect(row.querySelector(".kit-listrow-name")?.textContent).toBe("Studio engine");
     expect(row.textContent).not.toContain("Stub qwen");
-    const head = screen.getByTestId("runson-inspector-head");
-    expect(head.getAttribute("data-engine")).toBe(KEY);
-    expect(head.textContent).toContain("Studio engine");
-    expect(screen.getByTestId("runson-inspector-model").textContent).toBe("stub-qwen");
-    expect(screen.getByTestId("runson-inspector-state").textContent).toMatch(/^Not answering · checked (just now|\d+ (min|h|d) ago)$/);
+    // Engines grammar: the row opens its fold in place (no inspector).
+    const fold = screen.getByTestId(`runson-fold-${KEY}`);
+    expect(fold.getAttribute("data-engine")).toBe(KEY);
+    expect(row.contains(fold)).toBe(true);
+    expect(within(fold).getByTestId("runson-fold-model").textContent).toBe("stub-qwen");
+    expect(within(fold).getByTestId("runson-fold-state").textContent).toMatch(/^Not answering · checked (just now|\d+ (min|h|d) ago)$/);
     // The job that runs on it (Everything else) says so beside its picker.
     expect((await screen.findByTestId("runson-what-down-default")).textContent).toBe("Not answering");
     expect(screen.getByTestId("runson-status").textContent).toContain("1 not answering");
@@ -618,8 +630,8 @@ describe("Runs on — a record-less engine is refused on the drop (recorded hub)
         expect(screen.getByTestId("runson-receipt").textContent).toMatch(new RegExp(`^Could not put ${label} on .+ · No model record · Nothing changed$`)),
       );
     }
-    expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
-    expect(rec.misses).toEqual([]);
+    expect(rec.calls.filter((c) => c.method !== "GET" && c.path !== EDITOR_READ)).toEqual([]);
+    expect(unrecorded(rec)).toEqual([]);
   });
 
   it("the phone list never offers it to a job", async () => {
@@ -634,7 +646,7 @@ describe("Runs on — a record-less engine is refused on the drop (recorded hub)
         await screen.findByText(/ · engine$/i); // the job's card is open
         expect(screen.queryByTestId("switchboard-tap-old-box")).toBeNull();
       }
-      expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
+      expect(rec.calls.filter((c) => c.method !== "GET" && c.path !== EDITOR_READ)).toEqual([]);
     } finally {
       spy.mockRestore();
     }
@@ -651,8 +663,8 @@ describe("Runs on — Anthropic is a service, never a NOT SUPPORTED YET dead end
     expect(plate.textContent).toContain("No key");
     expect(plate.textContent).not.toContain("Not supported");
     expect(plate.textContent).not.toContain("Ready");
-    expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
-    expect(rec.misses).toEqual([]);
+    expect(rec.calls.filter((c) => c.method !== "GET" && c.path !== EDITOR_READ)).toEqual([]);
+    expect(unrecorded(rec)).toEqual([]);
   });
 
   it("at 393 the job list offers no tap for it", async () => {
