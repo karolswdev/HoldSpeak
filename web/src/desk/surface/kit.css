@@ -779,13 +779,15 @@
    state lasts: the ring opens to 5 px and closes, 2.4 s a breath, the
    Record tile's rhythm. A box-shadow on a lamp; nothing moves; a still
    ring under reduced motion. */
-.kit-statusbar-item > .kit-dot[data-live] {
+.kit-statusbar-item > .kit-dot[data-live],
+.kit-dotword > .kit-dot[data-live] {
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-fail)) 45%, transparent),
     0 0 0 3px color-mix(in srgb, var(--dot-tone, var(--lamp-fail)) 22%, transparent);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .kit-statusbar-item > .kit-dot[data-live] {
+  .kit-statusbar-item > .kit-dot[data-live],
+  .kit-dotword > .kit-dot[data-live] {
     animation: kit-lamp-live 2.4s ease-in-out infinite;
   }
 }

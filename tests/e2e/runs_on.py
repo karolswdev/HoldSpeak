@@ -40,13 +40,20 @@ def open_runs_on(page: Any, *, scope: str | None = None, staged: bool = True) ->
         from .glass_infra import _normal_chair
 
         _normal_chair(page)
-    page.locator(ROOT).wait_for(timeout=30_000)
-    page.get_by_test_id("switchboard").wait_for(timeout=30_000)
-    return page.locator(ROOT)
+    return wait_board(page)
+
+
+def open_wiring(page: Any) -> None:
+    """Engines grammar (2026-10-30): Builder tools never swap the face; the
+    parked switchboard sits in the closed Wiring fold under the lists."""
+    wiring = page.locator(f"{ROOT} .runson-wiring")
+    wiring.wait_for(state="attached", timeout=30_000)
+    wiring.evaluate("d => { d.open = true; }")
 
 
 def wait_board(page: Any) -> Any:
     page.locator(ROOT).wait_for(timeout=30_000)
+    open_wiring(page)
     page.get_by_test_id("switchboard").wait_for(timeout=30_000)
     return page.locator(ROOT)
 
@@ -105,7 +112,7 @@ def raw_buttons(page: Any) -> list[str]:
              "[data-testid='runson-root'] button, .runson-foot button")]
              .filter((b) => {
                const c = b.className.split(" ");
-               return !c.includes("btn") && !c.includes("desk-mic")
+               return !c.includes("btn") && !c.includes("btn--chrome") && !c.includes("desk-mic")
                  && !c.includes("gadget-chip-egress");
              })
              .map((b) => (b.textContent || b.className).slice(0, 40))"""

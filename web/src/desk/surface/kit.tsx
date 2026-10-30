@@ -462,6 +462,7 @@ export function DotWord({
   children,
   className,
   title,
+  live,
   "data-testid": testId,
 }: {
   tone?: ObjectTone | "idle";
@@ -469,11 +470,14 @@ export function DotWord({
   className?: string;
   /** The raw reason (a code, the hub's words) for the hover only. */
   title?: string;
+  /** A state that is happening now (Checking, Downloading): the dot
+   *  breathes as the status bar's live lamp does (a box-shadow). */
+  live?: boolean;
   "data-testid"?: string;
 }) {
   return (
     <span className={className ? `kit-dotword ${className}` : "kit-dotword"} data-tone={tone ?? "idle"} data-testid={testId} title={title || undefined}>
-      <span className="kit-dot" data-tone={tone ?? "idle"} aria-hidden="true" />
+      <span className="kit-dot" data-tone={tone ?? "idle"} data-live={live ? "" : undefined} aria-hidden="true" />
       {children}
     </span>
   );
