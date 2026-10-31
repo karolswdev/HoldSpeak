@@ -436,9 +436,12 @@ def test_independent_input_persistent_views_and_close_without_kill(
             a = next(row for row in sessions["sessions"] if row["session"] == name_a)
             b = next(row for row in sessions["sessions"] if row["session"] == name_b)
             assert a["id"] != b["id"] and a["target"]["target_id"] != b["target"]["target_id"]
+            # The frame paints before the core's first inventory read lands
+            # (Connecting); wait for the rows, never count at once.
+            from playwright.sync_api import expect
+            expect(inventory.locator(".kit-listrow")).to_have_count(2, timeout=15_000)
             SHOTS.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(SHOTS / f"inventory-{width}.png"))
-            assert inventory.locator(".kit-listrow").count() == 2
             working = tmp_path / "shell-folder"
             working.mkdir()
             inventory.get_by_test_id("terminal-new").click()
