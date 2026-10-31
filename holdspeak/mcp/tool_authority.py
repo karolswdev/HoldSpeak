@@ -349,6 +349,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "phone.get_replies": WORK,
     "phone.status": WORK,
     "phone.call": EGRESS,  # rings his phone: his press, unless the Program may call and the level allows
+    "phone.brief": WORK,  # PG-DIRECTION DIR1: a briefing page for his own held item; owner only in the service
     "agent.hand": EGRESS,  # starts a cloud coding agent and sends it a brief from the desk
     # PHILO-16 (16b): the owner's desk windows. A window is not egress,
     # authority or config: an agent composes the desk beside the owner.

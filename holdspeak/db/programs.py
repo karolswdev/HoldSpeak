@@ -236,15 +236,16 @@ class ProgramStore:
         self, *, step_id: str, program_id: str, at: str, by: str, line: str,
         operation_id: Optional[str] = None, kind: Optional[str] = None, choice: Optional[str] = None,
         rule: Optional[str] = None, overturnable: bool = False, undo: Optional[Mapping[str, Any]] = None,
+        via: Optional[str] = None,
     ) -> int:
         """One checkpoint line; with ``rule`` it is also an engine decision
         ("Decided for you")."""
         with self._db._connection() as conn:
             cursor = conn.execute(
                 "INSERT INTO program_checkpoints (step_id, program_id, at, by_kind, line, operation_id, kind, "
-                "choice, rule, overturnable, undo_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "choice, rule, overturnable, undo_json, via) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (step_id, program_id, at, by, line, operation_id, kind, choice, rule, 1 if overturnable else 0,
-                 json.dumps(dict(undo or {}))),
+                 json.dumps(dict(undo or {})), via),
             )
             return int(cursor.lastrowid or 0)
 
@@ -264,7 +265,7 @@ class ProgramStore:
         with self._db._connection() as conn:
             rows = conn.execute(
                 "SELECT id, step_id, at, by_kind, line, operation_id, kind, choice, rule, overturnable, "
-                "overturned_at, undo_json FROM program_checkpoints WHERE program_id=? ORDER BY id DESC",
+                "overturned_at, undo_json, via FROM program_checkpoints WHERE program_id=? ORDER BY id DESC",
                 (program_id,),
             ).fetchall()
         out = []
@@ -284,6 +285,8 @@ class ProgramStore:
                 "ref": _pin_of(undo).get("ref") or None,
                 "ref_commit": _pin_of(undo).get("commit") or None,
                 "pin_note": _pin_of(undo).get("note") or None,
+                # PG-DIRECTION DIR1: where he answered; absent for the desk.
+                **({"via": row["via"]} if row["via"] else {}),
             })
         return out
 

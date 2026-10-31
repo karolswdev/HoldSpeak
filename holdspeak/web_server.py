@@ -1834,6 +1834,11 @@ class MeetingWebServer:
         from .web.routes.programs import build_programs_router
 
         mount_router(app, build_programs_router(web_ctx))
+        # PG-DIRECTION DIR1 (2026-10-31): the briefing page for a held item,
+        # tokened, read over the tailnet (no switch: it reads nothing of the machine).
+        from .web.routes.briefing import build_briefing_router
+
+        mount_router(app, build_briefing_router(web_ctx))
         # Phone (2026-10-28): the desk reaches him on his phone and he reaches
         # it. HOLDSPEAK_PHONE=off (every rig) mounts nothing.
         from .phone import phone_on

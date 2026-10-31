@@ -353,6 +353,8 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
                 "decide": (f"/api/programs/{item['program_id']}/close" if kind == "close"
                            else f"/api/programs/{item['program_id']}/requirements/{requirement}/decide" if requirement
                            else f"/api/programs/{item['program_id']}/steps/{item['step_id']}/decide"),
+                # PG-DIRECTION DIR3: an open briefing page (absent when none).
+                **({"page": dict(item["page"])} if item.get("page") else {}),
             },
             "personId": item.get("for_person_id") or None,
         })

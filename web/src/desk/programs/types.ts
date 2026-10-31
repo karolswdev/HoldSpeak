@@ -383,6 +383,8 @@ export interface YourTurnItem {
   requirement_id?: string;
   /** PG-REQ: an agent's proposal (`POST …/proposals/{id}/decide`). */
   proposal_id?: number | string;
+  /** PG-DIRECTION DIR3: an open briefing page for the item (absent when none). */
+  page?: { package_id: string; expires_at: string };
 }
 
 export interface ProgramPlace {
