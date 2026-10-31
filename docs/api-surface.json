@@ -5605,6 +5605,22 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/shape",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/shape",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/start",
       "methods": [
         "POST"

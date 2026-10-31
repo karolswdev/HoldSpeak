@@ -52,6 +52,10 @@ import proposalsAddedFixture from "../__fixtures__/program.proposals.added.json"
 // on his press, a + line), recorded through the real routes.
 import textFixture from "../__fixtures__/program.text.json";
 import textApplyFixture from "../__fixtures__/program.text_apply.json";
+// PG-LANG LANG3/4: a sentence shaped by the REAL qwen3.8-27b replies
+// (tests/fixtures/program_shape_reply.json) replayed through the hub's runner,
+// recorded through the real routes (tests/integration/test_desk_program_shape.py).
+import shapeFixture from "../__fixtures__/program.shape.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -1317,5 +1321,155 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
     fireEvent.click(screen.getByTestId("program-more"));
     fireEvent.click(await screen.findByRole("menuitem", { name: "Text" }));
     await screen.findByTestId("programs-text");
+  });
+});
+
+
+describe("LANG4: shaping by a typed sentence (PROGRAM-LANGUAGE §4, §9.2, §14)", () => {
+  type Shape = import("../types").ShapeAnswer;
+  type Applied = import("../types").TextApplyAnswer;
+  const normal = shapeFixture.normal as unknown as { program: Program; shape: Shape; applied: Applied };
+  const yolo = shapeFixture.yolo as unknown as { program: Program; shape: Shape; overturned: { program: Program } };
+  const none = shapeFixture.no_engine as unknown as { program: Program; status: number; body: Record<string, unknown>; engine: unknown };
+  const question = shapeFixture.question as unknown as Shape;
+  const posts = (id: string, tail: string) => calls.filter((call) => call.startsWith(`POST /api/programs/${id}/${tail}`))
+    .map((call) => JSON.parse(call.slice(call.indexOf("{"))) as Record<string, unknown>);
+  const bar = () => screen.getByTestId("program-shape-bar");
+  const say = (words: string) => {
+    fireEvent.change(within(bar()).getByRole("textbox", { name: "Change the program" }), { target: { value: words } });
+    fireEvent.click(within(bar()).getByTestId("program-shape"));
+  };
+
+  it("a typed sentence: the engine's rows in the well with its words, name and time; the row that lowers the bar waits; Apply lands the new step", async () => {
+    const id = normal.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: normal.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+      [`POST /api/programs/${id}/shape`]: normal.shape,
+      [`POST /api/programs/${id}/text`]: normal.applied,
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    say(normal.shape.sentence);
+    const well = await screen.findByTestId("programs-change-well");
+    // Normal: nothing applies at once.
+    expect(posts(id, "shape")[0]).toEqual({ sentence: normal.shape.sentence, apply: false });
+    expect(within(well).getByText(normal.shape.say, { selector: ".kit-changewell-say" })).toBeInTheDocument();
+    expect(within(well).getByText(/^qwen3\.8-27b · under 1 s · 5 changes · 1 lowers the bar$/)).toBeInTheDocument();
+    const rows = within(well).getAllByTestId("programs-diff-row");
+    expect(rows.map((row) => row.getAttribute("data-row"))).toEqual(normal.shape.changes.map((row) => row.id));
+    const control = rows.find((row) => row.getAttribute("data-row") === "program.control")!;
+    expect(within(control).getByTestId("kit-diffrow-verdict").textContent).toBe("Lowers the bar");
+    const apply = within(well).getByTestId("programs-well-apply");
+    expect(apply).toBeDisabled();
+    fireEvent.click(within(control).getByRole("button", { name: "Apply this" }));
+    fireEvent.click(apply);
+    await waitFor(() => expect(posts(id, "text")).toHaveLength(1));
+    expect(posts(id, "text")[0]).toEqual({ text: normal.shape.proposed_text, base: normal.shape.base, dry_run: false,
+      allow_lower: ["program.control"] });
+    // The rows landed: the Program is in Drafting, so the board is its
+    // draft rows; the loop watch is step 3, before the fan-out.
+    await waitFor(() => expect((screen.getByRole("textbox", { name: "Step 3 title" }) as HTMLInputElement).value).toBe("Loop watch"));
+    expect((screen.getByRole("textbox", { name: "Step 4 title" }) as HTMLInputElement).value).toBe("The fan-out");
+    expect(within(status()).getByTestId("programs-status-control").textContent).toBe("control YOLO");
+    await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+    // The bar is empty again, ready for the next sentence.
+    expect((within(bar()).getByRole("textbox", { name: "Change the program" }) as HTMLInputElement).value).toBe("");
+  });
+
+  it("while the engine reads, the bar names it with a breathing lamp", async () => {
+    const id = normal.program.id;
+    let answer: (value: unknown) => void = () => undefined;
+    hub({
+      [`GET /api/programs/${id}`]: normal.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+    });
+    const table = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation((path: string, init?: { method?: string; json?: unknown }) =>
+      (init?.method === "POST" && path.endsWith("/shape") ? new Promise((resolve) => { answer = resolve; }) : table(path, init)));
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    say("put step 2 on Codex");
+    const reading = await screen.findByTestId("program-shape-reading");
+    await waitFor(() => expect(reading.textContent).toBe("Reading the program · Home Engine"));
+    expect(reading.querySelector(".kit-dot")).toHaveAttribute("data-live");
+    // The window stays usable: the board is there.
+    expect(screen.getByTestId("programs-board")).toBeInTheDocument();
+    await act(async () => answer(clone(normal.shape)));
+    await screen.findByTestId("programs-change-well");
+    expect(screen.queryByTestId("program-shape-reading")).toBeNull();
+  });
+
+  it("at YOLO the allowed row lands at once with Overturn; the row that lowers the bar still waits in the well", async () => {
+    const id = yolo.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: yolo.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+      [`POST /api/programs/${id}/shape`]: yolo.shape,
+      [`POST /api/programs/${id}/decisions/${yolo.shape.decision!.id}/overturn`]: yolo.overturned,
+      [`GET /api/programs/${id}/text`]: { program_id: id, text: yolo.shape.text, revision: yolo.shape.revision, version: 1 },
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    say(yolo.shape.sentence);
+    const shaped = await screen.findByTestId("programs-shaped-well");
+    expect(posts(id, "shape")[0]).toEqual({ sentence: yolo.shape.sentence, apply: true });
+    expect(within(shaped).getByText(`Shaped: ${yolo.shape.say}`)).toBeInTheDocument();
+    expect(within(shaped).getAllByTestId("programs-shaped-row").map((row) => row.getAttribute("data-row"))).toEqual(["step-1.agents"]);
+    const waiting = screen.getByTestId("programs-change-well");
+    const depth = within(waiting).getAllByTestId("programs-diff-row");
+    expect(depth.map((row) => row.getAttribute("data-row"))).toEqual(["step-1.depth"]);
+    expect(within(depth[0]).getByTestId("kit-diffrow-verdict").textContent).toBe("Lowers the bar");
+    // The hub wrote the Decided for you row Overturn reads.
+    expect(yolo.shape.program!.decided_for_you!.at(-1)!.line).toMatch(/^Shaped by a sentence: /);
+    fireEvent.click(within(shaped).getByTestId("programs-shaped-overturn"));
+    await waitFor(() => expect(screen.queryByTestId("programs-shaped-well")).toBeNull());
+    expect(calls).toContain(`POST /api/programs/${id}/decisions/${yolo.shape.decision!.id}/overturn {}`);
+    expect(screen.queryByTestId("programs-change-well")).toBeNull();
+  });
+
+  it("no engine: the refusal in place of the lamp, with Open Engines and Open text; nothing is guessed", async () => {
+    const id = none.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: none.program,
+      [`GET /api/programs/${id}/shape`]: none.engine,
+      [`POST /api/programs/${id}/shape`]: () => { throw new ApiError(none.status, String(none.body.detail), none.body); },
+      [`GET /api/programs/${id}/text`]: { program_id: id, text: normal.shape.base, revision: 1, version: 1 },
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    say("put step 2 on Codex");
+    const refusal = await screen.findByTestId("program-shape-refusal");
+    // The hub said no engine shapes here: the sentence is not sent.
+    expect(posts(id, "shape")).toHaveLength(0);
+    expect(refusal.textContent).toContain("No engine is set for planning");
+    expect(refusal).toHaveAttribute("title", "No engine is set for planning. The program is unchanged. Choose one in Engines.");
+    // The sentence is kept.
+    expect((within(bar()).getByRole("textbox", { name: "Change the program" }) as HTMLInputElement).value).toBe("put step 2 on Codex");
+    expect(screen.queryByTestId("programs-change-well")).toBeNull();
+    fireEvent.click(within(refusal).getByTestId("program-shape-engines"));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
+    fireEvent.click(within(refusal).getByTestId("program-shape-text"));
+    await screen.findByTestId("programs-text");
+  });
+
+  it("a question back is one line; his next sentence answers it, sent with the first one", async () => {
+    const id = yolo.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: yolo.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+      [`POST /api/programs/${id}/shape`]: question,
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    say(question.sentence);
+    const asked = await screen.findByTestId("program-shape-question");
+    expect(asked.textContent).toBe(question.question);
+    expect(screen.queryByTestId("programs-change-well")).toBeNull();
+    say("step 3 before step 2");
+    await waitFor(() => expect(posts(id, "shape")).toHaveLength(2));
+    expect(posts(id, "shape")[1]).toEqual({ sentence: `${question.sentence} step 3 before step 2`, apply: true });
   });
 });

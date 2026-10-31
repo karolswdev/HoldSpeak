@@ -273,6 +273,10 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # PG-LANG LANG2: the same Program in its Text view, one line changed
         # and previewed: the change well with its diff row over the text.
         ("program-text", "pullout:program:{program}", None),
+        # PG-LANG LANG4: the shaping bar under the toolbar, a sentence sent;
+        # the rig hub has no planning engine, so the bar's refusal line with
+        # Open Engines and Open text (a desk with an engine: the well).
+        ("program-shape", "pullout:program:{program}", None),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -1346,6 +1350,14 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             lines.nth(at).fill("step 3 The fan-out, one read")
             win.get_by_test_id("program-text-preview").click()
             win.locator("[data-testid=programs-change-well] [data-testid=programs-diff-row]").first.wait_for(timeout=T)
+            page.mouse.move(2, 2)
+        if case_id == "program-shape":
+            win = page.locator(f'[id="{wid}"]')
+            win.locator("[data-testid=programs-board]").wait_for(timeout=T)
+            bar = win.get_by_test_id("program-shape-bar")
+            bar.get_by_role("textbox", name="Change the program").fill("put step 2 on Codex")
+            bar.get_by_test_id("program-shape").click()
+            win.locator("[data-testid=program-shape-refusal], [data-testid=programs-change-well]").first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "person":
             # This pose is the seeded person's content, not the transient

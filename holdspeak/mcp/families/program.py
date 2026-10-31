@@ -27,6 +27,9 @@ live in the service, so every transport keeps them:
   ``dry_run`` false, applies it through the verbs above, so each change
   keeps its own authority rule. A row that lowers the bar applies only when
   its id is in ``allow_lower``.
+- PG-LANG LANG3 (2026-10-31): ``program.shape`` turns one sentence into the
+  same change rows through one planning-engine call; it writes nothing,
+  except at YOLO with ``apply`` (the allowed rows, one Decided for you row).
 """
 from __future__ import annotations
 
@@ -252,6 +255,18 @@ TOOLS: list[dict[str, Any]] = [
          "allow_lower": {"type": ["array", "null"], "items": {"type": "string"},
                          "description": "Ids of the rows that lower the bar that may apply."},
      }, ["program_id", "text"])},
+    {"name": "program.shape",
+     "description": "Change a Program by one sentence (PG-LANG §4): the hub sends the sentence and the Program's text "
+                    "to the planning engine (agent.plan) in one call, diffs the engine's whole text against the "
+                    "current text and returns the change rows as program.text_apply does, with say, engine and "
+                    "latency_ms. Nothing is written: apply with program.text_apply (text: allowed_text or "
+                    "proposed_text, base: base). apply true applies the allowed rows at once only at YOLO and "
+                    "lists them under Decided for you (Overturn); a row that lowers the bar or is a core question "
+                    "never applies here. The engine never waives.",
+     "inputSchema": _schema({
+         "program_id": _ID, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
+         "apply": {"type": ["boolean", "null"], "description": "At YOLO only: apply the allowed rows at once."},
+     }, ["program_id", "sentence"])},
     {"name": "program.checkpoint",
      "description": "Write one line on your step at a meaningful moment. Only the step's own agent (or the owner).",
      "inputSchema": _schema({"step_id": _ID, "line": {"type": "string", "minLength": 1, "maxLength": 400},
@@ -340,6 +355,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         dry = args.get("dry_run") if args.get("dry_run") is not None else args.get("preview")
         return service.text_apply(principal, str(args["program_id"]), args.get("text"), dry_run=dry is not False,
                                   base=args.get("base"), allow_lower=list(args.get("allow_lower") or []))
+    if name == "program.shape":
+        return service.shape(principal, str(args["program_id"]), args.get("sentence"), apply=args.get("apply") is True)
     if name in ("program.start", "program.get"):
         return _by_name(service, name, args, principal)
     if name == "program.park":

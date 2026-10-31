@@ -519,3 +519,30 @@ export interface TextApplyAnswer {
   lowers: string[];
   program?: Program;
 }
+
+/** PG-LANG LANG3: the engine that shapes (`engine: null`: none is set). */
+export interface ShapeEngine {
+  program_id: string;
+  engine: string | null;
+  capability: string | null;
+  profile: string | null;
+}
+
+/** PG-LANG LANG3: a sentence shaped into change rows (the text_apply
+ *  answer, plus the engine's words). At YOLO with apply, `applied` is true,
+ *  `applied_rows` are the rows that landed, `decision` is the Decided for
+ *  you row (Overturn), and `changes` are the rows that still wait for his
+ *  press, against the text as it is now (`base`). */
+export interface ShapeAnswer extends TextApplyAnswer {
+  sentence: string;
+  say: string;
+  question: string | null;
+  engine: string;
+  latency_ms: number;
+  seconds: number;
+  proposed_text: string;
+  base: string;
+  applied_rows: TextChange[];
+  decision: { id: number | string; rule: string; kind: string; choice: string; at: string } | null;
+  held?: string;
+}

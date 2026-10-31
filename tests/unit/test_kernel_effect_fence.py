@@ -194,6 +194,11 @@ _CALL_RULES = (
 # lands outside today's plugin/connector denominator.  Selectors are line-
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
+    # PG-LANG LANG3: the shaping call's grounding reads the repository map
+    # (`git ls-files` under the folders the steps own); it writes nothing.
+    ("holdspeak/services/program_shaper.py", "_repo_map", "run", 1): (
+        "read-only probe: `git ls-files` for the shaping prompt's repository map"
+    ),
     # The Line (2026-10-29): the node's link to its own hub and two local
     # build/probe processes. A call's own effects (say, hang up, place a call)
     # are the hub's Calls service's, as with ai-phone.

@@ -2866,6 +2866,19 @@ class ProgramService:
         return {"program_id": wire["id"], "text": print_program(wire), "revision": int(wire.get("revision") or 0),
                 "version": VERSION}
 
+    def shape(self, principal: Any, program_id: str, sentence: Any, *, apply: bool = False) -> dict[str, Any]:
+        """PG-LANG LANG3: one sentence becomes change rows (program_shaper)."""
+        from .program_shaper import shape_program
+
+        return shape_program(self, principal, program_id, sentence, apply=apply)
+
+    def shape_engine(self, principal: Any, program_id: str) -> dict[str, Any]:
+        """The engine the shaping bar names (``engine: None``: none is set)."""
+        from .program_shaper import engine_words
+
+        program = self._program(program_id)
+        return {"program_id": program["id"], **engine_words(self.db)}
+
     def _project_named(self, name: Any) -> Optional[str]:
         words = " ".join(str(name or "").split()).casefold()
         with self.db._connection() as conn:
@@ -3252,6 +3265,11 @@ class ProgramService:
         if not row["overturnable"] or row["overturned_at"]:
             raise ProgramRefused("not_overturnable", "This decision cannot be undone now.")
         undo = row.get("undo") or {}
+        if row.get("choice") == "shape":
+            # PG-LANG LANG3: a shaped change YOLO applied (program_shaper).
+            from .program_shaper import overturn_shape
+
+            return overturn_shape(self, principal, program, row)
         with _LOCK:
             step = self.store.get_step(row["step_id"]) if row["step_id"] else None
             choice = row.get("choice")

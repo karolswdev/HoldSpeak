@@ -1,0 +1,5803 @@
+{
+  "engine": {
+    "capability": "agent.plan",
+    "engine": "Home Engine",
+    "profile": "home-engine",
+    "program_id": "program-021f5fc24384"
+  },
+  "no_engine": {
+    "body": {
+      "code": "no_engine",
+      "detail": "No engine is set for planning. The program is unchanged. Choose one in Engines.",
+      "engine": null,
+      "error": "no_engine"
+    },
+    "engine": {
+      "capability": null,
+      "engine": null,
+      "profile": null,
+      "program_id": "program-437ce1b0e14d"
+    },
+    "program": {
+      "allowed_profiles": [],
+      "asks": 0,
+      "can_prove": {
+        "check": true,
+        "review": true,
+        "shot": false,
+        "shot_reason": "No shot command in this repository",
+        "word": true
+      },
+      "check_command": "true",
+      "checkpoints": [
+        {
+          "at": "2026-10-31T19:39:42.313359+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 3,
+          "kind": "requirement",
+          "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "step-115605234de8",
+          "undo": {
+            "requirement_id": "req-ddc46543387c"
+          }
+        },
+        {
+          "at": "2026-10-31T19:39:42.310407+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 2,
+          "kind": null,
+          "line": "Added 3 steps",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        {
+          "at": "2026-10-31T19:39:42.305078+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 1,
+          "kind": null,
+          "line": "Made the program from the Build and review template",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        }
+      ],
+      "closed_at": null,
+      "control": "normal",
+      "control_word": "Normal",
+      "created_at": "2026-10-31T19:39:42.304589+00:00",
+      "decided_for_you": [],
+      "default": {
+        "agent": "Claude Code",
+        "engine": null,
+        "profile": "claude-default",
+        "runs_on": [
+          {
+            "agent": "Claude Code",
+            "engine": null,
+            "label": "Claude Code",
+            "profile": "claude-default"
+          }
+        ]
+      },
+      "done": 0,
+      "for_person": null,
+      "for_person_id": null,
+      "goal": "Every route under 100 ms while a meeting records.",
+      "id": "program-437ce1b0e14d",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-10-31T19:39:42.313359+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 3,
+        "kind": "requirement",
+        "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "step-115605234de8",
+        "undo": {
+          "requirement_id": "req-ddc46543387c"
+        }
+      },
+      "may_call": false,
+      "may_handoff": false,
+      "note_id": "program-program-437ce1b0e14d",
+      "note_window": "pullout:note:program-program-437ce1b0e14d",
+      "origin_ref": null,
+      "persons": [],
+      "place": {
+        "origin": null,
+        "person": null,
+        "project": {
+          "id": "proj-holdspeak",
+          "name": "HoldSpeak"
+        }
+      },
+      "prefer_idle": false,
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      },
+      "project_id": "proj-holdspeak",
+      "repository": {
+        "base_branch": "main",
+        "label": "app",
+        "root": "/tmp/rig/none/app"
+      },
+      "requirements": [
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T19:39:42.305889+00:00",
+          "evidence": {},
+          "id": "req-fcebb589bee0",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R1",
+          "ordinal": 1,
+          "parent_id": null,
+          "program_id": "program-437ce1b0e14d",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": null,
+          "steps": [
+            {
+              "ordinal": 1,
+              "state": "not_yet",
+              "step_id": "step-c6d241fd6afa"
+            },
+            {
+              "ordinal": 2,
+              "state": "not_yet",
+              "step_id": "step-115605234de8"
+            },
+            {
+              "ordinal": 3,
+              "state": "not_yet",
+              "step_id": "step-3442164fb796"
+            }
+          ],
+          "text": "The change does only what its brief says.",
+          "waived_reason": null
+        },
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T19:39:42.306781+00:00",
+          "evidence": {},
+          "id": "req-febeafd91059",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R2",
+          "ordinal": 2,
+          "parent_id": null,
+          "program_id": "program-437ce1b0e14d",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": null,
+          "steps": [
+            {
+              "ordinal": 1,
+              "state": "not_yet",
+              "step_id": "step-c6d241fd6afa"
+            },
+            {
+              "ordinal": 2,
+              "state": "not_yet",
+              "step_id": "step-115605234de8"
+            },
+            {
+              "ordinal": 3,
+              "state": "not_yet",
+              "step_id": "step-3442164fb796"
+            }
+          ],
+          "text": "Each new behaviour has a test.",
+          "waived_reason": null
+        }
+      ],
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 7,
+        "unmet": 0,
+        "waived": 0
+      },
+      "reviewer": {
+        "agent": "Codex",
+        "engine": null,
+        "profile": "codex-default"
+      },
+      "revision": 2,
+      "search_words": "the hub stops stalling every route under 100 ms while a meeting records. holdspeak build-and-review indexes people routes the fan-out build and review",
+      "spend_limit_usd": null,
+      "state": "drafting",
+      "state_word": "Drafting",
+      "status_line": "Drafting · 0 of 3 done · check: true · control Normal",
+      "steps": [
+        {
+          "after": [],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "Add the three indexes.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-c6d241fd6afa",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 1,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/db/schema.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:42.309896+00:00",
+              "evidence": {},
+              "id": "req-546be380f4f3",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-fcebb589bee0",
+              "program_id": "program-437ce1b0e14d",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-c6d241fd6afa",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:42.310174+00:00",
+              "evidence": {},
+              "id": "req-da84490cf291",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-febeafd91059",
+              "program_id": "program-437ce1b0e14d",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-c6d241fd6afa",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 2,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "Indexes",
+          "updated_at": "2026-10-31T19:39:42.309411+00:00",
+          "worktree": null
+        },
+        {
+          "after": [],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "31 handlers through run_in_threadpool.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-115605234de8",
+          "last_checkpoint": {
+            "at": "2026-10-31T19:39:42.313359+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 3,
+            "kind": "requirement",
+            "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-115605234de8",
+            "undo": {
+              "requirement_id": "req-ddc46543387c"
+            }
+          },
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 2,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/web/routes/people.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:42.309896+00:00",
+              "evidence": {},
+              "id": "req-bf6b3c887a12",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-fcebb589bee0",
+              "program_id": "program-437ce1b0e14d",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-115605234de8",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:42.310174+00:00",
+              "evidence": {},
+              "id": "req-30445a83266d",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-febeafd91059",
+              "program_id": "program-437ce1b0e14d",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-115605234de8",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            },
+            {
+              "by": "owner",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:42.313266+00:00",
+              "evidence": {},
+              "id": "req-ddc46543387c",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "check",
+              "kind_word": "Check",
+              "label": "R3",
+              "ordinal": 3,
+              "parent_id": null,
+              "program_id": "program-437ce1b0e14d",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "step",
+              "spec": {
+                "command": "uv run pytest -q tests/unit/test_hub_loop_budget.py"
+              },
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-115605234de8",
+              "text": "`uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 3,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "People routes",
+          "updated_at": "2026-10-31T19:39:42.309411+00:00",
+          "worktree": null
+        },
+        {
+          "after": [
+            1,
+            2
+          ],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "One frame per change, not one per row.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-3442164fb796",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 3,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/web/fanout.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:42.309896+00:00",
+              "evidence": {},
+              "id": "req-b2d1aa78e510",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-fcebb589bee0",
+              "program_id": "program-437ce1b0e14d",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-3442164fb796",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:42.310174+00:00",
+              "evidence": {},
+              "id": "req-b9eff3089637",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-febeafd91059",
+              "program_id": "program-437ce1b0e14d",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-3442164fb796",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 2,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "The fan-out",
+          "updated_at": "2026-10-31T19:39:42.309411+00:00",
+          "worktree": null
+        }
+      ],
+      "template": "build-and-review",
+      "title": "The hub stops stalling",
+      "total": 3,
+      "updated_at": "2026-10-31T19:39:42.313423+00:00",
+      "usage_warning_share": null,
+      "your_turn": 0,
+      "your_turn_items": []
+    },
+    "status": 409
+  },
+  "normal": {
+    "applied": {
+      "allowed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  agent Codex\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep + Loop watch\n  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
+      "applied": true,
+      "changes": [
+        {
+          "after": "yolo",
+          "before": "normal",
+          "code": null,
+          "field": "control",
+          "id": "program.control",
+          "line": 1,
+          "lowers_bar": true,
+          "op": "change",
+          "reason": null,
+          "say": "The program's control is now yolo.",
+          "verdict": "lowers",
+          "where": "program"
+        },
+        {
+          "after": "Codex, then Claude Code",
+          "before": "Claude Code",
+          "code": null,
+          "field": "agent",
+          "id": "step-2.agents",
+          "line": 18,
+          "lowers_bar": false,
+          "op": "change",
+          "reason": null,
+          "say": "Step 2's agents is now Codex, then Claude Code.",
+          "verdict": "allowed",
+          "where": "step 2"
+        },
+        {
+          "after": "Loop watch · medium",
+          "before": "",
+          "code": null,
+          "field": "step",
+          "id": "step-4.add",
+          "line": 25,
+          "lowers_bar": false,
+          "op": "add",
+          "reason": null,
+          "say": "A new step 4, Loop watch.",
+          "verdict": "allowed",
+          "where": "step 4"
+        },
+        {
+          "after": "before step 3",
+          "before": "step 4",
+          "code": null,
+          "field": "position",
+          "id": "step-4.move",
+          "line": 25,
+          "lowers_bar": false,
+          "op": "move",
+          "reason": null,
+          "say": "Step 4 moves before step 3.",
+          "verdict": "allowed",
+          "where": "step 4"
+        },
+        {
+          "after": "owner",
+          "before": "level",
+          "code": null,
+          "field": "merge",
+          "id": "step-3.merge",
+          "line": 29,
+          "lowers_bar": false,
+          "op": "change",
+          "reason": null,
+          "say": "Step 3's merge is now owner.",
+          "verdict": "allowed",
+          "where": "step 3"
+        }
+      ],
+      "lowers": [
+        "program.control"
+      ],
+      "patch": "--- current\n+++ proposed\n@@ -1,29 +1,34 @@\n-# program text 1\n-program The hub stops stalling                    # Drafting · 0 of 3 done\n+program The hub stops stalling\n   goal\n   > Every route under 100 ms while a meeting records.\n   in app · main · project HoldSpeak\n   template build and review\n-  control normal\n+  control yolo\n   check true\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n \n-step 1 Indexes                                    # Planned\n+step 1 Indexes\n   owns holdspeak/db/schema.py\n   brief\n   > Add the three indexes.\n \n-step 2 People routes                              # Planned\n+step 2 People routes\n   owns holdspeak/web/routes/people.py\n+  agent Codex\n   brief\n   > 31 handlers through run_in_threadpool.\n-  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n+  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n \n-step 3 The fan-out                                # Planned\n+step + Loop watch\n+  brief\n+  > Log each handler over 100 ms.\n+\n+step 3 The fan-out\n   owns holdspeak/web/fanout.py\n   after 1, 2\n+  review agent · merge owner\n   brief\n   > One frame per change, not one per row.\n",
+      "program": {
+        "allowed_profiles": [],
+        "asks": 0,
+        "can_prove": {
+          "check": true,
+          "review": true,
+          "shot": false,
+          "shot_reason": "No shot command in this repository",
+          "word": true
+        },
+        "check_command": "true",
+        "checkpoints": [
+          {
+            "at": "2026-10-31T19:39:40.847719+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 9,
+            "kind": null,
+            "line": "Changed by the text: 5 changes (lines 1, 18, 25, 29)",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:40.844141+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 8,
+            "kind": null,
+            "line": "Moved step 4 to 3",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": "No worktree to pin yet",
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-b4e4d525a8e2",
+            "undo": {
+              "pin": {
+                "note": "No worktree to pin yet"
+              }
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:40.809158+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 7,
+            "kind": null,
+            "line": "Changed step 3: merge",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": "No worktree to pin yet",
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-c20fdf6fe098",
+            "undo": {
+              "pin": {
+                "note": "No worktree to pin yet"
+              }
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:40.806054+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 6,
+            "kind": null,
+            "line": "Changed step 2: agents",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": "No worktree to pin yet",
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-f1b02628136d",
+            "undo": {
+              "pin": {
+                "note": "No worktree to pin yet"
+              }
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:40.801947+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 5,
+            "kind": null,
+            "line": "Added 1 step",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:40.798852+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 4,
+            "kind": null,
+            "line": "Changed control YOLO",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:40.726386+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 3,
+            "kind": "requirement",
+            "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-f1b02628136d",
+            "undo": {
+              "requirement_id": "req-d88778c6180d"
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:40.722671+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 2,
+            "kind": null,
+            "line": "Added 3 steps",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:40.717888+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 1,
+            "kind": null,
+            "line": "Made the program from the Build and review template",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          }
+        ],
+        "closed_at": null,
+        "control": "yolo",
+        "control_word": "YOLO",
+        "created_at": "2026-10-31T19:39:40.717469+00:00",
+        "decided_for_you": [],
+        "default": {
+          "agent": "Claude Code",
+          "engine": null,
+          "profile": "claude-default",
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ]
+        },
+        "done": 0,
+        "for_person": null,
+        "for_person_id": null,
+        "goal": "Every route under 100 ms while a meeting records.",
+        "id": "program-021f5fc24384",
+        "in_state_seconds": 0,
+        "last_checkpoint": {
+          "at": "2026-10-31T19:39:40.847719+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 9,
+          "kind": null,
+          "line": "Changed by the text: 5 changes (lines 1, 18, 25, 29)",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        "may_call": false,
+        "may_handoff": false,
+        "note_id": "program-program-021f5fc24384",
+        "note_window": "pullout:note:program-program-021f5fc24384",
+        "origin_ref": null,
+        "persons": [],
+        "place": {
+          "origin": null,
+          "person": null,
+          "project": {
+            "id": "proj-holdspeak",
+            "name": "HoldSpeak"
+          }
+        },
+        "prefer_idle": false,
+        "project": {
+          "id": "proj-holdspeak",
+          "name": "HoldSpeak"
+        },
+        "project_id": "proj-holdspeak",
+        "repository": {
+          "base_branch": "main",
+          "label": "app",
+          "root": "/tmp/rig/normal/app"
+        },
+        "requirements": [
+          {
+            "by": "template",
+            "choices": [
+              "waive"
+            ],
+            "created_at": "2026-10-31T19:39:40.718145+00:00",
+            "evidence": {},
+            "id": "req-db55a6ad3a82",
+            "judged_at": null,
+            "judged_commit": null,
+            "kind": "review",
+            "kind_word": "Review",
+            "label": "R1",
+            "ordinal": 1,
+            "parent_id": null,
+            "program_id": "program-021f5fc24384",
+            "required": true,
+            "rounds": 0,
+            "running": false,
+            "scope": "every_step",
+            "spec": {},
+            "stale": false,
+            "state": "not_yet",
+            "state_word": "Not yet",
+            "step_id": null,
+            "steps": [
+              {
+                "ordinal": 1,
+                "state": "not_yet",
+                "step_id": "step-8bfa40487e07"
+              },
+              {
+                "ordinal": 2,
+                "state": "not_yet",
+                "step_id": "step-f1b02628136d"
+              },
+              {
+                "ordinal": 3,
+                "state": "not_yet",
+                "step_id": "step-b4e4d525a8e2"
+              },
+              {
+                "ordinal": 4,
+                "state": "not_yet",
+                "step_id": "step-c20fdf6fe098"
+              }
+            ],
+            "text": "The change does only what its brief says.",
+            "waived_reason": null
+          },
+          {
+            "by": "template",
+            "choices": [
+              "waive"
+            ],
+            "created_at": "2026-10-31T19:39:40.718530+00:00",
+            "evidence": {},
+            "id": "req-e0474734a472",
+            "judged_at": null,
+            "judged_commit": null,
+            "kind": "review",
+            "kind_word": "Review",
+            "label": "R2",
+            "ordinal": 2,
+            "parent_id": null,
+            "program_id": "program-021f5fc24384",
+            "required": true,
+            "rounds": 0,
+            "running": false,
+            "scope": "every_step",
+            "spec": {},
+            "stale": false,
+            "state": "not_yet",
+            "state_word": "Not yet",
+            "step_id": null,
+            "steps": [
+              {
+                "ordinal": 1,
+                "state": "not_yet",
+                "step_id": "step-8bfa40487e07"
+              },
+              {
+                "ordinal": 2,
+                "state": "not_yet",
+                "step_id": "step-f1b02628136d"
+              },
+              {
+                "ordinal": 3,
+                "state": "not_yet",
+                "step_id": "step-b4e4d525a8e2"
+              },
+              {
+                "ordinal": 4,
+                "state": "not_yet",
+                "step_id": "step-c20fdf6fe098"
+              }
+            ],
+            "text": "Each new behaviour has a test.",
+            "waived_reason": null
+          }
+        ],
+        "requirements_met": {
+          "his": 0,
+          "met": 0,
+          "total": 9,
+          "unmet": 0,
+          "waived": 0
+        },
+        "reviewer": {
+          "agent": "Codex",
+          "engine": null,
+          "profile": "codex-default"
+        },
+        "revision": 8,
+        "search_words": "the hub stops stalling every route under 100 ms while a meeting records. holdspeak build-and-review indexes people routes loop watch the fan-out build and review",
+        "spend_limit_usd": null,
+        "state": "drafting",
+        "state_word": "Drafting",
+        "status_line": "Drafting · 0 of 4 done · check: true · control YOLO",
+        "steps": [
+          {
+            "after": [],
+            "agent": "Claude Code",
+            "amendments": [],
+            "branch": null,
+            "brief": "Add the three indexes.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-8bfa40487e07",
+            "last_checkpoint": null,
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 1,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/db/schema.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "claude-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.722105+00:00",
+                "evidence": {},
+                "id": "req-0b4157330bf2",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-db55a6ad3a82",
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-8bfa40487e07",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.722443+00:00",
+                "evidence": {},
+                "id": "req-4ec0e7bded28",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-e0474734a472",
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-8bfa40487e07",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 2,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "Indexes",
+            "updated_at": "2026-10-31T19:39:40.721488+00:00",
+            "worktree": null
+          },
+          {
+            "after": [],
+            "agent": "Codex",
+            "amendments": [],
+            "branch": null,
+            "brief": "31 handlers through run_in_threadpool.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-f1b02628136d",
+            "last_checkpoint": {
+              "at": "2026-10-31T19:39:40.806054+00:00",
+              "by": "owner",
+              "choice": null,
+              "decision_record_id": null,
+              "id": 6,
+              "kind": null,
+              "line": "Changed step 2: agents",
+              "operation_id": null,
+              "overturnable": false,
+              "overturned_at": null,
+              "pin_note": "No worktree to pin yet",
+              "ref": null,
+              "ref_commit": null,
+              "rule": null,
+              "step_id": "step-f1b02628136d",
+              "undo": {
+                "pin": {
+                  "note": "No worktree to pin yet"
+                }
+              }
+            },
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 2,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/web/routes/people.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "codex-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.722105+00:00",
+                "evidence": {},
+                "id": "req-383294272591",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-db55a6ad3a82",
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-f1b02628136d",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.722443+00:00",
+                "evidence": {},
+                "id": "req-b5dce5083e55",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-e0474734a472",
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-f1b02628136d",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              },
+              {
+                "by": "owner",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.726291+00:00",
+                "evidence": {},
+                "id": "req-d88778c6180d",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "check",
+                "kind_word": "Check",
+                "label": "R3",
+                "ordinal": 3,
+                "parent_id": null,
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "step",
+                "spec": {
+                  "command": "uv run pytest -q tests/unit/test_hub_loop_budget.py"
+                },
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-f1b02628136d",
+                "text": "`uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 3,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Codex",
+                "engine": null,
+                "label": "Codex",
+                "profile": "codex-default"
+              },
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "People routes",
+            "updated_at": "2026-10-31T19:39:40.805919+00:00",
+            "worktree": null
+          },
+          {
+            "after": [],
+            "agent": "Claude Code",
+            "amendments": [],
+            "branch": null,
+            "brief": "Log each handler over 100 ms.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "medium",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-b4e4d525a8e2",
+            "last_checkpoint": {
+              "at": "2026-10-31T19:39:40.844141+00:00",
+              "by": "owner",
+              "choice": null,
+              "decision_record_id": null,
+              "id": 8,
+              "kind": null,
+              "line": "Moved step 4 to 3",
+              "operation_id": null,
+              "overturnable": false,
+              "overturned_at": null,
+              "pin_note": "No worktree to pin yet",
+              "ref": null,
+              "ref_commit": null,
+              "rule": null,
+              "step_id": "step-b4e4d525a8e2",
+              "undo": {
+                "pin": {
+                  "note": "No worktree to pin yet"
+                }
+              }
+            },
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 3,
+            "origin_ref": null,
+            "owns": [],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "claude-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.801623+00:00",
+                "evidence": {},
+                "id": "req-95a1c4d50d90",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-db55a6ad3a82",
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-b4e4d525a8e2",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.801838+00:00",
+                "evidence": {},
+                "id": "req-51648e080c39",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-e0474734a472",
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-b4e4d525a8e2",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 2,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "Loop watch",
+            "updated_at": "2026-10-31T19:39:40.840266+00:00",
+            "worktree": null
+          },
+          {
+            "after": [
+              1,
+              2
+            ],
+            "agent": "Claude Code",
+            "amendments": [],
+            "branch": null,
+            "brief": "One frame per change, not one per row.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "owner",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-c20fdf6fe098",
+            "last_checkpoint": {
+              "at": "2026-10-31T19:39:40.809158+00:00",
+              "by": "owner",
+              "choice": null,
+              "decision_record_id": null,
+              "id": 7,
+              "kind": null,
+              "line": "Changed step 3: merge",
+              "operation_id": null,
+              "overturnable": false,
+              "overturned_at": null,
+              "pin_note": "No worktree to pin yet",
+              "ref": null,
+              "ref_commit": null,
+              "rule": null,
+              "step_id": "step-c20fdf6fe098",
+              "undo": {
+                "pin": {
+                  "note": "No worktree to pin yet"
+                }
+              }
+            },
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 4,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/web/fanout.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "claude-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.722105+00:00",
+                "evidence": {},
+                "id": "req-428ce74a6446",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-db55a6ad3a82",
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-c20fdf6fe098",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:40.722443+00:00",
+                "evidence": {},
+                "id": "req-cf9d64dbb9c9",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-e0474734a472",
+                "program_id": "program-021f5fc24384",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-c20fdf6fe098",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 2,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "The fan-out",
+            "updated_at": "2026-10-31T19:39:40.838778+00:00",
+            "worktree": null
+          }
+        ],
+        "template": "build-and-review",
+        "title": "The hub stops stalling",
+        "total": 4,
+        "updated_at": "2026-10-31T19:39:40.847811+00:00",
+        "usage_warning_share": null,
+        "your_turn": 0,
+        "your_turn_items": []
+      },
+      "program_id": "program-021f5fc24384",
+      "refused": 0,
+      "revision": 8,
+      "text": "# program text 1\nprogram The hub stops stalling                    # Drafting · 0 of 4 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nstep 1 Indexes                                    # Planned\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Planned\n  owns holdspeak/web/routes/people.py\n  agent Codex\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n\nstep 3 Loop watch                                 # Planned\n  brief\n  > Log each handler over 100 ms.\n\nstep 4 The fan-out                                # Planned\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
+      "version": 1
+    },
+    "program": {
+      "allowed_profiles": [],
+      "asks": 0,
+      "can_prove": {
+        "check": true,
+        "review": true,
+        "shot": false,
+        "shot_reason": "No shot command in this repository",
+        "word": true
+      },
+      "check_command": "true",
+      "checkpoints": [
+        {
+          "at": "2026-10-31T19:39:40.726386+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 3,
+          "kind": "requirement",
+          "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "step-f1b02628136d",
+          "undo": {
+            "requirement_id": "req-d88778c6180d"
+          }
+        },
+        {
+          "at": "2026-10-31T19:39:40.722671+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 2,
+          "kind": null,
+          "line": "Added 3 steps",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        {
+          "at": "2026-10-31T19:39:40.717888+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 1,
+          "kind": null,
+          "line": "Made the program from the Build and review template",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        }
+      ],
+      "closed_at": null,
+      "control": "normal",
+      "control_word": "Normal",
+      "created_at": "2026-10-31T19:39:40.717469+00:00",
+      "decided_for_you": [],
+      "default": {
+        "agent": "Claude Code",
+        "engine": null,
+        "profile": "claude-default",
+        "runs_on": [
+          {
+            "agent": "Claude Code",
+            "engine": null,
+            "label": "Claude Code",
+            "profile": "claude-default"
+          }
+        ]
+      },
+      "done": 0,
+      "for_person": null,
+      "for_person_id": null,
+      "goal": "Every route under 100 ms while a meeting records.",
+      "id": "program-021f5fc24384",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-10-31T19:39:40.726386+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 3,
+        "kind": "requirement",
+        "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "step-f1b02628136d",
+        "undo": {
+          "requirement_id": "req-d88778c6180d"
+        }
+      },
+      "may_call": false,
+      "may_handoff": false,
+      "note_id": "program-program-021f5fc24384",
+      "note_window": "pullout:note:program-program-021f5fc24384",
+      "origin_ref": null,
+      "persons": [],
+      "place": {
+        "origin": null,
+        "person": null,
+        "project": {
+          "id": "proj-holdspeak",
+          "name": "HoldSpeak"
+        }
+      },
+      "prefer_idle": false,
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      },
+      "project_id": "proj-holdspeak",
+      "repository": {
+        "base_branch": "main",
+        "label": "app",
+        "root": "/tmp/rig/normal/app"
+      },
+      "requirements": [
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T19:39:40.718145+00:00",
+          "evidence": {},
+          "id": "req-db55a6ad3a82",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R1",
+          "ordinal": 1,
+          "parent_id": null,
+          "program_id": "program-021f5fc24384",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": null,
+          "steps": [
+            {
+              "ordinal": 1,
+              "state": "not_yet",
+              "step_id": "step-8bfa40487e07"
+            },
+            {
+              "ordinal": 2,
+              "state": "not_yet",
+              "step_id": "step-f1b02628136d"
+            },
+            {
+              "ordinal": 3,
+              "state": "not_yet",
+              "step_id": "step-c20fdf6fe098"
+            }
+          ],
+          "text": "The change does only what its brief says.",
+          "waived_reason": null
+        },
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T19:39:40.718530+00:00",
+          "evidence": {},
+          "id": "req-e0474734a472",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R2",
+          "ordinal": 2,
+          "parent_id": null,
+          "program_id": "program-021f5fc24384",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": null,
+          "steps": [
+            {
+              "ordinal": 1,
+              "state": "not_yet",
+              "step_id": "step-8bfa40487e07"
+            },
+            {
+              "ordinal": 2,
+              "state": "not_yet",
+              "step_id": "step-f1b02628136d"
+            },
+            {
+              "ordinal": 3,
+              "state": "not_yet",
+              "step_id": "step-c20fdf6fe098"
+            }
+          ],
+          "text": "Each new behaviour has a test.",
+          "waived_reason": null
+        }
+      ],
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 7,
+        "unmet": 0,
+        "waived": 0
+      },
+      "reviewer": {
+        "agent": "Codex",
+        "engine": null,
+        "profile": "codex-default"
+      },
+      "revision": 2,
+      "search_words": "the hub stops stalling every route under 100 ms while a meeting records. holdspeak build-and-review indexes people routes the fan-out build and review",
+      "spend_limit_usd": null,
+      "state": "drafting",
+      "state_word": "Drafting",
+      "status_line": "Drafting · 0 of 3 done · check: true · control Normal",
+      "steps": [
+        {
+          "after": [],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "Add the three indexes.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-8bfa40487e07",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 1,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/db/schema.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:40.722105+00:00",
+              "evidence": {},
+              "id": "req-0b4157330bf2",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-db55a6ad3a82",
+              "program_id": "program-021f5fc24384",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-8bfa40487e07",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:40.722443+00:00",
+              "evidence": {},
+              "id": "req-4ec0e7bded28",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-e0474734a472",
+              "program_id": "program-021f5fc24384",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-8bfa40487e07",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 2,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "Indexes",
+          "updated_at": "2026-10-31T19:39:40.721488+00:00",
+          "worktree": null
+        },
+        {
+          "after": [],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "31 handlers through run_in_threadpool.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-f1b02628136d",
+          "last_checkpoint": {
+            "at": "2026-10-31T19:39:40.726386+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 3,
+            "kind": "requirement",
+            "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-f1b02628136d",
+            "undo": {
+              "requirement_id": "req-d88778c6180d"
+            }
+          },
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 2,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/web/routes/people.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:40.722105+00:00",
+              "evidence": {},
+              "id": "req-383294272591",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-db55a6ad3a82",
+              "program_id": "program-021f5fc24384",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-f1b02628136d",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:40.722443+00:00",
+              "evidence": {},
+              "id": "req-b5dce5083e55",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-e0474734a472",
+              "program_id": "program-021f5fc24384",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-f1b02628136d",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            },
+            {
+              "by": "owner",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:40.726291+00:00",
+              "evidence": {},
+              "id": "req-d88778c6180d",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "check",
+              "kind_word": "Check",
+              "label": "R3",
+              "ordinal": 3,
+              "parent_id": null,
+              "program_id": "program-021f5fc24384",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "step",
+              "spec": {
+                "command": "uv run pytest -q tests/unit/test_hub_loop_budget.py"
+              },
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-f1b02628136d",
+              "text": "`uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 3,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "People routes",
+          "updated_at": "2026-10-31T19:39:40.721488+00:00",
+          "worktree": null
+        },
+        {
+          "after": [
+            1,
+            2
+          ],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "One frame per change, not one per row.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-c20fdf6fe098",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 3,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/web/fanout.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:40.722105+00:00",
+              "evidence": {},
+              "id": "req-428ce74a6446",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-db55a6ad3a82",
+              "program_id": "program-021f5fc24384",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-c20fdf6fe098",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:40.722443+00:00",
+              "evidence": {},
+              "id": "req-cf9d64dbb9c9",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-e0474734a472",
+              "program_id": "program-021f5fc24384",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-c20fdf6fe098",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 2,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "The fan-out",
+          "updated_at": "2026-10-31T19:39:40.721488+00:00",
+          "worktree": null
+        }
+      ],
+      "template": "build-and-review",
+      "title": "The hub stops stalling",
+      "total": 3,
+      "updated_at": "2026-10-31T19:39:40.726449+00:00",
+      "usage_warning_share": null,
+      "your_turn": 0,
+      "your_turn_items": []
+    },
+    "shape": {
+      "allowed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  agent Codex\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep + Loop watch\n  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
+      "applied": false,
+      "applied_rows": [],
+      "attempts": 1,
+      "base": "# program text 1\nprogram The hub stops stalling                    # Drafting · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nstep 1 Indexes                                    # Planned\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Planned\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n\nstep 3 The fan-out                                # Planned\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+      "capability": "agent.plan",
+      "changes": [
+        {
+          "after": "yolo",
+          "before": "normal",
+          "code": null,
+          "field": "control",
+          "id": "program.control",
+          "line": 1,
+          "lowers_bar": true,
+          "op": "change",
+          "reason": null,
+          "say": "The program's control is now yolo.",
+          "verdict": "lowers",
+          "where": "program"
+        },
+        {
+          "after": "Codex, then Claude Code",
+          "before": "Claude Code",
+          "code": null,
+          "field": "agent",
+          "id": "step-2.agents",
+          "line": 18,
+          "lowers_bar": false,
+          "op": "change",
+          "reason": null,
+          "say": "Step 2's agents is now Codex, then Claude Code.",
+          "verdict": "allowed",
+          "where": "step 2"
+        },
+        {
+          "after": "Loop watch · medium",
+          "before": "",
+          "code": null,
+          "field": "step",
+          "id": "step-4.add",
+          "line": 25,
+          "lowers_bar": false,
+          "op": "add",
+          "reason": null,
+          "say": "A new step 4, Loop watch.",
+          "verdict": "allowed",
+          "where": "step 4"
+        },
+        {
+          "after": "before step 3",
+          "before": "step 4",
+          "code": null,
+          "field": "position",
+          "id": "step-4.move",
+          "line": 25,
+          "lowers_bar": false,
+          "op": "move",
+          "reason": null,
+          "say": "Step 4 moves before step 3.",
+          "verdict": "allowed",
+          "where": "step 4"
+        },
+        {
+          "after": "owner",
+          "before": "level",
+          "code": null,
+          "field": "merge",
+          "id": "step-3.merge",
+          "line": 29,
+          "lowers_bar": false,
+          "op": "change",
+          "reason": null,
+          "say": "Step 3's merge is now owner.",
+          "verdict": "allowed",
+          "where": "step 3"
+        }
+      ],
+      "decision": null,
+      "engine": "qwen3.8-27b",
+      "grounded_on": {
+        "capability": "agent.plan",
+        "checkpoints": 3,
+        "frozen": 0,
+        "note": false,
+        "open_actions": 0,
+        "profile": "home-engine",
+        "repo_paths": 5
+      },
+      "held": "At Secure and Normal a shaped change waits for Apply.",
+      "latency_ms": 5,
+      "lowers": [
+        "program.control"
+      ],
+      "patch": "--- current\n+++ proposed\n@@ -1,29 +1,34 @@\n-# program text 1\n-program The hub stops stalling                    # Drafting · 0 of 3 done\n+program The hub stops stalling\n   goal\n   > Every route under 100 ms while a meeting records.\n   in app · main · project HoldSpeak\n   template build and review\n-  control normal\n+  control yolo\n   check true\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n \n-step 1 Indexes                                    # Planned\n+step 1 Indexes\n   owns holdspeak/db/schema.py\n   brief\n   > Add the three indexes.\n \n-step 2 People routes                              # Planned\n+step 2 People routes\n   owns holdspeak/web/routes/people.py\n+  agent Codex\n   brief\n   > 31 handlers through run_in_threadpool.\n-  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n+  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n \n-step 3 The fan-out                                # Planned\n+step + Loop watch\n+  brief\n+  > Log each handler over 100 ms.\n+\n+step 3 The fan-out\n   owns holdspeak/web/fanout.py\n   after 1, 2\n+  review agent · merge owner\n   brief\n   > One frame per change, not one per row.\n",
+      "program_id": "program-021f5fc24384",
+      "proposed_text": "program The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  agent Codex\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep + Loop watch\n  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  review agent · merge owner\n  brief\n  > One frame per change, not one per row.\n",
+      "question": null,
+      "refusals": [],
+      "refused": 0,
+      "revision": 2,
+      "say": "People routes on Codex, new loop-watch step before the fan-out, fan-out merges on your press.",
+      "seconds": 0.0,
+      "sentence": "put the People routes on Codex, add a loop watch step before the fan-out that logs each handler over 100 ms, and make the fan-out merge on my press",
+      "text": "# program text 1\nprogram The hub stops stalling                    # Drafting · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nstep 1 Indexes                                    # Planned\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Planned\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n\nstep 3 The fan-out                                # Planned\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+      "version": 1
+    }
+  },
+  "question": {
+    "allowed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+    "applied": false,
+    "applied_rows": [],
+    "attempts": 1,
+    "base": "# program text 1\nprogram The hub stops stalling                    # Drafting · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nstep 1 Indexes                                    # Planned\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Planned\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n\nstep 3 The fan-out                                # Planned\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+    "capability": "agent.plan",
+    "changes": [],
+    "decision": null,
+    "engine": "qwen3.8-27b",
+    "grounded_on": {
+      "capability": "agent.plan",
+      "checkpoints": 3,
+      "frozen": 0,
+      "note": false,
+      "open_actions": 0,
+      "profile": "home-engine",
+      "repo_paths": 5
+    },
+    "latency_ms": 3,
+    "lowers": [],
+    "patch": "--- current\n+++ proposed\n@@ -1,5 +1,4 @@\n-# program text 1\n-program The hub stops stalling                    # Drafting · 0 of 3 done\n+program The hub stops stalling\n   goal\n   > Every route under 100 ms while a meeting records.\n   in app · main · project HoldSpeak\n@@ -8,22 +7,22 @@\n   check true\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n \n-step 1 Indexes                                    # Planned\n+step 1 Indexes\n   owns holdspeak/db/schema.py\n   brief\n   > Add the three indexes.\n \n-step 2 People routes                              # Planned\n+step 2 People routes\n   owns holdspeak/web/routes/people.py\n   brief\n   > 31 handlers through run_in_threadpool.\n-  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n+  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n \n-step 3 The fan-out                                # Planned\n+step 3 The fan-out\n   owns holdspeak/web/fanout.py\n   after 1, 2\n   brief\n-  > One frame per change, not one per row.\n+  > One frame per change, not one per row.",
+    "program_id": "program-6e682f5fea63",
+    "proposed_text": "program The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.",
+    "question": "Which step should I move, and before which one?",
+    "refusals": [],
+    "refused": 0,
+    "revision": 2,
+    "say": "Which step should I move, and before which one?",
+    "seconds": 0.0,
+    "sentence": "move it before the other one",
+    "text": "# program text 1\nprogram The hub stops stalling                    # Drafting · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nstep 1 Indexes                                    # Planned\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Planned\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n\nstep 3 The fan-out                                # Planned\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+    "version": 1
+  },
+  "yolo": {
+    "overturned": {
+      "program": {
+        "allowed_profiles": [],
+        "asks": 0,
+        "can_prove": {
+          "check": true,
+          "review": true,
+          "shot": false,
+          "shot_reason": "No shot command in this repository",
+          "word": true
+        },
+        "check_command": "true",
+        "checkpoints": [
+          {
+            "at": "2026-10-31T19:39:41.781769+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 9,
+            "kind": null,
+            "line": "Overturned: Shaped by a sentence: Step 1 now runs on Codex with a glance review.",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:41.778734+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 8,
+            "kind": null,
+            "line": "Changed by the text: 1 change (line 14)",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:41.773121+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 7,
+            "kind": null,
+            "line": "Changed step 1: agents",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": "No worktree to pin yet",
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-1d486795193d",
+            "undo": {
+              "pin": {
+                "note": "No worktree to pin yet"
+              }
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:41.758614+00:00",
+            "by": "engine",
+            "choice": "shape",
+            "decision_record_id": null,
+            "id": 6,
+            "kind": "shape",
+            "line": "Shaped by a sentence: Step 1 now runs on Codex with a glance review.",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": "2026-10-31T19:39:41.781674+00:00",
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": "YOLO applies a shaped change",
+            "step_id": "",
+            "undo": {
+              "added_requirements": [],
+              "added_steps": [],
+              "base_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+              "numbers": {
+                "1": "step-1d486795193d",
+                "2": "step-80da23c8d036",
+                "3": "step-429a54a0ad27"
+              },
+              "sentence": "put the indexes step on Codex and give it only a glance review",
+              "touched": [
+                "step-1d486795193d"
+              ]
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:41.755698+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 5,
+            "kind": null,
+            "line": "Changed by the text: 1 change (line 14)",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:41.752443+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 4,
+            "kind": null,
+            "line": "Changed step 1: agents",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": "No worktree to pin yet",
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-1d486795193d",
+            "undo": {
+              "pin": {
+                "note": "No worktree to pin yet"
+              }
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:41.698336+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 3,
+            "kind": "requirement",
+            "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-80da23c8d036",
+            "undo": {
+              "requirement_id": "req-5adf60356d70"
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:41.695503+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 2,
+            "kind": null,
+            "line": "Added 3 steps",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:41.691868+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 1,
+            "kind": null,
+            "line": "Made the program from the Build and review template",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          }
+        ],
+        "closed_at": null,
+        "control": "yolo",
+        "control_word": "YOLO",
+        "created_at": "2026-10-31T19:39:41.691576+00:00",
+        "decided_for_you": [
+          {
+            "at": "2026-10-31T19:39:41.758614+00:00",
+            "choice": "shape",
+            "decision_record_id": null,
+            "id": 6,
+            "kind": "shape",
+            "line": "Shaped by a sentence: Step 1 now runs on Codex with a glance review.",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": "2026-10-31T19:39:41.781674+00:00",
+            "rule": "YOLO applies a shaped change",
+            "step_id": null
+          }
+        ],
+        "default": {
+          "agent": "Claude Code",
+          "engine": null,
+          "profile": "claude-default",
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ]
+        },
+        "done": 0,
+        "for_person": null,
+        "for_person_id": null,
+        "goal": "Every route under 100 ms while a meeting records.",
+        "id": "program-61492777a1fa",
+        "in_state_seconds": 0,
+        "last_checkpoint": {
+          "at": "2026-10-31T19:39:41.781769+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 9,
+          "kind": null,
+          "line": "Overturned: Shaped by a sentence: Step 1 now runs on Codex with a glance review.",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        "may_call": false,
+        "may_handoff": false,
+        "note_id": "program-program-61492777a1fa",
+        "note_window": "pullout:note:program-program-61492777a1fa",
+        "origin_ref": null,
+        "persons": [],
+        "place": {
+          "origin": null,
+          "person": null,
+          "project": {
+            "id": "proj-holdspeak",
+            "name": "HoldSpeak"
+          }
+        },
+        "prefer_idle": false,
+        "project": {
+          "id": "proj-holdspeak",
+          "name": "HoldSpeak"
+        },
+        "project_id": "proj-holdspeak",
+        "repository": {
+          "base_branch": "main",
+          "label": "app",
+          "root": "/tmp/rig/yolo/app"
+        },
+        "requirements": [
+          {
+            "by": "template",
+            "choices": [
+              "waive"
+            ],
+            "created_at": "2026-10-31T19:39:41.692069+00:00",
+            "evidence": {},
+            "id": "req-3330d3419f6e",
+            "judged_at": null,
+            "judged_commit": null,
+            "kind": "review",
+            "kind_word": "Review",
+            "label": "R1",
+            "ordinal": 1,
+            "parent_id": null,
+            "program_id": "program-61492777a1fa",
+            "required": true,
+            "rounds": 0,
+            "running": false,
+            "scope": "every_step",
+            "spec": {},
+            "stale": false,
+            "state": "not_yet",
+            "state_word": "Not yet",
+            "step_id": null,
+            "steps": [
+              {
+                "ordinal": 1,
+                "state": "not_yet",
+                "step_id": "step-1d486795193d"
+              },
+              {
+                "ordinal": 2,
+                "state": "not_yet",
+                "step_id": "step-80da23c8d036"
+              },
+              {
+                "ordinal": 3,
+                "state": "not_yet",
+                "step_id": "step-429a54a0ad27"
+              }
+            ],
+            "text": "The change does only what its brief says.",
+            "waived_reason": null
+          },
+          {
+            "by": "template",
+            "choices": [
+              "waive"
+            ],
+            "created_at": "2026-10-31T19:39:41.692439+00:00",
+            "evidence": {},
+            "id": "req-5661e1470fe1",
+            "judged_at": null,
+            "judged_commit": null,
+            "kind": "review",
+            "kind_word": "Review",
+            "label": "R2",
+            "ordinal": 2,
+            "parent_id": null,
+            "program_id": "program-61492777a1fa",
+            "required": true,
+            "rounds": 0,
+            "running": false,
+            "scope": "every_step",
+            "spec": {},
+            "stale": false,
+            "state": "not_yet",
+            "state_word": "Not yet",
+            "step_id": null,
+            "steps": [
+              {
+                "ordinal": 1,
+                "state": "not_yet",
+                "step_id": "step-1d486795193d"
+              },
+              {
+                "ordinal": 2,
+                "state": "not_yet",
+                "step_id": "step-80da23c8d036"
+              },
+              {
+                "ordinal": 3,
+                "state": "not_yet",
+                "step_id": "step-429a54a0ad27"
+              }
+            ],
+            "text": "Each new behaviour has a test.",
+            "waived_reason": null
+          }
+        ],
+        "requirements_met": {
+          "his": 0,
+          "met": 0,
+          "total": 7,
+          "unmet": 0,
+          "waived": 0
+        },
+        "reviewer": {
+          "agent": "Codex",
+          "engine": null,
+          "profile": "codex-default"
+        },
+        "revision": 8,
+        "search_words": "the hub stops stalling every route under 100 ms while a meeting records. holdspeak build-and-review indexes people routes the fan-out build and review",
+        "spend_limit_usd": null,
+        "state": "drafting",
+        "state_word": "Drafting",
+        "status_line": "Drafting · 0 of 3 done · check: true · control YOLO",
+        "steps": [
+          {
+            "after": [],
+            "agent": "Claude Code",
+            "amendments": [],
+            "branch": null,
+            "brief": "Add the three indexes.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-1d486795193d",
+            "last_checkpoint": {
+              "at": "2026-10-31T19:39:41.773121+00:00",
+              "by": "owner",
+              "choice": null,
+              "decision_record_id": null,
+              "id": 7,
+              "kind": null,
+              "line": "Changed step 1: agents",
+              "operation_id": null,
+              "overturnable": false,
+              "overturned_at": null,
+              "pin_note": "No worktree to pin yet",
+              "ref": null,
+              "ref_commit": null,
+              "rule": null,
+              "step_id": "step-1d486795193d",
+              "undo": {
+                "pin": {
+                  "note": "No worktree to pin yet"
+                }
+              }
+            },
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 1,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/db/schema.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "claude-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.694885+00:00",
+                "evidence": {},
+                "id": "req-686280e6ab14",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-3330d3419f6e",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-1d486795193d",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.695179+00:00",
+                "evidence": {},
+                "id": "req-b453581228ab",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-5661e1470fe1",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-1d486795193d",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 2,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "Indexes",
+            "updated_at": "2026-10-31T19:39:41.772845+00:00",
+            "worktree": null
+          },
+          {
+            "after": [],
+            "agent": "Claude Code",
+            "amendments": [],
+            "branch": null,
+            "brief": "31 handlers through run_in_threadpool.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-80da23c8d036",
+            "last_checkpoint": {
+              "at": "2026-10-31T19:39:41.698336+00:00",
+              "by": "owner",
+              "choice": null,
+              "decision_record_id": null,
+              "id": 3,
+              "kind": "requirement",
+              "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+              "operation_id": null,
+              "overturnable": false,
+              "overturned_at": null,
+              "pin_note": null,
+              "ref": null,
+              "ref_commit": null,
+              "rule": null,
+              "step_id": "step-80da23c8d036",
+              "undo": {
+                "requirement_id": "req-5adf60356d70"
+              }
+            },
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 2,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/web/routes/people.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "claude-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.694885+00:00",
+                "evidence": {},
+                "id": "req-299e4789365b",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-3330d3419f6e",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-80da23c8d036",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.695179+00:00",
+                "evidence": {},
+                "id": "req-9122493a2cb7",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-5661e1470fe1",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-80da23c8d036",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              },
+              {
+                "by": "owner",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.698201+00:00",
+                "evidence": {},
+                "id": "req-5adf60356d70",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "check",
+                "kind_word": "Check",
+                "label": "R3",
+                "ordinal": 3,
+                "parent_id": null,
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "step",
+                "spec": {
+                  "command": "uv run pytest -q tests/unit/test_hub_loop_budget.py"
+                },
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-80da23c8d036",
+                "text": "`uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 3,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "People routes",
+            "updated_at": "2026-10-31T19:39:41.694453+00:00",
+            "worktree": null
+          },
+          {
+            "after": [
+              1,
+              2
+            ],
+            "agent": "Claude Code",
+            "amendments": [],
+            "branch": null,
+            "brief": "One frame per change, not one per row.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-429a54a0ad27",
+            "last_checkpoint": null,
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 3,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/web/fanout.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "claude-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.694885+00:00",
+                "evidence": {},
+                "id": "req-b026c87aeb9d",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-3330d3419f6e",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-429a54a0ad27",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.695179+00:00",
+                "evidence": {},
+                "id": "req-b803fb4d1c9b",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-5661e1470fe1",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-429a54a0ad27",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 2,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "The fan-out",
+            "updated_at": "2026-10-31T19:39:41.694453+00:00",
+            "worktree": null
+          }
+        ],
+        "template": "build-and-review",
+        "title": "The hub stops stalling",
+        "total": 3,
+        "updated_at": "2026-10-31T19:39:41.781844+00:00",
+        "usage_warning_share": null,
+        "your_turn": 0,
+        "your_turn_items": []
+      }
+    },
+    "program": {
+      "allowed_profiles": [],
+      "asks": 0,
+      "can_prove": {
+        "check": true,
+        "review": true,
+        "shot": false,
+        "shot_reason": "No shot command in this repository",
+        "word": true
+      },
+      "check_command": "true",
+      "checkpoints": [
+        {
+          "at": "2026-10-31T19:39:41.698336+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 3,
+          "kind": "requirement",
+          "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "step-80da23c8d036",
+          "undo": {
+            "requirement_id": "req-5adf60356d70"
+          }
+        },
+        {
+          "at": "2026-10-31T19:39:41.695503+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 2,
+          "kind": null,
+          "line": "Added 3 steps",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        {
+          "at": "2026-10-31T19:39:41.691868+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 1,
+          "kind": null,
+          "line": "Made the program from the Build and review template",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        }
+      ],
+      "closed_at": null,
+      "control": "yolo",
+      "control_word": "YOLO",
+      "created_at": "2026-10-31T19:39:41.691576+00:00",
+      "decided_for_you": [],
+      "default": {
+        "agent": "Claude Code",
+        "engine": null,
+        "profile": "claude-default",
+        "runs_on": [
+          {
+            "agent": "Claude Code",
+            "engine": null,
+            "label": "Claude Code",
+            "profile": "claude-default"
+          }
+        ]
+      },
+      "done": 0,
+      "for_person": null,
+      "for_person_id": null,
+      "goal": "Every route under 100 ms while a meeting records.",
+      "id": "program-61492777a1fa",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-10-31T19:39:41.698336+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 3,
+        "kind": "requirement",
+        "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "step-80da23c8d036",
+        "undo": {
+          "requirement_id": "req-5adf60356d70"
+        }
+      },
+      "may_call": false,
+      "may_handoff": false,
+      "note_id": "program-program-61492777a1fa",
+      "note_window": "pullout:note:program-program-61492777a1fa",
+      "origin_ref": null,
+      "persons": [],
+      "place": {
+        "origin": null,
+        "person": null,
+        "project": {
+          "id": "proj-holdspeak",
+          "name": "HoldSpeak"
+        }
+      },
+      "prefer_idle": false,
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      },
+      "project_id": "proj-holdspeak",
+      "repository": {
+        "base_branch": "main",
+        "label": "app",
+        "root": "/tmp/rig/yolo/app"
+      },
+      "requirements": [
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T19:39:41.692069+00:00",
+          "evidence": {},
+          "id": "req-3330d3419f6e",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R1",
+          "ordinal": 1,
+          "parent_id": null,
+          "program_id": "program-61492777a1fa",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": null,
+          "steps": [
+            {
+              "ordinal": 1,
+              "state": "not_yet",
+              "step_id": "step-1d486795193d"
+            },
+            {
+              "ordinal": 2,
+              "state": "not_yet",
+              "step_id": "step-80da23c8d036"
+            },
+            {
+              "ordinal": 3,
+              "state": "not_yet",
+              "step_id": "step-429a54a0ad27"
+            }
+          ],
+          "text": "The change does only what its brief says.",
+          "waived_reason": null
+        },
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T19:39:41.692439+00:00",
+          "evidence": {},
+          "id": "req-5661e1470fe1",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R2",
+          "ordinal": 2,
+          "parent_id": null,
+          "program_id": "program-61492777a1fa",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": null,
+          "steps": [
+            {
+              "ordinal": 1,
+              "state": "not_yet",
+              "step_id": "step-1d486795193d"
+            },
+            {
+              "ordinal": 2,
+              "state": "not_yet",
+              "step_id": "step-80da23c8d036"
+            },
+            {
+              "ordinal": 3,
+              "state": "not_yet",
+              "step_id": "step-429a54a0ad27"
+            }
+          ],
+          "text": "Each new behaviour has a test.",
+          "waived_reason": null
+        }
+      ],
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 7,
+        "unmet": 0,
+        "waived": 0
+      },
+      "reviewer": {
+        "agent": "Codex",
+        "engine": null,
+        "profile": "codex-default"
+      },
+      "revision": 2,
+      "search_words": "the hub stops stalling every route under 100 ms while a meeting records. holdspeak build-and-review indexes people routes the fan-out build and review",
+      "spend_limit_usd": null,
+      "state": "drafting",
+      "state_word": "Drafting",
+      "status_line": "Drafting · 0 of 3 done · check: true · control YOLO",
+      "steps": [
+        {
+          "after": [],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "Add the three indexes.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-1d486795193d",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 1,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/db/schema.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:41.694885+00:00",
+              "evidence": {},
+              "id": "req-686280e6ab14",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-3330d3419f6e",
+              "program_id": "program-61492777a1fa",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-1d486795193d",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:41.695179+00:00",
+              "evidence": {},
+              "id": "req-b453581228ab",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-5661e1470fe1",
+              "program_id": "program-61492777a1fa",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-1d486795193d",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 2,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "Indexes",
+          "updated_at": "2026-10-31T19:39:41.694453+00:00",
+          "worktree": null
+        },
+        {
+          "after": [],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "31 handlers through run_in_threadpool.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-80da23c8d036",
+          "last_checkpoint": {
+            "at": "2026-10-31T19:39:41.698336+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 3,
+            "kind": "requirement",
+            "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-80da23c8d036",
+            "undo": {
+              "requirement_id": "req-5adf60356d70"
+            }
+          },
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 2,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/web/routes/people.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:41.694885+00:00",
+              "evidence": {},
+              "id": "req-299e4789365b",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-3330d3419f6e",
+              "program_id": "program-61492777a1fa",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-80da23c8d036",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:41.695179+00:00",
+              "evidence": {},
+              "id": "req-9122493a2cb7",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-5661e1470fe1",
+              "program_id": "program-61492777a1fa",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-80da23c8d036",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            },
+            {
+              "by": "owner",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:41.698201+00:00",
+              "evidence": {},
+              "id": "req-5adf60356d70",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "check",
+              "kind_word": "Check",
+              "label": "R3",
+              "ordinal": 3,
+              "parent_id": null,
+              "program_id": "program-61492777a1fa",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "step",
+              "spec": {
+                "command": "uv run pytest -q tests/unit/test_hub_loop_budget.py"
+              },
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-80da23c8d036",
+              "text": "`uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 3,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "People routes",
+          "updated_at": "2026-10-31T19:39:41.694453+00:00",
+          "worktree": null
+        },
+        {
+          "after": [
+            1,
+            2
+          ],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "One frame per change, not one per row.",
+          "check": {
+            "command": "true",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "engine": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "agent",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-429a54a0ad27",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 3,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/web/fanout.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "requirements": [
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:41.694885+00:00",
+              "evidence": {},
+              "id": "req-b026c87aeb9d",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R1",
+              "ordinal": 1,
+              "parent_id": "req-3330d3419f6e",
+              "program_id": "program-61492777a1fa",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-429a54a0ad27",
+              "text": "The change does only what its brief says.",
+              "waived_reason": null
+            },
+            {
+              "by": "template",
+              "choices": [
+                "waive"
+              ],
+              "created_at": "2026-10-31T19:39:41.695179+00:00",
+              "evidence": {},
+              "id": "req-b803fb4d1c9b",
+              "judged_at": null,
+              "judged_commit": null,
+              "kind": "review",
+              "kind_word": "Review",
+              "label": "R2",
+              "ordinal": 2,
+              "parent_id": "req-5661e1470fe1",
+              "program_id": "program-61492777a1fa",
+              "required": true,
+              "rounds": 0,
+              "running": false,
+              "scope": "every_step",
+              "spec": {},
+              "stale": false,
+              "state": "not_yet",
+              "state_word": "Not yet",
+              "step_id": "step-429a54a0ad27",
+              "text": "Each new behaviour has a test.",
+              "waived_reason": null
+            }
+          ],
+          "requirements_met": {
+            "his": 0,
+            "met": 0,
+            "total": 2,
+            "unmet": 0,
+            "waived": 0
+          },
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "title": "The fan-out",
+          "updated_at": "2026-10-31T19:39:41.694453+00:00",
+          "worktree": null
+        }
+      ],
+      "template": "build-and-review",
+      "title": "The hub stops stalling",
+      "total": 3,
+      "updated_at": "2026-10-31T19:39:41.698481+00:00",
+      "usage_warning_share": null,
+      "your_turn": 0,
+      "your_turn_items": []
+    },
+    "shape": {
+      "allowed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  agent Codex\n  review agent at glance\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+      "applied": true,
+      "applied_rows": [
+        {
+          "after": "Codex, then Claude Code",
+          "before": "Claude Code",
+          "code": null,
+          "field": "agent",
+          "id": "step-1.agents",
+          "line": 13,
+          "lowers_bar": false,
+          "op": "change",
+          "reason": null,
+          "say": "Step 1's agents is now Codex, then Claude Code.",
+          "verdict": "allowed",
+          "where": "step 1"
+        }
+      ],
+      "attempts": 1,
+      "base": "# program text 1\nprogram The hub stops stalling                    # Drafting · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nstep 1 Indexes                                    # Planned\n  owns holdspeak/db/schema.py\n  agent Codex\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Planned\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n\nstep 3 The fan-out                                # Planned\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+      "capability": "agent.plan",
+      "changes": [
+        {
+          "after": "glance",
+          "before": "delta",
+          "code": null,
+          "field": "review depth",
+          "id": "step-1.depth",
+          "line": 14,
+          "lowers_bar": true,
+          "op": "change",
+          "reason": null,
+          "say": "Step 1's depth is now glance.",
+          "verdict": "lowers",
+          "where": "step 1"
+        }
+      ],
+      "decision": {
+        "at": "2026-10-31T19:39:41.758614+00:00",
+        "choice": "shape",
+        "id": 6,
+        "kind": "shape",
+        "rule": "YOLO applies a shaped change"
+      },
+      "engine": "qwen3.8-27b",
+      "grounded_on": {
+        "capability": "agent.plan",
+        "checkpoints": 3,
+        "frozen": 0,
+        "note": false,
+        "open_actions": 0,
+        "profile": "home-engine",
+        "repo_paths": 5
+      },
+      "latency_ms": 4,
+      "lowers": [
+        "step-1.depth"
+      ],
+      "patch": "--- current\n+++ proposed\n@@ -1,5 +1,5 @@\n # program text 1\n-program The hub stops stalling                    # Drafting · 0 of 3 done\n+program The hub stops stalling\n   goal\n   > Every route under 100 ms while a meeting records.\n   in app · main · project HoldSpeak\n@@ -8,22 +8,23 @@\n   check true\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n \n-step 1 Indexes                                    # Planned\n+step 1 Indexes\n   owns holdspeak/db/schema.py\n   agent Codex\n+  review agent at glance\n   brief\n   > Add the three indexes.\n \n-step 2 People routes                              # Planned\n+step 2 People routes\n   owns holdspeak/web/routes/people.py\n   brief\n   > 31 handlers through run_in_threadpool.\n-  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n+  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n \n-step 3 The fan-out                                # Planned\n+step 3 The fan-out\n   owns holdspeak/web/fanout.py\n   after 1, 2\n   brief\n",
+      "program": {
+        "allowed_profiles": [],
+        "asks": 0,
+        "can_prove": {
+          "check": true,
+          "review": true,
+          "shot": false,
+          "shot_reason": "No shot command in this repository",
+          "word": true
+        },
+        "check_command": "true",
+        "checkpoints": [
+          {
+            "at": "2026-10-31T19:39:41.758614+00:00",
+            "by": "engine",
+            "choice": "shape",
+            "decision_record_id": null,
+            "id": 6,
+            "kind": "shape",
+            "line": "Shaped by a sentence: Step 1 now runs on Codex with a glance review.",
+            "operation_id": null,
+            "overturnable": true,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": "YOLO applies a shaped change",
+            "step_id": "",
+            "undo": {
+              "added_requirements": [],
+              "added_steps": [],
+              "base_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+              "numbers": {
+                "1": "step-1d486795193d",
+                "2": "step-80da23c8d036",
+                "3": "step-429a54a0ad27"
+              },
+              "sentence": "put the indexes step on Codex and give it only a glance review",
+              "touched": [
+                "step-1d486795193d"
+              ]
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:41.755698+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 5,
+            "kind": null,
+            "line": "Changed by the text: 1 change (line 14)",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:41.752443+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 4,
+            "kind": null,
+            "line": "Changed step 1: agents",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": "No worktree to pin yet",
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-1d486795193d",
+            "undo": {
+              "pin": {
+                "note": "No worktree to pin yet"
+              }
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:41.698336+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 3,
+            "kind": "requirement",
+            "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "step-80da23c8d036",
+            "undo": {
+              "requirement_id": "req-5adf60356d70"
+            }
+          },
+          {
+            "at": "2026-10-31T19:39:41.695503+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 2,
+            "kind": null,
+            "line": "Added 3 steps",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          },
+          {
+            "at": "2026-10-31T19:39:41.691868+00:00",
+            "by": "owner",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 1,
+            "kind": null,
+            "line": "Made the program from the Build and review template",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": null,
+            "ref_commit": null,
+            "rule": null,
+            "step_id": "",
+            "undo": {}
+          }
+        ],
+        "closed_at": null,
+        "control": "yolo",
+        "control_word": "YOLO",
+        "created_at": "2026-10-31T19:39:41.691576+00:00",
+        "decided_for_you": [
+          {
+            "at": "2026-10-31T19:39:41.758614+00:00",
+            "choice": "shape",
+            "decision_record_id": null,
+            "id": 6,
+            "kind": "shape",
+            "line": "Shaped by a sentence: Step 1 now runs on Codex with a glance review.",
+            "operation_id": null,
+            "overturnable": true,
+            "overturned_at": null,
+            "rule": "YOLO applies a shaped change",
+            "step_id": null
+          }
+        ],
+        "default": {
+          "agent": "Claude Code",
+          "engine": null,
+          "profile": "claude-default",
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ]
+        },
+        "done": 0,
+        "for_person": null,
+        "for_person_id": null,
+        "goal": "Every route under 100 ms while a meeting records.",
+        "id": "program-61492777a1fa",
+        "in_state_seconds": 0,
+        "last_checkpoint": {
+          "at": "2026-10-31T19:39:41.758614+00:00",
+          "by": "engine",
+          "choice": "shape",
+          "decision_record_id": null,
+          "id": 6,
+          "kind": "shape",
+          "line": "Shaped by a sentence: Step 1 now runs on Codex with a glance review.",
+          "operation_id": null,
+          "overturnable": true,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": "YOLO applies a shaped change",
+          "step_id": "",
+          "undo": {
+            "added_requirements": [],
+            "added_steps": [],
+            "base_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+            "numbers": {
+              "1": "step-1d486795193d",
+              "2": "step-80da23c8d036",
+              "3": "step-429a54a0ad27"
+            },
+            "sentence": "put the indexes step on Codex and give it only a glance review",
+            "touched": [
+              "step-1d486795193d"
+            ]
+          }
+        },
+        "may_call": false,
+        "may_handoff": false,
+        "note_id": "program-program-61492777a1fa",
+        "note_window": "pullout:note:program-program-61492777a1fa",
+        "origin_ref": null,
+        "persons": [],
+        "place": {
+          "origin": null,
+          "person": null,
+          "project": {
+            "id": "proj-holdspeak",
+            "name": "HoldSpeak"
+          }
+        },
+        "prefer_idle": false,
+        "project": {
+          "id": "proj-holdspeak",
+          "name": "HoldSpeak"
+        },
+        "project_id": "proj-holdspeak",
+        "repository": {
+          "base_branch": "main",
+          "label": "app",
+          "root": "/tmp/rig/yolo/app"
+        },
+        "requirements": [
+          {
+            "by": "template",
+            "choices": [
+              "waive"
+            ],
+            "created_at": "2026-10-31T19:39:41.692069+00:00",
+            "evidence": {},
+            "id": "req-3330d3419f6e",
+            "judged_at": null,
+            "judged_commit": null,
+            "kind": "review",
+            "kind_word": "Review",
+            "label": "R1",
+            "ordinal": 1,
+            "parent_id": null,
+            "program_id": "program-61492777a1fa",
+            "required": true,
+            "rounds": 0,
+            "running": false,
+            "scope": "every_step",
+            "spec": {},
+            "stale": false,
+            "state": "not_yet",
+            "state_word": "Not yet",
+            "step_id": null,
+            "steps": [
+              {
+                "ordinal": 1,
+                "state": "not_yet",
+                "step_id": "step-1d486795193d"
+              },
+              {
+                "ordinal": 2,
+                "state": "not_yet",
+                "step_id": "step-80da23c8d036"
+              },
+              {
+                "ordinal": 3,
+                "state": "not_yet",
+                "step_id": "step-429a54a0ad27"
+              }
+            ],
+            "text": "The change does only what its brief says.",
+            "waived_reason": null
+          },
+          {
+            "by": "template",
+            "choices": [
+              "waive"
+            ],
+            "created_at": "2026-10-31T19:39:41.692439+00:00",
+            "evidence": {},
+            "id": "req-5661e1470fe1",
+            "judged_at": null,
+            "judged_commit": null,
+            "kind": "review",
+            "kind_word": "Review",
+            "label": "R2",
+            "ordinal": 2,
+            "parent_id": null,
+            "program_id": "program-61492777a1fa",
+            "required": true,
+            "rounds": 0,
+            "running": false,
+            "scope": "every_step",
+            "spec": {},
+            "stale": false,
+            "state": "not_yet",
+            "state_word": "Not yet",
+            "step_id": null,
+            "steps": [
+              {
+                "ordinal": 1,
+                "state": "not_yet",
+                "step_id": "step-1d486795193d"
+              },
+              {
+                "ordinal": 2,
+                "state": "not_yet",
+                "step_id": "step-80da23c8d036"
+              },
+              {
+                "ordinal": 3,
+                "state": "not_yet",
+                "step_id": "step-429a54a0ad27"
+              }
+            ],
+            "text": "Each new behaviour has a test.",
+            "waived_reason": null
+          }
+        ],
+        "requirements_met": {
+          "his": 0,
+          "met": 0,
+          "total": 7,
+          "unmet": 0,
+          "waived": 0
+        },
+        "reviewer": {
+          "agent": "Codex",
+          "engine": null,
+          "profile": "codex-default"
+        },
+        "revision": 5,
+        "search_words": "the hub stops stalling every route under 100 ms while a meeting records. holdspeak build-and-review indexes people routes the fan-out build and review",
+        "spend_limit_usd": null,
+        "state": "drafting",
+        "state_word": "Drafting",
+        "status_line": "Drafting · 0 of 3 done · check: true · control YOLO",
+        "steps": [
+          {
+            "after": [],
+            "agent": "Codex",
+            "amendments": [],
+            "branch": null,
+            "brief": "Add the three indexes.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-1d486795193d",
+            "last_checkpoint": {
+              "at": "2026-10-31T19:39:41.752443+00:00",
+              "by": "owner",
+              "choice": null,
+              "decision_record_id": null,
+              "id": 4,
+              "kind": null,
+              "line": "Changed step 1: agents",
+              "operation_id": null,
+              "overturnable": false,
+              "overturned_at": null,
+              "pin_note": "No worktree to pin yet",
+              "ref": null,
+              "ref_commit": null,
+              "rule": null,
+              "step_id": "step-1d486795193d",
+              "undo": {
+                "pin": {
+                  "note": "No worktree to pin yet"
+                }
+              }
+            },
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 1,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/db/schema.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "codex-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.694885+00:00",
+                "evidence": {},
+                "id": "req-686280e6ab14",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-3330d3419f6e",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-1d486795193d",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.695179+00:00",
+                "evidence": {},
+                "id": "req-b453581228ab",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-5661e1470fe1",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-1d486795193d",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 2,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Codex",
+                "engine": null,
+                "label": "Codex",
+                "profile": "codex-default"
+              },
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "Indexes",
+            "updated_at": "2026-10-31T19:39:41.752149+00:00",
+            "worktree": null
+          },
+          {
+            "after": [],
+            "agent": "Claude Code",
+            "amendments": [],
+            "branch": null,
+            "brief": "31 handlers through run_in_threadpool.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-80da23c8d036",
+            "last_checkpoint": {
+              "at": "2026-10-31T19:39:41.698336+00:00",
+              "by": "owner",
+              "choice": null,
+              "decision_record_id": null,
+              "id": 3,
+              "kind": "requirement",
+              "line": "Added R3 on step 2 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+              "operation_id": null,
+              "overturnable": false,
+              "overturned_at": null,
+              "pin_note": null,
+              "ref": null,
+              "ref_commit": null,
+              "rule": null,
+              "step_id": "step-80da23c8d036",
+              "undo": {
+                "requirement_id": "req-5adf60356d70"
+              }
+            },
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 2,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/web/routes/people.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "claude-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.694885+00:00",
+                "evidence": {},
+                "id": "req-299e4789365b",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-3330d3419f6e",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-80da23c8d036",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.695179+00:00",
+                "evidence": {},
+                "id": "req-9122493a2cb7",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-5661e1470fe1",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-80da23c8d036",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              },
+              {
+                "by": "owner",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.698201+00:00",
+                "evidence": {},
+                "id": "req-5adf60356d70",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "check",
+                "kind_word": "Check",
+                "label": "R3",
+                "ordinal": 3,
+                "parent_id": null,
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "step",
+                "spec": {
+                  "command": "uv run pytest -q tests/unit/test_hub_loop_budget.py"
+                },
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-80da23c8d036",
+                "text": "`uv run pytest -q tests/unit/test_hub_loop_budget.py` is green",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 3,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "People routes",
+            "updated_at": "2026-10-31T19:39:41.694453+00:00",
+            "worktree": null
+          },
+          {
+            "after": [
+              1,
+              2
+            ],
+            "agent": "Claude Code",
+            "amendments": [],
+            "branch": null,
+            "brief": "One frame per change, not one per row.",
+            "check": {
+              "command": "true",
+              "commit": null,
+              "log": null,
+              "minutes": null,
+              "reasons": [],
+              "running": false,
+              "sections": [],
+              "verdict": null
+            },
+            "contenders": [],
+            "editable": [
+              "title",
+              "brief",
+              "owns",
+              "after",
+              "effort",
+              "agent",
+              "runs_on_then",
+              "race",
+              "gate_check",
+              "gate_review",
+              "review_depth",
+              "gate_merge",
+              "requirements",
+              "position",
+              "for_person",
+              "may_call"
+            ],
+            "effort": "low",
+            "elapsed": "",
+            "elapsed_seconds": null,
+            "ended_at": null,
+            "engine": null,
+            "findings": [],
+            "for_person": null,
+            "for_person_id": null,
+            "frozen": {},
+            "gate": {
+              "check": true,
+              "merge": "level",
+              "review": "agent",
+              "review_depth": "delta"
+            },
+            "handoffs": [],
+            "held_reason": null,
+            "history": null,
+            "id": "step-429a54a0ad27",
+            "last_checkpoint": null,
+            "launch_id": null,
+            "limit": null,
+            "may_call": false,
+            "ordinal": 3,
+            "origin_ref": null,
+            "owns": [
+              "holdspeak/web/fanout.py"
+            ],
+            "parked_by": null,
+            "parked_reason": null,
+            "pr": null,
+            "prefer_idle": false,
+            "profile": "claude-default",
+            "race": 0,
+            "race_of": null,
+            "report": null,
+            "requirements": [
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.694885+00:00",
+                "evidence": {},
+                "id": "req-b026c87aeb9d",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R1",
+                "ordinal": 1,
+                "parent_id": "req-3330d3419f6e",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-429a54a0ad27",
+                "text": "The change does only what its brief says.",
+                "waived_reason": null
+              },
+              {
+                "by": "template",
+                "choices": [
+                  "waive"
+                ],
+                "created_at": "2026-10-31T19:39:41.695179+00:00",
+                "evidence": {},
+                "id": "req-b803fb4d1c9b",
+                "judged_at": null,
+                "judged_commit": null,
+                "kind": "review",
+                "kind_word": "Review",
+                "label": "R2",
+                "ordinal": 2,
+                "parent_id": "req-5661e1470fe1",
+                "program_id": "program-61492777a1fa",
+                "required": true,
+                "rounds": 0,
+                "running": false,
+                "scope": "every_step",
+                "spec": {},
+                "stale": false,
+                "state": "not_yet",
+                "state_word": "Not yet",
+                "step_id": "step-429a54a0ad27",
+                "text": "Each new behaviour has a test.",
+                "waived_reason": null
+              }
+            ],
+            "requirements_met": {
+              "his": 0,
+              "met": 0,
+              "total": 2,
+              "unmet": 0,
+              "waived": 0
+            },
+            "review": {
+              "reviewer": null,
+              "round": null,
+              "verdict": null
+            },
+            "rounds": 0,
+            "runs_on": [
+              {
+                "agent": "Claude Code",
+                "engine": null,
+                "label": "Claude Code",
+                "profile": "claude-default"
+              }
+            ],
+            "started_at": null,
+            "state": "planned",
+            "state_word": "Planned",
+            "station": -1,
+            "stations": [
+              "brief",
+              "work",
+              "check",
+              "review",
+              "pr",
+              "merge"
+            ],
+            "title": "The fan-out",
+            "updated_at": "2026-10-31T19:39:41.694453+00:00",
+            "worktree": null
+          }
+        ],
+        "template": "build-and-review",
+        "title": "The hub stops stalling",
+        "total": 3,
+        "updated_at": "2026-10-31T19:39:41.758716+00:00",
+        "usage_warning_share": null,
+        "your_turn": 0,
+        "your_turn_items": []
+      },
+      "program_id": "program-61492777a1fa",
+      "proposed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  agent Codex\n  review agent at glance\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green\n\nstep 3 The fan-out\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+      "question": null,
+      "refusals": [],
+      "refused": 0,
+      "revision": 5,
+      "say": "Step 1 now runs on Codex with a glance review.",
+      "seconds": 0.0,
+      "sentence": "put the indexes step on Codex and give it only a glance review",
+      "text": "# program text 1\nprogram The hub stops stalling                    # Drafting · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check true\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nstep 1 Indexes                                    # Planned\n  owns holdspeak/db/schema.py\n  agent Codex\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Planned\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green  # Not yet\n\nstep 3 The fan-out                                # Planned\n  owns holdspeak/web/fanout.py\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+      "version": 1
+    }
+  }
+}
