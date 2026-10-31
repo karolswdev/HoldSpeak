@@ -691,3 +691,45 @@ def test_the_program_family_reads_and_applies_the_text(tmp_path, monkeypatch) ->
         ("change", "step 1", "title", "Indexes, all three")]
     done = family.dispatch("program.text_apply", {"program_id": pid, "text": changed, "dry_run": False}, OWNER)
     assert done["applied"] and rig.step(pid, 1)["title"] == "Indexes, all three"
+
+
+# ── PG-LANG fields: the step remove route, the Program's new fields ──
+
+def test_the_step_remove_route_and_the_new_program_fields(tmp_path, monkeypatch) -> None:
+    rig, client, pid = _req_rig(tmp_path, monkeypatch)
+    two = rig.step(pid, 2)
+    removed = client.post(f"/api/programs/{pid}/steps/{two['id']}/remove")
+    assert removed.status_code == 200, removed.text
+    assert [(s["ordinal"], s["title"], s["after"]) for s in removed.json()["steps"]] == [
+        (1, "Indexes", []), (2, "The fan-out", [1])]
+    patched = client.patch(f"/api/programs/{pid}", json={
+        "review_depth": "standard", "budget_tokens": "64k", "night": "23:30–07:00 · at most 8 steps",
+        "within": ["holdspeak/"], "rounds_before_start": True})
+    assert patched.status_code == 200, patched.text
+    body = patched.json()
+    assert (body["review_depth"], body["budget_tokens"], body["night"]["max_steps"], body["within"],
+            body["rounds_before_start"], body["delivery"], body["planner"], body["rounds"]) == (
+        "standard", 65536, 8, ["holdspeak/"], True, None, None, [])
+    refused = client.patch(f"/api/programs/{pid}", json={"delivery": "dw app/phase-1"})
+    assert refused.status_code == 409 and refused.json()["code"] == "delivery_no_rails"
+    client.post(f"/api/programs/{pid}/start")
+    one = rig.step(pid, 1)
+    stays = client.post(f"/api/programs/{pid}/steps/{one['id']}/remove")
+    assert stays.status_code == 409
+    assert {key: stays.json()[key] for key in ("code", "field", "reason")} == {
+        "code": "step_stays", "field": "position", "reason": "The worktree and the agent are set"}
+
+
+def test_the_program_family_lists_step_remove() -> None:
+    from holdspeak.mcp import palettes
+    from holdspeak.mcp.families import program as family
+    from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
+
+    assert "program.step_remove" in family.NAMES and TOOL_AUTHORITY["program.step_remove"] == WORK
+    assert "program.step_remove" in palettes.resolve_palette("CONDUCTOR")
+    update = next(tool for tool in family.TOOLS if tool["name"] == "program.update")
+    assert {"review_depth", "planner_engine", "budget_tokens", "night", "within", "delivery", "rounds_before_start",
+            "check_command", "for_person_id"} <= set(update["inputSchema"]["properties"])
+    require = next(tool for tool in family.TOOLS if tool["name"] == "program.require")
+    assert "measure" in require["inputSchema"]["properties"]["kind"]["enum"]
+    assert {"metric", "op", "bound", "unit", "walk"} <= set(require["inputSchema"]["properties"]["spec"]["properties"])

@@ -1191,6 +1191,12 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
   const posts = () => calls.filter((call) => call.startsWith(`POST /api/programs/${id}/text`))
     .map((call) => JSON.parse(call.slice(call.indexOf("{"))) as Record<string, unknown>);
   const line = (n: number) => screen.getByRole("textbox", { name: `Program text, line ${n}` }) as HTMLTextAreaElement;
+  // Read from the recorded answers, so a re-record moves these with it.
+  const controlLine = textFixture.text.split("\n").indexOf("  control normal") + 1;
+  const refusedRow = dry.changes.find((row) => row.id === "step-2.brief")!;
+  const blocked = (rows: Answer["changes"]) => rows.filter((row) => row.verdict === "refused" || row.verdict === "conflict").length;
+  const applyWords = (rows: Answer["changes"]) => `Apply ${rows.length - blocked(rows)}`;
+  const ledgerLine = after.checkpoints.find((row) => String(row.line).startsWith("Changed by the text: "))!.line as string;
 
   async function openText() {
     hub({
@@ -1225,8 +1231,8 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
 
   it("edit, Preview: the recorded rows in the well (the refused one with its line and reason, the one that lowers the bar); Apply waits for its own press", async () => {
     await openText();
-    fireEvent.change(line(7), { target: { value: "  control yolo" } });
-    expect(screen.getAllByTestId("kit-textpane-line")[6]).toHaveAttribute("data-mark", "~");
+    fireEvent.change(line(controlLine), { target: { value: "  control yolo" } });
+    expect(screen.getAllByTestId("kit-textpane-line")[controlLine - 1]).toHaveAttribute("data-mark", "~");
     fireEvent.click(screen.getByTestId("program-text-preview"));
     const well = await screen.findByTestId("programs-change-well");
     const sent = posts()[0];
@@ -1238,14 +1244,16 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
     expect(rows).toHaveLength(dry.changes.length);
     const refused = rows.find((row) => row.getAttribute("data-row") === "step-2.brief")!;
     expect(within(refused).getByTestId("kit-diffrow-verdict").textContent).toBe("Refused");
-    expect(within(refused).getByTestId("kit-diffrow-reason").textContent).toBe("Line 19Step 2 · brief: The agent has read it. Add a line with + instead.");
+    expect(within(refused).getByTestId("kit-diffrow-reason").textContent).toBe(`Line ${refusedRow.line}${refusedRow.reason}`);
+    expect(refusedRow.reason).toBe("Step 2 · brief: The agent has read it. Add a line with + instead.");
     const lowers = rows.find((row) => row.getAttribute("data-row") === "program.control")!;
     expect(within(lowers).getByTestId("kit-diffrow-verdict").textContent).toBe("Lowers the bar");
-    expect(within(well).getByText("6 changes · 1 refused · 1 lowers the bar")).toBeInTheDocument();
+    const lowering = dry.changes.filter((row) => row.verdict === "lowers").length;
+    expect(within(well).getByText(`${dry.changes.length} changes · ${blocked(dry.changes)} refused · ${lowering} lowers the bar`)).toBeInTheDocument();
     // The refused line is marked in the text, its reason as the title.
-    expect(screen.getAllByTestId("kit-textpane-line")[18]).toHaveAttribute("data-mark", "!");
+    expect(screen.getAllByTestId("kit-textpane-line")[refusedRow.line - 1]).toHaveAttribute("data-mark", "!");
     const apply = within(well).getByTestId("programs-well-apply");
-    expect(apply.textContent).toBe("Apply 5");
+    expect(apply.textContent).toBe(applyWords(dry.changes));
     expect(apply).toBeDisabled();
     fireEvent.click(within(lowers).getByRole("button", { name: "Apply this" }));
     expect(within(lowers).getByTestId("kit-diffrow-verdict").textContent).toBe("Allowed by you");
@@ -1254,7 +1262,7 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
 
   it("Apply sends the allowed text and only the row he pressed; the board comes back with the new step, YOLO, and the ledger line", async () => {
     await openText();
-    fireEvent.change(line(7), { target: { value: "  control yolo" } });
+    fireEvent.change(line(controlLine), { target: { value: "  control yolo" } });
     fireEvent.click(screen.getByTestId("program-text-preview"));
     const well = await screen.findByTestId("programs-change-well");
     const lowers = within(well).getAllByTestId("programs-diff-row").find((row) => row.getAttribute("data-row") === "program.control")!;
@@ -1269,7 +1277,7 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
     expect(born).toHaveAttribute("data-landed", "born");
     expect(stepRow(4)).toHaveAttribute("data-landed", "changed");
     expect(within(status()).getByTestId("programs-status-control").textContent).toBe("control YOLO");
-    expect(within(screen.getByTestId("programs-checkpoints")).getByText(/^Changed by the text: 5 changes/)).toBeInTheDocument();
+    expect(within(screen.getByTestId("programs-checkpoints")).getByText(ledgerLine)).toBeInTheDocument();
     const { useDesk } = await import("../../store");
     expect(useDesk.getState().places[`program/view/${id}`] ?? "").toBe("");
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
@@ -1277,12 +1285,12 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
 
   it("Not this closes the well and puts the text back as it was read", async () => {
     await openText();
-    fireEvent.change(line(7), { target: { value: "  control yolo" } });
+    fireEvent.change(line(controlLine), { target: { value: "  control yolo" } });
     fireEvent.click(screen.getByTestId("program-text-preview"));
     const well = await screen.findByTestId("programs-change-well");
     fireEvent.click(within(well).getByTestId("programs-well-not-this"));
     expect(screen.queryByTestId("programs-change-well")).toBeNull();
-    expect(line(7).value).toBe("  control normal");
+    expect(line(controlLine).value).toBe("  control normal");
     expect(posts()).toHaveLength(1);
   });
 
@@ -1299,15 +1307,15 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
       [`GET /api/programs/${id}/text`]: textFixture,
       [`POST /api/programs/${id}/text`]: conflict,
     });
-    fireEvent.change(line(7), { target: { value: "  control yolo" } });
+    fireEvent.change(line(controlLine), { target: { value: "  control yolo" } });
     fireEvent.click(screen.getByTestId("program-text-preview"));
     const well = await screen.findByTestId("programs-change-well");
     expect(within(well).getByText("Changed since you read it", { selector: ".kit-changewell-say" })).toBeInTheDocument();
     expect(within(well).getByText(/^Read again at /)).toBeInTheDocument();
     expect(calls.slice(read).filter((call) => call === `GET /api/programs/${id}/text`)).toHaveLength(1);
-    expect(within(well).getByTestId("programs-well-apply").textContent).toBe("Apply 4");
+    expect(within(well).getByTestId("programs-well-apply").textContent).toBe(applyWords(conflict.changes));
     // His text is kept.
-    expect(line(7).value).toBe("  control yolo");
+    expect(line(controlLine).value).toBe("  control yolo");
   });
 
   it("at 393 the view switch is in More ▾", async () => {

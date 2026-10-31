@@ -196,34 +196,42 @@ program-line  = "goal" NL { "  > " TEXT NL }
               | "control " ( "secure" | "normal" | "yolo" )
               | "check " ( COMMAND | "none" )
               | "agent " AGENTS                     (* the default Runs on list *)
-              | "reviewer " AGENT [ " at " DEPTH ]
+              | "reviewer " ( AGENT | "none" ) [ " at " DEPTH ]   (* the depth: the Program's, for each step that states none *)
               | "planner " ENGINE                   (* the engine of the library that plans and shapes, §4.3, §5.5 *)
               | "budget " TOKENS                    (* the context budget, §5.4 *)
-              | "when idle" | "may call" | "may hand off"
+              | FLAG { " · " FLAG }
               | "allow " AGENT { ", " AGENT }       (* allowed agents *)
               | "spend up to $" NUMBER
+              | "usage warning " NUMBER "%"
               | "for " PERSON
               | "from " REF                         (* origin: note:…, meeting:…, decision:… *)
               | "template " TEMPLATE
               | "delivery dw " DW-REF               (* §8, opt-in *)
-              | "night " TIME "–" TIME [ " · at most " INT " steps" ]   (* §5.5 *)
+              | "night " TIME ( "–" | "-" ) TIME [ " · at most " INT " step" [ "s" ] ]   (* §5.5 *)
               | "within " PATHS ;                   (* the files the Program may own at all, §5.5 *)
+FLAG        = "when idle" | "may call" | "may hand off" | "rounds before start" ;   (* §15.5 *)
+DEPTH       = "glance" | "delta" | "standard" ;
+DW-REF      = PROJECT "/" PHASE [ "/" STORY ] ;
 req-block   = ( "every step" | "at the end" ) NL { req } ;
 req         = "  " RID " " KIND [ " optional" ] ": " TEXT NL { "    " req-line NL } ;
 RID         = "R" INT | "R+" ;                     (* R+ = a new requirement *)
 KIND        = "check" | "review" | "shot" | "word" | "measure" ;
-req-line    = "run " COMMAND | "expect " PATTERN | "shot " CASE " at " ( "393" | "1440" )
-            | "walk " TEXT                          (* a line of a Your word walk, §6.3 *)
-            | "bound " METRIC OP NUMBER UNIT ;      (* measure only, §6.3 *)
+req-line    = "run " COMMAND                        (* check or measure *)
+            | "expect " PATTERN                     (* check or measure *)
+            | "shot " CASE " at " ( "393" | "1440" ) (* shot only *)
+            | "walk " TEXT                          (* word only: a line of a Your word walk, §6.3 *)
+            | "bound " METRIC " " OP " " NUMBER [ " " UNIT ]   (* measure only, §6.3; OP: < <= > >= = *)
+            | "waived: " TEXT ;                     (* his waive, his line (LANG1: a sub-line, not "R4 waived:") *)
 round-block = "round " ROUND " · " ROUND-STATE NL { "  ? " TEXT NL [ "  = " TEXT NL ] } ;
+ROUND-STATE = "open" | "asking" | "done" | "skipped" ;
 step-block  = "step " ( INT | "+" ) " " TEXT NL { "  " step-line NL } ;
 step-line   = "owns " PATHS | "after " INT { ", " INT }
             | "agent " AGENTS | "effort " ( "low" | "medium" | "high" )
-            | "race " ( "2" | "3" ) | "when idle" | "may call"
-            | "check off" | "review " ( "none" | "agent" | PERSON ) [ " at " DEPTH ]
+            | "race " ( "0" | "2" | "3" ) | "when idle" | "may call"
+            | "check " ( "off" | "on" ) | "review " ( "none" | "agent" | PERSON ) [ " at " DEPTH ]
             | "merge " ( "level" | "owner" | "none" )
             | "budget " TOKENS | "for " PERSON | "from " REF
-            | "merged #" INT [ " · " DATE ]         (* PG17 history steps *)
+            | "merged #" INT { " · " ( DATE | URL | COMMIT ) }   (* PG17 history steps *)
             | "brief" NL { "  > " TEXT NL }
             | "+ " TEXT                              (* an amendment *)
             | req ;
@@ -231,6 +239,17 @@ AGENTS      = AGENT { ", then " AGENT } ;          (* PG19's ordered list *)
 AGENT       = "Claude Code" | "Codex" | "pi" [ " on " ENGINE ] | "the desk's agent" ;
 TOKENS      = INT ( "k" | "" ) ;                   (* 64k = 65536 *)
 ```
+
+Corrections to this grammar from the build (PG-LANG fields, 2026-10-31): the
+first draft had no `DEPTH`, `ROUND-STATE` or `DW-REF` rule, no `usage warning`
+or `rounds before start` line, a `bound` with a required unit (`bound lost = 0`
+has none), `run` and `expect` under a check only (a measure takes both),
+`race 0` and `check on` missing, and the waive as `R4 waived: <line>`. LANG1
+prints and reads the waive as a sub-line under its requirement
+(`    waived: Not this week.`), so the requirement line itself stays as he
+wrote it; the grammar above says that. A step's block taken out of the text
+removes a Planned step (`program.step_remove`); its own requirements go with
+it (kept as rows, set aside, so an `R n` is never used again).
 
 Defaults are not printed. A step with the Program's agent prints no `agent`
 line; a step with the template's gates prints no `review` or `merge` line; a
@@ -279,7 +298,8 @@ above.
   program or skip the step in Your turn."
 - Removing a requirement line is refused for every requirement: "R4 stays.
   Waive it with a line." (PG-REQ decision 7: only his Waive lowers the bar.)
-  `R4 waived: <his line>` is the text's own waive (his only).
+  The sub-line `    waived: <his line>` under R4 is the text's own waive (his
+  only; LANG1 chose a sub-line over `R4 waived:`).
 - Removing a `+` amendment that was sent is refused: "It was sent at 14:05."
 
 ### 3.5 Frozen fields
@@ -470,6 +490,12 @@ Every refusal is by name (Constitution V.3), with a code an agent can read:
 | `requirement_stays` | "R4 stays. Waive it with a line." | a requirement line removed |
 | `text_version` | "This text is version 2; this hub reads version 1." | §7.4 |
 | `requirement_unprovable` | "A shot needs a window and a width." | as PG-REQ |
+| `field_fixed` | "Program · repository: it is set when the program is made; a program works in one repository; make a new program for another." | `in`, `template`, `from`, a step's `from` and `merged` |
+| `round_question` | "Round Architecture: the engine asked it. A '?' line stays as it is." | a `?` line changed or added |
+| `round_state` | "Round Security: the engine sets asking. Write open." | a round set to `asking` |
+| `round_stays` | "Round Architecture has questions. It stays; write 'round Architecture · skipped'." | a round with questions taken out |
+| `round_done` | "Round Architecture is done. Open it again to change an answer." | an answer of a done round |
+| `delivery_no_rails` | "This repository has no Delivery Workbench." | §8.1 |
 
 ## 4. Shaping: a sentence becomes a diff
 
@@ -685,8 +711,8 @@ default is 32,768, `:58`). A step that does not fit in that window fails
 slowly: the agent reads half the files, forgets the brief, and the check
 round burns the night.
 
-**Fields** (additive): `programs.context_budget` (INTEGER tokens, NULL: the
-budget of the first agent's engine) and `program_steps.context_budget`
+**Fields** (additive): `programs.budget_tokens` (INTEGER tokens, NULL: the
+budget of the first agent's engine) and `program_steps.budget_tokens`
 (NULL: the Program's). The text says `budget 64k`. A budget is only read for
 an agent whose engine has a window (pi on an engine); Claude Code and Codex
 have no budget unless the text names one.
@@ -1215,20 +1241,27 @@ dw Done writer.
 
 ### Tables (minimal, additive; SCHEMA_VERSION 89)
 
+As built by the fields lane (2026-10-31; the first draft is in git history):
+
 ```
-ALTER TABLE programs ADD COLUMN context_budget INTEGER;        -- NULL: the first agent's engine window
-ALTER TABLE programs ADD COLUMN planner_engine TEXT;           -- NULL: the desk's agent.plan assignment
-ALTER TABLE programs ADD COLUMN rounds_json TEXT NOT NULL DEFAULT '[]';
-ALTER TABLE programs ADD COLUMN night_json TEXT;               -- {from, to, at_most}
-ALTER TABLE programs ADD COLUMN within_json TEXT NOT NULL DEFAULT '[]';
-ALTER TABLE programs ADD COLUMN delivery_ref TEXT;             -- "dw:<project>/<phase>[/<story>]"
-ALTER TABLE programs ADD COLUMN shape_applies INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE program_steps ADD COLUMN context_budget INTEGER;
+programs.review_depth TEXT                       -- reviewer X at <depth>; NULL: the template's
+programs.planner_engine TEXT                     -- NULL: the desk's agent.plan assignment
+programs.budget_tokens INTEGER                   -- NULL: the first agent's engine window
+programs.night_json TEXT                         -- {line, start, end, max_steps}
+programs.within_json TEXT NOT NULL DEFAULT '[]'
+programs.delivery_ref TEXT                       -- "dw:<project>/<phase>[/<story>]"
+programs.rounds_before_start INTEGER NOT NULL DEFAULT 0
+program_steps.budget_tokens INTEGER              -- NULL: the Program's
+program_rounds (program_id, name, state, ordinal, questions_json, updated_at; PRIMARY KEY (program_id, name))
 ```
 
-No new table. The Measure kind is a value of `program_requirements.kind`
-with `spec_json` `{command, metric, op, bound, unit}`; walk lines are
-`spec_json.walk` on a word requirement. The schema snapshot is regenerated.
+The rounds are a table, not `programs.rounds_json`, by the lane's brief: a
+round is written by the engine (its questions) and by him (its answers and
+state) at different times. `shape_applies` waits for LANG3/LANG4. The Measure
+kind is a value of `program_requirements.kind` with `spec_json` `{command,
+metric, op, bound, unit, expect?}`; walk lines are `spec_json.walk` on a word
+requirement. A Measure stays Not yet ("Not measured yet") and does not gate
+until LANG11 builds its verifier. The schema snapshot is regenerated.
 
 ### REST (`holdspeak/web/routes/programs.py`, every handler through `run_in_threadpool`)
 
@@ -1241,6 +1274,9 @@ POST /api/programs/{id}/rounds/{name}/next      → {question?, done}
 POST /api/programs/{id}/rounds/{name}/answer    {question_id, answer | option | skip}  → {changes}
 POST /api/programs/{id}/rounds/{name}/decide    {choice: done | skip | reopen}
 POST /api/programs/{id}/steps/{sid}/split       {preview}  → {changes}
+POST /api/programs/{id}/steps/{sid}/remove      a Planned or Ready step (built, fields lane; MCP program.step_remove)
+PATCH /api/programs/{id}                        + review_depth, planner_engine, budget_tokens, night, within, delivery,
+                                                  rounds_before_start, check_command, for_person_id (built, fields lane)
 ```
 
 Each new route gets its residual-set entry, an aware clock (`local_now`), the
@@ -1268,6 +1304,15 @@ label} | null`, `night: {from, to, at_most} | null`, `delivery: {kind:
 "dw", ref, linked: bool} | null`. On a step: `estimate: {tokens, budget,
 fits} | null`. Your turn kinds: `step_too_big` (split, run_anyway), and for
 `rounds before start` only, `round_question`.
+
+As built by the fields lane (2026-10-31): on a Program `review_depth`,
+`planner: {engine, label} | null`, `budget_tokens`, `night: {line, start,
+end, max_steps} | null`, `within: [paths]`, `delivery: {kind: "dw", ref,
+linked: false} | null` (`linked` waits for LANG13), `rounds_before_start`,
+`rounds: [{name, state, order, questions: [{id, text, answer, answered_by,
+at}], asked, answered}]` (`became` waits for LANG9); on a step
+`budget_tokens`. The revision stays `revision`; `text_revision` and
+`estimate` wait for LANG8.
 
 ### Frame
 

@@ -10,7 +10,10 @@ POST   /api/programs                               create {title, goal, reposito
 GET    /api/programs/templates                     the templates (§10)
 GET    /api/programs/{id}                          the Program, its steps, checkpoints, your turn
 PATCH  /api/programs/{id}                          {title, goal, control, prefer_idle, project_id, spend_limit_usd,
-                                                   default_profile, default_engine, reviewer_profile, reviewer_engine}
+                                                   default_profile, default_engine, reviewer_profile ("none": no
+                                                   reviewer), reviewer_engine; PG-LANG: review_depth,
+                                                   planner_engine, budget_tokens, night, within, delivery,
+                                                   rounds_before_start, check_command, for_person_id}
 POST   /api/programs/{id}/plan                     {steps: [...], size: "auto"|null, replace: bool,
                                                    before: <step_id> (insert before), waits: bool}
 POST   /api/programs/{id}/from-desk                one step per open action of its Project
@@ -29,6 +32,7 @@ PATCH  /api/programs/{id}/steps/{sid}              PG-REQ: change a step (the §
                                                    open); before: <step_id> | "end" moves it; 409
                                                    step_frozen names the field and the reason
 POST   /api/programs/{id}/steps/{sid}/amend        {line}: a line added to a started step's brief
+POST   /api/programs/{id}/steps/{sid}/remove       PG-LANG: remove a Planned or Ready step (409 step_stays)
 POST   /api/programs/{id}/requirements             {text, kind?, step_id?, each_step?, required?, spec?}
 PATCH  /api/programs/{id}/requirements/{rid}       {text?, kind?, required?, spec?}
 POST   /api/programs/{id}/requirements/{rid}/decide {choice: met|unmet|waive|send_back, line?} (owner)
@@ -65,6 +69,9 @@ _CREATE_FIELDS = (
 _UPDATE_FIELDS = (
     "title", "goal", "control", "prefer_idle", "project_id", "spend_limit_usd", "default_profile", "default_engine",
     "reviewer_profile", "reviewer_engine", "runs_on", "allowed_profiles", "may_handoff", "usage_warning_share", "may_call",
+    # PG-LANG: the fields the Program text writes.
+    "review_depth", "planner_engine", "budget_tokens", "night", "within", "delivery", "rounds_before_start",
+    "check_command", "for_person_id",
 )
 
 
@@ -205,6 +212,11 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
     async def api_programs_step_change(program_id: str, step_id: str, request: Request) -> Any:
         principal, body = _principal(request), await _body(request)
         return await _call(lambda: _service().change_step(principal, program_id, step_id, **body))
+
+    @router.post("/api/programs/{program_id}/steps/{step_id}/remove")
+    async def api_programs_step_remove(program_id: str, step_id: str, request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().remove_step(principal, program_id, step_id))
 
     @router.post("/api/programs/{program_id}/steps/{step_id}/amend")
     async def api_programs_step_amend(program_id: str, step_id: str, request: Request) -> Any:

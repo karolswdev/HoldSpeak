@@ -443,7 +443,8 @@ FROZEN_BAR = "The bar does not come down while it runs"
 FROZEN_MERGED = "It is merged"
 #: Every field of a step he may change, in the order of §8.
 STEP_FIELDS = ("title", "brief", "amend", "owns", "after", "effort", "agent", "runs_on_then", "race", "gate_check",
-               "gate_review", "review_depth", "gate_merge", "requirements", "position", "for_person", "may_call")
+               "gate_review", "review_depth", "gate_merge", "requirements", "position", "for_person", "may_call",
+               "prefer_idle", "budget")
 _STARTED = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings",
                       "failed"})
 
@@ -457,7 +458,8 @@ def step_fields(step: Mapping[str, Any]) -> tuple[list[str], dict[str, str]]:
     if state in ("merged", "done"):
         return ["title"], {field: FROZEN_MERGED for field in STEP_FIELDS if field != "title"}
     frozen = {"brief": FROZEN_READ, "owns": FROZEN_READ, "after": FROZEN_READ, "effort": FROZEN_SET,
-              "agent": FROZEN_SET, "race": FROZEN_SET, "gate_check": FROZEN_BAR, "position": FROZEN_SET}
+              "agent": FROZEN_SET, "race": FROZEN_SET, "gate_check": FROZEN_BAR, "position": FROZEN_SET,
+              "prefer_idle": FROZEN_SET, "budget": FROZEN_SET}
     if state in _STARTED:
         if step.get("gate_review") == "agent":
             frozen["gate_review"] = FROZEN_BAR
@@ -1006,7 +1008,8 @@ class ProgramService:
                          steps_by_id: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
         """One requirement as the faces read it (PG-REQ §11)."""
         from .program_requirements import (
-            CHECKING_WORD, COMMIT_BOUND, FROZEN_STEP_STATES, KIND_WORDS, STATE_WORDS, WAITS_WORD, label, scope_of,
+            CHECKING_WORD, COMMIT_BOUND, FROZEN_STEP_STATES, KIND_WORDS, NOT_JUDGED_YET, NOT_MEASURED_WORD, STATE_WORDS,
+            WAITS_WORD, label, scope_of,
         )
 
         state = str(row.get("state") or "not_yet")
@@ -1024,6 +1027,8 @@ class ProgramService:
         head = (step or {}).get("head_commit")
         stale = bool(step and kind in COMMIT_BOUND and row.get("judged_commit") and head and row["judged_commit"] != head)
         word = CHECKING_WORD if running else (WAITS_WORD if row["id"] in his and state == "not_yet" else STATE_WORDS.get(state, state))
+        if kind in NOT_JUDGED_YET and state == "not_yet":
+            word = NOT_MEASURED_WORD  # PG-LANG §6.3: the verifier is LANG11
         frozen = bool(program.get("closed_at")) or step_state in FROZEN_STEP_STATES
         if frozen or state == "waived":
             choices: list[str] = []
@@ -1114,6 +1119,8 @@ class ProgramService:
                                                        "profile", "seen_at", "auto_at")} if limit and state == "limited" else None,
             "handoffs": [dict(row) for row in step.get("handoffs") or []],
             "history": history_of(step),
+            # PG-LANG §5.4: the step's context budget (None: the Program's).
+            "budget_tokens": step.get("budget_tokens"),
             **self._step_requirements_wire(program, step, requirements, his, steps_by_id),
         }
 
@@ -1220,6 +1227,29 @@ class ProgramService:
             "spend_limit_usd": program.get("spend_limit_usd"), "closed_at": program.get("closed_at"),
             "revision": int(program.get("revision") or 0),
             "status_line": self._status_line(program, summary),
+            **self._language_wire(program),
+        }
+
+    def _language_wire(self, program: Mapping[str, Any]) -> dict[str, Any]:
+        """PG-LANG (§12, the wire): the fields the Program text writes, and
+        its interview rounds."""
+        planner = None
+        if program.get("planner_engine"):
+            found = self.engine(program["planner_engine"])
+            planner = {"engine": program["planner_engine"], "label": getattr(found, "label", None) or program["planner_engine"]}
+        ref = str(program.get("delivery_ref") or "")
+        rounds = []
+        for row in self.store.list_rounds(program["id"]):
+            questions = [{key: item.get(key) for key in ("id", "text", "answer", "answered_by", "at")}
+                         for item in row["questions"]]
+            rounds.append({"name": row["name"], "state": row["state"], "order": row["ordinal"], "questions": questions,
+                           "asked": len(questions), "answered": sum(1 for item in questions if item.get("answer"))})
+        return {
+            "review_depth": program.get("review_depth"), "planner": planner,
+            "budget_tokens": program.get("budget_tokens"), "night": program.get("night"),
+            "within": list(program.get("within") or []),
+            "delivery": {"kind": "dw", "ref": ref[3:], "linked": False} if ref.startswith("dw:") else None,
+            "rounds_before_start": bool(program.get("rounds_before_start")), "rounds": rounds,
         }
 
     def _status_line(self, program: Mapping[str, Any], summary: Mapping[str, Any]) -> str:
@@ -1563,11 +1593,16 @@ class ProgramService:
         if "usage_warning_share" in fields:
             program["usage_warning_share"] = self._share(fields["usage_warning_share"])
             changed.append("usage warning")
-        if fields.get("reviewer_profile") is not None or fields.get("reviewer_engine") is not None:
+        if str(fields.get("reviewer_profile") or "").strip().lower() == "none":
+            # PG-LANG: ``reviewer none``, said on purpose: no reviewer.
+            program["reviewer_profile"], program["reviewer_engine"] = None, None
+            changed.append("no reviewer")
+        elif fields.get("reviewer_profile") is not None or fields.get("reviewer_engine") is not None:
             reviewer = self._profile(fields.get("reviewer_profile"), "reviewer_profile") or program.get("reviewer_profile")
             program["reviewer_profile"] = reviewer
             program["reviewer_engine"] = self._engine_id(fields.get("reviewer_engine"), reviewer, "reviewer_engine")
             changed.append("reviewer")
+        changed += self._update_language_fields(program, fields)
         if not changed:
             raise ProgramRefused("nothing_to_change", "Name a field to change.", status=400)
         with _LOCK:
@@ -1575,6 +1610,60 @@ class ProgramService:
             self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent", "Changed " + ", ".join(changed))
             self.changed(program["id"], verb="update")
         return self.get(principal, program["id"])
+
+    def _update_language_fields(self, program: dict[str, Any], fields: Mapping[str, Any]) -> list[str]:
+        """PG-LANG (§3.2, §5.4, §5.5, §6.2, §8): the review depth, the
+        planner, the budget, the night, within, delivery, rounds before
+        start, the check and the person. A key given as ``None`` clears it."""
+        from .program_text import parse_night
+
+        changed: list[str] = []
+        if "review_depth" in fields:
+            depth = str(fields["review_depth"] or "").strip().lower() or None
+            if depth is not None and depth not in REVIEW_DEPTHS:
+                raise ProgramRefused("review_depth_invalid", "Depth is glance, delta or standard.", status=400)
+            program["review_depth"] = depth
+            changed.append("review depth")
+        if "planner_engine" in fields:
+            engine_id = str(fields["planner_engine"] or "").strip() or None
+            if engine_id is not None and self.engine(engine_id) is None:
+                raise ProgramRefused("engine_unknown", f"planner: the model library has no engine {engine_id!r}.",
+                                     status=400)
+            program["planner_engine"] = engine_id
+            changed.append("planner")
+        if "budget_tokens" in fields:
+            program["budget_tokens"] = _budget(fields["budget_tokens"], "The budget")
+            changed.append("budget")
+        if "night" in fields:
+            value = fields["night"]
+            if value in (None, "", {}):
+                program["night"] = None
+            else:
+                night = parse_night(value)
+                if night is None:
+                    raise ProgramRefused("night_invalid", "The night is '23:30–07:00 · at most 8 steps'.", status=400)
+                program["night"] = night
+            changed.append("night")
+        if "within" in fields:
+            program["within"] = _within(fields["within"])
+            changed.append("within")
+        if "delivery" in fields:
+            program["delivery_ref"] = _delivery(fields["delivery"], str(program.get("repo_root") or ""))
+            changed.append("delivery")
+        if fields.get("rounds_before_start") is not None:
+            program["rounds_before_start"] = bool(fields["rounds_before_start"])
+            changed.append("rounds before start")
+        if "check_command" in fields:
+            given = fields["check_command"]
+            if given in (None, "", "none"):
+                program["check_command"] = None
+            else:
+                program["check_command"], _sections = self._check_command(str(program.get("repo_root") or ""), given)
+            changed.append("check")
+        if "for_person_id" in fields:
+            program["for_person_id"] = fields["for_person_id"] or None
+            changed.append("person")
+        return changed
 
     def plan(
         self, principal: Any, program_id: str, *, steps: list[Mapping[str, Any]],
@@ -1659,7 +1748,8 @@ class ProgramService:
             for_person = raw.get("for_person_id") or None
             if gate_review == "person" and not (for_person or program.get("for_person_id")):
                 raise ProgramRefused("person_required", f"Step {index}: a person review names the person (for_person_id).", status=400)
-            depth = str(raw.get("review_depth") or shape.get("review_depth") or "delta").lower()
+            depth = str(raw.get("review_depth") or program.get("review_depth") or shape.get("review_depth")
+                        or "delta").lower()
             if depth not in REVIEW_DEPTHS:
                 raise ProgramRefused("review_depth_invalid", f"Step {index}: depth is glance, delta or standard.", status=400)
             merge = str(raw.get("gate_merge") or shape.get("gate_merge") or "level").lower()
@@ -1681,6 +1771,7 @@ class ProgramService:
                 "origin_ref": raw.get("origin_ref") or None, "for_person_id": for_person,
                 "started_at": None, "ended_at": None, "updated_at": now,
                 "runs_on": listed if len(listed) > 1 else [], "handoffs": [],
+                "budget_tokens": _budget(raw.get("budget_tokens"), f"Step {index}: the budget"),
             })
             if history:
                 # PG17: the merged PR it stands for; no worktree, no hand,
@@ -2578,7 +2669,11 @@ class ProgramService:
             elif kind == "step_change":
                 if step is None:
                     raise NotFound("program_step", str(row.get("step_id")))
-                self._apply_step_change(program, step, dict(payload.get("fields") or {}), by="owner")
+                fields = dict(payload.get("fields") or {})
+                if fields.get("remove"):
+                    self._remove(program, step, by="owner")
+                else:
+                    self._apply_step_change(program, step, fields, by="owner")
             else:
                 if step is None:
                     raise NotFound("program_step", str(row.get("step_id")))
@@ -2744,6 +2839,10 @@ class ProgramService:
         if "gate_check" in fields:
             step["gate_check"] = bool(fields["gate_check"])
             changed.append("check")
+        if "for_person_id" in fields:
+            # Before the review: ``review <person>`` names the person and the gate at once.
+            step["for_person_id"] = fields["for_person_id"] or None
+            changed.append("person")
         if "gate_review" in fields:
             value = fields["gate_review"]
             value = "agent" if value is True else "none" if value is False else str(value or "none").lower()
@@ -2771,12 +2870,15 @@ class ProgramService:
                                      reason=FROZEN_SET)
             step["gate_merge"] = merge
             changed.append("merge")
-        if "for_person_id" in fields:
-            step["for_person_id"] = fields["for_person_id"] or None
-            changed.append("person")
         if "may_call" in fields:
             step["may_call"] = bool(fields["may_call"])
             changed.append("may call")
+        if "prefer_idle" in fields:
+            step["prefer_idle"] = bool(fields["prefer_idle"])
+            changed.append("when idle")
+        if "budget_tokens" in fields:
+            step["budget_tokens"] = _budget(fields["budget_tokens"], f"Step {step['ordinal']}: the budget")
+            changed.append("budget")
         if changed:
             self._save(step)
             self._checkpoint(program, step, by, f"Changed step {step['ordinal']}: " + ", ".join(changed))
@@ -2800,6 +2902,78 @@ class ProgramService:
         fresh = self.store.get_step(step["id"]) or step
         if int(fresh["ordinal"]) != before_ordinal:
             self._checkpoint(program, fresh, by, f"Moved step {before_ordinal} to {fresh['ordinal']}")
+
+    def remove_step(self, principal: Any, program_id: str, step_id: str) -> dict[str, Any]:
+        """Remove a Planned or Ready step (PG-LANG §3.4): the numbers follow
+        the order again and every ``after`` that named it takes what it came
+        after, as a move does. A started step stays (``step_stays``). His
+        removal applies at once; an orchestrating agent's goes up the ladder
+        (``step_change``: YOLO removes it and says so, Secure and Normal ask
+        him)."""
+        from .program_rules import decide
+
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        if step.get("race_of"):
+            step = self._step(program, str(step["race_of"]))
+        if step["state"] not in ("planned", "ready"):
+            raise ProgramRefused("step_stays", f"Step {step['ordinal']} started. It stays.", field="position",
+                                 reason=FROZEN_SET)
+        if _is_owner(principal):
+            with _LOCK:
+                self._remove(program, step, by="owner")
+                self._touch(program)
+                self.changed(program["id"], step["id"], verb="remove")
+            self._tick_now(program["id"])
+            return self.get(principal, program["id"])
+        self._require_writer(principal, program, "change")
+        outcome = decide(program.get("control"), "step_change", {})
+        title = f"The orchestrator removes step {step['ordinal']}, {step['title']}"
+        with _LOCK:
+            if outcome.to_owner:
+                self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="agent",
+                                          line=title[:400], kind="step_change",
+                                          undo={"title": title, "fields": {"remove": True}})
+            else:
+                self._remove(program, step, by="engine")
+                self.engine_decision(program, None, "step_change", outcome, title[:400])
+            self._touch(program)
+            self.changed(program["id"], step["id"], verb="remove")
+        self._tick_now(program["id"])
+        return self.get(principal, program["id"])
+
+    def _remove(self, program: Mapping[str, Any], step: Mapping[str, Any], *, by: str) -> None:
+        if step["state"] not in ("planned", "ready"):
+            raise ProgramRefused("step_stays", f"Step {step['ordinal']} started. It stays.", field="position",
+                                 reason=FROZEN_SET)
+        number = int(step["ordinal"])
+        inherited = [int(value) for value in step.get("after") or []]
+        for other in self.store.list_steps(program["id"]):
+            if other["id"] == step["id"]:
+                continue
+            if other.get("race_of") == step["id"]:
+                self.store.delete_step(other["id"])
+                continue
+            after = [int(value) for value in other.get("after") or []]
+            if number in after:
+                other["after"] = sorted({value for value in after if value != number} | set(inherited))
+                self._save(other)
+        # Its requirements stay as rows (R n is never used again, PG-REQ §3):
+        # set aside, not required, out of every count.
+        for row in self.requirements(program["id"]):
+            if row.get("step_id") != step["id"]:
+                continue
+            if row.get("parent_id"):
+                self.store.delete_requirement(row["id"])
+                continue
+            row.update(required=False, state="waived", waived_reason=f"Step {number} was removed",
+                       updated_at=self._clock())
+            self.store.save_requirement(row)
+        self.store.delete_step(step["id"])
+        order = [row["id"] for row in self._top_order(program["id"])]
+        self._reorder(program, order, by=by)
+        if by != "engine":  # the engine's removal is its Decided for you line
+            self._checkpoint(program, None, by, f"Removed step {number}, {step['title']}")
 
     def amend(self, principal: Any, program_id: str, step_id: str, line: Any) -> dict[str, Any]:
         """A line added to a started step's brief (§8): typed to the agent at
@@ -2913,8 +3087,18 @@ class ProgramService:
                 name, value = data["name"], data["value"]
                 if name == "agents":
                     guard(row, lambda value=value: self._runs_on(self._entries(value), "agent"))
-                elif name == "reviewer":
+                elif name == "reviewer" and value[0] != "none":
                     guard(row, lambda value=value: self._engine_id(value[1], self._profile(value[0], "reviewer"), "reviewer"))
+                elif name == "planner" and value and self.engine(value) is None:
+                    row.refuse("engine_unknown", f"planner: the model library has no engine {value!r}.")
+                elif name == "delivery" and value:
+                    guard(row, lambda value=value: _delivery(f"dw {value}", str(program.get("repo_root") or "")))
+                elif name == "within":
+                    guard(row, lambda value=value: _within(list(value)))
+                elif name == "check" and value:
+                    guard(row, lambda value=value: self._check_command(str(program.get("repo_root") or ""), value))
+                elif name == "for_person" and value and self._person_named(value) is None:
+                    row.refuse("person_unknown", f"There is no person {value!r} in People.")
                 elif name == "allow":
                     guard(row, lambda value=value: self._allowed_profiles(list(value)))
                 elif name == "project" and value and self._project_named(value) is None:
@@ -2938,6 +3122,9 @@ class ProgramService:
                             row.refuse("text_bad_value", f"Line {req.line}: a new step's requirement is R+.")
             elif kind in ("edit_requirement", "waive") and not owner:
                 row.refuse("owner_required", "Only the owner changes or waives a requirement.")
+            elif kind in ("round", "round_order") and not owner and row.verdict in ("allowed", "lowers"):
+                # §12: an agent passes his answer only as a proposal (LANG9).
+                row.refuse("owner_required", "Only the owner answers and closes a round.")
             if kind in ("edit_requirement", "require"):
                 req = data["row"]
                 guard(row, lambda req=req: self._requirement_input(program, req.text, req.kind, req.spec))
@@ -3013,12 +3200,23 @@ class ProgramService:
                     if name == "agents":
                         fields["runs_on"] = self._entries(value)
                     elif name == "reviewer":
-                        fields["reviewer_profile"], fields["reviewer_engine"] = value[0], value[1]
+                        if value[0] == "none":
+                            fields["reviewer_profile"] = "none"
+                        else:
+                            fields["reviewer_profile"], fields["reviewer_engine"] = value[0], value[1]
                     elif name == "project":
                         fields["project_id"] = self._project_named(value)
+                    elif name == "for_person":
+                        fields["for_person_id"] = self._person_named(value) if value else None
+                    elif name == "check":
+                        fields["check_command"] = value or "none"
+                    elif name == "delivery":
+                        fields["delivery"] = f"dw {value}" if value else None
                     else:
                         fields[{"when_idle": "prefer_idle", "may_hand_off": "may_handoff", "spend": "spend_limit_usd",
-                                "usage_warning": "usage_warning_share", "allow": "allowed_profiles"}.get(name, name)] = value
+                                "usage_warning": "usage_warning_share", "allow": "allowed_profiles",
+                                "depth": "review_depth", "planner": "planner_engine",
+                                "budget": "budget_tokens"}.get(name, name)] = value
                 if fields:
                     self.update(principal, pid, **fields)
                     done += len(kinds("head"))
@@ -3036,7 +3234,7 @@ class ProgramService:
                             raw["runs_on"] = self._entries(step.agents)
                         for key, value in (("effort", step.effort), ("race", step.race), ("gate_check", step.check),
                                            ("gate_review", step.review), ("review_depth", step.depth),
-                                           ("gate_merge", step.merge)):
+                                           ("gate_merge", step.merge), ("budget_tokens", step.budget)):
                             if value is not None:
                                 raw[key] = value
                         if step.for_person:
@@ -3065,7 +3263,8 @@ class ProgramService:
                         target["for_person_id"] = self._person_named(value) if value else None
                     else:
                         target[{"check": "gate_check", "review": "gate_review", "depth": "review_depth",
-                                "merge": "gate_merge"}.get(name, name)] = value
+                                "merge": "gate_merge", "when_idle": "prefer_idle",
+                                "budget": "budget_tokens"}.get(name, name)] = value
                 for number, step_fields_now in changes.items():
                     self.change_step(principal, pid, keys[f"s{number}"], **step_fields_now)
                     done += 1
@@ -3084,6 +3283,10 @@ class ProgramService:
                     now = ordinals()
                     if len(kept) < len(old):
                         self.change_step(principal, pid, sid, after=sorted(now[item] for item in kept))
+                # The blocks he took out (Planned steps), once nothing waits on them.
+                for row in kinds("remove_step"):
+                    self.remove_step(principal, pid, keys.pop(f"s{row.data['number']}"))
+                    done += 1
                 moves = kinds("move")
                 if moves:
                     top = max((step.number for step in base_model.steps if step.number is not None), default=0)
@@ -3148,6 +3351,11 @@ class ProgramService:
                                  required=req.required, each_step=scope == "every step",
                                  step_id=keys.get(key) if key else None)
                     done += 1
+                # 7. The rounds (§6.2): their states, order and his answers.
+                round_rows = kinds("round") + kinds("round_order")
+                if round_rows:
+                    self._write_rounds(self._program(pid), new_model.rounds, by=by)
+                    done += len(round_rows)
                 fresh = self._program(pid)
                 lines = sorted({row.line for row in rows if row.line})
                 self._checkpoint(fresh, None, by, f"Changed by the text: {done} change{'s' if done != 1 else ''}"
@@ -3162,6 +3370,29 @@ class ProgramService:
             self._held.on = False
             self.changed(pid, verb="text", text=True)
         self._tick_now(pid)
+
+    def _write_rounds(self, program: Mapping[str, Any], rounds: Iterable[Any], *, by: str) -> None:
+        """The text's rounds onto ``program_rounds``: each round's state and
+        order, his answers on the engine's questions (kept by place; the
+        question rows keep their ids). A round the text no longer has is
+        removed (only a round with no question gets that far)."""
+        now = self._clock()
+        stored = {_fold_name(row["name"]): row for row in self.store.list_rounds(program["id"])}
+        keep: set[str] = set()
+        for index, item in enumerate(rounds, start=1):
+            key = _fold_name(item.name)
+            keep.add(key)
+            row = stored.get(key) or {"program_id": program["id"], "name": item.name, "questions": []}
+            questions = [dict(question) for question in row.get("questions") or []]
+            for question, said in zip(questions, item.questions):
+                if (question.get("answer") or None) != (said.answer or None):
+                    question.update(answer=said.answer or None, answered_by=by if said.answer else None,
+                                    at=now if said.answer else None)
+            self.store.save_round({"program_id": program["id"], "name": row["name"], "state": item.state,
+                                   "ordinal": index, "questions": questions, "updated_at": now})
+        for key, row in stored.items():
+            if key not in keep:
+                self.store.delete_round(program["id"], row["name"])
 
     # ── Phone: the engine reaches him (Phone design §6) ──────────────
 
@@ -3764,7 +3995,7 @@ _CHANGE_FIELDS = {
     "title": "title", "brief": "brief", "owns": "owns", "after": "after", "effort": "effort", "profile": "agent",
     "engine": "agent", "runs_on": "agent", "race": "race", "gate_check": "gate_check", "gate_review": "gate_review",
     "review_depth": "review_depth", "gate_merge": "gate_merge", "for_person_id": "for_person", "may_call": "may_call",
-    "before": "position",
+    "prefer_idle": "prefer_idle", "budget_tokens": "budget", "before": "position",
 }
 #: The stored key of a change field (for an overturn's "before" values).
 _STORE_KEY = {"brief": "brief_markdown"}
@@ -3888,6 +4119,60 @@ def _waiting_first(rows: list[dict[str, Any]]) -> None:
     """Your turn, failed, running, drafting, done, parked; newest change first in a band."""
     rows.sort(key=lambda row: str(row.get("updated_at") or ""), reverse=True)
     rows.sort(key=lambda row: PROGRAM_BAND.get(row["state"], 9))
+
+
+def _fold_name(name: Any) -> str:
+    return "".join(str(name or "").split()).casefold()
+
+
+def _budget(value: Any, what: str) -> Optional[int]:
+    """A context budget in tokens (PG-LANG §5.4): ``65536``, ``"64k"``;
+    ``None`` / ``""``: not set (the Program's, or the engine's window)."""
+    if value in (None, "", 0):
+        return None
+    from .program_text import parse_tokens
+
+    tokens = parse_tokens(value)
+    if tokens is None:
+        raise ProgramRefused("budget_invalid", f"{what} is a number of tokens ('64k').", status=400)
+    return tokens
+
+
+def _within(value: Any) -> list[str]:
+    """PG-LANG §5.5: the paths the Program may own at all, relative to the
+    repository (a folder ends with ``/``)."""
+    if value in (None, "", []):
+        return []
+    items = [value] if isinstance(value, str) else value
+    if not isinstance(items, (list, tuple)):
+        raise ProgramRefused("within_invalid", "Within is a list of paths.", status=400)
+    out: list[str] = []
+    for item in items:
+        for part in str(item).split(","):
+            path = part.strip()
+            if not path:
+                continue
+            if path.startswith(("/", "~")) or ".." in Path(path).parts:
+                raise ProgramRefused("within_invalid", f"Within: {path!r} is not a path in the repository.", status=400)
+            if path not in out:
+                out.append(path)
+    return out
+
+
+def _delivery(value: Any, root: str) -> Optional[str]:
+    """PG-LANG §8: ``dw <project>/<phase>[/<story>]`` -> ``dw:<ref>``; only
+    in a repository with the rails (``.githooks/dw``)."""
+    words = " ".join(str(value or "").split())
+    if not words or words in ("none", "off"):
+        return None
+    ref = words[3:].strip() if words.startswith("dw ") else words[3:] if words.startswith("dw:") else ""
+    parts = [part for part in ref.split("/") if part.strip()]
+    if not 2 <= len(parts) <= 3 or len(parts) != len(ref.split("/")):
+        raise ProgramRefused("delivery_invalid", "Delivery is 'dw <project>/<phase>' or 'dw <project>/<phase>/<story>'.",
+                             status=400)
+    if not (Path(str(root or "")) / ".githooks" / "dw").exists():
+        raise ProgramRefused("delivery_no_rails", "This repository has no Delivery Workbench.", status=409)
+    return "dw:" + "/".join(part.strip() for part in parts)
 
 
 def _base_branch(root: str) -> str:

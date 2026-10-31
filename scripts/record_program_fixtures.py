@@ -25,7 +25,8 @@ person); the faces lane's answers to his presses on the same records
 .waive_refused.json, .waived.json, .added.json; needs_you.requirements.json; program.requirements.evidence.json; program.adjust.moved.json,
 .inserted.json, .amended.json, .titled.json, .refused.json) and an
 orchestrator's proposals (program.proposals.json, .added.json); PG-LANG LANG1:
-program.text.json (a running Program's text with its lamps) and
+program.text.json (a running Program's text with its lamps; PG-LANG fields: the
+review depth, budget, night, within, a Measure, a walk, a round) and
 program.text_apply.json (a dry run with a refused row and a row that lowers
 the bar, then the applied answer).
 ``--only program.race.json`` writes one file.
@@ -340,6 +341,9 @@ def record_text(root: Path) -> dict[str, Any]:
     pid = _create(rig, "The hub stops stalling", goal="Every route under 100 ms while a meeting records.",
                   template="build-and-review", control="normal", reviewer_profile="codex-default",
                   project_id="proj-holdspeak")
+    # PG-LANG fields: the Program's depth (its steps take it), budget, night, within.
+    rig.service.update(OWNER, pid, review_depth="standard", budget_tokens="64k", within=["holdspeak/", "docs/"],
+                       night="23:30–07:00 · at most 8 steps")
     rig.service.plan(OWNER, pid, steps=[
         {"title": "Indexes", "brief": "Add the three indexes.", "owns": ["holdspeak/db/schema.py"]},
         {"title": "People routes", "brief": "31 handlers through run_in_threadpool.",
@@ -347,6 +351,17 @@ def record_text(root: Path) -> dict[str, Any]:
         {"title": "The fan-out", "brief": "One frame per change, not one per row.", "after": [1, 2]},
     ])
     rig.service.require(OWNER, pid, text="`echo 12 passed` is green", step_id=rig.step(pid, 2)["id"])
+    # PG-LANG fields: a Measure and a walk; one interview round the engine asked.
+    rig.service.require(OWNER, pid, text="The People routes answer fast", kind="measure", step_id=rig.step(pid, 2)["id"],
+                        spec={"command": "sh scripts/bench_people.sh", "metric": "p95", "op": "<", "bound": 100,
+                              "unit": "ms"})
+    rig.service.require(OWNER, pid, text="I used the desk for a morning with no stall", kind="word",
+                        spec={"walk": ["Open People at 393", "Start a meeting", "Open People again"]})
+    rig.service.store.save_round({"program_id": pid, "name": "Architecture", "state": "asking", "ordinal": 1,
+                                  "questions": [{"id": "q-1", "text": "Does the cache live in the hub or the client?",
+                                                 "answer": None, "answered_by": None, "at": None}],
+                                  "updated_at": rig.service._clock()})
+    rig.service.change_step(OWNER, pid, rig.step(pid, 3)["id"], budget_tokens="32k")
     rig.service.start(OWNER, pid)
     rig.agent.finish(rig.step(pid, 1)["launch_id"], {"holdspeak/db/schema.py": "-- indexes\n"})
     rig.tick()
@@ -358,7 +373,9 @@ def record_text(root: Path) -> dict[str, Any]:
                .replace("\nstep 3 The fan-out", "\nstep + The loop watch\n  after 2\n  agent Codex · effort low\n"
                         "  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out")
                .replace("  > One frame per change, not one per row.",
-                        "  > One frame per change, not one per row.\n  merge owner"))
+                        "  > One frame per change, not one per row.\n  merge owner")
+               .replace("  ? Does the cache live in the hub or the client?\n",
+                        "  ? Does the cache live in the hub or the client?\n  = In the hub; the client stays as it is.\n"))
     preview = client.post(f"/api/programs/{pid}/text", json={"text": changed, "base": text})
     assert preview.status_code == 200, preview.text
     dry = preview.json()
@@ -586,6 +603,10 @@ def _check(fixtures: dict[str, Any]) -> None:
 def _check_text(fixtures: dict[str, Any]) -> None:
     text = fixtures["program.text.json"]["text"]
     assert text.startswith("# program text 1\n") and "  # " in text, text
+    for line in ("  reviewer Codex at standard\n", "  budget 64k\n", "  night 23:30–07:00 · at most 8 steps\n",
+                 "  within holdspeak/, docs/\n", "    bound p95 < 100 ms\n", "    walk Open People at 393\n",
+                 "round Architecture · asking\n", "  budget 32k\n"):
+        assert line in text, (line, text)
     apply = fixtures["program.text_apply.json"]
     verdicts = {row["verdict"] for row in apply["dry_run"]["changes"]}
     assert {"refused", "lowers", "allowed"} <= verdicts, verdicts
