@@ -6,8 +6,10 @@
 #
 # It runs, under the one-run-at-a-time lock and an isolated HOME:
 #   1. the web build;
-#   2. vitest on the tests RELATED to the changed web files (vitest related),
-#      then the web guards (vitest censuses, every run);
+#   2. vitest on the tests the changed web files reach
+#      (scripts/vitest_related.py: the import walk, a barrel followed by
+#      name, cut by depth over 120 files), then the web guards (vitest
+#      censuses, every run);
 #   3. pytest -m "not slow" on the affected test files
 #      (scripts/quick_check_affected.py: changed test files, tests/uat and
 #      tests/e2e included; tests that import a changed holdspeak module or
@@ -66,12 +68,26 @@ echo "== build"
 lock npm --prefix web run build >"$H/build.log" 2>&1 || { tail -20 "$H/build.log"; red "the web build failed"; }
 echo "   build ok"
 
-# ── 3. vitest related ────────────────────────────────────────────────────────
+# ── 3. vitest on the tests the change reaches ───────────────────────────────
+# Not `vitest related` (2026-10-31): it follows every barrel and the app
+# registry transitively, so one stylesheet or one shared module selected all
+# 431 files (a 6-minute check). scripts/vitest_related.py walks the same
+# imports, follows a barrel by name, and over 120 files keeps the tests within
+# two imports (more while under 120), every per-app T2 file and every test
+# that names the file. A stylesheet's page-wide look is proved by the desk
+# sweep (1440 and 393) and the web guards below; the whole vitest suite runs
+# on main after the merge (check_web_baseline --run).
 web="$(printf '%s\n' "$changed" | grep -E '^web/src/.*\.(ts|tsx|css)$' | sed 's#^web/##' || true)"
 web="$(printf '%s\n' "$web" | while read -r f; do [ -n "$f" ] && [ -f "web/$f" ] && echo "$f"; done)"
+vt=""
 if [ -n "$web" ]; then
-  echo "== vitest related ($(printf '%s\n' "$web" | wc -l | tr -d ' ') files)"
-  out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest related --run --maxWorkers=8 $web 2>&1)"; rc=$?
+  vt="$(uv run python scripts/vitest_related.py --why $web 2>"$H/vitest-related.why")" || red "the vitest selection failed"
+  sed 's/^/   /' "$H/vitest-related.why"
+  [ -z "$vt" ] && echo "== vitest: no web test reaches the changed files"
+fi
+if [ -n "$vt" ]; then
+  echo "== vitest ($(printf '%s\n' "$web" | wc -l | tr -d ' ') changed web files, $(printf '%s\n' "$vt" | wc -l | tr -d ' ') test files)"
+  out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest run --maxWorkers=8 $vt 2>&1)"; rc=$?
   printf '%s\n' "$out" >"$H/vitest.log"
   printf '%s\n' "$out" | grep -E '^ FAIL|×|Test Files|Tests |Errors ' | sort -u | sed 's/^/   /'
   # The unhandled-error blocks: each starts with "⎯ Unhandled Error ⎯" or
@@ -176,7 +192,7 @@ grep -E '^(FAILED|ERROR)|passed|failed' "$H/canon.log" | tail -4 | sed 's/^/   /
 # never navigates, the build stamp, the desk locks, the first-run wires and
 # every MCP tool on a real hub: eight reds that reached main unseen).
 echo "== repo guards"
-lock uv run pytest -q -n 8 tests/unit/test_static_sql_matches_schema.py tests/unit/test_density_guard.py tests/unit/test_product_copy.py tests/unit/test_api_surface.py tests/unit/test_realtime_frame_registry.py tests/unit/test_one_path_census.py tests/unit/test_aware_time_census.py tests/unit/test_kernel_effect_fence.py tests/unit/test_decisions.py tests/unit/test_philo7_contract.py tests/unit/test_doc_drift_guard.py tests/unit/test_graph_atlas.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_ux_canon_scan.py tests/unit/test_thread_tool_gate.py tests/unit/test_philo13_18_type_floor_static.py tests/unit/test_graph_reference.py tests/unit/test_native_surfaces_guard.py tests/unit/test_page_cores_guard.py tests/unit/test_web_null_read_guard.py tests/unit/test_web_vocabulary_guard.py tests/unit/test_hub_handlers_off_loop.py tests/unit/test_lamp_words_guard.py tests/unit/test_ci_lanes.py tests/unit/test_desk_no_exit_guard.py tests/unit/test_web_build_stamp_assets.py tests/unit/test_desk_locks.py tests/integration/test_desk_firstrun.py tests/integration/test_mcp_every_tool_runs_on_hub.py >"$H/repo.log" 2>&1 || { echo "   the repo guards failed: RED"; fail=1; }
+lock uv run pytest -q -n 8 tests/unit/test_static_sql_matches_schema.py tests/unit/test_density_guard.py tests/unit/test_product_copy.py tests/unit/test_api_surface.py tests/unit/test_realtime_frame_registry.py tests/unit/test_one_path_census.py tests/unit/test_aware_time_census.py tests/unit/test_kernel_effect_fence.py tests/unit/test_decisions.py tests/unit/test_philo7_contract.py tests/unit/test_doc_drift_guard.py tests/unit/test_graph_atlas.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_ux_canon_scan.py tests/unit/test_thread_tool_gate.py tests/unit/test_philo13_18_type_floor_static.py tests/unit/test_graph_reference.py tests/unit/test_native_surfaces_guard.py tests/unit/test_page_cores_guard.py tests/unit/test_web_null_read_guard.py tests/unit/test_web_vocabulary_guard.py tests/unit/test_hub_handlers_off_loop.py tests/unit/test_lamp_words_guard.py tests/unit/test_vitest_related.py tests/unit/test_ci_lanes.py tests/unit/test_desk_no_exit_guard.py tests/unit/test_web_build_stamp_assets.py tests/unit/test_desk_locks.py tests/integration/test_desk_firstrun.py tests/integration/test_mcp_every_tool_runs_on_hub.py >"$H/repo.log" 2>&1 || { echo "   the repo guards failed: RED"; fail=1; }
 grep -E '^(FAILED|ERROR)|passed|failed' "$H/repo.log" | tail -8 | sed 's/^/   /'
 
 if [ "$fail" = 0 ]; then echo "QUICK CHECK GREEN: merge; the main watcher runs the whole suite."; else echo "QUICK CHECK RED: fix before merging."; fi
