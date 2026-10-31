@@ -33,6 +33,9 @@ KINDS = (
     # PG-REQ (2026-10-31): the owner's requirements.
     "requirement_red", "requirement_unmet", "requirement_unanswered", "requirement_left", "requirement_proposed",
     "requirement_unprovable", "step_amend", "step_change",
+    # 2026-10-31 (a held commit stranded a step): the step's agent's own
+    # commit on its own branch, held by the gate or not made.
+    "held_commit",
 )
 
 #: PG19: the minutes Normal waits on his press before a Program that may
@@ -190,6 +193,13 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
         if facts.get("gate_allows"):
             return Decision("allow", f"{level_word(level)}: the gate allows a read, a build or a test by its own rules")
         return CoreQuestion("the gate holds the call", "authority stays with him", core=True)
+    if kind == "held_commit":
+        # The commit is the step's receipt (design §4). YOLO passes every call
+        # in the launch's own worktree, so the commit goes on by rule; Secure
+        # and Normal hold it for him (authority stays with him).
+        if level == "yolo":
+            return Decision("commit", "YOLO: the agent's commit on its own branch goes on by rule")
+        return CoreQuestion("the agent's commit waits for you", f"{level_word(level)}: a held commit is his")
     if kind == "check_failed":
         allowed = ROUNDS[level]
         if rounds < allowed:

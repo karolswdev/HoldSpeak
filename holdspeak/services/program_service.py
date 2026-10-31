@@ -142,6 +142,8 @@ DECIDE_CHOICES = {
     "parked": ("resume", "skip"),
     "ask_review": ("prepare",),
     "core": ("go_on", "park"),
+    # 2026-10-31: the step's agent's commit, held by the gate or not made.
+    "commit": ("allow", "not_now"),
     "race": ("pick",),
     "add_step": ("add", "skip"),
     "close": ("close",),
@@ -389,6 +391,15 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
             items.append({**base, "id": f"{step['id']}:core", "kind": "core", "core": True,
                           "choices": list(DECIDE_CHOICES["core"]), "reason": core.get("reason"),
                           "title": f"{label.capitalize()}: {core.get('reason')}"})
+            continue
+        held = facts.get("held_commit") if isinstance(facts.get("held_commit"), Mapping) else None
+        if (held or facts.get("commit_ask")) and state not in CLOSED_STATES and state != "parked":
+            # A held commit never expires silently: his row while the gate
+            # holds it (``hold``) and after the hold ended with the change
+            # left in the worktree.
+            items.append({**base, "id": f"{step['id']}:commit", "kind": "commit", "hold": bool(held),
+                          "choices": list(DECIDE_CHOICES["commit"]),
+                          "title": f"{label[:1].upper() + label[1:]}: the agent's commit waits for you"})
             continue
         limit = facts.get("limit") if isinstance(facts.get("limit"), Mapping) else None
         if state == "waiting":
@@ -1631,6 +1642,10 @@ class ProgramService:
             self._touch(program)
             self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent", "Changed " + ", ".join(changed))
             self.changed(program["id"], verb="update")
+        if fields.get("control") is not None and program.get("state") in ("running", "waiting", "failed"):
+            # A new level decides what waits at once: YOLO releases a held
+            # commit (the tick allows it by rule, or commits the change).
+            self._tick_now(program["id"])
         return self.get(principal, program["id"])
 
     def _update_language_fields(self, program: dict[str, Any], fields: Mapping[str, Any]) -> list[str]:
@@ -1936,6 +1951,9 @@ class ProgramService:
         text = str(report or "").strip()[:20000]
         with _LOCK:
             step["report"] = text
+            # 2026-10-31: from here every tick reads the branch head; a new
+            # commit (from anyone) moves the step to the check.
+            step.setdefault("facts", {})["said_done"] = True
             self._save(step)
             self._checkpoint(program, step, "agent", "Said it is done; the engine waits for the commit", kernel=False)
             for item in follow_ups or []:
@@ -2133,6 +2151,8 @@ class ProgramService:
                     facts.pop("core", None)
                     self.transition(program, step, "parked", by="owner", parked_by=PARKED_BY_OWNER,
                                     parked_reason="You parked this step", line=f"Parked: {core.get('reason')}")
+            elif kind == "commit":
+                answer = self._decide_commit(principal, program, step, choice)
             elif kind == "race":
                 facts = step.setdefault("facts", {})
                 if not facts.get("awaiting_pick"):
@@ -2165,6 +2185,50 @@ class ProgramService:
             self.changed(program["id"], step["id"], verb="decide")
         self._tick_now(program["id"])
         return {**answer, "program": self.get(principal, program["id"])}
+
+    def _decide_commit(self, principal: Any, program: dict[str, Any], step: dict[str, Any], choice: str) -> dict[str, Any]:
+        """His press on the agent's held commit. Allow: the gate lets the
+        held call run, or, when the hold ended, the engine commits the
+        worktree on the step's branch (the next tick reads the new head).
+        Not now: the held call is denied and the step parks (Resume)."""
+        facts = step.setdefault("facts", {})
+        held = facts.get("held_commit") if isinstance(facts.get("held_commit"), Mapping) else None
+        if not held and not facts.get("commit_ask"):
+            raise ProgramRefused("no_held_commit", "This step has no commit that waits for you.")
+        runner = self.runner()
+        if choice == "allow":
+            if held:
+                facts.pop("held_commit", None)
+                try:
+                    runner.gate().decide(str(held["proposal_id"]), approve=True, reason="Allowed from the program",
+                                         principal=principal)
+                except Exception as exc:
+                    # The hold ended before his press: the engine makes the
+                    # commit itself, below.
+                    log.info(f"held commit not allowed at the gate: {exc}")
+                else:
+                    self._save(step)
+                    self._checkpoint(program, step, "owner", "Allowed the agent's commit")
+                    return {}
+                facts["commit_ask"] = {"at": self._clock()}
+                self._save(step)
+            head = runner.commit_worktree(program, step)
+            if not head:
+                raise ProgramRefused("commit_failed", "git did not make the commit. Look at the step's worktree.")
+            self._checkpoint(program, step, "owner", f"Committed the agent's change ({head[:8]})")
+            return {"commit": head}
+        if held:
+            try:
+                runner.gate().decide(str(held["proposal_id"]), approve=False, reason="The owner said not now",
+                                     principal=principal)
+            except Exception as exc:
+                log.info(f"held commit not denied: {exc}")
+        facts.pop("held_commit", None)
+        facts.pop("commit_ask", None)
+        self.transition(program, step, "parked", by="owner", parked_by=PARKED_BY_OWNER,
+                        parked_reason="You parked this step; the change stays in the worktree",
+                        line="Not now: the commit waits; the step is parked")
+        return {}
 
     def handoff(self, principal: Any, program_id: str, step_id: str, to: Any, *, preview: bool = False) -> dict[str, Any]:
         """PG19, by hand: move a step that holds an agent to ``to`` (a name or
