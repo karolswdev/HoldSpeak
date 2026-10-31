@@ -13,10 +13,16 @@ the process edge only.
 - ``gh`` is :class:`FakeGitHub`: ``pr create`` answers a PR URL, ``pr merge``
   marks the PR merged, and :meth:`FakeGitHub.sweep` writes what the
   Heartbeat's follow-through writes on the launch (``follow_through.pr``);
-- AG12's review loop is the real ``AgentReviewLoop`` with its reader seams.
+- AG12's review loop is the real ``AgentReviewLoop`` with its reader seams;
+  the fake reviewer's words are ``Rig.words`` (a test types them). PG-REQ:
+  when a test's words name no ``REQ`` line, the fake reviewer answers
+  ``REQ Rn: MET`` for each owner's requirement its brief lists (a reviewer
+  that finds every requirement holds); a test that drives an UNMET or a
+  missing answer writes its own ``REQ`` lines.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -195,15 +201,24 @@ class Rig:
             self.db, self.hand, ledger=self.ledger,
             state_reader=lambda launch_id: str((self.states.get(launch_id) or {}).get("state") or ""),
             commit_reader=lambda record: git(Path(record["worktree_path"]), "rev-parse", "HEAD"),
-            result_reader=lambda launch_id: self.words.get(launch_id, ""),
+            result_reader=self.reviewer_words,
             prompt=lambda launch_id, text: self.prompts.append((launch_id, text)),
         )
         self.runner = ProgramRunner(
             self.service, hand=lambda: self.hand, ledger=lambda: self.ledger,
             launch_state=lambda launch_id: self.states.get(launch_id) or {},
             run=self.gh, prompt=lambda launch_id, text: self.prompts.append((launch_id, text)),
-            review_tick=self.review.tick, idle=idle, async_checks=False,
+            review_tick=self.review.tick, idle=idle, async_checks=False, review_words=self.reviewer_words,
         )
+
+    def reviewer_words(self, launch_id: str) -> str:
+        """The fake reviewer's words (see the module note on REQ lines)."""
+        words = self.words.get(launch_id, "")
+        if not words or "REQ" in words:
+            return words
+        acceptance = ((self.ledger.get(launch_id) or {}).get("review") or {}).get("acceptance") or []
+        asked = [found.group(1) for line in acceptance for found in [re.match(r"^R(\d+) · ", str(line))] if found]
+        return words + "".join(f"\nREQ R{n}: MET · the fake reviewer finds it holds" for n in asked)
 
     def _frame(self, frame: str, payload: Any) -> None:
         self.frames.append((frame, dict(payload)))

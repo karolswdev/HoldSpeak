@@ -31,6 +31,7 @@ _ALIASES = {
     "claude-default": "claude", "pi": "pi", "pi-default": "pi",
 }
 _FINDING = re.compile(r"^\s*(?:[-*]\s*)?(MUST|SHOULD)\b\s*[:\-]?\s*(.*?)\s*$", re.I)
+_REQ_UNMET = re.compile(r"^\s*(?:[-*]\s*)?REQ\s+R(\d+)\s*[:\-]\s*UNMET\b\s*(?:[·:\-—]\s*)?(.*?)\s*$", re.I)
 _CLEAR_FINDING = re.compile(
     r"^\s*(?:[-*]\s*)?MUST\s*[:\-]?\s*(?:none|no|zero)(?:\s+findings?)?\s*$",
     re.I,
@@ -83,10 +84,19 @@ def _copy_review(value: Any) -> dict[str, Any]:
 
 
 def parse_findings(words: Any) -> list[dict[str, str]]:
-    """Read only explicit MUST/SHOULD lines from a reviewer's Done text."""
+    """Read only explicit MUST/SHOULD lines from a reviewer's Done text.
+    Programs PG-REQ: ``REQ R3: UNMET · <what is missing>`` (an owner's
+    requirement the reviewer judged unmet) is a MUST, so the round that
+    exists sends it back; it carries ``requirement`` ("R3")."""
     text = str(words or "")
     found: list[dict[str, str]] = []
     for line in text.splitlines():
+        unmet = _REQ_UNMET.match(line)
+        if unmet:
+            detail = unmet.group(2).strip()
+            found.append({"level": "MUST", "text": f"R{unmet.group(1)} is unmet" + (f": {detail}" if detail else ""),
+                          "requirement": f"R{unmet.group(1)}"})
+            continue
         match = _FINDING.match(line)
         if not match or not match.group(2):
             continue

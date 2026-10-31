@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 87  # informational; 87 (PG14, additive): workbenches.program_template, program_control, program_runs_on_json, program_may_call, program_may_handoff; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
+SCHEMA_VERSION = 88  # informational; 88 (PG-REQ, additive): program_requirements and its index; 87 (PG14, additive): workbenches.program_template, program_control, program_runs_on_json, program_may_call, program_may_handoff; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -5297,6 +5297,33 @@ CREATE TABLE IF NOT EXISTS program_checkpoints (
     overturned_at TEXT,
     undo_json TEXT NOT NULL DEFAULT '{}'
 );
+-- Programs PG-REQ (2026-10-31, PROGRAMS-REQUIREMENTS-2026-10-31.md §11): one
+-- sentence of the owner's on a Program or a step, with the way it is proven
+-- (check, review, shot, word), its state and its evidence. A row with no
+-- step_id is the Program's own (each_step 0: the end check; each_step 1: the
+-- every-step parent, copied to each step with parent_id).
+CREATE TABLE IF NOT EXISTS program_requirements (
+    id TEXT PRIMARY KEY,
+    program_id TEXT NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
+    step_id TEXT,
+    ordinal INTEGER NOT NULL,
+    text TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    required INTEGER NOT NULL DEFAULT 1,
+    spec_json TEXT NOT NULL DEFAULT '{}',
+    each_step INTEGER NOT NULL DEFAULT 0,
+    parent_id TEXT,
+    state TEXT NOT NULL DEFAULT 'not_yet',
+    judged_commit TEXT,
+    evidence_json TEXT NOT NULL DEFAULT '{}',
+    waived_reason TEXT,
+    rounds INTEGER NOT NULL DEFAULT 0,
+    by_kind TEXT NOT NULL DEFAULT 'owner',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    judged_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_program_requirements_program ON program_requirements(program_id, step_id, ordinal);
 -- Phone (2026-10-28, docs/internal/betterment/phone/): the desk reaches the
 -- owner on his phone and he reaches the desk. A paired device, the messages
 -- both ways, the calls (ringing, answered, missed, declined, ended) and the

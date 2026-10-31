@@ -30,6 +30,9 @@ ROUNDS = {"secure": 2, "normal": 2, "yolo": 3}
 KINDS = (
     "routine", "open_pr", "merge", "finding_required", "finding_should", "finding_note", "agent_question",
     "gate_approval", "check_failed", "step_failed", "race_winner", "add_step", "program_done", "limited",
+    # PG-REQ (2026-10-31): the owner's requirements.
+    "requirement_red", "requirement_unmet", "requirement_unanswered", "requirement_left", "requirement_proposed",
+    "requirement_unprovable", "step_amend", "step_change",
 )
 
 #: PG19: the minutes Normal waits on his press before a Program that may
@@ -156,6 +159,9 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
     if kind == "merge":
         if not (facts.get("check_green") and facts.get("review_pass", True)):
             return CoreQuestion("the check is not green or the review did not pass", "no merge without green and PASS")
+        if not facts.get("requirements_met", True):
+            # PG-REQ decision 1: Your word holds the merge at every level.
+            return CoreQuestion("a requirement is not met yet", "no merge until every required requirement is met or waived")
         if level == "secure":
             return CoreQuestion("Secure: he merges", "Secure: merge is his press")
         return Decision("merge", f"{level_word(level)} merges on a green check and a passed review")
@@ -222,6 +228,47 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
             return Decision("handoff", f"Normal: the program may hand off; {HANDOFF_AFTER_MINUTES} minutes passed")
         return CoreQuestion("continue in the next agent now, or wait for the reset?",
                             f"{level_word(level)}: a limited step waits for his press")
+    if kind in ("requirement_red", "requirement_unmet"):
+        # PG-REQ §6: the log tail or the reviewer's line back to the builder,
+        # the same rounds as a red check or a REQUIRED finding, then the
+        # requirement is left.
+        allowed = ROUNDS[level]
+        if rounds < allowed:
+            what = "a red requirement" if kind == "requirement_red" else "an unmet requirement"
+            return Decision("retry" if kind == "requirement_red" else "fix",
+                            f"{what} goes back to the builder (round {rounds + 1} of {allowed})")
+        return decide(level, "requirement_left", {**facts, "round": rounds})
+    if kind == "requirement_unanswered":
+        if level == "secure":
+            return CoreQuestion("Secure: the reviewer gave no answer for a requirement", "Secure: an unanswered requirement is his")
+        if not facts.get("asked"):
+            return Decision("reask", f"{level_word(level)}: the engine asks the same reviewer once more")
+        return CoreQuestion("the reviewer gave no answer for a requirement twice", f"{level_word(level)}: asked once more, then him")
+    if kind == "requirement_left":
+        if level == "secure":
+            return CoreQuestion("Secure: a requirement is still unmet after the rounds", "Secure: a requirement left is his")
+        if level == "yolo" and not facts.get("replanned"):
+            return Decision("replan", "YOLO: one smaller brief that names the requirement")
+        return Decision("park", f"{level_word(level)}: the step with a requirement left is parked and the rest carries on",
+                        overturnable=True)
+    if kind == "requirement_proposed":
+        if level == "yolo":
+            return Decision("add", "YOLO: the engine adds a requirement an agent proposes and says so", overturnable=True)
+        return CoreQuestion(f"{level_word(level)}: he adds a requirement an agent proposes",
+                            f"{level_word(level)}: the bar is his")
+    if kind == "requirement_unprovable":
+        return CoreQuestion("the requirement has no way to be proven here", "a requirement with no proof is a core question",
+                            core=True)
+    if kind == "step_change":
+        if level == "yolo":
+            return Decision("apply", "YOLO: the engine applies an orchestrator's change to a planned step and says so",
+                            overturnable=True)
+        return CoreQuestion(f"{level_word(level)}: he applies a change to the plan", f"{level_word(level)}: the plan is his")
+    if kind == "step_amend":
+        if level == "yolo":
+            return Decision("send", "YOLO: the engine sends an orchestrator's amendment at the turn boundary and says so")
+        return CoreQuestion(f"{level_word(level)}: he sends an amendment to a running step",
+                            f"{level_word(level)}: the brief is his")
     if kind == "program_done":
         if level == "secure":
             return CoreQuestion("Secure: he closes the program", "Secure: Done is his")

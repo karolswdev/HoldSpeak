@@ -167,6 +167,80 @@ def verify_log(path: Optional[str], *, required: Iterable[str] = QUICK_CHECK_REQ
     return verify_text(text, required=required)
 
 
+def verify_requirement_text(text: str, *, expect: Optional[str] = None) -> dict[str, Any]:
+    """PG-REQ §5: the requirement form, for a command that is not the quick
+    check (it prints no ``== section`` lines and no verdict line). Met only
+    when ALL of these hold:
+
+    1. the log names the commit and the worktree was clean at the start;
+    2. the engine's own footer ``program-check: exit 0`` is there (the
+       engine wrote it from its own process: its receipt, not the agent's
+       claim);
+    3. no output line is red by :func:`_red_line` (``FAILED``, ``ERROR``,
+       "n failed" with n > 0);
+    4. when ``expect`` (a regular expression) is named, a line matches it.
+    """
+    reasons: list[str] = []
+    commit: Optional[str] = None
+    clean: Optional[bool] = None
+    exit_code: Optional[int] = None
+    footer = False
+    last_result = ""
+    matched = expect is None
+    pattern = re.compile(expect) if expect else None
+    for raw in text.splitlines():
+        line = raw.rstrip()
+        if line.startswith(HEADER):
+            body = line[len(HEADER):].strip()
+            if body.startswith("commit "):
+                commit = body.split(" ", 1)[1].strip() or None
+            elif body == "tree clean":
+                clean = True
+            elif body.startswith("tree dirty"):
+                clean = False
+            elif body.startswith("exit "):
+                footer = True
+                try:
+                    exit_code = int(body.split(" ", 1)[1])
+                except ValueError:
+                    exit_code = None
+            continue
+        if _red_line(line):
+            reasons.append(f"a line is red: {line.strip()[:160]}")
+        if _result_line(line):
+            last_result = line.strip()
+        if pattern is not None and pattern.search(line):
+            matched = True
+    if not commit:
+        reasons.append("the log names no commit")
+    if clean is False:
+        reasons.append("the worktree had changes that were not committed when the command started")
+    elif clean is None:
+        reasons.append("the log does not say the worktree was clean")
+    if not footer:
+        reasons.append("the log has no exit line of the engine")
+    elif exit_code != 0:
+        reasons.append(f"the command ended with exit {exit_code if exit_code is not None else 'none'}")
+    if not matched:
+        reasons.append(f"no line matches {expect}")
+    return {"met": not reasons, "reasons": reasons[:6], "commit": commit, "clean": clean, "exit": exit_code,
+            "line": last_result}
+
+
+def verify_requirement_log(path: Optional[str], expect: Optional[str] = None) -> dict[str, Any]:
+    """The requirement form of the log at ``path``. No path or no file: not Met."""
+    empty = {"met": False, "commit": None, "clean": None, "exit": None, "line": ""}
+    if not path:
+        return {**empty, "reasons": ["the command wrote no log"]}
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return {**empty, "reasons": ["the log is not there"]}
+    if not text.strip():
+        return {**empty, "reasons": ["the log is empty"]}
+    return verify_requirement_text(text, expect=expect)
+
+
 def log_tail(path: Optional[str], lines: int = 40) -> str:
     """The last ``lines`` lines of a check log (the builder's round-two prompt)."""
     if not path:
@@ -179,5 +253,6 @@ def log_tail(path: Optional[str], lines: int = 40) -> str:
 
 
 __all__ = [
-    "HEADER", "QUICK_CHECK_REQUIRED", "SECTION_ORDER", "log_tail", "verify_log", "verify_text",
+    "HEADER", "QUICK_CHECK_REQUIRED", "SECTION_ORDER", "log_tail", "verify_log", "verify_requirement_log",
+    "verify_requirement_text", "verify_text",
 ]

@@ -54,7 +54,7 @@ from .program_service import (
     ProgramRefused, ProgramService, agent_label, duration_words, history_of, programs_on,
 )
 from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
-from .program_verifier import log_tail, verify_log
+from .program_verifier import log_tail, verify_log, verify_requirement_log
 
 log = get_logger("program_runner")
 
@@ -148,6 +148,7 @@ class ProgramRunner:
         idle: Optional[Callable[[Optional[str]], tuple[bool, str]]] = None,
         async_checks: bool = True,
         principal: Any = None,
+        review_words: Optional[Callable[[str], str]] = None,
     ) -> None:
         self.service = service
         self.db = service.db
@@ -159,6 +160,7 @@ class ProgramRunner:
         self._review_tick = review_tick
         self._idle = idle
         self._async = async_checks
+        self._review_words = review_words
         if principal is None:
             from ..kernel.program_ops import RUNNER
 
@@ -291,6 +293,28 @@ class ProgramRunner:
         loop = AgentReviewLoop(self.db, self.hand(), ledger=self.ledger())
         return loop._prompt_builder(launch_id, text)
 
+    def prompt_launch(self, launch_id: str, text: str) -> Any:
+        """PG-REQ: type into a launch that is not the step's builder (the
+        reviewer, asked once more for its REQ answers), at its turn end."""
+        if self._prompt is not None:
+            return self._prompt(launch_id, text)
+        from .agent_review import AgentReviewLoop
+
+        loop = AgentReviewLoop(self.db, self.hand(), ledger=self.ledger())
+        return loop._prompt_builder(launch_id, text)
+
+    def review_words(self, launch_id: str) -> str:
+        """The reviewer's last words (its REQ answers)."""
+        if self._review_words is not None:
+            return str(self._review_words(launch_id) or "")
+        try:
+            from .agent_helpers import last_words
+
+            return str(last_words(self.db, launch_id, self.ledger()) or "")
+        except Exception as exc:
+            log.debug(f"review words not read: {exc}")
+            return ""
+
     # ── the tick ─────────────────────────────────────────────────────
 
     def tick(self) -> list[str]:
@@ -346,6 +370,7 @@ class ProgramRunner:
                 log.error(f"step {step['id']} failed to advance: {exc}", exc_info=True)
         self._promote(program)
         self._dispatch(program)
+        self._end_check(program)
         changed = self._fingerprint(program_id) != before
         if changed:
             self.service.changed(program_id, verb="step")
@@ -356,7 +381,83 @@ class ProgramRunner:
             (step["id"], step["state"], step.get("held_reason"), step.get("pr_number"), step.get("check_verdict"),
              step.get("review_verdict"), len(step.get("findings") or []), step.get("rounds"))
             for step in self.service.store.list_steps(program_id)
-        )
+        ) + tuple((row["id"], row["state"], row.get("judged_commit"))
+                  for row in self.service.store.list_requirements(program_id))
+
+    # ── PG-REQ §6: the end check ─────────────────────────────────────
+
+    def _end_check(self, program: Mapping[str, Any]) -> None:
+        """Every step is finished: the Program's own check and shot
+        requirements are judged once, in one scratch worktree at the base
+        branch head (``hs-program-<id>-end``). His word and Review ones are
+        his rows (``requirement_items``)."""
+        from .program_service import program_own, steps_finished
+
+        fresh = self.service.store.get_program(program["id"]) or program
+        if fresh.get("closed_at") or fresh.get("state") in ("drafting", "parked"):
+            return
+        if not steps_finished(fresh, self.service.store.list_steps(fresh["id"])):
+            return
+        runs = [row for row in program_own(self.service.requirements(fresh["id"]))
+                if row.get("kind") in ("check", "shot") and row.get("state") == "not_yet"]
+        key = f"{fresh['id']}-end"
+        if not runs or (key in _RUNNING_CHECKS and _RUNNING_CHECKS[key].is_alive()):
+            return
+        self.service._checkpoint(fresh, None, "engine", "The end check runs on " + str(fresh.get("base_branch") or "main"))
+        if self._async:
+            thread = threading.Thread(target=self._run_end_check, args=(fresh["id"],), daemon=True,
+                                      name=f"program-end-{fresh['id']}")
+            _RUNNING_CHECKS[key] = thread
+            thread.start()
+        else:
+            self._run_end_check(fresh["id"])
+
+    def end_worktree(self, program: Mapping[str, Any]) -> str:
+        """The scratch worktree at the base branch head (``origin/<base>``
+        when the repository has it)."""
+        root = str(program.get("repo_root") or "")
+        base = str(program.get("base_branch") or "main")
+        path = Path(root).parent / f"hs-program-{program['id']}-end"
+        self._git(root, "fetch", "-q", "origin", base)
+        ref = f"origin/{base}" if self._git(root, "rev-parse", "--verify", "--quiet", f"origin/{base}") else base
+        if path.is_dir():
+            self._git(str(path), "checkout", "-q", "--detach", ref)
+        else:
+            self._git(root, "worktree", "add", "-q", "--detach", str(path), ref)
+        return str(path) if path.is_dir() else ""
+
+    def _run_end_check(self, program_id: str) -> None:
+        from .program_service import program_own
+
+        key = f"{program_id}-end"
+        try:
+            with _CHECK_LOCK:
+                program = self.service.store.get_program(program_id)
+                if program is None:
+                    return
+                tree = self.end_worktree(program)
+                for row in program_own(self.service.requirements(program_id)):
+                    if row.get("kind") not in ("check", "shot") or row.get("state") != "not_yet":
+                        continue
+                    if not tree:
+                        self.service.judge(program, None, row, "unmet", {
+                            "kind": "log", "ref": None, "line": "the base branch could not be checked out",
+                            "commit": None})
+                        continue
+                    result = self.run_requirement(program, {"id": key}, row, worktree=tree, key=key)
+                    verdict = verify_requirement_log(result.get("log"), expect=(row.get("spec") or {}).get("expect"))
+                    met = bool(verdict["met"]) and (row.get("kind") != "shot" or bool(result.get("image")))
+                    reasons = verdict["reasons"] or ([] if met else ["the shot wrote no image"])
+                    self.service.judge(program, None, row, "met" if met else "unmet", {
+                        "kind": "shot" if row.get("kind") == "shot" and result.get("image") else "log",
+                        "ref": result.get("image") if row.get("kind") == "shot" and result.get("image") else result.get("log"),
+                        "log": result.get("log"), "line": verdict.get("line") if met else "; ".join(reasons[:2]),
+                        "commit": verdict.get("commit") or result.get("commit"), "command": result.get("command"),
+                        "end_check": True})
+        finally:
+            _RUNNING_CHECKS.pop(key, None)
+        if self._async:
+            self.tick_program(program_id)
 
     # ── 1. dispatch ──────────────────────────────────────────────────
 
@@ -796,6 +897,8 @@ class ProgramRunner:
         turn = str(flight.get("turn_id") or "")
         if turn and turn == facts.get("last_turn"):
             return  # the turn the engine already read (it prompted after it)
+        if self._amend_at_turn_end(program, step, facts, turn):
+            return
         head = self._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
         facts["last_turn"] = turn or None
         facts["turns"] = int(facts.get("turns") or 0) + 1
@@ -821,6 +924,33 @@ class ProgramRunner:
         except Exception as exc:
             log.info(f"commit nudge not typed: {exc}")
 
+    def _amend_at_turn_end(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any], turn: str) -> bool:
+        """PG-REQ §6: his amendments are typed at the turn boundary, never
+        into a blocked agent. True when this turn end typed them (the step
+        works on; the next turn end is read as usual)."""
+        pending = [item for item in facts.get("amendments") or [] if not item.get("sent_at")]
+        if not pending:
+            return False
+        lines = [f"{'The owner' if item.get('by') == 'owner' else 'The orchestrator'} on step {step['ordinal']}: {item['line']}"
+                 for item in pending]
+        try:
+            self.prompt_builder(step, "\n".join(lines) + "\nTake it into the step, commit on this branch, and end your turn.")
+        except Exception as exc:
+            log.info(f"amendment not typed: {exc}")
+            return False
+        now = self.service._clock()
+        for item in pending:
+            item["sent_at"] = now
+        facts["last_turn"] = turn or None
+        line = f"Typed {len(pending)} amendment{'s' if len(pending) != 1 else ''} at the turn boundary"
+        if step["state"] != "working":
+            self.service.transition(program, step, "working", facts=facts, line=line)
+        else:
+            step["facts"] = facts
+            self.service.save_step(step)
+            self.service._checkpoint(program, step, "engine", line)
+        return True
+
     # ── 3. the check ─────────────────────────────────────────────────
 
     def _check(self, program: dict[str, Any], step: dict[str, Any]) -> None:
@@ -836,23 +966,36 @@ class ProgramRunner:
                 self._after_check(program, step)
                 return
         check = dict(facts.get("check") or {})
-        if not step.get("gate_check") or not program.get("check_command"):
+        gate = bool(step.get("gate_check") and program.get("check_command"))
+        runs = self._requirement_runs(program, step)
+        if not gate and not runs:
             step["check_verdict"] = "none"
             step["checked_commit"] = step.get("head_commit")
             self.service.save_step(step)
             self._after_check(program, step)
             return
-        if check.get("commit") == step.get("head_commit") and check.get("finished"):
-            self._verdict(program, step, check)
-            return
         if step["id"] in _RUNNING_CHECKS and _RUNNING_CHECKS[step["id"]].is_alive():
             return
-        check = {"commit": step.get("head_commit"), "running": True, "finished": False,
-                 "command": program["check_command"], "started": time.time()}
+        if check.get("commit") == step.get("head_commit") and check.get("finished"):
+            gate_red = check.get("gate", True) and not verify_log(
+                check.get("log"), required=self._required_sections(program))["green"]
+            missing = [row for row in runs if ((check.get("requirements") or {}).get(row["id"]) or {}).get("commit")
+                       != step.get("head_commit")]
+            if gate_red or not missing:
+                self._verdict(program, step, check)
+                return
+            # PG-REQ: a requirement with no result on this commit (one added
+            # after the check ran): run only the requirements, same commit.
+            check.update({"running": True, "finished": False, "started": time.time()})
+            line = "Judging " + ", ".join(f"R{row['ordinal']}" for row in missing) + " on the same commit"
+        else:
+            check = {"commit": step.get("head_commit"), "running": True, "finished": False, "gate": gate,
+                     "command": program["check_command"] if gate else None, "started": time.time(), "requirements": {}}
+            line = f"Running the check: {program['check_command']}" if gate else "Judging the requirements on the commit"
         facts["check"] = check
         step["facts"] = facts
         self.service.save_step(step)
-        self.service._checkpoint(program, step, "engine", f"Running the check: {program['check_command']}")
+        self.service._checkpoint(program, step, "engine", line)
         if self._async:
             thread = threading.Thread(target=self._run_check_thread, args=(program["id"], step["id"]),
                                       daemon=True, name=f"program-check-{step['id']}")
@@ -869,11 +1012,23 @@ class ProgramRunner:
             step = self.service.store.get_step(step_id)
             if program is None or step is None:
                 return
-            path, rc = self.run_check(program, step)
+            check = dict((step.get("facts") or {}).get("check") or {})
+            path, rc = check.get("log"), check.get("exit")
+            if check.get("gate", True) and not path:
+                path, rc = self.run_check(program, step)
+            green = not check.get("gate", True) or verify_log(path, required=self._required_sections(program))["green"]
+            results = dict(check.get("requirements") or {})
+            if green:
+                # PG-REQ §5: the check and shot requirements, after a green
+                # check, on the same commit, through the same lock.
+                for row in self._requirement_runs(program, step):
+                    if (results.get(row["id"]) or {}).get("commit") == step.get("head_commit"):
+                        continue
+                    results[row["id"]] = self.run_requirement(program, step, row)
             step = self.service.store.get_step(step_id) or step
             facts = dict(step.get("facts") or {})
             check = dict(facts.get("check") or {})
-            check.update({"running": False, "finished": True, "log": path, "exit": rc,
+            check.update({"running": False, "finished": True, "log": path, "exit": rc, "requirements": results,
                           "minutes": round((time.time() - float(check.get("started") or time.time())) / 60, 1)})
             facts["check"] = check
             step["facts"] = facts
@@ -893,18 +1048,43 @@ class ProgramRunner:
 
     def run_check(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> tuple[Optional[str], Optional[int]]:
         """Run the gate in the step's worktree to its log; ``(log path, rc)``."""
-        worktree = str(step.get("worktree") or "")
+        return self.run_logged(str(step.get("worktree") or ""), str(step["id"]), str(program.get("check_command") or ""))
+
+    def run_requirement(self, program: Mapping[str, Any], step: Mapping[str, Any], row: Mapping[str, Any],
+                        *, worktree: Optional[str] = None, key: Optional[str] = None) -> dict[str, Any]:
+        """PG-REQ §4: one check or shot requirement in the worktree, to
+        ``.tmp/program-check/<step>/<ts>-R<n>.log`` with the engine's header
+        and footer; ``{log, exit, commit, image?}``."""
+        from .program_requirements import repository_config, shot_command, shot_image
+
+        tree = worktree or str(step.get("worktree") or "")
+        spec = row.get("spec") or {}
+        config = repository_config(program.get("repo_root"))
+        command = str(spec.get("command") or "") if row.get("kind") == "check" else shot_command(config, spec)
+        path, rc = self.run_logged(tree, key or str(step["id"]), command, suffix=f"-R{row['ordinal']}")
+        out: dict[str, Any] = {"log": path, "exit": rc, "commit": self._git(tree, "rev-parse", "HEAD") or None,
+                               "command": command}
+        if row.get("kind") == "shot":
+            out["image"] = shot_image(tree, config, spec)
+        return out
+
+    def run_logged(self, worktree: str, key: str, command: str, *, suffix: str = "") -> tuple[Optional[str], Optional[int]]:
+        """A command in a worktree to its log, under the engine's header and
+        footer (the verifier's receipt); ``(log path, rc)``."""
         if not worktree or not Path(worktree).is_dir():
             return None, None
         from ..timestamps import utc_now
 
         stamp = utc_now().strftime("%Y%m%dT%H%M%SZ")
-        folder = Path(worktree) / ".tmp" / "program-check" / str(step["id"])
+        folder = Path(worktree) / ".tmp" / "program-check" / str(key)
         folder.mkdir(parents=True, exist_ok=True)
-        log_path = folder / f"{stamp}.log"
+        log_path = folder / f"{stamp}{suffix}.log"
+        n = 1
+        while log_path.exists():  # two runs in one second keep both logs
+            n += 1
+            log_path = folder / f"{stamp}-{n}{suffix}.log"
         commit = self._git(worktree, "rev-parse", "HEAD")
         dirty = self._git(worktree, "status", "--porcelain", "--untracked-files=no")
-        command = str(program.get("check_command") or "")
         scratch = tempfile.mkdtemp(prefix="hs-program-check-")
         real_home = os.environ.get("HOME_REAL") or os.path.expanduser("~")
         env = {**os.environ, "HOME": scratch, "HOME_REAL": real_home,
@@ -939,7 +1119,116 @@ class ProgramRunner:
         _command, sections = self.service._check_command(str(program.get("repo_root") or ""), program.get("check_command"))
         return sections
 
+    def _requirement_runs(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[dict[str, Any]]:
+        """The step's check and shot requirements HoldSpeak runs at CHECK."""
+        return [row for row in self.service.step_requirements(program, step)
+                if row.get("kind") in ("check", "shot") and row.get("state") != "waived"]
+
+    def _judge_runs(self, program: dict[str, Any], step: dict[str, Any], check: Mapping[str, Any]) -> list[dict[str, Any]]:
+        """PG-REQ §5: each check and shot requirement's log through the
+        verifier's requirement form (a shot also needs its image). The
+        required ones that are red."""
+        from .program_requirements import label
+
+        results = check.get("requirements") or {}
+        head = step.get("head_commit")
+        red = []
+        for row in self._requirement_runs(program, step):
+            result = results.get(row["id"]) or {}
+            if result.get("commit") != head:
+                continue
+            verdict = verify_requirement_log(result.get("log"), expect=(row.get("spec") or {}).get("expect"))
+            met = bool(verdict["met"])
+            reasons = list(verdict["reasons"])
+            if row.get("kind") == "shot" and met and not result.get("image"):
+                met, reasons = False, ["the shot wrote no image"]
+            state = "met" if met else "unmet"
+            evidence = {"kind": "shot" if row.get("kind") == "shot" else "log",
+                        "ref": result.get("image") if row.get("kind") == "shot" and result.get("image") else result.get("log"),
+                        "log": result.get("log"), "line": verdict.get("line") if met else "; ".join(reasons[:2]),
+                        "commit": verdict.get("commit") or head, "command": result.get("command")}
+            if row.get("kind") == "shot":
+                spec = row.get("spec") or {}
+                evidence.update({"case": spec.get("case"), "width": spec.get("width")})
+            same = (row.get("state") == state and row.get("judged_commit") == evidence["commit"]
+                    and (row.get("evidence") or {}).get("log") == result.get("log"))
+            if not same:
+                self.service.judge(program, step, row, state, evidence)
+            if state == "unmet" and row.get("required"):
+                red.append({**row, "reasons": reasons, "log": result.get("log"), "label": label(row["ordinal"])})
+        return red
+
+    def _requirement_red(self, program: dict[str, Any], step: dict[str, Any], red: list[dict[str, Any]]) -> None:
+        """A red requirement is a red check round (PG-REQ §6): its log tail
+        goes back to the builder; after the rounds it is left."""
+        facts = dict(step.get("facts") or {})
+        done_rounds = int(step.get("rounds") or 0) + 1
+        step["rounds"] = done_rounds
+        names = ", ".join(row["label"] for row in red)
+        outcome = decide(program.get("control"), "requirement_red",
+                         {"round": done_rounds, "replanned": bool(facts.get("replanned"))})
+        if outcome.to_owner or outcome.choice == "park":
+            self._requirement_left(program, step, red, outcome)
+            return
+        first = red[0]
+        tail = log_tail(first.get("log"), 40)
+        why = "; ".join(first.get("reasons") or [])[:300]
+        if outcome.choice == "replan":
+            facts["replanned"] = True
+            step["facts"], step["rounds"] = facts, 0
+            self.service.transition(program, step, "check_failed", line="")
+            self.service.engine_decision(program, step, "requirement_left", outcome,
+                                         f"Re-planned step {step['ordinal']} with a smaller brief for {names}")
+            text = (f"HoldSpeak on step {step['ordinal']}: {names} stayed red ({why}). Re-plan: make the smallest change "
+                    f"that meets {first['label']} · {first['text']}, and leave the rest for a later step. The log is "
+                    f"{first.get('log')}. Its last lines:\n{tail}\nCommit on this branch and end your turn.")
+        else:
+            step["facts"] = facts
+            self.service.transition(program, step, "check_failed", line="")
+            self.service.engine_decision(program, step, "requirement_red", outcome,
+                                         f"{names} red on step {step['ordinal']}, round {done_rounds}; sent the log back")
+            text = (f"HoldSpeak on step {step['ordinal']}: {first['label']} is red: {first['text']} ({why}). The log is "
+                    f"{first.get('log')}. Its last lines:\n{tail}\nFix it, commit on this branch, and end your turn.")
+        try:
+            self.prompt_builder(step, text)
+        except Exception as exc:
+            log.info(f"requirement log tail not typed: {exc}")
+
+    def _requirement_left(self, program: dict[str, Any], step: dict[str, Any], rows: list[Mapping[str, Any]],
+                          outcome: Any) -> None:
+        """Still unmet after the rounds (§6, decision 3): Secure asks him;
+        Normal parks the step and goes on with one row to him (Waive / Send
+        back); YOLO tried one smaller brief first."""
+        facts = dict(step.get("facts") or {})
+        names = ", ".join(f"R{row['ordinal']}" for row in rows)
+        rounds = int(step.get("rounds") or 0)
+        reason = f"{names} {'is' if len(rows) == 1 else 'are'} unmet after {rounds} round{'s' if rounds != 1 else ''}"
+        facts["requirements_left"] = [row["id"] for row in rows]
+        facts["park_is_his"] = True
+        self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, parked_reason=reason, facts=facts,
+                                line=f"Parked: {reason}" if outcome.to_owner else "")
+        if not outcome.to_owner:
+            self.service.engine_decision(program, step, "requirement_left", outcome,
+                                         f"Parked step {step['ordinal']} and carried on: {reason}")
+        self.service.reach_phone(
+            program, step, "step_red",
+            f"{program['title']}, step {step['ordinal']}: {reason}. It waits for you on the desk.",
+            reason=f"{program['title']}, step {step['ordinal']} has a requirement left",
+        )
+
     def _verdict(self, program: dict[str, Any], step: dict[str, Any], check: dict[str, Any]) -> None:
+        if not check.get("gate", True):
+            # PG-REQ: no gate command; only the requirements ran.
+            facts = dict(step.get("facts") or {})
+            facts["check"] = {**check, "verified": True}
+            step["facts"], step["check_verdict"], step["checked_commit"] = facts, "none", step.get("head_commit")
+            self.service.save_step(step)
+            red = self._judge_runs(program, step, check)
+            if red:
+                self._requirement_red(program, step, red)
+                return
+            self._after_check(program, step)
+            return
         result = verify_log(check.get("log"), required=self._required_sections(program))
         facts = dict(step.get("facts") or {})
         facts["check"] = {**check, "sections": result["sections"], "reasons": result["reasons"], "verified": True}
@@ -952,6 +1241,10 @@ class ProgramRunner:
         if result["green"]:
             self.service.save_step(step)
             self.service._checkpoint(program, step, "engine", f"Checked · green{took} · {check.get('log')}")
+            red = self._judge_runs(program, step, check)
+            if red:
+                self._requirement_red(program, step, red)
+                return
             self._after_check(program, step)
             return
         why = "; ".join(result["reasons"][:3])
@@ -1057,13 +1350,21 @@ class ProgramRunner:
                 self.raise_core(program, step, "diff", reason)
                 return
         review = step.get("gate_review") or "none"
-        if review == "agent" and step.get("review_verdict") != "pass":
-            self._attach_review(program, step)
-            return
-        if review == "agent" and step.get("review_verdict") == "pass" and (step.get("facts") or {}).get("reviewed_commit") not in (None, step.get("checked_commit")):
-            self._attach_review(program, step)
-            return
+        # PG-REQ: a Review requirement brings the reviewer the step's Program
+        # pairs it with, and one still to judge asks it again.
+        pending = [row for row in self._review_requirements(program, step)
+                   if row.get("required") and row.get("state") != "met"]
+        if review == "agent" or pending:
+            reviewed = (step.get("facts") or {}).get("reviewed_commit")
+            if (step.get("review_verdict") != "pass" or reviewed not in (None, step.get("checked_commit"))
+                    or (pending and (reviewed is None or any(row.get("judged_commit") != reviewed for row in pending)))):
+                self._attach_review(program, step)
+                return
         self.pass_gate(program, step)
+
+    def _review_requirements(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[dict[str, Any]]:
+        return [row for row in self.service.step_requirements(program, step)
+                if row.get("kind") == "review" and row.get("state") != "waived"]
 
     def _reviewer(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> tuple[str, Optional[str]]:
         from .program_service import DEFAULT_REVIEWER
@@ -1085,7 +1386,7 @@ class ProgramRunner:
             "builder": agent_label(self._profile_of(program, step)),
             "item": {"kind": "program_step", "id": step["id"], "title": step["title"]},
             "acceptance": [f"Review depth: {depth}.", *(step.get("owns") and [f"The step owns: {', '.join(step['owns'])}"] or []),
-                           "Name each finding MUST (required) or SHOULD."],
+                           "Name each finding MUST (required) or SHOULD.", *self._requirement_acceptance(program, step)],
             **({"engine": engine} if engine else {}),
         })
         try:
@@ -1096,9 +1397,18 @@ class ProgramRunner:
                                     line=f"The reviewer could not be set up: {exc}")
             return
         facts = dict(step.get("facts") or {})
-        facts.update({"reviewer_profile": profile, "review_round": 0, "reviewed_commit": None})
+        facts.update({"reviewer_profile": profile, "review_round": 0, "reviewed_commit": None, "req_reask": None,
+                      "req_reask_done": False, "req_answers": {}})
         self.service.transition(program, step, "review", facts=facts, review_verdict=None,
                                 line=f"{agent_label(profile)} reviews at depth {depth}")
+
+    def _requirement_acceptance(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[str]:
+        """PG-REQ §5: the review requirements, each by its id, and how to answer."""
+        rows = self._review_requirements(program, step)
+        if not rows:
+            return []
+        return ["Answer each of the owner's requirements on its own line: REQ R3: MET · <one line> "
+                "or REQ R3: UNMET · <what is missing>.", *(f"R{row['ordinal']} · {row['text']}" for row in rows)]
 
     def _review_pair(self, step: Mapping[str, Any]) -> Optional[dict[str, Any]]:
         if not step.get("launch_id"):
@@ -1119,6 +1429,19 @@ class ProgramRunner:
             return
         status = str(pair.get("status") or "")
         round_ = int(pair.get("round") or 0)
+        reask = facts.get("req_reask") if isinstance(facts.get("req_reask"), Mapping) else None
+        if reask and status in ("done", "needs_you"):
+            flight = self.flight(str(reask.get("launch") or ""))
+            if str(flight.get("state") or "") not in _TURN_END or str(flight.get("turn_id") or "") == str(reask.get("turn") or ""):
+                return  # the reviewer has not answered the second ask yet
+            from .program_requirements import parse_review
+
+            answers = {str(k): v for k, v in parse_review(self.review_words(str(reask["launch"]))).items()}
+            facts["req_answers"] = {**dict(facts.get("req_answers") or {}), **answers}
+            facts["req_reask"] = None
+            facts["req_reask_done"] = True
+            step["facts"] = facts
+            self.service.save_step(step)
         facts["review_round"] = round_
         if status == "reviewing" and step["state"] != "review":
             step["facts"] = facts
@@ -1126,9 +1449,13 @@ class ProgramRunner:
             return
         if status == "awaiting_builder_commit" and round_ >= 1:
             if step["state"] != "findings":
+                latest = next((row for row in reversed(pair.get("rounds") or []) if isinstance(row, Mapping)), {})
+                self._judge_review_answers(program, step, str(latest.get("result") or ""), facts, round_,
+                                           str(pair.get("last_builder_commit") or "") or None)
                 left = (pair.get("result") or {}).get("findings_left") or []
                 findings = [{"id": f"r{round_}f{i}", "level": "REQUIRED", "text": str(item.get("text") or ""),
                              "decision": "fix", "to_owner": False} for i, item in enumerate(left, start=1)]
+                self._requirement_findings(program, step, left, findings, round_, str(pair.get("last_builder_commit") or ""))
                 facts["findings_open"] = False
                 self.service.transition(program, step, "findings", findings=findings, facts=facts,
                                         line="")
@@ -1141,6 +1468,28 @@ class ProgramRunner:
             return
         last = next((row for row in reversed(pair.get("rounds") or []) if isinstance(row, Mapping)), {})
         words = str(last.get("result") or "")
+        reviewed_at = str(pair.get("last_builder_commit") or "") or None
+        unanswered = self._judge_review_answers(program, step, words, facts, round_, reviewed_at)
+        if unanswered and status == "done":
+            outcome = decide(program.get("control"), "requirement_unanswered", {"asked": bool(facts.get("req_reask_done"))})
+            reviewer = str(last.get("reviewer_launch_id") or "")
+            if not outcome.to_owner and reviewer:
+                names = ", ".join(f"R{row['ordinal']}" for row in unanswered)
+                ask = ("HoldSpeak: you gave no answer for " + names + ". Answer each on its own line: REQ R3: MET · "
+                       "<one line> or REQ R3: UNMET · <what is missing>.\n"
+                       + "\n".join(f"R{row['ordinal']} · {row['text']}" for row in unanswered))
+                try:
+                    self.prompt_launch(reviewer, ask)
+                except Exception as exc:
+                    log.info(f"the reviewer was not asked again: {exc}")
+                else:
+                    facts["req_reask"] = {"launch": reviewer, "turn": str(self.flight(reviewer).get("turn_id") or ""),
+                                          "round": round_, "ids": [row["id"] for row in unanswered]}
+                    step["facts"] = facts
+                    self.service.save_step(step)
+                    self.service.engine_decision(program, step, "requirement_unanswered", outcome,
+                                                 f"Asked the reviewer once more for {names}")
+                    return
         should = [item for item in last.get("findings") or [] if str(item.get("level")) == "SHOULD"]
         notes = [{"level": "NOTE", "text": m.group(1).strip()}
                  for m in re.finditer(r"^\s*(?:[-*]\s*)?NOTE\s*[:\-]\s*(.+)$", words, re.M | re.I)]
@@ -1168,6 +1517,11 @@ class ProgramRunner:
             core = bool(is_core({"finding_text": text}))
             findings.append({"id": f"f{index}", "level": "REQUIRED", "text": text, "decision": None,
                              "to_owner": True, "core": core})
+        self._requirement_findings(program, step, must, findings, round_, reviewed_at or "", judge=False)
+        for index, row in enumerate(unanswered or [], start=1):
+            # No answer after the second ask (or at Secure): his (Waive / Send back).
+            findings.append({"id": f"q{index}", "level": "REQUIRED", "text": f"R{row['ordinal']}: the reviewer gave no answer",
+                             "decision": None, "to_owner": True, "core": False, "requirement_id": row["id"]})
         for index, item in enumerate(should, start=1):
             findings.append({"id": f"s{index}", "level": "SHOULD", "text": str(item.get("text") or ""), "decision": None})
         for index, item in enumerate(notes, start=1):
@@ -1202,13 +1556,62 @@ class ProgramRunner:
         self.service._checkpoint(program, step, "engine", f"Review passed (round {round_})")
         self.pass_gate(program, step)
 
+    def _requirement_findings(self, program: dict[str, Any], step: dict[str, Any], items: list[Mapping[str, Any]],
+                              findings: list[dict[str, Any]], round_: int, commit: str, *, judge: bool = True) -> None:
+        """PG-REQ §6: a reviewer's UNMET (a MUST the review loop carries with
+        ``requirement``) is a REQUIRED finding with ``requirement_id``; the
+        requirement is Unmet with the reviewer's line."""
+        by_label = {f"R{row['ordinal']}": row for row in self._review_requirements(program, step)}
+        who = agent_label((step.get("facts") or {}).get("reviewer_profile"))
+        for item, finding in zip(items, [f for f in findings if f["level"] == "REQUIRED"]):
+            row = by_label.get(str(item.get("requirement") or ""))
+            if row is None:
+                continue
+            finding["requirement_id"] = row["id"]
+            if judge and not (row.get("state") == "unmet" and (row.get("evidence") or {}).get("ref") == f"round {round_}"):
+                self.service.judge(program, step, row, "unmet", {
+                    "kind": "finding", "ref": f"round {round_}", "line": str(item.get("text") or ""), "by": who,
+                    "round": round_, "commit": commit or step.get("head_commit")})
+
+    def _judge_review_answers(self, program: dict[str, Any], step: dict[str, Any], words: str, facts: Mapping[str, Any],
+                              round_: int, commit: Optional[str]) -> list[dict[str, Any]]:
+        """The reviewer's REQ lines (and its answers to the second ask): MET
+        is Met with its line, UNMET is Unmet. The ones with no answer."""
+        from .program_requirements import parse_review
+
+        rows = self._review_requirements(program, step)
+        if not rows:
+            return []
+        answers = {str(k): v for k, v in parse_review(words).items()}
+        answers.update({str(k): v for k, v in dict(facts.get("req_answers") or {}).items()})
+        who = agent_label(facts.get("reviewer_profile"))
+        missing = []
+        for row in rows:
+            answer = answers.get(str(row["ordinal"]))
+            if answer is None:
+                if not (row.get("state") == "met" and row.get("judged_commit") == commit):
+                    missing.append(row)
+                continue
+            state = "met" if answer["answer"] == "MET" else "unmet"
+            if row.get("state") == state and row.get("judged_commit") == commit and (row.get("evidence") or {}).get("ref") == f"round {round_}":
+                continue
+            self.service.judge(program, step, row, state, {
+                "kind": "finding", "ref": f"round {round_}", "line": answer["line"] or answer["raw"], "by": who,
+                "round": round_, "commit": commit or step.get("head_commit")})
+        return missing
+
     def pass_gate(self, program: dict[str, Any], step: dict[str, Any], *, by: str = "engine") -> None:
         """The check is green and the review passed: win the race, then the
-        PR (or Done for a step with no PR gate)."""
+        PR (or Done for a step with no PR gate). PG-REQ: a step whose PR is
+        open already (a requirement judged on its head, a send back) goes
+        back to its PR."""
         if not self._win_race(program, step):
             return
         if step.get("gate_merge") == "none":
             self.service.transition(program, step, "done", line="Done (this step has no PR)")
+            return
+        if step.get("pr_url"):
+            self.service.transition(program, step, "pr_open", line=f"PR #{step.get('pr_number')} has the judged commit")
             return
         self.open_pr(program, step)
 
@@ -1342,9 +1745,13 @@ class ProgramRunner:
             return
         if ci not in ("passing", "none"):
             return
+        met = self.service.requirements_met(program, step)
+        if not met:
+            return  # PG-REQ decision 1: a requirement holds the merge at every level (his rows say which)
         outcome = decide(program.get("control"), "merge", {
             "check_green": step.get("check_verdict") in ("green", "none"),
             "review_pass": step.get("gate_review") != "agent" or step.get("review_verdict") == "pass",
+            "requirements_met": met,
         })
         if not outcome.to_owner and step.get("gate_merge") != "owner":
             try:

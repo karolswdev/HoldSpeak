@@ -1,6 +1,7 @@
-"""The Programs store (2026-10-28): three tables, static SQL only.
+"""The Programs store (2026-10-28): four tables, static SQL only.
 
-``programs``, ``program_steps`` and ``program_checkpoints``
+``programs``, ``program_steps``, ``program_checkpoints`` and (PG-REQ,
+2026-10-31) ``program_requirements``
 (``holdspeak/db/schema.py``). Every write is a whole-row write of a known
 column set, so each statement prepares against the schema
 (``tests/unit/test_static_sql_matches_schema.py``). The rules of the states
@@ -14,6 +15,8 @@ from typing import Any, Mapping, Optional
 PROGRAM_COLUMNS = ('id', 'title', 'goal_markdown', 'project_id', 'repo_root', 'base_branch', 'control', 'spend_limit_usd', 'check_command', 'reviewer_profile', 'reviewer_engine', 'default_profile', 'default_engine', 'prefer_idle', 'template', 'origin_ref', 'for_person_id', 'created_by', 'state', 'note_id', 'closed_at', 'revision', 'created_at', 'updated_at', 'default_runs_on_json', 'allowed_profiles_json', 'may_handoff', 'usage_warning_share', 'may_call')
 
 STEP_COLUMNS = ('id', 'program_id', 'ordinal', 'title', 'brief_markdown', 'owns_json', 'after_json', 'profile', 'engine', 'prefer_idle', 'effort', 'race', 'race_of', 'gate_check', 'gate_review', 'review_depth', 'gate_merge', 'state', 'held_reason', 'launch_id', 'worktree', 'branch', 'head_commit', 'checked_commit', 'pr_url', 'pr_number', 'check_log', 'check_verdict', 'facts_json', 'review_verdict', 'findings_json', 'report', 'rounds', 'parked_reason', 'parked_by', 'origin_ref', 'for_person_id', 'started_at', 'ended_at', 'updated_at', 'runs_on_json', 'handoffs_json', 'may_call')
+
+REQUIREMENT_COLUMNS = ('id', 'program_id', 'step_id', 'ordinal', 'text', 'kind', 'required', 'spec_json', 'each_step', 'parent_id', 'state', 'judged_commit', 'evidence_json', 'waived_reason', 'rounds', 'by_kind', 'created_at', 'updated_at', 'judged_at')
 
 #: The JSON columns and their wire keys.
 _JSON_FIELDS = {"owns_json": "owns", "after_json": "after", "findings_json": "findings", "facts_json": "facts",
@@ -70,6 +73,36 @@ _STEP_UPSERT = (
     "ended_at=excluded.ended_at, updated_at=excluded.updated_at, runs_on_json=excluded.runs_on_json, "
     "handoffs_json=excluded.handoffs_json, may_call=excluded.may_call"
 )
+
+
+_REQUIREMENT_UPSERT = (
+    "INSERT INTO program_requirements (id, program_id, step_id, ordinal, text, kind, required, spec_json, "
+    "each_step, parent_id, state, judged_commit, evidence_json, waived_reason, rounds, by_kind, created_at, "
+    "updated_at, judged_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE "
+    "SET step_id=excluded.step_id, ordinal=excluded.ordinal, text=excluded.text, kind=excluded.kind, "
+    "required=excluded.required, spec_json=excluded.spec_json, each_step=excluded.each_step, "
+    "parent_id=excluded.parent_id, state=excluded.state, judged_commit=excluded.judged_commit, "
+    "evidence_json=excluded.evidence_json, waived_reason=excluded.waived_reason, rounds=excluded.rounds, "
+    "by_kind=excluded.by_kind, updated_at=excluded.updated_at, judged_at=excluded.judged_at"
+)
+
+
+def _requirement(row: Any) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key in REQUIREMENT_COLUMNS:
+        value = row[key]
+        if key in ("spec_json", "evidence_json"):
+            try:
+                value = json.loads(value or "{}")
+            except ValueError:
+                value = {}
+            out[key[:-5]] = value if isinstance(value, dict) else {}
+            continue
+        out[key] = value
+    out["required"] = bool(out["required"])
+    out["each_step"] = bool(out["each_step"])
+    out["by"] = out.pop("by_kind")
+    return out
 
 
 def _program(row: Any) -> dict[str, Any]:
@@ -196,6 +229,13 @@ class ProgramStore:
             )
             return int(cursor.lastrowid or 0)
 
+    def decide_checkpoint(self, checkpoint_id: int, choice: str, undo: Mapping[str, Any]) -> None:
+        """PG-REQ: his answer on a proposal row (a requirement, a step change,
+        an amendment an agent proposed): its choice and its payload."""
+        with self._db._connection() as conn:
+            conn.execute("UPDATE program_checkpoints SET choice=?, undo_json=? WHERE id=?",
+                         (choice, json.dumps(dict(undo or {})), int(checkpoint_id)))
+
     def mark_overturned(self, checkpoint_id: int, at: str) -> None:
         with self._db._connection() as conn:
             conn.execute("UPDATE program_checkpoints SET overturned_at=?, overturnable=0 WHERE id=?",
@@ -229,9 +269,46 @@ class ProgramStore:
         return out
 
 
+    # ── requirements (PG-REQ) ────────────────────────────────────────
+
+    def save_requirement(self, requirement: Mapping[str, Any]) -> None:
+        values: list[Any] = []
+        for key in REQUIREMENT_COLUMNS:
+            if key in ("spec_json", "evidence_json"):
+                values.append(json.dumps(dict(requirement.get(key[:-5]) or {})))
+            elif key in ("required", "each_step"):
+                values.append(1 if requirement.get(key) else 0)
+            elif key == "by_kind":
+                values.append(requirement.get("by") or "owner")
+            else:
+                values.append(requirement.get(key))
+        with self._db._connection() as conn:
+            conn.execute(_REQUIREMENT_UPSERT, values)
+
+    def get_requirement(self, requirement_id: str) -> Optional[dict[str, Any]]:
+        with self._db._connection() as conn:
+            row = conn.execute("SELECT * FROM program_requirements WHERE id=?", (requirement_id,)).fetchone()
+        return _requirement(row) if row is not None else None
+
+    def list_requirements(self, program_id: str) -> list[dict[str, Any]]:
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM program_requirements WHERE program_id=? ORDER BY ordinal, step_id, id", (program_id,),
+            ).fetchall()
+        return [_requirement(row) for row in rows]
+
+    def next_requirement_ordinal(self, program_id: str) -> int:
+        """R n: unique in the Program, never reused (an every-step copy
+        carries its parent's number)."""
+        with self._db._connection() as conn:
+            row = conn.execute("SELECT MAX(ordinal) FROM program_requirements WHERE program_id=?",
+                               (program_id,)).fetchone()
+        return int((row[0] if row else 0) or 0) + 1
+
+
 def _pin_of(undo: Any) -> dict[str, Any]:
     pin = undo.get("pin") if isinstance(undo, dict) else None
     return pin if isinstance(pin, dict) else {}
 
 
-__all__ = ["PROGRAM_COLUMNS", "STEP_COLUMNS", "ProgramStore"]
+__all__ = ["PROGRAM_COLUMNS", "REQUIREMENT_COLUMNS", "STEP_COLUMNS", "ProgramStore"]
