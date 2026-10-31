@@ -1059,3 +1059,41 @@ span.pg-req-thumb { height: 150px; }
     min-height: 44px;
   }
 }
+
+/* LANG10: the round strip over the board and the one question under it
+   (PG-LANG §9.4 direction R-A, §9.6). */
+.pg-rounds {
+  border-bottom: 1px solid var(--wb-rule-soft);
+  padding-bottom: 4px;
+}
+.pg-round-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 10px;
+}
+.pg-round-label {
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-muted);
+}
+.pg-round-tokens {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pg-round-verbs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.pg-round-reading {
+  margin: 4px 12px;
+}
+@container surface (max-width: 560px) {
+  .pg-round-strip { padding: 4px 8px; }
+  .pg-round-verbs { margin-left: 0; width: 100%; }
+  .pg-round-verbs .btn { min-height: 44px; }
+}

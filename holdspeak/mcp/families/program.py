@@ -29,6 +29,10 @@ live in the service, so every transport keeps them:
   its id is in ``allow_lower``.
 - PG-LANG LANG6 (2026-10-31): ``program.plan_draft`` drafts a Program in
   Drafting from its goal, as change rows (``program_planner``).
+- PG-LANG LANG9 (2026-10-31): ``program.round`` runs the interview rounds
+  (``program_rounds``): open, next (one question), answer (the shaped rows
+  wait for Apply), skip_question, done, skip, reopen. An agent's answer is a
+  proposal: only the owner's lands at YOLO.
 - PG-LANG LANG3 (2026-10-31): ``program.shape`` turns one sentence into the
   same change rows through one planning-engine call; it writes nothing,
   except at YOLO with ``apply`` (the allowed rows, one Decided for you row).
@@ -324,6 +328,26 @@ TOOLS: list[dict[str, Any]] = [
          "text": {"type": ["string", "null"], "maxLength": 200000},
          "split": {"type": ["integer", "null"], "description": "With text: the place of the step to split."},
      }, ["program_id"])},
+    {"name": "program.round",
+     "description": "The interview rounds of a Program (PG-LANG §6.2): Architecture, Product, Stack, Verification, "
+                    "Delivery by default. action 'open' makes the rounds (names to choose others); 'next' asks the "
+                    "planning engine for the ONE next question of a round that would change the plan "
+                    "({question: {id, text, why, choices}} or done); 'answer' stores the answer (answer, or one of "
+                    "the choices as choice) and returns the change rows it implies as program.text_apply does "
+                    "(source 'round:<name>'; apply them with program.text_apply); 'skip_question', 'not_this' (the "
+                    "rows were dismissed), 'done' (withheld while a question waits), 'skip' (the round) and "
+                    "'reopen' (ask more). Rounds never gate Start.",
+     "inputSchema": _schema({
+         "program_id": _ID,
+         "action": {"type": "string", "enum": ["open", "next", "answer", "skip_question", "not_this", "done", "skip",
+                                               "reopen"]},
+         "round": {"type": ["string", "null"], "maxLength": 40},
+         "answer": {"type": ["string", "null"], "maxLength": 300},
+         "choice": {"type": ["string", "null"], "maxLength": 80},
+         "question_id": {"type": ["string", "null"]},
+         "names": {"type": ["array", "null"], "items": {"type": "string", "maxLength": 40}, "maxItems": 12},
+         "apply": {"type": ["boolean", "null"], "description": "At YOLO, the owner only: apply the allowed rows."},
+     }, ["program_id", "action"])},
     {"name": "program.checkpoint",
      "description": "Write one line on your step at a meaningful moment. Only the step's own agent (or the owner).",
      "inputSchema": _schema({"step_id": _ID, "line": {"type": "string", "minLength": 1, "maxLength": 400},
@@ -420,6 +444,11 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return service.plan_draft(principal, str(args["program_id"]), goal=args.get("goal"),
                                   template=args.get("template"), budget=args.get("budget"), text=args.get("text"),
                                   split=args.get("split"))
+    if name == "program.round":
+        return service.round(principal, str(args["program_id"]), args.get("action"), round_name=args.get("round"),
+                             answer_text=args.get("answer"), choice=args.get("choice"),
+                             question_id=args.get("question_id"), names=args.get("names"),
+                             apply=args.get("apply") is True)
     if name == "program.shape":
         from holdspeak.services.program_service import ProgramRefused
 

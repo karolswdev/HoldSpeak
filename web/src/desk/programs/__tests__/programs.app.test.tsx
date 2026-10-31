@@ -67,6 +67,11 @@ import shapeFixture from "../__fixtures__/program.shape.json";
 // (tests/fixtures/program_plan_reply.json) replayed through the hub's runner,
 // recorded through the real routes (tests/integration/test_desk_program_plan.py).
 import planFixture from "../__fixtures__/program.plan_draft.json";
+// PG-LANG LANG9/10: J1's interview rounds asked and shaped by the REAL
+// qwen3.8-27b replies (tests/fixtures/program_round_reply.json) replayed
+// through the hub's runner, recorded through the real routes
+// (tests/integration/test_desk_program_rounds.py), in the face's own walk.
+import roundsFixture from "../__fixtures__/program.rounds.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -1837,5 +1842,171 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
     fireEvent.click(within(refusal).getByTestId("program-plan-text"));
     await screen.findByTestId("programs-text");
+  });
+});
+
+describe("LANG10: the interview rounds, one question in place (PROGRAM-LANGUAGE §6.2, §9.4 R-A)", () => {
+  type Pressed = import("../types").RoundPressed;
+  type Asked = import("../types").RoundAsked;
+  type RoundAnswer = import("../types").RoundAnswer;
+  type Applied = import("../types").TextApplyAnswer;
+  const fx = roundsFixture as unknown as {
+    program: Program; engine: unknown; draft: import("../types").PlanAnswer; applied: Applied; opened: Pressed;
+    started: Program; reopened: Pressed; ask_failed: { status: number; body: Record<string, unknown> };
+    steps: {
+      "architecture.next": Asked; "architecture.answer": RoundAnswer; "architecture.next2": Asked; "architecture.apply": Applied;
+      "architecture.skip_question": Pressed; "architecture.done": Pressed; "product.next": Asked; "product.skip": Pressed;
+      "stack.next": Asked;
+    };
+  };
+  const steps = fx.steps;
+  const id = fx.program.id;
+  const posts = (tail: string) => calls.filter((call) => call.startsWith(`POST /api/programs/${id}/${tail} `))
+    .map((call) => JSON.parse(call.slice(call.indexOf("{"))) as Record<string, unknown>);
+  const token = (name: string) => within(screen.getByTestId("program-round-strip")).getByRole("button", { name: new RegExp(`^${name} · `) });
+
+  function walkHub() {
+    let asked = 0;
+    hub({
+      [`GET /api/programs/${id}`]: fx.program,
+      [`GET /api/programs/${id}/shape`]: fx.engine,
+      [`POST /api/programs/${id}/plan/draft`]: fx.draft,
+      [`POST /api/programs/${id}/text`]: (init?: { json?: { text?: string } }) =>
+        (init?.json?.text === fx.draft.allowed_text ? fx.applied : steps["architecture.apply"]),
+      [`POST /api/programs/${id}/rounds`]: fx.opened,
+      [`POST /api/programs/${id}/rounds/Architecture/next`]: () => (asked++ ? steps["architecture.next2"] : steps["architecture.next"]),
+      [`POST /api/programs/${id}/rounds/Architecture/answer`]: (init?: { json?: { skip?: boolean } }) =>
+        (init?.json?.skip ? steps["architecture.skip_question"] : steps["architecture.answer"]),
+      [`POST /api/programs/${id}/rounds/Architecture/decide`]: steps["architecture.done"],
+      [`POST /api/programs/${id}/rounds/Product/next`]: steps["product.next"],
+      [`POST /api/programs/${id}/rounds/Product/decide`]: steps["product.skip"],
+      [`POST /api/programs/${id}/rounds/Stack/next`]: steps["stack.next"],
+    });
+  }
+
+  it("Plan it, then Ask me first: the draft lands, the five rounds open, Architecture asks one question", async () => {
+    walkHub();
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    // No strip before the rounds open; Ask me first sits beside Plan it.
+    expect(screen.queryByTestId("program-round-strip")).toBeNull();
+    expect(screen.getByTestId("program-ask-first").textContent).toBe("Ask me first");
+    fireEvent.click(screen.getByTestId("program-plan-it"));
+    await screen.findByTestId("programs-change-well");
+    fireEvent.click(screen.getByTestId("program-ask-first"));
+    const question = await screen.findByTestId("program-question");
+    // The draft's allowed rows applied first, then the rounds, then one question.
+    expect(posts("text")).toEqual([{ text: fx.draft.allowed_text, base: fx.draft.base, dry_run: false, allow_lower: [] }]);
+    expect(posts("rounds")).toEqual([{}]);
+    expect(posts("rounds/Architecture/next")).toEqual([{}]);
+    const q1 = steps["architecture.next"].question!;
+    expect(within(question).getByText(q1.text)).toHaveClass("kit-question-text");
+    expect(within(question).getByText(q1.why!)).toHaveClass("kit-question-why");
+    expect(within(question).getAllByTestId("kit-question-choice").map((node) => node.textContent)).toEqual(q1.choices);
+    expect(within(question).getByRole("textbox", { name: "Your answer" })).toBeInTheDocument();
+    expect(within(question).getByTestId("kit-question-skip").textContent).toBe("Skip question");
+    // The strip: five tokens, Architecture on and breathing, the others open (hollow).
+    const strip = screen.getByTestId("program-round-strip");
+    expect(within(strip).getAllByRole("button").filter((node) => node.classList.contains("surface-filter-token"))
+      .map((node) => node.getAttribute("aria-label"))).toEqual([
+      "Architecture · asking", "Product · open", "Stack · open", "Verification · open", "Delivery · open"]);
+    expect(token("Architecture")).toHaveAttribute("data-filter-active");
+    expect(token("Architecture").querySelector(".surface-filter-lamp")).toHaveAttribute("data-live");
+    expect(token("Product").querySelector(".surface-filter-lamp")).toHaveAttribute("data-tone", "idle");
+    // Done with Architecture waits while a question waits; Skip round is always there.
+    const done = screen.getByTestId("program-round-done");
+    expect(done.textContent).toBe("Done with Architecture");
+    expect(done).toBeDisabled();
+    expect(done).toHaveAttribute("title", "A question waits");
+    expect(screen.getByTestId("program-round-skip")).not.toBeDisabled();
+    // Steps exist now: Ask me first has done its work.
+    expect(screen.queryByTestId("program-ask-first")).toBeNull();
+  });
+
+  it("an offered answer becomes rows in the well, the question folds, the next one rises; Apply lands step 3", async () => {
+    walkHub();
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    fireEvent.click(screen.getByTestId("program-ask-first"));
+    const question = await screen.findByTestId("program-question");
+    const q1 = steps["architecture.next"].question!;
+    fireEvent.click(within(question).getAllByTestId("kit-question-choice")[0]);
+    const well = await screen.findByTestId("programs-change-well");
+    expect(posts("rounds/Architecture/answer")).toEqual([{ question_id: q1.id, option: q1.choices[0], apply: false }]);
+    const answered = steps["architecture.answer"];
+    expect(within(well).getByText(answered.say, { selector: ".kit-changewell-say" })).toBeInTheDocument();
+    expect(within(well).getAllByTestId("programs-diff-row").map((row) => row.getAttribute("data-row"))).toEqual(
+      answered.changes.map((row) => row.id));
+    // The answered question folds to one line with what it became; the next question rises in.
+    await waitFor(() => expect(posts("rounds/Architecture/next")).toHaveLength(2));
+    const fold = await screen.findByTestId("program-round-fold");
+    expect(fold.textContent).toBe(`?${q1.text}= ${q1.choices[0]}→ step 3 brief`);
+    const q2 = steps["architecture.next2"].question!;
+    await waitFor(() => expect(within(screen.getByTestId("program-question")).getByText(q2.text)).toBeInTheDocument());
+    // Apply: the answer's rows land; step 3 changed on the board.
+    fireEvent.click(within(screen.getByTestId("programs-change-well")).getByTestId("programs-well-apply"));
+    await waitFor(() => expect(posts("text")).toHaveLength(1));
+    expect(posts("text")[0]).toEqual({ text: answered.proposed_text, base: answered.base, dry_run: false, allow_lower: [] });
+    await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+    const drafted = screen.getAllByTestId("programs-draft-step");
+    expect(drafted[2]).toHaveAttribute("data-landed", "changed");
+  });
+
+  it("Skip question, Done with Architecture (it keeps its count), Product asks; Skip round strikes it and Stack asks", async () => {
+    walkHub();
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    fireEvent.click(screen.getByTestId("program-ask-first"));
+    let question = await screen.findByTestId("program-question");
+    fireEvent.click(within(question).getAllByTestId("kit-question-choice")[0]);
+    const q2 = steps["architecture.next2"].question!;
+    await waitFor(() => expect(within(screen.getByTestId("program-question")).getByText(q2.text)).toBeInTheDocument());
+    fireEvent.click(within(screen.getByTestId("programs-change-well")).getByTestId("programs-well-apply"));
+    await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+    // Skip question: nothing waits; Done with Architecture is free, and Next question is there.
+    fireEvent.click(within(screen.getByTestId("program-question")).getByTestId("kit-question-skip"));
+    await waitFor(() => expect(screen.queryByTestId("program-question")).toBeNull());
+    expect(posts("rounds/Architecture/answer")[1]).toEqual({ question_id: q2.id, skip: true });
+    expect(screen.getByTestId("program-round-next").textContent).toBe("Next question");
+    expect(screen.getAllByTestId("program-round-fold").map((node) => node.textContent)).toEqual([
+      expect.stringContaining("→ step 3 brief"), `?${q2.text}Skipped`]);
+    const done = screen.getByTestId("program-round-done");
+    expect(done).not.toBeDisabled();
+    fireEvent.click(done);
+    // The round closes: its token turns ok and keeps "1 change"; Product asks next.
+    question = await screen.findByTestId("program-question");
+    expect(posts("rounds/Architecture/decide")).toEqual([{ choice: "done" }]);
+    expect(posts("rounds/Product/next")).toEqual([{}]);
+    expect(within(question).getByText(steps["product.next"].question!.text)).toBeInTheDocument();
+    expect(token("Architecture").querySelector(".surface-filter-lamp")).toHaveAttribute("data-tone", "ok");
+    expect(within(token("Architecture")).getByText("· 1 change")).toHaveClass("surface-filter-aside");
+    expect(token("Product")).toHaveAttribute("data-filter-active");
+    fireEvent.click(screen.getByTestId("program-round-skip"));
+    await waitFor(() => expect(posts("rounds/Stack/next")).toEqual([{}]));
+    expect(posts("rounds/Product/decide")).toEqual([{ choice: "skip" }]);
+    await waitFor(() => expect(within(screen.getByTestId("program-question")).getByText(steps["stack.next"].question!.text)).toBeInTheDocument());
+    expect(within(token("Product")).getByText("Product")).toHaveClass("surface-filter-struck");
+  });
+
+  it("while it runs, the strip stays; a done round has Ask more; an engine that fails says so", async () => {
+    const started = fx.started;
+    hub({
+      [`GET /api/programs/${id}`]: started,
+      [`GET /api/programs/${id}/shape`]: fx.engine,
+      [`POST /api/programs/${id}/rounds/Architecture/decide`]: fx.reopened,
+      [`POST /api/programs/${id}/rounds/Architecture/next`]: () => { throw new ApiError(fx.ask_failed.status, String(fx.ask_failed.body.detail), fx.ask_failed.body); },
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("program-round-strip");
+    expect(screen.queryByTestId("program-ask-first")).toBeNull();
+    // Nothing waits: no question row; he picks the done round.
+    expect(screen.queryByTestId("program-question")).toBeNull();
+    fireEvent.click(token("Architecture"));
+    const more = await screen.findByTestId("program-round-ask-more");
+    fireEvent.click(more);
+    await waitFor(() => expect(posts("rounds/Architecture/decide")).toEqual([{ choice: "reopen" }]));
+    const failure = await screen.findByTestId("program-round-failure");
+    expect(failure.textContent).toBe(String(fx.ask_failed.body.detail));
+    expect(token("Architecture").querySelector(".surface-filter-lamp")).toHaveAttribute("data-tone", "idle");
   });
 });

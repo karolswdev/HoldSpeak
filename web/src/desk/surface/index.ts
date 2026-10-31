@@ -124,6 +124,7 @@ export { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 // PG-LANG (PROGRAM-LANGUAGE-2026-10-31 §11): the text pane, the change well, the diff row.
 export { TextPane, lineMarks, paintLine, isWordsLine, type TextPaneLine, type TextPaneMark } from "./TextPane";
 export { ChangeWell } from "./ChangeWell";
+export { QuestionRow, QuestionFold } from "./QuestionRow";
 export { DiffRow, verdictWords, type DiffOp, type DiffVerdict } from "./DiffRow";
 // Phase 16: the interior kit (COMPOSITOR.md §11; contract.md "The interior kit").
 export { AppHead, StatusStrip, FilterBar, Toolbar, ToolbarFold, type ToolbarFoldVerb, StatusBar, TickNumber, DotWord, ToolGlyph, countWords, KindPlate, Avatar, AvatarStack, AppTile, FigureStrip, Steps, initialsOf, hueOf, type StatusStripItem, type StatusBarItem, type ToolGlyphKind, type Figure, type Step } from "./kit";

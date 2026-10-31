@@ -91,3 +91,34 @@
 .surface-filter-tokens .surface-strip-menu.btn:disabled {
   border-color: var(--disabled-border);
 }
+
+/* PG-LANG §9.4, the round strip: a state lamp, a struck label, a quiet aside. */
+.surface-filter-token.btn .surface-filter-lamp {
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+}
+.surface-filter-token.btn .surface-filter-struck {
+  text-decoration: line-through;
+  color: var(--wb-faint, var(--wb-muted));
+}
+.surface-filter-token.btn[data-filter-active] .surface-filter-struck { color: inherit; }
+.surface-filter-token.btn .surface-filter-aside {
+  margin-left: 4px;
+  opacity: 0.8;
+}
+/* An open round's lamp is hollow; an asking one breathes (the kit's live ring). */
+.surface-filter-token.btn .surface-filter-lamp[data-tone="idle"] {
+  background: var(--wb-paper);
+  box-shadow: inset 0 0 0 1.5px var(--wb-muted);
+}
+.surface-filter-token.btn .surface-filter-lamp[data-live] {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-ask)) 45%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--dot-tone, var(--lamp-ask)) 22%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .surface-filter-token.btn .surface-filter-lamp[data-live] {
+    animation: kit-lamp-live 2.4s ease-in-out infinite;
+  }
+}

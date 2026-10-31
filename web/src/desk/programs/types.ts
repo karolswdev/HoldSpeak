@@ -428,8 +428,65 @@ export interface Program extends ProgramSummary {
   /** PG-REQ: the Program's own and the every-step parents, in ordinal order. */
   requirements?: Requirement[];
   can_prove?: CanProve;
+  /** PG-LANG LANG9: the interview rounds (§6.2). */
+  rounds?: ProgramRound[];
   revision: number;
   status_line: string;
+}
+
+/** PG-LANG LANG9: one question of a round; `became`: what its answer proposed. */
+export interface ProgramRoundQuestion {
+  id: string;
+  text: string;
+  why: string | null;
+  choices: string[];
+  answer: string | null;
+  answered_by: string | null;
+  at: string | null;
+  skipped: boolean;
+  became: string[];
+}
+
+export type RoundState = "open" | "asking" | "done" | "skipped";
+
+/** PG-LANG LANG9: one interview round on the Program wire. */
+export interface ProgramRound {
+  name: string;
+  state: RoundState;
+  order: number;
+  questions: ProgramRoundQuestion[];
+  asked: number;
+  answered: number;
+  /** The changes its answers became (the token keeps "n changes"). */
+  became: number;
+  /** The question that waits for his answer. */
+  waiting: string | null;
+}
+
+/** `POST …/rounds/{name}/next`: one question, or the round done by the engine's word. */
+export interface RoundAsked {
+  round: string;
+  state: RoundState;
+  done: boolean;
+  question: ProgramRoundQuestion | null;
+  engine: string | null;
+  seconds: number;
+  program: Program;
+}
+
+/** `POST …/rounds/{name}/answer`: the shaped rows (source `round:<name>`). */
+export interface RoundAnswer extends ShapeAnswer {
+  source: string;
+  round: string;
+  round_question: ProgramRoundQuestion;
+  program: Program;
+}
+
+/** `POST …/rounds`, `…/decide` and Skip question: the Program after the press. */
+export interface RoundPressed {
+  round?: string;
+  state?: RoundState;
+  program: Program;
 }
 
 /** `program_changed`: one per change; the faces re-read what it names. */

@@ -48,6 +48,12 @@ DELETE /api/programs/{id}/shape/held               LANG5: Not this on the rows a
 POST   /api/programs/{id}/plan/draft               LANG6 {goal?, template?, budget?; Split: text, split}: one engine
                                                    call; the text_apply answer, each row source "plan" and an added
                                                    step's size, + {say, counts, sizes, budget, engine, latency_ms}
+POST   /api/programs/{id}/rounds                   LANG9 {names?}: the interview rounds, each open (the five defaults)
+POST   /api/programs/{id}/rounds/{name}/next       LANG9: one engine call; {round, state, done, question?, engine}
+POST   /api/programs/{id}/rounds/{name}/answer     LANG9 {question_id?, answer | option | skip | not_this, apply?}:
+                                                   the = line, then one shaping call; the rows (source
+                                                   "round:<name>") in the text_apply answer + {round, question}
+POST   /api/programs/{id}/rounds/{name}/decide     LANG9 {choice: done | skip | reopen}
 
 Every handler runs the service off the event loop (``run_in_threadpool``).
 """
@@ -309,6 +315,30 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         return await _call(lambda: _service().plan_draft(
             principal, program_id, goal=body.get("goal"), template=body.get("template"), budget=body.get("budget"),
             text=body.get("text"), split=body.get("split")))
+
+    @router.post("/api/programs/{program_id}/rounds")
+    async def api_programs_rounds_open(program_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        names = body.get("names") if isinstance(body.get("names"), list) else None
+        return await _call(lambda: _service().rounds_open(principal, program_id, names))
+
+    @router.post("/api/programs/{program_id}/rounds/{name}/next")
+    async def api_programs_round_next(program_id: str, name: str, request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().round_next(principal, program_id, name))
+
+    @router.post("/api/programs/{program_id}/rounds/{name}/answer")
+    async def api_programs_round_answer(program_id: str, name: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().round_answer(
+            principal, program_id, name, answer=body.get("answer"), option=body.get("option"),
+            question_id=body.get("question_id"), skip=body.get("skip") is True, not_this=body.get("not_this") is True,
+            apply=body.get("apply") is True))
+
+    @router.post("/api/programs/{program_id}/rounds/{name}/decide")
+    async def api_programs_round_decide(program_id: str, name: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().round_decide(principal, program_id, name, body.get("choice")))
 
     @router.post("/api/programs/{program_id}/close")
     async def api_programs_close(program_id: str, request: Request) -> Any:
