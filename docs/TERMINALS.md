@@ -12,6 +12,9 @@ Each window has its own output, input and typing control.
    terminals together. Other application windows keep their placement.
 
 Press an open session’s row to bring its window to the front.
+The **Sessions** face shows the selected job above the session list.
+It shows the brief, Project and available agent state.
+Use **Open terminal** to return to its shell.
 Agent state updates when HoldSpeak receives its session events. Press
 **Refresh** to discover shells you started outside the Desk.
 The Desk keeps open windows and their placement in the hub, so a reload can
@@ -28,6 +31,33 @@ Select a session to inspect its connected work. The workspace has three faces:
   It does not switch to the source's primary checkout.
 - **Context** shows the Project, source, worktree, branch, brief, agent,
   Needs you state, review, Program, and HoldSpeak tools facts.
+
+Project resources in **Context** have a named action such as **Open note** or **Open decision**.
+Supported resources also have **More** with **Ask about this** or **Hand to an agent**.
+These actions use the existing Ask window and agent handoff sheet.
+Unavailable resources keep their **Retry** action.
+
+### Prepare work from a file
+
+1. Open a file in **Files**.
+2. Press **Prepare agent**.
+3. Edit the task words.
+4. Expand **Source context** to inspect the captured file reference.
+5. Select the agent and review choice.
+6. Press **Start**.
+
+The prepared brief includes the repository, worktree, path and captured read revision.
+Long file content is shortened and marked in the source context.
+**Cancel** keeps the task words for that file.
+Preparing a brief does not start an agent.
+After a refusal, the task words stay. Press **Start** to retry.
+An unchanged brief reuses the Note already created for that task.
+
+The read copy is reference material. The agent starts through the Project's existing repository flow in its own worktree.
+This does not resume the selected shell or copy its uncommitted files into the new worktree.
+The existing Project repository resolver chooses the launch repository; this flow does not add a repository picker.
+
+### Review files and changes
 
 The **Files** face also has a **Changes** door. It shows changed files and a
 bounded diff for the selected worktree. Select files, press **Stage**, enter a
@@ -50,6 +80,8 @@ Press **Read latest** to compare the current disk text with your kept edit.
 Review your text, then press **Save reviewed edit**. If the file changes again,
 the save refuses again. Reading the latest file alone does not change your
 draft's saved revision.
+
+### Inspect workspace context
 
 The Context face uses these states:
 

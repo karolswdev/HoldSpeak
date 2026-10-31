@@ -89,6 +89,12 @@ def _git(root: Path, *args: str) -> str:
                           capture_output=True, text=True, timeout=12).stdout.strip()
 
 
+def _ag8_hand_refused_wire() -> dict[str, Any]:
+    """Return the recorded hub refusal envelope used by StartAgent tests."""
+    fixture = Path(__file__).resolve().parents[2] / "web/src/desk/__tests__/fixtures/agents-ag8/hand.refused.wire.json"
+    return json.loads(fixture.read_text(encoding="utf-8"))["wire"]
+
+
 def _workspace_face(page: Any, inventory: Any, name: str) -> None:
     # A restored frame mounts before its lazy core publishes the wings.
     # Wait for that actual chrome before choosing its wide or folded form.
@@ -175,6 +181,46 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             terminal.get_by_role("button", name="View only", exact=True).click()
             terminal.get_by_test_id("terminal-workspace").click()
             expect(inventory).to_have_class(re.compile(r"\bis-front\b"))
+            _workspace_face(page, inventory, "Sessions")
+            # Selecting a connected shell presents the job before the owner
+            # opens another wing: the real seeded brief, Project and agent
+            # state are readable beside the terminal. Opening the workspace
+            # must not dispatch or contact a provider by itself.
+            overview = inventory.get_by_test_id("terminal-job-overview")
+            expect(overview).to_contain_text("Build the connected workspace")
+            expect(overview).to_contain_text("Workspace fixture")
+            # The real isolated flight may already be expired (there is no
+            # provider process in this engine=none walk); the state remains a
+            # named fact rather than an optimistic success or blank.
+            assert re.search(r"\b(?:Live|Needs you|Done|expired)\b", overview.inner_text())
+            expect(overview).to_contain_text("Codex")
+            expect(overview.get_by_role("button", name="Open terminal", exact=True)).to_be_visible()
+            _eventually(lambda: "Connecting" not in inventory.inner_text(), seconds=15)
+            if width == 393:
+                # The overview has three actionable doors on phone. Check
+                # their real post-layout hit ownership after scrolling each
+                # into view; the status bar must not steal a clipped edge.
+                for button in (
+                    overview.get_by_role("button", name="Workspace fixture", exact=True),
+                    overview.get_by_role("button", name="Open terminal", exact=True),
+                    overview.get_by_role("button", name="Open agent", exact=True),
+                ):
+                    button.evaluate("element => element.scrollIntoView({block: 'center', inline: 'nearest'})")
+                    box = button.bounding_box()
+                    assert box and box["width"] >= 44 and box["height"] >= 44, box
+                    assert button.evaluate("""button => {
+                        const r = button.getBoundingClientRect();
+                        return [
+                            [r.x + r.width / 2, r.y + r.height / 2],
+                            [r.left + 2, r.top + 2], [r.right - 2, r.top + 2],
+                            [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2],
+                        ].every(([x, y]) => {
+                            const hit = document.elementFromPoint(x, y);
+                            return hit === button || button.contains(hit);
+                        });
+                    }"""), f"Overlapping overview target: {button.inner_text()}"
+                inventory.locator(".terminals-list").evaluate("element => element.scrollTo({top: 0, left: 0})")
+                page.screenshot(path=str(connected_shots / "workspace-job-overview-393.png"))
             if width == 1440:
                 _api(page, "POST", "/api/desk/windows/arrange", {"rects": {
                     # Positions are offsets from the work band's centre.
@@ -182,11 +228,100 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
                     f"terminal:{first['id']}": {"x": "40px", "y": "-50% + 50", "w": "660px", "h": "680px"},
                 }}, token=TOKEN)
                 _settle(page)
+                page.screenshot(path=str(connected_shots / "workspace-job-overview.png"))
+                # The same selected workspace must reflow when its Desk frame
+                # is narrow on a wide viewport. This is a geometry check, not
+                # a second browser harness.
+                _api(page, "POST", "/api/desk/windows/arrange", {"rects": {
+                    "surface-terminals": {"x": "-50% + 10", "y": "-50% + 50", "w": "480px", "h": "620px"},
+                    f"terminal:{first['id']}": {"x": "40px", "y": "-50% + 50", "w": "520px", "h": "620px"},
+                }}, token=TOKEN)
+                _settle(page)
+                narrow_inventory = inventory.bounding_box()
+                assert narrow_inventory and narrow_inventory["width"] <= 520, narrow_inventory
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                page.screenshot(path=str(connected_shots / "workspace-job-overview-narrow-desktop.png"))
+            _workspace_face(page, inventory, "Files")
             files = inventory.get_by_test_id("terminal-workspace-files")
             files.locator('tr[aria-label="app.txt"]').click()
             expect(files.get_by_test_id("repo-file-content")).to_contain_text("review worktree")
             expect(files.get_by_test_id("repo-file-content")).not_to_contain_text("main checkout")
             page.screenshot(path=str(connected_shots / f"files-{width}.png"))
+            # A file handoff uses the producer-backed source/worktree and the
+            # bytes just read. It prepares a brief but never sends it until
+            # the owner presses Start.
+            hand_requests: list[Any] = []
+            page.on("request", lambda request: hand_requests.append(request)
+                    if request.method == "POST" and request.url.endswith("/api/agent/hand") else None)
+            files.get_by_test_id("terminal-file-prepare-agent").click()
+            prepared = inventory.get_by_test_id("conductor-start-form")
+            prepared.wait_for(state="visible")
+            expect(prepared.get_by_test_id("conductor-start-context")).to_contain_text("Workspace fixture")
+            expect(prepared.get_by_test_id("conductor-start-context")).to_contain_text("app.txt")
+            expect(prepared.get_by_test_id("conductor-start-context")).to_contain_text("work/review")
+            words = prepared.get_by_test_id("conductor-start-words")
+            expect(words).to_have_value("Review app.txt")
+            assert not hand_requests, "Preparing context must not dispatch an agent"
+            if width == 393:
+                # The compact form is a real scroll surface. Scroll the verbs
+                # into view before checking all nine hit points so the Desk
+                # status bar cannot own an apparently large clipped target.
+                for button in (
+                    prepared.get_by_role("button", name="Cancel", exact=True),
+                    prepared.get_by_role("button", name="Start", exact=True),
+                ):
+                    button.evaluate("element => element.scrollIntoView({block: 'center', inline: 'nearest'})")
+                    box = button.bounding_box()
+                    assert box and box["width"] >= 44 and box["height"] >= 44, box
+                    assert button.evaluate("""button => {
+                        const r = button.getBoundingClientRect();
+                        return [
+                            [r.x + r.width / 2, r.y + r.height / 2],
+                            [r.left + 2, r.top + 2], [r.right - 2, r.top + 2],
+                            [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2],
+                        ].every(([x, y]) => {
+                            const hit = document.elementFromPoint(x, y);
+                            return hit === button || button.contains(hit);
+                        });
+                    }"""), f"Overlapping compact target: {button.inner_text()}"
+            page.screenshot(path=str(connected_shots / f"handoff-prepared-{width}.png"))
+            words.fill("Review the exact worktree file")
+            prepared.get_by_role("button", name="Cancel", exact=True).click()
+            expect(inventory.get_by_test_id("conductor-start-form")).to_have_count(0)
+            # Reopen through the same selected file's Prepare agent verb. The
+            # generic toolbar starts a fresh, unprepared hand by design.
+            files.get_by_test_id("terminal-file-prepare-agent").click()
+            reopened_start = inventory.get_by_test_id("conductor-start-form")
+            expect(reopened_start.get_by_test_id("conductor-start-words")).to_have_value("Review the exact worktree file")
+            expect(reopened_start.get_by_test_id("conductor-start-context")).to_contain_text("Workspace fixture")
+            # The hub still records the Note and Project as real local
+            # producers; only the named hand boundary is intercepted so this
+            # walk cannot start an agent or provider.
+            page.route("**/api/agent/hand", lambda route: route.fulfill(
+                status=409, content_type="application/json",
+                # This is the recorded AG8 refusal envelope from the hub
+                # producer, not an invented browser-only error shape.
+                body=json.dumps(_ag8_hand_refused_wire()),
+            ))
+            with page.expect_request(lambda request: request.method == "POST" and request.url.endswith("/api/notes")) as note_request:
+                with page.expect_request(lambda request: request.method == "POST" and request.url.endswith("/api/agent/hand")) as hand_request:
+                    reopened_start.get_by_role("button", name="Start", exact=True).click()
+            note_payload = note_request.value.post_data_json
+            hand_payload = hand_request.value.post_data_json
+            assert len(hand_requests) == 1, "Only explicit Start may cross the hand boundary"
+            assert hand_payload["kind"] == "note"
+            assert hand_payload["project_id"] == seeded["project_id"]
+            assert note_payload["title"] == "Review the exact worktree file"
+            assert "Repository source: Workspace fixture" in note_payload["body_markdown"]
+            assert "Captured worktree:" in note_payload["body_markdown"]
+            assert "work/review" in note_payload["body_markdown"]
+            assert "File path: app.txt" in note_payload["body_markdown"]
+            assert "review worktree" in note_payload["body_markdown"]
+            expect(reopened_start.get_by_role("alert")).to_contain_text("Not started")
+            expect(reopened_start.get_by_test_id("conductor-start-words")).to_have_value("Review the exact worktree file")
+            page.screenshot(path=str(connected_shots / f"handoff-failed-{width}.png"))
+            page.unroute("**/api/agent/hand")
+            reopened_start.get_by_role("button", name="Cancel", exact=True).click()
             files.get_by_role("button", name="Edit file", exact=True).click()
             editor = files.locator('[contenteditable="true"][aria-label="Edit app.txt"]')
             editor.fill("owner draft kept\n")
@@ -218,7 +353,7 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             expect(program.get_by_role("textbox", name="Step 1 title", exact=True)).to_have_value("Build the workspace")
             program.get_by_role("button", name=re.compile(r"^Back from " if width == 393 else r"^Close ")).click()
             _inventory(page, base)
-            context.locator(".surface-row").filter(has=page.get_by_text("Keep one Desk", exact=True)).get_by_role("button", name="Open", exact=True).click()
+            context.locator(".surface-row").filter(has=page.get_by_text("Keep one Desk", exact=True)).get_by_role("button", name="Open decision", exact=True).click()
             decision = page.locator('[id="pullout:decision:decision-connected-workspace"]')
             decision.wait_for(state="visible")
             expect(decision).to_contain_text("Keep one Desk")
@@ -364,6 +499,12 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             assert not errors, errors
             (connected_shots / f"observation-{width}.json").write_text(json.dumps({
                 "engine_mode": "none", "agent_metadata": "real producer seed; no agent process",
+                "handoff": {
+                    "prepared_without_dispatch": True,
+                    "explicit_start_boundary": True,
+                    "hand_boundary": "intercepted recorded AG8 no_repository refusal",
+                    "provider_dispatch": False,
+                },
                 "git": "private real main + two worktrees", "tmux": "private real socket",
                 "health": _api(page, "GET", "/health", token=TOKEN),
                 "build": json.loads((Path(__file__).resolve().parents[2] / "holdspeak/static/_built/.builds.json").read_text())[0],
