@@ -190,8 +190,9 @@ def _lazy_ask_tools() -> frozenset[str]:
 # ── CALL: what a phone call's turn may call (Calls, 2026-10-28) ─────────
 #
 # ASK, plus the two egress tools the owner named ("send things"): a send of a
-# prepared document and a nudge. Each of the two is offered only to a call's
-# turn, and each call of it holds for his spoken yes after the call's gate
+# prepared document and a nudge; and (PG15) a Program's read and its start.
+# The sends are offered only to a call's turn; each send and each start on a
+# call holds for his spoken yes after the call's gate
 # (allowed numbers, then the passphrase): ``ThreadToolExecutor(held_egress=)``.
 # Config and authority tools are never on a call.
 
@@ -199,10 +200,17 @@ CALL = "CALL"
 
 #: The egress tools a call offers, each held for his spoken yes.
 CALL_HELD_EGRESS: frozenset[str] = frozenset({"channel.send", "nudge.send"})
+#: PG15 (Programs): "start the overnight program" on a call. A start is an
+#: effect, so it holds for his spoken yes as a send does; the read answers
+#: "how is the phone program doing". Both name a Program by its words.
+CALL_PROGRAM_READS: frozenset[str] = frozenset({"program.get"})
+CALL_HELD_PROGRAM: frozenset[str] = frozenset({"program.start"})
+#: Every tool a call's turn holds for his spoken yes (``held_egress=``).
+CALL_HELD: frozenset[str] = CALL_HELD_EGRESS | CALL_HELD_PROGRAM
 
 
 def _lazy_call_tools() -> frozenset[str]:
-    return _lazy_ask_tools() | (CALL_HELD_EGRESS & _lazy_all_tools())
+    return _lazy_ask_tools() | ((CALL_HELD | CALL_PROGRAM_READS) & _lazy_all_tools())
 
 
 # ── Public API ──────────────────────────────────────────────────────────

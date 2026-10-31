@@ -87,6 +87,7 @@ KNOWN_CODE = re.compile(
     r"|^calls_no_number$"  # calls.place: a fresh HOME has no number in Settings > Calls (409; #1608)
     r"|^no_line$"  # phone.call: no paired phone and no number on a fresh HOME; nothing is sent (409; #1608)
     r"|^repository_required$"  # program.create: the placeholders name no repository or project (400; #1602)
+    r"|^program_name_required$"  # program.start / program.get: neither program_id nor name (400; PG15)
 )
 KNOWN_MESSAGE = re.compile(
     r"^people_store_unavailable$"  # no People keystore on a fresh HOME

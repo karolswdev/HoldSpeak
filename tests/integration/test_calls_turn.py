@@ -369,3 +369,143 @@ def test_the_routes_place_a_call_list_it_and_refuse_without_a_number(hub, monkey
     assert [step["id"] for step in status["steps"]] == ["install", "daemon", "line", "engine", "passphrase", "enable"]
     assert [step["done"] for step in status["steps"]] == [True, False, False, True, True, False], status["steps"]
     assert status["engine"]["state"] == "ready" and status["engine"]["model"] == "qwen3.8-27b"
+
+
+# ── PG15: a Program on a call ──────────────────────────────────────────
+
+
+class _ScriptedProgramEngine:
+    """Does what a model does with "start the overnight program" or "how is
+    the phone program doing": one ``program.*`` call by the words he said,
+    then it says the hub's own answer (its ``spoken`` line, as the CALL
+    prompt tells a model to). Nothing in it answers for the hub."""
+
+    active_provider = "fixture"
+
+    def __init__(self, model: str, tool: str, name: str, seen: list[dict[str, Any]]) -> None:
+        self.active_model = model
+        self._tool, self._name, self._seen = tool, name, seen
+
+    def run_prompt_stream(self, *, messages=None, tools=None, **_kw: Any) -> Any:
+        self._seen.append({"messages": [dict(m) for m in messages or []], "tools": tools})
+        results = [m for m in messages or [] if m.get("role") == "tool"]
+        if not results:
+            call = {"id": "call_program", "name": self._tool, "arguments": json.dumps({"name": self._name})}
+            yield Delta(kind="tool_calls", meta={"tool_calls": [call]})
+            yield Delta(kind="done")
+            return
+        content = str(results[-1].get("content") or "")
+        try:
+            answer = json.loads(content)
+        except ValueError:
+            answer = {}
+        if not isinstance(answer, dict):
+            answer = {}
+        text = str(answer.get("spoken") or content)
+        yield Delta(kind="text", text=text)
+        yield Delta(kind="done")
+
+
+def _program(tmp_path: Path, title: str, *, template: str = "", steps: int = 2) -> str:
+    from holdspeak.mcp.tools import dispatch
+    from tests.integration.program_rig import FAKE_CHECK, make_repo
+
+    repo = make_repo(tmp_path / f"repo-{len(list(tmp_path.glob('repo-*')))}")
+    made = dispatch("program.create", {"title": title, "repository": str(repo), "check_command": f"sh {FAKE_CHECK}",
+                                       **({"template": template} if template else {})}, OWNER)
+    dispatch("program.plan", {"program_id": made["id"], "steps": [{"title": f"Step {n}"} for n in range(1, steps + 1)]},
+             OWNER)
+    return str(made["id"])
+
+
+def _started(db: Any, program_id: str) -> int:
+    with db._connection() as conn:
+        return conn.execute("SELECT COUNT(*) FROM program_checkpoints WHERE program_id=? AND line=?",
+                            (program_id, "Started the program")).fetchone()[0]
+
+
+@pytest.mark.parametrize("answer, state, starts", [("Yes, start it.", "running", 1), ("No, not now.", "drafting", 0)])
+def test_a_program_starts_on_a_call_only_after_his_spoken_yes(hub, monkeypatch, tmp_path, answer, state, starts) -> None:
+    """PG15 done when: "start the overnight program on the hub" → the call
+    asks with the Program's own title → his yes runs program.start once and
+    the Program is Running; his no starts nothing. yolo here: the start holds
+    whatever the control mode."""
+    from holdspeak.services.program_service import default_program_service
+
+    monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")  # no step is handed to an agent
+    _write_config()
+    program_id = _program(tmp_path, "Overnight on the home box", template="overnight")
+    state_file = _fake(tmp_path, monkeypatch, [
+        {"kind": "incoming", "remote": REMOTE},
+        {"kind": "heard", "text": "blue heron"},
+        {"kind": "heard", "text": "Start the overnight program on the hub."},
+        {"kind": "heard", "text": answer},
+        {"kind": "ended"},
+    ])
+    frames: list[tuple[str, Any]] = []
+    seen: list[dict[str, Any]] = []
+    service = _service(hub, monkeypatch, lambda model: _ScriptedProgramEngine(model, "program.start", "overnight", seen),
+                       frames)
+
+    assert asyncio.run(service.serve_once(wait=5)) == "call"
+
+    said = _said(state_file)
+    asked = [line for line in said if line.endswith("Say yes or no.")]
+    assert asked == ["I want to start the program Overnight on the home box. Say yes or no."], said
+    program = default_program_service(hub.db).get(OWNER, program_id)
+    assert program["state"] == state and _started(hub.db, program_id) == starts, program["state"]
+    offered = {tool["function"]["name"] for tool in seen[0]["tools"]}
+    assert {"program.start", "program.get"} <= offered
+    assert not offered & {"program.create", "program.decide", "program.plan", "program.handoff"}
+    [record] = service.list()
+    if starts:
+        assert record["results"] == [{"kind": "program", "label": "Overnight on the home box",
+                                      "ref": f"program:{program_id}", "effect": "started"}], record["results"]
+        assert said[-1] == ("Overnight on the home box runs: 0 of 2 steps are done. "
+                            "Done: Started the program: Overnight on the home box."), said
+    else:
+        assert record["results"] == []
+
+
+def test_how_is_the_phone_program_doing_is_said_in_words(hub, monkeypatch, tmp_path) -> None:
+    """program.get by the words he said answers with its spoken line: its
+    state and steps, what waits on him, the last decision. No count of zero."""
+    monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")
+    _write_config()
+    _program(tmp_path, "The phone app", steps=3)
+    state_file = _fake(tmp_path, monkeypatch, [
+        {"kind": "incoming", "remote": REMOTE},
+        {"kind": "heard", "text": "blue heron"},
+        {"kind": "heard", "text": "How is the phone program doing?"},
+        {"kind": "ended"},
+    ])
+    service = _service(hub, monkeypatch, lambda model: _ScriptedProgramEngine(model, "program.get", "phone", []), [])
+
+    assert asyncio.run(service.serve_once(wait=5)) == "call"
+
+    said = _said(state_file)
+    assert "The phone app is not started: 0 of 3 steps are done." in said, said
+    assert not [line for line in said if line.endswith("Say yes or no.")]
+
+
+def test_a_program_that_does_not_exist_is_said_so_and_none_is_made(hub, monkeypatch, tmp_path) -> None:
+    """"Start the garden program" with no such Program: no question, the
+    call says there is none, and no Program is made."""
+    from holdspeak.services.program_service import default_program_service
+
+    monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")
+    _write_config()
+    state_file = _fake(tmp_path, monkeypatch, [
+        {"kind": "incoming", "remote": REMOTE},
+        {"kind": "heard", "text": "blue heron"},
+        {"kind": "heard", "text": "Start the garden program."},
+        {"kind": "ended"},
+    ])
+    service = _service(hub, monkeypatch, lambda model: _ScriptedProgramEngine(model, "program.start", "garden", []), [])
+
+    assert asyncio.run(service.serve_once(wait=5)) == "call"
+
+    said = _said(state_file)
+    assert not [line for line in said if line.endswith("Say yes or no.")], said
+    assert "There is no program with the name garden. I did not start a program." in said, said
+    assert default_program_service(hub.db).list(OWNER)["programs"] == []

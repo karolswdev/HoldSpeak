@@ -42,7 +42,17 @@ and **Settings > This Mac > Engines** before you run a call.
 | Read permitted Desk records | Send a prepared action | Change a setting |
 | Write a Note or add a task | Post a send or other held egress | Change an engine or account |
 | Propose a decision or add Project work | A control-mode hold | Confirm a decision for you |
-| Prepare a send | | Call another person |
+| Prepare a send | Start a program | Call another person |
+| Say how a program is doing | | Make a program |
+
+A program is named by its words: "start the overnight program" finds the
+program whose title or template has those words. HoldSpeak says "I want to
+start the program Overnight on the home box. Say yes or no." and starts it
+only on your yes; "no" starts nothing. "How is the phone program doing" gets
+one or two sentences: its state, how many steps are done, what waits on you
+and the last decision. When no program has that name, or the program runs
+already, HoldSpeak says so and asks nothing. It never makes a program on a
+call. The Line and ai-phone give a call the same tools.
 
 The exact tool palette and source scope apply to the call turn. When a held
 operation is needed, the caller hears the question. The Calls window can show

@@ -41,6 +41,10 @@ Choose the **From the desk** template and a project. HoldSpeak makes one step fo
 
 On a note, open the toolbar fold and press **Run as a program**. The note becomes the goal.
 
+### On a call
+
+On a call, say "start the overnight program". HoldSpeak asks "I want to start the program Overnight on the home box. Say yes or no." and starts it only when you say yes. Say "how is the phone program doing" to hear its state. See [Calls](calls.md#what-a-call-can-do).
+
 ### Programs on a schedule
 
 An automation can start a program. In the automation window, press **Edit**, and under **Do** press **Run a program**. Choose the template, the level (Secure, Normal or YOLO; no choice keeps the template's level) and the agent. Type the goal. Then choose **When**: a time ("Every weekday at 23:30"), an event, or only **Run now**.
@@ -280,7 +284,7 @@ The MCP tools are in the `program` family:
 | `program.plan` | Replace or add steps. `size: "auto"` sets each step's effort by rule. | You, or the orchestrating agent |
 | `program.update` | Change the title, goal, control, project, spend limit, agent or engine. | You, or the orchestrating agent |
 | `program.start`, `program.park`, `program.resume` | Start, park or resume a program. | You, or the orchestrating agent |
-| `program.get`, `program.list` | Read programs, their steps, checkpoints and your turn. | Everyone |
+| `program.get`, `program.list` | Read programs, their steps, checkpoints and your turn. `program.start` and `program.get` also take `name` (words of the title or the template); by name, the answer has `spoken`, and a name with no program is an answer that starts nothing. | Everyone |
 | `program.checkpoint` | Write one line on a step. | The step's own agent, you |
 | `program.step_done` | The step's agent says that it is done, with its report. HoldSpeak still waits for the commit. | The step's own agent |
 | `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. | You only |

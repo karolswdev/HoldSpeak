@@ -61,11 +61,15 @@ def test_the_five_calls_keys_round_trip_and_the_passphrase_is_write_only(home) -
 
 
 def test_a_call_offers_the_ask_tools_plus_the_two_sends_and_no_config() -> None:
-    from holdspeak.mcp.palettes import ASK, CALL, CALL_HELD_EGRESS, resolve_palette
+    from holdspeak.mcp.palettes import ASK, CALL, CALL_HELD, CALL_HELD_EGRESS, resolve_palette
     from holdspeak.mcp.tool_authority import EGRESS, TOOL_AUTHORITY, WORK
 
     call, ask = resolve_palette(CALL), resolve_palette(ASK)
-    assert call - ask == CALL_HELD_EGRESS == {"channel.send", "nudge.send"}
+    assert CALL_HELD_EGRESS == {"channel.send", "nudge.send"}
+    # PG15: a Program's read and its start join the call; the start holds.
+    assert call - ask == CALL_HELD_EGRESS | {"program.start", "program.get"}
+    assert CALL_HELD == CALL_HELD_EGRESS | {"program.start"}
+    assert {TOOL_AUTHORITY[n] for n in ("program.start", "program.get")} == {WORK}
     assert all(TOOL_AUTHORITY[name] == WORK for name in ask)
     assert all(TOOL_AUTHORITY[name] == EGRESS for name in CALL_HELD_EGRESS)
     assert "calls.place" not in call and TOOL_AUTHORITY["calls.place"] == EGRESS

@@ -276,3 +276,35 @@ def test_yolo_adds_a_step_an_agent_names_and_normal_asks(tmp_path, monkeypatch) 
         else:
             assert titles == ["A"]
             assert [item["kind"] for item in program["your_turn_items"]] == ["add_step"]
+
+
+# ── PG15: a Program by his words, and its state in spoken words ───────
+
+def test_find_by_his_words_never_makes_a_program(tmp_path) -> None:
+    from holdspeak.services.program_service import name_words
+
+    rig = _rig(tmp_path)
+    night = _made(rig, template="overnight")
+    rig.service.update(OWNER, night, title="Night build")
+    phone = rig.service.create(OWNER, title="The phone app", repository=str(rig.repo),
+                               check_command=f"sh {FAKE_CHECK}", control="normal")["id"]
+    assert name_words("Start the overnight program on the hub") == ["start", "overnight"]
+    assert rig.service.find(OWNER, name="the overnight program")["id"] == night  # by its template
+    assert rig.service.find(OWNER, name="phone")["id"] == phone  # by its title
+    assert rig.service.find(OWNER, program_id=phone)["id"] == phone
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.find(OWNER, name="the garden program")
+    assert refused.value.code == "program_not_found"
+    assert refused.value.detail == "There is no program with the name the garden program. I did not start a program."
+    assert len(rig.service.list(OWNER)["programs"]) == 2
+
+
+def test_spoken_state_says_steps_your_turn_and_the_last_decision() -> None:
+    from holdspeak.services.program_service import spoken_state
+
+    assert spoken_state({"title": "Phone app", "state": "drafting", "total": 0, "done": 0}) == "Phone app is not started."
+    assert spoken_state({
+        "title": "Phone app", "state": "waiting", "total": 3, "done": 1, "your_turn": 2, "asks": 0,
+        "decided_for_you": [{"line": "Skipped the lint finding."}, {"line": "Older"}],
+    }) == "Phone app waits on you: 1 of 3 steps are done. 2 things wait on you, and the last decision: Skipped the lint finding."
+    assert spoken_state({"title": "X", "state": "running", "total": 1, "done": 0, "your_turn": 0}) == "X runs: 0 of 1 step is done."

@@ -145,7 +145,7 @@ export interface CallResult {
   kind: string;
   label: string;
   ref: string;
-  effect: "wrote" | "prepared" | "sent";
+  effect: "wrote" | "prepared" | "sent" | "started";
 }
 
 export interface CallSummary {
