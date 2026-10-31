@@ -37,7 +37,7 @@ from dataclasses import dataclass, field, fields as dc_fields, replace
 from typing import Any, Iterable, Mapping, Optional
 
 from ..program_templates import get_template
-from .program_requirements import clean_spec, guess
+from .program_requirements import clean_spec
 
 #: The format version the printer writes (§7.4).
 VERSION = 1
