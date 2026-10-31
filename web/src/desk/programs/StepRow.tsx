@@ -13,7 +13,7 @@ import { CheckGadget, CycleGadget, DotWord, StateChip, StringGadget } from "../s
 import { Token } from "../surface/Token";
 import { openRef } from "../openObject";
 import { spriteUrl } from "../sprites";
-import { afterWords, agentKey, runsOnWords, stationsOf, stepChip, stepTone, stepWord } from "./model";
+import { afterWords, agentKey, mergedWords, runsOnWords, stationsOf, stepChip, stepTone, stepWord } from "./model";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { StationTrack } from "./StationTrack";
 import { stateWords } from "../surface/words";
@@ -37,12 +37,14 @@ export function StepRow({
   const word = stepWord(step);
   const agent = agentKey(step.profile, step.agent);
   const started = step.state !== "planned" && step.state !== "ready";
+  // PG17: an imported step names its PR and its merge time; no agent ran it.
+  const history = step.history ?? null;
   // A step held for its engine names the engine it waits for.
-  const shown = started || Boolean(step.held_reason);
+  const shown = !history && (started || Boolean(step.held_reason));
   const runsOn = runsOnWords(step.agent, step.engine);
-  const when = step.elapsed;
+  const when = history ? mergedWords(history.merged_at) : step.elapsed;
   const after = afterWords(step.after);
-  const line = quote(step.last_checkpoint?.line);
+  const line = history ? `PR #${history.pr_number}` : quote(step.last_checkpoint?.line);
   return (
     <li
       className="kit-listrow pg-step"
@@ -51,6 +53,7 @@ export function StepRow({
       data-contender={contender ? "" : undefined}
       data-testid={contender ? "programs-contender" : "programs-step"}
       data-step={step.id}
+      data-history={history ? "" : undefined}
     >
       <Button variant="chrome" className="pg-step-main" aria-pressed={selected} onClick={onSelect}
         aria-label={`Step ${step.ordinal}: ${step.title}, ${word}`} data-testid="programs-step-select">
@@ -82,7 +85,8 @@ export function StepRow({
         {line ? <span className="pg-step-meta-line"> · {line}</span> : null}
       </span>
       <span className="pg-step-when">{started ? when : ""}</span>
-      <span className="pg-step-line" title={step.last_checkpoint?.line ?? undefined}>{line}</span>
+      <span className="pg-step-line" title={history ? history.pr_url ?? undefined : step.last_checkpoint?.line ?? undefined}
+        data-testid={history ? "programs-step-pr" : undefined}>{line}</span>
       <span className="pg-step-verbs">
         {step.launch_id ? (
           <Button dense variant="secondary" onClick={() => openRef(`launch:${step.launch_id}`)} data-testid="programs-step-open">Open lane</Button>

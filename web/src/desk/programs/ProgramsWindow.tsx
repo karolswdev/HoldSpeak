@@ -27,7 +27,9 @@ import "./programs.css";
 export { openProgram };
 
 function ProgramRow({ row }: { row: ProgramSummary }) {
-  const inState = row.state === "done" && row.done_in ? `Done in ${row.done_in}` : durationWords(row.in_state_seconds);
+  // PG17: a Program of imported PRs says what merged and when.
+  const inState = row.state === "done" && row.history ? row.history.words
+    : row.state === "done" && row.done_in ? `Done in ${row.done_in}` : durationWords(row.in_state_seconds);
   const line = row.last_checkpoint?.line;
   return (
     <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}>

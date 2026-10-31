@@ -63,6 +63,19 @@ _STEP = {
         "origin_ref": {"type": ["string", "null"], "description": "The desk item it came from (action:<id>): its merge closes it."},
         "for_person_id": {"type": ["string", "null"], "description": "The person this step is owed to (a People id)."},
         "may_call": {"type": ["boolean", "null"], "description": "The engine may call the owner's phone about this step where the Reach rules allow it."},
+        "history": {
+            "type": ["object", "null"],
+            "description": "A step that merged already (PG17): it is written Merged with this PR and merge time; "
+                           "no agent runs it. A Program of only history steps is Done.",
+            "properties": {
+                "pr_number": {"type": "integer", "minimum": 1},
+                "pr_url": {"type": ["string", "null"], "maxLength": 400},
+                "merged_at": {"type": "string", "description": "The merge time (ISO 8601)."},
+                "head_commit": {"type": ["string", "null"], "maxLength": 64},
+            },
+            "required": ["pr_number", "merged_at"],
+            "additionalProperties": False,
+        },
     },
     "required": ["title"],
     "additionalProperties": False,
@@ -102,7 +115,8 @@ TOOLS: list[dict[str, Any]] = [
      }, ["title"])},
     {"name": "program.plan",
      "description": "Replace or append a Program's steps. size auto sets each step's effort by rule (more than 12 "
-                    "files or a refactor: high; one file and one paragraph: low).",
+                    "files or a refactor: high; one file and one paragraph: low). A step with history (pr_number, "
+                    "merged_at) is work that merged already: it is written Merged and no agent runs it.",
      "inputSchema": _schema({
          "program_id": _ID, "steps": {"type": "array", "items": _STEP},
          "size": {"type": ["string", "null"], "enum": ["auto", None]}, "replace": {"type": ["boolean", "null"]},

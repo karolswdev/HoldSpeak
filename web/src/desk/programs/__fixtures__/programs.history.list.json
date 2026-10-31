@@ -1,0 +1,49 @@
+{
+  "counts": {
+    "done": 1
+  },
+  "programs": [
+    {
+      "asks": 0,
+      "control": "yolo",
+      "created_at": "2026-10-31T01:42:49.305110+00:00",
+      "done": 3,
+      "done_in": "2 h 38",
+      "history": {
+        "first": "2026-10-28T15:36:11Z",
+        "last": "2026-10-28T18:14:50Z",
+        "prs": 3,
+        "words": "Merged 3 PRs · 28 Oct"
+      },
+      "id": "program-cb35d35a8980",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-10-31T01:42:49.308185+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 2,
+        "kind": null,
+        "line": "Added 3 steps; imported 3 merged PRs",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      "project_id": null,
+      "state": "done",
+      "state_word": "Done",
+      "title": "The hub stops stalling",
+      "total": 3,
+      "updated_at": "2026-10-31T01:42:49.308264+00:00",
+      "your_turn": 0
+    }
+  ],
+  "worst": "done",
+  "worst_word": "Done"
+}
