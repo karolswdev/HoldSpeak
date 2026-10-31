@@ -10,7 +10,8 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { frameChanges } from "../compositor/windowFrames";
 import type {
-  Control, DecideBody, PersonProgramRow, PlanStep, Program, ProgramChangedFrame, ProgramList, ProgramRoomRow,
+  Control, DecideBody, PersonProgramRow, PlanStep, Program, ProgramChangedFrame, ProgramList, ProgramRoomRow, ProgramText,
+  TextApplyAnswer,
 } from "./types";
 
 const EMPTY_LIST: ProgramList = { programs: [], counts: {}, worst: null, worst_word: "" };
@@ -303,4 +304,24 @@ export interface UpdateBody {
 
 export async function updateProgram(id: string, body: UpdateBody): Promise<Program | null> {
   return unwrap(await apiFetch<Program | { program?: Program }>(base(id), { method: "PATCH", json: body }));
+}
+
+/* ── PG-LANG (PROGRAM-LANGUAGE-2026-10-31 §3.6): the Program text ── */
+
+export function readProgramText(id: string): Promise<ProgramText> {
+  return apiFetch<ProgramText>(`${base(id)}/text`);
+}
+
+export interface TextApplyBody {
+  text: string;
+  /** The text he started from: a field that moved since is a conflict. */
+  base: string;
+  /** True (the default): a preview, nothing written. */
+  dry_run: boolean;
+  /** The rows that lower the bar he pressed one by one. */
+  allow_lower?: string[];
+}
+
+export function applyProgramText(id: string, body: TextApplyBody): Promise<TextApplyAnswer> {
+  return apiFetch<TextApplyAnswer>(`${base(id)}/text`, { method: "POST", json: body });
 }

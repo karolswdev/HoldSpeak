@@ -473,3 +473,49 @@ export interface PersonProgramRow extends ProgramRoomRow {
   to_ask: { step_id: string; title: string; kind: string }[];
 }
 
+
+/* ── PG-LANG (PROGRAM-LANGUAGE-2026-10-31 §3.6, §3.8): the Program text ── */
+
+/** `GET /api/programs/{id}/text`: the text with its lamps. */
+export interface ProgramText {
+  program_id: string;
+  text: string;
+  revision: number;
+  version: number;
+}
+
+/** One change row of a text preview or apply (§3.8). */
+export interface TextChange {
+  id: string;
+  op: "add" | "change" | "remove" | "move" | "amend";
+  /** `program`, `step 3`, `R6`. */
+  where: string;
+  field: string;
+  before: string;
+  after: string;
+  say: string;
+  verdict: "allowed" | "refused" | "conflict" | "lowers";
+  lowers_bar: boolean;
+  reason: string | null;
+  code: string | null;
+  /** The line of the proposed text (1-based). */
+  line: number | null;
+}
+
+/** `POST /api/programs/{id}/text`: the rows, and on a real apply the Program. */
+export interface TextApplyAnswer {
+  program_id: string;
+  changes: TextChange[];
+  patch: string;
+  /** The proposed text with each refused hunk put back as it was. */
+  allowed_text: string;
+  applied: boolean;
+  /** The current text (after an apply: the new one). */
+  text: string;
+  revision: number;
+  version: number;
+  refused: number;
+  /** The ids of the rows that lower the bar. */
+  lowers: string[];
+  program?: Program;
+}

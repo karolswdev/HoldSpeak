@@ -48,11 +48,27 @@ import {
   type GraphFlow,
   SurfaceFooter,
   SurfaceWings,
+  TextPane,
+  ChangeWell,
+  DiffRow,
+  type TextPaneLine,
 } from "../../../desk/surface";
 import { ObjectSpeciesGallery } from "../ObjectSpeciesGallery";
 import { DeskComposer } from "../../../desk/components/DeskComposer";
 import "../../../desk/components/delivery.css";
 import { Token } from "../../../desk/surface/Token";
+
+// PG-LANG §11: a Program text with its lamps (window-local; nothing is sent).
+const GALLERY_TEXT: TextPaneLine[] = [
+  { text: "# program text 1", readOnly: true },
+  { text: "program The hub stops stalling", lamp: "Running · 1 of 3 done", tone: "info" },
+  { text: "  > Every route under 100 ms while a meeting records." },
+  { text: "" },
+  { text: "step 1 Indexes", lamp: "Merged #1585 · 41 min", tone: "ok" },
+  { text: "  owns holdspeak/db/schema.py" },
+  { text: "step 2 The fan-out", lamp: "Planned", tone: "idle" },
+  { text: "  after 1 · merge owner" },
+];
 
 const ALL_CHIP_STATES: ChipState[] = [
   "idle", "active", "working", "success", "warning", "failure", "unreachable",
@@ -89,6 +105,8 @@ export function ControlsGallery({ hero }: CoreProps) {
   const [pad, setPad] = useState("");
   const [composerDraft, setComposerDraft] = useState("");
   const [composerPreview, setComposerPreview] = useState("");
+  const [programText, setProgramText] = useState<TextPaneLine[]>(GALLERY_TEXT);
+  const [lowered, setLowered] = useState(false);
   const [steps, setSteps] = useState(16384);
   const [prop, setProp] = useState(0.6);
   const [wing, setWing] = useState("one");
@@ -213,6 +231,20 @@ export function ControlsGallery({ hero }: CoreProps) {
             onAction={() => setComposerPreview(composerDraft.trim())}
           />
           {composerPreview ? <span role="status">Preview kept local: {composerPreview}</span> : null}
+        </div>
+      </SurfaceSection>
+      <SurfaceSection label="Program text and the change well">
+        <div data-specimen="true">
+          <ChangeWell head="Changes from the text" fact="3 changes · 1 refused · 1 lowers the bar"
+            verbs={<><Button dense variant="primary" disabled={!lowered}>Apply 2</Button><Button dense variant="secondary">Not this</Button></>}>
+            <DiffRow index={0} op="change" where="step 2" field="merge" before="level" after="owner" verdict="allowed" />
+            <DiffRow index={1} op="change" where="program" field="control" before="normal" after="yolo" verdict="lowers"
+              pressed={lowered} onPress={setLowered} />
+            <DiffRow index={2} op="change" where="step 1" field="owns" before="schema.py" after="tables.py" verdict="refused"
+              line={5} reason="Step 1 · owns: It is merged." />
+          </ChangeWell>
+          <TextPane label="Gallery program text" lines={programText} onChange={setProgramText}
+            keywords={["program", "step", "owns", "after", "merge"]} />
         </div>
       </SurfaceSection>
       <SurfaceSection label="Lamps and chips">
