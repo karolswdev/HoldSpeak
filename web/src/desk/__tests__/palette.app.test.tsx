@@ -613,11 +613,11 @@ describe("Betterment P4: Search writes the update and lists only verbs that work
 });
 
 describe("W1-DOORS (atlas 2026-10-27): the palette names where a parked app lands", () => {
-  it("the empty deck lists Wallpaper, Notices and Commands by the place they open, and no retired name", async () => {
+  it("the empty deck lists Wallpaper, Reach and Commands by the place they open, and no retired name", async () => {
     await deck();
     const labels = rows().map((o) => o.textContent ?? "");
     expect(labels.some((l) => l.includes("Wallpaper, in Settings ▸ Desk"))).toBe(true);
-    expect(labels.some((l) => l.includes("Notices, in Settings"))).toBe(true);
+    expect(labels.some((l) => l.includes("Reach, in Settings"))).toBe(true);
     expect(labels.some((l) => l.includes("Commands, in Speak"))).toBe(true);
     expect(labels.some((l) => /Change places|Rhythm/.test(l))).toBe(false);
   });
@@ -636,7 +636,7 @@ describe("W1-DOORS (atlas 2026-10-27): the palette names where a parked app land
 });
 
 describe("W6-B (atlas pass 3): exact names and one row per question", () => {
-  it("defect 3: \"Rhythm\" selects Notices, and Enter opens Settings, never Ask", async () => {
+  it("defect 3: \"Rhythm\" selects Reach, and Enter opens Settings, never Ask", async () => {
     // A note that says the words, so an object row is a candidate too.
     useDesk.setState({ items: { ...EMPTY_ITEMS, note: [
       { kind: "note", id: "n-r", title: "Team rhythm", bodyMarkdown: "Our rhythm and how we change places.", tags: [], createdAt: "" } as Note,
@@ -645,7 +645,7 @@ describe("W6-B (atlas pass 3): exact names and one row per question", () => {
     useDesk.setState({ askQuestion } as never);
     const input = await deck();
     await type(input, "Rhythm", 700);
-    expect(top()?.textContent).toContain("Notices, in Settings");
+    expect(top()?.textContent).toContain("Reach, in Settings");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(askQuestion).not.toHaveBeenCalled();
     expect(openedSurfaces.calls).toContainEqual(["configure-settings", "rhythm"]);

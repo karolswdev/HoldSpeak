@@ -92,6 +92,12 @@ class CadenceMixin:
         """First-activity morning push (CAD-5): once per day, after quiet hours, send the
         brief to paired Telegram chats. Off unless the Telegram surface is active."""
         tg = getattr(self.config, "cadence_telegram", None)
+        if tg is not None:
+            # PG-DIRECTION DIR5: one bot; its token and the paired chat are in
+            # the keystore (services/telegram_reach.py), no longer the file.
+            from ..services.telegram_reach import cadence_config
+
+            tg = cadence_config(tg)
         if tg is None or not tg.is_active or not tg.allowed_chat_ids:
             return
         try:
@@ -230,6 +236,12 @@ class CadenceMixin:
         """Deliver due nudges to paired Telegram chats (CAD-4-05) — off unless the
         Telegram surface is enabled + has a token + a paired chat."""
         tg = getattr(self.config, "cadence_telegram", None)
+        if tg is not None:
+            # PG-DIRECTION DIR5: one bot; its token and the paired chat are in
+            # the keystore (services/telegram_reach.py), no longer the file.
+            from ..services.telegram_reach import cadence_config
+
+            tg = cadence_config(tg)
         if tg is None or not tg.is_active or not tg.allowed_chat_ids:
             return
         try:

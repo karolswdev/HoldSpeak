@@ -238,6 +238,76 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
   );
 }
 
+/** Settings ▸ Reach ▸ When to reach you (PG-DIRECTION DIR6; moved from
+ *  Settings ▸ Calls ▸ Phone): a table of kinds × Message · Call · Nothing,
+ *  prefilled by the Control level; a choice is his own word over the
+ *  level's (`calls.phone_reach`, the Phone's reach rules read it). */
+export function ReachYouRows({ reach, level: levelKey, onChanged }: {
+  reach: PhoneStatus["reach"] | undefined; level: string | undefined; onChanged(): void | Promise<unknown>;
+}) {
+  const [chosen, setChosen] = useState<Record<string, ReachChannel>>({});
+  const [busy, setBusy] = useState("");
+  const [refusal, setRefusal] = useState<{ words: string; title: string } | null>(null);
+  const status = { reach } as PhoneStatus;
+  const run = async (key: string, act: () => Promise<void>, failed: (cause: unknown) => { words: string; title: string }) => {
+    setBusy(key);
+    setRefusal(null);
+    try { await act(); } catch (error) {
+      setRefusal(failed(error));
+    } finally { setBusy(""); }
+  };
+  const choose = (kind: string, channel: ReachChannel) => void run(`reach-${kind}`, async () => {
+    const own = { ...ownReach(status), ...chosen, [kind]: channel };
+    setChosen(own);
+    await writeReach(own);
+    await onChanged();
+  }, (cause) => plainFail("Reach you was not saved", cause, "The last choice holds", "Try again"));
+  const followLevel = () => void run("reach-reset", async () => {
+    setChosen({});
+    await writeReach({});
+    await onChanged();
+  }, (cause) => plainFail("Reach you was not saved", cause, "The last choices hold", "Try again"));
+  const level = levelWord(levelKey);
+  const own = { ...ownReach(status), ...chosen };
+  const rows = REACH_KINDS.map((entry) => {
+    const sent = reach?.[entry.kind];
+    return { ...entry, channel: (own[entry.kind] ?? sent?.level_word ?? sent?.word ?? "message") as ReachChannel, own: entry.kind in own };
+  });
+  return (
+    <>
+      {refusal ? <p className="phone-refusal" role="alert" title={refusal.title} data-testid="phone-settings-refusal">{refusal.words}</p> : null}
+      <GadgetGroup material="inset" label="Reach you">
+        <div className="phone-reach" data-testid="phone-reach">
+          <span className="phone-reach-head">When</span>
+          {CHANNELS.map((channel) => <span key={channel.value} className="phone-reach-head" aria-hidden="true">{channel.word}</span>)}
+          {rows.map((row) => (
+            <div key={row.kind} className="phone-reach-line" data-testid="phone-reach-row" data-kind={row.kind}
+              data-channel={row.channel} data-own={row.own || undefined}>
+              <span className="phone-reach-kind">{row.label}{row.note ? <span>{row.note}</span> : null}</span>
+              <MxRadio
+                label={row.label}
+                value={row.channel}
+                onChange={(next) => choose(row.kind, next as ReachChannel)}
+                options={CHANNELS.map((channel) => ({ value: channel.value, label: <span className="phone-reach-word">{channel.word}</span> }))}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="phone-reach-foot">
+          <span data-testid="phone-reach-level">
+            {Object.keys(own).length ? `Your choices over Control: ${level}` : `Set by Control: ${level}`}
+          </span>
+          {Object.keys(own).length ? (
+            <Button variant="ghost" dense loading={busy === "reach-reset"} onClick={followLevel} data-testid="phone-reach-reset">
+              Use the {level} set
+            </Button>
+          ) : null}
+        </div>
+      </GadgetGroup>
+    </>
+  );
+}
+
 export function PhoneSettingsPane() {
   const phone = usePhone(true, false);
   const status = phone.status;
@@ -246,7 +316,6 @@ export function PhoneSettingsPane() {
   const [busy, setBusy] = useState("");
   const [refusal, setRefusal] = useState<{ words: string; title: string } | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const [chosen, setChosen] = useState<Record<string, ReachChannel>>({});
 
   const paired = (status?.devices ?? []).filter((device) => device.state === "paired");
   useEffect(() => {
@@ -275,24 +344,6 @@ export function PhoneSettingsPane() {
     await removePhoneDevice(id);
     await phone.reload();
   }, (cause) => plainFail("The phone was not removed", cause, "It stays paired", "Try again"));
-  const choose = (kind: string, channel: ReachChannel) => void run(`reach-${kind}`, async () => {
-    const own = { ...ownReach(status), ...chosen, [kind]: channel };
-    setChosen(own);
-    await writeReach(own);
-    await phone.reload();
-  }, (cause) => plainFail("Reach you was not saved", cause, "The last choice holds", "Try again"));
-  const followLevel = () => void run("reach-reset", async () => {
-    setChosen({});
-    await writeReach({});
-    await phone.reload();
-  }, (cause) => plainFail("Reach you was not saved", cause, "The last choices hold", "Try again"));
-
-  const level = levelWord(status?.level);
-  const own = { ...ownReach(status), ...chosen };
-  const rows = REACH_KINDS.map((entry) => {
-    const sent = status?.reach?.[entry.kind];
-    return { ...entry, channel: (own[entry.kind] ?? sent?.level_word ?? sent?.word ?? "message") as ReachChannel, own: entry.kind in own };
-  });
 
   return (
     <div className="phone-settings" data-testid="phone-settings" aria-busy={phone.loading || undefined}>
@@ -326,40 +377,18 @@ export function PhoneSettingsPane() {
         </div>
       </GadgetGroup>
       {status ? <PushGroup devices={paired} onChanged={() => void phone.reload()} /> : null}
+      {/* PG-DIRECTION DIR6 (ruled 2026-10-31): Reach you moved to Settings ▸ Reach. */}
       <GadgetGroup material="inset" label="Reach you">
-        <div className="phone-reach" data-testid="phone-reach">
-          <span className="phone-reach-head">When</span>
-          {CHANNELS.map((channel) => <span key={channel.value} className="phone-reach-head" aria-hidden="true">{channel.word}</span>)}
-          {rows.map((row) => (
-            <div key={row.kind} className="phone-reach-line" data-testid="phone-reach-row" data-kind={row.kind}
-              data-channel={row.channel} data-own={row.own || undefined}>
-              <span className="phone-reach-kind">{row.label}{row.note ? <span>{row.note}</span> : null}</span>
-              <MxRadio
-                label={row.label}
-                value={row.channel}
-                onChange={(next) => choose(row.kind, next as ReachChannel)}
-                options={CHANNELS.map((channel) => ({ value: channel.value, label: <span className="phone-reach-word">{channel.word}</span> }))}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="phone-reach-foot">
-          <span data-testid="phone-reach-level">
-            {Object.keys(own).length ? `Your choices over Control: ${level}` : `Set by Control: ${level}`}
-          </span>
-          {Object.keys(own).length ? (
-            <Button variant="ghost" dense loading={busy === "reach-reset"} onClick={followLevel} data-testid="phone-reach-reset">
-              Use the {level} set
-            </Button>
-          ) : null}
-        </div>
+        <Row testId="phone-reach-moved" name="When the desk reaches you"
+          verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "reach")}
+            data-testid="phone-reach-open">Open Reach</Button>} />
       </GadgetGroup>
       <GadgetGroup material="inset" label="Quiet hours">
         <Row testId="phone-quiet"
           name={quietWords(status?.quiet_hours) || "22:00 to 08:00"}
           fact={status?.quiet_hours?.now ? "Quiet now. Messages wait. Only urgent calls ring." : "Messages wait. Only urgent calls ring."}
           verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "rhythm")}
-            data-testid="phone-quiet-rhythm">Change in Rhythm</Button>} />
+            data-testid="phone-quiet-rhythm">Change in Reach</Button>} />
         <Row testId="phone-urgent"
           name="Urgent calls ring through Do Not Disturb"
           fact={status?.urgent_dnd ? "A security or data-loss call rings through" : "Until Apple allows it, an urgent call rings once more after 1 min"}

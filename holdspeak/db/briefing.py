@@ -81,6 +81,10 @@ class BriefingStore:
                 if isinstance(answer, dict) and answer.get("choice") != "later":
                     continue
                 pages[ref] = {"package_id": package["id"], "expires_at": package["expires_at"]}
+                # PG-DIRECTION DIR5: where the package went last ({via, at}).
+                sent = [row for row in package["sent"] if isinstance(row, dict) and row.get("via")]
+                if sent:
+                    pages[ref]["sent"] = {"via": sent[-1]["via"], "at": sent[-1].get("at")}
         return pages
 
     def answer(self, package_id: str, answers: Mapping[str, Any]) -> None:
@@ -93,5 +97,66 @@ class BriefingStore:
             conn.execute("UPDATE briefing_packages SET revoked_at=? WHERE id=? AND revoked_at IS NULL",
                          (at, package_id))
 
+    def set_sent(self, package_id: str, sent: list[Mapping[str, Any]]) -> None:
+        """DIR5: where the package went (``[{via, at, message_id?, chat?}]``)."""
+        with self._db._connection() as conn:
+            conn.execute("UPDATE briefing_packages SET sent_json=? WHERE id=?",
+                         (json.dumps([dict(row) for row in sent], ensure_ascii=False), package_id))
 
-__all__ = ["BriefingStore"]
+    def sent_since(self, since: str) -> list[dict[str, Any]]:
+        """The packages made after ``since`` that went to a channel, newest first."""
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                f"SELECT {_COLUMNS} FROM briefing_packages WHERE created_at > ? AND sent_json != '[]' "
+                "ORDER BY created_at DESC", (since,),
+            ).fetchall()
+        return [_row(row) for row in rows]
+
+
+class HeldLaterStore:
+    """``held_later`` (PG-DIRECTION DIR4): one row per deferred held item."""
+
+    def __init__(self, db: Any) -> None:
+        self._db = db
+
+    def put(self, *, ref: str, until: str, via: str, at: str, package_id: Optional[str] = None) -> None:
+        with self._db._connection() as conn:
+            conn.execute(
+                "INSERT INTO held_later (ref, until, via, at, package_id) VALUES (?, ?, ?, ?, ?) "
+                "ON CONFLICT(ref) DO UPDATE SET until=excluded.until, via=excluded.via, at=excluded.at, "
+                "package_id=excluded.package_id",
+                (ref, until, via, at, package_id),
+            )
+
+    def get(self, ref: str) -> Optional[dict[str, Any]]:
+        with self._db._connection() as conn:
+            row = conn.execute("SELECT ref, until, via, at, package_id FROM held_later WHERE ref=?",
+                               (ref,)).fetchone()
+        return dict(row) if row is not None else None
+
+    def like(self, ref_prefix: str) -> dict[str, dict[str, Any]]:
+        """``{ref: row}`` for the rows whose ref starts with ``ref_prefix``."""
+        like = ref_prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        with self._db._connection() as conn:
+            rows = conn.execute("SELECT ref, until, via, at, package_id FROM held_later WHERE ref LIKE ? ESCAPE '\\'",
+                                (f"{like}%",)).fetchall()
+        return {str(row["ref"]): dict(row) for row in rows}
+
+    def due(self, now: str) -> list[dict[str, Any]]:
+        """The rows whose next touch has come."""
+        with self._db._connection() as conn:
+            rows = conn.execute("SELECT ref, until, via, at, package_id FROM held_later WHERE until <= ? "
+                                "ORDER BY until", (now,)).fetchall()
+        return [dict(row) for row in rows]
+
+    def drop(self, ref: str) -> None:
+        with self._db._connection() as conn:
+            conn.execute("DELETE FROM held_later WHERE ref=?", (ref,))
+
+    def drop_like(self, ref_prefix: str) -> None:
+        like = ref_prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        with self._db._connection() as conn:
+            conn.execute("DELETE FROM held_later WHERE ref LIKE ? ESCAPE '\\'", (f"{like}%",))
+
+
+__all__ = ["BriefingStore", "HeldLaterStore"]

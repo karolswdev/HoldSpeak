@@ -173,9 +173,13 @@ def test_only_the_owner_makes_or_revokes_and_a_bad_ref_is_refused(tmp_path) -> N
         with pytest.raises(BriefingRefused) as refused:
             briefing.make(OWNER, refs)
         assert refused.value.code == code
-    with pytest.raises(BriefingRefused) as telegram:
+    with pytest.raises(BriefingRefused) as phone:
+        briefing.make(OWNER, [_ref(pid, item)], send="phone")
+    assert phone.value.code == "send_unavailable"
+    # DIR5: send telegram needs a paired chat (this HOME has none).
+    with pytest.raises(Exception) as telegram:
         briefing.make(OWNER, [_ref(pid, item)], send="telegram")
-    assert telegram.value.code == "send_unavailable"
+    assert telegram.value.code == "telegram_not_paired"
     made = briefing.make(OWNER, [_ref(pid, item)])
     with pytest.raises(BriefingRefused):
         briefing.revoke(AGENT, made["id"])

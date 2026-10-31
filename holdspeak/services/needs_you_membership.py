@@ -361,6 +361,9 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
                 **({"page": dict(item["page"])} if item.get("page") else {}),
             },
             "personId": item.get("for_person_id") or None,
+            # PG-DIRECTION DIR4: he said Later; listed in the Later group and
+            # not counted until the next touch ({until, via}).
+            **({"later": dict(item["later"])} if item.get("later") else {}),
         })
     return rows
 
@@ -1391,7 +1394,10 @@ def compute_needs_you(
     for item in muted_items:
         item["counted"] = False
     for item in unmuted_items:
-        item["counted"] = not item.get("foldedInto") and counts_in_number(item, clock.date())
+        # PG-DIRECTION DIR4: a row he deferred is listed, not counted, until
+        # its next touch (the "waiting" rule's shape).
+        item["counted"] = (not item.get("foldedInto") and not item.get("later")
+                           and counts_in_number(item, clock.date()))
     counted_items = [item for item in unmuted_items if item["counted"]]
 
     blockers = [

@@ -1,0 +1,34 @@
+/* Settings ▸ Reach (PG-DIRECTION DIR6): the label · state · verb grid of the
+   Accounts paper; the pairing code opens in place under its row. */
+.desk-next .reach-settings { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.desk-next .reach-telegram-fact { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.desk-next .reach-fact { font: 400 12px / 1.4 var(--font-sans); color: var(--wb-muted); }
+.desk-next .reach-refusal { margin: 0; padding: 0 8px; font: 500 13px / 1.4 var(--font-sans); color: var(--wb-danger-ink); }
+.desk-next .reach-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 8px 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 8px;
+  background: var(--wb-steel-2);
+}
+.desk-next .reach-pair-say { flex: 1 1 220px; min-width: 0; font: 500 14px / 1.4 var(--font-sans); color: var(--wb-ink); }
+.desk-next .reach-pair-say code {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font: 600 15px / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--wb-ink);
+  background: var(--wb-paper);
+}
+.desk-next .reach-token { border-top: 1px solid var(--wb-rule-soft); }
+.desk-next .reach-field { display: flex; align-items: flex-start; gap: 6px; min-width: 0; padding: 2px 8px 8px; }
+.desk-next .reach-field > .gadget-string { flex: 1 1 auto; min-width: 0; max-width: 520px; }
+.desk-next .reach-field > .btn { flex: none; }
+@container surface (max-width: 520px) {
+  .desk-next .reach-field { flex-wrap: wrap; }
+  .desk-next .reach-field > .gadget-string { flex-basis: 100%; max-width: none; }
+}

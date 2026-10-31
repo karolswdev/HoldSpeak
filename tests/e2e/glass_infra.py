@@ -293,6 +293,9 @@ def _boot(
     monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")
     # Phone (2026-10-28): no phone route, no ring timer, no push.
     monkeypatch.setenv("HOLDSPEAK_PHONE", "off")
+    # PG-DIRECTION DIR5 (2026-10-31): no Telegram long poll, no send, no
+    # token move from the config file.
+    monkeypatch.setenv("HOLDSPEAK_TELEGRAM", "off")
     # Recordings (2026-10-28): no ffmpeg run, no Tailscale read, no keep sweep.
     monkeypatch.setenv("HOLDSPEAK_RECORDINGS", "off")
     # Live slice 3 (2026-10-28): the ready sheet's microphone check opens no
