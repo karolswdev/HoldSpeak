@@ -430,6 +430,30 @@
 .pg-draft-owns { display: flex; gap: 4px; min-width: 0; overflow: hidden; }
 .pg-draft-idle { display: inline-flex; align-items: center; gap: 6px; color: var(--wb-ink); font: 400 12px / 1.3 var(--font-sans); white-space: nowrap; }
 .pg-draft-brief { padding: 6px 12px 8px 42px; }
+/* LANG7: a drafted step's size lamp (`7k of 32k`; red when it does not fit). */
+.pg-size {
+  flex: 0 0 auto;
+  align-self: center;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pg-size[data-fits="no"] { color: var(--wb-danger-ink); font-weight: 600; }
+.pg-plan-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  margin-top: 4px;
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+}
+/* The drafted rows are born one after the other (§9.7). */
+@media (prefers-reduced-motion: no-preference) {
+  .kit-listrow.pg-draft[data-landed="born"] { animation-delay: calc(var(--i, 0) * 60ms); }
+}
 
 /* ── the place line in the status bar (§9b; the Note's place line) ── */
 .desk-next .kit-statusbar .btn.pg-place {

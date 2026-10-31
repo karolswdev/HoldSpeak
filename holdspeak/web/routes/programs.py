@@ -44,6 +44,9 @@ POST   /api/programs/{id}/text                     {text, dry_run (default true;
 GET    /api/programs/{id}/shape                    LANG3: the engine that shapes {engine, capability} (null: none)
 POST   /api/programs/{id}/shape                    LANG3 {sentence, apply?}: one engine call; the text_apply answer
                                                    + {say, question, engine, latency_ms, proposed_text, base, decision}
+POST   /api/programs/{id}/plan/draft               LANG6 {goal?, template?, budget?; Split: text, split}: one engine
+                                                   call; the text_apply answer, each row source "plan" and an added
+                                                   step's size, + {say, counts, sizes, budget, engine, latency_ms}
 
 Every handler runs the service off the event loop (``run_in_threadpool``).
 """
@@ -292,6 +295,13 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         principal, body = _principal(request), await _body(request)
         return await _call(lambda: _service().shape(principal, program_id, body.get("sentence"),
                                                     apply=body.get("apply") is True))
+
+    @router.post("/api/programs/{program_id}/plan/draft")
+    async def api_programs_plan_draft(program_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().plan_draft(
+            principal, program_id, goal=body.get("goal"), template=body.get("template"), budget=body.get("budget"),
+            text=body.get("text"), split=body.get("split")))
 
     @router.post("/api/programs/{program_id}/close")
     async def api_programs_close(program_id: str, request: Request) -> Any:

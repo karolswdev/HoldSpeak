@@ -13,12 +13,12 @@ import { CheckGadget, CycleGadget, DotWord, StateChip, StringGadget } from "../s
 import { Token } from "../surface/Token";
 import { openRef } from "../openObject";
 import { spriteUrl } from "../sprites";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { afterWords, agentKey, mergedWords, runsOnWords, stationsOf, stepChip, stepMetWords, stepTone, stepWord } from "./model";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { StationTrack } from "./StationTrack";
 import { stateWords } from "../surface/words";
-import type { PlanStep, ProgramStep } from "./types";
+import type { PlanSize, PlanStep, ProgramStep } from "./types";
 
 function quote(line: string | undefined | null): string {
   return line ? `“${line}”` : "";
@@ -151,6 +151,8 @@ export function DraftStepRow({
   count,
   selected,
   engineLabel,
+  size,
+  landed,
   onSelect,
   onChange,
 }: {
@@ -158,6 +160,10 @@ export function DraftStepRow({
   step: PlanStep;
   count: number;
   selected?: boolean;
+  /** PG-LANG §5.4 (LANG7): the step's size by rule (`7k of 32k`). */
+  size?: PlanSize | null;
+  /** PG-LANG §9.7: a step the applied draft added (born) or changed. */
+  landed?: "born" | "changed";
   /** The engine's name for a pi step (from the Program's wire). */
   engineLabel?: string;
   onSelect(): void;
@@ -171,6 +177,7 @@ export function DraftStepRow({
   const choice: RunsOnChoice = { profile: step.profile || "claude-default", engine: step.engine ?? null };
   return (
     <li className="kit-listrow pg-step pg-draft" data-selected={selected ? "" : undefined} data-testid="programs-draft-step"
+      data-landed={landed} style={landed ? ({ "--i": index } as CSSProperties) : undefined}
       onFocusCapture={onSelect}>
       <span className="pg-step-n" aria-hidden="true">{ordinal}</span>
       <span className="pg-draft-title">
@@ -179,6 +186,12 @@ export function DraftStepRow({
           inputProps={{ onBlur: () => onChange(step, true) }} />
       </span>
       <span className="pg-draft-owns">
+        {size ? (
+          <span className="pg-size" data-fits={size.fits === false ? "no" : size.fits ? "yes" : undefined}
+            title={size.fits === false ? size.words : undefined} data-testid="programs-draft-size">
+            {size.fits === false ? size.words.replace(/^Too big for .* · /, "") : size.words}
+          </span>
+        ) : null}
         {(step.owns ?? []).slice(0, 2).map((path) => <Token key={path} code>{path}</Token>)}
       </span>
       <span className="pg-draft-runs">

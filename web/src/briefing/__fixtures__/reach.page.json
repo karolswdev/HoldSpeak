@@ -4,19 +4,19 @@
       {
         "changed": [
           {
-            "at": "2026-10-31T20:32:31.934923+00:00",
-            "clock": "16:32",
-            "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-e25d5e891d07/.tmp/program-check/step-e25d5e891d07/20261031T203231Z.log"
+            "at": "2026-10-31T21:29:44.954504+00:00",
+            "clock": "17:29",
+            "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
           },
           {
-            "at": "2026-10-31T20:32:31.810503+00:00",
-            "clock": "16:32",
+            "at": "2026-10-31T21:29:44.809170+00:00",
+            "clock": "17:29",
             "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
           },
           {
-            "at": "2026-10-31T20:32:31.723096+00:00",
-            "clock": "16:32",
-            "line": "New commit 33f01b0f; the check runs"
+            "at": "2026-10-31T21:29:44.708284+00:00",
+            "clock": "17:29",
+            "line": "New commit 67147874; the check runs"
           }
         ],
         "choices": [
@@ -61,13 +61,13 @@
           "via": "page",
           "words": "Go on · decided here · 02:30"
         },
-        "program_id": "program-0f2d78ec0968",
+        "program_id": "program-73f237f0d806",
         "program_title": "Overnight on the home box",
         "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
-        "ref": "program:program-0f2d78ec0968:step-e25d5e891d07:core",
-        "since": "2026-10-31T20:32:32.051304+00:00",
+        "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
+        "since": "2026-10-31T21:29:45.076884+00:00",
         "state": "decided",
-        "step_id": "step-e25d5e891d07",
+        "step_id": "step-f2ff5de6b5c0",
         "step_ordinal": 1,
         "step_title": "Store the stall reason"
       }
@@ -99,7 +99,7 @@
       "expires_words": "Expires in 24 h",
       "head": "Overnight on the home box · step 1",
       "hub": "the rig hub",
-      "id": "pkg-bbeb1900e3ca",
+      "id": "pkg-4577b05e8a7f",
       "kind": "item"
     }
   },
@@ -124,19 +124,19 @@
     "item": {
       "changed": [
         {
-          "at": "2026-10-31T20:32:31.934923+00:00",
-          "clock": "16:32",
-          "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-e25d5e891d07/.tmp/program-check/step-e25d5e891d07/20261031T203231Z.log"
+          "at": "2026-10-31T21:29:44.954504+00:00",
+          "clock": "17:29",
+          "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
         },
         {
-          "at": "2026-10-31T20:32:31.810503+00:00",
-          "clock": "16:32",
+          "at": "2026-10-31T21:29:44.809170+00:00",
+          "clock": "17:29",
           "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
         },
         {
-          "at": "2026-10-31T20:32:31.723096+00:00",
-          "clock": "16:32",
-          "line": "New commit 33f01b0f; the check runs"
+          "at": "2026-10-31T21:29:44.708284+00:00",
+          "clock": "17:29",
+          "line": "New commit 67147874; the check runs"
         }
       ],
       "choices": [
@@ -181,13 +181,13 @@
         "via": "page",
         "words": "Go on · decided here · 02:30"
       },
-      "program_id": "program-0f2d78ec0968",
+      "program_id": "program-73f237f0d806",
       "program_title": "Overnight on the home box",
       "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
-      "ref": "program:program-0f2d78ec0968:step-e25d5e891d07:core",
-      "since": "2026-10-31T20:32:32.051304+00:00",
+      "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
+      "since": "2026-10-31T21:29:45.076884+00:00",
       "state": "decided",
-      "step_id": "step-e25d5e891d07",
+      "step_id": "step-f2ff5de6b5c0",
       "step_ordinal": 1,
       "step_title": "Store the stall reason"
     }
@@ -201,19 +201,19 @@
     "item": {
       "changed": [
         {
-          "at": "2026-10-31T20:32:31.934923+00:00",
-          "clock": "16:32",
-          "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-e25d5e891d07/.tmp/program-check/step-e25d5e891d07/20261031T203231Z.log"
+          "at": "2026-10-31T21:29:44.954504+00:00",
+          "clock": "17:29",
+          "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
         },
         {
-          "at": "2026-10-31T20:32:31.810503+00:00",
-          "clock": "16:32",
+          "at": "2026-10-31T21:29:44.809170+00:00",
+          "clock": "17:29",
           "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
         },
         {
-          "at": "2026-10-31T20:32:31.723096+00:00",
-          "clock": "16:32",
-          "line": "New commit 33f01b0f; the check runs"
+          "at": "2026-10-31T21:29:44.708284+00:00",
+          "clock": "17:29",
+          "line": "New commit 67147874; the check runs"
         }
       ],
       "choices": [
@@ -259,13 +259,13 @@
         "via": "page",
         "words": "Later · back at 13:00"
       },
-      "program_id": "program-0f2d78ec0968",
+      "program_id": "program-73f237f0d806",
       "program_title": "Overnight on the home box",
       "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
-      "ref": "program:program-0f2d78ec0968:step-e25d5e891d07:core",
-      "since": "2026-10-31T20:32:32.051304+00:00",
+      "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
+      "since": "2026-10-31T21:29:45.076884+00:00",
       "state": "later",
-      "step_id": "step-e25d5e891d07",
+      "step_id": "step-f2ff5de6b5c0",
       "step_ordinal": 1,
       "step_title": "Store the stall reason"
     }
@@ -273,16 +273,16 @@
   "log": {
     "kind": "code",
     "pane": "log",
-    "text": "program-check: commit 33f01b0f7b4e4dd63db799ebf36e54d5efb5cda9\nprogram-check: tree clean\nprogram-check: command sh /repo/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
+    "text": "program-check: commit 6714787419bc3170b0726c387e0bd17cb401d4e9\nprogram-check: tree clean\nprogram-check: command sh /repo/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
   },
   "made": {
     "expires_at": "2026-11-01T06:30:00+00:00",
     "expires_clock": "01:30",
-    "id": "pkg-bbeb1900e3ca",
+    "id": "pkg-4577b05e8a7f",
     "link": null,
     "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
     "refs": [
-      "program:program-0f2d78ec0968:step-e25d5e891d07:core"
+      "program:program-73f237f0d806:step-f2ff5de6b5c0:core"
     ],
     "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
   },
@@ -291,19 +291,19 @@
       {
         "changed": [
           {
-            "at": "2026-10-31T20:32:31.934923+00:00",
-            "clock": "16:32",
-            "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-e25d5e891d07/.tmp/program-check/step-e25d5e891d07/20261031T203231Z.log"
+            "at": "2026-10-31T21:29:44.954504+00:00",
+            "clock": "17:29",
+            "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
           },
           {
-            "at": "2026-10-31T20:32:31.810503+00:00",
-            "clock": "16:32",
+            "at": "2026-10-31T21:29:44.809170+00:00",
+            "clock": "17:29",
             "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
           },
           {
-            "at": "2026-10-31T20:32:31.723096+00:00",
-            "clock": "16:32",
-            "line": "New commit 33f01b0f; the check runs"
+            "at": "2026-10-31T21:29:44.708284+00:00",
+            "clock": "17:29",
+            "line": "New commit 67147874; the check runs"
           }
         ],
         "choices": [
@@ -341,13 +341,13 @@
         "kind": "core",
         "kind_words": "Core question",
         "level": "YOLO",
-        "program_id": "program-0f2d78ec0968",
+        "program_id": "program-73f237f0d806",
         "program_title": "Overnight on the home box",
         "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
-        "ref": "program:program-0f2d78ec0968:step-e25d5e891d07:core",
-        "since": "2026-10-31T20:32:32.051304+00:00",
+        "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
+        "since": "2026-10-31T21:29:45.076884+00:00",
         "state": "open",
-        "step_id": "step-e25d5e891d07",
+        "step_id": "step-f2ff5de6b5c0",
         "step_ordinal": 1,
         "step_title": "Store the stall reason"
       }
@@ -379,7 +379,7 @@
       "expires_words": "Expires in 24 h",
       "head": "Overnight on the home box · step 1",
       "hub": "the rig hub",
-      "id": "pkg-bbeb1900e3ca",
+      "id": "pkg-4577b05e8a7f",
       "kind": "item"
     }
   },

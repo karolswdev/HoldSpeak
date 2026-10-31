@@ -1143,8 +1143,22 @@ class ProgramService:
             "history": history_of(step),
             # PG-LANG §5.4: the step's context budget (None: the Program's).
             "budget_tokens": step.get("budget_tokens"),
+            # PG-LANG §5.4, §12 (LANG6): a step not handed yet carries its size
+            # by rule ({tokens, budget, share, fits, words}); the lamp "18k of 32k".
+            "estimate": self._estimate(program, step, profile, engine_id, requirements)
+            if step.get("state") in ("planned", "ready") else None,
             **self._step_requirements_wire(program, step, requirements, his, steps_by_id),
         }
+
+    def _estimate(self, program: Mapping[str, Any], step: Mapping[str, Any], profile: Optional[str],
+                  engine_id: Optional[str], requirements: Optional[list[dict[str, Any]]]) -> Optional[dict[str, Any]]:
+        from .program_sizing import step_estimate
+
+        try:
+            return step_estimate(self, program, step, profile=profile, engine_id=engine_id, requirements=requirements)
+        except Exception as exc:  # a size is a lamp; it never fails the read
+            log.warning(f"program step estimate failed: {exc}")
+            return None
 
     def _step_requirements_wire(self, program: Mapping[str, Any], step: Mapping[str, Any],
                                 requirements: Optional[list[dict[str, Any]]], his: Optional[set[str]],
@@ -3082,6 +3096,15 @@ class ProgramService:
         from .program_shaper import shape_program
 
         return shape_program(self, principal, program_id, sentence, apply=apply)
+
+    def plan_draft(self, principal: Any, program_id: str, *, goal: Any = None, template: Any = None,
+                   budget: Any = None, text: Any = None, split: Any = None) -> dict[str, Any]:
+        """PG-LANG LANG6: a goal becomes a drafted text, as change rows
+        (program_planner); nothing is written until ``text_apply``."""
+        from .program_planner import plan_draft
+
+        return plan_draft(self, principal, program_id, goal=goal, template=template, budget=budget, text=text,
+                          split=split)
 
     def shape_engine(self, principal: Any, program_id: str) -> dict[str, Any]:
         """The engine the shaping bar names (``engine: None``: none is set)."""

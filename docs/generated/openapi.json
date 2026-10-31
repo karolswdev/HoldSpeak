@@ -23534,6 +23534,45 @@
         "summary": "Api Programs Plan"
       }
     },
+    "/api/programs/{program_id}/plan/draft": {
+      "post": {
+        "operationId": "api_programs_plan_draft_api_programs__program_id__plan_draft_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Plan Draft Api Programs  Program Id  Plan Draft Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Programs Plan Draft"
+      }
+    },
     "/api/programs/{program_id}/proposals/{proposal_id}/decide": {
       "post": {
         "operationId": "api_programs_proposal_decide_api_programs__program_id__proposals__proposal_id__decide_post",
