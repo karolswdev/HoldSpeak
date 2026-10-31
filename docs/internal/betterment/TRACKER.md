@@ -300,6 +300,26 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | REQ12 | The shot pullout and the evidence thumbnail | Open (FACES lane) |  |
 | REQ13 | The documents | Built (PG-REQ PR) | `docs/programs.md`, the skill, RECIPE, UX-CANON, STATUS. |
 
+**PG-LANG** (open, 15 slices LANG1–LANG15, lanes HUB/FACES/DOCS, a PR per slice in the fast cycle; first slice on his desk = LANG1 + LANG2): the Program text (a line view that round-trips with the tables), shaping by sentence and voice, planning inference, interview rounds, sizing for small-context engines, the Dreaming template, Delivery Workbench at link and Done only, the SDK; design `programs/PROGRAM-LANGUAGE-2026-10-31.md`, canvas `programs/canvases/program-language-2026-10-31.html` (shaping S-A, rounds R-A), journeys `programs/PROGRAM-JOURNEYS-2026-10-31.md`.
+
+| Slice | What | State | Note |
+|---|---|---|---|
+| LANG1 | The text: parse, print, diff; `program.text` get and apply with the shown diff; refusals | Open | First slice. |
+| LANG2 | The Text view beside the board, TextPane, ChangeWell and DiffRow in the kit | Open | First slice. |
+| LANG3 | Shaping: quick forms, `program.shape` on `agent.plan`, the guard, YOLO apply and Overturn | Open |  |
+| LANG4 | The shaping bar (typed) and the landing | Open |  |
+| LANG5 | Voice: the `program` grammar, the call's held `program.shape` | Open |  |
+| LANG6 | Planning: `program.draft`; Run as a program plans | Open |  |
+| LANG7 | The planning draft face | Open |  |
+| LANG8 | Sizing: `budget`, the estimate, `step_too_big`, the split | Open |  |
+| LANG9 | Interview rounds, hub | Open |  |
+| LANG10 | The round strip and the question row | Open |  |
+| LANG11 | The Measure kind; walk lines on Your word | Open |  |
+| LANG12 | Dreaming: template, night, within, backlog, digest | Open |  |
+| LANG13 | Delivery Workbench: link and the Done PR | Open |  |
+| LANG14 | The SDK: Python client and `holdspeak program` CLI | Open |  |
+| LANG15 | The documents | Open |  |
+
 ## Phone (`phone/RECIPE.md`): 0 of 16
 
 | Slice | What | State | Note |
