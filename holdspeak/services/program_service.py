@@ -261,6 +261,63 @@ def _live(steps: Iterable[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
     return [step for step in steps if step.get("state") not in CLOSED_STATES and step.get("state") != "failed"]
 
 
+def history_of(step: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+    """PG17: the merged PR an imported step stands for (``facts.history``),
+    else ``None``. No agent runs such a step; the runner never moves it."""
+    found = (step.get("facts") or {}).get("history")
+    return dict(found) if isinstance(found, Mapping) and found.get("pr_number") else None
+
+
+def _history_input(raw: Any, index: int) -> Optional[dict[str, Any]]:
+    """Validate a plan step's ``history`` (pr_number and merged_at)."""
+    from datetime import datetime, timezone
+
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping):
+        raise ProgramRefused("history_invalid", f"Step {index}: history is an object.", status=400)
+    try:
+        number = int(raw.get("pr_number"))
+    except (TypeError, ValueError):
+        number = 0
+    if number < 1:
+        raise ProgramRefused("history_invalid", f"Step {index}: history needs a pr_number.", status=400)
+    stamp = str(raw.get("merged_at") or "").strip()
+    try:
+        merged = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        merged = None
+    if not stamp or merged is None:
+        raise ProgramRefused("history_invalid", f"Step {index}: history needs merged_at (ISO 8601).", status=400)
+    merged = (merged if merged.tzinfo else merged.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
+    url = str(raw.get("pr_url") or "").strip() or None
+    head = str(raw.get("head_commit") or "").strip() or None
+    return {"pr_number": number, "pr_url": url, "merged_at": merged.isoformat().replace("+00:00", "Z"),
+            "head_commit": head}
+
+
+def history_words(steps: Iterable[Mapping[str, Any]]) -> Optional[dict[str, Any]]:
+    """PG17: ``Merged 15 PRs · 28 Oct to 29 Oct`` for the imported steps."""
+    from datetime import datetime
+
+    stamps = sorted(str(item["merged_at"]) for item in (history_of(step) for step in steps) if item)
+    if not stamps:
+        return None
+
+    def day(value: str) -> str:
+        try:
+            at = datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone()
+        except ValueError:
+            return value[:10]
+        return f"{at.day} {at.strftime('%b')}"
+
+    first, last = day(stamps[0]), day(stamps[-1])
+    count = len(stamps)
+    span = first if first == last else f"{first} to {last}"
+    return {"prs": count, "first": stamps[0], "last": stamps[-1],
+            "words": f"Merged {count} PR{'s' if count != 1 else ''} · {span}"}
+
+
 def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     """What only he can do on this Program, one item per press.
 
@@ -607,7 +664,11 @@ class ProgramService:
         out = {"moved": 0, "running": 0, "waiting": 0, "done": 0, "merged": 0}
         for program in self.store.list_programs():
             steps = self.store.list_steps(program["id"])
-            if not (today(program.get("updated_at")) or any(today(step.get("updated_at")) for step in steps)):
+            # PG17: an imported step moved when it merged, not when it was
+            # written; a Program of imported steps only moves with them.
+            imported = bool(steps) and all(history_of(step) for step in steps)
+            if not ((today(program.get("updated_at")) and not imported) or any(
+                    today(step.get("ended_at") if history_of(step) else step.get("updated_at")) for step in steps)):
                 continue
             out["moved"] += 1
             state = program_state(program, steps)
@@ -651,9 +712,13 @@ class ProgramService:
             "last_checkpoint": last,
             "in_state_seconds": _seconds_between(program["updated_at"]),
         }
+        history = history_words(steps)
+        if history:
+            summary["history"] = history
         if state == "done":
             ended = max((str(step.get("ended_at") or "") for step in steps), default="") or program["updated_at"]
-            summary["done_in"] = duration_words(_seconds_between(program["created_at"], ended))
+            began = min(str(program["created_at"]), history["first"]) if history else program["created_at"]
+            summary["done_in"] = duration_words(_seconds_between(began, ended))
         return summary
 
     def _ordinal_finished(self, steps: Iterable[Mapping[str, Any]], ordinal: int) -> bool:
@@ -732,6 +797,7 @@ class ProgramService:
             "limit": {key: limit.get(key) for key in ("until", "words", "rule", "line", "share", "next", "waiting",
                                                        "profile", "seen_at", "auto_at")} if limit and state == "limited" else None,
             "handoffs": [dict(row) for row in step.get("handoffs") or []],
+            "history": history_of(step),
         }
 
     def _place(self, program: Mapping[str, Any]) -> dict[str, Any]:
@@ -1162,7 +1228,10 @@ class ProgramService:
         ``after`` (ordinals), ``profile``, ``engine``, ``prefer_idle``,
         ``effort``, ``race``, ``gate_check``, ``gate_review``
         (none|agent|person), ``review_depth``, ``gate_merge``, ``origin_ref``,
-        ``for_person_id``. ``size: auto`` sets effort by rule."""
+        ``for_person_id``, ``history`` (PG17: ``pr_number``, ``merged_at``,
+        ``pr_url``, ``head_commit``: work that merged already; it is written
+        Merged, no agent runs it). ``size: auto`` sets effort by rule. A
+        Program whose steps are all history is Done at once."""
         from ..program_templates import get_template
 
         program = self._program(program_id)
@@ -1225,6 +1294,7 @@ class ProgramService:
             merge = _GATE_MERGE_ALIASES.get(merge, merge)
             if merge not in GATE_MERGE:
                 raise ProgramRefused("gate_merge_invalid", f"Step {index}: merge is level, owner or none.", status=400)
+            history = _history_input(raw.get("history"), index)
             made.append({
                 "id": _new_id("step"), "program_id": program["id"], "ordinal": ordinal, "title": title,
                 "brief_markdown": brief, "owns": owns, "after": after, "profile": profile, "engine": engine,
@@ -1240,14 +1310,34 @@ class ProgramService:
                 "started_at": None, "ended_at": None, "updated_at": now,
                 "runs_on": listed if len(listed) > 1 else [], "handoffs": [],
             })
+            if history:
+                # PG17: the merged PR it stands for; no worktree, no hand,
+                # no checkpoint of its own; the runner never moves it.
+                made[-1].update({
+                    "state": "merged", "pr_number": history["pr_number"], "pr_url": history["pr_url"],
+                    "head_commit": history["head_commit"], "ended_at": history["merged_at"],
+                    "facts": {"history": history},
+                })
+        kept = [] if replace else existing
+        imported = [step for step in made if history_of(step)]
+        all_history = bool(made) and all(history_of(step) for step in [*kept, *made])
         with _LOCK:
             if replace:
                 for step in existing:
                     self.store.delete_step(step["id"])
+            if all_history:
+                # Every step merged already: the Program is Done, closed at
+                # its last merge.
+                for step in made:
+                    step["state"] = "done"
+                program["state"] = "done"
+                program["closed_at"] = max(str(step["ended_at"]) for step in [*kept, *made])
             for step in made:
                 self.store.save_step(step)
-            self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent",
-                             f"{'Planned' if replace else 'Added'} {len(made)} step{'s' if len(made) != 1 else ''}")
+            line = f"{'Planned' if replace else 'Added'} {len(made)} step{'s' if len(made) != 1 else ''}"
+            if imported:
+                line += f"; imported {len(imported)} merged PR{'s' if len(imported) != 1 else ''}"
+            self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent", line)
             self._touch(program)
             self.changed(program["id"], verb="plan")
         return self.get(principal, program["id"])
@@ -1594,6 +1684,7 @@ class ProgramService:
             raise ProgramRefused("program_not_finished", "Steps still run; park them or wait.")
         with _LOCK:
             program["closed_at"] = self._clock()
+            self._close_history(program)
             self._touch(program)
             self._checkpoint(program, None, "owner", "Closed the program")
             self.changed(program["id"], verb="close")
@@ -1955,6 +2046,14 @@ class ProgramService:
             self._checkpoint(program, step, by, line)
         return step
 
+    def _close_history(self, program: Mapping[str, Any]) -> None:
+        """PG17: the Program closed; its imported steps go Merged → Done (the
+        runner moves only live steps)."""
+        for step in self.store.list_steps(program["id"]):
+            if step.get("state") == "merged" and history_of(step):
+                step["state"] = "done"
+                self.store.save_step(step)
+
     def _save(self, step: dict[str, Any]) -> None:
         step["updated_at"] = self._clock()
         self.store.save_step(step)
@@ -2023,6 +2122,7 @@ class ProgramService:
             outcome = decide(program.get("control"), "program_done", {})
             if not outcome.to_owner:
                 program["closed_at"] = self._clock()
+                self._close_history(program)
                 self.store.save_program(program)
                 self.engine_decision(program, None, "program_done", outcome, "Closed the program: every step is finished")
         if state != program["state"]:
@@ -2256,6 +2356,6 @@ __all__ = [
     "ACTIVE_STATES", "AGENT_LABELS", "CLOSED_STATES", "DECIDE_CHOICES", "FINISHED_STATES", "MAX_RACE",
     "MAX_ROUNDS", "PROGRAMS_ENV", "PROGRAM_STATES", "PROGRAM_WORDS", "ProgramRefused", "ProgramService",
     "RACE_PROFILES", "STATIONS", "STEP_STATES", "STEP_TRANSITIONS", "STEP_WORDS", "agent_label",
-    "default_program_service", "duration_words", "program_state", "programs_on", "step_origin",
+    "default_program_service", "duration_words", "history_of", "history_words", "program_state", "programs_on", "step_origin",
     "triage_effort", "your_turn",
 ]

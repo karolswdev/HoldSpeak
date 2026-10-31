@@ -138,6 +138,21 @@ export function durationWords(seconds: number | null | undefined): string {
 }
 
 /** `after 4, 5` (`after 1 to 19` for a run). */
+/** PG17: `29 Oct 14:02`, the local day and time of a merge. */
+export function mergedWords(at: string | null | undefined): string {
+  const ms = Date.parse(String(at ?? ""));
+  if (!Number.isFinite(ms)) return "";
+  const when = new Date(ms);
+  const day = when.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  const time = when.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${day} ${time}`;
+}
+
+/** PG17: `Imported from PR #1584` for a step that merged before the Program. */
+export function importedWords(step: Pick<ProgramStep, "history">): string {
+  return step.history ? `Imported from PR #${step.history.pr_number}` : "";
+}
+
 export function afterWords(after: readonly number[]): string {
   if (!after.length) return "";
   const sorted = [...after].sort((a, b) => a - b);

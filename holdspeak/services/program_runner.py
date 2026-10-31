@@ -51,7 +51,7 @@ from typing import Any, Callable, Mapping, Optional
 from ..logging_config import get_logger
 from .program_service import (
     ACTIVE_STATES, PARKED_BY_ENGINE, PARKED_BY_RACE, RACE_PROFILES,
-    ProgramRefused, ProgramService, agent_label, duration_words, programs_on,
+    ProgramRefused, ProgramService, agent_label, duration_words, history_of, programs_on,
 )
 from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
 from .program_verifier import log_tail, verify_log
@@ -753,6 +753,8 @@ class ProgramRunner:
 
     def _advance(self, program: dict[str, Any], step: dict[str, Any], steps: list[dict[str, Any]]) -> None:
         state = step["state"]
+        if history_of(step):
+            return  # PG17: an imported merged PR; it closes with the Program
         if self._core_hold(step) and state != "checking":
             return
         if (step.get("facts") or {}).get("awaiting_pick"):

@@ -56,6 +56,10 @@ When the model library has an engine that pi can run on, **New automation** also
 
 Tools and agents use `automation.create` with `do: "run_program"` and the fields `program_template`, `program_control`, `program_runs_on`, `program_may_call` and `program_may_handoff`. Only you can set the level, the agents and the two permissions.
 
+### From pull requests that merged already
+
+A program can hold work that merged before the program existed. Each merged pull request is one step in the state Merged, with its number and its merge time. No agent runs it. A program of only such steps is Done at once. In the Programs window it says "Merged 14 PRs · 28 Oct", and the fold of each step says "Imported from PR #1584". To make one, run `scripts/program_import_history.py --title "…" --goal "…" --repository <folder> --pr 1584-1598`. The script reads each pull request with `gh` and leaves out a pull request that did not merge. Add `--dry-run` to see the steps first. Tools and agents give `program.plan` a step with `history: {pr_number, merged_at}`.
+
 ## Templates
 
 | Template | Steps | Gate | Review |

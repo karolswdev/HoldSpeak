@@ -1,0 +1,388 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "check_command": null,
+  "checkpoints": [
+    {
+      "at": "2026-10-31T01:42:49.308185+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 3 steps; imported 3 merged PRs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-31T01:42:49.305362+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": "2026-10-28T18:14:50Z",
+  "control": "yolo",
+  "control_word": "YOLO",
+  "created_at": "2026-10-31T01:42:49.305110+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "done": 3,
+  "done_in": "2 h 38",
+  "for_person_id": null,
+  "goal": "The hub answers at once.",
+  "history": {
+    "first": "2026-10-28T15:36:11Z",
+    "last": "2026-10-28T18:14:50Z",
+    "prs": 3,
+    "words": "Merged 3 PRs · 28 Oct"
+  },
+  "id": "program-cb35d35a8980",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-10-31T01:42:49.308185+00:00",
+    "by": "owner",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 2,
+    "kind": null,
+    "line": "Added 3 steps; imported 3 merged PRs",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "may_call": false,
+  "may_handoff": false,
+  "note_id": "program-program-cb35d35a8980",
+  "note_window": "pullout:note:program-program-cb35d35a8980",
+  "origin_ref": null,
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "prefer_idle": false,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 1,
+  "spend_limit_usd": null,
+  "state": "done",
+  "state_word": "Done",
+  "status_line": "Done · 3 of 3 done · control YOLO",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": null,
+      "brief": "",
+      "check": {
+        "command": null,
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "medium",
+      "elapsed": "",
+      "elapsed_seconds": null,
+      "ended_at": "2026-10-28T15:36:11Z",
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": {
+        "head_commit": "82067a48929f1ba7d77abf6bc793f96a8d68f493",
+        "merged_at": "2026-10-28T15:36:11Z",
+        "pr_number": 1584,
+        "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1584"
+      },
+      "id": "step-148fde8e523a",
+      "last_checkpoint": null,
+      "launch_id": null,
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": {
+        "number": 1584,
+        "url": "https://github.com/karolswdev/HoldSpeak/pull/1584"
+      },
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": null,
+      "state": "done",
+      "state_word": "Done",
+      "station": 5,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "The dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing",
+      "updated_at": "2026-10-31T01:42:49.307611+00:00",
+      "worktree": null
+    },
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": null,
+      "brief": "",
+      "check": {
+        "command": null,
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "medium",
+      "elapsed": "",
+      "elapsed_seconds": null,
+      "ended_at": "2026-10-28T16:05:42Z",
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": {
+        "head_commit": "a902e091acb98d144574aee1a348bf0bf2773a6b",
+        "merged_at": "2026-10-28T16:05:42Z",
+        "pr_number": 1585,
+        "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1585"
+      },
+      "id": "step-4792f04f1b7f",
+      "last_checkpoint": null,
+      "launch_id": null,
+      "limit": null,
+      "may_call": false,
+      "ordinal": 2,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": {
+        "number": 1585,
+        "url": "https://github.com/karolswdev/HoldSpeak/pull/1585"
+      },
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": null,
+      "state": "done",
+      "state_word": "Done",
+      "station": 5,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "The hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop",
+      "updated_at": "2026-10-31T01:42:49.307611+00:00",
+      "worktree": null
+    },
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": null,
+      "brief": "",
+      "check": {
+        "command": null,
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "effort": "medium",
+      "elapsed": "",
+      "elapsed_seconds": null,
+      "ended_at": "2026-10-28T18:14:50Z",
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": {
+        "head_commit": "b8e6ac038eacfa25579a63d0313c6dd119fe24d7",
+        "merged_at": "2026-10-28T18:14:50Z",
+        "pr_number": 1598,
+        "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1598"
+      },
+      "id": "step-964a0490fa55",
+      "last_checkpoint": null,
+      "launch_id": null,
+      "limit": null,
+      "may_call": false,
+      "ordinal": 3,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": {
+        "number": 1598,
+        "url": "https://github.com/karolswdev/HoldSpeak/pull/1598"
+      },
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": null,
+      "state": "done",
+      "state_word": "Done",
+      "station": 5,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard",
+      "updated_at": "2026-10-31T01:42:49.307611+00:00",
+      "worktree": null
+    }
+  ],
+  "template": null,
+  "title": "The hub stops stalling",
+  "total": 3,
+  "updated_at": "2026-10-31T01:42:49.308264+00:00",
+  "usage_warning_share": null,
+  "your_turn": 0,
+  "your_turn_items": []
+}

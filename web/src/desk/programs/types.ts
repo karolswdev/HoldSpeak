@@ -146,6 +146,23 @@ export interface ProgramSummary {
   in_state_seconds: number | null;
   /** Done only: `1 h 12`. */
   done_in?: string;
+  /** PG17: the imported merged PRs: `Merged 15 PRs · 28 Oct to 29 Oct`. */
+  history?: ProgramHistory;
+}
+
+export interface ProgramHistory {
+  prs: number;
+  first: string;
+  last: string;
+  words: string;
+}
+
+/** PG17: the merged PR an imported step stands for (no agent ran it here). */
+export interface StepHistory {
+  pr_number: number;
+  pr_url: string | null;
+  merged_at: string;
+  head_commit: string | null;
 }
 
 export interface ProgramList {
@@ -229,6 +246,8 @@ export interface ProgramStep {
   runs_on?: RunsOnEntry[];
   limit?: StepLimit | null;
   handoffs?: StepHandoff[];
+  /** PG17: an imported step: the PR it stands for. */
+  history?: StepHistory | null;
 }
 
 export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "race" | "add_step" | "close" | "limited";
