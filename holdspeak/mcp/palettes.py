@@ -194,7 +194,10 @@ def _lazy_ask_tools() -> frozenset[str]:
 # The sends are offered only to a call's turn; each send and each start on a
 # call holds for his spoken yes after the call's gate
 # (allowed numbers, then the passphrase): ``ThreadToolExecutor(held_egress=)``.
-# Config and authority tools are never on a call.
+# Config and authority tools are never on a call, with one exception
+# (owner ruling 2026-10-31, PG-DIRECTION DIR8): ``program.decide``
+# (AUTHORITY) is on a call only as a held tool, decided by his spoken yes
+# after the passphrase and the read back (``CALL_HELD_AUTHORITY``).
 
 CALL = "CALL"
 
@@ -207,8 +210,11 @@ CALL_PROGRAM_READS: frozenset[str] = frozenset({"program.get"})
 #: PG-LANG LANG5 (§10): "change the overnight program: …" is program.shape,
 #: held too: the call reads the changes back and his yes applies them.
 CALL_HELD_PROGRAM: frozenset[str] = frozenset({"program.start", "program.shape"})
+#: PG-DIRECTION DIR8: the one AUTHORITY tool on a call, held: his choice on
+#: what waits on him, read back, then decided on his spoken yes (``via=call``).
+CALL_HELD_AUTHORITY: frozenset[str] = frozenset({"program.decide"})
 #: Every tool a call's turn holds for his spoken yes (``held_egress=``).
-CALL_HELD: frozenset[str] = CALL_HELD_EGRESS | CALL_HELD_PROGRAM
+CALL_HELD: frozenset[str] = CALL_HELD_EGRESS | CALL_HELD_PROGRAM | CALL_HELD_AUTHORITY
 
 
 def _lazy_call_tools() -> frozenset[str]:

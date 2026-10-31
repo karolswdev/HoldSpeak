@@ -1,0 +1,68 @@
+{
+  "_note": "Recorded from the Calls rig by tests/integration/test_calls_program_decide.py; HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+  "needs_you_row": {
+    "why": "TO DECIDE",
+    "title": "Step 1 “owned”: it touches files no step owns (other/b.py)",
+    "group": "Overnight on the home box"
+  },
+  "turns": [
+    {
+      "who": "holdspeak",
+      "text": "Hello. Say your passphrase."
+    },
+    {
+      "who": "you",
+      "text": "(passphrase)"
+    },
+    {
+      "who": "holdspeak",
+      "text": "Hello Karol. What can I do?"
+    },
+    {
+      "who": "you",
+      "text": "What waits on me?"
+    },
+    {
+      "who": "holdspeak",
+      "text": "Overnight on the home box, step 1. Step 1 asks you: it touches files no step owns (other/b.py). Changed: checked, green, under a minute. Go on: the step goes on with this change. Park: the step stops. The other steps go on. Say Go on, Park, or later."
+    },
+    {
+      "who": "you",
+      "text": "Go on."
+    },
+    {
+      "who": "holdspeak",
+      "text": "You said Go on for step 1 of Overnight on the home box: the step goes on with this change. Say yes to decide, or no."
+    },
+    {
+      "who": "you",
+      "text": "Yes."
+    },
+    {
+      "who": "holdspeak",
+      "text": "Decided."
+    },
+    {
+      "who": "holdspeak",
+      "text": "That is all. One decided."
+    },
+    {
+      "who": "you",
+      "text": "That's all, thanks."
+    },
+    {
+      "who": "holdspeak",
+      "text": "Goodbye."
+    }
+  ],
+  "ledger": [
+    {
+      "line": "Go on: it touches files no step owns (other/b.py) · decided on a call",
+      "via": "call"
+    },
+    {
+      "line": "Asked on a call 12:10 · Go on, decided",
+      "via": "call"
+    }
+  ]
+}

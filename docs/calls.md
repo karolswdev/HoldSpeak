@@ -43,7 +43,8 @@ and **Settings > This Mac > Engines** before you run a call.
 | Write a Note or add a task | Post a send or other held egress | Change an engine or account |
 | Propose a decision or add Project work | A control-mode hold | Decide for you without your spoken yes |
 | Prepare a send | Start a program | Call another person |
-| Say how a program is doing | Change a program by your words | Make a program |
+| Say how a program is doing | Decide a question that waits on you | Make a program |
+| Read you what waits on you, with the choices | Change a program by your words | Waive a requirement, send, allow, or buy |
 
 A program is named by its words: "start the overnight program" finds the
 program whose title or template has those words. HoldSpeak says "I want to
@@ -69,6 +70,23 @@ A finished call is retained in the Calls service and its transcript becomes a
 Desk Note. The passphrase is redacted from the transcript and Note. A call
 record is evidence of the turn, not proof that an external action completed;
 read its receipt and the target record.
+
+### Decide on a call
+
+When something waits on you, HoldSpeak reads it to you: where it is from,
+the question, what changed, and the choices. Each question ends with "or
+later". Say a choice. HoldSpeak reads it back once, with what it will do,
+and asks you to say yes. On yes, it decides, exactly as your press on the
+Desk does. On no, nothing changes.
+
+Say "later" to decide later. You can say when: "later, at one", "in two
+hours", "tonight", "tomorrow". HoldSpeak asks you again then. Later changes
+nothing, and the program does only what it can safely do without you.
+
+If the call ends before your yes, nothing is decided. If you answered the
+same question on your phone or on the Desk first, HoldSpeak tells you that
+it is answered already. The program's ledger says "decided on a call", with
+a link to the call's Note.
 
 ## Who can use your line
 

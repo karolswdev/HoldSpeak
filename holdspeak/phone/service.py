@@ -148,6 +148,8 @@ class PhoneService:
         self.timers = RingTimers(on_timeout=self._ring_timeout, on_rering=self._rering,
                                  ring_seconds=ring_seconds, rering_seconds=rering_seconds)
         self._contexts: dict[str, str] = {}
+        #: PG-DIRECTION DIR8: the Program step a call is about, by call id.
+        self._about: dict[str, str] = {}
         self._answers: dict[str, dict[str, Any]] = {}
         self._waiters: dict[str, threading.Event] = {}
         self._fell_back: set[str] = set()
@@ -562,6 +564,8 @@ class PhoneService:
                    "urgent": bool(urgent), "state": "ringing" if allowed else "held", "created_at": now,
                    "transport": transport, "decision": None}
             self._contexts[row["id"]] = context
+            if program_step_id:
+                self._about[row["id"]] = str(program_step_id)
             self._waiters[row["id"]] = threading.Event()
             self.store.save_call(row)
         if not allowed:
@@ -662,8 +666,9 @@ class PhoneService:
             self._number_failed(call_id, word, detail)
 
         def run() -> None:
+            about = self._about.get(call_id)
             placed = self.number.place(reason=row["reason"], context=self._contexts.get(call_id, ""),
-                                       on_end=on_end, on_failed=on_failed)
+                                       on_end=on_end, on_failed=on_failed, **({"about": about} if about else {}))
             if placed:
                 with self._lock:
                     current = self._call(call_id)

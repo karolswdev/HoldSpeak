@@ -404,6 +404,37 @@ class BriefingService:
                  "expires_at": row["expires_at"], "answers": row["answers"]}
                 for row in self.store.open_like(f"{PROGRAM_REF}{program_id}:", now)]
 
+    # ── a call (DIR8): the package read aloud, no page ───────────────
+
+    def compose(self, ref: str) -> Optional[dict[str, Any]]:
+        """The package body of one held item for a channel that needs no page
+        (a call reads it): composed now, never stored, no token. ``None`` when
+        nothing waits on him there or the item is answered on the desk only."""
+        try:
+            program, step, item = self._held(str(ref))
+        except BriefingRefused:
+            return None
+        if item is None or str(item.get("kind") or "") not in BRIEFABLE:
+            return None
+        try:
+            return self._compose(str(ref), program, step, item)
+        except BriefingRefused:
+            return None
+
+    def decide_item(self, principal: Any, ref: str, choice: str, *, via: str) -> dict[str, Any]:
+        """His choice on one held item from a channel (``via``), through the
+        item's own verb. Refused by name when nothing waits there now or the
+        choice is not one the package offers (a waive stays on the desk)."""
+        self._require_owner(principal)
+        program, step, item = self._held(str(ref))
+        if item is None:
+            raise BriefingRefused("answered_already", "Answered already.")
+        body = self._compose(str(ref), program, step, item)
+        if str(choice) not in {row["id"] for row in body["choices"]}:
+            raise BriefingRefused("choice_invalid", "This choice waits for you on the desk.", status=400)
+        return self.programs().decide(principal, str(program["id"]), str(item.get("step_id") or ""), via=via,
+                                      choice=str(choice), **_decide_args(item))
+
     # ── the page's verbs (the token is the authority) ────────────────
 
     def _package(self, token: Any) -> dict[str, Any]:
