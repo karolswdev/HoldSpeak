@@ -22,7 +22,7 @@ his word), program.adjust.json (a Planned step moved, one inserted, a
 started step amended), programs.filtered.list.json (``q``, project,
 person); the faces lane's answers to his presses on the same records
 (program.requirement_word.met.json, program.requirements.send_back.json,
-.waive_refused.json, .waived.json, .added.json; program.adjust.moved.json,
+.waive_refused.json, .waived.json, .added.json; needs_you.requirements.json; program.requirements.evidence.json; program.adjust.moved.json,
 .inserted.json, .amended.json, .titled.json, .refused.json) and an
 orchestrator's proposals (program.proposals.json, .added.json).
 ``--only program.race.json`` writes one file.
@@ -246,10 +246,20 @@ def record_requirements(root: Path) -> dict[str, Any]:
     word_wire = _get(client, f"/api/programs/{word}")
     out = {"program.requirements.json": wire, "programs.filtered.list.json": filtered,
            "program.requirement_word.json": word_wire}
+    # His word as a Needs you row (the Program's title as its group).
+    needs = compute_needs_you(programs=rig.service.needs_you_items())
+    out["needs_you.requirements.json"] = {
+        "items": [item for item in needs["unmutedItems"] if item.get("source") == "program"]}
     # PG-REQ faces (REQ10): the hub's answers to his presses, on the same
     # records, so a face test drives each press to the rendered outcome.
     label = {row["label"]: row["id"] for row in wire["requirements"]}
     label.update({row["label"]: row["id"] for step in wire["steps"] for row in step["requirements"]})
+    # The evidence route: R5's log text, and R2's shot (its media type).
+    log = client.get(f"/api/programs/{pid}/requirements/{label['R5']}/evidence")
+    shot = client.get(f"/api/programs/{pid}/requirements/{label['R2']}/evidence")
+    out["program.requirements.evidence.json"] = {
+        "log": {"status": log.status_code, "type": log.headers.get("content-type"), "text": log.text},
+        "shot": {"status": shot.status_code, "type": shot.headers.get("content-type"), "bytes": len(shot.content)}}
     turn = word_wire["your_turn_items"][0]
     out["program.requirement_word.met.json"] = _press(
         client, f"/api/programs/{word}/requirements/{turn['requirement_id']}/decide", {"choice": "met"})
