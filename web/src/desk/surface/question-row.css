@@ -1,0 +1,66 @@
+/* QuestionRow (PG-LANG §9.4): one question in place, the ask lamp's tint. */
+.kit-question {
+  margin: var(--space-2) var(--space-3) var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md, 7px);
+  background: color-mix(in srgb, var(--lamp-ask) 6%, var(--wb-well, var(--wb-paper)));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lamp-ask) 30%, var(--wb-rule-soft));
+}
+.kit-question-text {
+  margin: 0;
+  font: 600 15px / 1.35 var(--font-sans);
+  color: var(--wb-ink, var(--wb-text));
+}
+.kit-question-why {
+  margin: 2px 0 var(--space-2);
+  font-size: 12px;
+  color: var(--wb-muted);
+}
+.kit-question-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+.kit-question-answer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.kit-question-answer > :first-child { flex: 1 1 auto; min-width: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .kit-question { animation: kit-question-rise 220ms var(--ease-standard, ease-out) 1; }
+}
+@keyframes kit-question-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.kit-question-fold {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 30px;
+  margin: 0 var(--space-3);
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--wb-rule-soft);
+  font-size: 13px;
+  white-space: nowrap;
+  min-width: 0;
+}
+.kit-question-fold-q { color: var(--wb-muted); font-weight: 600; }
+.kit-question-fold-text { color: var(--wb-muted); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.kit-question-fold-answer { font-weight: 500; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.kit-question-fold[data-skipped] .kit-question-fold-answer { font-weight: 400; color: var(--wb-muted); }
+.kit-question-fold-became { margin-left: auto; font-size: 12px; color: var(--kind-pr, var(--wb-info-ink)); flex: none; }
+
+/* At the phone width the row stacks; every verb a 44 px target. */
+@container surface (max-width: 560px) {
+  .kit-question-choices { flex-direction: column; align-items: stretch; }
+  .kit-question-answer { flex-wrap: wrap; }
+  .kit-question-answer > :first-child { flex-basis: 100%; }
+  .kit-question .btn { min-height: 44px; }
+  .kit-question-fold { white-space: normal; flex-wrap: wrap; padding: var(--space-1) var(--space-3); }
+  .kit-question-fold-became { margin-left: 0; }
+}
+.kit-question-answer > .btn { flex: none; white-space: nowrap; }

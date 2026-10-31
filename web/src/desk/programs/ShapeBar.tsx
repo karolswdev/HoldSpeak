@@ -93,7 +93,9 @@ export function ShapeBar({ program, pending, onAnswer, onOpenText }: {
     const said = (again ?? sentence).trim();
     if (!said || busy) return;
     const words = question && (!again || spoken) ? `${question.first} ${said}` : said;
-    if (engine === null) {
+    // The engine is read once per window; a press before that read lands reads it first.
+    const known = engine === undefined ? await readShapeEngine(program.id).then((answer) => answer?.engine ?? null, () => undefined) : engine;
+    if (known === null) {
       // The hub said no engine shapes on this desk: nothing is sent or guessed.
       setRefusal({ words: "No engine is set for planning", title: "No engine is set for planning. The program is unchanged. Choose one in Engines.", code: "no_engine" });
       return;

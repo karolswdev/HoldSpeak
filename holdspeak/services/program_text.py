@@ -560,10 +560,11 @@ def render(model: ProgramText, lamps: Optional[Mapping[str, str]] = None) -> str
                 out += _req_lines("  ", row, lamps.get(f"R{row.rid}") if row.rid is not None else None)
     for item in model.rounds:
         out += ["", f"round {item.name} · {item.state}"]
-        for question in item.questions:
+        for index, question in enumerate(item.questions, start=1):
             out.append(f"  ? {question.text}")
             if question.answer is not None:
-                out.append(f"  = {question.answer}")
+                # The lamp names what the answer became (LANG9): `# → step 1 owns, R+ measure`.
+                out.append(_lamp(f"  = {question.answer}", lamps.get(f"round {_fold(item.name)} ={index}")))
     for step in model.steps:
         number = "+" if step.number is None else str(step.number)
         out += ["", _lamp(f"step {number} {step.title}", lamps.get(f"step {step.number}"))]
@@ -648,6 +649,10 @@ def wire_lamps(wire: Mapping[str, Any]) -> dict[str, str]:
     for row in rows:
         if row.get("ordinal") is not None:
             lamps[f"R{row['ordinal']}"] = str(row.get("state_word") or "")
+    for item in wire.get("rounds") or []:
+        for index, question in enumerate(item.get("questions") or [], start=1):
+            if question.get("answer") and question.get("became"):
+                lamps[f"round {_fold(str(item.get('name') or ''))} ={index}"] = "→ " + ", ".join(map(str, question["became"]))
     return lamps
 
 

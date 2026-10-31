@@ -5643,6 +5643,38 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/rounds",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/rounds/{name}/answer",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/rounds/{name}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/rounds/{name}/next",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/shape",
       "methods": [
         "GET"

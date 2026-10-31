@@ -282,6 +282,10 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # line's refusal with Open Engines and Open text (a desk with an
         # engine: the draft's rows in the well, with their size lamps).
         ("program-plan", "pullout:program:{program_draft}", None),
+        # PG-LANG LANG10: the interview rounds over the board (direction R-A):
+        # Architecture done with its one change, Product asking one question
+        # (the REAL recorded question), Stack skipped, the rest open.
+        ("program-rounds", "pullout:program:{program_rounds}", None),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -494,6 +498,7 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             note_id = thought["thought"]["working_note"]["id"]
             program_id = _seed_program(page, tmp)
             program_draft = _seed_draft_program(page, tmp)
+            program_rounds = _seed_rounds_program(page, tmp)
             briefing = _seed_briefing(page, tmp)
             ctx.close()
             _seed_finished_receipts()
@@ -501,7 +506,7 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             automation_program = _seed_program_automation(program_id)
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
                    "automation": automation, "program": program_id, "automation_program": automation_program,
-                   "program_draft": program_draft, "briefing": briefing}
+                   "program_draft": program_draft, "program_rounds": program_rounds, "briefing": briefing}
         finally:
             server.stop()
 
@@ -521,6 +526,55 @@ def _seed_draft_program(page: Any, tmp: Path) -> str:
         "template": "build-and-review", "check_command": "true", "control": "normal",
     }, token=TOKEN)
     return str(made.get("id") or (made.get("program") or {}).get("id"))
+
+
+def _seed_rounds_program(page: Any, tmp: Path) -> str:
+    """PG-LANG LANG10: journey J1 at station 3: four drafted steps, the five
+    rounds opened by the hub, and the questions the REAL engine asked in the
+    recording (tests/fixtures/program_round_reply.json) on the rounds: no
+    engine runs in the sweep."""
+    import json as _json
+
+    from holdspeak.db import get_database
+    from tests.integration.program_plan_seed import J1_GOAL
+
+    repo = tmp / "program-rounds-repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "-c", "user.name=Sweep", "-c", "user.email=sweep@example.com",
+                    "commit", "-q", "--allow-empty", "-m", "start"], check=True)
+    made = _api(page, "POST", "/api/programs", {
+        "title": "Meeting recap in the Note", "goal": J1_GOAL, "repository": str(repo),
+        "template": "build-and-review", "check_command": "true", "control": "normal",
+    }, token=TOKEN)
+    pid = str(made.get("id") or (made.get("program") or {}).get("id"))
+    _api(page, "POST", f"/api/programs/{pid}/plan", {"steps": [
+        {"title": "Generate recap from transcript via local model", "brief": "The recap from the kept transcript."},
+        {"title": "Enforce \"No owner\" when no name is in the transcript", "brief": "No made-up owners.", "after": [1]},
+        {"title": "Wire recap into meeting Stop and append to the Note", "brief": "On Stop, append it.", "after": [1, 2]},
+        {"title": "Render and edit the Recap section in the Note editor", "brief": "An editable section.", "after": [3]},
+    ]}, token=TOKEN)
+    _api(page, "POST", f"/api/programs/{pid}/rounds", {}, token=TOKEN)
+    recorded = {row["label"]: row for row in _json.loads(
+        (Path(__file__).resolve().parents[1] / "fixtures" / "program_round_reply.json").read_text())["sequence"]}
+
+    def question(label: str, n: int, **more: Any) -> dict[str, Any]:
+        asked = recorded[label]["question"]
+        return {"id": f"q-sweep-{n}", "text": asked["text"], "why": asked["why"], "choices": asked["choices"],
+                "answer": None, "answered_by": None, "at": None, "skipped": False, "became": [], **more}
+
+    rows = {
+        "Architecture": ("done", [question("architecture.next", 1, answer=recorded["architecture.answer"]["question"]["answer"],
+                                           answered_by="owner", became=["step 3 brief"]),
+                                  question("architecture.next2", 2, skipped=True)]),
+        "Product": ("asking", [question("product.next", 3)]),
+        "Stack": ("skipped", [question("stack.next", 4, skipped=True)]),
+    }
+    with get_database()._connection() as conn:
+        for name, (state, questions) in rows.items():
+            conn.execute("UPDATE program_rounds SET state=?, questions_json=? WHERE program_id=? AND name=?",
+                         (state, _json.dumps(questions), pid, name))
+    return pid
 
 
 def _seed_program(page: Any, tmp: Path) -> str:
@@ -1421,6 +1475,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             win.get_by_test_id("program-plan-it").wait_for(timeout=T)
             win.get_by_test_id("program-plan-it").click()
             win.locator("[data-testid=program-plan-refusal], [data-testid=programs-change-well]").first.wait_for(timeout=T)
+            page.mouse.move(2, 2)
+        if case_id == "program-rounds":
+            win = page.locator(f'[id="{wid}"]')
+            # The strip over the board and Product's one question in place.
+            win.get_by_test_id("program-round-strip").wait_for(timeout=T)
+            win.get_by_test_id("program-question").wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "person":
             # This pose is the seeded person's content, not the transient

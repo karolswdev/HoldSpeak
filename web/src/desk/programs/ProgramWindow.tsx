@@ -37,7 +37,7 @@ import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
-import { closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, readProgram, updateProgram,
+import { applyProgramText, closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, readProgram, updateProgram,
   useProgram, type RequirementChoice } from "./api";
 import { briefable, copyPageLink, pageWords, programRef, revokePage } from "../reach";
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
@@ -49,8 +49,9 @@ import { RunsOnPicker } from "./RunsOn";
 import { ProgramChangeWell, ProgramTextPane, landedSteps, useProgramText, type TextProposal } from "./ProgramText";
 import { ShapeBar, ShapedWell, engineFact } from "./ShapeBar";
 import { PlanLine, usePlanIt } from "./PlanDraft";
+import { RoundPanel, useRounds } from "./Rounds";
 import type {
-  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
+  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
 
@@ -513,6 +514,8 @@ export function ProgramBody({ programId }: { programId: string }) {
   const [shaped, setShaped] = useState<ShapeAnswer | null>(null);
   // LANG7: Plan it drafts the goal; the rows open in the change well.
   const planner = usePlanIt(programId, program, setProposal);
+  // LANG10: the interview rounds; an answer's rows open in the change well.
+  const rounds = useRounds(program, apply, (answer) => onRoundAnswer(answer));
   useEffect(() => {
     if (!Object.keys(landed).length) return;
     const timer = window.setTimeout(() => setLanded({}), 2600);
@@ -582,9 +585,19 @@ export function ProgramBody({ programId }: { programId: string }) {
       fromCall: Boolean(earlier && proposal?.fromCall) || undefined,
     } : null);
   };
+  const onRoundAnswer = (answer: RoundAnswer) => {
+    onShaped(answer);
+    if (answer.changes.length) setProposal((now) => (now ? { ...now, source: "round" } : now));
+  };
   const notThis = () => {
     if (proposal?.source === "text") text.revert();
     if (proposal?.fromCall) void dropHeldShape(programId).then(apply).catch(() => undefined);
+    if (proposal?.source === "round") {
+      // The answer stays; it became nothing.
+      const answer = proposal.answer as RoundAnswer;
+      const round = rounds.rounds.find((item) => item.name === answer.round);
+      if (round) void rounds.press(round, "not_this", answer.round_question.id);
+    }
     setProposal(null);
   };
   // LANG5: rows a call left for his press open the well (once per set).
@@ -597,6 +610,14 @@ export function ProgramBody({ programId }: { programId: string }) {
       say: heldShape.say, fact: `On a call · ${engineFact(heldShape)}`,
     });
   }, [heldKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Ask me first with the draft in the well: the draft lands, then the rounds ask.
+  const applyDraft = proposal?.source === "plan" ? async () => {
+    const answer = await applyProgramText(programId, {
+      text: proposal.answer.refused ? proposal.answer.allowed_text : proposal.text, base: proposal.base, dry_run: false, allow_lower: [],
+    });
+    if (answer.applied) applied(answer);
+    return answer.applied;
+  } : undefined;
 
   // A new answer is a new well (his presses on the old rows do not carry).
   const wellKey = proposal ? [proposal.source, proposal.answer.revision, proposal.text, proposal.answer.changes.map((row) => row.id + row.verdict).join()].join(":") : "";
@@ -699,6 +720,10 @@ export function ProgramBody({ programId }: { programId: string }) {
           <Button dense variant={steps.length ? "secondary" : "primary"} loading={planner.busy} disabled={planner.busy || Boolean(busy)}
             onClick={() => void planner.plan(goal ?? program.goal)} data-testid="program-plan-it">Plan it</Button>
         ) : null}
+        {drafting && !(program.rounds ?? []).some((round) => round.asked) ? (
+          <Button dense variant="ghost" loading={rounds.busy === "ask"} disabled={planner.busy || Boolean(busy) || Boolean(rounds.busy)}
+            onClick={() => void rounds.askFirst(applyDraft)} data-testid="program-ask-first">Ask me first</Button>
+        ) : null}
         {program.state !== "done" ? (
           <Button dense variant="ghost" loading={busy === "add" || busy === "plan"} disabled={Boolean(busy)} onClick={addStep} data-testid="program-add-step">Add step</Button>
         ) : null}
@@ -720,6 +745,7 @@ export function ProgramBody({ programId }: { programId: string }) {
           onAnswer={onShaped} onOpenText={() => setView("text")} />
       ) : null}
       <div className="pg-body">
+        <RoundPanel program={program} rounds={rounds} engine={planner.engine} />
         {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
         <YourTurnWell program={program} onDecided={apply} />
         {shaped ? (
