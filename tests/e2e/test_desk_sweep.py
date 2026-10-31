@@ -493,7 +493,7 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
 
 def _seed_program(page: Any, tmp: Path) -> str:
     """Programs (2026-10-28): one Program on a real git folder, three steps
-    (the third after the first two), started. The rig hub's runner is off
+    (the third after the first two), three requirements (PG-REQ), started. The rig hub's runner is off
     (``HOLDSPEAK_PROGRAMS=off``), so the steps stay Ready and Planned and no
     agent is launched."""
     repo = tmp / "program-repo"
@@ -511,6 +511,13 @@ def _seed_program(page: Any, tmp: Path) -> str:
         {"title": "Retention", "brief": "Prune read receipts after 14 days."},
         {"title": "The fan-out", "brief": "One read for the desk.", "after": [1, 2]},
     ]}, token=TOKEN)
+    # PG-REQ: its requirements (the board of direction A, the Met column):
+    # one on every step, his word on step 1, a check on the whole program.
+    steps = _api(page, "GET", f"/api/programs/{program_id}", token=TOKEN)["steps"]
+    for body in ({"text": "The change does only what its brief says", "each_step": True},
+                 {"text": "I tried it on my desk", "kind": "word", "step_id": steps[0]["id"]},
+                 {"text": "`true` is green on main", "kind": "check"}):
+        _api(page, "POST", f"/api/programs/{program_id}/requirements", body, token=TOKEN)
     _api(page, "POST", f"/api/programs/{program_id}/start", {}, token=TOKEN)
     return program_id
 

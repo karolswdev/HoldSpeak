@@ -198,7 +198,7 @@ export function LedgerFold({ program, open, onToggle, onStarted }: {
   }
   const onStart = (row: ProgramCheckpoint) => void start(row);
   return (
-    <FoldGadget className="pg-checkpoints" title="Ledger" token={open ? "newest step activity on top" : `${rows.length} ${rows.length === 1 ? "line" : "lines"}`}
+    <FoldGadget className="pg-checkpoints" title="Ledger" token={open ? "newest first" : `${rows.length} ${rows.length === 1 ? "line" : "lines"}`}
       open={open} onToggle={onToggle}>
       <div className="pg-ledger-folds" data-testid="programs-checkpoints">
         {own.length ? (

@@ -2,8 +2,8 @@
  * programs-requirements-2026-10-31.html, direction A "the checklist").
  *
  * The Requirements board: a fold under the Your turn well, open while one
- * is Unmet or waits on his word, closed with its token ("5 of 5 met") when
- * all are met. One 32 px row per requirement, grouped The program (judged
+ * is not met (and again when one goes Unmet or waits on his word), closed
+ * with its token ("5 of 5 met") when all are met. One 32 px row per requirement, grouped The program (judged
  * after the last step) · Every step · Steps' own:
  *   R3 · DotWord(state) · the sentence · Token(kind) · where · proof · verbs
  * Where is "Step 5", "The program", or for an every-step one six small dots
@@ -457,7 +457,9 @@ export function RequirementsBoard({ program, onApplied }: { program: Program; on
   const total = own.length + every.length + stepsOwn.length;
   const met = program.requirements_met;
   const wants = Boolean(met && (met.unmet || met.his));
-  const [open, setOpen] = useState(wants || !total);
+  // Open while one is not met; closed with its token when all are met.
+  const allMet = Boolean(met?.total && met.met >= met.total);
+  const [open, setOpen] = useState(!allMet);
   const was = useRef(wants);
   useEffect(() => {
     if (wants && !was.current) setOpen(true);
