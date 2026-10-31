@@ -32,6 +32,19 @@ not bubble into DeskWindow's close behavior. The controller owns focus policy,
 target identity, input decoding, grant posture, and receipts; the renderer owns
 only xterm presentation.
 
+Native continuous terminals may additionally pass `output`, a target-bound
+`XtermOutputSource` that emits sequenced `Uint8Array` frames. Snapshot and
+resync frames replace the visible screen; output frames append directly to the
+mounted xterm. The source may provide a bounded `replay(afterSequence)` and a
+`snapshot()` so a lazy mount receives the bootstrap plus every retained byte
+without relying on React render batching. `fitLocal` opts a consumer into
+local `ResizeObserver` fitting and `onSize({ cols, rows })` reports geometry;
+ordinary read-only panes continue to use the pane geometry and never report a
+host resize. In byte mode, xterm's parser marks its own CSI device/status,
+DECRQSS and OSC colour queries; their protocol replies are consumed before
+the input callback. Unknown human escape input still reaches the controller's
+decoder and refusal fence.
+
 ## States vocabulary
 The closed state set: idle, active, working, success, warning, failure, unreachable.
 Every state renders icon + text; never color alone.

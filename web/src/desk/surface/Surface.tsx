@@ -16,7 +16,7 @@ import {
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { CheckGadget, StringGadget } from "./gadgets";
-import type { PaneGeometry } from "./XtermPane";
+import type { PaneGeometry, XtermOutputSource } from "./XtermPane";
 import { humanTime, presentValue } from "./format";
 import { Disclosure } from "./patterns";
 import { KindPlate, NotAnswering, useNotAnswered } from "./kit";
@@ -537,6 +537,10 @@ export function PaneWell({
   copyOnSelect,
   inputEnabled,
   onFocus,
+  output,
+  outputSequence,
+  fitLocal,
+  onSize,
 }: {
   /** The pane renders while the peek is live/resyncing. */
   live: boolean;
@@ -562,6 +566,13 @@ export function PaneWell({
   inputEnabled?: boolean;
   /** Called when the xterm receives focus. */
   onFocus?: () => void;
+  /** Optional continuous byte source for a native terminal consumer. */
+  output?: XtermOutputSource | null;
+  /** Sequence represented by the source's bootstrap snapshot. */
+  outputSequence?: number;
+  /** Fit the local well and report dimensions to an interactive owner. */
+  fitLocal?: boolean;
+  onSize?: (size: { cols: number; rows: number }) => void;
 }) {
   const preRef = useRef<HTMLPreElement | null>(null);
   const [query, setQuery] = useState("");
@@ -613,6 +624,10 @@ export function PaneWell({
             copyOnSelect={copyOnSelect}
             inputEnabled={inputEnabled ?? Boolean(onData)}
             onFocus={onFocus}
+            output={output}
+            outputSequence={outputSequence}
+            fitLocal={fitLocal}
+            onSize={onSize}
           />
         </Suspense>
       ) : (

@@ -1112,6 +1112,154 @@ def deliver_keys(
     )
 
 
+def resize_pane(
+    key: str,
+    *,
+    width: Any,
+    height: Any,
+    current_target: Optional[str],
+    expected_pane_id: Optional[str] = None,
+    operation: Optional[Mapping[str, Any]] = None,
+    policy_snapshot: Optional[Mapping[str, Any]] = None,
+    runner: Optional[Runner] = None,
+    clock: Clock = time.monotonic,
+    transport: Optional[Callable[..., Any]] = None,
+    audit: Optional[Callable[..., int]] = None,
+) -> dict[str, Any]:
+    """Resize a granted local pane and verify the resulting host geometry.
+
+    The Delivery adapter admits ``process.resize@1`` before this chokepoint.
+    This function rechecks the active Type grant and immutable pane identity,
+    then invokes tmux and verifies the dimensions it reports.
+    """
+    def _audited(result: dict[str, Any], *, pane_id: Optional[str]) -> dict[str, Any]:
+        if audit is None:
+            return result
+        return _audit_delivery_result(
+            audit,
+            result,
+            key=key,
+            agent="",
+            pane_id=pane_id,
+            text=f"{width}x{height}",
+            grounding=[],
+            submit=False,
+            operation=dict(operation or {}),
+            policy=dict(policy_snapshot or {}),
+        )
+
+    try:
+        from .kernel.process_resize import bounded_dimensions
+
+        columns, rows = bounded_dimensions(width, height)
+    except Exception as exc:
+        return _audited({"status": "resize_dimensions_invalid", "detail": str(exc)}, pane_id=None)
+    check = _require_delivery_authority(
+        key,
+        current_target,
+        expected_pane_id=expected_pane_id,
+        policy_snapshot=policy_snapshot,
+        runner=runner,
+        clock=clock,
+    )
+    if check["status"] != "ok":
+        return _audited(dict(check), pane_id=check.get("pane_id"))
+    pane_id = str(check["pane_id"])
+    try:
+        if transport is not None:
+            result = transport(pane=pane_id, width=columns, height=rows)
+            if isinstance(result, Mapping):
+                reported = result.get("actual_dimensions")
+                if not isinstance(reported, Mapping):
+                    return _audited(
+                        {
+                            "status": "resize_unverified",
+                            "detail": "resize transport returned no geometry",
+                            "pane_id": pane_id,
+                        },
+                        pane_id=pane_id,
+                    )
+                try:
+                    actual = (int(reported.get("cols")), int(reported.get("rows")))
+                except (TypeError, ValueError):
+                    actual = None
+                if actual != (columns, rows):
+                    return _audited(
+                        {
+                            "status": "resize_unverified",
+                            "detail": "resize transport reported a different geometry",
+                            "pane_id": pane_id,
+                            "actual_dimensions": dict(reported),
+                        },
+                        pane_id=pane_id,
+                    )
+                return _audited({
+                    "status": "delivered",
+                    **dict(result),
+                    "pane_id": pane_id,
+                    "width": columns,
+                    "height": rows,
+                    "actual_dimensions": {"cols": columns, "rows": rows},
+                }, pane_id=pane_id)
+        else:
+            run = runner or _default_runner
+            # Resizing a split window to an absolute size silently squeezes
+            # sibling panes.  The local resize contract is intentionally
+            # honest: support an independent pane only, and name the refusal
+            # for a split layout instead of claiming a verified PTY size after
+            # mutating someone else's view.
+            pane_list = run(
+                ["tmux", "list-panes", "-t", pane_id, "-F", "#{pane_id}"]
+            )
+            if pane_list.returncode != 0:
+                detail = (pane_list.stderr or "").strip() or "tmux did not report panes"
+                return _audited({"status": "resize_unverified", "detail": detail, "pane_id": pane_id}, pane_id=pane_id)
+            pane_output = pane_list.stdout or ""
+            if isinstance(pane_output, bytes):
+                pane_output = pane_output.decode("utf-8", "replace")
+            if len(str(pane_output).split()) != 1:
+                return _audited({
+                    "status": "resize_multi_pane_unsupported",
+                    "detail": "host resize preserves split layouts; select an independent pane",
+                    "pane_id": pane_id,
+                }, pane_id=pane_id)
+            for argv in (
+                ["tmux", "resize-window", "-t", pane_id, "-x", str(columns), "-y", str(rows)],
+                ["tmux", "resize-pane", "-t", pane_id, "-x", str(columns), "-y", str(rows)],
+            ):
+                completed = run(argv)
+                if completed.returncode != 0:
+                    detail = (completed.stderr or "").strip() or "tmux refused resize"
+                    return _audited({"status": "resize_failed", "detail": detail, "pane_id": pane_id}, pane_id=pane_id)
+            verified = run(
+                ["tmux", "display-message", "-p", "-t", pane_id, "#{pane_width} #{pane_height}"]
+            )
+            if verified.returncode != 0:
+                detail = (verified.stderr or "").strip() or "tmux did not report geometry"
+                return _audited({"status": "resize_unverified", "detail": detail, "pane_id": pane_id}, pane_id=pane_id)
+            parts = (verified.stdout or "").split()
+            if len(parts) != 2:
+                return _audited({"status": "resize_unverified", "detail": "tmux returned invalid geometry", "pane_id": pane_id}, pane_id=pane_id)
+            actual_width, actual_height = (int(part) for part in parts)
+            if (actual_width, actual_height) != (columns, rows):
+                return _audited({
+                    "status": "resize_unverified",
+                    "detail": "the host PTY kept a different geometry",
+                    "pane_id": pane_id,
+                    "width": actual_width,
+                    "height": actual_height,
+                }, pane_id=pane_id)
+    except (OSError, subprocess.TimeoutExpired, TypeError, ValueError) as exc:
+        return _audited({"status": "resize_failed", "detail": str(exc), "pane_id": pane_id}, pane_id=pane_id)
+    return _audited({
+        "status": "delivered",
+        "pane_id": pane_id,
+        "width": columns,
+        "height": rows,
+        "actual_dimensions": {"cols": columns, "rows": rows},
+    }, pane_id=pane_id)
+
+
 __all__ = [
     "ARM_DEFAULT_TTL_SECONDS",
     "ARM_MAX_TTL_SECONDS",
@@ -1133,6 +1281,7 @@ __all__ = [
     "content_hash",
     "deliver",
     "deliver_keys",
+    "resize_pane",
     "disarm",
     "is_named_key",
     "list_panes",

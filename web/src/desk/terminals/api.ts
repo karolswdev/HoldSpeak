@@ -6,6 +6,7 @@ import type {
   TerminalPaneGeometry,
   TerminalReceipt,
   TerminalTarget,
+  TerminalDimensions,
 } from "./types";
 
 export interface TerminalSessionsResponse {
@@ -186,6 +187,32 @@ export async function readTerminalSubscription(
   return { response, body: body as TerminalSubscriptionResponse };
 }
 
+/** Open the native terminal's byte stream. The response is NDJSON and must be
+ * consumed incrementally by the session controller; callers never turn this
+ * into a snapshot poll. The target is copied once and is not replaceable by a
+ * later inventory row. */
+export async function readTerminalLive(
+  targetValue: TerminalTarget,
+  streamId: string | null,
+  resumeSequence: number,
+  signal: AbortSignal,
+): Promise<Response> {
+  return apiRequest("/api/delivery/terminal/live", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/x-ndjson",
+    },
+    body: JSON.stringify({
+      target_id: targetValue.target_id,
+      target_generation: targetValue.target_generation,
+      stream_id: streamId || undefined,
+      resume_sequence: resumeSequence > 0 ? resumeSequence : undefined,
+    }),
+    signal,
+  });
+}
+
 function commandId(): string {
   try {
     return crypto.randomUUID();
@@ -247,6 +274,79 @@ export async function sendTerminalCommand(
     };
   } catch {
     // Unknown transport outcome is visible and never retried automatically.
+    return { ok: false, error: "hub unreachable" };
+  }
+}
+
+function dimensions(value: unknown): TerminalDimensions | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  const cols = Number(row.cols ?? row.columns ?? row.width);
+  const rows = Number(row.rows ?? row.height);
+  return Number.isInteger(cols) && Number.isInteger(rows) && cols > 0 && rows > 0
+    ? { cols, rows }
+    : null;
+}
+
+/** Resize the actual host process. A receipt without matching dimensions is
+ * deliberately not success: the window must never say it saved a size that
+ * the backend did not acknowledge. */
+export async function resizeTerminal(
+  descriptorValue: TerminalDescriptor,
+  size: TerminalDimensions,
+): Promise<
+  | { ok: true; receipt: TerminalReceipt | null; dimensions: TerminalDimensions }
+  | { ok: false; error: string; receipt?: TerminalReceipt | null; revoke?: boolean }
+> {
+  const body = {
+    command_schema: 1,
+    command_id: commandId(),
+    target: descriptorValue.target,
+    operation: { family: "coder_steering", verb: "process.resize@1" },
+    payload: {
+      session_key: descriptorValue.key,
+      agent: descriptorValue.agent,
+      cols: size.cols,
+      rows: size.rows,
+    },
+  };
+  try {
+    const response = await apiRequest("/api/delivery/terminal/commands", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const receipt = data.receipt && typeof data.receipt === "object"
+      ? data.receipt as TerminalReceipt
+      : null;
+    const ack = dimensions(data.actual_dimensions)
+      || dimensions(data.dimensions)
+      || dimensions(data.size)
+      || dimensions(receipt?.dimensions);
+    const state = asText(data.state);
+    const receiptState = asText(receipt?.state).toLowerCase();
+    const receiptOutcome = asText(receipt?.outcome).toLowerCase();
+    const delivered = response.ok
+      && ["complete", "sent"].includes(state)
+      && receiptState === "succeeded"
+      && receiptOutcome === "delivered"
+      && ack?.cols === size.cols
+      && ack.rows === size.rows;
+    if (delivered) return { ok: true, receipt, dimensions: ack };
+    const refusal = asText(
+      data.detail,
+      asText(data.error, asText(receipt?.detail, asText(receipt?.error, "Terminal resize was not acknowledged"))),
+    );
+    return {
+      ok: false,
+      error: refusal,
+      receipt,
+      revoke: ["unarmed", "expired", "pane_mismatch", "pane_gone", "generation_mismatch"].includes(
+        asText(data.status) || asText(receipt?.outcome),
+      ),
+    };
+  } catch {
     return { ok: false, error: "hub unreachable" };
   }
 }

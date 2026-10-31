@@ -138,6 +138,17 @@ The same pane is identified by `agent:session` plus its pane identity and
 generation. A peek strips terminal control codes and applies byte and line
 caps. The Desk can tell you when the bounded pane view has not changed.
 
+Native [Terminals](TERMINALS.md) windows use a separate continuous local output
+connection: `POST /api/delivery/terminal/live`. It returns NDJSON frames with a
+stream identity, sequence and base64-encoded bytes. A bounded in-memory replay
+supports reconnects; a gap requires a fresh screen. The older peek and snapshot
+subscription remain available to their existing consumers.
+
+The active terminal with a current typing grant can resize its host PTY through
+`process.resize@1` and the Delivery command receipt path. The hub rechecks the
+grant and immutable target, bounds the dimensions and verifies the host size.
+Read-only output connections do not resize the pane or replace its tmux pipe.
+
 Steering is deliberate input to the selected live pane. A draft or **Keep**
 does not send text. The hub never sends a shell command as a steering reply.
 It records the text hash, target, submit choice, and operation outcome. A
@@ -160,7 +171,7 @@ preview and argument hash for the hook path. See [Gate](GATE.md).
 
 ## Authority
 
-Watching sessions is read work. Sending text, keys, killing a session, and
+Watching sessions is read work. Sending text, keys, resizing a terminal, killing a session, and
 launching a coder are admitted through their own operations and audit rows.
 The Control mode and launch-bound grants apply before delivery.
 
@@ -172,6 +183,9 @@ The Control mode and launch-bound grants apply before delivery.
 - A relay uses the destination machine's posture, grant, and audit.
 
 ## Result states
+
+These states describe the existing peek and steering API. Native terminal output
+also reports snapshot, output, heartbeat and replay-gap frames on its live connection.
 
 | State | Meaning |
 | --- | --- |

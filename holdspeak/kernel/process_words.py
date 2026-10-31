@@ -106,6 +106,7 @@ PROCESS_WORDS: dict[str, str] = {
     "delegation.revoke": "Took an agent's access away",
     "process.spawn": "Started an agent",
     "process.input": "Sent words to an agent",
+    "process.resize": "Resized a terminal",
     "tool.call": "Ran an agent's tool",
     "tool.turn": "Ran an agent's turn",
     "subprocess.exec": "Ran a command",

@@ -1168,6 +1168,46 @@
         "title": "_IntentProfileRequest",
         "type": "object"
       },
+      "_LiveRequest": {
+        "properties": {
+          "resume_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resume Sequence"
+          },
+          "stream_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stream Id"
+          },
+          "target_generation": {
+            "title": "Target Generation",
+            "type": "string"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "target_generation"
+        ],
+        "title": "_LiveRequest",
+        "type": "object"
+      },
       "_MeetingStartRequest": {
         "description": "Optional body for ``POST /api/meeting/start`` (HS-14-06).\n\n``devices`` is an optional list of currently-registered\nAIPI-Lite-class device ids that should contribute audio to the\nmeeting. Default empty means legacy local-mic + system-audio only.\n``calendar_event_id`` is the exact projected calendar occurrence that\nopened the recording gesture. It is optional so generic recording keeps\nits legacy contract.",
         "properties": {
@@ -11609,6 +11649,57 @@
           }
         },
         "summary": "Api Terminal Receipt"
+      }
+    },
+    "/api/delivery/terminal/live": {
+      "post": {
+        "description": "Continuous local output as one authenticated NDJSON stream.\n\n``subscribe`` performs the initial immutable-target proof and the\ncontrol-mode startup off the event loop.  Each blocking iterator step\nruns in a cancellable worker, so a blocked PTY read never stalls the\nDesk loop and disconnect wakes the subscription promptly.  Closing\nthe iterator detaches only the control client.",
+        "operationId": "api_terminal_live_api_delivery_terminal_live_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_LiveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Continuous terminal frames as newline-delimited JSON"
+          },
+          "401": {
+            "description": "Authentication or target authority required"
+          },
+          "404": {
+            "description": "Target is gone"
+          },
+          "409": {
+            "description": "Target generation changed"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "Local stream unavailable"
+          }
+        },
+        "summary": "Api Terminal Live"
       }
     },
     "/api/delivery/terminal/node/results": {

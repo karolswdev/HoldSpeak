@@ -13,7 +13,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 890 (plus static mounts). iOS-consumed: 89. Web-consumed: 692.
+Routes: 891 (plus static mounts). iOS-consumed: 89. Web-consumed: 693.
 
 ## device_audio_ws
 
@@ -370,6 +370,7 @@ Routes: 890 (plus static mounts). iOS-consumed: 89. Web-consumed: 692.
 |---|---|---|
 | POST | `/api/delivery/terminal/commands` | web |
 | GET | `/api/delivery/terminal/commands/{command_id}` | server only |
+| POST | `/api/delivery/terminal/live` | web |
 | POST | `/api/delivery/terminal/node/results` | server only |
 | GET | `/api/delivery/terminal/sessions` | web |
 | POST | `/api/delivery/terminal/subscriptions` | web |
