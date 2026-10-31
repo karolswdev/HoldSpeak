@@ -319,6 +319,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | LANG13 | Delivery Workbench: link and the Done PR | Open |  |
 | LANG14 | The SDK: Python client and `holdspeak program` CLI | Open |  |
 | LANG15 | The documents | Open |  |
+**PG-JOURNEYS** (open, design only, from `lane/programs-journeys-20261031`): eight modeled journeys (J1 two paragraphs to a shipped change, J2 the dreaming program, J3 shaping by voice, J4 from the desk for a person, J5 the race, J6 the Phone and the Line, J7 a reviewer-only program, J8 teaching the engine) and "What the journeys demand" (34 New, 10 In PG-LANG, 20 exist), the checklist for the PG-LANG slices; design `programs/PROGRAM-JOURNEYS-2026-10-31.md`, canvas `programs/canvases/program-journeys-2026-10-31.html` (storyboards J1, J2, J3, J6; the interview round, direction A recommended).
 
 ## Phone (`phone/RECIPE.md`): 0 of 16
 
