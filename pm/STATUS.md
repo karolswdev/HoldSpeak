@@ -2445,12 +2445,14 @@ committing generated docs and line-number test maps; split the tests.
 - **Words (2026-10-30/31): DONE.** CSS closed (#1634); sources at UPPER_DEBT 21 lines, all
   compare keys, ids, initials and acronyms (#1637, #1640, #1643). Left only: caps literals
   that never call `toUpperCase()` (the AgentsCard HOOKS family, the "AGENTS · n" caption).
-- **Quick check time:** `vitest related` runs all 431 web files on a CSS or shared-API change
-  (6 min); lane VITEST-RELATED in flight. Slow desk vitest = whole-face role-name lookups
+- **Quick check time:** done (#1656): a CSS change runs 64 web files, ~3.4 min.
+- **Watch:** `test_delivery_spool_real_hub::test_a_spooled_event_reaches_the_event_log_with_no_reader`
+  red once under load on 2026-10-31 (green alone). Go ▸ Builder lists the older panes launcher
+  as a second "Terminals" row (parking candidate). Slow desk vitest = whole-face role-name lookups
   on big faces with all CSS loaded (#1650): scope the query.
 - **Desk stacking (2026-10-30):** the seed posts only this load's real raises (#1639).
-- **Programs (2026-10-28):** PG15, PG17 and PG21 in
-  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG13, PG13b, PG14, PG16, PG18, PG20 and the race shot
+- **Programs (2026-10-28):** PG15 and PG17 in
+  `docs/internal/betterment/programs/RECIPE.md` (PG12, PG13, PG13b, PG14, PG16, PG18, PG20, PG21 and the race shot
   #1618, PG13 #1620 and PG13b #1621 shipped); his live verdict on the Programs
   window and the Program window.
 
@@ -2616,6 +2618,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1657 — After the terminal workspace merges:** `/terminals` in the preflight sweep; the phone's Go fits again (Voice commands is a wing of Speak there); the Terminals glass waits for its rows; XtermPane no longer scrolls a disposed terminal.
+- **#1656 — The quick check's vitest step runs the honest related set** (`scripts/vitest_related.py`: barrel edges by name, a cap at the direct rings plus every app file); a stylesheet change runs 64 web files, not 429.
+- **#1655, #1654, #1652 — (owner) The native parallel terminal workspace,** insets removed, connected to Projects, worktrees and review.
+- **#1653 — Programs PG21:** the Engines fold says whether an agent's usage-limit notice is verified from a real stop on this desk or documented, with its last stop and reset; the parser reads "weekly limit" and a dated reset.
+- **#1651 — STATUS through #1650.**
 - **#1650 — The Settings leave vitest** scopes its lookups (5.4 s → 1.1 s under load); a no-canvas shim ends the jsdom getContext error storm.
 - **#1649 — Programs PG20:** every checkpoint pins the worktree to `refs/holdspeak/checkpoints/<step>/<n>`; a handoff names the ref it continues from; "Start from here" on a checkpoint row (REST + MCP `program.start_from`, ladder-gated for agents).
 - **#1648 — Every web census runs on every quick check** (19 files, ~7 s); screen.css on the shell exceptions; the Phone reach write through the one Calls writer; the calls app press inside act.
