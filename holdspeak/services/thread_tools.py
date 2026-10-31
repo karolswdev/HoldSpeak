@@ -372,6 +372,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "program.require": ("effect_proposal", False),
     "program.step_update": ("effect_proposal", False),
     "program.amend": ("effect_proposal", False),
+    "program.step_remove": ("effect_proposal", False),
     "program.text": ("evidence_read", False),
     "program.text_apply": ("effect_proposal", False),
     "project.mark_update_delivered": ("effect_proposal", False),

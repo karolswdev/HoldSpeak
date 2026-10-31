@@ -530,3 +530,50 @@ def test_counts_draw_no_zero() -> None:
             {"required": True, "state": "unmet", "step_id": "s"}, {"required": False, "state": "not_yet", "step_id": "s"},
             {"required": True, "state": "not_yet", "each_step": True}]  # a parent counts through its copies
     assert counts(rows, 1) == {"met": 2, "total": 3, "unmet": 1, "waived": 1, "his": 1}
+
+
+# ── PG-LANG fields: Measure (until LANG11) and a walk on Your word ───
+
+def test_a_measure_stays_not_measured_yet_and_does_not_hold_the_merge(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid = _program(rig, template="", control="yolo")
+    rig.service.plan(OWNER, pid, steps=[{"title": "People routes"}])
+    sid = rig.step(pid, 1)["id"]
+    rid = rig.service.require(OWNER, pid, text="The People routes answer under 100 ms", kind="measure", step_id=sid,
+                              spec={"command": "sh bench.sh", "metric": "p95", "op": "<", "bound": 100,
+                                    "unit": "ms"})["requirement_id"]
+    row = _req(rig, pid, rid)
+    assert (row["kind"], row["kind_word"], row["state"], row["state_word"]) == (
+        "measure", "Measure", "not_yet", "Not measured yet")
+    assert row["spec"] == {"command": "sh bench.sh", "metric": "p95", "op": "<", "bound": 100, "unit": "ms"}
+    rig.service.start(OWNER, pid)
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"a.py": "1\n"})
+    rig.tick(3)
+    assert rig.step(pid, 1)["state"] in ("merged", "done"), rig.step(pid, 1)["state"]  # not held, never Unmet
+    row = _req(rig, pid, rid)
+    assert (row["state"], row["state_word"]) == ("not_yet", "Not measured yet")
+    assert not any(item.get("requirement_id") == rid for item in rig.program(pid)["your_turn_items"])
+
+
+def test_a_measure_needs_a_command_and_a_bound(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid = _program(rig)
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.require(OWNER, pid, text="It is fast", kind="measure", spec={"command": "sh bench.sh"})
+    assert (refused.value.code, refused.value.detail) == ("requirement_unprovable", "A measure needs a command and a bound.")
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.require(OWNER, pid, text="It is fast", kind="measure",
+                            spec={"command": "sh bench.sh", "metric": "p95", "op": "about", "bound": 3})
+    assert refused.value.code == "bound_invalid"
+
+
+def test_walk_lines_are_kept_on_your_word(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid = _program(rig)
+    rid = rig.service.require(OWNER, pid, text="I used the board for a morning", kind="word",
+                              spec={"walk": ["Open Programs at 393", "  Press   Plan it ", ""]})["requirement_id"]
+    row = _req(rig, pid, rid)
+    assert (row["kind"], row["spec"]) == ("word", {"walk": ["Open Programs at 393", "Press Plan it"]})
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.require(OWNER, pid, text="I tried it", kind="word", spec={"walk": "Open it"})
+    assert refused.value.code == "walk_invalid"

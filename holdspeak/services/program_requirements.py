@@ -10,7 +10,11 @@ the way it is proven:
   ``REQ R3: UNMET · …`` by its id;
 - **Shot**: the repository's shot command renders one window at one width
   (``.holdspeak/program.json`` ``shot``);
-- **Your word**: he presses Met or Unmet.
+- **Your word**: he presses Met or Unmet (PG-LANG §6.3: its ``walk`` lines
+  are the steps he will do, ``spec.walk``);
+- **Measure** (PG-LANG §6.3): a command that prints a number and a bound
+  (``spec`` ``{command, metric, op, bound, unit}``). Its verifier is LANG11;
+  until then a Measure stays Not yet ("Not measured yet") and does not gate.
 
 This module holds the vocabulary (§4), the kind guessed by rule (§4,
 decision 5), the counts (§7) and the wire of one requirement (§11). The
@@ -23,8 +27,14 @@ import re
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional
 
-KINDS = ("check", "review", "shot", "word")
-KIND_WORDS = {"check": "Check", "review": "Review", "shot": "Shot", "word": "Your word"}
+KINDS = ("check", "review", "shot", "word", "measure")
+KIND_WORDS = {"check": "Check", "review": "Review", "shot": "Shot", "word": "Your word", "measure": "Measure"}
+#: The kinds no verifier judges yet (LANG11): they stay Not yet and do not gate.
+NOT_JUDGED_YET = frozenset({"measure"})
+NOT_MEASURED_WORD = "Not measured yet"
+#: A Measure's bound: ``<metric> <op> <number> [<unit>]`` ("p95 < 100 ms").
+BOUND_OPS = ("<=", ">=", "<", ">", "=")
+_BOUND = re.compile(r"^(\S+)\s*(<=|>=|<|>|=)\s*(-?\d+(?:\.\d+)?)\s*(\S+)?$")
 STATES = ("not_yet", "met", "unmet", "waived")
 STATE_WORDS = {"not_yet": "Not yet", "met": "Met", "unmet": "Unmet", "waived": "Waived"}
 CHECKING_WORD = "Checking"
@@ -76,12 +86,55 @@ def clean_text(text: Any) -> str:
     return " ".join(str(text or "").split())[:400]
 
 
+def parse_bound(words: Any) -> Optional[dict[str, Any]]:
+    """``p95 < 100 ms`` -> ``{metric, op, bound, unit}``; ``None`` when it is
+    not a bound."""
+    found = _BOUND.match(" ".join(str(words or "").split()))
+    if not found:
+        return None
+    number = float(found.group(3))
+    return {"metric": found.group(1), "op": found.group(2), "bound": int(number) if number.is_integer() else number,
+            "unit": found.group(4) or ""}
+
+
+def bound_words(spec: Mapping[str, Any]) -> str:
+    """The bound as the text writes it (``total < 6 min``)."""
+    return " ".join(str(part) for part in (spec.get("metric"), spec.get("op"), spec.get("bound"), spec.get("unit"))
+                    if part not in (None, ""))
+
+
 def clean_spec(kind: str, raw: Any, text: str) -> dict[str, Any]:
     """The spec of one kind: check ``{command, expect?}``, shot ``{case,
-    width}``, review and word ``{}``. A missing field is filled by the rule
-    from the sentence where it can be."""
+    width}``, measure ``{command, metric, op, bound, unit, expect?}``, word
+    ``{walk?}``, review ``{}``. A missing field is filled by the rule from
+    the sentence where it can be (a command in backticks)."""
     raw = dict(raw or {}) if isinstance(raw, Mapping) else {}
     guessed_kind, guessed = guess(text)
+    if kind == "measure":
+        command = str(raw.get("command") or (guessed.get("command") if guessed_kind == "check" else "") or "").strip()
+        out = {"command": command} if command else {}
+        if raw.get("metric") or raw.get("op") or raw.get("bound") not in (None, ""):
+            bound = parse_bound(bound_words(raw))
+            if bound is None or not raw.get("metric"):
+                raise RequirementInvalid("bound_invalid", "A bound is '<metric> <op> <number> <unit>' "
+                                                          "('p95 < 100 ms').")
+            out.update(bound)
+        expect = str(raw.get("expect") or "").strip()
+        if expect:
+            try:
+                re.compile(expect)
+            except re.error as exc:
+                raise RequirementInvalid("expect_invalid", f"The expected line is not a pattern: {exc}.")
+            out["expect"] = expect
+        return out
+    if kind == "word":
+        walk = raw.get("walk")
+        if walk in (None, "", []):
+            return {}
+        if not isinstance(walk, (list, tuple)) or not all(isinstance(line, str) for line in walk):
+            raise RequirementInvalid("walk_invalid", "A walk is a list of lines.")
+        lines = [" ".join(line.split())[:400] for line in walk if line.strip()]
+        return {"walk": lines} if lines else {}
     if kind == "check":
         command = str(raw.get("command") or (guessed.get("command") if guessed_kind == "check" else "") or "").strip()
         out: dict[str, Any] = {"command": command} if command else {}
@@ -116,6 +169,8 @@ def provable(kind: str, spec: Mapping[str, Any], config: Mapping[str, Any]) -> s
     requirement is a core question at every level; the add row says so)."""
     if kind == "check" and not spec.get("command"):
         return "A check needs a command"
+    if kind == "measure" and (not spec.get("command") or not spec.get("metric")):
+        return "A measure needs a command and a bound"
     if kind == "shot":
         if not str(config.get("shot") or "").strip():
             return "No shot command in this repository"
@@ -178,6 +233,10 @@ def judged(requirement: Mapping[str, Any]) -> bool:
 
 
 def gates(requirement: Mapping[str, Any]) -> bool:
+    """Required and not Met or Waived. A kind no verifier judges yet (a
+    Measure, LANG11) does not gate: it stays Not yet, never Unmet."""
+    if requirement.get("kind") in NOT_JUDGED_YET and requirement.get("state") == "not_yet":
+        return False
     return bool(requirement.get("required")) and not judged(requirement)
 
 
@@ -211,11 +270,14 @@ def proof_words(requirement: Mapping[str, Any]) -> str:
         return f"the desk sweep renders {spec.get('case')}-{spec.get('width')}"
     if kind == "word":
         return "the owner says it"
+    if kind == "measure":
+        return f"HoldSpeak measures it ({bound_words(spec)}); not measured yet"
     return "the reviewer judges it"
 
 
 __all__ = [
-    "BY", "CHECKING_WORD", "COMMIT_BOUND", "FROZEN_STEP_STATES", "KINDS", "KIND_WORDS", "RequirementInvalid",
+    "BOUND_OPS", "BY", "CHECKING_WORD", "COMMIT_BOUND", "NOT_JUDGED_YET", "NOT_MEASURED_WORD", "bound_words",
+    "parse_bound", "FROZEN_STEP_STATES", "KINDS", "KIND_WORDS", "RequirementInvalid",
     "SHOT_WIDTHS", "STATES", "STATE_WORDS", "WAITS_WORD", "clean_spec", "clean_text", "counted", "counts", "gates",
     "guess", "judged", "label", "parse_review", "proof_words", "provable", "repository_config", "scope_of",
     "shot_command", "shot_image",

@@ -26,8 +26,10 @@ The rules, in short:
   Program's agents, ``triage_effort``). ``parse(print(p))`` is the model of
   ``p``, field for field (§3.3).
 
-Rounds (§6.2) are read into the model and printed back; no table holds them
-yet (LANG9), so the service refuses a change to them.
+Rounds (§6.2) are read into the model and printed back; ``program_rounds``
+holds them (PG-LANG fields, 2026-10-31). His ``=`` answers, a round's state
+(not ``asking``: the engine's) and new rounds apply; the ``?`` questions are
+the engine's (LANG9 asks them) and a changed one is refused.
 """
 from __future__ import annotations
 
@@ -37,15 +39,13 @@ from dataclasses import dataclass, field, fields as dc_fields, replace
 from typing import Any, Iterable, Mapping, Optional
 
 from ..program_templates import get_template
-from .program_requirements import clean_spec
+from .program_requirements import bound_words, clean_spec, parse_bound
 
 #: The format version the printer writes (§7.4).
 VERSION = 1
 VERSION_LINE = f"# program text {VERSION}"
 
-KINDS = ("check", "review", "shot", "word")
-#: Kinds the grammar names that this hub does not store yet (LANG11).
-KINDS_LATER = ("measure",)
+KINDS = ("check", "review", "shot", "word", "measure")
 CONTROLS = ("secure", "normal", "yolo")
 EFFORTS = ("low", "medium", "high")
 REVIEWS = ("none", "agent", "person")
@@ -58,13 +58,16 @@ AGENT_WORDS = {"claude-default": "Claude Code", "codex-default": "Codex", "pi-de
 _AGENT_ALIASES = {"claudecode": "claude-default", "claude": "claude-default", "codex": "codex-default",
                   "pi": "pi-default"}
 
-#: Words of the version-1 grammar that no table holds yet (their lanes add
-#: them: budget LANG8, planner LANG6, night and within LANG12, delivery
-#: LANG13, rounds before start LANG9). A text that says one is refused by
-#: name, never dropped (§7.4).
-_LATER_PROGRAM = ("planner", "budget", "delivery", "night", "within", "rounds before start")
-_LATER_STEP = ("budget",)
-_LATER_REQ = ("walk", "bound")
+#: Words of the version-1 grammar that no table holds yet. Every word of
+#: §3.2 has a home since the PG-LANG fields lane (2026-10-31); a word added
+#: to the grammar before its table goes here and is refused by name, never
+#: dropped (§7.4).
+_LATER_PROGRAM: tuple[str, ...] = ()
+_LATER_STEP: tuple[str, ...] = ()
+_LATER_REQ: tuple[str, ...] = ()
+#: ``night 23:30–07:00 · at most 8 steps`` (an en dash or a hyphen).
+_NIGHT = re.compile(r"^(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})(?:\s*·\s*at most (\d+) steps?)?$")
+_TOKENS = re.compile(r"^(\d+)\s*(k|K)?$")
 
 #: The lamp: two or more spaces, then ``#`` and the rest of the line.
 _LAMP = re.compile(r"\s{2,}#(?:\s.*)?$")
@@ -128,6 +131,7 @@ class Step:
     for_person: Optional[str] = None
     origin: Optional[str] = None
     merged: Optional[dict[str, Any]] = None  # PG17: {pr_number, merged_at, pr_url, head_commit}
+    budget: Optional[int] = None            # None: the Program's (§5.4)
     brief: str = ""
     amendments: list[Amendment] = field(default_factory=list)
     requirements: list[Requirement] = field(default_factory=list)
@@ -159,6 +163,13 @@ class Head:
     check: Optional[str] = None             # "" = ``check none``
     agents: Optional[list[Agent]] = None    # None: the template's
     reviewer: Optional[Agent] = None        # None: the template's; ("none", None): no reviewer
+    depth: Optional[str] = None             # ``reviewer X at <depth>``; None: the template's
+    planner: Optional[str] = None           # an engine of the library (§4.3, §5.5); None: the desk's
+    budget: Optional[int] = None            # tokens (§5.4); None: the first agent's engine window
+    night: Optional[dict[str, Any]] = None  # {line, start, end, max_steps} (§5.5)
+    within: list[str] = field(default_factory=list)  # the paths it may own at all (§5.5)
+    delivery: Optional[str] = None          # "<project>/<phase>[/<story>]" of ``delivery dw`` (§8)
+    rounds_before_start: bool = False       # §15.5: the rounds gate Start
     when_idle: bool = False
     may_call: bool = False
     may_hand_off: bool = False
@@ -211,6 +222,54 @@ def template_reviewer(template: Optional[str]) -> Agent:
     program = (get_template(template) or {}).get("program") or {} if template else {}
     profile = program.get("reviewer_profile")
     return (str(profile), program.get("reviewer_engine") or None) if profile else ("none", None)
+
+
+def template_depth(template: Optional[str]) -> str:
+    return str(_shape(template).get("review_depth") or "delta")
+
+
+def program_depth(head: Head) -> str:
+    """The review depth a step takes when it states none."""
+    return head.depth or template_depth(head.template)
+
+
+def parse_tokens(value: Any) -> Optional[int]:
+    """``64k`` = 65536; ``32768``; ``None`` when it is not a number of
+    tokens (§3.2 TOKENS)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value > 0 else None
+    found = _TOKENS.match(str(value or "").strip())
+    if not found:
+        return None
+    tokens = int(found.group(1)) * (1024 if found.group(2) else 1)
+    return tokens if tokens > 0 else None
+
+
+def tokens_words(tokens: int) -> str:
+    return f"{tokens // 1024}k" if tokens % 1024 == 0 else str(tokens)
+
+
+def parse_night(value: Any) -> Optional[dict[str, Any]]:
+    """``23:30–07:00 · at most 8 steps`` (or ``{start, end, max_steps}``) ->
+    ``{line, start, end, max_steps}``; ``None`` when it is not a night."""
+    if isinstance(value, Mapping):
+        value = f"{value.get('start') or ''}–{value.get('end') or ''}" + (
+            f" · at most {value['max_steps']} steps" if value.get("max_steps") else "")
+    found = _NIGHT.match(" ".join(str(value or "").split()))
+    if not found:
+        return None
+    hours = (int(found.group(1)), int(found.group(3)))
+    minutes = (int(found.group(2)), int(found.group(4)))
+    if any(hour > 23 for hour in hours) or any(minute > 59 for minute in minutes):
+        return None
+    start, end = f"{hours[0]:02d}:{minutes[0]:02d}", f"{hours[1]:02d}:{minutes[1]:02d}"
+    most = int(found.group(5)) if found.group(5) else None
+    if most is not None and most < 1:
+        return None
+    line = f"{start}–{end}" + (f" · at most {most} step{'s' if most != 1 else ''}" if most else "")
+    return {"line": line, "start": start, "end": end, "max_steps": most}
 
 
 def program_agents(head: Head) -> list[Agent]:
@@ -268,7 +327,7 @@ def step_value(head: Head, step: Step, name: str) -> Any:
     if name == "review":
         return "agent" if shape.get("gate_review") and program_reviewer(head)[0] != "none" else "none"
     if name == "depth":
-        return str(shape.get("review_depth") or "delta")
+        return program_depth(head)
     if name == "merge":
         return str(shape.get("gate_merge") or "level")
     return value
@@ -327,11 +386,24 @@ def from_wire(wire: Mapping[str, Any], steps: Optional[list[Mapping[str, Any]]] 
         usage_warning=float(wire["usage_warning_share"]) if wire.get("usage_warning_share") is not None else None,
         for_person=(person.get("name") or wire.get("for_person_id") or None),
         origin=wire.get("origin_ref") or None, template=template,
+        depth=wire.get("review_depth") or None,
+        planner=((wire.get("planner") or {}).get("engine") or None) if isinstance(wire.get("planner"), Mapping) else None,
+        budget=int(wire["budget_tokens"]) if wire.get("budget_tokens") else None,
+        night=parse_night(wire["night"]) if isinstance(wire.get("night"), Mapping) else None,
+        within=[str(item) for item in wire.get("within") or []],
+        delivery=((wire.get("delivery") or {}).get("ref") or None) if isinstance(wire.get("delivery"), Mapping) else None,
+        rounds_before_start=bool(wire.get("rounds_before_start")),
     )
     head.agents = None if listed == template_agents(template) else listed
     head.reviewer = None if reviewer == template_reviewer(template) else reviewer
+    if head.depth == template_depth(template):
+        head.depth = None
     reqs = list(requirements if requirements is not None else wire.get("requirements") or [])
     model = ProgramText(head=head)
+    model.rounds = [Round(name=str(item.get("name") or ""), state=str(item.get("state") or "open"),
+                          questions=[Question(str(question.get("text") or ""), question.get("answer") or None)
+                                     for question in item.get("questions") or []])
+                    for item in sorted(wire.get("rounds") or [], key=lambda row: int(row.get("order") or 0))]
     for row in sorted(reqs, key=lambda item: int(item.get("ordinal") or 0)):
         if row.get("step_id") or row.get("parent_id"):
             continue
@@ -363,6 +435,7 @@ def from_wire(wire: Mapping[str, Any], steps: Optional[list[Mapping[str, Any]]] 
         step.may_call = bool(raw.get("may_call")) and not head.may_call
         step.for_person = raw.get("for_person") or raw.get("for_person_id") or None
         step.origin = raw.get("origin_ref") or None
+        step.budget = int(raw["budget_tokens"]) if raw.get("budget_tokens") else None
         history = raw.get("history")
         if isinstance(history, Mapping) and history.get("pr_number"):
             step.merged = {key: history.get(key) for key in ("pr_number", "merged_at", "pr_url", "head_commit")}
@@ -415,6 +488,15 @@ def _req_lines(indent: str, row: Requirement, lamp: Optional[str]) -> list[str]:
     elif row.kind == "shot" and (spec.get("case"), spec.get("width")) != (guessed.get("case"), guessed.get("width")):
         if spec.get("case") or spec.get("width"):
             lines.append(f"{sub}shot {spec.get('case') or ''} at {spec.get('width') or ''}".rstrip())
+    elif row.kind == "measure":
+        if spec.get("command") and spec.get("command") != guessed.get("command"):
+            lines.append(f"{sub}run {spec['command']}")
+        if spec.get("expect"):
+            lines.append(f"{sub}expect {spec['expect']}")
+        if spec.get("metric"):
+            lines.append(f"{sub}bound {bound_words(spec)}")
+    elif row.kind == "word":
+        lines += [f"{sub}walk {line}" for line in spec.get("walk") or []]
     if row.waived is not None:
         lines.append(f"{sub}waived: {row.waived}")
     return lines
@@ -442,18 +524,31 @@ def render(model: ProgramText, lamps: Optional[Mapping[str, str]] = None) -> str
         out.append(f"  check {head.check or 'none'}")
     if head.agents:
         out.append(f"  agent {agents_words(head.agents)}")
-    if head.reviewer is not None:
-        out.append(f"  reviewer {'none' if head.reviewer[0] == 'none' else agent_words(head.reviewer)}")
+    if head.planner:
+        out.append(f"  planner {head.planner}")
+    if head.reviewer is not None or head.depth is not None:
+        reviewer = program_reviewer(head)
+        out.append(f"  reviewer {'none' if reviewer[0] == 'none' else agent_words(reviewer)}"
+                   + (f" at {head.depth}" if head.depth is not None else ""))
+    if head.budget:
+        out.append(f"  budget {tokens_words(head.budget)}")
     flags = [word for word, on in (("when idle", head.when_idle), ("may call", head.may_call),
-                                   ("may hand off", head.may_hand_off)) if on]
+                                   ("may hand off", head.may_hand_off),
+                                   ("rounds before start", head.rounds_before_start)) if on]
     if flags:
         out.append("  " + " · ".join(flags))
+    if head.night:
+        out.append(f"  night {head.night['line']}")
+    if head.within:
+        out.append(f"  within {', '.join(head.within)}")
     if head.allow:
         out.append(f"  allow {', '.join(agent_words((profile, None)) for profile in head.allow)}")
     if head.spend is not None:
         out.append(f"  spend up to ${_number(head.spend)}")
     if head.usage_warning is not None:
         out.append(f"  usage warning {_number(round(head.usage_warning * 100, 6))}%")
+    if head.delivery:
+        out.append(f"  delivery dw {head.delivery}")
     if head.for_person:
         out.append(f"  for {head.for_person}")
     if head.origin:
@@ -489,6 +584,8 @@ def render(model: ProgramText, lamps: Optional[Mapping[str, str]] = None) -> str
             out.append("  " + " · ".join(work))
         if step.race is not None:
             out.append(f"  race {step.race}")
+        if step.budget:
+            out.append(f"  budget {tokens_words(step.budget)}")
         flags = [word for word, on in (("when idle", step.when_idle), ("may call", step.may_call)) if on]
         if flags:
             out.append("  " + " · ".join(flags))
@@ -736,17 +833,13 @@ class _Reader:
         found = _REQ.match(body)
         if not found:
             if re.match(r"^R(\d+|\+)(\s|$)", body):
-                self.bad(number, "a requirement is 'R<n> <kind>: <sentence>' (check, review, shot or word).")
+                self.bad(number, "a requirement is 'R<n> <kind>: <sentence>' (check, review, shot, word or measure).")
             else:
                 self.unknown(number, body.split(" ")[0])
             return None
         kind = found.group(2)
-        if kind in KINDS_LATER:
-            self.later(number, kind)
-            self.skip_sub = True  # its own lines go with it
-            return None
         if kind not in KINDS:
-            self.bad(number, "a requirement is a check, a review, a shot or your word.")
+            self.bad(number, "a requirement is a check, a review, a shot, your word or a measure.")
             return None
         text = " ".join(found.group(4).split())
         row = Requirement(rid=None if found.group(1) == "+" else int(found.group(1)), kind=kind, text=text,
@@ -765,9 +858,17 @@ class _Reader:
             return
         word, _sep, rest = body.partition(" ")
         rest = rest.strip()
-        if word == "run" and row.kind == "check" and rest:
+        if word == "run" and row.kind in ("check", "measure") and rest:
             row.spec["command"] = rest
-        elif word == "expect" and row.kind == "check" and rest:
+        elif word == "bound" and row.kind == "measure":
+            bound = parse_bound(rest)
+            if bound is None:
+                self.bad(number, "a bound is '<metric> <op> <number> <unit>' ('p95 < 100 ms').")
+                return
+            row.spec.update(bound)
+        elif word == "walk" and row.kind == "word" and rest:
+            row.spec.setdefault("walk", []).append(" ".join(rest.split()))
+        elif word == "expect" and row.kind in ("check", "measure") and rest:
             try:
                 re.compile(rest)
             except re.error:
@@ -782,6 +883,11 @@ class _Reader:
             row.spec.update({"case": found.group(1).lower(), "width": int(found.group(2))})
         elif word == "waived:":
             row.waived = rest
+        elif word in ("run", "expect", "bound", "walk", "shot") and rest:
+            self.bad(number, {"run": "'run' belongs under a check or a measure.",
+                              "expect": "'expect' belongs under a check or a measure.",
+                              "bound": "'bound' belongs under a measure.", "walk": "'walk' belongs under your word.",
+                              "shot": "'shot' belongs under a shot."}[word])
         elif word in _LATER_REQ:
             self.later(number, word)
         else:
@@ -816,10 +922,36 @@ class _Reader:
             elif word == "agent" and rest:
                 head.agents = parse_agents(rest)
             elif word == "reviewer" and rest:
-                if re.search(r"\sat\s+(glance|delta|standard)$", rest):
-                    self.bad(number, "the review depth is set on each step ('review agent at standard').")
+                found = re.match(r"^(.+?)(?:\s+at\s+(\S+))?$", rest)
+                who, depth = (found.group(1), found.group(2)) if found else (rest, None)
+                if depth is not None and depth not in DEPTHS:
+                    self.bad(number, "the review depth is glance, delta or standard.")
                     continue
-                head.reviewer = ("none", None) if rest == "none" else parse_agent(rest)
+                head.reviewer = ("none", None) if who == "none" else parse_agent(who)
+                head.depth = depth
+            elif word == "planner" and rest:
+                head.planner = rest
+            elif word == "budget":
+                tokens = parse_tokens(rest)
+                if tokens is None:
+                    self.bad(number, "the budget is a number of tokens ('budget 64k').")
+                else:
+                    head.budget = tokens
+            elif part == "rounds before start":
+                head.rounds_before_start = True
+            elif word == "night":
+                night = parse_night(rest)
+                if night is None:
+                    self.bad(number, "the night is '23:30–07:00 · at most 8 steps'.")
+                else:
+                    head.night = night
+            elif word == "within" and rest:
+                head.within = [item.strip() for item in rest.split(",") if item.strip()]
+            elif word == "delivery":
+                if not rest.startswith("dw ") or not rest[3:].strip():
+                    self.bad(number, "delivery is 'delivery dw <project>/<phase>[/<story>]'.")
+                else:
+                    head.delivery = rest[3:].strip()
             elif part == "when idle":
                 head.when_idle = True
             elif part == "may call":
@@ -924,6 +1056,12 @@ class _Reader:
                 step.for_person = rest
             elif word == "from" and rest:
                 step.origin = rest
+            elif word == "budget":
+                tokens = parse_tokens(rest)
+                if tokens is None:
+                    self.bad(number, "the budget is a number of tokens ('budget 32k').")
+                else:
+                    step.budget = tokens
             elif word in _LATER_STEP:
                 self.later(number, word)
             else:
@@ -946,6 +1084,8 @@ def canonical(model: ProgramText) -> ProgramText:
         head.agents = None
     if head.reviewer is not None and head.reviewer == template_reviewer(head.template):
         head.reviewer = None
+    if head.depth is not None and head.depth == template_depth(head.template):
+        head.depth = None
     for step in out.steps:
         if step.agents:
             step.agents = _minimal_agents(step_agents(head, step), program_agents(head))
@@ -991,23 +1131,39 @@ class Change:
 STEP_FIELD_NAMES = {
     "title": "title", "brief": "brief", "owns": "owns", "after": "after", "effort": "effort", "agents": "agent",
     "race": "race", "check": "gate_check", "review": "gate_review", "depth": "review_depth", "merge": "gate_merge",
-    "for_person": "for_person", "may_call": "may_call",
+    "for_person": "for_person", "may_call": "may_call", "when_idle": "prefer_idle", "budget": "budget",
 }
 #: The words the board's hover title adds to a frozen field's reason (§3.5).
 _FROZEN_HINT = {"brief": "Add a line with + instead.", "agents": "Hand off instead."}
-#: Step fields set only when the step is added (no service verb changes them).
-_STEP_FIXED = ("when_idle", "origin", "merged")
-#: Program fields set only when the Program is made.
-_HEAD_FIXED = ("repository", "branch", "check", "for_person", "origin", "template")
+#: Step fields set only when the step is added (no service verb changes
+#: them), and why.
+_STEP_FIXED = {"origin": "it names what the step closes; add a step for another one",
+               "merged": "it is the record of a merged PR"}
+#: Program fields set only when the Program is made, and why.
+_HEAD_FIXED = {"repository": "a program works in one repository; make a new program for another",
+               "branch": "the steps branch from it and merge to it; make a new program for another",
+               "origin": "it names what the program came from",
+               "template": "a template shapes a program when it is made; change the fields it set instead"}
 #: The Program fields ``ProgramService.update`` takes, in print order.
 _HEAD_FIELDS = ("title", "goal", "repository", "branch", "project", "template", "control", "check", "agents",
-                "reviewer", "when_idle", "may_call", "may_hand_off", "allow", "spend", "usage_warning",
+                "planner", "reviewer", "depth", "budget", "when_idle", "may_call", "may_hand_off",
+                "rounds_before_start", "night", "within", "allow", "spend", "usage_warning", "delivery",
                 "for_person", "origin")
+#: A Program field's words in a change row.
+_HEAD_WORDS = {"depth": "review depth", "for_person": "for", "origin": "from", "allow": "allowed agents",
+               "agents": "agent", "delivery": "delivery dw"}
+#: Step fields whose unstated value follows the Program (a change of the
+#: Program's line changes them too).
+_FOLLOWS_HEAD = ("review", "depth", "when_idle", "may_call")
 
 
 def _words(value: Any) -> str:
     if value is None:
         return "none"
+    if isinstance(value, dict) and "line" in value:
+        return str(value["line"])
+    if isinstance(value, int) and not isinstance(value, bool) and value >= 1024:
+        return tokens_words(value)
     if isinstance(value, bool):
         return "yes" if value else "no"
     if isinstance(value, list):
@@ -1027,6 +1183,8 @@ def head_value(head: Head, name: str) -> Any:
         return program_agents(head)
     if name == "reviewer":
         return program_reviewer(head)
+    if name == "depth":
+        return program_depth(head)
     return getattr(head, name)
 
 
@@ -1035,6 +1193,14 @@ def _lowers_head(name: str, before: Any, after: Any) -> bool:
         return _CONTROL_RANK.get(str(after), 0) > _CONTROL_RANK.get(str(before), 0)
     if name == "spend":
         return after is not None and (before is None or float(after) > float(before))
+    if name == "depth":
+        return _DEPTH_RANK.get(str(after), 1) < _DEPTH_RANK.get(str(before), 1)
+    if name == "reviewer":
+        return before[0] != "none" and after[0] == "none"
+    if name == "check":
+        return bool(before) and after == ""
+    if name == "rounds_before_start":
+        return bool(before) and not bool(after)
     return False
 
 
@@ -1053,6 +1219,8 @@ def _lowers_step(name: str, before: Any, after: Any) -> bool:
 def _lowers_requirement(before: Requirement, after: Requirement) -> bool:
     if before.required and not after.required:
         return True
+    if before.kind != "measure" and after.kind == "measure":
+        return True  # a Measure does not gate until its verifier (LANG11)
     return before.kind in _STRONG_KINDS and after.kind == "review"
 
 
@@ -1121,15 +1289,14 @@ def diff_program_text(current: Any, proposed: Any, *, record: Optional[Mapping[s
             continue
         if before == after:
             continue
-        row = Change(id=f"program.{name.replace('_', '-')}", op="change", where="program", field=name.replace("_", " "),
+        words = _HEAD_WORDS.get(name, name.replace("_", " "))
+        row = Change(id=f"program.{name.replace('_', '-')}", op="change", where="program", field=words,
                      before=_words(before), after=_words(after), line=new.head.line,
-                     say=f"The program's {name.replace('_', ' ')} is now {_words(after)}.",
+                     say=f"The program's {words} is now {_words(after)}.",
                      data={"kind": "head", "name": name, "value": after})
         row.lowers_bar = _lowers_head(name, before, after)
         if name in _HEAD_FIXED:
-            row.refuse("field_fixed", f"Program · {name.replace('_', ' ')}: it is set when the program is made.")
-        elif name == "reviewer" and after[0] == "none":
-            row.refuse("text_bad_value", "Program · reviewer: a reviewer is not taken off here. Name another agent.")
+            row.refuse("field_fixed", f"Program · {words}: it is set when the program is made; {_HEAD_FIXED[name]}.")
         elif name == "title" and not after:
             row.refuse("text_bad_value", "A program needs a title.")
         elif closed:
@@ -1160,12 +1327,14 @@ def diff_program_text(current: Any, proposed: Any, *, record: Optional[Mapping[s
         if number in new_by:
             continue
         row = Change(id=f"step-{number}.remove", op="remove", where=f"step {number}", field="step",
-                     before=step.title, line=step.line, say=f"Step {number}, {step.title}, is removed.")
+                     before=step.title, line=step.line, say=f"Step {number}, {step.title}, is removed.",
+                     data={"kind": "remove_step", "number": number})
         if _started(by_record.get(number)):
             row.refuse("step_stays", f"Step {number} started. It stays.")
-        else:
-            row.refuse("step_stays", f"Step {number} stays: this hub does not remove a step yet. "
-                                     "Park the program, or skip the step.")
+        elif step.merged:
+            row.refuse("step_stays", f"Step {number} is a merged PR. It stays.")
+        elif closed:
+            row.refuse("program_closed", "The program is closed.")
         rows.append(row)
     for number, step in new_by.items():
         if number not in base_by:
@@ -1173,17 +1342,23 @@ def diff_program_text(current: Any, proposed: Any, *, record: Optional[Mapping[s
                                line=step.line).refuse(
                 "text_bad_value", f"Line {step.line}: there is no step {number}. Write 'step +' for a new step."))
 
-    # ``after`` and order compare by identity (the step it points to).
-    def ident(number: int) -> Optional[str]:
-        if number in base_by:
+    # ``after`` and order compare by identity (the step it points to). A
+    # step removed in this text is no step for the new text's ``after``.
+    def ident(number: int, *, base_side: bool = False) -> Optional[str]:
+        if number in base_by and (base_side or number in new_by):
             return f"s{number}"
-        if number in provisional:
+        if number in provisional and not base_side:
             return f"n{number}"
         return None
 
     for step in new.steps:
         number = label[id(step)]
-        missing = [value for value in step.after if ident(value) is None or value == number]
+        gone = [value for value in step.after if value in base_by and value not in new_by]
+        missing = [value for value in step.after if (ident(value) is None or value == number) and value not in gone]
+        if gone:
+            rows.append(Change(id=f"step-{number}.after-removed", op="read", where=f"step {number}", field="after",
+                               line=step.line).refuse(
+                "text_bad_value", f"Step {number} · after: step {', '.join(map(str, gone))} is removed in this text."))
         if missing:
             rows.append(Change(id=f"step-{number}.after-unknown", op="read", where=f"step {number}", field="after",
                                line=step.line).refuse(
@@ -1257,19 +1432,29 @@ def diff_program_text(current: Any, proposed: Any, *, record: Optional[Mapping[s
         record_step = by_record.get(number)
         started = _started(record_step)
         for name in ("title", "brief", "owns", "after", "agents", "effort", "race", "check", "review", "depth",
-                     "merge", "for_person", "may_call", "when_idle", "origin", "merged"):
+                     "merge", "for_person", "may_call", "when_idle", "budget", "origin", "merged"):
             if name == "after":
-                before = sorted(filter(None, (ident(value) for value in old.after)))
+                before = sorted(filter(None, (ident(value, base_side=True) for value in old.after)))
                 after = sorted(filter(None, (ident(value) for value in step.after)))
                 shown = (", ".join(map(str, old.after)) or "none", ", ".join(map(str, step.after)) or "none")
             elif name in ("may_call", "when_idle"):
                 before = getattr(old, name) or getattr(base.head, name)
                 after = getattr(step, name) or getattr(new.head, name)
                 shown = (_words(before), _words(after))
+            elif name == "budget":
+                # None: the Program's budget; never resolved, so a Program
+                # line does not rewrite each step.
+                before, after = old.budget, step.budget
+                shown = (_words(before) if before else "the program's", _words(after) if after else "the program's")
             else:
                 before, after = step_value(base.head, old, name), step_value(new.head, step, name)
                 shown = (_words(before), _words(after))
             if before == after:
+                continue
+            follows = name in _FOLLOWS_HEAD and not getattr(old, name) and not getattr(step, name)
+            if follows and (_frozen(record_step, name) or (started and name == "review" and after != "agent")):
+                # The Program's line changed and this step took the old value
+                # from it; its state keeps that value (the text then states it).
                 continue
             row = Change(id=f"step-{number}.{name.replace('_', '-')}", op="change", where=f"step {number}",
                          field={"agents": "agent", "for_person": "for", "may_call": "may call",
@@ -1287,7 +1472,8 @@ def diff_program_text(current: Any, proposed: Any, *, record: Optional[Mapping[s
                 reason = (record_step.get("frozen") or {}).get("agent") if first_before != first_after else (
                     (record_step.get("frozen") or {}).get("runs_on_then"))
             if name in _STEP_FIXED:
-                row.refuse("field_fixed", f"Step {number} · {row.field}: it is set when the step is added.")
+                row.refuse("field_fixed", f"Step {number} · {row.field}: it is set when the step is added; "
+                                          f"{_STEP_FIXED[name]}.")
             elif reason:
                 hint = f" {_FROZEN_HINT[name]}" if name in _FROZEN_HINT and reason != "It is merged" else ""
                 row.refuse("step_frozen", f"Step {number} · {row.field}: {reason}.{hint}")
@@ -1396,24 +1582,99 @@ def diff_program_text(current: Any, proposed: Any, *, record: Optional[Mapping[s
             elif closed:
                 change.refuse("program_closed", "The program is closed.")
             rows.append(change)
+    removed = {f"step {number}" for number in base_by if number not in new_by}
     for rid, (where, old) in old_reqs.items():
+        if rid not in seen and where in removed:
+            continue  # it goes with its step's block (the step's row says whether it may)
         if rid not in seen:
             rows.append(Change(id=f"R{rid}.remove", op="remove", where=f"R{rid}", field="requirement",
                                before=_req_words(old), line=old.line).refuse(
                 "requirement_stays", f"R{rid} stays. Waive it with a line."))
 
-    # rounds: read, not stored yet (LANG9) --------------------------------
-    if new.rounds != base.rounds:
-        line = next((item.line for item in new.rounds), 0)
-        rows.append(Change(id="rounds", op="change", where="rounds", field="round", line=line).refuse(
-            "text_unknown_word", f"Line {line}: rounds are a word of the program text that this hub does not "
-                                 "store yet."))
+    # rounds (§6.2): his answers and the rounds' states; the questions are
+    # the engine's ---------------------------------------------------------
+    rows += _round_rows(base, new, closed)
 
     for row in rows:
         if row.verdict == "allowed" and row.lowers_bar:
             row.verdict = "lowers"
     # Reading order; on one line a new step comes before its move.
     rows.sort(key=lambda row: (row.line or 0, 0 if row.op == "add" else 1))
+    return rows
+
+
+def _round_key(name: str) -> str:
+    return _fold(name)
+
+
+def _round_rows(base: ProgramText, new: ProgramText, closed: bool) -> list[Change]:
+    rows: list[Change] = []
+    old_by = {_round_key(item.name): item for item in base.rounds}
+    new_by = {_round_key(item.name): item for item in new.rounds}
+    seen: set[str] = set()
+    for item in new.rounds:
+        key = _round_key(item.name)
+        where = f"round {item.name}"
+        if key in seen:
+            rows.append(Change(id=f"round-{key}.twice", op="read", where=where, field="round", line=item.line).refuse(
+                "text_bad_value", f"Line {item.line}: round {item.name} is in the text twice."))
+            continue
+        seen.add(key)
+        old = old_by.get(key)
+        if old is None:
+            row = Change(id=f"round-{key}.add", op="add", where=where, field="round", after=f"{item.name} · {item.state}",
+                         line=item.line, say=f"A new round, {item.name}.", data={"kind": "round", "name": item.name})
+            if item.questions:
+                row.refuse("round_question", f"Round {item.name}: the engine asks the questions. Add the round with "
+                                             "no '?' lines.")
+            elif item.state == "asking":
+                row.refuse("round_state", f"Round {item.name}: the engine sets asking. Write open.")
+            elif closed:
+                row.refuse("program_closed", "The program is closed.")
+            rows.append(row)
+            continue
+        if item.state != old.state:
+            row = Change(id=f"round-{key}.state", op="change", where=where, field="state", before=old.state,
+                         after=item.state, line=item.line, say=f"Round {item.name} is now {item.state}.",
+                         data={"kind": "round", "name": item.name})
+            if item.state == "asking":
+                row.refuse("round_state", f"Round {item.name}: the engine sets asking. Write open.")
+            elif closed:
+                row.refuse("program_closed", "The program is closed.")
+            rows.append(row)
+        if [question.text for question in item.questions] != [question.text for question in old.questions]:
+            rows.append(Change(id=f"round-{key}.questions", op="change", where=where, field="question",
+                               line=item.line, data={"kind": "round", "name": item.name}).refuse(
+                "round_question", f"Round {item.name}: the engine asked it. A '?' line stays as it is."))
+            continue
+        for index, (question, before) in enumerate(zip(item.questions, old.questions), start=1):
+            if question.answer == before.answer:
+                continue
+            row = Change(id=f"round-{key}.answer-{index}", op="change", where=where, field="answer",
+                         before=before.answer or "", after=question.answer or "", line=item.line,
+                         say=f"Round {item.name}: the answer to '{question.text}' is now {question.answer or 'none'}.",
+                         data={"kind": "round", "name": item.name})
+            if old.state == "done":
+                row.refuse("round_done", f"Round {item.name} is done. Open it again to change an answer.")
+            elif closed:
+                row.refuse("program_closed", "The program is closed.")
+            rows.append(row)
+    for key, old in old_by.items():
+        if key in new_by:
+            continue
+        row = Change(id=f"round-{key}.remove", op="remove", where=f"round {old.name}", field="round", before=old.name,
+                     line=old.line, say=f"Round {old.name} is removed.", data={"kind": "round", "name": old.name})
+        if old.questions:
+            row.refuse("round_stays", f"Round {old.name} has questions. It stays; write 'round {old.name} · skipped'.")
+        elif closed:
+            row.refuse("program_closed", "The program is closed.")
+        rows.append(row)
+    common = [_round_key(item.name) for item in new.rounds if _round_key(item.name) in old_by]
+    if common != [key for key in (_round_key(item.name) for item in base.rounds) if key in new_by]:
+        rows.append(Change(id="rounds.order", op="move", where="rounds", field="order",
+                           before=", ".join(item.name for item in base.rounds),
+                           after=", ".join(item.name for item in new.rounds), say="The rounds are in a new order.",
+                           line=next((item.line for item in new.rounds), 0), data={"kind": "round_order"}))
     return rows
 
 
@@ -1434,7 +1695,9 @@ def allowed_model(base: ProgramText, proposed: ProgramText, rows: list[Change],
     blocked = [row for row in rows if row.verdict in ("refused", "conflict") or
                (allow and row.verdict == "lowers" and row.id not in allow)]
     out = replace(proposed, head=replace(proposed.head), steps=[replace(step) for step in proposed.steps],
-                  every_step=list(proposed.every_step), at_end=list(proposed.at_end), errors=[])
+                  every_step=list(proposed.every_step), at_end=list(proposed.at_end), errors=[],
+                  rounds=[replace(item, questions=[replace(question) for question in item.questions])
+                          for item in proposed.rounds])
     base_by = {step.number: step for step in base.steps if step.number is not None}
     base_reqs = {row.rid: (where, row) for where, row in base.requirements() if row.rid is not None}
     for row in blocked:
@@ -1444,7 +1707,13 @@ def allowed_model(base: ProgramText, proposed: ProgramText, rows: list[Change],
         elif kind == "step":
             step = next((item for item in out.steps if item.number == row.data["number"]), None)
             if step is not None and row.data["number"] in base_by:
-                setattr(step, row.data["name"], getattr(base_by[row.data["number"]], row.data["name"]))
+                name, was = row.data["name"], base_by[row.data["number"]]
+                value = getattr(was, name)
+                if value in (None, False) and name in _FOLLOWS_HEAD:
+                    # It followed the Program's line in the base: state it.
+                    value = step_value(base.head, was, name) if name in ("review", "depth") else (
+                        getattr(was, name) or getattr(base.head, name))
+                setattr(step, name, value)
         elif kind == "add_step":
             out.steps = [item for item in out.steps if item is not row.data["step"]]
         elif kind == "amend":
@@ -1453,6 +1722,19 @@ def allowed_model(base: ProgramText, proposed: ProgramText, rows: list[Change],
                 step.amendments = [item for item in step.amendments if item.text != row.data["line"]]
         elif kind == "move":
             out.steps = _base_order(base, out.steps)
+        elif kind == "round":
+            key = _round_key(row.data["name"])
+            was = next((item for item in base.rounds if _round_key(item.name) == key), None)
+            at = next((index for index, item in enumerate(out.rounds) if _round_key(item.name) == key), None)
+            if was is None and at is not None:
+                out.rounds.pop(at)
+            elif was is not None and at is not None:
+                out.rounds[at] = replace(was, questions=[replace(question) for question in was.questions])
+            elif was is not None:
+                out.rounds.append(replace(was, questions=[replace(question) for question in was.questions]))
+        elif kind == "round_order":
+            rank = {_round_key(item.name): index for index, item in enumerate(base.rounds)}
+            out.rounds.sort(key=lambda item: rank.get(_round_key(item.name), len(rank)))
         elif kind in ("edit_requirement", "waive"):
             _swap_requirement(out, row.data["rid"], base_reqs[row.data["rid"]][1])
         elif kind == "require":
