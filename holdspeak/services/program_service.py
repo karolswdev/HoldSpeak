@@ -2927,7 +2927,9 @@ class ProgramService:
         """Change a step (§8): the fields its state leaves open; ``before``
         moves it. His change applies at once; an orchestrating agent's goes
         up the ladder (``step_change``: YOLO applies it and says so, Secure
-        and Normal ask him). A frozen field is refused with its reason."""
+        and Normal ask him). An agent's field that lowers the bar is one
+        ``step_change`` proposal for him at every level, YOLO too (§4.5,
+        §7.2). A frozen field is refused with its reason."""
         from .program_rules import decide
 
         program = self._program(program_id)
@@ -2951,12 +2953,21 @@ class ProgramService:
             return self.get(principal, program["id"])
         self._require_writer(principal, program, "change")
         outcome = decide(program.get("control"), "step_change", {})
+        # §4.5, §7.2: an agent's lower gate goes to him at every level, YOLO too.
+        lowered = _lowered_step_fields(step, fields)
+        if lowered and not outcome.to_owner:
+            fields = {key: value for key, value in fields.items() if key not in lowered}
         title = f"The orchestrator {_change_words(step, fields)}"
         with _LOCK:
-            if outcome.to_owner:
+            if lowered and not outcome.to_owner:
+                words = f"The orchestrator {_change_words(step, lowered)} (this lowers the bar)"
+                self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="agent",
+                                          line=words[:400], kind="step_change", undo={"title": words, "fields": lowered})
+            if fields and outcome.to_owner:
+                title += " (this lowers the bar)" if lowered else ""
                 self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="agent",
                                           line=title[:400], kind="step_change", undo={"title": title, "fields": dict(fields)})
-            else:
+            elif fields:
                 before = {key: step.get(_STORE_KEY.get(key, key)) for key in fields if key != "before"}
                 self._apply_step_change(program, step, fields, by="engine")
                 self.engine_decision(program, step, "step_change", outcome, title[:400],
@@ -4414,6 +4425,39 @@ def _via_line(by: str, line: str) -> tuple[str, Optional[str]]:
     if by != "owner" or not via:
         return line, None
     return f"{line} \u00b7 {VIA_WORDS[via]}"[:400], via
+
+
+def _lowered_step_fields(step: Mapping[str, Any], fields: Mapping[str, Any]) -> dict[str, Any]:
+    """The ``change_step`` fields that lower the step's bar (PG-LANG §4.5:
+    check off; review agent or person to none; depth down; merge owner to
+    level or none) or ask a core question (an ``owns`` path outside the
+    repository; ``may call``), as the text's guard reads them."""
+    from .program_shaper import _outside
+    from .program_text import _DEPTH_RANK
+
+    out: dict[str, Any] = {}
+    if "gate_check" in fields and step.get("gate_check") and not bool(fields["gate_check"]):
+        out["gate_check"] = fields["gate_check"]
+    if "gate_review" in fields:
+        value = fields["gate_review"]
+        value = "agent" if value is True else "none" if value is False else str(value or "none").lower()
+        if step.get("gate_review") in ("agent", "person") and value == "none":
+            out["gate_review"] = fields["gate_review"]
+    if "review_depth" in fields:
+        after, before = str(fields["review_depth"] or "").lower(), str(step.get("review_depth") or "delta")
+        if after in _DEPTH_RANK and _DEPTH_RANK[after] < _DEPTH_RANK.get(before, 1):
+            out["review_depth"] = fields["review_depth"]
+    if "gate_merge" in fields:
+        merge = str(fields["gate_merge"] or "").lower()
+        if step.get("gate_merge") == "owner" and _GATE_MERGE_ALIASES.get(merge, merge) in ("level", "none"):
+            out["gate_merge"] = fields["gate_merge"]
+    if "owns" in fields:
+        before = {str(item) for item in step.get("owns") or []}
+        if any(_outside(str(item)) and str(item) not in before for item in fields["owns"] or []):
+            out["owns"] = fields["owns"]
+    if "may_call" in fields and bool(fields["may_call"]) and not step.get("may_call"):
+        out["may_call"] = fields["may_call"]
+    return {key: value for key, value in fields.items() if key in out}
 
 
 def _change_words(step: Mapping[str, Any], fields: Mapping[str, Any]) -> str:

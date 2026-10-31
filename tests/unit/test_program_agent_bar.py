@@ -197,3 +197,61 @@ def test_an_agents_draft_that_reaches_outside_is_refused(tmp_path, monkeypatch) 
     # The owner's apply of the same draft is as it was (the text names no lower bar).
     owner = rig.service.text_apply(OWNER, rig.pid, result.proposed_text, dry_run=True, base=result.base_text)
     assert next(row for row in owner["changes"] if row["op"] == "add")["verdict"] == "allowed"
+
+
+# ── the step verb (program.step_update) ──────────────────────────────
+
+def test_an_agents_step_update_lower_gate_is_a_proposal_even_at_yolo(tmp_path) -> None:
+    rig, pid = _agents_program(tmp_path, control="yolo")
+    two = rig.step(pid, 2)["id"]
+    rig.service.change_step(AGENT, pid, two, title="B, renamed", gate_merge="level", review_depth="glance")
+    step = rig.service.store.get_step(two)
+    assert step["title"] == "B, renamed"  # the other field applies as before
+    assert _gates(rig, pid) == ("owner", "standard")  # the lower bar waits for him
+    assert [row["line"] for row in rig.service.decided_for_you(pid)] == ["The orchestrator changes step 2: title"]
+    item = next(i for i in rig.program(pid)["your_turn_items"] if i["kind"] == "step_change")
+    assert item["title"] == "The orchestrator changes step 2: gate_merge, review_depth (this lowers the bar)"
+    rig.service.decide(OWNER, pid, two, kind="step_change", choice="apply", proposal_id=item["proposal_id"])
+    assert _gates(rig, pid) == ("level", "glance")
+
+
+def test_an_agents_step_update_core_question_is_a_proposal_even_at_yolo(tmp_path) -> None:
+    rig, pid = _agents_program(tmp_path, control="yolo")
+    one = rig.step(pid, 1)["id"]
+    rig.service.change_step(AGENT, pid, one, owns=["/etc/hosts"], may_call=True, gate_check=False)
+    step = rig.service.store.get_step(one)
+    assert step["owns"] == ["a.py"] and not step["may_call"] and step["gate_check"]
+    assert rig.service.decided_for_you(pid) == []
+    items = [i for i in rig.program(pid)["your_turn_items"] if i["kind"] == "step_change"]
+    assert [i["title"] for i in items] == [
+        "The orchestrator changes step 1: owns, may_call, gate_check (this lowers the bar)"]
+    # A gate the agent raises still applies at YOLO as a Decided for you change.
+    rig.service.change_step(AGENT, pid, one, review_depth="standard")
+    assert rig.service.store.get_step(one)["review_depth"] == "standard"
+
+
+def test_the_owners_step_update_lowers_the_bar_as_before(tmp_path) -> None:
+    rig, pid = _agents_program(tmp_path, control="yolo")
+    rig.service.change_step(OWNER, pid, rig.step(pid, 2)["id"], gate_merge="level", review_depth="glance")
+    assert _gates(rig, pid) == ("level", "glance")
+    assert not [i for i in rig.program(pid)["your_turn_items"] if i["kind"] == "step_change"]
+
+
+# ── within (§4.5) ────────────────────────────────────────────────────
+
+def test_removing_a_within_path_lowers_the_bar(tmp_path) -> None:
+    rig, pid = _agents_program(tmp_path)
+    rig.service.update(OWNER, pid, within=["src/", "docs/"])
+    text = rig.service.text_get(OWNER, pid)["text"]
+    assert "  within src/, docs/" in text
+    for edited in (_edit(text, ("  within src/, docs/\n", "")), _edit(text, ("  within src/, docs/", "  within src/"))):
+        dry = rig.service.text_apply(OWNER, pid, edited)
+        assert dry["lowers"] == ["program.within"]
+        assert rig.service.text_apply(OWNER, pid, edited, dry_run=False)["applied"] is False  # held for his press
+        row = next(row for row in rig.service.text_apply(AGENT, pid, edited, dry_run=False)["changes"]
+                   if row["id"] == "program.within")
+        assert (row["verdict"], row["code"]) == ("refused", "owner_required")
+    assert rig.service._program(pid)["within"] == ["src/", "docs/"]
+    removed = _edit(text, ("  within src/, docs/\n", ""))
+    answer = rig.service.text_apply(OWNER, pid, removed, dry_run=False, allow_lower=["program.within"])
+    assert answer["applied"] is True and rig.service._program(pid)["within"] == []

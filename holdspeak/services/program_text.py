@@ -1206,6 +1206,9 @@ def _lowers_head(name: str, before: Any, after: Any) -> bool:
         return bool(before) and after == ""
     if name == "rounds_before_start":
         return bool(before) and not bool(after)
+    if name == "within":
+        # §4.5: a removed ``within`` line, or a list without a path it had.
+        return bool(before) and (not after or any(path not in after for path in before))
     return False
 
 
