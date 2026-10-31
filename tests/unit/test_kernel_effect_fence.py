@@ -134,6 +134,18 @@ _CALL_RULES = (
         path_globs=("holdspeak/coder_steering.py",),
         scopes=("deliver", "deliver_keys"),
     ),
+    CallRule(
+        FAMILY_TMUX,
+        ("run", "transport"),
+        path_globs=("holdspeak/coder_steering.py",),
+        scopes=("resize_pane",),
+    ),
+    CallRule(
+        FAMILY_SUBPROCESS,
+        ("_popen_factory",),
+        path_globs=("holdspeak/delivery/terminal_live.py",),
+        scopes=("_ControlClient.start",),
+    ),
     CallRule(FAMILY_TYPER, ("type_text",)),
     CallRule(FAMILY_SUBPROCESS, ("run_subprocess", "run_read_subprocess")),
     CallRule(
@@ -554,12 +566,28 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
 
 # Phase 108 emptied the transitional debt register. These exact statements are
 # no longer debt because their enforcement proofs are pinned below: T01/T02
-# have one caller inside the claimed process.input executor; C02/C03/C05 are
+# have one caller inside the claimed process.input executor; resize sites use
+# the separate process.resize admission below. C02/C03/C05 are
 # authenticated reads; N03/N04 are brokered egress; N10-N12 are the owner's
 # clause-5 computation ruling; and the desktop statements exist only behind the
 # warrant-validating anonymous-IPC child. A new statement matches no key here
 # and therefore fails as unledgered debt.
 _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
+    (
+        "holdspeak/coder_steering.py", "resize_pane", "transport", 1,
+    ): "process.resize executor only: injected local resize transport, grant and immutable pane rechecked",
+    (
+        "holdspeak/coder_steering.py", "resize_pane", "run", 1,
+    ): "process.resize split-layout read: fixed list-panes before any host geometry effect",
+    (
+        "holdspeak/coder_steering.py", "resize_pane", "run", 2,
+    ): "process.resize executor only: bounded tmux resize-window/resize-pane argv after kernel claim and Type grant",
+    (
+        "holdspeak/coder_steering.py", "resize_pane", "run", 3,
+    ): "process.resize geometry receipt read: fixed display-message after admitted host resize",
+    (
+        "holdspeak/delivery/terminal_live.py", "_ControlClient.start", "_popen_factory", 1,
+    ): "local output read: fixed read-only ignore-size tmux control client; no pane input or pipe replacement",
     (
         "holdspeak/services/lan_engine_discovery.py", "_run", "run", 1,
     ): (
@@ -1355,7 +1383,7 @@ def test_lan_transports_are_only_referenced_by_the_frozen_scan_sender() -> None:
     })
 
 
-def test_terminal_transport_has_only_the_process_input_executor_as_caller() -> None:
+def test_terminal_transports_have_only_the_admitted_command_executor_as_caller() -> None:
     direct_calls: set[tuple[str, str]] = set()
     for path in _source_paths():
         relative = path.relative_to(_REPO).as_posix()
@@ -1370,7 +1398,7 @@ def test_terminal_transport_has_only_the_process_input_executor_as_caller() -> N
             elif isinstance(node, ast.ImportFrom):
                 if str(node.module or "").endswith("coder_steering"):
                     for alias in node.names:
-                        if alias.name in {"deliver", "deliver_keys"}:
+                        if alias.name in {"deliver", "deliver_keys", "resize_pane"}:
                             function_aliases[alias.asname or alias.name] = alias.name
                 for alias in node.names:
                     if alias.name == "coder_steering":
@@ -1384,20 +1412,21 @@ def test_terminal_transport_has_only_the_process_input_executor_as_caller() -> N
             if not isinstance(node.func, ast.Attribute):
                 continue
             base = _dotted_expr(node.func.value)
-            if node.func.attr in {"deliver", "deliver_keys"} and (
+            if node.func.attr in {"deliver", "deliver_keys", "resize_pane"} and (
                 base in module_aliases or base.endswith(".coder_steering")
             ):
                 direct_calls.add((relative, node.func.attr))
     assert direct_calls == {
         ("holdspeak/delivery/commands.py", "deliver"),
         ("holdspeak/delivery/commands.py", "deliver_keys"),
+        ("holdspeak/delivery/commands.py", "resize_pane"),
     }
     assert "preflight_result" not in (
         _REPO / "holdspeak" / "delivery" / "commands.py"
     ).read_text(encoding="utf-8")
 
 
-def test_delivery_command_adapter_cannot_bypass_process_input() -> None:
+def test_delivery_command_adapters_cannot_bypass_process_admission() -> None:
     commands_path = _REPO / "holdspeak" / "delivery" / "commands.py"
     tree = ast.parse(
         commands_path.read_text(encoding="utf-8"),
@@ -1426,7 +1455,8 @@ def test_delivery_command_adapter_cannot_bypass_process_input() -> None:
     }
     assert {name: len(calls) for name, calls in native_calls.items() if calls} == {
         "submit": 1,
-        "submit_process_input": 1,
+        "_submit_process_input": 1,
+        "_submit_process_resize": 1,
     }
 
     external_native_calls: list[str] = []
@@ -1452,25 +1482,55 @@ def test_delivery_command_adapter_cannot_bypass_process_input() -> None:
         and "STEERING_VERBS" in ast.unparse(node.test)
     ]
     assert len(submit_routes) == 1
+    adapter_assignment = next(
+        node for node in submit_routes[0].body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "adapter" for target in node.targets)
+    )
+    selection = adapter_assignment.value
+    assert isinstance(selection, ast.IfExp)
+    assert ast.unparse(selection.test) == "verb == 'process.resize@1'"
+    assert ast.unparse(selection.body) == "self.submit_process_resize"
+    assert ast.unparse(selection.orelse) == "self.submit_process_input"
     assert any(
         isinstance(node, ast.Return)
         and isinstance(node.value, ast.Call)
-        and isinstance(node.value.func, ast.Attribute)
-        and node.value.func.attr == "submit_process_input"
+        and isinstance(node.value.func, ast.Name)
+        and node.value.func.id == "adapter"
         for node in submit_routes[0].body
     )
 
-    adapter_call = native_calls["submit_process_input"][0]
-    capability = next(
-        (
-            keyword.value
-            for keyword in adapter_call.keywords
-            if keyword.arg == "process_input_capability"
-        ),
-        None,
-    )
-    assert isinstance(capability, ast.Attribute)
-    assert capability.attr == "_process_input_capability"
+    locked_adapter_sites = set()
+    for public_name in ("submit_process_input", "submit_process_resize"):
+        private_name = "_" + public_name
+        wrapper = methods[public_name]
+        lock = next(node for node in wrapper.body if isinstance(node, ast.With))
+        assert len(lock.items) == 1
+        assert ast.unparse(lock.items[0].context_expr) == "self._steering_lock(request)"
+        private_call = next(
+            node for node in ast.walk(lock)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == private_name
+        )
+        locked_adapter_sites.add(("holdspeak/delivery/commands.py", private_call.lineno))
+    actual_adapter_sites = set()
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        for node in ast.walk(_parsed(relative, path.read_text(encoding="utf-8"))):
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                    and node.func.attr in {"_submit_process_input", "_submit_process_resize"}):
+                actual_adapter_sites.add((relative, node.lineno))
+    assert actual_adapter_sites == locked_adapter_sites
+
+    for name in ("_submit_process_input", "_submit_process_resize"):
+        adapter_call = native_calls[name][0]
+        capability = next(
+            (keyword.value for keyword in adapter_call.keywords if keyword.arg == "process_input_capability"),
+            None,
+        )
+        assert isinstance(capability, ast.Attribute)
+        assert capability.attr == "_process_input_capability"
     assert not any(
         keyword.arg == "process_input_capability"
         for keyword in native_calls["submit"][0].keywords

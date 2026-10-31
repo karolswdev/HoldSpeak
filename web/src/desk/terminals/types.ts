@@ -108,6 +108,38 @@ export interface TerminalReceipt {
   [key: string]: unknown;
 }
 
+export interface TerminalDimensions {
+  cols: number;
+  rows: number;
+}
+
+export interface TerminalResizeState {
+  desired: TerminalDimensions | null;
+  acknowledged: TerminalDimensions | null;
+  busy: boolean;
+  error: string | null;
+}
+
+export interface TerminalOutputFrame {
+  kind: "snapshot" | "output" | "resync";
+  data: Uint8Array;
+  sequence: number;
+  pane?: TerminalPaneGeometry | null;
+  streamId?: string | null;
+}
+
+/** A direct frame seam for a mounted xterm. It deliberately lives on the
+ * descriptor session, not in a global stream store: each target owns its
+ * stream identity and its bounded replay cursor. */
+export interface TerminalOutputSource {
+  subscribe(listener: (frame: TerminalOutputFrame) => void): () => void;
+  subscribeResync?(listener: () => void): () => void;
+  current(): TerminalOutputFrame | null;
+  replay?(afterSequence: number): TerminalOutputFrame[] | null;
+  snapshot?(): TerminalOutputFrame | null;
+  requestResync?(): void;
+}
+
 export interface TerminalSnapshot {
   status: TerminalStatus;
   raw: string | null;
@@ -131,9 +163,14 @@ export interface TerminalActivity {
 
 export interface TerminalSessionState extends TerminalSnapshot {
   descriptor: TerminalDescriptor;
+  output: TerminalOutputSource | null;
+  live: boolean;
+  resize: TerminalResizeState;
   start(): void;
   stop(): void;
   setActivity(activity: TerminalActivity): void;
+  setHostGeometry(dimensions: TerminalDimensions): void;
+  retryResize(): Promise<boolean>;
   enableTyping(): Promise<boolean>;
   disableTyping(): Promise<void>;
   sendData(data: string): boolean;

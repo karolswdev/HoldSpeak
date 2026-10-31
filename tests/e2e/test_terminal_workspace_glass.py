@@ -5,12 +5,14 @@ window routes. No agent CLI, provider, microphone or owner tmux is involved.
 """
 from __future__ import annotations
 
+import base64
 import json
 import re
 import shutil
 import subprocess
 import tempfile
 import time
+import uuid
 from urllib.parse import quote
 from pathlib import Path
 from typing import Any
@@ -33,6 +35,13 @@ def _tmux(*args: str) -> str:
 
 def _capture(pane: str) -> str:
     return _tmux("capture-pane", "-p", "-t", pane, "-S", "-100")
+
+
+def _send_python(pane: str, script: str) -> None:
+    """Run a private real producer without echoing its marker in the command."""
+    encoded = base64.b64encode(script.encode()).decode()
+    command = f"python3 -c \"import base64;exec(base64.b64decode('{encoded}'))\""
+    _tmux("send-keys", "-t", pane, command, "Enter")
 
 
 def _eventually(predicate: Any, *, seconds: float = 12) -> Any:
@@ -87,6 +96,12 @@ def _type(frame: Any, words: str) -> None:
 def _git(root: Path, *args: str) -> str:
     return subprocess.run(["git", "-C", str(root), *args], check=True,
                           capture_output=True, text=True, timeout=12).stdout.strip()
+
+
+def _ag8_hand_refused_wire() -> dict[str, Any]:
+    """Return the recorded hub refusal envelope used by StartAgent tests."""
+    fixture = Path(__file__).resolve().parents[2] / "web/src/desk/__tests__/fixtures/agents-ag8/hand.refused.wire.json"
+    return json.loads(fixture.read_text(encoding="utf-8"))["wire"]
 
 
 def _workspace_face(page: Any, inventory: Any, name: str) -> None:
@@ -175,6 +190,46 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             terminal.get_by_role("button", name="View only", exact=True).click()
             terminal.get_by_test_id("terminal-workspace").click()
             expect(inventory).to_have_class(re.compile(r"\bis-front\b"))
+            _workspace_face(page, inventory, "Sessions")
+            # Selecting a connected shell presents the job before the owner
+            # opens another wing: the real seeded brief, Project and agent
+            # state are readable beside the terminal. Opening the workspace
+            # must not dispatch or contact a provider by itself.
+            overview = inventory.get_by_test_id("terminal-job-overview")
+            expect(overview).to_contain_text("Build the connected workspace")
+            expect(overview).to_contain_text("Workspace fixture")
+            # The real isolated flight may already be expired (there is no
+            # provider process in this engine=none walk); the state remains a
+            # named fact rather than an optimistic success or blank.
+            assert re.search(r"\b(?:Live|Needs you|Done|expired)\b", overview.inner_text())
+            expect(overview).to_contain_text("Codex")
+            expect(overview.get_by_role("button", name="Open terminal", exact=True)).to_be_visible()
+            _eventually(lambda: "Connecting" not in inventory.inner_text(), seconds=15)
+            if width == 393:
+                # The overview has three actionable doors on phone. Check
+                # their real post-layout hit ownership after scrolling each
+                # into view; the status bar must not steal a clipped edge.
+                for button in (
+                    overview.get_by_role("button", name="Workspace fixture", exact=True),
+                    overview.get_by_role("button", name="Open terminal", exact=True),
+                    overview.get_by_role("button", name="Open agent", exact=True),
+                ):
+                    button.evaluate("element => element.scrollIntoView({block: 'center', inline: 'nearest'})")
+                    box = button.bounding_box()
+                    assert box and box["width"] >= 44 and box["height"] >= 44, box
+                    assert button.evaluate("""button => {
+                        const r = button.getBoundingClientRect();
+                        return [
+                            [r.x + r.width / 2, r.y + r.height / 2],
+                            [r.left + 2, r.top + 2], [r.right - 2, r.top + 2],
+                            [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2],
+                        ].every(([x, y]) => {
+                            const hit = document.elementFromPoint(x, y);
+                            return hit === button || button.contains(hit);
+                        });
+                    }"""), f"Overlapping overview target: {button.inner_text()}"
+                inventory.locator(".terminals-list").evaluate("element => element.scrollTo({top: 0, left: 0})")
+                page.screenshot(path=str(connected_shots / "workspace-job-overview-393.png"))
             if width == 1440:
                 _api(page, "POST", "/api/desk/windows/arrange", {"rects": {
                     # Positions are offsets from the work band's centre.
@@ -182,11 +237,100 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
                     f"terminal:{first['id']}": {"x": "40px", "y": "-50% + 50", "w": "660px", "h": "680px"},
                 }}, token=TOKEN)
                 _settle(page)
+                page.screenshot(path=str(connected_shots / "workspace-job-overview.png"))
+                # The same selected workspace must reflow when its Desk frame
+                # is narrow on a wide viewport. This is a geometry check, not
+                # a second browser harness.
+                _api(page, "POST", "/api/desk/windows/arrange", {"rects": {
+                    "surface-terminals": {"x": "-50% + 10", "y": "-50% + 50", "w": "480px", "h": "620px"},
+                    f"terminal:{first['id']}": {"x": "40px", "y": "-50% + 50", "w": "520px", "h": "620px"},
+                }}, token=TOKEN)
+                _settle(page)
+                narrow_inventory = inventory.bounding_box()
+                assert narrow_inventory and narrow_inventory["width"] <= 520, narrow_inventory
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                page.screenshot(path=str(connected_shots / "workspace-job-overview-narrow-desktop.png"))
+            _workspace_face(page, inventory, "Files")
             files = inventory.get_by_test_id("terminal-workspace-files")
             files.locator('tr[aria-label="app.txt"]').click()
             expect(files.get_by_test_id("repo-file-content")).to_contain_text("review worktree")
             expect(files.get_by_test_id("repo-file-content")).not_to_contain_text("main checkout")
             page.screenshot(path=str(connected_shots / f"files-{width}.png"))
+            # A file handoff uses the producer-backed source/worktree and the
+            # bytes just read. It prepares a brief but never sends it until
+            # the owner presses Start.
+            hand_requests: list[Any] = []
+            page.on("request", lambda request: hand_requests.append(request)
+                    if request.method == "POST" and request.url.endswith("/api/agent/hand") else None)
+            files.get_by_test_id("terminal-file-prepare-agent").click()
+            prepared = inventory.get_by_test_id("conductor-start-form")
+            prepared.wait_for(state="visible")
+            expect(prepared.get_by_test_id("conductor-start-context")).to_contain_text("Workspace fixture")
+            expect(prepared.get_by_test_id("conductor-start-context")).to_contain_text("app.txt")
+            expect(prepared.get_by_test_id("conductor-start-context")).to_contain_text("work/review")
+            words = prepared.get_by_test_id("conductor-start-words")
+            expect(words).to_have_value("Review app.txt")
+            assert not hand_requests, "Preparing context must not dispatch an agent"
+            if width == 393:
+                # The compact form is a real scroll surface. Scroll the verbs
+                # into view before checking all nine hit points so the Desk
+                # status bar cannot own an apparently large clipped target.
+                for button in (
+                    prepared.get_by_role("button", name="Cancel", exact=True),
+                    prepared.get_by_role("button", name="Start", exact=True),
+                ):
+                    button.evaluate("element => element.scrollIntoView({block: 'center', inline: 'nearest'})")
+                    box = button.bounding_box()
+                    assert box and box["width"] >= 44 and box["height"] >= 44, box
+                    assert button.evaluate("""button => {
+                        const r = button.getBoundingClientRect();
+                        return [
+                            [r.x + r.width / 2, r.y + r.height / 2],
+                            [r.left + 2, r.top + 2], [r.right - 2, r.top + 2],
+                            [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2],
+                        ].every(([x, y]) => {
+                            const hit = document.elementFromPoint(x, y);
+                            return hit === button || button.contains(hit);
+                        });
+                    }"""), f"Overlapping compact target: {button.inner_text()}"
+            page.screenshot(path=str(connected_shots / f"handoff-prepared-{width}.png"))
+            words.fill("Review the exact worktree file")
+            prepared.get_by_role("button", name="Cancel", exact=True).click()
+            expect(inventory.get_by_test_id("conductor-start-form")).to_have_count(0)
+            # Reopen through the same selected file's Prepare agent verb. The
+            # generic toolbar starts a fresh, unprepared hand by design.
+            files.get_by_test_id("terminal-file-prepare-agent").click()
+            reopened_start = inventory.get_by_test_id("conductor-start-form")
+            expect(reopened_start.get_by_test_id("conductor-start-words")).to_have_value("Review the exact worktree file")
+            expect(reopened_start.get_by_test_id("conductor-start-context")).to_contain_text("Workspace fixture")
+            # The hub still records the Note and Project as real local
+            # producers; only the named hand boundary is intercepted so this
+            # walk cannot start an agent or provider.
+            page.route("**/api/agent/hand", lambda route: route.fulfill(
+                status=409, content_type="application/json",
+                # This is the recorded AG8 refusal envelope from the hub
+                # producer, not an invented browser-only error shape.
+                body=json.dumps(_ag8_hand_refused_wire()),
+            ))
+            with page.expect_request(lambda request: request.method == "POST" and request.url.endswith("/api/notes")) as note_request:
+                with page.expect_request(lambda request: request.method == "POST" and request.url.endswith("/api/agent/hand")) as hand_request:
+                    reopened_start.get_by_role("button", name="Start", exact=True).click()
+            note_payload = note_request.value.post_data_json
+            hand_payload = hand_request.value.post_data_json
+            assert len(hand_requests) == 1, "Only explicit Start may cross the hand boundary"
+            assert hand_payload["kind"] == "note"
+            assert hand_payload["project_id"] == seeded["project_id"]
+            assert note_payload["title"] == "Review the exact worktree file"
+            assert "Repository source: Workspace fixture" in note_payload["body_markdown"]
+            assert "Captured worktree:" in note_payload["body_markdown"]
+            assert "work/review" in note_payload["body_markdown"]
+            assert "File path: app.txt" in note_payload["body_markdown"]
+            assert "review worktree" in note_payload["body_markdown"]
+            expect(reopened_start.get_by_role("alert")).to_contain_text("Not started")
+            expect(reopened_start.get_by_test_id("conductor-start-words")).to_have_value("Review the exact worktree file")
+            page.screenshot(path=str(connected_shots / f"handoff-failed-{width}.png"))
+            page.unroute("**/api/agent/hand")
+            reopened_start.get_by_role("button", name="Cancel", exact=True).click()
             files.get_by_role("button", name="Edit file", exact=True).click()
             editor = files.locator('[contenteditable="true"][aria-label="Edit app.txt"]')
             editor.fill("owner draft kept\n")
@@ -218,7 +362,7 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             expect(program.get_by_role("textbox", name="Step 1 title", exact=True)).to_have_value("Build the workspace")
             program.get_by_role("button", name=re.compile(r"^Back from " if width == 393 else r"^Close ")).click()
             _inventory(page, base)
-            context.locator(".surface-row").filter(has=page.get_by_text("Keep one Desk", exact=True)).get_by_role("button", name="Open", exact=True).click()
+            context.locator(".surface-row").filter(has=page.get_by_text("Keep one Desk", exact=True)).get_by_role("button", name="Open decision", exact=True).click()
             decision = page.locator('[id="pullout:decision:decision-connected-workspace"]')
             decision.wait_for(state="visible")
             expect(decision).to_contain_text("Keep one Desk")
@@ -364,6 +508,12 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             assert not errors, errors
             (connected_shots / f"observation-{width}.json").write_text(json.dumps({
                 "engine_mode": "none", "agent_metadata": "real producer seed; no agent process",
+                "handoff": {
+                    "prepared_without_dispatch": True,
+                    "explicit_start_boundary": True,
+                    "hand_boundary": "intercepted recorded AG8 no_repository refusal",
+                    "provider_dispatch": False,
+                },
                 "git": "private real main + two worktrees", "tmux": "private real socket",
                 "health": _api(page, "GET", "/health", token=TOKEN),
                 "build": json.loads((Path(__file__).resolve().parents[2] / "holdspeak/static/_built/.builds.json").read_text())[0],
@@ -460,6 +610,28 @@ def test_independent_input_persistent_views_and_close_without_kill(
             _tmux("has-session", "-t", "terminal-proof-created")
             _inventory(page, base)
             first = _open(page, a)
+            if width == 393:
+                # Before Type, this is a read-only 90-column host. Preserve
+                # the real wide-host overflow contract before the active view
+                # is admitted to resize its pane to the phone well.
+                readonly_screen = first.locator(".terminal-well-screen")
+                readonly_screen.wait_for(state="visible")
+                readonly_host = tuple(
+                    int(value)
+                    for value in _tmux(
+                        "display-message", "-p", "-t", pane_a,
+                        "#{pane_width} #{pane_height}",
+                    ).split()
+                )
+                assert readonly_host == (90, 28), readonly_host
+                _eventually(
+                    lambda: readonly_screen.evaluate(
+                        "element => element.scrollWidth > element.clientWidth"
+                    )
+                )
+                readonly_screen.evaluate("element => element.scrollLeft = 100")
+                assert readonly_screen.evaluate("element => element.scrollLeft > 0")
+                readonly_screen.evaluate("element => element.scrollLeft = 0")
             marker_a = f"observed-A-{width}"
             _type(first, f"printf '{marker_a}\\n'")
             _eventually(lambda: marker_a in [line.strip() for line in _capture(pane_a).splitlines()])
@@ -608,6 +780,27 @@ def test_independent_input_persistent_views_and_close_without_kill(
             finder.wait_for(state="detached")
             expect(reopened.locator("textarea.xterm-helper-textarea")).to_be_focused()
             if width == 393:
+                def _active_geometry() -> dict[str, tuple[int, int]] | None:
+                    status_match = re.search(
+                        r"Size (\d+) × (\d+)",
+                        reopened.get_by_test_id("terminal-status").inner_text(),
+                    )
+                    if not status_match:
+                        return None
+                    receipt_dimensions = tuple(int(value) for value in status_match.groups())
+                    host_rows_cols = tuple(
+                        int(value)
+                        for value in _tmux(
+                            "display-message", "-p", "-t", pane_a,
+                            "#{pane_width} #{pane_height}",
+                        ).split()
+                    )
+                    host = (host_rows_cols[0], host_rows_cols[1])
+                    return {"host": host, "receipt": receipt_dimensions} if host == receipt_dimensions else None
+
+                geometry = _eventually(_active_geometry)
+                assert geometry["host"] == geometry["receipt"]
+            if width == 393:
                 for button in (keys, reopened.get_by_test_id("terminal-enable-typing"), reopened.get_by_test_id("terminal-find"), message):
                     box = button.bounding_box()
                     assert box and box["width"] >= 44 and box["height"] >= 44, box
@@ -623,9 +816,16 @@ def test_independent_input_persistent_views_and_close_without_kill(
                         });
                     }"""), f"Overlapping compact target: {button.inner_text()}"
                 screen = reopened.locator(".terminal-well-screen")
-                assert screen.evaluate("element => element.scrollWidth > element.clientWidth")
+                screen_metrics = screen.evaluate("""element => ({
+                    scrollWidth: element.scrollWidth,
+                    clientWidth: element.clientWidth,
+                    offsetWidth: element.offsetWidth,
+                    scrollLeft: element.scrollLeft,
+                })""")
+                scrollbar_tolerance = max(1, screen_metrics["offsetWidth"] - screen_metrics["clientWidth"])
+                assert screen_metrics["scrollWidth"] <= screen_metrics["clientWidth"] + scrollbar_tolerance, screen_metrics
                 screen.evaluate("element => element.scrollLeft = 100")
-                assert screen.evaluate("element => element.scrollLeft > 0")
+                assert screen.evaluate("element => element.scrollLeft == 0")
                 screen.evaluate("element => element.scrollLeft = 0")
             if width == 1440:
                 inventory = _inventory(page, base)
@@ -700,4 +900,284 @@ def test_independent_input_persistent_views_and_close_without_kill(
             server.stop()
         for socket in sockets.glob("tmux-*/default"):
             subprocess.run(["tmux", "-S", str(socket), "kill-server"], capture_output=True, timeout=5, check=False)
+        shutil.rmtree(sockets, ignore_errors=True)
+
+
+@pytest.mark.parametrize(("width", "height"), [(1440, 900), (393, 852)])
+def test_live_stream_active_type_resizes_real_host_and_read_only_does_not(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int,
+) -> None:
+    """Continuous output and Type geometry are proven against two real shells."""
+    from playwright.sync_api import expect, sync_playwright
+
+    _ensure_build()
+    sockets = Path(tempfile.mkdtemp(prefix="hslive-glass-", dir="/tmp"))
+    monkeypatch.setenv("TMUX_TMPDIR", str(sockets))
+    monkeypatch.delenv("TMUX", raising=False)
+    server = None
+    shots = evidence_dir("terminal-live")
+    shots.mkdir(parents=True, exist_ok=True)
+    try:
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        active_name, read_name = "terminal-live-active", "terminal-live-read"
+        _tmux(
+            "-f", "/dev/null", "new-session", "-d", "-s", active_name,
+            "-x", "100", "-y", "30", "bash --noprofile --norc",
+        )
+        _tmux(
+            "new-session", "-d", "-s", read_name,
+            "-x", "100", "-y", "30", "bash --noprofile --norc",
+        )
+        active_pane = _tmux("list-panes", "-t", active_name, "-F", "#{pane_id}")
+        read_pane = _tmux("list-panes", "-t", read_name, "-F", "#{pane_id}")
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(
+                viewport={"width": width, "height": height},
+                has_touch=width == 393,
+                reduced_motion="reduce",
+            )
+            page.set_default_timeout(20_000)
+            errors: list[str] = []
+            resize_requests: list[str] = []
+            resize_response_statuses: list[int] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.on(
+                "request",
+                lambda request: resize_requests.append(request.post_data or "")
+                if request.method == "POST" and request.url.endswith("/api/delivery/terminal/commands")
+                and 'process.resize@1' in (request.post_data or "") else None,
+            )
+            page.on(
+                "response",
+                lambda response: resize_response_statuses.append(response.status)
+                if response.request.method == "POST" and response.url.endswith("/api/delivery/terminal/commands")
+                and 'process.resize@1' in (response.request.post_data or "") else None,
+            )
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            page.goto(f"{base}/terminals?token={TOKEN}", wait_until="load")
+            inventory = page.locator('[id="surface-terminals"]')
+            inventory.wait_for(state="visible")
+            expect(inventory.locator(".kit-listrow")).to_have_count(2, timeout=15_000)
+            rows = _api(page, "GET", "/api/delivery/terminal/sessions", token=TOKEN)["sessions"]
+            active = next(row for row in rows if row["session"] == active_name)
+            readonly = next(row for row in rows if row["session"] == read_name)
+            active_view = _open(page, active)
+            active_view.locator(".xterm").wait_for(state="visible")
+
+            # The browser receives an actual control-mode output burst. The
+            # first marker remains in the DOM after the second burst; a
+            # snapshot repaint per delta would erase it or reset scrollback.
+            first_marker = f"stream-first-{width}-{uuid.uuid4().hex[:8]}".encode()
+            second_marker = f"stream-second-{width}-{uuid.uuid4().hex[:8]}".encode()
+            first_output = first_marker + bytes([10])
+            _send_python(
+                active_pane,
+                f"import os; os.write(1,{first_output!r})",
+            )
+            _eventually(
+                lambda: first_marker.decode() in active_view.locator(".xterm-rows").inner_text(),
+                seconds=8,
+            )
+            _send_python(
+                active_pane,
+                (
+                    f"import os; os.write(1,{second_marker + b' '!r}); "
+                    "os.write(1,b'\\x1b[?25lANSI-TUI\\x1b[31mRED\\x1b[0m\\x1b[?25h\\n')"
+                ),
+            )
+            _eventually(
+                lambda: second_marker.decode() in active_view.locator(".xterm-rows").inner_text(),
+                seconds=8,
+            )
+            assert first_marker.decode() in active_view.locator(".xterm-rows").inner_text()
+            assert "ANSI-TUI" in active_view.locator(".xterm-rows").inner_text()
+
+            # Make the active window narrow on the wide Desk. Type then owns
+            # the xterm fit and sends the acknowledged emulator size to this
+            # target only.
+            if width == 1440:
+                frame_box = active_view.bounding_box()
+                grip = active_view.locator(".desk-window-grip").bounding_box()
+                assert frame_box and grip
+                start_x = grip["x"] + grip["width"] / 2
+                start_y = grip["y"] + grip["height"] / 2
+                page.mouse.move(start_x, start_y)
+                page.mouse.down()
+                page.mouse.move(
+                    start_x + 480 - frame_box["width"],
+                    start_y + 360 - frame_box["height"],
+                    steps=8,
+                )
+                page.mouse.up()
+                _settle(page)
+
+            active_view.get_by_test_id("terminal-enable-typing").click()
+            expect(active_view.get_by_role("button", name="View only", exact=True)).to_be_visible()
+            helper = active_view.locator("textarea.xterm-helper-textarea")
+            expect(helper).to_be_focused()
+            status = active_view.get_by_test_id("terminal-status")
+            try:
+                _eventually(
+                    lambda: re.search(r"Size \d+ × \d+", status.inner_text()),
+                    seconds=12,
+                )
+            except AssertionError as exc:
+                raise AssertionError({"status": status.inner_text(), "resize_requests": resize_requests, "resize_response_statuses": resize_response_statuses}) from exc
+            status_size = re.search(r"Size (\d+) × (\d+)", status.inner_text())
+            assert status_size, {"status": status.inner_text(), "resize_requests": resize_requests}
+            receipt_cols, receipt_rows = map(int, status_size.groups())
+            assert receipt_cols > 0 and receipt_rows > 0
+
+            # A real shell reports the host PTY size after the acknowledged
+            # resize. This also catches a resize ACK that updates only UI.
+            helper.type("stty size", delay=45)
+            helper.press("Enter")
+            _eventually(
+                lambda: bool(re.findall(r"(?m)^(\d+) (\d+)\s*$", _capture(active_pane).replace("\r", ""))),
+                seconds=8,
+            )
+            stty_matches = re.findall(r"(?m)^(\d+) (\d+)\s*$", _capture(active_pane).replace("\r", ""))
+            assert stty_matches, _capture(active_pane)
+            host_rows, host_cols = map(int, stty_matches[-1])
+            assert (host_cols, host_rows) == (receipt_cols, receipt_rows), {
+                "host": (host_cols, host_rows),
+                "receipt": (receipt_cols, receipt_rows),
+                "status": status.inner_text(),
+            }
+            physical = tuple(
+                int(value)
+                for value in _tmux(
+                    "display-message", "-p", "-t", active_pane,
+                    "#{pane_width} #{pane_height}",
+                ).split()
+            )
+            assert physical == (host_cols, host_rows)
+
+            # The receipt is not the rendered emulator. At the ASCII shell
+            # prompt, measure xterm's actual grid from its DOM rows and a
+            # single-cell cursor; retain the raw pixel values for provenance.
+            def _measure_xterm_grid() -> dict[str, Any] | None:
+                row_count = active_view.locator(".xterm-rows > div").count()
+                raw = active_view.locator(".xterm-screen").evaluate("""element => {
+                    const cursor = element.querySelector('.xterm-cursor');
+                    const screen = element.getBoundingClientRect();
+                    const cursorRect = cursor?.getBoundingClientRect();
+                    return {
+                        screen_width_px: screen.width,
+                        screen_rect: {x: screen.x, y: screen.y, width: screen.width, height: screen.height},
+                        cursor_cell_width_px: cursorRect?.width ?? 0,
+                        cursor_rect: cursorRect ? {
+                            x: cursorRect.x, y: cursorRect.y,
+                            width: cursorRect.width, height: cursorRect.height,
+                        } : null,
+                    };
+                }""")
+                screen_width = float(raw["screen_width_px"])
+                cursor_width = float(raw["cursor_cell_width_px"])
+                if row_count <= 0 or screen_width <= 0 or cursor_width <= 0:
+                    return None
+                return {
+                    "cols": round(screen_width / cursor_width),
+                    "rows": row_count,
+                    "raw": raw,
+                    "row_count": row_count,
+                }
+
+            xterm_grid = _eventually(_measure_xterm_grid, seconds=8)
+            actual_cols, actual_rows = xterm_grid["cols"], xterm_grid["rows"]
+            assert (actual_cols, actual_rows) == (receipt_cols, receipt_rows), {
+                "xterm": xterm_grid,
+                "receipt": (receipt_cols, receipt_rows),
+            }
+            assert (actual_cols, actual_rows) == (host_cols, host_rows), {
+                "xterm": xterm_grid,
+                "host": (host_cols, host_rows),
+                "stty": (host_cols, host_rows),
+            }
+
+            # A device-status/alternate-screen probe must not create a fake
+            # rejected input receipt or steal the owner's focus.
+            _send_python(
+                active_pane,
+                "import os; os.write(1,b'\\x1b[6n\\x1b[c\\x1b[?1049h\\x1b[2J\\x1b[HQUERY-TUI\\x1b[?1049l')",
+            )
+            time.sleep(0.4)
+            expect(status).not_to_contain_text("Not sent")
+            expect(helper).to_be_focused()
+            page.screenshot(path=str(shots / f"live-terminal-active-{width}.png"))
+
+            # Opening a second read-only view must not seize the host size of
+            # its pane. It never receives Type's fit/resize admission.
+            before_read = tuple(
+                int(value)
+                for value in _tmux(
+                    "display-message", "-p", "-t", read_pane,
+                    "#{pane_width} #{pane_height}",
+                ).split()
+            )
+            _inventory(page, base)
+            readonly_view = _open(page, readonly)
+            readonly_view.locator(".xterm").wait_for(state="visible")
+            time.sleep(0.6)
+            after_read = tuple(
+                int(value)
+                for value in _tmux(
+                    "display-message", "-p", "-t", read_pane,
+                    "#{pane_width} #{pane_height}",
+                ).split()
+            )
+            assert after_read == before_read
+            assert readonly_view.get_by_test_id("terminal-enable-typing").is_visible()
+            assert readonly_view.get_by_role("button", name="Type", exact=True).is_visible()
+
+            _settle(page)
+            page.screenshot(path=str(shots / f"live-terminal-{width}.png"))
+            observation = {
+                "engine_mode": "none",
+                "source": "production browser + isolated hub + private real tmux",
+                "db": str(tmp_path / "holdspeak.db"),
+                "build": json.loads(
+                    (Path(__file__).resolve().parents[2] / "holdspeak/static/_built/.builds.json").read_text()
+                )[0],
+                "viewport": {"width": width, "height": height},
+                "active": {
+                    "pane": active_pane,
+                    "host_dimensions": {"cols": host_cols, "rows": host_rows},
+                    "emulator_dimensions": {"cols": actual_cols, "rows": actual_rows},
+                    "receipt_dimensions": {"cols": receipt_cols, "rows": receipt_rows},
+                    "xterm_dom_measurement": xterm_grid,
+                    "physical_tmux_dimensions": {"cols": physical[0], "rows": physical[1]},
+                    "stty": True,
+                },
+                "readonly": {
+                    "pane": read_pane,
+                    "before": before_read,
+                    "after": after_read,
+                    "did_not_resize": True,
+                },
+                "stream": {
+                    "ordered_markers": [first_marker.decode(), second_marker.decode()],
+                    "ansi_and_query_probe": True,
+                    "no_spurious_input_error": True,
+                },
+                "page_errors": errors,
+            }
+            (shots / f"observation-{width}.json").write_text(
+                json.dumps(observation, indent=2) + "\n", encoding="utf-8"
+            )
+            assert not errors, errors
+            browser.close()
+    finally:
+        if server is not None:
+            server.stop()
+        for socket in sockets.glob("tmux-*/default"):
+            subprocess.run(
+                ["tmux", "-S", str(socket), "kill-server"],
+                capture_output=True,
+                timeout=5,
+                check=False,
+            )
         shutil.rmtree(sockets, ignore_errors=True)

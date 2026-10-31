@@ -17,7 +17,7 @@ const fakes = vi.hoisted(() => {
     options: any;
     cols = 80;
     rows = 24;
-    writes: string[] = [];
+    writes: Array<string | Uint8Array> = [];
     resizes: Array<[number, number]> = [];
     onDataCalls = 0;
     selectionHandler: (() => void) | null = null;
@@ -43,7 +43,7 @@ const fakes = vi.hoisted(() => {
     getSelection() {
       return this.selection;
     }
-    write(data: string, done?: () => void) {
+    write(data: string | Uint8Array, done?: () => void) {
       this.writes.push(data);
       if (FakeTerminal.deferWrites) {
         if (done) this.pendingWrites.push(done);
@@ -64,10 +64,14 @@ const fakes = vi.hoisted(() => {
   }
   class FakeFitAddon {
     static fits = 0;
+    static proposed: { cols: number; rows: number } | undefined;
     activate() {}
     dispose() {}
     fit() {
       FakeFitAddon.fits += 1;
+    }
+    proposeDimensions() {
+      return FakeFitAddon.proposed;
     }
   }
   class FakeSearchAddon {
@@ -104,6 +108,7 @@ beforeEach(() => {
   FakeTerminal.deferWrites = false;
   FakeSearchAddon.calls.length = 0;
   FakeFitAddon.fits = 0;
+  FakeFitAddon.proposed = undefined;
 });
 
 describe("PaneWell xterm interior (HS-111-11)", () => {
@@ -211,6 +216,57 @@ describe("PaneWell xterm interior (HS-111-11)", () => {
     await waitFor(() => expect(FakeTerminal.instances.length).toBe(1));
     expect(term.disposed).toBe(false);
     expect(term.onDataCalls).toBe(1);
+  });
+
+  it("appends a continuous byte frame without clearing the live emulator", async () => {
+    type LiveFrame = { kind: "snapshot" | "output" | "resync"; data: Uint8Array; sequence: number };
+    const snapshot: LiveFrame = { kind: "snapshot", data: new TextEncoder().encode("boot"), sequence: 1 };
+    let listener: ((frame: LiveFrame) => void) | null = null;
+    const output = {
+      current: () => snapshot,
+      snapshot: () => snapshot,
+      replay: () => [],
+      subscribe: (next: (frame: LiveFrame) => void) => {
+        listener = next;
+        return () => { listener = null; };
+      },
+    };
+    render(<PaneWell live lines={[]} raw="boot" header="none" output={output} outputSequence={1} />);
+    const term = await mountedTerminal();
+    await waitFor(() => expect(term.writes.length).toBeGreaterThan(0));
+    const before = term.writes.length;
+    const emit = listener as ((frame: LiveFrame) => void) | null;
+    emit?.({ kind: "output", data: new Uint8Array([0xc3, 0xa9]), sequence: 2 });
+    await waitFor(() => expect(term.writes.length).toBe(before + 1));
+    expect(term.writes.at(-1)).toEqual(new Uint8Array([0xc3, 0xa9]));
+    expect(term.writes.filter((write) => typeof write === "string" && write.includes("\u001b[2J")).length).toBe(1);
+  });
+
+  it("measures a local fit without rendering a refused host resize", async () => {
+    FakeFitAddon.proposed = { cols: 52, rows: 29 };
+    const onSize = vi.fn();
+    const output = {
+      current: () => ({ kind: "snapshot" as const, data: new TextEncoder().encode("boot"), sequence: 1, pane: { width: 100, height: 30, cursorX: 0, cursorY: 0 } }),
+      snapshot: () => ({ kind: "snapshot" as const, data: new TextEncoder().encode("boot"), sequence: 1, pane: { width: 100, height: 30, cursorX: 0, cursorY: 0 } }),
+      replay: () => [],
+      subscribe: () => () => {},
+    };
+    render(
+      <PaneWell
+        live
+        lines={[]}
+        raw="boot"
+        header="none"
+        pane={{ width: 100, height: 30, cursorX: 0, cursorY: 0 }}
+        output={output}
+        fitLocal
+        onSize={onSize}
+      />,
+    );
+    const term = await mountedTerminal();
+    await waitFor(() => expect(onSize).toHaveBeenCalledWith({ cols: 52, rows: 29 }));
+    expect(term.resizes).toContainEqual([100, 30]);
+    expect(term.resizes).not.toContainEqual([52, 29]);
   });
 
   it("supports quiet terminal heads without changing the inspector default", async () => {

@@ -6,7 +6,7 @@ import { Button } from "../../components/signal/Signal";
 import { DotWord, FoldGadget, SurfaceCode } from "../surface";
 import { stateWords } from "../surface/words";
 import { openRef } from "../openObject";
-import { stationsOf } from "./model";
+import { importedWords, mergedWords, stationsOf } from "./model";
 import { StationTrack } from "./StationTrack";
 import type { CheckSection, ProgramStep } from "./types";
 
@@ -43,10 +43,22 @@ export function GateFold({ step, open, onToggle }: { step: ProgramStep; open?: b
       <dl className="pg-gate-facts" data-testid="programs-gate">
         <dt>Track</dt>
         <dd><StationTrack form="words" stations={stationsOf(step)} data-testid="programs-gate-track" /></dd>
-        {check.command ? (<><dt>Command</dt><dd><SurfaceCode>{check.command}</SurfaceCode></dd></>) : null}
-        <dt>Verdict</dt>
-        <dd><DotWord tone={tone} data-testid="programs-gate-verdict">{verdictWords(step)}</DotWord>
-          {check.reasons.length ? <span className="pg-gate-reason"> · {check.reasons[0]}</span> : null}</dd>
+        {step.history ? (
+          <>
+            <dt>Brief</dt>
+            <dd data-testid="programs-history-brief">
+              <DotWord tone="ok">{importedWords(step)}</DotWord>
+              <span className="pg-gate-reason"> · merged {mergedWords(step.history.merged_at)}</span>
+            </dd>
+          </>
+        ) : (
+          <>
+            {check.command ? (<><dt>Command</dt><dd><SurfaceCode>{check.command}</SurfaceCode></dd></>) : null}
+            <dt>Verdict</dt>
+            <dd><DotWord tone={tone} data-testid="programs-gate-verdict">{verdictWords(step)}</DotWord>
+              {check.reasons.length ? <span className="pg-gate-reason"> · {check.reasons[0]}</span> : null}</dd>
+          </>
+        )}
         {check.sections.length ? (
           <>
             <dt>Sections</dt>

@@ -51,6 +51,104 @@
   background: var(--wb-well);
 }
 
+/* The Sessions wing leads with the selected job. Keep the overview short and
+ * readable; deeper provenance remains in Context and repository work stays in
+ * Files. */
+.desk-next .terminals-workspace-overview {
+  flex: none;
+  min-width: 0;
+  max-width: 760px;
+  padding: var(--space-2) var(--terminals-gap) 0;
+}
+
+.desk-next .terminals-workspace-overview .surface-well {
+  margin: 0;
+}
+
+.desk-next .terminals-overview-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.desk-next .terminals-overview-heading strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-ink);
+  font-size: var(--font-size-lg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Project and agent are filing facts, not a second metadata table. Keep them
+ * quiet and inline so the selected brief and its next action own the plate. */
+.desk-next .terminals-overview-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.desk-next .terminals-overview-fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.desk-next .terminals-overview-fact-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.desk-next .terminals-overview-fact strong {
+  overflow: hidden;
+  color: var(--wb-ink);
+  font-size: inherit;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-next .terminals-overview-fact .btn {
+  max-width: min(30rem, 70cqw);
+  overflow: hidden;
+  padding-inline: var(--space-1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-next .terminals-overview-brief,
+.desk-next .terminals-overview-question,
+.desk-next .terminals-overview-quiet {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  line-height: var(--line-height-normal);
+}
+
+.desk-next .terminals-overview-question {
+  color: var(--wb-ink);
+  font-weight: 600;
+}
+
+.desk-next .terminals-overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.desk-next .terminals-resource-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .desk-next .terminals-workspace-faces {
   display: flex;
   gap: var(--space-1);
@@ -72,6 +170,18 @@
   overflow: auto;
   border-top: var(--wb-frame) solid var(--line);
   background: var(--wb-paper);
+}
+
+.desk-next .terminals-workspace-return-target {
+  display: flex;
+  flex: 1 1 var(--space-8);
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.desk-next .terminals-workspace-return-target[hidden] {
+  display: none;
 }
 
 .desk-next .terminals-workspace-files,
@@ -190,6 +300,21 @@
   background: var(--wb-well);
 }
 
+/* StartAgent owns the form. The terminal shell only gives it the remaining
+ * column and scrolls that one body, keeping Cancel/Start above StatusBar on a
+ * phone without introducing a card inside another card. */
+.desk-next .terminals-start-agent {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: block;
+  overflow: auto;
+  margin: 0;
+  padding: 0 var(--terminals-gap) var(--terminals-gap);
+  border: 0;
+  background: var(--wb-paper);
+}
+
 .desk-next .terminals-form-verbs {
   display: flex;
   justify-content: flex-end;
@@ -197,7 +322,39 @@
 }
 
 .desk-next .terminals-start-agent .cw-start {
+  min-height: 100%;
   margin: 0;
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.desk-next .terminals-start-agent .cw-start-context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.desk-next .terminals-start-agent .cw-start-context-summary {
+  margin: 0;
+  color: var(--wb-ink);
+  overflow-wrap: anywhere;
+}
+
+.desk-next .terminals-start-agent .cw-start-context-meta {
+  margin: var(--space-1) 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  overflow-wrap: anywhere;
+}
+
+.desk-next .terminals-start-agent .cw-start-context-preview {
+  margin: 0;
+  max-height: calc(var(--desk-surface-row-h) * 8);
+  overflow: auto;
+  font: var(--font-size-xs) / var(--line-height-normal) var(--font-mono);
 }
 
 .desk-next .terminals-inline-error {

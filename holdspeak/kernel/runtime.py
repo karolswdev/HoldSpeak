@@ -18,7 +18,7 @@ from .inference_cancel import InferenceCancelCodec
 from .journal import JournalStore
 from .model import OperationSpec
 from .parent_run import ParentRunCodec, ParentRunController
-from .process_input import ProcessInputCodec
+from .process_operations import process_operations
 from .process_spawn import ProcessSpawnCodec
 from .subprocess_exec import SubprocessExecCodec
 from .tool_call import ToolCallCodec
@@ -55,7 +55,6 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     from ..delivery.factory_launch import default_launch_service
 
     tool_calls = ToolCallCodec(database.gate, _mode, db=database)
-    process_input = ProcessInputCodec(database.delivery_receipts)
     desktop_type_text = DesktopTypeTextCodec(
         database.desktop_type_receipts,
         DesktopEffectExecutor(store._secret()),
@@ -86,7 +85,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     tool_turn = ParentRunCodec("tool.turn", operation_name="tool.turn", **({"clock": clock} if clock else {}))
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
-        OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
+        *process_operations(database.delivery_receipts),
         OperationSpec(
             desktop_type_text.name,
             desktop_type_text.version,

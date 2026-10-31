@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terminal workspace flow — job overview direction</title>
+<link rel="stylesheet" href="../../../../web/src/styles/tokens.css">
+<link rel="stylesheet" href="../../../../web/src/desk/surface/kit.css">
+<link rel="stylesheet" href="../../../../web/src/desk/surface/objects/list-view.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--desk-terminal-screen); color: var(--text-on-accent); font: var(--font-size-sm)/1.5 var(--font-sans); }
+  header { margin-bottom: var(--space-4); }
+  main { display: grid; grid-template-columns: minmax(330px, 1fr) minmax(420px, 1.4fr); gap: var(--space-4); }
+  article { display: flex; flex-direction: column; border: var(--wb-frame) solid var(--line-strong); border-radius: var(--radius-sm); overflow: hidden; background: var(--wb-paper); color: var(--wb-ink); min-width: 0; }
+  .head { background: var(--wb-sel); color: var(--text-on-accent); font-size: var(--font-size-sm); padding: var(--space-2) var(--space-3); }
+  .kit-toolbar { padding: var(--space-2) var(--space-3); display: flex; gap: var(--space-4); border-bottom: var(--wb-frame) solid var(--line); flex-wrap: wrap; }
+  .overview { padding: var(--space-3); display: grid; gap: var(--space-2); border-bottom: var(--wb-frame) solid var(--line); background: var(--wb-well); }
+  .eyebrow { color: var(--text-muted); font-size: var(--font-size-xs); }
+  .title { font-size: var(--font-size-lg); font-weight: 600; }
+  .facts { display: flex; gap: var(--space-3); flex-wrap: wrap; color: var(--text-muted); font-size: var(--font-size-xs); }
+  .primary { display: inline-flex; align-items: center; justify-content: center; padding: var(--space-2) var(--space-3); width: max-content; background: var(--accent); color: var(--text-on-accent); border-radius: var(--radius-sm); }
+  .resource { display: flex; justify-content: space-between; gap: var(--space-2); padding-top: var(--space-2); border-top: var(--wb-frame) solid var(--line); }
+  pre { margin: 0; padding: var(--space-3); min-height: 50vh; background: var(--desk-terminal-screen); color: var(--text-on-accent); font: var(--font-size-sm)/1.5 var(--font-mono); overflow: auto; flex: 1; }
+  .foot { font-size: var(--font-size-xs); padding: var(--space-1) var(--space-3); background: var(--wb-well); border-top: var(--wb-frame) solid var(--line); }
+  .kit-listrow-main { padding: var(--space-2) var(--space-3); }
+  @media (max-width: 700px) {
+    body { padding: var(--space-2); }
+    main { grid-template-columns: 1fr; }
+    article:nth-child(2) { display: none; }
+    .overview { padding: var(--space-2); }
+  }
+</style>
+<header>Direction only · fixture content · existing Desk and kit material · selected job first</header>
+<main>
+  <article>
+    <div class="head">Terminals · Workspace fixture</div>
+    <div class="kit-toolbar">Start an agent　New terminal　More</div>
+    <div class="kit-toolbar">Project: Workspace fixture　Find a session or folder</div>
+    <div class="overview">
+      <span class="eyebrow">Selected workspace</span>
+      <span class="title">Build the connected workspace</span>
+      <div class="facts"><span>Project · Workspace fixture</span><span>Agent · Codex</span><span>Live</span></div>
+      <span>Keep the file, context and review beside the agent.</span>
+      <span class="primary">Open terminal</span>
+      <div class="resource"><span>Brief · Build the connected workspace</span><span>Open</span></div>
+    </div>
+    <div class="kit-listview">
+      <section class="kit-listday">
+        <h3 class="kit-listday-label" title="/tmp/hs-connected-fixture/review">review</h3>
+        <ul class="kit-listrows">
+          <li class="kit-listrow"><span class="kit-listrow-main"><span class="kit-listrow-text"><span class="kit-listrow-name">review:0.0</span><span class="kit-listrow-meta">Shell · bash</span></span></span><span class="kit-listrow-state">Live</span></li>
+          <li class="kit-listrow"><span class="kit-listrow-main"><span class="kit-listrow-text"><span class="kit-listrow-name">scratch:0.0</span><span class="kit-listrow-meta">Shell · zsh</span></span></span><span class="kit-listrow-state">Live</span></li>
+        </ul>
+      </section>
+    </div>
+    <div class="foot">2 terminals · one selected job</div>
+  </article>
+  <article>
+    <div class="head">review:0.0</div>
+    <div class="kit-toolbar">Type　 Keys ▾　 Find　 Message</div>
+    <pre>$ git status --short
+
+$ npm run build
+✓ Built
+
+$ ▌</pre>
+    <div class="foot">● Live · View only</div>
+  </article>
+</main>
+</html>

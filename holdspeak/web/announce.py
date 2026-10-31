@@ -60,6 +60,10 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/delivery/node/hello"): "noise: node traffic",
     ("POST", "/api/delivery/node/heartbeat"): "noise: node traffic, periodic",
     ("POST", "/api/delivery/node/disconnect"): "noise: node traffic",
+    # Ephemeral terminal output is a read-like subscription.  It is a POST so
+    # the browser can carry its immutable target and resume cursor, but it
+    # never writes a Desk object and may remain open indefinitely.
+    ("POST", "/api/delivery/terminal/live"): "read-like: ephemeral terminal output stream",
     ("POST", "/api/mesh/relay/claim"): "noise: node polling",
     ("POST", "/api/mesh/relay/{job_id}/complete"): "noise: node traffic",
     ("POST", "/api/mesh/relay/{job_id}/fail"): "noise: node traffic",

@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { agentWord, flightLabel, reviewResult, useAgentFlights } from "../agentFlights";
+import { aboutTarget, askAboutRef, askableKind, type AboutChip } from "../askAbout";
+import { handRefOf, openHand } from "../agentHand";
 import { MicButton } from "../components/MicButton";
+import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
 import { DeskEditor, type DeskEditorHandle } from "../components/DeskEditor";
 import { RepositoryBrowserView } from "../components/RepositoryBrowserView";
 import { useRepositoryBrowser } from "../components/RepositoryBrowserController";
@@ -26,6 +29,7 @@ import { normalizeRef } from "../screen/compose";
 import { refreshTerminalInventory } from "./windows";
 import { setWorkspaceSelection } from "./workspaceSelection";
 import { readWorkspaceFileDraft, writeWorkspaceFileDraft } from "./workspaceDrafts";
+import { capturedWorkspaceFileContent } from "./workspaceHandoff";
 import {
   ActionNotice,
   CheckGadget,
@@ -38,6 +42,7 @@ import {
 } from "../surface";
 import type { TerminalContext, TerminalDescriptor } from "./types";
 import type { WorkspaceFace } from "./workspaceSelection";
+import type { WorkspaceHandoffContext, WorkspaceHandoffPreparation } from "./workspaceHandoff";
 
 interface WorkspaceViewProps {
   descriptor: TerminalDescriptor | null;
@@ -46,6 +51,7 @@ interface WorkspaceViewProps {
   selectedProjectId: string | null;
   selectedProjectName: string | null;
   onRepositoryBound?(): void;
+  onPrepareFileHandoff?(preparation: WorkspaceHandoffPreparation): void;
 }
 
 function fact(label: string, value: ReactNode) {
@@ -67,6 +73,50 @@ function originRef(origin: unknown): string | null {
 }
 
 type ResourceRow = { ref: string; title: string; unavailable?: boolean };
+
+function resourceAboutTarget(ref: string, title: string): AboutChip | null {
+  const known = aboutTarget(ref);
+  if (known) return known;
+  const [kind, ...rest] = ref.split(":");
+  const id = rest.join(":");
+  if (!id || !askableKind(kind) || !["note", "decision", "meeting"].includes(kind)) return null;
+  return { id, kind, title: title.trim() || id, ref };
+}
+
+function ResourceAction({ resource, projectId, onOpen }: { resource: ResourceRow; projectId: string | null; onOpen(): void }) {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const ref = normalizeRef(resource.ref);
+  const openLabel = ref.startsWith("repository:") ? "Open files" : `Open ${resourceKind(ref).toLowerCase()}`;
+  const about = resourceAboutTarget(ref, resource.title);
+  const hand = handRefOf(ref);
+  if (resource.unavailable) return <Button dense variant="ghost" onClick={onOpen}>Retry</Button>;
+  const entries: WorkMenuEntry[] = [
+    ...(about ? [{ type: "item" as const, id: "ask", label: "Ask about this", onSelect: () => {
+      if (!askAboutRef(ref)) useDesk.getState().askAbout([about]);
+      setMenu(null);
+    } }] : []),
+    ...(hand ? [{ type: "item" as const, id: "hand", label: "Hand to an agent", onSelect: () => { openHand({ ...hand, title: resource.title, projectId }); setMenu(null); } }] : []),
+  ];
+  if (!entries.length) return <Button dense variant="ghost" onClick={onOpen}>{openLabel}</Button>;
+  return <>
+    <span className="terminals-resource-actions">
+      <Button dense variant="ghost" onClick={onOpen}>{openLabel}</Button>
+      <Button
+        ref={buttonRef}
+        dense
+        variant="ghost"
+        aria-haspopup="menu"
+        aria-expanded={Boolean(menu)}
+        onClick={() => {
+          const rect = buttonRef.current?.getBoundingClientRect();
+          if (rect) setMenu({ x: rect.left, y: rect.bottom });
+        }}
+      >More</Button>
+    </span>
+    {menu ? <WorkMenu label={`Actions for ${resource.title}`} x={menu.x} y={menu.y} opener={buttonRef.current} autoFocus entries={entries} onClose={() => setMenu(null)} /> : null}
+  </>;
+}
 
 function resourceKind(ref: string): string {
   const kind = normalizeRef(ref).split(":", 1)[0];
@@ -243,7 +293,9 @@ function ContextView({ descriptor, selectedProjectId, selectedProjectName, onRep
     {resourcesError ? <ActionNotice tone="danger">{resourcesError} <Button dense variant="ghost" onClick={() => { setResourcesError(null); setResourceReadNonce((value) => value + 1); }}>Retry</Button></ActionNotice> : null}
     {resources.length ? <SurfaceRows>{resources.map((resource) => <SurfaceRow key={resource.ref} title={resource.title} verbs={resource.unavailable
       ? <Button dense variant="ghost" onClick={() => { setResourcesError(null); setResourceReadNonce((value) => value + 1); }}>Retry</Button>
-      : <Button dense variant="ghost" onClick={() => openResource(resource.ref)}>{normalizeRef(resource.ref) === `repository:${context.source?.id ?? ""}` ? "Files" : "Open"}</Button>} />)}</SurfaceRows> : resourcesError ? null : <span className="quiet">No project resources</span>}
+      : normalizeRef(resource.ref) === `repository:${context.source?.id ?? ""}`
+        ? <Button dense variant="ghost" onClick={() => openResource(resource.ref)}>Files</Button>
+        : <ResourceAction resource={resource} projectId={context.project?.id ?? selectedProjectId} onOpen={() => openResource(resource.ref)} />} />)}</SurfaceRows> : resourcesError ? null : <span className="quiet">No project resources</span>}
   </SurfaceWell> : null;
   if (context.status === "unavailable") return <div className="terminals-workspace-context" data-testid="terminal-workspace-context">
     <SurfaceState error="Context unavailable. Session stays open. Retry inventory." onRetry={() => void refreshTerminalInventory()} retryLabel="Retry" />
@@ -412,9 +464,18 @@ function ChangesView({ repositoryId, worktreeId }: { repositoryId: string; workt
   </div>;
 }
 
-function FilesView({ repositoryId, worktreeId, onChanges }: { repositoryId: string; worktreeId?: string | null; onChanges(): void }) {
+function FilesView({ repositoryId, worktreeId, project, source, worktree, onChanges, onPrepareFileHandoff }: {
+  repositoryId: string;
+  worktreeId?: string | null;
+  project: WorkspaceHandoffContext["project"];
+  source: WorkspaceHandoffContext["source"];
+  worktree: WorkspaceHandoffContext["worktree"];
+  onChanges(): void;
+  onPrepareFileHandoff?: (preparation: WorkspaceHandoffPreparation) => void;
+}) {
   const alive = useRef(true);
   const hashes = useRef(new Map<string, string | null>());
+  const readHashes = useRef(new Map<string, { content: string; sha256: string | null }>());
   const previewRef = useRef<HTMLPreElement>(null);
   const editorRef = useRef<DeskEditorHandle | null>(null);
   const currentFileKeyRef = useRef("");
@@ -434,6 +495,10 @@ function FilesView({ repositoryId, worktreeId, onChanges }: { repositoryId: stri
     file: async (path: string) => {
       const answer = await fetchFileRecord(repositoryId, path, scope);
       const retained = readWorkspaceFileDraft(useDesk.getState().drafts[fileDraftKey(path)]);
+      // The controller owns stale-read acceptance. Keep the bytes with the
+      // hash so a late answer can never lend its revision to newer inspection
+      // text at prepare time.
+      readHashes.current.set(path, { content: answer.content, sha256: answer.sha256 });
       hashes.current.set(path, retained ? retained.baseSha256 : answer.sha256);
       return answer.content;
     },
@@ -562,6 +627,24 @@ function FilesView({ repositoryId, worktreeId, onChanges }: { repositoryId: stri
       <div className="terminals-file-editor-head">
         <span>{editing ? "Editing" : current.retained ? "Retained draft" : "Read only"}</span>
         {editing ? <MicButton label="Speak into file" draftScope={`terminal-workspace-voice-audio:${draftKey}`} bindText={bindVoice} onText={keepVoice} /> : null}
+        {!editing && onPrepareFileHandoff ? <Button dense variant="ghost" data-testid="terminal-file-prepare-agent" onClick={() => {
+          const read = readHashes.current.get(current.path);
+          const freshRead = !current.retained && read?.content === current.content;
+          const words = freshRead ? `Review ${current.path}` : `Review ${current.path} (read copy retained)`;
+          onPrepareFileHandoff({
+            words,
+            context: {
+              project,
+              source,
+              worktree,
+              file: {
+                path: current.path,
+                content: freshRead ? capturedWorkspaceFileContent(current.content).text : null,
+                revision: freshRead ? read?.sha256 ?? null : null,
+              },
+            },
+          });
+        }}>Prepare agent</Button> : null}
         {!editing && hashes.current.get(current.path) ? <Button dense variant="secondary" data-testid="terminal-file-edit" onClick={() => setEditing(true)}>Edit file</Button> : null}
       </div>
       {editing && retainedVoice ? <ActionNotice tone="info">Voice kept for this file <Button dense variant="ghost" onClick={insertRetainedVoice}>Insert</Button></ActionNotice> : null}
@@ -597,7 +680,7 @@ function FilesView({ repositoryId, worktreeId, onChanges }: { repositoryId: stri
   </div>;
 }
 
-export function WorkspaceView({ descriptor, face, onChanges, selectedProjectId, selectedProjectName, onRepositoryBound }: WorkspaceViewProps) {
+export function WorkspaceView({ descriptor, face, onChanges, selectedProjectId, selectedProjectName, onRepositoryBound, onPrepareFileHandoff }: WorkspaceViewProps) {
   if (face === "sessions") return null;
   if (!descriptor) return <SurfaceState empty emptyLabel="Choose a terminal session" emptyHint="Select a session to inspect its files and context." />;
   const context = descriptor.context;
@@ -606,7 +689,16 @@ export function WorkspaceView({ descriptor, face, onChanges, selectedProjectId, 
   const workspaceReady = Boolean(repositoryId && worktreeId);
   return <section className="terminals-workspace" aria-label="Terminal workspace" data-testid="terminal-workspace">
     {!workspaceReady && face !== "context" ? <SurfaceState empty emptyLabel="No registered worktree" emptyHint="This terminal is live, but it has no source and worktree record." /> : null}
-    {face === "files" && repositoryId && worktreeId ? <FilesView key={`${repositoryId}:${worktreeId}`} repositoryId={repositoryId} worktreeId={worktreeId} onChanges={onChanges} /> : null}
+    {face === "files" && repositoryId && worktreeId ? <FilesView
+      key={`${repositoryId}:${worktreeId}`}
+      repositoryId={repositoryId}
+      worktreeId={worktreeId}
+      project={context.project}
+      source={context.source ? { id: context.source.id, title: context.source.name } : null}
+      worktree={context.worktree ? { id: context.worktree.id, branch: context.worktree.branch } : null}
+      onChanges={onChanges}
+      onPrepareFileHandoff={onPrepareFileHandoff}
+    /> : null}
     {face === "changes" && repositoryId && worktreeId ? <ChangesView key={`${repositoryId}:${worktreeId}`} repositoryId={repositoryId} worktreeId={worktreeId} /> : null}
     {face === "context" ? <ContextView descriptor={descriptor} selectedProjectId={selectedProjectId} selectedProjectName={selectedProjectName} onRepositoryBound={onRepositoryBound} /> : null}
   </section>;

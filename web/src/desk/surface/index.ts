@@ -39,7 +39,7 @@ export {
   type PaneHeaderMode,
 } from "./Surface";
 
-export type { PaneGeometry } from "./XtermPane";
+export type { PaneGeometry, XtermOutputFrame, XtermOutputSource } from "./XtermPane";
 
 export {
   GadgetGroup,

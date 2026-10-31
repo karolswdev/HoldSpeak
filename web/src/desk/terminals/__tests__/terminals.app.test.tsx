@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { TerminalsCore } from "../TerminalsCore";
@@ -333,6 +333,49 @@ describe("Terminals inventory", () => {
     expect(screen.queryByTestId("terminal-file-edit")).toBeTruthy();
   });
 
+  it("leads with the selected job brief and one next action", async () => {
+    const connectedSessions = connectedFixture.inventory.sessions;
+    vi.spyOn(api, "apiFetch").mockImplementation(async (path) => {
+      const url = String(path);
+      if (url === "/api/delivery/terminal/sessions") return connectedFixture.inventory as never;
+      if (url === "/api/projects") return connectedFixture.projects as never;
+      if (url.includes("/notes/note-connected-brief")) return connectedFixture.notes["note-connected-brief"] as never;
+      return { status: "ok" } as never;
+    });
+    render(<TerminalsCore />);
+    await screen.findByTestId(`terminal-row-${connectedSessions[0].id}`);
+    fireEvent.click(screen.getByTestId(`terminal-open-${connectedSessions[0].id}`));
+
+    const overview = await screen.findByTestId("terminal-job-overview");
+    expect(overview).toHaveTextContent("Build the connected workspace");
+    expect(overview).toHaveTextContent("Workspace fixture");
+    expect(overview).toHaveTextContent("Live");
+    expect(within(overview).getByRole("button", { name: "Open terminal" })).toBeTruthy();
+  });
+
+  it("prepares a real file scope for Start agent without dispatching", async () => {
+    const connectedSessions = connectedFixture.inventory.sessions;
+    const hand = vi.spyOn(api, "apiFetch").mockImplementation(async (path) => {
+      const url = String(path);
+      if (url === "/api/delivery/terminal/sessions") return connectedFixture.inventory as never;
+      if (url === "/api/projects") return connectedFixture.projects as never;
+      if (url.includes("/tree")) return connectedFixture.repository.tree as never;
+      if (url.includes("/file/app.txt")) return connectedFixture.repository.file as never;
+      return { status: "ok" } as never;
+    });
+    render(<TerminalsCore />);
+    await screen.findByTestId(`terminal-row-${connectedSessions[0].id}`);
+    fireEvent.click(screen.getByTestId(`terminal-open-${connectedSessions[0].id}`));
+    act(() => selectWorkspaceFace("files"));
+    fireEvent.click(await screen.findByRole("row", { name: "app.txt" }));
+    fireEvent.click(await screen.findByTestId("terminal-file-prepare-agent"));
+
+    expect(await screen.findByTestId("conductor-start-context")).toBeTruthy();
+    expect(screen.getByTestId("conductor-start-source")).toHaveTextContent("Workspace fixture · app.txt");
+    expect(screen.getByTestId("conductor-start-words")).toHaveValue("Review app.txt");
+    expect(hand.mock.calls.some(([path]) => String(path) === "/api/agent/hand")).toBe(false);
+  });
+
   it("offers recorded shell cwd registration before Project binding", async () => {
     const shell = connectedFixture.inventory.sessions[1];
     const unbound = { ...shell, context: { ...shell.context, status: "unbound", project: null, source: null, worktree: null } };
@@ -403,7 +446,7 @@ describe("Terminals inventory", () => {
     fireEvent.click(screen.getByTestId(`terminal-open-${connectedSessions[0].id}`));
     act(() => selectWorkspaceFace("context"));
     expect(await screen.findByText("Keep one Desk")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: /^Open$/ }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Open decision" })).toBeTruthy();
   });
 
   it("joins a queued arrival by its captured Note and Project when queue_id is gone", async () => {

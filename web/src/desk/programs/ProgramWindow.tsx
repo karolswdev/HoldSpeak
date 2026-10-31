@@ -555,7 +555,8 @@ export function ProgramBody({ programId }: { programId: string }) {
   const fileTo = (anchor: HTMLElement) => { fileOpener.current = anchor; setFiling(anchor.getBoundingClientRect()); };
 
   const status: StatusBarItem[] = [
-    { key: "state", lamp: lampOf(programTone(program.state)), live: program.state === "running", text: program.state === "done" && program.done_in ? `Done in ${program.done_in}` : program.state_word, testId: "programs-status-state" },
+    { key: "state", lamp: lampOf(programTone(program.state)), live: program.state === "running", text: program.state === "done" && program.history ? `Done · ${program.history.words}`
+      : program.state === "done" && program.done_in ? `Done in ${program.done_in}` : program.state_word, testId: "programs-status-state" },
     { key: "done", text: program.done ? `${program.done} of ${program.total} done` : countWords(program.total, "step"), tick: program.done || null, testId: "programs-status-done" },
     program.your_turn ? { key: "turn", text: `${program.your_turn} ${program.your_turn === 1 ? "waits" : "wait"} on you`, tick: program.your_turn, testId: "programs-status-turn" } : null,
     program.check_command ? { key: "check", text: <span>{`check: ${checkName(program)}`}</span> } : null,

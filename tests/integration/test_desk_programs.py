@@ -373,3 +373,143 @@ def test_an_agent_asks_to_start_from_a_checkpoint_and_the_ladder_decides(tmp_pat
 
     with pytest.raises(program_module.ProgramRefused):
         rig.service.start_from(stranger, pid, row["id"])
+
+
+# ── PG17: the first Program is the engine's own history ─────────────
+
+GH_HISTORY = Path(__file__).resolve().parents[1] / "fixtures" / "gh" / "pr_view_history.json"
+
+
+def _importer() -> Any:
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / "program_import_history.py"
+    spec = importlib.util.spec_from_file_location("program_import_history", path)
+    module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+    return module
+
+
+def _recorded_prs() -> list[dict[str, Any]]:
+    """``gh pr view --json number,title,url,state,mergedAt,mergeCommit``
+    for #1584, #1585, #1596 (closed, not merged) and #1598, recorded."""
+    return json.loads(GH_HISTORY.read_text(encoding="utf-8"))
+
+
+def test_the_importer_builds_one_history_step_per_merged_pr_from_recorded_gh(tmp_path) -> None:
+    importer = _importer()
+    assert importer.pr_numbers(["1584-1586", "1590,#1591", "1585"]) == [1584, 1585, 1586, 1590, 1591]
+    payload = importer.build_payload(_recorded_prs(), title="The hub stops stalling", goal="Off the loop.",
+                                     repository="/repo")
+    assert payload["create"] == {"title": "The hub stops stalling", "goal": "Off the loop.", "repository": "/repo"}
+    steps = payload["plan"]["steps"]
+    assert [step["history"]["pr_number"] for step in steps] == [1584, 1585, 1598]
+    assert payload["skipped"] == [{"number": 1596, "state": "CLOSED"}]
+    first = steps[0]
+    assert first["history"] == {
+        "pr_number": 1584, "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1584",
+        "merged_at": "2026-10-28T15:36:11Z", "head_commit": "82067a48929f1ba7d77abf6bc793f96a8d68f493",
+    }
+    assert first["title"].startswith("The dock and the chair never force") and len(first["title"]) <= 200
+
+    # --dry-run prints the payload and posts nothing; a run posts create, then plan.
+    import io
+
+    recorded = {int(pr["number"]): pr for pr in _recorded_prs()}
+    posts: list[tuple[str, Any]] = []
+
+    def post(hub: str, path: str, body: Any, token: str) -> dict[str, Any]:
+        posts.append((path, body))
+        return {"id": "program-x"} if path == "/api/programs" else {"title": "T", "state_word": "Done",
+                                                                       "history": {"words": "Merged 3 PRs · 28 Oct"}}
+
+    out, err = io.StringIO(), io.StringIO()
+    argv = ["--title", "T", "--repository", "/repo", "--pr", "1584,1585,1596,1598", "--token", "t"]
+    assert importer.run([*argv, "--dry-run"], view=lambda n, **_kw: recorded[n], post=post, out=out, err=err) == 0
+    assert json.loads(out.getvalue())["plan"]["steps"][2]["history"]["pr_number"] == 1598 and posts == []
+    assert "PR #1596 did not merge (closed); left out" in err.getvalue()
+    assert importer.run(argv, view=lambda n, **_kw: recorded[n], post=post, out=out, err=err) == 0
+    assert [path for path, _ in posts] == ["/api/programs", "/api/programs/program-x/plan"]
+    assert len(posts[1][1]["steps"]) == 3
+
+
+def test_a_plan_of_merged_prs_is_a_done_program_the_runner_never_moves(tmp_path, monkeypatch) -> None:
+    from datetime import datetime
+
+    rig = Rig(tmp_path)
+    client = _client(rig, monkeypatch)
+    importer = _importer()
+    payload = importer.build_payload(_recorded_prs(), title="The hub stops stalling",
+                                     goal="The hub answers at once.", repository=str(rig.repo))
+    made = client.post("/api/programs", json=payload["create"])
+    assert made.status_code == 201, made.text
+    pid = made.json()["id"]
+    answer = client.post(f"/api/programs/{pid}/plan", json=payload["plan"])
+    assert answer.status_code == 200, answer.text
+    program = answer.json()
+
+    # Every step is written Merged and closes with the Program: Done at plan
+    # time, closed at the last merge.
+    assert program["state"] == "done" and program["state_word"] == "Done"
+    assert program["closed_at"] == "2026-10-28T18:14:50Z"
+    assert program["done"] == program["total"] == 3
+    assert program["history"]["prs"] == 3 and program["history"]["words"].startswith("Merged 3 PRs · ")
+    assert program["done_in"]  # first merge to last merge, never negative
+    rows = program["steps"]
+    assert [row["pr"]["number"] for row in rows] == [1584, 1585, 1598]
+    assert all(row["state"] == "done" and row["station"] == 5 for row in rows)
+    assert rows[0]["ended_at"] == "2026-10-28T15:36:11Z" and rows[0]["history"]["pr_number"] == 1584
+    assert all(row["worktree"] is None and row["launch_id"] is None and row["last_checkpoint"] is None for row in rows)
+    assert not program["your_turn_items"]
+
+    # The runner's tick moves nothing and hands nothing.
+    before = [(row["id"], row["state"], row["updated_at"]) for row in rig.program(pid)["steps"]]
+    rig.tick(3)
+    assert [(row["id"], row["state"], row["updated_at"]) for row in rig.program(pid)["steps"]] == before
+    assert rig.ledger.list() == []
+
+    # Today's Since this morning: an old merge is not today's work.
+    now = datetime(2026, 10, 30, 12, 0).astimezone()
+    assert rig.service.since_morning(OWNER, now=now) == {"moved": 0, "running": 0, "waiting": 0, "done": 0, "merged": 0}
+    merge_day = datetime(2026, 10, 28, 20, 0).astimezone()
+    assert rig.service.since_morning(OWNER, now=merge_day)["merged"] == 3
+
+    # The Programs window lists it under Done with what merged.
+    listed = client.get("/api/programs").json()
+    row = next(item for item in listed["programs"] if item["id"] == pid)
+    assert row["state"] == "done" and row["history"]["words"] == program["history"]["words"]
+    _fixture("program.history.json", client.get(f"/api/programs/{pid}").json(), tmp_path)
+    _fixture("programs.history.list.json", listed, tmp_path)
+
+
+def test_history_mixes_with_live_steps_and_is_validated(tmp_path, monkeypatch) -> None:
+    rig = Rig(tmp_path)
+    client = _client(rig, monkeypatch)
+    pid = rig.service.create(OWNER, title="After the refactor", repository=str(rig.repo),
+                             check_command=f"sh {FAKE_CHECK}")["id"]
+
+    # A history step needs its PR number and its merge time.
+    bad = client.post(f"/api/programs/{pid}/plan", json={"steps": [{"title": "Old", "history": {"pr_number": 1584}}]})
+    assert bad.status_code == 400 and "merged_at" in bad.text
+    bad = client.post(f"/api/programs/{pid}/plan", json={"steps": [{"title": "Old", "history": {"merged_at": "2026-10-28T15:36:11Z"}}]})
+    assert bad.status_code == 400 and "pr_number" in bad.text
+
+    # MCP program.plan passes history through (its schema names it).
+    from holdspeak.mcp.families import program as program_family
+
+    schema = next(tool for tool in program_family.TOOLS if tool["name"] == "program.plan")["inputSchema"]
+    assert schema["properties"]["steps"]["items"]["properties"]["history"]["required"] == ["pr_number", "merged_at"]
+    planned = program_family.dispatch("program.plan", {"program_id": pid, "steps": [
+        {"title": "The hub stops stalling", "history": {"pr_number": 1585, "merged_at": "2026-10-28T16:05:42Z"}},
+        {"title": "Dock words", "brief": "Plain words on the Dock.", "owns": ["web/src/desk/dock/words.ts"], "after": [1]},
+    ]}, OWNER)
+    assert [row["state"] for row in planned["steps"]] == ["merged", "planned"]
+    assert planned["state"] == "drafting"
+
+    # The live step runs as usual; `after` a history step counts as done.
+    rig.service.start(OWNER, pid)
+    rig.tick()
+    one, two = rig.step(pid, 1), rig.step(pid, 2)
+    assert one["state"] == "merged" and one["history"]["pr_number"] == 1585
+    assert two["state"] not in ("planned", "ready"), two["state"]
+    assert two["launch_id"]

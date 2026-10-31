@@ -426,17 +426,55 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   (`surface-project-memory`) does not draw the fold (the drawer holds the
   Programs fold, as PG8 built it).
 
-## PG17. The first Program is the engine's own history (Left)
+## PG17. The first Program is the engine's own history (Built)
 
 - **Goal**: on his desk, the refactor program (#1584 to #1598) is
   re-created from its PRs and shows Done (design §13, §15).
-- **Files**: a one-time script or an MCP session; no product code.
-- **Changes**: `program.create` + `program.plan` with the merged PRs as
-  steps in state Merged.
+- **Files**: `hs/services/program_service.py` (`plan` takes a step's
+  `history`; `history_of`, `history_words`; `since_morning`; `_close_history`),
+  `hs/services/program_runner.py` (`_advance` skips a history step),
+  `hs/mcp/families/program.py` (the `program.plan` step schema),
+  `scripts/program_import_history.py` (new), `web/src/desk/programs/`
+  `StepRow.tsx`, `GateFold.tsx`, `ProgramsWindow.tsx`, `ProgramWindow.tsx`,
+  `model.ts`, `types.ts`. "No product code" was the hope; there was no seam,
+  so this slice adds the smallest one.
+- **Changes**: a plan step may carry `history: {pr_number, merged_at,
+  pr_url?, head_commit?}` (both needed, else 400 `history_invalid`). Such a
+  step is written Merged with its PR, `ended_at = merged_at` and
+  `facts.history`: no worktree, no hand, no checkpoint of its own; the
+  runner never moves it; it goes Merged → Done when the Program closes. A
+  plan whose steps are all history makes the Program Done at once, closed at
+  the last merge. History and live steps mix: `after` a history step counts
+  as done. The wire: a step's `history`, a summary's `history` (`Merged 14
+  PRs · 28 Oct`), `done_in` from the first merge. Today's Since this morning
+  counts a history step by its merge time, never by its import. The board
+  draws a history step's row with its PR number and merge time and no agent;
+  its fold says "Imported from PR #1584 · merged 28 Oct 15:36"; the Programs
+  row and the status bar say "Merged 14 PRs · 28 Oct". The script reads each
+  PR with `gh pr view --json number,title,url,state,mergedAt,mergeCommit`,
+  leaves out a PR that did not merge (#1596 closed), and posts create +
+  plan to the hub; it opens no database; `--dry-run` prints the payload.
+- **On his desk** (the hub on :8765; the token is `$HOLDSPEAK_TOKEN`, else
+  the owner token in the hub's config file):
+
+  ```sh
+  cd /Users/karol/dev/tools/HoldSpeak && uv run python scripts/program_import_history.py \
+    --title "The hub stops stalling" \
+    --goal "Every hub route answers at once: no read holds the event loop, the dock and the chair never force a needs-you rebuild, and a guard keeps it so." \
+    --repository /Users/karol/dev/tools/HoldSpeak --pr 1584-1598 --hub http://127.0.0.1:8765
+  ```
+
 - **Done when**: the Programs window on his desk shows it Done with its PR
   numbers.
-- **Tests**: none (his desk).
-- **Not in this slice**: none.
+- **Tests**: T1 `tests/integration/test_desk_programs.py` (3: the payload
+  from recorded `gh` JSON `tests/fixtures/gh/pr_view_history.json`, never a
+  live gh; a history plan is Done, the tick moves nothing, Since this
+  morning shows nothing for an old merge, the list reads it Done; history
+  with live steps, validation and MCP; records `program.history.json` and
+  `programs.history.list.json`, `HOLDSPEAK_WIRE_WRITE=1`); T2
+  `programs.app.test.tsx` (2 PG17 cases from those recordings).
+- **Not in this slice**: re-importing into the same Program (replace refuses
+  steps that started; make a new Program).
 
 ## PG18. Programs on Today (Shipped)
 

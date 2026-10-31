@@ -33,7 +33,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Optional
 
-from ..operation_policy import POLICY_VERSION, describe_operation, resolve_policy
+from ..operation_policy import POLICY_VERSION, describe_operation, grant_matches, resolve_policy
 
 COMMAND_SCHEMA = 1
 RECEIPT_SCHEMA = 1
@@ -43,8 +43,8 @@ MAX_COMMAND_TTL_SECONDS = 300
 
 NODE_TARGET_ID = "node"  # the node-scoped pseudo-target (spawn/rename)
 
-STEERING_VERBS = frozenset({"terminal.text", "terminal.keys"})
-PANE_VERBS = frozenset({"terminal.text", "terminal.keys", "factory.kill"})
+STEERING_VERBS = frozenset({"terminal.text", "terminal.keys", "process.resize@1"})
+PANE_VERBS = frozenset({"terminal.text", "terminal.keys", "process.resize@1", "factory.kill"})
 NODE_SCOPED_VERBS = frozenset({"factory.spawn", "factory.rename", "worktree.create"})
 
 
@@ -90,6 +90,7 @@ KNOWN_OPERATIONS = frozenset(
     {
         ("coder_steering", "terminal.text"),
         ("coder_steering", "terminal.keys"),
+        ("coder_steering", "process.resize@1"),
         ("coder_steering", "terminal.disarm"),
         ("coder_factory", "factory.spawn"),
         ("coder_factory", "factory.rename"),
@@ -165,7 +166,7 @@ _SNAPSHOT_BY_DECISION = {
     },
 }
 _SUCCEEDED = frozenset(
-    {"delivered", "disarmed", "spawned", "renamed", "killed", "worktree_created"}
+    {"delivered", "resized", "disarmed", "spawned", "renamed", "killed", "worktree_created"}
 )
 _FAILED = frozenset({"transport_error", "error"})
 
@@ -218,6 +219,8 @@ def payload_head(
         head = str(payload.get("text") or "")
     elif verb == "terminal.keys":
         head = json.dumps(payload.get("keys") or [], separators=(",", ":"))
+    elif verb == "process.resize@1":
+        head = f"terminal resize {payload.get('cols')}x{payload.get('rows')}"
     elif verb == "factory.spawn":
         head = f"spawn {payload.get('name') or ''}"
     elif verb == "factory.rename":
@@ -406,6 +409,7 @@ class NodeCommandProcessor:
         audit: Optional[Callable[..., int]] = None,
         text_transport: Optional[Callable[..., Any]] = None,
         keys_transport: Optional[Callable[..., Any]] = None,
+        resize_transport: Optional[Callable[..., Any]] = None,
         wall_now: Callable[[], datetime] = _utc_now,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -416,6 +420,7 @@ class NodeCommandProcessor:
         self._audit = audit
         self._text_transport = text_transport
         self._keys_transport = keys_transport
+        self._resize_transport = resize_transport
         self._wall_now = wall_now
         self._clock = clock
         self._sequence_locks: dict[str, threading.Lock] = {}
@@ -640,7 +645,9 @@ class NodeCommandProcessor:
             destination=pane_id or env["target"]["target_id"],
             data_classes=("typed_text",)
             if verb == "terminal.text"
-            else ("key_events",),
+            else ("key_events",)
+            if verb == "terminal.keys"
+            else (),
             resource_scope=session_key or None,
             fixed_destination=bool(pane_id),
             consequence="execute_now",
@@ -681,6 +688,20 @@ class NodeCommandProcessor:
                 expected_wait_id=(
                     str(payload.get("expected_wait_id") or "") if "expected_wait_id" in payload else None
                 ),
+                operation=operation,
+                policy_snapshot=policy_snapshot,
+                **kwargs,
+            )
+            basis = policy_snapshot["authority_basis"]
+        elif verb == "process.resize@1":
+            if self._resize_transport is not None:
+                kwargs["transport"] = self._resize_transport
+            result = coder_steering.resize_pane(
+                session_key,
+                width=payload.get("cols"),
+                height=payload.get("rows"),
+                current_target=pane_id,
+                expected_pane_id=str(payload.get("expected_pane_id") or pane_id or ""),
                 operation=operation,
                 policy_snapshot=policy_snapshot,
                 **kwargs,
@@ -754,6 +775,8 @@ class NodeCommandProcessor:
             error=str(result.get("detail")) if result.get("detail") else None,
             revoked=bool(result.get("revoked")),
         )
+        if verb == "process.resize@1" and isinstance(result.get("actual_dimensions"), Mapping):
+            receipt["dimensions"] = dict(result["actual_dimensions"])
         return self._persist(env, receipt, seq_key=seq_key, advance=advance)
 
     def take_result(self, command_id: str) -> Optional[dict[str, Any]]:
@@ -811,6 +834,23 @@ class HubCommandService:
         self._process_input_capability = object()
         self._queues: dict[str, list[dict[str, Any]]] = {}
         self._queue_lock = threading.Lock()
+        # Sequence allocation happens in the process-input/resize adapters
+        # before the node executor's own lock.  Serialize only steering for
+        # one immutable target so concurrent Type resize + input cannot stamp
+        # the same expected sequence; unrelated targets remain concurrent.
+        self._steering_locks: dict[str, threading.Lock] = {}
+        self._steering_locks_guard = threading.Lock()
+
+    def _steering_lock(self, request: Mapping[str, Any]) -> threading.Lock:
+        target = request.get("target")
+        nested_id = target.get("target_id") if isinstance(target, Mapping) else None
+        target_id = str(request.get("target_id") or nested_id or "")
+        with self._steering_locks_guard:
+            lock = self._steering_locks.get(target_id)
+            if lock is None:
+                lock = threading.Lock()
+                self._steering_locks[target_id] = lock
+            return lock
 
     # policy -------------------------------------------------------------
 
@@ -841,6 +881,37 @@ class HubCommandService:
         exactly the local surface's posture — not policy families."""
         mode = self._mode()
         if verb in STEERING_VERBS:
+            # Host geometry belongs to the active Type view.  Even in YOLO a
+            # read-only watcher cannot resize the PTY: only the existing
+            # session grant issued by Type is accepted for this distinct
+            # process.resize operation.
+            if verb == "process.resize@1":
+                grant = self._grant(session_key)
+                operation = describe_operation(
+                    operation_id=f"command:{verb}:{session_key}",
+                    family="coder_steering",
+                    # Existing Type grants authorize host geometry too; resize
+                    # carries no typed data class.
+                    effect_class="terminal/type_text_and_keys",
+                    actor="owner",
+                    destination=destination,
+                    data_classes=(),
+                    resource_scope=session_key or None,
+                    fixed_destination=registered,
+                    consequence="execute_now",
+                )
+                decision = resolve_policy(
+                    operation, mode=mode, source="config", grant=grant
+                )
+                if grant is None or not grant_matches(grant, operation, mode=mode):
+                    return {
+                        "actor": "owner",
+                        "control_posture": mode,
+                        "decision": "grant_required",
+                        "policy_version": POLICY_VERSION,
+                        "grant_id": None,
+                    }
+                return self._authority_from_policy(decision.to_dict(), session_key)
             operation = describe_operation(
                 operation_id=f"command:{verb}:{session_key}",
                 family="coder_steering",
@@ -919,6 +990,14 @@ class HubCommandService:
         verb = str((operation or {}).get("verb") or "")
         family = str((operation or {}).get("family") or "")
         if family == "coder_steering" and verb in STEERING_VERBS:
+            if isinstance(request.get("target"), Mapping):
+                normalized = dict(request)
+                for field in ("node_id", "target_id", "target_generation"):
+                    if normalized.get(field) is None:
+                        value = request["target"].get(field)
+                        if value is not None:
+                            normalized[field] = value
+                request = normalized
             if not request.get("target_id") or not request.get("target_generation"):
                 raise CommandRefused(
                     "target_incomplete",
@@ -929,7 +1008,8 @@ class HubCommandService:
                 from ..principals import Principal, PrincipalKind
 
                 principal = Principal(PrincipalKind.OWNER, "owner-session")
-            return self.submit_process_input(
+            adapter = self.submit_process_resize if verb == "process.resize@1" else self.submit_process_input
+            return adapter(
                 request,
                 principal,
                 authority_snapshot=authority_snapshot,
@@ -1087,6 +1167,7 @@ class HubCommandService:
             from ..kernel.journal import JournalStore
             from ..kernel.model import OperationSpec
             from ..kernel.process_input import ProcessInputCodec
+            from ..kernel.process_resize import ProcessResizeCodec
 
             codec = ProcessInputCodec(self.repo)
             self._kernel = Broker(
@@ -1094,6 +1175,13 @@ class HubCommandService:
                 (
                     OperationSpec(
                         codec.name, codec.version, codec, "agent.submit", "propose"
+                    ),
+                    OperationSpec(
+                        ProcessResizeCodec.name,
+                        ProcessResizeCodec.version,
+                        ProcessResizeCodec(self.repo),
+                        "agent.submit",
+                        "propose",
                     ),
                 ),
             )
@@ -1106,7 +1194,7 @@ class HubCommandService:
         verb = str(operation.get("verb") or "")
         if (
             str(operation.get("family") or "") != "coder_steering"
-            or verb not in STEERING_VERBS
+            or verb not in {"terminal.text", "terminal.keys"}
         ):
             raise CommandRefused(
                 "process_input_operation_required",
@@ -1157,6 +1245,50 @@ class HubCommandService:
             raw["parent_operation_id"] = parent_operation_id
         return raw
 
+    @staticmethod
+    def _process_resize_request(request: Mapping[str, Any]) -> dict[str, Any]:
+        operation = request.get("operation") or {}
+        payload = request.get("payload") or {}
+        if (
+            str(operation.get("family") or "") != "coder_steering"
+            or str(operation.get("verb") or "") != "process.resize@1"
+        ):
+            raise CommandRefused(
+                "process_resize_operation_required",
+                "the process.resize adapter accepts terminal resize only",
+            )
+        command_id = str(request.get("command_id") or uuid.uuid4())
+        node_id = str(request.get("node_id") or "local")
+        target_id = str(request.get("target_id") or "")
+        generation = str(request.get("target_generation") or "")
+        arguments = {
+            "cols": payload.get("cols"),
+            "rows": payload.get("rows"),
+            "expected_generation": generation,
+            "expected_pane_id": str(payload.get("expected_pane_id") or ""),
+            "command_id": command_id,
+            "session_key": str(payload.get("session_key") or ""),
+            "agent": str(payload.get("agent") or ""),
+            "expected_sequence": request.get("expected_sequence"),
+            "expires_in_seconds": request.get("expires_in_seconds", 30),
+        }
+        raw = {
+            "request_schema": 1,
+            "request_id": command_id,
+            "idempotency_key": f"process.resize:{command_id}",
+            "operation": {"name": "process.resize", "version": 1},
+            "subject_refs": [f"coder_session:{payload.get('session_key')}" ]
+            if payload.get("session_key")
+            else [],
+            "target": {"ref": f"process:{target_id}"},
+            "arguments": arguments,
+            "placement": f"node:{node_id}",
+        }
+        parent_operation_id = str(request.get("parent_operation_id") or "").strip()
+        if parent_operation_id:
+            raw["parent_operation_id"] = parent_operation_id
+        return raw
+
     def _sync_kernel_receipt(self, command_id: str, node_id: str) -> None:
         from ..principals import Principal, PrincipalKind
 
@@ -1191,6 +1323,22 @@ class HubCommandService:
         )
 
     def submit_process_input(
+        self,
+        request: Mapping[str, Any],
+        principal: Any,
+        *,
+        authority_snapshot: Optional[Mapping[str, Any]] = None,
+        include_result: bool = False,
+    ) -> dict[str, Any]:
+        with self._steering_lock(request):
+            return self._submit_process_input(
+                request,
+                principal,
+                authority_snapshot=authority_snapshot,
+                include_result=include_result,
+            )
+
+    def _submit_process_input(
         self,
         request: Mapping[str, Any],
         principal: Any,
@@ -1313,6 +1461,124 @@ class HubCommandService:
                     "detail": receipt.get("error"),
                     "audit_id": receipt.get("node_audit_id"),
                     "revoked": bool(receipt.get("revoked")),
+                }
+        return response
+
+    def submit_process_resize(
+        self,
+        request: Mapping[str, Any],
+        principal: Any,
+        *,
+        authority_snapshot: Optional[Mapping[str, Any]] = None,
+        include_result: bool = False,
+    ) -> dict[str, Any]:
+        with self._steering_lock(request):
+            return self._submit_process_resize(
+                request,
+                principal,
+                authority_snapshot=authority_snapshot,
+                include_result=include_result,
+            )
+
+    def _submit_process_resize(
+        self,
+        request: Mapping[str, Any],
+        principal: Any,
+        *,
+        authority_snapshot: Optional[Mapping[str, Any]] = None,
+        include_result: bool = False,
+    ) -> dict[str, Any]:
+        """Admit ``process.resize@1`` then execute through the resize command.
+
+        This is deliberately separate from ``submit_process_input``: a resize
+        carries no terminal bytes and cannot be smuggled through the text/key
+        codec.  It still uses the same immutable target, kernel claim and
+        command receipt lifecycle.
+        """
+        from ..kernel.admission import parse_request
+        from ..kernel.model import KernelRefused
+        from ..principals import Principal, PrincipalKind
+
+        prepared = dict(request)
+        target = prepared.get("target")
+        if isinstance(target, Mapping):
+            for field in ("node_id", "target_id", "target_generation"):
+                nested_value = target.get(field)
+                flat_value = prepared.get(field)
+                if flat_value is not None and nested_value is not None and str(flat_value) != str(nested_value):
+                    raise CommandRefused("target_mismatch", f"target.{field} disagrees with the command target")
+                if flat_value is None:
+                    prepared[field] = nested_value
+        command_id = str(prepared.get("command_id") or "")
+        known = self.repo.get(command_id) if command_id else None
+        kernel = self._kernel_service()
+        known_operation = kernel.store.operation_for_native(command_id) if known is not None else None
+        if known is not None:
+            if known_operation is None:
+                raise CommandRefused("process_resize_operation_missing")
+            if known_operation["principal_kind"] != principal.name or known_operation["principal_identity"] != principal.identity:
+                raise CommandRefused("process_resize_principal_mismatch")
+        node_id = str(prepared.get("node_id") or self.local_node_id)
+        if node_id != self.local_node_id:
+            raise CommandRefused(
+                "process_resize_local_only",
+                "host terminal resize is available only on the local node",
+            )
+        if prepared.get("expected_sequence") is None and node_id == self.local_node_id:
+            prepared["expected_sequence"] = int(known["expected_sequence"]) if known is not None else self.processor.ledger.next_sequence(str(prepared.get("target_id") or ""))
+        raw = self._process_resize_request(prepared)
+        prepared["command_id"] = raw["request_id"]
+        if known is not None and known_operation is not None:
+            try:
+                admission = kernel._specs[("process.resize", 1)].codec.validate(parse_request(raw))
+            except KernelRefused as exc:
+                raise CommandRefused(exc.reason) from exc
+            if admission.payload_hash != known_operation["envelope_sha256"]:
+                raise CommandRefused("idempotency_payload_mismatch")
+            response: dict[str, Any] = {
+                "command_id": command_id,
+                "state": "complete" if known.get("receipt") else str(known.get("hub_state") or known_operation["state"]),
+                "duplicate": True,
+                "operation_id": known_operation["operation_id"],
+            }
+            if known.get("receipt"):
+                response["receipt"] = known["receipt"]
+            else:
+                response["kernel_state"] = known_operation["state"]
+            return response
+        handle = kernel.submit(raw, principal)
+        if handle.get("state") == "refused":
+            raise CommandRefused(str((handle.get("receipt") or {}).get("outcome") or "kernel_refused"))
+        if handle.get("state") == "awaiting_decision":
+            handle = kernel.decide(handle["operation_id"], "approve", int(handle["revision"]), principal)
+        if node_id == self.local_node_id and handle.get("state") == "awaiting_execution":
+            claimed = kernel.claim(Principal(PrincipalKind.NODE, node_id), prepared["command_id"])
+            claimed_operations = claimed.get("operations") or []
+            if not any(
+                str(
+                    item.get("native_id")
+                    or (item.get("warrant") or {}).get("native_id")
+                    or ""
+                )
+                == prepared["command_id"]
+                for item in claimed_operations
+                if isinstance(item, Mapping)
+            ):
+                raise CommandRefused(str((claimed.get("refusal") or {}).get("outcome") or "kernel_claim_refused"))
+        response = self._submit_native(
+            prepared,
+            authority_snapshot=authority_snapshot,
+            include_result=include_result,
+            process_input_capability=self._process_input_capability,
+        )
+        response["operation_id"] = handle["operation_id"]
+        if node_id == self.local_node_id:
+            self._sync_kernel_receipt(prepared["command_id"], node_id)
+            if include_result and "result" not in response:
+                receipt = dict(response.get("receipt") or {})
+                response["result"] = {
+                    "status": str(receipt.get("outcome") or "refused"),
+                    "detail": receipt.get("error"),
                 }
         return response
 

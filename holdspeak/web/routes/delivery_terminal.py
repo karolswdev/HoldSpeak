@@ -26,11 +26,13 @@ runs off the event loop (the Phase-85 rule).
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 from typing import Any, Optional
 
+import anyio
 from fastapi import APIRouter, Header, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from ...db import get_observer
@@ -39,6 +41,16 @@ from ...services.delivery_service import DeliveryService
 from ..context import WebContext
 
 log = get_logger("web.routes.delivery_terminal")
+
+_STREAM_END = object()
+
+
+def _next_stream_frame(iterator: Any) -> Any:
+    """Call ``next`` off-loop without leaking StopIteration through await."""
+    try:
+        return next(iterator)
+    except StopIteration:
+        return _STREAM_END
 
 NODE_TOKEN_HEADER = "X-HoldSpeak-Node-Token"
 
@@ -63,6 +75,13 @@ class _SubscriptionRequest(BaseModel):
     last_hash: Optional[str] = None
 
 
+class _LiveRequest(BaseModel):
+    target_id: str
+    target_generation: str
+    stream_id: Optional[str] = None
+    resume_sequence: Optional[int] = None
+
+
 class _ResultsRequest(BaseModel):
     name: str
     results: list[dict[str, Any]] = []
@@ -73,6 +92,7 @@ def build_delivery_terminal_router(
     *,
     service: Any = None,
     stream: Any = None,
+    live: Any = None,
     targets: Any = None,
     workspace: Any = None,
     link: Any = None,
@@ -96,6 +116,7 @@ def build_delivery_terminal_router(
     holder: dict[str, Any] = {
         "service": service,
         "stream": stream,
+        "live": live,
         "targets": targets,
         "workspace": workspace,
         "link": link,
@@ -114,6 +135,13 @@ def build_delivery_terminal_router(
 
             holder["stream"] = TerminalStreamService(_targets())
         return holder["stream"]
+
+    def _live() -> Any:
+        if holder["live"] is None:
+            if delivery_service is None:
+                raise RuntimeError("DeliveryService must be supplied at application composition")
+            holder["live"] = delivery_service.terminal_live_service(targets=_targets())
+        return holder["live"]
 
     def _workspace() -> Any:
         if holder["workspace"] is None:
@@ -204,6 +232,65 @@ def build_delivery_terminal_router(
         status = _ABSENCE_HTTP.get(out.get("status"))
         return JSONResponse(out, status_code=status or 200)
 
+    @router.post(
+        "/api/delivery/terminal/live",
+        response_class=StreamingResponse,
+        response_model=None,
+        responses={
+            200: {
+                "description": "Continuous terminal frames as newline-delimited JSON",
+                "content": {"application/x-ndjson": {"schema": {"type": "string"}}},
+            },
+            401: {"description": "Authentication or target authority required"},
+            404: {"description": "Target is gone"},
+            409: {"description": "Target generation changed"},
+            503: {"description": "Local stream unavailable"},
+        },
+    )
+    async def api_terminal_live(body: _LiveRequest) -> Any:
+        """Continuous local output as one authenticated NDJSON stream.
+
+        ``subscribe`` performs the initial immutable-target proof and the
+        control-mode startup off the event loop.  Each blocking iterator step
+        runs in a cancellable worker, so a blocked PTY read never stalls the
+        Desk loop and disconnect wakes the subscription promptly.  Closing
+        the iterator detaches only the control client.
+        """
+        try:
+            subscription = await asyncio.to_thread(
+                _live().subscribe,
+                body.target_id,
+                body.target_generation,
+                stream_id=body.stream_id,
+                resume_sequence=body.resume_sequence,
+            )
+        except Exception as exc:
+            status_name = getattr(exc, "status", "stream_unavailable")
+            status_code = _ABSENCE_HTTP.get(status_name, 503)
+            detail = getattr(exc, "detail", str(exc))
+            return JSONResponse(
+                {"status": status_name, "detail": detail}, status_code=status_code
+            )
+
+        async def lines() -> Any:
+            iterator = iter(subscription.frames())
+            try:
+                while True:
+                    frame = await anyio.to_thread.run_sync(
+                        _next_stream_frame,
+                        iterator,
+                        abandon_on_cancel=True,
+                    )
+                    if frame is _STREAM_END:
+                        return
+                    yield (json.dumps(frame, separators=(",", ":")) + "\n").encode(
+                        "utf-8"
+                    )
+            finally:
+                subscription.close()
+
+        return StreamingResponse(lines(), media_type="application/x-ndjson")
+
     @router.post("/api/delivery/terminal/commands")
     async def api_terminal_command(
         request: Request, payload: Optional[dict[str, Any]] = None
@@ -223,6 +310,13 @@ def build_delivery_terminal_router(
             ):
                 out = await asyncio.to_thread(
                     _service().submit_process_input, body, principal
+                )
+            elif (
+                operation.get("family") == "coder_steering"
+                and operation.get("verb") == "process.resize@1"
+            ):
+                out = await asyncio.to_thread(
+                    _service().submit_process_resize, body, principal
                 )
             else:
                 out = await asyncio.to_thread(_service().submit, body)

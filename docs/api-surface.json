@@ -2500,6 +2500,16 @@
       "consumers": []
     },
     {
+      "path": "/api/delivery/terminal/live",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/delivery/terminal/node/results",
       "methods": [
         "POST"

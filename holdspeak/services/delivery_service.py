@@ -68,6 +68,24 @@ class DeliveryService:
             ),
         )
 
+    def terminal_live_service(
+        self, *, targets: Any, runner: Any = None, popen_factory: Any = None
+    ) -> Any:
+        """Compose the continuous local terminal stream over shared targets.
+
+        The stream is ephemeral and intentionally has no database collaborator;
+        this method keeps its target registry on the same delivery composition
+        root as commands, discovery and launch.
+        """
+        from ..delivery.terminal_live import TerminalLiveService
+
+        kwargs: dict[str, Any] = {"targets": targets}
+        if runner is not None:
+            kwargs["runner"] = runner
+        if popen_factory is not None:
+            kwargs["popen_factory"] = popen_factory
+        return TerminalLiveService(**kwargs)
+
     def launch_service(
         self,
         *,

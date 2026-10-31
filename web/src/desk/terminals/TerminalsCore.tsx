@@ -15,6 +15,8 @@ import {
 } from "./windows";
 import type { TerminalDescriptor } from "./types";
 import { WorkspaceView } from "./WorkspaceView";
+import { WorkspaceOverview } from "./WorkspaceOverview";
+import type { WorkspaceHandoffPreparation } from "./workspaceHandoff";
 import {
   queueWorkspaceLaunch,
   bumpWorkspaceRequestEpoch,
@@ -88,10 +90,12 @@ function terminalRowState(descriptor: TerminalDescriptor) {
 function TerminalRow({
   descriptor,
   open,
+  selected,
   onOpen,
 }: {
   descriptor: TerminalDescriptor;
   open: boolean;
+  selected: boolean;
   onOpen(): void;
 }) {
   const rowState = terminalRowState(descriptor);
@@ -100,6 +104,7 @@ function TerminalRow({
     name={descriptor.label || descriptor.session || "Terminal"}
     meta={[descriptor.agent !== "pane" ? descriptor.agent : "Shell", descriptor.command].filter(Boolean).join(" · ")}
     state={{ word: rowState.word, tone: rowState.tone, live: rowState.live }}
+    selected={selected}
     onOpen={onOpen}
     openLabel={`${open ? "Focus" : "Open"}: ${descriptor.label || descriptor.session || "Terminal"}`}
     openTestId={`terminal-open-${descriptor.id}`}
@@ -187,6 +192,7 @@ export function TerminalsCore() {
   const [startingAgent, setStartingAgent] = useState(false);
   const [newShellName, setNewShellName] = useState("");
   const [newShellCwd, setNewShellCwd] = useState("");
+  const [agentPreparation, setAgentPreparation] = useState<WorkspaceHandoffPreparation | null>(null);
   const [projectOptions, setProjectOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [projectRepositoryIds, setProjectRepositoryIds] = useState<Set<string>>(new Set());
   const [projectResourceRevision, setProjectResourceRevision] = useState(0);
@@ -353,10 +359,11 @@ export function TerminalsCore() {
     <div className="terminals-core" data-testid="terminals-inventory" data-interior="list">
       <Toolbar label="Terminals" data-testid="terminals-toolbar">
         <Button
-          variant="primary"
+          variant={selectedDescriptor ? "secondary" : "primary"}
           dense
           onClick={() => {
             bumpWorkspaceRequestEpoch();
+            setAgentPreparation(null);
             setNewShell((value) => !value);
             setStartingAgent(false);
           }}
@@ -370,6 +377,7 @@ export function TerminalsCore() {
           dense
           onClick={() => {
             bumpWorkspaceRequestEpoch();
+            setAgentPreparation(null);
             setStartingAgent((value) => !value);
             setNewShell(false);
           }}
@@ -398,15 +406,18 @@ export function TerminalsCore() {
             refresh();
           }}
         /> : (
+          <>
           <div className="terminals-start-agent">
             <StartAgent
-              initialProjectId={selection.projectId}
+              initialProjectId={agentPreparation ? agentPreparation.context.project?.id ?? null : selection.projectId}
+              preparation={agentPreparation}
               onCancel={() => { bumpWorkspaceRequestEpoch(); setStartingAgent(false); }}
               onStarting={() => workspaceSelectionSnapshot().requestEpoch}
               onStarted={(row, started) => {
                 const requestEpoch = started?.requestEpoch ?? workspaceSelectionSnapshot().requestEpoch;
                 const ownsStart = workspaceSelectionSnapshot().requestEpoch === requestEpoch;
                 if (ownsStart) setStartingAgent(false);
+                if (ownsStart) setAgentPreparation(null);
                 const prefix = row?.split(":", 1)[0];
                 const id = row?.slice(prefix ? prefix.length + 1 : 0) ?? "";
                 const startedProject = started?.projectId ?? selection.projectId;
@@ -421,6 +432,7 @@ export function TerminalsCore() {
               }}
             />
           </div>
+          </>
         )
       ) : selection.face === "sessions" ? <>
       <div className="terminals-search">
@@ -432,6 +444,11 @@ export function TerminalsCore() {
         <Button dense variant="ghost" onClick={() => cancelWorkspaceLaunch(pending.id)}>Stop waiting</Button>
       </ActionNotice>)}
 
+      {selectedDescriptor ? <WorkspaceOverview
+        descriptor={selectedDescriptor}
+        selectedProjectName={selectedProjectName}
+        onOpenTerminal={() => openTerminal(selectedDescriptor)}
+      /> : null}
       <div className="terminals-list" role="region" aria-label="Terminal sessions">
         {inventoryLoading && !inventory.sessions.length ? <SurfaceState loading /> : null}
         {inventory.status === "error" ? <SurfaceState error={inventoryFailure(inventory.status, inventory.detail)} onRetry={refresh} retryLabel="Retry" /> : null}
@@ -439,7 +456,7 @@ export function TerminalsCore() {
         {inventory.status !== "error" && inventory.status !== "tmux_absent" && !rows.length && !inventoryLoading ? (
           <SurfaceState
             empty
-            emptyLabel={queryText ? "No matching terminals" : "No terminal sessions"}
+            emptyLabel={queryText ? "No matching terminals" : selection.projectId ? `No sessions in ${selectedProjectName || "this project"}` : "No terminal sessions"}
             emptyHint={queryText ? undefined : "Create a shell or start an agent to see it here."}
           />
         ) : null}
@@ -449,7 +466,7 @@ export function TerminalsCore() {
               <div className="terminals-group" key={group} title={group} data-folder-path={group}>
                 <ListDay label={group === "Local shells" ? group : group.split(/[\\/]/).filter(Boolean).pop() || group}>
                   {descriptors.map((descriptor) => (
-                    <TerminalRow key={descriptor.id} descriptor={descriptor} open={openIds.has(descriptor.id)} onOpen={() => openTerminal(descriptor)} />
+                    <TerminalRow key={descriptor.id} descriptor={descriptor} open={openIds.has(descriptor.id)} selected={selection.sessionId === descriptor.id} onOpen={() => openTerminal(descriptor)} />
                   ))}
                 </ListDay>
               </div>
@@ -466,8 +483,25 @@ export function TerminalsCore() {
       <div className="terminals-workspace-head" data-testid="terminal-workspace-head">
         {selectedDescriptor ? <span className="terminals-workspace-selected">{selectedDescriptor.label}</span> : <span className="terminals-workspace-selected">No session selected</span>}
       </div>
-      <WorkspaceView descriptor={selectedDescriptor} face={selection.face} onChanges={() => selectWorkspaceFace("changes")} selectedProjectId={selection.projectId} selectedProjectName={selectedProjectName} onRepositoryBound={() => setProjectResourceRevision((revision) => revision + 1)} />
       </>}
+      {selection.face !== "sessions" ? (
+        <div className="terminals-workspace-return-target" hidden={formOpen} aria-hidden={formOpen ? "true" : undefined}>
+          <WorkspaceView
+            descriptor={selectedDescriptor}
+            face={selection.face}
+            onChanges={() => selectWorkspaceFace("changes")}
+            selectedProjectId={selection.projectId}
+            selectedProjectName={selectedProjectName}
+            onRepositoryBound={() => setProjectResourceRevision((revision) => revision + 1)}
+            onPrepareFileHandoff={(preparation) => {
+              bumpWorkspaceRequestEpoch();
+              setAgentPreparation(preparation);
+              setStartingAgent(true);
+              setNewShell(false);
+            }}
+          />
+        </div>
+      ) : null}
       <StatusBar
         items={[inventoryStatusText ? { lamp: inventoryStatus, text: inventoryStatusText } : null]}
         trailing={terminalWindows.length ? `${terminalWindows.length} open` : undefined}

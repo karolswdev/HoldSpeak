@@ -25,6 +25,8 @@ import personFixture from "../__fixtures__/person.programs.json";
 import skipDecisionFixture from "../__fixtures__/program.skip_decision.json";
 import roomProposedFixture from "../__fixtures__/room.decisions.proposed.json";
 import startFromFixture from "../__fixtures__/program.start_from.json";
+import historyFixture from "../__fixtures__/program.history.json";
+import historyListFixture from "../__fixtures__/programs.history.list.json";
 import sinceMorningPrograms from "../../__tests__/fixtures/today-hub/since-morning.programs.json";
 
 type Frame = { type: string; data: unknown };
@@ -612,5 +614,48 @@ describe("PG16: decisions from a Program (the recorded Skip)", () => {
   it("no proposed decision, no fold", () => {
     const { container } = render(<RoomDecisions proposed={[]} />);
     expect(container.textContent).toBe("");
+  });
+});
+
+describe("PG17: a Program made from PRs that merged already (recorded through the real routes)", () => {
+  const history = historyFixture as unknown as Program;
+  const historyList = historyListFixture as unknown as ProgramList;
+
+  it("the Programs window lists it under Done with Merged n PRs and the dates", async () => {
+    hub({ "GET /api/programs": historyList });
+    render(<ProgramsCore />);
+    const bands = await screen.findAllByTestId("programs-band");
+    expect(bands.map((band) => within(band).getByRole("heading").textContent)).toEqual(["Done"]);
+    const row = within(bands[0]).getByTestId("programs-row");
+    expect(row.textContent).toContain("3 of 3 steps");
+    expect(row.textContent).toContain(history.history!.words);
+    expect(history.history!.words).toMatch(/^Merged 3 PRs · \d+ Oct/);
+    expect(row.textContent).not.toContain("Done in");
+  });
+
+  it("the board: every station lit, the PR number and the merge time on each row, no agent; the fold says Imported from PR #n", async () => {
+    hub({ [`GET /api/programs/${history.id}`]: history });
+    render(<ProgramBody programId={history.id} />);
+    await screen.findByTestId("programs-board");
+    const rows = screen.getAllByTestId("programs-step");
+    expect(rows).toHaveLength(3);
+    expect(rows.every((row) => row.hasAttribute("data-history"))).toBe(true);
+    expect(screen.getAllByTestId("programs-step-pr").map((cell) => cell.textContent)).toEqual(["PR #1584", "PR #1585", "PR #1598"]);
+    for (const step of history.steps) {
+      const merge = stationsOf(step as ProgramStep).at(-1)!;
+      expect(merge).toMatchObject({ key: "merge", tone: "ok", sub: `#${step.pr!.number}` });
+    }
+    expect(within(stepRow(1)).getByTestId("programs-step-word").textContent).toBe("Done");
+    expect(stepRow(1).querySelector(".pg-step-when")!.textContent).toMatch(/^28 Oct \d\d:\d\d$/);
+    expect(stepRow(1).querySelector(".pg-step-agent")!.textContent).toBe("");
+    expect(screen.queryByTestId("programs-step-open")).toBeNull();
+    expect(status().textContent).toContain(`Done · ${history.history!.words}`);
+    // No fold until he picks a step; the picked step's fold names its PR.
+    expect(screen.queryByTestId("programs-history-brief")).toBeNull();
+    fireEvent.click(within(stepRow(1)).getByTestId("programs-step-select"));
+    const brief = await screen.findByTestId("programs-history-brief");
+    expect(brief.textContent).toContain("Imported from PR #1584");
+    expect(brief.textContent).toMatch(/merged 28 Oct \d\d:\d\d/);
+    expect(screen.queryByTestId("programs-gate-verdict")).toBeNull();
   });
 });

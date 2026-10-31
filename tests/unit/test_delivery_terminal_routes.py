@@ -11,7 +11,10 @@ via the ``command_source`` hook.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
+import threading
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -28,6 +31,7 @@ from holdspeak.delivery.node_link import (
     NodeTokenStore,
 )
 from holdspeak.delivery.terminal import TerminalStreamService, TerminalTargetRegistry
+from holdspeak.web.announce import QUIET_ROUTES
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_terminal import build_delivery_terminal_router
@@ -227,6 +231,126 @@ def test_subscription_absence_status_codes(rig) -> None:
     assert res.json()["status"] == "generation_mismatch"
 
 
+class _FiniteLiveSubscription:
+    def __init__(self) -> None:
+        self.closed = False
+
+    def frames(self):
+        yield {"status": "snapshot", "stream_id": "live_test", "sequence": 1, "encoding": "base64", "data": "aGVsbG8="}
+        yield {"status": "output", "stream_id": "live_test", "sequence": 2, "encoding": "base64", "data": "AP8="}
+
+    def close(self) -> None:
+        self.closed = True
+
+
+class _FiniteLive:
+    def __init__(self) -> None:
+        self.subscription = _FiniteLiveSubscription()
+
+    def subscribe(self, *args, **kwargs):
+        return self.subscription
+
+
+class _BlockingLiveSubscription:
+    def __init__(self) -> None:
+        self.closed = False
+        self.wake = threading.Event()
+
+    def frames(self):
+        yield {"status": "snapshot", "stream_id": "live_block", "sequence": 1, "encoding": "base64", "data": "aGVsbG8="}
+        while not self.closed:
+            self.wake.wait(5)
+
+    def close(self) -> None:
+        self.closed = True
+        self.wake.set()
+
+
+class _BlockingLive:
+    def __init__(self) -> None:
+        self.subscription = _BlockingLiveSubscription()
+
+    def subscribe(self, *args, **kwargs):
+        return self.subscription
+
+
+def test_live_route_streams_ndjson_and_is_quiet(rig) -> None:
+    live = _FiniteLive()
+    # The router gets its live provider through the same composition seam as
+    # the production service; finite frames keep this route test bounded.
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    app.include_router(
+        build_delivery_terminal_router(
+            WebContext(get_state=lambda: {}),
+            service=rig.service,
+            stream=TerminalStreamService(rig.targets, runner=rig.tmux),
+            live=live,
+            targets=rig.targets,
+            link=rig.link,
+        )
+    )
+    target = _target(rig)
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/delivery/terminal/live",
+            json={"target_id": target["target_id"], "target_generation": target["target_generation"]},
+        )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    lines = response.text.splitlines()
+    assert '"status":"snapshot"' in lines[0]
+    assert '"status":"output"' in lines[1]
+    assert live.subscription.closed is True
+    assert ("POST", "/api/delivery/terminal/live") in QUIET_ROUTES
+
+
+def test_live_route_disconnect_closes_blocked_offloop_reader(rig) -> None:
+    live = _BlockingLive()
+    app = FastAPI()
+    app.include_router(
+        build_delivery_terminal_router(
+            WebContext(get_state=lambda: {}),
+            service=rig.service,
+            stream=TerminalStreamService(rig.targets, runner=rig.tmux),
+            live=live,
+            targets=rig.targets,
+            link=rig.link,
+        )
+    )
+    route = next(route for route in app.routes if getattr(route, "path", "") == "/api/delivery/terminal/live")
+    target = _target(rig)
+
+    async def walk() -> None:
+        response = await route.endpoint(
+            type("LiveBody", (), {
+                "target_id": target["target_id"],
+                "target_generation": target["target_generation"],
+                "stream_id": None,
+                "resume_sequence": None,
+            })()
+        )
+        iterator = response.body_iterator
+        first = await iterator.__anext__()
+        assert b'"status":"snapshot"' in first
+        pending = asyncio.create_task(iterator.__anext__())
+        await asyncio.sleep(0.05)
+        started = time.monotonic()
+        pending.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await pending
+        assert live.subscription.closed is True
+        assert time.monotonic() - started < 1.0
+        await iterator.aclose()
+
+    asyncio.run(walk())
+
+
 def test_command_submit_duplicate_and_receipt_join(rig) -> None:
     armed = arm(KEY, "hs:0.0", runner=rig.tmux, control_mode="neutral")
     assert armed["status"] == "armed"
@@ -259,6 +383,28 @@ def test_command_submit_duplicate_and_receipt_join(rig) -> None:
     assert joined.status_code == 200
     assert joined.json()["hub_state"] == "complete"
     assert joined.json()["receipt"]["receipt_id"] == receipt["receipt_id"]
+
+
+def test_resize_command_route_passes_authenticated_principal(rig, monkeypatch) -> None:
+    target = _target(rig)
+    seen: dict[str, object] = {}
+
+    def resize(body, principal):
+        seen["body"] = body
+        seen["principal"] = principal
+        return {"command_id": body.get("command_id", "resize"), "state": "complete"}
+
+    monkeypatch.setattr(rig.service, "submit_process_resize", resize)
+    body = {
+        "target_id": target["target_id"],
+        "target_generation": target["target_generation"],
+        "operation": {"family": "coder_steering", "verb": "process.resize@1"},
+        "payload": {"cols": 100, "rows": 30, "session_key": KEY},
+    }
+    response = rig.client.post("/api/delivery/terminal/commands", json=body)
+    assert response.status_code == 200
+    assert seen["principal"] is OWNER
+    assert seen["body"] == body
 
 
 def test_client_authority_is_refused_by_name(rig) -> None:
