@@ -81,6 +81,17 @@
           "branch": {
             "title": "Branch",
             "type": "string"
+          },
+          "worktree_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worktree Id"
           }
         },
         "required": [
@@ -94,6 +105,17 @@
           "message": {
             "title": "Message",
             "type": "string"
+          },
+          "worktree_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worktree Id"
           }
         },
         "required": [
@@ -179,6 +201,17 @@
             },
             "title": "Paths",
             "type": "array"
+          },
+          "worktree_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worktree Id"
           }
         },
         "title": "StageRequest",
@@ -222,6 +255,28 @@
           "content": {
             "title": "Content",
             "type": "string"
+          },
+          "expected_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Sha256"
+          },
+          "worktree_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worktree Id"
           }
         },
         "required": [
@@ -11611,6 +11666,25 @@
           }
         },
         "summary": "Api Terminal Node Results"
+      }
+    },
+    "/api/delivery/terminal/sessions": {
+      "get": {
+        "description": "List current local terminal sessions from live tmux panes.\n\nDiscovery is a read-only projection. Blocking tmux and hook-registry\nreads run off the event loop; an unclassified shell is still a useful\n``live`` pane and is never presented as an agent state.",
+        "operationId": "api_terminal_sessions_api_delivery_terminal_sessions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Terminal Sessions Api Delivery Terminal Sessions Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Terminal Sessions"
       }
     },
     "/api/delivery/terminal/subscriptions": {
@@ -28122,6 +28196,22 @@
               "title": "Repository Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
+            }
           }
         ],
         "responses": {
@@ -28160,6 +28250,22 @@
             "schema": {
               "title": "Repository Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
             }
           }
         ],
@@ -28210,6 +28316,22 @@
               "title": "Repository Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
+            }
           }
         ],
         "requestBody": {
@@ -28247,6 +28369,87 @@
         "summary": "Api Repository Commit"
       }
     },
+    "/api/repositories/{repository_id}/diff": {
+      "get": {
+        "operationId": "api_repository_diff_api_repositories__repository_id__diff_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "repository_id",
+            "required": true,
+            "schema": {
+              "title": "Repository Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Path"
+            }
+          },
+          {
+            "in": "query",
+            "name": "staged",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Staged",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Repository Diff Api Repositories  Repository Id  Diff Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Repository Diff"
+      }
+    },
     "/api/repositories/{repository_id}/file/{path}": {
       "get": {
         "operationId": "api_repository_file_api_repositories__repository_id__file__path__get",
@@ -28267,6 +28470,22 @@
             "schema": {
               "title": "Path",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
             }
           }
         ],
@@ -28313,6 +28532,22 @@
             "schema": {
               "title": "Path",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
             }
           }
         ],
@@ -28363,6 +28598,22 @@
               "title": "Repository Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
+            }
           }
         ],
         "requestBody": {
@@ -28412,6 +28663,22 @@
               "title": "Repository Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
+            }
           }
         ],
         "responses": {
@@ -28460,6 +28727,22 @@
               "default": "",
               "title": "Path",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "worktree_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Worktree Id"
             }
           }
         ],

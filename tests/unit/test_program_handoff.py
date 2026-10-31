@@ -1,10 +1,11 @@
 """Programs PG19: Runs on as a list, the usage-limit state, the handoff brief.
 
 Design: docs/internal/betterment/programs/PROGRAMS-DESIGN-2026-10-28.md
-("PG19 Handoff"). The notice wordings below are NOT real captures: no
-capture of either harness's usage-limit line is in the repository. They are
+("PG19 Handoff"). The notice wordings below are NOT real captures. They are
 the harnesses' documented and widely reported wordings (2025-2026), pinned
-here so a change to the reader is seen.
+here so a change to the reader is seen. The one real capture (Claude Code on
+this Mac, PG21) is tests/fixtures/usage_limit_captures.json, read by
+tests/unit/test_usage_limit_matrix.py.
 """
 from __future__ import annotations
 

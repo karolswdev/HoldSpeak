@@ -13,6 +13,32 @@ export interface RepoStatus {
   dirty: number;
   ahead: number;
   behind: number;
+  changes?: RepoChange[];
+}
+
+export interface RepoChange {
+  path: string;
+  status: string;
+  index_status: string;
+  worktree_status: string;
+}
+
+export interface RepoFileRead {
+  content: string;
+  sha256: string | null;
+}
+
+export interface RepoDiff {
+  diff: string;
+  truncated: boolean;
+}
+
+export interface RepositoryScope {
+  worktreeId?: string | null;
+}
+
+function scopeQuery(scope?: RepositoryScope): string {
+  return scope?.worktreeId ? `?worktree_id=${encodeURIComponent(scope.worktreeId)}` : "";
 }
 
 export interface RepositoryRecord {
@@ -40,54 +66,76 @@ export async function registerRepository(input: { sourceId?: string; path?: stri
   });
 }
 
-export async function fetchTree(repositoryId: string, path = ""): Promise<RepoFile[]> {
-  const query = path ? `?path=${encodeURIComponent(path)}` : "";
-  const data = await apiFetch<{ files: RepoFile[] }>(repoUrl(repositoryId, `/tree${query}`));
+export async function fetchTree(repositoryId: string, path = "", scope?: RepositoryScope): Promise<RepoFile[]> {
+  const query = new URLSearchParams();
+  if (path) query.set("path", path);
+  if (scope?.worktreeId) query.set("worktree_id", scope.worktreeId);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const data = await apiFetch<{ files: RepoFile[] }>(repoUrl(repositoryId, `/tree${suffix}`));
   return data.files ?? [];
 }
 
-export async function fetchFile(repositoryId: string, path: string): Promise<string> {
-  const data = await apiFetch<{ content: string }>(repoUrl(repositoryId, `/file/${path.split("/").map(encodeURIComponent).join("/")}`));
+export async function fetchFileRecord(repositoryId: string, path: string, scope?: RepositoryScope): Promise<RepoFileRead> {
+  const query = scopeQuery(scope);
+  const data = await apiFetch<{ content: string; sha256?: string }>(repoUrl(repositoryId, `/file/${path.split("/").map(encodeURIComponent).join("/")}${query}`));
+  return { content: data.content, sha256: typeof data.sha256 === "string" ? data.sha256 : null };
+}
+
+export async function fetchFile(repositoryId: string, path: string, scope?: RepositoryScope): Promise<string> {
+  const data = await fetchFileRecord(repositoryId, path, scope);
   return data.content;
 }
 
-export async function writeFile(repositoryId: string, path: string, content: string) {
+export async function writeFile(repositoryId: string, path: string, content: string, scope?: RepositoryScope & { expectedSha256?: string | null }) {
   return apiFetch(repoUrl(repositoryId, `/file/${path.split("/").map(encodeURIComponent).join("/")}`), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({
+      content,
+      ...(scope?.worktreeId ? { worktree_id: scope.worktreeId } : {}),
+      ...(scope?.expectedSha256 ? { expected_sha256: scope.expectedSha256 } : {}),
+    }),
   });
 }
 
-export async function stageFiles(repositoryId: string, paths: string[]) {
+export async function stageFiles(repositoryId: string, paths: string[], scope?: RepositoryScope) {
   return apiFetch<{ staged: string[] }>(repoUrl(repositoryId, "/stage"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ paths }),
+    body: JSON.stringify({ paths, ...(scope?.worktreeId ? { worktree_id: scope.worktreeId } : {}) }),
   });
 }
 
-export async function commit(repositoryId: string, message: string) {
+export async function commit(repositoryId: string, message: string, scope?: RepositoryScope) {
   return apiFetch<{ committed: boolean; summary: string }>(repoUrl(repositoryId, "/commit"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, ...(scope?.worktreeId ? { worktree_id: scope.worktreeId } : {}) }),
   });
 }
 
-export function fetchStatus(repositoryId: string) {
-  return apiFetch<RepoStatus>(repoUrl(repositoryId, "/status"));
+export function fetchStatus(repositoryId: string, scope?: RepositoryScope) {
+  return apiFetch<RepoStatus>(repoUrl(repositoryId, `/status${scopeQuery(scope)}`));
 }
 
-export async function fetchBranches(repositoryId: string): Promise<string[]> {
-  const data = await apiFetch<{ branches: string[] }>(repoUrl(repositoryId, "/branches"));
+export function fetchDiff(repositoryId: string, scope?: RepositoryScope & { path?: string; staged?: boolean }) {
+  const params = new URLSearchParams();
+  if (scope?.worktreeId) params.set("worktree_id", scope.worktreeId);
+  if (scope?.path) params.set("path", scope.path);
+  if (scope?.staged != null) params.set("staged", String(scope.staged));
+  const suffix = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch<RepoDiff>(repoUrl(repositoryId, `/diff${suffix}`));
+}
+
+export async function fetchBranches(repositoryId: string, scope?: RepositoryScope): Promise<string[]> {
+  const data = await apiFetch<{ branches: string[] }>(repoUrl(repositoryId, `/branches${scopeQuery(scope)}`));
   return data.branches ?? [];
 }
 
-export function checkout(repositoryId: string, branch: string) {
+export function checkout(repositoryId: string, branch: string, scope?: RepositoryScope) {
   return apiFetch<RepoStatus>(repoUrl(repositoryId, "/checkout"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ branch }),
+    body: JSON.stringify({ branch, ...(scope?.worktreeId ? { worktree_id: scope.worktreeId } : {}) }),
   });
 }

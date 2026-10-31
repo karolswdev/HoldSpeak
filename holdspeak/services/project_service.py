@@ -566,6 +566,29 @@ class ProjectService:
             return f"desk_decision:{resource_id}"
         return ref
 
+    def _validate_repository_binding(self, principal: Principal, resource_ref: str) -> None:
+        """Allow the owner to file one registered local Delivery Source.
+
+        Repository bindings are the durable authority used by Hand to agent;
+        an agent or launch must not be able to widen its own Project's local
+        repository.  Validation reads the same persisted registry as the
+        delivery context and never registers, imports or saves a source.
+        """
+        kind, _, source_id = resource_ref.partition(":")
+        if kind != "repository":
+            return
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "owner_required",
+                "Only the owner can bind a local repository to a Project.",
+                context={"status": 403},
+            )
+        from ..delivery.registry import DeliveryRegistry
+
+        registry = DeliveryRegistry.read_only_snapshot()
+        if registry.get(source_id) is None:
+            raise NotFound("delivery source", source_id)
+
     @staticmethod
     def _project_resource_ref_names(ref: str) -> tuple[str, ...]:
         """The names a stored row can carry for ``ref`` (old rows: `decision:`)."""
@@ -4565,6 +4588,7 @@ class ProjectService:
         if relationship is not None:
             body["relationship"] = relationship
         ref_str = self._project_resource_ref(resource_ref)
+        self._validate_repository_binding(principal, ref_str)
 
         # Idempotency
         req_hash = _request_hash({"project_id": project_id,

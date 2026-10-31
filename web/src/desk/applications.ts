@@ -190,6 +190,26 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     go: { group: "daily", order: 5 },
     shortcut: "⌃4",
   },
+  {
+    action: "open-terminals",
+    windowId: "surface-terminals",
+    label: "Terminals",
+    description: "Open and arrange live agent and shell sessions.",
+    glyph: "▥",
+    href: "/terminals",
+    group: "tool",
+    go: { group: "work", order: 2.5 },
+    surface: {
+      eyebrow: "Terminal inventory",
+      minW: 520,
+      minH: 360,
+      defaultW: 700,
+      defaultH: 560,
+      load: () => import("./terminals/TerminalsCore").then((module) => ({
+        default: module.TerminalsCore,
+      })),
+    },
+  },
   // Programs (PROGRAMS-DESIGN-2026-10-28 §9): a goal cut into steps, each
   // handed to an agent. It sits beside Agents (Go ▸ Daily, after Agents;
   // its worst state joins the Agents lamp on the Dock) and opens on ⌃7.

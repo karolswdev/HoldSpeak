@@ -49,6 +49,7 @@ import {
   announceLauncher,
   retractLauncher,
 } from "./DeskWindow";
+import { openSurfaceWhenReady } from "../shell";
 import { spriteUrl } from "../sprites";
 import { AgentWords } from "./AgentWords";
 import { useLaneOwnsSteering } from "../lane/laneStore";
@@ -247,100 +248,18 @@ function NodeCycle() {
  * HS-111-04: the transient is mini-ledger rows; active = the ledger's
  * open well fill, never a smuggled left accent rail. */
 export function PanePicker() {
-  const panes = useSteering((s) => s.panes);
-  const panesState = useSteering((s) => s.panesState);
-  const factoryState = useSteering((s) => s.factoryState);
-  const factoryDetail = useSteering((s) => s.factoryDetail);
-  const [open, setOpen] = useState(false);
-  const [spawnName, setSpawnName] = useState("");
-  const doSpawn = async () => {
-    const name = spawnName.trim();
-    if (!name) return;
-    const ok = await useSteering.getState().spawnSession(name);
-    if (ok) {
-      setSpawnName("");
-      setOpen(false); // the new session's pull-out is now open
-    }
-  };
-  // HS-97-07 — one shelf: the floating pill is gone; the dock carries
-  // the Panes launcher (toggle: the list is a transient, not a window).
+  const open = useDesk((state) => Boolean(state.windowsById["surface-terminals"]));
   useEffect(() => {
     announceLauncher({
       id: "panes",
       label: "Terminals",
       glyph: "⧉",
       open,
-      activate: () => {
-        const next = !open;
-        setOpen(next);
-        if (next) void useSteering.getState().listPanes();
-      },
+      activate: () => openSurfaceWhenReady("open-terminals"),
     });
     return () => retractLauncher("panes");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
-  return (
-    <div className={"desk-panepicker" + (open ? " is-open" : "")}>
-      {open && (
-        <div className="desk-panepicker-list">
-          {/* HS-90-03: spawn a new session from the desk */}
-          <div className="desk-panepicker-spawn">
-            <StringGadget
-              label="New session name"
-              value={spawnName}
-              onChange={setSpawnName}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void doSpawn();
-              }}
-            />
-            <TransportKey
-              compact
-              label="SPAWN"
-              glyph="＋"
-              disabled={!spawnName.trim() || factoryState === "working"}
-              onClick={() => void doSpawn()}
-            />
-          </div>
-          {factoryState === "failed" && (
-            <span className="desk-panepicker-empty desk-arm-refusal">
-              <span aria-hidden="true">{GLYPH_CLOSE}</span> {factoryDetail}
-            </span>
-          )}
-          <div className="desk-panepicker-divider" />
-          {panesState === "loading" && (
-            <span className="desk-panepicker-empty">…</span>
-          )}
-          {panesState === "error" && (
-            <span className="desk-panepicker-empty">tmux unreachable</span>
-          )}
-          {panesState === "loaded" && panes.length === 0 && (
-            <span className="desk-panepicker-empty">no tmux panes</span>
-          )}
-          {panes.map((p) => (
-            <Button
-              key={p.paneId}
-              variant="chrome"
-              className={
-                "desk-panepicker-item" + (p.active ? " is-active" : "")
-              }
-              onClick={() => {
-                useSteering.setState({ attachedSession: p.session });
-                useSteering.getState().openSession(`pane:${p.paneId}`);
-                setOpen(false);
-              }}
-            >
-              <span className="desk-panepicker-id">{p.paneId}</span>
-              <span className="desk-panepicker-meta">
-                {p.session}
-                {p.command ? ` · ${p.command}` : ""}
-              </span>
-            </Button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return null;
 }
 
 // The factory controls (HS-90-03) — rename + kill the open session, on glass.

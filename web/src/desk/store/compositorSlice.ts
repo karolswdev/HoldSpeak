@@ -24,6 +24,11 @@ import {
   makeOpenWindow,
   makeCloseWindow,
 } from "./windowFactory";
+import {
+  closeTerminalWindow as closeTerminalWindowState,
+  openTerminalWindow as openTerminalWindowState,
+} from "../terminals/open";
+import { terminalWindowId } from "../terminals/windows";
 
 // ---- localStorage persistence -------------------------------------------
 
@@ -102,6 +107,10 @@ const initialWindowsByIdRaw = Object.fromEntries(
   }),
 );
 const initialWindowsById = initialWindowsByIdRaw;
+const initialTerminalWindows = (initialWorkspace.terminals ?? []).map((id) => ({
+  id,
+  origin: null,
+}));
 
 // PHILO-13-07 (B2) — the open object windows come back after a reload, each
 // through its own family's array (the same openers then raise and close it).
@@ -159,6 +168,7 @@ const reopened = <K extends string>(key: K, values: string[]) =>
 // or a close ends that state (idempotent, so a double-run effect agrees).
 const returningIds = new Set<string>([
   ...Object.keys(initialWindowsById),
+  ...initialTerminalWindows.map((window) => terminalWindowId(window.id)),
   ...initialWindowLists.pullouts.filter((id) => !meetingRefFromPullout(id)).map((id) => `pullout:${id}`),
   ...initialWindowLists.info.map((ref) => `info:${ref}`),
   ...initialWindowLists.roadmap.map((slug) => `roadmap:${slug}`),
@@ -210,6 +220,7 @@ export type CompositorSlice = Pick<
   | "panelMax"
   | "panelZoom"
   | "windowsById"
+  | "terminalWindows"
   | "pullouts"
   | "zoneWindows"
   | "zoneViewPrefs"
@@ -238,6 +249,8 @@ export type CompositorSlice = Pick<
   | "openNewWorkbenchChooser"
   | "closeNewWorkbenchChooser"
   | "openSurfaceWindow"
+  | "openTerminalWindow"
+  | "closeTerminalWindow"
   | "closeSurfaceWindow"
   | "clearSurfaceWindows"
   | "setPanelRect"
@@ -267,6 +280,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   panelMax: migratedMax,
   panelZoom: migratedZoom,
   windowsById: initialWindowsById,
+  terminalWindows: initialTerminalWindows,
   pullouts: reopened("id", [
     ...initialWindowLists.pullouts.filter((id) => !meetingRefFromPullout(id)),
   ]),
@@ -560,6 +574,14 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     get().restorePanel(application.windowId);
     if (application.surface.maximized && !get().panelMax.includes(application.windowId))
       get().toggleMaximizePanel(application.windowId);
+  },
+  openTerminalWindow(id, origin) {
+    openTerminalWindowState(id, origin, set, get);
+    saveDeskWorkspace(get());
+  },
+  closeTerminalWindow(id) {
+    closeTerminalWindowState(id, set, get);
+    saveDeskWorkspace(get());
   },
   closeSurfaceWindow(key) {
     const application = surfaceByAction.get(key) ?? surfaceByWindowId.get(key);

@@ -146,6 +146,45 @@ def test_dead_pure_pane_ref_is_target_gone(tmux) -> None:
     assert gone["status"] == "target_gone"
 
 
+def test_same_pane_id_with_a_new_process_fingerprint_moves_generation() -> None:
+    identity = {"pane_id": "%5", "fingerprint": "sha256:first"}
+    registry = TerminalTargetRegistry(
+        resolver=lambda _ref, runner=None: {"status": "ok", **identity}
+    )
+    issued = registry.issue("hs:0.0")
+    identity["fingerprint"] = "sha256:second"
+    refused = registry.verify(issued["target_id"], issued["target_generation"])
+    assert refused["status"] == "generation_mismatch"
+    refreshed = registry.issue("hs:0.0")
+    assert refreshed["target_id"] == issued["target_id"]
+    assert refreshed["target_generation"] == refused["current_generation"]
+    assert refreshed["fingerprint"] == "sha256:second"
+
+
+def test_subscription_carries_verified_geometry_without_a_second_peek() -> None:
+    geometry = {"width": 120, "height": 36, "cursor_x": 7, "cursor_y": 4}
+    registry = TerminalTargetRegistry(
+        resolver=lambda _ref, runner=None: {
+            "status": "ok",
+            "pane_id": "%5",
+            "fingerprint": "sha256:screen",
+            "pane": geometry,
+        }
+    )
+    tmux = FakeTmux()
+    tmux.panes["%5"] = "screen"
+    stream = TerminalStreamService(registry, runner=tmux)
+    target = registry.issue("hs:0.0")
+    snapshot = stream.read(target["target_id"], target["target_generation"])
+    assert snapshot["pane"] == geometry
+    idle = stream.read(
+        target["target_id"], target["target_generation"],
+        resume_sequence=snapshot["sequence"],
+    )
+    assert idle["status"] == "not_modified"
+    assert idle["pane"] == geometry
+
+
 def test_unknown_target_id_is_target_gone(tmux) -> None:
     registry = TerminalTargetRegistry(runner=tmux)
     assert registry.verify("term_nope", "gen_nope")["status"] == "target_gone"

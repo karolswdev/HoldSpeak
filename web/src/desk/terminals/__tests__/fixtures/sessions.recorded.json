@@ -1,0 +1,37 @@
+{
+  "sessions": [
+    {
+      "agent": "codex",
+      "command": "bash",
+      "current_path": "/work/review",
+      "id": "terminal_aad7603db9d2441b44de9a8bcb1a85d8",
+      "key": "codex:fixture-agent",
+      "label": "codex \u00b7 Review \u00b7 review:0.0",
+      "pane_id": "%5",
+      "session": "review",
+      "state": "working",
+      "target": {
+        "node_id": "local",
+        "target_generation": "gen_021df72d4e00",
+        "target_id": "term_f6c20f91034c4305"
+      }
+    },
+    {
+      "agent": "pane",
+      "command": "zsh",
+      "current_path": "/work/scratch",
+      "id": "terminal_613d2d332428e99a4f35b2c4925ff2df",
+      "key": "pane:%8",
+      "label": "scratch:0.0",
+      "pane_id": "%8",
+      "session": "scratch",
+      "state": "live",
+      "target": {
+        "node_id": "local",
+        "target_generation": "gen_02f57c09278e",
+        "target_id": "term_1e9112865e614942"
+      }
+    }
+  ],
+  "status": "ok"
+}

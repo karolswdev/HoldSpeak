@@ -13,7 +13,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 887 (plus static mounts). iOS-consumed: 89. Web-consumed: 691.
+Routes: 890 (plus static mounts). iOS-consumed: 89. Web-consumed: 692.
 
 ## device_audio_ws
 
@@ -371,6 +371,7 @@ Routes: 887 (plus static mounts). iOS-consumed: 89. Web-consumed: 691.
 | POST | `/api/delivery/terminal/commands` | web |
 | GET | `/api/delivery/terminal/commands/{command_id}` | server only |
 | POST | `/api/delivery/terminal/node/results` | server only |
+| GET | `/api/delivery/terminal/sessions` | web |
 | POST | `/api/delivery/terminal/subscriptions` | web |
 | POST | `/api/delivery/terminal/targets` | server only |
 
@@ -724,6 +725,7 @@ Routes: 887 (plus static mounts). iOS-consumed: 89. Web-consumed: 691.
 | GET | `/settings` | server only |
 | GET | `/setup` | server only |
 | GET | `/studio` | server only |
+| GET | `/terminals` | server only |
 | GET | `/welcome` | server only |
 | GET | `/workbench` | server only |
 
@@ -1193,6 +1195,7 @@ Routes: 887 (plus static mounts). iOS-consumed: 89. Web-consumed: 691.
 | GET | `/api/repositories/{repository_id}/branches` | server only |
 | POST | `/api/repositories/{repository_id}/checkout` | server only |
 | POST | `/api/repositories/{repository_id}/commit` | server only |
+| GET | `/api/repositories/{repository_id}/diff` | server only |
 | GET | `/api/repositories/{repository_id}/file/{path:path}` | server only |
 | PUT | `/api/repositories/{repository_id}/file/{path:path}` | server only |
 | POST | `/api/repositories/{repository_id}/stage` | server only |

@@ -1,10 +1,9 @@
 // HS-111-11 — the xterm interior of the PaneWell (lazy chunk).
 //
-// A VIEWER, never an input: `disableStdin` is set, no `onData` handler
-// exists anywhere in this file, and nothing here imports a send path —
-// typing reaches a pane only through the armed steer composer
-// (Article XI / Phase 87 law). The chunk lazy-loads with the pullout so
-// the desk's first paint never pays for a terminal emulator.
+// A shared terminal interior: read-only by default, with an opt-in input
+// callback for a controller that already owns the target, grant and focus.
+// The renderer never discovers or selects a session. The chunk lazy-loads with
+// the pullout so the desk's first paint never pays for a terminal emulator.
 //
 // Material: Signal Workbench, not stock xterm — the screen is the
 // OPAQUE terminal-screen token (set on the container BEFORE open(), so
@@ -44,7 +43,10 @@ function tokenValue(name: string, fallback: string): string {
  * accent-cool); the rest are curated to sit on the same dark screen. */
 export function workbenchTerminalTheme() {
   const screen = tokenValue("--desk-terminal-screen", "#0f1115");
-  const text = tokenValue("--text", "#f2f3f5");
+  // The desk's ordinary `--text` is dark Workbench ink for pale wells. The
+  // terminal screen is intentionally dark, so use the existing light-on-deep
+  // token instead of making terminal output disappear in the browser.
+  const text = tokenValue("--text-on-accent", "#f7f9fc");
   return {
     background: screen,
     foreground: text,
@@ -71,7 +73,7 @@ export function workbenchTerminalTheme() {
   };
 }
 
-const CLEAR = "[3J[2J[H"; // scrollback + screen + home
+const CLEAR = "[2J[H"; // screen + home; keep scrollback for scrolled viewers
 const SEARCH_DECORATIONS = {
   matchOverviewRuler: "#fbbf24",
   activeMatchColorOverviewRuler: "#a86e4a",
@@ -84,6 +86,10 @@ export default function XtermPane({
   pane,
   search,
   onData,
+  focusSignal,
+  copyOnSelect = true,
+  inputEnabled = Boolean(onData),
+  onFocus,
 }: {
   /** The full raw ANSI snapshot; every change is one clear+write
    * repaint (the story's honest first step — no streaming). */
@@ -95,18 +101,36 @@ export default function XtermPane({
   search?: SearchOrder;
   /** Optional owner input seam. Omitted for the ordinary read-only panes. */
   onData?: (data: string) => void;
+  /** Increment to focus the xterm without remounting its emulator. */
+  focusSignal?: number | string;
+  /** Copy selected text to the system clipboard. Defaults to true. */
+  copyOnSelect?: boolean;
+  /** Enables stdin only when the owning controller has granted posture. */
+  inputEnabled?: boolean;
+  /** Called when the terminal's own textarea receives focus. */
+  onFocus?: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const searchRef = useRef<SearchAddon | null>(null);
+  const onDataRef = useRef(onData);
+  const copyRef = useRef(copyOnSelect);
+  const inputRef = useRef(inputEnabled);
+  const focusCallbackRef = useRef(onFocus);
+  const lastFrameRef = useRef<string | null>(null);
+  const hasGeometry = Boolean(pane && pane.width > 0 && pane.height > 0);
+  onDataRef.current = onData;
+  copyRef.current = copyOnSelect;
+  inputRef.current = inputEnabled;
+  focusCallbackRef.current = onFocus;
   const theme = useMemo(() => workbenchTerminalTheme(), []);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     const term = new Terminal({
-      disableStdin: !onData,
+      disableStdin: !inputEnabled,
       allowProposedApi: true, // search decorations
       convertEol: true,
       cursorBlink: false,
@@ -124,10 +148,10 @@ export default function XtermPane({
     term.open(host);
     // Copy-on-select: the operator's utility, still read-only.
     term.onSelectionChange(() => {
+      if (!copyRef.current) return;
       const selected = term.getSelection();
       if (selected) void navigator.clipboard?.writeText(selected).catch(() => {});
     });
-    const input = onData ? term.onData(onData) : null;
     termRef.current = term;
     fitRef.current = fit;
     searchRef.current = finder;
@@ -135,17 +159,52 @@ export default function XtermPane({
       searchRef.current = null;
       fitRef.current = null;
       termRef.current = null;
-      input?.dispose();
       term.dispose();
     };
     // The theme is token-derived and stable for the mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // The input callback is owned by the caller and changes only when the
-    // embedded pane changes target.
-  }, [onData]);
+  }, []);
+
+  // Attach/detach stdin independently of the callback identity. This keeps a
+  // controller rerender from destroying xterm's scrollback and selection.
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    // xterm reads this option at event time. Keep the emulator mounted while
+    // posture changes, but make the read-only boundary explicit on the live
+    // instance as well as in the constructor options.
+    term.options.disableStdin = !inputEnabled;
+    if (!inputEnabled) return;
+    const input = term.onData((data) => onDataRef.current?.(data));
+    return () => {
+      input.dispose();
+      if (termRef.current === term) term.options.disableStdin = true;
+    };
+  }, [inputEnabled]);
+
+  useEffect(() => {
+    if (focusSignal === undefined || focusSignal === 0) return;
+    termRef.current?.focus();
+  }, [focusSignal]);
+
+  // A no-geometry consumer (including a resized normal Desk frame) uses the
+  // host's own dimensions rather than a one-time fit at mount.
+  useEffect(() => {
+    if (hasGeometry || !hostRef.current || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      try {
+        fitRef.current?.fit();
+      } catch {
+        /* zero-size host during a frame transition; next resize will fit */
+      }
+    });
+    observer.observe(hostRef.current);
+    return () => observer.disconnect();
+  }, [hasGeometry]);
 
   // Full repaint on poll: clear + snapshot + cursor park in ONE write —
-  // xterm coalesces it into a single frame, so there is no flicker.
+  // xterm coalesces it into a single frame, so there is no flicker. Keep the
+  // prior viewport when the owner was reading above the tail.
   useEffect(() => {
     const term = termRef.current;
     if (!term) return;
@@ -163,7 +222,16 @@ export default function XtermPane({
     const park = pane
       ? `[${pane.cursorY + 1};${pane.cursorX + 1}H`
       : "";
-    term.write(CLEAR + raw + park, () => term.scrollToBottom());
+    const frame = CLEAR + raw + park;
+    if (lastFrameRef.current === frame) return;
+    const active = term.buffer?.active;
+    const viewportY = active?.viewportY ?? 0;
+    const followTail = !active || viewportY >= active.baseY;
+    lastFrameRef.current = frame;
+    term.write(frame, () => {
+      if (followTail) term.scrollToBottom();
+      else if (typeof term.scrollToLine === "function") term.scrollToLine(viewportY);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [raw, pane?.width, pane?.height, pane?.cursorX, pane?.cursorY]);
 
@@ -193,5 +261,16 @@ export default function XtermPane({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search?.seq]);
 
-  return <div ref={hostRef} className="terminal-well-screen" />;
+  return (
+    <div
+      ref={hostRef}
+      className="terminal-well-screen"
+      onFocus={() => focusCallbackRef.current?.()}
+      onKeyDown={(event) => {
+        // Escape belongs to the focused TUI when input is enabled. Letting it
+        // bubble to DeskWindow would close the window instead.
+        if (inputRef.current) event.stopPropagation();
+      }}
+    />
+  );
 }

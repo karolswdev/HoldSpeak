@@ -131,6 +131,17 @@ export interface AgentSpend {
   weekUsd: number;
 }
 
+/** Programs PG21: a Claude Code or Codex engine's usage-limit notice. Verified:
+ *  the screen watcher read a real stop on this desk (its time, the reset it
+ *  named). Documented: only the harness's documented wording is known. */
+export interface LimitNotice {
+  verified: boolean;
+  /** The notice: its shape (times and dates replaced) or the documented line. */
+  notice: string;
+  stoppedAt: string | null;
+  resetsAt: string | null;
+}
+
 export interface RunsOnEngine extends Engine {
   /** The machine has it; the library does not (one verb: Use it). */
   found?: boolean;
@@ -147,6 +158,7 @@ export interface RunsOnEngine extends Engine {
   /** W1-TRUTH: an endpoint engine's model id (meta under its name). */
   modelId?: string;
   spend?: AgentSpend;
+  limitNotice?: LimitNotice;
   /** The host a preset's file comes from. */
   downloadHost?: string;
   /** The authority's answer per group (PHILO-16 C, concierge detect route). */
@@ -244,6 +256,18 @@ function decodeEngine(raw: Record<string, unknown>): RunsOnEngine {
     model: str(raw.model),
     modelId: str(raw.modelId),
     spend: decodeSpend(raw.spend),
+    limitNotice: decodeLimitNotice(raw.limitNotice),
+  };
+}
+
+function decodeLimitNotice(raw: unknown): LimitNotice | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const row = raw as Record<string, unknown>;
+  return {
+    verified: row.verified === true,
+    notice: String(row.notice ?? ""),
+    stoppedAt: str(row.stoppedAt) ?? null,
+    resetsAt: str(row.resetsAt) ?? null,
   };
 }
 

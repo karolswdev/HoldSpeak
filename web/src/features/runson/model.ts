@@ -3,7 +3,7 @@
 
 import type { Repair } from "../concierge/api";
 import { hostPlace } from "../../desk/surface/egress";
-import type { AgentSpend, Detection, Roster, RosterEntry, RosterRow, RunsOnEngine } from "./api";
+import type { AgentSpend, Detection, LimitNotice, Roster, RosterEntry, RosterRow, RunsOnEngine } from "./api";
 import { stateWord, type StateWord } from "./stateWord";
 
 /** The default job's board id; the roster calls it `global`. */
@@ -106,6 +106,8 @@ export interface BoardEngine {
   vendorScope?: string;
   installed?: boolean;
   spend?: AgentSpend;
+  /** Programs PG21: Claude Code and Codex only. */
+  limitNotice?: LimitNotice;
 }
 
 /** Betterment E7: an agent's egress chip. pi on his LAN model reads like any
@@ -299,6 +301,7 @@ export function buildEngines(roster: Roster | null, detection: Detection | null)
       vendorScope: e.vendorScope,
       installed: e.installed,
       spend: e.spend,
+      limitNotice: e.limitNotice,
     });
   }
   return [...out.values()];
@@ -320,6 +323,29 @@ export function splitEngines(engines: BoardEngine[]): { have: BoardEngine[]; fou
  *  sign-in it cannot read is "not known", and Add tries it once. */
 export function foundAgentName(engine: BoardEngine): string {
   return `${engine.name} · ${engine.signedIn === "yes" ? "signed in" : "sign-in not known"}`;
+}
+
+/** A moment as the faces' clock words, with its weekday (`Tue 14:02`). */
+function dayClock(iso: string | null): string {
+  if (!iso) return "";
+  const moment = new Date(iso);
+  if (Number.isNaN(moment.getTime())) return "";
+  const day = moment.toLocaleDateString("en-US", { weekday: "short" });
+  const clock = `${String(moment.getHours()).padStart(2, "0")}:${String(moment.getMinutes()).padStart(2, "0")}`;
+  return `${day} ${clock}`;
+}
+
+/** Programs PG21: the Limit notice fact in words. Verified: `Verified · last
+ *  stop Tue 14:02 · resets Fri 02:00` (`reset` once that moment is past);
+ *  documented: `Documented · never read here`. */
+export function limitNoticeWords(notice: LimitNotice, now: Date = new Date()): string {
+  if (!notice.verified) return "Documented · never read here";
+  const parts = ["Verified"];
+  const stop = dayClock(notice.stoppedAt);
+  if (stop) parts.push(`last stop ${stop}`);
+  const reset = dayClock(notice.resetsAt);
+  if (reset) parts.push(`${new Date(notice.resetsAt as string) > now ? "resets" : "reset"} ${reset}`);
+  return parts.join(" · ");
 }
 
 /** US dollars for a cost or a limit (`$0.25`; a cost under a cent says so). */

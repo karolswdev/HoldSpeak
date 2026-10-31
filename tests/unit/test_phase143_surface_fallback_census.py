@@ -123,6 +123,13 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
 # behind a wire helper or a "display-only" component.
 WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/desk/api.ts": ("display-transport", "143-11"),
+    # Terminals (2026-10-30): `api.ts` parses the launch's profile_id for the
+    # Context face and sends existing terminal arm/disarm/steering requests;
+    # it never reads or writes an inference assignment or chooses a fallback.
+    "web/src/desk/terminals/api.ts": ("display-transport", "143-11"),
+    # The companion types are a server-issued terminal/context wire contract;
+    # profile_id is launch metadata, not browser route authority.
+    "web/src/desk/terminals/types.ts": ("display-transport", "143-11"),
     # Calls (2026-10-28): the Calls faces read `/api/calls/status`; its
     # `engine.profile_id` is drawn as the engine row's words, never chosen.
     "web/src/desk/calls/api.ts": ("display-transport", "143-11"),

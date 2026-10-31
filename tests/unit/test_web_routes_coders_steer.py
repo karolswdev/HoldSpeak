@@ -745,21 +745,29 @@ def test_relay_requires_a_key(env) -> None:
 # --- the factory routes (HS-90-01) -----------------------------------------
 
 
-def test_factory_spawn_returns_the_new_pane(env) -> None:
+def test_factory_spawn_returns_the_new_pane(env, tmp_path) -> None:
     from holdspeak import coder_factory
+    seen: dict[str, object] = {}
+
+    def fake_spawn(name, command=None, *, cwd=None):
+        seen.update({"name": name, "command": command, "cwd": cwd})
+        return {"status": "spawned", "session": name, "pane_id": "%9", "cwd": cwd}
+
     env.monkeypatch.setattr(
-        coder_factory, "spawn",
-        lambda name, command=None: {"status": "spawned", "session": name, "pane_id": "%9"},
+        coder_factory, "spawn", fake_spawn,
     )
-    res = env.client.post("/api/coders/factory/spawn", json={"name": "work"})
+    res = env.client.post(
+        "/api/coders/factory/spawn", json={"name": "work", "cwd": str(tmp_path)}
+    )
     assert res.status_code == 200 and res.json()["pane_id"] == "%9"
+    assert seen == {"name": "work", "command": None, "cwd": str(tmp_path)}
 
 
 def test_factory_spawn_bad_name_is_409(env) -> None:
     from holdspeak import coder_factory
     env.monkeypatch.setattr(
         coder_factory, "spawn",
-        lambda name, command=None: {"status": "bad_name", "detail": "no"},
+        lambda name, command=None, *, cwd=None: {"status": "bad_name", "detail": "no"},
     )
     res = env.client.post("/api/coders/factory/spawn", json={"name": "a b"})
     assert res.status_code == 409 and res.json()["status"] == "bad_name"

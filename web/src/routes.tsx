@@ -81,6 +81,7 @@ export const DEMOTED_ROUTES: DemotedRoute[] = [
   { path: "/companion", surface: "open-conductor" },
   // PHILO-14 C4: the Conductor drawer, where agents live.
   { path: "/conductor", surface: "open-conductor" },
+  { path: "/terminals", surface: "open-terminals" },
   { path: "/docs/dictation-runtime", surface: "read-runtime-docs" },
   { path: "/design/components", surface: "design-components" },
 ];

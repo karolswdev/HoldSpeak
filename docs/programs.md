@@ -102,6 +102,8 @@ Claude Code and Codex stop when their plan's usage window is used up. A program 
 
 **What the step says.** When an agent shows its limit notice, the step says **Limited until 14:00**. HoldSpeak reads the notice on the agent's own screen.
 
+**Is the notice known on this desk?** Open **Settings ▸ Engines** and press the Claude Code or Codex row. The **Limit notice** line tells you if HoldSpeak read a real stop of that agent on this desk. **Verified · last stop Mon 15:17 · reset Sat 02:00** gives the time of the last stop and the reset time that the notice gave. **Documented · never read here** tells you that HoldSpeak knows only the published wording of the notice. When HoldSpeak reads a stop on the agent's screen, the line changes to verified. Point to the line to see the notice. HoldSpeak keeps the words of the notice, but it removes the times, the dates and the time zone.
+
 **What happens next** depends on the control level:
 
 | Control | What HoldSpeak does |

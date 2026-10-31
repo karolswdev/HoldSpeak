@@ -85,6 +85,7 @@ def spawn(
     name: str,
     *,
     command: Optional[str] = None,
+    cwd: Optional[str] = None,
     launch_id: Optional[str] = None,
     scope_items: tuple[str, ...] = (),
     project_id: Optional[str] = None,
@@ -96,7 +97,7 @@ def spawn(
 ) -> dict[str, Any]:
     """Create a detached tmux session `name` (optionally running `command`),
     and return its first pane. Statuses: ``spawned``, ``bad_name``,
-    ``tmux_absent``, ``exists``, ``error``. Audited.
+    ``cwd_invalid``, ``tmux_absent``, ``exists``, ``error``. Audited.
 
     Conductor K6: a spawn for an agent launch (``launch_id``) issues a
     launch-bound credential, identity ``agent:launch:<launch_id>``, with the
@@ -122,6 +123,15 @@ def spawn(
         return _audited({"status": "bad_name", "detail": f"invalid session name: {name!r}"})
     if runner is None and shutil.which("tmux") is None:
         return _audited({"status": "tmux_absent"})
+    working_dir: Optional[str] = None
+    if cwd is not None and str(cwd).strip():
+        try:
+            candidate = Path(str(cwd)).expanduser().resolve(strict=True)
+        except (OSError, RuntimeError):
+            return _audited({"status": "cwd_invalid", "detail": "cwd is not a readable directory"})
+        if not candidate.is_dir():
+            return _audited({"status": "cwd_invalid", "detail": "cwd is not a directory"})
+        working_dir = str(candidate)
     from .principals import CredentialPersistError, agent_credentials
 
     launch = str(launch_id or "").strip()
@@ -161,16 +171,18 @@ def spawn(
         env_file = write_credential_env(credential.token, model_key=model_key)
     except (OSError, ValueError) as exc:
         return _fail("error", f"credential file: {type(exc).__name__}")
-    argv = [
-        "tmux",
-        "new-session",
-        "-d",
-        "-e",
-        f"HOLDSPEAK_HUB_URL={agent_credentials.hub_url}",
-        "-s",
-        name,
-        *session_argv(env_file, command),
-    ]
+    argv = ["tmux", "new-session", "-d"]
+    if working_dir is not None:
+        argv.extend(["-c", working_dir])
+    argv.extend(
+        [
+            "-e",
+            f"HOLDSPEAK_HUB_URL={agent_credentials.hub_url}",
+            "-s",
+            name,
+            *session_argv(env_file, command),
+        ]
+    )
     try:
         completed = _run(runner, argv)
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -200,7 +212,10 @@ def spawn(
         agent_credentials.bind_target(identity, name, pane_id)
     except CredentialPersistError as exc:
         return _fail("error", f"credential not stored: {exc}")
-    return _audited({"status": "spawned", "session": name, "pane_id": pane_id}, pane_id)
+    result = {"status": "spawned", "session": name, "pane_id": pane_id}
+    if working_dir is not None:
+        result["cwd"] = working_dir
+    return _audited(result, pane_id)
 
 
 #: The environment variable the session's processes read the token from.

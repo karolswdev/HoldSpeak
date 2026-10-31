@@ -5168,6 +5168,18 @@ CREATE TABLE IF NOT EXISTS agent_run_calls (
     called_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_agent_run_calls_run ON agent_run_calls(run_id, id);
+-- Programs PG21: the last usage-limit stop of each agent harness (claude,
+-- codex) that the screen watcher read on this desk: when it was first seen,
+-- the notice in its shape (times and dates replaced), the reset it named.
+-- One row per harness. With a row the Engines window says the notice is
+-- verified; without one, only the documented wording is known.
+CREATE TABLE IF NOT EXISTS agent_limit_stops (
+    harness TEXT PRIMARY KEY,
+    stopped_at TEXT NOT NULL,
+    notice TEXT NOT NULL,
+    resets_at TEXT,
+    rule TEXT NOT NULL
+);
 -- Betterment Q9 (Find the tasks): the outcome rows the meeting's extraction
 -- found in one note (a task with its owner and date, or a proposed decision).
 -- They stay with the note: a new Find replaces the rows still proposed and

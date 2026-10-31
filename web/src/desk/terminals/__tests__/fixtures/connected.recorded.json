@@ -1,0 +1,541 @@
+{
+  "decisions": {
+    "decisions": [
+      {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-10-30T23:53:30Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "Use the existing windows and worktree records.",
+        "deleted": false,
+        "id": "decision-connected-workspace",
+        "status": "accepted",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Keep one Desk",
+        "updated_at": "2026-10-30T23:53:30Z"
+      }
+    ]
+  },
+  "inventory": {
+    "sessions": [
+      {
+        "agent": "pane",
+        "command": "bash",
+        "context": {
+          "launch": {
+            "attempt_id": "att_66cc4378f48e470e",
+            "id": "launch-connected-fixture",
+            "origin_ref": {
+              "id": "note-connected-brief",
+              "kind": "note"
+            },
+            "profile_id": "codex-default",
+            "role": "builder",
+            "state": "registered"
+          },
+          "mcp": {
+            "palette": "CONDUCTOR",
+            "pre_approved": true,
+            "read_only": false,
+            "server": "holdspeak",
+            "status": "configured"
+          },
+          "program": {
+            "id": "program-928e9191a8e0",
+            "step_id": "step-af55862cb20b",
+            "step_ordinal": 1,
+            "title": "Connected workspace"
+          },
+          "project": {
+            "id": "proj-000000000001",
+            "name": "Workspace fixture"
+          },
+          "source": {
+            "id": "src_4f0e4f17251300c4",
+            "name": "Workspace fixture"
+          },
+          "status": "bound",
+          "worktree": {
+            "branch": "work/review",
+            "id": "wt_1b41d2fcc2e9ffe2"
+          }
+        },
+        "current_path": "/tmp/hs-connected-fixture-0rn3taaa/review",
+        "id": "terminal_aad7603db9d2441b44de9a8bcb1a85d8",
+        "key": "pane:%5",
+        "label": "review:0.0",
+        "pane_id": "%5",
+        "session": "review",
+        "state": "live",
+        "target": {
+          "node_id": "local",
+          "target_generation": "gen_fcd08351acea",
+          "target_id": "term_91b36796a53b4fbc"
+        }
+      },
+      {
+        "agent": "pane",
+        "command": "zsh",
+        "context": {
+          "launch": null,
+          "mcp": null,
+          "program": null,
+          "project": null,
+          "source": {
+            "id": "src_4f0e4f17251300c4",
+            "name": "Workspace fixture"
+          },
+          "status": "worktree",
+          "worktree": {
+            "branch": "work/scratch",
+            "id": "wt_87bc7b6f9db4ee70"
+          }
+        },
+        "current_path": "/tmp/hs-connected-fixture-0rn3taaa/scratch",
+        "id": "terminal_613d2d332428e99a4f35b2c4925ff2df",
+        "key": "pane:%8",
+        "label": "scratch:0.0",
+        "pane_id": "%8",
+        "session": "scratch",
+        "state": "live",
+        "target": {
+          "node_id": "local",
+          "target_generation": "gen_c728f4245c75",
+          "target_id": "term_d23b0320cabb4e85"
+        }
+      }
+    ],
+    "status": "ok"
+  },
+  "note": {
+    "note": {
+      "body_markdown": "Keep the file, context and review beside the agent.",
+      "created_at": "2026-10-30T23:53:30Z",
+      "deleted": false,
+      "id": "note-connected-brief",
+      "last_modified": "2026-10-30T23:53:30Z",
+      "tags": [],
+      "title": "Build the connected workspace",
+      "updated_at": "2026-10-30T23:53:30Z"
+    }
+  },
+  "notes": {
+    "note-connected-brief": {
+      "note": {
+        "body_markdown": "Keep the file, context and review beside the agent.",
+        "created_at": "2026-10-30T23:53:30Z",
+        "deleted": false,
+        "id": "note-connected-brief",
+        "last_modified": "2026-10-30T23:53:30Z",
+        "tags": [],
+        "title": "Build the connected workspace",
+        "updated_at": "2026-10-30T23:53:30Z"
+      }
+    },
+    "program-program-928e9191a8e0": {
+      "note": {
+        "body_markdown": "# Program: Connected workspace\n\nDrafting \u00b7 0 of 1 steps done\n\nProject: Workspace fixture\n\n## Your turn\n(nothing)\n\n## Steps\n1. Build the workspace \u2014 Planned\n\n## Parked\n(none)\n\n## Last checked\n2026-10-30 19:53 \u00b7 owner\n",
+        "created_at": "2026-10-30T23:53:30Z",
+        "deleted": false,
+        "id": "program-program-928e9191a8e0",
+        "last_modified": "2026-10-30T23:53:30Z",
+        "tags": [
+          "program"
+        ],
+        "title": "Program: Connected workspace",
+        "updated_at": "2026-10-30T23:53:30Z"
+      }
+    }
+  },
+  "program": {
+    "allowed_profiles": [],
+    "asks": 0,
+    "check_command": "true",
+    "checkpoints": [
+      {
+        "at": "2026-10-30T23:53:30.352816+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 2,
+        "kind": null,
+        "line": "Added 1 step",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      {
+        "at": "2026-10-30T23:53:30.347128+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 1,
+        "kind": null,
+        "line": "Made the program",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      }
+    ],
+    "closed_at": null,
+    "control": "normal",
+    "control_word": "Normal",
+    "created_at": "2026-10-30T23:53:30.346979+00:00",
+    "decided_for_you": [],
+    "default": {
+      "agent": "Codex",
+      "engine": null,
+      "profile": "codex-default",
+      "runs_on": [
+        {
+          "agent": "Codex",
+          "engine": null,
+          "label": "Codex",
+          "profile": "codex-default"
+        }
+      ]
+    },
+    "done": 0,
+    "for_person_id": null,
+    "goal": "",
+    "id": "program-928e9191a8e0",
+    "in_state_seconds": 0,
+    "last_checkpoint": {
+      "at": "2026-10-30T23:53:30.352816+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    "may_call": false,
+    "may_handoff": false,
+    "note_id": "program-program-928e9191a8e0",
+    "note_window": "pullout:note:program-program-928e9191a8e0",
+    "origin_ref": null,
+    "place": {
+      "origin": null,
+      "person": null,
+      "project": {
+        "id": "proj-000000000001",
+        "name": "Workspace fixture"
+      }
+    },
+    "prefer_idle": false,
+    "project_id": "proj-000000000001",
+    "repository": {
+      "base_branch": "main",
+      "label": "repository",
+      "root": "/private/tmp/hs-connected-fixture-0rn3taaa/repository"
+    },
+    "reviewer": {
+      "agent": null,
+      "engine": null,
+      "profile": null
+    },
+    "revision": 1,
+    "spend_limit_usd": null,
+    "state": "drafting",
+    "state_word": "Drafting",
+    "status_line": "Drafting \u00b7 0 of 1 done \u00b7 check: true \u00b7 control Normal",
+    "steps": [
+      {
+        "after": [],
+        "agent": "Codex",
+        "branch": "work/review",
+        "brief": "Keep the work connected.",
+        "check": {
+          "command": "true",
+          "commit": null,
+          "log": null,
+          "minutes": null,
+          "reasons": [],
+          "running": false,
+          "sections": [],
+          "verdict": null
+        },
+        "contenders": [],
+        "effort": "low",
+        "elapsed": "",
+        "elapsed_seconds": null,
+        "ended_at": null,
+        "engine": null,
+        "findings": [],
+        "for_person": null,
+        "for_person_id": null,
+        "gate": {
+          "check": true,
+          "merge": "level",
+          "review": "none",
+          "review_depth": "delta"
+        },
+        "handoffs": [],
+        "held_reason": null,
+        "id": "step-af55862cb20b",
+        "last_checkpoint": null,
+        "launch_id": "launch-connected-fixture",
+        "limit": null,
+        "may_call": false,
+        "ordinal": 1,
+        "origin_ref": null,
+        "owns": [
+          "app.txt"
+        ],
+        "parked_by": null,
+        "parked_reason": null,
+        "pr": null,
+        "prefer_idle": false,
+        "profile": "codex-default",
+        "race": 0,
+        "race_of": null,
+        "report": null,
+        "review": {
+          "reviewer": null,
+          "round": null,
+          "verdict": null
+        },
+        "rounds": 0,
+        "runs_on": [
+          {
+            "agent": "Codex",
+            "engine": null,
+            "label": "Codex",
+            "profile": "codex-default"
+          }
+        ],
+        "started_at": null,
+        "state": "working",
+        "state_word": "Working",
+        "station": 1,
+        "stations": [
+          "brief",
+          "work",
+          "check",
+          "review",
+          "pr",
+          "merge"
+        ],
+        "title": "Build the workspace",
+        "updated_at": "2026-10-30T23:53:30.352588+00:00",
+        "worktree": "review"
+      }
+    ],
+    "template": null,
+    "title": "Connected workspace",
+    "total": 1,
+    "updated_at": "2026-10-30T23:53:30.352867+00:00",
+    "usage_warning_share": null,
+    "your_turn": 0,
+    "your_turn_items": []
+  },
+  "projects": {
+    "projects": [
+      {
+        "context": {},
+        "created_at": "2026-10-30T19:53:30.340677",
+        "description": "",
+        "detection_threshold": 0.4,
+        "id": "proj-000000000002",
+        "is_archived": false,
+        "keywords": [],
+        "meeting_count": 0,
+        "name": "Local workspace",
+        "team_members": [],
+        "updated_at": "2026-10-30T19:53:30.340677"
+      },
+      {
+        "context": {},
+        "created_at": "2026-10-30T19:53:30.340578",
+        "description": "",
+        "detection_threshold": 0.4,
+        "id": "proj-000000000001",
+        "is_archived": false,
+        "keywords": [],
+        "meeting_count": 0,
+        "name": "Workspace fixture",
+        "team_members": [],
+        "updated_at": "2026-10-30T19:53:30.344429"
+      }
+    ]
+  },
+  "provenance": {
+    "engine_mode": "none",
+    "git": "private real worktrees",
+    "producer": "TerminalWorkspaceService + TerminalWorkspaceContext + repository HTTP",
+    "tmux": "injected fixture edge"
+  },
+  "queued": {
+    "entry": {
+      "id": "note-connected-brief",
+      "instruction": null,
+      "kind": "note",
+      "profile": "codex-default",
+      "project_id": "proj-000000000001",
+      "queue_id": "queue_3b1d1704fdc1",
+      "queued_at": "2026-10-30T23:53:30.344808Z",
+      "review_by": null
+    },
+    "flights": [
+      {
+        "agent": "codex",
+        "close": null,
+        "done_at": null,
+        "ended_at": null,
+        "id": "note-connected-brief",
+        "kind": "note",
+        "launch_id": null,
+        "launched_at": null,
+        "merged_at": null,
+        "new": false,
+        "origin_ref": "note:note-connected-brief",
+        "pr": null,
+        "project_id": "proj-000000000001",
+        "project_name": "Workspace fixture",
+        "queue_id": "queue_3b1d1704fdc1",
+        "queued_at": "2026-10-30T23:53:30.344808Z",
+        "session_cleanup": null,
+        "session_key": null,
+        "state": "queued",
+        "title": "Build the connected workspace",
+        "turn_end": null,
+        "turn_id": null
+      }
+    ]
+  },
+  "repository": {
+    "conflict": {
+      "body": {
+        "error": "file changed before write"
+      },
+      "status": 409
+    },
+    "diff": {
+      "diff": "diff --git a/app.txt b/app.txt\nindex 45d1448..6adea37 100644\n--- a/app.txt\n+++ b/app.txt\n@@ -1 +1 @@\n-main checkout\n+review worktree\n",
+      "truncated": false
+    },
+    "file": {
+      "content": "review worktree\n",
+      "path": "app.txt",
+      "sha256": "2bb44a4ba225a9bf9252d1b5afb7b98ade5ba7c464c0878157c70b6cac2f0a22"
+    },
+    "file_latest": {
+      "content": "agent changed after open\n",
+      "path": "app.txt",
+      "sha256": "540e9a089880ac0a5b7971c30add620fbad4e44d01519d81160d9c8fe82c1978"
+    },
+    "save_reviewed": {
+      "path": "app.txt",
+      "sha256": "9d6c0be3acef60c22f2054d5999570c87f197e046b359ebe81c7a932e79b5693",
+      "written": true
+    },
+    "staged_diff": {
+      "diff": "",
+      "truncated": false
+    },
+    "status": {
+      "ahead": 0,
+      "behind": 0,
+      "branch": "work/review",
+      "changes": [
+        {
+          "index_status": " ",
+          "path": "app.txt",
+          "status": "M",
+          "worktree_status": "M"
+        }
+      ],
+      "dirty": 1
+    },
+    "tree": {
+      "files": [
+        {
+          "modified": "2026-10-30T23:53:30.113493+00:00",
+          "name": "app.txt",
+          "path": "app.txt",
+          "status": "M",
+          "type": "file"
+        },
+        {
+          "modified": "2026-10-30T23:53:30.089111+00:00",
+          "name": "README.md",
+          "path": "README.md",
+          "status": null,
+          "type": "file"
+        }
+      ]
+    }
+  },
+  "resources": {
+    "resources": [
+      {
+        "confidence": 1.0,
+        "created_at": "2026-10-30T23:53:30.350412+00:00",
+        "deleted": false,
+        "id": "proj-000000000001|note:program-program-928e9191a8e0",
+        "last_modified": "2026-10-30T23:53:30.353511+00:00",
+        "project_id": "proj-000000000001",
+        "relationship": "member",
+        "resource_ref": "note:program-program-928e9191a8e0",
+        "source": "program"
+      },
+      {
+        "confidence": 1.0,
+        "created_at": "2026-10-30T23:53:30.344429+00:00",
+        "deleted": false,
+        "id": "proj-000000000001|desk_decision:decision-connected-workspace",
+        "last_modified": "2026-10-30T23:53:30.344429+00:00",
+        "project_id": "proj-000000000001",
+        "relationship": "member",
+        "resource_ref": "desk_decision:decision-connected-workspace",
+        "source": "manual"
+      },
+      {
+        "confidence": 1.0,
+        "created_at": "2026-10-30T23:53:30.343862+00:00",
+        "deleted": false,
+        "id": "proj-000000000001|repository:src_4f0e4f17251300c4",
+        "last_modified": "2026-10-30T23:53:30.343862+00:00",
+        "project_id": "proj-000000000001",
+        "relationship": "member",
+        "resource_ref": "repository:src_4f0e4f17251300c4",
+        "source": "manual"
+      },
+      {
+        "confidence": 1.0,
+        "created_at": "2026-10-30T23:53:30.341665+00:00",
+        "deleted": false,
+        "id": "proj-000000000001|note:note-connected-brief",
+        "last_modified": "2026-10-30T23:53:30.341665+00:00",
+        "project_id": "proj-000000000001",
+        "relationship": "member",
+        "resource_ref": "note:note-connected-brief",
+        "source": "manual"
+      }
+    ]
+  }
+}

@@ -50,6 +50,24 @@ class DeliveryService:
             kernel_broker=kernel_broker,
         )
 
+    def terminal_workspace_service(
+        self, *, targets: Any, local_node_id: str = "local",
+        registry_path: Path | None = None, launches_path: Path | None = None,
+    ) -> Any:
+        """Compose terminal discovery over the caller's shared target registry."""
+        from .terminal_workspace import TerminalWorkspaceService
+        from .terminal_workspace_context import TerminalWorkspaceContext
+
+        return TerminalWorkspaceService(
+            targets,
+            local_node_id=local_node_id,
+            context=TerminalWorkspaceContext(
+                self._db,
+                registry_path=registry_path,
+                launches_path=launches_path,
+            ),
+        )
+
     def launch_service(
         self,
         *,
