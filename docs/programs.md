@@ -19,6 +19,7 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 | **Program** | A goal, a repository, a base branch, a control level, the steps and a handover note. |
 | **Step** | One bounded part of the goal: a brief, the files it owns, the agent that does it, an effort and a gate. One step is one agent in one worktree. |
 | **Gate** | The step's independent check, review (`none`, `agent`, or `person`), and merge (`level`, `owner`, or `none`) settings. A `none` merge gate finishes without a PR. |
+| **Requirement** | One sentence that you want true, on a step, on every step or on the whole program, with the way HoldSpeak proves it: a command, the reviewer's answer, a shot of a window, or your word. See "Requirements". |
 | **Checkpoint** | One line that the agent, HoldSpeak or you write on a step at an important moment. |
 | **Your turn** | A thing that only you can do: merge, decide a finding, resume a parked step, answer a core question. |
 | **Handover note** | A desk note named "Program: <title>". HoldSpeak writes it again after each change. |
@@ -74,7 +75,7 @@ A program can hold work that merged before the program existed. Each merged pull
 | **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | Claude Code reviews. The program runs at YOLO and its merge gate is `level`. |
 | **From the desk** | One step for each open action of a project. | The check. | None. |
 
-You can change all values after you pick a template.
+You can change all values after you pick a template. Each template also gives each new program its default requirements (see "The template defaults").
 
 ### Overnight on the home box
 
@@ -244,6 +245,211 @@ A check with no log is not green. The **Gate** fold of a step shows the command,
 
 A new worktree has no installed packages. If your check needs them, put a command in `.holdspeak/program.json` that installs them first (for example `uv sync --extra dev` and `npm ci`). Otherwise the check is red, and the log tells why.
 
+## Requirements
+
+<!-- PG-REQ (2026-10-31): the hub behaviour below is from the hub build
+(holdspeak/services/program_requirements.py, program_service.py,
+program_runner.py). The window faces (the Requirements board, the Add
+requirement row, Find, the step fold, Move and Insert before) are written as
+designed in docs/internal/betterment/programs/PROGRAMS-REQUIREMENTS-2026-10-31.md
+§7–§9; the FACES lane ships them in the same PR. -->
+
+A requirement is one sentence that you want true, with the way HoldSpeak proves it. Examples: "`uv run pytest -q tests/unit/test_program_rules.py` is green", "The People window at 393 has no clipped text", "No new route skips the residual set", "I tried it on my desk".
+
+A step is done only when its check is green **and** each required requirement on the step is **Met** or **Waived**. A program is done only when each step is done **and** each required requirement of the whole program is Met or Waived.
+
+### Where a requirement is
+
+| Scope | When HoldSpeak judges it |
+|---|---|
+| **Step n** | On that step only, on the step's commit. |
+| **Every step** | HoldSpeak copies the requirement to each step that is not merged, and to each step that you add later. Each copy has the same number (R2 on step 3 and R2 on step 5). The board says "5 of 6 steps". |
+| **The program** | One time, after the last step is finished (the end check). HoldSpeak runs each Check and Shot in a new worktree at the head of the base branch, `hs-program-<id>-end`. A Review requirement of the whole program comes to you as a Your turn row with **Met** and **Unmet**, because no reviewer reads the base branch yet. |
+
+Each requirement has a number, R1, R2 and so on. A number is not used again in the same program.
+
+### The four kinds
+
+| Kind | How HoldSpeak proves it | The evidence |
+|---|---|---|
+| **Check** | At CHECK, after the step's check is green, on the same commit. HoldSpeak runs the command in the step's worktree with an isolated home folder. The log goes to `<worktree>/.tmp/program-check/<step>/`. | The log, its commit and its last result line. Press **Open log**. |
+| **Review** | At REVIEW. The step's reviewer gets each Review requirement by its number and answers `REQ R3: MET · <one line>` or `REQ R3: UNMET · <what is missing>`. | The reviewer's line, its round and the commit it read. |
+| **Shot** | At CHECK. The repository's shot command renders one window at 393 or at 1440. Met when the case is green and the image is there. | The image, the window, the width and the commit. Press **Open shot**. |
+| **Your word** | At MERGE (a step) or at the end (the program). A Your turn row asks you. | Your press and its time. |
+
+**A Check log is green only when:**
+
+1. the log names the commit, and the worktree was clean at the start;
+2. HoldSpeak's own last line says `program-check: exit 0` (HoldSpeak writes that line, not the agent);
+3. no line is red (`FAILED`, `ERROR`, or "n failed" with n more than 0);
+4. when the requirement has an expected line (a pattern such as `\b12 passed\b`), one line of the log matches it.
+
+A log that is not there is not green.
+
+**The kind is set by a rule, not by a model.** Text in backticks is a Check with that command. A window name followed by "window at 393" or "window at 1440" is a Shot of that window at that width. All other text is a Review. Only you choose **Your word**. You can change the kind on the row.
+
+A requirement that HoldSpeak cannot prove is not added, and HoldSpeak tells you why: "A check needs a command", "A shot needs a window and a width", "No shot command in this repository".
+
+A Review requirement needs a reviewer. On a step with no review gate, a Review requirement starts the program's reviewer for that step.
+
+### The states
+
+| The row says | What it means |
+|---|---|
+| **Not yet** | HoldSpeak did not judge it on the step's current commit. |
+| **Checking** | HoldSpeak judges it now. |
+| **Met** | The evidence says that it is true on the commit that the evidence names. |
+| **Unmet** | The evidence says that it is not true. The agent gets it in its next round. |
+| **Waits for you** | It is Your word, and it waits for your press. |
+| **Waived** | You waived it, with one line. It does not stop the step. It stays on the list, struck through. |
+
+A state changes only on evidence. A requirement is never Met because an agent says so.
+
+**When the commit changes, the judgement goes.** When the step's head commit changes, each Met or Unmet Check, Shot and Review goes back to Not yet. HoldSpeak judges it again on the new commit. Your word stays as you pressed it.
+
+**When you change the sentence, the judgement goes.** A change to the text, the kind, the command or the window sets the requirement to Not yet.
+
+### When a requirement is not met
+
+| What happens | Secure | Normal | YOLO |
+|---|---|---|---|
+| A Check or Shot is red | The log end goes back to the agent, two rounds, then you | The same | Three rounds, then you |
+| The reviewer answers UNMET | A REQUIRED finding for the agent, two rounds, then you | The same | Three rounds, then you |
+| The reviewer does not answer for a requirement | You | HoldSpeak asks the same reviewer one more time, then you | As Normal |
+| A Check or Shot is still red after the rounds | You: **Send back** or **Waive** | HoldSpeak parks the step, the other steps go on, one row to you | HoldSpeak tries one smaller brief that names the requirement, then parks the step |
+| Your word | You | You | You |
+| An agent proposes a requirement | You: **Add** or **Skip** | You: Add or Skip | HoldSpeak adds it and writes it under Decided for you |
+| Waive a requirement | You | You | You |
+
+An UNMET answer from the reviewer goes through the rounds as a REQUIRED finding. After the rounds, it comes to you as a finding with **Send back** and **Waive**. HoldSpeak does not park the step for it.
+
+**Your word stops the merge at every level, YOLO too.** An overnight program with a Your word requirement on a step merges that step when you press **Met** in the morning. The other steps go on.
+
+**Send back** types the requirement to the step's agent ("HoldSpeak on step 5: R5 is unmet: <the sentence> (<the evidence>). The owner: <your line>") and starts one more round, also after the rounds are used. **Unmet** on Your word does the same.
+
+**Waive** asks for one line: why. That line is the evidence. It goes in the Program window's ledger and in the handover note. Only you can waive. No agent and no rule waives a requirement.
+
+A requirement that you add while a step's pull request is open is judged on the pull request's head. The step goes back through CHECK on the same commit.
+
+### Your turn rows
+
+| Row | Verbs |
+|---|---|
+| "Step 3 · Projections off the loop: R7 · I tried it on my desk" | **Met** · **Unmet** |
+| "Step 5 · Projects routes: R4 is unmet after 2 rounds · <the evidence>" | **Send back** · **Waive** |
+| "Codex proposes a requirement on step 4: <sentence>" | **Add** · **Skip** |
+
+The first two rows are also in **Needs you**, in the group with the program's title. An agent's proposal shows only in the Program window's Your turn.
+
+### What the agent reads
+
+The brief of a step has a section "What must be true". It lists each requirement of the step that is not waived, with its number and the way HoldSpeak proves it, then the requirements of the whole program:
+
+```
+What must be true (the owner's requirements; HoldSpeak checks each one):
+- R2 · The People routes take no lock on the event loop · the reviewer judges it
+- R3 · `uv run pytest -q tests/unit/test_hub_loop_budget.py` is green · HoldSpeak runs it on your commit
+- R5 · The People window at 393 has no clipped text · the desk sweep renders people-393
+- R7 · The owner tried it on his desk · the owner says it
+For the whole program (judged after the last step): R1 · …
+```
+
+The rules of the brief also say: "Do not claim a requirement is met. HoldSpeak judges each one on your commit."
+
+### The template defaults
+
+| Template | Every step |
+|---|---|
+| **Fast cycle** | Review: "The change does only what its brief says." |
+| **Build and review** | Review: "The change does only what its brief says." · Review: "Each new behaviour has a test." |
+| **Race** | Review: "The change does only what its brief says." |
+| **Overnight on the home box** | The two of Build and review. |
+| **From the desk** | On each step: Review: "The change does what its action asks: <the action's title>". |
+
+A template adds a Review requirement only when its steps have a review gate. Build and review and Overnight on the home box have one, so their requirements are on each new program. Fast cycle, Race and From the desk have no review gate, so they add no requirement. HoldSpeak never starts a second reviewer for a template's default. A template's requirement says "by template". You can change or waive each one.
+
+### `.holdspeak/program.json` for another repository
+
+A repository gives HoldSpeak its own defaults in `.holdspeak/program.json`:
+
+```json
+{
+  "check": "scripts/quick_check.sh",
+  "shot": "DESK_SWEEP_SHOTS=1 uv run pytest -q tests/e2e/test_desk_sweep.py -k \"{case}-{width}\"",
+  "shot_image": ".tmp/evidence-shots/desk-sweep/*{case}-{width}*.png",
+  "requirements": [
+    {"text": "`uv run ruff check .` is green", "kind": "check", "each_step": true, "required": true}
+  ]
+}
+```
+
+| Key | What it does |
+|---|---|
+| `check` | The step's check command (see "The gate and its log"). |
+| `shot` | The command that renders one window. `{case}` is the window and `{width}` is 393 or 1440. Without it, a repository has no Shot kind. |
+| `shot_image` | A pattern under the worktree for the image that the shot command writes. The newest file that matches is the evidence. |
+| `requirements` | Requirements that each new program of the repository gets. Each item has `text`, and can have `kind`, `spec` (`command`, `expect`, `case`, `width`), `each_step` (default true) and `required` (default true). A Review item is added only when the template's steps have a review gate. An item that HoldSpeak cannot prove is not added. |
+
+HoldSpeak's own file names the desk sweep's shot command. It has no default requirement.
+
+## Find and filter
+
+In the Programs window:
+
+- **Find a program** (with its mic) keeps only the rows that have each word you type. It reads the title, the goal, the project, the persons, the step titles, the pull request numbers (type "#1591") and the template. The window finds locally; each key costs no request.
+- **Project ▾** and **Person ▾** keep only the programs of one project or one person. They list only the projects and persons that have a program. **Any project** and **Anyone** remove the filter.
+- **Group: State ▾** puts the rows in bands by state (Your turn, Running, Drafting, Done, Parked) or by project ("No project" is last). In a band, the worst state is first, then the newest change.
+- The **Met** column says "4 of 5 met" for the required requirements of the program. Each copy of an Every step requirement counts one time, and each requirement of the whole program counts one time. A Waived one counts as met; point to the cell to see "1 waived". Before HoldSpeak judges any of them, it says "7 requirements". A program with no requirement has an empty cell.
+- When a filter is on, the status bar says "3 of 12 programs · HoldSpeak · Alice".
+
+At 393, Templates, Project, Person and Group are in **More ▾**.
+
+In the Program window:
+
+- The **Requirements** fold is above the steps. It has the requirements of the whole program, the Every step requirements, and one row for each step that has its own ("Step 4 · 2 of 3 met"). It is open when one is Unmet or waits for you. It is closed with "5 of 5 met" when all are met. The last row is **Add requirement**: type the sentence; the kind follows the rule as you type; choose the scope (The program, Every step, Step n) and press **Add**.
+- Each step row on the board has a **Met** cell: "2 of 3", or "3 to meet" before any is met.
+- When you select a step, its fold opens with **Brief**, **Requirements**, **Gate**, **Findings**, **Handoffs** and **Ledger**. A part with nothing in it is not shown. The fold opens on the part that needs you first: Gate when the check is red, Requirements when one is Unmet, Findings when one waits for you, else Brief.
+- The **Ledger** fold has one part for each step ("Step 3 · 14 lines · last 18:40"). The program's own lines (start, park, plan, the end check) are first.
+
+Tools and agents use `program.list` with `q`, `project_id` and `person_id`, or `GET /api/programs?q=&project_id=&person_id=`.
+
+## Change a running program
+
+What you can change on a step depends on its state:
+
+| Field | Planned, Ready | Started (Briefed to Findings) | PR open, Merge?, Parked | Merged, Done |
+|---|---|---|---|---|
+| Title | Change | Change (the branch keeps its name) | Change | Change |
+| Brief | Change | **Amend brief**: add a line | Frozen: **Send back** with a line | Frozen |
+| Owns, After | Change | Frozen | Frozen | Frozen |
+| Effort, Race | Change | Frozen | Frozen | Frozen |
+| Agent (first) | Change | Frozen: **Hand off** moves it | Frozen | Frozen |
+| Agent (then, at a limit) | Change | Change | Frozen | Frozen |
+| Check gate | Change | Frozen | Frozen | Frozen |
+| Review gate | Change | From none to agent; not from agent to none | Frozen | Frozen |
+| Review depth | Change | Change until the review starts | Frozen | Frozen |
+| Merge gate | Change | Change | Change (frozen when Parked) | Frozen |
+| Requirements | Add, change, waive | Add, change, waive | Add (judged on the PR head), waive | Frozen: add it to the program |
+| Place | **Move up**, **Move down**, **Insert before** | Fixed | Fixed | Fixed |
+| Person, May call | Change | Change | Change (frozen when Parked) | Frozen |
+
+Point to a frozen field to see why:
+
+- **"The agent has read it."** The agent has its brief, its files and the files of the other steps. A change to the record would not change what the agent was told. An amendment adds; it does not rewrite.
+- **"The worktree and the agent are set."** To move the step to another agent, use **Hand off**.
+- **"The bar does not come down while it runs."** A gate can only go up. To lower the bar, waive a requirement with a line.
+- **"It is merged."** HoldSpeak does not change history.
+
+**Amend brief.** On a started step, press **Amend brief** and type one line. HoldSpeak adds it under the brief and types it to the agent at its next turn end, never into an agent that waits: "The owner on step 4: <your line>". The first brief stays as it was.
+
+**Insert before.** On a selected Planned or Ready step, press **Insert before**. The new step is Planned, in that place. It waits for the same steps as the step after it, and that step now also waits for the new one (**5 waits**, on by default). You cannot insert before a started step: "Step 4 started. Add the step after it."
+
+**Move up, Move down** (`Alt+↑`, `Alt+↓`) on a selected Planned or Ready step. A step cannot go above a step that it waits for; HoldSpeak names that step. The order is the order of reading and the order in which HoldSpeak starts ready steps.
+
+**The numbers follow the order.** Insert and move give each step a new number by its place and change each "after" to match, in one write. A started step whose number changes keeps its branch name and gets one line: "Step 4 is now step 5".
+
+Your change applies at once. A change from an orchestrating agent follows the Control level: at Secure and Normal, a Your turn row asks you (**Apply** or **Skip**, **Send** or **Skip** for an amendment); at YOLO, HoldSpeak applies it and writes it under Decided for you.
+
 ## The handover note
 
 Each program has one desk note, "Program: <title>". HoldSpeak writes it again after each change. You do not edit it. It has:
@@ -274,6 +480,7 @@ The service and web API use `gate_merge: "level"` for merge behavior governed by
 The current MCP step schema spells that value `"auto"` instead.
 MCP callers must send `"auto"`, `"owner"`, or `"none"`; the service normalizes `"auto"` to `"level"`.
 This spelling difference does not change the gate's behavior.
+`program.step_update` takes both `"level"` and `"auto"`.
 
 
 The MCP tools are in the `program` family:
@@ -281,16 +488,21 @@ The MCP tools are in the `program` family:
 | Tool | What it does | Who can use it |
 |---|---|---|
 | `program.create` | Make a program (title, goal, repository or project, base branch, control, check command, agent and engine, template). | You, or the orchestrating agent |
-| `program.plan` | Replace or add steps. `size: "auto"` sets each step's effort by rule. | You, or the orchestrating agent |
+| `program.plan` | Replace or add steps. `size: "auto"` sets each step's effort by rule. `before: <step id>` inserts the steps before a Planned or Ready step (`waits`, default true: that step also comes after them). | You, or the orchestrating agent |
 | `program.update` | Change the title, goal, control, project, spend limit, agent or engine. | You, or the orchestrating agent |
 | `program.start`, `program.park`, `program.resume` | Start, park or resume a program. | You, or the orchestrating agent |
-| `program.get`, `program.list` | Read programs, their steps, checkpoints and your turn. `program.start` and `program.get` also take `name` (words of the title or the template); by name, the answer has `spoken`, and a name with no program is an answer that starts nothing. | Everyone |
+| `program.get`, `program.list` | Read programs, their steps, checkpoints, requirements and your turn. `program.list` takes `q`, `project_id` and `person_id`. `program.start` and `program.get` also take `name` (words of the title or the template); by name, the answer has `spoken`, and a name with no program is an answer that starts nothing. | Everyone |
 | `program.checkpoint` | Write one line on a step. | The step's own agent, you |
 | `program.step_done` | The step's agent says that it is done, with its report. HoldSpeak still waits for the commit. | The step's own agent |
-| `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. | You only |
+| `program.require` | Add a requirement (`text`, `kind`, `step_id` or `each_step`, `required`, `spec`). With `requirement_id`, change one: you only. | You at once; an orchestrating agent or a step's own agent by the Control level (YOLO adds it, Secure and Normal ask you) |
+| `program.step_update` | Change a step: the fields that its state leaves open. `before` moves a Planned or Ready step. A frozen field is refused with `step_frozen` and its reason. | You at once; an orchestrating agent by the Control level |
+| `program.amend` | Add one line to a started step's brief. HoldSpeak types it at the next turn end. | You at once; an orchestrating agent by the Control level |
+| `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. Kind `requirement` with `requirement_id`: `met`, `unmet`, `waive` (with `reason`), `send_back`. With `proposal_id`: `requirement_proposed` (`add`, `skip`), `step_change` (`apply`, `skip`), `step_amend` (`send`, `skip`). | You only |
 | `program.overturn` | Undo a decision of HoldSpeak. | You only |
 | `program.start_from` | Add a step whose worktree starts at a checkpoint's ref. When an agent asks, the control level decides. | You, the step's own agent |
 | `program.handoff` | Move a running step to another agent, with the handoff brief. `preview: true` shows the brief and sends nothing. The next agent uses the same worktree and branch. | You only |
+
+No tool marks a requirement Met: HoldSpeak judges it, or you press. An agent can propose a requirement but cannot waive one, and cannot change one of yours.
 
 An agent can make and start a program, but it cannot decide for you, and it does not prompt a step's agent: HoldSpeak does that. The skill `agent/skills/holdspeak-programs/SKILL.md` tells an agent how to drive a program.
 

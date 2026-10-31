@@ -591,3 +591,91 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   `tests/integration/test_desk_engines.py` (the real stop through tick and
   the route), `engines.app.test.tsx` (PG21 describe) on the recorded
   `limitNotice` scenario of `scripts/record_engines_fixture.py`.
+
+---
+
+## PG-REQ. Requirements, browse and adjust (2026-10-31)
+
+Owner, 2026-10-31: programs "are not that clear to browse, adjust … not
+also clear how to add additional requirements/checks, see how they are
+met". Design `PROGRAMS-REQUIREMENTS-2026-10-31.md` (#1664; slices in its
+§12), canvas `canvases/programs-requirements-2026-10-31.html` (direction A,
+the checklist). One PR from `lane/programs-requirements-build-20261031`,
+three lanes: HUB (REQ1–REQ8), FACES (REQ9–REQ12), DOCS (REQ13).
+
+| Slice | Lane | What | State |
+|---|---|---|---|
+| REQ1 | HUB | the table `program_requirements` (SCHEMA_VERSION 88), rows, `ProgramService.require` / edit / waive, the wire on Program, Step and summary | Built |
+| REQ2 | HUB | check and shot kinds at CHECK, `verify_requirement_log`, the shot command from `.holdspeak/program.json`, Not yet on a new commit | Built |
+| REQ3 | HUB | the reviewer's REQ lines, the parse, UNMET as a REQUIRED finding with `requirement_id`, the one re-ask | Built |
+| REQ4 | HUB | `requirements_met` in the merge, Your word, `requirement_left` by level, the end check | Built (end-check Review is his word; see below) |
+| REQ5 | HUB | "What must be true" in the brief, the acceptance line, amendments | Built |
+| REQ6 | HUB | the templates' requirements and the repository's defaults | Built |
+| REQ7 | HUB | `change_step` (edit, insert before, move, renumber, `after` remap), `amend`, the frozen table | Built |
+| REQ8 | HUB | REST, MCP (`program.require`, `program.step_update`, `program.amend`, `program.decide`'s new kinds), the frame, list filters, `search_words`, the recorded fixtures | Built (310 tools) |
+| REQ9 | FACES | the Programs list: Find, Project ▾, Person ▾, Group, the Met column, the filtered status bar | In the FACES lane |
+| REQ10 | FACES | the Requirements board (direction A), Add requirement, the Your turn kinds, Needs you rows | In the FACES lane |
+| REQ11 | FACES | the step fold (FilterTokens), the per-step Ledger, the board's Met column, adjust in place | In the FACES lane |
+| REQ12 | FACES | the shot pullout and the evidence thumbnail | In the FACES lane |
+| REQ13 | DOCS | `docs/programs.md` (Requirements, Find and filter, Change a running program), the skill, this recipe, TRACKER, UX-CANON, `pm/STATUS.md`, the generated docs | Built |
+
+**Hub code.** `hs/services/program_requirements.py` (the rules, no I/O),
+`hs/services/program_service.py` (`require`, `edit_requirement`,
+`decide_requirement`, `decide_proposal`, `change_step`, `amend`,
+`step_fields`, `requirement_items`), `hs/services/program_runner.py`
+(`_judge_runs`, `_requirement_red`, `_requirement_left`,
+`_requirement_acceptance`, `_end_check`, `_amend_at_turn_end`),
+`hs/services/program_verifier.py` (`verify_requirement_log`),
+`hs/services/program_rules.py` (eight new kinds), `hs/program_templates.py`,
+`hs/services/program_brief.py` (`requirement_lines`). Tests: T1
+`tests/unit/test_program_requirements.py`, `test_program_adjust.py`,
+`test_program_rules.py`, `test_program_verifier.py`,
+`tests/integration/test_desk_programs.py`. Fixtures (recorded from the rig):
+`program.requirements.json`, `program.requirement_word.json`,
+`program.adjust.json`, `programs.filtered.list.json`.
+
+**What did not survive contact with the code (the hub lane's seven).**
+
+1. **Review requirements plant only on reviewed templates.** A Review needs
+   the reviewer the step already has (design §2), so Fast cycle, Race and
+   From the desk keep their list in `program_templates.py` and plant it
+   only where the steps have a review gate (`requirements_for`,
+   `reviewed`). Build and review and Overnight plant theirs. The design's
+   §10 table put "The change does only what its brief says." on every
+   template.
+2. **A Review requirement on an unreviewed step brings the Program's
+   reviewer.** A step with `gate_review: none` and a required Review
+   requirement still goes to REVIEW (`_after_check`: `review == "agent" or
+   pending`), with the Program's reviewer.
+3. **Copies share the parent's R number.** An every-step requirement's copy
+   on each step keeps the parent's ordinal (`_copy_parent`), so R2 on step
+   3 and R2 on step 5 are one sentence; the count counts each copy once.
+4. **New step moves** (the hub lane named four; the table has six).
+   `STEP_TRANSITIONS` gains `pr_open → checking`,
+   `pr_open → working`, `merge_ask → checking`, `merge_ask → working` (a
+   requirement added on the PR head is judged there; Send back or an Unmet
+   word gives one more round on the same branch), and `parked → checking`,
+   `parked → working` (a step parked with a requirement left goes on after
+   Waive or Send back).
+5. **Proposals decide on their own route.** An agent's proposal (a
+   requirement, a step change, an amendment) is a checkpoint row, not a
+   step's Your turn item, so it decides through `POST
+   /api/programs/{id}/proposals/{cid}/decide` and `program.decide` with
+   `proposal_id`; `step_id` is no longer required on `program.decide`.
+   Proposals are in the Program window's Your turn, not in Needs you.
+6. **An Unmet review requirement after the rounds is a REQUIRED finding,
+   not a parked step.** UNMET rides the findings rounds; after them it is
+   his (Send back, Waive) as a finding. Only a red check or shot
+   requirement goes to `requirement_left` and the park of decision 3.
+7. **`ux_canon_scan` is left out of the defaults.** HoldSpeak's
+   `.holdspeak/program.json` names the shot command and `shot_image` and no
+   `requirements`; the design's every-step Check `uv run python
+   scripts/ux_canon_scan.py` was not planted.
+
+**Open.**
+
+- The end check's Review requirements have no reviewer launch over the
+  diff `<base at start>..<base now>`; until one is built, a Program-level
+  Review is a Your word row for him (`requirement_items`).
+- An agent's edit of one of his requirements is refused
+  (`edit_requirement` is owner only); an agent proposes a new one instead.
