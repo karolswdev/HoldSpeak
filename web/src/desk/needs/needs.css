@@ -454,3 +454,20 @@
   from { background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper)); opacity: 1; }
   to { background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper)); opacity: 0; }
 }
+/* PG-DIRECTION DIR4/DIR5: a Program row with four verbs (its choices, Later ▾,
+   Send ▾ or Revoke) puts them on their own line at 393, so the name and its
+   lamp keep their width. */
+@container surface (max-width: 520px) {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"]:has(> .needs-row-verbs > .btn:nth-of-type(4)) {
+    grid-template-columns: 22px auto minmax(0, 1fr);
+    grid-template-areas:
+      "glyph name name"
+      "glyph state meta"
+      "glyph verbs verbs";
+    padding-block: 2px 4px;
+  }
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"]:has(> .needs-row-verbs > .btn:nth-of-type(4)) > .needs-row-verbs {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}

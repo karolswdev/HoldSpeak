@@ -224,7 +224,7 @@ Each decision that HoldSpeak makes for you is a line in the **Decided for you** 
 A program or step may set **May call**. This only permits the engine to ask
 the Phone service to call where the Reach rules allow it; it does not force a
 call. Secure does not allow an unattended program call. The owner's
-**Settings > Calls > Phone > Reach you** choices, quiet hours, reply state,
+**Settings > Reach > Reach you** choices, quiet hours, reply state,
 repeat window, active-call state, and the configured phone/Line path still
 apply. Without a paired phone or configured Line, the call is held or falls
 back to a message according to the service result. If **May call** is off, the

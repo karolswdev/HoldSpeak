@@ -1,0 +1,82 @@
+{
+  "channels": {
+    "calls": {
+      "ready": false,
+      "words": "Not set in Settings ▸ Calls"
+    },
+    "desk": {
+      "words": "Always"
+    },
+    "phone_app": {
+      "on": true,
+      "paired": null,
+      "words": "Phone is off on this desk"
+    },
+    "telegram": {
+      "destination": "Telegram · owner chat",
+      "on": true,
+      "paired": {
+        "at": "2026-10-31T21:27:51.792224+00:00",
+        "name": "Karol"
+      },
+      "pairing": null,
+      "token": "keystore"
+    }
+  },
+  "digest": {
+    "at": 7,
+    "hour": 7
+  },
+  "ladder": {
+    "kinds": {
+      "aftercare": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      },
+      "agent_question": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "core_question": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "heartbeat_security": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "level": "yolo",
+      "program_done": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      },
+      "step_red": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      }
+    },
+    "order": [
+      "desk",
+      "phone_app",
+      "telegram",
+      "call"
+    ],
+    "telegram": "after_10",
+    "telegram_words": "After 10 min"
+  },
+  "later": [],
+  "later_means": "end_of_quiet",
+  "later_means_words": "End of quiet hours",
+  "open_packages": [],
+  "quiet_hours": {
+    "end": 8,
+    "now": false,
+    "start": 22
+  }
+}

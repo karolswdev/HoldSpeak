@@ -64,7 +64,7 @@ import { openHand } from "../agentHand";
 import { Disclosure } from "../surface/patterns/Disclosure";
 import { AddToProject } from "../AddToProject";
 import "./needs.css";
-import { briefable, copyPageLink, revokePage } from "../reach";
+import { briefable, copyPageLink, deferItem, LATER_TIMES, revokePage, sendToTelegram } from "../reach";
 import { openPhoneWing } from "../calls/phoneFocus";
 import { Token } from "../surface/Token";
 
@@ -176,7 +176,7 @@ async function settleOut(origin?: Element | null): Promise<Element | null> {
 
 /** Programs (2026-10-28): the words of a your-turn choice. */
 const PROGRAM_CHOICE_WORDS: Record<string, string> = {
-  merge: "Merge", not_yet: "Not yet", fix_now: "Fix now", later: "Later", skip: "Skip", resume: "Resume", prepare: "Send…",
+  merge: "Merge", not_yet: "Not yet", fix_now: "Fix now", later: "Make a task", skip: "Skip", resume: "Resume", prepare: "Send…",
   // PG19: an agent at its usage limit.
   continue: "Continue", wait: "Wait",
   // PG-REQ: his word on a requirement, and one unmet after the rounds.
@@ -195,6 +195,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
   const [busy, setBusy] = useState(false);
   const moreRef = useRef<HTMLButtonElement>(null);
   const [more, setMore] = useState(false);
+  // PG-DIRECTION DIR5: Send ▾ on a Program row (Copy page link, Send to Telegram).
+  const sendRef = useRef<HTMLButtonElement>(null);
+  const [sendOpen, setSendOpen] = useState(false);
   const projects = useDesk((state) => state.projects);
   const setSourceReceipt = useSourceReceipt((st) => st.set);
   const lead = primary ? "primary" : "secondary";
@@ -255,6 +258,21 @@ function NeedVerbsView({ face, primary, onWell, well }: {
                 }), face.id, (event.currentTarget as Element).closest("li"))}>{word}</Button>
             );
           })}
+          {/* PG-DIRECTION DIR4: Later is an answer (the four times). A row
+              he deferred already sits in the Later group with its time. */}
+          {v.ref && briefable(v.itemKind) && !v.later ? (
+            <>
+              <Button ref={moreRef} dense variant="ghost" disabled={busy} aria-label={named("Later")} aria-haspopup="menu"
+                aria-expanded={more} data-testid="needs-row-verb" data-verb="program-defer"
+                onClick={() => setMore((value) => !value)}>Later ▾</Button>
+              {more && moreRef.current ? <WorkMenu label={named("Later")} x={moreRef.current.getBoundingClientRect().left}
+                y={moreRef.current.getBoundingClientRect().bottom} autoFocus onClose={() => setMore(false)}
+                returnFocus={() => moreRef.current?.focus()}
+                entries={LATER_TIMES.map((time) => ({ type: "item" as const, id: `later-${time.id}`, label: time.label,
+                  ghost: busy ? "Busy" : undefined,
+                  onSelect: () => void act("Later", () => deferItem(String(v.ref), time.id), face.id) }))} /> : null}
+            </>
+          ) : null}
           {/* PG-DIRECTION DIR3: the item's briefing page. Revoke ends the
               token, not the item. */}
           {v.ref && briefable(v.itemKind) ? (
@@ -263,9 +281,20 @@ function NeedVerbsView({ face, primary, onWell, well }: {
                 data-testid="needs-row-verb" data-verb="program-revoke-page"
                 onClick={() => void act("Revoke", () => revokePage(String(v.page?.package_id)), face.id)}>Revoke</Button>
             ) : (
-              <Button dense variant="ghost" loading={busy} disabled={busy} aria-label={named("Copy page link")}
-                data-testid="needs-row-verb" data-verb="program-copy-link"
-                onClick={() => void act("Copy page link", () => copyPageLink(String(v.ref)), face.id)}>Copy page link</Button>
+              <>
+                <Button ref={sendRef} dense variant="ghost" loading={busy} disabled={busy} aria-label={named("Send")}
+                  aria-haspopup="menu" aria-expanded={sendOpen} data-testid="needs-row-verb" data-verb="program-send"
+                  onClick={() => setSendOpen((value) => !value)}>Send ▾</Button>
+                {sendOpen && sendRef.current ? <WorkMenu label={named("Send")} x={sendRef.current.getBoundingClientRect().left}
+                  y={sendRef.current.getBoundingClientRect().bottom} autoFocus onClose={() => setSendOpen(false)}
+                  returnFocus={() => sendRef.current?.focus()}
+                  entries={[
+                    { type: "item" as const, id: "copy-link", label: "Copy page link", ghost: busy ? "Busy" : undefined,
+                      onSelect: () => void act("Copy page link", () => copyPageLink(String(v.ref)), face.id) },
+                    { type: "item" as const, id: "send-telegram", label: "Send to Telegram", ghost: busy ? "Busy" : undefined,
+                      onSelect: () => void act("Send to Telegram", () => sendToTelegram(String(v.ref)), face.id) },
+                  ]} /> : null}
+              </>
             )
           ) : null}
         </>

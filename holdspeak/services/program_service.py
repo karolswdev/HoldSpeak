@@ -168,6 +168,9 @@ PROPOSAL_KINDS = ("requirement_proposed", "step_change", "step_amend")
 VIA_CHANNELS = ("desk", "phone", "call", "telegram", "page")
 VIA_WORDS = {"phone": "decided on your phone", "call": "decided on a call", "telegram": "decided from Telegram",
              "page": "decided from the briefing page"}
+#: DIR4: the ledger's words for a Later said on a channel.
+LATER_VIA_WORDS = {"phone": "on your phone", "call": "on a call", "telegram": "from Telegram",
+                   "page": "from the briefing page"}
 #: The channel of the decide call in progress (set by ``decide``, read by
 #: ``_checkpoint``): every owner line that call writes names it.
 _VIA: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("program_decide_via", default=None)
@@ -385,7 +388,10 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
         }
         label = f"step {step['ordinal']} \u201c{step['title']}\u201d"
         core = facts.get("core")
-        if isinstance(core, Mapping) and not core.get("cleared") and state not in CLOSED_STATES:
+        # PG-DIRECTION DIR4: a step YOLO parked because he said Later keeps
+        # its core question (his Go on resumes it).
+        if isinstance(core, Mapping) and not core.get("cleared") and (
+                state not in CLOSED_STATES or (state == "parked" and core.get("provisional"))):
             items.append({**base, "id": f"{step['id']}:core", "kind": "core", "core": True,
                           "choices": list(DECIDE_CHOICES["core"]), "reason": core.get("reason"),
                           "title": f"{label.capitalize()}: {core.get('reason')}"})
@@ -780,7 +786,7 @@ class ProgramService:
               checkpoints: Optional[list[dict[str, Any]]] = None) -> list[dict[str, Any]]:
         reqs = requirements if requirements is not None else self.requirements(program["id"])
         items = your_turn(program, steps, reqs, self.proposals(program["id"], checkpoints))
-        return _with_pages(self.db, program["id"], items)
+        return _with_pages(self.db, program["id"], items, now=self._clock())
 
     def _state(self, program: Mapping[str, Any], steps: list[Mapping[str, Any]], *,
                requirements: Optional[list[dict[str, Any]]] = None,
@@ -2126,9 +2132,17 @@ class ProgramService:
                 if choice == "go_on":
                     core["cleared"] = True
                     facts.setdefault("core_cleared", []).append(str(core.get("kind") or ""))
+                    provisional = core.pop("provisional", None)
                     facts["core"] = core
                     self._save(step)
                     self._checkpoint(program, step, "owner", f"Go on: {core.get('reason')}")
+                    if isinstance(provisional, Mapping) and step["state"] == "parked":
+                        # PG-DIRECTION DIR4: the step YOLO parked when he said
+                        # Later goes on from where it stopped.
+                        back = str(provisional.get("from") or "")
+                        to = back if back in STEP_TRANSITIONS["parked"] else "ready"
+                        step["parked_by"], step["parked_reason"] = None, None
+                        self.transition(program, step, to, by="owner", line="Resumed the step from its checkpoint")
                 else:
                     facts.pop("core", None)
                     self.transition(program, step, "parked", by="owner", parked_by=PARKED_BY_OWNER,
@@ -2165,6 +2179,49 @@ class ProgramService:
             self.changed(program["id"], step["id"], verb="decide")
         self._tick_now(program["id"])
         return {**answer, "program": self.get(principal, program["id"])}
+
+    def later(self, principal: Any, program_id: str, item_id: str, *, until: str, until_words: str,
+              via: Any = None) -> dict[str, Any]:
+        """PG-DIRECTION DIR4 (DIRECTION-2026-10-31.md §7): his Later on a
+        your-turn item. It decides nothing: one ledger line ("Later, back at
+        13:00 · from Telegram"). At YOLO only, a core question's step is
+        parked for now (Overturnable) and the other steps go on; his Go on at
+        the next touch resumes it. A merge, an egress, a buy, a setting and a
+        credential are never provisional. ``until`` is kept by the caller
+        (``held_later``)."""
+        self._require_owner(principal, "decide later")
+        program = self._program(program_id)
+        steps = self.store.list_steps(program["id"])
+        item = next((row for row in self._turn(program, steps) if str(row.get("id")) == str(item_id)), None)
+        if item is None:
+            raise ProgramRefused("not_waiting", "Nothing waits on you there now.")
+        channel = via_of(via)
+        parked = False
+        with _LOCK:
+            step = next((row for row in steps if row["id"] == item.get("step_id")), None)
+            line = f"Later, back at {until_words}"
+            if channel:
+                line = f"{line} \u00b7 {LATER_VIA_WORDS[channel]}"
+            self.store.add_checkpoint(step_id=str((step or {}).get("id") or ""), program_id=program["id"],
+                                      at=self._clock(), by="owner", line=line[:400], via=channel)
+            if (item.get("kind") == "core" and step is not None and str(program.get("control") or "") == "yolo"
+                    and step["state"] != "parked" and "parked" in STEP_TRANSITIONS.get(step["state"], ())):
+                from types import SimpleNamespace
+
+                facts = step.setdefault("facts", {})
+                core = dict(facts.get("core") or {})
+                core["provisional"] = {"from": step["state"], "until": until}
+                facts["core"] = core
+                self.transition(program, step, "parked", by="engine", parked_by=PARKED_BY_ENGINE,
+                                parked_reason="Parked for now: you said later")
+                self.engine_decision(program, step, "later", SimpleNamespace(
+                    choice="park", rule="YOLO: you said later, so the step is parked and the other steps go on",
+                    overturnable=True), "Parked for now: you said later")
+                parked = True
+            self._touch(program)
+            self.changed(program["id"], (step or {}).get("id"), verb="later")
+        self._tick_now(program["id"])
+        return {"program_id": program["id"], "item_id": str(item_id), "until": until, "parked": parked}
 
     def handoff(self, principal: Any, program_id: str, step_id: str, to: Any, *, preview: bool = False) -> dict[str, Any]:
         """PG19, by hand: move a step that holds an agent to ``to`` (a name or
@@ -4058,7 +4115,7 @@ _CHANGE_FIELDS = {
 _STORE_KEY = {"brief": "brief_markdown"}
 
 
-def _with_pages(db: Any, program_id: str, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _with_pages(db: Any, program_id: str, items: list[dict[str, Any]], *, now: Optional[str] = None) -> list[dict[str, Any]]:
     """PG-DIRECTION DIR3: an item with an open briefing page carries
     ``page`` ({package_id, expires_at}); the key is absent otherwise."""
     if not items:
@@ -4074,7 +4131,47 @@ def _with_pages(db: Any, program_id: str, items: list[dict[str, Any]]) -> list[d
         page = pages.get(f"program:{program_id}:{item['id']}")
         if page:
             item["page"] = page
+    return _with_later(db, program_id, items, now=now)
+
+
+def _with_later(db: Any, program_id: str, items: list[dict[str, Any]], *, now: Optional[str] = None) -> list[dict[str, Any]]:
+    """PG-DIRECTION DIR4: an item he deferred carries ``later`` ({until,
+    via}) until its next touch; the row of an item that waits no more is
+    dropped (a new question on the same step starts fresh)."""
+    try:
+        from ..db.briefing import HeldLaterStore
+
+        store = HeldLaterStore(db)
+        rows = store.like(f"program:{program_id}:")
+    except Exception as exc:
+        log.debug(f"later rows not read: {exc}")
+        return items
+    if not rows:
+        return items
+    now = _utc_text(now or utc_now_iso())
+    live = set()
+    for item in items:
+        ref = f"program:{program_id}:{item['id']}"
+        live.add(ref)
+        row = rows.get(ref)
+        if row and _utc_text(row["until"]) > now:
+            item["later"] = {"until": row["until"], "via": row["via"]}
+    for ref in set(rows) - live:
+        store.drop(ref)
     return items
+
+
+def _utc_text(stamp: Any) -> str:
+    """An ISO stamp as UTC text, so stamps compare as text."""
+    from datetime import datetime, timezone
+
+    try:
+        value = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+    except ValueError:
+        return str(stamp)
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat()
 
 
 def _via_line(by: str, line: str) -> tuple[str, Optional[str]]:

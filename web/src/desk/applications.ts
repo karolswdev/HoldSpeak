@@ -301,7 +301,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // sweep and the loops are under its Advanced fold (CadenceCore, embedded
     // there); the window is parked, its id and Search word open Settings.
     parked: "settings:rhythm",
-    paletteLabel: "Notices, in Settings",
+    paletteLabel: "Reach, in Settings",
     surface: {
       eyebrow: "Follow-through",
       minW: 520,

@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 90  # informational; 90 (PG-DIRECTION DIR1, additive): briefing_packages, program_checkpoints.via; 89 (PG-LANG fields, additive): programs.review_depth, planner_engine, budget_tokens, night_json, within_json, delivery_ref, rounds_before_start; program_steps.budget_tokens; program_rounds; 88 (PG-REQ, additive): program_requirements and its index; 87 (PG14, additive): workbenches.program_template, program_control, program_runs_on_json, program_may_call, program_may_handoff; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
+SCHEMA_VERSION = 91  # informational; 91 (PG-DIRECTION DIR4, additive): held_later; 90 (PG-DIRECTION DIR1, additive): briefing_packages, program_checkpoints.via; 89 (PG-LANG fields, additive): programs.review_depth, planner_engine, budget_tokens, night_json, within_json, delivery_ref, rounds_before_start; program_steps.budget_tokens; program_rounds; 88 (PG-REQ, additive): program_requirements and its index; 87 (PG14, additive): workbenches.program_template, program_control, program_runs_on_json, program_may_call, program_may_handoff; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -5326,6 +5326,17 @@ CREATE TABLE IF NOT EXISTS briefing_packages (
     revoked_at TEXT,
     sent_json TEXT NOT NULL DEFAULT '[]',
     answers_json TEXT NOT NULL DEFAULT '{}'
+);
+-- PG-DIRECTION DIR4 (2026-10-31, DIRECTION-2026-10-31.md §7, §11): Later is
+-- an answer. One row per held item he deferred: the next touch (until), the
+-- channel he said it on and the package it came from. The item leaves the
+-- Needs you count until then and comes back at the next touch.
+CREATE TABLE IF NOT EXISTS held_later (
+    ref TEXT PRIMARY KEY,
+    until TEXT NOT NULL,
+    via TEXT NOT NULL,
+    at TEXT NOT NULL,
+    package_id TEXT
 );
 -- Programs PG-REQ (2026-10-31, PROGRAMS-REQUIREMENTS-2026-10-31.md §11): one
 -- sentence of the owner's on a Program or a step, with the way it is proven

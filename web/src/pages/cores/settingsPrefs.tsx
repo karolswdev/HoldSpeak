@@ -77,7 +77,9 @@ export const SETTINGS_SECTIONS = [
   { id: "you", label: "You", sprite: "system" },
   { id: "speak", label: "Speak", sprite: "voice" },
   { id: "meetings", label: "Meetings", sprite: "meetings" },
-  { id: "notices", label: "Notices", sprite: "rhythm" },
+  // PG-DIRECTION DIR6 (ruled 2026-10-31): Notices becomes Reach; the id
+  // stays for deep links.
+  { id: "notices", label: "Reach", sprite: "rhythm" },
   { id: "accounts", label: "Accounts", sprite: "integrations" },
   { id: "calls", label: "Calls", sprite: "voice" },
   { id: "agents", label: "Agents", sprite: "system" },
@@ -114,6 +116,10 @@ export const SETTINGS_PALETTE_ROWS: readonly SettingsPaletteRow[] = [
   { id: "quiet-hours", label: "Quiet hours", section: "notices", focus: "quiet-hours", terms: "quiet rhythm cadence" },
   { id: "daily-brief", label: "Daily brief", section: "notices", focus: "daily-brief", terms: "brief morning rhythm" },
   { id: "max-nudges", label: "Max nudges", section: "notices", focus: "max-nudges", terms: "nudges rhythm" },
+  { id: "reach-telegram", label: "Telegram", section: "notices", focus: "reach.telegram", terms: "telegram bot pair reach notices" },
+  { id: "reach-ladder", label: "When to reach you", section: "notices", focus: "reach.ladder", terms: "reach ladder phone call message" },
+  { id: "reach-later", label: "Later means", section: "notices", focus: "reach.later", terms: "later defer reach" },
+  { id: "reach-digest", label: "Digest", section: "notices", focus: "reach.digest", terms: "digest morning reach telegram" },
   { id: "connections", label: "Connections", section: "accounts", focus: "connections", terms: "account provider" },
   { id: "calendar", label: "Calendar", section: "accounts", focus: "calendar", terms: "calendar" },
   { id: "destinations", label: "Destinations", section: "accounts", focus: "destinations", terms: "send" },

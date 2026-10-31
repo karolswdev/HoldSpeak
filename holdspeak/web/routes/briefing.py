@@ -7,6 +7,13 @@ POST /api/b/{token}/answer                   {ref, choice, reason?, later?} → 
 POST /api/reach/packages                     {refs, kind?, send?} → {id, token, path, link, expires_at} OWNER
 POST /api/reach/packages/{id}/revoke                                                              OWNER
 GET  /api/reach/packages?program_id=         the open pages of one Program                         OWNER
+GET  /api/reach                              channels, ladder, quiet hours, digest, open packages   OWNER (DIR6)
+PUT  /api/reach                              {telegram?, later_means?, digest?, phone_app?}         OWNER (DIR6)
+POST /api/reach/later                        {ref, later} → {until, words, parked}                 OWNER (DIR4)
+POST /api/reach/telegram/pair                → {code, words, expires_at}                           OWNER (DIR5)
+DELETE /api/reach/telegram/pair              Unpair                                                OWNER (DIR5)
+PUT  /api/reach/telegram/token               {token} → {token: keystore | missing}                  OWNER (DIR5)
+POST /api/reach/digest                       send the digest now                                   OWNER (DIR5)
 
 The page routes are admitted at the edge by ``principals.briefing_route``
 alone; each handler here checks the token (hash, expiry, revocation) through
@@ -184,7 +191,60 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
         return await _owner(request, lambda principal: {"packages": _service().packages(principal, program_id)},
                             what="list")
 
+    # ── DIR4 to DIR6: Later, his settings, Telegram ──────────────────
+
+    @router.get("/api/reach")
+    async def api_reach(request: Request) -> Any:
+        return await _owner(request, lambda principal: _reach().status(principal), what="read")
+
+    @router.put("/api/reach")
+    async def api_reach_put(request: Request) -> Any:
+        body = await _body(request)
+
+        def save(principal: Any) -> dict[str, Any]:
+            _reach().save_settings(principal, body)
+            return _reach().status(principal)
+
+        return await _owner(request, save, what="save")
+
+    @router.post("/api/reach/later")
+    async def api_reach_later(request: Request) -> Any:
+        body = await _body(request)
+        return await _owner(request, lambda principal: _reach().later(
+            principal, body.get("ref"), body.get("later"), via="desk"), what="later")
+
+    @router.post("/api/reach/telegram/pair")
+    async def api_reach_telegram_pair(request: Request) -> Any:
+        return await _owner(request, lambda principal: _telegram().start_pairing(principal), status=201,
+                            what="pair")
+
+    @router.delete("/api/reach/telegram/pair")
+    async def api_reach_telegram_unpair(request: Request) -> Any:
+        return await _owner(request, lambda principal: _telegram().unpair(principal), what="unpair")
+
+    @router.put("/api/reach/telegram/token")
+    async def api_reach_telegram_token(request: Request) -> Any:
+        body = await _body(request)
+        return await _owner(request, lambda principal: _telegram().save_token(principal, body.get("token")),
+                            what="token")
+
+    @router.post("/api/reach/digest")
+    async def api_reach_digest(request: Request) -> Any:
+        return await _owner(request, lambda principal: _reach().send_digest_now(principal), what="digest")
+
     return router
+
+
+def _reach() -> Any:
+    from ...services.reach_service import default_reach_service
+
+    return default_reach_service()
+
+
+def _telegram() -> Any:
+    from ...services.telegram_reach import default_telegram_reach
+
+    return default_telegram_reach()
 
 
 __all__ = ["PAGE_HEADERS", "build_briefing_router"]

@@ -384,6 +384,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "phone.call": ("effect_proposal", False),
     # PG-DIRECTION DIR1: a briefing page for a held item (owner only).
     "phone.brief": ("effect_proposal", False),
+    "phone.later": ("effect_proposal", False),
 }
 # Betterment M3: the ``automation.*`` aliases, each in its Workbench tool's class.
 _ALL_TOOL_CLASSES.update({

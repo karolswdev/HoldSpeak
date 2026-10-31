@@ -28168,6 +28168,76 @@
         ]
       }
     },
+    "/api/reach": {
+      "get": {
+        "operationId": "api_reach_api_reach_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Api Reach Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach"
+      },
+      "put": {
+        "operationId": "api_reach_put_api_reach_put",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Put Api Reach Put"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach Put"
+      }
+    },
+    "/api/reach/digest": {
+      "post": {
+        "operationId": "api_reach_digest_api_reach_digest_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Digest Api Reach Digest Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach Digest"
+      }
+    },
+    "/api/reach/later": {
+      "post": {
+        "operationId": "api_reach_later_api_reach_later_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Later Api Reach Later Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach Later"
+      }
+    },
     "/api/reach/packages": {
       "get": {
         "operationId": "api_reach_packages_api_reach_packages_get",
@@ -28239,6 +28309,58 @@
           }
         },
         "summary": "Api Reach Package Revoke"
+      }
+    },
+    "/api/reach/telegram/pair": {
+      "delete": {
+        "operationId": "api_reach_telegram_unpair_api_reach_telegram_pair_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Telegram Unpair Api Reach Telegram Pair Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach Telegram Unpair"
+      },
+      "post": {
+        "operationId": "api_reach_telegram_pair_api_reach_telegram_pair_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Telegram Pair Api Reach Telegram Pair Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach Telegram Pair"
+      }
+    },
+    "/api/reach/telegram/token": {
+      "put": {
+        "operationId": "api_reach_telegram_token_api_reach_telegram_token_put",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Telegram Token Api Reach Telegram Token Put"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach Telegram Token"
       }
     },
     "/api/recipes": {

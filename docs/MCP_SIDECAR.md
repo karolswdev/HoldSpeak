@@ -391,7 +391,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 315 tools across 52 families.
+**Registry totals:** 316 tools across 52 families.
 
 #### agent (6)
 
@@ -634,11 +634,12 @@ database, FTS index or Cadence.
 - `people.resolve`
 - `people.suggestions`
 
-#### phone (5)
+#### phone (6)
 
 - `phone.brief`
 - `phone.call`
 - `phone.get_replies`
+- `phone.later`
 - `phone.send_message`
 - `phone.status`
 
@@ -972,7 +973,7 @@ it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 66 tools
-instead of 315.
+instead of 316.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed

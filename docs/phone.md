@@ -95,7 +95,7 @@ What the hub does with the key:
 
 Phone applies the control level **Secure**, **Normal**, or **YOLO**, the
 configured **Reach you** words, quiet hours, and the operation's own
-authority. In **Settings > Calls > Phone > Reach you**, each kind can be set
+authority. In **Settings > Reach > Reach you**, each kind can be set
 to **Message**, **Call**, or **Nothing**. The explicit row setting wins over
 the level when the service supports that kind.
 
