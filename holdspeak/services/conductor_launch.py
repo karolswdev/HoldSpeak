@@ -435,7 +435,7 @@ LAUNCH_RULES.update({
         # it made), and changes or amends only the Programs it made.
         "program.require", "program.step_update", "program.amend", "program.step_remove",
         # PG-LANG LANG1: read and change a Program as its text.
-        "program.text", "program.text_apply", "program.shape",
+        "program.text", "program.text_apply", "program.shape", "program.plan_draft",
     )
 })
 # Phone (2026-10-28): a launch reads the owner's replies, and writes one line
@@ -444,6 +444,8 @@ LAUNCH_RULES.update({
 LAUNCH_RULES.update({
     "phone.get_replies": (READ, "", ""),
     "phone.send_message": (CREATE, "phone_message", "id"),
+    # PG-DIRECTION DIR1: a briefing page is the owner's; no launch makes one.
+    "phone.brief": (NEVER, "", ""),
 })
 # Betterment AG11: the helper a launch starts is recorded as its own
 # (``launch:<id>``); every other helper tool names it.

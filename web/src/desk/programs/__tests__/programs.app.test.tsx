@@ -47,6 +47,13 @@ import amendedFixture from "../__fixtures__/program.adjust.amended.json";
 import titledFixture from "../__fixtures__/program.adjust.titled.json";
 import proposalsFixture from "../__fixtures__/program.proposals.json";
 import proposalsAddedFixture from "../__fixtures__/program.proposals.added.json";
+// PG-DIRECTION DIR3: recorded by tests/integration/test_desk_reach.py.
+import pageNoneFixture from "../__fixtures__/program.page_none.json";
+import pageOpenFixture from "../__fixtures__/program.page_open.json";
+import revokeOpenFixture from "../__fixtures__/program.revoke_open.json";
+import pageRevokedFixture from "../__fixtures__/program.page_revoked.json";
+import reachPackageFixture from "../__fixtures__/reach.package.json";
+import reachRevokedFixture from "../__fixtures__/reach.revoked.json";
 // PG-LANG LANG2: the Program text (GET) and a preview then an apply of a
 // changed text (a refused brief, control up the ladder, a new step, a merge
 // on his press, a + line), recorded through the real routes.
@@ -56,6 +63,10 @@ import textApplyFixture from "../__fixtures__/program.text_apply.json";
 // (tests/fixtures/program_shape_reply.json) replayed through the hub's runner,
 // recorded through the real routes (tests/integration/test_desk_program_shape.py).
 import shapeFixture from "../__fixtures__/program.shape.json";
+// PG-LANG LANG6/7: a goal drafted by the REAL qwen3.8-27b replies
+// (tests/fixtures/program_plan_reply.json) replayed through the hub's runner,
+// recorded through the real routes (tests/integration/test_desk_program_plan.py).
+import planFixture from "../__fixtures__/program.plan_draft.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -957,8 +968,9 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     expect(kinds.sort()).toEqual(["requirement_proposed", "step_amend", "step_change"]);
     const words = (kind: string) => [...within(within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === kind)!)
       .getAllByRole("button")].map((button) => button.textContent);
-    expect(words("step_change")).toEqual(["Apply", "Skip"]);
-    expect(words("step_amend")).toEqual(["Send", "Skip"]);
+    // PG-DIRECTION DIR3: each also makes its briefing page (Copy page link).
+    expect(words("step_change")).toEqual(["Apply", "Skip", "Copy page link"]);
+    expect(words("step_amend")).toEqual(["Send", "Skip", "Copy page link"]);
     const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "requirement_proposed")!;
     expect(row.textContent).toContain("The line answers in two rings");
     fireEvent.click(within(row).getByTestId("programs-turn-add"));
@@ -1184,6 +1196,51 @@ describe("REQ12: the shot (pullout:program-shot) and the evidence thumbnail", ()
     expect(bar).toContain(`on ${r2.evidence.commit!.slice(0, 7)}`);
     fireEvent.click(screen.getByTestId("program-shot-open-program"));
     expect(mocks.openPullout).toHaveBeenCalledWith(`program:${reqProgram.id}`);
+  });
+});
+
+describe("the briefing page link (PG-DIRECTION DIR3)", () => {
+  it("Copy page link makes the page, copies its link, and the row says the page is open", async () => {
+    const before = pageNoneFixture as unknown as Program;
+    const after = pageOpenFixture as unknown as Program;
+    const core = before.your_turn_items.find((item) => item.kind === "core")!;
+    const writeText = vi.fn(async () => undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    let made = false;
+    hub({
+      [`GET /api/programs/${before.id}`]: () => (made ? after : before),
+      "POST /api/reach/packages": () => { made = true; return reachPackageFixture; },
+    });
+    render(<ProgramBody programId={before.id} />);
+    const well = await screen.findByTestId("programs-your-turn");
+    const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "core")!;
+    expect(within(row).queryByTestId("programs-turn-page")).toBeNull();
+    fireEvent.click(within(row).getByTestId("programs-turn-copy-link"));
+    await waitFor(() => expect(screen.getByTestId("programs-turn-page").textContent).toMatch(/^Page link copied · open until \d\d:\d\d$/));
+    expect(calls).toContain(`POST /api/reach/packages ${JSON.stringify({ refs: [`program:${before.id}:${core.id}`] })}`);
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}${reachPackageFixture.path}`);
+    expect(screen.getByTestId("programs-turn-revoke").textContent).toBe("Revoke");
+    expect(screen.queryByTestId("programs-turn-copy-link")).toBeNull();
+    // No chip: the page is said in the row's line.
+    expect(within(screen.getByTestId("programs-your-turn")).queryAllByText(/^(Telegram|Page)$/)).toHaveLength(0);
+  });
+
+  it("Revoke ends the page and the item stays in Your turn", async () => {
+    const open = revokeOpenFixture as unknown as Program;
+    const after = pageRevokedFixture as unknown as Program;
+    const core = open.your_turn_items.find((item) => item.kind === "core")!;
+    let revoked = false;
+    hub({
+      [`GET /api/programs/${open.id}`]: () => (revoked ? after : open),
+      [`POST /api/reach/packages/${core.page!.package_id}/revoke`]: () => { revoked = true; return reachRevokedFixture; },
+    });
+    render(<ProgramBody programId={open.id} />);
+    expect((await screen.findByTestId("programs-turn-page")).textContent).toMatch(/^Page open until \d\d:\d\d$/);
+    fireEvent.click(screen.getByTestId("programs-turn-revoke"));
+    await waitFor(() => expect(screen.queryByTestId("programs-turn-page")).toBeNull());
+    expect(screen.getByTestId("programs-turn-copy-link").textContent).toBe("Copy page link");
+    expect(within(screen.getByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")
+      .some((node) => node.getAttribute("data-kind") === "core")).toBe(true);
   });
 });
 
@@ -1630,5 +1687,155 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
     fireEvent.click(within(well).getByTestId("programs-well-not-this"));
     await waitFor(() => expect(calls).toContain(`DELETE /api/programs/${id}/shape/held`));
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+  });
+});
+
+describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () => {
+  type Plan = import("../types").PlanAnswer;
+  type Applied = import("../types").TextApplyAnswer;
+  const j1 = planFixture.j1 as unknown as { program: Program; draft: Plan; applied: Applied };
+  const big = planFixture.big_file as unknown as { program: Program; draft: Plan; split: Plan };
+  const none = planFixture.no_engine as unknown as { program: Program; status: number; body: Record<string, unknown>; engine: unknown };
+  const posts = (id: string, tail: string) => calls.filter((call) => call.startsWith(`POST /api/programs/${id}/${tail} `))
+    .map((call) => JSON.parse(call.slice(call.indexOf("{"))) as Record<string, unknown>);
+
+  it("Plan it: the draft's rows in the well with their size lamps; Apply writes the steps, born on the board with their sizes", async () => {
+    const id = j1.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: j1.program,
+      [`GET /api/programs/${id}/shape`]: planFixture.engine,
+      [`POST /api/programs/${id}/plan/draft`]: j1.draft,
+      [`POST /api/programs/${id}/text`]: j1.applied,
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    // Drafting with no steps: Plan it is the primary verb; Start waits for steps.
+    const planIt = screen.getByTestId("program-plan-it");
+    expect(planIt.className).toMatch(/primary/);
+    expect(screen.getByTestId("program-start")).toBeDisabled();
+    fireEvent.click(planIt);
+    const well = await screen.findByTestId("programs-change-well");
+    // The goal is the Program's: the hub reads it (and the budget) itself.
+    expect(posts(id, "plan/draft")).toEqual([{}]);
+    expect(within(well).getByText("4 steps · 6 requirements", { selector: ".kit-changewell-say" })).toBeInTheDocument();
+    expect(within(well).getByText(/^qwen3\.8-27b · under 1 s · 11 changes · 1 refused$/)).toBeInTheDocument();
+    const rows = within(well).getAllByTestId("programs-diff-row");
+    expect(rows.map((row) => row.getAttribute("data-row"))).toEqual(j1.draft.changes.map((row) => row.id));
+    const sized = rows.filter((row) => within(row).queryByTestId("kit-diffrow-aside"));
+    expect(sized.map((row) => within(row).getByTestId("kit-diffrow-aside").textContent)).toEqual(
+      ["7k of 32k", "4k of 32k", "5k of 32k", "3k of 32k"]);
+    // The rig has no Alice in People: that row is refused by name; Apply applies the rest.
+    const alice = rows.find((row) => row.getAttribute("data-row") === "program.for-person")!;
+    expect(within(alice).getByTestId("kit-diffrow-verdict").textContent).toBe("Refused");
+    expect(within(alice).getByTestId("kit-diffrow-reason").textContent).toContain("There is no person 'Alice' in People.");
+    expect(within(well).queryByTestId("programs-diff-split")).toBeNull();
+    const apply = within(well).getByTestId("programs-well-apply");
+    expect(apply.textContent).toBe("Apply 10");
+    fireEvent.click(apply);
+    await waitFor(() => expect(posts(id, "text")).toHaveLength(1));
+    expect(posts(id, "text")[0]).toEqual({ text: j1.draft.allowed_text, base: j1.draft.base, dry_run: false, allow_lower: [] });
+    // The rows land: four drafted steps, each with its size lamp, born one after the other.
+    await waitFor(() => expect(screen.getAllByTestId("programs-draft-step")).toHaveLength(4));
+    const drafted = screen.getAllByTestId("programs-draft-step");
+    expect(drafted.map((row) => within(row).getByTestId("programs-draft-size").textContent)).toEqual(
+      ["7k of 32k", "4k of 32k", "5k of 32k", "3k of 32k"]);
+    expect((screen.getByRole("textbox", { name: "Step 1 title" }) as HTMLInputElement).value).toBe(j1.applied.program!.steps[0].title);
+    expect(drafted.every((row) => row.getAttribute("data-landed") === "born")).toBe(true);
+    expect(drafted[2].style.getPropertyValue("--i")).toBe("2");
+    await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+    // Steps exist now: Start is the primary verb, Plan it the second.
+    expect(screen.getByTestId("program-start")).not.toBeDisabled();
+    expect(screen.getByTestId("program-plan-it").className).not.toMatch(/primary/);
+  });
+
+  it("while the engine plans, one line and the status bar name it; the window stays usable", async () => {
+    const id = j1.program.id;
+    let answer: (value: unknown) => void = () => undefined;
+    hub({
+      [`GET /api/programs/${id}`]: j1.program,
+      [`GET /api/programs/${id}/shape`]: planFixture.engine,
+    });
+    const table = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation((path: string, init?: { method?: string; json?: unknown }) =>
+      (init?.method === "POST" && path.endsWith("/plan/draft") ? new Promise((resolve) => { answer = resolve; }) : table(path, init)));
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    fireEvent.click(screen.getByTestId("program-plan-it"));
+    const reading = await screen.findByTestId("program-plan-reading");
+    await waitFor(() => expect(reading.textContent).toBe("Planning · Home Engine"));
+    expect(reading.querySelector(".kit-dot")).toHaveAttribute("data-live");
+    expect(within(status()).getByTestId("programs-status-planning").textContent).toBe("Planning · Home Engine");
+    expect(screen.getByRole("textbox", { name: "Goal" })).not.toBeDisabled();
+    await act(async () => answer(clone(j1.draft)));
+    await screen.findByTestId("programs-change-well");
+    expect(screen.queryByTestId("program-plan-reading")).toBeNull();
+    expect(within(status()).queryByTestId("programs-status-planning")).toBeNull();
+  });
+
+  it("Return in the Goal pad plans the goal he typed; Shift+Return is a new line", async () => {
+    const id = j1.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: j1.program,
+      [`GET /api/programs/${id}/shape`]: planFixture.engine,
+      [`POST /api/programs/${id}/plan/draft`]: j1.draft,
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    const pad = screen.getByRole("textbox", { name: "Goal" });
+    fireEvent.change(pad, { target: { value: "Recap each meeting in its Note." } });
+    fireEvent.keyDown(pad, { key: "Enter", shiftKey: true });
+    expect(posts(id, "plan/draft")).toHaveLength(0);
+    fireEvent.keyDown(pad, { key: "Enter" });
+    await screen.findByTestId("programs-change-well");
+    expect(posts(id, "plan/draft")).toEqual([{ goal: "Recap each meeting in its Note." }]);
+  });
+
+  it("a step too big for its engine says so with Split; Split sends the draft and the step's place, the well shows the parts", async () => {
+    const id = big.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: big.program,
+      [`GET /api/programs/${id}/shape`]: { ...planFixture.engine, program_id: id },
+      [`POST /api/programs/${id}/plan/draft`]: (init?: { json?: { split?: number } }) => (init?.json?.split ? big.split : big.draft),
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    fireEvent.click(screen.getByTestId("program-plan-it"));
+    const well = await screen.findByTestId("programs-change-well");
+    expect(within(well).getByText("2 steps · 1 requirement · 1 too big", { selector: ".kit-changewell-say" })).toBeInTheDocument();
+    const tooBig = within(well).getAllByTestId("programs-diff-row").find((row) => row.getAttribute("data-row") === "step-2.add")!;
+    const aside = within(tooBig).getByTestId("kit-diffrow-aside");
+    expect(aside.textContent).toBe("Too big for Claude Code · 61k of 32k");
+    expect(aside).toHaveAttribute("data-tone", "fail");
+    // It is still a row he may apply (the runner holds it at hand time).
+    expect(within(tooBig).getByTestId("kit-diffrow-verdict").textContent).toBe("Allowed");
+    fireEvent.click(within(tooBig).getByTestId("programs-diff-split"));
+    await waitFor(() => expect(posts(id, "plan/draft")).toHaveLength(2));
+    expect(posts(id, "plan/draft")[1]).toEqual({ text: big.draft.proposed_text, split: 2 });
+    await waitFor(() => expect(within(screen.getByTestId("programs-change-well")).getAllByTestId("kit-diffrow-aside")
+      .map((node) => node.textContent)).toEqual(
+      ["1k of 32k", "Too big for Claude Code · 61k of 32k", "Too big for Claude Code · 61k of 32k"]));
+  });
+
+  it("no engine: the refusal in place of the lamp, with Open Engines and Open text; nothing is sent", async () => {
+    const id = none.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: none.program,
+      [`GET /api/programs/${id}/shape`]: none.engine,
+      [`POST /api/programs/${id}/plan/draft`]: () => { throw new ApiError(none.status, String(none.body.detail), none.body); },
+      [`GET /api/programs/${id}/text`]: { program_id: id, text: j1.draft.base, revision: 1, version: 1 },
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    fireEvent.click(screen.getByTestId("program-plan-it"));
+    const refusal = await screen.findByTestId("program-plan-refusal");
+    expect(posts(id, "plan/draft")).toHaveLength(0);
+    expect(refusal.textContent).toContain("No engine is set for planning");
+    expect(screen.queryByTestId("programs-change-well")).toBeNull();
+    fireEvent.click(within(refusal).getByTestId("program-plan-engines"));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
+    fireEvent.click(within(refusal).getByTestId("program-plan-text"));
+    await screen.findByTestId("programs-text");
   });
 });

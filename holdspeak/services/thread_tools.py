@@ -376,12 +376,15 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "program.text": ("evidence_read", False),
     "program.text_apply": ("effect_proposal", False),
     "program.shape": ("effect_proposal", False),
+    "program.plan_draft": ("effect_proposal", False),
     "project.mark_update_delivered": ("effect_proposal", False),
     # Phone (2026-10-28): his phone.
     "phone.status": ("evidence_read", False),
     "phone.get_replies": ("evidence_read", False),
     "phone.send_message": ("effect_proposal", False),
     "phone.call": ("effect_proposal", False),
+    # PG-DIRECTION DIR1: a briefing page for a held item (owner only).
+    "phone.brief": ("effect_proposal", False),
 }
 # Betterment M3: the ``automation.*`` aliases, each in its Workbench tool's class.
 _ALL_TOOL_CLASSES.update({

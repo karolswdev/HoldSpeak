@@ -339,6 +339,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "program.step_remove": WORK,  # PG-LANG: his at once; an orchestrator's removal goes up the ladder
     "program.text": WORK,  # PG-LANG LANG1: the Program as its text (a read)
     "program.text_apply": WORK,  # PG-LANG LANG1: a batch of the verbs above, each with its own rule
+    "program.plan_draft": WORK,  # PG-LANG LANG6: a goal becomes a drafted text (rows only; Apply writes)
     "program.shape": WORK,  # PG-LANG LANG3: a sentence becomes change rows; YOLO's apply is the level's
     "program.decide": AUTHORITY,  # a merge and a finding's fate are the owner's press
     "program.overturn": AUTHORITY,  # undoing the engine's decision is the owner's press
@@ -349,6 +350,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "phone.get_replies": WORK,
     "phone.status": WORK,
     "phone.call": EGRESS,  # rings his phone: his press, unless the Program may call and the level allows
+    "phone.brief": WORK,  # PG-DIRECTION DIR1: a briefing page for his own held item; owner only in the service
     "agent.hand": EGRESS,  # starts a cloud coding agent and sends it a brief from the desk
     # PHILO-16 (16b): the owner's desk windows. A window is not egress,
     # authority or config: an agent composes the desk beside the owner.

@@ -19,7 +19,7 @@ POST   /api/programs/{id}/plan                     {steps: [...], size: "auto"|n
 POST   /api/programs/{id}/from-desk                one step per open action of its Project
 POST   /api/programs/{id}/start | /park | /resume
 POST   /api/programs/{id}/steps/{sid}/checkpoint   {line}
-POST   /api/programs/{id}/steps/{sid}/decide       {kind, choice, finding_id?, reason?}
+POST   /api/programs/{id}/steps/{sid}/decide       {kind, choice, finding_id?, reason?, via?}
 POST   /api/programs/{id}/steps/{sid}/race         {n}
 POST   /api/programs/{id}/steps/{sid}/handoff      {to: profile | {profile, engine}, preview: bool} (owner only;
                                                    PG19: preview returns the brief, nothing moves)
@@ -45,6 +45,9 @@ GET    /api/programs/{id}/shape                    LANG3: the engine that shapes
 POST   /api/programs/{id}/shape                    LANG3 {sentence, apply?, pending?}: one engine call; the text_apply answer
 DELETE /api/programs/{id}/shape/held               LANG5: Not this on the rows a call left on the desk
                                                    + {say, question, engine, latency_ms, proposed_text, base, decision}
+POST   /api/programs/{id}/plan/draft               LANG6 {goal?, template?, budget?; Split: text, split}: one engine
+                                                   call; the text_apply answer, each row source "plan" and an added
+                                                   step's size, + {say, counts, sizes, budget, engine, latency_ms}
 
 Every handler runs the service off the event loop (``run_in_threadpool``).
 """
@@ -187,7 +190,7 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         principal, body = _principal(request), await _body(request)
         return await _call(lambda: _service().decide(
             principal, program_id, step_id, kind=str(body.get("kind") or ""), choice=str(body.get("choice") or ""),
-            finding_id=body.get("finding_id"), reason=body.get("reason"),
+            finding_id=body.get("finding_id"), reason=body.get("reason"), via=body.get("via"),
         ))
 
     @router.post("/api/programs/{program_id}/steps/{step_id}/race")
@@ -299,6 +302,13 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
     async def api_programs_shape_held_drop(program_id: str, request: Request) -> Any:
         principal = _principal(request)
         return await _call(lambda: _service().drop_held_shape(principal, program_id))
+
+    @router.post("/api/programs/{program_id}/plan/draft")
+    async def api_programs_plan_draft(program_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().plan_draft(
+            principal, program_id, goal=body.get("goal"), template=body.get("template"), budget=body.get("budget"),
+            text=body.get("text"), split=body.get("split")))
 
     @router.post("/api/programs/{program_id}/close")
     async def api_programs_close(program_id: str, request: Request) -> Any:

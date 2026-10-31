@@ -37,8 +37,9 @@ import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
-import { closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, updateProgram, useProgram,
-  type RequirementChoice } from "./api";
+import { closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, readProgram, updateProgram,
+  useProgram, type RequirementChoice } from "./api";
+import { briefable, copyPageLink, pageWords, programRef, revokePage } from "../reach";
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
 import { RequirementsBoard, openShot } from "./Requirements";
 import { StepFold, isPlanned, moveStep } from "./StepFold";
@@ -47,6 +48,7 @@ import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
 import { ProgramChangeWell, ProgramTextPane, landedSteps, useProgramText, type TextProposal } from "./ProgramText";
 import { ShapeBar, ShapedWell, engineFact } from "./ShapeBar";
+import { PlanLine, usePlanIt } from "./PlanDraft";
 import type {
   Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
@@ -128,6 +130,22 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
   const [line, setLine] = useState("");
   const items = program.your_turn_items;
   if (!items.length) return null;
+  // PG-DIRECTION DIR3: Copy page link makes the item's briefing page and
+  // copies its link; Revoke ends it. The row's line says the page is open.
+  const page = async (item: YourTurnItem, verb: "copy" | "revoke") => {
+    setBusy(`${item.id}:${verb}`);
+    setFailed(null);
+    try {
+      if (verb === "copy") await copyPageLink(programRef(program.id, item.id));
+      else if (item.page) await revokePage(item.page.package_id);
+      onDecided(await readProgram(program.id));
+    } catch (error) {
+      setFailed(plainFail(verb === "copy" ? "The page link was not made" : "The page was not revoked", error,
+        "The item is unchanged", "Try again"));
+    } finally {
+      setBusy("");
+    }
+  };
   const press = async (item: YourTurnItem, choice: string, line?: string) => {
     if (item.kind === "answer") return;
     // Unmet and Waive ask one line, in place.
@@ -170,6 +188,7 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
               data-asking={asking ? "" : undefined}>
               <span className="pg-turn-words">{itemWords(item, step)}</span>
               {fact ? <span className="pg-turn-fact">{fact}</span> : null}
+              {item.page ? <span className="pg-turn-page" data-testid="programs-turn-page">{pageWords(item.page)}</span> : null}
               {asking ? (
                 <span className="pg-turn-ask" data-testid="programs-turn-ask">
                   <StringGadget label={asking.choice === "waive" ? "Why you waive it" : "What is missing"} value={line} onChange={setLine}
@@ -195,6 +214,13 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
                     {verbWord(item, verb)}
                   </Button>
                 ))}
+                {briefable(item.kind) ? (
+                  <Button dense variant="ghost" loading={busy === `${item.id}:${item.page ? "revoke" : "copy"}`}
+                    disabled={Boolean(busy)} onClick={() => void page(item, item.page ? "revoke" : "copy")}
+                    data-testid={item.page ? "programs-turn-revoke" : "programs-turn-copy-link"}>
+                    {item.page ? "Revoke" : "Copy page link"}
+                  </Button>
+                ) : null}
               </span>
             </li>
           );
@@ -483,6 +509,8 @@ export function ProgramBody({ programId }: { programId: string }) {
   const [settling, setSettling] = useState(false);
   const [landed, setLanded] = useState<Record<string, "born" | "changed">>({});
   const [shaped, setShaped] = useState<ShapeAnswer | null>(null);
+  // LANG7: Plan it drafts the goal; the rows open in the change well.
+  const planner = usePlanIt(programId, program, setProposal);
   useEffect(() => {
     if (!Object.keys(landed).length) return;
     const timer = window.setTimeout(() => setLanded({}), 2600);
@@ -603,6 +631,7 @@ export function ProgramBody({ programId }: { programId: string }) {
       key: "met", text: met.met || met.unmet ? `${met.met} of ${met.total} met` : countWords(met.total, "requirement"), tick: met.met || null,
       lamp: allMet ? "ok" as const : undefined, pulse: allMet ? met.met : undefined, testId: "programs-status-met",
     } : null,
+    planner.busy ? { key: "planning", lamp: "info" as const, live: true, text: planner.engine ? `Planning · ${planner.engine}` : "Planning", testId: "programs-status-planning" } : null,
     program.check_command ? { key: "check", text: <span>{`check: ${checkName(program)}`}</span> } : null,
     // The ladder's own word (`YOLO` keeps its capitals: an element, not a wire token).
     { key: "control", text: <span>{`control ${program.control_word || controlWord(program.control)}`}</span>, testId: "programs-status-control" },
@@ -656,13 +685,17 @@ export function ProgramBody({ programId }: { programId: string }) {
         </span>
       }>
         {verb ? (
-          <Button dense variant={verb === "start" ? "primary" : "secondary"} loading={busy === verb} disabled={Boolean(busy) || (verb === "start" && !steps.length && !(draft ?? []).length)}
+          <Button dense variant={verb === "start" && (steps.length || !drafting) ? "primary" : "secondary"} loading={busy === verb} disabled={Boolean(busy) || (verb === "start" && !steps.length && !(draft ?? []).length)}
             onClick={() => void run(verb, () => programVerb(program.id, verb), verb === "start" ? "The program did not start" : verb === "park" ? "The program was not parked" : "The program did not resume")}
             data-testid={`program-${verb}`}>
             {verb === "start" ? "Start" : verb === "park" ? "Park" : "Resume"}
           </Button>
         ) : program.note_window || program.note_id ? (
           <Button dense variant="secondary" onClick={() => openRef(`note:${program.note_id}`)} data-testid="program-open-note">Open note</Button>
+        ) : null}
+        {drafting ? (
+          <Button dense variant={steps.length ? "secondary" : "primary"} loading={planner.busy} disabled={planner.busy || Boolean(busy)}
+            onClick={() => void planner.plan(goal ?? program.goal)} data-testid="program-plan-it">Plan it</Button>
         ) : null}
         {program.state !== "done" ? (
           <Button dense variant="ghost" loading={busy === "add" || busy === "plan"} disabled={Boolean(busy)} onClick={addStep} data-testid="program-add-step">Add step</Button>
@@ -695,7 +728,8 @@ export function ProgramBody({ programId }: { programId: string }) {
         {proposal ? (
           <ProgramChangeWell key={wellKey}
             programId={program.id} proposal={proposal} settling={settling}
-            onApplied={applied} onAnswer={setProposal} onDismiss={notThis} />
+            onApplied={applied} onAnswer={setProposal} onDismiss={notThis}
+            onSplit={proposal.source === "plan" ? (place) => planner.split(proposal, place) : undefined} />
         ) : null}
         {view === "text" ? (
           <ProgramTextPane text={text} proposal={proposal}
@@ -705,7 +739,10 @@ export function ProgramBody({ programId }: { programId: string }) {
           <>
             <div className="pg-goal">
               <PadGadget label="Goal" value={goal ?? program.goal} rows={2} onChange={setGoal}
+                // Return plans it; Shift+Return is a new line.
+                onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void planner.plan(goal ?? program.goal); } }}
                 inputProps={{ onBlur: () => { if (goal != null && goal !== program.goal) void run("goal", () => updateProgram(program.id, { goal }), "The goal was not saved"); } }} />
+              <PlanLine planner={planner} onOpenText={() => setView("text")} />
             </div>
             <RequirementsBoard program={program} onApplied={apply} />
             <ListView label="Steps" className="pg-board" data-testid="programs-board">
@@ -715,6 +752,7 @@ export function ProgramBody({ programId }: { programId: string }) {
               <ul className="kit-listrows">
                 {(draft ?? []).map((step, index) => (
                   <DraftStepRow key={`${index}-${step.id ?? ""}`} index={index} step={step} count={(draft ?? []).length}
+                    size={steps[index]?.estimate} landed={steps[index] ? landed[steps[index].id] : undefined}
                     selected={selected === String(index)} onSelect={() => setSelected(String(index))}
                     engineLabel={steps[index]?.engine?.short || steps[index]?.engine?.label}
                     onChange={(next, commit) => {

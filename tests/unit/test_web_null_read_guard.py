@@ -27,7 +27,10 @@ def test_only_typed_api_client_calls_fetch() -> None:
     # lib/sfx.ts fetches STATIC AUDIO ASSETS (HS-135-12), not API data —
     # the typed-client law governs API reads, so the asset loader is the
     # one sanctioned non-api fetch site.
-    allowed = ["lib/api.ts", "lib/sfx.ts"]
+    # briefing/api.ts is the briefing page's own wire (PG-DIRECTION DIR2): the
+    # page is its own entry and must never load lib/api.ts, which reads the
+    # owner token (guard: web/src/briefing/__tests__/briefing.app.test.tsx).
+    allowed = ["briefing/api.ts", "lib/api.ts", "lib/sfx.ts"]
     callers = []
     for path in sorted(ROOT.rglob("*.ts*")):
         if _is_test_source(path):

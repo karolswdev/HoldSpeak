@@ -88,6 +88,10 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # Phone (2026-10-28): a read receipt from his phone or the desk; no row a
     # window shows changes, and the service sends its own ``phone_changed``.
     ("POST", "/api/phone/messages/{message_id}/read"): "read-like: a read receipt; the phone service frames it",
+    # PG-DIRECTION DIR1: the briefing page's answer. Its path holds the page
+    # token, so it must never be a frame's id; the briefing service announces
+    # (kind reach, the package id) and the Program service its own frame.
+    ("POST", "/api/b/{token}/answer"): "the briefing service announces (kind reach, the package id; never the token)",
     ("POST", "/api/ui-feedback"): "local developer report; no desk object changes",
     ("POST", "/api/ui-feedback/{identifier}/transcribe"): "local report attachment; no desk object changes",
 }

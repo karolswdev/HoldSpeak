@@ -1,0 +1,391 @@
+{
+  "after": {
+    "items": [
+      {
+        "changed": [
+          {
+            "at": "2026-10-31T21:29:44.954504+00:00",
+            "clock": "17:29",
+            "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
+          },
+          {
+            "at": "2026-10-31T21:29:44.809170+00:00",
+            "clock": "17:29",
+            "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
+          },
+          {
+            "at": "2026-10-31T21:29:44.708284+00:00",
+            "clock": "17:29",
+            "line": "New commit 67147874; the check runs"
+          }
+        ],
+        "choices": [
+          {
+            "consequence": "The step goes on with this change.",
+            "id": "go_on",
+            "label": "Go on",
+            "primary": true
+          },
+          {
+            "consequence": "The step stops. The other steps go on.",
+            "id": "park",
+            "label": "Park",
+            "primary": false
+          }
+        ],
+        "evidence": [
+          {
+            "label": "Check log",
+            "pane": "log",
+            "token": "green"
+          },
+          {
+            "label": "Brief",
+            "pane": "brief",
+            "token": ""
+          },
+          {
+            "label": "Program text",
+            "pane": "text",
+            "token": "read only"
+          }
+        ],
+        "head": "Overnight on the home box · step 1",
+        "kind": "core",
+        "kind_words": "Core question",
+        "level": "YOLO",
+        "outcome": {
+          "at": "2026-10-31T06:30:00+00:00",
+          "choice": "go_on",
+          "label": "Go on",
+          "via": "page",
+          "words": "Go on · decided here · 02:30"
+        },
+        "program_id": "program-73f237f0d806",
+        "program_title": "Overnight on the home box",
+        "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
+        "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
+        "since": "2026-10-31T21:29:45.076884+00:00",
+        "state": "decided",
+        "step_id": "step-f2ff5de6b5c0",
+        "step_ordinal": 1,
+        "step_title": "Store the stall reason"
+      }
+    ],
+    "later": [
+      {
+        "at": "03:30",
+        "id": "in_1h",
+        "label": "In 1 hour"
+      },
+      {
+        "at": "13:00",
+        "id": "at_13",
+        "label": "At 13:00"
+      },
+      {
+        "at": "19:00",
+        "id": "tonight",
+        "label": "Tonight"
+      },
+      {
+        "at": "07:00",
+        "id": "tomorrow",
+        "label": "Tomorrow at 07:00"
+      }
+    ],
+    "package": {
+      "expires_at": "2026-11-01T06:30:00+00:00",
+      "expires_words": "Expires in 24 h",
+      "head": "Overnight on the home box · step 1",
+      "hub": "the rig hub",
+      "id": "pkg-4577b05e8a7f",
+      "kind": "item"
+    }
+  },
+  "again": {
+    "code": "answered_already",
+    "detail": "Answered already: Go on · decided here · 02:30",
+    "error": "answered_already",
+    "outcome": {
+      "at": "2026-10-31T06:30:00+00:00",
+      "choice": "go_on",
+      "label": "Go on",
+      "via": "page",
+      "words": "Go on · decided here · 02:30"
+    }
+  },
+  "brief": {
+    "kind": "code",
+    "pane": "brief",
+    "text": "Store the stall reason in its own column.\nKeep the old reads."
+  },
+  "decided": {
+    "item": {
+      "changed": [
+        {
+          "at": "2026-10-31T21:29:44.954504+00:00",
+          "clock": "17:29",
+          "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
+        },
+        {
+          "at": "2026-10-31T21:29:44.809170+00:00",
+          "clock": "17:29",
+          "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
+        },
+        {
+          "at": "2026-10-31T21:29:44.708284+00:00",
+          "clock": "17:29",
+          "line": "New commit 67147874; the check runs"
+        }
+      ],
+      "choices": [
+        {
+          "consequence": "The step goes on with this change.",
+          "id": "go_on",
+          "label": "Go on",
+          "primary": true
+        },
+        {
+          "consequence": "The step stops. The other steps go on.",
+          "id": "park",
+          "label": "Park",
+          "primary": false
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Check log",
+          "pane": "log",
+          "token": "green"
+        },
+        {
+          "label": "Brief",
+          "pane": "brief",
+          "token": ""
+        },
+        {
+          "label": "Program text",
+          "pane": "text",
+          "token": "read only"
+        }
+      ],
+      "head": "Overnight on the home box · step 1",
+      "kind": "core",
+      "kind_words": "Core question",
+      "level": "YOLO",
+      "outcome": {
+        "at": "2026-10-31T06:30:00+00:00",
+        "choice": "go_on",
+        "label": "Go on",
+        "via": "page",
+        "words": "Go on · decided here · 02:30"
+      },
+      "program_id": "program-73f237f0d806",
+      "program_title": "Overnight on the home box",
+      "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
+      "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
+      "since": "2026-10-31T21:29:45.076884+00:00",
+      "state": "decided",
+      "step_id": "step-f2ff5de6b5c0",
+      "step_ordinal": 1,
+      "step_title": "Store the stall reason"
+    }
+  },
+  "expired": {
+    "code": "page_expired",
+    "detail": "This page has expired.",
+    "error": "page_expired"
+  },
+  "later": {
+    "item": {
+      "changed": [
+        {
+          "at": "2026-10-31T21:29:44.954504+00:00",
+          "clock": "17:29",
+          "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
+        },
+        {
+          "at": "2026-10-31T21:29:44.809170+00:00",
+          "clock": "17:29",
+          "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
+        },
+        {
+          "at": "2026-10-31T21:29:44.708284+00:00",
+          "clock": "17:29",
+          "line": "New commit 67147874; the check runs"
+        }
+      ],
+      "choices": [
+        {
+          "consequence": "The step goes on with this change.",
+          "id": "go_on",
+          "label": "Go on",
+          "primary": true
+        },
+        {
+          "consequence": "The step stops. The other steps go on.",
+          "id": "park",
+          "label": "Park",
+          "primary": false
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Check log",
+          "pane": "log",
+          "token": "green"
+        },
+        {
+          "label": "Brief",
+          "pane": "brief",
+          "token": ""
+        },
+        {
+          "label": "Program text",
+          "pane": "text",
+          "token": "read only"
+        }
+      ],
+      "head": "Overnight on the home box · step 1",
+      "kind": "core",
+      "kind_words": "Core question",
+      "level": "YOLO",
+      "outcome": {
+        "at": "2026-10-31T06:30:00+00:00",
+        "choice": "later",
+        "label": "Later",
+        "later_until": "2026-10-31T17:00:00+00:00",
+        "via": "page",
+        "words": "Later · back at 13:00"
+      },
+      "program_id": "program-73f237f0d806",
+      "program_title": "Overnight on the home box",
+      "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
+      "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
+      "since": "2026-10-31T21:29:45.076884+00:00",
+      "state": "later",
+      "step_id": "step-f2ff5de6b5c0",
+      "step_ordinal": 1,
+      "step_title": "Store the stall reason"
+    }
+  },
+  "log": {
+    "kind": "code",
+    "pane": "log",
+    "text": "program-check: commit 6714787419bc3170b0726c387e0bd17cb401d4e9\nprogram-check: tree clean\nprogram-check: command sh /repo/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
+  },
+  "made": {
+    "expires_at": "2026-11-01T06:30:00+00:00",
+    "expires_clock": "01:30",
+    "id": "pkg-4577b05e8a7f",
+    "link": null,
+    "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
+    "refs": [
+      "program:program-73f237f0d806:step-f2ff5de6b5c0:core"
+    ],
+    "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
+  },
+  "open": {
+    "items": [
+      {
+        "changed": [
+          {
+            "at": "2026-10-31T21:29:44.954504+00:00",
+            "clock": "17:29",
+            "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
+          },
+          {
+            "at": "2026-10-31T21:29:44.809170+00:00",
+            "clock": "17:29",
+            "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
+          },
+          {
+            "at": "2026-10-31T21:29:44.708284+00:00",
+            "clock": "17:29",
+            "line": "New commit 67147874; the check runs"
+          }
+        ],
+        "choices": [
+          {
+            "consequence": "The step goes on with this change.",
+            "id": "go_on",
+            "label": "Go on",
+            "primary": true
+          },
+          {
+            "consequence": "The step stops. The other steps go on.",
+            "id": "park",
+            "label": "Park",
+            "primary": false
+          }
+        ],
+        "evidence": [
+          {
+            "label": "Check log",
+            "pane": "log",
+            "token": "green"
+          },
+          {
+            "label": "Brief",
+            "pane": "brief",
+            "token": ""
+          },
+          {
+            "label": "Program text",
+            "pane": "text",
+            "token": "read only"
+          }
+        ],
+        "head": "Overnight on the home box · step 1",
+        "kind": "core",
+        "kind_words": "Core question",
+        "level": "YOLO",
+        "program_id": "program-73f237f0d806",
+        "program_title": "Overnight on the home box",
+        "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
+        "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
+        "since": "2026-10-31T21:29:45.076884+00:00",
+        "state": "open",
+        "step_id": "step-f2ff5de6b5c0",
+        "step_ordinal": 1,
+        "step_title": "Store the stall reason"
+      }
+    ],
+    "later": [
+      {
+        "at": "03:30",
+        "id": "in_1h",
+        "label": "In 1 hour"
+      },
+      {
+        "at": "13:00",
+        "id": "at_13",
+        "label": "At 13:00"
+      },
+      {
+        "at": "19:00",
+        "id": "tonight",
+        "label": "Tonight"
+      },
+      {
+        "at": "07:00",
+        "id": "tomorrow",
+        "label": "Tomorrow at 07:00"
+      }
+    ],
+    "package": {
+      "expires_at": "2026-11-01T06:30:00+00:00",
+      "expires_words": "Expires in 24 h",
+      "head": "Overnight on the home box · step 1",
+      "hub": "the rig hub",
+      "id": "pkg-4577b05e8a7f",
+      "kind": "item"
+    }
+  },
+  "text": {
+    "kind": "code",
+    "pane": "text",
+    "text": "# program text 1\nprogram Overnight on the home box                 # Your turn · 0 of 1 done\n  goal\n  > Stop the stalls.\n  in app · main\n  template fast cycle\n  control yolo\n  check sh /repo/tests/fixtures/fake_program_check.sh\n\nstep 1 Store the stall reason                     # Checking · Claude Code · under a minute\n  owns src/a.py\n  brief\n  > Store the stall reason in its own column.\n  > Keep the old reads.\n"
+  }
+}

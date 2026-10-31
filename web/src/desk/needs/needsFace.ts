@@ -9,6 +9,7 @@
  *  Movement C repairs (PROPOSAL §3): an item an agent works is that
  *  agent's, never UNASSIGNED; a question is the `ask` lamp, never ⚠.
  */
+import { pageWords, type OpenPage } from "../reach";
 import { SELF_OWNER_NAMES, type NeedsArrival, type NeedsYouMember, type NeedsYouRoomItem } from "../needsYou";
 import type { AgentFlight, CoderSessionRow } from "../agentFlights";
 import { flightForItem, isInFlight } from "../agentFlights";
@@ -59,7 +60,9 @@ export type NeedVerbs =
   | { kind: "send"; sendId: string; documentRef: string; destinationId: string; state: "prepared" | "failed" | "unknown"; send: Record<string, unknown> }
   /** Programs (2026-10-28): a your-turn item of a Program; each choice is
    *  its `POST …/steps/{sid}/decide`. */
-  | { kind: "program"; programId: string; stepId: string; decide: string; itemKind: string; choices: string[]; findingId?: string | null }
+  | { kind: "program"; programId: string; stepId: string; decide: string; itemKind: string; choices: string[]; findingId?: string | null;
+      /** PG-DIRECTION DIR3: the row id (the page's ref) and its open page. */
+      ref?: string; page?: OpenPage | null }
   /** Phone (2026-10-28): the hub's own verbs for a phone item (Call now /
    *  Let it wait, Call again / Answer here, Call / Not now); a verb that
    *  needs words (Answer here) opens the Phone wing to reply. */
@@ -410,7 +413,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   // parked, a person to ask for a review. The group is the Program's title.
   const program = item.program as {
     programId?: string; stepId?: string; ordinal?: number | null; kind?: string; choices?: string[];
-    findingId?: string | null; decide?: string; requirementId?: string | null;
+    findingId?: string | null; decide?: string; requirementId?: string | null; page?: OpenPage | null;
   } | undefined;
   // PG-REQ: his word and a requirement left after the rounds decide through
   // the requirement's own route; the Program's own have no step.
@@ -418,11 +421,12 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
     const step = program.ordinal ? `Step ${program.ordinal}` : "";
     return {
       id, kind: "program", name: title,
-      fact: [String(item.group ?? ""), step].filter(Boolean).join(" · "),
+      // PG-DIRECTION DIR3: the line says the page is open (no chip, A.9).
+      fact: [String(item.group ?? ""), step, pageWords(program.page)].filter(Boolean).join(" · "),
       lamp: { label: why || "TO DECIDE", tone: "ask" }, group: "rest", direction: "decide",
       verbs: {
         kind: "program", programId: program.programId, stepId: program.stepId ?? "", decide: program.decide,
-        itemKind: String(program.kind ?? ""),
+        itemKind: String(program.kind ?? ""), ref: id, page: program.page ?? null,
         // Waive asks his one line: it is pressed in the Program window (Open).
         choices: [...(program.choices ?? [])].filter((choice) => !(program.requirementId && choice === "waive")),
         findingId: program.findingId ?? null,

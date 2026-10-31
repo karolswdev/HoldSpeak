@@ -1033,6 +1033,12 @@
     },
     {
       "transport": "mcp",
+      "entry_point": "phone.brief",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/phone.py) over the one BriefingService"
+    },
+    {
+      "transport": "mcp",
       "entry_point": "phone.call",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/phone.py) over the one PhoneService"
@@ -2492,6 +2498,12 @@
     {
       "transport": "mcp",
       "entry_point": "program.shape",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.plan_draft",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
     }

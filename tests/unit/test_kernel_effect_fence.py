@@ -199,6 +199,11 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     ("holdspeak/services/program_shaper.py", "_repo_map", "run", 1): (
         "read-only probe: `git ls-files` for the shaping prompt's repository map"
     ),
+    # PG-LANG LANG6: the planning call's grounding reads the repository map
+    # and the last merged subjects (`git ls-files`, `git log`); it writes nothing.
+    ("holdspeak/services/program_planner.py", "_git", "run", 1): (
+        "read-only probe: `git ls-files` and `git log` for the planning prompt's repository map"
+    ),
     # The Line (2026-10-29): the node's link to its own hub and two local
     # build/probe processes. A call's own effects (say, hang up, place a call)
     # are the hub's Calls service's, as with ai-phone.

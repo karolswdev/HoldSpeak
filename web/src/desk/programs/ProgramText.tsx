@@ -82,8 +82,8 @@ function bodyLines(text: string): string[] {
 
 /** One proposal in the well: the rows and how Apply sends them. */
 export type TextProposal = {
-  /** Where the rows came from: the typed text, or a shaped sentence (LANG4). */
-  source: "text" | "sentence";
+  /** Where the rows came from: the typed text, a shaped sentence (LANG4), or a planning draft (LANG7). */
+  source: "text" | "sentence" | "plan";
   /** A shaped sentence: the engine's line of what changes, and its name and time. */
   say?: string;
   fact?: string;
@@ -181,7 +181,7 @@ function fieldWords(row: TextChange): string | undefined {
 /** The change well of a Program window (direction S-A): the rows, Apply
  *  (`Apply 5` when a row is refused: it applies the allowed text), Not
  *  this, and Apply this on each row that lowers the bar. */
-export function ProgramChangeWell({ programId, proposal, settling, onApplied, onAnswer, onDismiss }: {
+export function ProgramChangeWell({ programId, proposal, settling, onApplied, onAnswer, onDismiss, onSplit }: {
   programId: string;
   proposal: TextProposal;
   settling?: boolean;
@@ -190,17 +190,32 @@ export function ProgramChangeWell({ programId, proposal, settling, onApplied, on
   /** The hub answered with rows again (a conflict at apply time). */
   onAnswer(proposal: TextProposal): void;
   onDismiss(): void;
+  /** LANG7: Split on a draft step that is too big (its place in the draft). */
+  onSplit?(place: number): Promise<void>;
 }) {
   const [pressed, setPressed] = useState<Record<string, true>>({});
   const [busy, setBusy] = useState(false);
+  const [splitting, setSplitting] = useState<number | null>(null);
   const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
   const rows = proposal.answer.changes;
   const blocked = rows.filter((row) => row.verdict === "refused" || row.verdict === "conflict");
   const applicable = rows.length - blocked.length;
   const waiting = rows.filter((row) => row.verdict === "lowers" && !pressed[row.id]);
   const words = headWords(rows);
-  const head = proposal.source === "sentence" && proposal.say ? proposal.say : words.head;
-  const fact = proposal.source === "sentence" && proposal.fact ? `${proposal.fact} · ${words.fact}` : words.fact;
+  const head = proposal.source !== "text" && proposal.say ? proposal.say : words.head;
+  const fact = proposal.source !== "text" && proposal.fact ? `${proposal.fact} · ${words.fact}` : words.fact;
+  const split = async (place: number) => {
+    if (!onSplit) return;
+    setSplitting(place);
+    setFailed(null);
+    try {
+      await onSplit(place);
+    } catch (cause) {
+      setFailed(plainFail("The step was not split", cause, "The draft is as it was", "Try again"));
+    } finally {
+      setSplitting(null);
+    }
+  };
   const apply = async () => {
     setBusy(true);
     setFailed(null);
@@ -226,7 +241,7 @@ export function ProgramChangeWell({ programId, proposal, settling, onApplied, on
       verbs={(
         <>
           {applicable ? (
-            <Button dense variant="primary" loading={busy} disabled={busy || waiting.length > 0}
+            <Button dense variant="primary" loading={busy} disabled={busy || splitting != null || waiting.length > 0}
               title={waiting.length ? "Press Apply this on each row that lowers the bar" : undefined}
               onClick={() => void apply()} data-testid="programs-well-apply">
               {blocked.length ? `Apply ${applicable}` : "Apply"}
@@ -238,7 +253,12 @@ export function ProgramChangeWell({ programId, proposal, settling, onApplied, on
       {rows.map((row, index) => (
         <DiffRow key={row.id} index={index} op={row.op} where={row.where} field={fieldWords(row)}
           before={row.before || undefined} after={row.after || undefined} verdict={row.verdict} reason={row.reason} line={row.line}
-          pressed={Boolean(pressed[row.id])} disabled={busy}
+          pressed={Boolean(pressed[row.id])} disabled={busy || splitting != null}
+          aside={row.size ? { words: row.size.words, tone: row.size.fits === false ? "fail" : undefined } : undefined}
+          verb={row.size?.code === "step_too_big" && onSplit && row.size.place ? (
+            <Button dense variant="secondary" loading={splitting === row.size.place} disabled={busy || splitting != null}
+              onClick={() => void split(row.size!.place!)} data-testid="programs-diff-split">Split</Button>
+          ) : undefined}
           onPress={row.verdict === "lowers" ? (next) => setPressed((now) => {
             const copy = { ...now };
             if (next) copy[row.id] = true; else delete copy[row.id];

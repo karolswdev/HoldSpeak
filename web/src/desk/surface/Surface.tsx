@@ -467,10 +467,9 @@ function deSnakeLabel(key: string): string {
   return key.replace(/[_-]+/g, " ");
 }
 
-/** A raw trace (JSON, hook output) on the surface material. */
-export function SurfaceCode({ children }: { children: ReactNode }) {
-  return <pre className="surface-code">{children}</pre>;
-}
+// A raw trace (JSON, hook output) on the surface material: ./code.tsx
+// (PG-DIRECTION DIR2: the briefing page composes it alone).
+export { SurfaceCode } from "./code";
 
 /** HS-111-03 — the sunken well (audit §3.2): a scrolling inset on the
  * window-well tone with an inset etch (never a border rail). The
