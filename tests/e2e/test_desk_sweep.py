@@ -277,6 +277,11 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # the rig hub has no planning engine, so the bar's refusal line with
         # Open Engines and Open text (a desk with an engine: the well).
         ("program-shape", "pullout:program:{program}", None),
+        # PG-LANG LANG7: a Program in Drafting with its goal and no steps;
+        # Plan it pressed. The rig hub has no planning engine, so the plan
+        # line's refusal with Open Engines and Open text (a desk with an
+        # engine: the draft's rows in the well, with their size lamps).
+        ("program-plan", "pullout:program:{program_draft}", None),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -488,14 +493,33 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             }, token=TOKEN)
             note_id = thought["thought"]["working_note"]["id"]
             program_id = _seed_program(page, tmp)
+            program_draft = _seed_draft_program(page, tmp)
             ctx.close()
             _seed_finished_receipts()
             automation = _seed_automation(note_id)
             automation_program = _seed_program_automation(program_id)
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
-                   "automation": automation, "program": program_id, "automation_program": automation_program}
+                   "automation": automation, "program": program_id, "automation_program": automation_program,
+                   "program_draft": program_draft}
         finally:
             server.stop()
+
+
+def _seed_draft_program(page: Any, tmp: Path) -> str:
+    """PG-LANG LANG7: a Program in Drafting, its goal two paragraphs (journey
+    J1), no steps yet (station 1, Dropped)."""
+    repo = tmp / "program-draft-repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "-c", "user.name=Sweep", "-c", "user.email=sweep@example.com",
+                    "commit", "-q", "--allow-empty", "-m", "start"], check=True)
+    from tests.integration.program_plan_seed import J1_GOAL
+
+    made = _api(page, "POST", "/api/programs", {
+        "title": "Meeting recap in the Note", "goal": J1_GOAL, "repository": str(repo),
+        "template": "build-and-review", "check_command": "true", "control": "normal",
+    }, token=TOKEN)
+    return str(made.get("id") or (made.get("program") or {}).get("id"))
 
 
 def _seed_program(page: Any, tmp: Path) -> str:
@@ -1358,6 +1382,13 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             bar.get_by_role("textbox", name="Change the program").fill("put step 2 on Codex")
             bar.get_by_test_id("program-shape").click()
             win.locator("[data-testid=program-shape-refusal], [data-testid=programs-change-well]").first.wait_for(timeout=T)
+            page.mouse.move(2, 2)
+        if case_id == "program-plan":
+            win = page.locator(f'[id="{wid}"]')
+            # No steps yet: the board is an empty list; the goal and Plan it are the face.
+            win.get_by_test_id("program-plan-it").wait_for(timeout=T)
+            win.get_by_test_id("program-plan-it").click()
+            win.locator("[data-testid=program-plan-refusal], [data-testid=programs-change-well]").first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "person":
             # This pose is the seeded person's content, not the transient

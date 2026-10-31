@@ -318,8 +318,11 @@ def engine_words(db: Any) -> dict[str, Any]:
     return {"engine": label or profile, "capability": capability, "profile": profile}
 
 
-def invoke(db: Any, principal: Any, capability: str, revision: str, payload: dict[str, Any]) -> tuple[Optional[str], str]:
-    """One routed call; ``(output or None, model)``."""
+def invoke(db: Any, principal: Any, capability: str, revision: str, payload: dict[str, Any], *,
+           contract: str = CONTRACT, contract_revision: str = CONTRACT_REVISION,
+           deadline: float = DEADLINE_SECONDS) -> tuple[Optional[str], str]:
+    """One routed call; ``(output or None, model)``. The planner
+    (``program_planner``) calls it with its own contract and deadline."""
     from ..kernel.inference_runner import InvocationRequest, ServiceContract
     from ..kernel.prompt_adapter import CanonicalPromptAdapter
     from ..kernel.runtime import _as_principal
@@ -327,15 +330,15 @@ def invoke(db: Any, principal: Any, capability: str, revision: str, payload: dic
     broker = _broker_for(db)
     request = InvocationRequest(
         deployment_revision=revision,
-        definition_origin=ServiceContract.for_payload(CONTRACT, CONTRACT_REVISION, payload),
-        deadline_at=time.time() + DEADLINE_SECONDS,
+        definition_origin=ServiceContract.for_payload(contract, contract_revision, payload),
+        deadline_at=time.time() + deadline,
         payload=payload,
     )
     captured: list[Any] = []
 
     def _capture(value: Any) -> str:
         captured.append(value)
-        return f"program-shape:{revision}"
+        return f"{contract.replace('.', '-')}:{revision}"
 
     with _as_principal(principal):
         outcome = broker.inference_runner.invoke(request, CanonicalPromptAdapter(), publish=_capture)

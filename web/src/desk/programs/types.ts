@@ -278,6 +278,8 @@ export interface CheckSection {
 }
 
 export interface ProgramStep {
+  /** PG-LANG §5.4 (LANG6): the size of a step not handed yet, by rule. */
+  estimate?: PlanSize | null;
   id: string;
   ordinal: number;
   title: string;
@@ -500,6 +502,44 @@ export interface TextChange {
   code: string | null;
   /** The line of the proposed text (1-based). */
   line: number | null;
+  /** LANG6: where the row came from (`plan` for a planning draft). */
+  source?: string;
+  /** LANG6: an added step's size (`7k of 32k`; `step_too_big`). */
+  size?: PlanSize | null;
+}
+
+/** PG-LANG §5.4: one step's size; the words name the working share. */
+export interface PlanSize {
+  tokens: number;
+  budget: number | null;
+  share: number | null;
+  /** `null`: no budget applies (Claude Code or Codex with none named). */
+  fits: boolean | null;
+  /** `7k of 32k`, or `Too big for qwen · 41k of 32k`. */
+  words: string;
+  engine: string | null;
+  code: "step_too_big" | null;
+  place?: number;
+  title?: string;
+  owns?: string[];
+}
+
+/** PG-LANG LANG6: `POST /api/programs/{id}/plan/draft`, a goal drafted
+ *  into change rows (the text_apply answer, plus the engine's words). */
+export interface PlanAnswer extends TextApplyAnswer {
+  source: "plan";
+  say: string;
+  words: string;
+  counts: { steps: number; requirements: number; too_big: number };
+  engine: string;
+  latency_ms: number;
+  seconds: number;
+  sizes: PlanSize[];
+  budget: number | null;
+  share: number | null;
+  split: { place: number; title: string; words: string; owns: string[] }[];
+  proposed_text: string;
+  base: string;
 }
 
 /** `POST /api/programs/{id}/text`: the rows, and on a real apply the Program. */

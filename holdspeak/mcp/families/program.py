@@ -27,6 +27,8 @@ live in the service, so every transport keeps them:
   ``dry_run`` false, applies it through the verbs above, so each change
   keeps its own authority rule. A row that lowers the bar applies only when
   its id is in ``allow_lower``.
+- PG-LANG LANG6 (2026-10-31): ``program.plan_draft`` drafts a Program in
+  Drafting from its goal, as change rows (``program_planner``).
 - PG-LANG LANG3 (2026-10-31): ``program.shape`` turns one sentence into the
   same change rows through one planning-engine call; it writes nothing,
   except at YOLO with ``apply`` (the allowed rows, one Decided for you row).
@@ -302,6 +304,21 @@ TOOLS: list[dict[str, Any]] = [
          "program_id": _ID, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
          "apply": {"type": ["boolean", "null"], "description": "At YOLO only: apply the allowed rows at once."},
      }, ["program_id", "sentence"])},
+    {"name": "program.plan_draft",
+     "description": "Draft a Program in Drafting from its goal (PG-LANG §5): the hub sends the goal (or the Note it "
+                    "came from), the template's shape, the repository map, the Project's open actions and the budget "
+                    "to the planning engine (agent.plan) in one call, and returns the whole drafted text as change "
+                    "rows as program.text_apply does (each row source 'plan'; an added step has its size, "
+                    "'18k of 32k'; a step over the working share is 'step_too_big' after one split). Nothing is "
+                    "written: apply with program.text_apply (text: proposed_text, base: base). To split one step "
+                    "of a draft: text (the draft) and split (the step's place).",
+     "inputSchema": _schema({
+         "program_id": _ID, "goal": {"type": ["string", "null"], "maxLength": 8000},
+         "template": {"type": ["string", "null"]},
+         "budget": {"type": ["string", "integer", "null"], "description": "The builder's context: 64k or 65536."},
+         "text": {"type": ["string", "null"], "maxLength": 200000},
+         "split": {"type": ["integer", "null"], "description": "With text: the place of the step to split."},
+     }, ["program_id"])},
     {"name": "program.checkpoint",
      "description": "Write one line on your step at a meaningful moment. Only the step's own agent (or the owner).",
      "inputSchema": _schema({"step_id": _ID, "line": {"type": "string", "minLength": 1, "maxLength": 400},
@@ -392,6 +409,10 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         dry = args.get("dry_run") if args.get("dry_run") is not None else args.get("preview")
         return service.text_apply(principal, str(args["program_id"]), args.get("text"), dry_run=dry is not False,
                                   base=args.get("base"), allow_lower=list(args.get("allow_lower") or []))
+    if name == "program.plan_draft":
+        return service.plan_draft(principal, str(args["program_id"]), goal=args.get("goal"),
+                                  template=args.get("template"), budget=args.get("budget"), text=args.get("text"),
+                                  split=args.get("split"))
     if name == "program.shape":
         return service.shape(principal, str(args["program_id"]), args.get("sentence"), apply=args.get("apply") is True)
     if name in ("program.start", "program.get"):
