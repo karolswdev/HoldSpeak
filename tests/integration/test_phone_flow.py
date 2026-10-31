@@ -804,12 +804,16 @@ def test_a_message_queued_at_23_30_goes_out_when_quiet_hours_end_and_not_before(
                          origin_ref="meeting:night:aftercare")
     assert first["queued"] and second["queued"] and phone.push().sent == []
 
-    clock[0] = (night + timedelta(hours=7, minutes=29)).astimezone(timezone.utc)  # 06:59
+    # The next morning by the WALL CLOCK, not by an offset: on the night the
+    # clocks change (DST ends), 23:30 + 7 h 30 is 06:00 on the wall, still
+    # inside quiet hours; the product reads wall time, so the test must too.
+    morning = datetime.combine(night.date() + timedelta(days=1), datetime.min.time().replace(hour=7)).astimezone()
+    clock[0] = (morning - timedelta(minutes=1)).astimezone(timezone.utc)  # 06:59
     phone.tick()
     assert phone.push().sent == []
     assert phone.store.get_message(first["msg_id"])["delivered_at"] is None
 
-    clock[0] = (night + timedelta(hours=7, minutes=30)).astimezone(timezone.utc)  # 07:00
+    clock[0] = morning.astimezone(timezone.utc)  # 07:00
     phone.tick()
     pushed = [json.loads(p["payload"]["event"]) for p in phone.push().sent]
     assert [p["kind"] for p in phone.push().sent] == ["message", "message"]  # one push each, in order
