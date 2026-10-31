@@ -70,7 +70,7 @@ function PulloutFrame({
   // (SurfaceWindowHost).
   // Programs (2026-10-28): a Program is a whole window too (its toolbar,
   // its board, its status bar).
-  const hosted = o.kind === "meeting" || o.kind === "people" || (o.kind as string) === "program";
+  const hosted = o.kind === "meeting" || o.kind === "people" || (o.kind as string) === "program" || (o.kind as string) === "program-shot";
   const [wings, setWings] = useState<ReactNode>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [titleOverride, setTitleOverride] = useState<string | null>(null);

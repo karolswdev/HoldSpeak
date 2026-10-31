@@ -4,7 +4,10 @@
  *  (objectWindows.ts) carries the family name as its kind. */
 import type { PulloutContent } from "./types";
 import { ProgramPullout } from "../programs/ProgramWindow";
+import { ProgramShotPullout } from "../programs/ProgramShot";
 
 export const PULLOUT_FAMILIES: Readonly<Record<string, PulloutContent>> = {
   program: ProgramPullout,
+  // PG-REQ (REQ12): a Shot requirement's image, `pullout:program-shot:<program>:<requirement>`.
+  "program-shot": ProgramShotPullout,
 };

@@ -35,11 +35,11 @@ export function verdictWords(step: ProgramStep): string {
   return parts.join(" · ");
 }
 
-export function GateFold({ step, open, onToggle }: { step: ProgramStep; open?: boolean; onToggle?: (open: boolean) => void }) {
+/** The gate's facts (the step fold's Gate token; PG-REQ §7). */
+export function GateFacts({ step }: { step: ProgramStep }) {
   const check = step.check;
   const tone = check.verdict === "green" ? "ok" : check.verdict ? "fail" : "idle";
   return (
-    <FoldGadget className="pg-gate" title={<>Gate<span className="pg-fold-sub">{` · step ${step.ordinal}, ${step.title}`}</span></>} open={open} onToggle={onToggle}>
       <dl className="pg-gate-facts" data-testid="programs-gate">
         <dt>Track</dt>
         <dd><StationTrack form="words" stations={stationsOf(step)} data-testid="programs-gate-track" /></dd>
@@ -79,6 +79,13 @@ export function GateFold({ step, open, onToggle }: { step: ProgramStep; open?: b
           </>
         ) : null}
       </dl>
+  );
+}
+
+export function GateFold({ step, open, onToggle }: { step: ProgramStep; open?: boolean; onToggle?: (open: boolean) => void }) {
+  return (
+    <FoldGadget className="pg-gate" title={<>Gate<span className="pg-fold-sub">{` · step ${step.ordinal}, ${step.title}`}</span></>} open={open} onToggle={onToggle}>
+      <GateFacts step={step} />
     </FoldGadget>
   );
 }

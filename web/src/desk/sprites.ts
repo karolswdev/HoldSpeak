@@ -28,6 +28,8 @@ export const VARIANTS: Record<string, string[]> = {
   // Programs (2026-10-28): three stacked cards, the front one lit with the
   // station track (canvases/programs-2026-10-28.html).
   program: ["program"],
+  // PG-REQ: a Shot requirement's image window wears its Program's object.
+  "program-shot": ["program"],
   note: ["note"],
   decision: ["decision"],
   artifact: ["artifact"],

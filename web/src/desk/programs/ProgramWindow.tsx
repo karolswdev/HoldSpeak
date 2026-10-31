@@ -5,9 +5,13 @@
  * Add step, Race on the selected step; at the right Runs on ▾, When idle,
  * Control: YOLO ▾, the desk's ladder Secure · Normal · YOLO) → the Your
  * turn well (only what the hub sends: core questions and the level's asks)
- * → the board (one 32 px row per step) → the Gate fold of the selected
- * step → the Decided for you fold (each engine decision, its rule,
- * Overturn) → the Checkpoints fold → the StatusBar (`Running · 2 of 6 done
+ * → the Requirements board (PG-REQ, direction A: the checklist) → the
+ * board (one 32 px row per step, with its Met column) → the step fold of
+ * the selected step (FilterTokens: Brief · Requirements · Gate · Findings ·
+ * Handoffs · Ledger; Move up, Move down, Insert before, Alt+↑ / Alt+↓;
+ * Amend brief, Hand off) → the Decided for you fold (each engine decision,
+ * its rule, Overturn) → the Ledger fold (one sub-fold per step) → the
+ * StatusBar (`Running · 2 of 6 done
  * · 1 waits on you · check: quick_check.sh · control YOLO`, then the place line:
  * Project ▸ HoldSpeak · From the meeting · For Alice, or a No project
  * Token that files it).
@@ -15,7 +19,7 @@
  * Drafting: steps are rows of fields; the selected step opens its brief in
  * a PadGadget; the goal is a PadGadget; Start is the primary verb. Done:
  * Open note in place of Start / Park / Resume. */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { WorkMenu } from "../components/DeskMenu";
 import { openRef } from "../openObject";
@@ -24,7 +28,7 @@ import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import {
-  CheckGadget, DotWord, FoldGadget, ListView, PadGadget, StatusBar, SurfaceState, SurfaceWell, Toolbar, countWords,
+  CheckGadget, DotWord, FoldGadget, ListView, PadGadget, StatusBar, StringGadget, SurfaceState, Toolbar, countWords,
   type StatusBarItem,
 } from "../surface";
 import { useWindowInterior } from "../surface/interior";
@@ -32,13 +36,16 @@ import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
-import { closeProgram, decide, overturn, planProgram, programVerb, race, startFrom, updateProgram, useProgram } from "./api";
-import { GateFold } from "./GateFold";
+import { closeProgram, decide, decideProposal, decideRequirement, overturn, planProgram, programVerb, race, updateProgram, useProgram,
+  type RequirementChoice } from "./api";
+import { LedgerFold, ProposedWord, clock } from "./Ledger";
+import { RequirementsBoard, openShot } from "./Requirements";
+import { StepFold, isPlanned, moveStep } from "./StepFold";
 import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
 import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
 import type {
-  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramCheckpoint, ProgramStep, RunsOnEntry, StepHandoff, YourTurnItem,
+  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RunsOnEntry, YourTurnItem,
 } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
@@ -55,7 +62,23 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   close: [{ choice: "close", word: "Close", primary: true }],
   // PG19: the agent is at its usage limit (the first word names the next agent).
   limited: [{ choice: "continue", word: "Continue", primary: true }, { choice: "wait", word: "Wait" }],
+  // PG-REQ §9: his word, a requirement left after the rounds, and what an agent proposes.
+  requirement_word: [{ choice: "met", word: "Met", primary: true }, { choice: "unmet", word: "Unmet" }],
+  requirement_left: [{ choice: "send_back", word: "Send back", primary: true }, { choice: "waive", word: "Waive" }],
+  requirement_proposed: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
+  step_change: [{ choice: "apply", word: "Apply", primary: true }, { choice: "skip", word: "Skip" }],
+  step_amend: [{ choice: "send", word: "Send", primary: true }, { choice: "skip", word: "Skip" }],
 };
+
+const REQUIREMENT_KINDS = new Set(["requirement_word", "requirement_left"]);
+const PROPOSAL_KINDS = new Set(["requirement_proposed", "step_change", "step_amend"]);
+
+/** The requirement an item is about (its Program's or its step's). */
+function requirementOf(program: Program, item: YourTurnItem) {
+  if (!item.requirement_id) return undefined;
+  return [...(program.requirements ?? []), ...program.steps.flatMap((step) => step.requirements ?? [])]
+    .find((row) => row.id === item.requirement_id);
+}
 
 /** A verb's words on one item (`Continue in Codex`). */
 function verbWord(item: YourTurnItem, verb: { choice: string; word: string }): string {
@@ -64,13 +87,15 @@ function verbWord(item: YourTurnItem, verb: { choice: string; word: string }): s
 }
 
 /** The quiet fact beside an item's verbs (`Check green · review passed`). */
-function itemFact(item: YourTurnItem, step: ProgramStep | undefined): string {
+function itemFact(item: YourTurnItem, step: ProgramStep | undefined, program: Program): string {
   if (item.kind === "merge") return step?.review.verdict === "pass" ? "Check green · review passed" : "Check green";
   if (item.kind === "finding") return [item.level ? wireWords(item.level) : "", step?.rounds ? `after ${step.rounds} rounds` : ""].filter(Boolean).join(" · ");
   if (item.kind === "answer") return "Asks you";
   if (item.kind === "parked") return step?.parked_reason ? "Parked" : "";
   if (item.kind === "core") return "A core question";
   if (item.kind === "limited") return item.warning ? "Near its limit" : "Limited";
+  if (item.kind === "requirement_word") return step ? "Your word · holds the merge" : "Your word";
+  if (item.kind === "requirement_left") return requirementOf(program, item)?.kind_word ?? "";
   return "";
 }
 
@@ -84,24 +109,43 @@ function itemWords(item: YourTurnItem, step: ProgramStep | undefined): ReactNode
   else if (item.kind === "answer") tail = `${step?.agent ?? "the agent"} asks you`;
   else if (item.kind === "core") tail = item.reason ?? item.title;
   else if (item.kind === "limited") tail = item.title;
-  else return item.title;
+  else {
+    // PG-REQ: the hub composes the line (`Step 3 · Projections off the
+    // loop: R4 · I tried it on my desk`); its place is bold.
+    const at = item.title.indexOf(": ");
+    if (at > 0 && /^(Step \d+|The program)/.test(item.title)) return <><b>{item.title.slice(0, at)}:</b> {item.title.slice(at + 2)}</>;
+    return item.title;
+  }
   return <><b>{head}:</b> {tail}</>;
 }
 
 export function YourTurnWell({ program, onDecided }: { program: Program; onDecided(next: Program | null): void }) {
   const [busy, setBusy] = useState("");
   const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
+  const [ask, setAsk] = useState<{ id: string; choice: string } | null>(null);
+  const [line, setLine] = useState("");
   const items = program.your_turn_items;
   if (!items.length) return null;
-  const press = async (item: YourTurnItem, choice: string) => {
+  const press = async (item: YourTurnItem, choice: string, line?: string) => {
     if (item.kind === "answer") return;
+    // Unmet and Waive ask one line, in place.
+    if (REQUIREMENT_KINDS.has(item.kind) && (choice === "waive" || choice === "unmet") && line === undefined) {
+      setAsk((now) => (now?.id === item.id && now.choice === choice ? null : { id: item.id, choice }));
+      return;
+    }
     setBusy(`${item.id}:${choice}`);
     setFailed(null);
-    const body: DecideBody = { kind: item.kind, choice };
+    const body: DecideBody = { kind: item.kind as DecideBody["kind"], choice };
     if (item.finding_id) body.finding_id = item.finding_id;
     if (item.kind === "add_step" && item.proposal != null) body.finding_id = String(item.proposal);
     try {
-      onDecided(item.kind === "close" ? await closeProgram(program.id) : await decide(program.id, item.step_id, body));
+      if (item.kind === "close") onDecided(await closeProgram(program.id));
+      else if (REQUIREMENT_KINDS.has(item.kind) && item.requirement_id) {
+        onDecided(await decideRequirement(program.id, item.requirement_id, choice as RequirementChoice, line || undefined));
+      } else if (PROPOSAL_KINDS.has(item.kind) && item.proposal_id != null) {
+        onDecided(await decideProposal(program.id, item.proposal_id, choice));
+      } else onDecided(await decide(program.id, item.step_id, body));
+      setAsk(null);
     } catch (error) {
       setFailed(plainFail("Your answer did not reach the program", error, "The step is unchanged", "Try again"));
     } finally {
@@ -114,12 +158,31 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
       <ul className="pg-turn-items">
         {items.map((item) => {
           const step = program.steps.find((row) => row.id === item.step_id);
-          const fact = itemFact(item, step);
+          const fact = itemFact(item, step, program);
+          // His word on a step that has a shot: Open shot beside Met.
+          const shot = item.kind === "requirement_word"
+            ? (step?.requirements ?? []).find((row) => row.kind === "shot" && row.evidence?.url) : undefined;
+          const asking = ask?.id === item.id ? ask : null;
           return (
-            <li key={item.id} className="pg-turn-item" data-kind={item.kind} data-testid="programs-turn-item" data-item={item.id}>
+            <li key={item.id} className="pg-turn-item" data-kind={item.kind} data-testid="programs-turn-item" data-item={item.id}
+              data-asking={asking ? "" : undefined}>
               <span className="pg-turn-words">{itemWords(item, step)}</span>
               {fact ? <span className="pg-turn-fact">{fact}</span> : null}
+              {asking ? (
+                <span className="pg-turn-ask" data-testid="programs-turn-ask">
+                  <StringGadget label={asking.choice === "waive" ? "Why you waive it" : "What is missing"} value={line} onChange={setLine}
+                    placeholder={asking.choice === "waive" ? "Why you waive it" : "What is missing"} autoFocus />
+                  <Button dense variant="primary" loading={busy === `${item.id}:${asking.choice}`}
+                    disabled={Boolean(busy) || (asking.choice === "waive" && !line.trim())}
+                    onClick={() => { void press(item, asking.choice, line.trim()); setLine(""); }} data-testid="programs-turn-ask-send">
+                    {asking.choice === "waive" ? "Waive" : "Unmet"}
+                  </Button>
+                </span>
+              ) : null}
               <span className="pg-turn-verbs">
+                {shot ? (
+                  <Button dense variant="secondary" onClick={() => openShot(program.id, shot.id)} data-testid="programs-turn-open-shot">Open shot</Button>
+                ) : null}
                 {item.kind === "answer" ? (
                   <Button dense variant="primary" onClick={() => item.launch_id && openRef(`launch:${item.launch_id}`)}
                     disabled={!item.launch_id} data-testid="programs-turn-answer">Answer</Button>
@@ -150,139 +213,6 @@ function checkName(program: Program): string {
 
 function lampOf(tone: ReturnType<typeof programTone>): StatusBarItem["lamp"] {
   return tone === "idle" ? undefined : tone;
-}
-
-function byWords(row: ProgramCheckpoint, program: Program): { who: string; sprite: string | null } {
-  if (row.by === "owner") return { who: "You", sprite: null };
-  if (row.by === "engine") return { who: "HoldSpeak · engine", sprite: spriteUrl("program", program.id, "rest", null, 20) };
-  const step = program.steps.find((candidate) => candidate.id === row.step_id);
-  const agent = agentKey(step?.profile, step?.agent);
-  return { who: `${step?.agent ?? "Agent"} · step ${step?.ordinal ?? ""}`.trim(), sprite: spriteUrl("coder", agent, "rest", agent, 20) };
-}
-
-function clock(at: string): string {
-  const ms = Date.parse(at);
-  if (!Number.isFinite(ms)) return "";
-  return new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
-}
-
-/** PG19: each handoff checkpoint's entry on its step (the nth handoff line
- *  of a step is its nth handoff). */
-function handoffsOf(program: Program): Map<string, { step: ProgramStep; entry: StepHandoff }> {
-  const out = new Map<string, { step: ProgramStep; entry: StepHandoff }>();
-  const seen = new Map<string, number>();
-  for (const row of [...program.checkpoints].reverse()) {
-    if (row.kind !== "handoff") continue;
-    const step = program.steps.find((candidate) => candidate.id === row.step_id);
-    const index = seen.get(row.step_id) ?? 0;
-    seen.set(row.step_id, index + 1);
-    const entry = step?.handoffs?.[index];
-    if (step && entry) out.set(String(row.id), { step, entry });
-  }
-  return out;
-}
-
-const REASON_WORDS: Record<string, string> = { usage_limit: "usage limit", usage_warning: "usage warning", by_hand: "by hand" };
-
-/** The divider line of one handoff, and its brief in a sunken well under
- *  View brief (what was sent, what was redacted, the earlier turns). */
-function HandoffLine({ row, step, entry }: { row: ProgramCheckpoint; step: ProgramStep; entry: StepHandoff }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <li className="pg-handoff-row" data-testid="programs-handoff" data-checkpoint={row.id}>
-      <div className="pg-handoff">
-        <span className="kit-dot" data-tone="warn" aria-hidden="true" />
-        <span className="pg-handoff-words">
-          <b>Step {step.ordinal} · Handed to {entry.to}</b> · {REASON_WORDS[entry.reason] ?? entry.reason} · {clock(entry.at)}
-        </span>
-        <Button dense variant="secondary" aria-expanded={open} onClick={() => setOpen((now) => !now)} data-testid="programs-view-brief">
-          {open ? "Hide brief" : "View brief"}
-        </Button>
-      </div>
-      {open ? (
-        <div className="pg-handoff-sheet" data-testid="programs-handoff-brief">
-          <p className="pg-handoff-head">
-            <b>Handoff brief</b>
-            <span>{entry.from} to {entry.to}</span>
-            <span data-testid="programs-handoff-redacted">{entry.redacted_words ? `Redacted: ${entry.redacted_words}` : "Nothing redacted"}</span>
-            {entry.earlier_turns ? <span>{`${entry.earlier_turns} earlier ${entry.earlier_turns === 1 ? "turn" : "turns"}, not included`}</span> : null}
-            {entry.continues_from ? (
-              <span data-testid="programs-handoff-ref">Continues from <code className="pg-ref">{entry.continues_from}</code></span>
-            ) : null}
-          </p>
-          <SurfaceWell>
-            <pre className="pg-handoff-brief">{entry.brief}</pre>
-          </SurfaceWell>
-        </div>
-      ) : null}
-    </li>
-  );
-}
-
-/** PG16: a Skip or a merge by rule became a proposed decision record (he
- *  accepts it in the Decisions window). A row word, never a chip of zero. */
-function ProposedWord() {
-  return <DotWord tone="ask" className="pg-proposed" data-testid="programs-proposed-decision">Proposed as a decision</DotWord>;
-}
-
-/** PG20: the commit a checkpoint pinned (the short hash git users read; the
- *  full ref in its title) and Start from here. */
-function PinCell({ row, busy, onStart }: { row: ProgramCheckpoint; busy: string; onStart(row: ProgramCheckpoint): void }) {
-  if (!row.ref) return <span className="pg-ledger-pin" />;
-  return (
-    <span className="pg-ledger-pin" data-testid="programs-checkpoint-ref" data-ref={row.ref}>
-      <code className="pg-ref" title={row.ref}>{(row.ref_commit ?? "").slice(0, 7) || row.ref.split("/").pop()}</code>
-      <Button dense variant="ghost" loading={busy === String(row.id)} disabled={Boolean(busy)} title={`A new step from ${row.ref}`}
-        onClick={() => onStart(row)} data-testid="programs-start-from">Start from here</Button>
-    </span>
-  );
-}
-
-function Checkpoints({ program, open, onToggle, onStarted }: {
-  program: Program; open: boolean; onToggle(open: boolean): void; onStarted(next: Program | null): void;
-}) {
-  const rows = program.checkpoints;
-  const handoffs = useMemo(() => handoffsOf(program), [program]);
-  const [busy, setBusy] = useState("");
-  const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
-  if (!rows.length) return null;
-  const start = async (row: ProgramCheckpoint) => {
-    setBusy(String(row.id));
-    setFailed(null);
-    try {
-      onStarted(await startFrom(program.id, String(row.id)));
-    } catch (cause) {
-      setFailed(plainFail("The step was not started", cause, "The program is unchanged", "Try again"));
-    } finally {
-      setBusy("");
-    }
-  };
-  return (
-    <FoldGadget className="pg-checkpoints" title="Checkpoints" token={open ? "newest first" : String(rows.length)} open={open} onToggle={onToggle}>
-      <ul className="pg-ledger" data-testid="programs-checkpoints">
-        {rows.slice(0, 50).map((row) => {
-          const handed = handoffs.get(String(row.id));
-          if (handed) return <HandoffLine key={row.id} row={row} step={handed.step} entry={handed.entry} />;
-          const by = byWords(row, program);
-          return (
-            <li key={row.id} className="pg-ledger-row">
-              <span className="pg-ledger-by">
-                {by.sprite ? <img src={by.sprite} alt="" width={20} height={20} /> : <span className="pg-ledger-you" aria-hidden="true">You</span>}
-                <span>{by.who}</span>
-              </span>
-              <span className="pg-ledger-line" data-proposed={row.decision_record_id && !row.overturned_at ? "" : undefined}>
-                <span className="pg-ledger-text">{row.line}</span>
-                {row.decision_record_id && !row.overturned_at ? <ProposedWord /> : null}
-              </span>
-              <PinCell row={row} busy={busy} onStart={(picked) => void start(picked)} />
-              <span className="pg-ledger-at">{clock(row.at)}</span>
-            </li>
-          );
-        })}
-      </ul>
-      {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="programs-start-from-failure">{failed.words}</p> : null}
-    </FoldGadget>
-  );
 }
 
 /** Control: YOLO ▾ — the desk's ladder (Secure · Normal · YOLO). */
@@ -496,7 +426,7 @@ function placeItems(program: Program, fileTo: (anchor: HTMLElement) => void, com
 export function ProgramBody({ programId }: { programId: string }) {
   const { loading, error, program, reload, apply } = useProgram(programId);
   const [selected, setSelected] = useState<string | null>(null);
-  const [gateOpen, setGateOpen] = useState(true);
+  const [stepOpen, setStepOpen] = useState(true);
   const [checksOpen, setChecksOpen] = useState(false);
   const [decidedOpen, setDecidedOpen] = useState(true);
   const [allowedOpen, setAllowedOpen] = useState(false);
@@ -554,11 +484,21 @@ export function ProgramBody({ programId }: { programId: string }) {
   const raceTarget = chosen && !chosen.race_of && ["planned", "ready"].includes(chosen.state) ? chosen : null;
   const fileTo = (anchor: HTMLElement) => { fileOpener.current = anchor; setFiling(anchor.getBoundingClientRect()); };
 
+  // PG-REQ §9 Delight: a Program whose every requirement is met says so in its Done word.
+  const met = program.requirements_met;
+  const allMet = Boolean(met?.total && met.met >= met.total);
+  const doneWord = program.state === "done" && allMet ? `Done · ${met!.met} of ${met!.total} met`
+    : program.state === "done" && program.history ? `Done · ${program.history.words}`
+    : program.state === "done" && program.done_in ? `Done in ${program.done_in}` : program.state_word;
   const status: StatusBarItem[] = [
-    { key: "state", lamp: lampOf(programTone(program.state)), live: program.state === "running", text: program.state === "done" && program.history ? `Done · ${program.history.words}`
-      : program.state === "done" && program.done_in ? `Done in ${program.done_in}` : program.state_word, testId: "programs-status-state" },
+    { key: "state", lamp: lampOf(programTone(program.state)), live: program.state === "running", text: doneWord, testId: "programs-status-state" },
+    program.state === "done" && allMet && program.done_in ? { key: "took", text: `in ${program.done_in}` } : null,
     { key: "done", text: program.done ? `${program.done} of ${program.total} done` : countWords(program.total, "step"), tick: program.done || null, testId: "programs-status-done" },
     program.your_turn ? { key: "turn", text: `${program.your_turn} ${program.your_turn === 1 ? "waits" : "wait"} on you`, tick: program.your_turn, testId: "programs-status-turn" } : null,
+    met?.total && !(program.state === "done" && allMet) ? {
+      key: "met", text: met.met || met.unmet ? `${met.met} of ${met.total} met` : countWords(met.total, "requirement"), tick: met.met || null,
+      lamp: allMet ? "ok" as const : undefined, pulse: allMet ? met.met : undefined, testId: "programs-status-met",
+    } : null,
     program.check_command ? { key: "check", text: <span>{`check: ${checkName(program)}`}</span> } : null,
     // The ladder's own word (`YOLO` keeps its capitals: an element, not a wire token).
     { key: "control", text: <span>{`control ${program.control_word || controlWord(program.control)}`}</span>, testId: "programs-status-control" },
@@ -570,8 +510,31 @@ export function ProgramBody({ programId }: { programId: string }) {
   const defaultLabel = `Agent: ${listWords(runsOnLabel(program.default.profile, program.default.engine), thenRows)}`;
   const firstChoice = { profile: program.default.profile ?? "claude-default", engine: program.default.engine?.id ?? null };
 
+  // Alt+↑ / Alt+↓ moves the selected Planned step (never from a text well).
+  const onKeys = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!event.altKey || (event.key !== "ArrowUp" && event.key !== "ArrowDown") || !chosen || drafting) return;
+    const target = event.target as HTMLElement;
+    if (target.closest("input, textarea, select, [contenteditable=true]")) return;
+    if (!isPlanned(chosen) || !chosen.editable?.includes("position")) return;
+    event.preventDefault();
+    const step = chosen;
+    void (async () => {
+      setBusy("move");
+      setFailed(null);
+      try {
+        const answer = await moveStep(program, step, event.key === "ArrowUp" ? -1 : 1);
+        if ("refused" in answer) setFailed({ words: `${answer.refused} · It keeps its place`, title: answer.refused });
+        else { apply(answer.program); setSelected(step.id); }
+      } catch (cause) {
+        setFailed(plainFail(`Step ${step.ordinal} did not move`, cause, "The order is as it was", "Try again"));
+      } finally {
+        setBusy("");
+      }
+    })();
+  };
+
   return (
-    <div className="pg-window" data-testid="program-window" data-state={program.state} data-program={program.id}>
+    <div className="pg-window" data-testid="program-window" data-state={program.state} data-program={program.id} onKeyDown={onKeys}>
       <Toolbar label="Program" data-testid="program-toolbar" trailing={
         <span className="pg-toolbar-trailing">
           <RunsOnPicker label={defaultLabel} value={firstChoice}
@@ -613,6 +576,7 @@ export function ProgramBody({ programId }: { programId: string }) {
               <PadGadget label="Goal" value={goal ?? program.goal} rows={2} onChange={setGoal}
                 inputProps={{ onBlur: () => { if (goal != null && goal !== program.goal) void run("goal", () => updateProgram(program.id, { goal }), "The goal was not saved"); } }} />
             </div>
+            <RequirementsBoard program={program} onApplied={apply} />
             <ListView label="Steps" className="pg-board" data-testid="programs-board">
               <div className="pg-board-head pg-draft-head" aria-hidden="true">
                 <span>Step</span><span>Owns</span><span>Agent</span><span>Effort</span><span>After</span><span>Down time</span>
@@ -641,24 +605,28 @@ export function ProgramBody({ programId }: { programId: string }) {
               onChange={(body) => void run("allowed", () => updateProgram(program.id, body), "The allowed agents were not saved")} />
           </>
         ) : steps.length ? (
-          <ListView label="Steps" className="pg-board" data-testid="programs-board">
-            <h3 className="pg-board-caption">Steps</h3>
-            <ul className="kit-listrows">
-              {steps.map((step) => (
-                <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} onSelect={() => setSelected(step.id)} />
-              ))}
-            </ul>
-          </ListView>
+          <>
+            <RequirementsBoard program={program} onApplied={apply} />
+            <ListView label="Steps" className="pg-board" data-testid="programs-board">
+              <h3 className="pg-board-caption">Steps</h3>
+              <ul className="kit-listrows">
+                {steps.map((step) => (
+                  <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} onSelect={() => setSelected(step.id)}
+                    his={program.your_turn_items.some((item) => item.kind === "requirement_word" && item.step_id === step.id)} />
+                ))}
+              </ul>
+            </ListView>
+          </>
         ) : (
           <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
             emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
         )}
-        {!drafting && chosen && (chosen.check.verdict || chosen.check.running || chosen.station >= 2) ? (
-          <GateFold step={chosen} open={gateOpen} onToggle={setGateOpen} />
+        {!drafting && chosen ? (
+          <StepFold key={chosen.id} program={program} step={chosen} onApplied={apply} open={stepOpen} onToggle={setStepOpen} />
         ) : null}
         {!drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
         {!drafting ? <ReachLine program={program} /> : null}
-        {!drafting ? <Checkpoints program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
+        {!drafting ? <LedgerFold program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
       </div>
       <StatusBar data-testid="program-status" items={status} />
       {filing ? (
@@ -674,10 +642,10 @@ export function ProgramBody({ programId }: { programId: string }) {
 }
 
 /** A step with its race's contenders indented under it. */
-function StepGroup({ step, selected, onSelect }: { step: ProgramStep; selected: boolean; onSelect(): void }) {
+function StepGroup({ step, selected, onSelect, his }: { step: ProgramStep; selected: boolean; onSelect(): void; his?: boolean }) {
   return (
     <>
-      <StepRow step={step} selected={selected} onSelect={onSelect} />
+      <StepRow step={step} selected={selected} onSelect={onSelect} his={his} />
       {(step.contenders ?? []).map((contender) => (
         <StepRow key={contender.id} step={contender} contender onSelect={onSelect} />
       ))}

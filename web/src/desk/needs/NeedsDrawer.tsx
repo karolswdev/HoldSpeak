@@ -178,6 +178,8 @@ const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   merge: "Merge", not_yet: "Not yet", fix_now: "Fix now", later: "Later", skip: "Skip", resume: "Resume", prepare: "Send…",
   // PG19: an agent at its usage limit.
   continue: "Continue", wait: "Wait",
+  // PG-REQ: his word on a requirement, and one unmet after the rounds.
+  met: "Met", unmet: "Unmet", send_back: "Send back",
 };
 
 function NeedVerbsView({ face, primary, onWell, well }: {

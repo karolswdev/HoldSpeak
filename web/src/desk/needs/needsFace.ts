@@ -410,17 +410,22 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   // parked, a person to ask for a review. The group is the Program's title.
   const program = item.program as {
     programId?: string; stepId?: string; ordinal?: number | null; kind?: string; choices?: string[];
-    findingId?: string | null; decide?: string;
+    findingId?: string | null; decide?: string; requirementId?: string | null;
   } | undefined;
-  if (source === "program" && program?.programId && program.stepId && program.decide) {
+  // PG-REQ: his word and a requirement left after the rounds decide through
+  // the requirement's own route; the Program's own have no step.
+  if (source === "program" && program?.programId && (program.stepId || program.requirementId) && program.decide) {
     const step = program.ordinal ? `Step ${program.ordinal}` : "";
     return {
       id, kind: "program", name: title,
       fact: [String(item.group ?? ""), step].filter(Boolean).join(" · "),
       lamp: { label: why || "TO DECIDE", tone: "ask" }, group: "rest", direction: "decide",
       verbs: {
-        kind: "program", programId: program.programId, stepId: program.stepId, decide: program.decide,
-        itemKind: String(program.kind ?? ""), choices: [...(program.choices ?? [])], findingId: program.findingId ?? null,
+        kind: "program", programId: program.programId, stepId: program.stepId ?? "", decide: program.decide,
+        itemKind: String(program.kind ?? ""),
+        // Waive asks his one line: it is pressed in the Program window (Open).
+        choices: [...(program.choices ?? [])].filter((choice) => !(program.requirementId && choice === "waive")),
+        findingId: program.findingId ?? null,
       },
       openRef: `program:${program.programId}`,
       kindWord: "Program",
