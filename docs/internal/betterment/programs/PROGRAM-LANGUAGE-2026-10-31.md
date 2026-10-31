@@ -1309,6 +1309,43 @@ Sequence: LANG1 → LANG2 (the first slice on his desk); then LANG3/LANG4
 rounds) in parallel by file ownership, then LANG11–LANG14; LANG15 rides
 each slice's docs and closes the set.
 
+## 13b. Slices from the journeys (PG-JOURNEYS build)
+
+`PROGRAM-JOURNEYS-2026-10-31.md` walks eight use cases on this system; its
+"What the journeys demand" table marks each need Exists, In PG-LANG (with the
+LANG slice) or New. The New ones are these slices, in build order after
+LANG15, each a PR in the fast cycle. The interview face of the journeys
+(direction A) is this design's R-A, so it is LANG10; only the goal split is
+left in that group.
+
+| Slice | Lane | What | Done when (tier) |
+|---|---|---|---|
+| | | **The interview face** | |
+| JRN1 | HUB + FACES | the draft proposes several Programs when the goal is several goals: one row per proposed Program in the change well ("Split into 3 programs") with Apply / Not this; never split by rule | a recorded draft of a three-goal paste returns three Program rows; Apply makes three Programs in Drafting, each with its own goal lines; Not this keeps one (T1, T2 `programs.app.test.tsx`) |
+| | | **Dreaming** (the template, `night`, `within`, the backlog reader, the night stop and "Since last night" are LANG12) | |
+| JRN2 | HUB + FACES | **Add to tonight** on a Door task, a Later finding and a note line: marks the item for the dreaming backlog (the mark the backlog reader reads, so no magic word is typed); `program.backlog_add`, `POST /api/programs/{id}/backlog`; a call's "add this to tonight" through the same tool | a press on each of the three rows puts the item in the next night's backlog read; the Door row shows "Tonight"; the call rig adds one by voice (T1, T2) |
+| JRN3 | HUB | the red-main hold: no step of a Program with `night` is handed while the base branch's last CI run is red; "Since last night" says how long the night waited | the rig with a recorded red run holds a Ready step, hands it after a green run, and the digest names the wait (T1) |
+| JRN4 | HUB | the night's end reaches him: one phone message with the first line of "Since last night", through Reach (the "Program is done" row's rules; quiet hours as built) | the night stop in the rig writes one reach with that line and no second one for the same night (T1) |
+| | | **Answers by voice and by phone** | |
+| JRN5 | HUB + FACES | the default, no ruling needed: on a call, a spoken answer to a held Your turn item becomes a **prepared answer** (the choice and his words as its line) on that item; the call decides nothing; Needs you shows "prepared on a call" with the item's verbs and **Not this** | the Calls rig turns "step 7: go on, with a new column" into a prepared row; the item stays open until a press; the press types his words to the agent at its next turn end (T1, T2) |
+| JRN6 | HUB + PHONE | the item's own verbs on a phone message (Go on · Park, Met · Unmet, Merge · Not yet); a press on his paired phone calls `program.decide` as his press; never a waive (it needs a typed line) | a recorded phone press decides the item once; a second press hears "answered already"; the paired-device check refuses an unpaired token (T1) |
+| JRN7 | HUB | with the ruling of §15.10 only: `program.decide` in the call palette, held for his spoken yes with the verbatim read-back, the same hold as `program.start` | the Calls rig decides a core question after "yes" and does nothing after "no" or silence; with the ruling off, the tool is not in the palette (T1) |
+| | | **Audit programs** | |
+| JRN8 | HUB | the **Audit** template: steps with no builder, each agent in a scratch copy (the reviewer's AG12 copy), `merge none`, a report of findings MUST / SHOULD / NOTE with evidence (a shot, a file and line); a commit on an audit step is a core question | a rig audit step returns a parsed report from a recorded agent answer; a commit on it raises the core question (T1) |
+| JRN9 | HUB + FACES | each finding filed as a Door task with its evidence through `door.add_item`, one task for one finding across windows; the Findings board on the Program window; the audit stations BRIEF · WORK · REVIEW · FILE | from a recorded report, 14 findings become 14 tasks grouped by window, a repeated finding is one task; the board draws each state (T1, T2) |
+| JRN10 | HUB | a proposed fix program from the MUST findings, a proposal row; started only by his press | the proposal makes a Program in Drafting with one step per MUST (T1) |
+| | | **Lessons** | |
+| JRN11 | HUB + FACES | the lesson rule (the same red cause on two steps, or the same finding on three), by rule, no model; the Lesson Your turn row **Keep for this program** · **Keep for HoldSpeak** · **Skip**; the `lesson` decide kinds; never kept by rule | two recorded reds with one cause raise one Lesson; Keep for this program adds an every-step requirement; a skipped cause is not proposed again in the Program (T1, T2) |
+| JRN12 | HUB | **Keep for the repository**: a tiny step in the same Program that edits `.holdspeak/program.json` (the check line or a `requirements` item), checked, reviewed and merged as any step | the step's diff is one JSON change; the next Program reads it after the merge (T1, a temp git repo) |
+| | | **From the desk, for a person** | |
+| JRN13 | HUB + FACES | **Run as a program** on a project action row: a From the desk Program of that one action, `for` its person, planned at once | a press on a recorded action row makes one Program of one step with `from action:` and `for` (T1, T2) |
+| JRN14 | HUB | a person review gate: the step's Review requirements become Your word at MERGE; GitHub "changes requested" comments go to the builder as findings for a round | a recorded "changes requested" review starts round 2 with its comments; the template requirement waits for his Met (T1) |
+
+Sequence: JRN13 and JRN14 can go with LANG6; JRN1 after LANG7; JRN2 to JRN4
+after LANG12; JRN5 and JRN6 after LANG5; JRN7 only after the ruling; JRN8 to
+JRN12 after LANG15. User templates ("Keep for a template") are parked, not a
+slice: the repository file is the place.
+
 ## 14. What he presses
 
 1. He opens "The hub stops stalling" and presses **Text**. The plan is one
@@ -1353,6 +1390,12 @@ each slice's docs and closes the set.
    0.5`). Default: 0.5.
 9. **dw at two points only (link, Done) and one PR at Done.** Default: as
    written; off for HoldSpeak's own repository.
+10. **A spoken yes on his own line decides a held item** (`program.decide` on
+   a call, JRN7). Today a call may not confirm a decision for him
+   (`docs/calls.md:44`). Default: **no**; the call prepares the answer and his
+   press decides it, on the desk or on his paired phone (JRN5, JRN6). The
+   other choice: the spoken yes, after the passphrase, with the verbatim
+   read-back, for core questions and Your word.
 
 ## 16. How we know it worked
 
@@ -1418,4 +1461,5 @@ his time.
   overlaid gutter.
 - **The journeys.** The times and the end-to-end walks of each use case are
   in `PROGRAM-JOURNEYS-2026-10-31.md`, written by another lane; this design
-  did not read it.
+  did not read it. That document was reconciled with this one afterwards; its
+  New needs are §13b.

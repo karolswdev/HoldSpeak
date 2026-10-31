@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Program journeys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material. Every value is copied from web/src/styles/tokens.css and the
+   kit (web/src/desk/surface/kit.css, patterns/state-chip.css,
+   objects/list-view.css) on lane/programs-20261028 (a902e091a); this page copies them from
+   canvases/programs-requirements-2026-10-31.html unchanged and adds only the parts at the end. */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-hover:rgba(37,52,73,.06); --wb-rec:#b3261e;
+  --wb-ok-ink:#1d5c2e; --wb-warn-ink:#6b4a00; --wb-danger-ink:#9b2219; --wb-info-ink:#2f4f86; --wb-ember-ink:#7a4a2c;
+  --lamp-ok:#34d399; --lamp-warn:#fbbf24; --lamp-fail:#f87171; --lamp-info:#3b5d93; --lamp-ask:#da9868;
+  --pill-neutral:#edf1f6; --pill-ok:#e3f3ea; --pill-warn:#fff2cf; --pill-danger:#fde6e4; --pill-info:#e6eef9; --pill-accent:#fff0df;
+  --kind-pr:#2b7a4a; --kind-agent:#a84a1c; --kind-project:#3b62c4;
+  --depth-paper:0 22px 48px rgba(22,40,62,.24),0 4px 12px rgba(22,40,62,.12);
+  --depth-row:0 1px 3px rgba(22,40,62,.12);
+  --depth-card:0 10px 28px rgba(8,14,22,.22);
+  --depth-menu:0 8px 22px rgba(22,40,62,.12);
+  --depth-dock:0 10px 30px rgba(8,14,22,.45),0 2px 6px rgba(8,14,22,.3);
+  --wb-toolbar-h:36px;
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  --page:#e9eef4; --page-ink:#253449; --page-card:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+}
+:root[data-theme="dark"]{ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font:15px/1.5 var(--font-ui);min-width:1440px}
+main{padding:32px 24px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 15px/1.3 var(--font-display);margin:22px 0 8px}
+p{margin:0 0 10px;max-width:1100px}
+code{font:12.5px var(--font-mono)}
+section.part{margin:44px 0 0;padding:24px 0 0;border-top:2px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#7b8aa0}
+.rec{border-left:4px solid var(--wb-sel-vivid);padding:12px 18px;background:color-mix(in srgb,var(--wb-sel-vivid) 8%,transparent);border-radius:0 8px 8px 0;max-width:1180px;margin:14px 0}
+.rec p{max-width:none}
+.note{font-size:13.5px;opacity:.85;max-width:1200px}
+.cmp{display:grid;grid-template-columns:240px repeat(3,1fr);max-width:1180px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;color:var(--wb-ink);font-size:13px;margin:12px 0}
+.cmp>div{padding:8px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.cmp>div:nth-child(4n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.cmp>.h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.cmp>.h.r{background:var(--wb-blue);color:#2b4a7a}
+.cmp>.r{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+.moment{display:grid;grid-template-columns:250px auto;gap:24px;align-items:start;margin:22px 0 0}
+.moment .say{font-size:13.5px}
+.moment .say b{display:block;font:600 15px var(--font-display);margin-bottom:4px}
+
+/* ── the sprites (Icons D): the levels of gen-illustrated-icons.py LEVELS ── */
+.spr{display:inline-block;flex:none;line-height:0;vertical-align:middle}
+.spr svg{width:100%;height:100%;display:block;overflow:visible}
+.spr .ol{stroke-width:var(--ow)}
+.spr .bv{transform:translate(var(--u),var(--u))}
+.spr .bvn{transform:translate(var(--nu),var(--nu))}
+.s64{width:64px;height:64px;--ow:1.5px;--u:3.25px;--nu:-3.25px;--lw:1}
+.s48{width:48px;height:48px;--ow:1.8px;--u:3.55px;--nu:-3.55px;--lw:1}
+.s32{width:32px;height:32px;--ow:2.2px;--u:3.1px;--nu:-3.1px;--lw:1}
+.s20,.s16{width:20px;height:20px;--ow:3px;--u:0px;--nu:0px;--lw:1.35}
+.s16{width:16px;height:16px}
+.s32 .detail,.s20 .detail,.s16 .detail{display:none}
+.s20 [fill="#9fb3c8"],.s16 [fill="#9fb3c8"]{fill:#c9d7e6}
+
+/* ── the desk (the floor, the menu bar, the dock) ── */
+.desk{position:relative;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);
+  background:radial-gradient(120% 90% at 20% 0%,#45607f 0%,#2f435b 45%,#233244 100%);font-family:var(--font-ui);color:var(--wb-ink)}
+.menubar{position:absolute;left:0;right:0;top:0;height:36px;background:#fbfcfe;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13.5px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.menubar b{font-weight:600}
+.menubar .grow{flex:1}
+.menubar .bell{display:inline-flex;align-items:center;gap:6px}
+.menubar .badge{background:#2f67c8;color:#fff;font:600 11.5px/1 var(--font-ui);padding:3px 6px;border-radius:9px}
+
+/* the window frame (window-chrome: 30 px blue title bar, a title chip) */
+.win{position:absolute;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--depth-paper);overflow:hidden;display:flex;flex-direction:column;container:surface/inline-size}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:18px;text-align:center;font-size:14px;opacity:.9}
+.tb .chip{width:22px;height:22px;border-radius:5px;background:var(--wb-paper);display:grid;place-items:center;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.tb .name{font:600 13.5px/1 var(--font-ui);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .name.edit span{border-bottom:1px dashed rgba(247,249,252,.7);padding-bottom:1px}
+.tb .gad{display:flex;gap:4px}
+.tb .gad i{width:26px;height:20px;display:grid;place-items:center}
+.tb .gad i::before{content:"";width:11px;height:10px;border:1.5px solid #f7f9fc;border-radius:2px}
+.toolbar{flex:0 0 var(--wb-toolbar-h);display:flex;align-items:center;gap:4px;padding:3px 8px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper);position:relative}
+.toolbar .grow{flex:1}
+.body{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .it+.it::before{content:"·";margin:0 7px 0 1px;opacity:.7}
+.sb b{color:var(--wb-ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* library Button (the plated and the quiet toolbar forms) */
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap;border:1px solid transparent;background:transparent}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc}
+.btn.plate{background:var(--wb-steel-2);border-color:var(--wb-rule);box-shadow:inset 0 1px 0 #fff}
+.btn.sm{height:24px;font-size:12.5px;padding:0 9px}
+.btn.off{color:#8d9aab}
+.btn .caret{font-size:10px;color:var(--wb-muted);margin-left:2px}
+.btn.primary .caret{color:#dbe4f2}
+.btn.open{background:var(--wb-blue);border-color:var(--wb-sel)}
+
+/* DotWord + the lamp dot (kit.css) */
+.dw{display:inline-flex;align-items:center;gap:6px;font:500 12px/1.35 var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:color-mix(in srgb,var(--wb-muted) 55%,var(--wb-paper));box-shadow:0 0 0 1px var(--wb-rule-soft)}
+[data-tone=ok]>.dot,.dot[data-tone=ok]{background:var(--lamp-ok)}
+[data-tone=warn]>.dot,.dot[data-tone=warn]{background:var(--lamp-warn)}
+[data-tone=fail]>.dot,.dot[data-tone=fail]{background:var(--lamp-fail)}
+[data-tone=info]>.dot,.dot[data-tone=info]{background:var(--lamp-info)}
+[data-tone=ask]>.dot,.dot[data-tone=ask]{background:var(--lamp-ask)}
+.dw[data-tone=ok]{color:var(--wb-ok-ink)} .dw[data-tone=warn]{color:var(--wb-warn-ink)}
+.dw[data-tone=fail]{color:var(--wb-danger-ink)} .dw[data-tone=info]{color:var(--wb-info-ink)} .dw[data-tone=ask]{color:var(--wb-ember-ink)}
+.sb .dot[data-tone=ok],.sb .dot[data-tone=info],.sb .dot[data-tone=ask]{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 40%,transparent),0 0 0 3px color-mix(in srgb,var(--t) 18%,transparent)}
+.dot[data-tone=ok]{--t:var(--lamp-ok)} .dot[data-tone=info]{--t:var(--lamp-info)} .dot[data-tone=ask]{--t:var(--lamp-ask)} .dot[data-tone=fail]{--t:var(--lamp-fail)}
+/* THE BREATH: the Record tile's rhythm (kit-lamp-live): a ring on the lamp opens to 5 px and closes, 2.4 s. A box-shadow, never a transform. */
+@keyframes live{0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 45%,transparent),0 0 0 2px color-mix(in srgb,var(--t) 16%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 60%,transparent),0 0 0 5px color-mix(in srgb,var(--t) 26%,transparent)}}
+@media (prefers-reduced-motion: no-preference){ .live{animation:live 2.4s ease-in-out infinite} }
+
+/* StateChip (patterns/state-chip.css): a tinted square pill, dot + word */
+.sc{display:inline-flex;align-items:center;gap:6px;min-height:20px;padding:1px 9px 1px 7px;background:var(--pill-neutral);box-shadow:inset 0 0 0 1px rgba(37,52,73,.06);font:600 12px/1 var(--font-ui);white-space:nowrap;color:var(--wb-muted)}
+.sc i{width:8px;height:8px;border-radius:50%;background:rgba(37,52,73,.05);box-shadow:0 0 0 1px rgba(37,52,73,.55)}
+.sc[data-s=success]{background:var(--pill-ok);color:var(--wb-ok-ink)} .sc[data-s=success] i{background:var(--lamp-ok)}
+.sc[data-s=working]{background:var(--pill-info);color:var(--wb-info-ink)} .sc[data-s=working] i{background:var(--lamp-info)}
+.sc[data-s=active]{background:var(--pill-accent);color:var(--wb-ember-ink)} .sc[data-s=active] i{background:var(--lamp-ask)}
+.sc[data-s=failure]{background:var(--pill-danger);color:var(--wb-danger-ink)} .sc[data-s=failure] i{background:var(--lamp-fail)}
+.sc[data-s=warning]{background:var(--pill-warn);color:var(--wb-warn-ink)} .sc[data-s=warning] i{background:var(--lamp-warn)}
+
+/* ListView (objects/list-view.css): a column head 26 px, rows 32 px */
+.lhead{height:26px;display:grid;align-items:center;gap:10px;padding:0 12px;font-size:12px;font-weight:600;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+.band{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-paper);border-bottom:1px solid var(--wb-rule-soft)}
+.band b{font-weight:500;color:var(--wb-faint)}
+.lrow{height:32px;display:grid;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.lrow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lrow .t{font-weight:600;display:flex;align-items:center;gap:8px}
+.lrow .m{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.lrow .q{color:var(--wb-muted);font-size:12px}
+.lrow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.lrow .done-in{color:var(--wb-ok-ink);font-weight:500}
+
+/* the Your turn well: an ember rule, the verbs inline */
+.well{margin:10px 12px 4px;border-radius:7px;background:color-mix(in srgb,var(--lamp-ask) 7%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-ask),0 0 0 1px color-mix(in srgb,var(--lamp-ask) 35%,var(--wb-rule-soft))}
+.well .cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;font:600 12px var(--font-ui);color:var(--wb-ember-ink)}
+.well .wr{min-height:32px;display:flex;align-items:center;gap:10px;padding:3px 10px 3px 14px;border-top:1px solid color-mix(in srgb,var(--lamp-ask) 22%,var(--wb-rule-soft));font-size:13px}
+.well .wr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.well .wr .t b{font-weight:600}
+.well .wr .m{color:var(--wb-muted);font-size:12px;white-space:nowrap}
+.well .wr .vb{display:flex;gap:6px}
+
+/* the board, direction C: the ledger (32 px rows, the track as six dots) */
+.board-cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;margin-top:6px;font:600 12px var(--font-ui);color:var(--wb-muted)}
+.crow{height:32px;display:grid;grid-template-columns:22px minmax(0,210px) 262px var(--agw,122px) 58px minmax(0,1fr) 62px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.crow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow .n{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.crow .ti{font-weight:600}
+.crow .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.crow .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.crow .el{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.crow .cp{color:var(--wb-muted);font-size:12px}
+.crow .op{text-align:right;overflow:visible}
+.crow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.crow.kid{background:color-mix(in srgb,var(--wb-field) 45%,var(--wb-paper))}
+.crow.kid .ti{font-weight:500;display:flex;align-items:center;gap:6px;padding-left:16px;position:relative}
+.crow.kid .ti::before{content:"";position:absolute;left:4px;top:-6px;width:8px;height:14px;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.crow.dim{color:var(--wb-muted)}
+.crow.dim .ti{font-weight:500}
+.dots{display:inline-flex;align-items:center;gap:0;margin-right:10px;vertical-align:middle}
+.dots .d{width:8px;height:8px;border-radius:50%;flex:none;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.dots .d.passed{background:#8ea0b6;box-shadow:none}
+.dots .d.skip{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6;width:6px;height:6px;margin:1px}
+.dots .d.cur{box-shadow:none;width:10px;height:10px}
+.dots .d.cur[data-tone=info]{background:var(--lamp-info);--t:var(--lamp-info)}
+.dots .d.cur[data-tone=ask]{background:var(--lamp-ask);--t:var(--lamp-ask)}
+.dots .d.cur[data-tone=fail]{background:var(--lamp-fail);--t:var(--lamp-fail)}
+.dots .d.cur[data-tone=ok],.dots .d.ok{background:var(--lamp-ok);box-shadow:none;--t:var(--lamp-ok)}
+.dots .d.cur[data-tone=idle]{background:#a9b6c6}
+.dots .ln{width:10px;height:1.5px;background:#cbd5e1;flex:none}
+.dots .ln.passed{background:#8ea0b6}
+.trk{display:flex;align-items:center}
+.trk .pr{font:500 12px var(--font-ui);color:var(--kind-pr)}
+
+/* direction A: the track is the row */
+.arow{display:grid;grid-template-columns:22px 1fr;column-gap:10px;padding:5px 12px 6px;border-bottom:1px solid #e9eef4;font-size:13px}
+.arow .n{grid-row:1/3;color:var(--wb-faint);font-size:12px;text-align:right;padding-top:4px}
+.arow .l1{display:flex;align-items:center;gap:10px;height:24px;white-space:nowrap}
+.arow .l1 .ti{font-weight:600}
+.arow .l1 .af{color:var(--wb-muted);font-size:12px}
+.arow .l1 .grow{flex:1}
+.arow .l1 .m{color:var(--wb-muted);font-size:12px}
+.arow .l1 .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.arow .l2{display:flex;align-items:center;gap:0;height:22px}
+.arow .l2 .cp{margin-left:auto;color:var(--wb-muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:12px}
+.st{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--font-ui);color:#8d9aab;white-space:nowrap}
+.st .dot{width:8px;height:8px}
+.st.passed{color:var(--wb-muted)} .st.passed .dot{background:#8ea0b6;box-shadow:none}
+.st.ahead .dot{background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.st.skip{color:#a9b4c2;text-decoration:line-through}
+.st.skip .dot{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6}
+.st.cur{font-weight:600}
+.st.cur[data-tone=info]{color:var(--wb-info-ink)} .st.cur[data-tone=ask]{color:var(--wb-ember-ink)} .st.cur[data-tone=fail]{color:var(--wb-danger-ink)} .st.cur[data-tone=ok],.st.ok{color:var(--wb-ok-ink)}
+.st.ok .dot{background:var(--lamp-ok);box-shadow:none}
+.st .sub{font-weight:400;color:var(--wb-muted)}
+.st.ok .sub,.st.cur[data-tone=ok] .sub{color:var(--kind-pr);font-weight:600}
+.seg{width:26px;height:1.5px;background:#cbd5e1;margin:0 8px;flex:none}
+.seg.passed{background:#8ea0b6}
+
+/* direction B: the card */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 12px}
+.card{background:var(--wb-well);border-radius:7px;box-shadow:var(--depth-row),0 0 0 1px var(--wb-rule-soft);display:flex;flex-direction:column;font-size:13px;overflow:hidden}
+.card .hd{display:flex;align-items:center;gap:8px;padding:8px 10px 2px}
+.card .hd .n{color:var(--wb-faint);font-size:12px}
+.card .hd .ti{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .mid{padding:2px 10px 8px;color:var(--wb-muted);font-size:12px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.card .mid .cp{overflow:hidden;text-overflow:ellipsis}
+.card .ft{border-top:1px solid #edf1f6;background:var(--wb-steel-2);padding:6px 10px;display:flex;align-items:center;gap:8px}
+.card.sel{box-shadow:var(--depth-row),0 0 0 2px var(--wb-sel-vivid)}
+
+/* CheckGadget (the kit's switch species: the sliding toggle is dead, HS-111-01) */
+.ck{display:inline-flex;align-items:center;gap:7px;font-size:13px;white-space:nowrap}
+.ck i{width:16px;height:16px;border:1px solid #bbc7d6;background:var(--wb-well);border-radius:3px;display:grid;place-items:center}
+.ck.on i::after{content:"";width:8px;height:4.5px;border-left:2px solid var(--wb-sel);border-bottom:2px solid var(--wb-sel);transform:translateY(-1px) rotate(-45deg)}
+/* the token form in a toolbar: a quiet pill toggle; on, the selection blue */
+.tokt{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;border:1px solid var(--wb-rule-soft);color:var(--wb-muted);font:500 13px var(--font-ui);white-space:nowrap}
+.tokt.on{border-color:var(--wb-sel);background:var(--wb-blue);color:var(--wb-sel)}
+/* the Runs on picker (a menu, the Engines window's list and words) */
+.menu .grp{font:600 12px var(--font-ui);color:var(--wb-muted);padding:6px 9px 2px}
+.menu .ro{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;height:32px;padding:0 9px;border-radius:5px;font-size:13px}
+.menu .ro.in{padding-left:24px;grid-template-columns:20px 1fr auto}
+.menu .ro.hot{background:var(--wb-blue)}
+.menu .ro .chk{color:var(--wb-sel);font-weight:700;margin-left:6px}
+.menu .ft{border-top:1px solid var(--wb-rule-soft);margin-top:4px;padding:8px 9px 4px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--wb-muted)}
+/* folds (FoldGadget) */
+.fold{border-top:1px solid var(--wb-rule-soft);margin-top:8px}
+.fold .fh{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12.5px var(--font-ui);color:var(--wb-ink)}
+.fold .fh .chev{width:12px;color:var(--wb-muted);font-size:10px}
+.fold .fh .q{font-weight:400;color:var(--wb-muted);font-size:12px}
+.gate{padding:2px 12px 10px 32px;display:grid;grid-template-columns:110px 1fr;row-gap:7px;font-size:13px;align-items:center}
+.gate .k{color:var(--wb-muted);font-size:12px}
+.gate .sections{display:flex;gap:14px;flex-wrap:wrap}
+.gate code{font:12.5px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);padding:2px 6px;border-radius:4px}
+.cpl{padding:0 12px 8px 32px}
+.cpl .c{height:28px;display:grid;grid-template-columns:20px 140px 1fr 56px;align-items:center;gap:8px;font-size:13px;border-bottom:1px solid #eef2f6}
+.cpl .c .who{font-size:12px;color:var(--wb-muted)}
+.cpl .c .m{font-size:12px;color:var(--wb-faint);text-align:right;font-variant-numeric:tabular-nums}
+.av{width:20px;height:20px;border-radius:50%;background:#1f7a6b;color:#fff;display:grid;place-items:center;font:600 9.5px var(--font-ui)}
+
+/* fields in Drafting: StringGadget + MicButton, CycleGadget, PadGadget */
+.fld{display:flex;align-items:center;height:26px;background:var(--wb-well);border:1px solid var(--wb-rule);border-radius:5px;overflow:hidden;min-width:0}
+.fld span{flex:1;padding:0 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld .mic{flex:0 0 26px;height:100%;border-left:1px solid var(--wb-rule-soft);display:grid;place-items:center;background:var(--wb-steel-2)}
+.mic svg{width:12px;height:12px;stroke:var(--wb-muted);fill:none;stroke-width:1.6;stroke-linecap:round}
+.cyc{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:26px;padding:0 8px;border-radius:5px;background:var(--wb-steel-2);border:1px solid var(--wb-rule);font-size:12.5px;white-space:nowrap;box-shadow:inset 0 1px 0 #fff}
+.cyc::after{content:"▾";font-size:10px;color:var(--wb-muted)}
+.drow{height:36px;display:grid;grid-template-columns:22px minmax(0,1fr) 150px 200px 84px 84px 96px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.drow .n{color:var(--wb-faint);font-size:12px;text-align:right}
+.drow .tok{display:inline-flex;gap:4px;overflow:hidden}
+.tokn{font:12px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.drow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.pad{margin:6px 12px 8px 44px;border:1px solid var(--wb-rule);border-radius:6px;background:var(--wb-well);display:grid;grid-template-columns:1fr 30px;min-height:84px}
+.pad .tx{padding:8px 10px;font-size:13px;line-height:1.5}
+.pad .mic{border-left:1px solid var(--wb-rule-soft);display:grid;place-items:start center;padding-top:8px;background:var(--wb-steel-2)}
+
+/* the Templates menu (depth-menu) */
+.menu{position:absolute;z-index:5;background:var(--wb-paper);border-radius:8px;box-shadow:var(--depth-menu),0 0 0 1px var(--wb-rule-soft);padding:5px;width:330px}
+.menu .mi{display:grid;grid-template-columns:20px 1fr;gap:2px 10px;padding:7px 9px;border-radius:5px}
+.menu .mi.hot{background:var(--wb-blue)}
+.menu .mi b{font:600 13px var(--font-ui)}
+.menu .mi span{grid-column:2;font-size:12px;color:var(--wb-muted)}
+
+/* empty state: the object, one line, one Button */
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-size:13px;color:var(--wb-muted)}
+.empty .obj{width:96px;height:96px;margin:0 auto 12px;border-radius:24px;background:linear-gradient(160deg,#eef3fa,#d9e4f3);display:grid;place-items:center;box-shadow:var(--depth-row),inset 0 1px 0 #fff}
+.empty b{display:block;font:600 15px var(--font-ui);color:var(--wb-ink);margin-bottom:4px}
+.empty p{max-width:420px;margin:0 auto 14px}
+
+/* the dock glass */
+.dock{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:12px;padding:8px 14px;border-radius:16px;background:rgba(30,43,58,.72);box-shadow:var(--depth-dock),inset 0 0 0 1px rgba(233,238,245,.16)}
+.dock .tile{position:relative;width:48px;height:48px;display:grid;place-items:center;border-radius:10px}
+.dock .tile.on{background:rgba(233,238,245,.12)}
+.dock .lampd{position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--lamp-ask);--t:var(--lamp-ask);box-shadow:0 0 0 1.5px #1e2b3a}
+.dock .badge{position:absolute;right:-6px;top:-4px;background:#2f67c8;color:#fff;font:600 11px/1 var(--font-ui);padding:3px 5px;border-radius:9px}
+
+/* phones (393) */
+.phones{display:flex;gap:48px;align-items:flex-start;margin:18px 0 0 10px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:#223142;font-family:var(--font-ui);color:var(--wb-ink);container:surface/inline-size}
+.ph-menu{position:absolute;left:0;right:0;top:0;height:44px;background:#fbfcfe;display:flex;align-items:center;gap:14px;padding:0 14px;font-size:14px}
+.ph-win{position:absolute;left:0;right:0;top:44px;bottom:84px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{flex:0 0 44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 14px var(--font-ui)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tool{flex:0 0 52px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.ph-tool .btn{height:44px;font-size:14px;padding:0 14px}
+.ph-tool .grow{flex:1}
+.ph-body{flex:1;overflow:hidden;position:relative}
+.ph-sb{flex:0 0 26px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.ph-dock{position:absolute;left:8px;right:8px;bottom:10px;height:64px;border-radius:16px;background:rgba(30,43,58,.85);display:flex;align-items:center;justify-content:space-around;box-shadow:inset 0 0 0 1px rgba(233,238,245,.16)}
+.prow{padding:8px 12px 8px 12px;border-bottom:1px solid #e9eef4;display:grid;grid-template-columns:auto 1fr auto;column-gap:10px;row-gap:3px;align-items:center;min-height:60px}
+.prow .t{font:600 14px var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .m{grid-column:2/4;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .n{color:var(--wb-faint);font-size:12px;width:16px;text-align:right}
+.ph-band{height:28px;display:flex;align-items:center;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.phone .well{margin:10px 10px 6px}
+.phone .well .wr{flex-wrap:wrap;padding:8px 10px 10px 14px;row-gap:8px}
+.phone .well .wr .t{white-space:normal;flex:1 1 100%}
+.phone .well .wr .vb{flex:1 1 100%}
+.phone .well .wr .btn{height:44px;font-size:14px;padding:0 16px}
+.measure{position:absolute;right:-2px;border-left:1.5px solid #e5483d;font:600 10px var(--font-ui);color:#e5483d;padding-left:3px}
+
+/* seams */
+.seams{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1440px}
+.seam{background:var(--page-card);border-radius:8px;padding:14px 16px;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.seam h3{margin:0 0 10px}
+.crop{background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;overflow:hidden;box-shadow:var(--depth-row);color:var(--wb-ink)}
+.nrow{height:31px;display:flex;align-items:center;gap:10px;padding:0 10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.nrow .t{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.nrow .m{color:var(--wb-muted);font-size:12px}
+.grp{height:24px;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.agrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.agrow .tx{flex:1;min-width:0}
+.agrow .tx b{display:block;font-weight:600}
+.agrow .tx span{font-size:12px;color:var(--wb-muted)}
+.agrow .tx a{color:var(--wb-info-ink);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--wb-info-ink) 35%,transparent)}
+.today{padding:10px 14px;font-size:14px;line-height:1.7}
+.today .cap{font:600 12px var(--font-ui);color:var(--wb-muted);margin-bottom:2px}
+.today .ln{display:flex;align-items:center;gap:8px}
+.today .ln.new{background:color-mix(in srgb,var(--lamp-ask) 8%,transparent);margin:0 -14px;padding:0 14px}
+
+/* the ecosystem (§9b) */
+.eco{display:grid;grid-template-columns:1fr;gap:26px;margin-top:20px;max-width:1440px}
+.eco h3{margin:0 0 8px}
+.place{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 6px;border-radius:4px;color:var(--wb-ink);font:500 12px var(--font-ui)}
+.place .spr{width:14px;height:14px}
+.place .av{width:14px;height:14px;font-size:7px}
+.tokn.press{font:500 12px var(--font-ui);background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule);border-radius:10px;padding:2px 9px;color:var(--wb-muted)}
+.sec{padding:10px 16px 4px}
+.sec .h{display:flex;align-items:center;gap:10px;font:600 13px var(--font-ui);margin-bottom:4px}
+.sec .h::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.rrow{height:32px;display:grid;grid-template-columns:24px 1fr 110px 70px 120px 60px;align-items:center;gap:10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.rrow .m{color:var(--wb-muted);font-size:12px}
+.rrow .t{font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.brief{padding:10px 16px;font-size:13.5px;line-height:1.6}
+.brief .h{font:600 12px var(--font-ui);color:var(--wb-muted);margin:8px 0 2px}
+.brief ul{margin:0;padding-left:18px}
+.av.alice{background:#8870cb}
+.st.person .av{width:16px;height:16px;font-size:8px}
+/* the sprite sheet */
+.sheet{display:flex;gap:36px;align-items:flex-end;flex-wrap:wrap}
+.sheet figure{margin:0;text-align:center;font-size:12px;opacity:.9}
+.sheet figure>div{display:grid;place-items:center;min-height:72px}
+.zoom{position:relative;line-height:0;background:#fff;box-shadow:0 0 0 1px var(--wb-rule)}
+.zoom canvas{image-rendering:pixelated;display:block}
+.zoom::after{content:"";position:absolute;inset:0;background-image:linear-gradient(to right,rgba(38,59,83,.14) 1px,transparent 1px),linear-gradient(to bottom,rgba(38,59,83,.14) 1px,transparent 1px);background-size:var(--cell) var(--cell);pointer-events:none}
+.onbar{background:var(--wb-sel);padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:8px;color:#f7f9fc;font:600 13px var(--font-ui)}
+pre.parts{font:12px/1.5 var(--font-mono);background:var(--page-card);padding:12px 14px;border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);max-width:900px;overflow:auto}
+.trackbig{background:var(--wb-paper);color:var(--wb-ink);border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);padding:12px 16px;display:grid;grid-template-columns:150px 1fr 230px;gap:16px;align-items:center;max-width:1180px;margin:10px 0}
+.trackbig .lbl{font:600 13px var(--font-ui)}
+.trackbig .lbl span{display:block;font-weight:400;font-size:12px;color:var(--wb-muted)}
+
+/* ── PG-REQ additions: the kit's FilterTokens, the search StringGadget, the
+   kind Token, the Met column, the requirement rows (all from kit values) ── */
+.srch{display:flex;align-items:center;height:28px;width:230px;background:var(--wb-well);border:1px solid var(--wb-rule);border-radius:6px;overflow:hidden;margin-left:6px}
+.srch .gl{width:26px;display:grid;place-items:center;color:var(--wb-muted)}
+.srch .gl svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
+.srch span.v{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;color:var(--wb-ink)}
+.srch span.ph{flex:1;font-size:13px;color:var(--wb-faint)}
+.srch .mic{flex:0 0 26px;height:100%;border-left:1px solid var(--wb-rule-soft);display:grid;place-items:center;background:var(--wb-steel-2)}
+.srch .caret-i{display:inline-block;width:1px;height:15px;background:var(--wb-ink);vertical-align:-3px;margin-left:1px}
+.ftoks{display:inline-flex;gap:2px;padding:2px;border-radius:6px;background:var(--wb-steel)}
+.ftok{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:4px;font:500 12px/1 var(--font-mono);text-transform:uppercase;letter-spacing:.02em;color:var(--wb-ink);background:var(--wb-steel-2);box-shadow:inset 0 1px 0 #fff,0 0 0 1px var(--wb-rule-soft)}
+.ftok.on{background:var(--wb-sel);color:#f7f9fc;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.ftok .dot{width:7px;height:7px}
+.kt{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;font:500 12px/1 var(--font-ui);color:var(--wb-muted);background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.kt[data-k=check]{color:#2b4a7a;box-shadow:inset 0 0 0 1px #b9c9e4;background:#f3f7fd}
+.kt[data-k=shot]{color:#2b6a50;box-shadow:inset 0 0 0 1px #b8dcc8;background:#f2faf5}
+.kt[data-k=word]{color:var(--wb-ember-ink);box-shadow:inset 0 0 0 1px #ecc9ac;background:#fdf6f0}
+.metc{font-size:12px;color:var(--wb-muted);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.metc.all{color:var(--wb-ok-ink);font-weight:500}
+.metc .dot{width:7px;height:7px}
+.rq{height:32px;display:grid;grid-template-columns:30px 112px minmax(0,1fr) 84px 150px 190px 160px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.rq>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rq .id{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.rq .tx{font-weight:500;color:var(--wb-ink)}
+.rq .sc2{font-size:12px;color:var(--wb-muted);display:flex;align-items:center;gap:6px}
+.rq .ev{font-size:12px;color:var(--wb-muted);display:flex;align-items:center;gap:6px}
+.rq .vb{display:flex;gap:6px;justify-content:flex-end;overflow:visible}
+.rq.waived .tx{text-decoration:line-through;color:var(--wb-muted);font-weight:400}
+.rq.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.rq.ask{background:color-mix(in srgb,var(--lamp-ask) 6%,var(--wb-paper))}
+.mini{display:inline-flex;gap:3px;align-items:center}
+.mini i{width:7px;height:7px;border-radius:50%;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.mini i.ok{background:var(--lamp-ok);box-shadow:none}
+.mini i.fail{background:var(--lamp-fail);box-shadow:none}
+.mini i.ask{background:var(--lamp-ask);box-shadow:none}
+.addrow{min-height:38px;display:grid;grid-template-columns:30px minmax(0,1fr) 112px 132px auto 92px 64px;align-items:center;gap:10px;padding:5px 12px;border-bottom:1px solid #e9eef4;font-size:13px;background:color-mix(in srgb,var(--wb-field) 35%,var(--wb-paper))}
+.addrow .id{color:var(--wb-faint);font-size:12px;text-align:right}
+.addrow .fld span.ph{color:var(--wb-faint)}
+.addrow .cmd span{font:12.5px var(--font-mono)}
+.addrow .hint{display:flex;align-items:center;gap:6px}
+.fldrow{display:flex;gap:6px;align-items:center}
+.wellsub{margin:0 12px 6px 54px;padding:6px 10px 8px;border-radius:0 0 6px 6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:12.5px;color:var(--wb-ink);display:grid;grid-template-columns:110px 1fr;row-gap:5px}
+.wellsub .k{color:var(--wb-muted);font-size:12px}
+.thumb{width:240px;height:150px;border-radius:5px;box-shadow:0 0 0 1px var(--wb-rule);background:linear-gradient(#3b5d93 0 14px,#fafbfc 14px);position:relative;overflow:hidden}
+.thumb i{position:absolute;left:10px;right:10px;height:7px;border-radius:2px;background:#dfe6ef}
+/* the board with the Met column */
+.crow2{height:32px;display:grid;grid-template-columns:22px minmax(0,190px) 250px 70px 118px 54px minmax(0,1fr) 84px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.crow2>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow2 .n{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.crow2 .ti{font-weight:600}
+.crow2 .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.crow2 .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.crow2 .el,.crow2 .cp{color:var(--wb-muted);font-size:12px}
+.crow2 .op{text-align:right;overflow:visible}
+.crow2.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.crow2.kidr{height:28px;background:color-mix(in srgb,var(--wb-field) 40%,var(--wb-paper));grid-template-columns:22px minmax(0,1fr) 112px 84px 160px}
+.crow2.kidr .tx{padding-left:18px;position:relative;font-size:12.5px}
+.crow2.kidr .tx::before{content:"";position:absolute;left:5px;top:-5px;width:8px;height:13px;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.lhead2{height:26px;display:grid;align-items:center;gap:10px;padding:0 12px;font-size:12px;font-weight:600;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+/* the matrix (direction B) */
+.mx{display:grid;grid-template-columns:22px minmax(0,220px) repeat(3,92px) 120px 1fr;align-items:center;gap:0 10px;padding:0 12px;font-size:13px}
+.mx>div{height:30px;display:flex;align-items:center;border-bottom:1px solid #e9eef4;white-space:nowrap;overflow:hidden}
+.mx .h{height:26px;font-size:12px;font-weight:600;color:var(--wb-muted);background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.mx .c{justify-content:center}
+.mx .n{color:var(--wb-faint);font-size:12px;justify-content:flex-end}
+.legend{padding:6px 12px 8px;font-size:12px;color:var(--wb-muted);display:flex;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--wb-rule-soft)}
+.legend b{color:var(--wb-ink);font-weight:600}
+/* the strip of the Program's own (direction C) */
+.ownstrip{margin:8px 12px 2px;display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:13px}
+/* the step fold head */
+.sfh{display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;font:600 12.5px var(--font-ui)}
+.sfh .grow{flex:1}
+.sfh .q{font-weight:400;color:var(--wb-muted);font-size:12px}
+.sfbody{padding:4px 0 8px}
+.brieftx{margin:4px 12px 6px 32px;padding:8px 12px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:13px;line-height:1.5}
+.brieftx .amd{margin-top:8px;padding-top:6px;border-top:1px dashed var(--wb-rule);color:var(--wb-ink)}
+.brieftx .amd b{font-weight:600;color:var(--wb-muted);font-size:12px;display:block}
+.sub{border-top:1px solid #eef2f6}
+.sub .fh{height:28px}
+/* phones */
+.prq{padding:8px 12px;border-bottom:1px solid #e9eef4;display:grid;grid-template-columns:26px 1fr;column-gap:8px;row-gap:4px;font-size:13px}
+.prq .id{color:var(--wb-faint);font-size:12px;text-align:right;padding-top:2px}
+.prq .l1{display:flex;align-items:center;gap:8px;min-width:0}
+.prq .l1 .tx{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.prq .l2{grid-column:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--wb-muted)}
+.prq .btn{height:44px;font-size:14px;padding:0 14px}
+
+/* ── PG-JOURNEYS additions: storyboards, the program text, the question well,
+   the diff well, the Note, the call transcript (all from the kit values above) ── */
+.story{display:grid;grid-template-columns:repeat(2,680px);gap:26px 28px;margin-top:16px}
+.story.three{grid-template-columns:repeat(3,452px);gap:22px 20px}
+.frame{display:flex;flex-direction:column;gap:8px}
+.frame .cap{font-size:13px;line-height:1.45;max-width:680px}
+.frame .cap b{font:600 14px var(--font-display);margin-right:6px}
+.frame .cap .when{display:inline-block;font:500 12px var(--font-mono);color:var(--wb-muted);margin-right:8px}
+.frame .stage{position:relative;border-radius:6px;padding:14px;background:radial-gradient(120% 90% at 20% 0%,#45607f 0%,#2f435b 45%,#233244 100%);box-shadow:0 0 0 1px var(--wb-rule)}
+.frame .stage .win{position:relative;left:auto;top:auto}
+.frame .press{font-size:12.5px;color:var(--page-ink);opacity:.9}
+.frame .press i{font-style:normal;display:inline-block;padding:1px 8px;border-radius:10px;background:var(--wb-sel);color:#f7f9fc;font:500 12px var(--font-ui);margin-left:4px}
+/* the program text (the grammar is PG-LANG's; this is the reading form) */
+.ptx{margin:8px 12px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);padding:6px 0;font-size:13px}
+.ptx .l{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:24px;padding:0 10px 0 0;white-space:nowrap}
+.ptx .l>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ptx .l .g{color:var(--wb-faint);font:12px var(--font-mono);text-align:right}
+.ptx .l .x b{font-weight:600}
+.ptx .l .x .mu{color:var(--wb-muted)}
+.ptx .l .x code{font:12px var(--font-mono);background:var(--wb-field);padding:1px 5px;border-radius:4px}
+.ptx .l.in .x{padding-left:18px}
+.ptx .l.add{background:color-mix(in srgb,var(--lamp-ok) 14%,var(--wb-well))}
+.ptx .l.add .g{color:var(--wb-ok-ink)}
+.ptx .l.chg{background:color-mix(in srgb,var(--lamp-info) 12%,var(--wb-well))}
+.ptx .l.chg .g{color:var(--wb-info-ink)}
+.ptx .l.asm .x{color:var(--wb-muted)}
+.ptx .l.lit{animation:none}
+@media (prefers-reduced-motion: no-preference){ .ptx .l.lit{animation:litonce 2.4s ease-in-out 1} }
+@keyframes litonce{0%{box-shadow:inset 3px 0 0 var(--lamp-ok)}50%{box-shadow:inset 3px 0 0 var(--lamp-ok),0 0 0 3px color-mix(in srgb,var(--lamp-ok) 22%,transparent)}100%{box-shadow:inset 3px 0 0 transparent}}
+.tg{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font:500 11.5px/1 var(--font-ui);color:var(--wb-muted);background:var(--wb-field)}
+.tg.dr{color:var(--wb-info-ink);background:var(--pill-info)}
+.tg.as{color:var(--wb-ember-ink);background:var(--pill-accent)}
+/* the question well (direction A) */
+.qw{margin:8px 12px 4px;border-radius:7px;background:color-mix(in srgb,var(--lamp-info) 6%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-info),0 0 0 1px color-mix(in srgb,var(--lamp-info) 30%,var(--wb-rule-soft));padding:8px 12px 10px 16px}
+.qw .rd{font:600 12px var(--font-ui);color:var(--wb-info-ink);display:flex;align-items:center;gap:8px}
+.qw .rd .grow{flex:1}
+.qw .rd .m{font-weight:400;color:var(--wb-muted);white-space:nowrap}
+.qw .q{font:600 14px/1.35 var(--font-ui);color:var(--wb-ink);margin:4px 0 8px}
+.qw .ans{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.qw .ans .mic{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;background:var(--wb-steel-2);border:1px solid var(--wb-rule)}
+.qw .pv{margin-top:8px;font-size:12px;color:var(--wb-muted);display:grid;gap:2px}
+.qw .pv span::before{content:"~ ";font-family:var(--font-mono);color:var(--wb-info-ink)}
+.rstrip{display:inline-flex;gap:2px;padding:2px;border-radius:6px;background:var(--wb-steel)}
+.rstrip .ftok{font-size:11px;padding:0 6px;letter-spacing:0}
+.rstrip .ftok .dot{width:7px;height:7px}
+.rstrip .ftok.done{background:var(--pill-ok);color:var(--wb-ok-ink)}
+/* the round sheet (direction B) */
+.sheetq{display:grid;grid-template-columns:minmax(0,1fr) 260px 28px 112px;align-items:center;gap:10px;min-height:34px;padding:0 12px 0 32px;border-bottom:1px solid #e9eef4;font-size:13px}
+.sheetq .q{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheetq .cyc{width:100%}
+.sheetq .mic{width:26px;height:26px;border-radius:5px;display:grid;place-items:center;background:var(--wb-steel-2);border:1px solid var(--wb-rule)}
+.sheetq.skip .q{color:var(--wb-muted)}
+.foot{display:flex;justify-content:flex-end;gap:8px;padding:8px 12px;border-bottom:1px solid var(--wb-rule-soft)}
+/* the shape field and the diff well */
+.shape{display:flex;align-items:center;gap:6px;margin:8px 12px 0}
+.shape .fld{flex:1;height:auto;min-height:28px;align-items:stretch}
+.shape .fld span{white-space:normal;padding:5px 8px;line-height:1.4}
+.dfw{margin:8px 12px 4px;border-radius:7px;background:var(--wb-well);box-shadow:inset 3px 0 0 var(--lamp-info),0 0 0 1px var(--wb-rule-soft)}
+.dfw .cap2{height:28px;display:flex;align-items:center;gap:8px;padding:0 10px 0 14px;font:600 12px var(--font-ui);color:var(--wb-info-ink)}
+.dfw .cap2 .grow{flex:1}
+.dl{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:32px;padding:3px 10px 3px 14px;border-top:1px solid var(--wb-rule-soft);font-size:13px}
+.dl .s{font:600 13px var(--font-mono);text-align:center}
+.dl.add .s{color:var(--wb-ok-ink)} .dl.chg .s{color:var(--wb-info-ink)}
+.dl .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl .tx code{font:12px var(--font-mono);background:var(--wb-field);padding:1px 5px;border-radius:4px}
+.dl .sub2{grid-column:2/4;font-size:12px;color:var(--wb-muted);margin-top:-2px}
+.dl .vb{display:flex;gap:6px}
+/* the journey board row */
+.jrow{height:32px;display:grid;grid-template-columns:22px minmax(0,1fr) 236px 64px 96px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.jrow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.jrow .n{color:var(--wb-faint);font-size:12px;text-align:right}
+.jrow .ti{font-weight:600}
+.jrow .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.jrow .bud{font-size:12px;color:var(--wb-muted);font-variant-numeric:tabular-nums}
+.jrow .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.jrow.new{background:color-mix(in srgb,var(--lamp-ok) 9%,var(--wb-paper))}
+.jrow.chg{background:color-mix(in srgb,var(--lamp-info) 8%,var(--wb-paper))}
+.jrow.added .ti::after{content:"Added for you";margin-left:8px;font:500 11.5px var(--font-ui);color:var(--wb-ember-ink);background:var(--pill-accent);padding:2px 7px;border-radius:9px}
+/* the Note pullout (rendered Markdown in place) */
+.nb{padding:12px 18px;font-size:13.5px;line-height:1.55;color:var(--wb-ink)}
+.nb h4{font:600 15px var(--font-display);margin:10px 0 4px}
+.nb h4:first-child{margin-top:0}
+.nb .lead{font-weight:600}
+.nb ul{margin:2px 0 6px;padding-left:18px}
+.nb li{margin:1px 0}
+.nb .mu{color:var(--wb-muted)}
+.nb a{color:var(--wb-info-ink);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--wb-info-ink) 35%,transparent)}
+/* the call transcript (the Calls window) */
+.tl{display:grid;grid-template-columns:62px 1fr;gap:4px 10px;padding:6px 14px;font-size:13px;border-bottom:1px solid #eef2f6}
+.tl .who{font:600 12px var(--font-ui);color:var(--wb-muted);padding-top:1px}
+.tl.hs .who{color:var(--wb-info-ink)}
+.tl.you .tx{font-weight:500}
+.tl .hold{grid-column:2;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--wb-ember-ink)}
+.callhd{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--wb-rule-soft);font-size:13px}
+.callhd .grow{flex:1}
+/* the phone message (the Phone app; a 393 frame cut to 560) */
+.mphone{position:relative;width:330px;height:520px;overflow:hidden;border-radius:26px;box-shadow:0 0 0 7px #1a2430,0 0 0 8px #46566a;background:var(--wb-paper);font-family:var(--font-ui);color:var(--wb-ink);margin:6px auto}
+.mphone .top{height:40px;display:flex;align-items:center;justify-content:center;font:600 13px var(--font-ui);background:#fbfcfe;border-bottom:1px solid var(--wb-rule-soft)}
+.mphone .msg{margin:12px;border-radius:12px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft),var(--depth-row);padding:10px 12px}
+.mphone .msg .fr{font:600 12px var(--font-ui);color:var(--wb-muted);display:flex;gap:6px;align-items:center}
+.mphone .msg .bd{font-size:14px;line-height:1.4;margin:6px 0 10px}
+.mphone .msg .vb{display:flex;gap:8px}
+.mphone .msg .vb .btn{height:44px;font-size:14px;padding:0 16px;flex:1;justify-content:center}
+.mphone .meta{font-size:12px;color:var(--wb-muted);text-align:center;margin-top:6px}
+/* the automation fields (label · control grid) */
+.agrid{display:grid;grid-template-columns:120px 1fr;gap:8px 12px;align-items:center;padding:12px 16px;font-size:13px}
+.agrid .k{color:var(--wb-muted);font-size:12px}
+.agrid .v{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.agrid .new{box-shadow:0 0 0 2px color-mix(in srgb,var(--lamp-ask) 60%,transparent);border-radius:6px}
+.legendnew{font-size:12.5px;color:var(--page-ink);opacity:.85;margin-top:6px}
+.legendnew span{box-shadow:0 0 0 2px color-mix(in srgb,var(--lamp-ask) 60%,transparent);border-radius:4px;padding:0 4px}
+.ledl{display:grid;grid-template-columns:44px 20px minmax(0,1fr) 64px;align-items:center;gap:8px;height:30px;padding:0 12px 0 32px;border-bottom:1px solid #eef2f6;font-size:13px}
+.ledl .m{font-size:12px;color:var(--wb-faint);font-variant-numeric:tabular-nums}
+.ledl .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* PG-LANG reconciliation: the Text view (TextPane: gutter lamps, mono keywords, his words in sans, faint lamps) */
+.tp{margin:8px 12px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);padding:4px 0;font:12px/20px var(--font-mono);color:var(--wb-ink)}
+.tp .l{display:grid;grid-template-columns:14px 14px minmax(0,1fr) auto;align-items:center;gap:4px;min-height:20px;padding-right:10px;white-space:pre}
+.tp .l>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tp .l .lm{display:grid;place-items:center}
+.tp .l .lm i{width:7px;height:7px;border-radius:50%}
+.tp .l .mk{color:var(--wb-faint);text-align:center}
+.tp .l.add{background:color-mix(in srgb,var(--lamp-ok) 12%,var(--wb-well))} .tp .l.add .mk{color:var(--wb-ok-ink)}
+.tp .l.chg{background:color-mix(in srgb,var(--lamp-info) 10%,var(--wb-well))} .tp .l.chg .mk{color:var(--wb-info-ink)}
+.tp .his{font-family:var(--font-ui);font-size:12.5px}
+.tp .kw{color:#2b4a7a}
+.tp .rid{color:var(--wb-info-ink);font-weight:500}
+.tp .lp{color:var(--wb-faint);font-family:var(--font-ui);font-size:11.5px}
+.tp .q{color:var(--wb-muted)}
+/* the question row folded to one line */
+.qfold{margin:6px 12px 0;font-size:12.5px;color:var(--wb-muted);display:flex;gap:10px;align-items:center}
+.qfold b{color:var(--wb-ink);font-weight:500}
+.qw .why{font-size:12px;color:var(--wb-muted);margin:-4px 0 8px}
+.dl .vd{white-space:nowrap}
+</style>
+</head>
+<body>
+<main>
+  <h1>Programs: modeled user journeys <span class="tag">Storyboards for PG-JOURNEYS</span></h1>
+  <p>Four journeys, frame by frame, in the real window grammar: title bar, one toolbar, the content, one status bar. Each frame says what the engine did, what you see, and what you press. Design: <code>docs/internal/betterment/programs/PROGRAM-JOURNEYS-2026-10-31.md</code>. Every Program text here follows the grammar of <code>PROGRAM-LANGUAGE-2026-10-31.md</code> §3.2 (PG-LANG, #1666), and every word on a face is PG-LANG's (§9). Every part is a kit piece at real size, in the material of <code>canvases/programs-requirements-2026-10-31.html</code>.</p>
+
+  <div class="rec" id="recommendation">
+    <p><b>The interview round: A, one question on the board (recommended; PG-LANG's R-A).</b> The round strip over the plan, one question row under it: the question, its why, up to three offered answers, your own words with the mic, <i>Skip question</i>. Your answer folds to one line and its diff rows wait in the change well for <i>Apply</i>; <i>Done with Architecture</i> closes the round. Voice works because there is one thing to answer.</p>
+    <p style="margin:0">B, the round sheet, shows every question of a round as rows and shapes them together with <i>Apply the round</i>: the fastest form when you know every answer, but it reads as a form, and you asked for one at a time. A done round prints as a <code>round</code> block in the Text view, so the whole interview stays readable without B.</p>
+  </div>
+
+  <!-- ─────────────── the interview round: two directions ─────────────── -->
+  <section class="part" id="interview">
+    <h2>The interview round: two directions</h2>
+    <p class="note">The same program in Drafting after <b>Plan it</b> and <b>Ask me first</b>: <i>Meeting recap in the Note</i>, four drafted steps, round <b>Architecture</b>, the Text view on.</p>
+    <div class="moment"><div class="say"><b>A · One question, in place <span class="tag">Recommended</span></b>The strip over the plan, Architecture breathing; Skip round at its right (Done with Architecture is withheld while a question waits). The offered answers are plated library Buttons.</div>
+      <div class="frame"><div class="stage" style="width:1050px"><div data-mount="int-A"></div></div></div></div>
+    <div class="moment"><div class="say"><b>B · The round sheet <span class="tag alt">Direction</span></b>Each round is a fold of question rows; you answer in any order with a CycleGadget or the mic, then <i>Apply the round</i> shapes all of its answers into one change well.</div>
+      <div class="frame"><div class="stage" style="width:1050px"><div data-mount="int-B"></div></div></div></div>
+  </section>
+
+  <!-- ─────────────── J1 ─────────────── -->
+  <section class="part" id="j1">
+    <h2>J1 · Two paragraphs to a shipped change</h2>
+    <p class="note">Tuesday 14:10. You paste two paragraphs (a recap at the end of a meeting's Note; under 20 seconds; no made-up owners; Alice sees it first). Plan it, Ask me first, five rounds of one question each, then Start. Normal.</p>
+    <div class="story" data-mount="j1"></div>
+  </section>
+
+  <!-- ─────────────── J2 ─────────────── -->
+  <section class="part" id="j2">
+    <h2>J2 · The dreaming program</h2>
+    <p class="note">Weeknights 23:30 to 07:00 on the idle home box. A cheap planner cuts the backlog into steps whose estimate is at most half the 64k budget; pi builds on qwen when idle; Claude Code reviews; YOLO merges. The morning is "Since last night" and only what is yours. Outlined: what LANG12 adds to the automation.</p>
+    <div class="story" data-mount="j2"></div>
+  </section>
+
+  <!-- ─────────────── J3 ─────────────── -->
+  <section class="part" id="j3">
+    <h2>J3 · Shaping a running program by voice</h2>
+    <p class="note">Wednesday 16:00. <i>The hub stops stalling</i> runs at Normal: steps 1 and 2 merged, step 4 working. Three spoken sentences become one change well of diff rows.</p>
+    <div class="story" data-mount="j3"></div>
+  </section>
+
+  <!-- ─────────────── J6 ─────────────── -->
+  <section class="part" id="j6">
+    <h2>J6 · Start and steer from the Phone and the Line</h2>
+    <p class="note">Thursday 23:10 in the car, and Friday 06:40 in the kitchen. Start and status by voice exist (#1663). New: the item's verbs on a phone message (JRN6) and the prepared answer from a call (JRN5, the default). A spoken yes that decides needs your ruling (PG-LANG §15.10, JRN7).</p>
+    <div class="story" data-mount="j6"></div>
+  </section>
+
+  <section class="part">
+    <h2>What this canvas could not establish</h2>
+    <ul class="note">
+      <li>The Text view here is drawn in CSS; PG-LANG's <code>TextPane</code> (LANG2) starts as a textarea with an overlaid gutter.</li>
+      <li>The desk floor, the phone and the Calls window are CSS, not recorded shots. No product guard reads <code>docs/</code> canvases, so the words here are proven by reading only.</li>
+      <li>The estimates ("18k of 64k") are illustrations; the sizing rule is PG-LANG §5.4, and the estimate and the held word use two denominators there (budget and share), noted for LANG8.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const SPR = {"program": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"22\" y=\"7\" width=\"33\" height=\"22\" rx=\"4\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"15\" y=\"17\" width=\"35\" height=\"23\" rx=\"4\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"8\" y=\"29\" width=\"39\" height=\"27\" rx=\"4\" id=\"__ID__-s3\"/><clipPath id=\"__ID__-c3\"><use href=\"#__ID__-s3\"/></clipPath><clipPath id=\"__ID__-m3\"><use href=\"#__ID__-s3\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#ffffff\"/><use href=\"#__ID__-s2\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><rect x=\"21\" y=\"23\" width=\"17\" height=\"3.5\" rx=\"1.75\" fill=\"#9fb3c8\"/></g><g clip-path=\"url(#__ID__-c3)\"><use href=\"#__ID__-s3\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s3\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m3)\"><use href=\"#__ID__-s3\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s3\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><polyline points=\"16,42.5 39,42.5\" fill=\"none\" stroke=\"#f4f8fc\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><circle cx=\"16\" cy=\"42.5\" r=\"3.2\" fill=\"#f4f8fc\"/><circle cx=\"27.5\" cy=\"42.5\" r=\"3.2\" fill=\"#f4f8fc\"/><circle cx=\"39\" cy=\"42.5\" r=\"4.2\" fill=\"#ecaa45\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "cartridge": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><polygon points=\"12,8 44,8 52,16 52,56 12,56\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"18\" y=\"15\" width=\"27\" height=\"22\" rx=\"2\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#cdbff5\"/><use href=\"#__ID__-s2\" fill=\"#5c479c\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#8870cb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><polyline points=\"23,22 38,22\" fill=\"none\" stroke=\"#cdbff5\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><g class=\"detail\"><polyline points=\"23,28 34,28\" fill=\"none\" stroke=\"#cdbff5\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><rect x=\"20\" y=\"44\" width=\"4\" height=\"8\" rx=\"1.5\" fill=\"#263b53\"/><rect x=\"27\" y=\"44\" width=\"4\" height=\"8\" rx=\"1.5\" fill=\"#263b53\"/><rect x=\"34\" y=\"44\" width=\"4\" height=\"8\" rx=\"1.5\" fill=\"#263b53\"/><rect x=\"41\" y=\"44\" width=\"4\" height=\"8\" rx=\"1.5\" fill=\"#263b53\"/></g></svg>", "agent-claude-code": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"7\" y=\"7\" width=\"50\" height=\"50\" rx=\"11\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"20\" y=\"14\" width=\"24\" height=\"25\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffe0a3\"/><use href=\"#__ID__-s1\" fill=\"#b0731a\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#ecaa45\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M16 56V53A11 11 0 0 1 27 42H37A11 11 0 0 1 48 53V56Z\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"21\" width=\"18\" height=\"9\" rx=\"4\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"26\" y=\"24\" width=\"4\" height=\"3\" rx=\"1.5\" fill=\"#8ff0df\"/><rect x=\"34\" y=\"24\" width=\"4\" height=\"3\" rx=\"1.5\" fill=\"#8ff0df\"/><polygon points=\"32,45 33.6,48.4 37,50 33.6,51.6 32,55 30.4,51.6 27,50 30.4,48.4\" fill=\"#ecaa45\"/></g></svg>", "agent-codex": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"7\" y=\"7\" width=\"50\" height=\"50\" rx=\"11\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"20\" y=\"14\" width=\"24\" height=\"25\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s1\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M16 56V53A11 11 0 0 1 27 42H37A11 11 0 0 1 48 53V56Z\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"22\" width=\"18\" height=\"7\" rx=\"3.5\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"26\" y=\"24.5\" width=\"12\" height=\"2\" rx=\"1\" fill=\"#8ff0df\"/><rect x=\"26\" y=\"46\" width=\"12\" height=\"3\" rx=\"1.5\" fill=\"#259c96\"/></g></svg>", "agent-pi": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"7\" y=\"7\" width=\"50\" height=\"50\" rx=\"11\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"20\" y=\"14\" width=\"24\" height=\"25\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#cdbff5\"/><use href=\"#__ID__-s1\" fill=\"#5c479c\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#8870cb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M16 56V53A11 11 0 0 1 27 42H37A11 11 0 0 1 48 53V56Z\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><polyline points=\"32,14 32,10\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/><circle cx=\"32\" cy=\"10\" r=\"2.6\" fill=\"#ecaa45\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"21\" width=\"18\" height=\"9\" rx=\"4\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"28\" cy=\"25.5\" r=\"2\" fill=\"#8ff0df\"/><circle cx=\"36\" cy=\"25.5\" r=\"2\" fill=\"#8ff0df\"/></g></svg>", "pull-request": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><circle cx=\"20\" cy=\"15\" r=\"6\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"20\" cy=\"49\" r=\"6\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"44\" cy=\"49\" r=\"6\" id=\"__ID__-s3\"/><clipPath id=\"__ID__-c3\"><use href=\"#__ID__-s3\"/></clipPath><clipPath id=\"__ID__-m3\"><use href=\"#__ID__-s3\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><polyline points=\"20,20 20,44\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(5px * var(--lw) + var(--ow) * 1.8)\"/><polyline points=\"20,20 20,44\" fill=\"none\" stroke=\"#9fb3c8\" style=\"stroke-width:calc(5px * var(--lw))\"/><path d=\"M44 44V30Q44 19 34 19H30\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(5px * var(--lw) + var(--ow) * 1.8)\"/><path d=\"M44 44V30Q44 19 34 19H30\" fill=\"none\" stroke=\"#9fb3c8\" style=\"stroke-width:calc(5px * var(--lw))\"/><polygon points=\"31,12.5 23.5,19 31,25.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s1\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s2\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c3)\"><use href=\"#__ID__-s3\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s3\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m3)\"><use href=\"#__ID__-s3\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s3\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "note": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><polygon points=\"14,7 40,7 50,17 50,56 14,56\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffffff\"/><use href=\"#__ID__-s1\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><polygon points=\"40,7 40,17 50,17\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"20\" y=\"26\" width=\"22\" height=\"5\" rx=\"2.5\" fill=\"#ecaa45\"/><rect x=\"20\" y=\"36\" width=\"24\" height=\"4\" rx=\"2\" fill=\"#9fb3c8\"/><g class=\"detail\"><rect x=\"20\" y=\"45\" width=\"16\" height=\"4\" rx=\"2\" fill=\"#9fb3c8\"/></g></g></svg>", "project-drawer": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><polygon points=\"43,5.5 57,12 43,18.5\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"7\" y=\"26\" width=\"50\" height=\"29\" rx=\"3\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M9 19V13A3 3 0 0 1 12 10H25A3 3 0 0 1 28 13V19Z\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"9\" y=\"15\" width=\"46\" height=\"36\" rx=\"3\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"13\" y=\"19\" width=\"38\" height=\"20\" rx=\"2\" fill=\"#f4f8fc\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><polyline points=\"18,24 37,24\" fill=\"none\" stroke=\"#6b829b\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><polyline points=\"43,27 43,7\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2.6px * var(--lw))\"/><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffe0a3\"/><use href=\"#__ID__-s1\" fill=\"#b0731a\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#ecaa45\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s2\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "repository": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"9\" y=\"7\" width=\"46\" height=\"49\" rx=\"4\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"14\" y=\"12\" width=\"36\" height=\"19\" rx=\"2\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"14\" y=\"35\" width=\"36\" height=\"16\" rx=\"2\" id=\"__ID__-s3\"/><clipPath id=\"__ID__-c3\"><use href=\"#__ID__-s3\"/></clipPath><clipPath id=\"__ID__-m3\"><use href=\"#__ID__-s3\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s2\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"20\" y=\"15.5\" width=\"24\" height=\"12\" rx=\"3\" fill=\"#f4f8fc\" stroke=\"#263b53\" class=\"ol\"/><polyline points=\"28,18 24.5,21.5 28,25\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/><polyline points=\"36,18 39.5,21.5 36,25\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/><g clip-path=\"url(#__ID__-c3)\"><use href=\"#__ID__-s3\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s3\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m3)\"><use href=\"#__ID__-s3\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s3\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"26\" y=\"40.5\" width=\"12\" height=\"5\" rx=\"2.5\" fill=\"#f4f8fc\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "meeting": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"8\" y=\"14\" width=\"48\" height=\"42\" rx=\"4\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M8 26V18A4 4 0 0 1 12 14H52A4 4 0 0 1 56 18V26Z\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffffff\"/><use href=\"#__ID__-s1\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s2\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"18\" y=\"8\" width=\"5\" height=\"10\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"41\" y=\"8\" width=\"5\" height=\"10\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"24.5\" cy=\"35\" r=\"5\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M17 52V49A7 7 0 0 1 24 42H25A7 7 0 0 1 32 49V52Z\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"39.5\" cy=\"35\" r=\"5\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M32 52V49A7 7 0 0 1 39 42H40A7 7 0 0 1 47 49V52Z\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "person": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><circle cx=\"32\" cy=\"21\" r=\"10\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M13 56V52A17 17 0 0 1 30 35H34A17 17 0 0 1 51 52V56Z\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s1\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s2\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "dock-intelligence": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"23\" y=\"41\" width=\"18\" height=\"13\" rx=\"3\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"32\" cy=\"25\" r=\"17\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><polyline points=\"24,46 40,46\" fill=\"none\" stroke=\"#6b829b\" style=\"stroke-width:calc(1.6px * var(--lw))\"/></g><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#ffe0a3\"/><use href=\"#__ID__-s2\" fill=\"#b0731a\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#ecaa45\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><polyline points=\"26,29 29,23 32,29 35,23 38,29\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2.2px * var(--lw))\"/><rect x=\"29\" y=\"54\" width=\"6\" height=\"3\" rx=\"1.5\" fill=\"#263b53\"/></g></svg>", "dock-agents": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"7\" y=\"7\" width=\"50\" height=\"50\" rx=\"11\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"20\" y=\"14\" width=\"24\" height=\"25\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s1\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M16 56V53A11 11 0 0 1 27 42H37A11 11 0 0 1 48 53V56Z\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"16\" y=\"22\" width=\"5\" height=\"9\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"43\" y=\"22\" width=\"5\" height=\"9\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"21\" width=\"18\" height=\"9\" rx=\"4\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"28\" cy=\"25.5\" r=\"2\" fill=\"#8ff0df\"/><circle cx=\"36\" cy=\"25.5\" r=\"2\" fill=\"#8ff0df\"/></g></svg>", "dock-meetings": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"8\" y=\"14\" width=\"48\" height=\"42\" rx=\"4\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M8 26V18A4 4 0 0 1 12 14H52A4 4 0 0 1 56 18V26Z\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffffff\"/><use href=\"#__ID__-s1\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s2\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"18\" y=\"8\" width=\"5\" height=\"10\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"41\" y=\"8\" width=\"5\" height=\"10\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"24.5\" cy=\"35\" r=\"5\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M17 52V49A7 7 0 0 1 24 42H25A7 7 0 0 1 32 49V52Z\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"39.5\" cy=\"35\" r=\"5\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M32 52V49A7 7 0 0 1 39 42H40A7 7 0 0 1 47 49V52Z\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "dock-people": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><circle cx=\"41\" cy=\"19\" r=\"8\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M28 52V43A12 12 0 0 1 40 31H42A12 12 0 0 1 54 43V52Z\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"25\" cy=\"25\" r=\"9\" id=\"__ID__-s3\"/><clipPath id=\"__ID__-c3\"><use href=\"#__ID__-s3\"/></clipPath><clipPath id=\"__ID__-m3\"><use href=\"#__ID__-s3\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M10 56V52A14 14 0 0 1 24 38H26A14 14 0 0 1 40 52V56Z\" id=\"__ID__-s4\"/><clipPath id=\"__ID__-c4\"><use href=\"#__ID__-s4\"/></clipPath><clipPath id=\"__ID__-m4\"><use href=\"#__ID__-s4\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c3)\"><use href=\"#__ID__-s3\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s3\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m3)\"><use href=\"#__ID__-s3\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s3\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c4)\"><use href=\"#__ID__-s4\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s4\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m4)\"><use href=\"#__ID__-s4\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s4\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "dock-speak": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"20\" y=\"50\" width=\"24\" height=\"6\" rx=\"3\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"23\" y=\"6\" width=\"18\" height=\"32\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><polyline points=\"17,25 17,32 20,39 26,43 32,44 38,43 44,39 47,32 47,25\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(3px * var(--lw) + var(--ow) * 1.8)\"/><polyline points=\"17,25 17,32 20,39 26,43 32,44 38,43 44,39 47,32 47,25\" fill=\"none\" stroke=\"#9fb3c8\" style=\"stroke-width:calc(3px * var(--lw))\"/><polyline points=\"32,45 32,50\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(3px * var(--lw) + var(--ow) * 1.8)\"/><polyline points=\"32,45 32,50\" fill=\"none\" stroke=\"#9fb3c8\" style=\"stroke-width:calc(3px * var(--lw))\"/><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"29\" width=\"18\" height=\"5\" rx=\"0\" fill=\"#259c96\" stroke=\"#263b53\" class=\"ol\"/><polyline points=\"27.5,13 36.5,13\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/><g class=\"detail\"><polyline points=\"27.5,18 36.5,18\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><polyline points=\"27.5,23 36.5,23\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/></g></svg>", "record-orb": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><circle cx=\"32\" cy=\"32\" r=\"23\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"32\" cy=\"32\" r=\"14\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffffff\"/><use href=\"#__ID__-s1\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#ffa79f\"/><use href=\"#__ID__-s2\" fill=\"#a3302b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#e2554f\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>"};
+let SID = 0;
+function spr(name, size){ const svg = SPR[name].replaceAll("__ID__", "x" + (++SID)); return `<span class="spr s${size}">${svg}</span>`; }
+const AG = {claude:["agent-claude-code","Claude Code"], codex:["agent-codex","Codex"], pi:["agent-pi","pi"]};
+const ST = ["Brief","Work","Check","Review","PR","Merge"];
+const MIC = `<svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg>`;
+const G = {
+  play:`<svg viewBox="0 0 16 16"><path d="M5 3.5v9l7-4.5z"/></svg>`,
+  park:`<svg viewBox="0 0 16 16"><rect x="4" y="3.5" width="2.5" height="9" rx="1"/><rect x="9.5" y="3.5" width="2.5" height="9" rx="1"/></svg>`,
+  plus:`<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>`,
+  race:`<svg viewBox="0 0 16 16"><path d="M2.5 5h8M2.5 11h8M9 3l2.5 2L9 7M9 9l2.5 2L9 13"/></svg>`,
+  note:`<svg viewBox="0 0 16 16"><path d="M4 2.5h5.5L12 5v8.5H4Z M9.5 2.5V5H12 M6 8h4M6 10.5h4"/></svg>`,
+  log:`<svg viewBox="0 0 16 16"><path d="M3 4h10M3 8h10M3 12h6"/></svg>`,
+  temp:`<svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="4" rx="1"/><rect x="2.5" y="9.5" width="5" height="4" rx="1"/><rect x="9.5" y="9.5" width="4" height="4" rx="1"/></svg>`,
+};
+
+/* the state of a step → its six stations, its word, its tone, its chip */
+const STEPW = {planned:["Planned","idle","idle"],ready:["Ready","idle","idle"],working:["Working","info","working"],checking:["Checking","info","working"],
+  check_failed:["Check failed","fail","failure"],review:["In review","info","working"],findings:["Findings","ask","active"],pr_open:["PR open","info","working"],
+  merge_ask:["Merge?","ask","active"],merged:["Merged","ok","success"],parked:["Parked","idle","idle"],failed:["Failed","fail","failure"],asks:["Asks you","ask","active"],held:["Ready · waiting for qwen","idle","idle"]};
+const AT = {planned:-1,ready:-1,working:1,checking:2,check_failed:2,review:3,findings:3,pr_open:4,merge_ask:5,merged:5,asks:1,held:-1};
+function stations(s){
+  const at = s.st === "parked" || s.st === "failed" ? (s.at ?? 2) : AT[s.st];
+  const [, tone] = STEPW[s.st];
+  return ST.map((w, i) => {
+    if (s.noreview && i === 3) return {w, k:"skip"};
+    if (s.person && i === 3) { const k = i < at ? "passed" : (i === at ? "cur" : "ahead"); return {w: s.person, k, tone: i === at ? tone : undefined, person: true, sub: i === at ? "reviews" : null}; }
+    if (s.st === "merged") return {w, k: i === 5 ? "ok" : "passed", sub: i === 5 ? "#" + s.pr : (i === 2 ? s.chk : (i===3 && s.rv ? s.rv : null))};
+    if (i < at) return {w, k:"passed", sub: i === 2 ? s.chk : (i === 3 ? s.rv : (i === 4 && s.pr ? "#" + s.pr : null))};
+    if (i === at) return {w, k:"cur", tone, sub: s.sub};
+    return {w, k:"ahead"};
+  });
+}
+function word(s){
+  const [w, tone] = STEPW[s.st];
+  let t = w;
+  if (s.st === "merged") t = `Merged <span class="pr">#${s.pr}</span>`;
+  if (s.st === "merge_ask") t = `Merge? <span class="pr">#${s.pr}</span>`;
+  if (s.st === "check_failed") t = `Check failed · log`;
+  if (s.word) t = s.word;
+  if (s.st === "held") return `<span class="dw" data-tone="idle"><i class="dot" style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"></i>${t}</span>`;
+  return `<span class="dw" data-tone="${tone}"${s.st==="merged"?' style="color:var(--wb-ok-ink)"':''}>${t}</span>`;
+}
+function dots(s){
+  const sts = stations(s); let h = "";
+  sts.forEach((x, i) => {
+    if (i) h += `<i class="ln ${x.k === "passed" || x.k === "ok" || (x.k === "cur") ? "passed" : ""}"></i>`;
+    const live = x.k === "cur" && (x.tone === "info" || x.tone === "ask") ? " live" : "";
+    if (x.person) { h += `<span class="av alice" style="width:14px;height:14px;font-size:7px;flex:none;box-shadow:${x.k==="cur"?"0 0 0 2px var(--lamp-ask)":"none"}" title="Review: ${x.w}">${x.w[0]}</span>`; return; }
+    h += `<i class="d ${x.k}${live}"${x.tone ? ` data-tone="${x.tone}"` : ""} title="${x.w}"></i>`;
+  });
+  return `<span class="dots" aria-label="${sts.map(x=>x.w+" "+x.k).join(", ")}">${h}</span>`;
+}
+function wordsTrack(s){
+  const sts = stations(s);
+  return sts.map((x, i) => {
+    const seg = i ? `<i class="seg ${x.k==="passed"||x.k==="ok"||x.k==="cur"?"passed":""}"></i>` : "";
+    const live = x.k === "cur" && (x.tone === "info" || x.tone === "ask") ? " live" : "";
+    const tone = x.k === "cur" ? ` data-tone="${x.tone}"` : (x.k === "ok" ? ' data-tone="ok"' : "");
+    if (x.person) return `${seg}<span class="st ${x.k} person"${tone}><span class="av alice">${x.w[0]}</span>${x.w}${x.sub ? ` <span class="sub">${x.sub}</span>` : ""}</span>`;
+    return `${seg}<span class="st ${x.k}"${tone}><i class="dot${live}"${tone}></i>${x.w}${x.sub ? ` <span class="sub">${x.sub}</span>` : ""}</span>`;
+  }).join("");
+}
+function agent(s, size=20){ if (!s.ag) return `<span class="ag"></span>`; const [sp, nm] = AG[s.ag]; return `<span class="ag">${spr(sp, size)}${s.agName || nm}${s.eng ? ` <span style="color:var(--wb-faint)">·</span> ${s.eng}` : ""}</span>`; }
+function kt(k){ const w = {check:"Check", review:"Review", shot:"Shot", word:"Your word"}[k]; return `<span class="kt" data-k="${k}">${w}</span>`; }
+const RQW = {not_yet:["Not yet","idle"], met:["Met","ok"], unmet:["Unmet","fail"], waived:["Waived","idle"], his:["Waits for you","ask"], checking:["Checking","info"]};
+function rqword(st){ const [w, t] = RQW[st]; const hollow = st === "not_yet" ? ' style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"' : ""; const live = st === "checking" || st === "his" ? " live" : "";
+  return `<span class="dw" data-tone="${t}"><i class="dot${live}"${hollow} data-tone="${t}"></i>${w}</span>`; }
+function mini(arr){ return `<span class="mini">${arr.map(x => `<i class="${x}"></i>`).join("")}</span>`; }
+
+/* ── PG-JOURNEYS: the storyboards, on PG-LANG's words and grammar ── */
+const M = {};
+const B = (w, k = "plate sm") => `<span class="btn ${k}">${w}</span>`;
+const P = (w) => B(w, "primary sm");
+const CODE = (t) => `<code>${t}</code>`;
+const ESC = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function tbar(name, icon = "program"){ return `<div class="tb"><span class="x">✕</span><span class="chip">${spr(icon,16)}</span><span class="name"><span>${name}</span></span><span class="gad"><i></i><i></i><i></i></span></div>`; }
+function W(name, o){
+  const tool = o.tool ? `<div class="toolbar">${o.tool}</div>` : "";
+  const sb = o.sb ? `<div class="sb">${o.sb.map(i => `<span class="it">${i}</span>`).join("")}</div>` : "";
+  return `<div class="win" style="width:${o.w || 652}px;height:${o.h || 420}px">${tbar(name, o.icon)}${tool}<div class="body">${o.body}</div>${sb}</div>`;
+}
+function frame(when, title, say, win, press, said){
+  return `<div class="frame"><div class="cap"><span class="when">${when}</span><b>${title}</b>${say}</div>
+    <div class="stage">${win}</div>${press ? `<div class="press">${said ? "You say" : "You press"}${press.map(p => `<i>${p}</i>`).join("")}</div>` : ""}</div>`;
+}
+const ROUNDS = ["Architecture", "Product", "Stack", "Verification", "Delivery"];
+function strip(states, verb){
+  const toks = ROUNDS.map((r, i) => {
+    const s = states[i] || "";
+    const dot = s === "done" ? '<i class="dot" data-tone="ok"></i>' : (s === "cur" ? '<i class="dot live" data-tone="info"></i>' : '<i class="dot" style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"></i>');
+    const st = s === "skip" ? ' style="text-decoration:line-through;color:var(--wb-faint)"' : "";
+    return `<span class="ftok${s === "cur" ? " on" : ""}${s === "done" ? " done" : ""}"${st}>${dot}${r}</span>`;
+  }).join("");
+  return `<div class="qw" style="padding:6px 12px 6px 16px;box-shadow:0 0 0 1px var(--wb-rule-soft);background:var(--wb-paper)"><div class="rd"><span class="rstrip">${toks}</span><span class="grow"></span>${verb || ""}</div></div>`;
+}
+function qrow(q, why, answers){
+  return `<div class="qw"><div class="q">${q}</div><div class="why">${why}</div>
+    <div class="ans">${answers.map(a => B(a)).join("")}<span class="fld" style="width:150px"><span class="ph" style="color:var(--wb-faint)">Your answer</span><i class="mic">${MIC}</i></span>${B("Skip question", "sm")}</div></div>`;
+}
+function qfold(q, a){ return `<div class="qfold"><span>?</span><b>${q}</b><span>=</span><b>${a}</b></div>`; }
+/* the change well: say head, diff rows (op · where · before → after · verdict), Apply / Not this */
+function well(say, engine, rows, verbs){
+  const v = verbs || `${P("Apply")}${B("Not this")}`;
+  return `<div class="dfw"><div class="cap2">${say}<span class="grow"></span><span style="font-weight:400;color:var(--wb-muted)">${engine || ""}</span></div>
+    ${rows.map(r => `<div class="dl ${r.op === "+" ? "add" : "chg"}"><span class="s">${r.op}</span><span class="tx"><b>${r.where}</b> ${r.what}</span><span class="vd">${r.v === "lowers" ? '<span class="dw" data-tone="ask"><i class="dot" data-tone="ask"></i>Lowers the bar</span>' : '<span class="dw" data-tone="ok"><i class="dot" data-tone="ok"></i>Allowed</span>'}</span></div>`).join("")}
+    <div class="foot" style="border:0;padding:6px 10px">${v}</div></div>`;
+}
+/* the Text view (TextPane): one line = [lamp tone, mark, text] */
+function tp(lines){
+  return `<div class="tp">${lines.map(([tone, mk, t, cls]) => {
+    let h = ESC(t);
+    let lamp = "";
+    const li = h.indexOf("   # ");
+    if (li >= 0) { lamp = h.slice(li + 5).trim(); h = h.slice(0, li); }
+    h = h.replace(/^(\s*)&gt; (.*)$/, (m, s, w) => `${s}&gt; <span class="his">${w}</span>`)
+         .replace(/^(\s*)(program|goal|in|control|check|agent|reviewer|planner|budget|when idle|night|within|template|spend up to|for|every step|at the end|step|owns|after|brief|review|merge|run|bound|walk|round|race)\b/, (m, s, k) => `${s}<span class="kw">${k}</span>`)
+         .replace(/\b(R\d+|R\+)( (?:check|review|shot|word|measure):)/, '<span class="rid">$1</span>$2')
+         .replace(/^(\s*)(\?|=)/, '$1<span class="q">$2</span>');
+    const dot = tone ? `<i style="background:var(--lamp-${tone})"></i>` : "";
+    return `<div class="l${cls ? " " + cls : ""}"><span class="lm">${dot}</span><span class="mk">${mk || ""}</span><span>${h}</span><span class="lp">${lamp ? "# " + lamp : ""}</span></div>`;
+  }).join("")}</div>`;
+}
+function jhead(cols){ return `<div class="lhead2" style="grid-template-columns:22px minmax(0,1fr) 236px 64px 96px"><span></span><span>Step</span><span>Track</span><span>${cols || "Met"}</span><span>Agent</span></div>`; }
+function jrow(s){
+  const met = s.met ? `<span class="metc${s.metall ? " all" : ""}">${s.mtone ? `<i class="dot" data-tone="${s.mtone}"></i>` : ""}${s.met}</span>` : (s.bud ? `<span class="bud">${s.bud}</span>` : "<span></span>");
+  return `<div class="jrow${s.cls ? " " + s.cls : ""}"><span class="n">${s.n}</span><span class="ti">${s.t}${s.after ? `<span class="af">${s.after}</span>` : ""}</span>
+    <span class="trk">${dots(s)}${word(s)}</span>${met}${agent(s, 16)}</div>`;
+}
+const VIEWS = (on) => `<span class="ftoks"><span class="ftok${on === "Board" ? " on" : ""}">Board</span><span class="ftok${on === "Text" ? " on" : ""}">Text</span></span>`;
+function dtb(start, view){ return `${start ? P(G.play + "Start") : B(G.play + "Start", "plate off")}${B(G.plus + "Add step", "")}<span class="grow"></span>${B('Control: Normal<span class="caret">▾</span>', "")}${VIEWS(view || "Text")}`; }
+function rtb(level, agentName, extra){ return `${B(G.park + "Park", "")}${B(G.plus + "Add step", "")}<span class="grow"></span>${extra || ""}${B(`Agent: ${agentName || "Claude Code"}<span class="caret">▾</span>`, "")}${B(`Control: ${level}<span class="caret">▾</span>`, "")}${VIEWS("Board")}`; }
+function shapebar(text, verb){ return `<div class="shape"><span class="fld"><span${text ? "" : ' style="color:var(--wb-faint)"'}>${text || "Change the program"}</span><i class="mic"${text ? ' style="background:var(--pill-info)"' : ""}>${MIC}</i></span>${P(verb || "Shape")}</div>`; }
+
+/* ── J1's text (PG-LANG §3.2) ── */
+const J1HEAD = [
+  ["", "", "# program text 1"],
+  ["info", "", "program Meeting recap in the Note"],
+  ["", "", "  in HoldSpeak · main · project HoldSpeak"],
+  ["", "", "  control normal"],
+  ["", "", "  reviewer Codex at delta"],
+];
+const J1DRAFT = [
+  ...J1HEAD,
+  ["", "+", "every step", "add"],
+  ["", "+", "  R1 review: The change does only what its brief says.", "add"],
+  ["", "+", "  R2 review: Each new behaviour has a test.", "add"],
+  ["", "+", "step + The recap from the transcript", "add"],
+  ["", "+", "  owns holdspeak/services/", "add"],
+  ["", "+", "step + No made-up owners", "add"],
+  ["", "+", "  R4 check: `uv run pytest -q tests/unit/test_recap_owners.py` is green.", "add"],
+  ["", "+", "step + The recap section in the Note", "add"],
+  ["", "+", "step + The recap in the export", "add"],
+];
+
+/* ── the interview: two directions (1020 wide) ── */
+M["int-A"] = () => W("Meeting recap in the Note", {w:1020, h:540, tool:dtb(false),
+  body: strip(["cur"], B("Skip round", "sm")) + qrow("Where does the recap run?", "It decides which files step 1 owns and what it must not touch.",
+      ["In the aftercare, after Stop", "As its own job", "In the Note window"]) + tp([
+      ...J1HEAD, ["", "", ""],
+      ["", "", "round Architecture · asking"],
+      ["", "", "  ? Where does the recap run?"],
+      ["", "", "round Product · open"],
+      ["", "", ""],
+      ["", "", "step 1 The recap from the transcript                       # Planned"],
+      ["", "", "  owns holdspeak/services/"],
+      ["", "", "step 2 No made-up owners                                    # Planned"],
+      ["", "", "  after 1"]]),
+  sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>8</b>&nbsp;requirements", "Architecture asking", "Project ▸ HoldSpeak"]});
+function sheetq(q, a){ return `<div class="sheetq"><span class="q">${q}</span><span class="cyc">${a}</span><span class="mic">${MIC}</span>${B("Skip question", "sm")}</div>`; }
+M["int-B"] = () => W("Meeting recap in the Note", {w:1020, h:540, tool:dtb(false),
+  body: `<div class="fold" style="margin-top:4px"><div class="fh"><span class="chev">▼</span>Architecture<span class="q">· 3 questions</span></div>
+      ${sheetq("Where does the recap run?", "In the aftercare, after Stop")}
+      ${sheetq("Where does the recap live?", "A section of the meeting's Note")}
+      ${sheetq("What must not change?", "The transcript store")}
+      <div class="foot">${P("Apply the round")}${B("Skip round")}</div></div>
+    <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Product<span class="q">· 2 questions</span></div></div>
+    <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Stack<span class="q">· 2 questions</span></div></div>
+    <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Verification<span class="q">· 3 questions</span></div></div>
+    <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Delivery<span class="q">· 2 questions</span></div></div>` + tp(J1HEAD),
+  sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>8</b>&nbsp;requirements", "<b>12</b>&nbsp;questions"]});
+
+/* ── J1 ── */
+M.j1 = () => [
+  frame("14:10", "Drafted", "Plan it read the two paragraphs. The draft is diff rows: every line is new, and nothing is written until you press.",
+    W("Meeting recap in the Note", {tool:dtb(false),
+      body: `<div class="dfw"><div class="cap2">4 steps · 8 requirements · 5 rounds to ask<span class="grow"></span><span style="font-weight:400;color:var(--wb-muted)">qwen3.8-27b · 14 s</span></div><div class="foot" style="border:0;padding:6px 10px">${B("Apply")}${P("Ask me first")}${B("Not this")}</div></div>` + tp(J1DRAFT),
+      sb:['<span class="dot" data-tone="info"></span>Drafting', "draft of 4 steps"]}), ["Ask me first"]),
+  frame("14:11", "One question", "The round strip over the plan; Architecture asks. Up to three offered answers, your own words with the mic, or Skip question.",
+    W("Meeting recap in the Note", {tool:dtb(false),
+      body: strip(["cur"], B("Skip round", "sm")) + qrow("Where does the recap run?", "It decides what step 1 owns.", ["In the aftercare, after Stop", "As its own job"]) + tp(J1HEAD.concat([["", "", "round Architecture · asking"], ["", "", "  ? Where does the recap run?"]])),
+      sb:['<span class="dot" data-tone="info"></span>Drafting', "Architecture asking"]}), ["In the aftercare, after Stop"]),
+  frame("14:12", "The answer is diff rows", "The question folds to one line. Its rows wait in the change well; Apply writes them, and Done with Architecture closes the round.",
+    W("Meeting recap in the Note", {tool:dtb(false),
+      body: strip(["cur"], B("Done with Architecture", "plate sm")) + qfold("Where does the recap run?", "In the aftercare, after Stop") +
+        well("Step 1 runs in the aftercare, after Stop", "qwen3.8-27b · 2.4 s", [
+          {op:"~", where:"step 1 · owns", what:"holdspeak/services/ → holdspeak/services/meeting_aftercare_service.py"},
+          {op:"~", where:"step 1 · brief", what:"+ “After Stop, write the recap at the end of the meeting's Note.”"}]) +
+        tp([["", "", "round Architecture · asking"], ["", "", "  ? Where does the recap run?"], ["", "", "  = In the aftercare, after Stop.   # → step 1 owns, step 1 brief"]]),
+      sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>2</b>&nbsp;changes to apply"]}), ["Apply", "Done with Architecture"]),
+  frame("14:15", "Verification picks the kind", "Product is done, Stack skipped. “Under 20 seconds” is a Measure with a bound; your try is Your word with walk lines.",
+    W("Meeting recap in the Note", {tool:dtb(false),
+      body: strip(["done", "done", "skip", "cur"], B("Done with Verification", "plate sm")) + qfold("How do we know “under 20 seconds”?", "Both") +
+        well("A measured run on step 1, and your word on step 4", "qwen3.8-27b · 3.1 s", [
+          {op:"+", where:"step 1", what:"R3 measure: The recap is in the Note under 20 s after Stop. · bound total &lt; 20 s"},
+          {op:"+", where:"step 4", what:"R8 word: I tried it on my desk after a real meeting. · 2 walk lines"}]) +
+        tp([["", "", "step 1 The recap in the aftercare"], ["", "+", "  R3 measure: The recap is in the Note under 20 s after Stop.", "add"], ["", "+", "    run uv run pytest -q tests/integration/test_recap_latency.py", "add"], ["", "+", "    bound total < 20 s", "add"]]),
+      sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>8</b>&nbsp;requirements", "For Alice"]}), ["Apply", "Done with Verification"]),
+  frame("15:40", "Execute and verify", "Started after Delivery. Step 1 merged; R3 measured 14.2 s. Step 2's reviewer answered R5 unmet; Normal gives the builder round 2 by rule.",
+    W("Meeting recap in the Note", {tool:rtb("Normal"), body: jhead() + [
+      {n:1, t:"The recap in the aftercare", st:"merged", pr:1699, ag:"claude", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
+      {n:2, t:"No made-up owners", st:"findings", ag:"claude", met:"3 of 4", mtone:"fail", word:"R5 unmet · round 2", after:"after 1", chk:"green"},
+      {n:3, t:"The recap section in the Note", st:"checking", ag:"claude", met:"3 to meet"},
+      {n:4, t:"The recap in the export", st:"planned", person:"Alice", met:"3 to meet", after:"after 2, 3"},
+    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Requirements<span class="q">· 6 of 14 met</span></div>
+      <div class="rq sel" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R5</span><span>${rqword("unmet")}</span><span class="tx">The recap never names an owner the transcript does not name.</span><span>${kt("review")}</span><span style="font-size:12px;color:var(--wb-muted)">“names Bob; no Bob”</span></div>
+      <div class="rq" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R3</span><span>${rqword("met")}</span><span class="tx">The recap is in the Note under 20 s after Stop.</span><span><span class="kt">Measure</span></span><span style="font-size:12px;color:var(--wb-ok-ink)">total 14.2 s (&lt; 20 s)</span></div></div>`,
+      sb:['<span class="dot" data-tone="info"></span>Running', "<b>1</b>&nbsp;of 4 done", "<b>6</b>&nbsp;of 14 met", "For Alice"]}), null),
+  frame("next day 09:05", "Prove", "Alice approved PR #1702. Your word holds the last merge; its walk lines are under the row. After Met and the end check: Done · 14 of 14 met.",
+    W("Meeting recap in the Note", {tool:rtb("Normal"), body: `<div class="well"><div class="cap"><span class="dot" data-tone="ask"></span>Your turn</div>
+      <div class="wr"><span class="t"><b>Step 4 · The recap in the export:</b> R8 · I tried it on my desk after a real meeting</span><span class="vb">${P("Met")}${B("Unmet")}</span></div>
+      <div class="wr" style="color:var(--wb-muted);font-size:12.5px"><span class="t">walk · Record a meeting of two minutes and press Stop · walk · Open its Note and read the recap</span></div></div>` + jhead() + [
+      {n:1, t:"The recap in the aftercare", st:"merged", pr:1699, ag:"claude", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
+      {n:2, t:"No made-up owners", st:"merged", pr:1700, ag:"claude", met:"4 of 4", metall:true, chk:"green", rv:"passed"},
+      {n:3, t:"The recap section in the Note", st:"merged", pr:1701, ag:"claude", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
+      {n:4, t:"The recap in the export", st:"merge_ask", pr:1702, person:"Alice", ag:"claude", met:"2 of 3", mtone:"ask", word:"Your word"},
+    ].map(jrow).join(""),
+      sb:['<span class="dot" data-tone="ask"></span>Your turn', "<b>3</b>&nbsp;of 4 done", "<b>12</b>&nbsp;of 14 met", "For Alice"]}), ["Met"]),
+].join("");
+
+/* ── J2 ── */
+const NEWF = (h) => `<span class="new">${h}</span>`;
+const DTB = () => rtb("YOLO", "pi on qwen3.8-27b", `<span class="tokt on">When idle</span>`).replace(`${B(G.plus + "Add step", "")}`, "");
+M.j2 = () => [
+  frame("set-up, once", "The dream is an automation", "Run a program with the Dreaming template; the night line comes from the Program (both LANG12, outlined).",
+    W("Nightly dream", {icon:"cartridge", h:400, tool:`${P("Turn on")}${B("Run now", "")}<span class="grow"></span>${B("Results", "")}`, body:`<div class="agrid">
+      <span class="k">Do</span><span class="v">${B('Run a program<span class="caret">▾</span>')}</span>
+      <span class="k">Template</span><span class="v">${NEWF(B('Dreaming<span class="caret">▾</span>'))}</span>
+      <span class="k">Level</span><span class="v">${B('YOLO<span class="caret">▾</span>')}</span>
+      <span class="k">Agent</span><span class="v">${B(`pi on qwen3.8-27b<span class="caret">▾</span>`)}</span>
+      <span class="k">When</span><span class="v">${B('Every weekday at 23:30<span class="caret">▾</span>')}</span>
+      <span class="k">Night</span><span class="v">${NEWF('<span class="tokn">23:30–07:00 · at most 8 steps</span>')}</span>
+      </div>`, sb:['<span class="dot"></span>Off', "Project ▸ HoldSpeak"]}), ["Turn on"]),
+  frame("set-up, once", "The program, as text", "The Program's own lines: the planner and its spend limit, the 64k budget, the night, and the folders it may touch.",
+    W("Dreaming · HoldSpeak", {h:400, tool:DTB().replace(VIEWS("Board"), VIEWS("Text")), body: tp([
+      ["", "", "# program text 1"],
+      ["info", "", "program Dreaming · HoldSpeak"],
+      ["", "", "  in HoldSpeak · main · project HoldSpeak"],
+      ["", "", "  template dreaming"],
+      ["", "", "  control yolo"],
+      ["", "", "  agent pi on qwen3.8-27b"],
+      ["", "", "  planner Claude Haiku"],
+      ["", "", "  spend up to $1"],
+      ["", "", "  reviewer Claude Code at glance"],
+      ["", "", "  budget 64k"],
+      ["", "", "  when idle"],
+      ["", "", "  night 23:30–07:00 · at most 8 steps"],
+      ["", "", "  within web/src/desk/, docs/, tests/unit/"],
+      ["", "", "every step"],
+      ["ok", "", "  R1 review: The change does only what its brief says."],
+      ["ok", "", "  R2 check: `uv run python scripts/ux_canon_scan.py` is green."]]),
+      sb:['<span class="dot"></span>Done · last night', "YOLO", "night 23:30–07:00"]}), null),
+  frame("23:31", "Planned to fit", "One tiny step per backlog item. A step fits when its estimate is at most half the budget; step 3 did not, so YOLO split it.",
+    W("Dreaming · HoldSpeak", {h:400, tool:DTB(), body: jhead("Estimate") + [
+      {n:1, t:"Line starting word", st:"working", ag:"pi", eng:"qwen", bud:"14k of 64k"},
+      {n:2, t:"Terminals buttons · toolbar", st:"held", ag:"pi", eng:"qwen", bud:"22k of 64k"},
+      {n:3, t:"Terminals buttons · rows", st:"planned", ag:"pi", eng:"qwen", bud:"19k of 64k", after:"after 2", cls:"new"},
+      {n:4, t:"Terminals buttons · wells", st:"planned", ag:"pi", eng:"qwen", bud:"21k of 64k", after:"after 3", cls:"new"},
+      {n:5, t:"Engines readiness at 393", st:"planned", ag:"pi", eng:"qwen", bud:"18k of 64k"},
+    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Decided for you<span class="q">· 1</span></div>
+      <div class="ledl"><span class="m">23:31</span><span>${spr("program",16)}</span><span class="tx">Split step 3 (too big for qwen · 41k of 32k): 2 parts · rule: YOLO splits</span>${B("Overturn")}</div></div>`,
+      sb:['<span class="dot" data-tone="info"></span>Running', "<b>9</b>&nbsp;steps", "YOLO", "until 07:00"]}), null),
+  frame("03:12", "The night runs", "Merged by rule. The canon scanner gave one more step. Step 7 needs holdspeak/db/, outside within: a core question, held for you.",
+    W("Dreaming · HoldSpeak", {h:400, tool:DTB(), body: jhead("Estimate") + [
+      {n:5, t:"Engines readiness at 393", st:"merged", pr:1714, ag:"pi", eng:"qwen", bud:"18k of 64k", chk:"green", rv:"passed"},
+      {n:6, t:"Engines readiness test", st:"review", ag:"pi", eng:"qwen", bud:"9k of 64k"},
+      {n:7, t:"Meetings keep the language", st:"asks", ag:"pi", eng:"qwen", bud:"24k of 64k", word:"Asks you · core"},
+      {n:10, t:"Calls words", st:"planned", ag:"pi", eng:"qwen", bud:"12k of 64k", cls:"added"},
+    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Decided for you<span class="q">· 7</span></div>
+      <div class="ledl"><span class="m">02:40</span><span>${spr("program",16)}</span><span class="tx">Added for you: step 10 · from the canon scanner · rule: YOLO adds a step</span>${B("Overturn")}</div>
+      <div class="ledl"><span class="m">03:12</span><span>${spr("program",16)}</span><span class="tx">Reached you: a message, held for quiet hours</span><span></span></div></div>`,
+      sb:['<span class="dot" data-tone="ask"></span>Your turn', "<b>5</b>&nbsp;of 10 merged", "<b>1</b>&nbsp;waits on you", "until 07:00"]}), null),
+  frame("07:00", "Since last night", "The handover note's top section: the night in one line, then what merged, what parked, what is yours, what it cost.",
+    W("Program: Dreaming · HoldSpeak", {icon:"note", h:400, tool:`${B("Done", "")}${B("Ask about this", "")}${B("Find the tasks", "")}<span class="grow"></span>${B('Project: HoldSpeak<span class="caret">▾</span>', "")}`, body:`<div class="nb">
+      <h4>Since last night</h4>
+      <div class="lead">23:30–06:52 · 10 steps · 8 merged · 1 parked · 1 waits on you</div>
+      <ul><li>Merged: <a>#1710</a> Line starting word · <a>#1711</a>, <a>#1712</a> Terminals buttons (split in 2) · <a>#1714</a> Engines at 393 · <a>#1715</a> · <a>#1716</a> · <a>#1717</a></li>
+      <li>Parked: step 9 · the night ended · continues from its checkpoint</li>
+      <li>Waits on you: step 7 · outside within: holdspeak/db/</li>
+      <li class="mu">Spent: $0.38 of $1 (the planner) · qwen 5 h 10 · Claude Code 41 min</li></ul>
+      <h4>Your turn</h4><ul><li>Step 7 · core question · Go on or Park</li></ul></div>`,
+      sb:["Project ▸ HoldSpeak", "Written 07:00 · engine"]}), null),
+  frame("07:01", "Only what is yours", "Needs you has the one core question. Today says the night in one line; the phone gets the same first line (JRN4).",
+    W("Needs you", {icon:"dock-intelligence", h:300, tool:`<span class="grow"></span>${B('All<span class="caret">▾</span>', "")}`, body:`
+      <div class="grp">Dreaming · HoldSpeak</div>
+      <div class="nrow"><span class="t">Step 7 asks you: the fix needs holdspeak/db/</span><span class="m">Now</span>${P("Go on")}${B("Park")}</div>
+      <div class="grp">Today</div>
+      <div class="today"><div class="ln new">${spr("program",16)} Dreaming: 8 merged, 1 waits on you</div><div class="ln">${spr("meeting",16)} 10:00 · Architecture review</div></div>`,
+      sb:["<b>1</b>&nbsp;needs you"]}), ["Go on"]),
+].join("");
+
+/* ── J3 ── */
+const RUN = [
+  {n:1, t:"Indexes", st:"merged", pr:1585, ag:"claude", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
+  {n:2, t:"Retention", st:"merged", pr:1587, ag:"claude", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
+  {n:3, t:"Projections off the loop", st:"pr_open", pr:1591, ag:"codex", met:"2 of 3"},
+  {n:4, t:"People routes", st:"working", ag:"codex", met:"3 to meet"},
+  {n:5, t:"Projects routes", st:"planned", ag:"claude", after:"after 2", met:"2 to meet"},
+  {n:6, t:"The fan-out", st:"planned", ag:"claude", after:"after 4, 5", met:"2 to meet"},
+];
+const SAID = "Every step must keep ruff green. Put a step before the fan-out that adds the loop watch. And the fan-out runs on qwen tonight, not Claude.";
+const J3ROWS = [
+  {op:"+", where:"every step", what:"R9 check: <code>uv run ruff check .</code> is green."},
+  {op:"+", where:"step 6", what:"The loop watch · after 4, 5"},
+  {op:"↕", where:"step 6", what:"before step 6 (step 6 is now step 7)"},
+  {op:"~", where:"step 7 · after", what:"4, 5 → 6"},
+  {op:"~", where:"step 7 · agent", what:"Claude Code → pi on qwen3.8-27b"},
+  {op:"+", where:"step 7", what:"when idle"}];
+M.j3 = () => [
+  frame("16:00", "He speaks", "The shaping bar's mic. The sentences fill the bar; nothing changes until Shape.",
+    W("The hub stops stalling", {tool:rtb("Normal"), body: shapebar(SAID) + jhead() + RUN.map(jrow).join(""),
+      sb:['<span class="dot" data-tone="info"></span>Running', "<b>2</b>&nbsp;of 6 done", "<b>9</b>&nbsp;of 16 met"]}), ["Shape"]),
+  frame("16:01", "The change well", "The say head, then one diff row per change, each with its verdict. None lowers the bar.",
+    W("The hub stops stalling", {h:440, tool:rtb("Normal"), body: shapebar("") + well("Add ruff to every step; add The loop watch before the fan-out; put the fan-out on qwen when idle", "qwen3.8-27b · 2.8 s", J3ROWS) + `<div style="opacity:.55">${jhead()}${RUN.slice(3).map(jrow).join("")}</div>`,
+      sb:['<span class="dot" data-tone="info"></span>Running', "<b>6</b>&nbsp;changes to apply"]}), ["Apply"]),
+  frame("16:02", "Applied in place", "The new step 6 lands with its dots drawn one by one; the fan-out is step 7 on qwen. R9 is on the five steps that are not merged.",
+    W("The hub stops stalling", {tool:rtb("Normal"), body: jhead() + [
+      RUN[2], RUN[3], RUN[4],
+      {n:6, t:"The loop watch", st:"planned", ag:"claude", after:"after 4, 5", met:"3 to meet", cls:"new"},
+      {n:7, t:"The fan-out", st:"planned", ag:"pi", eng:"qwen", after:"after 6", met:"3 to meet", cls:"chg"},
+    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Requirements<span class="q">· Every step</span></div>
+      <div class="rq" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R9</span><span>${rqword("not_yet")}</span><span class="tx">${CODE("uv run ruff check .")} is green</span><span>${kt("check")}</span><span class="sc2">${mini(["", "", "", "", ""])}<span>5 steps</span></span></div></div>`,
+      sb:['<span class="dot" data-tone="info"></span>Running', "<b>2</b>&nbsp;of 7 done", "<b>9</b>&nbsp;of 21 met"]}), null),
+  frame("16:02", "The same at YOLO", "At YOLO the allowed rows apply at once and are one line under Decided for you, with Overturn while the changed steps are planned. Below YOLO the ledger keeps “Changed by the text”.",
+    W("The hub stops stalling", {tool:rtb("YOLO"), body:`<div class="fold" style="margin-top:4px"><div class="fh"><span class="chev">▼</span>Decided for you<span class="q">· 4</span></div>
+      <div class="ledl"><span class="m">16:02</span><span>${spr("program",16)}</span><span class="tx">Shaped: ruff on every step; The loop watch before the fan-out; the fan-out on qwen · rule: YOLO applies a shaped change</span>${B("Overturn")}</div>
+      <div class="ledl"><span class="m">14:20</span><span>${spr("program",16)}</span><span class="tx">Merged step 2 · rule: YOLO merges on green, reviewed and met</span><span></span></div></div>
+      <div class="fold"><div class="fh"><span class="chev">▼</span>Ledger<span class="q">· the program</span></div>
+      <div class="ledl"><span class="m">16:02</span><span>${spr("program",16)}</span><span class="tx">Changed by the text: 6 changes</span><span></span></div>
+      <div class="ledl"><span class="m">16:02</span><span>${spr("program",16)}</span><span class="tx">Step 6 is now step 7</span><span></span></div></div>`,
+      sb:['<span class="dot" data-tone="info"></span>Running', "<b>2</b>&nbsp;of 7 done", "YOLO"]}), ["Overturn (if you want)"]),
+].join("");
+
+/* ── J6 ── */
+function tl(who, tx, cls, hold){ return `<div class="tl ${cls || ""}"><span class="who">${who}</span><span class="tx">${tx}</span>${hold ? `<span class="hold"><i class="dot live" data-tone="ask"></i>${hold}</span>` : ""}</div>`; }
+function callwin(time, lines, sb){ return W("Calls", {icon:"dock-speak", h:380, tool:`${B("Hang up", "primary sm")}<span class="grow"></span>${B("Calls", "")}${B("Phone", "")}`, body:`<div class="callhd"><b>The Line</b><span>· You</span><span class="grow"></span><span class="dw" data-tone="ok"><i class="dot live" data-tone="ok"></i>On a call · ${time}</span></div>` + lines.join(""), sb}); }
+M.j6 = () => [
+  frame("Thu 23:10", "Start by voice", "The call finds the program by its words and holds the start for your yes (#1663).",
+    callwin("0:42", [
+      tl("You", "Start the overnight program.", "you"),
+      tl("HoldSpeak", "I want to start the program Overnight on the home box. Say yes or no.", "hs", "Waits for your yes"),
+      tl("You", "Yes.", "you"),
+      tl("HoldSpeak", "Started. Nine steps. The first one runs when the home box is idle.", "hs")], ["Ready for calls", "Program started"]), ["Yes"], true),
+  frame("Fri 06:30", "The held message", "At 03:12 step 7 met a core question. It is not urgent, so quiet hours held the message. The item's verbs on the message are new (JRN6).",
+    `<div class="mphone"><div class="top">HoldSpeak</div><div class="msg"><div class="fr">${spr("program",16)}Overnight on the home box · 06:30</div>
+      <div class="bd">Step 7 asks you: the fix needs holdspeak/db/.</div><div class="vb">${P("Go on")}${B("Park")}</div></div>
+      <div class="meta">Held for quiet hours · 03:12</div></div>`, null),
+  frame("06:40", "How is it doing", "Two sentences: the state, the steps done, what waits on you, the last decision (#1663).",
+    callwin("0:18", [
+      tl("You", "How is the overnight program doing?", "you"),
+      tl("HoldSpeak", "Running. Six of nine steps merged. One waits on you: step 7 needs holdspeak/db/. Last decision: merged step 6 at 05:12.", "hs")], ["Ready for calls"]), null),
+  frame("06:40", "A prepared answer", "The default, with no ruling (JRN5): the call decides nothing. Your words become a prepared answer on the item; your press decides it.",
+    callwin("1:05", [
+      tl("You", "Step 7: go on, with a new column. Do not change the old rows.", "you"),
+      tl("HoldSpeak", "I put your answer on your desk: go on, with your words “a new column; do not change the old rows”. Press Go on there or on your phone.", "hs")], ["Ready for calls", "Answer prepared"]), null),
+  frame("06:41", "Your press decides", "The prepared row is in Needs you and on the phone. Your press types your words to step 7's agent at its next turn end. With your ruling (§15.10), a spoken yes would do it on the call.",
+    W("Needs you", {icon:"dock-intelligence", h:380, tool:`<span class="grow"></span>${B('All<span class="caret">▾</span>', "")}`, body:`
+      <div class="grp">Overnight on the home box</div>
+      <div class="nrow"><span class="t">Step 7 · Go on · “a new column; do not change the old rows”</span><span class="m">prepared on a call</span>${P("Go on")}${B("Not this")}</div>
+      <div class="grp">After the press · the Program's ledger</div>
+      <div class="ledl" style="padding-left:10px"><span class="m">06:41</span><span class="av">K</span><span class="tx">Answered by you: go on · prepared on a call</span>${B("Open call")}</div>
+      <div class="ledl" style="padding-left:10px"><span class="m">06:41</span><span>${spr("program",16)}</span><span class="tx">Typed at the turn end: “The owner on step 7: …”</span><span></span></div>`,
+      sb:["<b>1</b>&nbsp;needs you"]}), ["Go on (here or on the phone)"]),
+].join("");
+
+for (const el of document.querySelectorAll("[data-mount]")) el.innerHTML = M[el.dataset.mount]();
+</script>
+</body>
+</html>

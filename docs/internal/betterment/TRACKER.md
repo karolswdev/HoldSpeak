@@ -294,10 +294,10 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | REQ6 | Templates' requirements, the repository's defaults | Built (PG-REQ PR) | Review defaults plant only on reviewed templates; `ux_canon_scan` not planted. |
 | REQ7 | Adjust: change, insert before, move, amend, the frozen table | Built (PG-REQ PR) |  |
 | REQ8 | REST, MCP, the frame, list filters, fixtures | Built (PG-REQ PR) | 3 new tools (310 in all), 7 new routes. |
-| REQ9 | The Programs list: Find, Project, Person, Group, Met | Open (FACES lane) |  |
-| REQ10 | The Requirements board, Add requirement, Your turn kinds | Open (FACES lane) |  |
-| REQ11 | The step fold, the per-step Ledger, adjust in place | Open (FACES lane) |  |
-| REQ12 | The shot pullout and the evidence thumbnail | Open (FACES lane) |  |
+| REQ9 | The Programs list: Find, Project, Person, Group, Met | Shipped #1665 (2026-10-31) | `web/src/desk/programs/Requirements.tsx`. |
+| REQ10 | The Requirements board, Add requirement, Your turn kinds | Shipped #1665 (2026-10-31) | `web/src/desk/programs/Requirements.tsx`. |
+| REQ11 | The step fold, the per-step Ledger, adjust in place | Shipped #1665 (2026-10-31) | `web/src/desk/programs/Requirements.tsx`. |
+| REQ12 | The shot pullout and the evidence thumbnail | Shipped #1665 (2026-10-31) | `web/src/desk/programs/Requirements.tsx`. |
 | REQ13 | The documents | Built (PG-REQ PR) | `docs/programs.md`, the skill, RECIPE, UX-CANON, STATUS. |
 
 **PG-LANG** (open, 15 slices LANG1–LANG15, lanes HUB/FACES/DOCS, a PR per slice in the fast cycle; first slice on his desk = LANG1 + LANG2): the Program text (a line view that round-trips with the tables), shaping by sentence and voice, planning inference, interview rounds, sizing for small-context engines, the Dreaming template, Delivery Workbench at link and Done only, the SDK; design `programs/PROGRAM-LANGUAGE-2026-10-31.md`, canvas `programs/canvases/program-language-2026-10-31.html` (shaping S-A, rounds R-A), journeys `programs/PROGRAM-JOURNEYS-2026-10-31.md`.
@@ -319,6 +319,25 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | LANG13 | Delivery Workbench: link and the Done PR | Open |  |
 | LANG14 | The SDK: Python client and `holdspeak program` CLI | Open |  |
 | LANG15 | The documents | Open |  |
+
+**PG-JOURNEYS** (open, 14 slices JRN1–JRN14, lanes HUB/FACES/PHONE, a PR per slice after the LANG slice each follows): eight modeled journeys (J1 two paragraphs to a shipped change, J2 the dreaming program, J3 shaping by voice, J4 from the desk for a person, J5 the race, J6 the Phone and the Line, J7 a reviewer-only program, J8 teaching the engine), reconciled with PG-LANG; "What the journeys demand": 24 New, 23 In PG-LANG, 20 exist, 3 dropped. Design `programs/PROGRAM-JOURNEYS-2026-10-31.md`, slices in `programs/PROGRAM-LANGUAGE-2026-10-31.md` §13b, canvas `programs/canvases/program-journeys-2026-10-31.html` (storyboards J1, J2, J3, J6; the interview round, direction A = PG-LANG R-A).
+
+| Slice | What | State | Note |
+|---|---|---|---|
+| JRN1 | The draft proposes several Programs | Open | After LANG7. |
+| JRN2 | Add to tonight: the dreaming backlog mark | Open | After LANG12. |
+| JRN3 | The red-main hold for a night | Open | After LANG12. |
+| JRN4 | The night's end reaches him on the phone | Open | After LANG12. |
+| JRN5 | A spoken answer becomes a prepared answer | Open | After LANG5; the default, no ruling. |
+| JRN6 | The item's verbs on a phone message | Open | After LANG5. |
+| JRN7 | `program.decide` behind a spoken yes | Open | Only with the owner's ruling (PG-LANG §15.10). |
+| JRN8 | The Audit template | Open |  |
+| JRN9 | Findings filed as Door tasks; the Findings board | Open |  |
+| JRN10 | A proposed fix program from findings | Open |  |
+| JRN11 | The lesson rule and the Lesson row | Open |  |
+| JRN12 | Keep a lesson for the repository | Open |  |
+| JRN13 | Run as a program on a project action row | Open | With LANG6. |
+| JRN14 | The person gate's requirements and comments | Open | With LANG6. |
 
 ## Phone (`phone/RECIPE.md`): 0 of 16
 
