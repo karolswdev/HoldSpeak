@@ -1417,6 +1417,8 @@ slice: the repository file is the place.
 
 ## 15. Decisions for the owner (defaults chosen; say if another is wanted)
 
+**Ruled 2026-10-31 (owner, remote): "All defaults approved." Every default below stands as written; a lane builds it without a further gate.**
+
 1. **The text is a view; the tables stay the truth.** No `.program` file is
    stored by the hub; the CLI reads and writes files only on his machine for
    his scripts. Default: as written. The other choice: a repository may keep
