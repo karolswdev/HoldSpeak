@@ -14,7 +14,7 @@ Start with [What is HoldSpeak?](WHAT_IS_HOLDSPEAK.md) or the [root README](../RE
 | Hand a task to a coding agent | [Coder integration](CODER_INTEGRATION.md) | [Agent hooks](AGENT_HOOK_INSTALL.md), [Gate](GATE.md) |
 | Work with several live terminals | [Terminals](TERMINALS.md) | [Coder integration](CODER_INTEGRATION.md) |
 | Run a multi-step implementation goal | [Programs](programs.md) | [Coder integration](CODER_INTEGRATION.md) |
-| Work by phone or receive a work call | [Calls and The Line](calls.md) | [Phone](phone.md) |
+| Work by phone or receive a work call | [Calls and The Line](calls.md) | [Phone](phone.md), [Reach](reach.md) |
 | Make a useful job repeat | [Automation](AUTOMATION.md) | [Project Watches](PROJECT_ROOMS.md), [Cadence](CADENCE.md) |
 | Lead a Project or prepare for a 1:1 | [Project Rooms](PROJECT_ROOMS.md) | [People](PEOPLE_INTEGRATION.md), [Memory](RELATIONSHIP_AWARE_MEMORY.md) |
 | Put spoken words in another app | [Voice typing](USER_GUIDE.md#voice-typing) | [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
@@ -104,6 +104,7 @@ A tool's presence does not grant permission to execute it.
 
 [Calls](calls.md) documents phone conversations and The Line adapter.
 [Phone](phone.md) documents attention rules, configured number calls, and the incomplete iPhone-app transport.
+[Reach](reach.md) documents Settings ▸ Reach: Telegram, the digest, Later and the order of the channels.
 
 <a id="optional-clients-and-devices"></a>
 

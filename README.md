@@ -108,6 +108,7 @@ Choose steps, dependencies, agents, and checks. Each step gets its own worktree.
 Configured gates can take a step through work, check, review, pull request, and merge.
 The Control level sets how routine decisions proceed; **Your turn** brings questions and findings back to you.
 A handover Note retains the state and decisions.
+Read and change a Program as text, shape it by one typed or spoken sentence, or let the engine draft the steps from your goal. Decide what waits on you from a briefing page or from Telegram.
 
 [Programs, templates, overnight work, and fallback agents](docs/programs.md)
 

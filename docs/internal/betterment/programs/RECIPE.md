@@ -679,3 +679,131 @@ three lanes: HUB (REQ1–REQ8), FACES (REQ9–REQ12), DOCS (REQ13).
   Review is a Your word row for him (`requirement_items`).
 - An agent's edit of one of his requirements is refused
   (`edit_requirement` is owner only); an agent proposes a new one instead.
+
+---
+
+## PG-LANG. The Program text, shaping, planning, rounds (2026-10-31)
+
+Design `PROGRAM-LANGUAGE-2026-10-31.md` (#1666; slices §13), canvas
+`canvases/program-language-2026-10-31.html` (shaping S-A, rounds R-A). All
+defaults approved 2026-10-31 (#1672). One PR per slice in the fast cycle.
+
+| Slice | Lane | What | State |
+|---|---|---|---|
+| LANG1 | HUB | `hs/services/program_text.py` (print, parse, diff, `allowed_model`, `patch`), `text_get` / `text_apply`, `GET`/`POST /api/programs/{id}/text`, `program.text`, `program.text_apply` | Merged #1668 |
+| LANG2 | FACES | Board · Text, the kit's `TextPane`, `DiffRow`, `ChangeWell`; Preview, Apply / Apply n, Not this, Apply this | Merged #1670 |
+| (fields) | HUB | every word the text refused gets a home: review depth, `planner`, `budget`, `night`, `within`, `delivery dw`, `round` blocks (`program_rounds` table), `measure`, `walk`, `step remove`; SCHEMA_VERSION 89 | Merged #1671 |
+| LANG3 | HUB | `hs/services/program_shaper.py`, `program.shape`, the guard, YOLO apply and Overturn | Merged #1673 |
+| LANG4 | FACES | `ShapeBar.tsx`, `ShapedWell` | Merged #1673 |
+| LANG5 | FACES + HUB | voice into the bar; `pending`; `program.shape` held on a call, `DELETE …/shape/held` | Merged #1675 |
+| LANG6 | HUB | `hs/services/program_planner.py`, `program_sizing.py`, `program.plan_draft` | Merged #1676 |
+| LANG7 | FACES | `PlanDraft.tsx`: Plan it, Planning · engine, size lamps, Split | Merged #1676 |
+| LANG8 | HUB | sizing: the `budget` field (#1671) and the estimate and words (#1676) are in; the dispatcher's refusal, `step_too_big` by level, the split by level and the harness cost are not | Open |
+| LANG9 | HUB | `hs/services/program_rounds.py`, `program.round`, the round routes | Merged #1680 |
+| LANG10 | FACES | `Rounds.tsx`: Ask me first, the round strip, `QuestionRow`, `QuestionFold` | Merged #1680 |
+| LANG11 | HUB | the Measure verifier (the kind and `walk` lines are in, #1671) | Open |
+| LANG12 | HUB | Dreaming: the template, the night stop, the backlog reader, the digest (`night`, `within` stored, #1671) | Open |
+| LANG13 | HUB | Delivery Workbench link and the Done PR (`delivery dw` stored, #1671) | Open |
+| LANG14 | HUB | the SDK and `holdspeak program` CLI | Open |
+| LANG15 | DOCS | `docs/programs.md`, the skill, this recipe, TRACKER, UX-CANON, STATUS | This PR (PG-DOCS-2) |
+
+Not a slice, merged the same day: #1677, a held commit never strands a step
+(the `commit` Your turn row, Allow the commit / Not now; the tick reads the
+branch head after said-done or a nudge; YOLO allows by rule; a change of
+control to YOLO releases the hold).
+
+**What did not survive the code (from each PR's description).**
+
+- #1668: round blocks were read, not stored (stored since #1671). The design's
+  EBNF gained `planner ENGINE`; §5.4 has one denominator (the working share).
+- #1670: the view switch is Board · Text; the design's third view "Both" is not
+  built. The overlap fence's inset rule gained one narrow case for the painted
+  copy beside its textarea (`tests/e2e/glass_infra.py`).
+- #1671: §12's `rounds_json` column became the `program_rounds` table. The waive
+  stays a sub-line under its requirement. The §3.2 EBNF was corrected (DEPTH,
+  ROUND-STATE, DW-REF, flags, usage warning, optional bound unit, run and
+  expect under measure, race 0, check on). Refusals that remain: `field_fixed`
+  (`in`, `template`, `from`, a step's `from` and `merged`), `step_stays`, the
+  round refusals, `owner_required` on a round row from an agent,
+  `delivery_no_rails`, "A program stays filed to its project".
+- #1673: the deadline is 60 s, not 30 s (the home engine reasons first; one
+  shaping took 25 s). When `agent.plan` has no route, `ask.answer` is used
+  (§15.3's other choice). The engine answers the whole text, not block edits.
+- #1674: SCHEMA_VERSION 89 was shared with a sibling lane (renumber at merge).
+  The answer route is quiet (its path holds the token); the service announces
+  `reach <package id>`. A waive is not on the page (it needs a typed reason).
+- #1675: no `program` voice grammar for desk-wide wake or push to talk (its only
+  consumer, `grammars/desk.ts`, serves the parked Floor). `program.text` is not
+  read as speech. `allowed_model` now drops an `R<n>` line with no `R<n>` in the
+  base (the engine wrote R4 for R+).
+- #1676: the tool is `program.plan_draft` (§13 said `program.draft`); the
+  deadline is 240 s, not §4.7's 15 s p50. The engine's numbered `R3` is read as
+  `R+`. The harness cost in the estimate is 0 until it is measured (§17).
+- #1680: a round asks at most four questions (`QUESTIONS_MAX`). Rounds never
+  gate Start (`rounds before start` is stored, no gate). It also fixed a
+  ShapeBar race that made the `program-shape` sweep case red on main.
+
+**Found in the code by the docs lane (not in a PR description).**
+
+- The quick forms of §4.1 (`quick.py`) are not built: every sentence goes to
+  the engine.
+- `planner`, `night`, `within` and `delivery dw` are stored and printed, and
+  nothing acts on them yet (shaping and planning use the desk's assignment).
+- `program.round` takes `answer`, `done` and `skip` from the agent that made the
+  Program (`_require_writer`), while `text_apply` refuses a round row from any
+  agent (`owner_required`). The skill tells agents not to answer his rounds.
+
+**Open.** LANG8, LANG11, LANG12, LANG13, LANG14; the faces' live verdict on his
+desk.
+
+## PG-DIRECTION. Decide from anywhere (2026-10-31)
+
+Design `DIRECTION-2026-10-31.md` (#1669; slices §12), canvas
+`canvases/direction-2026-10-31.html` (page direction A, the brief). Owner ruling
+2026-10-31: calls decide, with the context and a free Later.
+
+| Slice | Lane | What | State |
+|---|---|---|---|
+| DIR1 | HUB | `briefing_packages`, `hs/services/briefing_service.py`, the token, `/b/{token}`, `/api/b/{token}`, `via` on `program.decide` and the ledger, `phone.brief` | Merged #1674 |
+| DIR2 | FACES | `web/briefing.html`, `web/src/briefing/`, the thin kit | Merged #1674 |
+| DIR3 | FACES | Copy page link and Revoke on Your turn and Needs you rows | Merged #1674 |
+| DIR4 | HUB + FACES | `held_later` (schema 91), `hs/services/reach_service.py`, Later ▾, `phone.later`, YOLO's provisional park | Merged #1678 |
+| DIR5 | HUB | `hs/services/telegram_reach.py`: keystore, pairing, poll, buttons, replies | Merged #1678 |
+| DIR6 | FACES | Settings ▸ Reach (`ReachSettings.tsx`), Reach you moved from Calls ▸ Phone | Merged #1678 |
+| DIR7 | HUB | the ladder and the morning digest: Telegram's rung and a plain digest message are in (#1678); the composed digest (Since last night, the Cadence brief) is not | Open |
+| DIR8 | HUB | the call that decides (= JRN7), `hs/calls/decide.py`, `docs/calls.md` "Decide on a call" | Merged #1679 |
+| DIR9 | HUB | a Telegram sentence as a shaping preview with Apply · Not this is in (#1678); the page's read-only change well is not | Open |
+| DIR10 | HUB + FACES | the other held items as packages | Open |
+| DIR11 | DOCS | `docs/reach.md`, `docs/phone.md`, `docs/calls.md`, `docs/programs.md` "Decide from anywhere", the skill | This PR (PG-DOCS-2) |
+| DIR12 | (parked) | email as a channel | Parked |
+
+**What did not survive the code.**
+
+- #1674: see PG-LANG above (schema number, the quiet answer route, no waive on
+  the page).
+- #1678: DIR6 was built here (the design named it a slice of its own). The
+  Telegram fixture `tests/fixtures/reach/telegram.updates.json` is the Bot API's
+  documented shapes, not a recording from a real bot (its `_source` says so).
+  The digest is a plain list with no buttons.
+- #1679: Later on a call hands off to `ReachService.later` when it is on the hub
+  (it is, since #1678). `program.decide` is the one authority tool on the call
+  palette, held, always `via=call`; a waive is denied on a call.
+
+**Found in the code by the docs lane.**
+
+- The desk's `BRIEFABLE` (`web/src/desk/reach.ts`) has no `commit`, while the
+  hub's (`briefing_service.BRIEFABLE`) has it: a held commit can go to Telegram
+  and a page by the ladder, but its desk row has no Copy page link, Send ▾ or
+  Later ▾.
+- The page's Later label says "Tomorrow at 07:00" (`briefing_service.later_options`),
+  but the answer goes through `reach_service.parse_later`, where "tomorrow" is
+  the hour quiet hours end (08:00 by default).
+
+**Open.** DIR7, DIR9 (the page half), DIR10; the first real Telegram pairing
+(needs his bot token); his live verdict on the page and Settings ▸ Reach.
+
+## PG-JOURNEYS. Slices from the journeys (2026-10-31)
+
+Design `PROGRAM-JOURNEYS-2026-10-31.md` (#1667); slices in
+`PROGRAM-LANGUAGE-2026-10-31.md` §13b. JRN7 is DIR8, merged #1679. JRN1 to JRN6
+and JRN8 to JRN14 are open.

@@ -304,21 +304,21 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 
 | Slice | What | State | Note |
 |---|---|---|---|
-| LANG1 | The text: parse, print, diff; `program.text` get and apply with the shown diff; refusals | Open | First slice. |
-| LANG2 | The Text view beside the board, TextPane, ChangeWell and DiffRow in the kit | Open | First slice. |
-| LANG3 | Shaping: quick forms, `program.shape` on `agent.plan`, the guard, YOLO apply and Overturn | Open |  |
-| LANG4 | The shaping bar (typed) and the landing | Open |  |
-| LANG5 | Voice: the `program` grammar, the call's held `program.shape` | Open |  |
-| LANG6 | Planning: `program.draft`; Run as a program plans | Open |  |
-| LANG7 | The planning draft face | Open |  |
-| LANG8 | Sizing: `budget`, the estimate, `step_too_big`, the split | Open |  |
-| LANG9 | Interview rounds, hub | Open |  |
-| LANG10 | The round strip and the question row | Open |  |
-| LANG11 | The Measure kind; walk lines on Your word | Open |  |
-| LANG12 | Dreaming: template, night, within, backlog, digest | Open |  |
-| LANG13 | Delivery Workbench: link and the Done PR | Open |  |
+| LANG1 | The text: parse, print, diff; `program.text` get and apply with the shown diff; refusals | Shipped #1668 (2026-10-31) | `holdspeak/services/program_text.py`. |
+| LANG2 | The Text view beside the board, TextPane, ChangeWell and DiffRow in the kit | Shipped #1670 (2026-10-31) | Board · Text; no "Both" view. |
+| LANG3 | Shaping: quick forms, `program.shape` on `agent.plan`, the guard, YOLO apply and Overturn | Shipped #1673 (2026-10-31) | No quick forms: every sentence goes to the engine. |
+| LANG4 | The shaping bar (typed) and the landing | Shipped #1673 (2026-10-31) | `ShapeBar.tsx`. |
+| LANG5 | Voice: the `program` grammar, the call's held `program.shape` | Shipped #1675 (2026-10-31) | No `program` voice grammar (no caller). |
+| LANG6 | Planning: `program.draft`; Run as a program plans | Shipped #1676 (2026-10-31) | `program.plan_draft`. |
+| LANG7 | The planning draft face | Shipped #1676 (2026-10-31) | `PlanDraft.tsx`. |
+| LANG8 | Sizing: `budget`, the estimate, `step_too_big`, the split | Open | `budget` field #1671, estimate #1676; dispatcher refusal and split by level open. |
+| LANG9 | Interview rounds, hub | Shipped #1680 (2026-10-31) | Fields #1671. Rounds never gate Start. |
+| LANG10 | The round strip and the question row | Shipped #1680 (2026-10-31) | `Rounds.tsx`. |
+| LANG11 | The Measure kind; walk lines on Your word | Open | Kind and walk lines #1671; the verifier open. |
+| LANG12 | Dreaming: template, night, within, backlog, digest | Open | `night`, `within` stored #1671. |
+| LANG13 | Delivery Workbench: link and the Done PR | Open | `delivery dw` stored #1671. |
 | LANG14 | The SDK: Python client and `holdspeak program` CLI | Open |  |
-| LANG15 | The documents | Open |  |
+| LANG15 | The documents | Shipped (PG-DOCS-2 PR) | `docs/programs.md`, the skill, RECIPE, UX-CANON, STATUS. |
 
 **PG-JOURNEYS** (open, 14 slices JRN1–JRN14, lanes HUB/FACES/PHONE, a PR per slice after the LANG slice each follows): eight modeled journeys (J1 two paragraphs to a shipped change, J2 the dreaming program, J3 shaping by voice, J4 from the desk for a person, J5 the race, J6 the Phone and the Line, J7 a reviewer-only program, J8 teaching the engine), reconciled with PG-LANG; "What the journeys demand": 24 New, 23 In PG-LANG, 20 exist, 3 dropped. Design `programs/PROGRAM-JOURNEYS-2026-10-31.md`, slices in `programs/PROGRAM-LANGUAGE-2026-10-31.md` §13b, canvas `programs/canvases/program-journeys-2026-10-31.html` (storyboards J1, J2, J3, J6; the interview round, direction A = PG-LANG R-A).
 
@@ -330,7 +330,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | JRN4 | The night's end reaches him on the phone | Open | After LANG12. |
 | JRN5 | A spoken answer becomes a prepared answer | Open | After LANG5; the default, no ruling. |
 | JRN6 | The item's verbs on a phone message | Open | After LANG5. |
-| JRN7 | `program.decide` behind a spoken yes | Open | The default: ruled yes 2026-10-31 (PG-LANG §15.10); built as PG-DIRECTION DIR8. |
+| JRN7 | `program.decide` behind a spoken yes | Shipped #1679 (2026-10-31) | Built as PG-DIRECTION DIR8. |
 | JRN8 | The Audit template | Open |  |
 | JRN9 | Findings filed as Door tasks; the Findings board | Open |  |
 | JRN10 | A proposed fix program from findings | Open |  |
@@ -343,17 +343,17 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 
 | Slice | What | State | Note |
 |---|---|---|---|
-| DIR1 | Packages, the token, `/b/<token>` and `/api/b/{token}`, `via` on the ledger | Open | First slice. |
-| DIR2 | The briefing page (direction A) in the kit, its own entry | Open | First slice. |
-| DIR3 | The Needs you line and Revoke; Send to my phone ▸ Copy page link | Open | First slice. |
-| DIR4 | Later everywhere: the words, the Later group, the YOLO provisional park | Open |  |
-| DIR5 | Telegram reach: keystore, pairing code, poller, buttons, replies | Open | One bot with Cadence. |
-| DIR6 | Settings ▸ Reach (Notices renamed) | Open |  |
-| DIR7 | The ladder and the one morning digest (JRN4 folded in) | Open |  |
-| DIR8 | The call that decides (= JRN7); `docs/calls.md` table replaced | Open |  |
-| DIR9 | A Telegram sentence becomes a shaping preview | Open | After LANG3. |
+| DIR1 | Packages, the token, `/b/<token>` and `/api/b/{token}`, `via` on the ledger | Shipped #1674 (2026-10-31) | First slice. |
+| DIR2 | The briefing page (direction A) in the kit, its own entry | Shipped #1674 (2026-10-31) | First slice. |
+| DIR3 | The Needs you line and Revoke; Send to my phone ▸ Copy page link | Shipped #1674 (2026-10-31) | First slice. |
+| DIR4 | Later everywhere: the words, the Later group, the YOLO provisional park | Shipped #1678 (2026-10-31) | `held_later`, schema 91. |
+| DIR5 | Telegram reach: keystore, pairing code, poller, buttons, replies | Shipped #1678 (2026-10-31) | One bot with Cadence. First real pairing untested. |
+| DIR6 | Settings ▸ Reach (Notices renamed) | Shipped #1678 (2026-10-31) | `ReachSettings.tsx`. |
+| DIR7 | The ladder and the one morning digest (JRN4 folded in) | Open | Telegram rung and a plain digest in #1678. |
+| DIR8 | The call that decides (= JRN7); `docs/calls.md` table replaced | Shipped #1679 (2026-10-31) | = JRN7. |
+| DIR9 | A Telegram sentence becomes a shaping preview | Open | Telegram half in #1678; the page half open. |
 | DIR10 | The other held items as packages | Open |  |
-| DIR11 | The documents (`docs/reach.md` and the rest) | Open |  |
+| DIR11 | The documents (`docs/reach.md` and the rest) | Shipped (PG-DOCS-2 PR) | `docs/reach.md` and the rest. |
 | DIR12 | Email as a channel | Parked | Until he asks. |
 
 ## Phone (`phone/RECIPE.md`): 0 of 16

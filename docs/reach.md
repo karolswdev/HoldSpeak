@@ -1,0 +1,92 @@
+# Reach
+
+**Settings ▸ Reach** sets how HoldSpeak reaches you when something waits on you and you are not at the desk. It has the channels, Telegram, when to reach you, quiet hours, the digest and what **Later** means. (This section was **Notices** before.)
+
+What you can decide from each channel, and how, is in [Programs](programs.md#decide-from-anywhere). Remote MCP access is a different feature: see [Reach in the user guide](USER_GUIDE.md#reach).
+
+## Channels
+
+| Channel | What the row shows |
+|---|---|
+| **Desk** | **Always**. Needs you on the desk always has each item. |
+| **Phone app** | The paired phone, or "No phone is paired". **Open Calls settings** pairs one (see [Phone](phone.md)). |
+| **Telegram** | **Not paired**, **Waiting for your bot** or **Paired · <name>**, with **Pair Telegram** or **Unpair**. The row says "Messages go through Telegram's servers". |
+| **Calls** | The state of your call path. **Open Calls settings** sets it up (see [Calls](calls.md)). |
+
+## Pair Telegram
+
+HoldSpeak uses one bot (the same bot as Cadence) and one chat: yours.
+
+1. Make a bot with BotFather in Telegram and copy its token.
+2. In the **Bot token** row, paste the token and press **Save**. HoldSpeak keeps it in your keystore (the macOS Keychain, or the Secret Service on Linux). The row then says **Stored in your keystore**; before that, **Missing**. **Replace** puts in a new token. No page shows the token again. A token that is still in the config file is moved into the keystore one time, and the file entry is made empty.
+3. Press **Pair Telegram**. The row shows "Send /pair <code> to your bot", the minutes left and **Copy**. The code has six digits and is good for ten minutes. **New code** makes a new one.
+4. Send `/pair <code>` to your bot from your own Telegram chat. The first chat that sends the code is your chat. The row then says **Paired · <name>**.
+
+While a chat is paired, no other chat can pair. **Unpair** removes the chat. **Pair Telegram** is off until the token is stored.
+
+Note: no real bot was paired when these docs were written. The pairing is tested against the documented shapes of the Telegram Bot API only.
+
+## When to reach you
+
+**Telegram** sets when an item goes to Telegram:
+
+| Choice | What HoldSpeak does |
+|---|---|
+| **At once** (the default) | It sends each item when it starts to wait. |
+| **After 10 min** | It sends an item when it waited 10 minutes and you did not answer it on the desk. |
+| **Only the digest** | It sends only the daily digest. |
+| **Off** | It sends nothing to Telegram. |
+
+The **Reach you** rows set, for each kind, **Message**, **Call** or **Nothing** for the Phone. They were in **Settings ▸ Calls ▸ Phone** before. See [Phone](phone.md#reach-you-when-the-desk-sends-a-message-or-calls).
+
+## Quiet hours
+
+Reach and the Phone use one set of quiet hours. During quiet hours, Telegram sends no message and no digest. The messages wait until the quiet hours end.
+
+## Digest and Later
+
+**Digest** sets the time of the daily digest: **End of quiet hours** (the default), or 06:00, 07:00, 08:00, 09:00, 10:00, 12:00 or 18:00. HoldSpeak sends one digest a day at that time, only when something waits on you, and not when Telegram is **Off**. **Send the digest now** sends it at once (Telegram must be paired).
+
+The digest is a plain list today: "3 wait on you", one line for each item ("Finding · <program> · step 2"), and "Open your desk to see each one." It has no buttons.
+
+**Later means** sets what a plain "later" means:
+
+| Choice | The item comes back |
+|---|---|
+| **In 2 hours** (the default) | In 2 hours. If that time is in your quiet hours, at the end of the quiet hours. |
+| **End of quiet hours** | At the next end of your quiet hours. |
+| **Tomorrow** | Tomorrow, at the hour your quiet hours end. |
+
+Later decides nothing. A deferred item leaves the Needs you count, and its row says "Later · back at 13:00". At that time it comes back. When you deferred it on Telegram or on the briefing page, Telegram sends it again. The times you can say are in [Programs](programs.md#later-and-when-it-comes-back).
+
+## The ladder
+
+The ladder has a fixed order today: the desk, the Phone app, Telegram, a call. You cannot change it.
+
+- The desk shows the item at once.
+- The Phone app and a call follow the Phone's rules ([Phone](phone.md)).
+- Telegram follows your choice under **When to reach you**.
+- Telegram never sends one item two times in five minutes, and never more than three messages in one hour for one step.
+- An answer on any channel stops the ladder. A Telegram message about an item that you answered somewhere else changes to show the answer.
+
+## What is never sent
+
+A Telegram message holds only the item: where it is from, the question, what changed, each choice with what it does, and the page link. It never holds a secret, a diff, a file, a brief, a transcript, a log or another person's notes. HoldSpeak checks each message before it leaves and stops a message that holds a diff, a bot token or a private key.
+
+Each send is egress. Its record names the destination ("Telegram · owner chat") and a digest of the message. It never holds the bot token.
+
+## For tools and agents
+
+| Route | What it does |
+|---|---|
+| `GET /api/reach`, `PUT /api/reach` | Read or change the Reach settings (`telegram`, `later_means`, `digest`, `phone_app`). |
+| `PUT /api/reach/telegram/token` | Store the bot token in the keystore. |
+| `POST /api/reach/telegram/pair`, `DELETE /api/reach/telegram/pair` | Start pairing (a code), or unpair. |
+| `POST /api/reach/digest` | Send the digest now. |
+| `POST /api/reach/later` | Later on one item (`ref`, `later`). |
+| `POST /api/reach/packages` | Make the briefing page for one item; `send: ["telegram"]` also sends it. |
+| `POST /api/reach/packages/{id}/revoke`, `GET /api/reach/packages?program_id=` | End a page, or list the open pages. |
+
+The MCP tools are `phone.brief`, `phone.later` and `phone.status` (it also tells Telegram's state, the ladder and the open pages). Only you can change Reach, make a page or say Later.
+
+`HOLDSPEAK_TELEGRAM=off` turns off every Telegram send and the poll. Test hubs set it.

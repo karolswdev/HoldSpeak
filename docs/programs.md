@@ -19,7 +19,7 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 | **Program** | A goal, a repository, a base branch, a control level, the steps and a handover note. |
 | **Step** | One bounded part of the goal: a brief, the files it owns, the agent that does it, an effort and a gate. One step is one agent in one worktree. |
 | **Gate** | The step's independent check, review (`none`, `agent`, or `person`), and merge (`level`, `owner`, or `none`) settings. A `none` merge gate finishes without a PR. |
-| **Requirement** | One sentence that you want true, on a step, on every step or on the whole program, with the way HoldSpeak proves it: a command, the reviewer's answer, a shot of a window, or your word. See "Requirements". |
+| **Requirement** | One sentence that you want true, on a step, on every step or on the whole program, with the way HoldSpeak proves it: a command, the reviewer's answer, a shot of a window, your word, or a measured number. See "Requirements". |
 | **Checkpoint** | One line that the agent, HoldSpeak or you write on a step at an important moment. |
 | **Your turn** | A thing that only you can do: merge, decide a finding, resume a parked step, answer a core question. |
 | **Handover note** | A desk note named "Program: <title>". HoldSpeak writes it again after each change. |
@@ -31,7 +31,7 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 1. Open **Go ▸ Programs** (after Agents), or press ⌃7.
 2. Press **New program**. The Program window opens in **Drafting**.
 3. Type the goal. Choose the repository (or a project, which gives its repository).
-4. Add the steps. Paste a brief for each step. Give each step the files it owns. A step can start after other steps ("after 2, 3").
+4. Add the steps. Paste a brief for each step. Give each step the files it owns. A step can start after other steps ("after 2, 3"). Or press **Plan it**, and the engine drafts the steps for you (see "Plan it from a goal"). Press **Ask me first** if you want the engine to ask you some questions before it plans (see "The interview rounds").
 5. Press **Start**.
 
 ### From the desk
@@ -182,7 +182,7 @@ HoldSpeak decides what it can decide by rule at the program's control level. A *
 - **Safety.** A finding about security or data loss, a deleted test, a migration that drops or changes rows.
 - **No rule.** HoldSpeak has no rule for the choice.
 
-Each item of your turn is a row in Needs you, in a group with the program's title. It is also on top of the Program window, with its verbs: **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Answer**.
+Each item of your turn is a row in Needs you, in a group with the program's title. It is also on top of the Program window, with its verbs: **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
 
 ![The Program window at 1440: Your turn with a merge, two findings and a core question](assets/programs/program-your-turn-1440.png)
 
@@ -247,12 +247,11 @@ A new worktree has no installed packages. If your check needs them, put a comman
 
 ## Requirements
 
-<!-- PG-REQ (2026-10-31): the hub behaviour below is from the hub build
-(holdspeak/services/program_requirements.py, program_service.py,
-program_runner.py). The window faces (the Requirements board, the Add
-requirement row, Find, the step fold, Move and Insert before) are written as
-designed in docs/internal/betterment/programs/PROGRAMS-REQUIREMENTS-2026-10-31.md
-§7 to §9; the FACES lane ships them in the same PR. -->
+<!-- PG-REQ (2026-10-31): the hub behaviour below is from
+holdspeak/services/program_requirements.py, program_service.py and
+program_runner.py; the faces are web/src/desk/programs/Requirements.tsx
+(#1665). The Measure kind and walk lines are from #1671; the Measure
+verifier is not built yet. -->
 
 A requirement is one sentence that you want true, with the way HoldSpeak proves it. Examples: "`uv run pytest -q tests/unit/test_program_rules.py` is green", "The People window at 393 has no clipped text", "No new route skips the residual set", "I tried it on my desk".
 
@@ -268,7 +267,7 @@ A step is done only when its check is green **and** each required requirement on
 
 Each requirement has a number, R1, R2 and so on. A number is not used again in the same program.
 
-### The four kinds
+### The five kinds
 
 | Kind | How HoldSpeak proves it | The evidence |
 |---|---|---|
@@ -276,6 +275,7 @@ Each requirement has a number, R1, R2 and so on. A number is not used again in t
 | **Review** | At REVIEW. The step's reviewer gets each Review requirement by its number and answers `REQ R3: MET · <one line>` or `REQ R3: UNMET · <what is missing>`. | The reviewer's line, its round and the commit it read. |
 | **Shot** | At CHECK. The repository's shot command renders one window at 393 or at 1440. Met when the case is green and the image is there. | The image, the window, the width and the commit. Press **Open shot**. |
 | **Your word** | At MERGE (a step) or at the end (the program). A Your turn row asks you. | Your press and its time. |
+| **Measure** | A command that prints a number, and a bound (`p95 < 100 ms`). **HoldSpeak does not measure it yet.** It stays **Not measured yet** and does not stop a step or a merge. | None yet. |
 
 **A Check log is green only when:**
 
@@ -286,9 +286,13 @@ Each requirement has a number, R1, R2 and so on. A number is not used again in t
 
 A log that is not there is not green.
 
-**The kind is set by a rule, not by a model.** Text in backticks is a Check with that command. A window name followed by "window at 393" or "window at 1440" is a Shot of that window at that width. All other text is a Review. Only you choose **Your word**. You can change the kind on the row.
+**The kind is set by a rule, not by a model.** Text in backticks is a Check with that command. A window name followed by "window at 393" or "window at 1440" is a Shot of that window at that width. All other text is a Review. Only you choose **Your word**. You can change the kind on the row. The **Add requirement** row offers Check, Review, Shot and Your word. To add a Measure, write it in the Program text (see "The Program text") or give `kind: "measure"` to `program.require`.
 
-A requirement that HoldSpeak cannot prove is not added, and HoldSpeak tells you why: "A check needs a command", "A shot needs a window and a width", "No shot command in this repository".
+**A Measure** has a `run` line (the command) and a `bound` line (`p95 < 100 ms`, `total < 6 min`) under it in the text. Its verifier is not built yet, so today a Measure records what you want measured and nothing more. A text change that makes a Check, Shot or Review into a Measure lowers the bar, because a Measure does not stop a step yet.
+
+**Walk lines on Your word.** Under a Your word requirement, each `walk` line is one thing that you will do before you press **Met** ("walk Open People at 393"). HoldSpeak keeps them in order and prints them in the text. They are for you; HoldSpeak does not run them.
+
+A requirement that HoldSpeak cannot prove is not added, and HoldSpeak tells you why: "A check needs a command", "A shot needs a window and a width", "No shot command in this repository", "A measure needs a command and a bound".
 
 A Review requirement needs a reviewer. On a step with no review gate, a Review requirement starts the program's reviewer for that step.
 
@@ -302,6 +306,7 @@ A Review requirement needs a reviewer. On a step with no review gate, a Review r
 | **Unmet** | The evidence says that it is not true. The agent gets it in its next round. |
 | **Waits for you** | It is Your word, and it waits for your press. |
 | **Waived** | You waived it, with one line. It does not stop the step. It stays on the list, struck through. |
+| **Not measured yet** | A Measure. HoldSpeak does not judge it yet, and it does not stop the step. |
 
 A state changes only on evidence. A requirement is never Met because an agent says so.
 
@@ -450,6 +455,138 @@ Point to a frozen field to see why:
 
 Your change applies at once. A change from an orchestrating agent follows the Control level: at Secure and Normal, a Your turn row asks you (**Apply** or **Skip**, **Send** or **Skip** for an amendment); at YOLO, HoldSpeak applies it and writes it under Decided for you.
 
+**Remove a step.** A Planned or Ready step can go. Delete its block in the Program text (see "The Program text"), or use `program.step_remove`. The steps are numbered again. A step that came after the removed step now comes after what the removed step came after. The removed step's requirements stay in the record, so a number such as R4 is not used again. A started step stays: "Step 3 started. It stays."
+
+## The Program text
+
+Each program has a text: one statement on each line. The text is a view of the program. The record stays the truth, and HoldSpeak prints the text again from the record after each change.
+
+In the Program window's toolbar, press **Board · Text** to change the view. The window keeps your choice. At 393, the choice is in **More ▾**.
+
+This is the text of a running program, as the hub prints it:
+
+```
+# program text 1
+program The hub stops stalling                    # Running · 0 of 3 done
+  goal
+  > Every route under 100 ms while a meeting records.
+  in app · main · project HoldSpeak
+  template build and review
+  control normal
+  check sh tests/fixtures/fake_program_check.sh
+  reviewer Codex at standard
+  budget 64k
+  night 23:30–07:00 · at most 8 steps
+  within holdspeak/, docs/
+
+every step
+  R1 review: The change does only what its brief says.  # Not yet
+  R2 review: Each new behaviour has a test.       # Not yet
+
+at the end
+  R5 word: I used the desk for a morning with no stall  # Not yet
+    walk Open People at 393
+    walk Start a meeting
+    walk Open People again
+
+round Architecture · asking
+  ? Does the cache live in the hub or the client?
+
+step 1 Indexes                                    # In review · Claude Code · under a minute
+  owns holdspeak/db/schema.py
+  brief
+  > Add the three indexes.
+
+step 2 People routes                              # Working · Claude Code · under a minute
+  owns holdspeak/web/routes/people.py
+  brief
+  > 31 handlers through run_in_threadpool.
+  R3 check: `echo 12 passed` is green             # Not yet
+  R4 measure: The People routes answer fast       # Not measured yet
+    run sh scripts/bench_people.sh
+    bound p95 < 100 ms
+
+step 3 The fan-out                                # Planned
+  after 1, 2
+  budget 32k
+  brief
+  > One frame per change, not one per row.
+```
+
+### How to read it
+
+- **Headers.** `program`, `every step`, `at the end`, `round` and `step N` start a block. Two spaces of indent put a line under the last header. Four spaces put a line under the last requirement.
+- **Lamps.** Two or more spaces and `#` start a lamp: the state that HoldSpeak writes at the end of a line. HoldSpeak does not read a lamp back, so a change to a lamp changes nothing. The Text view shows each lamp at the end of its line, outside the text that you edit.
+- **Your words.** A line that starts with `>` is your words (a goal, a brief). HoldSpeak keeps them exactly as you wrote them.
+- **Joins.** `·` joins short statements on one line: `agent Codex · effort high`, `review agent · merge owner`.
+- **Defaults.** A value that is the same as the default is not printed. For example, a step that uses the program's agent has no `agent` line.
+- **New things.** Write `step +` for a new step and `R+` for a new requirement. HoldSpeak gives the numbers. Under a started step, a line that starts with `+` is one more line for its brief (an amendment).
+- **Requirements.** `R<n> <kind>: <sentence>`, with `optional` after the kind for a requirement that does not stop the step. The kinds are `check`, `review`, `shot`, `word` and `measure`. Under a requirement: `run` and `expect` (a check or a measure), `shot <window> at <width>`, `bound` (a measure), `walk` (your word) and `waived: <why>`.
+
+The program lines are `goal`, `in`, `template`, `control`, `check`, `agent`, `planner`, `reviewer`, `budget`, the flags (`when idle`, `may call`, `may hand off`, `rounds before start`), `night`, `within`, `allow`, `spend up to`, `usage warning`, `delivery dw`, `for` and `from`. The step lines are `owns`, `after`, `agent` and `effort`, `race`, `budget`, `when idle` and `may call`, `review`, `merge` and `check on` or `check off`, `for`, `from`, `brief` and the `+` lines.
+
+### What the text can change, and what it cannot
+
+The text changes what the record lets you change, by the same rules as the board (see "Change a running program"). HoldSpeak refuses these changes, and each refused row tells you why:
+
+| Change | Why HoldSpeak refuses it |
+|---|---|
+| `in` (the repository or the branch) | A program works in one repository, from one branch. Make a new program for another. |
+| `template` | A template shapes a program when HoldSpeak makes it. Change the fields that it set. |
+| `from` (on the program or on a step), and a step's `merged` line | They name where the work came from. |
+| A frozen field of a started step | The reason from the frozen table, for example "The agent has read it. Add a line with + instead." |
+| Remove a started or merged step | "Step 3 started. It stays." |
+| Change a `?` line, or set a round to `asking` | The engine asks the questions. |
+| Change an answer in a done round | Open the round again first. |
+| Remove the project | A program stays filed to its project. |
+| Any change to a closed program | The program is closed. |
+
+Some lines are in the record and in the text, but HoldSpeak does not act on them yet: `planner` (shaping and planning use the desk's engine), `night`, `within`, `delivery dw` and `rounds before start` (the rounds never stop **Start**). A step's `budget` sizes the planning draft (see "Plan it from a goal"), but HoldSpeak does not yet stop a step that is too big from starting. A `measure` requirement is "Not measured yet".
+
+### Preview, Apply, Not this
+
+1. In the Text view, change the text.
+2. Press **Preview** in the toolbar. **Revert** puts your text back as it was. Preview writes nothing.
+3. The change rows open in the change well above the text. Each row tells what changes, where, the old value and the new value, and the verdict.
+4. Press **Apply** to apply the rows. Press **Not this** to remove them.
+
+A refused row names its line and tells why. Its line in the text gets a `!` mark. When one or more rows are refused, the button says, for example, **Apply 5**: it applies only the rows that can apply and puts the refused ones back.
+
+If the program changed after you read the text, a row that touches the same field is a conflict. The well says "Changed since you read it" and HoldSpeak reads the text again.
+
+After Apply, the board shows the steps that the text added or changed, and the Ledger gets one line: "Changed by the text: 3 changes".
+
+### Rows that lower the bar
+
+Some changes make the program check less. HoldSpeak marks each one, and **Apply** stays off until you press **Apply this** on each such row. These rows lower the bar:
+
+- a higher control level (Secure to Normal, Normal to YOLO), or a higher spend limit;
+- a lower review depth, `reviewer none`, a step review set to `none`, or a merge gate from `owner` to `level` or `none`;
+- a check removed (`check none` on the program, `check off` on a step);
+- `rounds before start` turned off;
+- a required requirement made `optional`, a Check, Shot or Measure made a Review, any requirement made a Measure;
+- a `waived:` line (only you can waive).
+
+A shaped sentence, a call and YOLO never apply a row that lowers the bar. It always waits for your own press.
+
+## Shape it by a sentence
+
+Under the Program window's toolbar is the bar **Change the program**, with its mic and **Shape**. Type one sentence, for example "add a step after step 2 that removes the old route", and press Return or **Shape**.
+
+HoldSpeak sends your sentence and the program's text to one engine. The engine is the **Agent plan** assignment in **Settings ▸ This Mac ▸ Engines**. If that assignment has no engine, HoldSpeak uses the **Ask answer** engine. The engine also gets the folders that the steps own, the note the program came from, the project's open actions and the last checkpoints. It answers with the whole changed text. HoldSpeak compares that text with the current text, so the rows are the same rows that a typed edit gets, with the same refusals.
+
+While the engine reads, the bar says "Reading the program · <engine>". The rows open in the change well. The head of the well is the engine's own line about the change, with the engine's name and the time it took. **Apply** and **Not this** work as in the Text view. If the engine asks a question back, the question shows under the bar.
+
+If something goes wrong, HoldSpeak says what and changes nothing: "No engine is set for planning" (with **Open Engines**), the engine failed, or the engine did not answer in time (60 s). If HoldSpeak cannot read the engine's answer, it asks the engine one more time, then says so.
+
+**What the guard holds back.** The engine never applies anything. These rows always wait for your own press, at every level:
+
+- a row that lowers the bar (see "Rows that lower the bar");
+- a row that is a core question, for example a file outside the repository or a new phone call;
+- a waive: HoldSpeak refuses a `waived:` line from the engine ("Only you waive").
+
+**At YOLO.** A shaped sentence on a YOLO program applies the allowed rows at once. The well then says "Shaped: <the change> · applied", with **Overturn** and **Keep**. The program's Decided for you gets one line, "Shaped by a sentence: …", with **Overturn**. Overturn takes the added steps out again and puts the changed fields and the order back. Overturn goes away when a step that the change touched has started. Rows that lower the bar stay in the well for your press.
+
 ### Change it by voice
 
 Press the mic in **Change the program**, say the change, and press the mic again. HoldSpeak puts the words in the bar and sends them at once; you do not press **Shape**. While the engine reads, the bar shows "Heard:" and your words. The change rows open in the change well.
@@ -467,6 +604,94 @@ On a call, say "change the overnight program: add a check that the People window
 - **No** applies nothing and keeps nothing.
 
 The changes that wait stay until you press **Apply** or **Not this**, or until the hub restarts.
+
+## Plan it from a goal
+
+In Drafting, type the goal (one or two paragraphs are enough) and press **Plan it** in the toolbar, or press Return in the goal. Shift+Return makes a new line. **Plan it** is the first button while the program has no steps. The engine is the same as for shaping. It gets the goal (or the note that the program came from), the template's shape and requirements, a map of the repository (the top folders, the likely files and their size, the headings of CLAUDE.md or AGENTS.md, the last commit subjects) and the project's open actions. It writes the steps, with their briefs, the files they own and their order.
+
+While it plans, the window says "Planning · <engine>". A plan can take some minutes on a home engine; HoldSpeak waits up to 240 s. The drafted steps open in the change well as rows. Press **Apply** to make them the program's steps, or **Not this**. HoldSpeak keeps the title, the goal, `in`, `template`, `from` and `budget` as they are, whatever the engine writes.
+
+**The size lamp.** Each drafted step has a size, for example "7k of 32k". HoldSpeak counts it by a rule, not by a model: the brief and its frame, the requirement lines, and the files that the step owns (bytes divided by 4). The second number is the working share: half of the agent's budget. The other half stays free for the agent's own reads, edits and the check log. The budget is the `budget` line of the step or of the program (for example `budget 64k`). With no budget line, a pi step uses its engine's context window. Claude Code and Codex steps have no budget unless you give one, and then the lamp shows only the estimate.
+
+**Too big.** A step over the working share goes back to the engine one time, to be split. A step that is still too big says, for example, "Too big for Claude Code · 61k of 32k", with **Split**: press it to ask the engine to split that step again. HoldSpeak does not yet stop a step that is too big from starting.
+
+Note: the size does not yet count the agent's own fixed cost (its system prompt and tools).
+
+## The interview rounds
+
+In Drafting, press **Ask me first** (beside **Plan it**) to answer some questions before the plan. If a draft waits in the change well, **Ask me first** applies it first.
+
+The round strip is above the board. It has five rounds: **Architecture**, **Product**, **Stack**, **Verification** and **Delivery**. Each round has a lamp: open, asking, done ("· 1 change") or skipped (struck through).
+
+A round asks **one question at a time**. The question shows under the strip, with why it matters and, when the engine has some, the answers that it offers. Press an offered answer, or type or say your own. HoldSpeak keeps your answer as the `=` line under the question in the Program text, then turns it into change rows. The rows wait in the change well for **Apply**. The next question comes at once. A round asks four questions at most.
+
+The verbs:
+
+- **Skip question**: no answer to this question.
+- **Skip round**: no more questions in this round. The strip goes to the next open round.
+- **Done with <round>**: the round is done. This is off while a question waits.
+- **Next question**: ask the round's next question when none waits.
+- **Ask more**: on a done or skipped round, open it again. This also works while the program runs.
+
+The rounds help you plan; they never stop **Start**. The `?` lines are the engine's, and you cannot change them in the text. In the text, an answered `=` line has a lamp that tells what the answer became, for example `# → step 3 brief`.
+
+## A held commit
+
+A step's agent commits its work on the step's branch. At Secure and Normal, the gate can hold that `git commit`. Then the step's Your turn row says "Step 2: the agent's commit waits for you", with **Allow the commit** and **Not now**.
+
+- **Allow the commit**: the agent's change is committed on the step's branch, and the check runs.
+- **Not now**: the step stops (Parked). The change stays in the worktree.
+
+While the gate holds the call, Needs you has one row for it: the gate's own row. When the hold ends and the change is still not committed, the row in Needs you says **TO ALLOW**. A change that the agent left uncommitted at the end of its turn gets the same row. **Allow the commit** then makes the commit on the step's branch.
+
+At YOLO, HoldSpeak allows the commit by rule and writes it under Decided for you. A change left uncommitted is committed by rule, and the step goes to the check. When you change a program to YOLO, a commit that waits is released at once.
+
+A commit on the step's branch by anyone, also by you by hand, moves the step on to the check.
+
+## Decide from anywhere
+
+What waits on you does not need the desk. You can decide it from a page on your phone, from Telegram, or on a call. Each answer goes through the same verb as your press on the desk, and the Ledger says where you decided it, for example "Go on: … · decided from the briefing page".
+
+### The briefing page
+
+On a Your turn row (in the Program window or in Needs you), press **Copy page link**. In Needs you, it is in **Send ▾**. HoldSpeak makes a page for that one item and puts its link on the clipboard. The row's line then says "Page link copied · open until 06:30".
+
+The page shows the question first, then each choice with what it does, **Later ▾**, and the evidence, folded and read only. Press a choice to decide. The page then shows what you decided.
+
+- **The token.** The link holds a token: 32 random bytes. The hub keeps only its hash. Nobody can read the page without the link.
+- **Its life.** The page is open for 24 hours. You can read it many times. You can decide it once. An item that you decided on another channel shows its answer.
+- **Revoke.** Press **Revoke** on the row to end the page. The item stays where it is. An expired page, a revoked page and a wrong link all show "This page has expired." with no data.
+- **Where it opens.** The link uses the hub's tailnet address when the hub is on your tailnet (Tailscale Serve). Without it, the link uses the address that your desk is open on.
+- **A waive stays on the desk.** A waive needs your typed reason, so the page does not offer it.
+
+These items can have a page: a core question, a held commit (Telegram and the page; the desk row has no **Copy page link** yet), a merge, a finding, a parked step, an agent at its limit, a race winner, an added step, your word, a requirement left after its rounds, a proposed requirement, a proposed step change and a proposed amendment. An agent's question, a review request and Close stay on the desk.
+
+### Telegram
+
+Pair Telegram one time in **Settings ▸ Reach** (see [Reach](reach.md)). Then:
+
+- HoldSpeak sends each item that waits on you to your Telegram chat, by your setting in **When to reach you**. A message has eight lines at most: where it is from, the question, what changed, each choice with what it does, and the page link.
+- The buttons are the item's own choices and **Later**. Tap a choice to decide. **Merge**, and **Skip** on a proposed requirement, ask for a second tap. After your answer, the message changes: the buttons go and the last line tells the outcome.
+- You can also reply in words: the word of a choice ("go on", "park"), "yes" or "no" when that is clear, or "later 2h". "waive" is refused: waive on the desk, with your reason.
+- Any other sentence on a program's item is a shaping sentence. HoldSpeak replies with the changes and **Apply** · **Not this**.
+
+### Later, and when it comes back
+
+Every item has **Later**. Later decides nothing. In Needs you, **Later ▾** offers **In 1 hour**, **At 13:00**, **Tonight** (19:00) and **Tomorrow** (the end of your quiet hours). On Telegram you can also write the time: "later" (your default in **Settings ▸ Reach ▸ Later means**), "later 2h", "later 30m", "at 13:00", "at one", "tonight", "tomorrow".
+
+A deferred item leaves the Needs you count. Its row says "Later · back at 13:00", and the channel when it was not the desk ("· from Telegram"). At that time, it comes back to the count, and Telegram sends it again when you deferred it on Telegram or on the page. The Ledger gets one line: "Later, back at 13:00 · from Telegram".
+
+At YOLO, Later on a core question parks its step for now, and the other steps go on. **Go on** at the next time resumes it, and Decided for you has **Overturn**. Below YOLO, the step only waits. A merge only waits, at every level.
+
+### On a call
+
+When the desk calls you about a step, or when you say "what waits on me", HoldSpeak reads each item that waits on you: where it is from, the question, what changed, and the choices. Say a choice. HoldSpeak reads it back once and asks for your yes; only yes decides, and the Ledger says "decided on a call". Say "later" (with a time or without one) to decide later. A waive stays on the desk. If the call ends before your yes, nothing is decided. See [Decide on a call](calls.md#decide-on-a-call). A call can also change a program by your sentence (see "Change it on a call").
+
+### What is not there yet
+
+- The Telegram digest is a plain list: one line for each item, with no buttons ("3 wait on you", then "Finding · <program> · step 2", then "Open your desk to see each one.").
+- No real Telegram bot was paired for these docs. The pairing and the messages are tested against the Bot API's documented shapes only.
+- The page and Telegram are only for Program items today.
 
 ## The handover note
 
@@ -519,11 +744,19 @@ The MCP tools are in the `program` family:
 | `program.overturn` | Undo a decision of HoldSpeak. | You only |
 | `program.start_from` | Add a step whose worktree starts at a checkpoint's ref. When an agent asks, the control level decides. | You, the step's own agent |
 | `program.handoff` | Move a running step to another agent, with the handoff brief. `preview: true` shows the brief and sends nothing. The next agent uses the same worktree and branch. | You only |
+| `program.step_remove` | Remove a Planned or Ready step. A started step stays (`step_stays`). | You at once; an orchestrating agent by the Control level |
+| `program.text` | Read a program as its text, with `revision`. By `program_id` or by `name`. | Everyone |
+| `program.text_apply` | Change a program by its whole text. `dry_run` (the default, true) returns the change rows and writes nothing. `dry_run: false` applies only when no row is refused or in conflict, and a row that lowers the bar only when its id is in `allow_lower`. `base` is the text that you read. `allowed_text` is your text with each refused change put back. | You; an agent's rows go through the same verbs and rules (it cannot change or waive your requirements, or answer a round, in the text) |
+| `program.shape` | Change a program by one sentence: one engine call, the same rows as `program.text_apply`, with `say`, `engine` and `latency_ms`. Nothing is written; `apply: true` applies the allowed rows at once only at YOLO. `pending` adds the sentence to rows that wait. On a call, it waits for your spoken yes. | You, or the orchestrating agent |
+| `program.plan_draft` | Draft the steps of a program in Drafting from its goal: one engine call; the rows with their size. With `text` and `split`, split one drafted step. Nothing is written. | You, or the orchestrating agent |
+| `program.round` | The interview rounds: `open`, `next` (one question), `answer` (the rows it implies), `skip_question`, `not_this`, `done`, `skip`, `reopen`. | You, or the agent that made the program. Answer for yourself: a `=` line in the text from an agent is refused. |
+| `phone.brief` | Make the briefing page for one held item, and with `send: "telegram"` send it to your Telegram chat. | You only |
+| `phone.later` | Later on one held item, with your words for the time. It decides nothing. | You only |
 
 No tool marks a requirement Met: HoldSpeak judges it, or you press. An agent can propose a requirement but cannot waive one, and cannot change one of yours.
 
 An agent can make and start a program, but it cannot decide for you, and it does not prompt a step's agent: HoldSpeak does that. The skill `agent/skills/holdspeak-programs/SKILL.md` tells an agent how to drive a program.
 
-The routes are under `/api/programs` (see [API surface](API_SURFACE.md)). Each change of a program is a `program_changed` frame.
+The routes are under `/api/programs` (see [API surface](API_SURFACE.md)): `GET` and `POST /api/programs/{id}/text`, `GET` and `POST /api/programs/{id}/shape`, `DELETE /api/programs/{id}/shape/held`, `POST /api/programs/{id}/plan/draft`, `POST /api/programs/{id}/rounds`, `/rounds/{name}/next`, `/rounds/{name}/answer` and `/rounds/{name}/decide`, and `POST /api/programs/{id}/steps/{sid}/remove`. The briefing page is `/b/<token>` and `GET /api/b/{token}`, with `POST /api/b/{token}/answer`. The owner's reach routes are under `/api/reach` (see [Reach](reach.md)). Each change of a program is a `program_changed` frame.
 
 `HOLDSPEAK_PROGRAMS=off` stops the engine: it hands, checks and merges nothing. Test hubs set it.
