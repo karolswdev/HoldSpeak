@@ -48,6 +48,12 @@ GOODBYE = "Goodbye."
 NO_ENGINE = "My engine cannot use your desk now. I will keep this call as a note."
 DID_NOT_ANSWER = "My engine did not answer. Say it again, or call later."
 YES_OR_NO = "Say yes or no."
+#: LANG5: a held program.shape may also wait on the desk.
+YES_OR_NO_LATER = "Say yes, no, or later."
+LATER_TOOLS = frozenset({"program.shape"})
+#: LANG5: the held tools shaped before the question (an engine call).
+READ_FIRST = frozenset({"program.shape"})
+READING = "One moment. I am reading the program."
 WORKING_ON_IT = "I am working on it. I will tell you when it is done."
 LATER_PREFIX = "About what you asked: "
 
@@ -186,6 +192,14 @@ def yes_or_no(text: str) -> str:
     return ""
 
 
+_LATER = re.compile(r"\b(later|on (my|the) desk|at my desk)\b", re.I)
+
+
+def is_later(text: str) -> bool:
+    """LANG5: "later" (or "put it on my desk"): the rows wait on the desk."""
+    return bool(_LATER.search(text or ""))
+
+
 def is_goodbye(text: str) -> bool:
     return len(str(text or "").split()) <= 8 and bool(_BYE.search(text or ""))
 
@@ -220,14 +234,17 @@ _KIND_WORDS = {
 }
 
 
-def read_back(used: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
+def read_back(used: dict[str, Any], *, skip: frozenset[str] = frozenset()) -> tuple[str, list[dict[str, Any]]]:
     """The read back from the turn's own record (``run_trace``), never from
-    the model's words: what it wrote and what it prepared."""
+    the model's words: what it wrote and what it prepared. ``skip``: kinds a
+    held call already said (LANG5: a shaped Program's own spoken line)."""
     parts: list[str] = []
     rows: list[dict[str, Any]] = []
     for row in (used or {}).get("wrote") or []:
         label = str(row.get("label") or "").strip()
         kind = str(row.get("kind") or "")
+        if kind in skip:
+            continue
         words = _KIND_WORDS.get(kind, "Changed")
         parts.append(f"{words}: {label}." if label else f"{words}.")
         rows.append({"kind": kind, "label": label, "ref": str(row.get("ref") or ""),
@@ -271,6 +288,8 @@ class CallRunner:
         self._later = later
         #: Turns slower than ANSWER_LATER_SECONDS: (task, holds queue, decided).
         self._late: list[tuple["asyncio.Future[dict[str, Any]]", "asyncio.Queue[list[dict[str, Any]]]", set[str]]] = []
+        #: LANG5: record kinds a held call already said (a shaped Program).
+        self._said_kinds: frozenset[str] = frozenset()
 
     # ── the phone, with the transcript and the frame ─────────────────
 
@@ -418,7 +437,7 @@ class CallRunner:
             log.info(f"a slow call turn did not answer: {exc}")
             return ""
         text = speakable(str(result.get("text") or ""))
-        back, rows = read_back(result.get("used") or {})
+        back, rows = read_back(result.get("used") or {}, skip=self._said_kinds)
         for row in rows:
             if row not in self.record.results:
                 self.record.results.append(row)
@@ -477,6 +496,7 @@ class CallRunner:
 
     async def _turn(self, heard: str) -> None:
         assert self._turns is not None
+        self._said_kinds = frozenset()
         holds: asyncio.Queue[list[dict[str, Any]]] = asyncio.Queue()
         loop = asyncio.get_running_loop()
 
@@ -523,7 +543,7 @@ class CallRunner:
             await self.say(DID_NOT_ANSWER)
             return
         text = speakable(str(result.get("text") or ""))
-        back, rows = read_back(result.get("used") or {})
+        back, rows = read_back(result.get("used") or {}, skip=self._said_kinds)
         for row in rows:
             if row not in self.record.results:
                 self.record.results.append(row)
@@ -541,15 +561,26 @@ class CallRunner:
         when the call ended."""
         assert self._turns is not None
         nothing = getattr(self._turns, "nothing_to_ask", None)
-        if nothing is not None and nothing(tool_call_id, tool):
+        if tool in READ_FIRST:
+            # The shaped answer says what changed ("Done: the program … has
+            # three changes"); the record's "program" row is not said again.
+            self._said_kinds = self._said_kinds | {"program"}
+            if not await self.say(READING):
+                return False
+        # LANG5: a program.shape is shaped here (one engine call): off the loop.
+        if nothing is not None and await asyncio.to_thread(nothing, tool_call_id, tool):
             # PG15: nothing would change (no Program has that name): no
             # question; the tool answers so and the turn says it.
             self._turns.decide(tool_call_id, "approve")
             return True
         words = self._turns.hold_words(tool_call_id, tool)
-        self.record.hold = {"tool": tool, "words": words, "call_id": tool_call_id}
+        asked = getattr(self._turns, "hold_question", None)
+        read = asked(tool_call_id, tool) if asked is not None else ""
+        self.record.hold = {"tool": tool, "words": read or words, "label": words, "call_id": tool_call_id}
         self._emit("hold", self.record)
-        question = f"I want to {words[0].lower() + words[1:] if words else 'change your desk'}. {YES_OR_NO}"
+        question = (f"{read} {YES_OR_NO_LATER}" if read and tool in LATER_TOOLS
+                    else f"{read} {YES_OR_NO}" if read
+                    else f"I want to {words[0].lower() + words[1:] if words else 'change your desk'}. {YES_OR_NO}")
         while True:
             if self.record.hold is None:  # decided by the tap on the Calls window
                 return True
@@ -562,7 +593,7 @@ class CallRunner:
                 return False
             if self.record.hold is None:
                 return True
-            decision = yes_or_no(heard)
+            decision = "later" if tool in LATER_TOOLS and is_later(heard) else yes_or_no(heard)
             if decision:
                 self.decide(decision, by="voice")
                 return True
@@ -580,6 +611,8 @@ class CallRunner:
                 "kind": "send" if hold["tool"] == "channel.send" else "nudge",
                 "label": hold.get("words", ""), "ref": "", "effect": "sent",
             })
+        if decision == "approve" and hold.get("tool") == "program.shape":
+            self.record.results.append({"kind": "program", "label": hold.get("label", ""), "ref": "", "effect": "changed"})
         self.record.hold = None
         self._emit("decided", self.record)
         return True
@@ -596,6 +629,6 @@ def _project_refs(used: dict[str, Any]) -> list[str]:
 
 
 __all__ = [
-    "ANSWER_LATER_SECONDS", "CallRecord", "CallRunner", "Line", "Turns", "is_goodbye", "number_allowed", "passphrase_heard",
+    "ANSWER_LATER_SECONDS", "CallRecord", "CallRunner", "Line", "Turns", "is_goodbye", "is_later", "number_allowed", "passphrase_heard",
     "read_back", "speakable", "yes_or_no",
 ]

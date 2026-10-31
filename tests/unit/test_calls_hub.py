@@ -67,9 +67,10 @@ def test_a_call_offers_the_ask_tools_plus_the_two_sends_and_no_config() -> None:
     call, ask = resolve_palette(CALL), resolve_palette(ASK)
     assert CALL_HELD_EGRESS == {"channel.send", "nudge.send"}
     # PG15: a Program's read and its start join the call; the start holds.
-    assert call - ask == CALL_HELD_EGRESS | {"program.start", "program.get"}
-    assert CALL_HELD == CALL_HELD_EGRESS | {"program.start"}
-    assert {TOOL_AUTHORITY[n] for n in ("program.start", "program.get")} == {WORK}
+    # LANG5: program.shape joins too, held for his spoken yes.
+    assert call - ask == CALL_HELD_EGRESS | {"program.start", "program.get", "program.shape"}
+    assert CALL_HELD == CALL_HELD_EGRESS | {"program.start", "program.shape"}
+    assert {TOOL_AUTHORITY[n] for n in ("program.start", "program.get", "program.shape")} == {WORK}
     assert all(TOOL_AUTHORITY[name] == WORK for name in ask)
     assert all(TOOL_AUTHORITY[name] == EGRESS for name in CALL_HELD_EGRESS)
     assert "calls.place" not in call and TOOL_AUTHORITY["calls.place"] == EGRESS

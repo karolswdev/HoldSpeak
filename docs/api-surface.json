@@ -5621,6 +5621,14 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/shape/held",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/start",
       "methods": [
         "POST"

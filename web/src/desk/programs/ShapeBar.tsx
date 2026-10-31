@@ -17,7 +17,14 @@
  * says "Reading the program · <engine>", and the window stays usable. A
  * refusal (no engine, the engine did not answer, an answer it could not
  * read) is one line in place of that lamp, with its verbs. A question back
- * is one line; his next sentence answers it (sent with the first one). */
+ * is one line; his next sentence answers it (sent with the first one).
+ *
+ * LANG5 (§4.2, J3): the bar's mic is the window's one mic. A finished
+ * dictation (the end of the capture) settles into the well and is sent at
+ * once; while the engine reads, the bar says what it heard. A question back
+ * after a spoken sentence names the mic for the answer. Rows that wait in
+ * the well (`pending`) go with each next sentence, so the engine adds to
+ * them: three sentences in a row are one well. */
 import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError } from "../../lib/api";
@@ -56,8 +63,11 @@ function refusalOf(cause: unknown): Refusal {
   return { words: "The sentence did not reach the hub. The program is unchanged. Try again.", title: failureTitle(cause), code: "unreachable" };
 }
 
-export function ShapeBar({ program, onAnswer, onOpenText }: {
+export function ShapeBar({ program, pending, onAnswer, onOpenText }: {
   program: Program;
+  /** LANG5: the text of the rows that wait in the well (a sentence's); the
+   *  next sentence is shaped over it, so its rows add to them. */
+  pending?: string | null;
   /** The hub answered rows (or landed them at YOLO). */
   onAnswer(answer: ShapeAnswer): void;
   /** No engine: the typed text is the other way to change it. */
@@ -67,13 +77,22 @@ export function ShapeBar({ program, onAnswer, onOpenText }: {
   const [sentence, setSentence] = useState("");
   const [busy, setBusy] = useState(false);
   const [refusal, setRefusal] = useState<Refusal | null>(null);
-  const [question, setQuestion] = useState<{ asked: string; first: string } | null>(null);
+  const [question, setQuestion] = useState<{ asked: string; first: string; spoken: boolean } | null>(null);
   const [nothing, setNothing] = useState(false);
+  // LANG5: the sentence the mic heard (shown while the engine reads), and
+  // the settle of the words into the well (Delight §9.7).
+  const [heard, setHeard] = useState<string | null>(null);
+  const [settle, setSettle] = useState(0);
+  useEffect(() => {
+    if (!settle) return;
+    const timer = window.setTimeout(() => setSettle(0), 700);
+    return () => window.clearTimeout(timer);
+  }, [settle]);
 
-  const shape = useCallback(async (again?: string) => {
+  const shape = useCallback(async (again?: string, spoken = false) => {
     const said = (again ?? sentence).trim();
     if (!said || busy) return;
-    const words = question && !again ? `${question.first} ${said}` : said;
+    const words = question && (!again || spoken) ? `${question.first} ${said}` : said;
     if (engine === null) {
       // The hub said no engine shapes on this desk: nothing is sent or guessed.
       setRefusal({ words: "No engine is set for planning", title: "No engine is set for planning. The program is unchanged. Choose one in Engines.", code: "no_engine" });
@@ -82,10 +101,13 @@ export function ShapeBar({ program, onAnswer, onOpenText }: {
     setBusy(true);
     setRefusal(null);
     setNothing(false);
+    setHeard(spoken ? said : null);
     try {
-      const answer = await shapeProgram(program.id, { sentence: words, apply: program.control === "yolo" });
+      const answer = await shapeProgram(program.id, {
+        sentence: words, apply: program.control === "yolo", ...(pending ? { pending } : {}),
+      });
       if (answer.question && !answer.applied && !answer.changes.length) {
-        setQuestion({ asked: answer.question, first: words });
+        setQuestion({ asked: answer.question, first: words, spoken });
         setSentence("");
         return;
       }
@@ -100,8 +122,19 @@ export function ShapeBar({ program, onAnswer, onOpenText }: {
       setRefusal(refusalOf(cause));
     } finally {
       setBusy(false);
+      setHeard(null);
     }
-  }, [busy, engine, onAnswer, program.control, program.id, question, sentence]);
+  }, [busy, engine, onAnswer, pending, program.control, program.id, question, sentence]);
+
+  // The end of the capture: the words settle into the well and go at once.
+  const dictated = (text: string) => {
+    const said = text.trim();
+    setSentence(said);
+    setNothing(false);
+    if (!said) return;
+    setSettle((n) => n + 1);
+    void shape(said, true);
+  };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -111,18 +144,23 @@ export function ShapeBar({ program, onAnswer, onOpenText }: {
   };
 
   return (
-    <div className="pg-shape" data-testid="program-shape-bar" data-busy={busy ? "" : undefined}>
+    <div className="pg-shape" data-testid="program-shape-bar" data-busy={busy ? "" : undefined}
+      data-settle={settle ? "" : undefined}>
       <div className="pg-shape-row">
         <StringGadget label="Change the program" placeholder="Change the program" value={sentence}
           onChange={(next) => { setSentence(next); setNothing(false); }} onKeyDown={onKeyDown}
-          micLabel="Speak a change to the program" />
+          onDictation={dictated}
+          micLabel={question?.spoken ? "Speak your answer" : "Speak a change to the program"} />
         <Button dense variant="secondary" loading={busy} disabled={busy || !sentence.trim()} onClick={() => void shape()}
           data-testid="program-shape">Shape</Button>
       </div>
       {busy ? (
-        <DotWord tone="info" live className="pg-shape-line" data-testid="program-shape-reading">
-          {engine ? `Reading the program · ${engine}` : "Reading the program"}
-        </DotWord>
+        <div className="pg-shape-line">
+          <DotWord tone="info" live data-testid="program-shape-reading">
+            {engine ? `Reading the program · ${engine}` : "Reading the program"}
+          </DotWord>
+          {heard ? <span className="pg-shape-heard" title={heard} data-testid="program-shape-heard">{`Heard: ${heard}`}</span> : null}
+        </div>
       ) : refusal ? (
         <div className="pg-shape-line pg-shape-refusal" role="status" title={refusal.title || undefined} data-testid="program-shape-refusal">
           <span>{refusal.words}</span>

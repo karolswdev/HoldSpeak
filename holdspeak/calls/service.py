@@ -47,6 +47,8 @@ RETRY_SECONDS = 15.0
 FRAME = "call_state"
 #: PG15: a held ``program.start``, in words ("I want to start the program …").
 START_PROGRAM = "Start the program"
+#: LANG5: a held ``program.shape``, in words (the Calls window's row).
+CHANGE_PROGRAM = "Change the program"
 
 #: The system prompt of a call's turn.
 CALL_PROMPT = (
@@ -59,7 +61,10 @@ CALL_PROMPT = (
     "To send a prepared send, call channel.send with its send_id; to post a nudge, call nudge.send: "
     "each one waits for his spoken yes, so call it and the call asks him. "
     "To start a program (\"start the overnight program\"), call program.start with its name: it waits for his "
-    "spoken yes. To say how a program is doing, call program.get with its name and say its spoken line. "
+    "spoken yes. To change a program by his words (\"change the overnight program: add a check to every step\"), "
+    "call program.shape with its name and his sentence (the words after the name): it reads the changes back and "
+    "waits for his spoken yes; then say its spoken line. "
+    "To say how a program is doing, call program.get with its name and say its spoken line. "
     "When there is no program with that name, say so; never make one. Never change settings. "
     "Then say in one sentence what you did."
 )
@@ -152,6 +157,8 @@ class DeskTurns:
         self._factory = thread_factory
         self._override = profile_override
         self._context = ""
+        #: LANG5: a held program.shape's read back, by tool call id.
+        self._shaped: dict[str, dict[str, Any]] = {}
 
     def set_context(self, context: str) -> None:
         """Phone (2026-10-28): the desk called him; the turn knows why."""
@@ -215,6 +222,8 @@ class DeskTurns:
                 found = self._program(args)
                 if found is not None:
                     return f"{START_PROGRAM} {found['title']}"
+            if tool == "program.shape" and tool_call_id in self._shaped:
+                return f"{CHANGE_PROGRAM} {self._shaped[tool_call_id]['title']}"
             if tool == "nudge.send" and args.get("text"):
                 return "Post this nudge on GitHub: " + str(args["text"])[:160]
             data = args.get("data") if isinstance(args.get("data"), dict) else {}
@@ -240,20 +249,49 @@ class DeskTurns:
     def nothing_to_ask(self, tool_call_id: str, tool: str) -> bool:
         """True when a held call would change nothing, so the call asks no
         question: a ``program.start`` that names no Program, or one that runs
-        already. The tool then answers why, and the turn says it."""
+        already; a ``program.shape`` (LANG5) whose sentence the engine asks
+        back about or that has no row a call may apply. The tool then answers
+        why, and the turn says it. A ``program.shape`` is shaped here (a
+        preview; one engine call), so its read back is ready to ask."""
+        if tool == "program.shape":
+            from ..services import program_spoken
+            from ..services.program_service import default_program_service
+
+            handle = self._handle(tool_call_id)
+            held = program_spoken.prepare(default_program_service(self._db), OWNER,
+                                          dict(getattr(handle, "args", {}) or {}))
+            if held is None:
+                return True
+            self._shaped[tool_call_id] = held
+            return held["state"] != "asked"
         if tool != "program.start":
             return False
         handle = self._handle(tool_call_id)
         found = self._program(dict(getattr(handle, "args", {}) or {}))
         return found is None or found.get("state") not in ("drafting", "parked")
 
+    def hold_question(self, tool_call_id: str, tool: str) -> str:
+        """LANG5: a held ``program.shape`` is asked as its read back (one
+        sentence a row, then "Apply?"); "" for every other tool."""
+        held = self._shaped.get(tool_call_id) if tool == "program.shape" else None
+        return str((held or {}).get("question") or "")
+
     def decide(self, tool_call_id: str, decision: str) -> bool:
+        """``approve`` or ``deny``; for a held ``program.shape`` also
+        ``later`` (the rows wait on the desk; the tool runs and says so)."""
         from ..services.thread_service import ThreadService
 
         handle = self._handle(tool_call_id)
         if handle is None or handle.state != "awaiting_decision":
             return False
-        ThreadService._tool_executor.decide(handle, decision)
+        held = self._shaped.pop(tool_call_id, None)
+        if held is not None:
+            from ..services import program_spoken
+
+            program_spoken.answered(held["program_id"], held["sentence"], decision)
+        elif decision == "later":
+            decision = "deny"
+        ThreadService._tool_executor.decide(handle, "approve" if decision == "later" else decision)
         return True
 
 

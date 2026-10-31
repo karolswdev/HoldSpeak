@@ -413,6 +413,9 @@ export interface Program extends ProgramSummary {
   checkpoints: ProgramCheckpoint[];
   your_turn_items: YourTurnItem[];
   decided_for_you?: DecidedRow[];
+  /** PG-LANG LANG5: the rows a call left for his press ("later", or a row
+   *  that lowers the bar); the change well opens with them. */
+  held_shape?: (ShapeAnswer & { source: "call"; at?: number }) | null;
   /** Phone (PHONE-DESIGN §6): the engine may call him for this Program. */
   may_call?: boolean;
   spend_limit_usd?: number | null;

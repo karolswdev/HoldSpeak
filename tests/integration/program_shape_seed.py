@@ -29,7 +29,21 @@ SENTENCES = {
     "glance": "the indexes step only needs a glance review",
     "question": "move it before the other one",
     "mixed": "put the indexes step on Codex and give it only a glance review",
+    # LANG5: three spoken sentences in a row (PROGRAM-JOURNEYS J3). Each one
+    # after the first is recorded over the text the one before it answered
+    # (the rows wait in the well; ``pending``), so the well holds all three.
+    "voice1": "every step must keep ruff green",
+    "voice2": "put a step before the fan-out that adds the loop watch",
+    "voice3": "and the fan-out runs on Codex, not Claude",
+    # LANG5, on a call (§10): "change the overnight program: …".
+    "call": "add a check that the People window fits at 393 to every step",
 }
+
+#: LANG5: a key here was recorded over the text its named key's reply answered.
+CHAINED = {"voice2": "voice1", "voice3": "voice2"}
+#: LANG5: these were recorded over the seed at control normal (the rows wait
+#: in the well, and a call's yes applies them); the others at yolo.
+NORMAL = frozenset({"voice1", "voice2", "voice3", "call"})
 
 
 def seed(rig: Rig, *, control: str = "yolo") -> str:

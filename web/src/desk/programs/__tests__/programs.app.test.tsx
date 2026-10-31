@@ -92,6 +92,20 @@ vi.mock("../../shell", async (importOriginal) => ({
   openProjectRoom: mocks.openProjectRoom,
 }));
 vi.mock("../open", () => ({ openProgram: (id: string) => mocks.openPullout(`program:${id}`) }));
+// LANG5: the bar's mic. Off (as jsdom is) unless a test turns it on; then a
+// capture's end answers the words the test speaks.
+const mic = vi.hoisted(() => ({ supported: false, startStreamSession: vi.fn() }));
+vi.mock("../../../lib/speakToFill", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../lib/speakToFill")>()),
+  speakToFillSupported: () => mic.supported,
+  speakToFillUnsupportedReason: () => (mic.supported ? null : "No microphone in this browser"),
+  subscribeCaptureLevel: () => () => undefined,
+}));
+vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../lib/micStreamSession")>()),
+  micStreamSupported: () => mic.supported,
+  startStreamSession: mic.startStreamSession,
+}));
 
 import { ApiError } from "../../../lib/api";
 import { ProgramsCore } from "../ProgramsWindow";
@@ -143,6 +157,8 @@ function hub(table: Record<string, Answer>) {
 }
 
 beforeEach(() => {
+  mic.supported = false;
+  mic.startStreamSession.mockReset();
   calls = [];
   mocks.listeners.clear();
   mocks.apiFetch.mockReset();
@@ -1479,5 +1495,140 @@ describe("LANG4: shaping by a typed sentence (PROGRAM-LANGUAGE §4, §9.2, §14)
     say("step 3 before step 2");
     await waitFor(() => expect(posts(id, "shape")).toHaveLength(2));
     expect(posts(id, "shape")[1]).toEqual({ sentence: `${question.sentence} step 3 before step 2`, apply: true });
+  });
+});
+
+describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEYS J3)", () => {
+  type Shape = import("../types").ShapeAnswer;
+  type Applied = import("../types").TextApplyAnswer;
+  const voice = shapeFixture.voice as unknown as { program: Program; shapes: Shape[]; applied: Applied };
+  const yolo = shapeFixture.yolo as unknown as { program: Program };
+  const question = shapeFixture.question as unknown as Shape;
+  const later = shapeFixture.call_later as unknown as { program: Program; dropped: Program };
+  const posts = (id: string, tail: string) => calls.filter((call) => call.startsWith(`POST /api/programs/${id}/${tail}`))
+    .map((call) => JSON.parse(call.slice(call.indexOf("{"))) as Record<string, unknown>);
+  const bar = () => screen.getByTestId("program-shape-bar");
+  const field = () => within(bar()).getByRole("textbox", { name: "Change the program" }) as HTMLInputElement;
+  /** He presses the bar's mic, says the words, presses it again: the capture's end. */
+  const speak = async (words: string, micName = "Speak a change to the program") => {
+    mic.startStreamSession.mockResolvedValueOnce({ stop: vi.fn().mockResolvedValue(words), cancel: vi.fn() });
+    fireEvent.click(within(bar()).getByRole("button", { name: micName }));
+    const stop = await within(bar()).findByRole("button", { name: "Stop listening" });
+    fireEvent.click(stop);
+  };
+  beforeEach(() => { mic.supported = true; });
+
+  it("the end of a dictation sends the sentence at once; the bar says what it heard while the engine reads; the rows land", async () => {
+    const id = voice.program.id;
+    let answer: (value: unknown) => void = () => undefined;
+    hub({
+      [`GET /api/programs/${id}`]: voice.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+    });
+    const table = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation((path: string, init?: { method?: string; json?: unknown }) => {
+      if (init?.method === "POST" && path.endsWith("/shape")) {
+        calls.push(`POST ${path} ${JSON.stringify(init.json)}`);
+        return new Promise((resolve) => { answer = resolve; });
+      }
+      return table(path, init);
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    await speak(voice.shapes[0].sentence);
+    // No Shape press: the capture's end sent it.
+    await waitFor(() => expect(posts(id, "shape")).toHaveLength(1));
+    expect(posts(id, "shape")[0]).toEqual({ sentence: voice.shapes[0].sentence, apply: false });
+    expect(field().value).toBe(voice.shapes[0].sentence);
+    expect(bar()).toHaveAttribute("data-settle");
+    expect(screen.getByTestId("program-shape-heard").textContent).toBe(`Heard: ${voice.shapes[0].sentence}`);
+    expect(screen.getByTestId("program-shape-reading").textContent).toBe("Reading the program · Home Engine");
+    await act(async () => answer(clone(voice.shapes[0])));
+    const well = await screen.findByTestId("programs-change-well");
+    expect(screen.queryByTestId("program-shape-heard")).toBeNull();
+    expect(within(well).getAllByTestId("programs-diff-row").map((row) => row.getAttribute("data-row")))
+      .toEqual(voice.shapes[0].changes.map((row) => row.id));
+    expect(within(well).getByText(voice.shapes[0].say, { selector: ".kit-changewell-say" })).toBeInTheDocument();
+    expect(field().value).toBe("");
+  });
+
+  it("three sentences in a row: each goes with the rows that wait; the one well holds all three; one Apply lands them", async () => {
+    const id = voice.program.id;
+    let turn = 0;
+    hub({
+      [`GET /api/programs/${id}`]: voice.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+      [`POST /api/programs/${id}/shape`]: () => voice.shapes[turn++],
+      [`POST /api/programs/${id}/text`]: voice.applied,
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    for (const [index, shape] of voice.shapes.entries()) {
+      await speak(shape.sentence);
+      await waitFor(() => expect(posts(id, "shape")).toHaveLength(index + 1));
+      await waitFor(() => expect(within(screen.getByTestId("programs-change-well")).getAllByTestId("programs-diff-row"))
+        .toHaveLength(shape.changes.length));
+    }
+    const bodies = posts(id, "shape");
+    expect(bodies[0]).toEqual({ sentence: voice.shapes[0].sentence, apply: false });
+    expect(bodies[1]).toEqual({ sentence: voice.shapes[1].sentence, apply: false, pending: voice.shapes[0].proposed_text });
+    expect(bodies[2]).toEqual({ sentence: voice.shapes[2].sentence, apply: false, pending: voice.shapes[1].proposed_text });
+    const well = screen.getByTestId("programs-change-well");
+    // Every sentence's rows, against the text as it is now, and each sentence's line.
+    expect(within(well).getAllByTestId("programs-diff-row").map((row) => row.getAttribute("data-row")))
+      .toEqual(voice.shapes[2].changes.map((row) => row.id));
+    expect(within(well).getByText(voice.shapes.map((shape) => shape.say).join("; "), { selector: ".kit-changewell-say" }))
+      .toBeInTheDocument();
+    // The engine wrote "R4" for the new ruff requirement: refused by name; Apply lands the rest.
+    const refused = within(well).getAllByTestId("programs-diff-row").find((row) => row.getAttribute("data-row") === "R4.unknown")!;
+    expect(within(refused).getByTestId("kit-diffrow-verdict").textContent).toBe("Refused");
+    const apply = within(well).getByTestId("programs-well-apply");
+    expect(apply.textContent).toBe(`Apply ${voice.shapes[2].changes.length - 1}`);
+    fireEvent.click(apply);
+    await waitFor(() => expect(posts(id, "text")).toHaveLength(1));
+    expect(posts(id, "text")[0]).toEqual({ text: voice.shapes[2].allowed_text, base: voice.shapes[2].base, dry_run: false,
+      allow_lower: [] });
+    await waitFor(() => expect((screen.getByRole("textbox", { name: "Step 3 title" }) as HTMLInputElement).value).toBe("Loop watch"));
+    await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+  });
+
+  it("a question back after a spoken sentence: the question in place, the mic named for the answer; the answer goes with the first", async () => {
+    const id = yolo.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: yolo.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+      [`POST /api/programs/${id}/shape`]: question,
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    await speak(question.sentence);
+    const asked = await screen.findByTestId("program-shape-question");
+    expect(asked.textContent).toBe(question.question);
+    expect(screen.queryByTestId("programs-change-well")).toBeNull();
+    await speak("step 3 before step 2", "Speak your answer");
+    await waitFor(() => expect(posts(id, "shape")).toHaveLength(2));
+    expect(posts(id, "shape")[1]).toEqual({ sentence: `${question.sentence} step 3 before step 2`, apply: true });
+  });
+
+  it("rows a call left for his press open the well; Not this drops them on the hub", async () => {
+    const id = later.program.id;
+    const held = later.program.held_shape!;
+    hub({
+      [`GET /api/programs/${id}`]: later.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+      [`DELETE /api/programs/${id}/shape/held`]: later.dropped,
+    });
+    render(<ProgramBody programId={id} />);
+    const well = await screen.findByTestId("programs-change-well");
+    expect(within(well).getByText(held.say, { selector: ".kit-changewell-say" })).toBeInTheDocument();
+    expect(within(well).getByText(/^On a call · qwen3\.8-27b · under 1 s · /)).toBeInTheDocument();
+    expect(within(well).getAllByTestId("programs-diff-row").map((row) => row.getAttribute("data-row")))
+      .toEqual(held.changes.map((row) => row.id));
+    fireEvent.click(within(well).getByTestId("programs-well-not-this"));
+    await waitFor(() => expect(calls).toContain(`DELETE /api/programs/${id}/shape/held`));
+    await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
   });
 });

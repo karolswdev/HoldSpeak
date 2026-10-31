@@ -333,6 +333,11 @@ export function readShapeEngine(id: string): Promise<ShapeEngine> {
 
 /** PG-LANG LANG3: one sentence → the change rows; `apply` lands the allowed
  *  rows at once at YOLO only (the hub decides by the level). */
-export function shapeProgram(id: string, body: { sentence: string; apply: boolean }): Promise<ShapeAnswer> {
+export function shapeProgram(id: string, body: { sentence: string; apply: boolean; pending?: string }): Promise<ShapeAnswer> {
   return apiFetch<ShapeAnswer>(`${base(id)}/shape`, { method: "POST", json: body });
+}
+
+/** PG-LANG LANG5: Not this on the rows a call left in the change well. */
+export function dropHeldShape(id: string): Promise<Program> {
+  return apiFetch<Program>(`${base(id)}/shape/held`, { method: "DELETE" });
 }

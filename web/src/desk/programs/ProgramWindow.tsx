@@ -37,7 +37,7 @@ import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
-import { closeProgram, decide, decideProposal, decideRequirement, overturn, planProgram, programVerb, race, updateProgram, useProgram,
+import { closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, updateProgram, useProgram,
   type RequirementChoice } from "./api";
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
 import { RequirementsBoard, openShot } from "./Requirements";
@@ -542,14 +542,31 @@ export function ProgramBody({ programId }: { programId: string }) {
     } else {
       setShaped(null);
     }
+    // LANG5: the next sentence was shaped over the rows that wait, so its
+    // answer holds them all; the say head keeps each sentence's line.
+    const earlier = !answer.applied && proposal?.source === "sentence" ? proposal.say : "";
     setProposal(answer.changes.length ? {
-      source: "sentence", text: answer.proposed_text, base: answer.base, answer, say: answer.say, fact: engineFact(answer),
+      source: "sentence", text: answer.proposed_text, base: answer.base, answer, fact: engineFact(answer),
+      say: [earlier, answer.say].filter(Boolean).join("; "),
+      // A call's rows the sentence added to: Not this still drops them on the hub.
+      fromCall: Boolean(earlier && proposal?.fromCall) || undefined,
     } : null);
   };
   const notThis = () => {
     if (proposal?.source === "text") text.revert();
+    if (proposal?.fromCall) void dropHeldShape(programId).then(apply).catch(() => undefined);
     setProposal(null);
   };
+  // LANG5: rows a call left for his press open the well (once per set).
+  const heldShape = program?.held_shape ?? null;
+  const heldKey = heldShape ? `${heldShape.at ?? ""}:${heldShape.base}:${heldShape.proposed_text}` : "";
+  useEffect(() => {
+    if (!heldShape || proposal) return;
+    setProposal({
+      source: "sentence", fromCall: true, text: heldShape.proposed_text, base: heldShape.base, answer: heldShape,
+      say: heldShape.say, fact: `On a call · ${engineFact(heldShape)}`,
+    });
+  }, [heldKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A new answer is a new well (his presses on the old rows do not carry).
   const wellKey = proposal ? [proposal.source, proposal.answer.revision, proposal.text, proposal.answer.changes.map((row) => row.id + row.verdict).join()].join(":") : "";
@@ -663,7 +680,10 @@ export function ProgramBody({ programId }: { programId: string }) {
         ) : null}
         <ViewMore view={view} onView={setView} />
       </Toolbar>
-      {program.state !== "done" ? <ShapeBar program={program} onAnswer={onShaped} onOpenText={() => setView("text")} /> : null}
+      {program.state !== "done" ? (
+        <ShapeBar program={program} pending={proposal?.source === "sentence" ? proposal.text : null}
+          onAnswer={onShaped} onOpenText={() => setView("text")} />
+      ) : null}
       <div className="pg-body">
         {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
         <YourTurnWell program={program} onDecided={apply} />

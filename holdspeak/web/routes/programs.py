@@ -42,7 +42,8 @@ GET    /api/programs/{id}/text                     PG-LANG LANG1: the Program te
 POST   /api/programs/{id}/text                     {text, dry_run (default true; preview too), base?, allow_lower?: [row ids]}
                                                    -> {changes, patch, allowed_text, applied, text, revision}
 GET    /api/programs/{id}/shape                    LANG3: the engine that shapes {engine, capability} (null: none)
-POST   /api/programs/{id}/shape                    LANG3 {sentence, apply?}: one engine call; the text_apply answer
+POST   /api/programs/{id}/shape                    LANG3 {sentence, apply?, pending?}: one engine call; the text_apply answer
+DELETE /api/programs/{id}/shape/held               LANG5: Not this on the rows a call left on the desk
                                                    + {say, question, engine, latency_ms, proposed_text, base, decision}
 
 Every handler runs the service off the event loop (``run_in_threadpool``).
@@ -290,8 +291,14 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/programs/{program_id}/shape")
     async def api_programs_shape(program_id: str, request: Request) -> Any:
         principal, body = _principal(request), await _body(request)
+        pending = body.get("pending") if isinstance(body.get("pending"), str) else None
         return await _call(lambda: _service().shape(principal, program_id, body.get("sentence"),
-                                                    apply=body.get("apply") is True))
+                                                    apply=body.get("apply") is True, pending=pending))
+
+    @router.delete("/api/programs/{program_id}/shape/held")
+    async def api_programs_shape_held_drop(program_id: str, request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().drop_held_shape(principal, program_id))
 
     @router.post("/api/programs/{program_id}/close")
     async def api_programs_close(program_id: str, request: Request) -> Any:

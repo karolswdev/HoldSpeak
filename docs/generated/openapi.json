@@ -23745,6 +23745,45 @@
         "summary": "Api Programs Shape"
       }
     },
+    "/api/programs/{program_id}/shape/held": {
+      "delete": {
+        "operationId": "api_programs_shape_held_drop_api_programs__program_id__shape_held_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Shape Held Drop Api Programs  Program Id  Shape Held Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Programs Shape Held Drop"
+      }
+    },
     "/api/programs/{program_id}/start": {
       "post": {
         "operationId": "api_programs_start_api_programs__program_id__start_post",

@@ -93,6 +93,8 @@ export type TextProposal = {
   answer: TextApplyAnswer;
   /** The base moved: the text was read again (the time). */
   readAgain?: string;
+  /** LANG5: rows a call left on the desk (Not this drops them on the hub). */
+  fromCall?: boolean;
 };
 
 /** The Text view's state: the base, his lines, the reads. */

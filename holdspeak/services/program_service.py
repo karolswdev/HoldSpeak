@@ -799,7 +799,14 @@ class ProgramService:
     def get(self, principal: Any, program_id: str) -> dict[str, Any]:
         program = self._program(program_id)
         steps = self.store.list_steps(program["id"])
-        return self._wire(program, steps)
+        wire = self._wire(program, steps)
+        # LANG5: the rows a call left for his press (only when there are some).
+        from .program_spoken import on_desk
+
+        held = on_desk(program["id"])
+        if held:
+            wire["held_shape"] = held
+        return wire
 
     def find(self, principal: Any, *, program_id: Any = None, name: Any = None,
              startable: bool = False) -> dict[str, Any]:
@@ -3040,11 +3047,22 @@ class ProgramService:
         return {"program_id": wire["id"], "text": print_program(wire), "revision": int(wire.get("revision") or 0),
                 "version": VERSION}
 
-    def shape(self, principal: Any, program_id: str, sentence: Any, *, apply: bool = False) -> dict[str, Any]:
-        """PG-LANG LANG3: one sentence becomes change rows (program_shaper)."""
+    def shape(self, principal: Any, program_id: str, sentence: Any, *, apply: bool = False,
+              pending: Optional[str] = None) -> dict[str, Any]:
+        """PG-LANG LANG3: one sentence becomes change rows (program_shaper);
+        LANG5 ``pending``: the rows in the well, so the next sentence adds."""
         from .program_shaper import shape_program
 
-        return shape_program(self, principal, program_id, sentence, apply=apply)
+        return shape_program(self, principal, program_id, sentence, apply=apply, pending=pending)
+
+    def drop_held_shape(self, principal: Any, program_id: str) -> dict[str, Any]:
+        """LANG5: Not this on the rows a call left on the desk."""
+        from .program_spoken import drop
+
+        program = self._program(program_id)
+        self._require_writer(principal, program, "shape")
+        drop(program["id"])
+        return self.get(principal, program["id"])
 
     def shape_engine(self, principal: Any, program_id: str) -> dict[str, Any]:
         """The engine the shaping bar names (``engine: None``: none is set)."""
@@ -3187,6 +3205,10 @@ class ProgramService:
         if dry_run or blocked or not rows:
             return answer
         self._apply_text(principal, program, wire, base_model, new_model, rows)
+        # LANG5: rows a call left on the desk are against the old text.
+        from .program_spoken import drop
+
+        drop(program["id"])
         fresh = self.get(principal, program["id"])
         answer.update(applied=True, text=print_program(fresh), revision=int(fresh.get("revision") or 0),
                       program=fresh)
