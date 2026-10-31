@@ -16,7 +16,9 @@ etiquette coded, not only written (its ``skills/agentring/SKILL.md``):
 - ``phone.brief`` (PG-DIRECTION DIR1): the owner makes a briefing page for
   one held item of a Program and gets its link (the token is in the link
   only). Owner only; it reads nothing of the phone, so it works with the
-  phone off. Telegram and the push are later slices.
+  phone off. ``send: telegram`` also sends it to his paired chat (DIR5).
+- ``phone.later`` (DIR4): Later on his own held item; owner only.
+- ``phone.status`` gains ``telegram``, ``ladder`` and ``open_packages``.
 """
 from __future__ import annotations
 
@@ -82,17 +84,35 @@ TOOLS: list[dict[str, Any]] = [
         "name": "phone.brief",
         "description": (
             "Owner only. Make a briefing page for one held item (a Needs you row id, program:<program>:<item>) "
-            "and return its page path /b/<token>, open for 24 hours, decided once. send is none: Telegram and the "
-            "phone push are not built yet."
+            "and return its page path /b/<token>, open for 24 hours, decided once. send telegram also sends it to "
+            "his paired Telegram chat (eight lines, the choices as buttons, Later, the page link); none makes only "
+            "the page. The phone push is not built yet."
         ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "refs": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 1},
                 "kind": {"type": ["string", "null"], "enum": ["item", None]},
-                "send": {"type": ["string", "null"], "enum": ["none", None]},
+                "send": {"type": ["string", "null"], "enum": ["none", "telegram", None]},
             },
             "required": ["refs"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "phone.later",
+        "description": (
+            "Owner only. Later on one held item (program:<program>:<item>): it leaves the Needs you count and comes "
+            "back at the next touch. later is his words: empty (his default), in 1 hour, later 2h, at 13:00, at one, "
+            "tonight, tomorrow. It decides nothing; at YOLO a core question's step is parked for now, Overturnable."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "ref": {"type": "string", "minLength": 1},
+                "later": {"type": ["string", "null"]},
+            },
+            "required": ["ref"],
             "additionalProperties": False,
         },
     },
@@ -117,6 +137,11 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         args = dict(arguments or {})
         return default_briefing_service().make(principal, args.get("refs"), kind=args.get("kind") or "item",
                                                send=args.get("send"))
+    if name == "phone.later":
+        from holdspeak.services.reach_service import default_reach_service
+
+        args = dict(arguments or {})
+        return default_reach_service().later(principal, args.get("ref"), args.get("later"), via="desk")
     from holdspeak.phone import phone_on
     from holdspeak.phone.service import PhoneRefused, default_phone_service
 
@@ -133,7 +158,9 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return service.call(principal, reason=str(args.get("reason") or ""), context=str(args.get("context") or ""),
                             urgent=bool(args.get("urgent")), wait=True,
                             program_step_id=args.get("program_step_id") or None)
-    return service.status(principal)
+    from holdspeak.services.reach_service import default_reach_service
+
+    return {**service.status(principal), **default_reach_service().summary()}
 
 
 __all__ = ["NAMES", "TOOLS", "dispatch"]

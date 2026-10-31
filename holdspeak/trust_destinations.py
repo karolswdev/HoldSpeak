@@ -76,7 +76,7 @@ def destination_inventory(
         "telegram": bool(
             getattr(config.cadence_telegram, "enabled", False)
             and _configured(getattr(config.cadence_telegram, "bot_token", ""))
-        ),
+        ) or _reach_telegram_paired(),
         "failure_webhook": _configured(meeting.intel_retry_failure_webhook_url),
     }
     summary_ready = bool(summary_route and summary_route.get("status") == "ready")
@@ -250,3 +250,14 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
 
 
 __all__ = ["REGISTRY_PATH", "destination_inventory", "destination_registry"]
+
+
+def _reach_telegram_paired() -> bool:
+    """PG-DIRECTION DIR5: the reach bot's token is in the keystore and one
+    chat is paired (``services/telegram_reach.py``)."""
+    try:
+        from .services.telegram_reach import bot_token, paired_chat, telegram_on
+
+        return telegram_on() and bool(bot_token()) and paired_chat() is not None
+    except Exception:
+        return False

@@ -26,6 +26,9 @@ import { useDrawers } from "../../drawer/store";
 import needsPageNone from "../../programs/__fixtures__/needs_you.page_none.json";
 import needsPageOpen from "../../programs/__fixtures__/needs_you.page_open.json";
 import reachPackage from "../../programs/__fixtures__/reach.package.json";
+// PG-DIRECTION DIR4/DIR5: recorded by tests/integration/test_desk_reach_settings.py.
+import needsLater from "../../reach/__fixtures__/needs_you.later.json";
+import needsSent from "../../reach/__fixtures__/needs_you.sent.json";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -1417,10 +1420,11 @@ describe("the briefing page on a Program row (PG-DIRECTION DIR3)", () => {
     });
     render(<NeedsDrawer />);
     const title = needsPageNone.items[0].title;
-    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Copy page link"]));
+    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Later ▾", "Send ▾"]));
     expect(face(row(title)).fact).not.toMatch(/Page/);
-    fireEvent.click(within(row(title)).getByRole("button", { name: /Copy page link/ }));
-    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Revoke"]));
+    fireEvent.click(within(row(title)).getByRole("button", { name: /^Send:/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Copy page link" }));
+    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Later ▾", "Revoke"]));
     expect(posts).toEqual([{ path: "/api/reach/packages", json: { refs: [needsPageNone.items[0].id] } }]);
     expect(writeText).toHaveBeenCalledWith(`${window.location.origin}${reachPackage.path}`);
     expect(face(row(title)).fact).toMatch(/Page link copied · open until \d\d:\d\d$/);
@@ -1446,8 +1450,56 @@ describe("the briefing page on a Program row (PG-DIRECTION DIR3)", () => {
     // (The copy above, in this module, marked the same recorded page copied.)
     await waitFor(() => expect(face(row(title)).fact).toMatch(/(Page open|Page link copied · open) until \d\d:\d\d$/));
     fireEvent.click(within(row(title)).getByRole("button", { name: /Revoke the page/ }));
-    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Copy page link"]));
+    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Later ▾", "Send ▾"]));
     expect(posts).toEqual([`/api/reach/packages/${page.package_id}/revoke`]);
   });
 });
 
+describe("Later and Telegram on a Program row (PG-DIRECTION DIR4, DIR5)", () => {
+  const read = (items: unknown[]) => ({ items, blockers: [], failedMeetings: [], coverage: [], complete: true });
+  const clock = (stamp: string) => {
+    const at = new Date(stamp);
+    return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  };
+
+  it("the line says it was sent to Telegram and the page is open; no chip", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) return read(needsSent.items) as never;
+      if (value === "/api/door") return DOOR as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    const item = needsSent.items[0];
+    const sent = item.program.page.sent;
+    await waitFor(() => expect(face(row(item.title)).fact).toContain(
+      `Sent to Telegram ${clock(sent.at)} · page open until ${clock(item.program.page.expires_at)}`));
+    expect(face(row(item.title)).egress).toBe("");
+    expect(face(row(item.title)).verbs).toEqual(["Go on", "Park", "Later ▾", "Revoke"]);
+  });
+
+  it("Later ▾ ▸ In 1 hour defers the item: it moves to the end, not counted, with its time", async () => {
+    let deferred = false;
+    const posts: { path: string; json: unknown }[] = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) return read(deferred ? needsLater.items : needsSent.items) as never;
+      if (value === "/api/reach/later") {
+        posts.push({ path: value, json: (init as { json?: unknown })?.json });
+        deferred = true;
+        return { until: needsLater.items[0].later.until, words: "Later · back at 13:00" } as never;
+      }
+      if (value === "/api/door") return DOOR as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    const item = needsSent.items[0];
+    fireEvent.click(await within(await waitFor(() => row(item.title))).findByRole("button", { name: /^Later:/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "In 1 hour" }));
+    await waitFor(() => expect(posts).toEqual([{ path: "/api/reach/later", json: { ref: item.id, later: "in_1h" } }]));
+    const later = needsLater.items[0];
+    await waitFor(() => expect(face(row(later.title)).fact).toContain(`Later · back at ${clock(later.later.until)}`));
+    expect(face(row(later.title)).verbs).not.toContain("Later ▾");
+    await waitFor(() => expect(row(later.title).getAttribute("data-counted")).toBe("false"));
+  });
+});

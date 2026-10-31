@@ -57,7 +57,11 @@ def _wire(rig: Rig, monkeypatch: pytest.MonkeyPatch, service: Any) -> None:
 
     monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")
     monkeypatch.setattr(program_service, "default_program_service", lambda db=None: rig.service)
-    service.configure(held=lambda: DeskHeld(rig.db, programs=lambda: rig.service, now=lambda: NOW))
+    from holdspeak.services.reach_service import ReachService
+
+    reach = ReachService(rig.db, programs=lambda: rig.service, clock=lambda: NOW.isoformat())
+    service.configure(held=lambda: DeskHeld(rig.db, programs=lambda: rig.service, reach=lambda: reach,
+                                            now=lambda: NOW))
 
 
 class _NoModel:

@@ -1,0 +1,39 @@
+{
+  "_source": "The Telegram Bot API's own shapes (core.telegram.org/bots/api: Update, Message, CallbackQuery, and the ok/result answers of getUpdates, sendMessage, editMessageText, answerCallbackQuery). NOT recorded from a live bot: the lane had no scratch bot (DIRECTION-2026-10-31.md §11 asks for one recording; replace this file with it). Ids and names are invented.",
+  "owner_chat": {"id": 7012345678, "first_name": "Karol", "type": "private"},
+  "other_chat": {"id": 7099999999, "first_name": "Mallory", "type": "private"},
+  "updates": {
+    "pair": {"update_id": 900000001, "message": {"message_id": 11, "date": 1793439000,
+      "from": {"id": 7012345678, "is_bot": false, "first_name": "Karol"},
+      "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "/pair {code}",
+      "entities": [{"offset": 0, "length": 5, "type": "bot_command"}]}},
+    "pair_other": {"update_id": 900000002, "message": {"message_id": 3, "date": 1793439010,
+      "from": {"id": 7099999999, "is_bot": false, "first_name": "Mallory"},
+      "chat": {"id": 7099999999, "first_name": "Mallory", "type": "private"}, "text": "/pair {code}",
+      "entities": [{"offset": 0, "length": 5, "type": "bot_command"}]}},
+    "text_other": {"update_id": 900000003, "message": {"message_id": 4, "date": 1793439020,
+      "from": {"id": 7099999999, "is_bot": false, "first_name": "Mallory"},
+      "chat": {"id": 7099999999, "first_name": "Mallory", "type": "private"}, "text": "/brief"}},
+    "tap": {"update_id": 900000004, "callback_query": {"id": "4382bfdwdsb323b2d9", "chat_instance": "-123456789",
+      "from": {"id": 7012345678, "is_bot": false, "first_name": "Karol"},
+      "message": {"message_id": "{message_id}", "date": 1793439030, "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"},
+        "from": {"id": 6000000001, "is_bot": true, "first_name": "HoldSpeak"}, "text": "{text}"},
+      "data": "{data}"}},
+    "tap_other": {"update_id": 900000005, "callback_query": {"id": "5382bfdwdsb323b2e0", "chat_instance": "-987654321",
+      "from": {"id": 7099999999, "is_bot": false, "first_name": "Mallory"},
+      "message": {"message_id": 1, "date": 1793439040, "chat": {"id": 7099999999, "first_name": "Mallory", "type": "private"},
+        "text": "x"}, "data": "{data}"}},
+    "reply": {"update_id": 900000006, "message": {"message_id": 12, "date": 1793439050,
+      "from": {"id": 7012345678, "is_bot": false, "first_name": "Karol"},
+      "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "{text}"}}
+  },
+  "answers": {
+    "sendMessage": {"ok": true, "result": {"message_id": "{message_id}", "date": 1793439000,
+      "from": {"id": 6000000001, "is_bot": true, "first_name": "HoldSpeak", "username": "holdspeak_karol_bot"},
+      "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "{text}"}},
+    "editMessageText": {"ok": true, "result": {"message_id": "{message_id}", "date": 1793439000, "edit_date": 1793439060,
+      "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "{text}"}},
+    "answerCallbackQuery": {"ok": true, "result": true},
+    "getUpdates": {"ok": true, "result": []}
+  }
+}

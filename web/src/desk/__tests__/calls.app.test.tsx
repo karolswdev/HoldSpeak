@@ -719,17 +719,16 @@ describe("Phone: the wing of the Calls window", () => {
 });
 
 describe("Settings ▸ Calls ▸ Phone", () => {
-  it("the recorded status: the paired phone with Remove, Reach you by the level, Rhythm's quiet hours, the line, egress once", async () => {
+  it("the recorded status: the paired phone with Remove, Reach you in Reach, Rhythm's quiet hours, the line, egress once", async () => {
     hub({ "GET /api/settings": phoneOn, "GET /api/phone/status": P.status, [`DELETE /api/phone/devices/${P.status.devices[0].id}`]: { ok: true } });
     render(<PhoneSettingsPane />);
     const row = await screen.findByTestId("phone-device-row");
     expect(row.textContent).toContain(P.status.devices[0].name);
     expect(row.textContent).toMatch(/Paired \d+ Oct/);
-    const reach = screen.getAllByTestId("phone-reach-row");
-    expect(reach.map((r) => r.getAttribute("data-kind"))).toEqual(Object.keys(P.status.reach));
-    for (const r of reach) expect(r.getAttribute("data-channel")).toBe(P.status.reach[r.getAttribute("data-kind")!].level_word);
-    expect(screen.getByTestId("phone-reach-level").textContent).toBe("Set by Control: YOLO");
-    expect(screen.queryByTestId("phone-reach-reset")).toBeNull();
+    // PG-DIRECTION DIR6: Reach you moved to Settings ▸ Reach (reach.app.test.tsx).
+    expect(screen.queryAllByTestId("phone-reach-row")).toHaveLength(0);
+    fireEvent.click(screen.getByTestId("phone-reach-open"));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "reach");
     expect(screen.getByTestId("phone-quiet").textContent).toContain("22:00 to 08:00");
     fireEvent.click(screen.getByTestId("phone-quiet-rhythm"));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "rhythm");
@@ -785,25 +784,8 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     expect(screen.getByTestId("phone-device-row")).toBeInTheDocument();
   });
 
-  it("a Reach you choice writes his own word over the level; Use the YOLO set clears it", async () => {
-    let own: Record<string, string> = {};
-    const withOwn = () => ({ ...P.status, reach: Object.fromEntries(Object.entries(P.status.reach).map(([kind, choice]) =>
-      [kind, own[kind] ? { ...choice, word: own[kind], own: true } : choice])) });
-    hub({
-      "GET /api/settings": phoneOn,
-      "GET /api/phone/status": withOwn,
-      "PUT /api/settings": (init?: { json?: unknown }) => { own = (init?.json as { calls: { phone_reach: Record<string, string> } }).calls.phone_reach; return {}; },
-    });
-    render(<PhoneSettingsPane />);
-    const row = (await screen.findAllByTestId("phone-reach-row")).find((r) => r.getAttribute("data-kind") === "program_done")!;
-    fireEvent.click(within(row).getByLabelText("Nothing"));
-    await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"phone_reach":{"program_done":"nothing"}}}'));
-    await waitFor(() => expect(row.getAttribute("data-channel")).toBe("nothing"));
-    expect(screen.getByTestId("phone-reach-level").textContent).toBe("Your choices over Control: YOLO");
-    fireEvent.click(screen.getByTestId("phone-reach-reset"));
-    await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"phone_reach":{}}}'));
-    await waitFor(() => expect(row.getAttribute("data-channel")).toBe("message"));
-  });
+  // PG-DIRECTION DIR6: "a Reach you choice writes his own word over the
+  // level" moved with the rows to web/src/desk/reach/__tests__/reach.app.test.tsx.
 });
 
 // PHONE-APNS-KEY: the hub's own answers, recorded through the real routes

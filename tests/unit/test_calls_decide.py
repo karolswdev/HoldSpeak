@@ -13,7 +13,7 @@ already"; each item read gets its ledger line with the transcript Note.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -21,12 +21,15 @@ import pytest
 
 from holdspeak.calls import decide
 from holdspeak.calls.aiphone import Reply
-from holdspeak.calls.decide import DeskHeld, later_at, match_choice
+from holdspeak.calls.decide import DeskHeld, later_words, match_choice
 from holdspeak.calls.runner import CallRecord, CallRunner
 from holdspeak.services.briefing_service import BriefingService
+from holdspeak.services.reach_service import ReachRefused, ReachService
 from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig
 
 NOW = datetime(2026, 10, 31, 12, 10).astimezone()
+#: The reach service's clock seam (UTC text), at NOW.
+CLOCK = lambda: NOW.astimezone(timezone.utc).isoformat()  # noqa: E731
 
 
 class ScriptPhone:
@@ -77,7 +80,7 @@ class NoTurns:
 
 def _core(tmp_path: Path, control: str = "yolo") -> tuple[Rig, str]:
     """Step 1 touched a file no step owns: a core question (Go on · Park)."""
-    rig = Rig(tmp_path)
+    rig = Rig(tmp_path, clock=CLOCK)  # Needs you reads a Later against the Program's clock
     pid = rig.service.create(OWNER, title="Overnight on the home box", goal="Stop the stalls.",
                              repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}", template="fast-cycle",
                              control=control)["id"]
@@ -110,7 +113,8 @@ def _call(rig: Rig, heard: list[str], *, about: str = "", **phone_kw: Any) -> tu
     async def save(rec: CallRecord) -> None:
         rec.note_ref = "note:call-1"
 
-    held = DeskHeld(rig.db, programs=lambda: rig.service, now=lambda: NOW)
+    reach = ReachService(rig.db, programs=lambda: rig.service, clock=CLOCK)
+    held = DeskHeld(rig.db, programs=lambda: rig.service, reach=lambda: reach, now=lambda: NOW)
     runner = CallRunner(phone, record, turns=NoTurns(), passphrase="blue heron", allowed_numbers=[],
                         greeting="Hello.", emit=lambda *_: None, save_note=save, held=held)
     asyncio.run(asyncio.wait_for(runner.run(), 20))
@@ -131,18 +135,23 @@ def _kinds(rig: Rig) -> list[str]:
     ("later", (14, 10, 0)), ("Not now.", (14, 10, 0)), ("Wait.", (14, 10, 0)), ("Ask me later.", (14, 10, 0)),
     ("Later, at one.", (13, 0, 0)), ("later 2 hours", (14, 10, 0)), ("In two hours.", (14, 10, 0)),
     ("later 30 minutes", (12, 40, 0)), ("at 13:30", (13, 30, 0)), ("Later at five.", (17, 0, 0)),
-    ("at 9 am", (9, 0, 1)), ("tonight", (19, 0, 0)), ("Tomorrow.", (7, 0, 1)), ("put it on my desk", (14, 10, 0)),
+    ("at 9 am", (9, 0, 1)), ("tonight", (19, 0, 0)), ("Tomorrow.", (8, 0, 1)), ("put it on my desk", (14, 10, 0)),
+    ("Next.", (14, 10, 0)),
 ])
-def test_later_words_map_to_the_next_touch(words: str, want: tuple[int, int, int]) -> None:
-    assert decide.is_later(words), words
-    until = later_at(words, NOW)
+def test_spoken_later_words_map_to_the_next_touch_by_the_one_later_parser(tmp_path, words, want) -> None:
+    from holdspeak.db import Database
+
+    assert decide.is_later(words) or decide.is_next(words), words
+    until = ReachService(Database(tmp_path / "r.db"), clock=CLOCK).later_until(later_words(words))
     assert (until.hour, until.minute, (until.date() - NOW.date()).days) == want, (words, until)
 
 
 @pytest.mark.parametrize("words", ["later after the standup", "at 25", "in 0 hours"])
-def test_later_with_no_time_we_know_asks_for_one(words: str) -> None:
-    with pytest.raises(ValueError):
-        later_at(words, NOW)
+def test_later_with_no_time_we_know_asks_for_one(tmp_path, words) -> None:
+    from holdspeak.db import Database
+
+    with pytest.raises(ReachRefused):
+        ReachService(Database(tmp_path / "r.db"), clock=CLOCK).later_until(later_words(words))
 
 
 def test_a_choice_is_heard_by_its_label_and_later_is_never_make_a_task() -> None:
@@ -192,25 +201,43 @@ def test_no_changes_nothing_and_the_question_is_asked_again_once(tmp_path) -> No
     assert "core" not in _kinds(rig)
 
 
-def test_later_at_a_time_defers_with_no_read_back_and_decides_nothing(tmp_path) -> None:
-    rig, pid = _core(tmp_path)
+def _later(rig: Rig) -> list[Any]:
+    """Each held item's Later ({until, via}) or None: a deferred item keeps
+    its place, out of the Needs you count, until its next touch."""
+    return [(item["kind"], (item.get("later") or {}).get("via")) for item in rig.service.needs_you_items()]
+
+
+def test_later_at_a_time_defers_for_real_with_no_read_back_and_decides_nothing(tmp_path) -> None:
+    rig, pid = _core(tmp_path, control="normal")
     said, _ = _call(rig, ["What waits on me?", "Later, at one."])
     assert said[3] == "Later, at 13:00. I will ask again then.", said
     assert said[4] == "That is all. One later at 13:00."
-    assert _kinds(rig) == ["core"]  # it keeps its place
-    assert _lines(rig, pid) == ["Asked on a call 12:10 · later, back at 13:00 · transcript: Call · "
-                                + _lines(rig, pid)[0].rsplit("Call · ", 1)[1]]
+    assert _later(rig) == [("core", "call")]  # it keeps its place, out of the count, back at 13:00
+    later, asked = _lines(rig, pid)
+    assert later == "Later, back at 13:00 · on a call"
+    assert asked.startswith("Asked on a call 12:10 · later, back at 13:00 · transcript: Call · "), asked
+    # A second "what waits on me" does not read it again before its next touch.
+    said, _ = _call(rig, ["What waits on me?"])
+    assert said[2] == "Nothing waits on you.", said
+
+
+def test_later_at_yolo_parks_the_core_questions_step_for_now(tmp_path) -> None:
+    rig, pid = _core(tmp_path, control="yolo")
+    said, _ = _call(rig, ["What waits on me?", "Later, in two hours."])
+    assert said[3] == "Later, at 14:10. I will ask again then.", said
+    assert rig.step(pid, 1)["state"] == "parked"  # the provisional move, Overturnable
+    assert "Later, back at 14:10 · on a call" in _lines(rig, pid)
 
 
 def test_wait_on_the_read_back_is_later_never_no(tmp_path) -> None:
-    rig, _pid = _core(tmp_path)
+    rig, _pid = _core(tmp_path, control="normal")
     said, _ = _call(rig, ["What waits on me?", "Go on.", "Wait."])
     assert said[4] == "Later, at 14:10. I will ask again then.", said
-    assert _kinds(rig) == ["core"]
+    assert _later(rig) == [("core", "call")]
 
 
 def test_a_time_it_cannot_read_asks_for_one(tmp_path) -> None:
-    rig, _pid = _core(tmp_path)
+    rig, _pid = _core(tmp_path, control="normal")
     said, _ = _call(rig, ["What waits on me?", "Later, after the standup.", "Two hours."])
     assert said[3:5] == ["Say a time, for example 14:30.", "Later, at 14:10. I will ask again then."], said
 
@@ -346,13 +373,17 @@ def test_a_held_decide_a_call_may_not_take_is_denied_without_a_question(tmp_path
     assert _kinds(rig) == ["core"]
 
 
-def test_later_on_a_held_decide_decides_nothing(tmp_path, monkeypatch) -> None:
-    rig, pid = _core(tmp_path)
+def test_later_on_a_held_decide_decides_nothing_and_defers(tmp_path, monkeypatch) -> None:
+    rig, pid = _core(tmp_path, control="normal")
     turns, executor = _desk_turns(rig, monkeypatch)
+    from holdspeak.services import reach_service
+
+    monkeypatch.setattr(reach_service, "default_reach_service",
+                        lambda db=None: ReachService(rig.db, programs=lambda: rig.service, clock=CLOCK))
     turns.hold("c3", program_id=pid, step_id=rig.step(pid, 1)["id"], kind="core", choice="park")
     assert turns.nothing_to_ask("c3", "program.decide") is False
     assert turns.decide("c3", "later") and executor.decided["c3"] == "deny"
-    assert _kinds(rig) == ["core"]
+    assert _later(rig) == [("core", "call")]
 
 
 class _HeldDecideTurns:

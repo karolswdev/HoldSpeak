@@ -1892,6 +1892,20 @@ class MeetingWebServer:
                     await asyncio.to_thread(lambda: default_phone_service().start())
             except Exception as e:
                 log.error(f"phone startup failed: {e}")
+            # PG-DIRECTION DIR4/DIR5: the reach thread (Later's returns, the
+            # ladder, Telegram's long poll when a chat is paired). The bot
+            # token moves from the config file into the keystore once.
+            # HOLDSPEAK_TELEGRAM=off (every rig) polls and sends nothing.
+            try:
+                from .services import telegram_reach
+                from .services.reach_service import default_reach_service
+
+                telegram_reach.remember_port(self.port)
+                if telegram_reach.telegram_on():
+                    await asyncio.to_thread(telegram_reach.repair_token)
+                    await asyncio.to_thread(lambda: default_reach_service().start())
+            except Exception as e:
+                log.error(f"reach startup failed: {e}")
             # Recordings: park old ones, finish a cut encode, watch for stale.
             try:
                 from .recordings.service import RECORDINGS
@@ -2130,6 +2144,13 @@ class MeetingWebServer:
                     phone_service._DEFAULT.stop()
             except Exception as e:
                 log.error(f"phone stop failed: {e}")
+            try:
+                from .services import reach_service
+
+                if reach_service._DEFAULT is not None:
+                    reach_service._DEFAULT.stop()
+            except Exception as e:
+                log.error(f"reach stop failed: {e}")
             # HS-200-03: EVERY conductor this lifespan started is stopped here.
             # Only the calendar one was, so the workbench and scheduled-recording
             # conductors (started at the two `startup` sites above) outlived the

@@ -13,7 +13,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 912 (plus static mounts). iOS-consumed: 89. Web-consumed: 699.
+Routes: 919 (plus static mounts). iOS-consumed: 89. Web-consumed: 706.
 
 ## device_audio_ws
 
@@ -170,9 +170,16 @@ Routes: 912 (plus static mounts). iOS-consumed: 89. Web-consumed: 699.
 | GET | `/api/b/{token}` | web |
 | POST | `/api/b/{token}/answer` | web |
 | GET | `/api/b/{token}/evidence/{ref}/{pane}` | web |
+| GET | `/api/reach` | web |
+| PUT | `/api/reach` | web |
+| POST | `/api/reach/digest` | web |
+| POST | `/api/reach/later` | web |
 | GET | `/api/reach/packages` | web |
 | POST | `/api/reach/packages` | web |
 | POST | `/api/reach/packages/{package_id}/revoke` | web |
+| DELETE | `/api/reach/telegram/pair` | web |
+| POST | `/api/reach/telegram/pair` | web |
+| PUT | `/api/reach/telegram/token` | web |
 | GET | `/b/{token}` | server only |
 
 ## web.routes.cadence

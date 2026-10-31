@@ -56,13 +56,13 @@ PROGRAM_REF = "program:"
 
 #: The held items a page answers (§3 "The held item"); an agent's question
 #: (``answer``), a review ask (it prepares a send) and Close stay on the desk.
-BRIEFABLE = frozenset({"core", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word",
+BRIEFABLE = frozenset({"core", "commit", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word",
                        "requirement_left", "requirement_proposed", "step_change", "step_amend"})
 #: A choice the page does not offer yet: a waive needs his typed reason.
 _DESK_ONLY_CHOICES = frozenset({"waive"})
 
 KIND_WORDS = {
-    "core": "Core question", "merge": "Merge ask", "finding": "Finding", "parked": "Parked step",
+    "core": "Core question", "commit": "Held commit", "merge": "Merge ask", "finding": "Finding", "parked": "Parked step",
     "limited": "Agent at its limit", "race": "Race winner", "add_step": "Added step",
     "requirement_word": "Your word", "requirement_left": "Requirement left",
     "requirement_proposed": "Proposed requirement", "step_change": "Proposed change",
@@ -73,6 +73,8 @@ KIND_WORDS = {
 CHOICE_WORDS: dict[str, dict[str, tuple[str, str]]] = {
     "core": {"go_on": ("Go on", "The step goes on with this change."),
              "park": ("Park", "The step stops. The other steps go on.")},
+    "commit": {"allow": ("Allow the commit", "The agent's change is committed. The check runs."),
+               "not_now": ("Not now", "The step stops. The change stays in the worktree.")},
     "merge": {"merge": ("Merge", "HoldSpeak merges the PR."), "not_yet": ("Not yet", "The PR stays open.")},
     "finding": {"fix_now": ("Fix now", "The agent fixes it in this step."),
                 "later": ("Make a task", "It becomes a task for later."),
@@ -211,11 +213,18 @@ PAGE_OWNER = Principal(PrincipalKind.OWNER, "briefing-page")
 
 class BriefingService:
     def __init__(self, db: Any, *, programs: Optional[Callable[[], Any]] = None,
-                 clock: Callable[[], str] = utc_now_iso) -> None:
+                 clock: Callable[[], str] = utc_now_iso, reach: Any = None,
+                 settle: Optional[Callable[[Mapping[str, Any], str], None]] = None,
+                 telegram: Optional[Callable[[], Any]] = None) -> None:
         self.db = db
         self.store = BriefingStore(db)
         self._programs = programs
         self._clock = clock
+        self._reach = reach
+        #: DIR5: the package's Telegram message settles when it is answered
+        #: here (``TelegramReach.settle``); the default reads the live bot.
+        self.settle = settle
+        self._telegram = telegram
 
     # ── seams ────────────────────────────────────────────────────────
 
@@ -228,6 +237,29 @@ class BriefingService:
 
     def _now(self) -> datetime:
         return _parse(self._clock()) or datetime.now().astimezone()
+
+    def reach(self) -> Any:
+        """DIR4: Later goes through the one reach service (``held_later``,
+        the ledger line, YOLO's provisional park)."""
+        if self._reach is None:
+            from .reach_service import ReachService
+
+            self._reach = ReachService(self.db, programs=self._programs, briefing=self, clock=self._clock)
+        return self._reach
+
+    def _settle(self, package: Mapping[str, Any], words: str) -> None:
+        if not any(isinstance(row, dict) and row.get("via") == "telegram" for row in package.get("sent") or []):
+            return
+        try:
+            if self.settle is not None:
+                self.settle(package, words)
+                return
+            from .telegram_reach import default_telegram_reach, telegram_on
+
+            if telegram_on():
+                default_telegram_reach(self.db).settle(package, words)
+        except Exception as exc:
+            log.info(f"briefing: the Telegram message was not settled ({type(exc).__name__})")
 
     @staticmethod
     def _require_owner(principal: Any) -> None:
@@ -316,9 +348,21 @@ class BriefingService:
         self._require_owner(principal)
         if str(kind or "item") != "item":
             raise BriefingRefused("digest_later", "A digest is not built yet. Make a page for one item.", status=400)
-        if send not in (None, "", "none", []):
-            raise BriefingRefused("send_unavailable", "Sending to Telegram or your phone is not built yet. "
-                                  "Copy the page link.", status=400)
+        sends = [send] if isinstance(send, str) else list(send or [])
+        sends = [str(row) for row in sends if row not in (None, "", "none")]
+        if any(row != "telegram" for row in sends):
+            raise BriefingRefused("send_unavailable", "Send takes telegram or none. Your phone's push is not "
+                                  "built yet.", status=400)
+        telegram = None
+        if "telegram" in sends:
+            if self._telegram is not None:
+                telegram = self._telegram()
+            else:
+                from .telegram_reach import default_telegram_reach
+
+                telegram = default_telegram_reach(self.db)
+            if not telegram.live():
+                raise BriefingRefused("telegram_not_paired", "Pair Telegram first, in Settings ▸ Reach.")
         refs = [str(ref) for ref in (refs if isinstance(refs, (list, tuple)) else [refs]) if ref]
         if len(refs) != 1:
             raise BriefingRefused("refs_invalid", "Name one item (refs: [ref]).", status=400)
@@ -336,8 +380,12 @@ class BriefingService:
         self.store.add(package_id=package_id, kind="item", refs=[ref], body=body, token_hash=token_hash(token),
                        created_at=_utc(now), expires_at=_utc(expires))
         self._changed(package_id, "sent")
-        return {"id": package_id, "token": token, "path": f"{PAGE_PREFIX}{token}", "expires_at": _utc(expires),
+        made = {"id": package_id, "token": token, "path": f"{PAGE_PREFIX}{token}", "expires_at": _utc(expires),
                 "expires_clock": expires.astimezone().strftime("%H:%M"), "refs": [ref]}
+        if telegram is not None:
+            made["telegram"] = telegram.send_package(package_id, made["path"])
+            made["telegram"].pop("text", None)  # it holds the link, and the link holds the token
+        return made
 
     def revoke(self, principal: Any, package_id: str) -> dict[str, Any]:
         self._require_owner(principal)
@@ -419,7 +467,8 @@ class BriefingService:
             merged = step is not None and step.get("state") in ("merged", "done")
             words = "This step is merged." if merged else "Answered already on your desk."
             return {"state": "gone", "outcome": {"words": words}}
-        if isinstance(answer, dict) and answer.get("choice") == "later":
+        later_at = _parse((answer or {}).get("later_until")) if isinstance(answer, dict) else None
+        if isinstance(answer, dict) and answer.get("choice") == "later" and later_at and later_at > self._now():
             return {"state": "later", "outcome": {
                 "choice": "later", "label": "Later", "via": answer.get("via"), "at": answer.get("at"),
                 "later_until": answer.get("later_until"),
@@ -471,34 +520,61 @@ class BriefingService:
         nothing."""
         with _LOCK:
             package = self._package(token)
-            body = dict(package.get("body") or {})
-            ref, choice = str(ref or body.get("ref") or ""), str(choice or "")
-            if ref != str(body.get("ref")):
-                raise BriefingRefused("ref_unknown", "This page does not hold that item.", status=404)
-            state = self._item_state(package, body)
-            if state["state"] in ("decided", "gone"):
-                raise BriefingRefused("answered_already", f"Answered already: {state['outcome']['words']}",
-                                      outcome=state.get("outcome"))
-            answers = dict(package.get("answers") or {})
-            now = self._now()
-            if choice == "later":
-                until = later_until(str(later or ""), now)
-                answers[ref] = {"choice": "later", "via": "page", "at": _utc(now), "later_until": _utc(until)}
-                self.store.answer(package["id"], answers)
-                self._changed(package["id"], "later")
-            else:
-                if choice not in {row["id"] for row in body.get("choices") or []}:
-                    raise BriefingRefused("choice_invalid", "This choice is not on the page.", status=400)
-                _program, _step, item = self._held(ref)
-                if item is None:
-                    raise BriefingRefused("answered_already", "Answered already on your desk.")
-                self.programs().decide(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),
-                                       via="page", choice=choice, reason=reason, **_decide_args(item))
-                answers[ref] = {"choice": choice, "via": "page", "at": _utc(now)}
-                self.store.answer(package["id"], answers)
-                self._changed(package["id"], "answered")
-            fresh = self.store.get(package["id"]) or package
-            return {"item": {**body, **self._item_state(fresh, body)}}
+            return self._answer(package, ref, choice, via="page", reason=reason, later=later)
+
+    def answer_package(self, package_id: str, ref: Any, choice: Any, *, via: str, reason: Any = None,
+                       later: Any = None) -> dict[str, Any]:
+        """DIR5: his answer on a channel that proves him another way (the
+        paired Telegram chat). The page's token expiry and Revoke end the page,
+        not the item, so a tap still decides while the item waits."""
+        with _LOCK:
+            package = self.store.get(str(package_id))
+            if package is None:
+                raise BriefingRefused("package_unknown", "This item is gone.", status=404)
+            return self._answer(package, ref, choice, via=via, reason=reason, later=later)
+
+    def _answer(self, package: dict[str, Any], ref: Any, choice: Any, *, via: str, reason: Any = None,
+                later: Any = None) -> dict[str, Any]:
+        body = dict(package.get("body") or {})
+        ref, choice = str(ref or body.get("ref") or ""), str(choice or "")
+        if ref != str(body.get("ref")):
+            raise BriefingRefused("ref_unknown", "This page does not hold that item.", status=404)
+        state = self._item_state(package, body)
+        if state["state"] in ("decided", "gone"):
+            raise BriefingRefused("answered_already", f"Answered already: {state['outcome']['words']}",
+                                  outcome=state.get("outcome"))
+        answers = dict(package.get("answers") or {})
+        now = self._now()
+        if choice == "later":
+            try:
+                deferred = self.reach().later(PAGE_OWNER, ref, later, via=via, package_id=package["id"])
+            except ServiceError as exc:
+                raise BriefingRefused(exc.code, exc.detail, status=int((exc.context or {}).get("status", 409))) from exc
+            answers[ref] = {"choice": "later", "via": via, "at": _utc(now), "later_until": deferred["until"]}
+            self.store.answer(package["id"], answers)
+            self._changed(package["id"], "later")
+        else:
+            if choice not in {row["id"] for row in body.get("choices") or []}:
+                raise BriefingRefused("choice_invalid", "This choice is not on the page.", status=400)
+            _program, _step, item = self._held(ref)
+            if item is None:
+                raise BriefingRefused("answered_already", "Answered already on your desk.")
+            self.programs().decide(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),
+                                   via=via, choice=choice, reason=reason, **_decide_args(item))
+            answers[ref] = {"choice": choice, "via": via, "at": _utc(now)}
+            self.store.answer(package["id"], answers)
+            self._changed(package["id"], "answered")
+        fresh = self.store.get(package["id"]) or package
+        state = {**body, **self._item_state(fresh, body)}
+        if via != "telegram":
+            words = (state.get("outcome") or {}).get("words") or ""
+            if state.get("state") == "decided":
+                words = f"Decided: {state['outcome'].get('label')} · {clock_words(now)} · {_VIA_SETTLE.get(via, '')}".rstrip(" ·")
+            self._settle(fresh, words)
+        return {"item": state}
+
+
+_VIA_SETTLE = {"page": "from the briefing page", "call": "on a call", "phone": "on your phone", "desk": "on your desk"}
 
 
 def _decide_args(item: Mapping[str, Any]) -> dict[str, Any]:

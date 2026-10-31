@@ -68,6 +68,7 @@ import { Destinations } from "./connections/Destinations";
 import { RunsOnCore } from "../../features/runson/RunsOnCore";
 import { LiveMeetingTools } from "./LiveMeetingTools";
 import { CallsSettingsPane } from "../../desk/calls/CallsSettings";
+import { ReachSettingsPane } from "../../desk/reach/ReachSettings";
 import { RecordingsSettings } from "../../desk/recordings/RecordingsSettings";
 import "./settingsSurfaceRepair.css";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
@@ -252,6 +253,9 @@ const SECTION_ALIASES: Record<string, SettingsSectionId> = {
   calendar: "accounts",
   rhythm: "notices",
   cadence: "notices",
+  // PG-DIRECTION DIR6: the section reads Reach; its anchor id stays notices.
+  reach: "notices",
+  telegram: "notices",
   integrations: "accounts",
   accounts: "accounts",
   people: "you",
@@ -2620,19 +2624,25 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </>
         );
       }
-      /* ── Rhythm: cadence user-facing + Telegram + RAW ── */
+      /* ── Reach (PG-DIRECTION DIR6, ruled 2026-10-31: Notices becomes
+         Reach): the channels, Telegram, when to reach you, quiet hours,
+         the digest, Later means; Cadence and the morning brief folded. ── */
       case "rhythm":
         return (
-          <>
-            <SurfaceColumns variant="preferences" main={<>
-              {/* Betterment setup ST1: quiet hours have one store, the
-                  heartbeat policy the notices loop reads; Notify moved here
-                  from the parked Rhythm window. */}
+          <ReachSettingsPane
+            highlight={focusHighlight}
+            onSaved={() => setWrittenAt(new Date().toTimeString().slice(0, 8))}
+            quiet={
+              /* Betterment setup ST1: quiet hours have one store, the
+                 heartbeat policy the notices loop reads (shared with the Phone). */
               <RhythmNoticeRows
                 highlight={focusHighlight}
                 onSaved={() => setWrittenAt(new Date().toTimeString().slice(0, 8))}
                 onWrite={() => setHeartbeatRevision((n) => n + 1)}
               />
+            }
+            cadence={<>
+            <SurfaceColumns variant="preferences" main={<>
               <GadgetGroup material="inset" label="Cadence">
                 {check(["cadence", "enabled"], "Enabled")}
                 {cyc(
@@ -2665,13 +2675,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   min: 30,
                   step: 30,
                 })}
-                {csv(["cadence_telegram", "allowed_chat_ids"], "Allowed chats")}
+                {/* PG-DIRECTION DIR5: one bot; Cadence's nudges and brief go to
+                    the chat paired in Reach (the old allow-list is read once). */}
+                {check(["cadence_telegram", "enabled"], "Cadence on Telegram")}
               </GadgetGroup>
               {/* Betterment setup ST1: the parked Rhythm window's sweep
                   interval, Run now, Where it runs, mutes and loops. */}
               <RhythmSweepFold revision={heartbeatRevision} />
             </FoldGadget>
-          </>
+            </>}
+          />
         );
       /* ── Models: legacy deep-link compatibility. Engines is its own Desk
          window; this branch remains for callers that still render a module
@@ -2686,8 +2699,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
           "failure_webhook_url",
           "failure_webhook_credential",
         ]);
+        // PG-DIRECTION DIR5: the bot token lives in the keystore, set in
+        // Settings ▸ Reach; the static pairing code is gone (one-time codes).
         const keepSecrets = Object.entries(secrets).filter(
-          ([id]) => !RAW_SECRETS.has(id),
+          ([id]) => !RAW_SECRETS.has(id) && !id.startsWith("telegram_"),
         );
         const rawSecrets = Object.entries(secrets).filter(([id]) =>
           RAW_SECRETS.has(id),
@@ -2724,12 +2739,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <div className="prefs-column">
               {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
               <Destinations />
-              {/* Betterment ST7: Telegram is an account destination. Keep its
-                  existing cadence_telegram writer; only its Settings home
-                  moves from Notices to Accounts. */}
-              <GadgetGroup material="inset" label="Telegram">
-                {check(["cadence_telegram", "enabled"], "Enabled")}
-              </GadgetGroup>
+              {/* PG-DIRECTION DIR6: Telegram's home is Settings ▸ Reach (its
+                  token is in the keystore there; Cadence's switch folds there). */}
               {/* PHILO-17 REFIT: keys and tokens are technical; they fold. */}
               <FoldGadget title="Credentials">
                 <GadgetGroup>
@@ -2820,7 +2831,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         {pageSection("you", "You", <OwnerNameGroup prefs={ownerPrefs} highlight={focusHighlight} />)}
         {pageSection("speak", "Speak", renderModule("voice"))}
         {pageSection("meetings", "Meetings", renderModule("meetings"))}
-        {pageSection("notices", "Notices", renderModule("rhythm"))}
+        {pageSection("notices", "Reach", renderModule("rhythm"))}
         {pageSection("accounts", "Accounts", renderModule("integrations"))}
         {pageSection("calls", "Calls", moduleId === "calls" ? <CallsSettingsPane highlight={focusHighlight} onSaved={() => setWrittenAt(new Date().toTimeString().slice(0, 8))} /> : null)}
         {pageSection("agents", "Agents", <>

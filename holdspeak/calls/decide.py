@@ -16,7 +16,7 @@ call, with no model in it:
   changes and the question is asked again once. A merge and a Skip that
   drops a proposal take the same read back and the same yes (ruled).
 - **Later defers with no penalty.** "later", "not now", "wait", "ask me
-  later", "put it on my desk", with a time or not (:func:`later_at`). "next"
+  later", "put it on my desk", with a time or not (``reach_service.parse_later``). "next"
   (and "skip" where Skip is not a choice) is Later with the default touch.
   A waive never decides from a call: it waits for him on the desk.
 - **Interruption-safe.** A call that ends before his yes decides nothing;
@@ -25,15 +25,15 @@ call, with no model in it:
   ("Asked on a call 12:10 · Go on, decided · transcript: Call · 31 Oct
   12:10") with the call's Note in ``undo.note_ref``.
 
-Later's next touch, the Later group in Needs you and YOLO's provisional park
-are PG-DIRECTION DIR4 (``services/reach_service.py``). When that module is on
-this hub, :meth:`DeskHeld.later` hands Later to it; else the call records
-Later in the ledger only.
+Later goes through the one Later verb, ``ReachService.later`` (DIR4,
+``services/reach_service.py``) with ``via="call"``: its parser reads the
+time, the item leaves the Needs you count and comes back at the next touch,
+and at YOLO a core question's step is parked for now (Overturnable).
 """
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
@@ -49,14 +49,9 @@ DECIDED = "Decided."
 NOTHING_CHANGED = "Nothing changed."
 SAY_A_TIME = "Say a time, for example 14:30."
 ON_THE_DESK = "A waive waits for you on the desk."
-#: §7: Later with no time said (DIR4's Settings ▸ Reach ▸ Later means
-#: replaces this when it is on the hub).
-DEFAULT_LATER_HOURS = 2
 #: Unclear answers to one question before the call goes to the next item.
 UNCLEAR_TRIES = 2
 
-_NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
-            "ten": 10, "eleven": 11, "twelve": 12}
 _COUNT = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine",
           10: "Ten", 11: "Eleven", 12: "Twelve"}
 #: Words a choice is also heard by (``not met`` is Unmet).
@@ -135,61 +130,18 @@ def match_choice(body: Mapping[str, Any], text: Any) -> Optional[str]:
     return best[1]
 
 
-def later_at(text: Any, now: datetime) -> datetime:
-    """His Later words to the next touch (aware, local), by rule, no model:
-    none (in 2 hours), "in two hours", "later 30 minutes", "at one", "at
-    13:30", "at five pm", "tonight" (19:00), "tomorrow" (07:00). Raises
-    ``ValueError`` on anything else."""
-    local = now.astimezone()
+def later_words(text: Any) -> str:
+    """His spoken Later as the words ``reach_service.parse_later`` reads:
+    no punctuation, the fillers out ("not now", "wait", "ask me", "put it on
+    my desk", "next"), "later" in front. "Later, at one." → "later at one";
+    "Not now." → "later"."""
     words = _words(text)
     for strip in (r"\bask me\b", r"\blater\b", r"\bnot now\b", r"\bwait\b", r"\bplease\b", r"\bagain\b",
-                  r"\bcall me\b", r"\bput it on (my|the) desk\b", r"\bon (my|the) desk\b", r"^(ok(ay)?|yes|no)\b"):
+                  r"\bcall me\b", r"\bput it on (my|the) desk\b", r"\bon (my|the) desk\b", r"^(next|skip)\b",
+                  r"^(ok(ay)?|yes|no)\b"):
         words = re.sub(strip, " ", words)
     words = " ".join(words.split())
-    if not words:
-        return local + timedelta(hours=DEFAULT_LATER_HOURS)
-    if words == "tonight":
-        return _next_at(local, 19, 0)
-    if words in ("tomorrow", "tomorrow morning"):
-        return (local + timedelta(days=1)).replace(hour=7, minute=0, second=0, microsecond=0)
-    number = r"(\d{1,3}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|an|a|half an)"
-    span = re.fullmatch(rf"(?:in )?{number} ?(h|hr|hrs|hours?|m|mins?|minutes?)", words)
-    if span:
-        amount, unit = span.group(1), span.group(2)
-        minutes = 30 if amount == "half an" else (1 if amount in ("a", "an") else
-                                                  int(amount) if amount.isdigit() else _NUMBERS[amount])
-        if amount != "half an":
-            minutes *= 60 if unit.startswith("h") else 1
-        if minutes <= 0 or minutes > 7 * 24 * 60:
-            raise ValueError(words)
-        return local + timedelta(minutes=minutes)
-    clock = re.fullmatch(r"(?:at )?(\d{1,2}):(\d\d)( ?[ap]m)?", words)
-    if clock:
-        hour, minute = int(clock.group(1)), int(clock.group(2))
-        if clock.group(3):
-            hour = hour % 12 + (12 if "p" in clock.group(3) else 0)
-        if hour > 23 or minute > 59:
-            raise ValueError(words)
-        return _next_at(local, hour, minute)
-    bare = re.fullmatch(r"at (\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
-                        r"( ?[ap]m| o'?clock)?", words)
-    if bare:
-        hour = int(bare.group(1)) if bare.group(1).isdigit() else _NUMBERS[bare.group(1)]
-        mark = (bare.group(2) or "").strip()
-        if hour > 23:
-            raise ValueError(words)
-        if mark in ("am", "pm"):
-            return _next_at(local, hour % 12 + (12 if mark == "pm" else 0), 0)
-        if hour > 12:
-            return _next_at(local, hour, 0)
-        # "at one" is the next one o'clock: 13:00 at 12:10, 01:00 at 00:20.
-        return min(_next_at(local, hour % 12, 0), _next_at(local, hour % 12 + 12, 0))
-    raise ValueError(words)
-
-
-def _next_at(local: datetime, hour: int, minute: int) -> datetime:
-    at = local.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    return at if at > local else at + timedelta(days=1)
+    return f"later {words}".strip()
 
 
 def clock(value: datetime) -> str:
@@ -312,10 +264,11 @@ class DeskHeld:
     the event loop)."""
 
     def __init__(self, db: Any, *, briefing: Any = None, programs: Optional[Callable[[], Any]] = None,
-                 now: Callable[[], datetime] = local_now) -> None:
+                 reach: Optional[Callable[[], Any]] = None, now: Callable[[], datetime] = local_now) -> None:
         self._db = db
         self._briefing = briefing
         self._programs = programs
+        self._reach = reach
         self._now = now
 
     def now(self) -> datetime:
@@ -343,6 +296,8 @@ class DeskHeld:
         bodies: list[dict[str, Any]] = []
         desk_only = 0
         for item in self.programs().needs_you_items():
+            if item.get("later"):
+                continue  # deferred: it comes back at its next touch, not on this call
             body = self.briefing().compose(f"program:{item['program_id']}:{item['id']}")
             if body is None:
                 desk_only += 1
@@ -366,24 +321,28 @@ class DeskHeld:
         Raises the verb's refusal (answered already, not mergeable, …)."""
         self.briefing().decide_item(OWNER, str(body["ref"]), choice, via="call")
 
+    def reach(self) -> Any:
+        if self._reach is not None:
+            return self._reach()
+        from ..services.reach_service import default_reach_service
+
+        return default_reach_service(self._db)
+
     def later(self, body: Mapping[str, Any], words: str) -> datetime:
-        """Later with the next touch his words name; decides nothing. DIR4's
-        reach service takes it when it is on this hub (the Later group, the
-        return, YOLO's provisional park). Raises ``ValueError`` when his words
-        name no time."""
+        """Later with the next touch his words name, through the one Later
+        verb (``ReachService.later``, ``via="call"``): the item leaves the
+        Needs you count, comes back at the next touch, and at YOLO a core
+        question's step is parked for now. Decides nothing. Raises
+        ``ValueError`` when his words name no time."""
+        from ..services.reach_service import ReachRefused
+
         try:
-            from ..services import reach_service  # type: ignore[attr-defined]
-        except ImportError:
-            reach_service = None
-        if reach_service is not None:
-            try:
-                done = reach_service.default_reach_service(self._db).later(OWNER, str(body["ref"]), words, via="call")
-            except reach_service.ReachRefused as exc:
-                if exc.code == "later_invalid":
-                    raise ValueError(str(words)) from exc
-                raise
-            return datetime.fromisoformat(str(done["until"]).replace("Z", "+00:00")).astimezone()
-        return later_at(words, self.now())
+            done = self.reach().later(OWNER, str(body["ref"]), later_words(words), via="call")
+        except ReachRefused as exc:
+            if exc.code == "later_invalid":
+                raise ValueError(str(words)) from exc
+            raise
+        return datetime.fromisoformat(str(done["until"]).replace("Z", "+00:00")).astimezone()
 
     def ledger(self, rows: list[dict[str, Any]], *, note_ref: str = "", note_title: str = "") -> None:
         """One line per item the call read (§4.6), the transcript Note linked."""
@@ -399,6 +358,6 @@ class DeskHeld:
 
 __all__ = [
     "DECIDED", "DeskHeld", "answered_words", "is_waive", "NOTHING_CHANGED", "NOTHING_WAITS", "ON_THE_DESK", "SAY_A_TIME", "choices_words",
-    "is_later", "is_next", "is_stop", "is_what_waits", "later_at", "ledger_words", "match_choice", "package_words",
+    "is_later", "is_next", "is_stop", "is_what_waits", "later_words", "ledger_words", "match_choice", "package_words",
     "read_back_words", "summary_words", "where_words", "yes_no",
 ]

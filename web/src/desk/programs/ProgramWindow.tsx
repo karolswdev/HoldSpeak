@@ -61,6 +61,8 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   parked: [{ choice: "resume", word: "Resume", primary: true }, { choice: "skip", word: "Skip" }],
   ask_review: [{ choice: "prepare", word: "Send…", primary: true }],
   core: [{ choice: "go_on", word: "Go on", primary: true }, { choice: "park", word: "Park" }],
+  // 2026-10-31: the step's agent's commit, held by the gate or not made.
+  commit: [{ choice: "allow", word: "Allow the commit", primary: true }, { choice: "not_now", word: "Not now" }],
   race: [{ choice: "pick", word: "Pick", primary: true }],
   add_step: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
   close: [{ choice: "close", word: "Close", primary: true }],

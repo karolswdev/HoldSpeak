@@ -1,0 +1,81 @@
+{
+  "channels": {
+    "calls": {
+      "ready": false,
+      "words": "Not set in Settings ▸ Calls"
+    },
+    "desk": {
+      "words": "Always"
+    },
+    "phone_app": {
+      "on": true,
+      "paired": null,
+      "words": "Phone is off on this desk"
+    },
+    "telegram": {
+      "destination": "Telegram · owner chat",
+      "on": true,
+      "paired": null,
+      "pairing": {
+        "expires_at": "2026-10-31T21:37:51.790126+00:00"
+      },
+      "token": "keystore"
+    }
+  },
+  "digest": {
+    "at": "end_of_quiet",
+    "hour": 8
+  },
+  "ladder": {
+    "kinds": {
+      "aftercare": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      },
+      "agent_question": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "core_question": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "heartbeat_security": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "level": "yolo",
+      "program_done": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      },
+      "step_red": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      }
+    },
+    "order": [
+      "desk",
+      "phone_app",
+      "telegram",
+      "call"
+    ],
+    "telegram": "at_once",
+    "telegram_words": "At once"
+  },
+  "later": [],
+  "later_means": "in_2h",
+  "later_means_words": "In 2 hours",
+  "open_packages": [],
+  "quiet_hours": {
+    "end": 8,
+    "now": false,
+    "start": 22
+  }
+}
