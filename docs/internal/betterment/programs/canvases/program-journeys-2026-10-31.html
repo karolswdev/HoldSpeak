@@ -498,7 +498,7 @@ pre.parts{font:12px/1.5 var(--font-mono);background:var(--page-card);padding:12p
 .rstrip .ftok .dot{width:7px;height:7px}
 .rstrip .ftok.done{background:var(--pill-ok);color:var(--wb-ok-ink)}
 /* the round sheet (direction B) */
-.sheetq{display:grid;grid-template-columns:minmax(0,1fr) 260px 28px 60px;align-items:center;gap:10px;min-height:34px;padding:0 12px 0 32px;border-bottom:1px solid #e9eef4;font-size:13px}
+.sheetq{display:grid;grid-template-columns:minmax(0,1fr) 260px 28px 112px;align-items:center;gap:10px;min-height:34px;padding:0 12px 0 32px;border-bottom:1px solid #e9eef4;font-size:13px}
 .sheetq .q{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sheetq .cyc{width:100%}
 .sheetq .mic{width:26px;height:26px;border-radius:5px;display:grid;place-items:center;background:var(--wb-steel-2);border:1px solid var(--wb-rule)}
@@ -565,62 +565,81 @@ pre.parts{font:12px/1.5 var(--font-mono);background:var(--page-card);padding:12p
 .ledl{display:grid;grid-template-columns:44px 20px minmax(0,1fr) 64px;align-items:center;gap:8px;height:30px;padding:0 12px 0 32px;border-bottom:1px solid #eef2f6;font-size:13px}
 .ledl .m{font-size:12px;color:var(--wb-faint);font-variant-numeric:tabular-nums}
 .ledl .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* PG-LANG reconciliation: the Text view (TextPane: gutter lamps, mono keywords, his words in sans, faint lamps) */
+.tp{margin:8px 12px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);padding:4px 0;font:12px/20px var(--font-mono);color:var(--wb-ink)}
+.tp .l{display:grid;grid-template-columns:14px 14px minmax(0,1fr) auto;align-items:center;gap:4px;min-height:20px;padding-right:10px;white-space:pre}
+.tp .l>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tp .l .lm{display:grid;place-items:center}
+.tp .l .lm i{width:7px;height:7px;border-radius:50%}
+.tp .l .mk{color:var(--wb-faint);text-align:center}
+.tp .l.add{background:color-mix(in srgb,var(--lamp-ok) 12%,var(--wb-well))} .tp .l.add .mk{color:var(--wb-ok-ink)}
+.tp .l.chg{background:color-mix(in srgb,var(--lamp-info) 10%,var(--wb-well))} .tp .l.chg .mk{color:var(--wb-info-ink)}
+.tp .his{font-family:var(--font-ui);font-size:12.5px}
+.tp .kw{color:#2b4a7a}
+.tp .rid{color:var(--wb-info-ink);font-weight:500}
+.tp .lp{color:var(--wb-faint);font-family:var(--font-ui);font-size:11.5px}
+.tp .q{color:var(--wb-muted)}
+/* the question row folded to one line */
+.qfold{margin:6px 12px 0;font-size:12.5px;color:var(--wb-muted);display:flex;gap:10px;align-items:center}
+.qfold b{color:var(--wb-ink);font-weight:500}
+.qw .why{font-size:12px;color:var(--wb-muted);margin:-4px 0 8px}
+.dl .vd{white-space:nowrap}
 </style>
 </head>
 <body>
 <main>
   <h1>Programs: modeled user journeys <span class="tag">Storyboards for PG-JOURNEYS</span></h1>
-  <p>Four journeys, frame by frame, in the real window grammar: title bar, one toolbar, the content, one status bar. Each frame says what the engine did, what you see, and what you press. Design: <code>docs/internal/betterment/programs/PROGRAM-JOURNEYS-2026-10-31.md</code>. The program text here is the reading form only; its grammar is the sibling design <code>PROGRAM-LANGUAGE-2026-10-31.md</code> (PG-LANG). Every part is a kit piece at real size, in the material of <code>canvases/programs-requirements-2026-10-31.html</code>.</p>
+  <p>Four journeys, frame by frame, in the real window grammar: title bar, one toolbar, the content, one status bar. Each frame says what the engine did, what you see, and what you press. Design: <code>docs/internal/betterment/programs/PROGRAM-JOURNEYS-2026-10-31.md</code>. Every Program text here follows the grammar of <code>PROGRAM-LANGUAGE-2026-10-31.md</code> §3.2 (PG-LANG, #1666), and every word on a face is PG-LANG's (§9). Every part is a kit piece at real size, in the material of <code>canvases/programs-requirements-2026-10-31.html</code>.</p>
 
   <div class="rec" id="recommendation">
-    <p><b>The interview round: A, one question in place (recommended).</b> One question at a time, under the toolbar, with two to four answer Buttons, the mic and <i>Skip</i>; under it, muted, the lines of the plan that the answer will change; after the press, those lines light once. You see each answer become a change to the plan, and voice works because there is one thing to answer.</p>
-    <p style="margin:0">B, the round sheet, shows every question of a round as rows and applies them together: the fastest form when you know every answer, but twelve questions are on the screen where A shows one, and you see the effect only at <i>Apply the round</i>. B is drawn as A's open round: a press on a round token opens its questions as B's rows.</p>
+    <p><b>The interview round: A, one question on the board (recommended; PG-LANG's R-A).</b> The round strip over the plan, one question row under it: the question, its why, up to three offered answers, your own words with the mic, <i>Skip question</i>. Your answer folds to one line and its diff rows wait in the change well for <i>Apply</i>; <i>Done with Architecture</i> closes the round. Voice works because there is one thing to answer.</p>
+    <p style="margin:0">B, the round sheet, shows every question of a round as rows and shapes them together with <i>Apply the round</i>: the fastest form when you know every answer, but it reads as a form, and you asked for one at a time. A done round prints as a <code>round</code> block in the Text view, so the whole interview stays readable without B.</p>
   </div>
 
   <!-- ─────────────── the interview round: two directions ─────────────── -->
   <section class="part" id="interview">
     <h2>The interview round: two directions</h2>
-    <p class="note">The same program in Drafting: <i>Meeting recap in the Note</i>, four drafted steps, round <b>Architecture</b>. <b>Ask me: Each round ▾</b> is on the toolbar; <b>Only the core</b> asks one question, <b>Everything</b> also asks each step's gate, review depth and requirement kinds.</p>
-    <div class="moment"><div class="say"><b>A · One question, in place <span class="tag">Recommended</span></b>The round strip is at the head of the question. The answers are library Buttons; the first is the planner's guess, in primary. The muted lines under the answers are what will change.</div>
+    <p class="note">The same program in Drafting after <b>Plan it</b> and <b>Ask me first</b>: <i>Meeting recap in the Note</i>, four drafted steps, round <b>Architecture</b>, the Text view on.</p>
+    <div class="moment"><div class="say"><b>A · One question, in place <span class="tag">Recommended</span></b>The strip over the plan, Architecture breathing; Skip round at its right (Done with Architecture is withheld while a question waits). The offered answers are plated library Buttons.</div>
       <div class="frame"><div class="stage" style="width:1050px"><div data-mount="int-A"></div></div></div></div>
-    <div class="moment"><div class="say"><b>B · The round sheet <span class="tag alt">Direction</span></b>Each round is a fold of question rows; you answer in any order with a CycleGadget or the mic, then <i>Apply the round</i> writes all of its answers as one diff.</div>
+    <div class="moment"><div class="say"><b>B · The round sheet <span class="tag alt">Direction</span></b>Each round is a fold of question rows; you answer in any order with a CycleGadget or the mic, then <i>Apply the round</i> shapes all of its answers into one change well.</div>
       <div class="frame"><div class="stage" style="width:1050px"><div data-mount="int-B"></div></div></div></div>
   </section>
 
   <!-- ─────────────── J1 ─────────────── -->
   <section class="part" id="j1">
     <h2>J1 · Two paragraphs to a shipped change</h2>
-    <p class="note">Tuesday 14:10. You paste two paragraphs (a recap at the end of a meeting's Note; under 20 seconds; no made-up owners; Alice sees it first). Five rounds, one question at a time, then Start. Normal.</p>
+    <p class="note">Tuesday 14:10. You paste two paragraphs (a recap at the end of a meeting's Note; under 20 seconds; no made-up owners; Alice sees it first). Plan it, Ask me first, five rounds of one question each, then Start. Normal.</p>
     <div class="story" data-mount="j1"></div>
   </section>
 
   <!-- ─────────────── J2 ─────────────── -->
   <section class="part" id="j2">
     <h2>J2 · The dreaming program</h2>
-    <p class="note">Weeknights 23:30 to 07:00 on the idle home box. A cheap planner cuts tonight's list into steps that fit 64k; pi builds on qwen when idle; Claude Code reviews; YOLO merges. The morning is a digest and only what is yours. The outlined fields are new.</p>
+    <p class="note">Weeknights 23:30 to 07:00 on the idle home box. A cheap planner cuts the backlog into steps whose estimate is at most half the 64k budget; pi builds on qwen when idle; Claude Code reviews; YOLO merges. The morning is "Since last night" and only what is yours. Outlined: what LANG12 adds to the automation.</p>
     <div class="story" data-mount="j2"></div>
   </section>
 
   <!-- ─────────────── J3 ─────────────── -->
   <section class="part" id="j3">
     <h2>J3 · Shaping a running program by voice</h2>
-    <p class="note">Wednesday 16:00. <i>The hub stops stalling</i> runs at Normal: steps 1 and 2 merged, step 4 working. Three spoken sentences become one shown diff.</p>
+    <p class="note">Wednesday 16:00. <i>The hub stops stalling</i> runs at Normal: steps 1 and 2 merged, step 4 working. Three spoken sentences become one change well of diff rows.</p>
     <div class="story" data-mount="j3"></div>
   </section>
 
   <!-- ─────────────── J6 ─────────────── -->
   <section class="part" id="j6">
     <h2>J6 · Start and steer from the Phone and the Line</h2>
-    <p class="note">Thursday 23:10 in the car, and Friday 06:40 in the kitchen. Start and status by voice exist (#1663). The reply verbs on a message and the answer by voice are new; the answer by voice needs your ruling (design §5, decision 1).</p>
+    <p class="note">Thursday 23:10 in the car, and Friday 06:40 in the kitchen. Start and status by voice exist (#1663). New: the item's verbs on a phone message (JRN6) and the prepared answer from a call (JRN5, the default). A spoken yes that decides needs your ruling (PG-LANG §15.10, JRN7).</p>
     <div class="story" data-mount="j6"></div>
   </section>
 
   <section class="part">
     <h2>What this canvas could not establish</h2>
     <ul class="note">
-      <li>The program text grammar is PG-LANG's; the reading form here can change when that design lands.</li>
+      <li>The Text view here is drawn in CSS; PG-LANG's <code>TextPane</code> (LANG2) starts as a textarea with an overlaid gutter.</li>
       <li>The desk floor, the phone and the Calls window are CSS, not recorded shots. No product guard reads <code>docs/</code> canvases, so the words here are proven by reading only.</li>
-      <li>The budget words ("38k of 64k") are illustrations; the sizing rule is PG-LANG's.</li>
+      <li>The estimates ("18k of 64k") are illustrations; the sizing rule is PG-LANG §5.4, and the estimate and the held word use two denominators there (budget and share), noted for LANG8.</li>
     </ul>
   </section>
 </main>
@@ -696,11 +715,12 @@ function rqword(st){ const [w, t] = RQW[st]; const hollow = st === "not_yet" ? '
   return `<span class="dw" data-tone="${t}"><i class="dot${live}"${hollow} data-tone="${t}"></i>${w}</span>`; }
 function mini(arr){ return `<span class="mini">${arr.map(x => `<i class="${x}"></i>`).join("")}</span>`; }
 
-/* ── PG-JOURNEYS: the storyboards ── */
+/* ── PG-JOURNEYS: the storyboards, on PG-LANG's words and grammar ── */
 const M = {};
 const B = (w, k = "plate sm") => `<span class="btn ${k}">${w}</span>`;
 const P = (w) => B(w, "primary sm");
 const CODE = (t) => `<code>${t}</code>`;
+const ESC = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 function tbar(name, icon = "program"){ return `<div class="tb"><span class="x">✕</span><span class="chip">${spr(icon,16)}</span><span class="name"><span>${name}</span></span><span class="gad"><i></i><i></i><i></i></span></div>`; }
 function W(name, o){
   const tool = o.tool ? `<div class="toolbar">${o.tool}</div>` : "";
@@ -712,168 +732,218 @@ function frame(when, title, say, win, press, said){
     <div class="stage">${win}</div>${press ? `<div class="press">${said ? "You say" : "You press"}${press.map(p => `<i>${p}</i>`).join("")}</div>` : ""}</div>`;
 }
 const ROUNDS = ["Architecture", "Product", "Stack", "Verification", "Delivery"];
-function strip(states){
-  return `<span class="rstrip">${ROUNDS.map((r, i) => {
+function strip(states, verb){
+  const toks = ROUNDS.map((r, i) => {
     const s = states[i] || "";
-    const dot = s === "done" ? '<i class="dot" data-tone="ok"></i>' : (s === "cur" ? '<i class="dot live" data-tone="info"></i>' : (s === "skip" ? '<i class="dot"></i>' : '<i class="dot" style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"></i>'));
-    return `<span class="ftok${s === "cur" ? " on" : ""}${s === "done" ? " done" : ""}">${dot}${r}</span>`;
-  }).join("")}</span>`;
+    const dot = s === "done" ? '<i class="dot" data-tone="ok"></i>' : (s === "cur" ? '<i class="dot live" data-tone="info"></i>' : '<i class="dot" style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"></i>');
+    const st = s === "skip" ? ' style="text-decoration:line-through;color:var(--wb-faint)"' : "";
+    return `<span class="ftok${s === "cur" ? " on" : ""}${s === "done" ? " done" : ""}"${st}>${dot}${r}</span>`;
+  }).join("");
+  return `<div class="qw" style="padding:6px 12px 6px 16px;box-shadow:0 0 0 1px var(--wb-rule-soft);background:var(--wb-paper)"><div class="rd"><span class="rstrip">${toks}</span><span class="grow"></span>${verb || ""}</div></div>`;
 }
-function qwell(states, n, q, answers, preview){
-  return `<div class="qw"><div class="rd">${strip(states)}<span class="grow"></span><span class="m">${n}</span>${B("Skip the round", "sm")}</div>
-    <div class="q">${q}</div>
-    <div class="ans">${answers.map((a, i) => i === 0 ? P(a) : B(a)).join("")}${B("Skip", "sm")}<span class="mic">${MIC}</span></div>
-    ${preview ? `<div class="pv">${preview.map(p => `<span>${p}</span>`).join("")}</div>` : ""}</div>`;
+function qrow(q, why, answers){
+  return `<div class="qw"><div class="q">${q}</div><div class="why">${why}</div>
+    <div class="ans">${answers.map(a => B(a)).join("")}<span class="fld" style="width:150px"><span class="ph" style="color:var(--wb-faint)">Your answer</span><i class="mic">${MIC}</i></span>${B("Skip question", "sm")}</div></div>`;
 }
-function ptx(lines){
-  return `<div class="ptx">${lines.map(l => `<div class="l${l.c ? " " + l.c : ""}"><span class="g">${l.g || ""}</span><span class="x">${l.x}</span><span>${l.t || ""}</span></div>`).join("")}</div>`;
+function qfold(q, a){ return `<div class="qfold"><span>?</span><b>${q}</b><span>=</span><b>${a}</b></div>`; }
+/* the change well: say head, diff rows (op · where · before → after · verdict), Apply / Not this */
+function well(say, engine, rows, verbs){
+  const v = verbs || `${P("Apply")}${B("Not this")}`;
+  return `<div class="dfw"><div class="cap2">${say}<span class="grow"></span><span style="font-weight:400;color:var(--wb-muted)">${engine || ""}</span></div>
+    ${rows.map(r => `<div class="dl ${r.op === "+" ? "add" : "chg"}"><span class="s">${r.op}</span><span class="tx"><b>${r.where}</b> ${r.what}</span><span class="vd">${r.v === "lowers" ? '<span class="dw" data-tone="ask"><i class="dot" data-tone="ask"></i>Lowers the bar</span>' : '<span class="dw" data-tone="ok"><i class="dot" data-tone="ok"></i>Allowed</span>'}</span></div>`).join("")}
+    <div class="foot" style="border:0;padding:6px 10px">${v}</div></div>`;
 }
-const DR = '<span class="tg dr">Drafted</span>';
-const AS = `<span style="display:inline-flex;gap:6px;align-items:center"><span class="tg as">Assumed</span>${B("Change", "sm")}</span>`;
+/* the Text view (TextPane): one line = [lamp tone, mark, text] */
+function tp(lines){
+  return `<div class="tp">${lines.map(([tone, mk, t, cls]) => {
+    let h = ESC(t);
+    let lamp = "";
+    const li = h.indexOf("   # ");
+    if (li >= 0) { lamp = h.slice(li + 5).trim(); h = h.slice(0, li); }
+    h = h.replace(/^(\s*)&gt; (.*)$/, (m, s, w) => `${s}&gt; <span class="his">${w}</span>`)
+         .replace(/^(\s*)(program|goal|in|control|check|agent|reviewer|planner|budget|when idle|night|within|template|spend up to|for|every step|at the end|step|owns|after|brief|review|merge|run|bound|walk|round|race)\b/, (m, s, k) => `${s}<span class="kw">${k}</span>`)
+         .replace(/\b(R\d+|R\+)( (?:check|review|shot|word|measure):)/, '<span class="rid">$1</span>$2')
+         .replace(/^(\s*)(\?|=)/, '$1<span class="q">$2</span>');
+    const dot = tone ? `<i style="background:var(--lamp-${tone})"></i>` : "";
+    return `<div class="l${cls ? " " + cls : ""}"><span class="lm">${dot}</span><span class="mk">${mk || ""}</span><span>${h}</span><span class="lp">${lamp ? "# " + lamp : ""}</span></div>`;
+  }).join("")}</div>`;
+}
 function jhead(cols){ return `<div class="lhead2" style="grid-template-columns:22px minmax(0,1fr) 236px 64px 96px"><span></span><span>Step</span><span>Track</span><span>${cols || "Met"}</span><span>Agent</span></div>`; }
 function jrow(s){
   const met = s.met ? `<span class="metc${s.metall ? " all" : ""}">${s.mtone ? `<i class="dot" data-tone="${s.mtone}"></i>` : ""}${s.met}</span>` : (s.bud ? `<span class="bud">${s.bud}</span>` : "<span></span>");
   return `<div class="jrow${s.cls ? " " + s.cls : ""}"><span class="n">${s.n}</span><span class="ti">${s.t}${s.after ? `<span class="af">${s.after}</span>` : ""}</span>
     <span class="trk">${dots(s)}${word(s)}</span>${met}${agent(s, 16)}</div>`;
 }
-function dtb(start){ return `${start ? P(G.play + "Start") : B(G.play + "Start", "plate off")}${B(G.plus + "Add step", "")}<span class="grow"></span>${B('Ask me: Each round<span class="caret">▾</span>', "")}${B('Control: Normal<span class="caret">▾</span>', "")}`; }
-function rtb(level, extra){ return `${B(G.park + "Park", "")}${B(G.plus + "Add step", "")}<span class="grow"></span>${extra || ""}${B(`Agent: Claude Code<span class="caret">▾</span>`, "")}${B(`Control: ${level}<span class="caret">▾</span>`, "")}`; }
+const VIEWS = (on) => `<span class="ftoks"><span class="ftok${on === "Board" ? " on" : ""}">Board</span><span class="ftok${on === "Text" ? " on" : ""}">Text</span></span>`;
+function dtb(start, view){ return `${start ? P(G.play + "Start") : B(G.play + "Start", "plate off")}${B(G.plus + "Add step", "")}<span class="grow"></span>${B('Control: Normal<span class="caret">▾</span>', "")}${VIEWS(view || "Text")}`; }
+function rtb(level, agentName, extra){ return `${B(G.park + "Park", "")}${B(G.plus + "Add step", "")}<span class="grow"></span>${extra || ""}${B(`Agent: ${agentName || "Claude Code"}<span class="caret">▾</span>`, "")}${B(`Control: ${level}<span class="caret">▾</span>`, "")}${VIEWS("Board")}`; }
+function shapebar(text, verb){ return `<div class="shape"><span class="fld"><span${text ? "" : ' style="color:var(--wb-faint)"'}>${text || "Change the program"}</span><i class="mic"${text ? ' style="background:var(--pill-info)"' : ""}>${MIC}</i></span>${P(verb || "Shape")}</div>`; }
+
+/* ── J1's text (PG-LANG §3.2) ── */
+const J1HEAD = [
+  ["", "", "# program text 1"],
+  ["info", "", "program Meeting recap in the Note"],
+  ["", "", "  in HoldSpeak · main · project HoldSpeak"],
+  ["", "", "  control normal"],
+  ["", "", "  reviewer Codex at delta"],
+];
+const J1DRAFT = [
+  ...J1HEAD,
+  ["", "+", "every step", "add"],
+  ["", "+", "  R1 review: The change does only what its brief says.", "add"],
+  ["", "+", "  R2 review: Each new behaviour has a test.", "add"],
+  ["", "+", "step + The recap from the transcript", "add"],
+  ["", "+", "  owns holdspeak/services/", "add"],
+  ["", "+", "step + No made-up owners", "add"],
+  ["", "+", "  R4 check: `uv run pytest -q tests/unit/test_recap_owners.py` is green.", "add"],
+  ["", "+", "step + The recap section in the Note", "add"],
+  ["", "+", "step + The recap in the export", "add"],
+];
 
 /* ── the interview: two directions (1020 wide) ── */
-const DRAFT = [
-  {x:'<b>Meeting recap in the Note</b> <span class="mu">· Project HoldSpeak · Control: Normal</span>'},
-  {g:"", x:'Every step · <b>R1</b> Review · The change does only what its brief says. <span class="mu">· by template</span>'},
-  {g:"1", x:'<b>The recap</b> · Claude Code <span class="mu">· the recap from the transcript, on the local model</span>', t:DR},
-  {g:"", c:"in", x:`<b>R3</b> Check · ${CODE("uv run pytest -q tests/integration/test_recap_latency.py")} is green`, t:DR},
-  {g:"2", x:'<b>No made-up owners</b> · Claude Code <span class="mu">· after 1</span>', t:DR},
-  {g:"", c:"in", x:'<b>R5</b> Review · The recap never names an owner the transcript does not name.', t:DR},
-  {g:"3", x:'<b>The recap section in the Note</b> · Claude Code', t:DR},
-  {g:"4", x:'<b>Ship it</b> · Claude Code <span class="mu">· after 2, 3</span>', t:DR},
-];
-M["int-A"] = () => W("Meeting recap in the Note", {w:1020, h:520, tool:dtb(false),
-  body: qwell(["cur"], "1 of 5 rounds · 5 questions", "Where does the recap run?",
-      ["In the aftercare, after Stop", "As its own job"],
-      ["Step 1 · brief: “in the meeting's aftercare, after Stop”", "Step 1 · owns holdspeak/services/meeting_aftercare*.py"]) + ptx(DRAFT),
-  sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>6</b>&nbsp;requirements", "<b>5</b>&nbsp;questions", "Project ▸ HoldSpeak"]});
-function sheetq(q, a, skip){ return `<div class="sheetq${skip ? " skip" : ""}"><span class="q">${q}</span><span class="cyc">${a}</span><span class="mic">${MIC}</span>${B("Skip", "sm")}</div>`; }
-M["int-B"] = () => W("Meeting recap in the Note", {w:1020, h:520, tool:dtb(false),
+M["int-A"] = () => W("Meeting recap in the Note", {w:1020, h:540, tool:dtb(false),
+  body: strip(["cur"], B("Skip round", "sm")) + qrow("Where does the recap run?", "It decides which files step 1 owns and what it must not touch.",
+      ["In the aftercare, after Stop", "As its own job", "In the Note window"]) + tp([
+      ...J1HEAD, ["", "", ""],
+      ["", "", "round Architecture · asking"],
+      ["", "", "  ? Where does the recap run?"],
+      ["", "", "round Product · open"],
+      ["", "", ""],
+      ["", "", "step 1 The recap from the transcript                       # Planned"],
+      ["", "", "  owns holdspeak/services/"],
+      ["", "", "step 2 No made-up owners                                    # Planned"],
+      ["", "", "  after 1"]]),
+  sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>8</b>&nbsp;requirements", "Architecture asking", "Project ▸ HoldSpeak"]});
+function sheetq(q, a){ return `<div class="sheetq"><span class="q">${q}</span><span class="cyc">${a}</span><span class="mic">${MIC}</span>${B("Skip question", "sm")}</div>`; }
+M["int-B"] = () => W("Meeting recap in the Note", {w:1020, h:540, tool:dtb(false),
   body: `<div class="fold" style="margin-top:4px"><div class="fh"><span class="chev">▼</span>Architecture<span class="q">· 3 questions</span></div>
       ${sheetq("Where does the recap run?", "In the aftercare, after Stop")}
       ${sheetq("Where does the recap live?", "A section of the meeting's Note")}
-      ${sheetq("Which engine writes the recap?", "The desk's assignment for meetings")}
-      <div class="foot">${P("Apply the round")}</div></div>
+      ${sheetq("What must not change?", "The transcript store")}
+      <div class="foot">${P("Apply the round")}${B("Skip round")}</div></div>
     <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Product<span class="q">· 2 questions</span></div></div>
     <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Stack<span class="q">· 2 questions</span></div></div>
     <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Verification<span class="q">· 3 questions</span></div></div>
-    <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Delivery<span class="q">· 2 questions</span></div></div>` + ptx(DRAFT.slice(0, 5)),
-  sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>6</b>&nbsp;requirements", "<b>12</b>&nbsp;questions"]});
+    <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Delivery<span class="q">· 2 questions</span></div></div>` + tp(J1HEAD),
+  sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>8</b>&nbsp;requirements", "<b>12</b>&nbsp;questions"]});
 
 /* ── J1 ── */
 M.j1 = () => [
-  frame("14:10", "Drafted", "Planning made four steps and six requirements from your two paragraphs. Each drafted line says so. The first question is on top.",
-    W("Meeting recap in the Note", {tool:dtb(false), body: qwell(["cur"], "1 of 5", "Where does the recap run?", ["In the aftercare, after Stop", "As its own job"], ["Step 1 · brief and owns"]) + ptx(DRAFT.slice(0, 6)),
-      sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>6</b>&nbsp;requirements", "<b>5</b>&nbsp;questions"]}), ["In the aftercare, after Stop"]),
-  frame("14:11", "The answer is a change", "The lines your answer changed light once. Architecture is green; Product asks the next question.",
-    W("Meeting recap in the Note", {tool:dtb(false), body: qwell(["done", "cur"], "2 of 5", "Who sees it before it ships?", ["Alice reviews the pull request", "Only you"], ["The program · For Alice", "Step 4 · review: Alice"]) + ptx([
-      DRAFT[0], DRAFT[1],
-      {g:"1", c:"chg lit", x:'<b>The recap in the aftercare</b> · Claude Code <span class="mu">· owns holdspeak/services/meeting_aftercare*.py</span>', t:'<span class="tg">Changed</span>'},
-      DRAFT[3], DRAFT[4], DRAFT[5]]),
-      sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>6</b>&nbsp;requirements", "<b>4</b>&nbsp;questions"]}), ["Alice reviews the pull request"]),
-  frame("14:13", "Verification asks the kind", "You skipped Stack, so the default pair stays, as an assumed line you can change. Verification asks how each sentence of yours is proven.",
-    W("Meeting recap in the Note", {tool:dtb(false), body: qwell(["done", "done", "skip", "cur"], "4 of 5", "How do we know “under 20 seconds”?", ["Both", "A test with a recorded meeting", "You try it on your desk"], ["+ R3 Check · test_recap_latency.py", "+ R8 Your word · on step 4"]) + ptx([
-      {x:'<b>Meeting recap in the Note</b> <span class="mu">· For Alice · Control: Normal</span>', c:"chg"},
-      {g:"", c:"asm", x:'Codex reviews Claude Code <span class="mu">· Stack, skipped</span>', t:AS},
-      DRAFT[2], DRAFT[3], DRAFT[4],
-      {g:"4", c:"chg", x:'<b>Alice\'s review</b> · reviewer: Alice <span class="mu">· after 2, 3</span>', t:'<span class="tg">Changed</span>'}]),
-      sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>7</b>&nbsp;requirements", "<b>2</b>&nbsp;questions", "For Alice"]}), ["Both"]),
-  frame("14:16", "Ready to start", "Every round is answered. Each step fits its agent; each requirement can be proven here. Start is the primary verb now.",
-    W("Meeting recap in the Note", {tool:dtb(true), body: `<div class="qw" style="padding:6px 12px 6px 16px"><div class="rd">${strip(["done","done","done","done","done"])}<span class="grow"></span><span class="m">5 of 5 · 1 assumed</span></div></div>` + ptx([
-      {x:'<b>Meeting recap in the Note</b> <span class="mu">· For Alice · Control: Normal</span>'},
-      {g:"", x:'Every step · <b>R1</b> · <b>R2</b> Review · only its brief · each new behaviour has a test'},
-      {g:"1", x:'<b>The recap in the aftercare</b> · <b>R3</b> Check · latency'},
-      {g:"2", x:'<b>No made-up owners</b> · <b>R4</b> Check · <b>R5</b> Review <span class="mu">· after 1</span>'},
-      {g:"3", x:'<b>The recap section in the Note</b> · <b>R6</b> Shot · Note at 393'},
-      {g:"4", x:'<b>Alice\'s review</b> · <b>R8</b> Your word <span class="mu">· after 2, 3</span>'},
-      {g:"", x:'The program · <b>R7</b> Check · ' + CODE("scripts/quick_check.sh") + ' is green on main'},
-      {g:"", x:'Delivery · merge each step · one Delivery Workbench milestone at Done'}]),
-      sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>8</b>&nbsp;requirements", "1 assumed", "For Alice"]}), ["Start"]),
-  frame("15:40", "Execute and verify", "Step 1 merged. Step 2's reviewer answered R5 unmet: the recap named an owner the transcript does not name. At Normal the builder gets round 2 by rule.",
+  frame("14:10", "Drafted", "Plan it read the two paragraphs. The draft is diff rows: every line is new, and nothing is written until you press.",
+    W("Meeting recap in the Note", {tool:dtb(false),
+      body: `<div class="dfw"><div class="cap2">4 steps · 8 requirements · 5 rounds to ask<span class="grow"></span><span style="font-weight:400;color:var(--wb-muted)">qwen3.8-27b · 14 s</span></div><div class="foot" style="border:0;padding:6px 10px">${B("Apply")}${P("Ask me first")}${B("Not this")}</div></div>` + tp(J1DRAFT),
+      sb:['<span class="dot" data-tone="info"></span>Drafting', "draft of 4 steps"]}), ["Ask me first"]),
+  frame("14:11", "One question", "The round strip over the plan; Architecture asks. Up to three offered answers, your own words with the mic, or Skip question.",
+    W("Meeting recap in the Note", {tool:dtb(false),
+      body: strip(["cur"], B("Skip round", "sm")) + qrow("Where does the recap run?", "It decides what step 1 owns.", ["In the aftercare, after Stop", "As its own job"]) + tp(J1HEAD.concat([["", "", "round Architecture · asking"], ["", "", "  ? Where does the recap run?"]])),
+      sb:['<span class="dot" data-tone="info"></span>Drafting', "Architecture asking"]}), ["In the aftercare, after Stop"]),
+  frame("14:12", "The answer is diff rows", "The question folds to one line. Its rows wait in the change well; Apply writes them, and Done with Architecture closes the round.",
+    W("Meeting recap in the Note", {tool:dtb(false),
+      body: strip(["cur"], B("Done with Architecture", "plate sm")) + qfold("Where does the recap run?", "In the aftercare, after Stop") +
+        well("Step 1 runs in the aftercare, after Stop", "qwen3.8-27b · 2.4 s", [
+          {op:"~", where:"step 1 · owns", what:"holdspeak/services/ → holdspeak/services/meeting_aftercare_service.py"},
+          {op:"~", where:"step 1 · brief", what:"+ “After Stop, write the recap at the end of the meeting's Note.”"}]) +
+        tp([["", "", "round Architecture · asking"], ["", "", "  ? Where does the recap run?"], ["", "", "  = In the aftercare, after Stop.   # → step 1 owns, step 1 brief"]]),
+      sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>2</b>&nbsp;changes to apply"]}), ["Apply", "Done with Architecture"]),
+  frame("14:15", "Verification picks the kind", "Product is done, Stack skipped. “Under 20 seconds” is a Measure with a bound; your try is Your word with walk lines.",
+    W("Meeting recap in the Note", {tool:dtb(false),
+      body: strip(["done", "done", "skip", "cur"], B("Done with Verification", "plate sm")) + qfold("How do we know “under 20 seconds”?", "Both") +
+        well("A measured run on step 1, and your word on step 4", "qwen3.8-27b · 3.1 s", [
+          {op:"+", where:"step 1", what:"R3 measure: The recap is in the Note under 20 s after Stop. · bound total &lt; 20 s"},
+          {op:"+", where:"step 4", what:"R8 word: I tried it on my desk after a real meeting. · 2 walk lines"}]) +
+        tp([["", "", "step 1 The recap in the aftercare"], ["", "+", "  R3 measure: The recap is in the Note under 20 s after Stop.", "add"], ["", "+", "    run uv run pytest -q tests/integration/test_recap_latency.py", "add"], ["", "+", "    bound total < 20 s", "add"]]),
+      sb:['<span class="dot" data-tone="info"></span>Drafting', "<b>4</b>&nbsp;steps", "<b>8</b>&nbsp;requirements", "For Alice"]}), ["Apply", "Done with Verification"]),
+  frame("15:40", "Execute and verify", "Started after Delivery. Step 1 merged; R3 measured 14.2 s. Step 2's reviewer answered R5 unmet; Normal gives the builder round 2 by rule.",
     W("Meeting recap in the Note", {tool:rtb("Normal"), body: jhead() + [
       {n:1, t:"The recap in the aftercare", st:"merged", pr:1699, ag:"claude", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
       {n:2, t:"No made-up owners", st:"findings", ag:"claude", met:"3 of 4", mtone:"fail", word:"R5 unmet · round 2", after:"after 1", chk:"green"},
-      {n:3, t:"The recap section in the Note", st:"checking", ag:"claude", met:"2 to meet"},
-      {n:4, t:"Alice's review", st:"planned", person:"Alice", met:"3 to meet", after:"after 2, 3"},
+      {n:3, t:"The recap section in the Note", st:"checking", ag:"claude", met:"3 to meet"},
+      {n:4, t:"The recap in the export", st:"planned", person:"Alice", met:"3 to meet", after:"after 2, 3"},
     ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Requirements<span class="q">· 6 of 14 met</span></div>
-      <div class="rq sel" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R5</span><span>${rqword("unmet")}</span><span class="tx">The recap never names an owner the transcript does not name.</span><span>${kt("review")}</span><span class="ev" style="font-size:12px;color:var(--wb-muted)">“names Bob; no Bob”</span></div>
-      <div class="rq" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R3</span><span>${rqword("met")}</span><span class="tx">${CODE("…test_recap_latency.py")} is green</span><span>${kt("check")}</span><span>${B(G.log + "Open log")}</span></div></div>`,
+      <div class="rq sel" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R5</span><span>${rqword("unmet")}</span><span class="tx">The recap never names an owner the transcript does not name.</span><span>${kt("review")}</span><span style="font-size:12px;color:var(--wb-muted)">“names Bob; no Bob”</span></div>
+      <div class="rq" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R3</span><span>${rqword("met")}</span><span class="tx">The recap is in the Note under 20 s after Stop.</span><span><span class="kt">Measure</span></span><span style="font-size:12px;color:var(--wb-ok-ink)">total 14.2 s (&lt; 20 s)</span></div></div>`,
       sb:['<span class="dot" data-tone="info"></span>Running', "<b>1</b>&nbsp;of 4 done", "<b>6</b>&nbsp;of 14 met", "For Alice"]}), null),
-  frame("next day 09:05", "Prove", "Alice approved PR #1702 on GitHub. Your word holds the last merge. After Met and the end check: Done · 14 of 14 met, and one milestone line.",
+  frame("next day 09:05", "Prove", "Alice approved PR #1702. Your word holds the last merge; its walk lines are under the row. After Met and the end check: Done · 14 of 14 met.",
     W("Meeting recap in the Note", {tool:rtb("Normal"), body: `<div class="well"><div class="cap"><span class="dot" data-tone="ask"></span>Your turn</div>
-      <div class="wr"><span class="t"><b>Step 4 · Alice's review:</b> R8 · You tried it on your desk after a real meeting?</span><span class="vb">${P("Met")}${B("Unmet")}</span></div></div>` + jhead() + [
+      <div class="wr"><span class="t"><b>Step 4 · The recap in the export:</b> R8 · I tried it on my desk after a real meeting</span><span class="vb">${P("Met")}${B("Unmet")}</span></div>
+      <div class="wr" style="color:var(--wb-muted);font-size:12.5px"><span class="t">walk · Record a meeting of two minutes and press Stop · walk · Open its Note and read the recap</span></div></div>` + jhead() + [
       {n:1, t:"The recap in the aftercare", st:"merged", pr:1699, ag:"claude", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
       {n:2, t:"No made-up owners", st:"merged", pr:1700, ag:"claude", met:"4 of 4", metall:true, chk:"green", rv:"passed"},
       {n:3, t:"The recap section in the Note", st:"merged", pr:1701, ag:"claude", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
-      {n:4, t:"Alice's review", st:"merge_ask", pr:1702, person:"Alice", ag:"claude", met:"2 of 3", mtone:"ask", word:"Your word"},
-    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▶</span>Delivery Workbench<span class="q">· at Done: Meeting recap in the Note · 4 PRs · 14 of 14 met</span></div></div>`,
+      {n:4, t:"The recap in the export", st:"merge_ask", pr:1702, person:"Alice", ag:"claude", met:"2 of 3", mtone:"ask", word:"Your word"},
+    ].map(jrow).join(""),
       sb:['<span class="dot" data-tone="ask"></span>Your turn', "<b>3</b>&nbsp;of 4 done", "<b>12</b>&nbsp;of 14 met", "For Alice"]}), ["Met"]),
 ].join("");
 
 /* ── J2 ── */
 const NEWF = (h) => `<span class="new">${h}</span>`;
+const DTB = () => rtb("YOLO", "pi on qwen3.8-27b", `<span class="tokt on">When idle</span>`).replace(`${B(G.plus + "Add step", "")}`, "");
 M.j2 = () => [
-  frame("set-up, once", "The dream is an automation", "Do: Run a program, with the new Dreaming template. The night window, the planner, its spend limit and the sources are new fields.",
-    W("Nightly dream", {icon:"cartridge", h:452, tool:`${P("Turn on")}${B("Run now", "")}<span class="grow"></span>${B("Results", "")}`, body:`<div class="agrid">
+  frame("set-up, once", "The dream is an automation", "Run a program with the Dreaming template; the night line comes from the Program (both LANG12, outlined).",
+    W("Nightly dream", {icon:"cartridge", h:400, tool:`${P("Turn on")}${B("Run now", "")}<span class="grow"></span>${B("Results", "")}`, body:`<div class="agrid">
       <span class="k">Do</span><span class="v">${B('Run a program<span class="caret">▾</span>')}</span>
       <span class="k">Template</span><span class="v">${NEWF(B('Dreaming<span class="caret">▾</span>'))}</span>
       <span class="k">Level</span><span class="v">${B('YOLO<span class="caret">▾</span>')}</span>
-      <span class="k">Builds</span><span class="v">${B(`Agent: pi on qwen3.8-27b<span class="caret">▾</span>`)}<span class="ck on"><i></i>When idle</span></span>
-      <span class="k">Reviews</span><span class="v">${B('Claude Code<span class="caret">▾</span>')}</span>
-      <span class="k">Plans</span><span class="v">${NEWF(B('Claude Haiku<span class="caret">▾</span>'))}${NEWF('<span class="fld" style="width:140px"><span>$1 a night</span></span>')}</span>
-      <span class="k">Sources</span><span class="v">${NEWF('<span class="tokt on">Tonight list</span>')}${NEWF('<span class="tokt on">Copy guard</span>')}${NEWF('<span class="tokt on">Known reds</span>')}</span>
-      <span class="k">Every step</span><span class="v"><span class="kt" data-k="check">Check</span><span style="font-size:12.5px">No file under ${CODE("holdspeak/db/")} changes</span></span>
-      <span class="k">When</span><span class="v">${B('Every weekday at 23:30<span class="caret">▾</span>')}${NEWF(B('Until 07:00<span class="caret">▾</span>'))}</span>
-      </div>`, sb:['<span class="dot"></span>Off', "Project ▸ HoldSpeak", "<b>3</b>&nbsp;lines on tonight's list"]}), ["Turn on"]),
-  frame("23:31", "Planned to fit 64k", "The planner cut three lines of yours into nine steps. Each row says its budget: the brief, the owned files and room for the check log.",
-    W("Dreaming · Thu 31 Oct", {h:452, tool:rtb("YOLO", `<span class="tokt on">When idle</span>`).replace("Agent: Claude Code", "Agent: pi on qwen3.8-27b"), body: jhead("Budget") + [
-      {n:1, t:"Line starting word", st:"working", ag:"pi", eng:"qwen", bud:"22k of 64k"},
-      {n:2, t:"Terminals buttons · toolbar", st:"held", ag:"pi", eng:"qwen", bud:"38k of 64k"},
-      {n:3, t:"Terminals buttons · rows", st:"planned", ag:"pi", eng:"qwen", bud:"41k of 64k", after:"after 2"},
-      {n:4, t:"Terminals buttons · wells", st:"planned", ag:"pi", eng:"qwen", bud:"36k of 64k", after:"after 3"},
-      {n:5, t:"Engines readiness at 393", st:"planned", ag:"pi", eng:"qwen", bud:"29k of 64k"},
-      {n:6, t:"Engines readiness test", st:"planned", ag:"pi", eng:"qwen", bud:"18k of 64k", after:"after 5"},
-    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▶</span>Requirements<span class="q">· R1 · No database file · 9 steps · R2 · R3 by template</span></div></div>`,
+      <span class="k">Agent</span><span class="v">${B(`pi on qwen3.8-27b<span class="caret">▾</span>`)}</span>
+      <span class="k">When</span><span class="v">${B('Every weekday at 23:30<span class="caret">▾</span>')}</span>
+      <span class="k">Night</span><span class="v">${NEWF('<span class="tokn">23:30–07:00 · at most 8 steps</span>')}</span>
+      </div>`, sb:['<span class="dot"></span>Off', "Project ▸ HoldSpeak"]}), ["Turn on"]),
+  frame("set-up, once", "The program, as text", "The Program's own lines: the planner and its spend limit, the 64k budget, the night, and the folders it may touch.",
+    W("Dreaming · HoldSpeak", {h:400, tool:DTB().replace(VIEWS("Board"), VIEWS("Text")), body: tp([
+      ["", "", "# program text 1"],
+      ["info", "", "program Dreaming · HoldSpeak"],
+      ["", "", "  in HoldSpeak · main · project HoldSpeak"],
+      ["", "", "  template dreaming"],
+      ["", "", "  control yolo"],
+      ["", "", "  agent pi on qwen3.8-27b"],
+      ["", "", "  planner Claude Haiku"],
+      ["", "", "  spend up to $1"],
+      ["", "", "  reviewer Claude Code at glance"],
+      ["", "", "  budget 64k"],
+      ["", "", "  when idle"],
+      ["", "", "  night 23:30–07:00 · at most 8 steps"],
+      ["", "", "  within web/src/desk/, docs/, tests/unit/"],
+      ["", "", "every step"],
+      ["ok", "", "  R1 review: The change does only what its brief says."],
+      ["ok", "", "  R2 check: `uv run python scripts/ux_canon_scan.py` is green."]]),
+      sb:['<span class="dot"></span>Done · last night', "YOLO", "night 23:30–07:00"]}), null),
+  frame("23:31", "Planned to fit", "One tiny step per backlog item. A step fits when its estimate is at most half the budget; step 3 did not, so YOLO split it.",
+    W("Dreaming · HoldSpeak", {h:400, tool:DTB(), body: jhead("Estimate") + [
+      {n:1, t:"Line starting word", st:"working", ag:"pi", eng:"qwen", bud:"14k of 64k"},
+      {n:2, t:"Terminals buttons · toolbar", st:"held", ag:"pi", eng:"qwen", bud:"22k of 64k"},
+      {n:3, t:"Terminals buttons · rows", st:"planned", ag:"pi", eng:"qwen", bud:"19k of 64k", after:"after 2", cls:"new"},
+      {n:4, t:"Terminals buttons · wells", st:"planned", ag:"pi", eng:"qwen", bud:"21k of 64k", after:"after 3", cls:"new"},
+      {n:5, t:"Engines readiness at 393", st:"planned", ag:"pi", eng:"qwen", bud:"18k of 64k"},
+    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Decided for you<span class="q">· 1</span></div>
+      <div class="ledl"><span class="m">23:31</span><span>${spr("program",16)}</span><span class="tx">Split step 3 (too big for qwen · 41k of 32k): 2 parts · rule: YOLO splits</span>${B("Overturn")}</div></div>`,
       sb:['<span class="dot" data-tone="info"></span>Running', "<b>9</b>&nbsp;steps", "YOLO", "until 07:00"]}), null),
-  frame("03:12", "The night runs", "Four merged by rule. The list ran dry, so the planner took a step from the copy guard and said so. Step 7 needs a new column: a core question, held for you.",
-    W("Dreaming · Thu 31 Oct", {h:452, tool:rtb("YOLO", `<span class="tokt on">When idle</span>`).replace("Agent: Claude Code", "Agent: pi on qwen3.8-27b"), body: jhead("Budget") + [
-      {n:4, t:"Terminals buttons · wells", st:"merged", pr:1713, ag:"pi", eng:"qwen", bud:"36k of 64k", chk:"green", rv:"passed"},
-      {n:5, t:"Engines readiness at 393", st:"merged", pr:1714, ag:"pi", eng:"qwen", bud:"29k of 64k", chk:"green", rv:"passed"},
-      {n:6, t:"Engines readiness test", st:"review", ag:"pi", eng:"qwen", bud:"18k of 64k"},
-      {n:7, t:"Meetings keep the language", st:"asks", ag:"pi", eng:"qwen", bud:"33k of 64k", word:"Asks you · core"},
-      {n:10, t:"Calls toolbar words", st:"planned", ag:"pi", eng:"qwen", bud:"14k of 64k", cls:"added"},
-    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Decided for you<span class="q">· 6</span></div>
-      <div class="ledl"><span class="m">02:40</span><span>${spr("program",16)}</span><span class="tx">Added for you: step 10 · from the copy guard · rule: YOLO adds a step</span>${B("Overturn")}</div>
+  frame("03:12", "The night runs", "Merged by rule. The canon scanner gave one more step. Step 7 needs holdspeak/db/, outside within: a core question, held for you.",
+    W("Dreaming · HoldSpeak", {h:400, tool:DTB(), body: jhead("Estimate") + [
+      {n:5, t:"Engines readiness at 393", st:"merged", pr:1714, ag:"pi", eng:"qwen", bud:"18k of 64k", chk:"green", rv:"passed"},
+      {n:6, t:"Engines readiness test", st:"review", ag:"pi", eng:"qwen", bud:"9k of 64k"},
+      {n:7, t:"Meetings keep the language", st:"asks", ag:"pi", eng:"qwen", bud:"24k of 64k", word:"Asks you · core"},
+      {n:10, t:"Calls words", st:"planned", ag:"pi", eng:"qwen", bud:"12k of 64k", cls:"added"},
+    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Decided for you<span class="q">· 7</span></div>
+      <div class="ledl"><span class="m">02:40</span><span>${spr("program",16)}</span><span class="tx">Added for you: step 10 · from the canon scanner · rule: YOLO adds a step</span>${B("Overturn")}</div>
       <div class="ledl"><span class="m">03:12</span><span>${spr("program",16)}</span><span class="tx">Reached you: a message, held for quiet hours</span><span></span></div></div>`,
       sb:['<span class="dot" data-tone="ask"></span>Your turn', "<b>5</b>&nbsp;of 10 merged", "<b>1</b>&nbsp;waits on you", "until 07:00"]}), null),
-  frame("07:00", "The digest", "The handover note's new top section says the whole night in one line, then what merged, what parked, what is yours, and what it cost.",
-    W("Program: Dreaming · Thu 31 Oct", {icon:"note", h:452, tool:`${B("Done", "")}${B("Ask about this", "")}${B("Find the tasks", "")}<span class="grow"></span>${B('Project: HoldSpeak<span class="caret">▾</span>', "")}`, body:`<div class="nb">
-      <h4>Last night</h4>
-      <div class="lead">23:30–06:52 · 11 steps · 8 merged · 2 parked · 1 waits on you</div>
-      <ul><li>Merged: <a>#1710</a> Line starting word · <a>#1711–#1713</a> Terminals buttons · <a>#1714</a> Engines at 393 · <a>#1715</a> · <a>#1716</a> · <a>#1717</a></li>
-      <li>Parked: step 9 · Too big for one night · back on the Door</li>
-      <li>Parked: step 11 · Morning: continue from here</li>
-      <li>Waits on you: step 7 · the fix needs a new column on meetings</li>
+  frame("07:00", "Since last night", "The handover note's top section: the night in one line, then what merged, what parked, what is yours, what it cost.",
+    W("Program: Dreaming · HoldSpeak", {icon:"note", h:400, tool:`${B("Done", "")}${B("Ask about this", "")}${B("Find the tasks", "")}<span class="grow"></span>${B('Project: HoldSpeak<span class="caret">▾</span>', "")}`, body:`<div class="nb">
+      <h4>Since last night</h4>
+      <div class="lead">23:30–06:52 · 10 steps · 8 merged · 1 parked · 1 waits on you</div>
+      <ul><li>Merged: <a>#1710</a> Line starting word · <a>#1711</a>, <a>#1712</a> Terminals buttons (split in 2) · <a>#1714</a> Engines at 393 · <a>#1715</a> · <a>#1716</a> · <a>#1717</a></li>
+      <li>Parked: step 9 · the night ended · continues from its checkpoint</li>
+      <li>Waits on you: step 7 · outside within: holdspeak/db/</li>
       <li class="mu">Spent: $0.38 of $1 (the planner) · qwen 5 h 10 · Claude Code 41 min</li></ul>
-      <h4>Your turn</h4><ul><li>Step 7 · core question · Go on or Park</li></ul>
-      <h4>Decided for you</h4><ul><li class="mu">8 merges by rule · 1 step added from the copy guard · 2 parks</li></ul></div>`,
+      <h4>Your turn</h4><ul><li>Step 7 · core question · Go on or Park</li></ul></div>`,
       sb:["Project ▸ HoldSpeak", "Written 07:00 · engine"]}), null),
-  frame("07:01", "Only what is yours", "Needs you has the one core question and the one Your word. Today says the night in one line. The phone has the same first line.",
+  frame("07:01", "Only what is yours", "Needs you has the one core question. Today says the night in one line; the phone gets the same first line (JRN4).",
     W("Needs you", {icon:"dock-intelligence", h:300, tool:`<span class="grow"></span>${B('All<span class="caret">▾</span>', "")}`, body:`
-      <div class="grp">Dreaming · Thu 31 Oct</div>
-      <div class="nrow"><span class="t">Step 7 asks you: the fix needs a new column on meetings</span><span class="m">Now</span>${P("Go on")}${B("Park")}</div>
-      <div class="nrow"><span class="t">Step 5 · R4 · The Engines window at 393 reads right to you?</span><span class="m">Now</span>${P("Met")}${B("Unmet")}</div>
+      <div class="grp">Dreaming · HoldSpeak</div>
+      <div class="nrow"><span class="t">Step 7 asks you: the fix needs holdspeak/db/</span><span class="m">Now</span>${P("Go on")}${B("Park")}</div>
       <div class="grp">Today</div>
-      <div class="today"><div class="ln new">${spr("program",16)} Last night: 8 merged, 1 waits on you</div><div class="ln">${spr("meeting",16)} 10:00 · Architecture review</div></div>`,
-      sb:["<b>2</b>&nbsp;need you"]}), ["Go on", "Met"]),
+      <div class="today"><div class="ln new">${spr("program",16)} Dreaming: 8 merged, 1 waits on you</div><div class="ln">${spr("meeting",16)} 10:00 · Architecture review</div></div>`,
+      sb:["<b>1</b>&nbsp;needs you"]}), ["Go on"]),
 ].join("");
 
 /* ── J3 ── */
@@ -885,69 +955,69 @@ const RUN = [
   {n:5, t:"Projects routes", st:"planned", ag:"claude", after:"after 2", met:"2 to meet"},
   {n:6, t:"The fan-out", st:"planned", ag:"claude", after:"after 4, 5", met:"2 to meet"},
 ];
-const SAID = "Every step must keep the hub loop under 100 milliseconds. Put a step before the fan-out that adds the loop watch. And the fan-out runs on qwen tonight, not Claude.";
+const SAID = "Every step must keep ruff green. Put a step before the fan-out that adds the loop watch. And the fan-out runs on qwen tonight, not Claude.";
+const J3ROWS = [
+  {op:"+", where:"every step", what:"R9 check: <code>uv run ruff check .</code> is green."},
+  {op:"+", where:"step 6", what:"The loop watch · after 4, 5"},
+  {op:"↕", where:"step 6", what:"before step 6 (step 6 is now step 7)"},
+  {op:"~", where:"step 7 · after", what:"4, 5 → 6"},
+  {op:"~", where:"step 7 · agent", what:"Claude Code → pi on qwen3.8-27b"},
+  {op:"+", where:"step 7", what:"when idle"}];
 M.j3 = () => [
-  frame("16:00", "He speaks", "The mic on the Shape field. The three sentences land as text; nothing changes until you press Shape.",
-    W("The hub stops stalling", {tool:rtb("Normal"), body:`<div class="shape"><span class="fld"><span>${SAID}</span><i class="mic" style="background:var(--pill-info)">${MIC}</i></span>${P("Shape")}${B("Clear", "")}</div>` + jhead() + RUN.map(jrow).join(""),
+  frame("16:00", "He speaks", "The shaping bar's mic. The sentences fill the bar; nothing changes until Shape.",
+    W("The hub stops stalling", {tool:rtb("Normal"), body: shapebar(SAID) + jhead() + RUN.map(jrow).join(""),
       sb:['<span class="dot" data-tone="info"></span>Running', "<b>2</b>&nbsp;of 6 done", "<b>9</b>&nbsp;of 16 met"]}), ["Shape"]),
-  frame("16:01", "The shown diff", "One line for each sentence, each checked against what is frozen. A merged step gets no new requirement; a working one is judged at CHECK.",
-    W("The hub stops stalling", {tool:rtb("Normal"), body:`<div class="dfw"><div class="cap2">3 changes from what you said<span class="grow"></span>${P("Apply all")}${B("Skip all")}</div>
-      <div class="dl add"><span class="s">+</span><span class="tx"><b>R9</b> · Every step · Check · ${CODE("uv run pytest -q tests/unit/test_hub_loop_budget.py")} is green</span><span class="vb">${B("Apply")}${B("Skip", "sm")}</span><span class="sub2">Steps 1, 2 merged: not added · step 4: judged at CHECK · 4 steps</span></div>
-      <div class="dl add"><span class="s">+</span><span class="tx"><b>6</b> · The loop watch · Planned · before the fan-out (now 7) · 7 waits</span><span class="vb">${B("Apply")}${B("Skip", "sm")}</span></div>
-      <div class="dl chg"><span class="s">~</span><span class="tx"><b>7</b> · The fan-out · Agent: Claude Code → pi on qwen3.8-27b · When idle</span><span class="vb">${B("Apply")}${B("Skip", "sm")}</span></div></div>` + `<div style="opacity:.55">${jhead()}${RUN.slice(2).map(jrow).join("")}</div>`,
-      sb:['<span class="dot" data-tone="info"></span>Running', "<b>3</b>&nbsp;changes to apply"]}), ["Apply all"]),
-  frame("16:02", "Applied in place", "The new step 6 and the changed step 7 breathe once. R9 is on the four steps that are not merged.",
+  frame("16:01", "The change well", "The say head, then one diff row per change, each with its verdict. None lowers the bar.",
+    W("The hub stops stalling", {h:440, tool:rtb("Normal"), body: shapebar("") + well("Add ruff to every step; add The loop watch before the fan-out; put the fan-out on qwen when idle", "qwen3.8-27b · 2.8 s", J3ROWS) + `<div style="opacity:.55">${jhead()}${RUN.slice(3).map(jrow).join("")}</div>`,
+      sb:['<span class="dot" data-tone="info"></span>Running', "<b>6</b>&nbsp;changes to apply"]}), ["Apply"]),
+  frame("16:02", "Applied in place", "The new step 6 lands with its dots drawn one by one; the fan-out is step 7 on qwen. R9 is on the five steps that are not merged.",
     W("The hub stops stalling", {tool:rtb("Normal"), body: jhead() + [
       RUN[2], RUN[3], RUN[4],
-      {n:6, t:"The loop watch", st:"planned", ag:"claude", after:"after 4, 5", met:"2 to meet", cls:"new"},
+      {n:6, t:"The loop watch", st:"planned", ag:"claude", after:"after 4, 5", met:"3 to meet", cls:"new"},
       {n:7, t:"The fan-out", st:"planned", ag:"pi", eng:"qwen", after:"after 6", met:"3 to meet", cls:"chg"},
     ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Requirements<span class="q">· Every step</span></div>
-      <div class="rq" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R9</span><span>${rqword("not_yet")}</span><span class="tx">${CODE("…test_hub_loop_budget.py")} is green</span><span>${kt("check")}</span><span class="sc2">${mini(["", "", "", "", ""])}<span>5 steps</span></span></div></div>`,
+      <div class="rq" style="grid-template-columns:30px 90px minmax(0,1fr) 70px 150px"><span class="id">R9</span><span>${rqword("not_yet")}</span><span class="tx">${CODE("uv run ruff check .")} is green</span><span>${kt("check")}</span><span class="sc2">${mini(["", "", "", "", ""])}<span>5 steps</span></span></div></div>`,
       sb:['<span class="dot" data-tone="info"></span>Running', "<b>2</b>&nbsp;of 7 done", "<b>9</b>&nbsp;of 21 met"]}), null),
-  frame("16:02", "Undo stays", "Your change is one line in the Ledger, with your words. Undo works while every part of it can still be undone. An agent's change at YOLO is under Decided for you with Overturn instead.",
-    W("The hub stops stalling", {tool:rtb("Normal"), body:`<div class="fold" style="margin-top:4px"><div class="fh"><span class="chev">▼</span>Ledger<span class="q">· the program</span></div>
-      <div class="ledl"><span class="m">16:02</span><span class="av">K</span><span class="tx"><b>Shaped by you</b> · 3 changes · R9, step 6, step 7</span>${B("Undo")}</div>
-      <div class="ledl"><span class="m"></span><span></span><span class="tx" style="color:var(--wb-muted)">“${SAID}”</span><span></span></div>
-      <div class="ledl"><span class="m">16:02</span><span>${spr("program",16)}</span><span class="tx">Step 6 is now step 7</span><span></span></div>
-      <div class="ledl"><span class="m">14:20</span><span>${spr("program",16)}</span><span class="tx">Merged step 2 · rule: Normal merges on green, reviewed and met</span><span></span></div></div>
-      <div class="fold"><div class="fh"><span class="chev">▶</span>Step 4 · People routes<span class="q">· 22 lines · last 15:58</span></div></div>
-      <div class="fold" style="margin-top:0"><div class="fh"><span class="chev">▶</span>Step 3 · Projections off the loop<span class="q">· 31 lines · last 15:40</span></div></div>`,
-      sb:['<span class="dot" data-tone="info"></span>Running', "<b>2</b>&nbsp;of 7 done"]}), null),
+  frame("16:02", "The same at YOLO", "At YOLO the allowed rows apply at once and are one line under Decided for you, with Overturn while the changed steps are planned. Below YOLO the ledger keeps “Changed by the text”.",
+    W("The hub stops stalling", {tool:rtb("YOLO"), body:`<div class="fold" style="margin-top:4px"><div class="fh"><span class="chev">▼</span>Decided for you<span class="q">· 4</span></div>
+      <div class="ledl"><span class="m">16:02</span><span>${spr("program",16)}</span><span class="tx">Shaped: ruff on every step; The loop watch before the fan-out; the fan-out on qwen · rule: YOLO applies a shaped change</span>${B("Overturn")}</div>
+      <div class="ledl"><span class="m">14:20</span><span>${spr("program",16)}</span><span class="tx">Merged step 2 · rule: YOLO merges on green, reviewed and met</span><span></span></div></div>
+      <div class="fold"><div class="fh"><span class="chev">▼</span>Ledger<span class="q">· the program</span></div>
+      <div class="ledl"><span class="m">16:02</span><span>${spr("program",16)}</span><span class="tx">Changed by the text: 6 changes</span><span></span></div>
+      <div class="ledl"><span class="m">16:02</span><span>${spr("program",16)}</span><span class="tx">Step 6 is now step 7</span><span></span></div></div>`,
+      sb:['<span class="dot" data-tone="info"></span>Running', "<b>2</b>&nbsp;of 7 done", "YOLO"]}), ["Overturn (if you want)"]),
 ].join("");
 
 /* ── J6 ── */
 function tl(who, tx, cls, hold){ return `<div class="tl ${cls || ""}"><span class="who">${who}</span><span class="tx">${tx}</span>${hold ? `<span class="hold"><i class="dot live" data-tone="ask"></i>${hold}</span>` : ""}</div>`; }
 function callwin(time, lines, sb){ return W("Calls", {icon:"dock-speak", h:380, tool:`${B("Hang up", "primary sm")}<span class="grow"></span>${B("Calls", "")}${B("Phone", "")}`, body:`<div class="callhd"><b>The Line</b><span>· You</span><span class="grow"></span><span class="dw" data-tone="ok"><i class="dot live" data-tone="ok"></i>On a call · ${time}</span></div>` + lines.join(""), sb}); }
 M.j6 = () => [
-  frame("Thu 23:10", "Start by voice", "The call finds the program by its words and holds the start for your yes. This exists (#1663).",
+  frame("Thu 23:10", "Start by voice", "The call finds the program by its words and holds the start for your yes (#1663).",
     callwin("0:42", [
       tl("You", "Start the overnight program.", "you"),
       tl("HoldSpeak", "I want to start the program Overnight on the home box. Say yes or no.", "hs", "Waits for your yes"),
       tl("You", "Yes.", "you"),
       tl("HoldSpeak", "Started. Nine steps. The first one runs when the home box is idle.", "hs")], ["Ready for calls", "Program started"]), ["Yes"], true),
-  frame("Fri 06:30", "The held message", "At 03:12 step 7 hit a core question. A migration is not urgent, so quiet hours held the message until 06:30. The reply verbs are new.",
+  frame("Fri 06:30", "The held message", "At 03:12 step 7 met a core question. It is not urgent, so quiet hours held the message. The item's verbs on the message are new (JRN6).",
     `<div class="mphone"><div class="top">HoldSpeak</div><div class="msg"><div class="fr">${spr("program",16)}Overnight on the home box · 06:30</div>
-      <div class="bd">Step 7 asks you: the fix needs a new column on meetings.</div><div class="vb">${P("Go on")}${B("Park")}</div></div>
+      <div class="bd">Step 7 asks you: the fix needs holdspeak/db/.</div><div class="vb">${P("Go on")}${B("Park")}</div></div>
       <div class="meta">Held for quiet hours · 03:12</div></div>`, null),
-  frame("06:40", "How is it doing", "Two sentences: the state, the steps done, what waits on you, the last decision. This exists (#1663).",
+  frame("06:40", "How is it doing", "Two sentences: the state, the steps done, what waits on you, the last decision (#1663).",
     callwin("0:18", [
       tl("You", "How is the overnight program doing?", "you"),
-      tl("HoldSpeak", "Running. Six of nine steps merged. One waits on you: step 7 needs a new column on meetings. Last decision: merged step 6 at 05:12.", "hs")], ["Ready for calls"]), null),
-  frame("06:40", "The answer, read back", "New, and it needs your ruling: an answer to a held item is program.decide behind your spoken yes, the same hold as the start. Your words are read back as they will be typed.",
+      tl("HoldSpeak", "Running. Six of nine steps merged. One waits on you: step 7 needs holdspeak/db/. Last decision: merged step 6 at 05:12.", "hs")], ["Ready for calls"]), null),
+  frame("06:40", "A prepared answer", "The default, with no ruling (JRN5): the call decides nothing. Your words become a prepared answer on the item; your press decides it.",
     callwin("1:05", [
       tl("You", "Step 7: go on, with a new column. Do not change the old rows.", "you"),
-      tl("HoldSpeak", "I want to answer step 7: go on, with your words “a new column; do not change the old rows”. Say yes or no.", "hs", "Waits for your yes"),
-      tl("You", "Yes.", "you"),
-      tl("HoldSpeak", "Done. Step 7 goes on.", "hs")], ["Ready for calls", "Step 7 answered"]), ["Yes"], true),
-  frame("06:41", "On the desk", "Your turn is empty. Step 7 works again with your line. The ledger says where the answer came from, and the call's Note is one press away.",
-    W("Overnight on the home box", {h:380, tool:rtb("YOLO", `<span class="tokt on">When idle</span>`).replace("Agent: Claude Code", "Agent: pi on qwen3.8-27b"), body: jhead() + [
-      {n:6, t:"Recordings keep the clock", st:"merged", pr:1726, ag:"pi", eng:"qwen", met:"3 of 3", metall:true, chk:"green", rv:"passed"},
-      {n:7, t:"Meetings keep the language", st:"working", ag:"pi", eng:"qwen", met:"3 to meet"},
-      {n:8, t:"The language in the export", st:"planned", ag:"pi", eng:"qwen", after:"after 7", met:"2 to meet"},
-    ].map(jrow).join("") + `<div class="fold"><div class="fh"><span class="chev">▼</span>Ledger<span class="q">· step 7</span></div>
-      <div class="ledl"><span class="m">06:41</span><span class="av">K</span><span class="tx">Answered by you on a call: go on · “a new column; do not change the old rows”</span>${B("Open call")}</div>
-      <div class="ledl"><span class="m">06:41</span><span>${spr("program",16)}</span><span class="tx">Typed at the turn end: “The owner on step 7: …”</span><span></span></div></div>`,
-      sb:['<span class="dot" data-tone="info"></span>Running', "<b>6</b>&nbsp;of 9 merged", "YOLO"]}), null),
+      tl("HoldSpeak", "I put your answer on your desk: go on, with your words “a new column; do not change the old rows”. Press Go on there or on your phone.", "hs")], ["Ready for calls", "Answer prepared"]), null),
+  frame("06:41", "Your press decides", "The prepared row is in Needs you and on the phone. Your press types your words to step 7's agent at its next turn end. With your ruling (§15.10), a spoken yes would do it on the call.",
+    W("Needs you", {icon:"dock-intelligence", h:380, tool:`<span class="grow"></span>${B('All<span class="caret">▾</span>', "")}`, body:`
+      <div class="grp">Overnight on the home box</div>
+      <div class="nrow"><span class="t">Step 7 · Go on · “a new column; do not change the old rows”</span><span class="m">prepared on a call</span>${P("Go on")}${B("Not this")}</div>
+      <div class="grp">After the press · the Program's ledger</div>
+      <div class="ledl" style="padding-left:10px"><span class="m">06:41</span><span class="av">K</span><span class="tx">Answered by you: go on · prepared on a call</span>${B("Open call")}</div>
+      <div class="ledl" style="padding-left:10px"><span class="m">06:41</span><span>${spr("program",16)}</span><span class="tx">Typed at the turn end: “The owner on step 7: …”</span><span></span></div>`,
+      sb:["<b>1</b>&nbsp;needs you"]}), ["Go on (here or on the phone)"]),
 ].join("");
 
 for (const el of document.querySelectorAll("[data-mount]")) el.innerHTML = M[el.dataset.mount]();
