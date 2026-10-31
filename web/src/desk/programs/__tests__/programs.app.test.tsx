@@ -47,6 +47,11 @@ import amendedFixture from "../__fixtures__/program.adjust.amended.json";
 import titledFixture from "../__fixtures__/program.adjust.titled.json";
 import proposalsFixture from "../__fixtures__/program.proposals.json";
 import proposalsAddedFixture from "../__fixtures__/program.proposals.added.json";
+// PG-LANG LANG2: the Program text (GET) and a preview then an apply of a
+// changed text (a refused brief, control up the ladder, a new step, a merge
+// on his press, a + line), recorded through the real routes.
+import textFixture from "../__fixtures__/program.text.json";
+import textApplyFixture from "../__fixtures__/program.text_apply.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -1159,5 +1164,158 @@ describe("REQ12: the shot (pullout:program-shot) and the evidence thumbnail", ()
     expect(bar).toContain(`on ${r2.evidence.commit!.slice(0, 7)}`);
     fireEvent.click(screen.getByTestId("program-shot-open-program"));
     expect(mocks.openPullout).toHaveBeenCalledWith(`program:${reqProgram.id}`);
+  });
+});
+
+describe("LANG2: the Text view beside the board, the change well and diff rows (PROGRAM-LANGUAGE §9.1, §9.2, §14)", () => {
+  type Answer = import("../types").TextApplyAnswer;
+  const dry = textApplyFixture.dry_run as unknown as Answer;
+  const done = textApplyFixture.applied as unknown as Answer;
+  const after = done.program as Program;
+  // The recorded Program before the apply: the applied wire with the apply's
+  // own writes taken back (the new step, the + line, the control, the ledger
+  // lines of the apply). Its id, steps and states are the recorded ones.
+  const before = (() => {
+    const program = clone(after);
+    program.steps = program.steps.filter((step) => step.title !== "The loop watch")
+      .map((step, index) => ({ ...step, ordinal: index + 1, amendments: [] }));
+    program.control = "normal";
+    program.control_word = "Normal";
+    program.total = 3;
+    program.revision = textFixture.revision;
+    program.checkpoints = program.checkpoints.filter((row) => Number(row.id) <= 10);
+    program.status_line = "Running · 0 of 3 done · check: fake_program_check.sh · control Normal";
+    return program;
+  })();
+  const id = before.id;
+  const posts = () => calls.filter((call) => call.startsWith(`POST /api/programs/${id}/text`))
+    .map((call) => JSON.parse(call.slice(call.indexOf("{"))) as Record<string, unknown>);
+  const line = (n: number) => screen.getByRole("textbox", { name: `Program text, line ${n}` }) as HTMLTextAreaElement;
+
+  async function openText() {
+    hub({
+      [`GET /api/programs/${id}`]: before,
+      [`GET /api/programs/${id}/text`]: textFixture,
+      [`POST /api/programs/${id}/text`]: (init?: { json?: unknown }) => ((init?.json as { dry_run?: boolean })?.dry_run === false ? done : dry),
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    fireEvent.click(within(screen.getByRole("group", { name: "View" })).getByRole("button", { name: "Text" }));
+    await screen.findByTestId("programs-text");
+  }
+
+  it("Text: the recorded text in the pane, each lamp at its line end (never in the line), the pick kept for this window", async () => {
+    await openText();
+    const { useDesk } = await import("../../store");
+    expect(useDesk.getState().places[`program/view/${id}`]).toBe("text");
+    expect(screen.queryByTestId("programs-board")).toBeNull();
+    const lines = screen.getAllByTestId("kit-textpane-line");
+    expect(lines).toHaveLength(textFixture.text.split("\n").length);
+    expect(lines[0]).toHaveAttribute("data-readonly");
+    expect(line(2).value).toBe("program The hub stops stalling");
+    expect(lines[1].querySelector(".kit-textpane-lamp")?.textContent).toBe("Running · 0 of 3 done");
+    expect(lines[1].querySelector(".kit-dot")?.getAttribute("data-tone")).toBe("info");
+    // Step 3 is Planned: the grey dot; his > lines read in the body face.
+    const fanOut = lines.find((row) => row.querySelector("textarea")?.value === "step 3 The fan-out")!;
+    expect(fanOut.querySelector(".kit-textpane-lamp")?.textContent).toBe("Planned");
+    expect(lines[3]).toHaveAttribute("data-words");
+    // Nothing changed: no Preview.
+    expect(screen.queryByTestId("program-text-preview")).toBeNull();
+  });
+
+  it("edit, Preview: the recorded rows in the well (the refused one with its line and reason, the one that lowers the bar); Apply waits for its own press", async () => {
+    await openText();
+    fireEvent.change(line(7), { target: { value: "  control yolo" } });
+    expect(screen.getAllByTestId("kit-textpane-line")[6]).toHaveAttribute("data-mark", "~");
+    fireEvent.click(screen.getByTestId("program-text-preview"));
+    const well = await screen.findByTestId("programs-change-well");
+    const sent = posts()[0];
+    expect(sent.dry_run).toBe(true);
+    expect(sent.base).toBe(textFixture.text);
+    expect(sent.text).toContain("  control yolo");
+    expect(sent.text).not.toContain("# Running");
+    const rows = within(well).getAllByTestId("programs-diff-row");
+    expect(rows).toHaveLength(dry.changes.length);
+    const refused = rows.find((row) => row.getAttribute("data-row") === "step-2.brief")!;
+    expect(within(refused).getByTestId("kit-diffrow-verdict").textContent).toBe("Refused");
+    expect(within(refused).getByTestId("kit-diffrow-reason").textContent).toBe("Line 19Step 2 · brief: The agent has read it. Add a line with + instead.");
+    const lowers = rows.find((row) => row.getAttribute("data-row") === "program.control")!;
+    expect(within(lowers).getByTestId("kit-diffrow-verdict").textContent).toBe("Lowers the bar");
+    expect(within(well).getByText("6 changes · 1 refused · 1 lowers the bar")).toBeInTheDocument();
+    // The refused line is marked in the text, its reason as the title.
+    expect(screen.getAllByTestId("kit-textpane-line")[18]).toHaveAttribute("data-mark", "!");
+    const apply = within(well).getByTestId("programs-well-apply");
+    expect(apply.textContent).toBe("Apply 5");
+    expect(apply).toBeDisabled();
+    fireEvent.click(within(lowers).getByRole("button", { name: "Apply this" }));
+    expect(within(lowers).getByTestId("kit-diffrow-verdict").textContent).toBe("Allowed by you");
+    expect(apply).toBeEnabled();
+  });
+
+  it("Apply sends the allowed text and only the row he pressed; the board comes back with the new step, YOLO, and the ledger line", async () => {
+    await openText();
+    fireEvent.change(line(7), { target: { value: "  control yolo" } });
+    fireEvent.click(screen.getByTestId("program-text-preview"));
+    const well = await screen.findByTestId("programs-change-well");
+    const lowers = within(well).getAllByTestId("programs-diff-row").find((row) => row.getAttribute("data-row") === "program.control")!;
+    fireEvent.click(within(lowers).getByRole("button", { name: "Apply this" }));
+    fireEvent.click(within(well).getByTestId("programs-well-apply"));
+    await screen.findByTestId("programs-board");
+    const sent = posts()[1];
+    expect(sent).toEqual({ text: dry.allowed_text, base: textFixture.text, dry_run: false, allow_lower: ["program.control"] });
+    // The rows landed: the new step on the board, in its place, marked born.
+    const born = stepRow(3);
+    expect(within(born).getByTestId("programs-step-select").textContent).toContain("The loop watch");
+    expect(born).toHaveAttribute("data-landed", "born");
+    expect(stepRow(4)).toHaveAttribute("data-landed", "changed");
+    expect(within(status()).getByTestId("programs-status-control").textContent).toBe("control YOLO");
+    expect(within(screen.getByTestId("programs-checkpoints")).getByText(/^Changed by the text: 5 changes/)).toBeInTheDocument();
+    const { useDesk } = await import("../../store");
+    expect(useDesk.getState().places[`program/view/${id}`] ?? "").toBe("");
+    await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+  });
+
+  it("Not this closes the well and puts the text back as it was read", async () => {
+    await openText();
+    fireEvent.change(line(7), { target: { value: "  control yolo" } });
+    fireEvent.click(screen.getByTestId("program-text-preview"));
+    const well = await screen.findByTestId("programs-change-well");
+    fireEvent.click(within(well).getByTestId("programs-well-not-this"));
+    expect(screen.queryByTestId("programs-change-well")).toBeNull();
+    expect(line(7).value).toBe("  control normal");
+    expect(posts()).toHaveLength(1);
+  });
+
+  it("a conflict (the base moved) reads the text again and says so", async () => {
+    // The recorded preview with its agent row as the hub words a conflict
+    // (program_service.text_apply: verdict conflict, code text_conflict).
+    const conflict = clone(dry);
+    conflict.changes = conflict.changes.map((row) => (row.id === "step-3.merge"
+      ? { ...row, verdict: "conflict" as const, code: "text_conflict", reason: "Step 3's merge changed since you read it: now owner." } : row));
+    await openText();
+    const read = calls.length;
+    hub({
+      [`GET /api/programs/${id}`]: before,
+      [`GET /api/programs/${id}/text`]: textFixture,
+      [`POST /api/programs/${id}/text`]: conflict,
+    });
+    fireEvent.change(line(7), { target: { value: "  control yolo" } });
+    fireEvent.click(screen.getByTestId("program-text-preview"));
+    const well = await screen.findByTestId("programs-change-well");
+    expect(within(well).getByText("Changed since you read it", { selector: ".kit-changewell-say" })).toBeInTheDocument();
+    expect(within(well).getByText(/^Read again at /)).toBeInTheDocument();
+    expect(calls.slice(read).filter((call) => call === `GET /api/programs/${id}/text`)).toHaveLength(1);
+    expect(within(well).getByTestId("programs-well-apply").textContent).toBe("Apply 4");
+    // His text is kept.
+    expect(line(7).value).toBe("  control yolo");
+  });
+
+  it("at 393 the view switch is in More ▾", async () => {
+    hub({ [`GET /api/programs/${id}`]: before, [`GET /api/programs/${id}/text`]: textFixture });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    fireEvent.click(screen.getByTestId("program-more"));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Text" }));
+    await screen.findByTestId("programs-text");
   });
 });

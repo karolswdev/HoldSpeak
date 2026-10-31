@@ -1,0 +1,167 @@
+/* ChangeWell + DiffRow (PG-LANG §9.2, §11): the inset that holds a proposed
+   change, one 32 px row per change, two lines at the phone width. */
+
+.kit-changewell {
+  flex: 0 0 auto;
+  margin: var(--space-2) var(--space-3) 0;
+  border: 1px solid var(--wb-rule);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field-hi);
+  box-shadow: inset 0 1px 0 var(--wb-rule-soft);
+}
+.kit-changewell-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.kit-changewell-say {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-ink);
+  font: 600 13px / 1.35 var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kit-changewell-fact {
+  flex: 0 0 auto;
+  color: var(--wb-muted);
+  font: 400 12px / 1.3 var(--font-sans);
+  white-space: nowrap;
+}
+.kit-changewell-rows { margin: 0; padding: 0; list-style: none; }
+.kit-changewell-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-height: 40px;
+  padding: var(--space-1) var(--space-3);
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.kit-changewell-verbs { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); }
+.kit-changewell-failure {
+  margin-left: auto;
+  color: var(--wb-danger-ink);
+  font: 400 12px / 1.35 var(--font-sans);
+}
+
+/* ── the row ── */
+.kit-diffrow {
+  display: grid;
+  grid-template-columns: 16px minmax(96px, 168px) minmax(0, 1fr) auto auto;
+  grid-template-areas: "glyph where values verdict verb" ". reason reason reason reason";
+  align-items: center;
+  column-gap: var(--space-3);
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: var(--wb-paper);
+}
+.kit-diffrow:last-child { border-bottom: 0; }
+.kit-diffrow[data-verdict="refused"],
+.kit-diffrow[data-verdict="conflict"] { background: color-mix(in srgb, var(--lamp-fail) 7%, var(--wb-paper)); }
+.kit-diffrow[data-verdict="lowers"]:not([data-pressed]) { background: color-mix(in srgb, var(--lamp-ask) 10%, var(--wb-paper)); }
+
+.kit-diffrow-glyph {
+  grid-area: glyph;
+  color: var(--wb-muted);
+  font: 600 13px / 1 var(--font-mono);
+  text-align: center;
+}
+.kit-diffrow[data-op="add"] .kit-diffrow-glyph,
+.kit-diffrow[data-op="amend"] .kit-diffrow-glyph { color: var(--wb-ok-ink); }
+.kit-diffrow[data-op="remove"] .kit-diffrow-glyph { color: var(--wb-danger-ink); }
+.kit-diffrow-where {
+  grid-area: where;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kit-diffrow-values {
+  grid-area: values;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.kit-diffrow-value {
+  min-width: 0;
+  overflow: hidden;
+  padding: 1px var(--space-1);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field-hi);
+  color: var(--wb-ink);
+  font: 400 12px / 1.4 var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kit-diffrow-value[data-side="before"] { color: var(--wb-muted); }
+.kit-diffrow[data-verdict="refused"] .kit-diffrow-value,
+.kit-diffrow[data-verdict="conflict"] .kit-diffrow-value[data-side="after"] { text-decoration: line-through; }
+.kit-diffrow-to { flex: 0 0 auto; color: var(--wb-muted); font: 400 12px / 1 var(--font-sans); }
+.kit-diffrow-verdict { grid-area: verdict; white-space: nowrap; }
+.kit-diffrow[data-verdict="lowers"]:not([data-pressed]) .kit-diffrow-verdict { color: var(--wb-ember-ink); }
+.kit-diffrow[data-verdict="refused"] .kit-diffrow-verdict,
+.kit-diffrow[data-verdict="conflict"] .kit-diffrow-verdict { color: var(--wb-danger-ink); }
+.kit-diffrow-verb { grid-area: verb; display: inline-flex; justify-content: flex-end; }
+.kit-diffrow-verb:empty { display: none; }
+.kit-diffrow-reason {
+  grid-area: reason;
+  display: flex;
+  gap: var(--space-2);
+  padding: 0 0 var(--space-1);
+  color: var(--wb-danger-ink);
+  font: 400 12px / 1.35 var(--font-sans);
+}
+.kit-diffrow-line { color: var(--wb-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ── motion: the rows land, a refusal shakes once, Apply settles ── */
+@media (prefers-reduced-motion: no-preference) {
+  .kit-diffrow {
+    animation: kit-diff-in var(--duration-long) var(--ease-standard) both;
+    animation-delay: calc(var(--i, 0) * var(--duration-micro));
+  }
+  .kit-diffrow[data-verdict="refused"],
+  .kit-diffrow[data-verdict="conflict"] {
+    animation: kit-diff-in var(--duration-long) var(--ease-standard) both, kit-diff-shake var(--duration-long) var(--ease-standard) 1;
+    animation-delay: calc(var(--i, 0) * var(--duration-micro)), calc(var(--i, 0) * var(--duration-micro) + var(--duration-long));
+  }
+  .kit-changewell[data-settling] { animation: kit-well-settle var(--duration-medium) var(--ease-standard) forwards; }
+}
+@keyframes kit-diff-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes kit-diff-shake {
+  0%, 100% { transform: none; }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+}
+@keyframes kit-well-settle {
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ── the phone: two lines a row, 44 px verbs ── */
+@container surface (max-width: 520px) {
+  .kit-changewell { margin: var(--space-2) var(--space-2) 0; }
+  .kit-changewell-head { flex-wrap: wrap; row-gap: 0; padding: var(--space-1) var(--space-3); }
+  .kit-changewell-say { white-space: normal; }
+  .kit-diffrow {
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    grid-template-areas: "glyph where verb" ". values verb" ". verdict verb" ". reason reason";
+    row-gap: 2px;
+    padding: var(--space-1) var(--space-3);
+  }
+  .kit-diffrow-where { color: var(--wb-ink); font-size: 13px; white-space: normal; }
+  .desk-next .kit-diffrow-verb .btn,
+  .desk-next .kit-changewell-verbs .btn { min-height: 44px; min-width: 44px; }
+}

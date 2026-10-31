@@ -57,6 +57,7 @@ export function StepRow({
   onSelect,
   contender = false,
   his = false,
+  landed,
 }: {
   step: ProgramStep;
   selected?: boolean;
@@ -64,6 +65,8 @@ export function StepRow({
   contender?: boolean;
   /** A requirement of this step waits on his word. */
   his?: boolean;
+  /** PG-LANG §9.7: the step an applied text added (born) or changed. */
+  landed?: "born" | "changed";
 }) {
   const word = stepWord(step);
   const agent = agentKey(step.profile, step.agent);
@@ -85,6 +88,7 @@ export function StepRow({
       data-testid={contender ? "programs-contender" : "programs-step"}
       data-step={step.id}
       data-history={history ? "" : undefined}
+      data-landed={landed}
     >
       <Button variant="chrome" className="pg-step-main" aria-pressed={selected} onClick={onSelect}
         aria-label={`Step ${step.ordinal}: ${step.title}, ${word}`} data-testid="programs-step-select">
