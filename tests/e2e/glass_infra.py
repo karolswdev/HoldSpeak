@@ -619,8 +619,13 @@ _RENDERED_TEXT_JS = """(args) => {
         const inside = (x, y) => x.r.left >= y.r.left - 1 && x.r.right <= y.r.right + 1
           && x.r.top >= y.r.top - 1 && x.r.bottom <= y.r.bottom + 1;
         const glyph = (x) => /^[^\\p{L}\\p{N}]+$/u.test(x.what) && x.el.closest('[aria-hidden="true"]');
+        // PG-LANG (the kit TextPane): the painted copy of a text entry's own
+        // value, drawn under its transparent entry (aria-hidden, marked
+        // data-entry-copy, the entry's previous sibling) is one thing with it.
+        const copy = (x, y) => y.el.matches('textarea, input') && x.el.closest('[aria-hidden="true"]')
+          && x.el.closest('[data-entry-copy]')?.nextElementSibling === y.el;
         const inset = (x, y) => y.el.matches(ctl) && inside(x, y)
-          && (glyph(x) || (x.el.matches(ctl) && y.el.matches('textarea, input')));
+          && (glyph(x) || copy(x, y) || (x.el.matches(ctl) && y.el.matches('textarea, input')));
         if (inset(a, b) || inset(b, a)) { out.inset.push([a.what, b.what]); continue; }
       }
       // On the glass each box says WHERE it is: the data-testids of its

@@ -41,7 +41,7 @@ and **Settings > This Mac > Engines** before you run a call.
 | --- | --- | --- |
 | Read permitted Desk records | Send a prepared action | Change a setting |
 | Write a Note or add a task | Post a send or other held egress | Change an engine or account |
-| Propose a decision or add Project work | A control-mode hold | Confirm a decision for you |
+| Propose a decision or add Project work | A control-mode hold | Decide for you without your spoken yes |
 | Prepare a send | Start a program | Call another person |
 | Say how a program is doing | | Make a program |
 

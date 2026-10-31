@@ -1380,7 +1380,7 @@ left in that group.
 | | | **Answers by voice and by phone** | |
 | JRN5 | HUB + FACES | the default, no ruling needed: on a call, a spoken answer to a held Your turn item becomes a **prepared answer** (the choice and his words as its line) on that item; the call decides nothing; Needs you shows "prepared on a call" with the item's verbs and **Not this** | the Calls rig turns "step 7: go on, with a new column" into a prepared row; the item stays open until a press; the press types his words to the agent at its next turn end (T1, T2) |
 | JRN6 | HUB + PHONE | the item's own verbs on a phone message (Go on · Park, Met · Unmet, Merge · Not yet); a press on his paired phone calls `program.decide` as his press; never a waive (it needs a typed line) | a recorded phone press decides the item once; a second press hears "answered already"; the paired-device check refuses an unpaired token (T1) |
-| JRN7 | HUB | with the ruling of §15.10 only: `program.decide` in the call palette, held for his spoken yes with the verbatim read-back, the same hold as `program.start` | the Calls rig decides a core question after "yes" and does nothing after "no" or silence; with the ruling off, the tool is not in the palette (T1) |
+| JRN7 | HUB | **the default (owner ruling 2026-10-31, §15.10; built as DIRECTION's DIR8):** `program.decide` in the call palette, held for his spoken yes with the verbatim read-back, the same hold as `program.start`; "later" defers with a next touch | the Calls rig decides a core question after "yes" and does nothing after "no" or silence; "later, at one" defers it to 13:00 (T1) |
 | | | **Audit programs** | |
 | JRN8 | HUB | the **Audit** template: steps with no builder, each agent in a scratch copy (the reviewer's AG12 copy), `merge none`, a report of findings MUST / SHOULD / NOTE with evidence (a shot, a file and line); a commit on an audit step is a core question | a rig audit step returns a parsed report from a recorded agent answer; a commit on it raises the core question (T1) |
 | JRN9 | HUB + FACES | each finding filed as a Door task with its evidence through `door.add_item`, one task for one finding across windows; the Findings board on the Program window; the audit stations BRIEF · WORK · REVIEW · FILE | from a recorded report, 14 findings become 14 tasks grouped by window, a repeated finding is one task; the board draws each state (T1, T2) |
@@ -1393,7 +1393,7 @@ left in that group.
 | JRN14 | HUB | a person review gate: the step's Review requirements become Your word at MERGE; GitHub "changes requested" comments go to the builder as findings for a round | a recorded "changes requested" review starts round 2 with its comments; the template requirement waits for his Met (T1) |
 
 Sequence: JRN13 and JRN14 can go with LANG6; JRN1 after LANG7; JRN2 to JRN4
-after LANG12; JRN5 and JRN6 after LANG5; JRN7 only after the ruling; JRN8 to
+after LANG12; JRN5 and JRN6 after LANG5; JRN7 is DIRECTION's DIR8 (ruled 2026-10-31); JRN8 to
 JRN12 after LANG15. User templates ("Keep for a template") are parked, not a
 slice: the repository file is the place.
 
@@ -1447,6 +1447,14 @@ slice: the repository file is the place.
    press decides it, on the desk or on his paired phone (JRN5, JRN6). The
    other choice: the spoken yes, after the passphrase, with the verbatim
    read-back, for core questions and Your word.
+   **Ruled 2026-10-31: yes, the spoken yes decides** (owner: "No - calls can
+   absolutely occur, for decision making purposes. As long as they can bring
+   context over, as well as allow me to defer (so call isn't huge pressure)
+   then we are good."). JRN7 is now the default. The contract (the package
+   read on the call, the read-back once, "later" with a next touch, what a
+   call never decides, interruption-safety) is
+   `DIRECTION-2026-10-31.md` §4; the build is its slice DIR8. JRN5's prepared
+   answer stays only for "put it on my desk".
 
 ## 16. How we know it worked
 

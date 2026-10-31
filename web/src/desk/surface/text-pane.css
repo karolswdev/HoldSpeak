@@ -1,0 +1,129 @@
+/* TextPane (PG-LANG §9.1, §11): a mono line editor with a gutter of line
+   lamps. One font per line: the painted copy and the transparent textarea
+   over it wrap the same way. The pane wraps, so it scrolls vertically only. */
+
+.kit-textpane {
+  position: relative;
+  min-width: 0;
+  padding: var(--space-2) 0 var(--space-3);
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  font: 400 13px / 20px var(--font-mono);
+}
+
+/* The mic: the pane's own, at its top right, while the pane scrolls. */
+.kit-textpane-mic {
+  position: sticky;
+  top: var(--space-1);
+  z-index: 1;
+  float: right;
+  height: 0;
+  margin-right: var(--space-2);
+  overflow: visible;
+}
+
+.kit-textpane-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--space-2);
+  min-height: 20px;
+  padding-right: 44px;
+}
+.kit-textpane-row[data-mark="~"] { background: color-mix(in srgb, var(--wb-sel) 7%, var(--wb-paper)); }
+.kit-textpane-row[data-mark="+"] { background: color-mix(in srgb, var(--lamp-ok) 10%, var(--wb-paper)); }
+.kit-textpane-row[data-mark="!"] { background: color-mix(in srgb, var(--lamp-fail) 9%, var(--wb-paper)); }
+
+.kit-textpane-gutter {
+  display: grid;
+  grid-template-columns: 28px 14px 14px;
+  align-items: center;
+  height: 20px;
+  border-right: 1px solid var(--wb-rule-soft);
+  color: var(--text-faint);
+  font: 400 12px / 20px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.kit-textpane-n { text-align: right; }
+.kit-textpane-lampdot { display: inline-flex; justify-content: center; }
+.kit-textpane-lampdot .kit-dot { width: 7px; height: 7px; }
+.kit-textpane-mark { text-align: center; font-weight: 600; }
+.kit-textpane-row[data-mark="~"] .kit-textpane-mark { color: var(--wb-info-ink); }
+.kit-textpane-row[data-mark="+"] .kit-textpane-mark { color: var(--wb-ok-ink); }
+.kit-textpane-row[data-mark="-"] .kit-textpane-mark,
+.kit-textpane-row[data-mark="!"] .kit-textpane-mark { color: var(--wb-danger-ink); }
+
+/* The painted copy and the textarea share one grid cell. */
+.kit-textpane-cell {
+  display: grid;
+  min-width: 0;
+}
+.kit-textpane-paint,
+.kit-textpane-input {
+  grid-area: 1 / 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  letter-spacing: normal;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.kit-textpane-input {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 20px;
+  overflow: hidden;
+  resize: none;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--wb-ink);
+  outline: none;
+}
+/* The desk's field skin (global.css) never reaches a line: no box, no inset. */
+.desk-next .kit-textpane .kit-textpane-input,
+.desk-next .kit-textpane .kit-textpane-input:hover,
+.desk-next .kit-textpane .kit-textpane-input:focus,
+.desk-next .kit-textpane .kit-textpane-input:disabled {
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  font: inherit;
+  transition: none;
+}
+.kit-textpane-input::selection { background: color-mix(in srgb, var(--wb-sel) 24%, transparent); color: transparent; }
+.kit-textpane-row:focus-within { box-shadow: inset 2px 0 0 var(--wb-sel); }
+
+/* His words read as words: the body face. */
+.kit-textpane-row[data-words] { font: 400 14px / 20px var(--font-sans); }
+.kit-textpane-quote { color: var(--text-faint); }
+.kit-textpane-keyword { color: var(--wb-ink); font-weight: 600; }
+.kit-textpane-id { color: var(--wb-info-ink); font-weight: 600; }
+.kit-textpane-row[data-readonly] .kit-textpane-paint { color: var(--text-faint); }
+
+/* The lamp: the run at the line end, never text he edits. */
+.kit-textpane-lamp {
+  max-width: 28ch;
+  overflow: hidden;
+  color: var(--text-faint);
+  font: 400 12px / 20px var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kit-textpane[data-disabled] .kit-textpane-input { cursor: default; }
+
+/* The phone: the gutter is the dot, the lamp words are its title. */
+@container surface (max-width: 520px) {
+  .kit-textpane { font-size: 14px; }
+  .kit-textpane-row { grid-template-columns: 44px minmax(0, 1fr); padding-right: 52px; }
+  .kit-textpane-gutter { grid-template-columns: 20px 12px 12px; }
+  .kit-textpane-lamp { display: none; }
+}
