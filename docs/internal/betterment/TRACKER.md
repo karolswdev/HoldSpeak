@@ -282,6 +282,8 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | PG17 | The first Program is the engine's own history | Open | On his desk. |
 | PG18 | Programs on Today | Open |  |
 
+**PG-REQ** (open, 13 slices REQ1–REQ13, lanes HUB/FACES/DOCS): requirements as a noun, browse and adjust; design `programs/PROGRAMS-REQUIREMENTS-2026-10-31.md`, canvas `programs/canvases/programs-requirements-2026-10-31.html`.
+
 ## Phone (`phone/RECIPE.md`): 0 of 16
 
 | Slice | What | State | Note |
