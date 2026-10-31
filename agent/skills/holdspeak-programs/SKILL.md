@@ -14,6 +14,7 @@ the record; the engine drives the agents. Read first:
 - `docs/internal/betterment/programs/PROGRAMS-DESIGN-2026-10-28.md` (§4 states, §6 rules, §7 tools, "Built")
 - `holdspeak/mcp/families/program.py` (the tool schemas)
 - `docs/internal/betterment/programs/PROGRAMS-REQUIREMENTS-2026-10-31.md` (requirements, browse, adjust)
+- `docs/internal/betterment/programs/PROGRAM-LANGUAGE-2026-10-31.md` (the Program text, shaping, planning, rounds; the code in `holdspeak/services/program_text.py` wins where they differ)
 
 ## Drive a Program (you orchestrate)
 
@@ -37,6 +38,48 @@ the record; the engine drives the agents. Read first:
    engine ticks every 30 s, after each press, and about 1 s after a step's
    agent ends its turn.
 
+## Read and write the Program text
+
+`program.text` (by `program_id` or `name`) returns the Program as text, one
+statement per line, with `revision`. Read `docs/programs.md` "The Program
+text" for the grammar. Keep these rules:
+
+- Lamps (two spaces, `#`, the rest of the line) are state. The hub never
+  reads them back; do not write them and do not count on them.
+- `>` lines are the owner's words. Keep them byte for byte. Never put your
+  own words on a `>` line as his.
+- A new step is `step +`, a new requirement `R+`; the hub gives the numbers.
+  Under a started step, add a brief line with `+ <line>`; do not rewrite
+  its `>` brief.
+- To change the Program, send the WHOLE changed text to
+  `program.text_apply` with `base` set to the text you read. The default is
+  `dry_run: true`: it writes nothing and returns `changes` (each row: `op`,
+  `where`, `field`, `before`, `after`, `verdict`, `code`, `reason`,
+  `lowers_bar`) and `allowed_text` (your text with each refused change put
+  back). Read the rows first. Then apply with `dry_run: false`. It applies
+  only when no row is `refused` or `conflict`; send `allowed_text` to
+  apply the rest.
+- A `conflict` row means the Program changed after you read it: read
+  `program.text` again and redo your change on the new text.
+- `program.shape` (one sentence) and `program.plan_draft` (a goal) return
+  the same rows from one engine call and write nothing. Apply their
+  `proposed_text` or `allowed_text` with `program.text_apply` and their
+  `base`.
+
+What the hub refuses, by code: `field_fixed` (`in`, `template`, `from`, a
+step's `merged`), `step_frozen` (a frozen field of a started step, with its
+reason), `step_stays` (remove a started or merged step), `round_question`
+and `round_state` (the `?` lines and `asking` are the engine's),
+`round_done`, `owner_required` (a change or waive of one of his
+requirements, a round answer), `text_bad_value`, `text_unknown_word`,
+`program_closed`. Do not retry a refusal; tell the owner.
+
+**Never put a row id in `allow_lower`.** A row with verdict `lowers` makes
+the Program check less (a higher control level, a review or check taken
+off, a lower depth, a merge gate from `owner`, a requirement made optional
+or weaker, a waive). Only his own press applies it. Leave it in the well
+and tell him.
+
 ## Be a step's agent (you build one step)
 
 - Your brief is your first prompt. It names your files ("yours") and the
@@ -48,15 +91,33 @@ the record; the engine drives the agents. Read first:
 - `program.step_done` with your report: files changed, what you left
   out, the log path. Name a missing step in `follow_ups`; YOLO adds it,
   the other levels ask the owner. The engine still waits for your commit.
+- **A question that blocks you:** ask it in your session and wait. Do not
+  guess. The step shows "Asks you". At Normal and YOLO the desk can type a
+  draft answer to a routine question. A core question (below) always goes
+  to the owner. Write the same question in one `program.checkpoint` line,
+  so the handover note has it.
+- **A held commit.** At Secure and Normal the gate can hold your
+  `git commit`. Do not retry it, do not go around it (no other branch, no
+  `--no-verify`, no second commit tool) and do not ask him to commit for
+  you. Call `program.step_done` and end your turn. He sees "Allow the
+  commit" and "Not now"; at YOLO the rule allows it. A change you leave
+  uncommitted at the end of your turn gets the same row, and Allow makes
+  the commit on your branch. Not now parks the step; the change stays in
+  the worktree. Do not commit the `.tmp/program-check` logs.
 
 ## Requirements (the owner's bar)
 
 A requirement is one sentence of the owner's, with a number (R3) and a
 kind: **check** (a command HoldSpeak runs on the step's commit),
 **review** (the step's reviewer answers it), **shot** (the desk sweep
-renders a window at 393 or 1440), **word** (the owner presses Met).
+renders a window at 393 or 1440), **word** (the owner presses Met; its
+`walk` lines are the things he will do, in order), **measure** (a command
+and a bound such as `p95 < 100 ms`; it stays "Not measured yet" and does
+not hold a step or a merge, because its verifier is not built).
 `program.get` carries them: `requirements` and `requirements_met` on the
-Program and on each step.
+Program and on each step. In the text a requirement is
+`R3 check: <sentence>`, with `run`, `expect`, `shot`, `bound`, `walk` or
+`waived:` lines under it.
 
 **You build a step.** Your brief has "What must be true": each
 requirement of your step with how it is proven, then the ones for the
@@ -91,10 +152,26 @@ the owner presses Add or Skip. A requirement HoldSpeak cannot prove (a
 check with no command, a shot with no shot command in the repository) is
 refused with `requirement_unprovable`.
 
+To propose one in the text, add an `R+ <kind>: <sentence>` line and send
+it through `program.text_apply`; it goes up the same ladder. A measure
+needs `kind: "measure"` and `spec` with `command`, `metric`, `op`, `bound`
+and `unit` (else `requirement_unprovable`: "A measure needs a command and a
+bound").
+
 **You never lower the bar.** No agent waives a requirement, marks one
 Met, or changes one of his (`program.require` with `requirement_id` and
-`program.decide` kind `requirement` are his only). When a requirement
-cannot be met, say so in your report and in a checkpoint line; he decides.
+`program.decide` kind `requirement` are his only). In the text: never
+write a `waived:` line, never make his requirement `optional` or another
+kind, never take a check, a review or a gate off, never raise the control
+level, never change his `>` lines, his `?` questions or his `=` answers.
+When a requirement cannot be met, say so in your report and in a
+checkpoint line; he decides.
+
+**The interview rounds are his.** `program.round` with `next` asks the
+engine for the next question; that is for him to answer. Do not answer a
+round (`answer`), close it (`done`, `skip`) or skip its questions for him,
+even where the tool lets the agent that made the Program do it. A `=` line
+from an agent in the text is refused (`owner_required`).
 
 **You orchestrate and the plan must change.** `program.step_update`
 (the fields a step's state leaves open; `before` moves a Planned or Ready
@@ -111,10 +188,11 @@ it, tell him.
   and sends the log tail at a turn boundary. Do not use `agent.prompt` or
   `agent.answer` on a launch that belongs to a step.
 - **Never decide.** `program.decide` (merge, findings, parked steps, core
-  questions, a race winner, close, an agent at its limit, a requirement,
-  a proposal), `program.overturn`
+  questions, a held commit, a race winner, close, an agent at its limit, a
+  requirement, a proposal), `program.overturn`
   and `program.handoff` are the owner's press (AUTHORITY). You refuse them;
-  you tell him the row in Needs you.
+  you tell him the row in Needs you. `phone.brief` and `phone.later` (the
+  briefing page, Telegram, Later) are his too; never call them for him.
 - **Runs on is a list.** `runs_on: ["claude", "codex"]` on `program.create`,
   `program.update` or a step: the first agent runs it, the next takes over
   when one stops at its usage limit (PG19). If you start on a handoff brief

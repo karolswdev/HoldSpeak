@@ -126,10 +126,14 @@ These rules still apply:
 Each reach stores the rule and route used. A pending reach is not a sent
 message, and a ringing call is not an answered call.
 
+**Settings > Reach** also has Telegram, the daily digest, what Later means and
+the order of the channels. See [Reach](reach.md).
+
 ## Quiet hours
 
 Phone reads quiet hours from the active quiet-hours setting in **Settings >
-Notices**. The Phone row can still expose the compatibility label **Change in
+Reach** (this section was **Notices** before). Telegram uses the same quiet
+hours ([Reach](reach.md#quiet-hours)). The Phone row can still expose the compatibility label **Change in
 Rhythm**. The service queues ordinary messages during quiet hours. An urgent
 call can bypass the quiet period only when the configured policy and transport
 allow it.

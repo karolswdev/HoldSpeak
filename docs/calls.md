@@ -305,6 +305,13 @@ Call latency depends on the speech engine, the Calls engine, the source scope,
 and the phone network. The service can report **Still working** while a turn
 runs. There is no fixed response-time guarantee in the source.
 
+## Other ways to answer
+
+What waits on you can also go to a briefing page or to Telegram, and you can
+say Later on each one. **Settings > Reach** sets the channels, the digest and
+what Later means. See [Reach](reach.md) and
+[Programs](programs.md#decide-from-anywhere).
+
 ## For tools and agents
 
 | Route | Meaning |
