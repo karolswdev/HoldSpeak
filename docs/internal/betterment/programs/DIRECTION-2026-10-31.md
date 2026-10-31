@@ -833,6 +833,8 @@ the set.
 
 ## 14. Decisions for the owner (defaults chosen; say if another is wanted)
 
+**Ruled 2026-10-31 (owner, remote): "All defaults approved." Every default below stands as written; a lane builds it without a further gate.**
+
 1. **One bot.** The Cadence bot is the reach bot; its static pairing code
    becomes a one-time code; its token moves to the keystore. Default: yes.
 2. **A tap that cannot be undone needs a second tap on Telegram** (Merge,

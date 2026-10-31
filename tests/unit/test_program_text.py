@@ -20,8 +20,8 @@ from holdspeak.delivery.pi_launch import LibraryEngine, PiEngine
 from holdspeak.program_templates import TEMPLATE_IDS
 from holdspeak.services.program_service import FROZEN_BAR, FROZEN_READ, FROZEN_SET
 from holdspeak.services.program_text import (
-    Amendment, Head, ProgramText, Requirement, Step, canonical, diff_program_text, from_wire, guessed_spec,
-    parse_program_text, print_program, render, wire_lamps,
+    Amendment, Head, ProgramText, Question, Requirement, Round, Step, canonical, diff_program_text, from_wire,
+    guessed_spec, parse_night, parse_program_text, print_program, render, wire_lamps,
 )
 from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig
 
@@ -136,19 +136,24 @@ def test_the_fast_cycle_example_reads_whole() -> None:
     assert (three.agents, three.effort, three.review, three.merge, three.check) == (None, None, None, None, None)
 
 
-def test_the_overnight_example_names_the_word_this_hub_does_not_read_yet() -> None:
+def test_the_overnight_example_reads_its_budget() -> None:
     model = parse_program_text(OVERNIGHT)
-    assert [(error.line, error.code) for error in model.errors] == [(5, "text_unknown_word")]
-    assert "'budget'" in model.errors[0].words and "does not read yet" in model.errors[0].words
+    assert model.errors == []
+    assert model.head.budget == 65536  # 64k
+    assert "  budget 64k\n" in render(model)
     assert model.head.agents == [("pi-default", "qwen3.8-27b"), ("claude-default", None)]
     assert (model.head.when_idle, model.head.may_call) == (True, True)  # one line, joined with ·
 
 
-def test_the_race_example_names_measure_as_not_read_yet() -> None:
+def test_the_race_example_reads_its_measure() -> None:
     model = parse_program_text(RACE)
-    assert [error.code for error in model.errors] == ["text_unknown_word"]
-    assert "'measure'" in model.errors[0].words
+    assert model.errors == []
     step = model.step(1)
+    assert [(row.rid, row.kind, row.spec) for row in step.requirements] == [
+        (2, "measure", {"command": "uv run pytest -q tests/e2e/test_desk_sweep.py --durations=0",
+                        "metric": "total", "op": "<", "bound": 6, "unit": "min"})]
+    assert render(model).endswith("    run uv run pytest -q tests/e2e/test_desk_sweep.py --durations=0\n"
+                                  "    bound total < 6 min\n")
     assert step is not None and step.agents == [("claude-default", None), ("codex-default", None)]
     assert step.race is None  # the Race template's own 2: a default, not stated
 
@@ -264,8 +269,7 @@ def test_the_journeys_texts_are_a_second_corpus() -> None:
         assert model.steps or model.every_step, text[:80]
         again = parse_program_text(render(model))
         assert again.errors == [] and again == model, text[:80]
-        for error in model.errors:
-            assert ("does not read yet" in error.words or "review depth is set on each step" in error.words), error
+        assert model.errors == [], (text[:80], model.errors)  # every word of §3.2 has a home
 
 
 def test_every_templates_planned_program_round_trips(tmp_path) -> None:
@@ -281,7 +285,17 @@ def test_every_templates_planned_program_round_trips(tmp_path) -> None:
              "prefer_idle": True, "gate_check": False, "review_depth": "standard"},
         ])
         rig.service.require(OWNER, pid, text="`echo ok` is green", step_id=rig.step(pid, 2)["id"])
-        rig.service.require(OWNER, pid, text="I tried it", kind="word", required=False)
+        rig.service.require(OWNER, pid, text="I tried it", kind="word", required=False,
+                            spec={"walk": ["Open Programs at 393", "Press Plan it"]})
+        rig.service.require(OWNER, pid, text="The routes answer fast", kind="measure", step_id=rig.step(pid, 1)["id"],
+                            spec={"command": "sh bench.sh", "metric": "p95", "op": "<", "bound": 100, "unit": "ms"})
+        rig.service.update(OWNER, pid, review_depth="standard", planner_engine=QWEN.profile_id, budget_tokens="64k",
+                           night="23:30–07:00 · at most 8 steps", within=["holdspeak/", "docs/"],
+                           rounds_before_start=True)
+        rig.service.change_step(OWNER, pid, rig.step(pid, 1)["id"], budget_tokens=16384)
+        rig.service.store.save_round({"program_id": pid, "name": "Architecture", "state": "asking", "ordinal": 1,
+                                      "questions": [{"id": "q1", "text": "Hub or client?", "answer": None}],
+                                      "updated_at": "2026-10-31T10:00:00Z"})
         wire = rig.program(pid)
         text = print_program(wire)
         model = parse_program_text(text)
@@ -296,7 +310,7 @@ def _random_text(rng: random.Random, template: Any) -> str:
 
 
 def _random_requirement(rng: random.Random, rid: int) -> Requirement:
-    kind = rng.choice(["check", "review", "shot", "word"])
+    kind = rng.choice(["check", "review", "shot", "word", "measure"])
     text = rng.choice(["`uv run pytest -q x.py` is green", "No route takes a lock", "The People window at 393 fits",
                        "I used it for a morning", "echo done prints done"])
     spec = guessed_spec(kind, text)
@@ -306,6 +320,15 @@ def _random_requirement(rng: random.Random, rid: int) -> Requirement:
         spec = {**spec, "expect": r"\d+ passed"}
     if kind == "shot" and rng.random() < 0.5:
         spec = {"case": "programs", "width": rng.choice([393, 1440])}
+    if kind == "measure":
+        spec = {**spec, "command": rng.choice([spec.get("command") or "sh bench.sh", "sh bench.sh"]),
+                **rng.choice([{"metric": "p95", "op": "<", "bound": 100, "unit": "ms"},
+                              {"metric": "lost", "op": "=", "bound": 0, "unit": ""},
+                              {"metric": "total", "op": "<=", "bound": 6.5, "unit": "min"}])}
+        if rng.random() < 0.3:
+            spec["expect"] = r"p95 \d+"
+    if kind == "word" and rng.random() < 0.5:
+        spec = {"walk": rng.sample(["Open Programs at 393", "Press Plan it", "See 6 steps"], rng.randint(1, 3))}
     return Requirement(rid=rid, kind=kind, text=text, required=rng.random() < 0.8, spec=spec,
                        waived=rng.choice([None, None, "Not this week."]))
 
@@ -326,8 +349,18 @@ def test_five_hundred_generated_programs_round_trip() -> None:
             allow=rng.choice([[], ["codex-default"], ["claude-default", "pi-default"]]),
             spend=rng.choice([None, 5.0, 2.5]), usage_warning=rng.choice([None, 0.9, 0.85]),
             for_person=rng.choice([None, "Alice"]), origin=rng.choice([None, "note:n-1"]), template=template,
+            depth=rng.choice([None, "glance", "delta", "standard"]), planner=rng.choice([None, "qwen3.8-27b"]),
+            budget=rng.choice([None, 65536, 32768, 50000]),
+            night=rng.choice([None, parse_night("23:30–07:00 · at most 8 steps"), parse_night("01:00-05:30")]),
+            within=rng.choice([[], ["web/src/desk/", "docs/"]]),
+            delivery=rng.choice([None, "app/phase-3", "app/phase-3/story-01"]),
+            rounds_before_start=rng.random() < 0.3,
         )
         model = ProgramText(head=head)
+        model.rounds = rng.choice([[], [Round("Architecture", "done", [Question("Hub or client?", "The hub."),
+                                                                       Question("Can it lose rows?", None)]),
+                                        Round("Product", "asking", [Question("Who sees it first?")]),
+                                        Round("Security", "open")]])
         model.every_step = [_random_requirement(rng, next(rid)) for _ in range(rng.randint(0, 2))]
         model.at_end = [_random_requirement(rng, next(rid)) for _ in range(rng.randint(0, 2))]
         for number in range(1, rng.randint(1, 7)):
@@ -340,7 +373,7 @@ def test_five_hundred_generated_programs_round_trip() -> None:
                 when_idle=rng.random() < 0.2, may_call=rng.random() < 0.2, check=rng.choice([None, True, False]),
                 review=rng.choice([None, "none", "agent", "person"]), depth=rng.choice([None, "glance", "standard"]),
                 merge=rng.choice([None, "level", "owner", "none"]), for_person=rng.choice([None, "Bob"]),
-                origin=rng.choice([None, "action:a-1"]),
+                origin=rng.choice([None, "action:a-1"]), budget=rng.choice([None, None, 16384, 20000]),
                 merged=rng.choice([None, None, {"pr_number": 12, "merged_at": "2026-10-28T15:36:11Z",
                                                "pr_url": "https://github.com/a/b/pull/12", "head_commit": "82067a4"}]),
                 brief=rng.choice(["", "Do it.", "First.\n\nSecond, with `code`."]),
@@ -411,14 +444,20 @@ def test_removals_unknown_ids_and_moves_of_started_steps_are_refused(tmp_path) -
     wire = rig.program(pid)
     text = rig.service.text_get(OWNER, pid)["text"]
     lines = text.split("\n")
-    # Remove every-step R1 and the whole of step 6; name a step 9; put step 3 first.
+    # Remove every-step R1, the whole of step 6 (Planned: allowed) and of step
+    # 2 (started: it stays); name a step 9; put step 3 first.
     cut = "\n".join(line for line in lines if not line.startswith("  R1 "))
     cut = cut.split("\nstep 6 The fan-out")[0] + "\n\nstep 9 Ghost\n"
+    two = cut[cut.index("\nstep 2 Retention"):cut.index("\nstep 3 ")]
+    cut = cut.replace(two, "")
     three = cut[cut.index("step 3 People routes"):cut.index("\nstep 4 ")]
     cut = cut.replace(three + "\n", "").replace("step 1 Indexes", three + "\nstep 1 Indexes")
     rows = {row.id: row for row in diff_program_text(text, cut, record=wire)}
     assert rows["R1.remove"].code == "requirement_stays" and rows["R1.remove"].reason == "R1 stays. Waive it with a line."
-    assert rows["step-6.remove"].code == "step_stays"
+    assert rows["step-6.remove"].verdict == "allowed" and rows["step-6.remove"].data["kind"] == "remove_step"
+    assert (rows["step-2.remove"].code, rows["step-2.remove"].reason) == ("step_stays", "Step 2 started. It stays.")
+    # Step 5 came after step 2: the text names a step it removes.
+    assert rows["step-5.after-removed"].reason == "Step 5 · after: step 2 is removed in this text."
     assert rows["step-9.unknown"].reason.endswith("there is no step 9. Write 'step +' for a new step.")
     moved = [row for row in rows.values() if row.op == "move"]
     assert moved and all(row.verdict == "refused" for row in moved), moved
@@ -560,11 +599,224 @@ def test_print_program_takes_the_wire_with_its_steps_and_requirements(tmp_path) 
     assert parse_program_text(bare) == parse_program_text(print_program(wire))
 
 
-@pytest.mark.parametrize("line, code", [
-    ("  reviewer Codex at delta", "text_bad_value"),
-    ("  planner qwen3.8-27b", "text_unknown_word"),
-    ("  night 23:30–07:00 · at most 8 steps", "text_unknown_word"),
+@pytest.mark.parametrize("line, field, value", [
+    ("  reviewer Codex at standard", "depth", "standard"),
+    ("  planner qwen3.8-27b", "planner", "qwen3.8-27b"),
+    ("  budget 32768", "budget", 32768),
+    ("  night 23:30-7:00 · at most 8 steps", "night",
+     {"line": "23:30–07:00 · at most 8 steps", "start": "23:30", "end": "07:00", "max_steps": 8}),
+    ("  within web/src/desk/, docs/", "within", ["web/src/desk/", "docs/"]),
+    ("  delivery dw holdspeak/phase-201/story-03", "delivery", "holdspeak/phase-201/story-03"),
+    ("  when idle · rounds before start", "rounds_before_start", True),
 ])
-def test_program_words_this_hub_does_not_store_are_refused_by_name(line: str, code: str) -> None:
+def test_each_program_word_of_the_grammar_reads(line: str, field: str, value: Any) -> None:
     model = parse_program_text(f"program P\n{line}\n")
-    assert [error.code for error in model.errors][:1] == [code]
+    assert model.errors == [] and getattr(model.head, field) == value
+    assert parse_program_text(render(model)) == model
+
+
+@pytest.mark.parametrize("line, words", [
+    ("  reviewer Codex at deep", "Line 2: the review depth is glance, delta or standard."),
+    ("  budget lots", "Line 2: the budget is a number of tokens ('budget 64k')."),
+    ("  night 25:00–07:00", "Line 2: the night is '23:30–07:00 · at most 8 steps'."),
+    ("  delivery jira X-1", "Line 2: delivery is 'delivery dw <project>/<phase>[/<story>]'."),
+])
+def test_a_bad_value_of_a_new_word_is_refused_by_name(line: str, words: str) -> None:
+    errors = parse_program_text(f"program P\n{line}\n").errors
+    assert [(error.code, error.words) for error in errors] == [("text_bad_value", words)]
+
+
+# ── PG-LANG fields: each statement the text could not write applies ──
+
+class _People:
+    def display_names(self) -> dict[str, str]:
+        return {"p-alice": "Alice"}
+
+
+def _drafting(tmp_path, *, template: str = "build-and-review") -> tuple[Rig, str]:
+    rig = Rig(tmp_path, engines=_engines, people=lambda: _People())
+    (rig.repo / ".githooks").mkdir(exist_ok=True)
+    (rig.repo / ".githooks" / "dw").write_text("#!/bin/sh\n", encoding="utf-8")
+    pid = rig.service.create(OWNER, title="Fields", goal="All of them.", repository=str(rig.repo),
+                             check_command=f"sh {FAKE_CHECK}", template=template, reviewer_profile="codex-default")["id"]
+    rig.service.plan(OWNER, pid, steps=[
+        {"title": "Store", "brief": "Do the store.", "owns": ["holdspeak/db/programs.py"]},
+        {"title": "Routes", "brief": "Do the routes.", "after": [1]},
+        {"title": "Faces", "brief": "Do the faces.", "after": [2]},
+    ])
+    return rig, pid
+
+
+def _apply(rig: Rig, pid: str, text: str, *, readback: bool = True, **kw: Any) -> dict[str, Any]:
+    answer = rig.service.text_apply(OWNER, pid, text, dry_run=False, **kw)
+    assert answer["applied"] is True, [row for row in answer["changes"] if row["verdict"] != "allowed"]
+    again = rig.service.text_get(OWNER, pid)["text"]
+    if readback and "R+ " not in text and "step + " not in text:  # a new one reads back with its number
+        assert diff_program_text(text, again) == [], (text, again)  # it reads back as he wrote it
+    return answer
+
+
+def test_the_program_fields_apply_and_read_back(tmp_path) -> None:
+    rig, pid = _drafting(tmp_path)
+    text = rig.service.text_get(OWNER, pid)["text"]
+    changed = _edit(text, ("\n\nevery step", "\n  planner " + QWEN.profile_id + "\n  reviewer Codex at standard\n"
+                           "  budget 64k\n  rounds before start\n  night 23:30–07:00 · at most 8 steps\n"
+                           "  within holdspeak/, docs/\n  delivery dw app/phase-3/story-01\n  for Alice\n\nevery step"))
+    preview = rig.service.text_apply(OWNER, pid, changed)
+    assert [(row["field"], row["after"], row["verdict"]) for row in preview["changes"]] == [
+        ("planner", QWEN.profile_id, "allowed"), ("review depth", "standard", "allowed"), ("budget", "64k", "allowed"),
+        ("rounds before start", "yes", "allowed"), ("night", "23:30–07:00 · at most 8 steps", "allowed"),
+        ("within", "holdspeak/, docs/", "allowed"), ("delivery dw", "app/phase-3/story-01", "allowed"),
+        ("for", "Alice", "allowed"),
+        ("review depth", "standard", "allowed"), ("review depth", "standard", "allowed"),
+        ("review depth", "standard", "allowed"),
+    ], preview["changes"]
+    wire = _apply(rig, pid, changed)["program"]
+    assert (wire["review_depth"], wire["planner"]["engine"], wire["budget_tokens"]) == ("standard", QWEN.profile_id, 65536)
+    assert wire["night"] == {"line": "23:30–07:00 · at most 8 steps", "start": "23:30", "end": "07:00", "max_steps": 8}
+    assert (wire["within"], wire["delivery"], wire["rounds_before_start"], wire["for_person_id"]) == (
+        ["holdspeak/", "docs/"], {"kind": "dw", "ref": "app/phase-3/story-01", "linked": False}, True, "p-alice")
+    assert {step["gate"]["review_depth"] for step in wire["steps"]} == {"standard"}
+    # A new step takes the Program's depth.
+    rig.service.plan(OWNER, pid, steps=[{"title": "Docs"}])
+    assert rig.step(pid, 4)["gate"]["review_depth"] == "standard"
+    # Taking the lines out clears them; ``check none`` and ``reviewer none`` lower the bar.
+    text = rig.service.text_get(OWNER, pid)["text"]
+    bare = "\n".join("  check none" if line.startswith("  check ") else line for line in text.split("\n")
+                     if not line.startswith(("  planner", "  budget", "  rounds before", "  night", "  within",
+                                             "  delivery")))
+    bare = _edit(bare, ("  reviewer Codex at standard", "  reviewer none at standard"))
+    preview = rig.service.text_apply(OWNER, pid, bare)
+    lowers = set(preview["lowers"])
+    assert {"program.reviewer", "program.check", "program.rounds-before-start"} <= lowers, preview["changes"]
+    assert {f"step-{n}.review" for n in (1, 2, 3, 4)} <= lowers
+    wire = _apply(rig, pid, bare, allow_lower=preview["lowers"])["program"]
+    assert (wire["planner"], wire["budget_tokens"], wire["night"], wire["within"], wire["delivery"]) == (
+        None, None, None, [], None)
+    assert (wire["reviewer"]["profile"], wire["check_command"], wire["rounds_before_start"]) == (None, None, False)
+    assert {step["gate"]["review"] for step in wire["steps"]} == {"none"}
+
+
+def test_delivery_needs_the_rails_and_the_fixed_fields_say_why(tmp_path) -> None:
+    rig, pid = _drafting(tmp_path)
+    (rig.repo / ".githooks" / "dw").unlink()
+    text = rig.service.text_get(OWNER, pid)["text"]
+    changed = "\n".join("  in other · dev" if line.startswith("  in ") else line for line in text.split("\n"))
+    changed = _edit(changed, ("\n\nevery step", "\n  delivery dw app/phase-3\n\nevery step"),
+                    ("  template build and review", "  template race"))
+    rows = {row["id"]: row for row in rig.service.text_apply(OWNER, pid, changed)["changes"]}
+    assert (rows["program.delivery"]["code"], rows["program.delivery"]["reason"]) == (
+        "delivery_no_rails", "This repository has no Delivery Workbench.")
+    assert rows["program.repository"]["reason"] == ("Program · repository: it is set when the program is made; "
+                                                    "a program works in one repository; make a new program for another.")
+    assert rows["program.template"]["code"] == "field_fixed" and "change the fields it set" in rows["program.template"]["reason"]
+
+
+def test_the_step_fields_apply_budget_when_idle_and_a_named_reviewer(tmp_path) -> None:
+    rig, pid = _drafting(tmp_path)
+    text = rig.service.text_get(OWNER, pid)["text"]
+    changed = _edit(text, ("  owns holdspeak/db/programs.py\n", "  owns holdspeak/db/programs.py\n  budget 32k\n"
+                                                                 "  when idle\n  review Alice · merge owner\n"))
+    wire = _apply(rig, pid, changed)["program"]
+    one = wire["steps"][0]
+    assert (one["budget_tokens"], one["prefer_idle"], one["gate"]["review"], one["for_person_id"]) == (
+        32768, True, "person", "p-alice")
+
+
+def test_a_planned_block_taken_out_removes_the_step(tmp_path) -> None:
+    rig, pid = _drafting(tmp_path)
+    rig.service.require(OWNER, pid, text="`echo ok` is green", step_id=rig.step(pid, 2)["id"])
+    text = rig.service.text_get(OWNER, pid)["text"]
+    cut = text[:text.index("\nstep 2 Routes")] + text[text.index("\nstep 3 Faces"):]
+    rows = {row.id: row for row in diff_program_text(text, cut, record=rig.program(pid))}
+    assert rows["step-3.after-removed"].code == "text_bad_value"  # step 3 still names step 2
+    cut = cut.replace("  after 2\n", "  after 1\n")
+    preview = rig.service.text_apply(OWNER, pid, cut)
+    assert [(row["op"], row["where"], row["verdict"]) for row in preview["changes"]] == [
+        ("remove", "step 2", "allowed"), ("change", "step 3", "allowed")], preview["changes"]
+    wire = _apply(rig, pid, cut, readback=False)["program"]  # the numbers follow the order again
+    assert [(step["ordinal"], step["title"], step["after"]) for step in wire["steps"]] == [
+        (1, "Store", []), (2, "Faces", [1])]
+    assert "Removed step 2, Routes" in [row["line"] for row in rig.service.store.list_checkpoints(pid)]
+    # Its requirement is set aside, never counted, and its R number is not used again.
+    assert all(row["text"] != "`echo ok` is green" for row in wire["requirements"])
+    before = max(int(row["ordinal"]) for row in rig.service.requirements(pid))
+    rig.service.require(OWNER, pid, text="A new one", kind="word")
+    new = next(row for row in rig.service.requirements(pid) if row["text"] == "A new one")
+    assert int(new["ordinal"]) == before + 1
+    gone = next(row for row in rig.service.requirements(pid) if row["text"] == "`echo ok` is green")
+    assert (gone["state"], gone["required"], gone["waived_reason"]) == ("waived", False, "Step 2 was removed")
+
+
+def test_rounds_apply_his_answers_and_states_never_a_question(tmp_path) -> None:
+    rig, pid = _drafting(tmp_path)
+    rig.service.store.save_round({"program_id": pid, "name": "Architecture", "state": "asking", "ordinal": 1,
+                                  "questions": [{"id": "q1", "text": "Does the cache live in the hub?", "answer": None},
+                                                {"id": "q2", "text": "Can the event log lose rows?", "answer": None}],
+                                  "updated_at": "2026-10-31T10:00:00Z"})
+    text = rig.service.text_get(OWNER, pid)["text"]
+    assert "round Architecture · asking\n  ? Does the cache live in the hub?\n  ? Can the event log lose rows?\n" in text
+    changed = _edit(text, ("  ? Can the event log lose rows?\n", "  ? Can the event log lose rows?\n  = No.\n"),
+                    ("\n\nstep 1 ", "\n\nround Security · open\n\nround Product · skipped\n\nstep 1 "))
+    preview = rig.service.text_apply(OWNER, pid, changed)
+    assert [(row["op"], row["where"], row["field"], row["verdict"]) for row in preview["changes"]] == [
+        ("change", "round Architecture", "answer", "allowed"), ("add", "round Security", "round", "allowed"),
+        ("add", "round Product", "round", "allowed")], preview["changes"]
+    wire = _apply(rig, pid, changed)["program"]
+    assert [(item["name"], item["state"], item["asked"], item["answered"]) for item in wire["rounds"]] == [
+        ("Architecture", "asking", 2, 1), ("Security", "open", 0, 0), ("Product", "skipped", 0, 0)]
+    answered = wire["rounds"][0]["questions"][1]
+    assert (answered["id"], answered["answer"], answered["answered_by"]) == ("q2", "No.", "owner")
+    # The engine's question, a round set to asking, a round with questions taken out: refused by name.
+    text = rig.service.text_get(OWNER, pid)["text"]
+    bad = _edit(text, ("  ? Does the cache live in the hub?", "  ? Does the cache live in the client?"),
+                ("round Security · open", "round Security · asking"))
+    rows = {row["id"]: row for row in rig.service.text_apply(OWNER, pid, bad)["changes"]}
+    assert rows["round-architecture.questions"]["reason"] == ("Round Architecture: the engine asked it. "
+                                                              "A '?' line stays as it is.")
+    assert rows["round-security.state"]["code"] == "round_state"
+    gone = text[:text.index("round Architecture")] + text[text.index("round Security"):]
+    rows = {row["id"]: row for row in rig.service.text_apply(OWNER, pid, gone)["changes"]}
+    assert rows["round-architecture.remove"]["code"] == "round_stays"
+    # A done round's answers stay until he opens it again.
+    done = _edit(text, ("round Architecture · asking", "round Architecture · done"))
+    _apply(rig, pid, done)
+    text = rig.service.text_get(OWNER, pid)["text"]
+    rows = {row["id"]: row for row in rig.service.text_apply(OWNER, pid, _edit(text, ("  = No.", "  = Yes.")))["changes"]}
+    assert rows["round-architecture.answer-2"]["code"] == "round_done"
+
+
+def test_measure_and_walk_lines_apply_as_requirements(tmp_path) -> None:
+    rig, pid = _drafting(tmp_path)
+    text = rig.service.text_get(OWNER, pid)["text"]
+    changed = _edit(text, ("\nstep 1 Store", "\nat the end\n  R+ word: I used the board for a morning.\n"
+                                             "    walk Open Programs at 393\n    walk Press Plan it\n\nstep 1 Store"),
+                    ("  > Do the store.\n", "  > Do the store.\n  R+ measure: The store answers fast.\n"
+                                            "    run sh bench.sh\n    bound p95 < 100 ms\n"))
+    wire = _apply(rig, pid, changed)["program"]
+    word = next(row for row in wire["requirements"] if row["kind"] == "word")
+    assert word["spec"] == {"walk": ["Open Programs at 393", "Press Plan it"]}
+    measure = next(row for row in wire["steps"][0]["requirements"] if row["kind"] == "measure")
+    assert measure["spec"] == {"command": "sh bench.sh", "metric": "p95", "op": "<", "bound": 100, "unit": "ms"}
+    assert (measure["state"], measure["state_word"], measure["kind_word"]) == ("not_yet", "Not measured yet", "Measure")
+    # A measure with no bound cannot be proven here.
+    text = rig.service.text_get(OWNER, pid)["text"]
+    rows = rig.service.text_apply(OWNER, pid, _edit(text, ("  > Do the routes.\n", "  > Do the routes.\n"
+                                                           "  R+ measure: It is fast.\n")))["changes"]
+    assert [(row["code"], row["reason"]) for row in rows] == [
+        ("requirement_unprovable", "A measure needs a command and a bound.")]
+    # Making a check a measure lowers the bar (a measure does not gate yet).
+    rows = diff_program_text(
+        "program P\n\nat the end\n  R1 check: `echo ok` is green.\n",
+        "program P\n\nat the end\n  R1 measure: `echo ok` is green.\n    bound n < 3\n")
+    assert [(row.id, row.verdict) for row in rows] == [("R1.requirement", "lowers")]
+
+
+def test_only_the_owner_writes_a_round(tmp_path) -> None:
+    from holdspeak.principals import Principal, PrincipalKind
+
+    rig, pid = _drafting(tmp_path)
+    text = rig.service.text_get(OWNER, pid)["text"]
+    agent = Principal(PrincipalKind.AGENT, "agent:orchestrator")
+    rows = rig.service.text_apply(agent, pid, _edit(text, ("\n\nstep 1 ", "\n\nround Security · open\n\nstep 1 ")))
+    assert [(row["id"], row["code"]) for row in rows["changes"]] == [("round-security.add", "owner_required")]

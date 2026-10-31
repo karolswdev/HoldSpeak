@@ -30,6 +30,11 @@ live in the service, so every transport keeps them:
 - PG-LANG LANG3 (2026-10-31): ``program.shape`` turns one sentence into the
   same change rows through one planning-engine call; it writes nothing,
   except at YOLO with ``apply`` (the allowed rows, one Decided for you row).
+- PG-LANG fields (2026-10-31): ``program.update`` writes the review depth,
+  the planner, the budget, the night, within, delivery, rounds before start,
+  the check and the person (``reviewer_profile: "none"`` takes the reviewer
+  off); ``program.step_remove`` removes a Planned step (the text's removed
+  block); ``program.require`` takes ``measure`` and a word's ``walk``.
 """
 from __future__ import annotations
 
@@ -115,7 +120,14 @@ _SPEC = {"type": ["object", "null"], "additionalProperties": False, "properties"
     "expect": {"type": "string", "maxLength": 400, "description": "Check: a pattern one line of the log must match."},
     "case": {"type": "string", "maxLength": 200, "description": "Shot: the desk sweep case (the window)."},
     "width": {"type": "integer", "enum": [393, 1440]},
+    "metric": {"type": "string", "maxLength": 80, "description": "Measure: the name the log prints the number with (p95)."},
+    "op": {"type": "string", "enum": ["<", "<=", ">", ">=", "="]},
+    "bound": {"type": "number", "description": "Measure: the number the value must meet."},
+    "unit": {"type": "string", "maxLength": 20, "description": "Measure: ms, s, min, MB, ..."},
+    "walk": {"type": "array", "items": {"type": "string", "maxLength": 400}, "maxItems": 30,
+             "description": "Your word: the steps the owner will do (a walk)."},
 }}
+_TOKENS = {"type": ["integer", "string", "null"], "description": "A context budget in tokens: 65536 or \"64k\"."}
 #: PG-REQ §8: the step fields program.step_update takes.
 _STEP_UPDATE = {
     "title": {"type": "string", "minLength": 1, "maxLength": 200},
@@ -133,6 +145,8 @@ _STEP_UPDATE = {
                    "description": "level (the Control level decides), owner (his press) or none (no PR)."},
     "for_person_id": {"type": ["string", "null"]},
     "may_call": {"type": "boolean"},
+    "prefer_idle": {"type": "boolean", "description": "Start it only when its engine is idle (Planned or Ready steps)."},
+    "budget_tokens": _TOKENS,
     "before": {"type": ["string", "null"], "description": "Move it before this step id (\"end\": to the end). Planned or Ready steps only."},
 }
 
@@ -175,7 +189,11 @@ TOOLS: list[dict[str, Any]] = [
      }, ["program_id", "steps"])},
     {"name": "program.update",
      "description": "Change a Program: title, goal, Control level (secure, normal, yolo), when idle, its Project "
-                    "(file an unfiled Program), the spend limit, the default and reviewer Runs on.",
+                    "(file an unfiled Program), the spend limit, the default and reviewer Runs on (reviewer_profile "
+                    "\"none\": no reviewer), the review depth, the planner engine, the context budget, the night "
+                    "(\"23:30–07:00 · at most 8 steps\"), within (the paths it may own), delivery (\"dw "
+                    "<project>/<phase>\"; only where the repository has Delivery Workbench), rounds before start, "
+                    "the check command (\"none\": no check) and the person it is for. null clears a field.",
      "inputSchema": _schema({
          "program_id": _ID, "title": {"type": ["string", "null"], "maxLength": 200},
          "goal": {"type": ["string", "null"], "maxLength": 12000},
@@ -186,6 +204,16 @@ TOOLS: list[dict[str, Any]] = [
          "reviewer_profile": _RUNS_ON["profile"], "reviewer_engine": _RUNS_ON["engine"],
          "may_call": {"type": ["boolean", "null"]},
          **_HANDOFF,
+         "review_depth": {"type": ["string", "null"], "enum": ["glance", "delta", "standard", None]},
+         "planner_engine": {"type": ["string", "null"], "description": "An engine of the model library that plans."},
+         "budget_tokens": _TOKENS,
+         "night": {"type": ["string", "object", "null"], "description": "\"23:30–07:00 · at most 8 steps\", or "
+                                                                     "{start, end, max_steps}."},
+         "within": {"type": ["array", "null"], "items": {"type": "string"}},
+         "delivery": {"type": ["string", "null"], "description": "\"dw <project>/<phase>[/<story>]\"; null: off."},
+         "rounds_before_start": {"type": ["boolean", "null"]},
+         "check_command": {"type": ["string", "null"], "maxLength": 2000},
+         "for_person_id": {"type": ["string", "null"]},
      }, ["program_id"])},
     {"name": "program.start", "description": "Start a Program: its ready steps are handed to agents. Name it by "
                                             "program_id, or by name (words of its title or its template, "
@@ -210,13 +238,15 @@ TOOLS: list[dict[str, Any]] = [
      "description": "Add one requirement: one sentence the owner wants true, on the Program (judged after the last "
                     "step), on every step (each_step), or on one step (step_id). kind: check (a command, in "
                     "backticks or spec.command), review (the step's reviewer answers REQ Rn: MET or UNMET), shot "
-                    "(spec.case and spec.width, 393 or 1440), word (the owner presses Met). No kind: the rule "
+                    "(spec.case and spec.width, 393 or 1440), word (the owner presses Met; spec.walk lists his "
+                    "steps), measure (spec.command and a bound: metric, op, bound, unit; it stays Not measured yet "
+                    "until its verifier exists and does not hold a merge). No kind: the rule "
                     "guesses it. An agent's requirement is a proposal: at YOLO it is added and listed under "
                     "Decided for you; at Secure and Normal the owner adds or skips it. With requirement_id it "
                     "changes one (the owner only). No tool marks a requirement met.",
      "inputSchema": _schema({
          "program_id": _ID, "text": {"type": ["string", "null"], "maxLength": 400},
-         "kind": {"type": ["string", "null"], "enum": ["check", "review", "shot", "word", None]},
+         "kind": {"type": ["string", "null"], "enum": ["check", "review", "shot", "word", "measure", None]},
          "step_id": {"type": ["string", "null"]}, "each_step": {"type": ["boolean", "null"]},
          "required": {"type": ["boolean", "null"]}, "spec": _SPEC,
          "requirement_id": {"type": ["string", "null"]},
@@ -228,6 +258,11 @@ TOOLS: list[dict[str, Any]] = [
                     "order. A frozen field is refused with its reason (step_frozen). The owner's change applies at "
                     "once; an orchestrating agent's goes to the owner at Secure and Normal, YOLO applies it.",
      "inputSchema": _schema({"program_id": _ID, "step_id": _ID, **_STEP_UPDATE}, ["program_id", "step_id"])},
+    {"name": "program.step_remove",
+     "description": "Remove a Planned or Ready step. The numbers follow the order again; a step that came after it "
+                    "comes after what it came after. A started step stays (step_stays). The owner's removal applies "
+                    "at once; an orchestrating agent's goes to the owner at Secure and Normal, YOLO removes it.",
+     "inputSchema": _schema({"program_id": _ID, "step_id": _ID}, ["program_id", "step_id"])},
     {"name": "program.amend",
      "description": "Add one line to a started step's brief. HoldSpeak types it to the step's agent at its next turn "
                     "boundary (never into a blocked agent); the first brief stays as it was. The owner's line goes "
@@ -343,6 +378,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name == "program.step_update":
         program_id, step_id = str(args.pop("program_id")), str(args.pop("step_id"))
         return service.change_step(principal, program_id, step_id, **args)
+    if name == "program.step_remove":
+        return service.remove_step(principal, str(args["program_id"]), str(args["step_id"]))
     if name == "program.amend":
         return service.amend(principal, str(args["program_id"]), str(args["step_id"]), args.get("line"))
     if name == "program.update":

@@ -336,6 +336,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "program.require": WORK,  # PG-REQ: his at once; an agent's is a proposal up the ladder
     "program.step_update": WORK,  # PG-REQ: his at once; an orchestrator's change goes up the ladder
     "program.amend": WORK,  # PG-REQ: his at once; an orchestrator's amendment goes up the ladder
+    "program.step_remove": WORK,  # PG-LANG: his at once; an orchestrator's removal goes up the ladder
     "program.text": WORK,  # PG-LANG LANG1: the Program as its text (a read)
     "program.text_apply": WORK,  # PG-LANG LANG1: a batch of the verbs above, each with its own rule
     "program.shape": WORK,  # PG-LANG LANG3: a sentence becomes change rows; YOLO's apply is the level's

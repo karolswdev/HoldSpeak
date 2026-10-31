@@ -644,6 +644,8 @@ fixtures, one quick check, one PR, as the fast cycle says.
 
 ## 14. Decisions for the owner (defaults chosen; say if another is wanted)
 
+**Ruled 2026-10-31 (owner, remote): "All defaults approved." Every default below stands as written; a lane builds it without a further gate.**
+
 1. **Your word holds the merge at every level, YOLO too.** An overnight
    Program with a Your word requirement on a step merges that step when he
    presses Met in the morning; the other steps go on. Default: hold. The

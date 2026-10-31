@@ -5677,6 +5677,14 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/steps/{step_id}/remove",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/text",
       "methods": [
         "GET"

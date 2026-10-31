@@ -433,7 +433,7 @@ LAUNCH_RULES.update({
         "program.checkpoint", "program.step_done", "program.start_from",
         # PG-REQ: a launch proposes a requirement (its own step, or a Program
         # it made), and changes or amends only the Programs it made.
-        "program.require", "program.step_update", "program.amend",
+        "program.require", "program.step_update", "program.amend", "program.step_remove",
         # PG-LANG LANG1: read and change a Program as its text.
         "program.text", "program.text_apply", "program.shape",
     )
