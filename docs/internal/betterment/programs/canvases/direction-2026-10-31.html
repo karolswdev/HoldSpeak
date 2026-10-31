@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction canvas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material. Every value is copied from web/src/styles/tokens.css and the
+   kit (web/src/desk/surface/kit.css, patterns/state-chip.css,
+   objects/list-view.css) on lane/programs-20261028 (a902e091a); this page (PG-DIRECTION) copies them from programs-requirements-2026-10-31.html, which copies them from
+   canvases/programs-2026-10-28.html unchanged and adds only the parts at the end. */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-hover:rgba(37,52,73,.06); --wb-rec:#b3261e;
+  --wb-ok-ink:#1d5c2e; --wb-warn-ink:#6b4a00; --wb-danger-ink:#9b2219; --wb-info-ink:#2f4f86; --wb-ember-ink:#7a4a2c;
+  --lamp-ok:#34d399; --lamp-warn:#fbbf24; --lamp-fail:#f87171; --lamp-info:#3b5d93; --lamp-ask:#da9868;
+  --pill-neutral:#edf1f6; --pill-ok:#e3f3ea; --pill-warn:#fff2cf; --pill-danger:#fde6e4; --pill-info:#e6eef9; --pill-accent:#fff0df;
+  --kind-pr:#2b7a4a; --kind-agent:#a84a1c; --kind-project:#3b62c4;
+  --depth-paper:0 22px 48px rgba(22,40,62,.24),0 4px 12px rgba(22,40,62,.12);
+  --depth-row:0 1px 3px rgba(22,40,62,.12);
+  --depth-card:0 10px 28px rgba(8,14,22,.22);
+  --depth-menu:0 8px 22px rgba(22,40,62,.12);
+  --depth-dock:0 10px 30px rgba(8,14,22,.45),0 2px 6px rgba(8,14,22,.3);
+  --wb-toolbar-h:36px;
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  --page:#e9eef4; --page-ink:#253449; --page-card:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+}
+:root[data-theme="dark"]{ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font:15px/1.5 var(--font-ui);min-width:1440px}
+main{padding:32px 24px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 15px/1.3 var(--font-display);margin:22px 0 8px}
+p{margin:0 0 10px;max-width:1100px}
+code{font:12.5px var(--font-mono)}
+section.part{margin:44px 0 0;padding:24px 0 0;border-top:2px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#7b8aa0}
+.rec{border-left:4px solid var(--wb-sel-vivid);padding:12px 18px;background:color-mix(in srgb,var(--wb-sel-vivid) 8%,transparent);border-radius:0 8px 8px 0;max-width:1180px;margin:14px 0}
+.rec p{max-width:none}
+.note{font-size:13.5px;opacity:.85;max-width:1200px}
+.cmp{display:grid;grid-template-columns:240px repeat(3,1fr);max-width:1180px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;color:var(--wb-ink);font-size:13px;margin:12px 0}
+.cmp>div{padding:8px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.cmp>div:nth-child(4n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.cmp>.h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.cmp>.h.r{background:var(--wb-blue);color:#2b4a7a}
+.cmp>.r{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+.moment{display:grid;grid-template-columns:250px auto;gap:24px;align-items:start;margin:22px 0 0}
+.moment .say{font-size:13.5px}
+.moment .say b{display:block;font:600 15px var(--font-display);margin-bottom:4px}
+
+/* ── the sprites (Icons D): the levels of gen-illustrated-icons.py LEVELS ── */
+.spr{display:inline-block;flex:none;line-height:0;vertical-align:middle}
+.spr svg{width:100%;height:100%;display:block;overflow:visible}
+.spr .ol{stroke-width:var(--ow)}
+.spr .bv{transform:translate(var(--u),var(--u))}
+.spr .bvn{transform:translate(var(--nu),var(--nu))}
+.s64{width:64px;height:64px;--ow:1.5px;--u:3.25px;--nu:-3.25px;--lw:1}
+.s48{width:48px;height:48px;--ow:1.8px;--u:3.55px;--nu:-3.55px;--lw:1}
+.s32{width:32px;height:32px;--ow:2.2px;--u:3.1px;--nu:-3.1px;--lw:1}
+.s20,.s16{width:20px;height:20px;--ow:3px;--u:0px;--nu:0px;--lw:1.35}
+.s16{width:16px;height:16px}
+.s32 .detail,.s20 .detail,.s16 .detail{display:none}
+.s20 [fill="#9fb3c8"],.s16 [fill="#9fb3c8"]{fill:#c9d7e6}
+
+/* ── the desk (the floor, the menu bar, the dock) ── */
+.desk{position:relative;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);
+  background:radial-gradient(120% 90% at 20% 0%,#45607f 0%,#2f435b 45%,#233244 100%);font-family:var(--font-ui);color:var(--wb-ink)}
+.menubar{position:absolute;left:0;right:0;top:0;height:36px;background:#fbfcfe;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13.5px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.menubar b{font-weight:600}
+.menubar .grow{flex:1}
+.menubar .bell{display:inline-flex;align-items:center;gap:6px}
+.menubar .badge{background:#2f67c8;color:#fff;font:600 11.5px/1 var(--font-ui);padding:3px 6px;border-radius:9px}
+
+/* the window frame (window-chrome: 30 px blue title bar, a title chip) */
+.win{position:absolute;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--depth-paper);overflow:hidden;display:flex;flex-direction:column;container:surface/inline-size}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:18px;text-align:center;font-size:14px;opacity:.9}
+.tb .chip{width:22px;height:22px;border-radius:5px;background:var(--wb-paper);display:grid;place-items:center;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.tb .name{font:600 13.5px/1 var(--font-ui);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .name.edit span{border-bottom:1px dashed rgba(247,249,252,.7);padding-bottom:1px}
+.tb .gad{display:flex;gap:4px}
+.tb .gad i{width:26px;height:20px;display:grid;place-items:center}
+.tb .gad i::before{content:"";width:11px;height:10px;border:1.5px solid #f7f9fc;border-radius:2px}
+.toolbar{flex:0 0 var(--wb-toolbar-h);display:flex;align-items:center;gap:4px;padding:3px 8px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper);position:relative}
+.toolbar .grow{flex:1}
+.body{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .it+.it::before{content:"·";margin:0 7px 0 1px;opacity:.7}
+.sb b{color:var(--wb-ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* library Button (the plated and the quiet toolbar forms) */
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap;border:1px solid transparent;background:transparent}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc}
+.btn.plate{background:var(--wb-steel-2);border-color:var(--wb-rule);box-shadow:inset 0 1px 0 #fff}
+.btn.sm{height:24px;font-size:12.5px;padding:0 9px}
+.btn.off{color:#8d9aab}
+.btn .caret{font-size:10px;color:var(--wb-muted);margin-left:2px}
+.btn.primary .caret{color:#dbe4f2}
+.btn.open{background:var(--wb-blue);border-color:var(--wb-sel)}
+
+/* DotWord + the lamp dot (kit.css) */
+.dw{display:inline-flex;align-items:center;gap:6px;font:500 12px/1.35 var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:color-mix(in srgb,var(--wb-muted) 55%,var(--wb-paper));box-shadow:0 0 0 1px var(--wb-rule-soft)}
+[data-tone=ok]>.dot,.dot[data-tone=ok]{background:var(--lamp-ok)}
+[data-tone=warn]>.dot,.dot[data-tone=warn]{background:var(--lamp-warn)}
+[data-tone=fail]>.dot,.dot[data-tone=fail]{background:var(--lamp-fail)}
+[data-tone=info]>.dot,.dot[data-tone=info]{background:var(--lamp-info)}
+[data-tone=ask]>.dot,.dot[data-tone=ask]{background:var(--lamp-ask)}
+.dw[data-tone=ok]{color:var(--wb-ok-ink)} .dw[data-tone=warn]{color:var(--wb-warn-ink)}
+.dw[data-tone=fail]{color:var(--wb-danger-ink)} .dw[data-tone=info]{color:var(--wb-info-ink)} .dw[data-tone=ask]{color:var(--wb-ember-ink)}
+.sb .dot[data-tone=ok],.sb .dot[data-tone=info],.sb .dot[data-tone=ask]{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 40%,transparent),0 0 0 3px color-mix(in srgb,var(--t) 18%,transparent)}
+.dot[data-tone=ok]{--t:var(--lamp-ok)} .dot[data-tone=info]{--t:var(--lamp-info)} .dot[data-tone=ask]{--t:var(--lamp-ask)} .dot[data-tone=fail]{--t:var(--lamp-fail)}
+/* THE BREATH: the Record tile's rhythm (kit-lamp-live): a ring on the lamp opens to 5 px and closes, 2.4 s. A box-shadow, never a transform. */
+@keyframes live{0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 45%,transparent),0 0 0 2px color-mix(in srgb,var(--t) 16%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 60%,transparent),0 0 0 5px color-mix(in srgb,var(--t) 26%,transparent)}}
+@media (prefers-reduced-motion: no-preference){ .live{animation:live 2.4s ease-in-out infinite} }
+
+/* StateChip (patterns/state-chip.css): a tinted square pill, dot + word */
+.sc{display:inline-flex;align-items:center;gap:6px;min-height:20px;padding:1px 9px 1px 7px;background:var(--pill-neutral);box-shadow:inset 0 0 0 1px rgba(37,52,73,.06);font:600 12px/1 var(--font-ui);white-space:nowrap;color:var(--wb-muted)}
+.sc i{width:8px;height:8px;border-radius:50%;background:rgba(37,52,73,.05);box-shadow:0 0 0 1px rgba(37,52,73,.55)}
+.sc[data-s=success]{background:var(--pill-ok);color:var(--wb-ok-ink)} .sc[data-s=success] i{background:var(--lamp-ok)}
+.sc[data-s=working]{background:var(--pill-info);color:var(--wb-info-ink)} .sc[data-s=working] i{background:var(--lamp-info)}
+.sc[data-s=active]{background:var(--pill-accent);color:var(--wb-ember-ink)} .sc[data-s=active] i{background:var(--lamp-ask)}
+.sc[data-s=failure]{background:var(--pill-danger);color:var(--wb-danger-ink)} .sc[data-s=failure] i{background:var(--lamp-fail)}
+.sc[data-s=warning]{background:var(--pill-warn);color:var(--wb-warn-ink)} .sc[data-s=warning] i{background:var(--lamp-warn)}
+
+/* ListView (objects/list-view.css): a column head 26 px, rows 32 px */
+.lhead{height:26px;display:grid;align-items:center;gap:10px;padding:0 12px;font-size:12px;font-weight:600;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+.band{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-paper);border-bottom:1px solid var(--wb-rule-soft)}
+.band b{font-weight:500;color:var(--wb-faint)}
+.lrow{height:32px;display:grid;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.lrow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lrow .t{font-weight:600;display:flex;align-items:center;gap:8px}
+.lrow .m{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.lrow .q{color:var(--wb-muted);font-size:12px}
+.lrow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.lrow .done-in{color:var(--wb-ok-ink);font-weight:500}
+
+/* the Your turn well: an ember rule, the verbs inline */
+.well{margin:10px 12px 4px;border-radius:7px;background:color-mix(in srgb,var(--lamp-ask) 7%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-ask),0 0 0 1px color-mix(in srgb,var(--lamp-ask) 35%,var(--wb-rule-soft))}
+.well .cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;font:600 12px var(--font-ui);color:var(--wb-ember-ink)}
+.well .wr{min-height:32px;display:flex;align-items:center;gap:10px;padding:3px 10px 3px 14px;border-top:1px solid color-mix(in srgb,var(--lamp-ask) 22%,var(--wb-rule-soft));font-size:13px}
+.well .wr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.well .wr .t b{font-weight:600}
+.well .wr .m{color:var(--wb-muted);font-size:12px;white-space:nowrap}
+.well .wr .vb{display:flex;gap:6px}
+
+/* the board, direction C: the ledger (32 px rows, the track as six dots) */
+.board-cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;margin-top:6px;font:600 12px var(--font-ui);color:var(--wb-muted)}
+.crow{height:32px;display:grid;grid-template-columns:22px minmax(0,210px) 262px var(--agw,122px) 58px minmax(0,1fr) 62px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.crow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow .n{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.crow .ti{font-weight:600}
+.crow .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.crow .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.crow .el{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.crow .cp{color:var(--wb-muted);font-size:12px}
+.crow .op{text-align:right;overflow:visible}
+.crow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.crow.kid{background:color-mix(in srgb,var(--wb-field) 45%,var(--wb-paper))}
+.crow.kid .ti{font-weight:500;display:flex;align-items:center;gap:6px;padding-left:16px;position:relative}
+.crow.kid .ti::before{content:"";position:absolute;left:4px;top:-6px;width:8px;height:14px;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.crow.dim{color:var(--wb-muted)}
+.crow.dim .ti{font-weight:500}
+.dots{display:inline-flex;align-items:center;gap:0;margin-right:10px;vertical-align:middle}
+.dots .d{width:8px;height:8px;border-radius:50%;flex:none;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.dots .d.passed{background:#8ea0b6;box-shadow:none}
+.dots .d.skip{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6;width:6px;height:6px;margin:1px}
+.dots .d.cur{box-shadow:none;width:10px;height:10px}
+.dots .d.cur[data-tone=info]{background:var(--lamp-info);--t:var(--lamp-info)}
+.dots .d.cur[data-tone=ask]{background:var(--lamp-ask);--t:var(--lamp-ask)}
+.dots .d.cur[data-tone=fail]{background:var(--lamp-fail);--t:var(--lamp-fail)}
+.dots .d.cur[data-tone=ok],.dots .d.ok{background:var(--lamp-ok);box-shadow:none;--t:var(--lamp-ok)}
+.dots .d.cur[data-tone=idle]{background:#a9b6c6}
+.dots .ln{width:10px;height:1.5px;background:#cbd5e1;flex:none}
+.dots .ln.passed{background:#8ea0b6}
+.trk{display:flex;align-items:center}
+.trk .pr{font:500 12px var(--font-ui);color:var(--kind-pr)}
+
+/* direction A: the track is the row */
+.arow{display:grid;grid-template-columns:22px 1fr;column-gap:10px;padding:5px 12px 6px;border-bottom:1px solid #e9eef4;font-size:13px}
+.arow .n{grid-row:1/3;color:var(--wb-faint);font-size:12px;text-align:right;padding-top:4px}
+.arow .l1{display:flex;align-items:center;gap:10px;height:24px;white-space:nowrap}
+.arow .l1 .ti{font-weight:600}
+.arow .l1 .af{color:var(--wb-muted);font-size:12px}
+.arow .l1 .grow{flex:1}
+.arow .l1 .m{color:var(--wb-muted);font-size:12px}
+.arow .l1 .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.arow .l2{display:flex;align-items:center;gap:0;height:22px}
+.arow .l2 .cp{margin-left:auto;color:var(--wb-muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:12px}
+.st{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--font-ui);color:#8d9aab;white-space:nowrap}
+.st .dot{width:8px;height:8px}
+.st.passed{color:var(--wb-muted)} .st.passed .dot{background:#8ea0b6;box-shadow:none}
+.st.ahead .dot{background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.st.skip{color:#a9b4c2;text-decoration:line-through}
+.st.skip .dot{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6}
+.st.cur{font-weight:600}
+.st.cur[data-tone=info]{color:var(--wb-info-ink)} .st.cur[data-tone=ask]{color:var(--wb-ember-ink)} .st.cur[data-tone=fail]{color:var(--wb-danger-ink)} .st.cur[data-tone=ok],.st.ok{color:var(--wb-ok-ink)}
+.st.ok .dot{background:var(--lamp-ok);box-shadow:none}
+.st .sub{font-weight:400;color:var(--wb-muted)}
+.st.ok .sub,.st.cur[data-tone=ok] .sub{color:var(--kind-pr);font-weight:600}
+.seg{width:26px;height:1.5px;background:#cbd5e1;margin:0 8px;flex:none}
+.seg.passed{background:#8ea0b6}
+
+/* direction B: the card */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 12px}
+.card{background:var(--wb-well);border-radius:7px;box-shadow:var(--depth-row),0 0 0 1px var(--wb-rule-soft);display:flex;flex-direction:column;font-size:13px;overflow:hidden}
+.card .hd{display:flex;align-items:center;gap:8px;padding:8px 10px 2px}
+.card .hd .n{color:var(--wb-faint);font-size:12px}
+.card .hd .ti{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .mid{padding:2px 10px 8px;color:var(--wb-muted);font-size:12px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.card .mid .cp{overflow:hidden;text-overflow:ellipsis}
+.card .ft{border-top:1px solid #edf1f6;background:var(--wb-steel-2);padding:6px 10px;display:flex;align-items:center;gap:8px}
+.card.sel{box-shadow:var(--depth-row),0 0 0 2px var(--wb-sel-vivid)}
+
+/* CheckGadget (the kit's switch species: the sliding toggle is dead, HS-111-01) */
+.ck{display:inline-flex;align-items:center;gap:7px;font-size:13px;white-space:nowrap}
+.ck i{width:16px;height:16px;border:1px solid #bbc7d6;background:var(--wb-well);border-radius:3px;display:grid;place-items:center}
+.ck.on i::after{content:"";width:8px;height:4.5px;border-left:2px solid var(--wb-sel);border-bottom:2px solid var(--wb-sel);transform:translateY(-1px) rotate(-45deg)}
+/* the token form in a toolbar: a quiet pill toggle; on, the selection blue */
+.tokt{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;border:1px solid var(--wb-rule-soft);color:var(--wb-muted);font:500 13px var(--font-ui);white-space:nowrap}
+.tokt.on{border-color:var(--wb-sel);background:var(--wb-blue);color:var(--wb-sel)}
+/* the Runs on picker (a menu, the Engines window's list and words) */
+.menu .grp{font:600 12px var(--font-ui);color:var(--wb-muted);padding:6px 9px 2px}
+.menu .ro{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;height:32px;padding:0 9px;border-radius:5px;font-size:13px}
+.menu .ro.in{padding-left:24px;grid-template-columns:20px 1fr auto}
+.menu .ro.hot{background:var(--wb-blue)}
+.menu .ro .chk{color:var(--wb-sel);font-weight:700;margin-left:6px}
+.menu .ft{border-top:1px solid var(--wb-rule-soft);margin-top:4px;padding:8px 9px 4px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--wb-muted)}
+/* folds (FoldGadget) */
+.fold{border-top:1px solid var(--wb-rule-soft);margin-top:8px}
+.fold .fh{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12.5px var(--font-ui);color:var(--wb-ink)}
+.fold .fh .chev{width:12px;color:var(--wb-muted);font-size:10px}
+.fold .fh .q{font-weight:400;color:var(--wb-muted);font-size:12px}
+.gate{padding:2px 12px 10px 32px;display:grid;grid-template-columns:110px 1fr;row-gap:7px;font-size:13px;align-items:center}
+.gate .k{color:var(--wb-muted);font-size:12px}
+.gate .sections{display:flex;gap:14px;flex-wrap:wrap}
+.gate code{font:12.5px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);padding:2px 6px;border-radius:4px}
+.cpl{padding:0 12px 8px 32px}
+.cpl .c{height:28px;display:grid;grid-template-columns:20px 140px 1fr 56px;align-items:center;gap:8px;font-size:13px;border-bottom:1px solid #eef2f6}
+.cpl .c .who{font-size:12px;color:var(--wb-muted)}
+.cpl .c .m{font-size:12px;color:var(--wb-faint);text-align:right;font-variant-numeric:tabular-nums}
+.av{width:20px;height:20px;border-radius:50%;background:#1f7a6b;color:#fff;display:grid;place-items:center;font:600 9.5px var(--font-ui)}
+
+/* fields in Drafting: StringGadget + MicButton, CycleGadget, PadGadget */
+.fld{display:flex;align-items:center;height:26px;background:var(--wb-well);border:1px solid var(--wb-rule);border-radius:5px;overflow:hidden;min-width:0}
+.fld span{flex:1;padding:0 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld .mic{flex:0 0 26px;height:100%;border-left:1px solid var(--wb-rule-soft);display:grid;place-items:center;background:var(--wb-steel-2)}
+.mic svg{width:12px;height:12px;stroke:var(--wb-muted);fill:none;stroke-width:1.6;stroke-linecap:round}
+.cyc{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:26px;padding:0 8px;border-radius:5px;background:var(--wb-steel-2);border:1px solid var(--wb-rule);font-size:12.5px;white-space:nowrap;box-shadow:inset 0 1px 0 #fff}
+.cyc::after{content:"▾";font-size:10px;color:var(--wb-muted)}
+.drow{height:36px;display:grid;grid-template-columns:22px minmax(0,1fr) 150px 200px 84px 84px 96px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.drow .n{color:var(--wb-faint);font-size:12px;text-align:right}
+.drow .tok{display:inline-flex;gap:4px;overflow:hidden}
+.tokn{font:12px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.drow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.pad{margin:6px 12px 8px 44px;border:1px solid var(--wb-rule);border-radius:6px;background:var(--wb-well);display:grid;grid-template-columns:1fr 30px;min-height:84px}
+.pad .tx{padding:8px 10px;font-size:13px;line-height:1.5}
+.pad .mic{border-left:1px solid var(--wb-rule-soft);display:grid;place-items:start center;padding-top:8px;background:var(--wb-steel-2)}
+
+/* the Templates menu (depth-menu) */
+.menu{position:absolute;z-index:5;background:var(--wb-paper);border-radius:8px;box-shadow:var(--depth-menu),0 0 0 1px var(--wb-rule-soft);padding:5px;width:330px}
+.menu .mi{display:grid;grid-template-columns:20px 1fr;gap:2px 10px;padding:7px 9px;border-radius:5px}
+.menu .mi.hot{background:var(--wb-blue)}
+.menu .mi b{font:600 13px var(--font-ui)}
+.menu .mi span{grid-column:2;font-size:12px;color:var(--wb-muted)}
+
+/* empty state: the object, one line, one Button */
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-size:13px;color:var(--wb-muted)}
+.empty .obj{width:96px;height:96px;margin:0 auto 12px;border-radius:24px;background:linear-gradient(160deg,#eef3fa,#d9e4f3);display:grid;place-items:center;box-shadow:var(--depth-row),inset 0 1px 0 #fff}
+.empty b{display:block;font:600 15px var(--font-ui);color:var(--wb-ink);margin-bottom:4px}
+.empty p{max-width:420px;margin:0 auto 14px}
+
+/* the dock glass */
+.dock{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:12px;padding:8px 14px;border-radius:16px;background:rgba(30,43,58,.72);box-shadow:var(--depth-dock),inset 0 0 0 1px rgba(233,238,245,.16)}
+.dock .tile{position:relative;width:48px;height:48px;display:grid;place-items:center;border-radius:10px}
+.dock .tile.on{background:rgba(233,238,245,.12)}
+.dock .lampd{position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--lamp-ask);--t:var(--lamp-ask);box-shadow:0 0 0 1.5px #1e2b3a}
+.dock .badge{position:absolute;right:-6px;top:-4px;background:#2f67c8;color:#fff;font:600 11px/1 var(--font-ui);padding:3px 5px;border-radius:9px}
+
+/* phones (393) */
+.phones{display:flex;gap:48px;align-items:flex-start;margin:18px 0 0 10px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:#223142;font-family:var(--font-ui);color:var(--wb-ink);container:surface/inline-size}
+.ph-menu{position:absolute;left:0;right:0;top:0;height:44px;background:#fbfcfe;display:flex;align-items:center;gap:14px;padding:0 14px;font-size:14px}
+.ph-win{position:absolute;left:0;right:0;top:44px;bottom:84px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{flex:0 0 44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 14px var(--font-ui)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tool{flex:0 0 52px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.ph-tool .btn{height:44px;font-size:14px;padding:0 14px}
+.ph-tool .grow{flex:1}
+.ph-body{flex:1;overflow:hidden;position:relative}
+.ph-sb{flex:0 0 26px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.ph-dock{position:absolute;left:8px;right:8px;bottom:10px;height:64px;border-radius:16px;background:rgba(30,43,58,.85);display:flex;align-items:center;justify-content:space-around;box-shadow:inset 0 0 0 1px rgba(233,238,245,.16)}
+.prow{padding:8px 12px 8px 12px;border-bottom:1px solid #e9eef4;display:grid;grid-template-columns:auto 1fr auto;column-gap:10px;row-gap:3px;align-items:center;min-height:60px}
+.prow .t{font:600 14px var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .m{grid-column:2/4;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .n{color:var(--wb-faint);font-size:12px;width:16px;text-align:right}
+.ph-band{height:28px;display:flex;align-items:center;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.phone .well{margin:10px 10px 6px}
+.phone .well .wr{flex-wrap:wrap;padding:8px 10px 10px 14px;row-gap:8px}
+.phone .well .wr .t{white-space:normal;flex:1 1 100%}
+.phone .well .wr .vb{flex:1 1 100%}
+.phone .well .wr .btn{height:44px;font-size:14px;padding:0 16px}
+.measure{position:absolute;right:-2px;border-left:1.5px solid #e5483d;font:600 10px var(--font-ui);color:#e5483d;padding-left:3px}
+
+/* seams */
+.seams{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1440px}
+.seam{background:var(--page-card);border-radius:8px;padding:14px 16px;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.seam h3{margin:0 0 10px}
+.crop{background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;overflow:hidden;box-shadow:var(--depth-row);color:var(--wb-ink)}
+.nrow{height:31px;display:flex;align-items:center;gap:10px;padding:0 10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.nrow .t{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.nrow .m{color:var(--wb-muted);font-size:12px}
+.grp{height:24px;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.agrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.agrow .tx{flex:1;min-width:0}
+.agrow .tx b{display:block;font-weight:600}
+.agrow .tx span{font-size:12px;color:var(--wb-muted)}
+.agrow .tx a{color:var(--wb-info-ink);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--wb-info-ink) 35%,transparent)}
+.today{padding:10px 14px;font-size:14px;line-height:1.7}
+.today .cap{font:600 12px var(--font-ui);color:var(--wb-muted);margin-bottom:2px}
+.today .ln{display:flex;align-items:center;gap:8px}
+.today .ln.new{background:color-mix(in srgb,var(--lamp-ask) 8%,transparent);margin:0 -14px;padding:0 14px}
+
+/* the ecosystem (§9b) */
+.eco{display:grid;grid-template-columns:1fr;gap:26px;margin-top:20px;max-width:1440px}
+.eco h3{margin:0 0 8px}
+.place{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 6px;border-radius:4px;color:var(--wb-ink);font:500 12px var(--font-ui)}
+.place .spr{width:14px;height:14px}
+.place .av{width:14px;height:14px;font-size:7px}
+.tokn.press{font:500 12px var(--font-ui);background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule);border-radius:10px;padding:2px 9px;color:var(--wb-muted)}
+.sec{padding:10px 16px 4px}
+.sec .h{display:flex;align-items:center;gap:10px;font:600 13px var(--font-ui);margin-bottom:4px}
+.sec .h::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.rrow{height:32px;display:grid;grid-template-columns:24px 1fr 110px 70px 120px 60px;align-items:center;gap:10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.rrow .m{color:var(--wb-muted);font-size:12px}
+.rrow .t{font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.brief{padding:10px 16px;font-size:13.5px;line-height:1.6}
+.brief .h{font:600 12px var(--font-ui);color:var(--wb-muted);margin:8px 0 2px}
+.brief ul{margin:0;padding-left:18px}
+.av.alice{background:#8870cb}
+.st.person .av{width:16px;height:16px;font-size:8px}
+/* the sprite sheet */
+.sheet{display:flex;gap:36px;align-items:flex-end;flex-wrap:wrap}
+.sheet figure{margin:0;text-align:center;font-size:12px;opacity:.9}
+.sheet figure>div{display:grid;place-items:center;min-height:72px}
+.zoom{position:relative;line-height:0;background:#fff;box-shadow:0 0 0 1px var(--wb-rule)}
+.zoom canvas{image-rendering:pixelated;display:block}
+.zoom::after{content:"";position:absolute;inset:0;background-image:linear-gradient(to right,rgba(38,59,83,.14) 1px,transparent 1px),linear-gradient(to bottom,rgba(38,59,83,.14) 1px,transparent 1px);background-size:var(--cell) var(--cell);pointer-events:none}
+.onbar{background:var(--wb-sel);padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:8px;color:#f7f9fc;font:600 13px var(--font-ui)}
+pre.parts{font:12px/1.5 var(--font-mono);background:var(--page-card);padding:12px 14px;border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);max-width:900px;overflow:auto}
+.trackbig{background:var(--wb-paper);color:var(--wb-ink);border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);padding:12px 16px;display:grid;grid-template-columns:150px 1fr 230px;gap:16px;align-items:center;max-width:1180px;margin:10px 0}
+.trackbig .lbl{font:600 13px var(--font-ui)}
+.trackbig .lbl span{display:block;font-weight:400;font-size:12px;color:var(--wb-muted)}
+
+/* ── PG-REQ additions: the kit's FilterTokens, the search StringGadget, the
+   kind Token, the Met column, the requirement rows (all from kit values) ── */
+.srch{display:flex;align-items:center;height:28px;width:230px;background:var(--wb-well);border:1px solid var(--wb-rule);border-radius:6px;overflow:hidden;margin-left:6px}
+.srch .gl{width:26px;display:grid;place-items:center;color:var(--wb-muted)}
+.srch .gl svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
+.srch span.v{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;color:var(--wb-ink)}
+.srch span.ph{flex:1;font-size:13px;color:var(--wb-faint)}
+.srch .mic{flex:0 0 26px;height:100%;border-left:1px solid var(--wb-rule-soft);display:grid;place-items:center;background:var(--wb-steel-2)}
+.srch .caret-i{display:inline-block;width:1px;height:15px;background:var(--wb-ink);vertical-align:-3px;margin-left:1px}
+.ftoks{display:inline-flex;gap:2px;padding:2px;border-radius:6px;background:var(--wb-steel)}
+.ftok{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:4px;font:500 12px/1 var(--font-mono);text-transform:uppercase;letter-spacing:.02em;color:var(--wb-ink);background:var(--wb-steel-2);box-shadow:inset 0 1px 0 #fff,0 0 0 1px var(--wb-rule-soft)}
+.ftok.on{background:var(--wb-sel);color:#f7f9fc;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.ftok .dot{width:7px;height:7px}
+.kt{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;font:500 12px/1 var(--font-ui);color:var(--wb-muted);background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.kt[data-k=check]{color:#2b4a7a;box-shadow:inset 0 0 0 1px #b9c9e4;background:#f3f7fd}
+.kt[data-k=shot]{color:#2b6a50;box-shadow:inset 0 0 0 1px #b8dcc8;background:#f2faf5}
+.kt[data-k=word]{color:var(--wb-ember-ink);box-shadow:inset 0 0 0 1px #ecc9ac;background:#fdf6f0}
+.metc{font-size:12px;color:var(--wb-muted);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.metc.all{color:var(--wb-ok-ink);font-weight:500}
+.metc .dot{width:7px;height:7px}
+.rq{height:32px;display:grid;grid-template-columns:30px 112px minmax(0,1fr) 84px 150px 190px 160px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.rq>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rq .id{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.rq .tx{font-weight:500;color:var(--wb-ink)}
+.rq .sc2{font-size:12px;color:var(--wb-muted);display:flex;align-items:center;gap:6px}
+.rq .ev{font-size:12px;color:var(--wb-muted);display:flex;align-items:center;gap:6px}
+.rq .vb{display:flex;gap:6px;justify-content:flex-end;overflow:visible}
+.rq.waived .tx{text-decoration:line-through;color:var(--wb-muted);font-weight:400}
+.rq.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.rq.ask{background:color-mix(in srgb,var(--lamp-ask) 6%,var(--wb-paper))}
+.mini{display:inline-flex;gap:3px;align-items:center}
+.mini i{width:7px;height:7px;border-radius:50%;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.mini i.ok{background:var(--lamp-ok);box-shadow:none}
+.mini i.fail{background:var(--lamp-fail);box-shadow:none}
+.mini i.ask{background:var(--lamp-ask);box-shadow:none}
+.addrow{min-height:38px;display:grid;grid-template-columns:30px minmax(0,1fr) 112px 132px auto 92px 64px;align-items:center;gap:10px;padding:5px 12px;border-bottom:1px solid #e9eef4;font-size:13px;background:color-mix(in srgb,var(--wb-field) 35%,var(--wb-paper))}
+.addrow .id{color:var(--wb-faint);font-size:12px;text-align:right}
+.addrow .fld span.ph{color:var(--wb-faint)}
+.addrow .cmd span{font:12.5px var(--font-mono)}
+.addrow .hint{display:flex;align-items:center;gap:6px}
+.fldrow{display:flex;gap:6px;align-items:center}
+.wellsub{margin:0 12px 6px 54px;padding:6px 10px 8px;border-radius:0 0 6px 6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:12.5px;color:var(--wb-ink);display:grid;grid-template-columns:110px 1fr;row-gap:5px}
+.wellsub .k{color:var(--wb-muted);font-size:12px}
+.thumb{width:240px;height:150px;border-radius:5px;box-shadow:0 0 0 1px var(--wb-rule);background:linear-gradient(#3b5d93 0 14px,#fafbfc 14px);position:relative;overflow:hidden}
+.thumb i{position:absolute;left:10px;right:10px;height:7px;border-radius:2px;background:#dfe6ef}
+/* the board with the Met column */
+.crow2{height:32px;display:grid;grid-template-columns:22px minmax(0,190px) 250px 70px 118px 54px minmax(0,1fr) 84px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.crow2>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow2 .n{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.crow2 .ti{font-weight:600}
+.crow2 .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.crow2 .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.crow2 .el,.crow2 .cp{color:var(--wb-muted);font-size:12px}
+.crow2 .op{text-align:right;overflow:visible}
+.crow2.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.crow2.kidr{height:28px;background:color-mix(in srgb,var(--wb-field) 40%,var(--wb-paper));grid-template-columns:22px minmax(0,1fr) 112px 84px 160px}
+.crow2.kidr .tx{padding-left:18px;position:relative;font-size:12.5px}
+.crow2.kidr .tx::before{content:"";position:absolute;left:5px;top:-5px;width:8px;height:13px;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.lhead2{height:26px;display:grid;align-items:center;gap:10px;padding:0 12px;font-size:12px;font-weight:600;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+/* the matrix (direction B) */
+.mx{display:grid;grid-template-columns:22px minmax(0,220px) repeat(3,92px) 120px 1fr;align-items:center;gap:0 10px;padding:0 12px;font-size:13px}
+.mx>div{height:30px;display:flex;align-items:center;border-bottom:1px solid #e9eef4;white-space:nowrap;overflow:hidden}
+.mx .h{height:26px;font-size:12px;font-weight:600;color:var(--wb-muted);background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.mx .c{justify-content:center}
+.mx .n{color:var(--wb-faint);font-size:12px;justify-content:flex-end}
+.legend{padding:6px 12px 8px;font-size:12px;color:var(--wb-muted);display:flex;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--wb-rule-soft)}
+.legend b{color:var(--wb-ink);font-weight:600}
+/* the strip of the Program's own (direction C) */
+.ownstrip{margin:8px 12px 2px;display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:13px}
+/* the step fold head */
+.sfh{display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;font:600 12.5px var(--font-ui)}
+.sfh .grow{flex:1}
+.sfh .q{font-weight:400;color:var(--wb-muted);font-size:12px}
+.sfbody{padding:4px 0 8px}
+.brieftx{margin:4px 12px 6px 32px;padding:8px 12px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:13px;line-height:1.5}
+.brieftx .amd{margin-top:8px;padding-top:6px;border-top:1px dashed var(--wb-rule);color:var(--wb-ink)}
+.brieftx .amd b{font-weight:600;color:var(--wb-muted);font-size:12px;display:block}
+.sub{border-top:1px solid #eef2f6}
+.sub .fh{height:28px}
+/* phones */
+.prq{padding:8px 12px;border-bottom:1px solid #e9eef4;display:grid;grid-template-columns:26px 1fr;column-gap:8px;row-gap:4px;font-size:13px}
+.prq .id{color:var(--wb-faint);font-size:12px;text-align:right;padding-top:2px}
+.prq .l1{display:flex;align-items:center;gap:8px;min-width:0}
+.prq .l1 .tx{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.prq .l2{grid-column:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--wb-muted)}
+.prq .btn{height:44px;font-size:14px;padding:0 14px}
+
+/* ── PG-DIRECTION additions (kit values only): the briefing page, the
+   question well with its choices, the evidence folds, the Telegram drawing,
+   the call transcript, Settings ▸ Reach, the Needs you rows ── */
+.bp{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:var(--wb-paper);font-family:var(--font-ui);color:var(--wb-ink);display:flex;flex-direction:column}
+.bp .url{flex:0 0 44px;background:#eef1f5;display:flex;align-items:center;justify-content:center;font:500 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.bp .url b{color:var(--wb-ink);font-weight:500}
+.bp .tb{flex:0 0 44px;font-size:14px}
+.bp .tb .name{font-size:14px}
+.bp .bd{flex:1;overflow:hidden;position:relative}
+.bp .sb{flex:0 0 26px}
+.qwell{margin:12px 12px 8px;border-radius:8px;background:color-mix(in srgb,var(--lamp-ask) 7%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-ask),0 0 0 1px color-mix(in srgb,var(--lamp-ask) 35%,var(--wb-rule-soft));padding:12px 14px 14px 18px}
+.qwell .facts{font-size:12px;color:var(--wb-ember-ink);font-weight:600;display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.qwell .facts span{font-weight:400;color:var(--wb-muted)}
+.qwell .q{font:600 22px/1.25 var(--font-display);margin:0 0 12px;color:var(--wb-ink)}
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{display:flex;flex-direction:column;gap:3px}
+.choice .btn{height:44px;font-size:15px;justify-content:center}
+.choice .cq{font-size:12px;color:var(--wb-muted);padding-left:2px}
+.qwell.wide .choices{flex-direction:row;gap:12px}
+.qwell.wide .choice{flex:1}
+.qwell.done{background:color-mix(in srgb,var(--lamp-ok) 7%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-ok),0 0 0 1px color-mix(in srgb,var(--lamp-ok) 35%,var(--wb-rule-soft))}
+.qwell.done .facts{color:var(--wb-ok-ink)}
+.outcome{display:flex;align-items:center;gap:10px;height:44px;padding:0 12px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font:600 15px var(--font-ui);color:var(--wb-ok-ink)}
+.outcome span{font-weight:400;color:var(--wb-muted);font-size:13px}
+.cap2{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted)}
+.chg{min-height:32px;display:flex;align-items:center;gap:10px;padding:4px 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.chg .m{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;width:40px;flex:none}
+.chg .t{flex:1;min-width:0}
+.ev{border-top:1px solid var(--wb-rule-soft)}
+.ev .fh{height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 13px var(--font-ui)}
+.ev .fh .chev{width:12px;color:var(--wb-muted);font-size:10px}
+.ev .fh .q{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:auto}
+.ev .pane{padding:0 12px 10px 32px;font-size:13px}
+.ev .pane .fr{display:flex;gap:10px;align-items:baseline;min-height:26px;padding:3px 0}
+.ev .pane .fr .k{width:56px;flex:none;color:var(--wb-muted);font-size:12px}
+.code{font:12px/1.5 var(--font-mono);background:var(--wb-field);border-radius:5px;padding:8px 10px;white-space:pre;overflow:hidden;color:var(--wb-ink)}
+.lmenu{position:absolute;z-index:6;background:var(--wb-paper);border-radius:8px;box-shadow:var(--depth-menu),0 0 0 1px var(--wb-rule-soft);padding:5px;width:240px}
+.lmenu .mi{height:44px;display:flex;align-items:center;padding:0 12px;border-radius:5px;font-size:14px}
+.lmenu .mi.hot{background:var(--wb-blue)}
+.lmenu .mi span{margin-left:auto;color:var(--wb-muted);font-size:12px}
+.floor{background:var(--page);padding:28px;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);position:relative}
+.floor .win{position:relative}
+.dig{height:44px;display:grid;grid-template-columns:10px minmax(0,1fr) 92px 64px;gap:10px;align-items:center;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.dig.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.dig .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dig .m{font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.cols{display:grid;grid-template-columns:400px 1fr;height:100%}
+.cols>div{min-width:0;overflow:hidden}
+.cols>div+div{border-left:1px solid var(--wb-rule-soft)}
+/* Telegram, drawn neutrally: a chat column, one bot message, inline buttons */
+.tg{position:relative;width:393px;height:700px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:#dfe7ee;font-family:var(--font-ui)}
+.tg .hd{height:56px;background:#f7f9fb;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid #d5dde6;font-size:14px;color:#253449}
+.tg .hd .av{width:34px;height:34px;font-size:13px;background:#3b5d93}
+.tg .hd small{display:block;color:#63758b;font-size:12px}
+.tg .msgs{padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.bub{max-width:330px;background:#fff;border-radius:12px 12px 12px 4px;padding:9px 12px 7px;font-size:14px;line-height:1.42;color:#1f2a37;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.bub .tm{display:block;text-align:right;font-size:11.5px;color:#8b93a3;margin-top:2px}
+.bub a{color:#2f67c8;text-decoration:none;word-break:break-all}
+.bub.me{align-self:flex-end;background:#e2f3d9;border-radius:12px 12px 4px 12px}
+.ikb{max-width:330px;display:grid;gap:4px}
+.ikb .r{display:grid;gap:4px}
+.ikb .k{height:40px;border-radius:8px;background:rgba(60,80,105,.32);color:#fff;font:600 14px var(--font-ui);display:grid;place-items:center}
+.tg .lbl{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:11.5px;color:#63758b}
+/* the call transcript */
+.call{width:620px;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--depth-paper);overflow:hidden;color:var(--wb-ink)}
+.call .tb{height:30px}
+.call .ln{display:grid;grid-template-columns:56px 92px 1fr;gap:10px;padding:7px 14px;border-bottom:1px solid #eef2f6;font-size:13.5px;line-height:1.45}
+.call .ln .tm{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;padding-top:2px}
+.call .ln .who{font-weight:600;font-size:12px;padding-top:2px;color:var(--wb-info-ink)}
+.call .ln.him .who{color:var(--wb-ember-ink)}
+.call .ln.him .tx{font-weight:500}
+.call .ln.sys{background:var(--wb-field)}
+.call .ln.sys .tx{font-size:12px;color:var(--wb-muted)}
+.call .ln mark{background:color-mix(in srgb,var(--lamp-ask) 22%,transparent);padding:0 2px;border-radius:2px;color:inherit}
+/* Settings ▸ Reach: the rail and the label/control grid */
+.rail{width:180px;border-right:1px solid var(--wb-rule-soft);background:var(--wb-steel-2);padding:8px 6px;display:flex;flex-direction:column;gap:2px}
+.rail .ri{height:30px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:5px;font-size:13px}
+.rail .ri.on{background:var(--wb-sel);color:#f7f9fc;font-weight:600}
+.paper{flex:1;padding:14px 22px;overflow:hidden}
+.grp2{margin:0 0 16px}
+.grp2 .gh{font:600 12px var(--font-ui);color:var(--wb-muted);margin:0 0 6px}
+.gr{display:grid;grid-template-columns:150px 1fr auto;gap:12px;align-items:center;min-height:36px;border-bottom:1px solid #eef2f6;font-size:13px}
+.gr .k{color:var(--wb-muted)}
+.gr .v{display:flex;align-items:center;gap:10px;min-width:0}
+.gr .v .fact{font-size:12px;color:var(--wb-muted)}
+.codebox{display:inline-flex;align-items:center;gap:10px;padding:4px 10px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule);font:500 15px var(--font-mono);letter-spacing:.08em}
+/* Needs you crops */
+.nyw{width:760px}
+.ny{min-height:40px;display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:10px;align-items:center;padding:4px 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.ny .tx b{font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ny .tx span{font-size:12px;color:var(--wb-muted)}
+.ny .vb{display:flex;gap:6px}
+.ny.later{color:var(--wb-muted)}
+.ny.later .tx b{font-weight:500}
+.annot{font-size:12.5px;color:var(--page-ink);opacity:.8;margin:6px 0 0}
+</style>
+</head>
+<body>
+<main>
+  <h1>Direction: briefing packages and the channels he decides on <span class="tag">Direction for PG-DIRECTION</span></h1>
+  <p>You decide on the desk, on your phone, on a call, from Telegram, or on a page that your hub serves over your tailnet, guarded by a token. Every channel carries the same package (the question, what changed, the choices with what each one does, <b>Later</b>, the evidence), and every answer is the same verb with one ledger line that names the channel. Design: <code>DIRECTION-2026-10-31.md</code>.</p>
+
+  <div class="rec" id="recommendation">
+    <p><b>Recommendation: A, the brief.</b> The question is the first thing on the page, in display type once, and the choices are 44 px library Buttons under it, each with what it does. Later is the last Button. The evidence is folded below, one press each, read only. At 393 you decide with one thumb in one screen; at 1440 a digest is a list on the left and the same brief on the right.</p>
+    <p style="margin:0">B, the board, shows the Program window read only with the Your turn well on top. It gives more context (every step and its track), but at 393 the choices are two screens down from the program's head, and a digest becomes several boards.</p>
+  </div>
+  <div class="cmp">
+    <div class="h"></div><div class="h r">A · The brief (recommended)</div><div class="h">B · The board</div><div class="h">Both</div>
+    <div>First thing you see</div><div class="r">the question and its choices</div><div>the Program's head and its steps</div><div>one window of the desk grammar</div>
+    <div>Decide at 393</div><div class="r">one screen, one thumb</div><div>scroll past the board</div><div>44 px plated verbs</div>
+    <div>Context</div><div class="r">three lines of what changed, then folds</div><div>the whole board</div><div>PR, log, shot, brief, Program text, read only</div>
+    <div>A digest of 5</div><div class="r">a list and one brief</div><div>five boards</div><div>each item decided alone</div>
+    <div>New kit</div><div class="r">none (the Your turn well, Button, ListView, FoldGadget, SurfaceCode)</div><div>a read-only Program window</div><div>a second app entry, no desk</div>
+  </div>
+
+  <!-- ─────────────── A at 393 ─────────────── -->
+  <section class="part" id="page-a-393">
+    <h2>The page, A · the brief, at 393 <span class="tag">Recommended</span></h2>
+    <p class="note">Four states of one package: open, Later menu open, decided, expired. The title bar is the package's head; there is no close gadget because the window is the page. The status bar says when it expires and which hub sent it, with no address.</p>
+    <div class="phones">
+      <div class="bp">
+        <div class="url"><b>karols-macbook-pro</b>&nbsp;· /b/Xr4…</div>
+        <div class="tb"><span class="chip"><span class="dot" data-tone="ask" style="box-shadow:none"></span></span><span class="name">Overnight on the home box · step 7</span></div>
+        <div class="bd">
+          <div class="qwell">
+            <div class="facts">Core question <span>· waits 3 h · YOLO</span></div>
+            <p class="q">The fix needs holdspeak/db/, outside what the program owns.</p>
+            <div class="choices">
+              <div class="choice"><span class="btn primary">Go on</span><span class="cq">The step may change holdspeak/db/.</span></div>
+              <div class="choice"><span class="btn plate">Park</span><span class="cq">The other steps go on.</span></div>
+              <div class="choice"><span class="btn plate">Later <span class="caret">▾</span></span><span class="cq">Back in 2 hours. At YOLO the step parks for now.</span></div>
+            </div>
+          </div>
+          <div class="cap2">What changed</div>
+          <div class="chg"><span class="m">03:12</span><span class="t">Check green on step 7</span></div>
+          <div class="chg"><span class="m">03:11</span><span class="t">2 files in holdspeak/services/</span></div>
+          <div class="ev"><div class="fh"><span class="chev">▸</span>PR #1712<span class="q">2 files · +48 −6</span></div></div>
+          <div class="ev"><div class="fh"><span class="chev">▸</span>Check log<span class="q">green</span></div></div>
+          <div class="ev"><div class="fh"><span class="chev">▸</span>Brief</div></div>
+          <div class="ev"><div class="fh"><span class="chev">▸</span>Program text</div></div>
+        </div>
+        <div class="sb"><span class="it">Expires in 21 h</span><span class="it">from Karol's MacBook Pro</span></div>
+      </div>
+
+      <div class="bp">
+        <div class="url"><b>karols-macbook-pro</b>&nbsp;· /b/Xr4…</div>
+        <div class="tb"><span class="chip"><span class="dot" data-tone="ask" style="box-shadow:none"></span></span><span class="name">Overnight on the home box · step 7</span></div>
+        <div class="bd">
+          <div class="qwell">
+            <div class="facts">Core question <span>· waits 3 h · YOLO</span></div>
+            <p class="q">The fix needs holdspeak/db/, outside what the program owns.</p>
+            <div class="choices">
+              <div class="choice"><span class="btn primary">Go on</span><span class="cq">The step may change holdspeak/db/.</span></div>
+              <div class="choice"><span class="btn plate">Park</span><span class="cq">The other steps go on.</span></div>
+              <div class="choice"><span class="btn plate open">Later <span class="caret">▾</span></span><span class="cq">&nbsp;</span></div>
+            </div>
+          </div>
+          <div class="lmenu" style="left:24px;top:318px">
+            <div class="mi">In 1 hour<span>08:31</span></div>
+            <div class="mi hot">At 13:00</div>
+            <div class="mi">Tonight<span>19:00</span></div>
+            <div class="mi">Tomorrow<span>07:00</span></div>
+            <div class="mi">At a time…</div>
+          </div>
+        </div>
+        <div class="sb"><span class="it">Expires in 21 h</span><span class="it">from Karol's MacBook Pro</span></div>
+      </div>
+
+      <div class="bp">
+        <div class="url"><b>karols-macbook-pro</b>&nbsp;· /b/Xr4…</div>
+        <div class="tb"><span class="chip"><span class="dot" data-tone="ok" style="box-shadow:none"></span></span><span class="name">Overnight on the home box · step 7</span></div>
+        <div class="bd">
+          <div class="qwell done">
+            <div class="facts">Decided <span>· 06:31</span></div>
+            <p class="q">The fix needs holdspeak/db/, outside what the program owns.</p>
+            <div class="outcome">Go on <span>· decided here · 06:31</span></div>
+          </div>
+          <div class="cap2">What changed</div>
+          <div class="chg"><span class="m">06:31</span><span class="t">Step 7 resumed from its checkpoint</span></div>
+          <div class="chg"><span class="m">03:12</span><span class="t">Check green on step 7</span></div>
+          <div class="ev"><div class="fh"><span class="chev">▾</span>PR #1712<span class="q">2 files · +48 −6</span></div>
+            <div class="pane">
+              <div class="fr"><span class="k">Title</span>Store the stall reason in its own column</div>
+              <div class="fr"><span class="k">Files</span>holdspeak/db/schema.py, holdspeak/services/stall.py</div>
+              <div class="fr"><span class="k">Checks</span><span class="dw" data-tone="ok"><span class="dot"></span>Green</span></div>
+              <div class="fr"><span class="k">Review</span><span class="dw" data-tone="ok"><span class="dot"></span>Pass</span></div>
+            </div></div>
+          <div class="ev"><div class="fh"><span class="chev">▸</span>Check log<span class="q">green</span></div></div>
+          <div class="ev"><div class="fh"><span class="chev">▸</span>Program text</div></div>
+        </div>
+        <div class="sb"><span class="it">Expires in 21 h</span><span class="it">from Karol's MacBook Pro</span></div>
+      </div>
+
+      <div class="bp">
+        <div class="url"><b>karols-macbook-pro</b>&nbsp;· /b/Lq9…</div>
+        <div class="tb"><span class="name">HoldSpeak</span></div>
+        <div class="bd">
+          <div class="empty"><div><div class="obj"><span class="dot" style="width:14px;height:14px"></span></div><b>This page has expired.</b><p>Open the item on your desk.</p></div></div>
+        </div>
+        <div class="sb"><span class="it">from Karol's MacBook Pro</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── A at 1440 ─────────────── -->
+  <section class="part" id="page-a-1440">
+    <h2>The page, A · the brief, at 1440: a digest</h2>
+    <p class="note">The morning digest: three items wait, one night ran. The list on the left is the digest (a ListView, ranked as Needs you ranks); the right is the same brief as at 393, its choices in a row. The toolbar's FilterTokens show Waits on you and Decided. Each item is decided alone; the page stays readable until all are answered or it expires (12 h).</p>
+    <div class="floor" style="width:1180px">
+      <div class="win" style="width:1124px;height:660px">
+        <div class="tb"><span class="chip"><span class="dot" data-tone="ask" style="box-shadow:none"></span></span><span class="name">Since last night · 3 wait on you</span></div>
+        <div class="toolbar"><span class="ftoks"><span class="ftok on">Waits on you 3</span><span class="ftok">Decided 1</span></span><span class="grow"></span></div>
+        <div class="body">
+          <div class="cols">
+            <div>
+              <div class="today" style="border-bottom:1px solid var(--wb-rule-soft)"><div class="cap">Since last night</div>23:30 to 06:52 · 8 merged · 1 parked · 1 waits on you</div>
+              <div class="dig sel"><span class="dot" data-tone="ask"></span><span class="t">Overnight · step 7 asks you</span><span class="m">Core question</span><span class="m">3 h</span></div>
+              <div class="dig"><span class="dot" data-tone="ask"></span><span class="t">The hub stops stalling · step 3</span><span class="m">Your word</span><span class="m">40 min</span></div>
+              <div class="dig"><span class="dot" data-tone="info"></span><span class="t">Platform sync · 4 proposals</span><span class="m">Meeting</span><span class="m">yesterday</span></div>
+              <div class="dig" style="color:var(--wb-muted)"><span class="dot" data-tone="ok"></span><span class="t" style="font-weight:500">People routes · step 2 merged</span><span class="m">Decided</span><span class="m">05:12</span></div>
+              <div class="cap2" style="margin-top:6px">Also today</div>
+              <div class="chg"><span class="t">3 tasks are due today</span></div>
+            </div>
+            <div>
+              <div class="qwell wide">
+                <div class="facts">Core question <span>· Overnight on the home box · step 7 · waits 3 h · YOLO</span></div>
+                <p class="q">The fix needs holdspeak/db/, outside what the program owns.</p>
+                <div class="choices">
+                  <div class="choice"><span class="btn primary">Go on</span><span class="cq">The step may change holdspeak/db/.</span></div>
+                  <div class="choice"><span class="btn plate">Park</span><span class="cq">The other steps go on.</span></div>
+                  <div class="choice"><span class="btn plate">Later <span class="caret">▾</span></span><span class="cq">Back in 2 hours.</span></div>
+                </div>
+              </div>
+              <div class="cap2">What changed</div>
+              <div class="chg"><span class="m">03:12</span><span class="t">Check green on step 7</span></div>
+              <div class="chg"><span class="m">03:11</span><span class="t">2 files in holdspeak/services/ and one in holdspeak/db/</span></div>
+              <div class="ev"><div class="fh"><span class="chev">▸</span>PR #1712<span class="q">3 files · +48 −6 · checks green</span></div></div>
+              <div class="ev"><div class="fh"><span class="chev">▾</span>Program text<span class="q">read only · step 7 marked</span></div>
+                <div class="pane"><div class="code">step 7  Store the stall reason            # Asks you · core question
+  on pi · qwen3.8-27b · budget 32k
+  owns holdspeak/services/stall.py
+  after 5, 6
+  R7 check: `uv run pytest tests/unit/test_stall.py`   # Met
+  R8 word:  The stall reason reads well on the board</div></div></div>
+              <div class="ev"><div class="fh"><span class="chev">▸</span>Check log</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="sb"><span class="it">Expires in 11 h</span><span class="it">from Karol's MacBook Pro</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── B ─────────────── -->
+  <section class="part" id="page-b">
+    <h2>The page, B · the board <span class="tag alt">Direction</span></h2>
+    <p class="note">The Program window, read only, with the Your turn well on top and the board under it. The same question and choices; the steps are there to read. At 393 the well is first, but a digest stacks boards.</p>
+    <div class="phones" style="align-items:flex-start">
+      <div class="bp">
+        <div class="url"><b>karols-macbook-pro</b>&nbsp;· /b/Xr4…</div>
+        <div class="tb"><span class="name">Overnight on the home box</span></div>
+        <div class="bd">
+          <div class="well"><div class="cap">Your turn · 1</div>
+            <div class="wr"><span class="t"><b>Step 7</b> · the fix needs holdspeak/db/</span><span class="vb"><span class="btn primary">Go on</span><span class="btn plate">Park</span><span class="btn plate">Later ▾</span></span></div></div>
+          <div class="board-cap">Steps · 6 of 9 merged</div>
+          <div class="prow"><span class="n">5</span><span class="t">Loop watch</span><span class="sc" data-s="success"><i></i>Merged</span><span class="m">#1709 · 01:40</span></div>
+          <div class="prow"><span class="n">6</span><span class="t">Fan-out off the loop</span><span class="sc" data-s="success"><i></i>Merged</span><span class="m">#1711 · 05:12</span></div>
+          <div class="prow"><span class="n">7</span><span class="t">Store the stall reason</span><span class="sc" data-s="active"><i></i>Asks you</span><span class="m">core question · 3 h</span></div>
+          <div class="prow"><span class="n">8</span><span class="t">The stall word on the board</span><span class="sc"><i></i>Planned</span><span class="m">after 7</span></div>
+          <div class="prow"><span class="n">9</span><span class="t">Docs</span><span class="sc"><i></i>Planned</span><span class="m">after 8</span></div>
+        </div>
+        <div class="sb"><span class="it">Expires in 21 h</span></div>
+      </div>
+      <div class="floor" style="width:760px">
+        <div class="win" style="width:704px;height:420px">
+          <div class="tb"><span class="name">Overnight on the home box</span></div>
+          <div class="body">
+            <div class="well"><div class="cap">Your turn · 1</div>
+              <div class="wr"><span class="t"><b>Step 7</b> · the fix needs holdspeak/db/, outside what the program owns</span><span class="vb"><span class="btn sm primary">Go on</span><span class="btn sm plate">Park</span><span class="btn sm plate">Later ▾</span></span></div></div>
+            <div class="board-cap">Steps</div>
+            <div class="nrow"><span class="dw" data-tone="ok"><span class="dot"></span></span><span class="t">5 · Loop watch</span><span class="m">Merged #1709</span></div>
+            <div class="nrow"><span class="dw" data-tone="ok"><span class="dot"></span></span><span class="t">6 · Fan-out off the loop</span><span class="m">Merged #1711</span></div>
+            <div class="nrow"><span class="dw" data-tone="ask"><span class="dot"></span></span><span class="t">7 · Store the stall reason</span><span class="m">Asks you · 3 h</span></div>
+            <div class="nrow"><span class="dw"><span class="dot"></span></span><span class="t">8 · The stall word on the board</span><span class="m">Planned</span></div>
+          </div>
+          <div class="sb"><span class="it">Expires in 21 h</span><span class="it">from Karol's MacBook Pro</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── Telegram ─────────────── -->
+  <section class="part" id="telegram">
+    <h2>The Telegram message</h2>
+    <p class="note">At most eight lines, plain text, the item's own choices and Later as inline buttons, and the page link. After the answer the message edits itself (right). Merge would ask a second tap in place. The chat is drawn neutrally here, not in Telegram's own look.</p>
+    <div class="phones">
+      <div class="tg">
+        <div class="hd"><span class="av">HS</span><div>HoldSpeak<small>bot</small></div></div>
+        <div class="msgs">
+          <div class="bub">Overnight on the home box · step 7 · waits 3 h<br>The fix needs holdspeak/db/, outside what the program owns.<br>Changed: 2 files in holdspeak/services/, check green.<br>Go on: the step may change holdspeak/db/.<br>Park: the other steps go on.<br>Open the page: <a>https://karols-macbook-pro.tailad9943.ts.net/b/Xr4…</a><span class="tm">06:30</span></div>
+          <div class="ikb"><div class="r" style="grid-template-columns:1fr 1fr 1fr"><span class="k">Go on</span><span class="k">Park</span><span class="k">Later ▾</span></div></div>
+        </div>
+        <div class="lbl">Drawn: the message as the bot sends it</div>
+      </div>
+      <div class="tg">
+        <div class="hd"><span class="av">HS</span><div>HoldSpeak<small>bot</small></div></div>
+        <div class="msgs">
+          <div class="bub">Overnight on the home box · step 7 · waits 3 h<br>The fix needs holdspeak/db/, outside what the program owns.<br>…<span class="tm">06:30</span></div>
+          <div class="ikb"><div class="r" style="grid-template-columns:1fr 1fr 1fr 1fr"><span class="k">1 h</span><span class="k">13:00</span><span class="k">Tonight</span><span class="k">Tomorrow</span></div></div>
+          <div class="bub me">later 2h<span class="tm">06:32</span></div>
+        </div>
+        <div class="lbl">Later: the second row, or a reply in words</div>
+      </div>
+      <div class="tg">
+        <div class="hd"><span class="av">HS</span><div>HoldSpeak<small>bot</small></div></div>
+        <div class="msgs">
+          <div class="bub">Overnight on the home box · step 7 · waits 3 h<br>The fix needs holdspeak/db/, outside what the program owns.<br>Open the page: <a>https://karols-macbook-pro.tailad9943.ts.net/b/Xr4…</a><br><b>Decided: Go on · 06:31</b><span class="tm">06:30 · edited</span></div>
+          <div class="bub">The hub stops stalling · step 3 · ready to merge<br>Merge #1712 to main?<span class="tm">07:02</span></div>
+          <div class="ikb"><div class="r" style="grid-template-columns:1fr 1fr"><span class="k">Merge</span><span class="k">Not now</span></div></div>
+        </div>
+        <div class="lbl">After: the edit, and Merge's second tap</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── the call ─────────────── -->
+  <section class="part" id="call">
+    <h2>The call that decides, as a transcript</h2>
+    <p class="note">The package read in his words, the choices named, "or later" on every question, the read-back once, then the decision. Later needs no read-back. The grey lines are what the ledger writes.</p>
+    <div class="call">
+      <div class="tb"><span class="name">Call · 12:10 · 2 min 14 s</span></div>
+      <div class="ln"><span class="tm">12:10:02</span><span class="who">HoldSpeak</span><span class="tx">Hello. Say your passphrase.</span></div>
+      <div class="ln him"><span class="tm">12:10:06</span><span class="who">You</span><span class="tx">(passphrase)</span></div>
+      <div class="ln"><span class="tm">12:10:09</span><span class="who">HoldSpeak</span><span class="tx">Two things wait on you. First: Overnight on the home box, step 7. The fix needs holdspeak/db/, outside what the program owns. The check is green. You can say go on, park, <mark>or later</mark>.</span></div>
+      <div class="ln him"><span class="tm">12:10:24</span><span class="who">You</span><span class="tx">Go on.</span></div>
+      <div class="ln"><span class="tm">12:10:26</span><span class="who">HoldSpeak</span><span class="tx">You said go on for step 7 of Overnight on the home box: the fix may change holdspeak/db/. <mark>Say yes to decide, or no.</mark></span></div>
+      <div class="ln him"><span class="tm">12:10:31</span><span class="who">You</span><span class="tx">Yes.</span></div>
+      <div class="ln"><span class="tm">12:10:32</span><span class="who">HoldSpeak</span><span class="tx">Decided. Second: The hub stops stalling, step 3 waits for your word: the People window at 393 has no clipped text. You can say met, not met, <mark>or later</mark>.</span></div>
+      <div class="ln sys"><span class="tm"></span><span class="who">Ledger</span><span class="tx">12:10 · Go on: the fix needs holdspeak/db/ · decided on a call · transcript</span></div>
+      <div class="ln him"><span class="tm">12:10:48</span><span class="who">You</span><span class="tx">Later, at five.</span></div>
+      <div class="ln"><span class="tm">12:10:50</span><span class="who">HoldSpeak</span><span class="tx">Later, at 17:00. I will ask again then. That is all: one decided, one later.</span></div>
+      <div class="ln sys"><span class="tm"></span><span class="who">Ledger</span><span class="tx">12:10 · Later, back at 17:00 · on a call</span></div>
+      <div class="ln sys"><span class="tm"></span><span class="who">If it drops</span><span class="tx">A call that ends between "go on" and "yes" decides nothing: "12:10 · Asked on a call · no answer". The item stays held.</span></div>
+    </div>
+  </section>
+
+  <!-- ─────────────── Settings ▸ Reach ─────────────── -->
+  <section class="part" id="settings">
+    <h2>Settings ▸ Reach at 1440</h2>
+    <p class="note">Notices becomes Reach: one rail item. Channels, when to reach you, quiet hours (moved here, the same store), the digest, and Later means. Telegram's fact row is the egress disclosure at the place where the choice is made. Pair Telegram shows the one-time code in place, no modal.</p>
+    <div class="desk" style="width:1100px;height:640px"><div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><span>Window</span><b>Settings</b><span class="grow"></span><span>Sat, Oct 31 <b>09:12</b></span></div>
+      <div class="win" style="left:40px;top:52px;width:1020px;height:570px">
+        <div class="tb"><span class="name">Settings</span></div>
+        <div class="body" style="display:flex">
+          <div class="rail"><span class="ri">You</span><span class="ri">Speak</span><span class="ri">Meetings</span><span class="ri on">Reach</span><span class="ri">Accounts</span><span class="ri">Calls</span><span class="ri">Agents</span><span class="ri">Desk</span><span class="ri">This Mac</span></div>
+          <div class="paper">
+            <div class="grp2"><div class="gh">Channels</div>
+              <div class="gr"><span class="k">Desk</span><span class="v"><span class="dw" data-tone="ok"><span class="dot"></span>Always</span></span><span></span></div>
+              <div class="gr"><span class="k">Phone app</span><span class="v"><span class="dw"><span class="dot"></span>No phone is paired</span></span><span class="btn sm plate">Open Calls settings</span></div>
+              <div class="gr"><span class="k">Telegram</span><span class="v"><span class="dw" data-tone="ok"><span class="dot"></span>Paired · Karol</span><span class="fact">Messages go through Telegram's servers</span></span><span class="btn sm plate">Unpair</span></div>
+              <div class="gr"><span class="k">Bot token</span><span class="v"><span class="dw" data-tone="ok"><span class="dot"></span>Stored in your keystore</span></span><span class="btn sm plate">Replace</span></div>
+              <div class="gr"><span class="k">Calls</span><span class="v"><span class="dw" data-tone="ok"><span class="dot"></span>Ready for calls</span></span><span class="btn sm plate">Open Calls settings</span></div>
+            </div>
+            <div class="grp2"><div class="gh">When to reach you</div>
+              <div class="gr"><span class="k">Telegram</span><span class="v"><span class="cyc" style="width:170px">At once</span></span><span></span></div>
+              <div class="gr"><span class="k">Core question</span><span class="v"><span class="cyc" style="width:170px">Message, then call</span></span><span></span></div>
+              <div class="gr"><span class="k">Program is done</span><span class="v"><span class="cyc" style="width:170px">Message</span></span><span></span></div>
+            </div>
+            <div class="grp2"><div class="gh">Quiet hours · digest · later</div>
+              <div class="gr"><span class="k">Quiet hours</span><span class="v"><span class="cyc" style="width:90px">22:00</span>to<span class="cyc" style="width:90px">07:00</span></span><span></span></div>
+              <div class="gr"><span class="k">Digest</span><span class="v"><span class="cyc" style="width:200px">End of quiet hours</span></span><span class="btn sm plate">Send the digest now</span></div>
+              <div class="gr"><span class="k">Later means</span><span class="v"><span class="cyc" style="width:200px">In 2 hours</span></span><span></span></div>
+            </div>
+            <div class="fold"><div class="fh"><span class="chev">▸</span>Cadence and the morning brief</div></div>
+          </div>
+        </div>
+        <div class="sb"><span class="it">Reach</span></div>
+      </div></div>
+    <div class="moment"><div class="say"><b>Pair Telegram, in place</b>The row unfolds with the one-time code and its time; the first chat that sends it is paired, and the row reads "Paired · Karol".</div>
+      <div class="crop" style="width:760px;padding:10px 16px">
+        <div class="gr" style="border:0"><span class="k">Telegram</span><span class="v"><span class="dw"><span class="dot"></span>Not paired</span></span><span class="btn sm plate open">Pair Telegram</span></div>
+        <div class="gr" style="border:0;padding-left:162px;grid-template-columns:1fr auto"><span class="v">Send <span class="codebox">/pair 482 913</span> to your bot <span class="fact">9 min left</span></span><span class="btn sm plate">Copy</span></div>
+      </div></div>
+  </section>
+
+  <!-- ─────────────── Needs you ─────────────── -->
+  <section class="part" id="needs">
+    <h2>The Needs you rows</h2>
+    <p class="note">No channel chips (owner 2026-10-25: egress labels are a relic). The row's line says where it was sent and whether a page is open; Revoke is there only while a page is open. A deferred item leaves the count and sits in a Later group at the end, with its time.</p>
+    <div class="crop nyw">
+      <div class="grp">Needs you · 2</div>
+      <div class="ny"><span class="dot" data-tone="ask"></span><span class="tx"><b>Overnight · step 7 asks you: the fix needs holdspeak/db/</b><span>Core question · 3 h · sent to Telegram 06:30 · page open 23 h</span></span><span class="vb"><span class="btn sm primary">Go on</span><span class="btn sm plate">Park</span><span class="btn sm plate">Later ▾</span><span class="btn sm">Revoke</span></span></div>
+      <div class="ny"><span class="dot" data-tone="ask"></span><span class="tx"><b>The hub stops stalling · step 3 waits for your word</b><span>Your word · 40 min · in the digest at 07:00</span></span><span class="vb"><span class="btn sm primary">Met</span><span class="btn sm plate">Unmet</span><span class="btn sm plate">Later ▾</span></span></div>
+      <div class="grp">Later</div>
+      <div class="ny later"><span class="dot"></span><span class="tx"><b>Platform sync · 4 proposals</b><span>Meeting · later, back at 13:00 · from Telegram</span></span><span class="vb"><span class="btn sm plate">Review</span></span></div>
+    </div>
+    <p class="annot">The Program window's Reach line: "Reach: Telegram at once, then a call after 10 min · quiet 22:00 to 07:00" and "Step 7 · sent to Telegram 06:30 · page open · Revoke".</p>
+  </section>
+
+  <section class="part">
+    <h2>What this canvas could not establish</h2>
+    <p class="note">The page's real fit at 393 with the kit's own Buttons (the 44 px area is drawn, not measured); Telegram's own rendering of eight lines and four buttons on a small phone; whether the phone's browser reaches the tailnet address; the owner's live verdict on direction A.</p>
+  </section>
+</main>
+</body>
+</html>
