@@ -285,8 +285,9 @@ TOOLS: list[dict[str, Any]] = [
                     "default) writes nothing and returns the change rows: op, where, field, before, after, verdict "
                     "(allowed, refused with code and reason, conflict, lowers) and lowers_bar; allowed_text is your text "
                     "with every refused change put back. dry_run false applies only when no row is refused or in "
-                    "conflict, and a row that lowers the bar only when its id is in allow_lower. A new step is "
-                    "'step +', a new requirement 'R+'; a started step takes a line with '+'. base: the text you read, "
+                    "conflict, and a row that lowers the bar only when its id is in allow_lower (the owner only). An "
+                    "agent's lower gate on a Planned step goes to the owner as a proposal (proposed); any other "
+                    "lower bar from an agent is refused (owner_required). A new step is 'step +', a new requirement 'R+'; a started step takes a line with '+'. base: the text you read, "
                     "so a field changed since then is a conflict. Never write 'waived'.",
      "inputSchema": _schema({
          "program_id": _ID, "text": {"type": "string", "minLength": 1, "maxLength": 200000},
@@ -294,7 +295,7 @@ TOOLS: list[dict[str, Any]] = [
          "preview": {"type": ["boolean", "null"], "description": "The same as dry_run (PG-LANG §12)."},
          "base": {"type": ["string", "null"], "maxLength": 200000},
          "allow_lower": {"type": ["array", "null"], "items": {"type": "string"},
-                         "description": "Ids of the rows that lower the bar that may apply."},
+                         "description": "The owner only: ids of the rows that lower the bar that may apply."},
      }, ["program_id", "text"])},
     {"name": "program.shape",
      "description": "Change a Program by one sentence (PG-LANG §4): the hub sends the sentence and the Program's text "

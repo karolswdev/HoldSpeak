@@ -3415,9 +3415,17 @@ class ProgramService:
                     what = row.where[0].upper() + row.where[1:]
                     row.reason = f"{what}'s {row.field} changed since you read it: now {moved.after or 'none'}."
         self._check_text_rows(principal, program, wire, rows)
-        allow = {str(item) for item in allow_lower or []}
+        asked = [str(item) for item in allow_lower or [] if str(item).strip()]
+        owner = _is_owner(principal)
+        if asked and not owner:
+            # §4.5, §7.2: agents propose; only the owner lowers the bar.
+            raise ProgramRefused("owner_required", f"Only the owner lowers the bar. You named: {', '.join(asked)}.",
+                                 status=403, rows=asked)
+        proposed = [] if owner else self._agent_bar_rows(wire, rows)
+        to_owner = {row.id for row in proposed}
+        allow = set(asked)
         blocked = [row for row in rows if row.verdict in ("refused", "conflict")
-                   or (row.verdict == "lowers" and row.id not in allow)]
+                   or (row.verdict == "lowers" and row.id not in allow and row.id not in to_owner)]
         answer: dict[str, Any] = {
             "program_id": program["id"], "changes": [row.to_wire() for row in rows], "patch": patch(base_text, text),
             "allowed_text": render(allowed_model(base_model, new_model, rows)), "applied": False,
@@ -3425,9 +3433,15 @@ class ProgramService:
             "refused": sum(1 for row in rows if row.verdict in ("refused", "conflict")),
             "lowers": [row.id for row in rows if row.lowers_bar and row.verdict == "lowers"],
         }
+        if not owner:
+            answer["proposed"] = sorted(to_owner)
         if dry_run or blocked or not rows:
             return answer
-        self._apply_text(principal, program, wire, base_model, new_model, rows)
+        rest = [row for row in rows if row.id not in to_owner]
+        if rest:
+            self._apply_text(principal, program, wire, base_model, new_model, rest)
+        if proposed:
+            answer["proposals"] = self._propose_text_rows(program, wire, proposed)
         # LANG5: rows a call left on the desk are against the old text.
         from .program_spoken import drop
 
@@ -3436,6 +3450,56 @@ class ProgramService:
         answer.update(applied=True, text=print_program(fresh), revision=int(fresh.get("revision") or 0),
                       program=fresh)
         return answer
+
+    def _agent_bar_rows(self, wire: Mapping[str, Any], rows: list[Any]) -> list[Any]:
+        """An agent's text never lowers the bar (§4.5, §7.2; PG-REQ §14.7).
+        A core question waits for him as a lower bar does (the shaper's
+        guard). A Planned or Ready step's lower gate goes to him as a
+        ``step_change`` proposal at every level; any other lower bar is
+        refused with its reason. Answers the rows that become proposals."""
+        from .program_shaper import guard
+
+        guard(rows, wire)
+        by_number = {int(step["ordinal"]): step for step in wire.get("steps") or []}
+        out = []
+        for row in rows:
+            if row.verdict != "lowers":
+                continue
+            data = row.data
+            step = by_number.get(data.get("number")) if data.get("kind") == "step" else None
+            core = row.code == "core_question"
+            if (step is not None and data.get("name") in _PROPOSED_STEP_FIELDS
+                    and step.get("state") in ("planned", "ready")):
+                row.code = "owner_proposal"
+                row.reason = (f"{row.reason} " if core and row.reason else "") + \
+                    "Only the owner lowers the bar. This goes to him as a proposal."
+                out.append(row)
+            elif core:
+                row.refuse("owner_required", f"{row.reason} Only the owner answers this.")
+            else:
+                row.refuse("owner_required", f"Only the owner lowers the bar ({row.where}, {row.field}).")
+        return out
+
+    def _propose_text_rows(self, program: Mapping[str, Any], wire: Mapping[str, Any],
+                           rows: list[Any]) -> list[int]:
+        """The agent's lower gates as one ``step_change`` proposal per step
+        (PG-REQ §6): his Apply writes them, his Skip drops them."""
+        ids = {int(step["ordinal"]): step["id"] for step in wire.get("steps") or []}
+        fields_of: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            fields_of.setdefault(ids[row.data["number"]], {})[_PROPOSED_STEP_FIELDS[row.data["name"]]] = \
+                row.data["value"]
+        made: list[int] = []
+        with _LOCK:
+            for step_id, fields in fields_of.items():
+                step = self.store.get_step(step_id) or {}
+                title = f"The orchestrator {_change_words(step, fields)} (this lowers the bar)"
+                made.append(self.store.add_checkpoint(step_id=step_id, program_id=program["id"], at=self._clock(),
+                                                      by="agent", line=title[:400], kind="step_change",
+                                                      undo={"title": title, "fields": dict(fields)}))
+            self._touch(self._program(program["id"]))
+            self.changed(program["id"], verb="text", text=True)
+        return made
 
     def _apply_text(self, principal: Any, program: Mapping[str, Any], wire: Mapping[str, Any], base_model: Any,
                     new_model: Any, rows: list[Any]) -> None:
@@ -4276,6 +4340,10 @@ _CHANGE_FIELDS = {
     "review_depth": "review_depth", "gate_merge": "gate_merge", "for_person_id": "for_person", "may_call": "may_call",
     "prefer_idle": "prefer_idle", "budget_tokens": "budget", "before": "position",
 }
+#: The text's step fields whose lower bar an agent may propose (PG-LANG
+#: §4.5; a core ``owns`` or ``may call`` too) -> the ``change_step`` field.
+_PROPOSED_STEP_FIELDS = {"check": "gate_check", "review": "gate_review", "depth": "review_depth",
+                         "merge": "gate_merge", "may_call": "may_call", "owns": "owns"}
 #: The stored key of a change field (for an overturn's "before" values).
 _STORE_KEY = {"brief": "brief_markdown"}
 
