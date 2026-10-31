@@ -43,7 +43,7 @@ and **Settings > This Mac > Engines** before you run a call.
 | Write a Note or add a task | Post a send or other held egress | Change an engine or account |
 | Propose a decision or add Project work | A control-mode hold | Decide for you without your spoken yes |
 | Prepare a send | Start a program | Call another person |
-| Say how a program is doing | | Make a program |
+| Say how a program is doing | Change a program by your words | Make a program |
 
 A program is named by its words: "start the overnight program" finds the
 program whose title or template has those words. HoldSpeak says "I want to
@@ -53,6 +53,13 @@ one or two sentences: its state, how many steps are done, what waits on you
 and the last decision. When no program has that name, or the program runs
 already, HoldSpeak says so and asks nothing. It never makes a program on a
 call. The Line and ai-phone give a call the same tools.
+
+"Change the overnight program: add a check to every step" shapes the program
+by your sentence. HoldSpeak reads each change back in one sentence and asks
+"Apply? Say yes, no, or later." Yes applies the changes that can apply; a
+change that lowers the bar never applies from a call and waits for you on the
+desk. Later puts every change in the program's change well on the desk. See
+[Programs](programs.md#change-it-on-a-call).
 
 The exact tool palette and source scope apply to the call turn. When a held
 operation is needed, the caller hears the question. The Calls window can show

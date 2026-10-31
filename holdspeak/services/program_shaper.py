@@ -426,8 +426,15 @@ def _rows_for(service: Any, principal: Any, program: Mapping[str, Any], wire: Ma
 # ── the shaper ───────────────────────────────────────────────────────
 
 def shape(service: Any, principal: Any, program_id: str, sentence: Any, *,
-          invoke_fn: Optional[Callable[..., tuple[Optional[str], str]]] = None) -> ShapeResult:
-    """One sentence → one call → the change rows (nothing is written)."""
+          invoke_fn: Optional[Callable[..., tuple[Optional[str], str]]] = None,
+          pending: Optional[str] = None) -> ShapeResult:
+    """One sentence → one call → the change rows (nothing is written).
+
+    LANG5: ``pending`` is the text of the rows that wait in the change well
+    (an earlier sentence's ``proposed_text``). The engine reads it in place
+    of the current text, so the next sentence adds to those rows; the rows
+    stay against the current text, so the well holds every sentence's rows
+    until Apply or Not this."""
     words = " ".join(str(sentence or "").split())
     if not words:
         raise _refused("sentence_required", "Say or type what to change.", status=400)
@@ -440,6 +447,14 @@ def shape(service: Any, principal: Any, program_id: str, sentence: Any, *,
 
     printed = print_program(wire)
     text = stripped_text(printed)
+    if pending is not None and str(pending).strip():
+        from .program_text import parse_program_text, render
+
+        waiting = parse_program_text(str(pending))
+        if waiting.errors or not waiting.head.title:
+            raise _refused("pending_unreadable", "The changes that wait could not be read. Press Not this, then say "
+                                                 "it again.", status=400)
+        text = render(waiting)
     frozen = frozen_list(wire)
     ground = grounding(service, wire)
     capability, revision, profile, label = resolve_engine(service.db)
@@ -502,14 +517,15 @@ def _answer(service: Any, principal: Any, program: Mapping[str, Any], wire: Mapp
 
 
 def shape_program(service: Any, principal: Any, program_id: str, sentence: Any, *, apply: bool = False,
-                  invoke_fn: Optional[Callable[..., tuple[Optional[str], str]]] = None) -> dict[str, Any]:
+                  invoke_fn: Optional[Callable[..., tuple[Optional[str], str]]] = None,
+                  pending: Optional[str] = None) -> dict[str, Any]:
     """The REST and MCP answer: the rows of :func:`shape` in the
     ``text_apply`` answer shape (the well draws it as it is), the engine and
     its time; with ``apply`` at YOLO, the allowed rows applied and the
     Decided for you row."""
     from .program_text import allowed_model, parse_program_text, print_program, render
 
-    result = shape(service, principal, program_id, sentence, invoke_fn=invoke_fn)
+    result = shape(service, principal, program_id, sentence, invoke_fn=invoke_fn, pending=pending)
     program = service._program(program_id)
     wire = service.get(principal, program["id"])
     # The rows are against the text the engine read: a field that moved
@@ -569,6 +585,41 @@ def shape_program(service: Any, principal: Any, program_id: str, sentence: Any, 
     out.update(_answer(service, principal, program, fresh, after, residual, rest))
     out.update(applied=True, program=fresh, text=after, base=after, proposed_text=residual, decision=decision,
                applied_rows=[row.to_wire() for row in auto])
+    return out
+
+
+def apply_allowed(service: Any, principal: Any, program_id: str, base: str, proposed: str) -> dict[str, Any]:
+    """LANG5, a call's yes: the allowed rows of a shaped answer applied
+    through ``text_apply`` (his yes is his press: no Decided for you row);
+    the rows that lower the bar or are core questions are put back and come
+    back as ``waiting`` (the ``text_apply`` answer shape, against the text as
+    it is now) for the change well on the desk. ``applied`` False: nothing
+    could apply (a row changed since the read back)."""
+    from .program_text import allowed_model, parse_program_text, print_program, render
+
+    program = service._program(program_id)
+    wire = service.get(principal, program["id"])
+    _b, _n, rows = _rows_for(service, principal, program, wire, base, proposed)
+    auto = [row for row in rows if row.verdict == "allowed"]
+    waiting = [row for row in rows if row.verdict == "lowers"]
+    numbers = {int(step["ordinal"]): step["id"] for step in wire.get("steps") or []}
+    if not auto:
+        return {"applied": False, "applied_rows": [], "waiting": None}
+    auto_text = render(allowed_model(parse_program_text(base), parse_program_text(proposed), rows, allow={"\x00"}))
+    applied = service.text_apply(principal, program["id"], auto_text, dry_run=False, base=base)
+    if not applied.get("applied"):
+        return {"applied": False, "applied_rows": [], "waiting": None}
+    fresh = service.get(principal, program["id"])
+    out: dict[str, Any] = {"applied": True, "applied_rows": [row.to_wire() for row in auto], "program": fresh,
+                           "waiting": None}
+    if waiting:
+        after = print_program(fresh)
+        residual = render(_residual(parse_program_text(after), parse_program_text(proposed), waiting, numbers, fresh))
+        _b, _n, rest = _rows_for(service, principal, service._program(program["id"]), fresh, after, residual)
+        if rest:
+            answer = _answer(service, principal, program, fresh, after, residual, rest)
+            answer.update(base=after, proposed_text=residual)
+            out["waiting"] = answer
     return out
 
 

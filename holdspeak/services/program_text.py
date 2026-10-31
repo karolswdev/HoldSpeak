@@ -1754,6 +1754,12 @@ def allowed_model(base: ProgramText, proposed: ProgramText, rows: list[Change],
             if step is not None and number in base_by:
                 extra = step.amendments[len(base_by[number].amendments):]
                 step.amendments = list(base_by[number].amendments) + extra
+        elif row.op == "read" and row.field == "requirement" and row.id.endswith(".unknown"):
+            # LANG5: "R4" for a requirement the base has no R4 for (a real
+            # engine's slip for "R+"): put back is the line left out.
+            rid = int(row.where[1:])
+            for held in [out.every_step, out.at_end] + [step.requirements for step in out.steps]:
+                held[:] = [item for item in held if not (item.rid == rid and item.line == row.line)]
         elif row.op == "read" and row.field in ("step", "requirement", "after", "line"):
             continue
     return out

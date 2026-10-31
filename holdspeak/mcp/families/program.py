@@ -299,11 +299,16 @@ TOOLS: list[dict[str, Any]] = [
                     "latency_ms. Nothing is written: apply with program.text_apply (text: allowed_text or "
                     "proposed_text, base: base). apply true applies the allowed rows at once only at YOLO and "
                     "lists them under Decided for you (Overturn); a row that lowers the bar or is a core question "
-                    "never applies here. The engine never waives.",
+                    "never applies here. The engine never waives. On a call (LANG5): name the Program by its words "
+                    "(name) and give his sentence; the call reads the changes back and waits for his spoken yes; "
+                    "say the answer's spoken line.",
      "inputSchema": _schema({
-         "program_id": _ID, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
+         **_BY_NAME, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
          "apply": {"type": ["boolean", "null"], "description": "At YOLO only: apply the allowed rows at once."},
-     }, ["program_id", "sentence"])},
+         "pending": {"type": ["string", "null"], "maxLength": 200000,
+                     "description": "The proposed_text of rows that wait: the engine reads it, so this sentence "
+                                    "adds to them."},
+     }, ["sentence"])},
     {"name": "program.plan_draft",
      "description": "Draft a Program in Drafting from its goal (PG-LANG §5): the hub sends the goal (or the Note it "
                     "came from), the template's shape, the repository map, the Project's open actions and the budget "
@@ -416,7 +421,24 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                                   template=args.get("template"), budget=args.get("budget"), text=args.get("text"),
                                   split=args.get("split"))
     if name == "program.shape":
-        return service.shape(principal, str(args["program_id"]), args.get("sentence"), apply=args.get("apply") is True)
+        from holdspeak.services.program_service import ProgramRefused
+
+        try:
+            found = service.find(principal, program_id=args.get("program_id"), name=args.get("name"))
+        except ProgramRefused as refused:
+            if str(args.get("name") or "").strip() and refused.code == "program_not_found":
+                said = " ".join(str(args.get("name")).split())
+                return {"found": False, "applied": False,
+                        "spoken": f"There is no program with the name {said}. Nothing changed."}
+            raise
+        # LANG5: on a call his spoken answer to the read back runs here.
+        from holdspeak.services import program_spoken
+
+        held = program_spoken.take(found["id"], args.get("sentence"))
+        if held is not None:
+            return program_spoken.run(service, principal, held)
+        return service.shape(principal, str(found["id"]), args.get("sentence"), apply=args.get("apply") is True,
+                             pending=args.get("pending") if isinstance(args.get("pending"), str) else None)
     if name in ("program.start", "program.get"):
         return _by_name(service, name, args, principal)
     if name == "program.park":

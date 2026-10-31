@@ -450,6 +450,24 @@ Point to a frozen field to see why:
 
 Your change applies at once. A change from an orchestrating agent follows the Control level: at Secure and Normal, a Your turn row asks you (**Apply** or **Skip**, **Send** or **Skip** for an amendment); at YOLO, HoldSpeak applies it and writes it under Decided for you.
 
+### Change it by voice
+
+Press the mic in **Change the program**, say the change, and press the mic again. HoldSpeak puts the words in the bar and sends them at once; you do not press **Shape**. While the engine reads, the bar shows "Heard:" and your words. The change rows open in the change well.
+
+Say the next change while the rows wait: HoldSpeak sends it with them, and the well then holds the rows of each sentence. The head of the well keeps one line for each sentence. **Apply** applies all of them; **Not this** removes all of them.
+
+When the engine asks a question back, the question shows under the bar and the mic changes to **Speak your answer**. Your answer goes with your first sentence.
+
+### Change it on a call
+
+On a call, say "change the overnight program: add a check that the People window fits at 393 to every step". HoldSpeak reads the program, then reads each change back in one sentence and asks "Apply? Say yes, no, or later."
+
+- **Yes** applies the changes that can apply. A change that lowers the bar never applies from a call: HoldSpeak says "waits for you on the desk" and puts it in the program's change well.
+- **Later** applies nothing. All the changes wait in the program's change well, with "On a call" in its head.
+- **No** applies nothing and keeps nothing.
+
+The changes that wait stay until you press **Apply** or **Not this**, or until the hub restarts.
+
 ## The handover note
 
 Each program has one desk note, "Program: <title>". HoldSpeak writes it again after each change. You do not edit it. It has:

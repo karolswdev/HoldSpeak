@@ -278,6 +278,7 @@ export function StringGadget({
   inputProps,
   micStartSignal,
   micDraftScope,
+  onDictation,
   caption,
 }: {
   label: string;
@@ -293,6 +294,11 @@ export function StringGadget({
   micStartSignal?: number;
   /** PHILO-14 C2: the mic's draft scope (a recovered capture lands here). */
   micDraftScope?: string;
+  /** PG-LANG LANG5: the mic's finished dictation (the end of the capture).
+   *  Given, the words go here and not through `onChange`: a face that acts
+   *  on a spoken sentence (the shaping bar sends it at once) tells a
+   *  dictation from typing. */
+  onDictation?(text: string): void;
   /** Every text well carries the speak-to-fill mic unless secret. */
   mic?: boolean;
   /** HS-200-13: the mic's own accessible name when the face names it
@@ -342,7 +348,7 @@ export function StringGadget({
       {mic && type !== "password" ? (
         <MicButton
           label={micLabel ?? `Speak ${label}`}
-          onText={(text) => onChange(text)}
+          onText={(text) => (onDictation ? onDictation(text) : onChange(text))}
           startSignal={micStartSignal}
           draftScope={micDraftScope}
         />

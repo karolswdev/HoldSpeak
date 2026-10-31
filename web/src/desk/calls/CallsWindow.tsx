@@ -102,6 +102,7 @@ const EFFECT_WORDS: Record<CallResult["effect"], string> = {
   prepared: "Prepared",
   sent: "Sent on your yes",
   started: "Started on your yes",
+  changed: "Changed on your yes",
 };
 
 /** A result's kind mark: the toolbar glyph of its kind (kit ToolGlyph). */
