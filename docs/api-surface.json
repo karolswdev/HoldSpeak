@@ -5587,6 +5587,14 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/plan/draft",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/proposals/{proposal_id}/decide",
       "methods": [
         "POST"
@@ -5646,6 +5654,14 @@
       "path": "/api/programs/{program_id}/shape",
       "methods": [
         "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/shape/held",
+      "methods": [
+        "DELETE"
       ],
       "module": "web.routes.programs",
       "consumers": []

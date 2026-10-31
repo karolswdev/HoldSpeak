@@ -12,7 +12,7 @@
   "check_command": null,
   "checkpoints": [
     {
-      "at": "2026-10-31T18:56:13.541894+00:00",
+      "at": "2026-10-31T21:00:30.521718+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-10-31T18:56:13.536760+00:00",
+      "at": "2026-10-31T21:00:30.513471+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -51,7 +51,7 @@
   "closed_at": "2026-10-28T18:14:50Z",
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-10-31T18:56:13.536408+00:00",
+  "created_at": "2026-10-31T21:00:30.512973+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -78,10 +78,10 @@
     "prs": 3,
     "words": "Merged 3 PRs · 28 Oct"
   },
-  "id": "program-4c574a630b60",
+  "id": "program-926e0b49cddb",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-10-31T18:56:13.541894+00:00",
+    "at": "2026-10-31T21:00:30.521718+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -101,8 +101,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-4c574a630b60",
-  "note_window": "pullout:note:program-program-4c574a630b60",
+  "note_id": "program-program-926e0b49cddb",
+  "note_window": "pullout:note:program-program-926e0b49cddb",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -161,6 +161,7 @@
       "elapsed_seconds": null,
       "ended_at": "2026-10-28T15:36:11Z",
       "engine": null,
+      "estimate": null,
       "findings": [],
       "for_person": null,
       "for_person_id": null,
@@ -198,7 +199,7 @@
         "pr_number": 1584,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1584"
       },
-      "id": "step-cecfad6aa7b3",
+      "id": "step-7cce3a5f3274",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -245,7 +246,7 @@
         "merge"
       ],
       "title": "The dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing",
-      "updated_at": "2026-10-31T18:56:13.541304+00:00",
+      "updated_at": "2026-10-31T21:00:30.520081+00:00",
       "worktree": null
     },
     {
@@ -274,6 +275,7 @@
       "elapsed_seconds": null,
       "ended_at": "2026-10-28T16:05:42Z",
       "engine": null,
+      "estimate": null,
       "findings": [],
       "for_person": null,
       "for_person_id": null,
@@ -311,7 +313,7 @@
         "pr_number": 1585,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1585"
       },
-      "id": "step-30c73b2c5148",
+      "id": "step-01aabaeb8308",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -358,7 +360,7 @@
         "merge"
       ],
       "title": "The hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop",
-      "updated_at": "2026-10-31T18:56:13.541304+00:00",
+      "updated_at": "2026-10-31T21:00:30.520081+00:00",
       "worktree": null
     },
     {
@@ -387,6 +389,7 @@
       "elapsed_seconds": null,
       "ended_at": "2026-10-28T18:14:50Z",
       "engine": null,
+      "estimate": null,
       "findings": [],
       "for_person": null,
       "for_person_id": null,
@@ -424,7 +427,7 @@
         "pr_number": 1598,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1598"
       },
-      "id": "step-e8c18774f07d",
+      "id": "step-c4f5855595e8",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -471,14 +474,14 @@
         "merge"
       ],
       "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard",
-      "updated_at": "2026-10-31T18:56:13.541304+00:00",
+      "updated_at": "2026-10-31T21:00:30.520081+00:00",
       "worktree": null
     }
   ],
   "template": null,
   "title": "The hub stops stalling",
   "total": 3,
-  "updated_at": "2026-10-31T18:56:13.541970+00:00",
+  "updated_at": "2026-10-31T21:00:30.521884+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

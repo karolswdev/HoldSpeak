@@ -56,13 +56,13 @@ PROGRAM_REF = "program:"
 
 #: The held items a page answers (§3 "The held item"); an agent's question
 #: (``answer``), a review ask (it prepares a send) and Close stay on the desk.
-BRIEFABLE = frozenset({"core", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word",
+BRIEFABLE = frozenset({"core", "commit", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word",
                        "requirement_left", "requirement_proposed", "step_change", "step_amend"})
 #: A choice the page does not offer yet: a waive needs his typed reason.
 _DESK_ONLY_CHOICES = frozenset({"waive"})
 
 KIND_WORDS = {
-    "core": "Core question", "merge": "Merge ask", "finding": "Finding", "parked": "Parked step",
+    "core": "Core question", "commit": "Held commit", "merge": "Merge ask", "finding": "Finding", "parked": "Parked step",
     "limited": "Agent at its limit", "race": "Race winner", "add_step": "Added step",
     "requirement_word": "Your word", "requirement_left": "Requirement left",
     "requirement_proposed": "Proposed requirement", "step_change": "Proposed change",
@@ -73,6 +73,8 @@ KIND_WORDS = {
 CHOICE_WORDS: dict[str, dict[str, tuple[str, str]]] = {
     "core": {"go_on": ("Go on", "The step goes on with this change."),
              "park": ("Park", "The step stops. The other steps go on.")},
+    "commit": {"allow": ("Allow the commit", "The agent's change is committed. The check runs."),
+               "not_now": ("Not now", "The step stops. The change stays in the worktree.")},
     "merge": {"merge": ("Merge", "HoldSpeak merges the PR."), "not_yet": ("Not yet", "The PR stays open.")},
     "finding": {"fix_now": ("Fix now", "The agent fixes it in this step."),
                 "later": ("Make a task", "It becomes a task for later."),

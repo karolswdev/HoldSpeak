@@ -28,7 +28,7 @@ sys.path.insert(0, str(REPO))
 from holdspeak.services import program_shaper  # noqa: E402
 from holdspeak.services.program_text import print_program  # noqa: E402
 from tests.integration.program_rig import Rig  # noqa: E402
-from tests.integration.program_shape_seed import SENTENCES, program, seed  # noqa: E402
+from tests.integration.program_shape_seed import CHAINED, NORMAL, SENTENCES, program, seed  # noqa: E402
 
 OUT = REPO / "tests" / "fixtures" / "program_shape_reply.json"
 
@@ -57,26 +57,36 @@ def main() -> None:
     args = parser.parse_args()
     kept = json.loads(OUT.read_text(encoding="utf-8"))["replies"] if args.only and OUT.exists() else {}
     with tempfile.TemporaryDirectory(prefix="program-shape-") as tmp:
-        rig = Rig(Path(tmp))
-        pid = seed(rig)
-        wire = program(rig, pid)
-        text = program_shaper.stripped_text(print_program(wire))
-        ground = program_shaper.grounding(rig.service, wire)
-        frozen = program_shaper.frozen_list(wire)
+        texts = {}
+        for control in ("yolo", "normal"):
+            (Path(tmp) / control).mkdir()
+            rig = Rig(Path(tmp) / control)
+            pid = seed(rig, control=control)
+            wire = program(rig, pid)
+            texts[control] = (program_shaper.stripped_text(print_program(wire)),
+                              program_shaper.grounding(rig.service, wire), program_shaper.frozen_list(wire))
         replies = dict(kept)
         for key, sentence in SENTENCES.items():
             if args.only and key not in args.only:
                 continue
-            system, user = program_shaper.messages(sentence, text, frozen, ground)
-            first = _send(args, text, system, user)
+            text, ground, frozen = texts["normal" if key in NORMAL else "yolo"]
+            # LANG5: a chained sentence reads the text the one before answered
+            # (the rows that wait in the well), as the hub sends it (``pending``).
+            over = text
+            if key in CHAINED:
+                earlier = replies[CHAINED[key]]
+                before, _error = program_shaper.read_answer((earlier.get("retry") or earlier)["reply_text"])
+                over = program_shaper.stripped_text(before["text"]) if before and before["text"] else text
+            system, user = program_shaper.messages(sentence, over, frozen, ground)
+            first = _send(args, over, system, user)
             entry = {"sentence": sentence, "system_prompt": system, "user_prompt": user, **first}
             # The hub's one retry: an answer the parser cannot read goes back
             # with the parser's words quoted (program_shaper.shape).
             _answer, error = program_shaper.read_answer(first["reply_text"])
             if error:
-                _system, retry_user = program_shaper.messages(sentence, text, frozen, ground, error=error)
+                _system, retry_user = program_shaper.messages(sentence, over, frozen, ground, error=error)
                 entry["parse_error"] = error
-                entry["retry"] = {"user_prompt": retry_user, **_send(args, text, system, retry_user)}
+                entry["retry"] = {"user_prompt": retry_user, **_send(args, over, system, retry_user)}
             replies[key] = entry
             print(key, entry["seconds"], "s", "(retried)" if error else "", "\n", entry["reply_text"], "\n")
     OUT.write_text(json.dumps({
@@ -85,7 +95,8 @@ def main() -> None:
                    "Never hand-edit it.",
         "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "engine": {"base_url": args.base_url, "model": args.model},
-        "program_text": text,
+        "program_text": texts["yolo"][0],
+        "program_text_normal": texts["normal"][0],
         "replies": replies,
     }, indent=1, ensure_ascii=False) + "\n")
 

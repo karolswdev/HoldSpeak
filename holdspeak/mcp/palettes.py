@@ -204,7 +204,9 @@ CALL_HELD_EGRESS: frozenset[str] = frozenset({"channel.send", "nudge.send"})
 #: effect, so it holds for his spoken yes as a send does; the read answers
 #: "how is the phone program doing". Both name a Program by its words.
 CALL_PROGRAM_READS: frozenset[str] = frozenset({"program.get"})
-CALL_HELD_PROGRAM: frozenset[str] = frozenset({"program.start"})
+#: PG-LANG LANG5 (§10): "change the overnight program: …" is program.shape,
+#: held too: the call reads the changes back and his yes applies them.
+CALL_HELD_PROGRAM: frozenset[str] = frozenset({"program.start", "program.shape"})
 #: Every tool a call's turn holds for his spoken yes (``held_egress=``).
 CALL_HELD: frozenset[str] = CALL_HELD_EGRESS | CALL_HELD_PROGRAM
 

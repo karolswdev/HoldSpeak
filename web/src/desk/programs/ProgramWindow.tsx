@@ -37,7 +37,7 @@ import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
-import { closeProgram, decide, decideProposal, decideRequirement, overturn, planProgram, programVerb, race, readProgram, updateProgram,
+import { closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, readProgram, updateProgram,
   useProgram, type RequirementChoice } from "./api";
 import { briefable, copyPageLink, pageWords, programRef, revokePage } from "../reach";
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
@@ -48,6 +48,7 @@ import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
 import { ProgramChangeWell, ProgramTextPane, landedSteps, useProgramText, type TextProposal } from "./ProgramText";
 import { ShapeBar, ShapedWell, engineFact } from "./ShapeBar";
+import { PlanLine, usePlanIt } from "./PlanDraft";
 import type {
   Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
@@ -60,6 +61,8 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   parked: [{ choice: "resume", word: "Resume", primary: true }, { choice: "skip", word: "Skip" }],
   ask_review: [{ choice: "prepare", word: "Send…", primary: true }],
   core: [{ choice: "go_on", word: "Go on", primary: true }, { choice: "park", word: "Park" }],
+  // 2026-10-31: the step's agent's commit, held by the gate or not made.
+  commit: [{ choice: "allow", word: "Allow the commit", primary: true }, { choice: "not_now", word: "Not now" }],
   race: [{ choice: "pick", word: "Pick", primary: true }],
   add_step: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
   close: [{ choice: "close", word: "Close", primary: true }],
@@ -508,6 +511,8 @@ export function ProgramBody({ programId }: { programId: string }) {
   const [settling, setSettling] = useState(false);
   const [landed, setLanded] = useState<Record<string, "born" | "changed">>({});
   const [shaped, setShaped] = useState<ShapeAnswer | null>(null);
+  // LANG7: Plan it drafts the goal; the rows open in the change well.
+  const planner = usePlanIt(programId, program, setProposal);
   useEffect(() => {
     if (!Object.keys(landed).length) return;
     const timer = window.setTimeout(() => setLanded({}), 2600);
@@ -567,14 +572,31 @@ export function ProgramBody({ programId }: { programId: string }) {
     } else {
       setShaped(null);
     }
+    // LANG5: the next sentence was shaped over the rows that wait, so its
+    // answer holds them all; the say head keeps each sentence's line.
+    const earlier = !answer.applied && proposal?.source === "sentence" ? proposal.say : "";
     setProposal(answer.changes.length ? {
-      source: "sentence", text: answer.proposed_text, base: answer.base, answer, say: answer.say, fact: engineFact(answer),
+      source: "sentence", text: answer.proposed_text, base: answer.base, answer, fact: engineFact(answer),
+      say: [earlier, answer.say].filter(Boolean).join("; "),
+      // A call's rows the sentence added to: Not this still drops them on the hub.
+      fromCall: Boolean(earlier && proposal?.fromCall) || undefined,
     } : null);
   };
   const notThis = () => {
     if (proposal?.source === "text") text.revert();
+    if (proposal?.fromCall) void dropHeldShape(programId).then(apply).catch(() => undefined);
     setProposal(null);
   };
+  // LANG5: rows a call left for his press open the well (once per set).
+  const heldShape = program?.held_shape ?? null;
+  const heldKey = heldShape ? `${heldShape.at ?? ""}:${heldShape.base}:${heldShape.proposed_text}` : "";
+  useEffect(() => {
+    if (!heldShape || proposal) return;
+    setProposal({
+      source: "sentence", fromCall: true, text: heldShape.proposed_text, base: heldShape.base, answer: heldShape,
+      say: heldShape.say, fact: `On a call · ${engineFact(heldShape)}`,
+    });
+  }, [heldKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A new answer is a new well (his presses on the old rows do not carry).
   const wellKey = proposal ? [proposal.source, proposal.answer.revision, proposal.text, proposal.answer.changes.map((row) => row.id + row.verdict).join()].join(":") : "";
@@ -611,6 +633,7 @@ export function ProgramBody({ programId }: { programId: string }) {
       key: "met", text: met.met || met.unmet ? `${met.met} of ${met.total} met` : countWords(met.total, "requirement"), tick: met.met || null,
       lamp: allMet ? "ok" as const : undefined, pulse: allMet ? met.met : undefined, testId: "programs-status-met",
     } : null,
+    planner.busy ? { key: "planning", lamp: "info" as const, live: true, text: planner.engine ? `Planning · ${planner.engine}` : "Planning", testId: "programs-status-planning" } : null,
     program.check_command ? { key: "check", text: <span>{`check: ${checkName(program)}`}</span> } : null,
     // The ladder's own word (`YOLO` keeps its capitals: an element, not a wire token).
     { key: "control", text: <span>{`control ${program.control_word || controlWord(program.control)}`}</span>, testId: "programs-status-control" },
@@ -664,13 +687,17 @@ export function ProgramBody({ programId }: { programId: string }) {
         </span>
       }>
         {verb ? (
-          <Button dense variant={verb === "start" ? "primary" : "secondary"} loading={busy === verb} disabled={Boolean(busy) || (verb === "start" && !steps.length && !(draft ?? []).length)}
+          <Button dense variant={verb === "start" && (steps.length || !drafting) ? "primary" : "secondary"} loading={busy === verb} disabled={Boolean(busy) || (verb === "start" && !steps.length && !(draft ?? []).length)}
             onClick={() => void run(verb, () => programVerb(program.id, verb), verb === "start" ? "The program did not start" : verb === "park" ? "The program was not parked" : "The program did not resume")}
             data-testid={`program-${verb}`}>
             {verb === "start" ? "Start" : verb === "park" ? "Park" : "Resume"}
           </Button>
         ) : program.note_window || program.note_id ? (
           <Button dense variant="secondary" onClick={() => openRef(`note:${program.note_id}`)} data-testid="program-open-note">Open note</Button>
+        ) : null}
+        {drafting ? (
+          <Button dense variant={steps.length ? "secondary" : "primary"} loading={planner.busy} disabled={planner.busy || Boolean(busy)}
+            onClick={() => void planner.plan(goal ?? program.goal)} data-testid="program-plan-it">Plan it</Button>
         ) : null}
         {program.state !== "done" ? (
           <Button dense variant="ghost" loading={busy === "add" || busy === "plan"} disabled={Boolean(busy)} onClick={addStep} data-testid="program-add-step">Add step</Button>
@@ -688,7 +715,10 @@ export function ProgramBody({ programId }: { programId: string }) {
         ) : null}
         <ViewMore view={view} onView={setView} />
       </Toolbar>
-      {program.state !== "done" ? <ShapeBar program={program} onAnswer={onShaped} onOpenText={() => setView("text")} /> : null}
+      {program.state !== "done" ? (
+        <ShapeBar program={program} pending={proposal?.source === "sentence" ? proposal.text : null}
+          onAnswer={onShaped} onOpenText={() => setView("text")} />
+      ) : null}
       <div className="pg-body">
         {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
         <YourTurnWell program={program} onDecided={apply} />
@@ -700,7 +730,8 @@ export function ProgramBody({ programId }: { programId: string }) {
         {proposal ? (
           <ProgramChangeWell key={wellKey}
             programId={program.id} proposal={proposal} settling={settling}
-            onApplied={applied} onAnswer={setProposal} onDismiss={notThis} />
+            onApplied={applied} onAnswer={setProposal} onDismiss={notThis}
+            onSplit={proposal.source === "plan" ? (place) => planner.split(proposal, place) : undefined} />
         ) : null}
         {view === "text" ? (
           <ProgramTextPane text={text} proposal={proposal}
@@ -710,7 +741,10 @@ export function ProgramBody({ programId }: { programId: string }) {
           <>
             <div className="pg-goal">
               <PadGadget label="Goal" value={goal ?? program.goal} rows={2} onChange={setGoal}
+                // Return plans it; Shift+Return is a new line.
+                onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void planner.plan(goal ?? program.goal); } }}
                 inputProps={{ onBlur: () => { if (goal != null && goal !== program.goal) void run("goal", () => updateProgram(program.id, { goal }), "The goal was not saved"); } }} />
+              <PlanLine planner={planner} onOpenText={() => setView("text")} />
             </div>
             <RequirementsBoard program={program} onApplied={apply} />
             <ListView label="Steps" className="pg-board" data-testid="programs-board">
@@ -720,6 +754,7 @@ export function ProgramBody({ programId }: { programId: string }) {
               <ul className="kit-listrows">
                 {(draft ?? []).map((step, index) => (
                   <DraftStepRow key={`${index}-${step.id ?? ""}`} index={index} step={step} count={(draft ?? []).length}
+                    size={steps[index]?.estimate} landed={steps[index] ? landed[steps[index].id] : undefined}
                     selected={selected === String(index)} onSelect={() => setSelected(String(index))}
                     engineLabel={steps[index]?.engine?.short || steps[index]?.engine?.label}
                     onChange={(next, commit) => {

@@ -375,6 +375,16 @@ name the screen reader says. HS-201-12 gave `PadGadget` the same prop with
 the same default, so both text species answer to one rule (the Thought
 window's answer pad names its mic `Speak your answer`).
 
+## StringGadget.onDictation (PG-LANG LANG5, 2026-10-31)
+
+`onDictation?(text)` takes the mic's finished dictation (the end of the
+capture). When it is given, the words go there and not through `onChange`,
+so a face can tell a spoken sentence from typed keys: the Program window's
+shaping bar puts the words in its well and sends them to shape at once
+(PROGRAM-LANGUAGE §4.2: "the end of a held press sends"). Without it the
+mic fills the well through `onChange`, as before. The mic, its placement
+and its one-authority rule are unchanged.
+
 ## PadGadget capture hooks (surface repair, 2026-10-14)
 
 `inputRef?: Ref<HTMLTextAreaElement>` exposes the same textarea used by

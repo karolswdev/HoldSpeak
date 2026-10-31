@@ -142,6 +142,8 @@ DECIDE_CHOICES = {
     "parked": ("resume", "skip"),
     "ask_review": ("prepare",),
     "core": ("go_on", "park"),
+    # 2026-10-31: the step's agent's commit, held by the gate or not made.
+    "commit": ("allow", "not_now"),
     "race": ("pick",),
     "add_step": ("add", "skip"),
     "close": ("close",),
@@ -395,6 +397,15 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
             items.append({**base, "id": f"{step['id']}:core", "kind": "core", "core": True,
                           "choices": list(DECIDE_CHOICES["core"]), "reason": core.get("reason"),
                           "title": f"{label.capitalize()}: {core.get('reason')}"})
+            continue
+        held = facts.get("held_commit") if isinstance(facts.get("held_commit"), Mapping) else None
+        if (held or facts.get("commit_ask")) and state not in CLOSED_STATES and state != "parked":
+            # A held commit never expires silently: his row while the gate
+            # holds it (``hold``) and after the hold ended with the change
+            # left in the worktree.
+            items.append({**base, "id": f"{step['id']}:commit", "kind": "commit", "hold": bool(held),
+                          "choices": list(DECIDE_CHOICES["commit"]),
+                          "title": f"{label[:1].upper() + label[1:]}: the agent's commit waits for you"})
             continue
         limit = facts.get("limit") if isinstance(facts.get("limit"), Mapping) else None
         if state == "waiting":
@@ -827,7 +838,14 @@ class ProgramService:
     def get(self, principal: Any, program_id: str) -> dict[str, Any]:
         program = self._program(program_id)
         steps = self.store.list_steps(program["id"])
-        return self._wire(program, steps)
+        wire = self._wire(program, steps)
+        # LANG5: the rows a call left for his press (only when there are some).
+        from .program_spoken import on_desk
+
+        held = on_desk(program["id"])
+        if held:
+            wire["held_shape"] = held
+        return wire
 
     def find(self, principal: Any, *, program_id: Any = None, name: Any = None,
              startable: bool = False) -> dict[str, Any]:
@@ -1149,8 +1167,22 @@ class ProgramService:
             "history": history_of(step),
             # PG-LANG §5.4: the step's context budget (None: the Program's).
             "budget_tokens": step.get("budget_tokens"),
+            # PG-LANG §5.4, §12 (LANG6): a step not handed yet carries its size
+            # by rule ({tokens, budget, share, fits, words}); the lamp "18k of 32k".
+            "estimate": self._estimate(program, step, profile, engine_id, requirements)
+            if step.get("state") in ("planned", "ready") else None,
             **self._step_requirements_wire(program, step, requirements, his, steps_by_id),
         }
+
+    def _estimate(self, program: Mapping[str, Any], step: Mapping[str, Any], profile: Optional[str],
+                  engine_id: Optional[str], requirements: Optional[list[dict[str, Any]]]) -> Optional[dict[str, Any]]:
+        from .program_sizing import step_estimate
+
+        try:
+            return step_estimate(self, program, step, profile=profile, engine_id=engine_id, requirements=requirements)
+        except Exception as exc:  # a size is a lamp; it never fails the read
+            log.warning(f"program step estimate failed: {exc}")
+            return None
 
     def _step_requirements_wire(self, program: Mapping[str, Any], step: Mapping[str, Any],
                                 requirements: Optional[list[dict[str, Any]]], his: Optional[set[str]],
@@ -1637,6 +1669,10 @@ class ProgramService:
             self._touch(program)
             self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent", "Changed " + ", ".join(changed))
             self.changed(program["id"], verb="update")
+        if fields.get("control") is not None and program.get("state") in ("running", "waiting", "failed"):
+            # A new level decides what waits at once: YOLO releases a held
+            # commit (the tick allows it by rule, or commits the change).
+            self._tick_now(program["id"])
         return self.get(principal, program["id"])
 
     def _update_language_fields(self, program: dict[str, Any], fields: Mapping[str, Any]) -> list[str]:
@@ -1942,6 +1978,9 @@ class ProgramService:
         text = str(report or "").strip()[:20000]
         with _LOCK:
             step["report"] = text
+            # 2026-10-31: from here every tick reads the branch head; a new
+            # commit (from anyone) moves the step to the check.
+            step.setdefault("facts", {})["said_done"] = True
             self._save(step)
             self._checkpoint(program, step, "agent", "Said it is done; the engine waits for the commit", kernel=False)
             for item in follow_ups or []:
@@ -2147,6 +2186,8 @@ class ProgramService:
                     facts.pop("core", None)
                     self.transition(program, step, "parked", by="owner", parked_by=PARKED_BY_OWNER,
                                     parked_reason="You parked this step", line=f"Parked: {core.get('reason')}")
+            elif kind == "commit":
+                answer = self._decide_commit(principal, program, step, choice)
             elif kind == "race":
                 facts = step.setdefault("facts", {})
                 if not facts.get("awaiting_pick"):
@@ -2222,6 +2263,50 @@ class ProgramService:
             self.changed(program["id"], (step or {}).get("id"), verb="later")
         self._tick_now(program["id"])
         return {"program_id": program["id"], "item_id": str(item_id), "until": until, "parked": parked}
+
+    def _decide_commit(self, principal: Any, program: dict[str, Any], step: dict[str, Any], choice: str) -> dict[str, Any]:
+        """His press on the agent's held commit. Allow: the gate lets the
+        held call run, or, when the hold ended, the engine commits the
+        worktree on the step's branch (the next tick reads the new head).
+        Not now: the held call is denied and the step parks (Resume)."""
+        facts = step.setdefault("facts", {})
+        held = facts.get("held_commit") if isinstance(facts.get("held_commit"), Mapping) else None
+        if not held and not facts.get("commit_ask"):
+            raise ProgramRefused("no_held_commit", "This step has no commit that waits for you.")
+        runner = self.runner()
+        if choice == "allow":
+            if held:
+                facts.pop("held_commit", None)
+                try:
+                    runner.gate().decide(str(held["proposal_id"]), approve=True, reason="Allowed from the program",
+                                         principal=principal)
+                except Exception as exc:
+                    # The hold ended before his press: the engine makes the
+                    # commit itself, below.
+                    log.info(f"held commit not allowed at the gate: {exc}")
+                else:
+                    self._save(step)
+                    self._checkpoint(program, step, "owner", "Allowed the agent's commit")
+                    return {}
+                facts["commit_ask"] = {"at": self._clock()}
+                self._save(step)
+            head = runner.commit_worktree(program, step)
+            if not head:
+                raise ProgramRefused("commit_failed", "git did not make the commit. Look at the step's worktree.")
+            self._checkpoint(program, step, "owner", f"Committed the agent's change ({head[:8]})")
+            return {"commit": head}
+        if held:
+            try:
+                runner.gate().decide(str(held["proposal_id"]), approve=False, reason="The owner said not now",
+                                     principal=principal)
+            except Exception as exc:
+                log.info(f"held commit not denied: {exc}")
+        facts.pop("held_commit", None)
+        facts.pop("commit_ask", None)
+        self.transition(program, step, "parked", by="owner", parked_by=PARKED_BY_OWNER,
+                        parked_reason="You parked this step; the change stays in the worktree",
+                        line="Not now: the commit waits; the step is parked")
+        return {}
 
     def handoff(self, principal: Any, program_id: str, step_id: str, to: Any, *, preview: bool = False) -> dict[str, Any]:
         """PG19, by hand: move a step that holds an agent to ``to`` (a name or
@@ -3134,11 +3219,31 @@ class ProgramService:
         return {"program_id": wire["id"], "text": print_program(wire), "revision": int(wire.get("revision") or 0),
                 "version": VERSION}
 
-    def shape(self, principal: Any, program_id: str, sentence: Any, *, apply: bool = False) -> dict[str, Any]:
-        """PG-LANG LANG3: one sentence becomes change rows (program_shaper)."""
+    def shape(self, principal: Any, program_id: str, sentence: Any, *, apply: bool = False,
+              pending: Optional[str] = None) -> dict[str, Any]:
+        """PG-LANG LANG3: one sentence becomes change rows (program_shaper);
+        LANG5 ``pending``: the rows in the well, so the next sentence adds."""
         from .program_shaper import shape_program
 
-        return shape_program(self, principal, program_id, sentence, apply=apply)
+        return shape_program(self, principal, program_id, sentence, apply=apply, pending=pending)
+
+    def drop_held_shape(self, principal: Any, program_id: str) -> dict[str, Any]:
+        """LANG5: Not this on the rows a call left on the desk."""
+        from .program_spoken import drop
+
+        program = self._program(program_id)
+        self._require_writer(principal, program, "shape")
+        drop(program["id"])
+        return self.get(principal, program["id"])
+
+    def plan_draft(self, principal: Any, program_id: str, *, goal: Any = None, template: Any = None,
+                   budget: Any = None, text: Any = None, split: Any = None) -> dict[str, Any]:
+        """PG-LANG LANG6: a goal becomes a drafted text, as change rows
+        (program_planner); nothing is written until ``text_apply``."""
+        from .program_planner import plan_draft
+
+        return plan_draft(self, principal, program_id, goal=goal, template=template, budget=budget, text=text,
+                          split=split)
 
     def shape_engine(self, principal: Any, program_id: str) -> dict[str, Any]:
         """The engine the shaping bar names (``engine: None``: none is set)."""
@@ -3281,6 +3386,10 @@ class ProgramService:
         if dry_run or blocked or not rows:
             return answer
         self._apply_text(principal, program, wire, base_model, new_model, rows)
+        # LANG5: rows a call left on the desk are against the old text.
+        from .program_spoken import drop
+
+        drop(program["id"])
         fresh = self.get(principal, program["id"])
         answer.update(applied=True, text=print_program(fresh), revision=int(fresh.get("revision") or 0),
                       program=fresh)

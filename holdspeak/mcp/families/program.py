@@ -27,6 +27,8 @@ live in the service, so every transport keeps them:
   ``dry_run`` false, applies it through the verbs above, so each change
   keeps its own authority rule. A row that lowers the bar applies only when
   its id is in ``allow_lower``.
+- PG-LANG LANG6 (2026-10-31): ``program.plan_draft`` drafts a Program in
+  Drafting from its goal, as change rows (``program_planner``).
 - PG-LANG LANG3 (2026-10-31): ``program.shape`` turns one sentence into the
   same change rows through one planning-engine call; it writes nothing,
   except at YOLO with ``apply`` (the allowed rows, one Decided for you row).
@@ -297,11 +299,31 @@ TOOLS: list[dict[str, Any]] = [
                     "latency_ms. Nothing is written: apply with program.text_apply (text: allowed_text or "
                     "proposed_text, base: base). apply true applies the allowed rows at once only at YOLO and "
                     "lists them under Decided for you (Overturn); a row that lowers the bar or is a core question "
-                    "never applies here. The engine never waives.",
+                    "never applies here. The engine never waives. On a call (LANG5): name the Program by its words "
+                    "(name) and give his sentence; the call reads the changes back and waits for his spoken yes; "
+                    "say the answer's spoken line.",
      "inputSchema": _schema({
-         "program_id": _ID, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
+         **_BY_NAME, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
          "apply": {"type": ["boolean", "null"], "description": "At YOLO only: apply the allowed rows at once."},
-     }, ["program_id", "sentence"])},
+         "pending": {"type": ["string", "null"], "maxLength": 200000,
+                     "description": "The proposed_text of rows that wait: the engine reads it, so this sentence "
+                                    "adds to them."},
+     }, ["sentence"])},
+    {"name": "program.plan_draft",
+     "description": "Draft a Program in Drafting from its goal (PG-LANG §5): the hub sends the goal (or the Note it "
+                    "came from), the template's shape, the repository map, the Project's open actions and the budget "
+                    "to the planning engine (agent.plan) in one call, and returns the whole drafted text as change "
+                    "rows as program.text_apply does (each row source 'plan'; an added step has its size, "
+                    "'18k of 32k'; a step over the working share is 'step_too_big' after one split). Nothing is "
+                    "written: apply with program.text_apply (text: proposed_text, base: base). To split one step "
+                    "of a draft: text (the draft) and split (the step's place).",
+     "inputSchema": _schema({
+         "program_id": _ID, "goal": {"type": ["string", "null"], "maxLength": 8000},
+         "template": {"type": ["string", "null"]},
+         "budget": {"type": ["string", "integer", "null"], "description": "The builder's context: 64k or 65536."},
+         "text": {"type": ["string", "null"], "maxLength": 200000},
+         "split": {"type": ["integer", "null"], "description": "With text: the place of the step to split."},
+     }, ["program_id"])},
     {"name": "program.checkpoint",
      "description": "Write one line on your step at a meaningful moment. Only the step's own agent (or the owner).",
      "inputSchema": _schema({"step_id": _ID, "line": {"type": "string", "minLength": 1, "maxLength": 400},
@@ -315,7 +337,7 @@ TOOLS: list[dict[str, Any]] = [
                                             "description": "Steps the plan lacks (YOLO adds them; else the owner decides)."}},
                             ["step_id", "report"])},
     {"name": "program.decide",
-     "description": "The owner's decision on a step: a merge (merge, not_yet), a finding (fix_now, later, skip), a "
+     "description": "The owner's decision on a step: a merge (merge, not_yet), the agent's held commit (commit: allow, not_now), a finding (fix_now, later, skip), a "
                     "parked step (resume, skip), a person review (prepare: a send is prepared, he presses Send), "
                     "an agent at its usage limit (limited: continue, wait), a requirement (requirement with "
                     "requirement_id: met, unmet, waive with reason, send_back), what an agent proposed "
@@ -394,8 +416,29 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         dry = args.get("dry_run") if args.get("dry_run") is not None else args.get("preview")
         return service.text_apply(principal, str(args["program_id"]), args.get("text"), dry_run=dry is not False,
                                   base=args.get("base"), allow_lower=list(args.get("allow_lower") or []))
+    if name == "program.plan_draft":
+        return service.plan_draft(principal, str(args["program_id"]), goal=args.get("goal"),
+                                  template=args.get("template"), budget=args.get("budget"), text=args.get("text"),
+                                  split=args.get("split"))
     if name == "program.shape":
-        return service.shape(principal, str(args["program_id"]), args.get("sentence"), apply=args.get("apply") is True)
+        from holdspeak.services.program_service import ProgramRefused
+
+        try:
+            found = service.find(principal, program_id=args.get("program_id"), name=args.get("name"))
+        except ProgramRefused as refused:
+            if str(args.get("name") or "").strip() and refused.code == "program_not_found":
+                said = " ".join(str(args.get("name")).split())
+                return {"found": False, "applied": False,
+                        "spoken": f"There is no program with the name {said}. Nothing changed."}
+            raise
+        # LANG5: on a call his spoken answer to the read back runs here.
+        from holdspeak.services import program_spoken
+
+        held = program_spoken.take(found["id"], args.get("sentence"))
+        if held is not None:
+            return program_spoken.run(service, principal, held)
+        return service.shape(principal, str(found["id"]), args.get("sentence"), apply=args.get("apply") is True,
+                             pending=args.get("pending") if isinstance(args.get("pending"), str) else None)
     if name in ("program.start", "program.get"):
         return _by_name(service, name, args, principal)
     if name == "program.park":

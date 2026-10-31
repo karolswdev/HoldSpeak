@@ -184,6 +184,8 @@ const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   // PG-DIRECTION DIR3: a core question, a race winner, an added step, what an
   // agent proposed (they read as raw wire keys before).
   go_on: "Go on", park: "Park", pick: "Pick", add: "Add", apply: "Apply", send: "Send",
+  // 2026-10-31: the step's agent's commit.
+  allow: "Allow the commit", not_now: "Not now",
 };
 
 function NeedVerbsView({ face, primary, onWell, well }: {

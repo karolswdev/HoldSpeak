@@ -179,6 +179,31 @@ class FakeGitHub:
             self.rig.ledger.update(record["launch_id"], follow_through=follow)
 
 
+class FakeGate:
+    """The gate at the hub edge (``program_runner.HubGate``'s shape): the
+    held calls of a launch, and the decisions the engine or his press made."""
+
+    def __init__(self) -> None:
+        self.holds: dict[str, list[dict[str, Any]]] = {}
+        self.decisions: list[tuple[str, bool, str]] = []
+
+    def hold_commit(self, launch_id: str, proposal_id: str = "gate-1") -> None:
+        self.holds.setdefault(launch_id, []).append({
+            "proposal_id": proposal_id, "tool": "Bash", "scope": "inside", "commit": True,
+            "head": 'git add README.md && git commit -m "Add one line to the README"'})
+
+    def held(self, launch_id: str) -> list[dict[str, Any]]:
+        return list(self.holds.get(launch_id, []))
+
+    def decide(self, proposal_id: str, *, approve: bool, reason: str, principal: Any = None) -> None:
+        self.decisions.append((proposal_id, approve, reason))
+        for rows in self.holds.values():
+            rows[:] = [row for row in rows if row["proposal_id"] != proposal_id]
+
+    def expire(self, launch_id: str) -> None:
+        self.holds.pop(launch_id, None)
+
+
 class Rig:
     def __init__(self, tmp_path: Path, *, kernel: bool = False, people: Any = None,
                  engines: Any = None, idle: Any = None, working_at_once: int = 6, clock: Any = None) -> None:
@@ -191,6 +216,7 @@ class Rig:
         self.hand = FakeHand(self.db, self.ledger, self.states, self.repo, working_at_once)
         self.gh = FakeGitHub(self)
         self.agent = FakeAgent(self)
+        self.gate = FakeGate()
         self.service = ProgramService(
             self.db, broadcast=self._frame, people=people, engines=engines,
             kernel=None if kernel else (lambda **_kw: None),
@@ -209,6 +235,7 @@ class Rig:
             launch_state=lambda launch_id: self.states.get(launch_id) or {},
             run=self.gh, prompt=lambda launch_id, text: self.prompts.append((launch_id, text)),
             review_tick=self.review.tick, idle=idle, async_checks=False, review_words=self.reviewer_words,
+            gate=self.gate,
         )
 
     def reviewer_words(self, launch_id: str) -> str:

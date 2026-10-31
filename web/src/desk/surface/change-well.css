@@ -106,6 +106,15 @@
 .kit-diffrow-value[data-side="before"] { color: var(--wb-muted); }
 .kit-diffrow[data-verdict="refused"] .kit-diffrow-value,
 .kit-diffrow[data-verdict="conflict"] .kit-diffrow-value[data-side="after"] { text-decoration: line-through; }
+/* A host's lamp after the values (a planned step's size, PG-LANG §9.3). */
+.kit-diffrow-aside {
+  flex: 0 0 auto;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.kit-diffrow-aside[data-tone="fail"] { color: var(--wb-danger-ink); font-weight: 600; }
 .kit-diffrow-to { flex: 0 0 auto; color: var(--wb-muted); font: 400 12px / 1 var(--font-sans); }
 .kit-diffrow-verdict { grid-area: verdict; white-space: nowrap; }
 .kit-diffrow[data-verdict="lowers"]:not([data-pressed]) .kit-diffrow-verdict { color: var(--wb-ember-ink); }
@@ -162,6 +171,8 @@
     padding: var(--space-1) var(--space-3);
   }
   .kit-diffrow-where { color: var(--wb-ink); font-size: 13px; white-space: normal; }
+  .kit-diffrow-values { flex-wrap: wrap; row-gap: 2px; }
+  .kit-diffrow-aside { white-space: normal; }
   .desk-next .kit-diffrow-verb .btn,
   .desk-next .kit-changewell-verbs .btn { min-height: 44px; min-width: 44px; }
 }

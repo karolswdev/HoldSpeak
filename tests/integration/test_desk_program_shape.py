@@ -80,6 +80,44 @@ def test_shape_over_rest_preview_apply_yolo_and_overturn(tmp_path, monkeypatch) 
     out["no_engine"] = {"program": _ok(client_n.get(f"/api/programs/{pid_n}")), "status": none.status_code, "body": none.json(),
                         "engine": _ok(client_n.get(f"/api/programs/{pid_n}/shape"))}
     assert out["no_engine"]["engine"]["engine"] is None
+    # LANG5: three spoken sentences in a row, each sent with the rows that
+    # wait (pending); one Apply lands what can land of all three.
+    rig_v = Rig(tmp_path / "voice")
+    engine_v = wire_engine(rig_v, monkeypatch)
+    pid_v = seed(rig_v, control="normal")
+    client_v = _client(rig_v, monkeypatch)
+    voice_before = _ok(client_v.get(f"/api/programs/{pid_v}"))
+    shapes, pending = [], None
+    for key in ("voice1", "voice2", "voice3"):
+        engine_v.replies = [reply(key)]
+        body = {"sentence": SENTENCES[key], "apply": False, **({"pending": pending} if pending else {})}
+        shapes.append(_ok(client_v.post(f"/api/programs/{pid_v}/shape", json=body)))
+        pending = shapes[-1]["proposed_text"]
+    assert len(shapes[2]["changes"]) > len(shapes[1]["changes"]) > len(shapes[0]["changes"])
+    voice_applied = _ok(client_v.post(f"/api/programs/{pid_v}/text", json={
+        "text": shapes[2]["allowed_text"], "base": shapes[2]["base"], "dry_run": False}))
+    assert voice_applied["applied"] is True
+    out["voice"] = {"program": voice_before, "shapes": shapes, "applied": voice_applied}
+
+    # LANG5: a call's "later": the rows wait in the Program's change well.
+    from holdspeak.services import program_spoken
+    from tests.integration.program_rig import OWNER as RIG_OWNER
+
+    program_spoken.reset()
+    rig_c = Rig(tmp_path / "call")
+    engine_c = wire_engine(rig_c, monkeypatch)
+    pid_c = seed(rig_c)  # yolo: the recording of "mixed"
+    client_c = _client(rig_c, monkeypatch)
+    engine_c.replies = [reply("mixed")]
+    program_spoken.prepare(rig_c.service, RIG_OWNER, {"program_id": pid_c, "sentence": SENTENCES["mixed"]})
+    program_spoken.answered(pid_c, SENTENCES["mixed"], "later")
+    program_spoken.run(rig_c.service, RIG_OWNER, program_spoken.take(pid_c, SENTENCES["mixed"]))
+    held = _ok(client_c.get(f"/api/programs/{pid_c}"))
+    assert held["held_shape"]["source"] == "call" and held["held_shape"]["changes"]
+    dropped = _ok(client_c.delete(f"/api/programs/{pid_c}/shape/held"))
+    assert "held_shape" not in dropped
+    out["call_later"] = {"program": held, "dropped": dropped}
+    program_spoken.reset()
     _fixture("program.shape.json", out, tmp_path)
 
 
@@ -87,7 +125,7 @@ def test_program_shape_is_an_mcp_tool_of_work_authority(tmp_path, monkeypatch) -
     names = [tool["name"] for tool in program_family.TOOLS]
     assert "program.shape" in names and TOOL_AUTHORITY["program.shape"] == WORK
     schema = next(tool for tool in program_family.TOOLS if tool["name"] == "program.shape")["inputSchema"]
-    assert schema["required"] == ["program_id", "sentence"]
+    assert schema["required"] == ["sentence"]  # LANG5: by program_id or by name
     rig = Rig(tmp_path)
     engine = wire_engine(rig, monkeypatch)
     pid = seed(rig)

@@ -11,7 +11,7 @@ import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { frameChanges } from "../compositor/windowFrames";
 import type {
   Control, DecideBody, PersonProgramRow, PlanStep, Program, ProgramChangedFrame, ProgramList, ProgramRoomRow, ProgramText,
-  ShapeAnswer, ShapeEngine, TextApplyAnswer,
+  PlanAnswer, ShapeAnswer, ShapeEngine, TextApplyAnswer,
 } from "./types";
 
 const EMPTY_LIST: ProgramList = { programs: [], counts: {}, worst: null, worst_word: "" };
@@ -333,6 +333,18 @@ export function readShapeEngine(id: string): Promise<ShapeEngine> {
 
 /** PG-LANG LANG3: one sentence → the change rows; `apply` lands the allowed
  *  rows at once at YOLO only (the hub decides by the level). */
-export function shapeProgram(id: string, body: { sentence: string; apply: boolean }): Promise<ShapeAnswer> {
+export function shapeProgram(id: string, body: { sentence: string; apply: boolean; pending?: string }): Promise<ShapeAnswer> {
   return apiFetch<ShapeAnswer>(`${base(id)}/shape`, { method: "POST", json: body });
+}
+
+/** PG-LANG LANG5: Not this on the rows a call left in the change well. */
+export function dropHeldShape(id: string): Promise<Program> {
+  return apiFetch<Program>(`${base(id)}/shape/held`, { method: "DELETE" });
+}
+
+/** PG-LANG LANG6: the goal drafted into change rows (nothing is written; Apply
+ *  is `applyProgramText`). Split on a too-big row sends the draft and the
+ *  step's place. */
+export function planDraft(id: string, body: { goal?: string; budget?: string; text?: string; split?: number }): Promise<PlanAnswer> {
+  return apiFetch<PlanAnswer>(`${base(id)}/plan/draft`, { method: "POST", json: body });
 }
