@@ -270,6 +270,13 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # Programs (2026-10-28): a Program's window (the board of direction
         # C), seeded through the real routes on a real git folder.
         ("program", "pullout:program:{program}", None),
+        # PG-LANG LANG2: the same Program in its Text view, one line changed
+        # and previewed: the change well with its diff row over the text.
+        ("program-text", "pullout:program:{program}", None),
+        # PG-LANG LANG4: the shaping bar under the toolbar, a sentence sent;
+        # the rig hub has no planning engine, so the bar's refusal line with
+        # Open Engines and Open text (a desk with an engine: the well).
+        ("program-shape", "pullout:program:{program}", None),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -1359,6 +1366,32 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         if case_id == "program":
             # Programs (2026-10-28): the seeded Program's board, read.
             page.locator(f'[id="{wid}"] [data-testid=programs-board]').wait_for(timeout=T)
+        if case_id == "program-text":
+            # PG-LANG LANG2: Text (in More ▾ at the phone width), a planned
+            # step's title changed, Preview: the well over the text.
+            win = page.locator(f'[id="{wid}"]')
+            win.locator("[data-testid=programs-board]").wait_for(timeout=T)
+            if width < 720:
+                win.get_by_test_id("program-more").click()
+                page.get_by_role("menuitem", name="Text").click()
+            else:
+                win.get_by_role("group", name="View").get_by_role("button", name="Text").click()
+            lines = win.locator("[data-testid=programs-text] textarea.kit-textpane-input")
+            lines.first.wait_for(timeout=T)
+            at = lines.evaluate_all("els => els.findIndex(e => e.value === 'step 3 The fan-out')")
+            assert at >= 0, "the seeded Program's text has no step 3 line"
+            lines.nth(at).fill("step 3 The fan-out, one read")
+            win.get_by_test_id("program-text-preview").click()
+            win.locator("[data-testid=programs-change-well] [data-testid=programs-diff-row]").first.wait_for(timeout=T)
+            page.mouse.move(2, 2)
+        if case_id == "program-shape":
+            win = page.locator(f'[id="{wid}"]')
+            win.locator("[data-testid=programs-board]").wait_for(timeout=T)
+            bar = win.get_by_test_id("program-shape-bar")
+            bar.get_by_role("textbox", name="Change the program").fill("put step 2 on Codex")
+            bar.get_by_test_id("program-shape").click()
+            win.locator("[data-testid=program-shape-refusal], [data-testid=programs-change-well]").first.wait_for(timeout=T)
+            page.mouse.move(2, 2)
         if case_id == "person":
             # This pose is the seeded person's content, not the transient
             # readiness/detail gap or a frame whose lazy body has not loaded.

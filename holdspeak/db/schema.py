@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 89  # informational; 89 (PG-DIRECTION DIR1, additive): briefing_packages, program_checkpoints.via; 88 (PG-REQ, additive): program_requirements and its index; 87 (PG14, additive): workbenches.program_template, program_control, program_runs_on_json, program_may_call, program_may_handoff; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
+SCHEMA_VERSION = 90  # informational; 90 (PG-DIRECTION DIR1, additive): briefing_packages, program_checkpoints.via; 89 (PG-LANG fields, additive): programs.review_depth, planner_engine, budget_tokens, night_json, within_json, delivery_ref, rounds_before_start; program_steps.budget_tokens; program_rounds; 88 (PG-REQ, additive): program_requirements and its index; 87 (PG14, additive): workbenches.program_template, program_control, program_runs_on_json, program_may_call, program_may_handoff; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -5205,6 +5205,11 @@ CREATE INDEX IF NOT EXISTS idx_note_outcomes_note ON note_outcomes(note_id, ordi
 -- steps; each step is one agent launch in one worktree, checked by a verified
 -- log, reviewed, and merged on the owner's press or by delegation. The
 -- engine (services/program_runner.py) is the only writer of the states.
+-- PG-LANG (2026-10-31, PROGRAM-LANGUAGE-2026-10-31.md §3.2, §5.4, §5.5, §8):
+-- the fields the Program text writes. NULL review_depth: the template's; NULL
+-- planner_engine: the desk's agent.plan assignment; NULL budget_tokens: the
+-- first agent's engine window (a step's NULL: the Program's); night_json
+-- {line, start, end, max_steps}; delivery_ref "dw:<project>/<phase>[/<story>]".
 CREATE TABLE IF NOT EXISTS programs (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -5234,7 +5239,14 @@ CREATE TABLE IF NOT EXISTS programs (
     allowed_profiles_json TEXT NOT NULL DEFAULT '[]',
     may_handoff INTEGER NOT NULL DEFAULT 0,
     usage_warning_share REAL,
-    may_call INTEGER NOT NULL DEFAULT 0
+    may_call INTEGER NOT NULL DEFAULT 0,
+    review_depth TEXT,
+    planner_engine TEXT,
+    budget_tokens INTEGER,
+    night_json TEXT,
+    within_json TEXT NOT NULL DEFAULT '[]',
+    delivery_ref TEXT,
+    rounds_before_start INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS program_steps (
     id TEXT PRIMARY KEY,
@@ -5279,7 +5291,8 @@ CREATE TABLE IF NOT EXISTS program_steps (
     updated_at TEXT NOT NULL,
     runs_on_json TEXT NOT NULL DEFAULT '[]',
     handoffs_json TEXT NOT NULL DEFAULT '[]',
-    may_call INTEGER NOT NULL DEFAULT 0
+    may_call INTEGER NOT NULL DEFAULT 0,
+    budget_tokens INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_program_steps_program ON program_steps(program_id, ordinal);
 CREATE TABLE IF NOT EXISTS program_checkpoints (
@@ -5341,6 +5354,19 @@ CREATE TABLE IF NOT EXISTS program_requirements (
     judged_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_program_requirements_program ON program_requirements(program_id, step_id, ordinal);
+-- PG-LANG (2026-10-31, PROGRAM-LANGUAGE-2026-10-31.md §6.2): the interview
+-- rounds of a Program (Architecture, Product, ...). state open | asking | done
+-- | skipped; questions_json [{id, text, answer, answered_by, at}]: the engine
+-- writes each question, the owner writes each answer.
+CREATE TABLE IF NOT EXISTS program_rounds (
+    program_id TEXT NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'open',
+    ordinal INTEGER NOT NULL DEFAULT 0,
+    questions_json TEXT NOT NULL DEFAULT '[]',
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (program_id, name)
+);
 -- Phone (2026-10-28, docs/internal/betterment/phone/): the desk reaches the
 -- owner on his phone and he reaches the desk. A paired device, the messages
 -- both ways, the calls (ringing, answered, missed, declined, ended) and the

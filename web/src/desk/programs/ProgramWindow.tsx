@@ -26,9 +26,10 @@ import { openRef } from "../openObject";
 import { openProjectRoom } from "../shell";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
+import { keepPlace } from "../deskMemory";
 import { useCompactViewport } from "../useCompactViewport";
 import {
-  CheckGadget, DotWord, FoldGadget, ListView, PadGadget, StatusBar, StringGadget, SurfaceState, Toolbar, countWords,
+  CheckGadget, DotWord, FilterTokens, FoldGadget, ListView, PadGadget, StatusBar, StringGadget, SurfaceState, Toolbar, countWords,
   type StatusBarItem,
 } from "../surface";
 import { useWindowInterior } from "../surface/interior";
@@ -45,9 +46,10 @@ import { StepFold, isPlanned, moveStep } from "./StepFold";
 import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
 import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
+import { ProgramChangeWell, ProgramTextPane, landedSteps, useProgramText, type TextProposal } from "./ProgramText";
+import { ShapeBar, ShapedWell, engineFact } from "./ShapeBar";
 import type {
-  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RunsOnEntry, YourTurnItem,
-} from "./types";
+  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
 
@@ -448,6 +450,38 @@ function placeItems(program: Program, fileTo: (anchor: HTMLElement) => void, com
   return items;
 }
 
+/** PG-LANG §9.1: one window, two views, one truth. */
+type ProgramView = "board" | "text";
+const VIEWS = [{ value: "board", label: "Board" }, { value: "text", label: "Text" }];
+
+/** At 393 the view switch folds into More ▾ (the toolbar's right side does
+ *  not fit the phone). */
+function ViewMore({ view, onView }: { view: ProgramView; onView(next: ProgramView): void }) {
+  const opener = useRef<HTMLButtonElement | null>(null);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  return (
+    <>
+      <Button ref={opener} dense variant="ghost" className="pg-narrow kit-toolbar-more" aria-haspopup="menu" aria-expanded={Boolean(rect)}
+        onClick={() => setRect((now) => (now ? null : opener.current?.getBoundingClientRect() ?? null))} data-testid="program-more">
+        More
+        <svg className="kit-toolbar-more-caret" width={10} height={10} viewBox="0 0 10 10" fill="none" stroke="currentColor"
+          strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <path d="M2.5 3.75L5 6.25l2.5-2.5" />
+        </svg>
+      </Button>
+      {rect ? (
+        <WorkMenu label="More" x={rect.left} y={rect.bottom} opener={opener.current} autoFocus
+          returnFocus={() => opener.current?.focus()} onClose={() => setRect(null)}
+          entries={VIEWS.map((row) => ({
+            type: "item" as const, id: row.value, label: row.label,
+            checked: row.value === view ? "exclusive" as const : undefined,
+            onSelect: () => onView(row.value as ProgramView),
+          }))} />
+      ) : null}
+    </>
+  );
+}
+
 export function ProgramBody({ programId }: { programId: string }) {
   const { loading, error, program, reload, apply } = useProgram(programId);
   const [selected, setSelected] = useState<string | null>(null);
@@ -465,6 +499,20 @@ export function ProgramBody({ programId }: { programId: string }) {
   useWindowInterior("list");
   useWindowTitle(program?.title ?? null, [program?.title]);
   const compact = useCompactViewport();
+  // The view he picked, remembered per window (the desk's places).
+  const viewKey = `program/view/${programId}`;
+  const view: ProgramView = useDesk((s) => s.places[viewKey]) === "text" ? "text" : "board";
+  const setView = (next: ProgramView) => keepPlace(viewKey, next === "text" ? "text" : "");
+  const text = useProgramText(programId, program, view === "text");
+  const [proposal, setProposal] = useState<TextProposal | null>(null);
+  const [settling, setSettling] = useState(false);
+  const [landed, setLanded] = useState<Record<string, "born" | "changed">>({});
+  const [shaped, setShaped] = useState<ShapeAnswer | null>(null);
+  useEffect(() => {
+    if (!Object.keys(landed).length) return;
+    const timer = window.setTimeout(() => setLanded({}), 2600);
+    return () => window.clearTimeout(timer);
+  }, [landed]);
 
   const drafting = program?.state === "drafting";
   useEffect(() => {
@@ -491,6 +539,45 @@ export function ProgramBody({ programId }: { programId: string }) {
       setFailed(plainFail(failedWords, cause, "The program is unchanged", "Try again"));
     } finally { setBusy(""); }
   };
+
+  const preview = async () => {
+    const next = await text.preview();
+    if (next) setProposal(next);
+  };
+  const applied = (answer: TextApplyAnswer) => {
+    const before = program;
+    if (answer.program) apply(answer.program);
+    text.reset(answer.text);
+    if (before && answer.program) setLanded(landedSteps(before, answer.program, answer.changes));
+    // Apply settles: the well fades up and closes; the rows land on the board.
+    setSettling(true);
+    window.setTimeout(() => { setProposal(null); setSettling(false); }, 200);
+    setView("board");
+  };
+  // LANG4: a shaped sentence. At YOLO the hub landed the allowed rows (the
+  // ShapedWell says so, with Overturn); the rows that wait for his press
+  // open in the change well against the text as it is now.
+  const onShaped = (answer: ShapeAnswer) => {
+    const before = program;
+    if (answer.applied && answer.program) {
+      apply(answer.program);
+      text.reset(answer.text);
+      if (before) setLanded(landedSteps(before, answer.program, answer.applied_rows));
+      setShaped(answer);
+    } else {
+      setShaped(null);
+    }
+    setProposal(answer.changes.length ? {
+      source: "sentence", text: answer.proposed_text, base: answer.base, answer, say: answer.say, fact: engineFact(answer),
+    } : null);
+  };
+  const notThis = () => {
+    if (proposal?.source === "text") text.revert();
+    setProposal(null);
+  };
+
+  // A new answer is a new well (his presses on the old rows do not carry).
+  const wellKey = proposal ? [proposal.source, proposal.answer.revision, proposal.text, proposal.answer.changes.map((row) => row.id + row.verdict).join()].join(":") : "";
 
   if (loading || (error && !program) || !program) {
     return <SurfaceState loading={loading} error={error ? "The program did not load. Nothing on it changed. Try again." : undefined} onRetry={() => void reload()} />;
@@ -562,6 +649,7 @@ export function ProgramBody({ programId }: { programId: string }) {
     <div className="pg-window" data-testid="program-window" data-state={program.state} data-program={program.id} onKeyDown={onKeys}>
       <Toolbar label="Program" data-testid="program-toolbar" trailing={
         <span className="pg-toolbar-trailing">
+          <FilterTokens label="View" options={VIEWS} value={view} onChange={(next) => setView(next as ProgramView)} className="pg-views" />
           <RunsOnPicker label={defaultLabel} value={firstChoice}
             idle={idle} idleLabel="When idle, for every pi step" disabled={!drafting}
             then={thenRows.map((row) => ({ profile: row.profile, engine: row.engine }))}
@@ -591,11 +679,34 @@ export function ProgramBody({ programId }: { programId: string }) {
           <Button dense variant="ghost" disabled={Boolean(busy)} onClick={() => void run("race", () => race(program.id, raceTarget.id, 2), "The race did not start")}
             data-testid="program-race">Race</Button>
         ) : null}
+        {view === "text" && text.edited && !proposal ? (
+          <>
+            <Button dense variant={verb === "start" ? "secondary" : "primary"} loading={text.busy === "preview"} disabled={Boolean(text.busy)}
+              onClick={() => void preview()} data-testid="program-text-preview">Preview</Button>
+            <Button dense variant="ghost" disabled={Boolean(text.busy)} onClick={text.revert} data-testid="program-text-revert">Revert</Button>
+          </>
+        ) : null}
+        <ViewMore view={view} onView={setView} />
       </Toolbar>
+      {program.state !== "done" ? <ShapeBar program={program} onAnswer={onShaped} onOpenText={() => setView("text")} /> : null}
       <div className="pg-body">
         {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
         <YourTurnWell program={program} onDecided={apply} />
-        {drafting ? (
+        {shaped ? (
+          <ShapedWell key={String(shaped.decision?.id ?? shaped.revision)} program={program} answer={shaped}
+            onOverturned={(next) => { apply(next); setShaped(null); setProposal(null); if (next) void text.read(); }}
+            onKeep={() => setShaped(null)} />
+        ) : null}
+        {proposal ? (
+          <ProgramChangeWell key={wellKey}
+            programId={program.id} proposal={proposal} settling={settling}
+            onApplied={applied} onAnswer={setProposal} onDismiss={notThis} />
+        ) : null}
+        {view === "text" ? (
+          <ProgramTextPane text={text} proposal={proposal}
+            scrollTo={chosen ? text.lines.findIndex((line) => line.text.startsWith(`step ${chosen.ordinal} `)) : null}
+            onLines={(next) => { text.setLines(next); if (proposal?.source === "text") setProposal(null); }} />
+        ) : drafting ? (
           <>
             <div className="pg-goal">
               <PadGadget label="Goal" value={goal ?? program.goal} rows={2} onChange={setGoal}
@@ -636,7 +747,7 @@ export function ProgramBody({ programId }: { programId: string }) {
               <h3 className="pg-board-caption">Steps</h3>
               <ul className="kit-listrows">
                 {steps.map((step) => (
-                  <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} onSelect={() => setSelected(step.id)}
+                  <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} onSelect={() => setSelected(step.id)} landed={landed[step.id]}
                     his={program.your_turn_items.some((item) => item.kind === "requirement_word" && item.step_id === step.id)} />
                 ))}
               </ul>
@@ -646,12 +757,12 @@ export function ProgramBody({ programId }: { programId: string }) {
           <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
             emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
         )}
-        {!drafting && chosen ? (
+        {view === "board" && !drafting && chosen ? (
           <StepFold key={chosen.id} program={program} step={chosen} onApplied={apply} open={stepOpen} onToggle={setStepOpen} />
         ) : null}
-        {!drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
-        {!drafting ? <ReachLine program={program} /> : null}
-        {!drafting ? <LedgerFold program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
+        {view === "board" && !drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
+        {view === "board" && !drafting ? <ReachLine program={program} /> : null}
+        {view === "board" && !drafting ? <LedgerFold program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
       </div>
       <StatusBar data-testid="program-status" items={status} />
       {filing ? (
@@ -667,10 +778,12 @@ export function ProgramBody({ programId }: { programId: string }) {
 }
 
 /** A step with its race's contenders indented under it. */
-function StepGroup({ step, selected, onSelect, his }: { step: ProgramStep; selected: boolean; onSelect(): void; his?: boolean }) {
+function StepGroup({ step, selected, onSelect, his, landed }: {
+  step: ProgramStep; selected: boolean; onSelect(): void; his?: boolean; landed?: "born" | "changed";
+}) {
   return (
     <>
-      <StepRow step={step} selected={selected} onSelect={onSelect} his={his} />
+      <StepRow step={step} selected={selected} onSelect={onSelect} his={his} landed={landed} />
       {(step.contenders ?? []).map((contender) => (
         <StepRow key={contender.id} step={contender} contender onSelect={onSelect} />
       ))}

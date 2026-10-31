@@ -942,3 +942,78 @@ span.pg-req-thumb { height: 150px; }
   .pg-sf-amend { flex-wrap: wrap; }
   .pg-turn-ask { flex-basis: 100%; }
 }
+
+/* ── PG-LANG §9.1 (LANG2): the Text view beside the board ── */
+.pg-text { flex: 1 0 auto; border-top: 1px solid var(--wb-rule-soft); }
+.pg-text-reading {
+  margin: var(--space-3);
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+}
+/* The diff lands (§9.7): a born step rises in, a changed one breathes once. */
+@media (prefers-reduced-motion: no-preference) {
+  .kit-listrow.pg-step[data-landed="born"] { animation: pg-step-born var(--duration-long) var(--ease-standard) both; }
+  .kit-listrow.pg-step[data-landed="changed"] { animation: pg-step-changed 2.4s var(--ease-standard) 1; }
+}
+.kit-listrow.pg-step[data-landed] { background: color-mix(in srgb, var(--lamp-ok) 8%, var(--wb-paper)); }
+@keyframes pg-step-born {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pg-step-changed {
+  0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
+  30% { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--lamp-ok) 45%, transparent); }
+}
+
+/* ── LANG4: the shaping bar (PG-LANG §9.2, direction S-A) ──
+   One row under the toolbar: the sentence well with its mic, then Shape.
+   The status line (reading, a refusal, a question) sits under it, one
+   line, never over the board. At the phone width the row stays one line. */
+.pg-shape {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: var(--wb-paper);
+}
+.pg-shape-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 36px;
+}
+.pg-shape-row > .gadget-string,
+.pg-shape-row > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pg-shape-row > .btn {
+  flex: 0 0 auto;
+}
+.pg-shape-line {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+}
+.pg-shape-refusal > span {
+  color: var(--wb-danger-ink);
+}
+.pg-shape-question {
+  color: var(--wb-ink);
+}
+@container surface (max-width: 520px) {
+  .pg-shape {
+    padding: 6px 8px;
+  }
+  .pg-shape-row {
+    min-height: 44px;
+  }
+}

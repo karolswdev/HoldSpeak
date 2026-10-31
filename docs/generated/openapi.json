@@ -23804,6 +23804,82 @@
         "summary": "Api Programs Resume"
       }
     },
+    "/api/programs/{program_id}/shape": {
+      "get": {
+        "operationId": "api_programs_shape_engine_api_programs__program_id__shape_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Shape Engine Api Programs  Program Id  Shape Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Programs Shape Engine"
+      },
+      "post": {
+        "operationId": "api_programs_shape_api_programs__program_id__shape_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Shape Api Programs  Program Id  Shape Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Programs Shape"
+      }
+    },
     "/api/programs/{program_id}/start": {
       "post": {
         "operationId": "api_programs_start_api_programs__program_id__start_post",
@@ -24129,6 +24205,54 @@
           }
         },
         "summary": "Api Programs Race"
+      }
+    },
+    "/api/programs/{program_id}/steps/{step_id}/remove": {
+      "post": {
+        "operationId": "api_programs_step_remove_api_programs__program_id__steps__step_id__remove_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "title": "Step Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Step Remove Api Programs  Program Id  Steps  Step Id  Remove Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Programs Step Remove"
       }
     },
     "/api/programs/{program_id}/text": {

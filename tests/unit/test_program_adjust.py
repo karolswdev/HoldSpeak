@@ -33,7 +33,8 @@ def test_the_frozen_table_by_state() -> None:
     editable, frozen = step_fields({"state": "working", "gate_review": "none"})
     assert {"title", "amend", "runs_on_then", "gate_review", "review_depth", "gate_merge", "requirements"} <= set(editable)
     assert frozen == {"brief": FROZEN_READ, "owns": FROZEN_READ, "after": FROZEN_READ, "effort": FROZEN_SET,
-                      "agent": FROZEN_SET, "race": FROZEN_SET, "gate_check": FROZEN_BAR, "position": FROZEN_SET}
+                      "agent": FROZEN_SET, "race": FROZEN_SET, "gate_check": FROZEN_BAR, "position": FROZEN_SET,
+                      "prefer_idle": FROZEN_SET, "budget": FROZEN_SET}
     _editable, frozen = step_fields({"state": "review", "gate_review": "agent"})
     assert frozen["gate_review"] == FROZEN_BAR and frozen["review_depth"] == FROZEN_READ
     editable, frozen = step_fields({"state": "pr_open"})
@@ -195,3 +196,76 @@ def test_an_orchestrators_change_goes_up_the_ladder(tmp_path, monkeypatch) -> No
     assert item["choices"] == ["send", "skip"] and not rig.step(pid, 1)["amendments"]
     rig.service.decide(OWNER, pid, one["id"], kind="step_amend", choice="send", proposal_id=item["proposal_id"])
     assert [a["by"] for a in rig.step(pid, 1)["amendments"]] == ["agent"]
+
+
+# ── PG-LANG fields: remove a Planned step ────────────────────────────
+
+def test_remove_renumbers_and_remaps_after_like_a_move(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid = _program(rig)
+    rig.service.plan(OWNER, pid, steps=[{"title": "A"}, {"title": "B", "after": [1]}, {"title": "C", "after": [2]},
+                                        {"title": "D", "after": [1, 3]}])
+    rig.service.remove_step(OWNER, pid, rig.step(pid, 2)["id"])
+    # C came after B: it now comes after what B came after (A).
+    assert _titles(rig, pid) == [(1, "A", []), (2, "C", [1]), (3, "D", [1, 2])]
+    assert "Removed step 2, B" in [row["line"] for row in rig.program(pid)["checkpoints"]]
+
+
+def test_a_started_step_stays(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid = _program(rig)
+    rig.service.plan(OWNER, pid, steps=[{"title": "A"}, {"title": "B", "after": [1]}])
+    rig.service.start(OWNER, pid)
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.remove_step(OWNER, pid, rig.step(pid, 1)["id"])
+    assert (refused.value.code, refused.value.detail, refused.value.context["reason"]) == (
+        "step_stays", "Step 1 started. It stays.", FROZEN_SET)
+    assert [title for _n, title, _a in _titles(rig, pid)] == ["A", "B"]
+
+
+def test_an_orchestrators_removal_goes_up_the_ladder(tmp_path, monkeypatch) -> None:
+    from holdspeak.mcp import palettes
+    from holdspeak.mcp.families import program as family
+
+    rig = Rig(tmp_path)
+    monkeypatch.setattr("holdspeak.services.program_service.default_program_service", lambda db=None: rig.service)
+    store = AgentCredentialStore()
+    agent = store.issue("agent:orchestrator", palette=palettes.resolve_palette("CONDUCTOR"), palette_name="CONDUCTOR",
+                        launch_id="L-orch").principal
+    monkeypatch.setattr("holdspeak.principals.agent_credentials", store)
+    assert "program.step_remove" in palettes.resolve_palette("CONDUCTOR")
+    pid = family.dispatch("program.create", {"title": "Mine", "repository": str(rig.repo), "control": "normal",
+                                             "check_command": f"sh {FAKE_CHECK}"}, agent)["id"]
+    family.dispatch("program.plan", {"program_id": pid, "steps": [{"title": "A"}, {"title": "B"}, {"title": "C"}]}, agent)
+    family.dispatch("program.step_remove", {"program_id": pid, "step_id": rig.step(pid, 2)["id"]}, agent)
+    assert [title for _n, title, _a in _titles(rig, pid)] == ["A", "B", "C"]  # Normal: his press
+    item = next(i for i in rig.program(pid)["your_turn_items"] if i["kind"] == "step_change")
+    assert item["title"] == "The orchestrator removes step 2, B"
+    family.dispatch("program.decide", {"program_id": pid, "kind": "step_change", "choice": "apply",
+                                       "proposal_id": item["proposal_id"]}, OWNER)
+    assert [title for _n, title, _a in _titles(rig, pid)] == ["A", "C"]
+    family.dispatch("program.update", {"program_id": pid, "control": "yolo"}, agent)
+    family.dispatch("program.step_remove", {"program_id": pid, "step_id": rig.step(pid, 2)["id"]}, agent)
+    assert [title for _n, title, _a in _titles(rig, pid)] == ["A"]  # YOLO removes it and says so
+    assert any(row["kind"] == "step_change" and "removes step 2, C" in row["line"]
+               for row in rig.program(pid)["decided_for_you"])
+
+
+def test_change_step_writes_when_idle_budget_and_a_named_reviewer(tmp_path) -> None:
+    rig = Rig(tmp_path, people=lambda: type("P", (), {"display_names": lambda self: {"p-bob": "Bob"}})())
+    pid = _program(rig)
+    rig.service.plan(OWNER, pid, steps=[{"title": "A"}])
+    one = rig.step(pid, 1)
+    # ``review Bob``: the person and the gate in one change (the person is set first).
+    rig.service.change_step(OWNER, pid, one["id"], gate_review="person", for_person_id="p-bob", prefer_idle=True,
+                            budget_tokens="32k")
+    one = rig.step(pid, 1)
+    assert (one["gate"]["review"], one["for_person_id"], one["prefer_idle"], one["budget_tokens"]) == (
+        "person", "p-bob", True, 32768)
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.change_step(OWNER, pid, one["id"], budget_tokens="lots")
+    assert refused.value.code == "budget_invalid"
+    rig.service.start(OWNER, pid)
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.change_step(OWNER, pid, one["id"], budget_tokens=16384)
+    assert refused.value.code == "step_frozen" and refused.value.context["reason"] == FROZEN_SET
