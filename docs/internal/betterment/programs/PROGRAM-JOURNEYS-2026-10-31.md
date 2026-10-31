@@ -315,7 +315,7 @@ qwen3.8-27b` costs nothing and needs no spend line.
 | # | Time | The engine does | He sees | He presses |
 |---|---|---|---|---|
 | 1 | set-up | the Automation (PG14) gains the Dreaming template and the night line (LANG12) | the automation window: Do **Run a program** · Template **Dreaming** · Level **YOLO** · When **Every weekday at 23:30** | **Turn on** |
-| 2 | 23:30 | the Program record reopens as Running (one record, one Note history, PG-LANG §5.5). The planner reads the backlog by rule and makes one tiny step per item (one `agent.plan` call per item). Sizing (LANG8): each step's estimate must be at most half the budget (`WORKING_SHARE`, 32k of 64k). | The board fills; each row's lamp says its estimate: "# 18k of 64k". | nothing |
+| 2 | 23:30 | the Program record reopens as Running (one record, one Note history, PG-LANG §5.5). The planner reads the backlog by rule and makes one tiny step per item (one `agent.plan` call per item). Sizing (LANG8): each step's estimate must be at most half the budget (`WORKING_SHARE`, 32k of 64k). | The board fills; each row's lamp says its estimate: "# 18k of 32k". | nothing |
 | 3 | 23:31 | One step is too big: "Too big for qwen · 41k of 32k". At YOLO the planner splits it into parts that together own what it owned (`step_too_big`, PG-LANG §5.4). | Decided for you: "Split step 3 (too big for qwen): 2 parts · rule: YOLO splits" · **Overturn** (while the parts are Planned). | |
 | 4 | 23:32–06:30 | pi on qwen builds one step at a time, only when idle (`program_runner.engine_idle`, `holdspeak/services/program_runner.py:196`); Claude Code reviews at glance; YOLO merges green, reviewed and met (#1602). | "Running · 5 of 9 merged"; a waiting row: "Ready · waiting for qwen". | nothing |
 | 5 | 02:40 | The backlog's canon scanner residue gives one more step; YOLO adds a step the plan lacked and says so. | "Added for you: step 10 · from the canon scanner" · **Overturn**. | |
@@ -379,7 +379,7 @@ Spent: $0.38 of $1 (the planner) · qwen 5 h 10 · Claude Code 41 min
 ### Delight moments
 
 - The board at 07:00 is a column of green MERGE dots.
-- Each row's lamp ("# 18k of 64k") shows that small is small.
+- Each row's lamp ("# 18k of 32k") shows that small is small.
 - "Since last night" says the night in one line.
 - **Add to tonight** is one press from anywhere.
 
@@ -860,7 +860,7 @@ is not needed on PG-LANG's system (see "Reconciled").
 | F9 | The round strip with a state dot per round, Done with <round>, Skip round | J1 | In PG-LANG LANG10 |
 | F10 | "Ask me ▾" (Only the core · Each round · Everything) | J1 J4 | Dropped: **Plan it** / **Ask me first** (LANG7) |
 | F11 | "Assumed" lines | J1 | Dropped: every default is a line of the draft (LANG6, LANG7) |
-| F12 | The estimate lamp ("# 18k of 64k"), the Sizing token, "Too big for qwen" | J2 | In PG-LANG LANG8, LANG10 |
+| F12 | The estimate lamp ("# 18k of 32k"), the Sizing token, "Too big for qwen" | J2 | In PG-LANG LANG8, LANG10 |
 | F13 | **Add to tonight** on a Door task, a finding, a note line | J2 | New · JRN2 |
 | F14 | "Since last night" in the handover note | J2 J6 | In PG-LANG LANG12 |
 | F15 | "Dreaming: 8 merged, 1 waits on you" on Today | J2 | In PG-LANG LANG12 |

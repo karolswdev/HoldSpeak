@@ -2979,7 +2979,7 @@ class ProgramService:
                    or (row.verdict == "lowers" and row.id not in allow)]
         answer: dict[str, Any] = {
             "program_id": program["id"], "changes": [row.to_wire() for row in rows], "patch": patch(base_text, text),
-            "allowed_text": render(allowed_model(base_model, new_model, rows, allow)), "applied": False,
+            "allowed_text": render(allowed_model(base_model, new_model, rows)), "applied": False,
             "text": current, "revision": int(wire.get("revision") or 0), "version": VERSION,
             "refused": sum(1 for row in rows if row.verdict in ("refused", "conflict")),
             "lowers": [row.id for row in rows if row.lowers_bar and row.verdict == "lowers"],

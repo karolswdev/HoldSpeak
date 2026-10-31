@@ -5661,6 +5661,22 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/text",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/text",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/project-setups",
       "methods": [
         "POST"

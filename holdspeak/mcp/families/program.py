@@ -21,6 +21,12 @@ live in the service, so every transport keeps them:
   an orchestrating agent's (and, for ``program.require``, a step's own
   agent's) by the Control level. No tool says a requirement is met: the
   engine judges it, or he presses (``program.decide`` kind ``requirement``).
+- PG-LANG LANG1 (2026-10-31): ``program.text`` (anyone) reads a Program as
+  its text; ``program.text_apply`` previews a changed text as change rows
+  (allowed, refused by name, conflict, lowers the bar) and, with
+  ``dry_run`` false, applies it through the verbs above, so each change
+  keeps its own authority rule. A row that lowers the bar applies only when
+  its id is in ``allow_lower``.
 """
 from __future__ import annotations
 
@@ -225,6 +231,27 @@ TOOLS: list[dict[str, Any]] = [
                     "at once; an orchestrating agent's goes to the owner at Secure and Normal, YOLO sends it.",
      "inputSchema": _schema({"program_id": _ID, "step_id": _ID, "line": {"type": "string", "minLength": 1, "maxLength": 1000}},
                             ["program_id", "step_id", "line"])},
+    {"name": "program.text",
+     "description": "Read one Program as its text (PG-LANG §3): one statement per line, the steps with their briefs, "
+                    "agents, gates and requirements; the run is in lamps after '#' (never read back). Defaults are not "
+                    "written. revision is the Program's revision. By program_id or by name, as program.get.",
+     "inputSchema": _schema(_BY_NAME, [])},
+    {"name": "program.text_apply",
+     "description": "Change a Program by its text: give the whole changed text (from program.text). dry_run true (the "
+                    "default) writes nothing and returns the change rows: op, where, field, before, after, verdict "
+                    "(allowed, refused with code and reason, conflict, lowers) and lowers_bar; allowed_text is your text "
+                    "with every refused change put back. dry_run false applies only when no row is refused or in "
+                    "conflict, and a row that lowers the bar only when its id is in allow_lower. A new step is "
+                    "'step +', a new requirement 'R+'; a started step takes a line with '+'. base: the text you read, "
+                    "so a field changed since then is a conflict. Never write 'waived'.",
+     "inputSchema": _schema({
+         "program_id": _ID, "text": {"type": "string", "minLength": 1, "maxLength": 200000},
+         "dry_run": {"type": ["boolean", "null"], "description": "Default true: preview only."},
+         "preview": {"type": ["boolean", "null"], "description": "The same as dry_run (PG-LANG §12)."},
+         "base": {"type": ["string", "null"], "maxLength": 200000},
+         "allow_lower": {"type": ["array", "null"], "items": {"type": "string"},
+                         "description": "Ids of the rows that lower the bar that may apply."},
+     }, ["program_id", "text"])},
     {"name": "program.checkpoint",
      "description": "Write one line on your step at a meaningful moment. Only the step's own agent (or the owner).",
      "inputSchema": _schema({"step_id": _ID, "line": {"type": "string", "minLength": 1, "maxLength": 400},
@@ -306,6 +333,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name == "program.update":
         program_id = str(args.pop("program_id"))
         return service.update(principal, program_id, **args)
+    if name == "program.text":
+        found = service.find(principal, program_id=args.get("program_id"), name=args.get("name"))
+        return service.text_get(principal, str(found["id"]))
+    if name == "program.text_apply":
+        dry = args.get("dry_run") if args.get("dry_run") is not None else args.get("preview")
+        return service.text_apply(principal, str(args["program_id"]), args.get("text"), dry_run=dry is not False,
+                                  base=args.get("base"), allow_lower=list(args.get("allow_lower") or []))
     if name in ("program.start", "program.get"):
         return _by_name(service, name, args, principal)
     if name == "program.park":

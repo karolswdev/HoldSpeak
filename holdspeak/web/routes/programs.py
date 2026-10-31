@@ -34,6 +34,9 @@ PATCH  /api/programs/{id}/requirements/{rid}       {text?, kind?, required?, spe
 POST   /api/programs/{id}/requirements/{rid}/decide {choice: met|unmet|waive|send_back, line?} (owner)
 POST   /api/programs/{id}/proposals/{cid}/decide   {choice: add|apply|send|skip} (owner)
 GET    /api/programs/{id}/requirements/{rid}/evidence  the log text or the shot image
+GET    /api/programs/{id}/text                     PG-LANG LANG1: the Program text {text, revision, version}
+POST   /api/programs/{id}/text                     {text, dry_run (default true; preview too), base?, allow_lower?: [row ids]}
+                                                   -> {changes, patch, allowed_text, applied, text, revision}
 
 Every handler runs the service off the event loop (``run_in_threadpool``).
 """
@@ -249,6 +252,20 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
             return PlainTextResponse(text[-200_000:])
 
         return await run_in_threadpool(read)
+
+    @router.get("/api/programs/{program_id}/text")
+    async def api_programs_text(program_id: str, request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().text_get(principal, program_id))
+
+    @router.post("/api/programs/{program_id}/text")
+    async def api_programs_text_apply(program_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        dry = body.get("dry_run", body.get("preview", True))
+        allow = body.get("allow_lower") if isinstance(body.get("allow_lower"), list) else []
+        return await _call(lambda: _service().text_apply(
+            principal, program_id, body.get("text"), dry_run=dry is not False, base=body.get("base"),
+            allow_lower=[str(item) for item in allow]))
 
     @router.post("/api/programs/{program_id}/close")
     async def api_programs_close(program_id: str, request: Request) -> Any:

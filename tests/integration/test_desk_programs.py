@@ -636,3 +636,58 @@ def test_the_program_family_lists_the_requirement_tools() -> None:
         decide["inputSchema"]["properties"]["kind"]["enum"])
     listing = next(tool for tool in family.TOOLS if tool["name"] == "program.list")
     assert {"q", "project_id", "person_id"} <= set(listing["inputSchema"]["properties"])
+
+
+# ── PG-LANG LANG1: the Program text over REST and MCP ────────────────
+
+def test_the_text_routes_get_preview_and_apply(tmp_path, monkeypatch) -> None:
+    rig, client, pid = _req_rig(tmp_path, monkeypatch)
+    got = client.get(f"/api/programs/{pid}/text")
+    assert got.status_code == 200, got.text
+    body = got.json()
+    assert body["text"].startswith("# program text 1\nprogram The hub stops stalling")
+    assert (body["version"], body["revision"]) == (1, rig.program(pid)["revision"])
+    assert "  in app · main · project HoldSpeak\n" in body["text"] and "  for Alice\n" in body["text"]
+    text = body["text"].replace("step 3 The fan-out", "step + The loop watch\n  after 2\n\nstep 3 The fan-out") \
+                       .replace("  control normal", "  control yolo")
+    preview = client.post(f"/api/programs/{pid}/text", json={"text": text})
+    assert preview.status_code == 200, preview.text
+    rows = {row["id"]: row for row in preview.json()["changes"]}
+    assert rows["program.control"]["verdict"] == "lowers" and rows["program.control"]["lowers_bar"] is True
+    assert rows["step-4.add"]["verdict"] == "allowed" and preview.json()["applied"] is False
+    assert rig.program(pid)["revision"] == body["revision"]
+    frames = len(rig.frames)
+    held = client.post(f"/api/programs/{pid}/text", json={"text": text, "dry_run": False})
+    assert held.status_code == 200 and held.json()["applied"] is False  # the lowering was not passed
+    applied = client.post(f"/api/programs/{pid}/text", json={"text": text, "dry_run": False,
+                                                             "allow_lower": ["program.control"]})
+    assert applied.status_code == 200, applied.text
+    answer = applied.json()
+    assert answer["applied"] is True and answer["program"]["control"] == "yolo"
+    assert [step["title"] for step in answer["program"]["steps"]] == [
+        "Indexes", "Retention", "The loop watch", "The fan-out"]
+    assert [payload.get("text") for frame, payload in rig.frames[frames:] if frame == "program_changed"].count(True) == 1
+    missing = client.post(f"/api/programs/{pid}/text", json={"text": ""})
+    assert missing.status_code == 400 and missing.json()["code"] == "text_required"
+    assert client.get("/api/programs/program-nope/text").status_code == 404
+
+
+def test_the_program_family_reads_and_applies_the_text(tmp_path, monkeypatch) -> None:
+    from holdspeak.mcp import palettes
+    from holdspeak.mcp.families import program as family
+    from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
+
+    assert {"program.text", "program.text_apply"} <= family.NAMES
+    assert {TOOL_AUTHORITY[name] for name in ("program.text", "program.text_apply")} == {WORK}
+    assert {"program.text", "program.text_apply"} <= palettes.resolve_palette("CONDUCTOR")
+    apply_tool = next(tool for tool in family.TOOLS if tool["name"] == "program.text_apply")
+    assert {"program_id", "text", "dry_run", "base", "allow_lower"} <= set(apply_tool["inputSchema"]["properties"])
+    rig, _client_, pid = _req_rig(tmp_path, monkeypatch)
+    got = family.dispatch("program.text", {"name": "stops stalling"}, OWNER)
+    assert got["program_id"] == pid and got["text"].startswith("# program text 1\n")
+    changed = got["text"].replace("step 1 Indexes", "step 1 Indexes, all three")
+    rows = family.dispatch("program.text_apply", {"program_id": pid, "text": changed}, OWNER)["changes"]
+    assert [(row["op"], row["where"], row["field"], row["after"]) for row in rows] == [
+        ("change", "step 1", "title", "Indexes, all three")]
+    done = family.dispatch("program.text_apply", {"program_id": pid, "text": changed, "dry_run": False}, OWNER)
+    assert done["applied"] and rig.step(pid, 1)["title"] == "Indexes, all three"

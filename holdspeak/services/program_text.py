@@ -493,8 +493,10 @@ def render(model: ProgramText, lamps: Optional[Mapping[str, str]] = None) -> str
         if flags:
             out.append("  " + " · ".join(flags))
         gates = []
+        named = step.review == "person" and bool(step.for_person)
         if step.review is not None or step.depth is not None:
             review = step.review if step.review is not None else step_value(model.head, step, "review")
+            review = step.for_person if named else review
             gates.append(f"review {review}" + (f" at {step.depth}" if step.depth is not None else ""))
         if step.merge is not None:
             gates.append(f"merge {step.merge}")
@@ -502,7 +504,7 @@ def render(model: ProgramText, lamps: Optional[Mapping[str, str]] = None) -> str
             gates.append("check on" if step.check else "check off")
         if gates:
             out.append("  " + " · ".join(gates))
-        if step.for_person:
+        if step.for_person and not named:
             out.append(f"  for {step.for_person}")
         if step.origin:
             out.append(f"  from {step.origin}")
@@ -787,7 +789,7 @@ class _Reader:
 
     def program_line(self, number: int, body: str) -> None:
         head = self.model.head
-        if body.startswith(("in ", "check ")) or body == "goal":
+        if body.startswith(("in ", "check ", "night ")) or body == "goal":
             parts = [body]
         else:
             parts = [part.strip() for part in body.split(" · ")]
@@ -904,12 +906,15 @@ class _Reader:
             elif part in ("check off", "check on"):
                 step.check = part == "check on"
             elif word == "review":
-                found = re.match(r"^(none|agent|person)(?: at (glance|delta|standard))?$", rest)
+                found = re.match(r"^(.+?)(?: at (glance|delta|standard))?$", rest)
                 if not found:
-                    self.bad(number, "review is none, agent or person, and at glance, delta or standard.")
-                else:
+                    self.bad(number, "review is none, agent or a person, and at glance, delta or standard.")
+                elif found.group(1) in REVIEWS:
                     step.review = found.group(1)
                     step.depth = found.group(2)
+                else:
+                    # ``review Alice``: a person reviews the PR (the step's person).
+                    step.review, step.depth, step.for_person = "person", found.group(2), found.group(1).strip()
             elif word == "merge":
                 if rest not in MERGES:
                     self.bad(number, "merge is level, owner or none.")
@@ -1421,11 +1426,13 @@ def patch(current: str, proposed: str) -> str:
 
 def allowed_model(base: ProgramText, proposed: ProgramText, rows: list[Change],
                   allow: Iterable[str] = ()) -> ProgramText:
-    """``proposed`` with every change that will not apply put back as it is
-    in ``base`` (§3.6): one more apply of its text is "Apply the rest"."""
+    """``proposed`` with every refused or conflicting change put back as it
+    is in ``base`` (§3.6): one more apply of its text is "Apply the rest".
+    A row that lowers the bar stays in the text unless ``allow`` is given
+    and omits it; it applies only with its own id in ``allow_lower``."""
     allow = set(allow)
     blocked = [row for row in rows if row.verdict in ("refused", "conflict") or
-               (row.verdict == "lowers" and row.id not in allow)]
+               (allow and row.verdict == "lowers" and row.id not in allow)]
     out = replace(proposed, head=replace(proposed.head), steps=[replace(step) for step in proposed.steps],
                   every_step=list(proposed.every_step), at_end=list(proposed.at_end), errors=[])
     base_by = {step.number: step for step in base.steps if step.number is not None}

@@ -2470,6 +2470,18 @@
       "entry_point": "program.step_update",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.text",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.text_apply",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
     }
   ]
 }

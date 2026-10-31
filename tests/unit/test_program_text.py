@@ -41,7 +41,8 @@ def _wires() -> list[tuple[str, dict[str, Any]]]:
     out = []
     for path in sorted(FIXTURES.glob("*.json")):
         value = json.loads(path.read_text(encoding="utf-8"))
-        for wire in (value, value.get("program") if isinstance(value, dict) else None):
+        nested = [value.get("program"), (value.get("applied") or {}).get("program")] if isinstance(value, dict) else []
+        for wire in (value, *nested):
             if isinstance(wire, dict) and "steps" in wire and "control" in wire:
                 out.append((path.name, wire))
     return out
@@ -245,6 +246,26 @@ def test_every_recorded_program_round_trips() -> None:
         assert render(model, wire_lamps(wire)) == text, name          # 2. print(parse(t)) is t
         assert diff_program_text(text, text, record=wire) == [], name  # 3. no change, no row
         assert text.startswith("# program text 1\n")
+
+
+def test_the_journeys_texts_are_a_second_corpus() -> None:
+    """PROGRAM-JOURNEYS-2026-10-31.md writes its texts to §3.2: each one
+    reads, prints and reads again to the same model (lamps are ignored, so
+    the bytes may differ). A word this hub does not store yet is refused by
+    name and only that."""
+    import re
+
+    journeys = (Path(__file__).resolve().parents[2] / "docs" / "internal" / "betterment" / "programs"
+                / "PROGRAM-JOURNEYS-2026-10-31.md").read_text(encoding="utf-8")
+    texts = [block for block in re.findall(r"```\n(.*?)```", journeys, re.S) if re.search(r"^program ", block, re.M)]
+    assert len(texts) >= 5
+    for text in texts:
+        model = parse_program_text(text)
+        assert model.steps or model.every_step, text[:80]
+        again = parse_program_text(render(model))
+        assert again.errors == [] and again == model, text[:80]
+        for error in model.errors:
+            assert ("does not read yet" in error.words or "review depth is set on each step" in error.words), error
 
 
 def test_every_templates_planned_program_round_trips(tmp_path) -> None:
