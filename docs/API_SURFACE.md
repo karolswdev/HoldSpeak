@@ -13,7 +13,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 891 (plus static mounts). iOS-consumed: 89. Web-consumed: 693.
+Routes: 898 (plus static mounts). iOS-consumed: 89. Web-consumed: 693.
 
 ## device_audio_ws
 
@@ -1011,8 +1011,15 @@ Routes: 891 (plus static mounts). iOS-consumed: 89. Web-consumed: 693.
 | POST | `/api/programs/{program_id}/from-desk` | server only |
 | POST | `/api/programs/{program_id}/park` | server only |
 | POST | `/api/programs/{program_id}/plan` | server only |
+| POST | `/api/programs/{program_id}/proposals/{proposal_id}/decide` | server only |
+| POST | `/api/programs/{program_id}/requirements` | server only |
+| PATCH | `/api/programs/{program_id}/requirements/{requirement_id}` | server only |
+| POST | `/api/programs/{program_id}/requirements/{requirement_id}/decide` | server only |
+| GET | `/api/programs/{program_id}/requirements/{requirement_id}/evidence` | server only |
 | POST | `/api/programs/{program_id}/resume` | server only |
 | POST | `/api/programs/{program_id}/start` | server only |
+| PATCH | `/api/programs/{program_id}/steps/{step_id}` | server only |
+| POST | `/api/programs/{program_id}/steps/{step_id}/amend` | server only |
 | POST | `/api/programs/{program_id}/steps/{step_id}/checkpoint` | server only |
 | POST | `/api/programs/{program_id}/steps/{step_id}/decide` | server only |
 | POST | `/api/programs/{program_id}/steps/{step_id}/handoff` | server only |

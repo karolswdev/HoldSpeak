@@ -5557,6 +5557,46 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/proposals/{proposal_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/requirements",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/requirements/{requirement_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/requirements/{requirement_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/requirements/{requirement_id}/evidence",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/resume",
       "methods": [
         "POST"
@@ -5566,6 +5606,22 @@
     },
     {
       "path": "/api/programs/{program_id}/start",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/steps/{step_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
+      "path": "/api/programs/{program_id}/steps/{step_id}/amend",
       "methods": [
         "POST"
       ],

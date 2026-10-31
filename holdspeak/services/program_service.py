@@ -2846,7 +2846,11 @@ class ProgramService:
         who = "the owner" if by == "owner" else "the orchestrator"
         self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=at, by=by, kind="amend",
                                   line=f"Added to the brief by {who}: {line}"[:400], undo={"line": line})
-        write_amendment(step, f"Added by {who} at {_clock_words(at)}", line)
+        try:
+            git = self.runner()._git
+        except Exception:
+            git = None
+        write_amendment(step, f"Added by {who} at {_clock_words(at)}", line, git=git)
 
     # ── Phone: the engine reaches him (Phone design §6) ──────────────
 
@@ -3461,7 +3465,8 @@ def _change_words(step: Mapping[str, Any], fields: Mapping[str, Any]) -> str:
     return " and ".join(parts)
 
 
-def write_amendment(step: Mapping[str, Any], head: str, line: str) -> Optional[str]:
+def write_amendment(step: Mapping[str, Any], head: str, line: str,
+                    git: Optional[Callable[..., str]] = None) -> Optional[str]:
     """PG-REQ §6: the amendment appended to ``<worktree>/.holdspeak/brief.md``
     under its head ("Added by the owner at 14:02"); the file is kept out of
     git (the worktree's ``info/exclude``), so the check's clean-tree rule
@@ -3474,11 +3479,9 @@ def write_amendment(step: Mapping[str, Any], head: str, line: str) -> Optional[s
         target.parent.mkdir(parents=True, exist_ok=True)
         with target.open("a", encoding="utf-8") as out:
             out.write(f"\n## {head}\n\n{line}\n")
-        import subprocess
-
-        found = subprocess.run(["git", "-C", worktree, "rev-parse", "--path-format=absolute", "--git-path", "info/exclude"],
-                               capture_output=True, text=True, timeout=30)
-        exclude = Path(found.stdout.strip()) if found.returncode == 0 and found.stdout.strip() else None
+        # git runs through the runner's one process site (the effect fence).
+        found = git(worktree, "rev-parse", "--path-format=absolute", "--git-path", "info/exclude") if git else ""
+        exclude = Path(found) if found else None
         if exclude is not None:
             exclude.parent.mkdir(parents=True, exist_ok=True)
             known = exclude.read_text(encoding="utf-8") if exclude.exists() else ""
