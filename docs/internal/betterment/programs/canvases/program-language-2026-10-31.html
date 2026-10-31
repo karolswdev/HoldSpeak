@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Program language</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material. Every value is copied from web/src/styles/tokens.css and the
+   kit (web/src/desk/surface/kit.css, patterns/state-chip.css,
+   objects/list-view.css) on lane/programs-20261028 (a902e091a); this page (PG-LANG) copies them from canvases/programs-requirements-2026-10-31.html, which copies them from
+   canvases/programs-2026-10-28.html unchanged and adds only the parts at the end. */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-hover:rgba(37,52,73,.06); --wb-rec:#b3261e;
+  --wb-ok-ink:#1d5c2e; --wb-warn-ink:#6b4a00; --wb-danger-ink:#9b2219; --wb-info-ink:#2f4f86; --wb-ember-ink:#7a4a2c;
+  --lamp-ok:#34d399; --lamp-warn:#fbbf24; --lamp-fail:#f87171; --lamp-info:#3b5d93; --lamp-ask:#da9868;
+  --pill-neutral:#edf1f6; --pill-ok:#e3f3ea; --pill-warn:#fff2cf; --pill-danger:#fde6e4; --pill-info:#e6eef9; --pill-accent:#fff0df;
+  --kind-pr:#2b7a4a; --kind-agent:#a84a1c; --kind-project:#3b62c4;
+  --depth-paper:0 22px 48px rgba(22,40,62,.24),0 4px 12px rgba(22,40,62,.12);
+  --depth-row:0 1px 3px rgba(22,40,62,.12);
+  --depth-card:0 10px 28px rgba(8,14,22,.22);
+  --depth-menu:0 8px 22px rgba(22,40,62,.12);
+  --depth-dock:0 10px 30px rgba(8,14,22,.45),0 2px 6px rgba(8,14,22,.3);
+  --wb-toolbar-h:36px;
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  --page:#e9eef4; --page-ink:#253449; --page-card:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+}
+:root[data-theme="dark"]{ --page:#1b2531; --page-ink:#e3e9f1; --page-card:#223040; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font:15px/1.5 var(--font-ui);min-width:1440px}
+main{padding:32px 24px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 15px/1.3 var(--font-display);margin:22px 0 8px}
+p{margin:0 0 10px;max-width:1100px}
+code{font:12.5px var(--font-mono)}
+section.part{margin:44px 0 0;padding:24px 0 0;border-top:2px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#7b8aa0}
+.rec{border-left:4px solid var(--wb-sel-vivid);padding:12px 18px;background:color-mix(in srgb,var(--wb-sel-vivid) 8%,transparent);border-radius:0 8px 8px 0;max-width:1180px;margin:14px 0}
+.rec p{max-width:none}
+.note{font-size:13.5px;opacity:.85;max-width:1200px}
+.cmp{display:grid;grid-template-columns:240px repeat(3,1fr);max-width:1180px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;color:var(--wb-ink);font-size:13px;margin:12px 0}
+.cmp>div{padding:8px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.cmp>div:nth-child(4n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.cmp>.h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.cmp>.h.r{background:var(--wb-blue);color:#2b4a7a}
+.cmp>.r{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+.moment{display:grid;grid-template-columns:250px auto;gap:24px;align-items:start;margin:22px 0 0}
+.moment .say{font-size:13.5px}
+.moment .say b{display:block;font:600 15px var(--font-display);margin-bottom:4px}
+
+/* ── the sprites (Icons D): the levels of gen-illustrated-icons.py LEVELS ── */
+.spr{display:inline-block;flex:none;line-height:0;vertical-align:middle}
+.spr svg{width:100%;height:100%;display:block;overflow:visible}
+.spr .ol{stroke-width:var(--ow)}
+.spr .bv{transform:translate(var(--u),var(--u))}
+.spr .bvn{transform:translate(var(--nu),var(--nu))}
+.s64{width:64px;height:64px;--ow:1.5px;--u:3.25px;--nu:-3.25px;--lw:1}
+.s48{width:48px;height:48px;--ow:1.8px;--u:3.55px;--nu:-3.55px;--lw:1}
+.s32{width:32px;height:32px;--ow:2.2px;--u:3.1px;--nu:-3.1px;--lw:1}
+.s20,.s16{width:20px;height:20px;--ow:3px;--u:0px;--nu:0px;--lw:1.35}
+.s16{width:16px;height:16px}
+.s32 .detail,.s20 .detail,.s16 .detail{display:none}
+.s20 [fill="#9fb3c8"],.s16 [fill="#9fb3c8"]{fill:#c9d7e6}
+
+/* ── the desk (the floor, the menu bar, the dock) ── */
+.desk{position:relative;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);
+  background:radial-gradient(120% 90% at 20% 0%,#45607f 0%,#2f435b 45%,#233244 100%);font-family:var(--font-ui);color:var(--wb-ink)}
+.menubar{position:absolute;left:0;right:0;top:0;height:36px;background:#fbfcfe;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13.5px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.menubar b{font-weight:600}
+.menubar .grow{flex:1}
+.menubar .bell{display:inline-flex;align-items:center;gap:6px}
+.menubar .badge{background:#2f67c8;color:#fff;font:600 11.5px/1 var(--font-ui);padding:3px 6px;border-radius:9px}
+
+/* the window frame (window-chrome: 30 px blue title bar, a title chip) */
+.win{position:absolute;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--depth-paper);overflow:hidden;display:flex;flex-direction:column;container:surface/inline-size}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:18px;text-align:center;font-size:14px;opacity:.9}
+.tb .chip{width:22px;height:22px;border-radius:5px;background:var(--wb-paper);display:grid;place-items:center;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.tb .name{font:600 13.5px/1 var(--font-ui);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .name.edit span{border-bottom:1px dashed rgba(247,249,252,.7);padding-bottom:1px}
+.tb .gad{display:flex;gap:4px}
+.tb .gad i{width:26px;height:20px;display:grid;place-items:center}
+.tb .gad i::before{content:"";width:11px;height:10px;border:1.5px solid #f7f9fc;border-radius:2px}
+.toolbar{flex:0 0 var(--wb-toolbar-h);display:flex;align-items:center;gap:4px;padding:3px 8px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper);position:relative}
+.toolbar .grow{flex:1}
+.body{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .it+.it::before{content:"·";margin:0 7px 0 1px;opacity:.7}
+.sb b{color:var(--wb-ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* library Button (the plated and the quiet toolbar forms) */
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap;border:1px solid transparent;background:transparent}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc}
+.btn.plate{background:var(--wb-steel-2);border-color:var(--wb-rule);box-shadow:inset 0 1px 0 #fff}
+.btn.sm{height:24px;font-size:12.5px;padding:0 9px}
+.btn.off{color:#8d9aab}
+.btn .caret{font-size:10px;color:var(--wb-muted);margin-left:2px}
+.btn.primary .caret{color:#dbe4f2}
+.btn.open{background:var(--wb-blue);border-color:var(--wb-sel)}
+
+/* DotWord + the lamp dot (kit.css) */
+.dw{display:inline-flex;align-items:center;gap:6px;font:500 12px/1.35 var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:color-mix(in srgb,var(--wb-muted) 55%,var(--wb-paper));box-shadow:0 0 0 1px var(--wb-rule-soft)}
+[data-tone=ok]>.dot,.dot[data-tone=ok]{background:var(--lamp-ok)}
+[data-tone=warn]>.dot,.dot[data-tone=warn]{background:var(--lamp-warn)}
+[data-tone=fail]>.dot,.dot[data-tone=fail]{background:var(--lamp-fail)}
+[data-tone=info]>.dot,.dot[data-tone=info]{background:var(--lamp-info)}
+[data-tone=ask]>.dot,.dot[data-tone=ask]{background:var(--lamp-ask)}
+.dw[data-tone=ok]{color:var(--wb-ok-ink)} .dw[data-tone=warn]{color:var(--wb-warn-ink)}
+.dw[data-tone=fail]{color:var(--wb-danger-ink)} .dw[data-tone=info]{color:var(--wb-info-ink)} .dw[data-tone=ask]{color:var(--wb-ember-ink)}
+.sb .dot[data-tone=ok],.sb .dot[data-tone=info],.sb .dot[data-tone=ask]{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 40%,transparent),0 0 0 3px color-mix(in srgb,var(--t) 18%,transparent)}
+.dot[data-tone=ok]{--t:var(--lamp-ok)} .dot[data-tone=info]{--t:var(--lamp-info)} .dot[data-tone=ask]{--t:var(--lamp-ask)} .dot[data-tone=fail]{--t:var(--lamp-fail)}
+/* THE BREATH: the Record tile's rhythm (kit-lamp-live): a ring on the lamp opens to 5 px and closes, 2.4 s. A box-shadow, never a transform. */
+@keyframes live{0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 45%,transparent),0 0 0 2px color-mix(in srgb,var(--t) 16%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 60%,transparent),0 0 0 5px color-mix(in srgb,var(--t) 26%,transparent)}}
+@media (prefers-reduced-motion: no-preference){ .live{animation:live 2.4s ease-in-out infinite} }
+
+/* StateChip (patterns/state-chip.css): a tinted square pill, dot + word */
+.sc{display:inline-flex;align-items:center;gap:6px;min-height:20px;padding:1px 9px 1px 7px;background:var(--pill-neutral);box-shadow:inset 0 0 0 1px rgba(37,52,73,.06);font:600 12px/1 var(--font-ui);white-space:nowrap;color:var(--wb-muted)}
+.sc i{width:8px;height:8px;border-radius:50%;background:rgba(37,52,73,.05);box-shadow:0 0 0 1px rgba(37,52,73,.55)}
+.sc[data-s=success]{background:var(--pill-ok);color:var(--wb-ok-ink)} .sc[data-s=success] i{background:var(--lamp-ok)}
+.sc[data-s=working]{background:var(--pill-info);color:var(--wb-info-ink)} .sc[data-s=working] i{background:var(--lamp-info)}
+.sc[data-s=active]{background:var(--pill-accent);color:var(--wb-ember-ink)} .sc[data-s=active] i{background:var(--lamp-ask)}
+.sc[data-s=failure]{background:var(--pill-danger);color:var(--wb-danger-ink)} .sc[data-s=failure] i{background:var(--lamp-fail)}
+.sc[data-s=warning]{background:var(--pill-warn);color:var(--wb-warn-ink)} .sc[data-s=warning] i{background:var(--lamp-warn)}
+
+/* ListView (objects/list-view.css): a column head 26 px, rows 32 px */
+.lhead{height:26px;display:grid;align-items:center;gap:10px;padding:0 12px;font-size:12px;font-weight:600;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+.band{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-paper);border-bottom:1px solid var(--wb-rule-soft)}
+.band b{font-weight:500;color:var(--wb-faint)}
+.lrow{height:32px;display:grid;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.lrow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lrow .t{font-weight:600;display:flex;align-items:center;gap:8px}
+.lrow .m{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.lrow .q{color:var(--wb-muted);font-size:12px}
+.lrow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.lrow .done-in{color:var(--wb-ok-ink);font-weight:500}
+
+/* the Your turn well: an ember rule, the verbs inline */
+.well{margin:10px 12px 4px;border-radius:7px;background:color-mix(in srgb,var(--lamp-ask) 7%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--lamp-ask),0 0 0 1px color-mix(in srgb,var(--lamp-ask) 35%,var(--wb-rule-soft))}
+.well .cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;font:600 12px var(--font-ui);color:var(--wb-ember-ink)}
+.well .wr{min-height:32px;display:flex;align-items:center;gap:10px;padding:3px 10px 3px 14px;border-top:1px solid color-mix(in srgb,var(--lamp-ask) 22%,var(--wb-rule-soft));font-size:13px}
+.well .wr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.well .wr .t b{font-weight:600}
+.well .wr .m{color:var(--wb-muted);font-size:12px;white-space:nowrap}
+.well .wr .vb{display:flex;gap:6px}
+
+/* the board, direction C: the ledger (32 px rows, the track as six dots) */
+.board-cap{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;margin-top:6px;font:600 12px var(--font-ui);color:var(--wb-muted)}
+.crow{height:32px;display:grid;grid-template-columns:22px minmax(0,210px) 262px var(--agw,122px) 58px minmax(0,1fr) 62px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.crow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow .n{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.crow .ti{font-weight:600}
+.crow .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.crow .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.crow .el{color:var(--wb-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.crow .cp{color:var(--wb-muted);font-size:12px}
+.crow .op{text-align:right;overflow:visible}
+.crow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.crow.kid{background:color-mix(in srgb,var(--wb-field) 45%,var(--wb-paper))}
+.crow.kid .ti{font-weight:500;display:flex;align-items:center;gap:6px;padding-left:16px;position:relative}
+.crow.kid .ti::before{content:"";position:absolute;left:4px;top:-6px;width:8px;height:14px;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.crow.dim{color:var(--wb-muted)}
+.crow.dim .ti{font-weight:500}
+.dots{display:inline-flex;align-items:center;gap:0;margin-right:10px;vertical-align:middle}
+.dots .d{width:8px;height:8px;border-radius:50%;flex:none;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.dots .d.passed{background:#8ea0b6;box-shadow:none}
+.dots .d.skip{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6;width:6px;height:6px;margin:1px}
+.dots .d.cur{box-shadow:none;width:10px;height:10px}
+.dots .d.cur[data-tone=info]{background:var(--lamp-info);--t:var(--lamp-info)}
+.dots .d.cur[data-tone=ask]{background:var(--lamp-ask);--t:var(--lamp-ask)}
+.dots .d.cur[data-tone=fail]{background:var(--lamp-fail);--t:var(--lamp-fail)}
+.dots .d.cur[data-tone=ok],.dots .d.ok{background:var(--lamp-ok);box-shadow:none;--t:var(--lamp-ok)}
+.dots .d.cur[data-tone=idle]{background:#a9b6c6}
+.dots .ln{width:10px;height:1.5px;background:#cbd5e1;flex:none}
+.dots .ln.passed{background:#8ea0b6}
+.trk{display:flex;align-items:center}
+.trk .pr{font:500 12px var(--font-ui);color:var(--kind-pr)}
+
+/* direction A: the track is the row */
+.arow{display:grid;grid-template-columns:22px 1fr;column-gap:10px;padding:5px 12px 6px;border-bottom:1px solid #e9eef4;font-size:13px}
+.arow .n{grid-row:1/3;color:var(--wb-faint);font-size:12px;text-align:right;padding-top:4px}
+.arow .l1{display:flex;align-items:center;gap:10px;height:24px;white-space:nowrap}
+.arow .l1 .ti{font-weight:600}
+.arow .l1 .af{color:var(--wb-muted);font-size:12px}
+.arow .l1 .grow{flex:1}
+.arow .l1 .m{color:var(--wb-muted);font-size:12px}
+.arow .l1 .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.arow .l2{display:flex;align-items:center;gap:0;height:22px}
+.arow .l2 .cp{margin-left:auto;color:var(--wb-muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:12px}
+.st{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--font-ui);color:#8d9aab;white-space:nowrap}
+.st .dot{width:8px;height:8px}
+.st.passed{color:var(--wb-muted)} .st.passed .dot{background:#8ea0b6;box-shadow:none}
+.st.ahead .dot{background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.st.skip{color:#a9b4c2;text-decoration:line-through}
+.st.skip .dot{background:transparent;box-shadow:inset 0 0 0 1.5px #d3dbe6}
+.st.cur{font-weight:600}
+.st.cur[data-tone=info]{color:var(--wb-info-ink)} .st.cur[data-tone=ask]{color:var(--wb-ember-ink)} .st.cur[data-tone=fail]{color:var(--wb-danger-ink)} .st.cur[data-tone=ok],.st.ok{color:var(--wb-ok-ink)}
+.st.ok .dot{background:var(--lamp-ok);box-shadow:none}
+.st .sub{font-weight:400;color:var(--wb-muted)}
+.st.ok .sub,.st.cur[data-tone=ok] .sub{color:var(--kind-pr);font-weight:600}
+.seg{width:26px;height:1.5px;background:#cbd5e1;margin:0 8px;flex:none}
+.seg.passed{background:#8ea0b6}
+
+/* direction B: the card */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 12px}
+.card{background:var(--wb-well);border-radius:7px;box-shadow:var(--depth-row),0 0 0 1px var(--wb-rule-soft);display:flex;flex-direction:column;font-size:13px;overflow:hidden}
+.card .hd{display:flex;align-items:center;gap:8px;padding:8px 10px 2px}
+.card .hd .n{color:var(--wb-faint);font-size:12px}
+.card .hd .ti{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .mid{padding:2px 10px 8px;color:var(--wb-muted);font-size:12px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.card .mid .cp{overflow:hidden;text-overflow:ellipsis}
+.card .ft{border-top:1px solid #edf1f6;background:var(--wb-steel-2);padding:6px 10px;display:flex;align-items:center;gap:8px}
+.card.sel{box-shadow:var(--depth-row),0 0 0 2px var(--wb-sel-vivid)}
+
+/* CheckGadget (the kit's switch species: the sliding toggle is dead, HS-111-01) */
+.ck{display:inline-flex;align-items:center;gap:7px;font-size:13px;white-space:nowrap}
+.ck i{width:16px;height:16px;border:1px solid #bbc7d6;background:var(--wb-well);border-radius:3px;display:grid;place-items:center}
+.ck.on i::after{content:"";width:8px;height:4.5px;border-left:2px solid var(--wb-sel);border-bottom:2px solid var(--wb-sel);transform:translateY(-1px) rotate(-45deg)}
+/* the token form in a toolbar: a quiet pill toggle; on, the selection blue */
+.tokt{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;border:1px solid var(--wb-rule-soft);color:var(--wb-muted);font:500 13px var(--font-ui);white-space:nowrap}
+.tokt.on{border-color:var(--wb-sel);background:var(--wb-blue);color:var(--wb-sel)}
+/* the Runs on picker (a menu, the Engines window's list and words) */
+.menu .grp{font:600 12px var(--font-ui);color:var(--wb-muted);padding:6px 9px 2px}
+.menu .ro{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;height:32px;padding:0 9px;border-radius:5px;font-size:13px}
+.menu .ro.in{padding-left:24px;grid-template-columns:20px 1fr auto}
+.menu .ro.hot{background:var(--wb-blue)}
+.menu .ro .chk{color:var(--wb-sel);font-weight:700;margin-left:6px}
+.menu .ft{border-top:1px solid var(--wb-rule-soft);margin-top:4px;padding:8px 9px 4px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--wb-muted)}
+/* folds (FoldGadget) */
+.fold{border-top:1px solid var(--wb-rule-soft);margin-top:8px}
+.fold .fh{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font:600 12.5px var(--font-ui);color:var(--wb-ink)}
+.fold .fh .chev{width:12px;color:var(--wb-muted);font-size:10px}
+.fold .fh .q{font-weight:400;color:var(--wb-muted);font-size:12px}
+.gate{padding:2px 12px 10px 32px;display:grid;grid-template-columns:110px 1fr;row-gap:7px;font-size:13px;align-items:center}
+.gate .k{color:var(--wb-muted);font-size:12px}
+.gate .sections{display:flex;gap:14px;flex-wrap:wrap}
+.gate code{font:12.5px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);padding:2px 6px;border-radius:4px}
+.cpl{padding:0 12px 8px 32px}
+.cpl .c{height:28px;display:grid;grid-template-columns:20px 140px 1fr 56px;align-items:center;gap:8px;font-size:13px;border-bottom:1px solid #eef2f6}
+.cpl .c .who{font-size:12px;color:var(--wb-muted)}
+.cpl .c .m{font-size:12px;color:var(--wb-faint);text-align:right;font-variant-numeric:tabular-nums}
+.av{width:20px;height:20px;border-radius:50%;background:#1f7a6b;color:#fff;display:grid;place-items:center;font:600 9.5px var(--font-ui)}
+
+/* fields in Drafting: StringGadget + MicButton, CycleGadget, PadGadget */
+.fld{display:flex;align-items:center;height:26px;background:var(--wb-well);border:1px solid var(--wb-rule);border-radius:5px;overflow:hidden;min-width:0}
+.fld span{flex:1;padding:0 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld .mic{flex:0 0 26px;height:100%;border-left:1px solid var(--wb-rule-soft);display:grid;place-items:center;background:var(--wb-steel-2)}
+.mic svg{width:12px;height:12px;stroke:var(--wb-muted);fill:none;stroke-width:1.6;stroke-linecap:round}
+.cyc{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:26px;padding:0 8px;border-radius:5px;background:var(--wb-steel-2);border:1px solid var(--wb-rule);font-size:12.5px;white-space:nowrap;box-shadow:inset 0 1px 0 #fff}
+.cyc::after{content:"▾";font-size:10px;color:var(--wb-muted)}
+.drow{height:36px;display:grid;grid-template-columns:22px minmax(0,1fr) 150px 200px 84px 84px 96px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.drow .n{color:var(--wb-faint);font-size:12px;text-align:right}
+.drow .tok{display:inline-flex;gap:4px;overflow:hidden}
+.tokn{font:12px var(--font-mono);color:var(--wb-ink);background:var(--wb-field);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.drow.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.pad{margin:6px 12px 8px 44px;border:1px solid var(--wb-rule);border-radius:6px;background:var(--wb-well);display:grid;grid-template-columns:1fr 30px;min-height:84px}
+.pad .tx{padding:8px 10px;font-size:13px;line-height:1.5}
+.pad .mic{border-left:1px solid var(--wb-rule-soft);display:grid;place-items:start center;padding-top:8px;background:var(--wb-steel-2)}
+
+/* the Templates menu (depth-menu) */
+.menu{position:absolute;z-index:5;background:var(--wb-paper);border-radius:8px;box-shadow:var(--depth-menu),0 0 0 1px var(--wb-rule-soft);padding:5px;width:330px}
+.menu .mi{display:grid;grid-template-columns:20px 1fr;gap:2px 10px;padding:7px 9px;border-radius:5px}
+.menu .mi.hot{background:var(--wb-blue)}
+.menu .mi b{font:600 13px var(--font-ui)}
+.menu .mi span{grid-column:2;font-size:12px;color:var(--wb-muted)}
+
+/* empty state: the object, one line, one Button */
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-size:13px;color:var(--wb-muted)}
+.empty .obj{width:96px;height:96px;margin:0 auto 12px;border-radius:24px;background:linear-gradient(160deg,#eef3fa,#d9e4f3);display:grid;place-items:center;box-shadow:var(--depth-row),inset 0 1px 0 #fff}
+.empty b{display:block;font:600 15px var(--font-ui);color:var(--wb-ink);margin-bottom:4px}
+.empty p{max-width:420px;margin:0 auto 14px}
+
+/* the dock glass */
+.dock{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:12px;padding:8px 14px;border-radius:16px;background:rgba(30,43,58,.72);box-shadow:var(--depth-dock),inset 0 0 0 1px rgba(233,238,245,.16)}
+.dock .tile{position:relative;width:48px;height:48px;display:grid;place-items:center;border-radius:10px}
+.dock .tile.on{background:rgba(233,238,245,.12)}
+.dock .lampd{position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--lamp-ask);--t:var(--lamp-ask);box-shadow:0 0 0 1.5px #1e2b3a}
+.dock .badge{position:absolute;right:-6px;top:-4px;background:#2f67c8;color:#fff;font:600 11px/1 var(--font-ui);padding:3px 5px;border-radius:9px}
+
+/* phones (393) */
+.phones{display:flex;gap:48px;align-items:flex-start;margin:18px 0 0 10px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:#223142;font-family:var(--font-ui);color:var(--wb-ink);container:surface/inline-size}
+.ph-menu{position:absolute;left:0;right:0;top:0;height:44px;background:#fbfcfe;display:flex;align-items:center;gap:14px;padding:0 14px;font-size:14px}
+.ph-win{position:absolute;left:0;right:0;top:44px;bottom:84px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{flex:0 0 44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 14px var(--font-ui)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tool{flex:0 0 52px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.ph-tool .btn{height:44px;font-size:14px;padding:0 14px}
+.ph-tool .grow{flex:1}
+.ph-body{flex:1;overflow:hidden;position:relative}
+.ph-sb{flex:0 0 26px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.ph-dock{position:absolute;left:8px;right:8px;bottom:10px;height:64px;border-radius:16px;background:rgba(30,43,58,.85);display:flex;align-items:center;justify-content:space-around;box-shadow:inset 0 0 0 1px rgba(233,238,245,.16)}
+.prow{padding:8px 12px 8px 12px;border-bottom:1px solid #e9eef4;display:grid;grid-template-columns:auto 1fr auto;column-gap:10px;row-gap:3px;align-items:center;min-height:60px}
+.prow .t{font:600 14px var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .m{grid-column:2/4;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .n{color:var(--wb-faint);font-size:12px;width:16px;text-align:right}
+.ph-band{height:28px;display:flex;align-items:center;padding:0 12px;font:600 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.phone .well{margin:10px 10px 6px}
+.phone .well .wr{flex-wrap:wrap;padding:8px 10px 10px 14px;row-gap:8px}
+.phone .well .wr .t{white-space:normal;flex:1 1 100%}
+.phone .well .wr .vb{flex:1 1 100%}
+.phone .well .wr .btn{height:44px;font-size:14px;padding:0 16px}
+.measure{position:absolute;right:-2px;border-left:1.5px solid #e5483d;font:600 10px var(--font-ui);color:#e5483d;padding-left:3px}
+
+/* seams */
+.seams{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1440px}
+.seam{background:var(--page-card);border-radius:8px;padding:14px 16px;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.seam h3{margin:0 0 10px}
+.crop{background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;overflow:hidden;box-shadow:var(--depth-row);color:var(--wb-ink)}
+.nrow{height:31px;display:flex;align-items:center;gap:10px;padding:0 10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.nrow .t{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.nrow .m{color:var(--wb-muted);font-size:12px}
+.grp{height:24px;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 12px var(--font-ui);color:var(--wb-muted);background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.agrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #e9eef4;font-size:13px}
+.agrow .tx{flex:1;min-width:0}
+.agrow .tx b{display:block;font-weight:600}
+.agrow .tx span{font-size:12px;color:var(--wb-muted)}
+.agrow .tx a{color:var(--wb-info-ink);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--wb-info-ink) 35%,transparent)}
+.today{padding:10px 14px;font-size:14px;line-height:1.7}
+.today .cap{font:600 12px var(--font-ui);color:var(--wb-muted);margin-bottom:2px}
+.today .ln{display:flex;align-items:center;gap:8px}
+.today .ln.new{background:color-mix(in srgb,var(--lamp-ask) 8%,transparent);margin:0 -14px;padding:0 14px}
+
+/* the ecosystem (§9b) */
+.eco{display:grid;grid-template-columns:1fr;gap:26px;margin-top:20px;max-width:1440px}
+.eco h3{margin:0 0 8px}
+.place{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 6px;border-radius:4px;color:var(--wb-ink);font:500 12px var(--font-ui)}
+.place .spr{width:14px;height:14px}
+.place .av{width:14px;height:14px;font-size:7px}
+.tokn.press{font:500 12px var(--font-ui);background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule);border-radius:10px;padding:2px 9px;color:var(--wb-muted)}
+.sec{padding:10px 16px 4px}
+.sec .h{display:flex;align-items:center;gap:10px;font:600 13px var(--font-ui);margin-bottom:4px}
+.sec .h::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.rrow{height:32px;display:grid;grid-template-columns:24px 1fr 110px 70px 120px 60px;align-items:center;gap:10px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.rrow .m{color:var(--wb-muted);font-size:12px}
+.rrow .t{font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.brief{padding:10px 16px;font-size:13.5px;line-height:1.6}
+.brief .h{font:600 12px var(--font-ui);color:var(--wb-muted);margin:8px 0 2px}
+.brief ul{margin:0;padding-left:18px}
+.av.alice{background:#8870cb}
+.st.person .av{width:16px;height:16px;font-size:8px}
+/* the sprite sheet */
+.sheet{display:flex;gap:36px;align-items:flex-end;flex-wrap:wrap}
+.sheet figure{margin:0;text-align:center;font-size:12px;opacity:.9}
+.sheet figure>div{display:grid;place-items:center;min-height:72px}
+.zoom{position:relative;line-height:0;background:#fff;box-shadow:0 0 0 1px var(--wb-rule)}
+.zoom canvas{image-rendering:pixelated;display:block}
+.zoom::after{content:"";position:absolute;inset:0;background-image:linear-gradient(to right,rgba(38,59,83,.14) 1px,transparent 1px),linear-gradient(to bottom,rgba(38,59,83,.14) 1px,transparent 1px);background-size:var(--cell) var(--cell);pointer-events:none}
+.onbar{background:var(--wb-sel);padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:8px;color:#f7f9fc;font:600 13px var(--font-ui)}
+pre.parts{font:12px/1.5 var(--font-mono);background:var(--page-card);padding:12px 14px;border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);max-width:900px;overflow:auto}
+.trackbig{background:var(--wb-paper);color:var(--wb-ink);border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);padding:12px 16px;display:grid;grid-template-columns:150px 1fr 230px;gap:16px;align-items:center;max-width:1180px;margin:10px 0}
+.trackbig .lbl{font:600 13px var(--font-ui)}
+.trackbig .lbl span{display:block;font-weight:400;font-size:12px;color:var(--wb-muted)}
+
+/* ── PG-REQ additions: the kit's FilterTokens, the search StringGadget, the
+   kind Token, the Met column, the requirement rows (all from kit values) ── */
+.srch{display:flex;align-items:center;height:28px;width:230px;background:var(--wb-well);border:1px solid var(--wb-rule);border-radius:6px;overflow:hidden;margin-left:6px}
+.srch .gl{width:26px;display:grid;place-items:center;color:var(--wb-muted)}
+.srch .gl svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
+.srch span.v{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;color:var(--wb-ink)}
+.srch span.ph{flex:1;font-size:13px;color:var(--wb-faint)}
+.srch .mic{flex:0 0 26px;height:100%;border-left:1px solid var(--wb-rule-soft);display:grid;place-items:center;background:var(--wb-steel-2)}
+.srch .caret-i{display:inline-block;width:1px;height:15px;background:var(--wb-ink);vertical-align:-3px;margin-left:1px}
+.ftoks{display:inline-flex;gap:2px;padding:2px;border-radius:6px;background:var(--wb-steel)}
+.ftok{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:4px;font:500 12px/1 var(--font-mono);text-transform:uppercase;letter-spacing:.02em;color:var(--wb-ink);background:var(--wb-steel-2);box-shadow:inset 0 1px 0 #fff,0 0 0 1px var(--wb-rule-soft)}
+.ftok.on{background:var(--wb-sel);color:#f7f9fc;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.ftok .dot{width:7px;height:7px}
+.kt{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;font:500 12px/1 var(--font-ui);color:var(--wb-muted);background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.kt[data-k=check]{color:#2b4a7a;box-shadow:inset 0 0 0 1px #b9c9e4;background:#f3f7fd}
+.kt[data-k=shot]{color:#2b6a50;box-shadow:inset 0 0 0 1px #b8dcc8;background:#f2faf5}
+.kt[data-k=word]{color:var(--wb-ember-ink);box-shadow:inset 0 0 0 1px #ecc9ac;background:#fdf6f0}
+.metc{font-size:12px;color:var(--wb-muted);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.metc.all{color:var(--wb-ok-ink);font-weight:500}
+.metc .dot{width:7px;height:7px}
+.rq{height:32px;display:grid;grid-template-columns:30px 112px minmax(0,1fr) 84px 150px 190px 160px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.rq>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rq .id{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.rq .tx{font-weight:500;color:var(--wb-ink)}
+.rq .sc2{font-size:12px;color:var(--wb-muted);display:flex;align-items:center;gap:6px}
+.rq .ev{font-size:12px;color:var(--wb-muted);display:flex;align-items:center;gap:6px}
+.rq .vb{display:flex;gap:6px;justify-content:flex-end;overflow:visible}
+.rq.waived .tx{text-decoration:line-through;color:var(--wb-muted);font-weight:400}
+.rq.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.rq.ask{background:color-mix(in srgb,var(--lamp-ask) 6%,var(--wb-paper))}
+.mini{display:inline-flex;gap:3px;align-items:center}
+.mini i{width:7px;height:7px;border-radius:50%;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.mini i.ok{background:var(--lamp-ok);box-shadow:none}
+.mini i.fail{background:var(--lamp-fail);box-shadow:none}
+.mini i.ask{background:var(--lamp-ask);box-shadow:none}
+.addrow{min-height:38px;display:grid;grid-template-columns:30px minmax(0,1fr) 112px 132px auto 92px 64px;align-items:center;gap:10px;padding:5px 12px;border-bottom:1px solid #e9eef4;font-size:13px;background:color-mix(in srgb,var(--wb-field) 35%,var(--wb-paper))}
+.addrow .id{color:var(--wb-faint);font-size:12px;text-align:right}
+.addrow .fld span.ph{color:var(--wb-faint)}
+.addrow .cmd span{font:12.5px var(--font-mono)}
+.addrow .hint{display:flex;align-items:center;gap:6px}
+.fldrow{display:flex;gap:6px;align-items:center}
+.wellsub{margin:0 12px 6px 54px;padding:6px 10px 8px;border-radius:0 0 6px 6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:12.5px;color:var(--wb-ink);display:grid;grid-template-columns:110px 1fr;row-gap:5px}
+.wellsub .k{color:var(--wb-muted);font-size:12px}
+.thumb{width:240px;height:150px;border-radius:5px;box-shadow:0 0 0 1px var(--wb-rule);background:linear-gradient(#3b5d93 0 14px,#fafbfc 14px);position:relative;overflow:hidden}
+.thumb i{position:absolute;left:10px;right:10px;height:7px;border-radius:2px;background:#dfe6ef}
+/* the board with the Met column */
+.crow2{height:32px;display:grid;grid-template-columns:22px minmax(0,190px) 250px 70px 118px 54px minmax(0,1fr) 84px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.crow2>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow2 .n{color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.crow2 .ti{font-weight:600}
+.crow2 .ti .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.crow2 .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.crow2 .el,.crow2 .cp{color:var(--wb-muted);font-size:12px}
+.crow2 .op{text-align:right;overflow:visible}
+.crow2.sel{background:color-mix(in srgb,#3b5d93 9%,#fafbfc)}
+.crow2.kidr{height:28px;background:color-mix(in srgb,var(--wb-field) 40%,var(--wb-paper));grid-template-columns:22px minmax(0,1fr) 112px 84px 160px}
+.crow2.kidr .tx{padding-left:18px;position:relative;font-size:12.5px}
+.crow2.kidr .tx::before{content:"";position:absolute;left:5px;top:-5px;width:8px;height:13px;border-left:1.5px solid var(--wb-rule);border-bottom:1.5px solid var(--wb-rule);border-bottom-left-radius:4px}
+.lhead2{height:26px;display:grid;align-items:center;gap:10px;padding:0 12px;font-size:12px;font-weight:600;color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+/* the matrix (direction B) */
+.mx{display:grid;grid-template-columns:22px minmax(0,220px) repeat(3,92px) 120px 1fr;align-items:center;gap:0 10px;padding:0 12px;font-size:13px}
+.mx>div{height:30px;display:flex;align-items:center;border-bottom:1px solid #e9eef4;white-space:nowrap;overflow:hidden}
+.mx .h{height:26px;font-size:12px;font-weight:600;color:var(--wb-muted);background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.mx .c{justify-content:center}
+.mx .n{color:var(--wb-faint);font-size:12px;justify-content:flex-end}
+.legend{padding:6px 12px 8px;font-size:12px;color:var(--wb-muted);display:flex;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--wb-rule-soft)}
+.legend b{color:var(--wb-ink);font-weight:600}
+/* the strip of the Program's own (direction C) */
+.ownstrip{margin:8px 12px 2px;display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:13px}
+/* the step fold head */
+.sfh{display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;font:600 12.5px var(--font-ui)}
+.sfh .grow{flex:1}
+.sfh .q{font-weight:400;color:var(--wb-muted);font-size:12px}
+.sfbody{padding:4px 0 8px}
+.brieftx{margin:4px 12px 6px 32px;padding:8px 12px;border-radius:6px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft);font-size:13px;line-height:1.5}
+.brieftx .amd{margin-top:8px;padding-top:6px;border-top:1px dashed var(--wb-rule);color:var(--wb-ink)}
+.brieftx .amd b{font-weight:600;color:var(--wb-muted);font-size:12px;display:block}
+.sub{border-top:1px solid #eef2f6}
+.sub .fh{height:28px}
+/* phones */
+.prq{padding:8px 12px;border-bottom:1px solid #e9eef4;display:grid;grid-template-columns:26px 1fr;column-gap:8px;row-gap:4px;font-size:13px}
+.prq .id{color:var(--wb-faint);font-size:12px;text-align:right;padding-top:2px}
+.prq .l1{display:flex;align-items:center;gap:8px;min-width:0}
+.prq .l1 .tx{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.prq .l2{grid-column:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--wb-muted)}
+.prq .btn{height:44px;font-size:14px;padding:0 14px}
+
+/* ── PG-LANG additions (all from kit values above): the Text view, the
+   shaping bar, the change well with DiffRows, the TextPane gutter lamps, the
+   round strip and the QuestionRow ── */
+.split{display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);height:100%}
+.split .rule{background:var(--wb-rule-soft)}
+.split>div{min-width:0;overflow:hidden}
+.shape{display:flex;align-items:center;gap:8px;height:40px;padding:4px 10px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper)}
+.shape .fld{flex:1;height:30px}
+.shape .fld span{font-size:13.5px}
+.shape .fld .mic.on{background:color-mix(in srgb,var(--wb-rec) 14%,var(--wb-steel-2))}
+.shape .fld .mic.on svg{stroke:var(--wb-rec)}
+.shape .heard{color:var(--wb-ink)}
+.shape .lbl{font:600 12px var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.cwell{margin:8px 10px 6px;border-radius:7px;background:var(--wb-well);box-shadow:0 0 0 1px var(--wb-rule-soft),var(--depth-row);overflow:hidden}
+.cwell .hd{display:flex;align-items:center;gap:10px;min-height:32px;padding:4px 10px 4px 12px;background:var(--wb-steel-2);border-bottom:1px solid var(--wb-rule-soft)}
+.cwell .hd .say{flex:1;font:500 13px var(--font-ui);color:var(--wb-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cwell .hd .who{font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.cwell .ft{display:flex;align-items:center;gap:6px;padding:6px 10px;border-top:1px solid var(--wb-rule-soft);background:var(--wb-paper)}
+.cwell .ft .grow{flex:1}
+.drw{height:30px;display:grid;grid-template-columns:22px 92px minmax(0,1fr) 150px 92px;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #eef2f6;font-size:13px;white-space:nowrap}
+.drw>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.drw .op{font:600 13px var(--font-mono);text-align:center;color:var(--wb-muted)}
+.drw .op[data-op="+"]{color:var(--kind-pr)} .drw .op[data-op="~"]{color:var(--wb-info-ink)} .drw .op[data-op="↕"]{color:var(--wb-info-ink)} .drw .op[data-op="−"]{color:var(--wb-danger-ink)}
+.drw .wh{font-size:12px;color:var(--wb-muted)}
+.drw .ch code,.tline code{font:12.5px var(--font-mono);background:var(--wb-field);padding:1px 5px;border-radius:4px}
+.drw .ch .ar{color:var(--wb-faint);margin:0 6px}
+.drw .vb{text-align:right;overflow:visible}
+.drw.lower{background:color-mix(in srgb,var(--lamp-ask) 6%,var(--wb-well))}
+.drw.ref{background:color-mix(in srgb,var(--lamp-fail) 5%,var(--wb-well))}
+.drw.ref .ch{color:var(--wb-muted);text-decoration:line-through}
+/* the TextPane: mono lines, a gutter of line lamps, line marks */
+.tpane{font:12.5px/22px var(--font-mono);color:var(--wb-ink);background:var(--wb-well);height:100%;overflow:hidden}
+.tline{display:grid;grid-template-columns:30px 14px 14px minmax(0,1fr);align-items:center;height:22px;white-space:pre;padding-right:10px}
+.tline .ln{color:var(--wb-faint);text-align:right;font-size:11.5px;padding-right:4px;user-select:none}
+.tline .lamp{display:grid;place-items:center}
+.tline .lamp .dot{width:7px;height:7px}
+.tline .mk{text-align:center;font-weight:600;color:var(--wb-faint)}
+.tline .mk[data-m="+"]{color:var(--kind-pr)} .tline .mk[data-m="~"]{color:var(--wb-info-ink)} .tline .mk[data-m="!"]{color:var(--wb-danger-ink)}
+.tline.add{background:color-mix(in srgb,var(--lamp-ok) 10%,var(--wb-well))}
+.tline.chg{background:color-mix(in srgb,var(--lamp-info) 9%,var(--wb-well))}
+.tline.bad{background:color-mix(in srgb,var(--lamp-fail) 9%,var(--wb-well))}
+.tline.sel{box-shadow:inset 2px 0 0 var(--wb-sel-vivid)}
+.tline .tx{overflow:hidden;text-overflow:ellipsis}
+.k{color:#2b4a7a;font-weight:500}
+.hd2{color:var(--wb-ink);font-weight:600}
+.his{font-family:var(--font-ui);font-size:13px;color:var(--wb-ink)}
+.lampc{color:var(--wb-faint)}
+.rid{color:#2b6a50;font-weight:600}
+.q{color:var(--wb-ember-ink)}
+/* ghost rows (the draft streaming in) */
+.ghost{opacity:.55}
+.ghost .ti{font-weight:500}
+.est{font-size:12px;color:var(--wb-muted);font-variant-numeric:tabular-nums}
+.est.over{color:var(--wb-danger-ink);font-weight:600}
+/* the round strip and the question row */
+.rstrip{display:flex;align-items:center;gap:8px;height:40px;padding:0 10px;border-bottom:1px solid var(--wb-rule-soft)}
+.rstrip .grow{flex:1}
+.rt{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:5px;font:500 12.5px var(--font-ui);color:var(--wb-ink);background:var(--wb-steel-2);box-shadow:inset 0 1px 0 #fff,0 0 0 1px var(--wb-rule-soft);white-space:nowrap}
+.rt.on{background:var(--wb-sel);color:#f7f9fc;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.rt.skip{color:#a9b4c2;text-decoration:line-through}
+.rt .dot{width:7px;height:7px}
+.rt .n{font-size:12px;opacity:.8}
+.qrow{margin:10px 10px 6px;padding:12px 14px 12px;border-radius:7px;background:color-mix(in srgb,var(--lamp-ask) 6%,var(--wb-well));box-shadow:0 0 0 1px color-mix(in srgb,var(--lamp-ask) 30%,var(--wb-rule-soft))}
+.qrow .qq{font:600 15px/1.35 var(--font-ui);color:var(--wb-ink)}
+.qrow .why{font-size:12px;color:var(--wb-muted);margin:2px 0 10px}
+.qrow .opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.qrow .ans{display:flex;gap:8px;align-items:center}
+.qrow .ans .fld{flex:1;height:30px}
+.qdone{display:flex;align-items:center;gap:10px;height:30px;padding:0 12px;margin:0 10px;border-bottom:1px solid #eef2f6;font-size:13px;white-space:nowrap}
+.qdone .qd{color:var(--wb-muted);overflow:hidden;text-overflow:ellipsis}
+.qdone .an{font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.qdone .bec{margin-left:auto;font-size:12px;color:var(--kind-pr)}
+.qcol{padding:8px 10px}
+.qcol .qi{display:grid;grid-template-columns:18px 1fr;gap:4px 8px;padding:8px 6px;border-bottom:1px solid #eef2f6;font-size:13px}
+.qcol .qi b{font-weight:600}
+.qcol .qi .fld{height:26px;grid-column:2}
+/* the floating proposal strip (direction S-C) */
+.pstrip{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:640px;border-radius:10px;background:var(--wb-paper);box-shadow:var(--depth-card),0 0 0 1px var(--wb-rule-soft);padding:8px 10px;display:flex;align-items:center;gap:10px;font-size:13px}
+.pstrip .say{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* phone rows */
+.pdrw{padding:8px 12px;border-bottom:1px solid #eef2f6;font-size:14px}
+.pdrw .l1{display:flex;gap:8px;align-items:center}
+.pdrw .l1 .op{font:600 14px var(--font-mono);width:16px}
+.pdrw .l2{font-size:12px;color:var(--wb-muted);margin:3px 0 0 24px}
+.ladder{display:grid;grid-template-columns:repeat(8,1fr);gap:0;max-width:1440px;margin:14px 0;background:var(--page-card);border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule-soft);overflow:hidden}
+.ladder>div{padding:10px 12px;border-left:1px solid var(--wb-rule-soft);font-size:12.5px}
+.ladder>div:first-child{border-left:0}
+.ladder b{display:block;font:600 13.5px var(--font-display);margin-bottom:4px}
+.ladder .on{background:color-mix(in srgb,var(--wb-blue) 60%,transparent)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Programs: the Program language and shaping <span class="tag">Direction for PG-LANG</span></h1>
+  <p>A program has a text: a short, line-based view of the same record the board draws. You read and edit it beside the board. A sentence that you say or type becomes a proposed change to that text, drawn as rows on the board; you press <b>Apply</b>. Design: <code>docs/internal/betterment/programs/PROGRAM-LANGUAGE-2026-10-31.md</code>. Journeys: <code>PROGRAM-JOURNEYS-2026-10-31.md</code>. Every part is a kit piece at real size, in the material of <code>canvases/programs-requirements-2026-10-31.html</code>; the new pieces (DiffRow, ChangeWell, TextPane, QuestionRow, RoundStrip) are drawn from the same tokens.</p>
+
+  <div class="rec" id="recommendation">
+    <p><b>Recommendation, shaping: S-A, the bar and the well.</b> One sentence field with its mic under the toolbar; the proposed change opens as a well of diff rows right under it, above the board, with Apply and Not this. The rows land on the board when you apply. Your eye never leaves the plan, and the text, the draft and the interview rounds use the same well.</p>
+    <p style="margin:0"><b>Recommendation, interview rounds: R-A, one question on the board.</b> A strip of round tokens, then one question at a time with up to three offered answers and a field with its mic; your answer turns into diff rows in the same well. Never a form.</p>
+  </div>
+  <div class="cmp">
+    <div class="h"></div><div class="h r">S-A · The bar and the well (recommended)</div><div class="h">S-B · Tracked changes in the text</div><div class="h">S-C · A floating strip</div>
+    <div>Where the change shows</div><div class="r">diff rows above the board, in the window</div><div>marked lines in the Text view only</div><div>a strip over the desk floor</div>
+    <div>Works in Board view</div><div class="r">yes</div><div>no: you must open Text</div><div>yes</div>
+    <div>A row that lowers the bar</div><div class="r">its own ember row and its own Apply this</div><div>a red line, hard to see in a long text</div><div>one line of words; no per-row press</div>
+    <div>Shared with draft and rounds</div><div class="r">one ChangeWell for all four</div><div>text only</div><div>voice only (the ProposalStrip)</div>
+    <div>New kit</div><div class="r">DiffRow, ChangeWell</div><div>TextPane marks only</div><div>none, but the strip covers other windows</div>
+  </div>
+
+  <section class="part" id="ladder">
+    <h2>The ladder: from two paragraphs to Done</h2>
+    <p class="note">The eight stations. You can enter or leave at each one; hands-off goes 1 → 2 → 4 → 5 → 8 with no press at YOLO.</p>
+    <div class="ladder">
+      <div><b>1 · Dropped</b>A goal: two paragraphs, a note, a sentence on a call.</div>
+      <div class="on"><b>2 · Drafted</b>The plan as diff rows. Apply, Ask me first, Not this.</div>
+      <div class="on"><b>3 · Interviewed</b>Rounds, one question at a time. Done with each, or Skip round.</div>
+      <div><b>4 · Refined</b>Steps with briefs, owns, gates, requirements, sized for the engine.</div>
+      <div><b>5 · Running</b>Steps hand, work, check. Shape in one sentence.</div>
+      <div><b>6 · Verified</b>Each check, review and requirement judged on its commit.</div>
+      <div><b>7 · Proven</b>PRs merged, the end check, the evidence, the dw story.</div>
+      <div><b>8 · Done</b>"Done · 18 of 18 met". A dreaming night opens again at 23:30.</div>
+    </div>
+  </section>
+
+  <section class="part" id="window">
+    <h2>The Program window: Board and Text, side by side, with a spoken change</h2>
+    <p class="note">At 1440 the view tokens read <b>Board · Text · Both</b>; Both is the default above 1100 px. The text's gutter lamps carry the same state as the board. You held the mic and said the sentence in the bar; the well holds its five rows; the lines they change are marked in the text.</p>
+    <div class="moment"><div class="say"><b>S-A · The bar and the well <span class="tag">Recommended</span></b>The engine's one line says what changes, with its name and time. Step 2's row lowers the bar and is refused, because step 2 started; Apply applies the other four ("Apply 4").</div>
+      <div class="desk" style="width:1440px;height:900px"><div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><span>Window</span><b>The hub stops stalling</b><span class="grow"></span><span class="bell">🔔<span class="badge">2</span></span><span>Sat, Oct 31 <b>14:20</b></span></div>
+        <div class="win" style="left:20px;top:50px;width:1400px;height:836px" data-mount="both"></div></div></div>
+  </section>
+
+  <section class="part" id="directions">
+    <h2>The shaping surface: two more directions</h2>
+    <div class="moment"><div class="say"><b>S-B · Tracked changes in the text <span class="tag alt">Direction</span></b>The proposal is only marks in the Text view: new lines green, changed lines blue, refused lines red. Precise, but you must be in the text, and a refused line is easy to miss.</div>
+      <div class="desk" style="width:1100px;height:560px"><div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><b>The hub stops stalling</b><span class="grow"></span><span>14:20</span></div>
+        <div class="win" style="left:40px;top:50px;width:1020px;height:496px" data-mount="dir-SB"></div></div></div>
+    <div class="moment"><div class="say"><b>S-C · A floating strip <span class="tag alt">Direction</span></b>The voice proposal strip, grown: one line of words with Apply over the desk. Fast for one change; no per-row view, and it covers the windows under it.</div>
+      <div class="desk" style="width:1100px;height:520px"><div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><b>The hub stops stalling</b><span class="grow"></span><span>14:20</span></div>
+        <div class="win" style="left:40px;top:50px;width:1020px;height:390px" data-mount="dir-SC"></div>
+        <div class="pstrip"><i class="dot live" data-tone="info" style="--t:var(--lamp-info);background:var(--lamp-info)"></i><span class="say">Put step 4 on Codex, add The loop watch before step 6, and 3 more</span><span class="btn primary sm">Apply</span><span class="btn plate sm">Not this</span></div></div></div>
+  </section>
+
+  <section class="part" id="draft">
+    <h2>The planning draft</h2>
+    <p class="note">From two paragraphs in a note: <b>Run as a program</b> plans at once. The draft rises in as ghost rows; each shows its size against the engine's context budget (64k for pi on qwen). Step 3 does not fit, so the draft has already cut it in two.</p>
+    <div class="moment"><div class="say"><b>Planning · qwen3.8-27b</b>The well's head counts what the draft makes. <i>Ask me first</i> opens the Architecture round before anything is applied.</div>
+      <div class="desk" style="width:1100px;height:640px"><div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><b>Loop budget</b><span class="grow"></span><span>14:31</span></div>
+        <div class="win" style="left:40px;top:50px;width:1020px;height:576px" data-mount="draft"></div></div></div>
+  </section>
+
+  <section class="part" id="rounds">
+    <h2>Interview rounds: three directions</h2>
+    <p class="note">The same program in Drafting after the draft was applied. Rounds, by default: Architecture, Product, Stack, Verification, Delivery. Architecture is done (2 changes), Product is asking, Stack was skipped. Each answer goes through the same well as a spoken change.</p>
+    <div class="moment"><div class="say"><b>R-A · One question on the board <span class="tag">Recommended</span></b>The strip over the board shows each round's state; one question at a time, its reason under it, three offered answers, your own answer by voice or text. The answered question folds to one line and its rows wait in the well. <i>Done with Product</i> waits until no question is open.</div>
+      <div class="desk" style="width:1100px;height:720px"><div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><b>Loop budget</b><span class="grow"></span><span>14:40</span></div>
+        <div class="win" style="left:40px;top:50px;width:1020px;height:656px" data-mount="round-A"></div></div></div>
+    <div class="moment"><div class="say"><b>R-B · The interview as a column <span class="tag alt">Direction</span></b>Every question of the round in a column beside the board. Quick to scan, but it reads as a form.</div>
+      <div class="desk" style="width:1100px;height:520px"><div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><b>Loop budget</b><span class="grow"></span><span>14:40</span></div>
+        <div class="win" style="left:40px;top:50px;width:1020px;height:456px" data-mount="round-B"></div></div></div>
+    <div class="moment"><div class="say"><b>R-C · Questions in the text <span class="tag alt">Direction</span></b>The round prints as a block in the text: <code>?</code> lines are the engine's, you type <code>=</code> lines. True to the text, weak for voice. The text shows this block in every direction anyway.</div>
+      <div class="desk" style="width:1100px;height:470px"><div class="menubar"><b>HoldSpeak</b><span>Desk</span><span>Go</span><b>Loop budget</b><span class="grow"></span><span>14:40</span></div>
+        <div class="win" style="left:40px;top:50px;width:1020px;height:406px" data-mount="round-C"></div></div></div>
+  </section>
+
+  <section class="part" id="phones">
+    <h2>At 393</h2>
+    <p class="note">Board and Text are tokens, one at a time. The bar is full width with its 44 px mic; diff rows take two lines; the round strip scrolls sideways and the question stacks. Every plated verb owns 44 × 44.</p>
+    <div class="phones" data-mount="phones"></div>
+  </section>
+
+  <section class="part">
+    <h2>What this canvas could not establish</h2>
+    <ul class="note">
+      <li>The TextPane is drawn in CSS; whether a textarea with an overlaid gutter keeps 60 fps on a 400-line text is not measured (the design starts there, with no editor library).</li>
+      <li>The engine's times ("qwen3.8-27b · 2.8 s") are targets from the design, not measurements; no shaping call has run.</li>
+      <li>The estimates ("18k of 64k") follow the design's rule with a guessed fixed cost for pi; the real cost is measured in LANG8.</li>
+      <li>The desk floor is CSS, not a recorded shot. No product guard reads <code>docs/</code> canvases, so the words here are proven by reading only.</li>
+    </ul>
+  </section>
+</main>
+<script>
+const SPR = {"program": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"22\" y=\"7\" width=\"33\" height=\"22\" rx=\"4\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"15\" y=\"17\" width=\"35\" height=\"23\" rx=\"4\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"8\" y=\"29\" width=\"39\" height=\"27\" rx=\"4\" id=\"__ID__-s3\"/><clipPath id=\"__ID__-c3\"><use href=\"#__ID__-s3\"/></clipPath><clipPath id=\"__ID__-m3\"><use href=\"#__ID__-s3\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#ffffff\"/><use href=\"#__ID__-s2\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><rect x=\"21\" y=\"23\" width=\"17\" height=\"3.5\" rx=\"1.75\" fill=\"#9fb3c8\"/></g><g clip-path=\"url(#__ID__-c3)\"><use href=\"#__ID__-s3\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s3\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m3)\"><use href=\"#__ID__-s3\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s3\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><polyline points=\"16,42.5 39,42.5\" fill=\"none\" stroke=\"#f4f8fc\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><circle cx=\"16\" cy=\"42.5\" r=\"3.2\" fill=\"#f4f8fc\"/><circle cx=\"27.5\" cy=\"42.5\" r=\"3.2\" fill=\"#f4f8fc\"/><circle cx=\"39\" cy=\"42.5\" r=\"4.2\" fill=\"#ecaa45\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "cartridge": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><polygon points=\"12,8 44,8 52,16 52,56 12,56\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"18\" y=\"15\" width=\"27\" height=\"22\" rx=\"2\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#cdbff5\"/><use href=\"#__ID__-s2\" fill=\"#5c479c\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#8870cb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><polyline points=\"23,22 38,22\" fill=\"none\" stroke=\"#cdbff5\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><g class=\"detail\"><polyline points=\"23,28 34,28\" fill=\"none\" stroke=\"#cdbff5\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><rect x=\"20\" y=\"44\" width=\"4\" height=\"8\" rx=\"1.5\" fill=\"#263b53\"/><rect x=\"27\" y=\"44\" width=\"4\" height=\"8\" rx=\"1.5\" fill=\"#263b53\"/><rect x=\"34\" y=\"44\" width=\"4\" height=\"8\" rx=\"1.5\" fill=\"#263b53\"/><rect x=\"41\" y=\"44\" width=\"4\" height=\"8\" rx=\"1.5\" fill=\"#263b53\"/></g></svg>", "agent-claude-code": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"7\" y=\"7\" width=\"50\" height=\"50\" rx=\"11\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"20\" y=\"14\" width=\"24\" height=\"25\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffe0a3\"/><use href=\"#__ID__-s1\" fill=\"#b0731a\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#ecaa45\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M16 56V53A11 11 0 0 1 27 42H37A11 11 0 0 1 48 53V56Z\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"21\" width=\"18\" height=\"9\" rx=\"4\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"26\" y=\"24\" width=\"4\" height=\"3\" rx=\"1.5\" fill=\"#8ff0df\"/><rect x=\"34\" y=\"24\" width=\"4\" height=\"3\" rx=\"1.5\" fill=\"#8ff0df\"/><polygon points=\"32,45 33.6,48.4 37,50 33.6,51.6 32,55 30.4,51.6 27,50 30.4,48.4\" fill=\"#ecaa45\"/></g></svg>", "agent-codex": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"7\" y=\"7\" width=\"50\" height=\"50\" rx=\"11\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"20\" y=\"14\" width=\"24\" height=\"25\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s1\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M16 56V53A11 11 0 0 1 27 42H37A11 11 0 0 1 48 53V56Z\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"22\" width=\"18\" height=\"7\" rx=\"3.5\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"26\" y=\"24.5\" width=\"12\" height=\"2\" rx=\"1\" fill=\"#8ff0df\"/><rect x=\"26\" y=\"46\" width=\"12\" height=\"3\" rx=\"1.5\" fill=\"#259c96\"/></g></svg>", "agent-pi": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"7\" y=\"7\" width=\"50\" height=\"50\" rx=\"11\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"20\" y=\"14\" width=\"24\" height=\"25\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#cdbff5\"/><use href=\"#__ID__-s1\" fill=\"#5c479c\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#8870cb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M16 56V53A11 11 0 0 1 27 42H37A11 11 0 0 1 48 53V56Z\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><polyline points=\"32,14 32,10\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/><circle cx=\"32\" cy=\"10\" r=\"2.6\" fill=\"#ecaa45\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"21\" width=\"18\" height=\"9\" rx=\"4\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"28\" cy=\"25.5\" r=\"2\" fill=\"#8ff0df\"/><circle cx=\"36\" cy=\"25.5\" r=\"2\" fill=\"#8ff0df\"/></g></svg>", "pull-request": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><circle cx=\"20\" cy=\"15\" r=\"6\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"20\" cy=\"49\" r=\"6\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"44\" cy=\"49\" r=\"6\" id=\"__ID__-s3\"/><clipPath id=\"__ID__-c3\"><use href=\"#__ID__-s3\"/></clipPath><clipPath id=\"__ID__-m3\"><use href=\"#__ID__-s3\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><polyline points=\"20,20 20,44\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(5px * var(--lw) + var(--ow) * 1.8)\"/><polyline points=\"20,20 20,44\" fill=\"none\" stroke=\"#9fb3c8\" style=\"stroke-width:calc(5px * var(--lw))\"/><path d=\"M44 44V30Q44 19 34 19H30\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(5px * var(--lw) + var(--ow) * 1.8)\"/><path d=\"M44 44V30Q44 19 34 19H30\" fill=\"none\" stroke=\"#9fb3c8\" style=\"stroke-width:calc(5px * var(--lw))\"/><polygon points=\"31,12.5 23.5,19 31,25.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s1\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s2\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c3)\"><use href=\"#__ID__-s3\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s3\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m3)\"><use href=\"#__ID__-s3\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s3\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "note": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><polygon points=\"14,7 40,7 50,17 50,56 14,56\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffffff\"/><use href=\"#__ID__-s1\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><polygon points=\"40,7 40,17 50,17\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"20\" y=\"26\" width=\"22\" height=\"5\" rx=\"2.5\" fill=\"#ecaa45\"/><rect x=\"20\" y=\"36\" width=\"24\" height=\"4\" rx=\"2\" fill=\"#9fb3c8\"/><g class=\"detail\"><rect x=\"20\" y=\"45\" width=\"16\" height=\"4\" rx=\"2\" fill=\"#9fb3c8\"/></g></g></svg>", "project-drawer": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><polygon points=\"43,5.5 57,12 43,18.5\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"7\" y=\"26\" width=\"50\" height=\"29\" rx=\"3\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M9 19V13A3 3 0 0 1 12 10H25A3 3 0 0 1 28 13V19Z\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"9\" y=\"15\" width=\"46\" height=\"36\" rx=\"3\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"13\" y=\"19\" width=\"38\" height=\"20\" rx=\"2\" fill=\"#f4f8fc\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><polyline points=\"18,24 37,24\" fill=\"none\" stroke=\"#6b829b\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><polyline points=\"43,27 43,7\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2.6px * var(--lw))\"/><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffe0a3\"/><use href=\"#__ID__-s1\" fill=\"#b0731a\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#ecaa45\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s2\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "repository": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"9\" y=\"7\" width=\"46\" height=\"49\" rx=\"4\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"14\" y=\"12\" width=\"36\" height=\"19\" rx=\"2\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"14\" y=\"35\" width=\"36\" height=\"16\" rx=\"2\" id=\"__ID__-s3\"/><clipPath id=\"__ID__-c3\"><use href=\"#__ID__-s3\"/></clipPath><clipPath id=\"__ID__-m3\"><use href=\"#__ID__-s3\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s2\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"20\" y=\"15.5\" width=\"24\" height=\"12\" rx=\"3\" fill=\"#f4f8fc\" stroke=\"#263b53\" class=\"ol\"/><polyline points=\"28,18 24.5,21.5 28,25\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/><polyline points=\"36,18 39.5,21.5 36,25\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/><g clip-path=\"url(#__ID__-c3)\"><use href=\"#__ID__-s3\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s3\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m3)\"><use href=\"#__ID__-s3\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s3\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"26\" y=\"40.5\" width=\"12\" height=\"5\" rx=\"2.5\" fill=\"#f4f8fc\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "meeting": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"8\" y=\"14\" width=\"48\" height=\"42\" rx=\"4\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M8 26V18A4 4 0 0 1 12 14H52A4 4 0 0 1 56 18V26Z\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffffff\"/><use href=\"#__ID__-s1\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s2\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"18\" y=\"8\" width=\"5\" height=\"10\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"41\" y=\"8\" width=\"5\" height=\"10\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"24.5\" cy=\"35\" r=\"5\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M17 52V49A7 7 0 0 1 24 42H25A7 7 0 0 1 32 49V52Z\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"39.5\" cy=\"35\" r=\"5\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M32 52V49A7 7 0 0 1 39 42H40A7 7 0 0 1 47 49V52Z\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "person": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><circle cx=\"32\" cy=\"21\" r=\"10\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M13 56V52A17 17 0 0 1 30 35H34A17 17 0 0 1 51 52V56Z\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s1\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s2\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "dock-intelligence": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"23\" y=\"41\" width=\"18\" height=\"13\" rx=\"3\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"32\" cy=\"25\" r=\"17\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g class=\"detail\"><polyline points=\"24,46 40,46\" fill=\"none\" stroke=\"#6b829b\" style=\"stroke-width:calc(1.6px * var(--lw))\"/></g><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#ffe0a3\"/><use href=\"#__ID__-s2\" fill=\"#b0731a\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#ecaa45\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><polyline points=\"26,29 29,23 32,29 35,23 38,29\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2.2px * var(--lw))\"/><rect x=\"29\" y=\"54\" width=\"6\" height=\"3\" rx=\"1.5\" fill=\"#263b53\"/></g></svg>", "dock-agents": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"7\" y=\"7\" width=\"50\" height=\"50\" rx=\"11\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"20\" y=\"14\" width=\"24\" height=\"25\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s1\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M16 56V53A11 11 0 0 1 27 42H37A11 11 0 0 1 48 53V56Z\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"16\" y=\"22\" width=\"5\" height=\"9\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"43\" y=\"22\" width=\"5\" height=\"9\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"21\" width=\"18\" height=\"9\" rx=\"4\" fill=\"#263b53\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"28\" cy=\"25.5\" r=\"2\" fill=\"#8ff0df\"/><circle cx=\"36\" cy=\"25.5\" r=\"2\" fill=\"#8ff0df\"/></g></svg>", "dock-meetings": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"8\" y=\"14\" width=\"48\" height=\"42\" rx=\"4\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M8 26V18A4 4 0 0 1 12 14H52A4 4 0 0 1 56 18V26Z\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffffff\"/><use href=\"#__ID__-s1\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#a9c8ff\"/><use href=\"#__ID__-s2\" fill=\"#2b58ad\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#477fe0\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"18\" y=\"8\" width=\"5\" height=\"10\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"41\" y=\"8\" width=\"5\" height=\"10\" rx=\"2.5\" fill=\"#9fb3c8\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"24.5\" cy=\"35\" r=\"5\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M17 52V49A7 7 0 0 1 24 42H25A7 7 0 0 1 32 49V52Z\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><circle cx=\"39.5\" cy=\"35\" r=\"5\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/><path d=\"M32 52V49A7 7 0 0 1 39 42H40A7 7 0 0 1 47 49V52Z\" fill=\"#477fe0\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "dock-people": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><circle cx=\"41\" cy=\"19\" r=\"8\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M28 52V43A12 12 0 0 1 40 31H42A12 12 0 0 1 54 43V52Z\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"25\" cy=\"25\" r=\"9\" id=\"__ID__-s3\"/><clipPath id=\"__ID__-c3\"><use href=\"#__ID__-s3\"/></clipPath><clipPath id=\"__ID__-m3\"><use href=\"#__ID__-s3\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><path d=\"M10 56V52A14 14 0 0 1 24 38H26A14 14 0 0 1 40 52V56Z\" id=\"__ID__-s4\"/><clipPath id=\"__ID__-c4\"><use href=\"#__ID__-s4\"/></clipPath><clipPath id=\"__ID__-m4\"><use href=\"#__ID__-s4\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c3)\"><use href=\"#__ID__-s3\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s3\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m3)\"><use href=\"#__ID__-s3\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s3\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c4)\"><use href=\"#__ID__-s4\" fill=\"#8fe0d6\"/><use href=\"#__ID__-s4\" fill=\"#166e69\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m4)\"><use href=\"#__ID__-s4\" fill=\"#259c96\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s4\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>", "dock-speak": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><rect x=\"20\" y=\"50\" width=\"24\" height=\"6\" rx=\"3\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><rect x=\"23\" y=\"6\" width=\"18\" height=\"32\" rx=\"9\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><polyline points=\"17,25 17,32 20,39 26,43 32,44 38,43 44,39 47,32 47,25\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(3px * var(--lw) + var(--ow) * 1.8)\"/><polyline points=\"17,25 17,32 20,39 26,43 32,44 38,43 44,39 47,32 47,25\" fill=\"none\" stroke=\"#9fb3c8\" style=\"stroke-width:calc(3px * var(--lw))\"/><polyline points=\"32,45 32,50\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(3px * var(--lw) + var(--ow) * 1.8)\"/><polyline points=\"32,45 32,50\" fill=\"none\" stroke=\"#9fb3c8\" style=\"stroke-width:calc(3px * var(--lw))\"/><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s1\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#e2ebf4\"/><use href=\"#__ID__-s2\" fill=\"#6b829b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#9fb3c8\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><rect x=\"23\" y=\"29\" width=\"18\" height=\"5\" rx=\"0\" fill=\"#259c96\" stroke=\"#263b53\" class=\"ol\"/><polyline points=\"27.5,13 36.5,13\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/><g class=\"detail\"><polyline points=\"27.5,18 36.5,18\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/></g><polyline points=\"27.5,23 36.5,23\" fill=\"none\" stroke=\"#263b53\" style=\"stroke-width:calc(2px * var(--lw))\"/></g></svg>", "record-orb": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\"><defs><circle cx=\"32\" cy=\"32\" r=\"23\" id=\"__ID__-s1\"/><clipPath id=\"__ID__-c1\"><use href=\"#__ID__-s1\"/></clipPath><clipPath id=\"__ID__-m1\"><use href=\"#__ID__-s1\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath><circle cx=\"32\" cy=\"32\" r=\"14\" id=\"__ID__-s2\"/><clipPath id=\"__ID__-c2\"><use href=\"#__ID__-s2\"/></clipPath><clipPath id=\"__ID__-m2\"><use href=\"#__ID__-s2\" class=\"bvn\" transform=\"translate(-3.25 -3.25)\"/></clipPath></defs><g stroke-linejoin=\"round\" stroke-linecap=\"round\"><g clip-path=\"url(#__ID__-c1)\"><use href=\"#__ID__-s1\" fill=\"#ffffff\"/><use href=\"#__ID__-s1\" fill=\"#bccadb\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m1)\"><use href=\"#__ID__-s1\" fill=\"#f4f8fc\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s1\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/><g clip-path=\"url(#__ID__-c2)\"><use href=\"#__ID__-s2\" fill=\"#ffa79f\"/><use href=\"#__ID__-s2\" fill=\"#a3302b\" class=\"bv\" transform=\"translate(3.25 3.25)\"/><g clip-path=\"url(#__ID__-m2)\"><use href=\"#__ID__-s2\" fill=\"#e2554f\" class=\"bv\" transform=\"translate(3.25 3.25)\"/></g></g><use href=\"#__ID__-s2\" fill=\"none\" stroke=\"#263b53\" class=\"ol\"/></g></svg>"};
+let SID = 0;
+function spr(name, size){ const svg = SPR[name].replaceAll("__ID__", "x" + (++SID)); return `<span class="spr s${size}">${svg}</span>`; }
+const AG = {claude:["agent-claude-code","Claude Code"], codex:["agent-codex","Codex"], pi:["agent-pi","pi"]};
+const ST = ["Brief","Work","Check","Review","PR","Merge"];
+const MIC = `<svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg>`;
+const G = {
+  play:`<svg viewBox="0 0 16 16"><path d="M5 3.5v9l7-4.5z"/></svg>`,
+  park:`<svg viewBox="0 0 16 16"><rect x="4" y="3.5" width="2.5" height="9" rx="1"/><rect x="9.5" y="3.5" width="2.5" height="9" rx="1"/></svg>`,
+  plus:`<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>`,
+  race:`<svg viewBox="0 0 16 16"><path d="M2.5 5h8M2.5 11h8M9 3l2.5 2L9 7M9 9l2.5 2L9 13"/></svg>`,
+  note:`<svg viewBox="0 0 16 16"><path d="M4 2.5h5.5L12 5v8.5H4Z M9.5 2.5V5H12 M6 8h4M6 10.5h4"/></svg>`,
+  log:`<svg viewBox="0 0 16 16"><path d="M3 4h10M3 8h10M3 12h6"/></svg>`,
+  temp:`<svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="4" rx="1"/><rect x="2.5" y="9.5" width="5" height="4" rx="1"/><rect x="9.5" y="9.5" width="4" height="4" rx="1"/></svg>`,
+};
+
+/* the state of a step → its six stations, its word, its tone, its chip */
+const STEPW = {planned:["Planned","idle","idle"],ready:["Ready","idle","idle"],working:["Working","info","working"],checking:["Checking","info","working"],
+  check_failed:["Check failed","fail","failure"],review:["In review","info","working"],findings:["Findings","ask","active"],pr_open:["PR open","info","working"],
+  merge_ask:["Merge?","ask","active"],merged:["Merged","ok","success"],parked:["Parked","idle","idle"],failed:["Failed","fail","failure"],asks:["Asks you","ask","active"],held:["Ready · waiting for qwen","idle","idle"]};
+const AT = {planned:-1,ready:-1,working:1,checking:2,check_failed:2,review:3,findings:3,pr_open:4,merge_ask:5,merged:5,asks:1,held:-1};
+function stations(s){
+  const at = s.st === "parked" || s.st === "failed" ? (s.at ?? 2) : AT[s.st];
+  const [, tone] = STEPW[s.st];
+  return ST.map((w, i) => {
+    if (s.noreview && i === 3) return {w, k:"skip"};
+    if (s.person && i === 3) { const k = i < at ? "passed" : (i === at ? "cur" : "ahead"); return {w: s.person, k, tone: i === at ? tone : undefined, person: true, sub: i === at ? "reviews" : null}; }
+    if (s.st === "merged") return {w, k: i === 5 ? "ok" : "passed", sub: i === 5 ? "#" + s.pr : (i === 2 ? s.chk : (i===3 && s.rv ? s.rv : null))};
+    if (i < at) return {w, k:"passed", sub: i === 2 ? s.chk : (i === 3 ? s.rv : (i === 4 && s.pr ? "#" + s.pr : null))};
+    if (i === at) return {w, k:"cur", tone, sub: s.sub};
+    return {w, k:"ahead"};
+  });
+}
+function word(s){
+  const [w, tone] = STEPW[s.st];
+  let t = w;
+  if (s.st === "merged") t = `Merged <span class="pr">#${s.pr}</span>`;
+  if (s.st === "merge_ask") t = `Merge? <span class="pr">#${s.pr}</span>`;
+  if (s.st === "check_failed") t = `Check failed · log`;
+  if (s.word) t = s.word;
+  if (s.st === "held") return `<span class="dw" data-tone="idle"><i class="dot" style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"></i>${t}</span>`;
+  return `<span class="dw" data-tone="${tone}"${s.st==="merged"?' style="color:var(--wb-ok-ink)"':''}>${t}</span>`;
+}
+function dots(s){
+  const sts = stations(s); let h = "";
+  sts.forEach((x, i) => {
+    if (i) h += `<i class="ln ${x.k === "passed" || x.k === "ok" || (x.k === "cur") ? "passed" : ""}"></i>`;
+    const live = x.k === "cur" && (x.tone === "info" || x.tone === "ask") ? " live" : "";
+    if (x.person) { h += `<span class="av alice" style="width:14px;height:14px;font-size:7px;flex:none;box-shadow:${x.k==="cur"?"0 0 0 2px var(--lamp-ask)":"none"}" title="Review: ${x.w}">${x.w[0]}</span>`; return; }
+    h += `<i class="d ${x.k}${live}"${x.tone ? ` data-tone="${x.tone}"` : ""} title="${x.w}"></i>`;
+  });
+  return `<span class="dots" aria-label="${sts.map(x=>x.w+" "+x.k).join(", ")}">${h}</span>`;
+}
+function wordsTrack(s){
+  const sts = stations(s);
+  return sts.map((x, i) => {
+    const seg = i ? `<i class="seg ${x.k==="passed"||x.k==="ok"||x.k==="cur"?"passed":""}"></i>` : "";
+    const live = x.k === "cur" && (x.tone === "info" || x.tone === "ask") ? " live" : "";
+    const tone = x.k === "cur" ? ` data-tone="${x.tone}"` : (x.k === "ok" ? ' data-tone="ok"' : "");
+    if (x.person) return `${seg}<span class="st ${x.k} person"${tone}><span class="av alice">${x.w[0]}</span>${x.w}${x.sub ? ` <span class="sub">${x.sub}</span>` : ""}</span>`;
+    return `${seg}<span class="st ${x.k}"${tone}><i class="dot${live}"${tone}></i>${x.w}${x.sub ? ` <span class="sub">${x.sub}</span>` : ""}</span>`;
+  }).join("");
+}
+function agent(s, size=20){ if (!s.ag) return `<span class="ag"></span>`; const [sp, nm] = AG[s.ag]; return `<span class="ag">${spr(sp, size)}${s.agName || nm}${s.eng ? ` <span style="color:var(--wb-faint)">·</span> ${s.eng}` : ""}</span>`; }
+function open(s){ return s.ag ? `<span class="op"><span class="btn plate sm">Open</span></span>` : `<span class="op"></span>`; }
+
+function crow(s){
+  const kid = s.kid ? " kid" : "", sel = s.sel ? " sel" : "", dim = (s.st === "parked" && s.kid) ? " dim" : "";
+  const title = s.kid ? `${spr(AG[s.ag][0],16)}${AG[s.ag][1]}` : `${s.t}${s.after ? `<span class="af">${s.after}</span>` : ""}`;
+  return `<div class="crow${kid}${sel}${dim}"><span class="n">${s.kid ? "" : s.n}</span><span class="ti">${title}</span>
+    <span class="trk">${dots(s)}${word(s)}</span>${s.kid ? `<span class="ag"></span>` : agent(s)}<span class="el">${s.el || ""}</span>
+    <span class="cp">${s.cp ? "“" + s.cp + "”" : ""}</span>${open(s)}</div>`;
+}
+function arow(s){
+  return `<div class="arow${s.sel?" sel":""}" ${s.sel?'style="background:color-mix(in srgb,#3b5d93 9%,#fafbfc)"':""}><span class="n">${s.n}</span>
+    <div class="l1"><span class="ti">${s.t}</span>${s.after ? `<span class="af">${s.after}</span>` : ""}<span class="grow"></span>${agent(s)}<span class="m">${s.el||""}</span>${s.ag ? '<span class="btn plate sm">Open</span>' : '<span style="width:52px"></span>'}</div>
+    <div class="l2">${wordsTrack(s)}<span class="cp">${s.cp ? "“" + s.cp + "”" : ""}</span></div></div>`;
+}
+function card(s){
+  return `<div class="card${s.sel?" sel":""}"><div class="hd"><span class="n">${s.n}</span><span class="ti">${s.t}</span>${s.ag ? '<span class="btn plate sm">Open</span>' : ""}</div>
+    <div class="mid">${s.ag ? agent(s) + " · " + (s.el||"") : (s.after || "")}${s.cp ? ` · <span class="cp">“${s.cp}”</span>` : ""}</div>
+    <div class="ft">${dots(s)}${word(s)}</div></div>`;
+}
+
+
+function titlebar(name, edit){ return `<div class="tb"><span class="x">✕</span><span class="chip">${spr("program",16)}</span><span class="name${edit?" edit":""}"><span>${name}</span></span><span class="gad"><i></i><i></i><i></i></span></div>`; }
+function kt(k){ const w = {check:"Check", review:"Review", shot:"Shot", word:"Your word"}[k]; return `<span class="kt" data-k="${k}">${w}</span>`; }
+function metc(m, t, tone){ if (!t) return `<span class="metc"></span>`; if (tone === "count") return `<span class="metc">${t} requirements</span>`;
+  const all = m === t; return `<span class="metc${all ? " all" : ""}"${all ? "" : ""}>${tone === "ask" ? '<i class="dot" data-tone="ask"></i>' : (tone === "fail" ? '<i class="dot" data-tone="fail"></i>' : "")}${m} of ${t}${all ? " met" : " met"}</span>`; }
+const RQW = {not_yet:["Not yet","idle"], met:["Met","ok"], unmet:["Unmet","fail"], waived:["Waived","idle"], his:["Waits for you","ask"], checking:["Checking","info"]};
+function rqword(st){ const [w, t] = RQW[st]; const hollow = st === "not_yet" ? ' style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"' : ""; const live = st === "checking" || st === "his" ? " live" : "";
+  return `<span class="dw" data-tone="${t}"><i class="dot${live}"${hollow} data-tone="${t}"></i>${w}</span>`; }
+function mini(arr){ return `<span class="mini">${arr.map(x => `<i class="${x}"></i>`).join("")}</span>`; }
+
+/* ── PG-LANG: one running program at Normal, its text, a spoken change ── */
+const M = {};
+const BOARDCOLS = "22px minmax(0,1fr) 238px 104px 54px";
+const RUN = [
+  {n:1,t:"Indexes",st:"merged",pr:1585,ag:"claude",el:"41 min",chk:"green",rv:"passed"},
+  {n:2,t:"Retention",st:"working",ag:"claude",el:"18 min"},
+  {n:3,t:"Projections off the loop",st:"checking",ag:"codex",el:"23 min"},
+  {n:4,t:"People routes",st:"planned",after:"after 1",chg:true},
+  {n:5,t:"Projects routes",st:"planned",after:"after 2"},
+  {n:"+",t:"The loop watch",st:"planned",after:"after 4",born:true},
+  {n:6,t:"The fan-out",st:"planned",after:"after 4, 5, 7",chg:true},
+];
+function srow(s){
+  const bg = s.born ? "background:color-mix(in srgb,var(--lamp-ok) 9%,var(--wb-paper));" : (s.chg ? "background:color-mix(in srgb,var(--lamp-info) 7%,var(--wb-paper));" : "");
+  return `<div class="crow2" style="${bg}grid-template-columns:${BOARDCOLS}"><span class="n">${s.n}</span><span class="ti">${s.t}${s.after ? `<span class="af">${s.after}</span>` : ""}</span>
+    <span class="trk">${dots(s)}${word(s)}</span>${agent(s)}<span class="el">${s.el || ""}</span></div>`;
+}
+function boardHead(){ return `<div class="lhead2" style="grid-template-columns:${BOARDCOLS}"><span></span><span>Step</span><span>Track</span><span>Agent</span><span>Time</span></div>`; }
+function views(on){ return `<span class="ftoks">${["Board","Text","Both"].map(w => `<span class="ftok${w === on ? " on" : ""}">${w}</span>`).join("")}</span>`; }
+function toolbar(on, extra){ return `<div class="toolbar"><span class="btn">${G.park}Park</span><span class="btn">${G.plus}Add step</span>${extra || ""}<span class="grow"></span><span class="btn">Agent: Claude Code<span class="caret">▾</span></span><span class="btn">Control: Normal<span class="caret">▾</span></span>${views(on)}</div>`; }
+function bar(text, live, label){ return `<div class="shape"><span class="fld"><span class="${text ? "heard" : "ph"}"${text ? "" : ' style="color:var(--wb-faint)"'}>${text || label || "Change the program"}</span><i class="mic${live ? " on" : ""}">${MIC}</i></span><span class="btn primary sm">${label === "Describe the work" ? "Plan it" : "Shape"}</span></div>`; }
+const VERD = {allowed:["Allowed","ok"], lowers:["Lowers the bar","ask"], refused:["Refused","fail"], conflict:["Changed since you read it","warn"]};
+function drw(op, where, change, verdict, verb, title){
+  const [w, tone] = VERD[verdict];
+  const cls = verdict === "refused" ? " ref" : (verdict === "lowers" ? " lower" : "");
+  return `<div class="drw${cls}"${title ? ` title="${title}"` : ""}><span class="op" data-op="${op}">${op}</span><span class="wh">${where}</span><span class="ch">${change}</span><span class="dw" data-tone="${tone}"><i class="dot" data-tone="${tone}"></i>${w}</span><span class="vb">${verb || ""}</span></div>`;
+}
+const AR = '<span class="ar">→</span>';
+function well(say, who, rows, verbs){ return `<div class="cwell"><div class="hd"><i class="dot" data-tone="info"></i><span class="say">${say}</span><span class="who">${who}</span></div>${rows}<div class="ft">${verbs}</div></div>`; }
+const ROWS5 = [
+  drw("~","step 4 · agent",`<code>Claude Code</code>${AR}<code>Codex</code>`,"allowed"),
+  drw("+","step 7","The loop watch · after 4 · pi on qwen3.8-27b · low","allowed"),
+  drw("↕","step 7","before step 6 · step 6 is now step 8","allowed"),
+  drw("~","step 8 · after",`<code>4, 5</code>${AR}<code>4, 5, 7</code>`,"allowed"),
+  drw("~","step 2 · review",`<code>agent</code>${AR}<code>none</code>`,"refused","","The bar does not come down while it runs"),
+].join("");
+const SAY5 = "Put step 4 on Codex; add The loop watch before step 6; step 2 without review";
+const WELLV = `<span class="btn primary sm">Apply 4</span><span class="btn plate sm">Not this</span><span class="grow"></span><span class="dw" data-tone="fail" style="font-size:12px">Step 2 · The bar does not come down while it runs</span>`;
+
+/* the text, line by line: [lamp tone | "", mark, html] */
+const T = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const L = [
+  ["", "", `<span class="lampc"># program text 1</span>`],
+  ["ask", "", `<span class="k">program</span> <span class="hd2">The hub stops stalling</span>`],
+  ["", "", `  <span class="k">goal</span>`],
+  ["", "", `  <span class="k">&gt;</span> <span class="his">Make the hub answer every route under 100 ms while a meeting records.</span>`],
+  ["", "", `  <span class="k">in</span> HoldSpeak · main · <span class="k">project</span> HoldSpeak`],
+  ["", "", `  <span class="k">control</span> normal · <span class="k">check</span> scripts/quick_check.sh`],
+  ["", "", `  <span class="k">agent</span> Claude Code, then Codex · <span class="k">reviewer</span> Codex at delta`],
+  ["", "", ``],
+  ["", "", `<span class="k">every step</span>`],
+  ["idle", "", `  <span class="rid">R2</span> <span class="k">review:</span> <span class="his">The change does only what its brief says.</span>`],
+  ["ok", "", `  <span class="rid">R3</span> <span class="k">check:</span> <code>uv run pytest -q tests/unit/test_hub_loop_budget.py</code> <span class="his">is green.</span>`],
+  ["", "", ``],
+  ["ok", "", `<span class="k">step 1</span> <span class="hd2">Indexes</span>                 <span class="lampc"># Merged #1585 · 41 min</span>`],
+  ["", "", `  <span class="k">owns</span> holdspeak/db/schema.py · <span class="k">effort</span> low`],
+  ["info", "", `<span class="k">step 2</span> <span class="hd2">Retention</span>               <span class="lampc"># Working · 18 min</span>`],
+  ["", "!", `  <span class="k">review</span> none  <span class="lampc"># refused: the bar does not come down while it runs</span>`, "bad"],
+  ["info", "", `<span class="k">step 3</span> <span class="hd2">Projections off the loop</span> <span class="lampc"># Checking · Codex</span>`],
+  ["idle", "", `<span class="k">step 4</span> <span class="hd2">People routes</span>           <span class="lampc"># Planned</span>`, "sel"],
+  ["", "", `  <span class="k">after</span> 1`],
+  ["", "~", `  <span class="k">agent</span> Codex`, "chg"],
+  ["idle", "", `<span class="k">step 5</span> <span class="hd2">Projects routes</span>         <span class="lampc"># Planned</span>`],
+  ["", "+", `<span class="k">step +</span> <span class="hd2">The loop watch</span>`, "add"],
+  ["", "+", `  <span class="k">after</span> 4 · <span class="k">agent</span> pi on qwen3.8-27b · <span class="k">effort</span> low`, "add"],
+  ["", "+", `  <span class="k">brief</span>`, "add"],
+  ["", "+", `  <span class="k">&gt;</span> <span class="his">Log each handler that holds the loop over 100 ms.</span>`, "add"],
+  ["idle", "", `<span class="k">step 6</span> <span class="hd2">The fan-out</span>             <span class="lampc"># Planned</span>`],
+  ["", "~", `  <span class="k">after</span> 4, 5, 7`, "chg"],
+];
+function tpane(lines){
+  return `<div class="tpane">${lines.map((l, i) => {
+    const lamp = l[0] ? `<i class="dot${l[0] === "info" ? " live" : ""}" data-tone="${l[0]}"${l[0] === "idle" ? ' style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"' : ""}></i>` : "";
+    return `<div class="tline${l[3] ? " " + l[3] : ""}"><span class="ln">${i + 1}</span><span class="lamp">${lamp}</span><span class="mk" data-m="${l[1]}">${l[1]}</span><span class="tx">${l[2]}</span></div>`;
+  }).join("")}</div>`;
+}
+function sb(extra){ return `<div class="sb"><span class="it"><span class="dot" data-tone="info"></span>Running</span><span class="it"><b>1</b>&nbsp;of 7 done</span><span class="it"><b>4</b>&nbsp;of 9 met</span><span class="it">check: quick_check.sh</span><span class="it">control Normal</span>${extra || ""}<span class="it">Project ▸ HoldSpeak</span></div>`; }
+
+M["both"] = () => `${titlebar("The hub stops stalling")}${toolbar("Both")}${bar("put the People routes on Codex, add a loop watch step before the fan-out, and step 2 does not need the review", true)}
+  <div class="body"><div class="split"><div>${well(SAY5, "qwen3.8-27b · 2.8 s", ROWS5, WELLV)}<div class="board-cap">Steps</div>${boardHead()}${RUN.map(srow).join("")}</div><div class="rule"></div><div>${tpane(L)}</div></div></div>${sb('<span class="it">5 changes proposed</span>')}`;
+
+M["dir-SB"] = () => `${titlebar("The hub stops stalling")}${toolbar("Text")}${bar("put the People routes on Codex and add a loop watch step before the fan-out", false)}
+  <div class="body">${tpane(L.slice(11))}</div><div class="sb"><span class="it">5 changes · 1 refused</span><span class="it"><span class="btn primary sm" style="height:20px">Apply 4</span></span><span class="it">Revert</span></div>`;
+
+M["dir-SC"] = () => `${titlebar("The hub stops stalling")}${toolbar("Board")}<div class="body"><div class="board-cap">Steps</div>${boardHead()}${RUN.map(s => srow({...s, chg:false, born:false})).join("")}</div>${sb()}`;
+
+/* the planning draft */
+const DRAFT = [
+  {n:1,t:"Pipeline events index",after:"",ag:"pi",est:"12k of 64k"},
+  {n:2,t:"Retention thread",after:"",ag:"pi",est:"16k of 64k"},
+  {n:3,t:"Loop watch: the middleware",after:"after 1",ag:"pi",est:"14k of 64k",split:true},
+  {n:4,t:"Loop watch: the log words",after:"after 3",ag:"pi",est:"9k of 64k",split:true},
+  {n:5,t:"People routes off the loop",after:"after 3",ag:"pi",est:"22k of 64k"},
+  {n:6,t:"Projects routes off the loop",after:"after 3",ag:"pi",est:"24k of 64k"},
+  {n:7,t:"The budget fence",after:"after 5, 6",ag:"pi",est:"…",ghost:true},
+];
+function drow(s){ return `<div class="crow2${s.ghost ? " ghost" : ""}" style="grid-template-columns:22px minmax(0,1fr) 140px 120px 110px"><span class="n">+</span><span class="ti">${s.t}${s.after ? `<span class="af">${s.after}</span>` : ""}</span>
+  <span>${s.split ? '<span class="dw" data-tone="info"><i class="dot" data-tone="info"></i>Cut to fit</span>' : '<span class="dw"><i class="dot" style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"></i>Planned</span>'}</span>${agent({ag:s.ag, eng:"qwen"})}<span class="est">${s.est}</span></div>`; }
+M["draft"] = () => `${titlebar("Loop budget", true)}<div class="toolbar"><span class="btn primary">${G.play}Start</span><span class="btn">${G.plus}Add step</span><span class="grow"></span><span class="btn">Agent: pi on qwen3.8-27b<span class="caret">▾</span></span><span class="btn">Control: YOLO<span class="caret">▾</span></span>${views("Board")}</div>
+  ${bar("", false, "Describe the work")}
+  <div class="body"><div class="pad" style="margin:8px 12px 6px 12px;min-height:58px"><div class="tx">Every hub route answers under 100 ms while a meeting records. Nothing on the event loop takes a lock; the event log stays small. Use the home box at night.</div><div class="mic">${MIC}</div></div>
+  ${well("8 steps · 11 requirements · 3 rounds to ask · step 3 cut in two to fit 64k", '<i class="dot live" data-tone="info" style="--t:var(--lamp-info);background:var(--lamp-info)"></i> Planning · qwen3.8-27b', `<div class="lhead2" style="grid-template-columns:22px minmax(0,1fr) 140px 120px 110px"><span></span><span>Step</span><span>State</span><span>Agent</span><span>Size</span></div>${DRAFT.map(drow).join("")}`,
+    `<span class="btn primary sm">Apply</span><span class="btn plate sm">Ask me first</span><span class="btn plate sm">Not this</span>`)}</div>
+  <div class="sb"><span class="it"><span class="dot"></span>Drafting</span><span class="it">Planning · qwen3.8-27b</span><span class="it">budget 64k</span><span class="it">From the note Loop budget</span></div>`;
+
+/* interview rounds */
+function rstrip(verb){ return `<div class="rstrip"><span class="lbl" style="font:600 12px var(--font-ui);color:var(--wb-muted)">Rounds</span>
+  <span class="rt"><i class="dot" data-tone="ok"></i>Architecture <span class="n">· 2 changes</span></span>
+  <span class="rt on"><i class="dot live" data-tone="ask" style="--t:var(--lamp-ask);background:var(--lamp-ask)"></i>Product</span>
+  <span class="rt skip"><i class="dot"></i>Stack</span>
+  <span class="rt"><i class="dot" style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"></i>Verification</span>
+  <span class="rt"><i class="dot" style="background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #8ea0b6"></i>Delivery</span><span class="grow"></span>${verb}</div>`; }
+M["round-A"] = () => `${titlebar("Loop budget", true)}<div class="toolbar"><span class="btn primary">${G.play}Start</span><span class="btn">${G.plus}Add step</span><span class="grow"></span><span class="btn">Control: YOLO<span class="caret">▾</span></span>${views("Board")}</div>
+  ${rstrip('<span class="btn plate sm off" title="A question waits">Done with Product</span><span class="btn sm">Skip round</span>')}
+  <div class="body">
+  <div class="qdone"><span class="q">?</span><span class="qd">Who sees the stall first?</span><span class="an">= Me, when I dictate during a meeting.</span><span class="bec">→ R12 word</span></div>
+  <div class="qrow"><div class="qq">When the hub stalls, what must you still be able to do?</div><div class="why">The answer sets which routes go first and what your word checks.</div>
+    <div class="opts"><span class="btn plate sm">Dictate</span><span class="btn plate sm">Record the meeting</span><span class="btn plate sm">Open Needs you</span></div>
+    <div class="ans"><span class="fld"><span class="heard">Dictate and keep the recording; Needs you can wait a second</span><i class="mic on">${MIC}</i></span><span class="btn primary sm">Answer</span><span class="btn sm">Skip question</span></div></div>
+  ${well("From your answer: dictation routes first; a Your word walk", "qwen3.8-27b · 2.1 s", [
+    drw("↕","step 5","People routes before step 4 · dictation first","allowed"),
+    drw("+","R13","word: I dictated through a recorded meeting with no stall · walk 3 lines","allowed"),
+    drw("+","R14","measure: Dictation answers under 100 ms · bound p95 &lt; 100 ms","allowed"),
+  ].join(""), `<span class="btn primary sm">Apply</span><span class="btn plate sm">Not this</span>`)}
+  <div class="board-cap">Steps</div>${boardHead()}${DRAFT.slice(0,4).map(s => srow({n:s.n,t:s.t,st:"planned",after:s.after})).join("")}</div>
+  <div class="sb"><span class="it"><span class="dot"></span>Drafting</span><span class="it">8 steps</span><span class="it">11 requirements</span><span class="it">Product · 1 answered</span></div>`;
+M["round-B"] = () => `${titlebar("Loop budget", true)}<div class="toolbar"><span class="btn primary">${G.play}Start</span><span class="grow"></span>${views("Board")}</div>${rstrip('<span class="btn plate sm">Done with Product</span>')}
+  <div class="body"><div class="split" style="grid-template-columns:minmax(0,1.3fr) 1px minmax(0,1fr)"><div><div class="board-cap">Steps</div>${boardHead()}${DRAFT.slice(0,6).map(s => srow({n:s.n,t:s.t,st:"planned",after:s.after})).join("")}</div><div class="rule"></div>
+  <div class="qcol"><div class="qi"><span class="q">1</span><b>Who sees the stall first?</b><span class="fld"><span>Me, when I dictate during a meeting.</span><i class="mic">${MIC}</i></span></div>
+  <div class="qi"><span class="q">2</span><b>When the hub stalls, what must you still do?</b><span class="fld"><span class="ph" style="color:var(--wb-faint)">Answer</span><i class="mic">${MIC}</i></span></div>
+  <div class="qi"><span class="q">3</span><b>Which windows must stay quick at 393?</b><span class="fld"><span class="ph" style="color:var(--wb-faint)">Answer</span><i class="mic">${MIC}</i></span></div>
+  <div class="qi"><span class="q">4</span><b>Is a second of delay on Needs you all right?</b><span class="fld"><span class="ph" style="color:var(--wb-faint)">Answer</span><i class="mic">${MIC}</i></span></div></div></div></div>
+  <div class="sb"><span class="it"><span class="dot"></span>Drafting</span><span class="it">Product · 1 of 4 answered</span></div>`;
+const LR = [
+  ["", "", `<span class="k">round</span> Architecture · done`],
+  ["", "", `  <span class="q">?</span> Does the cache live in the hub or in the client?`],
+  ["", "", `  <span class="k">=</span> <span class="his">In the hub; the client stays as it is.</span>        <span class="lampc"># → R11, step 3 owns</span>`],
+  ["", "", `  <span class="q">?</span> Can the event log lose rows on a crash?`],
+  ["", "", `  <span class="k">=</span> <span class="his">No.</span>                                          <span class="lampc"># → R12 measure</span>`],
+  ["ask", "", `<span class="k">round</span> Product · asking`],
+  ["", "", `  <span class="q">?</span> Who sees the stall first?`],
+  ["", "", `  <span class="k">=</span> <span class="his">Me, when I dictate during a meeting.</span>`],
+  ["", "", `  <span class="q">?</span> When the hub stalls, what must you still be able to do?`],
+  ["", "+", `  <span class="k">=</span> <span class="his">Dictate and keep the recording</span>`, "add"],
+  ["", "", `<span class="k">round</span> Stack · skipped`],
+  ["", "", `<span class="k">round</span> Verification · open`],
+  ["", "", `<span class="k">round</span> Delivery · open`],
+];
+M["round-C"] = () => `${titlebar("Loop budget", true)}<div class="toolbar"><span class="btn primary">${G.play}Start</span><span class="grow"></span>${views("Text")}</div><div class="body">${tpane(LR)}</div><div class="sb"><span class="it"><span class="dot"></span>Drafting</span><span class="it">1 line changed</span></div>`;
+
+function phone(inner){ return `<div class="phone"><div class="ph-menu"><b>Go</b><span>Programs</span><span style="flex:1"></span><span class="bell">🔔</span></div><div class="ph-win">${inner}</div><div class="ph-dock"></div></div>`; }
+M["phones"] = () => {
+  const pr = (op, l1, l2, tone, w) => `<div class="pdrw"><div class="l1"><span class="op" style="color:${op === "+" ? "var(--kind-pr)" : "var(--wb-info-ink)"}">${op}</span><span style="flex:1;font-weight:500">${l1}</span></div><div class="l2">${l2} · <span class="dw" data-tone="${tone}"><i class="dot" data-tone="${tone}"></i>${w}</span></div></div>`;
+  const shaping = `<div class="ph-tb"><span class="back">‹ Programs</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">The hub stops stalling</span></div>
+    <div class="ph-tool"><span class="ftoks"><span class="ftok on">Board</span><span class="ftok">Text</span></span><span class="grow"></span><span class="btn plate">More<span class="caret">▾</span></span></div>
+    <div class="shape" style="height:56px"><span class="fld" style="height:44px"><span class="heard" style="font-size:14px;white-space:normal;line-height:1.25">put step 4 on Codex and add a loop watch</span><i class="mic on" style="flex-basis:44px">${MIC}</i></span></div>
+    <div class="ph-body"><div class="cwell" style="margin:8px"><div class="hd"><span class="say">Step 4 on Codex; add The loop watch</span></div>
+    ${pr("~","Step 4 · agent","Claude Code → Codex","ok","Allowed")}${pr("+","Step 7 · The loop watch","after 4 · pi · low","ok","Allowed")}${pr("↕","Step 7 before step 6","step 6 is now step 8","ok","Allowed")}
+    <div class="ft"><span class="btn primary" style="height:44px">Apply</span><span class="btn plate" style="height:44px">Not this</span></div></div></div>
+    <div class="ph-sb">Running · 1 of 7 done · 3 changes</div>`;
+  const round = `<div class="ph-tb"><span class="back">‹ Programs</span><span style="flex:1">Loop budget</span></div>
+    <div class="rstrip" style="overflow:hidden;height:48px"><span class="rt"><i class="dot" data-tone="ok"></i>Architecture</span><span class="rt on"><i class="dot live" data-tone="ask" style="--t:var(--lamp-ask);background:var(--lamp-ask)"></i>Product</span><span class="rt skip">Stack</span><span class="rt">Verification</span></div>
+    <div class="ph-body"><div class="qrow"><div class="qq">When the hub stalls, what must you still be able to do?</div><div class="why">Sets which routes go first.</div>
+    <div class="opts" style="flex-direction:column"><span class="btn plate" style="height:44px">Dictate</span><span class="btn plate" style="height:44px">Record the meeting</span><span class="btn plate" style="height:44px">Open Needs you</span></div>
+    <div class="ans"><span class="fld" style="height:44px"><span class="ph" style="color:var(--wb-faint)">Your answer</span><i class="mic" style="flex-basis:44px">${MIC}</i></span></div>
+    <div style="margin-top:8px;display:flex;gap:6px"><span class="btn" style="height:44px">Skip question</span><span class="btn" style="height:44px">Skip round</span></div></div></div>
+    <div class="ph-sb">Drafting · Product · 1 answered</div>`;
+  return phone(shaping) + phone(round);
+};
+
+for (const el of document.querySelectorAll("[data-mount]")) el.innerHTML = M[el.dataset.mount]();
+</script>
+</body>
+</html>
