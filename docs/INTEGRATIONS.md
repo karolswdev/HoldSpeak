@@ -56,6 +56,37 @@ The full route list is in [`api-surface.json`](api-surface.json). A provider
 read can fail because its CLI, sign-in, connection, or scope is unavailable.
 Read the named refusal before retrying.
 
+## Project repositories and local worktrees
+
+If you already have a local Git checkout, open a terminal in its exact Git top
+folder. In **Context**, use **Register workspace folder** and press **Register
+folder**. The input and a named refusal stay visible when registration fails; a
+subfolder is refused before anything is persisted. Then select a Project and
+use **Use repository in project**. The existing agent hand uses this registered
+source and creates its worktree. No API or Automation setup is needed.
+
+If no local checkout is registered, a Project can name a GitHub repository as
+`owner/name`. In the Project Info window, **Register** records that name. It
+does not clone the repository.
+
+The first **Hand to agent** for an item in that Project uses the local GitHub
+CLI (`gh`) to clone from `github.com`. HoldSpeak registers the clone as a
+local Delivery Source and starts the agent in a new sibling worktree. The
+clone and worktree are on the hub that runs the Desk. A missing CLI, sign-in,
+repository, or clone result is a named refusal.
+
+Project Room watches and Project repository registration are different records.
+A watched repository can be a candidate for **Register**, but a watch does not
+prove that a local clone or worktree exists. See [Coder integration](CODER_INTEGRATION.md)
+for the handoff and [Terminals](TERMINALS.md) for the connected workspace.
+
+The connected workspace reads and edits a registered local worktree by its
+source ID and worktree ID. It can show Files and a bounded Changes diff with
+plain working or staged statuses, then stage files and make a local commit.
+Failed stage or commit keeps the relevant owner input for retry. It does not
+push, synchronize, publish, or close a GitHub issue. It does not provide SSH
+project access or remote terminal output.
+
 ## Saved execution destinations
 
 An Automation chooses **My Inbox**, **Needs you**, **Today**, or a saved destination for its output.

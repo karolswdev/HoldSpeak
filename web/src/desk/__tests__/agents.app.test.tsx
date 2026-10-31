@@ -917,12 +917,17 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
 
   it("Start an agent in three presses: a note with his words, filed in the project, handed", async () => {
     const calls: Array<[string, string, unknown]> = [];
+    let handAttempts = 0;
     const routes = api.fetch.getMockImplementation()!;
     api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
       const method = init?.method ?? "GET";
       if (method !== "GET") calls.push([String(url), method, init?.json]);
       if (String(url).includes("/resources/note%3A")) return ag8("resource.add").wire;
-      if (String(url) === "/api/agent/hand") throw new ApiError(409, "refused", HAND_REFUSED.wire);
+      if (String(url) === "/api/agent/hand") {
+        handAttempts += 1;
+        if (handAttempts === 1) throw new ApiError(409, "refused", HAND_REFUSED.wire);
+        return { launch_id: "launch_ag8_retry" };
+      }
       return routes(url, init);
     });
     render(<ConductorWindow />);
@@ -942,8 +947,16 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       [`/api/projects/p-platform/resources/${encodeURIComponent(`note:${noteId}`)}`, "PUT", {}],
       ["/api/agent/hand", "POST", { kind: "note", id: noteId, profile: "claude-default", project_id: "p-platform", queue: true, review_by: "none" }],
     ]);
-    // The hub's own refusal, in words, where he pressed.
+    // The hub's own refusal, in words, where he pressed. Retry the same
+    // captured intent: it must reuse the filed note, not create a duplicate.
     await waitFor(() => expect(screen.getByTestId("conductor-start-form").textContent).toMatch(/Not started · (No repository|Repository not registered)/));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conductor-start-go"));
+    });
+    await waitFor(() => expect(screen.queryByTestId("conductor-start-form")).toBeNull());
+    expect(calls.filter(([url]) => url === "/api/notes")).toHaveLength(1);
+    expect(calls.filter(([url]) => url.includes("/resources/note%3A"))).toHaveLength(1);
+    expect(calls.filter(([url]) => url === "/api/agent/hand")).toHaveLength(2);
   });
 
   it("a hand that waits for a free agent has Cancel; one press takes it out of the queue", async () => {

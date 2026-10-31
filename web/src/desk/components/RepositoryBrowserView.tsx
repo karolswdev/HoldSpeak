@@ -25,11 +25,14 @@ export function RepositoryBrowserView({
   checkedPaths = new Set<string>(),
   onToggleChecked,
   trailingNavigation,
+  renderInspection,
 }: {
   browser: RepositoryBrowserController;
   checkedPaths?: ReadonlySet<string>;
   onToggleChecked?: (path: string) => void;
   trailingNavigation?: ReactNode;
+  /** Optional editor owned by the host. The default remains the retained read-only preview. */
+  renderInspection?: (inspection: NonNullable<RepositoryBrowserController["entry"]["inspection"]>) => ReactNode;
 }) {
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "name", dir: "asc" });
   const previewRef = useRef<HTMLPreElement>(null);
@@ -97,11 +100,9 @@ export function RepositoryBrowserView({
       </div></ScrollHint>
       {inspection ? <div className="repo-browser-inspection" aria-label={`File inspection: ${inspection.path}`}>
         <Button className="repo-browser-detail-back" dense variant="ghost" onClick={browser.closeInspection}>Back to files</Button>
-        <SurfaceWell head={<span className="repo-browser-file-path">{inspection.path} · {inspection.retained ? "RETAINED COPY" : "READ ONLY"}</span>}>
-          <ScrollHint axis="y" scrollRef={previewRef}>
-            <pre ref={previewRef} className="repo-browser-file-content" data-testid="repo-file-content">{inspection.content}</pre>
-          </ScrollHint>
-        </SurfaceWell>
+        {renderInspection ? renderInspection(inspection) : <SurfaceWell head={<span className="repo-browser-file-path">{inspection.path} · {inspection.retained ? "RETAINED COPY" : "READ ONLY"}</span>}>
+          <ScrollHint axis="y" scrollRef={previewRef}><pre ref={previewRef} className="repo-browser-file-content" data-testid="repo-file-content">{inspection.content}</pre></ScrollHint>
+        </SurfaceWell>}
       </div> : null}
     </div>
   </section>;

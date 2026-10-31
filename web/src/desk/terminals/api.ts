@@ -1,6 +1,7 @@
 import { apiFetch, apiRequest } from "../../lib/api";
 import type {
   TerminalDescriptor,
+  TerminalContext,
   TerminalKey,
   TerminalPaneGeometry,
   TerminalReceipt,
@@ -26,6 +27,80 @@ function target(value: unknown): TerminalTarget {
   };
 }
 
+function object(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
+function project(value: unknown) {
+  const row = object(value);
+  return row.id ? { id: asText(row.id), name: asText(row.name, asText(row.id)) } : null;
+}
+
+function source(value: unknown) {
+  const row = object(value);
+  return row.id ? { id: asText(row.id), name: asText(row.name, asText(row.id)) } : null;
+}
+
+function worktree(value: unknown) {
+  const row = object(value);
+  return row.id ? { id: asText(row.id), branch: asText(row.branch) } : null;
+}
+
+function launch(value: unknown) {
+  const row = object(value);
+  return row.id ? {
+    id: asText(row.id),
+    profile_id: asText(row.profile_id),
+    state: asText(row.state),
+    role: asText(row.role),
+    origin_ref: typeof row.origin_ref === "string"
+      ? row.origin_ref
+      : row.origin_ref && typeof row.origin_ref === "object"
+        ? row.origin_ref as { kind?: string; id?: string; [key: string]: unknown }
+        : null,
+    attempt_id: asText(row.attempt_id),
+  } : null;
+}
+
+function program(value: unknown) {
+  const row = object(value);
+  return row.id ? {
+    id: asText(row.id),
+    title: asText(row.title, asText(row.id)),
+    step_id: asText(row.step_id),
+    step_ordinal: typeof row.step_ordinal === "number" ? row.step_ordinal : null,
+  } : null;
+}
+
+function mcp(value: unknown) {
+  const row = object(value);
+  const status = row.status === "configured" ? "configured" : "unknown";
+  if (!Object.keys(row).length) return null;
+  return {
+    status,
+    server: asText(row.server),
+    palette: asText(row.palette),
+    pre_approved: row.pre_approved === true,
+    read_only: row.read_only === true,
+  } as const;
+}
+
+function context(value: unknown): TerminalContext {
+  const row = object(value);
+  const status = ["bound", "worktree", "unbound", "unavailable"].includes(asText(row.status))
+    ? asText(row.status) as TerminalContext["status"]
+    : "unbound";
+  return {
+    status,
+    project: project(row.project),
+    source: source(row.source),
+    worktree: worktree(row.worktree),
+    launch: launch(row.launch),
+    program: program(row.program),
+    mcp: mcp(row.mcp),
+  };
+}
+
 function descriptor(value: unknown): TerminalDescriptor {
   const row = value && typeof value === "object" ? value as Record<string, unknown> : {};
   return {
@@ -39,6 +114,7 @@ function descriptor(value: unknown): TerminalDescriptor {
     state: asText(row.state, "live"),
     target: target(row.target),
     pane_id: asText(row.pane_id),
+    context: context(row.context),
   };
 }
 

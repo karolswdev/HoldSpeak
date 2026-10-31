@@ -18,6 +18,70 @@ The Desk keeps open windows and their placement in the hub, so a reload can
 restore them. A terminal that has ended stays unavailable; its old window does
 not become a different shell with a reused pane number.
 
+## Use the connected workspace
+
+Select a session to inspect its connected work. The workspace has three faces:
+
+- **Sessions** lists live terminal rows. Use **Project** to filter rows by
+  Project. Use **Find a session or folder** to search the inventory.
+- **Files** opens the repository browser for the selected source and worktree.
+  It does not switch to the source's primary checkout.
+- **Context** shows the Project, source, worktree, branch, brief, agent,
+  Needs you state, review, Program, and HoldSpeak tools facts.
+
+The **Files** face also has a **Changes** door. It shows changed files and a
+bounded diff for the selected worktree. Select files, press **Stage**, enter a
+commit message, and press **Commit** to make a local Git commit. These controls
+do not push or publish the commit. Each path has a plain status such as **New
+file**, **Changed**, **Staged**, **Staged and changed again**, **Renamed**, or
+**Deleted**. The face shows separate **Working tree diff** and **Staged diff**
+sections; a long diff is marked **shortened**. With no changes it says **No
+changed files** and shows the branch or that the worktree is clean.
+
+If Stage fails, the selection stays in the face. Press **Retry** to stage it
+again. If Commit fails, the staged changes and commit message stay in place.
+Press **Retry** to try that commit again.
+
+Open a file to read it. Press **Edit file**, then press **Save file** to write
+the edit to that same worktree. HoldSpeak checks whether the file changed after
+you opened it. If it changed, the save returns a conflict and keeps your edit.
+A failed save does not move the edit to another worktree.
+Press **Read latest** to compare the current disk text with your kept edit.
+Review your text, then press **Save reviewed edit**. If the file changes again,
+the save refuses again. Reading the latest file alone does not change your
+draft's saved revision.
+
+The Context face uses these states:
+
+| State | Meaning |
+| --- | --- |
+| **Bound workspace** | The terminal target still matches one recorded launch. |
+| **Worktree only** | The terminal folder is inside a registered worktree, but no launch target matches it. |
+| **Unbound shell** | The terminal has no registered source or worktree. |
+| **Context unavailable** | The live terminal remains visible, but a context source could not be read. |
+
+For a bound launch, **HoldSpeak tools** shows the configured server and its
+read-only fact when the launch record has that configuration. **Configured** is
+not proof of a successful MCP handshake. **Unknown** means that no configuration
+fact is available.
+
+If a source has no Project, select a Project in the inventory. The Context face
+then offers **Use repository in project**. Select it to add the registered
+repository as a Project resource. The path stays on the hub.
+
+For an unbound shell with a local Git checkout, Context shows **Register
+workspace folder**. The **Repository folder** field starts with the shell's
+current folder. Press **Register folder** to register it. The field stays in
+place and the refusal remains visible if registration fails. The path must be
+the exact Git top folder; a subfolder is refused before anything is persisted.
+After registration, select a Project in the inventory and press **Use
+repository in project**. A later **Hand to agent** uses this registered source
+and creates its worktree; no API or Automation setup is needed.
+
+The layout uses existing Desk windows, repository records, launch records and
+Program records. Nodeterm and similar tools were workflow inspiration. HoldSpeak
+does not add an infinite canvas, a second project store, or a second Git system.
+
 ## Type or speak
 
 Press **Type** in the terminal you want to use. The press focuses its screen
@@ -72,6 +136,11 @@ that is the job you intend. A browser close is not a Stop command.
   process on its host. A wide terminal can scroll inside its window on a phone.
 - Tmux can keep a session alive when a view closes. A machine reboot can end it;
   the workspace does not promise to restart that process.
+- Files, Changes, and Context work with registered local sources and worktrees.
+  They do not provide SSH projects, remote terminal output, or machine restart
+  recovery.
+- Local Git stage and commit are available. Push, sync, publish, and a two-way
+  GitHub Issues board are not part of this workspace.
 
 ## See also
 

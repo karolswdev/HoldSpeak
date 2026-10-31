@@ -11,6 +11,57 @@ export interface TerminalTarget {
   target_generation: string;
 }
 
+export interface TerminalProjectRef {
+  id: string;
+  name: string;
+}
+
+export interface TerminalSourceRef {
+  id: string;
+  name: string;
+}
+
+export interface TerminalWorktreeRef {
+  id: string;
+  branch: string;
+}
+
+export interface TerminalLaunchRef {
+  id: string;
+  profile_id: string;
+  state: string;
+  role: string;
+  origin_ref: string | { kind?: string; id?: string; [key: string]: unknown } | null;
+  attempt_id: string;
+}
+
+export interface TerminalProgramRef {
+  id: string;
+  title: string;
+  step_id: string;
+  step_ordinal: number | null;
+}
+
+export interface TerminalMcpRef {
+  status: "configured" | "unknown";
+  server: string;
+  palette: string;
+  pre_approved: boolean;
+  read_only: boolean;
+}
+
+export type TerminalContextStatus = "bound" | "worktree" | "unbound" | "unavailable";
+
+export interface TerminalContext {
+  status: TerminalContextStatus;
+  project: TerminalProjectRef | null;
+  source: TerminalSourceRef | null;
+  worktree: TerminalWorktreeRef | null;
+  launch: TerminalLaunchRef | null;
+  program: TerminalProgramRef | null;
+  mcp: TerminalMcpRef | null;
+}
+
 export interface TerminalDescriptor {
   id: string;
   label: string;
@@ -22,6 +73,8 @@ export interface TerminalDescriptor {
   state: string;
   target: TerminalTarget;
   pane_id: string;
+  /** Optional additive context. Old hubs still produce useful live terminals. */
+  context: TerminalContext;
 }
 
 export interface TerminalPaneGeometry {

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiRequest } from "../../lib/api";
+import { apiFetch, apiRequest } from "../../lib/api";
 import { StartAgent } from "../conductor/StartAgent";
-import { useConductor } from "../conductor/store";
-import { ListDay, ListRow, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, ToolbarFold, countWords, useWindowInterior } from "../surface";
+import { useAgentFlights } from "../agentFlights";
+import { ActionNotice, CycleGadget, ListDay, ListRow, ListView, StatusBar, StringGadget, SurfaceState, SurfaceWings, ToolGlyph, Toolbar, ToolbarFold, countWords, useWindowInterior, useWindowWings } from "../surface";
 import { useDesk } from "../store";
 import { gatherFront } from "../compositor/useCompositor";
 import {
@@ -14,6 +14,20 @@ import {
   type TerminalInventoryState,
 } from "./windows";
 import type { TerminalDescriptor } from "./types";
+import { WorkspaceView } from "./WorkspaceView";
+import {
+  queueWorkspaceLaunch,
+  bumpWorkspaceRequestEpoch,
+  cancelWorkspaceLaunch,
+  resolveWorkspaceLaunch,
+  selectWorkspaceFace,
+  selectWorkspaceSession,
+  setWorkspaceSelection,
+  setWorkspaceSelectionQuiet,
+  subscribeWorkspaceSelection,
+  workspaceSelectionSnapshot,
+  type WorkspaceFace,
+} from "./workspaceSelection";
 import "./terminals.css";
 
 function useTerminalInventory() {
@@ -32,6 +46,13 @@ function stateWord(descriptor: TerminalDescriptor): string {
   if (state === "waiting" || state === "awaiting_response" || state === "needs_you") return "Needs you";
   if (state === "done" || state === "checked") return "Done";
   return state.replaceAll("_", " ");
+}
+
+function contextOriginRef(value: unknown): string | null {
+  if (typeof value === "string" && value.includes(":")) return value;
+  if (!value || typeof value !== "object") return null;
+  const row = value as { kind?: unknown; id?: unknown };
+  return typeof row.kind === "string" && typeof row.id === "string" ? `${row.kind}:${row.id}` : null;
 }
 
 const terminalInventoryError = "Cannot read terminals. Open views kept. Press Retry.";
@@ -129,9 +150,10 @@ function NewShell({
     try {
       const answer = await spawnShell(clean, cwd.trim());
       await refreshTerminalInventory();
-      const descriptor = terminalInventorySnapshot().sessions.find((row) =>
-        row.session === clean || row.label.includes(clean) || row.pane_id === answer.pane_id,
-      );
+      const sessions = terminalInventorySnapshot().sessions;
+      const descriptor = answer.pane_id
+        ? sessions.find((row) => row.pane_id === answer.pane_id)
+        : sessions.find((row) => row.session === clean);
       setBusy(false);
       onCreated(descriptor?.id);
     } catch (caught) {
@@ -165,12 +187,49 @@ export function TerminalsCore() {
   const [startingAgent, setStartingAgent] = useState(false);
   const [newShellName, setNewShellName] = useState("");
   const [newShellCwd, setNewShellCwd] = useState("");
+  const [projectOptions, setProjectOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [projectRepositoryIds, setProjectRepositoryIds] = useState<Set<string>>(new Set());
+  const [projectResourceRevision, setProjectResourceRevision] = useState(0);
+  const [handoffTimedOut, setHandoffTimedOut] = useState<Record<string, boolean>>({});
+  const [pendingRetry, setPendingRetry] = useState(0);
+  const selection = useSyncExternalStore(subscribeWorkspaceSelection, workspaceSelectionSnapshot, workspaceSelectionSnapshot);
+  const flights = useAgentFlights((state) => state.flights);
+  useEffect(() => {
+    let alive = true;
+    void apiFetch<{ projects?: Array<Record<string, unknown>> }>("/api/projects")
+      .then((answer) => {
+        if (!alive) return;
+        setProjectOptions((answer.projects ?? []).filter((project) => project.archived !== true).map((project) => ({ value: String(project.id ?? ""), label: String(project.name ?? project.id ?? "Project") })).filter((project) => project.value));
+      })
+      .catch(() => { if (alive) setProjectOptions([]); });
+    return () => { alive = false; };
+  }, []);
+  useEffect(() => {
+    let alive = true;
+    setProjectRepositoryIds(new Set());
+    if (!selection.projectId) return () => { alive = false; };
+    void apiFetch<{ resources?: Array<Record<string, unknown>> }>(`/api/projects/${encodeURIComponent(selection.projectId)}/resources`)
+      .then((answer) => {
+        if (!alive) return;
+        const ids = (answer.resources ?? []).map((resource) => String(resource.resource_ref ?? resource.ref ?? ""))
+          .filter((ref) => ref.startsWith("repository:"))
+          .map((ref) => ref.slice("repository:".length));
+        setProjectRepositoryIds(new Set(ids));
+      })
+      .catch(() => { if (alive) setProjectRepositoryIds(new Set()); });
+    return () => { alive = false; };
+  }, [selection.projectId, projectResourceRevision]);
   const queryText = query.trim().toLowerCase();
   const rows = useMemo(() => inventory.sessions.filter((descriptor) => {
+    if (selection.projectId) {
+      const boundToProject = descriptor.context.project?.id === selection.projectId;
+      const filedSource = !descriptor.context.project && Boolean(descriptor.context.source?.id && projectRepositoryIds.has(descriptor.context.source.id));
+      if (!boundToProject && !filedSource) return false;
+    }
     if (!queryText) return true;
     return [descriptor.label, descriptor.session, descriptor.agent, descriptor.command, descriptor.current_path]
       .some((value) => value.toLowerCase().includes(queryText));
-  }), [inventory.sessions, queryText]);
+  }), [inventory.sessions, projectRepositoryIds, queryText, selection.projectId]);
   const openIds = useMemo(() => new Set(terminalWindows.map((window) => window.id)), [terminalWindows]);
   const groups = useMemo(() => {
     const grouped = new Map<string, TerminalDescriptor[]>();
@@ -182,9 +241,98 @@ export function TerminalsCore() {
   }, [rows]);
 
   const openTerminal = (descriptor: TerminalDescriptor) => {
+    selectWorkspaceSession(descriptor, selection.face);
     useDesk.getState().openTerminalWindow(descriptor.id);
   };
-  const refresh = () => { void refreshTerminalInventory(); };
+  const selectedDescriptor = inventory.sessions.find((descriptor) => descriptor.id === selection.sessionId) ?? null;
+  useWindowWings(
+    <SurfaceWings
+      wings={[{ id: "sessions", label: "Sessions" }, { id: "files", label: "Files" }, { id: "context", label: "Context" }]}
+      active={selection.face === "changes" ? "files" : selection.face}
+      onChange={(face) => selectWorkspaceFace(face as WorkspaceFace)}
+    />,
+    [selection.face],
+  );
+  const projects = useMemo(() => {
+    const found = new Map<string, string>();
+    projectOptions.forEach((project) => found.set(project.value, project.label));
+    inventory.sessions.forEach((descriptor) => {
+      if (descriptor.context.project) found.set(descriptor.context.project.id, descriptor.context.project.name);
+    });
+    return [...found.entries()].map(([value, label]) => ({ value, label }));
+  }, [inventory.sessions, projectOptions]);
+  const selectedProjectName = projects.find((project) => project.value === selection.projectId)?.label ?? null;
+  const changeProject = (value: string) => {
+    const nextProjectId = value === "all" ? null : value;
+    const selected = selection.sessionId
+      ? inventory.sessions.find((descriptor) => descriptor.id === selection.sessionId) ?? null
+      : null;
+    const selectedBoundProject = selected?.context.project?.id ?? null;
+    // An unbound shell stays selected while the Project picker changes: that
+    // picker is the filing target. A bound agent belongs to its authoritative
+    // Project, so do not leave its checkout under a different Project label.
+    if (nextProjectId && selectedBoundProject && selectedBoundProject !== nextProjectId) {
+      setWorkspaceSelection({ projectId: nextProjectId, sessionId: null, face: "sessions" });
+      return;
+    }
+    setWorkspaceSelection({ projectId: nextProjectId });
+  };
+  const sessionOptions = useMemo(() => {
+    const options = rows.map((descriptor) => ({ value: descriptor.id, label: descriptor.label || descriptor.session || "Terminal" }));
+    if (selectedDescriptor && !options.some((option) => option.value === selectedDescriptor.id))
+      options.push({ value: selectedDescriptor.id, label: selectedDescriptor.label || selectedDescriptor.session || "Terminal" });
+    return [{ value: "none", label: "Choose a session" }, ...options];
+  }, [rows, selectedDescriptor]);
+  useEffect(() => {
+    selection.pendingHandoffs.forEach((pending) => {
+      const pendingFlight = pending.kind === "queue" ? flights.find((flight) => flight.queueId === pending.id) : null;
+      const launchId = pendingFlight?.launchId ?? (pending.kind === "launch" ? pending.id : null);
+      const directMatch = launchId
+        ? inventory.sessions.find((descriptor) => descriptor.context.launch?.id === launchId)
+        : null;
+      const originMatches = pending.kind === "queue" && pending.originRef && pending.projectId
+        ? inventory.sessions.filter((descriptor) => descriptor.context.project?.id === pending.projectId
+          && contextOriginRef(descriptor.context.launch?.origin_ref) === pending.originRef)
+        : [];
+      // Queued flights can lose their queue_id when the hub projects the
+      // admitted launch. Join only on the captured Note + Project and only
+      // when that producer-backed join is unique; never guess by cwd/name.
+      const match = directMatch ?? (originMatches.length === 1 ? originMatches[0] : null);
+      if (!match) return;
+      const currentSelection = workspaceSelectionSnapshot();
+      const before = currentSelection.pendingHandoffs.some((handoff) => handoff.id === pending.id);
+      const ownsArrival = currentSelection.pendingHandoffs.find((handoff) => handoff.id === pending.id)?.epoch === currentSelection.requestEpoch;
+      resolveWorkspaceLaunch(pending.id, match);
+      if (before && ownsArrival) useDesk.getState().openTerminalWindow(match.id);
+    });
+  }, [flights, inventory.sessions, selection.pendingHandoffs]);
+  useEffect(() => {
+    if (!selection.pendingHandoffs.length) return;
+    let active = true;
+    let attempts = 0;
+    let timer: number | null = null;
+    const poll = () => {
+      if (!active || !workspaceSelectionSnapshot().pendingHandoffs.length) return;
+      if (attempts >= 20) {
+        setHandoffTimedOut((current) => Object.fromEntries(workspaceSelectionSnapshot().pendingHandoffs.map((handoff) => [handoff.id, current[handoff.id] ?? true])));
+        return;
+      }
+      attempts += 1;
+      void refreshTerminalInventory();
+      void useAgentFlights.getState().load();
+      timer = window.setTimeout(poll, 1000);
+    };
+    poll();
+    return () => { active = false; if (timer != null) window.clearTimeout(timer); };
+  }, [selection.pendingHandoffs.length, pendingRetry]);
+  const refresh = () => {
+    void refreshTerminalInventory();
+    if (selection.pendingHandoffs.length) {
+      setHandoffTimedOut((current) => Object.fromEntries(selection.pendingHandoffs.map((handoff) => [handoff.id, false])));
+      setPendingRetry((current) => current + 1);
+      void useAgentFlights.getState().load();
+    }
+  };
   const inventoryLoading = inventory.status === "idle" || inventory.status === "loading";
 
   const formOpen = newShell || startingAgent;
@@ -208,6 +356,7 @@ export function TerminalsCore() {
           variant="primary"
           dense
           onClick={() => {
+            bumpWorkspaceRequestEpoch();
             setNewShell((value) => !value);
             setStartingAgent(false);
           }}
@@ -220,6 +369,7 @@ export function TerminalsCore() {
           variant={startingAgent ? "secondary" : "ghost"}
           dense
           onClick={() => {
+            bumpWorkspaceRequestEpoch();
             setStartingAgent((value) => !value);
             setNewShell(false);
           }}
@@ -229,6 +379,8 @@ export function TerminalsCore() {
           Start an agent
         </Button>
         <ToolbarFold label="More" foldAt="medium" verbs={secondaryActions} data-testid="terminal-more" />
+        {!formOpen && projects.length ? <CycleGadget label="Project" value={selection.projectId ?? "all"} options={[{ value: "all", label: "All projects" }, ...projects]} onChange={changeProject} /> : null}
+        {!formOpen && selection.face !== "sessions" ? <CycleGadget label="Session" value={selection.sessionId ?? "none"} options={sessionOptions} onChange={(value) => { const descriptor = inventory.sessions.find((row) => row.id === value); if (descriptor) selectWorkspaceSession(descriptor, selection.face); }} data-testid="terminal-session-select" /> : null}
       </Toolbar>
 
       {formOpen ? (
@@ -248,20 +400,37 @@ export function TerminalsCore() {
         /> : (
           <div className="terminals-start-agent">
             <StartAgent
-              onCancel={() => setStartingAgent(false)}
-              onStarted={(row) => {
-                setStartingAgent(false);
-                if (row) useConductor.getState().openWindow(null, row);
-                void useConductor.getState().readFlights();
+              initialProjectId={selection.projectId}
+              onCancel={() => { bumpWorkspaceRequestEpoch(); setStartingAgent(false); }}
+              onStarting={() => workspaceSelectionSnapshot().requestEpoch}
+              onStarted={(row, started) => {
+                const requestEpoch = started?.requestEpoch ?? workspaceSelectionSnapshot().requestEpoch;
+                const ownsStart = workspaceSelectionSnapshot().requestEpoch === requestEpoch;
+                if (ownsStart) setStartingAgent(false);
+                const prefix = row?.split(":", 1)[0];
+                const id = row?.slice(prefix ? prefix.length + 1 : 0) ?? "";
+                const startedProject = started?.projectId ?? selection.projectId;
+                if (row && id) {
+                  setHandoffTimedOut((current) => ({ ...current, [id]: false }));
+                  if (ownsStart)
+                    setWorkspaceSelectionQuiet({ projectId: startedProject, sessionId: null, face: "sessions" });
+                  queueWorkspaceLaunch(id, startedProject, prefix === "queue" ? "queue" : "launch", requestEpoch,
+                    started?.noteId ? `note:${started.noteId}` : null);
+                }
                 refresh();
               }}
             />
           </div>
         )
-      ) : <>
+      ) : selection.face === "sessions" ? <>
       <div className="terminals-search">
         <StringGadget label="Find a session or folder" value={query} onChange={setQuery} placeholder="Find a session or folder" />
       </div>
+      {selection.pendingHandoffs.map((pending) => <ActionNotice key={`${pending.kind}:${pending.id}`} tone="info" data-testid={`terminal-handoff-pending-${pending.id}`}>
+        <span>{handoffTimedOut[pending.id] ? "Still waiting · Check again" : pending.kind === "queue" ? "Agent queued · waiting for its terminal" : "Agent starting · waiting for its terminal"}</span>
+        <Button dense variant="ghost" onClick={refresh}>Check again</Button>
+        <Button dense variant="ghost" onClick={() => cancelWorkspaceLaunch(pending.id)}>Stop waiting</Button>
+      </ActionNotice>)}
 
       <div className="terminals-list" role="region" aria-label="Terminal sessions">
         {inventoryLoading && !inventory.sessions.length ? <SurfaceState loading /> : null}
@@ -288,6 +457,16 @@ export function TerminalsCore() {
           </ListView>
         ) : null}
       </div>
+      </> : <>
+      {selection.pendingHandoffs.map((pending) => <ActionNotice key={`${pending.kind}:${pending.id}`} tone="info" data-testid={`terminal-handoff-pending-${pending.id}`}>
+        <span>{handoffTimedOut[pending.id] ? "Still waiting · Check again" : pending.kind === "queue" ? "Agent queued · waiting for its terminal" : "Agent starting · waiting for its terminal"}</span>
+        <Button dense variant="ghost" onClick={refresh}>Check again</Button>
+        <Button dense variant="ghost" onClick={() => cancelWorkspaceLaunch(pending.id)}>Stop waiting</Button>
+      </ActionNotice>)}
+      <div className="terminals-workspace-head" data-testid="terminal-workspace-head">
+        {selectedDescriptor ? <span className="terminals-workspace-selected">{selectedDescriptor.label}</span> : <span className="terminals-workspace-selected">No session selected</span>}
+      </div>
+      <WorkspaceView descriptor={selectedDescriptor} face={selection.face} onChanges={() => selectWorkspaceFace("changes")} selectedProjectId={selection.projectId} selectedProjectName={selectedProjectName} onRepositoryBound={() => setProjectResourceRevision((revision) => revision + 1)} />
       </>}
       <StatusBar
         items={[inventoryStatusText ? { lamp: inventoryStatus, text: inventoryStatusText } : null]}

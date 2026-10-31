@@ -24,7 +24,7 @@ RESOURCE_KINDS = frozenset({
     "people",
     # Memory kinds a relevance pass can hand to grounding (2026-10-03).
     "send", "project_update", "prep_brief", "calendar_event",
-    "brief_item", "dictation", "steward_run", "ask_answer",
+    "brief_item", "dictation", "steward_run", "ask_answer", "repository",
 })
 
 

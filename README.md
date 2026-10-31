@@ -80,8 +80,18 @@ The conversation is saved as a Thread from its first answer, ready for a follow-
 Select **Hand to agent** on a task or Desk item.
 Inspect the brief, repository, branch, and worktree before launching Claude Code, Codex, or pi in a separate Git worktree.
 Follow progress, read terminal output, answer questions by text or voice, and review the result.
-Use [Terminals](docs/TERMINALS.md) to work with several live sessions side by side.
+Use [Terminals](docs/TERMINALS.md) to keep live sessions beside their files, changes, and Project context.
+Edit, inspect a diff, and make a local commit in the selected agent's worktree.
 This needs a project repository, the installed agent CLI, and tmux.
+
+<details>
+<summary>See the connected workspace</summary>
+
+<p align="center">
+  <img src="docs/assets/readme/workspace.png" width="780" alt="The connected workspace shows staged changes and a commit message beside its own live terminal on the Desk." />
+</p>
+
+</details>
 
 [Coder integration](docs/CODER_INTEGRATION.md) · [Agent hook setup](docs/AGENT_HOOK_INSTALL.md)
 
