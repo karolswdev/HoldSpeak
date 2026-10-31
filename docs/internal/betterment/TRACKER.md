@@ -330,7 +330,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | JRN4 | The night's end reaches him on the phone | Open | After LANG12. |
 | JRN5 | A spoken answer becomes a prepared answer | Open | After LANG5; the default, no ruling. |
 | JRN6 | The item's verbs on a phone message | Open | After LANG5. |
-| JRN7 | `program.decide` behind a spoken yes | Open | Only with the owner's ruling (PG-LANG §15.10). |
+| JRN7 | `program.decide` behind a spoken yes | Open | The default: ruled yes 2026-10-31 (PG-LANG §15.10); built as PG-DIRECTION DIR8. |
 | JRN8 | The Audit template | Open |  |
 | JRN9 | Findings filed as Door tasks; the Findings board | Open |  |
 | JRN10 | A proposed fix program from findings | Open |  |
@@ -338,6 +338,23 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | JRN12 | Keep a lesson for the repository | Open |  |
 | JRN13 | Run as a program on a project action row | Open | With LANG6. |
 | JRN14 | The person gate's requirements and comments | Open | With LANG6. |
+
+**PG-DIRECTION** (open, 12 slices DIR1–DIR12, lanes HUB/FACES/DOCS, a PR per slice in the fast cycle; first slice on his desk = DIR1 + DIR2 + DIR3, the briefing page over the tailnet with a token, no third party): the owner's ruling 2026-10-31 that calls decide, with context and a free Later; briefing packages (one held item or a digest) for the desk, the Phone app push, a call, Telegram and a tokened page `/b/<token>`; one decision record with `via`; Later with a next touch and the escalation ladder; Settings ▸ Reach. Design `programs/DIRECTION-2026-10-31.md`, canvas `programs/canvases/direction-2026-10-31.html` (page direction A, the brief).
+
+| Slice | What | State | Note |
+|---|---|---|---|
+| DIR1 | Packages, the token, `/b/<token>` and `/api/b/{token}`, `via` on the ledger | Open | First slice. |
+| DIR2 | The briefing page (direction A) in the kit, its own entry | Open | First slice. |
+| DIR3 | The Needs you line and Revoke; Send to my phone ▸ Copy page link | Open | First slice. |
+| DIR4 | Later everywhere: the words, the Later group, the YOLO provisional park | Open |  |
+| DIR5 | Telegram reach: keystore, pairing code, poller, buttons, replies | Open | One bot with Cadence. |
+| DIR6 | Settings ▸ Reach (Notices renamed) | Open |  |
+| DIR7 | The ladder and the one morning digest (JRN4 folded in) | Open |  |
+| DIR8 | The call that decides (= JRN7); `docs/calls.md` table replaced | Open |  |
+| DIR9 | A Telegram sentence becomes a shaping preview | Open | After LANG3. |
+| DIR10 | The other held items as packages | Open |  |
+| DIR11 | The documents (`docs/reach.md` and the rest) | Open |  |
+| DIR12 | Email as a channel | Parked | Until he asks. |
 
 ## Phone (`phone/RECIPE.md`): 0 of 16
 
