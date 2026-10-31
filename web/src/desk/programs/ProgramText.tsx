@@ -82,8 +82,8 @@ function bodyLines(text: string): string[] {
 
 /** One proposal in the well: the rows and how Apply sends them. */
 export type TextProposal = {
-  /** Where the rows came from: the typed text, a shaped sentence (LANG4), or a planning draft (LANG7). */
-  source: "text" | "sentence" | "plan";
+  /** Where the rows came from: the typed text, a shaped sentence (LANG4), a planning draft (LANG7), or a round's answer (LANG10). */
+  source: "text" | "sentence" | "plan" | "round";
   /** A shaped sentence: the engine's line of what changes, and its name and time. */
   say?: string;
   fact?: string;

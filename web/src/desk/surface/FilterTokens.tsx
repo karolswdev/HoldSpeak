@@ -31,6 +31,7 @@ import "./filter-tokens.css";
 import { Button } from "../../components/signal/Signal";
 import { useCompactViewport } from "../useCompactViewport";
 import { StripMenuButton, useStripFit } from "./stripMenu";
+import type { ObjectTone } from "./objects/kinds";
 
 export type FilterTokenOption = {
   /** The value handed back to `onChange` (and usually the wire's param). */
@@ -40,6 +41,13 @@ export type FilterTokenOption = {
   /** HS-200-13: an accessible name richer than the visible label
    *  (`Filter — Decisions` over `Decisions`), when the face names it. */
   ariaLabel?: string;
+  /** PG-LANG §9.4 (the round strip): a state lamp before the label
+   *  (`live`: it breathes), the label struck through (skipped), and a quiet
+   *  aside after it (`· 4 changes`). Without them the token is as before. */
+  lamp?: ObjectTone | "idle";
+  live?: boolean;
+  struck?: boolean;
+  aside?: string;
 };
 
 export function FilterTokens({
@@ -103,8 +111,17 @@ export function FilterTokens({
             aria-label={option.ariaLabel}
             disabled={disabled}
             onClick={() => onChange(option.value)}
+            data-filter-lamp={option.lamp}
           >
-            {option.label}
+            {option.lamp || option.struck || option.aside ? (
+              <>
+                {option.lamp ? (
+                  <span className="kit-dot surface-filter-lamp" data-tone={option.lamp} data-live={option.live ? "" : undefined} aria-hidden="true" />
+                ) : null}
+                <span className={option.struck ? "surface-filter-struck" : undefined}>{option.label}</span>
+                {option.aside ? <span className="surface-filter-aside">{option.aside}</span> : null}
+              </>
+            ) : option.label}
           </Button>
         );
       })}

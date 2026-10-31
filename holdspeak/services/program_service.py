@@ -1300,10 +1300,16 @@ class ProgramService:
         ref = str(program.get("delivery_ref") or "")
         rounds = []
         for row in self.store.list_rounds(program["id"]):
-            questions = [{key: item.get(key) for key in ("id", "text", "answer", "answered_by", "at")}
-                         for item in row["questions"]]
+            # LANG9: a question's why, its offered answers, skipped, and what
+            # the answer became; the round's count of changes, its waiting question.
+            questions = [{**{key: item.get(key) for key in ("id", "text", "answer", "answered_by", "at", "why")},
+                          "choices": list(item.get("choices") or []), "skipped": bool(item.get("skipped")),
+                          "became": list(item.get("became") or [])} for item in row["questions"]]
+            waits = next((item["id"] for item in questions if not item.get("answer") and not item["skipped"]), None)
             rounds.append({"name": row["name"], "state": row["state"], "order": row["ordinal"], "questions": questions,
-                           "asked": len(questions), "answered": sum(1 for item in questions if item.get("answer"))})
+                           "asked": len(questions), "answered": sum(1 for item in questions if item.get("answer")),
+                           "became": sum(len(item["became"]) for item in questions if item.get("answer")),
+                           "waiting": waits})
         return {
             "review_depth": program.get("review_depth"), "planner": planner,
             "budget_tokens": program.get("budget_tokens"), "night": program.get("night"),
@@ -3235,6 +3241,42 @@ class ProgramService:
         self._require_writer(principal, program, "shape")
         drop(program["id"])
         return self.get(principal, program["id"])
+
+    # ── PG-LANG LANG9: the interview rounds (program_rounds) ─────────
+
+    def rounds_open(self, principal: Any, program_id: str, names: Any = None) -> dict[str, Any]:
+        from .program_rounds import open_rounds
+
+        return open_rounds(self, principal, program_id, names)
+
+    def round_next(self, principal: Any, program_id: str, name: str) -> dict[str, Any]:
+        from .program_rounds import ask
+
+        return ask(self, principal, program_id, name)
+
+    def round_answer(self, principal: Any, program_id: str, name: str, *, answer: Any = None, option: Any = None,
+                     question_id: Any = None, skip: bool = False, not_this: bool = False,
+                     apply: bool = False) -> dict[str, Any]:
+        """``{question_id, answer | option | skip}`` (§12); ``not_this``: the
+        answer's rows were dismissed, so it became nothing."""
+        from . import program_rounds as rounds
+
+        qid = str(question_id) if question_id else None
+        if skip:
+            return rounds.skip_question(self, principal, program_id, name, qid)
+        if not_this:
+            return rounds.not_this(self, principal, program_id, name, qid or "")
+        return rounds.answer(self, principal, program_id, name, answer, question_id=qid, choice=option, apply=apply)
+
+    def round_decide(self, principal: Any, program_id: str, name: str, choice: Any) -> dict[str, Any]:
+        from .program_rounds import decide
+
+        return decide(self, principal, program_id, name, choice)
+
+    def round(self, principal: Any, program_id: str, action: Any, **kw: Any) -> dict[str, Any]:
+        from .program_rounds import act
+
+        return act(self, principal, program_id, action, **kw)
 
     def plan_draft(self, principal: Any, program_id: str, *, goal: Any = None, template: Any = None,
                    budget: Any = None, text: Any = None, split: Any = None) -> dict[str, Any]:

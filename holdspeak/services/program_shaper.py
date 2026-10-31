@@ -427,14 +427,18 @@ def _rows_for(service: Any, principal: Any, program: Mapping[str, Any], wire: Ma
 
 def shape(service: Any, principal: Any, program_id: str, sentence: Any, *,
           invoke_fn: Optional[Callable[..., tuple[Optional[str], str]]] = None,
-          pending: Optional[str] = None) -> ShapeResult:
+          pending: Optional[str] = None, rounds: bool = True) -> ShapeResult:
     """One sentence → one call → the change rows (nothing is written).
 
     LANG5: ``pending`` is the text of the rows that wait in the change well
     (an earlier sentence's ``proposed_text``). The engine reads it in place
     of the current text, so the next sentence adds to those rows; the rows
     stay against the current text, so the well holds every sentence's rows
-    until Apply or Not this."""
+    until Apply or Not this.
+
+    ``rounds=False`` (an interview answer, LANG9): the round blocks are not
+    sent and the text's own rounds are put back on the answer, so the
+    engine can never touch a ``?`` line or an ``=`` line."""
     words = " ".join(str(sentence or "").split())
     if not words:
         raise _refused("sentence_required", "Say or type what to change.", status=400)
@@ -455,6 +459,12 @@ def shape(service: Any, principal: Any, program_id: str, sentence: Any, *,
             raise _refused("pending_unreadable", "The changes that wait could not be read. Press Not this, then say "
                                                  "it again.", status=400)
         text = render(waiting)
+    if not rounds:
+        from .program_text import parse_program_text, render
+
+        unrounded = parse_program_text(text)
+        unrounded.rounds = []
+        text = render(unrounded)
     frozen = frozen_list(wire)
     ground = grounding(service, wire)
     capability, revision, profile, label = resolve_engine(service.db)
@@ -495,6 +505,12 @@ def shape(service: Any, principal: Any, program_id: str, sentence: Any, *,
         return ShapeResult(proposed_text=text, rows=[], refusals=[], grounded_on=grounded, latency_ms=latency,
                            engine=engine, say=answer["say"], question=answer["question"], attempts=len(prompts),
                            capability=capability, base_text=printed, prompts=prompts)
+    if not rounds:
+        from .program_text import parse_program_text, render
+
+        answered = parse_program_text(answer["text"])
+        answered.rounds = parse_program_text(printed).rounds
+        answer["text"] = render(answered)
     _base, _new, rows = _rows_for(service, principal, program, wire, printed, answer["text"])
     refusals = [{"id": row.id, "code": row.code, "reason": row.reason} for row in rows
                 if row.verdict in ("refused", "conflict")]
@@ -518,14 +534,14 @@ def _answer(service: Any, principal: Any, program: Mapping[str, Any], wire: Mapp
 
 def shape_program(service: Any, principal: Any, program_id: str, sentence: Any, *, apply: bool = False,
                   invoke_fn: Optional[Callable[..., tuple[Optional[str], str]]] = None,
-                  pending: Optional[str] = None) -> dict[str, Any]:
+                  pending: Optional[str] = None, rounds: bool = True) -> dict[str, Any]:
     """The REST and MCP answer: the rows of :func:`shape` in the
     ``text_apply`` answer shape (the well draws it as it is), the engine and
     its time; with ``apply`` at YOLO, the allowed rows applied and the
     Decided for you row."""
     from .program_text import allowed_model, parse_program_text, print_program, render
 
-    result = shape(service, principal, program_id, sentence, invoke_fn=invoke_fn, pending=pending)
+    result = shape(service, principal, program_id, sentence, invoke_fn=invoke_fn, pending=pending, rounds=rounds)
     program = service._program(program_id)
     wire = service.get(principal, program["id"])
     # The rows are against the text the engine read: a field that moved

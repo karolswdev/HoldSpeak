@@ -11,7 +11,7 @@ import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { frameChanges } from "../compositor/windowFrames";
 import type {
   Control, DecideBody, PersonProgramRow, PlanStep, Program, ProgramChangedFrame, ProgramList, ProgramRoomRow, ProgramText,
-  PlanAnswer, ShapeAnswer, ShapeEngine, TextApplyAnswer,
+  PlanAnswer, RoundAnswer, RoundAsked, RoundPressed, ShapeAnswer, ShapeEngine, TextApplyAnswer,
 } from "./types";
 
 const EMPTY_LIST: ProgramList = { programs: [], counts: {}, worst: null, worst_word: "" };
@@ -340,6 +340,29 @@ export function shapeProgram(id: string, body: { sentence: string; apply: boolea
 /** PG-LANG LANG5: Not this on the rows a call left in the change well. */
 export function dropHeldShape(id: string): Promise<Program> {
   return apiFetch<Program>(`${base(id)}/shape/held`, { method: "DELETE" });
+}
+
+/** PG-LANG LANG9: the interview rounds (the five defaults, each open). */
+export function openRounds(id: string, names?: string[]): Promise<RoundPressed> {
+  return apiFetch<RoundPressed>(`${base(id)}/rounds`, { method: "POST", json: names ? { names } : {} });
+}
+
+/** PG-LANG LANG9: the ONE next question of a round (one engine call). */
+export function nextQuestion(id: string, round: string): Promise<RoundAsked> {
+  return apiFetch<RoundAsked>(`${base(id)}/rounds/${encodeURIComponent(round)}/next`, { method: "POST", json: {} });
+}
+
+/** PG-LANG LANG9: his answer (his words or an offered one), Skip question,
+ *  or Not this on the answer's rows. */
+export function answerRound(id: string, round: string, body: {
+  question_id: string; answer?: string; option?: string; skip?: boolean; not_this?: boolean; apply?: boolean;
+}): Promise<RoundAnswer & RoundPressed> {
+  return apiFetch<RoundAnswer & RoundPressed>(`${base(id)}/rounds/${encodeURIComponent(round)}/answer`, { method: "POST", json: body });
+}
+
+/** PG-LANG LANG9: Done with <round>, Skip round, Ask more. */
+export function decideRound(id: string, round: string, choice: "done" | "skip" | "reopen"): Promise<RoundPressed> {
+  return apiFetch<RoundPressed>(`${base(id)}/rounds/${encodeURIComponent(round)}/decide`, { method: "POST", json: { choice } });
 }
 
 /** PG-LANG LANG6: the goal drafted into change rows (nothing is written; Apply
