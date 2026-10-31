@@ -1,0 +1,4 @@
+{
+  "shot": "DESK_SWEEP_SHOTS=1 uv run pytest -q tests/e2e/test_desk_sweep.py -k \"{case}-{width}\"",
+  "shot_image": ".tmp/evidence-shots/desk-sweep/*{case}-{width}*.png"
+}

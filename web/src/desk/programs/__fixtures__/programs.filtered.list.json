@@ -1,0 +1,79 @@
+{
+  "counts": {
+    "waiting": 1
+  },
+  "filter": {
+    "of": 2,
+    "person_id": "p-alice",
+    "project_id": "proj-holdspeak",
+    "q": "stalling",
+    "shown": 1
+  },
+  "programs": [
+    {
+      "asks": 0,
+      "control": "normal",
+      "created_at": "2026-10-31T16:26:06.332455+00:00",
+      "done": 1,
+      "for_person": {
+        "id": "p-alice",
+        "name": "Alice"
+      },
+      "id": "program-22d46004ad51",
+      "in_state_seconds": 1,
+      "last_checkpoint": {
+        "at": "2026-10-31T16:26:10.183679+00:00",
+        "by": "engine",
+        "choice": "retry",
+        "decision_record_id": null,
+        "id": 44,
+        "kind": "requirement_red",
+        "line": "R5 red on step 4, round 1; sent the log back",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-9ced529228da/5",
+        "ref_commit": "60378f9e885dc4fc47967697288a19f432e5669b",
+        "rule": "a red requirement goes back to the builder (round 2 of 2)",
+        "step_id": "step-9ced529228da",
+        "undo": {
+          "pin": {
+            "commit": "60378f9e885dc4fc47967697288a19f432e5669b",
+            "head": "527bf8d4a17f8829201273470da398d286c5271a",
+            "n": 5,
+            "ref": "refs/holdspeak/checkpoints/step-9ced529228da/5",
+            "tree": "b5605b3f50c2553f9c65a30d6af73ffb25c106dd"
+          }
+        }
+      },
+      "persons": [
+        {
+          "id": "p-alice",
+          "name": "Alice"
+        }
+      ],
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      },
+      "project_id": "proj-holdspeak",
+      "requirements_met": {
+        "his": 1,
+        "met": 6,
+        "total": 13,
+        "unmet": 2,
+        "waived": 1
+      },
+      "search_words": "the hub stops stalling the hub stops stalling. holdspeak fast-cycle alice indexes retention projections off the loop people routes projects routes the fan-out #101 #102 fast cycle",
+      "state": "waiting",
+      "state_word": "Your turn",
+      "title": "The hub stops stalling",
+      "total": 6,
+      "updated_at": "2026-10-31T16:26:09.705519+00:00",
+      "your_turn": 1
+    }
+  ],
+  "worst": "waiting",
+  "worst_word": "Your turn"
+}

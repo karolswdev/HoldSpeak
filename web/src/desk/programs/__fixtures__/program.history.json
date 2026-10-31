@@ -1,10 +1,17 @@
 {
   "allowed_profiles": [],
   "asks": 0,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
   "check_command": null,
   "checkpoints": [
     {
-      "at": "2026-10-31T01:42:49.308185+00:00",
+      "at": "2026-10-31T16:26:17.385587+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -22,7 +29,7 @@
       "undo": {}
     },
     {
-      "at": "2026-10-31T01:42:49.305362+00:00",
+      "at": "2026-10-31T16:26:17.381912+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -43,7 +50,7 @@
   "closed_at": "2026-10-28T18:14:50Z",
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-10-31T01:42:49.305110+00:00",
+  "created_at": "2026-10-31T16:26:17.381657+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -60,6 +67,7 @@
   },
   "done": 3,
   "done_in": "2 h 38",
+  "for_person": null,
   "for_person_id": null,
   "goal": "The hub answers at once.",
   "history": {
@@ -68,10 +76,10 @@
     "prs": 3,
     "words": "Merged 3 PRs · 28 Oct"
   },
-  "id": "program-cb35d35a8980",
+  "id": "program-98bf57bd996f",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-10-31T01:42:49.308185+00:00",
+    "at": "2026-10-31T16:26:17.385587+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -90,27 +98,31 @@
   },
   "may_call": false,
   "may_handoff": false,
-  "note_id": "program-program-cb35d35a8980",
-  "note_window": "pullout:note:program-program-cb35d35a8980",
+  "note_id": "program-program-98bf57bd996f",
+  "note_window": "pullout:note:program-program-98bf57bd996f",
   "origin_ref": null,
+  "persons": [],
   "place": {
     "origin": null,
     "person": null,
     "project": null
   },
   "prefer_idle": false,
+  "project": null,
   "project_id": null,
   "repository": {
     "base_branch": "main",
     "label": "app",
     "root": "/tmp/rig/app"
   },
+  "requirements": [],
   "reviewer": {
     "agent": null,
     "engine": null,
     "profile": null
   },
   "revision": 1,
+  "search_words": "the hub stops stalling the hub answers at once. the dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing the hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard #1584 #1585 #1598",
   "spend_limit_usd": null,
   "state": "done",
   "state_word": "Done",
@@ -119,6 +131,7 @@
     {
       "after": [],
       "agent": "Claude Code",
+      "amendments": [],
       "branch": null,
       "brief": "",
       "check": {
@@ -132,6 +145,9 @@
         "verdict": null
       },
       "contenders": [],
+      "editable": [
+        "title"
+      ],
       "effort": "medium",
       "elapsed": "",
       "elapsed_seconds": null,
@@ -140,6 +156,24 @@
       "findings": [],
       "for_person": null,
       "for_person_id": null,
+      "frozen": {
+        "after": "It is merged",
+        "agent": "It is merged",
+        "amend": "It is merged",
+        "brief": "It is merged",
+        "effort": "It is merged",
+        "for_person": "It is merged",
+        "gate_check": "It is merged",
+        "gate_merge": "It is merged",
+        "gate_review": "It is merged",
+        "may_call": "It is merged",
+        "owns": "It is merged",
+        "position": "It is merged",
+        "race": "It is merged",
+        "requirements": "It is merged",
+        "review_depth": "It is merged",
+        "runs_on_then": "It is merged"
+      },
       "gate": {
         "check": true,
         "merge": "level",
@@ -154,7 +188,7 @@
         "pr_number": 1584,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1584"
       },
-      "id": "step-148fde8e523a",
+      "id": "step-b2766c4d02ec",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -173,6 +207,7 @@
       "race": 0,
       "race_of": null,
       "report": null,
+      "requirements": [],
       "review": {
         "reviewer": null,
         "round": null,
@@ -200,12 +235,13 @@
         "merge"
       ],
       "title": "The dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing",
-      "updated_at": "2026-10-31T01:42:49.307611+00:00",
+      "updated_at": "2026-10-31T16:26:17.384425+00:00",
       "worktree": null
     },
     {
       "after": [],
       "agent": "Claude Code",
+      "amendments": [],
       "branch": null,
       "brief": "",
       "check": {
@@ -219,6 +255,9 @@
         "verdict": null
       },
       "contenders": [],
+      "editable": [
+        "title"
+      ],
       "effort": "medium",
       "elapsed": "",
       "elapsed_seconds": null,
@@ -227,6 +266,24 @@
       "findings": [],
       "for_person": null,
       "for_person_id": null,
+      "frozen": {
+        "after": "It is merged",
+        "agent": "It is merged",
+        "amend": "It is merged",
+        "brief": "It is merged",
+        "effort": "It is merged",
+        "for_person": "It is merged",
+        "gate_check": "It is merged",
+        "gate_merge": "It is merged",
+        "gate_review": "It is merged",
+        "may_call": "It is merged",
+        "owns": "It is merged",
+        "position": "It is merged",
+        "race": "It is merged",
+        "requirements": "It is merged",
+        "review_depth": "It is merged",
+        "runs_on_then": "It is merged"
+      },
       "gate": {
         "check": true,
         "merge": "level",
@@ -241,7 +298,7 @@
         "pr_number": 1585,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1585"
       },
-      "id": "step-4792f04f1b7f",
+      "id": "step-b3aa235b1826",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -260,6 +317,7 @@
       "race": 0,
       "race_of": null,
       "report": null,
+      "requirements": [],
       "review": {
         "reviewer": null,
         "round": null,
@@ -287,12 +345,13 @@
         "merge"
       ],
       "title": "The hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop",
-      "updated_at": "2026-10-31T01:42:49.307611+00:00",
+      "updated_at": "2026-10-31T16:26:17.384425+00:00",
       "worktree": null
     },
     {
       "after": [],
       "agent": "Claude Code",
+      "amendments": [],
       "branch": null,
       "brief": "",
       "check": {
@@ -306,6 +365,9 @@
         "verdict": null
       },
       "contenders": [],
+      "editable": [
+        "title"
+      ],
       "effort": "medium",
       "elapsed": "",
       "elapsed_seconds": null,
@@ -314,6 +376,24 @@
       "findings": [],
       "for_person": null,
       "for_person_id": null,
+      "frozen": {
+        "after": "It is merged",
+        "agent": "It is merged",
+        "amend": "It is merged",
+        "brief": "It is merged",
+        "effort": "It is merged",
+        "for_person": "It is merged",
+        "gate_check": "It is merged",
+        "gate_merge": "It is merged",
+        "gate_review": "It is merged",
+        "may_call": "It is merged",
+        "owns": "It is merged",
+        "position": "It is merged",
+        "race": "It is merged",
+        "requirements": "It is merged",
+        "review_depth": "It is merged",
+        "runs_on_then": "It is merged"
+      },
       "gate": {
         "check": true,
         "merge": "level",
@@ -328,7 +408,7 @@
         "pr_number": 1598,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1598"
       },
-      "id": "step-964a0490fa55",
+      "id": "step-17d7ee14b200",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -347,6 +427,7 @@
       "race": 0,
       "race_of": null,
       "report": null,
+      "requirements": [],
       "review": {
         "reviewer": null,
         "round": null,
@@ -374,14 +455,14 @@
         "merge"
       ],
       "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard",
-      "updated_at": "2026-10-31T01:42:49.307611+00:00",
+      "updated_at": "2026-10-31T16:26:17.384425+00:00",
       "worktree": null
     }
   ],
   "template": null,
   "title": "The hub stops stalling",
   "total": 3,
-  "updated_at": "2026-10-31T01:42:49.308264+00:00",
+  "updated_at": "2026-10-31T16:26:17.385659+00:00",
   "usage_warning_share": null,
   "your_turn": 0,
   "your_turn_items": []

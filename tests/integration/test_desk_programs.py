@@ -513,3 +513,126 @@ def test_history_mixes_with_live_steps_and_is_validated(tmp_path, monkeypatch) -
     assert one["state"] == "merged" and one["history"]["pr_number"] == 1585
     assert two["state"] not in ("planned", "ready"), two["state"]
     assert two["launch_id"]
+
+
+# ── PG-REQ (2026-10-31): requirements, browse and adjust over REST ───
+
+
+def _req_rig(tmp_path: Path, monkeypatch, control: str = "normal") -> tuple[Rig, TestClient, str]:
+    class People:
+        def display_names(self) -> dict[str, str]:
+            return {"p-alice": "Alice"}
+
+    rig = Rig(tmp_path, people=lambda: People())
+    with rig.db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
+    client = _client(rig, monkeypatch)
+    answer = client.post("/api/programs", json={
+        "title": "The hub stops stalling", "goal": "Stop the stalls.", "repository": str(rig.repo),
+        "check_command": f"sh {FAKE_CHECK}", "control": control, "project_id": "proj-holdspeak",
+        "for_person_id": "p-alice"})
+    assert answer.status_code == 201, answer.text
+    pid = answer.json()["id"]
+    answer = client.post(f"/api/programs/{pid}/plan", json={"steps": [
+        {"title": "Indexes"}, {"title": "Retention", "after": [1]}, {"title": "The fan-out", "after": [2]}]})
+    assert answer.status_code == 200, answer.text
+    return rig, client, pid
+
+
+def test_requirement_routes_add_edit_decide_and_read_evidence(tmp_path, monkeypatch) -> None:
+    rig, client, pid = _req_rig(tmp_path, monkeypatch)
+    one = rig.step(pid, 1)
+    made = client.post(f"/api/programs/{pid}/requirements", json={"text": "`echo 12 passed` is green", "step_id": one["id"]})
+    assert made.status_code == 201, made.text
+    rid = made.json()["requirement_id"]
+    row = next(r for r in made.json()["program"]["steps"][0]["requirements"] if r["id"] == rid)
+    assert (row["kind"], row["spec"], row["by"]) == ("check", {"command": "echo 12 passed"}, "owner")
+    refused = client.post(f"/api/programs/{pid}/requirements", json={"text": "The People window at 393 is clean",
+                                                                     "step_id": one["id"]})
+    assert refused.status_code == 409 and refused.json()["code"] == "requirement_unprovable"
+    word = client.post(f"/api/programs/{pid}/requirements", json={"text": "I tried it", "kind": "word"}).json()["requirement_id"]
+    edited = client.patch(f"/api/programs/{pid}/requirements/{rid}", json={"spec": {"command": "echo 12 passed",
+                                                                                     "expect": "12 passed"}})
+    assert edited.status_code == 200, edited.text
+    bad = client.post(f"/api/programs/{pid}/requirements/{rid}/decide", json={"choice": "met"})
+    assert bad.status_code == 409 and bad.json()["code"] == "not_his_word"
+    said = client.post(f"/api/programs/{pid}/requirements/{word}/decide", json={"choice": "met"})
+    assert said.status_code == 200 and next(r for r in said.json()["program"]["requirements"] if r["id"] == word)["state"] == "met"
+    none = client.get(f"/api/programs/{pid}/requirements/{rid}/evidence")
+    assert none.status_code == 404 and none.json()["code"] == "no_evidence_file"
+    client.post(f"/api/programs/{pid}/start")
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"a.py": "1\n"})
+    rig.tick()
+    log = client.get(f"/api/programs/{pid}/requirements/{rid}/evidence")
+    assert log.status_code == 200 and "program-check: exit 0" in log.text and "12 passed" in log.text
+    frames = [payload for frame, payload in rig.frames if frame == "program_changed" and payload.get("requirement_id")]
+    assert frames and frames[-1]["requirements_met"]["total"] >= 1
+
+
+def test_list_filters_find_by_words_project_and_person(tmp_path, monkeypatch) -> None:
+    rig, client, pid = _req_rig(tmp_path, monkeypatch)
+    other = client.post("/api/programs", json={"title": "Calls on the home box", "repository": str(rig.repo),
+                                              "check_command": f"sh {FAKE_CHECK}"}).json()["id"]
+    every = client.get("/api/programs").json()
+    assert len(every["programs"]) == 2 and "filter" not in every
+    row = next(r for r in every["programs"] if r["id"] == pid)
+    assert row["project"] == {"id": "proj-holdspeak", "name": "HoldSpeak"}
+    assert row["for_person"] == {"id": "p-alice", "name": "Alice"}
+    assert "stalling" in row["search_words"] and "retention" in row["search_words"] and "alice" in row["search_words"]
+    found = client.get("/api/programs", params={"q": "stalling fan-out"}).json()
+    assert [r["id"] for r in found["programs"]] == [pid] and found["filter"]["of"] == 2
+    assert [r["id"] for r in client.get("/api/programs", params={"project_id": "proj-holdspeak"}).json()["programs"]] == [pid]
+    assert [r["id"] for r in client.get("/api/programs", params={"person_id": "p-alice"}).json()["programs"]] == [pid]
+    assert [r["id"] for r in client.get("/api/programs", params={"q": "home box"}).json()["programs"]] == [other]
+    assert client.get("/api/programs", params={"q": "nothing like it"}).json()["programs"] == []
+
+
+def test_step_routes_change_move_insert_and_amend(tmp_path, monkeypatch) -> None:
+    rig, client, pid = _req_rig(tmp_path, monkeypatch)
+    three = rig.step(pid, 3)
+    inserted = client.post(f"/api/programs/{pid}/plan", json={"steps": [{"title": "The loop watch"}], "before": three["id"]})
+    assert inserted.status_code == 200, inserted.text
+    assert [(s["ordinal"], s["title"], s["after"]) for s in inserted.json()["steps"]] == [
+        (1, "Indexes", []), (2, "Retention", [1]), (3, "The loop watch", [2]), (4, "The fan-out", [2, 3])]
+    watch = rig.step(pid, 3)
+    changed = client.patch(f"/api/programs/{pid}/steps/{watch['id']}", json={"title": "The loop watch, on", "effort": "low"})
+    assert changed.status_code == 200, changed.text
+    assert next(s for s in changed.json()["steps"] if s["id"] == watch["id"])["effort"] == "low"
+    client.post(f"/api/programs/{pid}/start")
+    one = rig.step(pid, 1)
+    frozen = client.patch(f"/api/programs/{pid}/steps/{one['id']}", json={"brief": "Other words."})
+    assert frozen.status_code == 409
+    assert {key: frozen.json()[key] for key in ("code", "field", "reason")} == {
+        "code": "step_frozen", "field": "brief", "reason": "The agent has read it"}
+    amended = client.post(f"/api/programs/{pid}/steps/{one['id']}/amend", json={"line": "Keep the 14-day rule"})
+    assert amended.status_code == 200, amended.text
+    assert next(s for s in amended.json()["steps"] if s["id"] == one["id"])["amendments"][0]["line"] == "Keep the 14-day rule"
+
+
+def test_a_proposal_is_decided_over_its_route(tmp_path, monkeypatch) -> None:
+    rig, client, pid = _req_rig(tmp_path, monkeypatch)
+    proposal = rig.service.store.add_checkpoint(
+        step_id="", program_id=pid, at=rig.service._clock(), by="agent", line="Codex proposes a requirement",
+        kind="requirement_proposed", undo={"title": "Codex proposes a requirement on the program: The desk opens",
+                                           "text": "The desk opens", "kind": "word", "step_id": None})
+    item = next(i for i in client.get(f"/api/programs/{pid}").json()["your_turn_items"] if i["kind"] == "requirement_proposed")
+    assert item["proposal_id"] == proposal
+    answer = client.post(f"/api/programs/{pid}/proposals/{proposal}/decide", json={"choice": "add"})
+    assert answer.status_code == 200, answer.text
+    assert [r["text"] for r in answer.json()["program"]["requirements"]] == ["The desk opens"]
+    again = client.post(f"/api/programs/{pid}/proposals/{proposal}/decide", json={"choice": "add"})
+    assert again.status_code == 409 and again.json()["code"] == "proposal_decided"
+
+
+def test_the_program_family_lists_the_requirement_tools() -> None:
+    from holdspeak.mcp.families import program as family
+    from holdspeak.mcp.tool_authority import AUTHORITY, TOOL_AUTHORITY, WORK
+
+    assert {"program.require", "program.step_update", "program.amend"} <= family.NAMES
+    assert {TOOL_AUTHORITY[name] for name in ("program.require", "program.step_update", "program.amend")} == {WORK}
+    assert TOOL_AUTHORITY["program.decide"] == AUTHORITY
+    decide = next(tool for tool in family.TOOLS if tool["name"] == "program.decide")
+    assert {"requirement", "requirement_proposed", "step_change", "step_amend"} <= set(
+        decide["inputSchema"]["properties"]["kind"]["enum"])
+    listing = next(tool for tool in family.TOOLS if tool["name"] == "program.list")
+    assert {"q", "project_id", "person_id"} <= set(listing["inputSchema"]["properties"])

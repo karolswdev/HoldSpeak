@@ -1008,6 +1008,13 @@ class ProgramService:
 
         state = str(row.get("state") or "not_yet")
         kind = str(row.get("kind") or "review")
+        copies = ([other for other in requirements if other.get("parent_id") == row["id"]]
+                  if scope_of(row) == "every_step" and not row.get("step_id") else [])
+        if copies and state != "waived":
+            # An every-step parent reads its copies: Unmet when one is, Met
+            # when each is Met or Waived, else Not yet.
+            state = ("unmet" if any(other.get("state") == "unmet" for other in copies)
+                     else "met" if all(other.get("state") in ("met", "waived") for other in copies) else "not_yet")
         step_state = str((step or {}).get("state") or "")
         running = state == "not_yet" and (
             (kind in ("check", "shot") and step_state == "checking") or (kind == "review" and step_state == "review"))
@@ -1036,8 +1043,7 @@ class ProgramService:
             "waived_reason": row.get("waived_reason"), "rounds": int(row.get("rounds") or 0), "by": row.get("by"),
             "choices": choices, "judged_at": row.get("judged_at"), "created_at": row.get("created_at"),
         }
-        if scope_of(row) == "every_step":
-            copies = [other for other in requirements if other.get("parent_id") == row["id"]]
+        if copies or (scope_of(row) == "every_step" and not row.get("step_id")):
             out["steps"] = sorted(({"step_id": other["step_id"],
                                     "ordinal": int((steps_by_id.get(other["step_id"]) or {}).get("ordinal") or 0),
                                     "state": other.get("state")} for other in copies), key=lambda item: item["ordinal"])
