@@ -998,6 +998,8 @@ requirement, or apply a row that lowers the bar without its own yes.
 
 ## 5. Decisions for the owner (defaults chosen; say if another is wanted)
 
+**Ruled 2026-10-31 (owner, remote): "All defaults approved." Every default below stands as written; a lane builds it without a further gate.**
+
 1. **A spoken yes on his own line decides a held item** (JRN7). Default:
    **no**; the call prepares the answer and his press decides it (JRN5).
    Added to PG-LANG as §15.10.
