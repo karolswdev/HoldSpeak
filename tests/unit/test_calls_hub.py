@@ -61,15 +61,20 @@ def test_the_five_calls_keys_round_trip_and_the_passphrase_is_write_only(home) -
 
 
 def test_a_call_offers_the_ask_tools_plus_the_two_sends_and_no_config() -> None:
-    from holdspeak.mcp.palettes import ASK, CALL, CALL_HELD, CALL_HELD_EGRESS, resolve_palette
-    from holdspeak.mcp.tool_authority import EGRESS, TOOL_AUTHORITY, WORK
+    from holdspeak.mcp.palettes import ASK, CALL, CALL_HELD, CALL_HELD_AUTHORITY, CALL_HELD_EGRESS, resolve_palette
+    from holdspeak.mcp.tool_authority import AUTHORITY, CONFIG, EGRESS, TOOL_AUTHORITY, WORK
 
     call, ask = resolve_palette(CALL), resolve_palette(ASK)
     assert CALL_HELD_EGRESS == {"channel.send", "nudge.send"}
     # PG15: a Program's read and its start join the call; the start holds.
     # LANG5: program.shape joins too, held for his spoken yes.
-    assert call - ask == CALL_HELD_EGRESS | {"program.start", "program.get", "program.shape"}
-    assert CALL_HELD == CALL_HELD_EGRESS | {"program.start", "program.shape"}
+    # DIR8 (owner ruling 2026-10-31): program.decide, held, the one AUTHORITY tool on a call.
+    assert call - ask == CALL_HELD_EGRESS | {"program.start", "program.get", "program.shape", "program.decide"}
+    assert CALL_HELD == CALL_HELD_EGRESS | {"program.start", "program.shape", "program.decide"}
+    assert CALL_HELD_AUTHORITY == {"program.decide"} and TOOL_AUTHORITY["program.decide"] == AUTHORITY
+    # The fence: no other authority or config tool is on a call, and the one is held.
+    assert {name for name in call if TOOL_AUTHORITY[name] in (AUTHORITY, CONFIG)} == CALL_HELD_AUTHORITY
+    assert {name for name in call if TOOL_AUTHORITY[name] != WORK} <= CALL_HELD
     assert {TOOL_AUTHORITY[n] for n in ("program.start", "program.get", "program.shape")} == {WORK}
     assert all(TOOL_AUTHORITY[name] == WORK for name in ask)
     assert all(TOOL_AUTHORITY[name] == EGRESS for name in CALL_HELD_EGRESS)

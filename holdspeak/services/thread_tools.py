@@ -387,6 +387,10 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # PG-DIRECTION DIR1: a briefing page for a held item (owner only).
     "phone.brief": ("effect_proposal", False),
     "phone.later": ("effect_proposal", False),
+    # PG-DIRECTION DIR8: AUTHORITY, so in no palette and refused by
+    # ``tool_class``; a call's turn holds it for his spoken yes
+    # (``palettes.CALL_HELD_AUTHORITY``), the one way it is admitted.
+    "program.decide": ("effect_proposal", False),
 }
 # Betterment M3: the ``automation.*`` aliases, each in its Workbench tool's class.
 _ALL_TOOL_CLASSES.update({

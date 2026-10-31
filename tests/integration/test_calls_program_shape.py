@@ -103,7 +103,8 @@ def _call(hub, monkeypatch, tmp_path, *, key: str, control: str, answer: str) ->
     pid = _seed(hub, tmp_path, control)
     assert asyncio.run(service.serve_once(wait=5)) == "call"
     offered = {tool["function"]["name"] for tool in seen[0]["tools"]}
-    assert "program.shape" in offered and not offered & {"program.text_apply", "program.decide"}
+    # DIR8: program.decide is on a call too (held); the text apply never is.
+    assert "program.shape" in offered and "program.text_apply" not in offered
     return pid, _said(state_file), service
 
 

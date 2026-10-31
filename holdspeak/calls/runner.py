@@ -22,6 +22,7 @@ from typing import Any, Awaitable, Callable, Optional, Protocol
 
 from ..logging_config import get_logger
 from ..timestamps import local_now
+from . import decide
 from .aiphone import AiPhone, Reply
 
 log = get_logger("calls.runner")
@@ -51,6 +52,9 @@ YES_OR_NO = "Say yes or no."
 #: LANG5: a held program.shape may also wait on the desk.
 YES_OR_NO_LATER = "Say yes, no, or later."
 LATER_TOOLS = frozenset({"program.shape"})
+#: DIR8: a held program.decide is asked as its read back, whole ("… Say yes
+#: to decide, or no."); "later", "wait" and "not now" are Later, never No.
+DECIDE_TOOLS = frozenset({"program.decide"})
 #: LANG5: the held tools shaped before the question (an engine call).
 READ_FIRST = frozenset({"program.shape"})
 READING = "One moment. I am reading the program."
@@ -109,6 +113,9 @@ class CallRecord:
     #: never in the summary).
     context: str = ""
     reason: str = ""
+    #: PG-DIRECTION DIR8: the Program step the desk called him about; its
+    #: held items are read first, after the passphrase.
+    about: str = ""
 
     def add(self, who: str, text: str, *, interrupted: bool = False) -> None:
         text = str(text or "").strip()
@@ -274,6 +281,7 @@ class CallRunner:
         save_note: Callable[[CallRecord], Awaitable[None]],
         engine_ready: bool = True,
         later: Optional[Callable[[CallRecord, str], None]] = None,
+        held: Optional[Any] = None,
     ) -> None:
         self._phone = phone
         self.record = record
@@ -290,6 +298,10 @@ class CallRunner:
         self._late: list[tuple["asyncio.Future[dict[str, Any]]", "asyncio.Queue[list[dict[str, Any]]]", set[str]]] = []
         #: LANG5: record kinds a held call already said (a shaped Program).
         self._said_kinds: frozenset[str] = frozenset()
+        #: DIR8: what waits on him (``calls.decide.DeskHeld``), and each held
+        #: item this call read, with what came of it (the ledger at the end).
+        self._held = held
+        self._asked: list[dict[str, Any]] = []
 
     # ── the phone, with the transcript and the frame ─────────────────
 
@@ -347,6 +359,7 @@ class CallRunner:
             await self._save_note(self.record)
         except Exception as exc:  # the call is over; the note is not a gate
             log.warning(f"call note not saved: {exc}")
+        await self._write_ledger()
         self._emit("result", self.record)
 
     # ── the call ──────────────────────────────────────────────────────
@@ -365,6 +378,8 @@ class CallRunner:
                 record.thread_id = self._turns.new_thread(f"Call · {local_now():%d %b %H:%M}")
                 if record.context and hasattr(self._turns, "set_context"):
                     self._turns.set_context(record.context)
+            if self._held is not None and record.about:
+                await self.read_held(about=record.about)
             while record.state != "ended":
                 heard = await self._listen_or_late()
                 if heard is None:
@@ -372,6 +387,9 @@ class CallRunner:
                 if is_goodbye(heard):
                     await self.hang_up(GOODBYE, ended_by="caller")
                     break
+                if self._held is not None and decide.is_what_waits(heard):
+                    await self.read_held()
+                    continue
                 if not self._engine_ready:
                     if not await self.say(NO_ENGINE):
                         break
@@ -579,6 +597,7 @@ class CallRunner:
         self.record.hold = {"tool": tool, "words": read or words, "label": words, "call_id": tool_call_id}
         self._emit("hold", self.record)
         question = (f"{read} {YES_OR_NO_LATER}" if read and tool in LATER_TOOLS
+                    else read if read and tool in DECIDE_TOOLS
                     else f"{read} {YES_OR_NO}" if read
                     else f"I want to {words[0].lower() + words[1:] if words else 'change your desk'}. {YES_OR_NO}")
         while True:
@@ -593,7 +612,12 @@ class CallRunner:
                 return False
             if self.record.hold is None:
                 return True
-            decision = "later" if tool in LATER_TOOLS and is_later(heard) else yes_or_no(heard)
+            if tool in DECIDE_TOOLS:
+                said = decide.yes_no(heard)
+                decision = ({"yes": "approve", "no": "deny"}.get(said, "")
+                            or ("later" if decide.is_later(heard) else ""))
+            else:
+                decision = "later" if tool in LATER_TOOLS and is_later(heard) else yes_or_no(heard)
             if decision:
                 self.decide(decision, by="voice")
                 return True
@@ -611,11 +635,159 @@ class CallRunner:
                 "kind": "send" if hold["tool"] == "channel.send" else "nudge",
                 "label": hold.get("words", ""), "ref": "", "effect": "sent",
             })
+        if decision == "approve" and hold.get("tool") == "program.decide":
+            self.record.results.append({"kind": "program_decision", "label": hold.get("label", ""), "ref": "",
+                                        "effect": "decided"})
         if decision == "approve" and hold.get("tool") == "program.shape":
             self.record.results.append({"kind": "program", "label": hold.get("label", ""), "ref": "", "effect": "changed"})
         self.record.hold = None
         self._emit("decided", self.record)
         return True
+
+    # ── the call that decides (PG-DIRECTION DIR8) ─────────────────────
+
+    async def read_held(self, *, about: str = "") -> None:
+        """Read what waits on him, one item at a time (§4): the package, his
+        choice, the read back, his yes; Later; the next. A call that ends
+        decides nothing more; what it did not decide stays held."""
+        assert self._held is not None
+        try:
+            bodies, desk_only = await asyncio.to_thread(self._held.items, about)
+        except Exception as exc:
+            log.warning(f"what waits on him was not read: {exc}")
+            await self.say(DID_NOT_ANSWER)
+            return
+        if not bodies:
+            await self.say(decide.NOTHING_WAITS if not desk_only else
+                           decide.summary_words([], desk_only).removeprefix("That is all. "))
+            return
+        if len(bodies) > 1 and not await self.say(f"{decide.count_words(len(bodies))} things wait on you."):
+            return
+        outcomes: list[dict[str, Any]] = []
+        for body in bodies:
+            answered = await asyncio.to_thread(self._held.answered, body)
+            if answered:
+                if not await self.say(decide.answered_words(body, speakable(answered, 200))):
+                    return
+                continue
+            row = {"body": body, "outcome": "", "asked_clock": decide.clock(self._held.now())}
+            self._asked.append(row)
+            outcomes.append(row)
+            step = await self._one_held(row)
+            if step is None:
+                return  # the call ended: nothing more is decided
+            if step == "stop":
+                break
+        await self.say(decide.summary_words(outcomes, desk_only))
+
+    async def _one_held(self, row: dict[str, Any]) -> Optional[str]:
+        """One held item: ``next``, ``stop``, or None when the call ended."""
+        body = row["body"]
+        if not await self.say(decide.package_words(body)):
+            return None
+        unclear, noes = 0, 0
+        while True:
+            heard = await self.listen()
+            if heard is None:
+                return None
+            if decide.is_stop(heard):
+                return "stop"
+            choice = decide.match_choice(body, heard)
+            if choice is None and decide.is_next(heard):
+                heard = "later"
+            if choice is None and decide.is_later(heard):
+                return await self._later_held(row, heard)
+            if choice is None:
+                if decide.is_waive(heard):
+                    words = f"{decide.ON_THE_DESK} {decide.choices_words(body)}"
+                else:
+                    unclear += 1
+                    if unclear > decide.UNCLEAR_TRIES:
+                        return "next"  # it stays held; the summary says it still waits
+                    words = decide.choices_words(body)
+                if not await self.say(words):
+                    return None
+                continue
+            answer = await self._read_back(body, choice)
+            if answer is None:
+                return None
+            if answer == "later":
+                return await self._later_held(row, "later")
+            if answer == "yes":
+                try:
+                    await asyncio.to_thread(self._held.decide, body, choice)
+                except Exception as exc:
+                    detail = str(getattr(exc, "detail", "") or exc) or "It was not decided."
+                    row["outcome"] = "answered" if getattr(exc, "code", "") == "answered_already" else ""
+                    return "next" if await self.say(speakable(detail, 200)) else None
+                label = next((c["label"] for c in body["choices"] if c["id"] == choice), choice)
+                row.update(outcome="decided", choice=choice, label=label)
+                self.record.results.append({"kind": "program_decision", "label": f"{label}: {decide.where_words(body)}",
+                                            "ref": str(body.get("ref") or ""), "effect": "decided"})
+                self._emit("result", self.record)
+                return "next" if await self.say(decide.DECIDED) else None
+            noes += 1
+            if noes > 1:
+                return "next" if await self.say(decide.NOTHING_CHANGED) else None
+            if not await self.say(f"{decide.NOTHING_CHANGED} {decide.choices_words(body)}"):
+                return None
+
+    async def _read_back(self, body: dict[str, Any], choice: str) -> Optional[str]:
+        """The read back, once; ``yes``, ``no``, ``later``, or None (ended)."""
+        question = decide.read_back_words(body, choice)
+        self.record.hold = {"tool": "program.decide", "words": question, "label": question, "call_id": ""}
+        self._emit("hold", self.record)
+        try:
+            while True:
+                if not await self.say(question):
+                    return None
+                heard = await self.listen()
+                if heard is None:
+                    return None
+                answer = decide.yes_no(heard)
+                if not answer and decide.is_later(heard):
+                    return "later"
+                if answer:
+                    return answer
+                question = "Say yes to decide, or no."
+        finally:
+            if self.record.state != "ended":
+                self.record.hold = None
+
+    async def _later_held(self, row: dict[str, Any], heard: str) -> Optional[str]:
+        """Later with his next touch (or his default); no read back: it
+        changes nothing."""
+        assert self._held is not None
+        while True:
+            try:
+                until = await asyncio.to_thread(self._held.later, row["body"], heard)
+                break
+            except ValueError:
+                if not await self.say(decide.SAY_A_TIME):
+                    return None
+                heard = await self.listen()
+                if heard is None:
+                    return None
+                heard = heard if decide.is_later(heard) else f"later {heard}"
+            except Exception as exc:
+                log.warning(f"later was not recorded: {exc}")
+                return "next" if await self.say(DID_NOT_ANSWER) else None
+        row.update(outcome="later", until_clock=decide.clock(until))
+        return "next" if await self.say(f"Later, at {decide.clock(until)}. I will ask again then.") else None
+
+    async def _write_ledger(self) -> None:
+        """When the call ends: one ledger line per item it read (§4.6)."""
+        if self._held is None or not self._asked:
+            return
+        title = ""
+        if self.record.note_ref:
+            started = datetime.fromtimestamp(self.record.answered_at or self.record.started_at)
+            title = f"Call · {started:%d %b %H:%M}"
+        try:
+            await asyncio.to_thread(self._held.ledger, list(self._asked), note_ref=self.record.note_ref,
+                                    note_title=title)
+        except Exception as exc:
+            log.warning(f"the call's ledger was not written: {exc}")
 
 
 def _project_refs(used: dict[str, Any]) -> list[str]:
