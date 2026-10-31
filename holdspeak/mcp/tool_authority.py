@@ -339,6 +339,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "program.step_remove": WORK,  # PG-LANG: his at once; an orchestrator's removal goes up the ladder
     "program.text": WORK,  # PG-LANG LANG1: the Program as its text (a read)
     "program.text_apply": WORK,  # PG-LANG LANG1: a batch of the verbs above, each with its own rule
+    "program.shape": WORK,  # PG-LANG LANG3: a sentence becomes change rows; YOLO's apply is the level's
     "program.decide": AUTHORITY,  # a merge and a finding's fate are the owner's press
     "program.overturn": AUTHORITY,  # undoing the engine's decision is the owner's press
     "program.handoff": AUTHORITY,  # PG19: which agent reads the repository next is the owner's press

@@ -46,9 +46,9 @@ import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTo
 import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
 import { ProgramChangeWell, ProgramTextPane, landedSteps, useProgramText, type TextProposal } from "./ProgramText";
+import { ShapeBar, ShapedWell, engineFact } from "./ShapeBar";
 import type {
-  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RunsOnEntry, TextApplyAnswer, YourTurnItem,
-} from "./types";
+  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
 
@@ -482,6 +482,7 @@ export function ProgramBody({ programId }: { programId: string }) {
   const [proposal, setProposal] = useState<TextProposal | null>(null);
   const [settling, setSettling] = useState(false);
   const [landed, setLanded] = useState<Record<string, "born" | "changed">>({});
+  const [shaped, setShaped] = useState<ShapeAnswer | null>(null);
   useEffect(() => {
     if (!Object.keys(landed).length) return;
     const timer = window.setTimeout(() => setLanded({}), 2600);
@@ -527,6 +528,23 @@ export function ProgramBody({ programId }: { programId: string }) {
     setSettling(true);
     window.setTimeout(() => { setProposal(null); setSettling(false); }, 200);
     setView("board");
+  };
+  // LANG4: a shaped sentence. At YOLO the hub landed the allowed rows (the
+  // ShapedWell says so, with Overturn); the rows that wait for his press
+  // open in the change well against the text as it is now.
+  const onShaped = (answer: ShapeAnswer) => {
+    const before = program;
+    if (answer.applied && answer.program) {
+      apply(answer.program);
+      text.reset(answer.text);
+      if (before) setLanded(landedSteps(before, answer.program, answer.applied_rows));
+      setShaped(answer);
+    } else {
+      setShaped(null);
+    }
+    setProposal(answer.changes.length ? {
+      source: "sentence", text: answer.proposed_text, base: answer.base, answer, say: answer.say, fact: engineFact(answer),
+    } : null);
   };
   const notThis = () => {
     if (proposal?.source === "text") text.revert();
@@ -645,9 +663,15 @@ export function ProgramBody({ programId }: { programId: string }) {
         ) : null}
         <ViewMore view={view} onView={setView} />
       </Toolbar>
+      {program.state !== "done" ? <ShapeBar program={program} onAnswer={onShaped} onOpenText={() => setView("text")} /> : null}
       <div className="pg-body">
         {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
         <YourTurnWell program={program} onDecided={apply} />
+        {shaped ? (
+          <ShapedWell key={String(shaped.decision?.id ?? shaped.revision)} program={program} answer={shaped}
+            onOverturned={(next) => { apply(next); setShaped(null); setProposal(null); if (next) void text.read(); }}
+            onKeep={() => setShaped(null)} />
+        ) : null}
         {proposal ? (
           <ProgramChangeWell key={wellKey}
             programId={program.id} proposal={proposal} settling={settling}

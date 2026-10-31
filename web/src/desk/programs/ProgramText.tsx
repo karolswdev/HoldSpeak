@@ -10,7 +10,7 @@
  * well above the view. Apply sends the allowed text (each refused hunk put
  * back) with `allow_lower` = only the rows he pressed one by one; a conflict
  * (the base moved) reads the text again and says so. The well takes rows
- * from any source (a typed text now; a shaped sentence in LANG3/4). */
+ * from any source (a typed text; a shaped sentence, LANG4's ShapeBar). */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ChangeWell, DiffRow, TextPane, countWords, lineMarks, type TextPaneLine } from "../surface";
@@ -82,8 +82,11 @@ function bodyLines(text: string): string[] {
 
 /** One proposal in the well: the rows and how Apply sends them. */
 export type TextProposal = {
-  /** Where the rows came from (the typed text; LANG3/4 add a sentence). */
-  source: "text";
+  /** Where the rows came from: the typed text, or a shaped sentence (LANG4). */
+  source: "text" | "sentence";
+  /** A shaped sentence: the engine's line of what changes, and its name and time. */
+  say?: string;
+  fact?: string;
   /** The text that was previewed and the base it was read against. */
   text: string;
   base: string;
@@ -193,7 +196,9 @@ export function ProgramChangeWell({ programId, proposal, settling, onApplied, on
   const blocked = rows.filter((row) => row.verdict === "refused" || row.verdict === "conflict");
   const applicable = rows.length - blocked.length;
   const waiting = rows.filter((row) => row.verdict === "lowers" && !pressed[row.id]);
-  const { head, fact } = headWords(rows);
+  const words = headWords(rows);
+  const head = proposal.source === "sentence" && proposal.say ? proposal.say : words.head;
+  const fact = proposal.source === "sentence" && proposal.fact ? `${proposal.fact} · ${words.fact}` : words.fact;
   const apply = async () => {
     setBusy(true);
     setFailed(null);

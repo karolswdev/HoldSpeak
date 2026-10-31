@@ -11,7 +11,7 @@ import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { frameChanges } from "../compositor/windowFrames";
 import type {
   Control, DecideBody, PersonProgramRow, PlanStep, Program, ProgramChangedFrame, ProgramList, ProgramRoomRow, ProgramText,
-  TextApplyAnswer,
+  ShapeAnswer, ShapeEngine, TextApplyAnswer,
 } from "./types";
 
 const EMPTY_LIST: ProgramList = { programs: [], counts: {}, worst: null, worst_word: "" };
@@ -324,4 +324,15 @@ export interface TextApplyBody {
 
 export function applyProgramText(id: string, body: TextApplyBody): Promise<TextApplyAnswer> {
   return apiFetch<TextApplyAnswer>(`${base(id)}/text`, { method: "POST", json: body });
+}
+
+/** PG-LANG LANG3: the engine that shapes this Program (the bar names it). */
+export function readShapeEngine(id: string): Promise<ShapeEngine> {
+  return apiFetch<ShapeEngine>(`${base(id)}/shape`);
+}
+
+/** PG-LANG LANG3: one sentence → the change rows; `apply` lands the allowed
+ *  rows at once at YOLO only (the hub decides by the level). */
+export function shapeProgram(id: string, body: { sentence: string; apply: boolean }): Promise<ShapeAnswer> {
+  return apiFetch<ShapeAnswer>(`${base(id)}/shape`, { method: "POST", json: body });
 }

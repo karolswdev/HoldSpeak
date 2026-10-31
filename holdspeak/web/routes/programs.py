@@ -41,6 +41,9 @@ GET    /api/programs/{id}/requirements/{rid}/evidence  the log text or the shot 
 GET    /api/programs/{id}/text                     PG-LANG LANG1: the Program text {text, revision, version}
 POST   /api/programs/{id}/text                     {text, dry_run (default true; preview too), base?, allow_lower?: [row ids]}
                                                    -> {changes, patch, allowed_text, applied, text, revision}
+GET    /api/programs/{id}/shape                    LANG3: the engine that shapes {engine, capability} (null: none)
+POST   /api/programs/{id}/shape                    LANG3 {sentence, apply?}: one engine call; the text_apply answer
+                                                   + {say, question, engine, latency_ms, proposed_text, base, decision}
 
 Every handler runs the service off the event loop (``run_in_threadpool``).
 """
@@ -278,6 +281,17 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         return await _call(lambda: _service().text_apply(
             principal, program_id, body.get("text"), dry_run=dry is not False, base=body.get("base"),
             allow_lower=[str(item) for item in allow]))
+
+    @router.get("/api/programs/{program_id}/shape")
+    async def api_programs_shape_engine(program_id: str, request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().shape_engine(principal, program_id))
+
+    @router.post("/api/programs/{program_id}/shape")
+    async def api_programs_shape(program_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().shape(principal, program_id, body.get("sentence"),
+                                                    apply=body.get("apply") is True))
 
     @router.post("/api/programs/{program_id}/close")
     async def api_programs_close(program_id: str, request: Request) -> Any:
