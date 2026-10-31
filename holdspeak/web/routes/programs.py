@@ -1,6 +1,7 @@
 """Programs transport (2026-10-28); the work is ``services/program_service.py``.
 
-GET    /api/programs                               the Programs, waiting first
+GET    /api/programs?q=&project_id=&person_id=     the Programs, waiting first (PG-REQ: Find a program,
+                                                   Project, Person; the group is the face's)
 POST   /api/programs                               create {title, goal, repository | project_id,
                                                    base_branch, control, check_command, template,
                                                    default_profile, default_engine, reviewer_profile,
@@ -10,7 +11,8 @@ GET    /api/programs/templates                     the templates (§10)
 GET    /api/programs/{id}                          the Program, its steps, checkpoints, your turn
 PATCH  /api/programs/{id}                          {title, goal, control, prefer_idle, project_id, spend_limit_usd,
                                                    default_profile, default_engine, reviewer_profile, reviewer_engine}
-POST   /api/programs/{id}/plan                     {steps: [...], size: "auto"|null, replace: bool}
+POST   /api/programs/{id}/plan                     {steps: [...], size: "auto"|null, replace: bool,
+                                                   before: <step_id> (insert before), waits: bool}
 POST   /api/programs/{id}/from-desk                one step per open action of its Project
 POST   /api/programs/{id}/start | /park | /resume
 POST   /api/programs/{id}/steps/{sid}/checkpoint   {line}
@@ -23,6 +25,15 @@ POST   /api/programs/{id}/checkpoints/{cid}/start-from  PG20, Start from here: a
                                                    own agent asks, and the ladder decides)
 POST   /api/programs/{id}/decisions/{did}/overturn undo one engine decision (owner only)
 POST   /api/programs/{id}/close                    he closes a finished Program (Secure)
+PATCH  /api/programs/{id}/steps/{sid}              PG-REQ: change a step (the §8 fields its state leaves
+                                                   open); before: <step_id> | "end" moves it; 409
+                                                   step_frozen names the field and the reason
+POST   /api/programs/{id}/steps/{sid}/amend        {line}: a line added to a started step's brief
+POST   /api/programs/{id}/requirements             {text, kind?, step_id?, each_step?, required?, spec?}
+PATCH  /api/programs/{id}/requirements/{rid}       {text?, kind?, required?, spec?}
+POST   /api/programs/{id}/requirements/{rid}/decide {choice: met|unmet|waive|send_back, line?} (owner)
+POST   /api/programs/{id}/proposals/{cid}/decide   {choice: add|apply|send|skip} (owner)
+GET    /api/programs/{id}/requirements/{rid}/evidence  the log text or the shot image
 
 Every handler runs the service off the event loop (``run_in_threadpool``).
 """
@@ -31,7 +42,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from starlette.concurrency import run_in_threadpool
 
 from ...logging_config import get_logger
@@ -94,8 +105,9 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/api/programs")
     async def api_programs_list(request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().list(principal))
+        principal, query = _principal(request), request.query_params
+        return await _call(lambda: _service().list(principal, q=query.get("q"), project_id=query.get("project_id"),
+                                                   person_id=query.get("person_id")))
 
     @router.get("/api/programs/templates")
     async def api_programs_templates() -> Any:
@@ -127,7 +139,8 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         principal, body = _principal(request), await _body(request)
         return await _call(lambda: _service().plan(
             principal, program_id, steps=body.get("steps") if isinstance(body.get("steps"), list) else [],
-            size=body.get("size"), replace=bool(body.get("replace")),
+            size=body.get("size"), replace=bool(body.get("replace")), before=body.get("before") or None,
+            waits=body.get("waits") is not False,
         ))
 
     @router.post("/api/programs/{program_id}/from-desk")
@@ -184,6 +197,58 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
     async def api_programs_overturn(program_id: str, decision_id: str, request: Request) -> Any:
         principal = _principal(request)
         return await _call(lambda: _service().overturn(principal, program_id, decision_id))
+
+    @router.patch("/api/programs/{program_id}/steps/{step_id}")
+    async def api_programs_step_change(program_id: str, step_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().change_step(principal, program_id, step_id, **body))
+
+    @router.post("/api/programs/{program_id}/steps/{step_id}/amend")
+    async def api_programs_step_amend(program_id: str, step_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().amend(principal, program_id, step_id, body.get("line")))
+
+    @router.post("/api/programs/{program_id}/requirements")
+    async def api_programs_require(program_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        args = {key: body[key] for key in ("text", "kind", "step_id", "each_step", "required", "spec") if key in body}
+        return await _call(lambda: _service().require(principal, program_id, **args), status=201)
+
+    @router.patch("/api/programs/{program_id}/requirements/{requirement_id}")
+    async def api_programs_requirement_edit(program_id: str, requirement_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        args = {key: body[key] for key in ("text", "kind", "required", "spec") if key in body}
+        return await _call(lambda: _service().edit_requirement(principal, program_id, requirement_id, **args))
+
+    @router.post("/api/programs/{program_id}/requirements/{requirement_id}/decide")
+    async def api_programs_requirement_decide(program_id: str, requirement_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().decide_requirement(
+            principal, program_id, requirement_id, str(body.get("choice") or ""), line=body.get("line")))
+
+    @router.post("/api/programs/{program_id}/proposals/{proposal_id}/decide")
+    async def api_programs_proposal_decide(program_id: str, proposal_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().decide_proposal(principal, program_id, proposal_id,
+                                                              str(body.get("choice") or "")))
+
+    @router.get("/api/programs/{program_id}/requirements/{requirement_id}/evidence")
+    async def api_programs_requirement_evidence(program_id: str, requirement_id: str, request: Request) -> Any:
+        principal = _principal(request)
+
+        def read() -> Any:
+            try:
+                found = _service().requirement_evidence(principal, program_id, requirement_id)
+            except ServiceError as exc:
+                return _refused(exc)
+            if found["media"].startswith("image/"):
+                return FileResponse(found["path"], media_type=found["media"])
+            from pathlib import Path
+
+            text = Path(found["path"]).read_text(encoding="utf-8", errors="replace")
+            return PlainTextResponse(text[-200_000:])
+
+        return await run_in_threadpool(read)
 
     @router.post("/api/programs/{program_id}/close")
     async def api_programs_close(program_id: str, request: Request) -> Any:

@@ -712,7 +712,7 @@ import { PRIMITIVES, type PrimitiveKind } from "../../lib/primitives";
 /** Reverse the display-name mapping from qualifiedRef back to PrimitiveKind. */
 /** The pullout families' keys (pullouts/families.ts PULLOUT_FAMILIES; that
  *  module draws the windows, so it is not imported here). */
-const PULLOUT_FAMILY_REF = /^program:[^:]+$/;
+const PULLOUT_FAMILY_REF = /^(program:[^:]+|program-shot:[^:]+:[^:]+)$/;
 
 const REF_PREFIX_TO_KIND: Record<string, PrimitiveKind> = {
   knowledge: "kb",

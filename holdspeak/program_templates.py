@@ -7,6 +7,14 @@ level takes the desk's Control mode) onto the new Program;
 ``program.plan`` with the same template applies its step shape to each brief
 he pastes (one step per brief; Race gives one brief two contenders). Every
 value can be changed afterwards on the Program or on the row.
+
+PG-REQ (2026-10-31, §10): each template ships its requirements
+(``{text, kind, each_step, required}``), planted on the Program it makes as
+``by = template``; he edits or waives each. A Review requirement is planted
+only where the template's steps are reviewed (``step.gate_review``): a
+Review needs the reviewer the step already has (§2, "not a second
+reviewer"), so Fast cycle, Race and From the desk keep their list here and
+plant it when he turns the review on (``requirements_for``).
 """
 from __future__ import annotations
 
@@ -23,6 +31,13 @@ RACE = "race"
 FROM_THE_DESK = "from-the-desk"
 OVERNIGHT = "overnight"
 
+#: The one sentence every template ships on every step (decision 8).
+ONLY_THE_BRIEF = "The change does only what its brief says."
+#: Build and review adds this one.
+HAS_A_TEST = "Each new behaviour has a test."
+#: From the desk: one per step, from the step's origin (the action's title).
+FROM_ACTION = "The change does what its action asks: {title}"
+
 TEMPLATES: list[dict[str, Any]] = [
     {
         "id": FAST_CYCLE,
@@ -30,6 +45,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "description": "One step per brief. The repository's check gates each step. The desk's Control mode decides the merge.",
         "program": {"reviewer_profile": None, "default_profile": "claude-default"},
         "step": {"gate_check": True, "gate_review": False, "gate_merge": "level", "race": 0},
+        "requirements": [{"text": ONLY_THE_BRIEF, "kind": "review", "each_step": True, "required": True}],
     },
     {
         "id": BUILD_AND_REVIEW,
@@ -37,6 +53,8 @@ TEMPLATES: list[dict[str, Any]] = [
         "description": "One step per brief. The check, then Codex reviews the change. The desk's Control mode decides the merge.",
         "program": {"reviewer_profile": "codex-default", "default_profile": "claude-default"},
         "step": {"gate_check": True, "gate_review": True, "review_depth": "delta", "gate_merge": "level", "race": 0},
+        "requirements": [{"text": ONLY_THE_BRIEF, "kind": "review", "each_step": True, "required": True},
+                         {"text": HAS_A_TEST, "kind": "review", "each_step": True, "required": True}],
     },
     {
         "id": RACE,
@@ -44,6 +62,7 @@ TEMPLATES: list[dict[str, Any]] = [
         "description": "One brief, two agents (Claude Code and Codex). The first green and reviewed branch wins.",
         "program": {"reviewer_profile": None, "default_profile": "claude-default"},
         "step": {"gate_check": True, "gate_review": False, "gate_merge": "level", "race": 2},
+        "requirements": [{"text": ONLY_THE_BRIEF, "kind": "review", "each_step": True, "required": True}],
     },
     {
         "id": FROM_THE_DESK,
@@ -51,6 +70,9 @@ TEMPLATES: list[dict[str, Any]] = [
         "description": "One step per open action of a project. The check gates each step.",
         "program": {"reviewer_profile": None, "default_profile": "claude-default"},
         "step": {"gate_check": True, "gate_review": False, "gate_merge": "level", "race": 0},
+        "requirements": [],
+        #: One per step, from the step's origin (``action:<id>``).
+        "step_requirements": [{"text": FROM_ACTION, "kind": "review", "required": True}],
     },
     {
         "id": OVERNIGHT,
@@ -67,6 +89,8 @@ TEMPLATES: list[dict[str, Any]] = [
             "may_call": True,
         },
         "step": {"gate_check": True, "gate_review": True, "review_depth": "delta", "gate_merge": "level", "race": 0},
+        "requirements": [{"text": ONLY_THE_BRIEF, "kind": "review", "each_step": True, "required": True},
+                         {"text": HAS_A_TEST, "kind": "review", "each_step": True, "required": True}],
     },
 ]
 
@@ -78,7 +102,20 @@ def get_template(template_id: Optional[str]) -> Optional[dict[str, Any]]:
     return next((dict(template) for template in TEMPLATES if template["id"] == key), None)
 
 
+def reviewed(template: Optional[dict[str, Any]]) -> bool:
+    """The template's steps are reviewed (their Review requirements plant)."""
+    return bool(((template or {}).get("step") or {}).get("gate_review"))
+
+
+def requirements_for(template: Optional[dict[str, Any]], *, review: Optional[bool] = None) -> list[dict[str, Any]]:
+    """The template's Program-wide requirements that plant: a Review only
+    where its steps are reviewed (``review`` overrides the template's gate)."""
+    on = reviewed(template) if review is None else bool(review)
+    return [dict(item) for item in (template or {}).get("requirements") or [] if item.get("kind") != "review" or on]
+
+
 __all__ = [
     "BUILD_AND_REVIEW", "FAST_CYCLE", "FROM_THE_DESK", "HOME_ENGINE_PROFILE", "OVERNIGHT", "RACE",
-    "TEMPLATES", "TEMPLATE_IDS", "get_template",
+    "FROM_ACTION", "HAS_A_TEST", "ONLY_THE_BRIEF", "TEMPLATES", "TEMPLATE_IDS", "get_template", "requirements_for",
+    "reviewed",
 ]

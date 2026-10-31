@@ -1,0 +1,10 @@
+{
+  "body": {
+    "code": "step_frozen",
+    "detail": "Step 1 started. Add the step after it.",
+    "error": "step_frozen",
+    "field": "position",
+    "reason": "The worktree and the agent are set"
+  },
+  "status": 409
+}

@@ -6,19 +6,20 @@
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-10-31T01:42:49.305110+00:00",
+      "created_at": "2026-10-31T16:26:17.381657+00:00",
       "done": 3,
       "done_in": "2 h 38",
+      "for_person": null,
       "history": {
         "first": "2026-10-28T15:36:11Z",
         "last": "2026-10-28T18:14:50Z",
         "prs": 3,
         "words": "Merged 3 PRs · 28 Oct"
       },
-      "id": "program-cb35d35a8980",
+      "id": "program-98bf57bd996f",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-10-31T01:42:49.308185+00:00",
+        "at": "2026-10-31T16:26:17.385587+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -35,12 +36,15 @@
         "step_id": "",
         "undo": {}
       },
+      "persons": [],
+      "project": null,
       "project_id": null,
+      "search_words": "the hub stops stalling the hub answers at once. the dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing the hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard #1584 #1585 #1598",
       "state": "done",
       "state_word": "Done",
       "title": "The hub stops stalling",
       "total": 3,
-      "updated_at": "2026-10-31T01:42:49.308264+00:00",
+      "updated_at": "2026-10-31T16:26:17.385659+00:00",
       "your_turn": 0
     }
   ],

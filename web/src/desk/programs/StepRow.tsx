@@ -13,7 +13,8 @@ import { CheckGadget, CycleGadget, DotWord, StateChip, StringGadget } from "../s
 import { Token } from "../surface/Token";
 import { openRef } from "../openObject";
 import { spriteUrl } from "../sprites";
-import { afterWords, agentKey, mergedWords, runsOnWords, stationsOf, stepChip, stepTone, stepWord } from "./model";
+import { useEffect, useRef, useState } from "react";
+import { afterWords, agentKey, mergedWords, runsOnWords, stationsOf, stepChip, stepMetWords, stepTone, stepWord } from "./model";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { StationTrack } from "./StationTrack";
 import { stateWords } from "../surface/words";
@@ -23,16 +24,46 @@ function quote(line: string | undefined | null): string {
   return line ? `“${line}”` : "";
 }
 
+/** PG-REQ §9 Delight: the step's Met cell. When its last required
+ *  requirement goes Met the count draws in ok ink and the dot breathes
+ *  once (the 2.4 s ring, once; none under reduced motion). */
+function MetCell({ step, his }: { step: ProgramStep; his?: boolean }) {
+  const met = stepMetWords(step.requirements_met, his);
+  const was = useRef(met?.all ?? false);
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const all = met?.all ?? false;
+    if (all && !was.current) {
+      setSettled(true);
+      const timer = window.setTimeout(() => setSettled(false), 2600);
+      was.current = all;
+      return () => window.clearTimeout(timer);
+    }
+    was.current = all;
+    return undefined;
+  }, [met?.all]);
+  return (
+    <span className="pg-step-met" data-testid="programs-step-met" data-all={met?.all ? "" : undefined} data-tone={met?.tone ?? undefined}
+      data-settled={settled ? "" : undefined}>
+      {met?.tone ? <span className="kit-dot pg-step-met-dot" data-tone={met.tone} aria-hidden="true" /> : null}
+      {met?.text ?? ""}
+    </span>
+  );
+}
+
 export function StepRow({
   step,
   selected,
   onSelect,
   contender = false,
+  his = false,
 }: {
   step: ProgramStep;
   selected?: boolean;
   onSelect?: () => void;
   contender?: boolean;
+  /** A requirement of this step waits on his word. */
+  his?: boolean;
 }) {
   const word = stepWord(step);
   const agent = agentKey(step.profile, step.agent);
@@ -69,6 +100,7 @@ export function StepRow({
         <DotWord tone={stepTone(step.state)} className="pg-step-word" data-testid="programs-step-word"
           title={step.state === "limited" ? stateWords(step.state_word) : undefined}>{word}</DotWord>
       </span>
+      {contender ? <span className="pg-step-met" /> : <MetCell step={step} his={his} />}
       <span className="pg-step-chip"><StateChip state={stepChip(step.state)} label={word} wordless={false} /></span>
       <span className="pg-step-agent">
         {shown && !contender ? (
@@ -81,7 +113,7 @@ export function StepRow({
         ) : null}
       </span>
       <span className="pg-step-meta">
-        {[shown ? runsOn : "", when, after].filter(Boolean).join(" · ")}
+        {[shown ? runsOn : "", stepMetWords(step.requirements_met, his)?.text ?? "", when, after].filter(Boolean).join(" · ")}
         {line ? <span className="pg-step-meta-line"> · {line}</span> : null}
       </span>
       <span className="pg-step-when">{started ? when : ""}</span>

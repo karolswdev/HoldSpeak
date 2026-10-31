@@ -150,6 +150,17 @@ export function objectWindowStandIn(ref: string): WorldObject | null {
   }
   // Programs (2026-10-28): a Program is the hub's, not a desk item; its
   // window reads its own record (ProgramWindow).
+  // PG-REQ (REQ12): a Shot requirement's image window
+  // (`program-shot:<program>:<requirement>`).
+  if (ref.startsWith("program-shot:") && ref.split(":").length === 3) {
+    const id = ref.slice("program-shot:".length);
+    return {
+      kind: "program-shot" as unknown as WorldObject["kind"],
+      id,
+      title: "Shot",
+      ref: { kind: "program-shot", id, title: "Shot" } as unknown as Primitive,
+    };
+  }
   if (ref.startsWith("program:") && ref.length > "program:".length) {
     const id = ref.slice("program:".length);
     return {

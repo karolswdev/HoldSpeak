@@ -1,0 +1,88 @@
+{
+  "items": [
+    {
+      "ageToken": "2026-10-31T17:04:15.669447+00:00",
+      "counted": true,
+      "direction": "decide",
+      "dueAt": null,
+      "dueWord": "now",
+      "group": "The dock lamp",
+      "id": "program:program-ae9de5e243e0:req-9402fb1c2479:word",
+      "kind": "program",
+      "muted": false,
+      "openRef": "program:program-ae9de5e243e0",
+      "personId": null,
+      "program": {
+        "choices": [
+          "met",
+          "unmet"
+        ],
+        "decide": "/api/programs/program-ae9de5e243e0/requirements/req-9402fb1c2479/decide",
+        "findingId": null,
+        "kind": "requirement_word",
+        "ordinal": 1,
+        "pr": {
+          "number": 103,
+          "url": "https://github.com/acme/app/pull/103"
+        },
+        "programId": "program-ae9de5e243e0",
+        "requirementId": "req-9402fb1c2479",
+        "stepId": "step-dc9a3820917b"
+      },
+      "projectId": "proj-holdspeak",
+      "projectName": "",
+      "rank": 1,
+      "rankClass": "no_due_date",
+      "ref": "program:program-ae9de5e243e0:req-9402fb1c2479:word",
+      "severity": "warning",
+      "since": "2026-10-31T17:04:15.669447+00:00",
+      "source": "program",
+      "title": "Step 1 · Dock lamp: R1 · I tried it on my desk",
+      "verbHref": null,
+      "waiting": false,
+      "why": "TO CONFIRM"
+    },
+    {
+      "ageToken": "2026-10-31T17:04:14.348878+00:00",
+      "counted": true,
+      "direction": "decide",
+      "dueAt": null,
+      "dueWord": "now",
+      "group": "The hub stops stalling",
+      "id": "program:program-8edaacaf8cca:req-b99e0cbc8597:word",
+      "kind": "program",
+      "muted": false,
+      "openRef": "program:program-8edaacaf8cca",
+      "personId": "p-alice",
+      "program": {
+        "choices": [
+          "met",
+          "unmet"
+        ],
+        "decide": "/api/programs/program-8edaacaf8cca/requirements/req-b99e0cbc8597/decide",
+        "findingId": null,
+        "kind": "requirement_word",
+        "ordinal": 3,
+        "pr": {
+          "number": 102,
+          "url": "https://github.com/acme/app/pull/102"
+        },
+        "programId": "program-8edaacaf8cca",
+        "requirementId": "req-b99e0cbc8597",
+        "stepId": "step-78acbacf62a8"
+      },
+      "projectId": "proj-holdspeak",
+      "projectName": "",
+      "rank": 2,
+      "rankClass": "no_due_date",
+      "ref": "program:program-8edaacaf8cca:req-b99e0cbc8597:word",
+      "severity": "warning",
+      "since": "2026-10-31T17:04:14.348878+00:00",
+      "source": "program",
+      "title": "Step 3 · Projections off the loop: R4 · I tried it on my desk",
+      "verbHref": null,
+      "waiting": false,
+      "why": "TO CONFIRM"
+    }
+  ]
+}

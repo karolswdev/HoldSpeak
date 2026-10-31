@@ -75,3 +75,36 @@ def test_a_section_without_a_result_line_and_no_commit() -> None:
     result = verify_text(text)
     assert "the section build has no result line" in result["reasons"]
     assert "the log names no commit" in result["reasons"]
+
+
+# ── PG-REQ §5: the requirement form ─────────────────────────────────
+
+from holdspeak.services.program_verifier import verify_requirement_log, verify_requirement_text  # noqa: E402
+
+
+def _req_log(body: str, *, exit_code: int = 0, clean: bool = True, footer: bool = True) -> str:
+    return ("program-check: commit 0123abcd\n" + ("program-check: tree clean\n" if clean else "program-check: tree dirty (1 files)\n")
+            + "program-check: command uv run pytest -q tests/unit/test_x.py\n" + body
+            + (f"program-check: exit {exit_code}\n" if footer else ""))
+
+
+def test_a_requirement_log_is_met_on_the_engines_exit_and_no_red_line() -> None:
+    result = verify_requirement_text(_req_log("....\n12 passed in 0.4s\n"))
+    assert result["met"] and result["line"] == "12 passed in 0.4s" and result["commit"] == "0123abcd"
+    assert verify_requirement_text(_req_log("12 passed\n"), expect=r"\b12 passed\b")["met"]
+
+
+def test_a_requirement_log_is_not_met_without_its_receipt() -> None:
+    assert verify_requirement_text(_req_log("12 passed\n", exit_code=1))["reasons"] == ["the command ended with exit 1"]
+    assert "the log has no exit line of the engine" in verify_requirement_text(_req_log("12 passed\n", footer=False))["reasons"]
+    red = verify_requirement_text(_req_log("FAILED tests/unit/test_x.py::t\n1 failed, 11 passed\n"))
+    assert not red["met"] and any(reason.startswith("a line is red") for reason in red["reasons"])
+    assert not verify_requirement_text(_req_log("12 passed\n", clean=False))["met"]
+    assert verify_requirement_text(_req_log("11 passed\n"), expect=r"\b12 passed\b")["reasons"] == [r"no line matches \b12 passed\b"]
+
+
+def test_no_requirement_log_is_never_met(tmp_path) -> None:
+    assert verify_requirement_log(None)["reasons"] == ["the command wrote no log"]
+    assert verify_requirement_log(str(tmp_path / "nope.log"))["reasons"] == ["the log is not there"]
+    (tmp_path / "empty.log").write_text("")
+    assert not verify_requirement_log(str(tmp_path / "empty.log"))["met"]

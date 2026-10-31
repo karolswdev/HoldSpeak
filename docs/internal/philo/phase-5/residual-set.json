@@ -2452,6 +2452,24 @@
       "entry_point": "holdspeak/web/routes/today.py::build_today_router.service",
       "discriminator": "TodayService",
       "reason": "route builds its own service instance instead of the hub's bound one (only when the context has none: a route test); a read-only desk reader (Since this morning)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.amend",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.require",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.step_update",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
     }
   ]
 }

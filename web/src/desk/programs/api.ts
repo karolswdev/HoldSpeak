@@ -103,6 +103,85 @@ export async function handoff(programId: string, stepId: string, to: { profile: 
     `${base(programId)}/steps/${encodeURIComponent(stepId)}/handoff`, { method: "POST", json: { to } }));
 }
 
+/* ── PG-REQ (PROGRAMS-REQUIREMENTS-2026-10-31 §11): requirements and adjust ── */
+
+export interface RequireBody {
+  text: string;
+  /** Omitted: the hub guesses it by rule. */
+  kind?: string;
+  step_id?: string;
+  each_step?: boolean;
+  required?: boolean;
+  spec?: { command?: string; case?: string; width?: number };
+}
+
+/** Add a requirement (his, at once). */
+export async function addRequirement(programId: string, body: RequireBody): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(programId)}/requirements`, { method: "POST", json: body }));
+}
+
+/** Edit a requirement's sentence, kind or spec (a Met one goes to Not yet). */
+export async function editRequirement(programId: string, requirementId: string,
+  body: Partial<Pick<RequireBody, "text" | "kind" | "required" | "spec">>): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/requirements/${encodeURIComponent(requirementId)}`, { method: "PATCH", json: body }));
+}
+
+export type RequirementChoice = "met" | "unmet" | "waive" | "send_back";
+
+/** His press on a requirement: Met / Unmet (his word), Waive (with his
+ *  line), Send back (one more round). */
+export async function decideRequirement(programId: string, requirementId: string, choice: RequirementChoice,
+  line?: string): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/requirements/${encodeURIComponent(requirementId)}/decide`,
+    { method: "POST", json: line ? { choice, line } : { choice } }));
+}
+
+/** His answer to what an agent proposed (Add / Apply / Send, or Skip). */
+export async function decideProposal(programId: string, proposalId: string | number, choice: string): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/proposals/${encodeURIComponent(String(proposalId))}/decide`, { method: "POST", json: { choice } }));
+}
+
+/** The §8 fields a step's state leaves open; `before` moves it (a step id,
+ *  or `end`). A frozen field answers 409 `step_frozen` with its reason. */
+export interface StepChangeBody {
+  title?: string;
+  brief?: string;
+  owns?: string[];
+  after?: number[];
+  effort?: "low" | "medium" | "high";
+  profile?: string | null;
+  engine?: string | null;
+  before?: string;
+}
+
+export async function changeStep(programId: string, stepId: string, body: StepChangeBody): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/steps/${encodeURIComponent(stepId)}`, { method: "PATCH", json: body }));
+}
+
+/** A line added to a started step's brief, typed at the next turn boundary. */
+export async function amendStep(programId: string, stepId: string, line: string): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/steps/${encodeURIComponent(stepId)}/amend`, { method: "POST", json: { line } }));
+}
+
+/** Insert before: a new Planned step at the place of `beforeId`; with
+ *  `waits` that step now also comes after the new one. */
+export async function insertStep(programId: string, beforeId: string, step: PlanStep, waits = true): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(programId)}/plan`, {
+    method: "POST", json: { steps: [step], before: beforeId, waits },
+  }));
+}
+
+/** The address of a requirement's evidence file (its log text or its shot
+ *  image): the hub serves it only to this desk. */
+export function evidenceUrl(programId: string, requirementId: string): string {
+  return `${base(programId)}/requirements/${encodeURIComponent(requirementId)}/evidence`;
+}
+
 /** The Room's Programs fold and the person's room line (§9b). */
 export async function readProjectPrograms(projectId: string): Promise<ProgramRoomRow[]> {
   try {

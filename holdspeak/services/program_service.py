@@ -61,11 +61,16 @@ STEP_TRANSITIONS: dict[str, frozenset[str]] = {
     "check_failed": frozenset({"briefed", "working", "waiting", "limited", "checking", "parked", "failed"}),
     "review": frozenset({"pr_open", "findings", "checking", "done", "parked", "failed"}),
     "findings": frozenset({"review", "working", "checking", "pr_open", "done", "parked", "failed"}),
-    "pr_open": frozenset({"merge_ask", "merged", "parked", "failed"}),
-    "merge_ask": frozenset({"merged", "pr_open", "parked"}),
+    # PG-REQ: a requirement added on the PR head is judged there (checking),
+    # and his Send back or an Unmet word gives the builder one more round
+    # on the same branch and PR (working).
+    "pr_open": frozenset({"merge_ask", "merged", "parked", "failed", "checking", "working"}),
+    "merge_ask": frozenset({"merged", "pr_open", "parked", "checking", "working"}),
     "merged": frozenset({"done"}),
     "done": frozenset(),
-    "parked": frozenset({"ready", "planned"}),
+    # PG-REQ: a step parked with a requirement left goes on when he waives
+    # it (checking) or sends it back (working).
+    "parked": frozenset({"ready", "planned", "checking", "working"}),
     "failed": frozenset({"ready", "parked"}),
 }
 
@@ -142,7 +147,17 @@ DECIDE_CHOICES = {
     # PG19: the agent is at its usage limit: continue in the next agent now,
     # or wait for the reset.
     "limited": ("continue", "wait"),
+    # PG-REQ: a requirement (his word, one left after the rounds), and what
+    # an agent proposes: a requirement, a change to a planned step, an
+    # amendment to a running step's brief.
+    "requirement": ("met", "unmet", "waive", "send_back"),
+    "requirement_proposed": ("add", "skip"),
+    "step_change": ("apply", "skip"),
+    "step_amend": ("send", "skip"),
 }
+#: PG-REQ: the proposal kinds (a checkpoint row each, ``choice`` empty until
+#: he answers).
+PROPOSAL_KINDS = ("requirement_proposed", "step_change", "step_amend")
 
 
 
@@ -161,10 +176,12 @@ def programs_on() -> bool:
 
 
 class ProgramRefused(ServiceError):
-    """A named refusal (``code``); HTTP and MCP answer ``{error, code}``."""
+    """A named refusal (``code``); HTTP and MCP answer ``{error, code}``.
+    ``more`` rides on the answer (PG-REQ: ``step_frozen`` names its
+    ``field`` and ``reason``)."""
 
-    def __init__(self, code: str, detail: str, *, status: int = 409) -> None:
-        super().__init__(code, detail, context={"status": status})
+    def __init__(self, code: str, detail: str, *, status: int = 409, **more: Any) -> None:
+        super().__init__(code, detail, context={"status": status, **more})
 
 
 def _new_id(prefix: str) -> str:
@@ -318,7 +335,9 @@ def history_words(steps: Iterable[Mapping[str, Any]]) -> Optional[dict[str, Any]
             "words": f"Merged {count} PR{'s' if count != 1 else ''} · {span}"}
 
 
-def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
+              requirements: Optional[Iterable[Mapping[str, Any]]] = None,
+              proposals: Optional[Iterable[Mapping[str, Any]]] = None) -> list[dict[str, Any]]:
     """What only he can do on this Program, one item per press.
 
     Design §6 (Control): only a core question, or what the rules send to
@@ -374,13 +393,14 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) ->
                                    f"{', review passed' if step.get('review_verdict') == 'pass' else ''})"})
         elif state == "findings" and facts.get("findings_open"):
             for finding in step.get("findings") or []:
-                if finding.get("decision") or not finding.get("to_owner", True):
-                    continue
+                if finding.get("decision") or not finding.get("to_owner", True) or finding.get("requirement_id"):
+                    continue  # PG-REQ: a requirement's finding is its requirement_left row
                 items.append({**base, "id": f"{step['id']}:finding:{finding['id']}", "kind": "finding",
                               "finding_id": finding["id"], "level": finding.get("level"),
                               "core": bool(finding.get("core")), "choices": list(DECIDE_CHOICES["finding"]),
                               "title": f"Finding on {label}: {finding.get('text', '')}"})
-        elif _engine_parked(step) and (level == "secure" or facts.get("park_is_his", True) or not live):
+        elif (_engine_parked(step) and not facts.get("requirements_left")
+              and (level == "secure" or facts.get("park_is_his", True) or not live)):
             items.append({**base, "id": f"{step['id']}:parked", "kind": "parked",
                           "choices": list(DECIDE_CHOICES["parked"]),
                           "title": f"Parked {label}: {step.get('parked_reason') or 'it stopped'}"})
@@ -401,8 +421,9 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) ->
             items.append({**base, "id": f"{step['id']}:ask_review", "kind": "ask_review",
                           "choices": list(DECIDE_CHOICES["ask_review"]),
                           "title": f"Ask {name} to review PR #{number}" if number else f"Ask {name} to review"})
+    items.extend(requirement_items(program, steps, requirements, proposals))
     if (level == "secure" and steps and not live and not items and not program.get("closed_at")
-            and program.get("state") not in ("drafting", "parked")):
+            and program.get("state") not in ("drafting", "parked") and not end_pending(program, steps, requirements)):
         items.append({
             "program_id": program["id"], "program_title": program["title"], "step_id": "", "ordinal": 0,
             "step_title": "", "launch_id": None, "since": program.get("updated_at"),
@@ -410,6 +431,153 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) ->
             "id": f"{program['id']}:close", "kind": "close", "choices": list(DECIDE_CHOICES["close"]),
             "title": f"Close \u201c{program['title']}\u201d: every step is finished",
         })
+    return items
+
+
+# ── PG-REQ §8: what he can change on a step, by its state ────────────
+
+#: The words a frozen field's hover title says (PG-REQ §8).
+FROZEN_READ = "The agent has read it"
+FROZEN_SET = "The worktree and the agent are set"
+FROZEN_BAR = "The bar does not come down while it runs"
+FROZEN_MERGED = "It is merged"
+#: Every field of a step he may change, in the order of §8.
+STEP_FIELDS = ("title", "brief", "amend", "owns", "after", "effort", "agent", "runs_on_then", "race", "gate_check",
+               "gate_review", "review_depth", "gate_merge", "requirements", "position", "for_person", "may_call")
+_STARTED = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings",
+                      "failed"})
+
+
+def step_fields(step: Mapping[str, Any]) -> tuple[list[str], dict[str, str]]:
+    """``(editable, frozen)``: the §8 table for the step's state. ``frozen``
+    maps each field he cannot change now to its reason."""
+    state = str(step.get("state") or "planned")
+    if state in ("planned", "ready"):
+        return [field for field in STEP_FIELDS if field != "amend"], {}
+    if state in ("merged", "done"):
+        return ["title"], {field: FROZEN_MERGED for field in STEP_FIELDS if field != "title"}
+    frozen = {"brief": FROZEN_READ, "owns": FROZEN_READ, "after": FROZEN_READ, "effort": FROZEN_SET,
+              "agent": FROZEN_SET, "race": FROZEN_SET, "gate_check": FROZEN_BAR, "position": FROZEN_SET}
+    if state in _STARTED:
+        if step.get("gate_review") == "agent":
+            frozen["gate_review"] = FROZEN_BAR
+        if state in ("review", "findings"):
+            frozen["review_depth"] = FROZEN_READ
+    else:  # pr_open, merge_ask, parked: the PR is open or he parked it
+        frozen.update({"amend": FROZEN_READ, "runs_on_then": FROZEN_SET, "gate_review": FROZEN_BAR,
+                       "review_depth": FROZEN_READ})
+        if state == "parked":
+            frozen.update({"gate_merge": FROZEN_SET, "for_person": FROZEN_SET, "may_call": FROZEN_SET})
+    return [field for field in STEP_FIELDS if field not in frozen], frozen
+
+
+def _turn_base(program: Mapping[str, Any], step: Optional[Mapping[str, Any]]) -> dict[str, Any]:
+    step = step or {}
+    return {
+        "program_id": program["id"], "program_title": program["title"], "step_id": step.get("id") or "",
+        "ordinal": step.get("ordinal") or 0, "step_title": step.get("title") or "", "launch_id": step.get("launch_id"),
+        "since": step.get("updated_at") or program.get("updated_at"), "project_id": program.get("project_id"),
+        "for_person_id": step.get("for_person_id") or program.get("for_person_id"),
+        "pr": {"number": step.get("pr_number"), "url": step.get("pr_url")} if step.get("pr_url") else None,
+    }
+
+
+def program_own(requirements: Optional[Iterable[Mapping[str, Any]]]) -> list[Mapping[str, Any]]:
+    """PG-REQ: the Program's own requirements (the end check)."""
+    return [row for row in requirements or [] if not row.get("step_id") and not row.get("each_step")]
+
+
+def steps_finished(program: Mapping[str, Any], steps: list[Mapping[str, Any]]) -> bool:
+    """Every top step merged, done or parked by him (the end check may run)."""
+    top = [step for step in steps if not step.get("race_of")]
+    return bool(top) and not _live(steps) and all(
+        step.get("state") in FINISHED_STATES or (step.get("state") == "parked" and step.get("parked_by") == PARKED_BY_OWNER)
+        for step in top)
+
+
+def end_pending(program: Mapping[str, Any], steps: list[Mapping[str, Any]],
+                requirements: Optional[Iterable[Mapping[str, Any]]]) -> bool:
+    """PG-REQ §5: the Program's own required requirements are not all Met or
+    Waived after the last step: the Program is not Done yet."""
+    from .program_requirements import gates
+
+    if program.get("closed_at") or not steps_finished(program, steps):
+        return False
+    return any(gates(row) for row in program_own(requirements))
+
+
+def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
+                      requirements: Optional[Iterable[Mapping[str, Any]]],
+                      proposals: Optional[Iterable[Mapping[str, Any]]]) -> list[dict[str, Any]]:
+    """PG-REQ §9: his word on a step at its merge (``requirement_word``), a
+    requirement still unmet after the rounds (``requirement_left``), the
+    Program's own after the last step, and what an agent proposes."""
+    from .program_requirements import judged, label
+
+    steps = list(steps)
+    reqs = list(requirements or [])
+    by_id = {row["id"]: row for row in reqs}
+    items: list[dict[str, Any]] = []
+
+    def word(base: dict[str, Any], row: Mapping[str, Any], where: str) -> dict[str, Any]:
+        return {**base, "id": f"{row['id']}:word", "kind": "requirement_word", "requirement_id": row["id"],
+                "choices": ["met", "unmet"], "title": f"{where}: {label(row['ordinal'])} · {row['text']}"}
+
+    def left(base: dict[str, Any], row: Mapping[str, Any], where: str, choices: list[str],
+             finding_id: Optional[str] = None) -> dict[str, Any]:
+        rounds = int(row.get("rounds") or 0)
+        line = str((row.get("evidence") or {}).get("line") or "")
+        what = (f"{label(row['ordinal'])} is unmet after {rounds} round{'s' if rounds != 1 else ''}" if rounds
+                else f"{label(row['ordinal'])} has no answer")
+        return {**base, "id": f"{row['id']}:left", "kind": "requirement_left", "requirement_id": row["id"],
+                "finding_id": finding_id, "choices": choices,
+                "title": f"{where}: {what}" + (f" · {line}" if line else "")}
+
+    for step in steps:
+        if step.get("race_of"):
+            continue
+        state = str(step.get("state") or "")
+        facts = step.get("facts") or {}
+        base = _turn_base(program, step)
+        where = f"Step {step['ordinal']} · {step['title']}"
+        own = [row for row in reqs if row.get("step_id") == step["id"]]
+        if state in ("pr_open", "merge_ask"):
+            for row in own:
+                if row.get("kind") == "word" and row.get("required") and row.get("state") == "not_yet":
+                    items.append(word(base, row, where))
+        seen: set[str] = set()
+        for rid in facts.get("requirements_left") or []:
+            row = by_id.get(rid)
+            if row is not None and not judged(row) and rid not in seen:
+                seen.add(rid)
+                items.append(left(base, row, where, ["send_back", "waive"]))
+        if state == "findings" and facts.get("findings_open"):
+            for finding in step.get("findings") or []:
+                row = by_id.get(str(finding.get("requirement_id") or ""))
+                if row is None or finding.get("decision") or row["id"] in seen or judged(row):
+                    continue
+                seen.add(row["id"])
+                items.append(left(base, row, where, ["send_back", "waive"], finding_id=finding.get("id")))
+    if steps_finished(program, steps) and not program.get("closed_at") and program.get("state") not in ("drafting", "parked"):
+        base = _turn_base(program, None)
+        for row in program_own(reqs):
+            if not row.get("required"):
+                continue
+            if row.get("state") == "not_yet" and row.get("kind") in ("word", "review"):
+                # The end check's Review has no reviewer launch over the base
+                # diff yet (PG-REQ §6): it is his word until that is built.
+                items.append(word(base, row, "The program"))
+            elif row.get("state") == "unmet":
+                items.append(left(base, row, "The program", ["waive"]))
+    step_of = {step["id"]: step for step in steps}
+    for row in proposals or []:
+        kind = str(row.get("kind") or "")
+        if kind not in PROPOSAL_KINDS or row.get("choice") or row.get("overturned_at"):
+            continue
+        undo = row.get("undo") or {}
+        base = _turn_base(program, step_of.get(str(row.get("step_id") or "")))
+        items.append({**base, "id": f"proposal:{row['id']}", "kind": kind, "proposal_id": row["id"],
+                      "choices": list(DECIDE_CHOICES[kind]), "title": str(undo.get("title") or row.get("line") or "")})
     return items
 
 
@@ -425,20 +593,25 @@ def limit_words(limit: Optional[Mapping[str, Any]]) -> str:
     return f"{head} · waits for the reset"
 
 
-def program_state(program: Mapping[str, Any], steps: list[Mapping[str, Any]]) -> str:
+def program_state(program: Mapping[str, Any], steps: list[Mapping[str, Any]],
+                  requirements: Optional[Iterable[Mapping[str, Any]]] = None,
+                  proposals: Optional[Iterable[Mapping[str, Any]]] = None) -> str:
     """Worst state wins (AG0). Drafting and Parked are his; the rest is read
-    off the steps."""
+    off the steps. PG-REQ: a Program whose own requirements are not judged
+    after its last step still runs (the end check)."""
     current = str(program.get("state") or "drafting")
     if current in ("drafting", "parked"):
         return current
     if not steps:
         return "running"
-    if your_turn(program, steps):
+    if your_turn(program, steps, requirements, proposals):
         return "waiting"
     if _live(steps):
         return "running"
     if any(step.get("state") == "failed" for step in steps):
         return "failed"
+    if end_pending(program, steps, requirements):
+        return "running"
     return "done"
 
 
@@ -567,20 +740,56 @@ class ProgramService:
             raise NotFound("program_step", str(step_id))
         return step
 
-    def list(self, principal: Any = None) -> dict[str, Any]:
+    # ── PG-REQ: requirements and proposals beside the steps ──────────
+
+    def requirements(self, program_id: str) -> list[dict[str, Any]]:
+        return self.store.list_requirements(str(program_id))
+
+    def proposals(self, program_id: str, checkpoints: Optional[list[dict[str, Any]]] = None) -> list[dict[str, Any]]:
+        rows = checkpoints if checkpoints is not None else self.store.list_checkpoints(str(program_id))
+        return [row for row in rows if row.get("kind") in PROPOSAL_KINDS]
+
+    def _turn(self, program: Mapping[str, Any], steps: list[Mapping[str, Any]], *,
+              requirements: Optional[list[dict[str, Any]]] = None,
+              checkpoints: Optional[list[dict[str, Any]]] = None) -> list[dict[str, Any]]:
+        reqs = requirements if requirements is not None else self.requirements(program["id"])
+        return your_turn(program, steps, reqs, self.proposals(program["id"], checkpoints))
+
+    def _state(self, program: Mapping[str, Any], steps: list[Mapping[str, Any]], *,
+               requirements: Optional[list[dict[str, Any]]] = None,
+               checkpoints: Optional[list[dict[str, Any]]] = None) -> str:
+        reqs = requirements if requirements is not None else self.requirements(program["id"])
+        return program_state(program, steps, reqs, self.proposals(program["id"], checkpoints))
+
+    def list(self, principal: Any = None, *, q: Any = None, project_id: Any = None,
+             person_id: Any = None) -> dict[str, Any]:
         """Every Program, waiting first, then running, drafting, done, parked;
-        the most recently changed first inside a band."""
+        the most recently changed first inside a band. PG-REQ §7: ``q``
+        (every word in the row's ``search_words``), ``project_id`` and
+        ``person_id`` narrow the rows; ``of`` is the count before them."""
         rows = []
         for program in self.store.list_programs():
             steps = self.store.list_steps(program["id"])
             rows.append(self._summary(program, steps))
+        everything = len(rows)
+        words = [word for word in re.findall(r"[#\w]+", str(q or "").lower()) if word]
+        if words:
+            rows = [row for row in rows if all(word in row["search_words"] for word in words)]
+        if project_id:
+            rows = [row for row in rows if row.get("project_id") == str(project_id)]
+        if person_id:
+            rows = [row for row in rows if any(person["id"] == str(person_id) for person in row.get("persons") or [])]
         _waiting_first(rows)
         counts: dict[str, int] = {}
         for row in rows:
             counts[row["state"]] = counts.get(row["state"], 0) + 1
         worst = min((row["state"] for row in rows), key=lambda s: PROGRAM_BAND.get(s, 9), default=None)
-        return {"programs": rows, "counts": {k: v for k, v in counts.items() if v},
-                "worst": worst, "worst_word": PROGRAM_WORDS.get(worst or "", "")}
+        out = {"programs": rows, "counts": {k: v for k, v in counts.items() if v},
+               "worst": worst, "worst_word": PROGRAM_WORDS.get(worst or "", "")}
+        if words or project_id or person_id:
+            out["filter"] = {"q": str(q or "").strip() or None, "project_id": project_id or None,
+                             "person_id": person_id or None, "shown": len(rows), "of": everything}
+        return out
 
     def get(self, principal: Any, program_id: str) -> dict[str, Any]:
         program = self._program(program_id)
@@ -644,10 +853,10 @@ class ProgramService:
             ]
             to_ask = [
                 {"step_id": item["step_id"], "title": item["title"], "kind": item["kind"]}
-                for item in your_turn(program, steps)
+                for item in self._turn(program, steps)
                 if item["kind"] in ("finding", "ask_review") and (item.get("for_person_id") == person_id)
             ]
-            waits = next((item for item in your_turn(program, steps) if item.get("pr")), None)
+            waits = next((item for item in self._turn(program, steps) if item.get("pr")), None)
             line = f"{program['title']} · {summary['done']} of {summary['total']}"
             if waits and waits.get("pr", {}).get("number"):
                 line += f" · PR #{waits['pr']['number']} waits on you"
@@ -662,7 +871,7 @@ class ProgramService:
         for program in self.store.list_programs():
             if program["state"] in ("drafting", "parked", "done"):
                 continue
-            items.extend(your_turn(program, self.store.list_steps(program["id"])))
+            items.extend(self._turn(program, self.store.list_steps(program["id"])))
         return items
 
     def since_morning(self, principal: Any = None, *, now: Any = None) -> dict[str, int]:
@@ -697,7 +906,7 @@ class ProgramService:
                     today(step.get("ended_at") if history_of(step) else step.get("updated_at")) for step in steps)):
                 continue
             out["moved"] += 1
-            state = program_state(program, steps)
+            state = self._state(program, steps)
             if state == "running":
                 out["running"] += 1
             elif state in ("waiting", "failed"):
@@ -721,12 +930,17 @@ class ProgramService:
     def _top_steps(self, steps: list[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
         return [step for step in steps if not step.get("race_of")]
 
-    def _summary(self, program: Mapping[str, Any], steps: list[dict[str, Any]]) -> dict[str, Any]:
+    def _summary(self, program: Mapping[str, Any], steps: list[dict[str, Any]], *,
+                 requirements: Optional[list[dict[str, Any]]] = None,
+                 checkpoints: Optional[list[dict[str, Any]]] = None) -> dict[str, Any]:
+        from .program_requirements import counts as requirement_counts
+
         top = self._top_steps(steps)
-        state = program_state(program, steps)
-        turn = your_turn(program, steps)
+        reqs = requirements if requirements is not None else self.requirements(program["id"])
+        checkpoints = checkpoints if checkpoints is not None else self.store.list_checkpoints(program["id"])
+        state = self._state(program, steps, requirements=reqs, checkpoints=checkpoints)
+        turn = self._turn(program, steps, requirements=reqs, checkpoints=checkpoints)
         done = sum(1 for step in top if self._ordinal_finished(steps, step["ordinal"]))
-        checkpoints = self.store.list_checkpoints(program["id"])
         last = checkpoints[0] if checkpoints else None
         summary = {
             "id": program["id"], "title": program["title"], "state": state,
@@ -738,6 +952,26 @@ class ProgramService:
             "last_checkpoint": last,
             "in_state_seconds": _seconds_between(program["updated_at"]),
         }
+        # PG-REQ §7, §11: the count of his required requirements, the Project
+        # and the person by name, and the words Find a program matches.
+        his = len([item for item in turn if item["kind"] in ("requirement_word", "requirement_left")])
+        met = requirement_counts(reqs, his)
+        if met:
+            summary["requirements_met"] = met
+        place = self._place(program)
+        summary["project"] = place["project"]
+        summary["for_person"] = place["person"] if place["person"] and place["person"].get("id") else None
+        persons = sorted({str(pid) for pid in [program.get("for_person_id"), *(step.get("for_person_id") for step in steps)] if pid})
+        summary["persons"] = [{"id": pid, "name": self.person_name(pid)} for pid in persons]
+        words = [program.get("title"), program.get("goal_markdown"), (place["project"] or {}).get("name"),
+                 program.get("template"), *(row["name"] for row in summary["persons"]),
+                 *(step.get("title") for step in top), *(f"#{step['pr_number']}" for step in steps if step.get("pr_number"))]
+        from ..program_templates import get_template
+
+        shape = get_template(program.get("template")) if program.get("template") else None
+        if shape:
+            words.append(shape["name"])
+        summary["search_words"] = " ".join(" ".join(str(word).split()) for word in words if word).lower()
         history = history_words(steps)
         if history:
             summary["history"] = history
@@ -764,8 +998,61 @@ class ProgramService:
         return {"id": engine_id, "label": found.label, "short": found.short_name,
                 "model": found.engine.model if found.engine is not None else None}
 
+    def requirement_wire(self, program: Mapping[str, Any], row: Mapping[str, Any], step: Optional[Mapping[str, Any]],
+                         requirements: list[dict[str, Any]], his: set[str],
+                         steps_by_id: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+        """One requirement as the faces read it (PG-REQ §11)."""
+        from .program_requirements import (
+            CHECKING_WORD, COMMIT_BOUND, FROZEN_STEP_STATES, KIND_WORDS, STATE_WORDS, WAITS_WORD, label, scope_of,
+        )
+
+        state = str(row.get("state") or "not_yet")
+        kind = str(row.get("kind") or "review")
+        copies = ([other for other in requirements if other.get("parent_id") == row["id"]]
+                  if scope_of(row) == "every_step" and not row.get("step_id") else [])
+        if copies and state != "waived":
+            # An every-step parent reads its copies: Unmet when one is, Met
+            # when each is Met or Waived, else Not yet.
+            state = ("unmet" if any(other.get("state") == "unmet" for other in copies)
+                     else "met" if all(other.get("state") in ("met", "waived") for other in copies) else "not_yet")
+        step_state = str((step or {}).get("state") or "")
+        running = state == "not_yet" and (
+            (kind in ("check", "shot") and step_state == "checking") or (kind == "review" and step_state == "review"))
+        head = (step or {}).get("head_commit")
+        stale = bool(step and kind in COMMIT_BOUND and row.get("judged_commit") and head and row["judged_commit"] != head)
+        word = CHECKING_WORD if running else (WAITS_WORD if row["id"] in his and state == "not_yet" else STATE_WORDS.get(state, state))
+        frozen = bool(program.get("closed_at")) or step_state in FROZEN_STEP_STATES
+        if frozen or state == "waived":
+            choices: list[str] = []
+        elif kind == "word":
+            choices = ["met", "send_back", "waive"] if state == "unmet" else (["unmet", "waive"] if state == "met" else ["met", "unmet", "waive"])
+        elif state == "unmet":
+            choices = ["send_back", "waive"] if (step or {}).get("launch_id") else ["waive"]
+        else:
+            choices = ["waive"]
+        evidence = dict(row.get("evidence") or {})
+        if evidence.get("kind") in ("log", "shot") and evidence.get("ref"):
+            evidence["url"] = f"/api/programs/{program['id']}/requirements/{row['id']}/evidence"
+        out = {
+            "id": row["id"], "ordinal": int(row["ordinal"]), "label": label(row["ordinal"]),
+            "program_id": program["id"], "step_id": row.get("step_id"), "scope": scope_of(row),
+            "text": row["text"], "kind": kind, "kind_word": KIND_WORDS.get(kind, kind),
+            "required": bool(row.get("required")), "spec": dict(row.get("spec") or {}),
+            "parent_id": row.get("parent_id"), "state": state, "state_word": word, "running": running,
+            "judged_commit": row.get("judged_commit"), "stale": stale, "evidence": evidence,
+            "waived_reason": row.get("waived_reason"), "rounds": int(row.get("rounds") or 0), "by": row.get("by"),
+            "choices": choices, "judged_at": row.get("judged_at"), "created_at": row.get("created_at"),
+        }
+        if copies or (scope_of(row) == "every_step" and not row.get("step_id")):
+            out["steps"] = sorted(({"step_id": other["step_id"],
+                                    "ordinal": int((steps_by_id.get(other["step_id"]) or {}).get("ordinal") or 0),
+                                    "state": other.get("state")} for other in copies), key=lambda item: item["ordinal"])
+        return out
+
     def step_wire(self, program: Mapping[str, Any], step: Mapping[str, Any],
-                  checkpoints: list[dict[str, Any]]) -> dict[str, Any]:
+                  checkpoints: list[dict[str, Any]], *, requirements: Optional[list[dict[str, Any]]] = None,
+                  his: Optional[set[str]] = None,
+                  steps_by_id: Optional[Mapping[str, Mapping[str, Any]]] = None) -> dict[str, Any]:
         profile = step.get("profile") or program.get("default_profile")
         engine_id = step.get("engine") if step.get("profile") else (step.get("engine") or program.get("default_engine"))
         facts = step.get("facts") or {}
@@ -824,7 +1111,32 @@ class ProgramService:
                                                        "profile", "seen_at", "auto_at")} if limit and state == "limited" else None,
             "handoffs": [dict(row) for row in step.get("handoffs") or []],
             "history": history_of(step),
+            **self._step_requirements_wire(program, step, requirements, his, steps_by_id),
         }
+
+    def _step_requirements_wire(self, program: Mapping[str, Any], step: Mapping[str, Any],
+                                requirements: Optional[list[dict[str, Any]]], his: Optional[set[str]],
+                                steps_by_id: Optional[Mapping[str, Mapping[str, Any]]]) -> dict[str, Any]:
+        """PG-REQ §11: a step's own requirements and its every-step copies,
+        their count, what he can still change and why the rest is frozen,
+        and the lines he added to its brief."""
+        from .program_requirements import counts as requirement_counts
+
+        reqs = requirements if requirements is not None else self.requirements(program["id"])
+        owner_id = step.get("race_of") or step["id"]
+        own = [row for row in reqs if row.get("step_id") == owner_id]
+        editable, frozen = step_fields(step)
+        out: dict[str, Any] = {
+            "requirements": [self.requirement_wire(program, row, step, reqs, his or set(), steps_by_id or {step["id"]: step})
+                             for row in own],
+            "editable": editable, "frozen": frozen,
+            "amendments": [{key: item.get(key) for key in ("at", "by", "line", "sent_at")}
+                           for item in (step.get("facts") or {}).get("amendments") or []],
+        }
+        met = requirement_counts(own)
+        if met:
+            out["requirements_met"] = met
+        return out
 
     def _place(self, program: Mapping[str, Any]) -> dict[str, Any]:
         """The status bar's place line parts (§9b): project, origin, person."""
@@ -855,14 +1167,22 @@ class ProgramService:
         return {"project": project, "origin": origin, "person": person}
 
     def _wire(self, program: Mapping[str, Any], steps: list[dict[str, Any]]) -> dict[str, Any]:
+        from .program_requirements import provable, repository_config
+
         checkpoints = self.store.list_checkpoints(program["id"])
-        summary = self._summary(program, steps)
+        reqs = self.requirements(program["id"])
+        summary = self._summary(program, steps, requirements=reqs, checkpoints=checkpoints)
+        turn = self._turn(program, steps, requirements=reqs, checkpoints=checkpoints)
+        his = {str(item.get("requirement_id")) for item in turn if item.get("requirement_id")}
+        by_id = {step["id"]: step for step in steps}
         top = []
         for step in self._top_steps(steps):
-            row = self.step_wire(program, step, checkpoints)
-            row["contenders"] = [self.step_wire(program, other, checkpoints)
+            row = self.step_wire(program, step, checkpoints, requirements=reqs, his=his, steps_by_id=by_id)
+            row["contenders"] = [self.step_wire(program, other, checkpoints, requirements=reqs, his=his, steps_by_id=by_id)
                                  for other in steps if other.get("race_of") == step["id"]]
             top.append(row)
+        config = repository_config(program.get("repo_root"))
+        shot_reason = provable("shot", {"case": "x", "width": 393}, config)
         return {
             **summary,
             "goal": program.get("goal_markdown") or "", "repository": {
@@ -885,7 +1205,13 @@ class ProgramService:
             "note_id": program.get("note_id"), "note_window": f"pullout:note:{program['note_id']}" if program.get("note_id") else None,
             "place": self._place(program),
             "steps": top, "checkpoints": checkpoints[:200],
-            "your_turn_items": your_turn(program, steps),
+            "your_turn_items": turn,
+            # PG-REQ §11: the Program's own (the end check) and the every-step
+            # parents, in R order; what this repository can prove.
+            "requirements": [self.requirement_wire(program, row, None, reqs, his, by_id)
+                             for row in reqs if not row.get("step_id")],
+            "can_prove": {"check": True, "review": True, "word": True, "shot": not shot_reason,
+                          "shot_reason": shot_reason or None},
             "decided_for_you": self.decided_for_you(program["id"]),
             "control_word": level_word(program.get("control")),
             "spend_limit_usd": program.get("spend_limit_usd"), "closed_at": program.get("closed_at"),
@@ -1168,6 +1494,7 @@ class ProgramService:
             self.store.save_program(program)
             self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent",
                              f"Made the program{' from the ' + shape['name'] + ' template' if shape else ''}")
+            self._plant_requirements(program, shape)
             self.changed(program["id"], verb="create")
         return self.get(principal, program["id"])
 
@@ -1248,7 +1575,7 @@ class ProgramService:
 
     def plan(
         self, principal: Any, program_id: str, *, steps: list[Mapping[str, Any]],
-        size: Optional[str] = None, replace: bool = False,
+        size: Optional[str] = None, replace: bool = False, before: Optional[str] = None, waits: bool = True,
     ) -> dict[str, Any]:
         """Replace or append steps. A step: ``title``, ``brief``, ``owns``,
         ``after`` (ordinals), ``profile``, ``engine``, ``prefer_idle``,
@@ -1267,6 +1594,17 @@ class ProgramService:
         existing = self.store.list_steps(program["id"])
         if replace and any(step.get("state") not in ("planned", "ready") for step in existing):
             raise ProgramRefused("program_running", "Steps that started cannot be replaced. Park the program, or append.")
+        target = None
+        if before:
+            # PG-REQ §8, Insert before: the new steps take the target's place.
+            if replace:
+                raise ProgramRefused("before_invalid", "Insert before adds steps; it does not replace them.", status=400)
+            target = self._step(program, str(before))
+            if target.get("race_of"):
+                target = self._step(program, str(target["race_of"]))
+            if target["state"] not in ("planned", "ready"):
+                raise ProgramRefused("step_frozen", f"Step {target['ordinal']} started. Add the step after it.",
+                                     field="position", reason=FROZEN_SET)
         shape = (get_template(program.get("template")) or {}).get("step") or {}
         start = 0 if replace else max((int(step["ordinal"]) for step in existing), default=0)
         now = self._clock()
@@ -1281,7 +1619,12 @@ class ProgramService:
             brief = str(raw.get("brief") or raw.get("brief_markdown") or "").strip()
             after = [int(value) for value in raw.get("after") or [] if str(value).strip().lstrip("-").isdigit()]
             ordinal = start + index
-            if any(value >= ordinal or value < 1 for value in after):
+            if target is not None:
+                # It comes after what the step it precedes came after.
+                if any(value >= int(target["ordinal"]) or value < 1 for value in after):
+                    raise ProgramRefused("after_invalid", f"Step {index} may only come after an earlier step.", status=400)
+                after = sorted(set(after) | set(int(v) for v in target.get("after") or []))
+            elif any(value >= ordinal or value < 1 for value in after):
                 raise ProgramRefused("after_invalid", f"Step {index} may only come after an earlier step.", status=400)
             listed = self._runs_on(raw.get("runs_on"), f"step {index} runs_on")
             if listed:
@@ -1360,10 +1703,24 @@ class ProgramService:
                 program["closed_at"] = max(str(step["ended_at"]) for step in [*kept, *made])
             for step in made:
                 self.store.save_step(step)
+            by = "owner" if _is_owner(principal) else "agent"
             line = f"{'Planned' if replace else 'Added'} {len(made)} step{'s' if len(made) != 1 else ''}"
             if imported:
                 line += f"; imported {len(imported)} merged PR{'s' if len(imported) != 1 else ''}"
-            self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent", line)
+            if target is not None:
+                if waits:
+                    target["after"] = sorted(set(int(v) for v in target.get("after") or [])
+                                             | {int(step["ordinal"]) for step in made})
+                    self._save(target)
+                order = [row["id"] for row in self._top_order(program["id"]) if row["id"] not in {step["id"] for step in made}]
+                at = order.index(target["id"])
+                order[at:at] = [step["id"] for step in made]
+                self._reorder(program, order, by=by)
+                line = f"Inserted {len(made)} step{'s' if len(made) != 1 else ''} before step " \
+                       f"{(self.store.get_step(target['id']) or target)['ordinal']}"
+            self._copy_parents(program, made)
+            self._plant_step_requirements(program, made)
+            self._checkpoint(program, None, by, line)
             self._touch(program)
             self.changed(program["id"], verb="plan")
         return self.get(principal, program["id"])
@@ -1522,6 +1879,7 @@ class ProgramService:
             "started_at": None, "ended_at": None, "updated_at": now,
         }
         self.store.save_step(added)
+        self._copy_parents(program, [added])
         return added
 
     def start_from(self, principal: Any, program_id: str, checkpoint_id: Any) -> dict[str, Any]:
@@ -1581,13 +1939,22 @@ class ProgramService:
     def decide(
         self, principal: Any, program_id: str, step_id: str, *, kind: str, choice: str,
         finding_id: Optional[str] = None, reason: Optional[str] = None,
+        requirement_id: Optional[str] = None, proposal_id: Any = None,
     ) -> dict[str, Any]:
-        """His press on a your-turn item (owner only)."""
+        """His press on a your-turn item (owner only). PG-REQ: ``requirement``
+        (with ``requirement_id``) and the proposal kinds (with
+        ``proposal_id``) go to their own verbs."""
         self._require_owner(principal, "decide")
         program = self._program(program_id)
         kind, choice = str(kind or ""), str(choice or "")
         if kind == "close":
             return self.close(principal, program_id)
+        if kind == "requirement":
+            if not requirement_id:
+                raise ProgramRefused("requirement_required", "Name the requirement (requirement_id).", status=400)
+            return self.decide_requirement(principal, program_id, str(requirement_id), choice, line=reason)
+        if kind in PROPOSAL_KINDS:
+            return self.decide_proposal(principal, program_id, proposal_id if proposal_id is not None else finding_id, choice)
         step = self._step(program, step_id)
         if kind not in DECIDE_CHOICES or choice not in DECIDE_CHOICES[kind]:
             raise ProgramRefused("choice_invalid", f"{kind!r} takes {', '.join(DECIDE_CHOICES.get(kind, ())) or 'nothing'}.", status=400)
@@ -1602,6 +1969,9 @@ class ProgramService:
                 else:
                     if step.get("gate_review") == "person" and not (step.get("facts") or {}).get("person_approved"):
                         raise ProgramRefused("person_review_missing", "The person has not approved the PR on GitHub yet.")
+                    if not self.requirements_met(program, step):
+                        raise ProgramRefused("requirements_not_met", "A requirement of this step is not met. Press Met, "
+                                             "or waive it.")
                     answer = self.runner().merge(program, step, by="owner")
             elif kind == "finding":
                 answer = self._decide_finding(program, step, finding_id, choice, reason)
@@ -1741,6 +2111,747 @@ class ProgramService:
         self._checkpoint(program, step, "owner", f"Did not add: {proposal['title']}")
         return {}
 
+    # ── PG-REQ: requirements (§3 to §6) ──────────────────────────────
+
+    def _requirement_input(self, program: Mapping[str, Any], text: Any, kind: Any, spec: Any) -> dict[str, Any]:
+        """A validated ``{text, kind, spec}``; the kind by rule when he names
+        none (decision 5). A requirement with no way to be proven here is
+        refused by name (a core question at every level, §4)."""
+        from .program_requirements import KINDS, RequirementInvalid, clean_spec, clean_text, guess, provable, repository_config
+        from .program_rules import decide
+
+        words = clean_text(text)
+        if not words:
+            raise ProgramRefused("text_required", "A requirement is one sentence.", status=400)
+        chosen = str(kind or "").strip().lower().replace(" ", "_")
+        chosen = {"your_word": "word", "owner": "word"}.get(chosen, chosen) or guess(words)[0]
+        if chosen not in KINDS:
+            raise ProgramRefused("kind_invalid", "A requirement is a check, a review, a shot or your word.", status=400)
+        try:
+            cleaned = clean_spec(chosen, spec, words)
+        except RequirementInvalid as exc:
+            raise ProgramRefused(exc.code, exc.detail, status=400)
+        why = provable(chosen, cleaned, repository_config(program.get("repo_root")))
+        if why:
+            outcome = decide(program.get("control"), "requirement_unprovable", {})
+            raise ProgramRefused("requirement_unprovable", f"{why}.", status=409, rule=getattr(outcome, "rule", None))
+        return {"text": words, "kind": chosen, "spec": cleaned}
+
+    def _frozen_step(self, step: Optional[Mapping[str, Any]], field: str = "requirements") -> None:
+        if step is None:
+            return
+        _editable, frozen = step_fields(step)
+        if field in frozen:
+            extra = " Add it to the program instead." if field == "requirements" else ""
+            raise ProgramRefused("step_frozen", f"Step {step['ordinal']}: {frozen[field]}.{extra}", field=field,
+                                 reason=frozen[field])
+
+    def _new_requirement(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], data: Mapping[str, Any], *,
+                         each_step: bool, required: bool, by: str) -> dict[str, Any]:
+        now = self._clock()
+        row = {
+            "id": _new_id("req"), "program_id": program["id"], "step_id": step["id"] if step else None,
+            "ordinal": self.store.next_requirement_ordinal(program["id"]), "text": data["text"], "kind": data["kind"],
+            "required": bool(required), "spec": dict(data.get("spec") or {}), "each_step": bool(each_step and not step),
+            "parent_id": None, "state": "not_yet", "judged_commit": None, "evidence": {}, "waived_reason": None,
+            "rounds": 0, "by": by, "created_at": now, "updated_at": now, "judged_at": None,
+        }
+        self.store.save_requirement(row)
+        if row["each_step"]:
+            self._copy_parent(program, row, self.store.list_steps(program["id"]))
+        return row
+
+    def _copy_parent(self, program: Mapping[str, Any], parent: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) -> None:
+        """An every-step requirement on each step that can still be judged
+        (a merged step is history)."""
+        have = {row["step_id"] for row in self.requirements(program["id"]) if row.get("parent_id") == parent["id"]}
+        now = self._clock()
+        for step in steps:
+            if step.get("race_of") or step["id"] in have or step.get("state") in ("merged", "done") or history_of(step):
+                continue
+            self.store.save_requirement({
+                **parent, "id": _new_id("req"), "step_id": step["id"], "parent_id": parent["id"], "each_step": True,
+                "state": "not_yet", "judged_commit": None, "evidence": {}, "waived_reason": None, "rounds": 0,
+                "created_at": now, "updated_at": now, "judged_at": None,
+            })
+
+    def _copy_parents(self, program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) -> None:
+        """New steps get every every-step requirement of the Program."""
+        steps = list(steps)
+        for parent in self.requirements(program["id"]):
+            if not parent.get("step_id") and parent.get("each_step") and parent.get("state") != "waived":
+                self._copy_parent(program, parent, steps)
+
+    def _requirement_line(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], by: str, line: str,
+                          requirement_ids: Iterable[str], *, kernel: bool = False) -> None:
+        operation_id = self._kernel_record(program, step, line) if kernel and by == "engine" else None
+        ids = [str(rid) for rid in requirement_ids]
+        undo: dict[str, Any] = {"requirement_id": ids[0]} if len(ids) == 1 else {"requirement_ids": ids}
+        self.store.add_checkpoint(step_id=str((step or {}).get("id") or ""), program_id=program["id"], at=self._clock(),
+                                  by=by, line=line[:400], operation_id=operation_id, kind="requirement", undo=undo)
+
+    def require(
+        self, principal: Any, program_id: str, *, text: Any = None, kind: Any = None, step_id: Any = None,
+        each_step: Any = False, required: Any = True, spec: Any = None, requirement_id: Any = None,
+    ) -> dict[str, Any]:
+        """Add a requirement (PG-REQ §6): his at once; an orchestrating agent's
+        or a step's own agent's goes up the ladder (``requirement_proposed``:
+        YOLO adds it and says so, Secure and Normal ask him). With
+        ``requirement_id`` it is an edit (his only)."""
+        from .program_requirements import label
+        from .program_rules import decide
+
+        if requirement_id:
+            return self.edit_requirement(principal, program_id, str(requirement_id), text=text, kind=kind,
+                                         required=required if required is not True else None, spec=spec)
+        program = self._program(program_id)
+        if program.get("closed_at"):
+            raise ProgramRefused("program_closed", "The program is closed.")
+        step = self._step(program, str(step_id)) if step_id else None
+        if step is not None and step.get("race_of"):
+            step = self._step(program, str(step["race_of"]))
+        if step is not None and each_step:
+            raise ProgramRefused("scope_invalid", "Every step is a program requirement: name no step.", status=400)
+        owner = _is_owner(principal)
+        if not owner:
+            mine = program.get("created_by") == _creator(principal) or (
+                step is not None and _launch_of(principal) and _launch_of(principal) == step.get("launch_id"))
+            if not mine:
+                raise ProgramRefused("not_your_program", "Only the owner, the agent that made this program, or a "
+                                     "step's own agent may propose a requirement.", status=403)
+        self._frozen_step(step)
+        data = self._requirement_input(program, text, kind, spec)
+        where = f"step {step['ordinal']}" if step else ("every step" if each_step else "the program")
+        answer: dict[str, Any] = {}
+        with _LOCK:
+            if owner:
+                row = self._new_requirement(program, step, data, each_step=bool(each_step), required=bool(required), by="owner")
+                self._requirement_line(program, step, "owner", f"Added {label(row['ordinal'])} on {where} · {row['text']}", [row["id"]])
+            else:
+                outcome = decide(program.get("control"), "requirement_proposed", {})
+                who = agent_label(getattr(principal, "profile", None)) if getattr(principal, "profile", None) else "An agent"
+                title = f"{who} proposes a requirement on {where}: {data['text']}"
+                if outcome.to_owner:
+                    proposal = self.store.add_checkpoint(
+                        step_id=str((step or {}).get("id") or ""), program_id=program["id"], at=self._clock(), by="agent",
+                        line=title[:400], kind="requirement_proposed",
+                        undo={"title": title, "text": data["text"], "kind": data["kind"], "spec": data["spec"],
+                              "step_id": (step or {}).get("id"), "each_step": bool(each_step), "required": bool(required)})
+                    self._touch(program)
+                    self.changed(program["id"], (step or {}).get("id"), verb="require")
+                    return {"proposed": proposal, "program": self.get(principal, program["id"])}
+                row = self._new_requirement(program, step, data, each_step=bool(each_step), required=bool(required), by="agent")
+                self.engine_decision(program, step, "requirement_proposed", outcome,
+                                     f"Added {label(row['ordinal'])} on {where} that an agent proposed: {row['text']}",
+                                     undo={"requirement_id": row["id"]})
+            self._requirement_added(program, step, row)
+            self._touch(program)
+            self.changed(program["id"], (step or {}).get("id"), verb="require", requirement_id=row["id"])
+        self._tick_now(program["id"])
+        answer["requirement_id"] = row["id"]
+        answer["program"] = self.get(principal, program["id"])
+        return answer
+
+    def _plant_requirements(self, program: Mapping[str, Any], shape: Optional[Mapping[str, Any]]) -> None:
+        """PG-REQ §10: the template's requirements and the repository's own
+        defaults (``.holdspeak/program.json`` ``requirements``), ``by =
+        template``. A Review plants only where the steps are reviewed."""
+        from ..program_templates import requirements_for, reviewed
+        from .program_requirements import repository_config
+
+        review = reviewed(dict(shape)) if shape else False
+        items = requirements_for(dict(shape), review=review) if shape else []
+        for raw in repository_config(program.get("repo_root")).get("requirements") or []:
+            if isinstance(raw, Mapping) and (raw.get("kind") != "review" or review):
+                items.append(dict(raw))
+        for item in items:
+            try:
+                data = self._requirement_input(program, item.get("text"), item.get("kind"), item.get("spec"))
+            except ProgramRefused as exc:
+                log.info(f"a default requirement was not planted ({exc.code}): {item.get('text')}")
+                continue
+            self._new_requirement(program, None, data, each_step=bool(item.get("each_step", True)),
+                                  required=bool(item.get("required", True)), by="template")
+
+    def _plant_step_requirements(self, program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) -> None:
+        """From the desk (§10): one Review per step from its origin, where
+        the step is reviewed."""
+        from ..program_templates import get_template
+
+        shape = get_template(program.get("template")) if program.get("template") else None
+        for item in (shape or {}).get("step_requirements") or []:
+            for step in steps:
+                if step.get("gate_review") != "agent" or not str(step.get("origin_ref") or "").startswith("action:"):
+                    continue
+                try:
+                    data = self._requirement_input(program, str(item["text"]).replace("{title}", step["title"]),
+                                                   item.get("kind"), None)
+                except ProgramRefused:
+                    continue
+                self._new_requirement(program, step, data, each_step=False, required=bool(item.get("required", True)),
+                                      by="template")
+
+    def _requirement_added(self, program: Mapping[str, Any], step: Optional[dict[str, Any]], row: Mapping[str, Any]) -> None:
+        """A requirement added after the step's gate passed is judged on the
+        PR head (§6): the step goes back through CHECK on the same commit."""
+        if step is None or row.get("kind") == "word" or step.get("state") not in ("pr_open", "merge_ask"):
+            return
+        from .program_requirements import label
+
+        self.transition(program, step, "checking", by="engine",
+                        line=f"{label(row['ordinal'])} is judged on the PR head")
+
+    def edit_requirement(self, principal: Any, program_id: str, requirement_id: str, *, text: Any = None,
+                         kind: Any = None, required: Any = None, spec: Any = None) -> dict[str, Any]:
+        """His edit (§4): a changed sentence, kind, command or window sets a
+        Met or Unmet requirement to Not yet. Agents propose; they do not
+        edit his requirements (the bar is his)."""
+        from .program_requirements import label
+
+        self._require_owner(principal, "change a requirement")
+        program = self._program(program_id)
+        row = self._requirement(program, requirement_id)
+        step = self.store.get_step(row["step_id"]) if row.get("step_id") else None
+        self._frozen_step(step)
+        changed: list[str] = []
+        if text is not None or kind is not None or spec is not None:
+            data = self._requirement_input(program, text if text is not None else row["text"],
+                                           kind if kind is not None else (row["kind"] if text is None else row["kind"]),
+                                           spec if spec is not None else (row.get("spec") if kind is None else None))
+            if (data["text"], data["kind"], data["spec"]) != (row["text"], row["kind"], dict(row.get("spec") or {})):
+                row.update(data)
+                changed.append("the sentence" if text is not None else "how it is proven")
+        if required is not None and bool(required) != bool(row.get("required")):
+            row["required"] = bool(required)
+            changed.append("required" if row["required"] else "not required")
+        if not changed:
+            raise ProgramRefused("nothing_to_change", "Name a field to change.", status=400)
+        reset = "the sentence" in changed or "how it is proven" in changed
+        with _LOCK:
+            targets = [row] + ([other for other in self.requirements(program["id"]) if other.get("parent_id") == row["id"]]
+                               if not row.get("step_id") and row.get("each_step") else [])
+            for target in targets:
+                target_step = step if target is row else self.store.get_step(str(target.get("step_id") or ""))
+                if target is not row and target_step is not None and step_fields(target_step)[1].get("requirements"):
+                    continue
+                if target is not row:
+                    target.update({key: row[key] for key in ("text", "kind", "spec", "required")})
+                if reset and target.get("state") in ("met", "unmet"):
+                    target.update({"state": "not_yet", "evidence": {}, "judged_commit": None, "judged_at": None})
+                target["updated_at"] = self._clock()
+                self.store.save_requirement(target)
+                if reset and target_step is not None:
+                    self._requirement_added(program, target_step, target)
+            self._requirement_line(program, step, "owner", f"Changed {label(row['ordinal'])}: " + ", ".join(changed), [row["id"]])
+            self._touch(program)
+            self.changed(program["id"], row.get("step_id"), verb="require", requirement_id=row["id"])
+        self._tick_now(program["id"])
+        return {"requirement_id": row["id"], "program": self.get(principal, program["id"])}
+
+    def _requirement(self, program: Mapping[str, Any], requirement_id: str) -> dict[str, Any]:
+        row = self.store.get_requirement(str(requirement_id or ""))
+        if row is None or row["program_id"] != program["id"]:
+            raise NotFound("program_requirement", str(requirement_id))
+        return row
+
+    def judge(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], row: dict[str, Any], state: str,
+              evidence: Mapping[str, Any], *, by: str = "engine") -> dict[str, Any]:
+        """One judgement on a receipt (§4): the state, the evidence with the
+        commit it was judged on, a checkpoint line ``kind = requirement``."""
+        from .program_requirements import STATE_WORDS, label
+
+        now = self._clock()
+        row.update({"state": state, "evidence": {**dict(evidence), "by": evidence.get("by") or by, "at": now},
+                    "judged_commit": evidence.get("commit") or row.get("judged_commit"), "judged_at": now,
+                    "updated_at": now})
+        if state == "unmet":
+            row["rounds"] = int(row.get("rounds") or 0) + 1
+        self.store.save_requirement(row)
+        tail = f" · {evidence.get('line')}" if evidence.get("line") else ""
+        self._requirement_line(program, step, by, f"{label(row['ordinal'])} · {STATE_WORDS.get(state, state)}{tail}",
+                               [row["id"]], kernel=True)
+        return row
+
+    def requirements_moved(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> None:
+        """Decision 4: the step's head commit moved; every Met or Unmet of
+        kind check, shot and review goes back to Not yet (his word stays)."""
+        from .program_requirements import COMMIT_BOUND, label
+
+        head = step.get("head_commit")
+        moved = []
+        for row in self.requirements(program["id"]):
+            if row.get("step_id") != (step.get("race_of") or step["id"]) or row.get("kind") not in COMMIT_BOUND:
+                continue
+            if row.get("state") in ("met", "unmet") and row.get("judged_commit") != head:
+                row.update({"state": "not_yet", "updated_at": self._clock()})
+                self.store.save_requirement(row)
+                moved.append(row)
+        if moved:
+            labels = ", ".join(label(row["ordinal"]) for row in moved)
+            self._requirement_line(program, step, "engine", f"The commit moved: {labels} {'is' if len(moved) == 1 else 'are'} "
+                                   "judged again", [row["id"] for row in moved])
+
+    def step_requirements(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[dict[str, Any]]:
+        owner_id = step.get("race_of") or step["id"]
+        return [row for row in self.requirements(program["id"]) if row.get("step_id") == owner_id]
+
+    def requirements_met(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> bool:
+        """The merge's fact (§6): every required requirement of the step is
+        Met or Waived."""
+        from .program_requirements import gates
+
+        return not any(gates(row) for row in self.step_requirements(program, step))
+
+    def decide_requirement(self, principal: Any, program_id: str, requirement_id: str, choice: str,
+                           line: Optional[str] = None) -> dict[str, Any]:
+        """His press on a requirement (owner only): Met or Unmet for his
+        word; Waive (with his line, the evidence) and Send back (one more
+        round, even after the rounds ran out) for any."""
+        from .program_requirements import label
+
+        self._require_owner(principal, "decide a requirement")
+        program = self._program(program_id)
+        row = self._requirement(program, requirement_id)
+        choice = str(choice or "")
+        if choice not in DECIDE_CHOICES["requirement"]:
+            raise ProgramRefused("choice_invalid", f"A requirement takes {', '.join(DECIDE_CHOICES['requirement'])}.", status=400)
+        if row.get("state") == "waived":
+            raise ProgramRefused("requirement_waived", f"{label(row['ordinal'])} is waived.")
+        step = self.store.get_step(row["step_id"]) if row.get("step_id") else None
+        if step is not None and step.get("state") in ("merged", "done"):
+            raise ProgramRefused("step_frozen", f"Step {step['ordinal']}: {FROZEN_MERGED}.", field="requirements",
+                                 reason=FROZEN_MERGED)
+        words = " ".join(str(line or "").split())[:400]
+        commit = (step or {}).get("head_commit")
+        with _LOCK:
+            if choice in ("met", "unmet"):
+                if row.get("kind") != "word":
+                    raise ProgramRefused("not_his_word", "HoldSpeak judges this requirement on the commit. Waive it, "
+                                         "or send it back.")
+                said = f"You · {_clock_words(self._clock())}" + (f" · {words}" if words else "")
+                self.judge(program, step, row, choice, {"kind": "press", "line": said, "commit": commit}, by="owner")
+                if choice == "unmet" and step is not None and step.get("launch_id"):
+                    self._send_back(program, step, row, words)
+            elif choice == "waive":
+                if not words:
+                    raise ProgramRefused("line_required", "Say in one line why you waive it.", status=400)
+                self._waive(program, row, words)
+                if step is not None:
+                    self._after_waive(program, self.store.get_step(step["id"]) or step, row)
+            else:
+                if step is None or not step.get("launch_id"):
+                    raise ProgramRefused("no_builder", f"{label(row['ordinal'])} has no agent to send it to.")
+                self._send_back(program, step, row, words)
+            self._touch(program)
+            self.changed(program["id"], (step or {}).get("id"), verb="waive" if choice == "waive" else "judge",
+                         requirement_id=row["id"])
+        self._tick_now(program["id"])
+        return {"requirement_id": row["id"], "program": self.get(principal, program["id"])}
+
+    def _waive(self, program: Mapping[str, Any], row: dict[str, Any], line: str) -> None:
+        from .program_requirements import label
+
+        targets = [row]
+        if not row.get("step_id") and row.get("each_step"):
+            targets += [other for other in self.requirements(program["id"])
+                        if other.get("parent_id") == row["id"] and other.get("state") != "met"]
+        now = self._clock()
+        for target in targets:
+            target.update({"state": "waived", "waived_reason": line, "updated_at": now, "judged_at": now,
+                           "evidence": {"kind": "press", "line": line, "by": "owner", "at": now,
+                                        "commit": target.get("judged_commit")}})
+            self.store.save_requirement(target)
+        step = self.store.get_step(row["step_id"]) if row.get("step_id") else None
+        self._requirement_line(program, step, "owner", f"Waived {label(row['ordinal'])}: {line}", [row["id"]])
+
+    def _after_waive(self, program: dict[str, Any], step: dict[str, Any], row: Mapping[str, Any]) -> None:
+        """A waived requirement no longer gates: a step parked on it goes on;
+        a finding it made is decided."""
+        from .program_requirements import judged
+
+        facts = step.setdefault("facts", {})
+        left = [rid for rid in facts.get("requirements_left") or [] if rid != row["id"]]
+        by_id = {other["id"]: other for other in self.requirements(program["id"])}
+        left = [rid for rid in left if rid in by_id and not judged(by_id[rid])]
+        if facts.get("requirements_left") and not left:
+            facts["requirements_left"] = []
+            if step["state"] == "parked":
+                self.transition(program, step, "checking", by="owner", parked_by=None, parked_reason=None, facts=facts,
+                                line="The requirement is waived; the step goes on")
+                return
+        facts["requirements_left"] = left
+        findings = list(step.get("findings") or [])
+        touched = False
+        for finding in findings:
+            if finding.get("requirement_id") == row["id"] and not finding.get("decision"):
+                finding.update({"decision": "waive", "decided_at": self._clock(), "to_owner": False})
+                touched = True
+        step["findings"] = findings
+        self._save(step)
+        if touched and step["state"] == "findings" and all(item.get("decision") or not item.get("to_owner", True)
+                                                            for item in findings):
+            facts["findings_open"] = False
+            self._after_findings(program, step, findings)
+
+    def _send_back(self, program: dict[str, Any], step: dict[str, Any], row: Mapping[str, Any], line: str) -> None:
+        """Send back (§6): one line to the builder ("R5 is unmet: <the
+        evidence>. <his line>") and one more round, even after the rounds ran
+        out."""
+        from .program_requirements import label
+
+        evidence = str((row.get("evidence") or {}).get("line") or "").strip()
+        text = (f"HoldSpeak on step {step['ordinal']}: {label(row['ordinal'])} is unmet: {row['text']}"
+                + (f" ({evidence})" if evidence else "") + "."
+                + (f" The owner: {line}" if line else "")
+                + " Fix it, commit on this branch, and end your turn.")
+        facts = step.setdefault("facts", {})
+        facts["requirements_left"] = [rid for rid in facts.get("requirements_left") or [] if rid != row["id"]]
+        for finding in step.get("findings") or []:
+            if finding.get("requirement_id") == row["id"] and not finding.get("decision"):
+                finding.update({"decision": "fix_now", "decided_at": self._clock()})
+        facts["findings_open"] = any(not item.get("decision") and item.get("to_owner", True)
+                                     for item in step.get("findings") or [])
+        step["rounds"] = max(0, int(step.get("rounds") or 0) - 1)
+        try:
+            self.runner().prompt_builder(step, text)
+        except Exception as exc:
+            log.info(f"send back not typed: {exc}")
+        if step["state"] != "working" and "working" in STEP_TRANSITIONS.get(step["state"], ()):
+            self.transition(program, step, "working", by="owner", parked_by=None, parked_reason=None, facts=facts,
+                            line=f"Sent {label(row['ordinal'])} back to the agent")
+        else:
+            self._save(step)
+            self._checkpoint(program, step, "owner", f"Sent {label(row['ordinal'])} back to the agent")
+
+    def _after_findings(self, program: dict[str, Any], step: dict[str, Any], findings: list[dict[str, Any]]) -> None:
+        """Every finding is decided: the Fix now ones go back to the agent,
+        else the review passes and the gate goes on."""
+        fix = [item for item in findings if item.get("decision") == "fix_now"]
+        if fix:
+            words = "\n".join(f"- {item.get('text')}" for item in fix)
+            self.runner().prompt_builder(
+                step, f"The owner asks you to fix these findings on HoldSpeak's step {step['ordinal']}:\n{words}\n"
+                      "Fix them, commit on your branch, and end your turn.")
+            step["rounds"] = int(step.get("rounds") or 0)
+            step.setdefault("facts", {})["fix_requested_at"] = self._clock()
+            self.transition(program, step, "working", by="engine", line="Sent the findings to fix back to the agent")
+        else:
+            step["review_verdict"] = "pass"
+            self._save(step)
+            self.runner().pass_gate(program, step, by="owner")
+
+    def decide_proposal(self, principal: Any, program_id: str, proposal_id: Any, choice: str) -> dict[str, Any]:
+        """His answer on what an agent proposed (§6): a requirement (Add /
+        Skip), a change to a planned step (Apply / Skip), an amendment to a
+        running step's brief (Send / Skip)."""
+        self._require_owner(principal, "decide a proposal")
+        program = self._program(program_id)
+        row = next((item for item in self.store.list_checkpoints(program["id"])
+                    if str(item["id"]) == str(proposal_id) and item.get("kind") in PROPOSAL_KINDS), None)
+        if row is None:
+            raise ProgramRefused("proposal_unknown", "There is no such proposal on this program.", status=404)
+        if row.get("choice"):
+            raise ProgramRefused("proposal_decided", "You answered this proposal already.")
+        kind, choice = str(row["kind"]), str(choice or "")
+        if choice not in DECIDE_CHOICES[kind]:
+            raise ProgramRefused("choice_invalid", f"{kind!r} takes {', '.join(DECIDE_CHOICES[kind])}.", status=400)
+        payload = dict(row.get("undo") or {})
+        step = self.store.get_step(str(row.get("step_id") or "")) if row.get("step_id") else None
+        answer: dict[str, Any] = {}
+        with _LOCK:
+            if choice == "skip":
+                self._checkpoint(program, step, "owner", f"Skipped: {payload.get('title') or row['line']}"[:400])
+            elif kind == "requirement_proposed":
+                from .program_requirements import label
+
+                self._frozen_step(step)
+                data = self._requirement_input(program, payload.get("text"), payload.get("kind"), payload.get("spec"))
+                added = self._new_requirement(program, step, data, each_step=bool(payload.get("each_step")),
+                                              required=bool(payload.get("required", True)), by="agent")
+                self._requirement_line(program, step, "owner", f"Added {label(added['ordinal'])} that an agent proposed · "
+                                       f"{added['text']}", [added["id"]])
+                self._requirement_added(program, step, added)
+                answer["requirement_id"] = added["id"]
+            elif kind == "step_change":
+                if step is None:
+                    raise NotFound("program_step", str(row.get("step_id")))
+                self._apply_step_change(program, step, dict(payload.get("fields") or {}), by="owner")
+            else:
+                if step is None:
+                    raise NotFound("program_step", str(row.get("step_id")))
+                self._apply_amend(program, step, str(payload.get("line") or ""), by="agent")
+            self.store.decide_checkpoint(int(row["id"]), choice, payload)
+            self._touch(program)
+            self.changed(program["id"], (step or {}).get("id"), verb="decide", requirement_id=answer.get("requirement_id"))
+        self._tick_now(program["id"])
+        return {**answer, "program": self.get(principal, program["id"])}
+
+    def requirement_evidence(self, principal: Any, program_id: str, requirement_id: str) -> dict[str, Any]:
+        """The file behind a requirement's evidence (its log, or its shot),
+        read only inside the worktree the engine judged it in."""
+        program = self._program(program_id)
+        row = self._requirement(program, requirement_id)
+        evidence = row.get("evidence") or {}
+        ref = str(evidence.get("ref") or "")
+        if evidence.get("kind") not in ("log", "shot") or not ref:
+            raise ProgramRefused("no_evidence_file", "This requirement has no log or shot yet.", status=404)
+        step = self.store.get_step(row["step_id"]) if row.get("step_id") else None
+        roots = [Path(str(step["worktree"]))] if step and step.get("worktree") else []
+        roots.append(Path(str(program.get("repo_root") or ".")).parent / f"hs-program-{program['id']}-end")
+        path = Path(ref).resolve()
+        if not any(path.is_relative_to(root.resolve()) for root in roots) or not path.is_file():
+            raise ProgramRefused("no_evidence_file", "The evidence file is not there any more.", status=404)
+        media = "image/png" if path.suffix.lower() == ".png" else "text/plain; charset=utf-8"
+        return {"path": str(path), "media": media, "kind": evidence.get("kind")}
+
+    # ── PG-REQ §8: adjust while running ──────────────────────────────
+
+    def _top_order(self, program_id: str) -> list[dict[str, Any]]:
+        return [step for step in self.store.list_steps(program_id) if not step.get("race_of")]
+
+    def _reorder(self, program: Mapping[str, Any], order: list[str], *, by: str) -> list[str]:
+        """Numbers follow the order (decision 6): every step is numbered by
+        its place, every ``after`` list is rewritten through the same map, in
+        one write under the lock. A started step that changes its number
+        keeps its branch and gets one line. A step never lands above a step
+        it comes after (the refusal names it)."""
+        steps = self.store.list_steps(program["id"])
+        top = {step["id"]: step for step in steps if not step.get("race_of")}
+        mapping = {int(top[sid]["ordinal"]): index for index, sid in enumerate(order, start=1)}
+        for sid in order:
+            step = top[sid]
+            new = mapping[int(step["ordinal"])]
+            for value in step.get("after") or []:
+                if int(value) in mapping and mapping[int(value)] >= new:
+                    raise ProgramRefused("order_invalid", f"Step {step['ordinal']} comes after step {value}: it cannot "
+                                         f"move above it.", status=409)
+        lines = []
+        for step in steps:
+            old = int(step["ordinal"])
+            new = mapping.get(old, old)
+            after = sorted({mapping.get(int(value), int(value)) for value in step.get("after") or []})
+            if new == old and after == list(step.get("after") or []):
+                continue
+            if new != old and not step.get("race_of") and step.get("state") not in ("planned", "ready"):
+                lines.append((step, f"Step {old} is now step {new}"))
+            step["ordinal"], step["after"] = new, after
+            self._save(step)
+        for step, line in lines:
+            self._checkpoint(program, step, by, line)
+        return [line for _step, line in lines]
+
+    def change_step(self, principal: Any, program_id: str, step_id: str, **fields: Any) -> dict[str, Any]:
+        """Change a step (§8): the fields its state leaves open; ``before``
+        moves it. His change applies at once; an orchestrating agent's goes
+        up the ladder (``step_change``: YOLO applies it and says so, Secure
+        and Normal ask him). A frozen field is refused with its reason."""
+        from .program_rules import decide
+
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        fields = {key: value for key, value in fields.items() if key in _CHANGE_FIELDS}
+        if not fields:
+            raise ProgramRefused("nothing_to_change", "Name a field to change.", status=400)
+        _editable, frozen = step_fields(step)
+        for key in fields:
+            field = _CHANGE_FIELDS[key] if key != "runs_on" or step["state"] in ("planned", "ready") else "runs_on_then"
+            if field in frozen:
+                detail = (f"Step {step['ordinal']} started. Add the step after it." if field == "position"
+                          else f"Step {step['ordinal']}: {frozen[field]}.")
+                raise ProgramRefused("step_frozen", detail, field=field, reason=frozen[field])
+        if _is_owner(principal):
+            with _LOCK:
+                self._apply_step_change(program, step, fields, by="owner")
+                self._touch(program)
+                self.changed(program["id"], step["id"], verb="move" if "before" in fields else "step")
+            self._tick_now(program["id"])
+            return self.get(principal, program["id"])
+        self._require_writer(principal, program, "change")
+        outcome = decide(program.get("control"), "step_change", {})
+        title = f"The orchestrator {_change_words(step, fields)}"
+        with _LOCK:
+            if outcome.to_owner:
+                self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="agent",
+                                          line=title[:400], kind="step_change", undo={"title": title, "fields": dict(fields)})
+            else:
+                before = {key: step.get(_STORE_KEY.get(key, key)) for key in fields if key != "before"}
+                self._apply_step_change(program, step, fields, by="engine")
+                self.engine_decision(program, step, "step_change", outcome, title[:400],
+                                     undo={"step_id": step["id"], "fields_before": before})
+            self._touch(program)
+            self.changed(program["id"], step["id"], verb="step")
+        self._tick_now(program["id"])
+        return self.get(principal, program["id"])
+
+    def _apply_step_change(self, program: Mapping[str, Any], step: dict[str, Any], fields: Mapping[str, Any], *,
+                           by: str) -> None:
+        """Validate and write the §8 fields (each as ``plan`` validates it)."""
+        state = step["state"]
+        planned = state in ("planned", "ready")
+        changed: list[str] = []
+        if "title" in fields:
+            title = " ".join(str(fields["title"] or "").split())[:200]
+            if not title:
+                raise ProgramRefused("step_title_required", "A step needs a title.", status=400)
+            step["title"] = title
+            changed.append("title")
+        if "brief" in fields:
+            step["brief_markdown"] = str(fields["brief"] or "").strip()
+            changed.append("brief")
+        if "owns" in fields:
+            step["owns"] = [str(item) for item in fields["owns"] or [] if str(item).strip()]
+            changed.append("owns")
+        if "after" in fields:
+            after = sorted({int(value) for value in fields["after"] or [] if str(value).strip().lstrip("-").isdigit()})
+            if any(value >= int(step["ordinal"]) or value < 1 for value in after):
+                raise ProgramRefused("after_invalid", f"Step {step['ordinal']} may only come after an earlier step.", status=400)
+            step["after"] = after
+            changed.append("after")
+        if "effort" in fields:
+            effort = str(fields["effort"] or "").strip().lower()
+            if effort not in EFFORTS:
+                raise ProgramRefused("effort_invalid", "Effort is low, medium or high.", status=400)
+            step["effort"] = effort
+            changed.append("effort")
+        if "profile" in fields or "engine" in fields:
+            profile = self._profile(fields.get("profile", step.get("profile")), "profile")
+            run_profile = profile or program["default_profile"]
+            step["profile"] = profile
+            step["engine"] = self._engine_id(fields.get("engine"), run_profile, "engine") if fields.get("engine") else None
+            changed.append("agent")
+        if "runs_on" in fields:
+            listed = self._runs_on(fields["runs_on"], "runs_on")
+            if planned:
+                if listed:
+                    step["profile"], step["engine"] = listed[0]["profile"], listed[0]["engine"]
+                step["runs_on"] = listed if len(listed) > 1 else []
+            else:
+                # Started: the first agent is set; only the agents after it change.
+                first = self.runs_on_of(program, step)[0]
+                step["runs_on"] = [first] + [row for row in listed if (row["profile"], row.get("engine"))
+                                             != (first["profile"], first.get("engine"))]
+            changed.append("agents")
+        if "race" in fields:
+            race = int(fields["race"] or 0)
+            race = 0 if race == 1 else race
+            if race < 0 or race > MAX_RACE:
+                raise ProgramRefused("race_invalid", "A race has 2 or 3 agents.", status=400)
+            step["race"] = race
+            changed.append("race")
+        if "gate_check" in fields:
+            step["gate_check"] = bool(fields["gate_check"])
+            changed.append("check")
+        if "gate_review" in fields:
+            value = fields["gate_review"]
+            value = "agent" if value is True else "none" if value is False else str(value or "none").lower()
+            if value not in GATE_REVIEW:
+                raise ProgramRefused("gate_review_invalid", "Review is none, agent or person.", status=400)
+            if not planned and value != "agent":
+                raise ProgramRefused("step_frozen", f"Step {step['ordinal']}: {FROZEN_BAR}.", field="gate_review",
+                                     reason=FROZEN_BAR)
+            if value == "person" and not (step.get("for_person_id") or program.get("for_person_id")):
+                raise ProgramRefused("person_required", "A person review names the person (for_person_id).", status=400)
+            step["gate_review"] = value
+            changed.append("review")
+        if "review_depth" in fields:
+            depth = str(fields["review_depth"] or "").lower()
+            if depth not in REVIEW_DEPTHS:
+                raise ProgramRefused("review_depth_invalid", "Depth is glance, delta or standard.", status=400)
+            step["review_depth"] = depth
+            changed.append("review depth")
+        if "gate_merge" in fields:
+            merge = _GATE_MERGE_ALIASES.get(str(fields["gate_merge"] or "").lower(), str(fields["gate_merge"] or "").lower())
+            if merge not in GATE_MERGE:
+                raise ProgramRefused("gate_merge_invalid", "Merge is level, owner or none.", status=400)
+            if not planned and merge == "none":
+                raise ProgramRefused("step_frozen", f"Step {step['ordinal']}: {FROZEN_SET}.", field="gate_merge",
+                                     reason=FROZEN_SET)
+            step["gate_merge"] = merge
+            changed.append("merge")
+        if "for_person_id" in fields:
+            step["for_person_id"] = fields["for_person_id"] or None
+            changed.append("person")
+        if "may_call" in fields:
+            step["may_call"] = bool(fields["may_call"])
+            changed.append("may call")
+        if changed:
+            self._save(step)
+            self._checkpoint(program, step, by, f"Changed step {step['ordinal']}: " + ", ".join(changed))
+        if "before" in fields:
+            self._move(program, step, fields["before"], by=by)
+
+    def _move(self, program: Mapping[str, Any], step: Mapping[str, Any], before: Any, *, by: str) -> None:
+        if step["state"] not in ("planned", "ready"):
+            raise ProgramRefused("step_frozen", f"Step {step['ordinal']} started; it keeps its place.", field="position",
+                                 reason=FROZEN_SET)
+        order = [row["id"] for row in self._top_order(program["id"]) if row["id"] != step["id"]]
+        target = str(before or "")
+        if target in ("", "end"):
+            order.append(step["id"])
+        else:
+            if target not in order:
+                raise NotFound("program_step", target)
+            order.insert(order.index(target), step["id"])
+        before_ordinal = int(step["ordinal"])
+        self._reorder(program, order, by=by)
+        fresh = self.store.get_step(step["id"]) or step
+        if int(fresh["ordinal"]) != before_ordinal:
+            self._checkpoint(program, fresh, by, f"Moved step {before_ordinal} to {fresh['ordinal']}")
+
+    def amend(self, principal: Any, program_id: str, step_id: str, line: Any) -> dict[str, Any]:
+        """A line added to a started step's brief (§8): typed to the agent at
+        its next turn boundary, never into a blocked agent; the first brief
+        stays as it was. His at once; an orchestrating agent's by the level
+        (``step_amend``)."""
+        from .program_rules import decide
+
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        words = " ".join(str(line or "").split())[:1000]
+        if not words:
+            raise ProgramRefused("line_required", "An amendment is one line.", status=400)
+        if step["state"] in ("planned", "ready"):
+            raise ProgramRefused("step_not_started", f"Step {step['ordinal']} has not started: change its brief.")
+        _editable, frozen = step_fields(step)
+        if "amend" in frozen:
+            raise ProgramRefused("step_frozen", f"Step {step['ordinal']}: {frozen['amend']}. Send it back with a line instead.",
+                                 field="amend", reason=frozen["amend"])
+        if _is_owner(principal):
+            with _LOCK:
+                self._apply_amend(program, step, words, by="owner")
+                self._touch(program)
+                self.changed(program["id"], step["id"], verb="amend")
+            self._tick_now(program["id"])
+            return self.get(principal, program["id"])
+        self._require_writer(principal, program, "amend")
+        outcome = decide(program.get("control"), "step_amend", {})
+        title = f"The orchestrator adds to step {step['ordinal']}: {words}"
+        with _LOCK:
+            if outcome.to_owner:
+                self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="agent",
+                                          line=title[:400], kind="step_amend", undo={"title": title, "line": words})
+            else:
+                self._apply_amend(program, step, words, by="agent")
+                self.engine_decision(program, step, "step_amend", outcome, f"Sent to step {step['ordinal']}: {words}"[:400])
+            self._touch(program)
+            self.changed(program["id"], step["id"], verb="amend")
+        self._tick_now(program["id"])
+        return self.get(principal, program["id"])
+
+    def _apply_amend(self, program: Mapping[str, Any], step: dict[str, Any], line: str, *, by: str) -> None:
+        at = self._clock()
+        facts = step.setdefault("facts", {})
+        facts.setdefault("amendments", []).append({"at": at, "by": by, "line": line, "sent_at": None})
+        self._save(step)
+        who = "the owner" if by == "owner" else "the orchestrator"
+        self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=at, by=by, kind="amend",
+                                  line=f"Added to the brief by {who}: {line}"[:400], undo={"line": line})
+        try:
+            git = self.runner()._git
+        except Exception:
+            git = None
+        write_amendment(step, f"Added by {who} at {_clock_words(at)}", line, git=git)
+
     # ── Phone: the engine reaches him (Phone design §6) ──────────────
 
     def reach_phone(
@@ -1861,6 +2972,19 @@ class ProgramService:
                 step["rounds"] = 0
                 step["parked_by"], step["parked_reason"] = None, None
                 self.transition(program, step, "ready", by="owner", line="Overturned: the step runs again")
+            elif choice == "add" and undo.get("requirement_id"):
+                # PG-REQ: an agent's requirement YOLO added; never deleted, set aside.
+                added = self.store.get_requirement(str(undo["requirement_id"]))
+                if added is not None and added.get("state") != "waived":
+                    self._waive(program, added, "You overturned the requirement an agent proposed")
+                    added["required"] = False
+                    self.store.save_requirement(added)
+            elif choice == "apply" and step is not None and undo.get("fields_before") is not None:
+                if step["state"] not in ("planned", "ready"):
+                    raise ProgramRefused("not_overturnable", "The step started; its change stays.")
+                for key, value in dict(undo["fields_before"]).items():
+                    step[_STORE_KEY.get(key, key)] = value
+                self._save(step)
             elif choice == "add" and undo.get("step_id"):
                 added = self.store.get_step(str(undo["step_id"]))
                 if added is not None:
@@ -1912,19 +3036,7 @@ class ProgramService:
                          decision_record_id=answer.get("decision_record_id"))
         if all(item.get("decision") or not item.get("to_owner", True) for item in findings):
             step.setdefault("facts", {})["findings_open"] = False
-            fix = [item for item in findings if item.get("decision") == "fix_now"]
-            if fix:
-                words = "\n".join(f"- {item.get('text')}" for item in fix)
-                self.runner().prompt_builder(
-                    step, f"The owner asks you to fix these findings on HoldSpeak's step {step['ordinal']}:\n{words}\n"
-                          "Fix them, commit on your branch, and end your turn.")
-                step["rounds"] = int(step.get("rounds") or 0)
-                step.setdefault("facts", {})["fix_requested_at"] = self._clock()
-                self.transition(program, step, "working", by="engine", line="Sent the findings to fix back to the agent")
-            else:
-                step["review_verdict"] = "pass"
-                self._save(step)
-                self.runner().pass_gate(program, step, by="owner")
+            self._after_findings(program, step, findings)
         return answer
 
     def apply_finding_rule(self, program: dict[str, Any], step: dict[str, Any], finding: dict[str, Any],
@@ -2052,6 +3164,7 @@ class ProgramService:
         current = str(step.get("state") or "")
         if to != current and to not in STEP_TRANSITIONS.get(current, frozenset()):
             raise ProgramRefused("transition_invalid", f"A step cannot go from {current} to {to}.")
+        old_head = step.get("head_commit")
         step.update(fields)
         now = self._clock()
         step["state"] = to
@@ -2064,6 +3177,8 @@ class ProgramService:
         elif to in ("ready", "planned"):
             step["ended_at"] = None
         self._save(step)
+        if fields.get("head_commit") and fields["head_commit"] != old_head and old_head:
+            self.requirements_moved(program, step)  # PG-REQ decision 4
         if to == "pr_open" and current != "pr_open" and step.get("pr_url"):
             from . import program_decisions
 
@@ -2134,11 +3249,16 @@ class ProgramService:
             log.warning(f"program.step kernel receipt not written: {exc}")
             return None
 
-    def changed(self, program_id: str, step_id: Optional[str] = None, *, verb: str = "step") -> None:
-        """Recompute the Program's state, rewrite its note, emit the frames."""
+    def changed(self, program_id: str, step_id: Optional[str] = None, *, verb: str = "step",
+                requirement_id: Optional[str] = None) -> None:
+        """Recompute the Program's state, rewrite its note, emit the frames.
+        PG-REQ: the frame names the requirement and the count when one moved."""
+        from .program_requirements import counts as requirement_counts
+
         program = self._program(program_id)
         steps = self.store.list_steps(program_id)
-        state = program_state(program, steps)
+        reqs = self.requirements(program_id)
+        state = self._state(program, steps, requirements=reqs)
         if state == "done" and not program.get("closed_at"):
             from .program_rules import decide
 
@@ -2158,10 +3278,14 @@ class ProgramService:
             if before not in ("drafting",) or state != "running":
                 self._checkpoint(program, None, "engine", _STATE_LINES.get(state, f"The program is {state}"))
         self.write_note(program, steps)
-        turn = [item for item in your_turn(program, steps) if item["kind"] != "answer"]
-        self._broadcast("program_changed", {
-            "program_id": program_id, "step_id": step_id, "state": state, "your_turn": len(turn),
-        })
+        turn = [item for item in self._turn(program, steps, requirements=reqs) if item["kind"] != "answer"]
+        frame: dict[str, Any] = {"program_id": program_id, "step_id": step_id, "state": state, "your_turn": len(turn)}
+        if requirement_id:
+            frame["requirement_id"] = requirement_id
+        met = requirement_counts(reqs, len([item for item in turn if item["kind"] in ("requirement_word", "requirement_left")]))
+        if met:
+            frame["requirements_met"] = met
+        self._broadcast("program_changed", frame)
         try:
             from ..runtime import composition
 
@@ -2200,8 +3324,8 @@ class ProgramService:
         if program.get("goal_markdown"):
             lines += ["## Goal", program["goal_markdown"], ""]
         lines.append("## Your turn")
-        turn = [item for item in your_turn(program, steps) if item["kind"] != "answer"]
-        asks = [item for item in your_turn(program, steps) if item["kind"] == "answer"]
+        turn = [item for item in self._turn(program, steps) if item["kind"] != "answer"]
+        asks = [item for item in self._turn(program, steps) if item["kind"] == "answer"]
         for item in turn + asks:
             lines.append(f"- {item['title']}")
         if not turn and not asks:
@@ -2217,6 +3341,7 @@ class ProgramService:
         lines += ["", "## Parked"]
         lines += [f"- Step {step['ordinal']} “{step['title']}” ({agent_label(step.get('profile') or program['default_profile'])}): "
                   f"{step.get('parked_reason') or 'parked'}" for step in parked] or ["(none)"]
+        lines += self._note_requirements(program, steps)
         skips = [(step, skip) for step in steps for skip in (step.get("facts") or {}).get("skips") or []]
         later = [(step, item) for step in steps for item in step.get("findings") or [] if item.get("decision") == "later"]
         if skips or later:
@@ -2238,6 +3363,35 @@ class ProgramService:
         lines += ["", "## Last checked"]
         lines.append(f"{local_now().strftime('%Y-%m-%d %H:%M')} · {last['by'] if last else 'engine'}")
         return "\n".join(lines) + "\n"
+
+    def _note_requirements(self, program: Mapping[str, Any], steps: list[dict[str, Any]]) -> list[str]:
+        """PG-REQ: the handover note's Requirements: each sentence, where it
+        is, its state; a waive with his line."""
+        from .program_requirements import STATE_WORDS, label
+
+        reqs = self.requirements(program["id"])
+        if not reqs:
+            return []
+        ordinal = {step["id"]: step["ordinal"] for step in steps}
+        out = ["", "## Requirements"]
+        for row in reqs:
+            if row.get("step_id") and row.get("parent_id"):
+                continue
+            if not row.get("step_id"):
+                where = "every step" if row.get("each_step") else "the program"
+                copies = [other for other in reqs if other.get("parent_id") == row["id"]]
+                state = (f"{sum(1 for other in copies if other.get('state') in ('met', 'waived'))} of {len(copies)} steps"
+                         if row.get("each_step") else STATE_WORDS.get(row["state"], row["state"]))
+            else:
+                where = f"step {ordinal.get(row['step_id'], '?')}"
+                state = STATE_WORDS.get(row["state"], row["state"])
+            if row.get("state") == "waived":
+                state = f"Waived: {row.get('waived_reason') or ''}".strip()
+            out.append(f"- {label(row['ordinal'])} · {row['text']} · {where} · {state}")
+        for row in reqs:
+            if row.get("parent_id") and row.get("state") == "waived" and row.get("waived_reason"):
+                out.append(f"- {label(row['ordinal'])} on step {ordinal.get(row['step_id'], '?')} · Waived: {row['waived_reason']}")
+        return out
 
     def _step_line(self, program: Mapping[str, Any], step: Mapping[str, Any], checkpoints: list[dict[str, Any]]) -> str:
         wire = self.step_wire(program, step, checkpoints)
@@ -2287,6 +3441,57 @@ class ProgramService:
         if program.get("note_id") != note_id:
             program["note_id"] = note_id
             self.store.save_program(program)
+
+
+#: PG-REQ §8: the step fields ``change_step`` takes -> the §8 table's names.
+_CHANGE_FIELDS = {
+    "title": "title", "brief": "brief", "owns": "owns", "after": "after", "effort": "effort", "profile": "agent",
+    "engine": "agent", "runs_on": "agent", "race": "race", "gate_check": "gate_check", "gate_review": "gate_review",
+    "review_depth": "review_depth", "gate_merge": "gate_merge", "for_person_id": "for_person", "may_call": "may_call",
+    "before": "position",
+}
+#: The stored key of a change field (for an overturn's "before" values).
+_STORE_KEY = {"brief": "brief_markdown"}
+
+
+def _change_words(step: Mapping[str, Any], fields: Mapping[str, Any]) -> str:
+    """"moves step 6 before step 5", "changes step 4: title, brief"."""
+    names = [key for key in fields if key != "before"]
+    parts = []
+    if "before" in fields:
+        parts.append(f"moves step {step['ordinal']}" + (" to the end" if fields["before"] in (None, "", "end") else " up the plan"))
+    if names:
+        parts.append(f"changes step {step['ordinal']}: " + ", ".join(names))
+    return " and ".join(parts)
+
+
+def write_amendment(step: Mapping[str, Any], head: str, line: str,
+                    git: Optional[Callable[..., str]] = None) -> Optional[str]:
+    """PG-REQ §6: the amendment appended to ``<worktree>/.holdspeak/brief.md``
+    under its head ("Added by the owner at 14:02"); the file is kept out of
+    git (the worktree's ``info/exclude``), so the check's clean-tree rule
+    holds. ``None`` when the step has no worktree yet."""
+    worktree = str(step.get("worktree") or "")
+    if not worktree or not Path(worktree).is_dir():
+        return None
+    target = Path(worktree) / ".holdspeak" / "brief.md"
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("a", encoding="utf-8") as out:
+            out.write(f"\n## {head}\n\n{line}\n")
+        # git runs through the runner's one process site (the effect fence).
+        found = git(worktree, "rev-parse", "--path-format=absolute", "--git-path", "info/exclude") if git else ""
+        exclude = Path(found) if found else None
+        if exclude is not None:
+            exclude.parent.mkdir(parents=True, exist_ok=True)
+            known = exclude.read_text(encoding="utf-8") if exclude.exists() else ""
+            if ".holdspeak/brief.md" not in known.splitlines():
+                with exclude.open("a", encoding="utf-8") as out:
+                    out.write(("" if known.endswith("\n") or not known else "\n") + ".holdspeak/brief.md\n")
+    except Exception as exc:  # a note never stops the step
+        log.info(f"amendment not written to the brief file: {exc}")
+        return None
+    return str(target)
 
 
 #: The words that do not name a Program ("start the overnight program on the hub").

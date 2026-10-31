@@ -309,6 +309,8 @@ PROGRAM_WHY = {
     "core": "TO DECIDE", "race": "TO PICK", "add_step": "TO DECIDE", "close": "TO CLOSE",
     # PG19: the step's agent is at its usage limit: continue in the next, or wait.
     "limited": "TO DECIDE",
+    # PG-REQ: his word on a requirement, and one still unmet after the rounds.
+    "requirement_word": "TO CONFIRM", "requirement_left": "TO DECIDE",
 }
 
 
@@ -321,7 +323,8 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for item in items:
         kind = str(item.get("kind") or "")
-        if kind not in PROGRAM_WHY or not item.get("program_id") or not (item.get("step_id") or kind == "close"):
+        requirement = str(item.get("requirement_id") or "")
+        if kind not in PROGRAM_WHY or not item.get("program_id") or not (item.get("step_id") or kind == "close" or requirement):
             continue
         ref = f"{PROGRAM_SOURCE}:{item['program_id']}:{item['id']}"
         since = str(item.get("since") or "")
@@ -346,7 +349,9 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
                 "programId": str(item["program_id"]), "stepId": str(item["step_id"]),
                 "ordinal": item.get("ordinal"), "kind": kind, "choices": list(item.get("choices") or []),
                 "findingId": item.get("finding_id"), "pr": item.get("pr"),
+                "requirementId": requirement or None,
                 "decide": (f"/api/programs/{item['program_id']}/close" if kind == "close"
+                           else f"/api/programs/{item['program_id']}/requirements/{requirement}/decide" if requirement
                            else f"/api/programs/{item['program_id']}/steps/{item['step_id']}/decide"),
             },
             "personId": item.get("for_person_id") or None,

@@ -138,3 +138,52 @@ def test_not_core_and_the_ladder_words() -> None:
     assert is_core({"finding_text": "rename the variable"}) == ""
     assert [level_of(word) for word in ("safe", "neutral", "yolo", "SECURE", None)] == [S, N, Y, S, N]
     _him(decide(N, "something_new"), core=True)
+
+
+# ── PG-REQ §6: the requirement rows, at each level ───────────────────
+
+@pytest.mark.parametrize("level, rounds_to_builder", [(S, 2), (N, 2), (Y, 3)])
+@pytest.mark.parametrize("kind, choice", [("requirement_red", "retry"), ("requirement_unmet", "fix")])
+def test_a_red_or_unmet_requirement_goes_back_then_is_left(level, rounds_to_builder, kind, choice) -> None:
+    for done in range(rounds_to_builder):
+        _engine(decide(level, kind, {"round": done}), choice)
+    left = decide(level, kind, {"round": rounds_to_builder})
+    if level == S:
+        _him(left)
+    elif level == N:
+        assert _engine(left, "park").overturnable
+    else:
+        _engine(left, "replan")
+        assert _engine(decide(level, kind, {"round": rounds_to_builder, "replanned": True}), "park").overturnable
+
+
+def test_an_unanswered_requirement() -> None:
+    _him(decide(S, "requirement_unanswered"))
+    for level in (N, Y):
+        _engine(decide(level, "requirement_unanswered", {"asked": False}), "reask")
+        _him(decide(level, "requirement_unanswered", {"asked": True}))
+
+
+@pytest.mark.parametrize("level", [S, N, Y])
+def test_your_word_holds_the_merge_at_every_level(level) -> None:
+    _him(decide(level, "merge", {"check_green": True, "review_pass": True, "requirements_met": False}))
+
+
+def test_requirement_left_by_level() -> None:
+    _him(decide(S, "requirement_left"))
+    assert _engine(decide(N, "requirement_left"), "park").overturnable
+    _engine(decide(Y, "requirement_left"), "replan")
+    _engine(decide(Y, "requirement_left", {"replanned": True}), "park")
+
+
+def test_proposals_by_level() -> None:
+    for kind, yolo in (("requirement_proposed", "add"), ("step_change", "apply"), ("step_amend", "send")):
+        _him(decide(S, kind))
+        _him(decide(N, kind))
+        _engine(decide(Y, kind), yolo)
+    assert decide(Y, "requirement_proposed").overturnable and decide(Y, "step_change").overturnable
+
+
+@pytest.mark.parametrize("level", [S, N, Y])
+def test_a_requirement_with_no_proof_is_a_core_question(level) -> None:
+    _him(decide(level, "requirement_unprovable"), core=True)

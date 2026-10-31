@@ -125,6 +125,88 @@ export interface StepHandoff {
   continues_commit?: string | null;
 }
 
+/** PG-REQ: the kinds of proof (design §3, §4). */
+export type RequirementKind = "check" | "review" | "shot" | "word";
+export type RequirementState = "not_yet" | "met" | "unmet" | "waived";
+export type RequirementScope = "program" | "every_step" | "step";
+
+/** PG-REQ §11: what proves a requirement's state (a log, the reviewer's
+ *  line, a shot, his press), with the commit it was judged on. */
+export interface RequirementEvidence {
+  kind?: "log" | "finding" | "shot" | "press" | string;
+  line?: string;
+  by?: string;
+  at?: string;
+  commit?: string | null;
+  command?: string;
+  case?: string;
+  width?: number;
+  ref?: string;
+  round?: number;
+  /** The log text or the shot image (`GET …/requirements/{rid}/evidence`). */
+  url?: string;
+}
+
+/** PG-REQ §11: one sentence of his and the way it is proven. */
+export interface Requirement {
+  id: string;
+  ordinal: number;
+  /** `R3`. */
+  label: string;
+  program_id: string;
+  step_id: string | null;
+  scope: RequirementScope;
+  text: string;
+  kind: RequirementKind;
+  /** `Check`, `Review`, `Shot`, `Your word`. */
+  kind_word: string;
+  required: boolean;
+  spec: { command?: string; expect?: string; case?: string; width?: number };
+  parent_id: string | null;
+  /** An every-step parent: each step's copy and its state. */
+  steps?: { step_id: string; ordinal: number; state: RequirementState }[];
+  state: RequirementState;
+  /** `Not yet`, `Checking`, `Met`, `Unmet`, `Waived`, `Waits for you`. */
+  state_word: string;
+  running: boolean;
+  judged_commit: string | null;
+  stale: boolean;
+  evidence: RequirementEvidence;
+  waived_reason: string | null;
+  rounds: number;
+  by: "owner" | "agent" | "template" | string;
+  /** The presses his state allows (`met`, `unmet`, `waive`, `send_back`). */
+  choices: string[];
+}
+
+/** Required ones, counted (`4 of 5 met`; waived counts as met). */
+export interface RequirementsMet {
+  met: number;
+  total: number;
+  unmet: number;
+  waived: number;
+  /** What waits on his word or his press. */
+  his: number;
+}
+
+/** What this repository can prove (a Shot needs a shot command). */
+export interface CanProve {
+  check: boolean;
+  review: boolean;
+  shot: boolean;
+  word: boolean;
+  shot_reason?: string | null;
+}
+
+/** A line he (or an agent) added to a started step's brief. */
+export interface StepAmendment {
+  at: string;
+  by: string;
+  line: string;
+  /** When it was typed to the agent; null while it waits for a turn boundary. */
+  sent_at: string | null;
+}
+
 export interface ProgramSummary {
   id: string;
   title: string;
@@ -148,6 +230,13 @@ export interface ProgramSummary {
   done_in?: string;
   /** PG17: the imported merged PRs: `Merged 15 PRs · 28 Oct to 29 Oct`. */
   history?: ProgramHistory;
+  /** PG-REQ: omitted when the Program has no required requirement. */
+  requirements_met?: RequirementsMet | null;
+  /** PG-REQ §7: Find, Project ▾, Person ▾. */
+  project?: { id: string; name: string } | null;
+  for_person?: { id: string; name: string } | null;
+  persons?: { id: string; name: string }[];
+  search_words?: string;
 }
 
 export interface ProgramHistory {
@@ -248,9 +337,18 @@ export interface ProgramStep {
   handoffs?: StepHandoff[];
   /** PG17: an imported step: the PR it stands for. */
   history?: StepHistory | null;
+  /** PG-REQ: its own requirements and its every-step copies. */
+  requirements?: Requirement[];
+  requirements_met?: RequirementsMet | null;
+  /** PG-REQ §8: the fields its state leaves open, and why the rest are frozen. */
+  editable?: string[];
+  frozen?: Record<string, string>;
+  amendments?: StepAmendment[];
 }
 
-export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "race" | "add_step" | "close" | "limited";
+export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "race" | "add_step" | "close" | "limited"
+  // PG-REQ §9: his word, a requirement left after the rounds, and what an agent proposes.
+  | "requirement_word" | "requirement_left" | "requirement_proposed" | "step_change" | "step_amend";
 
 export interface YourTurnItem {
   id: string;
@@ -281,6 +379,10 @@ export interface YourTurnItem {
   until?: string | null;
   until_words?: string;
   warning?: boolean;
+  /** PG-REQ: the requirement an item is about. */
+  requirement_id?: string;
+  /** PG-REQ: an agent's proposal (`POST …/proposals/{id}/decide`). */
+  proposal_id?: number | string;
 }
 
 export interface ProgramPlace {
@@ -316,6 +418,9 @@ export interface Program extends ProgramSummary {
   spend_limit_usd?: number | null;
   /** He closed it (Secure). */
   closed_at?: string | null;
+  /** PG-REQ: the Program's own and the every-step parents, in ordinal order. */
+  requirements?: Requirement[];
+  can_prove?: CanProve;
   revision: number;
   status_line: string;
 }

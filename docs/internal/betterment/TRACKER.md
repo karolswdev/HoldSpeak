@@ -282,7 +282,23 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | PG17 | The first Program is the engine's own history | Open | On his desk. |
 | PG18 | Programs on Today | Open |  |
 
-**PG-REQ** (open, 13 slices REQ1–REQ13, lanes HUB/FACES/DOCS): requirements as a noun, browse and adjust; design `programs/PROGRAMS-REQUIREMENTS-2026-10-31.md`, canvas `programs/canvases/programs-requirements-2026-10-31.html`.
+**PG-REQ** (open, 13 slices REQ1–REQ13, lanes HUB/FACES/DOCS, one PR from `lane/programs-requirements-build-20261031`): requirements as a noun, browse and adjust; design `programs/PROGRAMS-REQUIREMENTS-2026-10-31.md` (#1664), canvas `programs/canvases/programs-requirements-2026-10-31.html`, recipe `programs/RECIPE.md` "PG-REQ".
+
+| Slice | What | State | Note |
+|---|---|---|---|
+| REQ1 | The table, rows, require / edit / waive, the wire | Built (PG-REQ PR) | SCHEMA_VERSION 88. |
+| REQ2 | Check and shot kinds at CHECK, the verifier's requirement form | Built (PG-REQ PR) |  |
+| REQ3 | The reviewer's REQ lines, UNMET as a REQUIRED finding, one re-ask | Built (PG-REQ PR) |  |
+| REQ4 | The gate and the rules, Your word, the end check | Built (PG-REQ PR) | End-check Review is his word until a reviewer runs over the base diff. |
+| REQ5 | "What must be true" in the brief, amendments | Built (PG-REQ PR) |  |
+| REQ6 | Templates' requirements, the repository's defaults | Built (PG-REQ PR) | Review defaults plant only on reviewed templates; `ux_canon_scan` not planted. |
+| REQ7 | Adjust: change, insert before, move, amend, the frozen table | Built (PG-REQ PR) |  |
+| REQ8 | REST, MCP, the frame, list filters, fixtures | Built (PG-REQ PR) | 3 new tools (310 in all), 7 new routes. |
+| REQ9 | The Programs list: Find, Project, Person, Group, Met | Open (FACES lane) |  |
+| REQ10 | The Requirements board, Add requirement, Your turn kinds | Open (FACES lane) |  |
+| REQ11 | The step fold, the per-step Ledger, adjust in place | Open (FACES lane) |  |
+| REQ12 | The shot pullout and the evidence thumbnail | Open (FACES lane) |  |
+| REQ13 | The documents | Built (PG-REQ PR) | `docs/programs.md`, the skill, RECIPE, UX-CANON, STATUS. |
 
 ## Phone (`phone/RECIPE.md`): 0 of 16
 

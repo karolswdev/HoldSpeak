@@ -1,172 +1,317 @@
 {
   "allowed_profiles": [],
   "asks": 0,
-  "check_command": "FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-10-28T23:53:35.270787+00:00",
+      "at": "2026-10-31T16:26:03.375317+00:00",
       "by": "owner",
       "choice": null,
-      "id": 74,
+      "decision_record_id": null,
+      "id": 83,
       "kind": null,
       "line": "Parked the program; the worktrees stay",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
       "rule": null,
       "step_id": "",
       "undo": {}
     },
     {
-      "at": "2026-10-28T23:53:35.266829+00:00",
+      "at": "2026-10-31T16:26:03.290013+00:00",
+      "by": "engine",
+      "choice": "message",
+      "decision_record_id": null,
+      "id": 82,
+      "kind": "reach",
+      "line": "Reached you: a message",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5ca571297867/8",
+      "ref_commit": "6e0e042cff57e27b133f1d07df706988a0e15bcd",
+      "rule": "Normal: a red step is a message",
+      "step_id": "step-5ca571297867",
+      "undo": {
+        "pin": {
+          "commit": "6e0e042cff57e27b133f1d07df706988a0e15bcd",
+          "head": "f9d8341dec1c4afabac2b97eb7920944930c80d7",
+          "n": 8,
+          "ref": "refs/holdspeak/checkpoints/step-5ca571297867/8",
+          "tree": "a656b55e35ccca4520a97f0f8b015e59381c135b"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T16:26:03.196415+00:00",
       "by": "engine",
       "choice": "park",
-      "id": 73,
+      "decision_record_id": null,
+      "id": 81,
       "kind": "step_failed",
       "line": "Parked step 1 and carried on: The check failed 2 times (the section pytest is red; the check's verdict is RED)",
       "operation_id": null,
       "overturnable": true,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5ca571297867/7",
+      "ref_commit": "6710eeff1755db7d97da9e5b4554684c2efecc82",
       "rule": "Normal: a failed step is parked and the rest carries on",
-      "step_id": "step-e68c8dd5ee68",
-      "undo": {}
+      "step_id": "step-5ca571297867",
+      "undo": {
+        "pin": {
+          "commit": "6710eeff1755db7d97da9e5b4554684c2efecc82",
+          "head": "f9d8341dec1c4afabac2b97eb7920944930c80d7",
+          "n": 7,
+          "ref": "refs/holdspeak/checkpoints/step-5ca571297867/7",
+          "tree": "a656b55e35ccca4520a97f0f8b015e59381c135b"
+        }
+      }
     },
     {
-      "at": "2026-10-28T23:53:35.231896+00:00",
+      "at": "2026-10-31T16:26:03.054898+00:00",
       "by": "engine",
       "choice": null,
-      "id": 72,
+      "decision_record_id": null,
+      "id": 80,
       "kind": null,
-      "line": "Running the check: FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5ca571297867/6",
+      "ref_commit": "8966a9af735835e024b04c34e4fdf9ebf3fdc9dd",
       "rule": null,
-      "step_id": "step-e68c8dd5ee68",
-      "undo": {}
+      "step_id": "step-5ca571297867",
+      "undo": {
+        "pin": {
+          "commit": "8966a9af735835e024b04c34e4fdf9ebf3fdc9dd",
+          "head": "f9d8341dec1c4afabac2b97eb7920944930c80d7",
+          "n": 6,
+          "ref": "refs/holdspeak/checkpoints/step-5ca571297867/6",
+          "tree": "d605ad03f95f0c6d1e8e7065997fd0f9362a35ba"
+        }
+      }
     },
     {
-      "at": "2026-10-28T23:53:35.231638+00:00",
+      "at": "2026-10-31T16:26:02.972953+00:00",
       "by": "engine",
       "choice": null,
-      "id": 71,
+      "decision_record_id": null,
+      "id": 79,
       "kind": null,
-      "line": "New commit 0059b20d; the check runs",
+      "line": "New commit f9d8341d; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5ca571297867/5",
+      "ref_commit": "133593e42751ad8e437fa6dbab73820d78c1f859",
       "rule": null,
-      "step_id": "step-e68c8dd5ee68",
-      "undo": {}
+      "step_id": "step-5ca571297867",
+      "undo": {
+        "pin": {
+          "commit": "133593e42751ad8e437fa6dbab73820d78c1f859",
+          "head": "f9d8341dec1c4afabac2b97eb7920944930c80d7",
+          "n": 5,
+          "ref": "refs/holdspeak/checkpoints/step-5ca571297867/5",
+          "tree": "d605ad03f95f0c6d1e8e7065997fd0f9362a35ba"
+        }
+      }
     },
     {
-      "at": "2026-10-28T23:53:35.170197+00:00",
+      "at": "2026-10-31T16:26:02.818508+00:00",
       "by": "engine",
       "choice": "retry",
-      "id": 70,
+      "decision_record_id": null,
+      "id": 78,
       "kind": "check_failed",
       "line": "Check red on step 1, round 1 (the section pytest is red; the check's verdict is RED); sent the log back",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5ca571297867/4",
+      "ref_commit": "d8f5b459c401d14f89f9d8aef52e563509ca36fb",
       "rule": "a red check goes back to the builder (round 2 of 2)",
-      "step_id": "step-e68c8dd5ee68",
-      "undo": {}
+      "step_id": "step-5ca571297867",
+      "undo": {
+        "pin": {
+          "commit": "d8f5b459c401d14f89f9d8aef52e563509ca36fb",
+          "head": "d4743619d3ad990be696e8bc5660f063df8c5b39",
+          "n": 4,
+          "ref": "refs/holdspeak/checkpoints/step-5ca571297867/4",
+          "tree": "530d97bbf48c8b4348fe9c14b473167aebf3f5e7"
+        }
+      }
     },
     {
-      "at": "2026-10-28T23:53:35.135048+00:00",
+      "at": "2026-10-31T16:26:02.700732+00:00",
       "by": "engine",
       "choice": null,
-      "id": 69,
+      "decision_record_id": null,
+      "id": 77,
       "kind": null,
-      "line": "Running the check: FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5ca571297867/3",
+      "ref_commit": "5fb34fc2c73bb0d30b719570366f0192088f9e3a",
       "rule": null,
-      "step_id": "step-e68c8dd5ee68",
-      "undo": {}
+      "step_id": "step-5ca571297867",
+      "undo": {
+        "pin": {
+          "commit": "5fb34fc2c73bb0d30b719570366f0192088f9e3a",
+          "head": "d4743619d3ad990be696e8bc5660f063df8c5b39",
+          "n": 3,
+          "ref": "refs/holdspeak/checkpoints/step-5ca571297867/3",
+          "tree": "7e7848f1de0954387ecd09726fce905c0af9f2f9"
+        }
+      }
     },
     {
-      "at": "2026-10-28T23:53:35.134725+00:00",
+      "at": "2026-10-31T16:26:02.611383+00:00",
       "by": "engine",
       "choice": null,
-      "id": 68,
+      "decision_record_id": null,
+      "id": 76,
       "kind": null,
-      "line": "New commit 38b32997; the check runs",
+      "line": "New commit d4743619; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5ca571297867/2",
+      "ref_commit": "d59da4951f41ad03892a402d9ee2ccbec4646e5a",
       "rule": null,
-      "step_id": "step-e68c8dd5ee68",
-      "undo": {}
+      "step_id": "step-5ca571297867",
+      "undo": {
+        "pin": {
+          "commit": "d59da4951f41ad03892a402d9ee2ccbec4646e5a",
+          "head": "d4743619d3ad990be696e8bc5660f063df8c5b39",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-5ca571297867/2",
+          "tree": "7e7848f1de0954387ecd09726fce905c0af9f2f9"
+        }
+      }
     },
     {
-      "at": "2026-10-28T23:53:35.077939+00:00",
+      "at": "2026-10-31T16:26:02.474975+00:00",
       "by": "engine",
       "choice": null,
-      "id": 67,
+      "decision_record_id": null,
+      "id": 75,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-5f88e1a6a2dd",
+      "line": "Handed to Claude Code in hs-program-step-498c08092ed0",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-498c08092ed0/1",
+      "ref_commit": "078b21dae00e0bcca50e450f17f41b62405fb8ae",
       "rule": null,
-      "step_id": "step-5f88e1a6a2dd",
-      "undo": {}
+      "step_id": "step-498c08092ed0",
+      "undo": {
+        "pin": {
+          "commit": "078b21dae00e0bcca50e450f17f41b62405fb8ae",
+          "head": "4c413e3de9ade94f814a5e2858716c4bdd50c3b1",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-498c08092ed0/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        }
+      }
     },
     {
-      "at": "2026-10-28T23:53:35.019527+00:00",
+      "at": "2026-10-31T16:26:02.322440+00:00",
       "by": "engine",
       "choice": null,
-      "id": 66,
+      "decision_record_id": null,
+      "id": 74,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-e68c8dd5ee68",
+      "line": "Handed to Claude Code in hs-program-step-5ca571297867",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5ca571297867/1",
+      "ref_commit": "01563f8f15d1e38d6ee025cfa553fb986bacc61a",
       "rule": null,
-      "step_id": "step-e68c8dd5ee68",
-      "undo": {}
+      "step_id": "step-5ca571297867",
+      "undo": {
+        "pin": {
+          "commit": "01563f8f15d1e38d6ee025cfa553fb986bacc61a",
+          "head": "4c413e3de9ade94f814a5e2858716c4bdd50c3b1",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-5ca571297867/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        }
+      }
     },
     {
-      "at": "2026-10-28T23:53:34.957546+00:00",
+      "at": "2026-10-31T16:26:02.250099+00:00",
       "by": "owner",
       "choice": null,
-      "id": 65,
+      "decision_record_id": null,
+      "id": 73,
       "kind": null,
       "line": "Started the program",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
       "rule": null,
       "step_id": "",
       "undo": {}
     },
     {
-      "at": "2026-10-28T23:53:34.956513+00:00",
+      "at": "2026-10-31T16:26:02.248878+00:00",
       "by": "owner",
       "choice": null,
-      "id": 64,
+      "decision_record_id": null,
+      "id": 72,
       "kind": null,
       "line": "Added 2 steps",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
       "rule": null,
       "step_id": "",
       "undo": {}
     },
     {
-      "at": "2026-10-28T23:53:34.955567+00:00",
+      "at": "2026-10-31T16:26:02.247692+00:00",
       "by": "owner",
       "choice": null,
-      "id": 63,
+      "decision_record_id": null,
+      "id": 71,
       "kind": null,
       "line": "Made the program from the Fast cycle template",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
       "rule": null,
       "step_id": "",
       "undo": {}
@@ -175,31 +320,46 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-10-28T23:53:34.955466+00:00",
+  "created_at": "2026-10-31T16:26:02.247567+00:00",
   "decided_for_you": [
     {
-      "at": "2026-10-28T23:53:35.266829+00:00",
+      "at": "2026-10-31T16:26:03.290013+00:00",
+      "choice": "message",
+      "decision_record_id": null,
+      "id": 82,
+      "kind": "reach",
+      "line": "Reached you: a message",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal: a red step is a message",
+      "step_id": "step-5ca571297867"
+    },
+    {
+      "at": "2026-10-31T16:26:03.196415+00:00",
       "choice": "park",
-      "id": 73,
+      "decision_record_id": null,
+      "id": 81,
       "kind": "step_failed",
       "line": "Parked step 1 and carried on: The check failed 2 times (the section pytest is red; the check's verdict is RED)",
       "operation_id": null,
       "overturnable": true,
       "overturned_at": null,
       "rule": "Normal: a failed step is parked and the rest carries on",
-      "step_id": "step-e68c8dd5ee68"
+      "step_id": "step-5ca571297867"
     },
     {
-      "at": "2026-10-28T23:53:35.170197+00:00",
+      "at": "2026-10-31T16:26:02.818508+00:00",
       "choice": "retry",
-      "id": 70,
+      "decision_record_id": null,
+      "id": 78,
       "kind": "check_failed",
       "line": "Check red on step 1, round 1 (the section pytest is red; the check's verdict is RED); sent the log back",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "rule": "a red check goes back to the builder (round 2 of 2)",
-      "step_id": "step-e68c8dd5ee68"
+      "step_id": "step-5ca571297867"
     }
   ],
   "default": {
@@ -216,46 +376,56 @@
     ]
   },
   "done": 0,
+  "for_person": null,
   "for_person_id": null,
   "goal": "Retire the old ledger.",
-  "id": "program-3fb17da9237b",
+  "id": "program-3c9316758474",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-10-28T23:53:35.270787+00:00",
+    "at": "2026-10-31T16:26:03.375317+00:00",
     "by": "owner",
     "choice": null,
-    "id": 74,
+    "decision_record_id": null,
+    "id": 83,
     "kind": null,
     "line": "Parked the program; the worktrees stay",
     "operation_id": null,
     "overturnable": false,
     "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
     "rule": null,
     "step_id": "",
     "undo": {}
   },
+  "may_call": false,
   "may_handoff": false,
-  "note_id": "program-program-3fb17da9237b",
-  "note_window": "pullout:note:program-program-3fb17da9237b",
+  "note_id": "program-program-3c9316758474",
+  "note_window": "pullout:note:program-program-3c9316758474",
   "origin_ref": null,
+  "persons": [],
   "place": {
     "origin": null,
     "person": null,
     "project": null
   },
   "prefer_idle": false,
+  "project": null,
   "project_id": null,
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-a73wsh5g/rig/app"
   },
+  "requirements": [],
   "reviewer": {
     "agent": null,
     "engine": null,
     "profile": null
   },
   "revision": 3,
+  "search_words": "retire the old ledger retire the old ledger. fast-cycle drop the ledger tidy fast cycle",
   "spend_limit_usd": null,
   "state": "parked",
   "state_word": "Parked",
@@ -264,12 +434,13 @@
     {
       "after": [],
       "agent": "Claude Code",
+      "amendments": [],
       "branch": "program/retire-the-old-ledger/1-drop-the-ledger",
       "brief": "x",
       "check": {
-        "command": "FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
-        "commit": "0059b20d2c846b3e4151a6745c34da23b1a017ab",
-        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/hs-program-step-e68c8dd5ee68/.tmp/program-check/step-e68c8dd5ee68/20261028T235335Z.log",
+        "command": "FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
+        "commit": "f9d8341dec1c4afabac2b97eb7920944930c80d7",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-a73wsh5g/rig/hs-program-step-5ca571297867/.tmp/program-check/step-5ca571297867/20261031T162603Z.log",
         "minutes": 0.0,
         "reasons": [
           "the section pytest is red",
@@ -305,14 +476,35 @@
         "verdict": "red"
       },
       "contenders": [],
+      "editable": [
+        "title",
+        "requirements"
+      ],
       "effort": "medium",
       "elapsed": "under a minute",
       "elapsed_seconds": 0,
-      "ended_at": "2026-10-28T23:53:35.266705+00:00",
+      "ended_at": "2026-10-31T16:26:03.191881+00:00",
       "engine": null,
       "findings": [],
       "for_person": null,
       "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "amend": "The agent has read it",
+        "brief": "The agent has read it",
+        "effort": "The worktree and the agent are set",
+        "for_person": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "gate_merge": "The worktree and the agent are set",
+        "gate_review": "The bar does not come down while it runs",
+        "may_call": "The worktree and the agent are set",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set",
+        "review_depth": "The agent has read it",
+        "runs_on_then": "The worktree and the agent are set"
+      },
       "gate": {
         "check": true,
         "merge": "level",
@@ -321,23 +513,37 @@
       },
       "handoffs": [],
       "held_reason": null,
-      "id": "step-e68c8dd5ee68",
+      "history": null,
+      "id": "step-5ca571297867",
       "last_checkpoint": {
-        "at": "2026-10-28T23:53:35.266829+00:00",
+        "at": "2026-10-31T16:26:03.290013+00:00",
         "by": "engine",
-        "choice": "park",
-        "id": 73,
-        "kind": "step_failed",
-        "line": "Parked step 1 and carried on: The check failed 2 times (the section pytest is red; the check's verdict is RED)",
+        "choice": "message",
+        "decision_record_id": null,
+        "id": 82,
+        "kind": "reach",
+        "line": "Reached you: a message",
         "operation_id": null,
-        "overturnable": true,
+        "overturnable": false,
         "overturned_at": null,
-        "rule": "Normal: a failed step is parked and the rest carries on",
-        "step_id": "step-e68c8dd5ee68",
-        "undo": {}
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-5ca571297867/8",
+        "ref_commit": "6e0e042cff57e27b133f1d07df706988a0e15bcd",
+        "rule": "Normal: a red step is a message",
+        "step_id": "step-5ca571297867",
+        "undo": {
+          "pin": {
+            "commit": "6e0e042cff57e27b133f1d07df706988a0e15bcd",
+            "head": "f9d8341dec1c4afabac2b97eb7920944930c80d7",
+            "n": 8,
+            "ref": "refs/holdspeak/checkpoints/step-5ca571297867/8",
+            "tree": "a656b55e35ccca4520a97f0f8b015e59381c135b"
+          }
+        }
       },
       "launch_id": "L13",
       "limit": null,
+      "may_call": false,
       "ordinal": 1,
       "origin_ref": null,
       "owns": [],
@@ -349,6 +555,7 @@
       "race": 0,
       "race_of": null,
       "report": null,
+      "requirements": [],
       "review": {
         "reviewer": null,
         "round": null,
@@ -363,7 +570,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-10-28T23:53:35.019252+00:00",
+      "started_at": "2026-10-31T16:26:02.322108+00:00",
       "state": "parked",
       "state_word": "Parked",
       "station": -1,
@@ -376,16 +583,17 @@
         "merge"
       ],
       "title": "Drop the ledger",
-      "updated_at": "2026-10-28T23:53:35.266710+00:00",
-      "worktree": "hs-program-step-e68c8dd5ee68"
+      "updated_at": "2026-10-31T16:26:03.191888+00:00",
+      "worktree": "hs-program-step-5ca571297867"
     },
     {
       "after": [],
       "agent": "Claude Code",
+      "amendments": [],
       "branch": "program/retire-the-old-ledger/2-tidy",
       "brief": "y",
       "check": {
-        "command": "FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "command": "FAKE_CHECK_RED=1 sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -395,6 +603,17 @@
         "verdict": null
       },
       "contenders": [],
+      "editable": [
+        "title",
+        "amend",
+        "runs_on_then",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "for_person",
+        "may_call"
+      ],
       "effort": "medium",
       "elapsed": "under a minute",
       "elapsed_seconds": 0,
@@ -403,6 +622,16 @@
       "findings": [],
       "for_person": null,
       "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "brief": "The agent has read it",
+        "effort": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set"
+      },
       "gate": {
         "check": true,
         "merge": "level",
@@ -411,23 +640,37 @@
       },
       "handoffs": [],
       "held_reason": null,
-      "id": "step-5f88e1a6a2dd",
+      "history": null,
+      "id": "step-498c08092ed0",
       "last_checkpoint": {
-        "at": "2026-10-28T23:53:35.077939+00:00",
+        "at": "2026-10-31T16:26:02.474975+00:00",
         "by": "engine",
         "choice": null,
-        "id": 67,
+        "decision_record_id": null,
+        "id": 75,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-5f88e1a6a2dd",
+        "line": "Handed to Claude Code in hs-program-step-498c08092ed0",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-498c08092ed0/1",
+        "ref_commit": "078b21dae00e0bcca50e450f17f41b62405fb8ae",
         "rule": null,
-        "step_id": "step-5f88e1a6a2dd",
-        "undo": {}
+        "step_id": "step-498c08092ed0",
+        "undo": {
+          "pin": {
+            "commit": "078b21dae00e0bcca50e450f17f41b62405fb8ae",
+            "head": "4c413e3de9ade94f814a5e2858716c4bdd50c3b1",
+            "n": 1,
+            "ref": "refs/holdspeak/checkpoints/step-498c08092ed0/1",
+            "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+          }
+        }
       },
       "launch_id": "L14",
       "limit": null,
+      "may_call": false,
       "ordinal": 2,
       "origin_ref": null,
       "owns": [],
@@ -439,6 +682,7 @@
       "race": 0,
       "race_of": null,
       "report": null,
+      "requirements": [],
       "review": {
         "reviewer": null,
         "round": null,
@@ -453,7 +697,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-10-28T23:53:35.077636+00:00",
+      "started_at": "2026-10-31T16:26:02.474693+00:00",
       "state": "working",
       "state_word": "Working",
       "station": 1,
@@ -466,14 +710,14 @@
         "merge"
       ],
       "title": "Tidy",
-      "updated_at": "2026-10-28T23:53:35.170407+00:00",
-      "worktree": "hs-program-step-5f88e1a6a2dd"
+      "updated_at": "2026-10-31T16:26:02.908321+00:00",
+      "worktree": "hs-program-step-498c08092ed0"
     }
   ],
   "template": "fast-cycle",
   "title": "Retire the old ledger",
   "total": 2,
-  "updated_at": "2026-10-28T23:53:35.270721+00:00",
+  "updated_at": "2026-10-31T16:26:03.375248+00:00",
   "usage_warning_share": null,
   "your_turn": 0,
   "your_turn_items": []

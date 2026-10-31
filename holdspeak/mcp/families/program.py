@@ -15,6 +15,12 @@ live in the service, so every transport keeps them:
   own launch (the ladder decides: Secure and Normal ask him, YOLO adds it);
 - ``program.decide``, ``program.overturn`` and ``program.handoff`` (PG19): the owner only (AUTHORITY in ``tool_authority.py``,
   never in the CONDUCTOR palette).
+- PG-REQ (2026-10-31): ``program.require`` (add a requirement, or his edit
+  of one), ``program.step_update`` (change a step, move it) and
+  ``program.amend`` (a line added to a started step's brief): his at once;
+  an orchestrating agent's (and, for ``program.require``, a step's own
+  agent's) by the Control level. No tool says a requirement is met: the
+  engine judges it, or he presses (``program.decide`` kind ``requirement``).
 """
 from __future__ import annotations
 
@@ -95,6 +101,32 @@ def _schema(properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
     return {"type": "object", "properties": properties, "required": required, "additionalProperties": False}
 
 
+_SPEC = {"type": ["object", "null"], "additionalProperties": False, "properties": {
+    "command": {"type": "string", "maxLength": 2000, "description": "Check: the command HoldSpeak runs on the step's commit."},
+    "expect": {"type": "string", "maxLength": 400, "description": "Check: a pattern one line of the log must match."},
+    "case": {"type": "string", "maxLength": 200, "description": "Shot: the desk sweep case (the window)."},
+    "width": {"type": "integer", "enum": [393, 1440]},
+}}
+#: PG-REQ §8: the step fields program.step_update takes.
+_STEP_UPDATE = {
+    "title": {"type": "string", "minLength": 1, "maxLength": 200},
+    "brief": {"type": "string", "maxLength": 12000},
+    "owns": {"type": "array", "items": {"type": "string"}},
+    "after": {"type": "array", "items": {"type": "integer", "minimum": 1}},
+    **_RUNS_ON,
+    "runs_on": _RUNS_ON_LIST,
+    "effort": {"type": "string", "enum": ["low", "medium", "high"]},
+    "race": {"type": "integer", "minimum": 0, "maximum": 3},
+    "gate_check": {"type": "boolean"},
+    "gate_review": {"type": ["string", "boolean"]},
+    "review_depth": {"type": "string", "enum": ["glance", "delta", "standard"]},
+    "gate_merge": {"type": "string", "enum": ["level", "owner", "auto", "none"],
+                   "description": "level (the Control level decides), owner (his press) or none (no PR)."},
+    "for_person_id": {"type": ["string", "null"]},
+    "may_call": {"type": "boolean"},
+    "before": {"type": ["string", "null"], "description": "Move it before this step id (\"end\": to the end). Planned or Ready steps only."},
+}
+
 TOOLS: list[dict[str, Any]] = [
     {"name": "program.create",
      "description": "Make a Program: a goal cut into steps, each handed to an agent in its own worktree, checked by a "
@@ -129,6 +161,8 @@ TOOLS: list[dict[str, Any]] = [
      "inputSchema": _schema({
          "program_id": _ID, "steps": {"type": "array", "items": _STEP},
          "size": {"type": ["string", "null"], "enum": ["auto", None]}, "replace": {"type": ["boolean", "null"]},
+         "before": {"type": ["string", "null"], "description": "Insert the steps before this Planned or Ready step id."},
+         "waits": {"type": ["boolean", "null"], "description": "With before: that step also comes after the new ones (default true)."},
      }, ["program_id", "steps"])},
     {"name": "program.update",
      "description": "Change a Program: title, goal, Control level (secure, normal, yolo), when idle, its Project "
@@ -157,8 +191,40 @@ TOOLS: list[dict[str, Any]] = [
                     "its checkpoints (each with the hidden ref it pinned the step's worktree to, ref and ref_commit), "
                     "what waits on the owner, and spoken (its state in one or two sentences to say on a call).",
      "inputSchema": _schema(_BY_NAME, [])},
-    {"name": "program.list", "description": "List the Programs, waiting first.",
-     "inputSchema": _schema({}, [])},
+    {"name": "program.list", "description": "List the Programs, waiting first. q: words every row must have "
+                                           "(title, goal, project, person, step titles, #PR, template); "
+                                           "project_id and person_id narrow the rows.",
+     "inputSchema": _schema({"q": {"type": ["string", "null"], "maxLength": 200},
+                             "project_id": {"type": ["string", "null"]},
+                             "person_id": {"type": ["string", "null"]}}, [])},
+    {"name": "program.require",
+     "description": "Add one requirement: one sentence the owner wants true, on the Program (judged after the last "
+                    "step), on every step (each_step), or on one step (step_id). kind: check (a command, in "
+                    "backticks or spec.command), review (the step's reviewer answers REQ Rn: MET or UNMET), shot "
+                    "(spec.case and spec.width, 393 or 1440), word (the owner presses Met). No kind: the rule "
+                    "guesses it. An agent's requirement is a proposal: at YOLO it is added and listed under "
+                    "Decided for you; at Secure and Normal the owner adds or skips it. With requirement_id it "
+                    "changes one (the owner only). No tool marks a requirement met.",
+     "inputSchema": _schema({
+         "program_id": _ID, "text": {"type": ["string", "null"], "maxLength": 400},
+         "kind": {"type": ["string", "null"], "enum": ["check", "review", "shot", "word", None]},
+         "step_id": {"type": ["string", "null"]}, "each_step": {"type": ["boolean", "null"]},
+         "required": {"type": ["boolean", "null"]}, "spec": _SPEC,
+         "requirement_id": {"type": ["string", "null"]},
+     }, ["program_id"])},
+    {"name": "program.step_update",
+     "description": "Change a step: the fields its state leaves open (a Planned step: all; a started step: title, "
+                    "the agents after the first, raise the review to agent, merge level or owner, the person; an "
+                    "open PR: title, merge, the person). before moves a Planned or Ready step; numbers follow the "
+                    "order. A frozen field is refused with its reason (step_frozen). The owner's change applies at "
+                    "once; an orchestrating agent's goes to the owner at Secure and Normal, YOLO applies it.",
+     "inputSchema": _schema({"program_id": _ID, "step_id": _ID, **_STEP_UPDATE}, ["program_id", "step_id"])},
+    {"name": "program.amend",
+     "description": "Add one line to a started step's brief. HoldSpeak types it to the step's agent at its next turn "
+                    "boundary (never into a blocked agent); the first brief stays as it was. The owner's line goes "
+                    "at once; an orchestrating agent's goes to the owner at Secure and Normal, YOLO sends it.",
+     "inputSchema": _schema({"program_id": _ID, "step_id": _ID, "line": {"type": "string", "minLength": 1, "maxLength": 1000}},
+                            ["program_id", "step_id", "line"])},
     {"name": "program.checkpoint",
      "description": "Write one line on your step at a meaningful moment. Only the step's own agent (or the owner).",
      "inputSchema": _schema({"step_id": _ID, "line": {"type": "string", "minLength": 1, "maxLength": 400},
@@ -174,15 +240,19 @@ TOOLS: list[dict[str, Any]] = [
     {"name": "program.decide",
      "description": "The owner's decision on a step: a merge (merge, not_yet), a finding (fix_now, later, skip), a "
                     "parked step (resume, skip), a person review (prepare: a send is prepared, he presses Send), "
-                    "an agent at its usage limit (limited: continue, wait). "
+                    "an agent at its usage limit (limited: continue, wait), a requirement (requirement with "
+                    "requirement_id: met, unmet, waive with reason, send_back), what an agent proposed "
+                    "(proposal_id: requirement_proposed add or skip, step_change apply or skip, step_amend send or skip). "
                     "Owner only.",
      "inputSchema": _schema({
-         "program_id": _ID, "step_id": _ID,
+         "program_id": _ID, "step_id": {"type": ["string", "null"], "maxLength": 128},
          "kind": {"type": "string", "enum": ["merge", "finding", "parked", "ask_review", "core", "race", "add_step", "close",
-                                             "limited"]},
+                                             "limited", "requirement", "requirement_proposed", "step_change", "step_amend"]},
          "choice": {"type": "string"}, "finding_id": {"type": ["string", "null"]},
          "reason": {"type": ["string", "null"], "maxLength": 400},
-     }, ["program_id", "step_id", "kind", "choice"])},
+         "requirement_id": {"type": ["string", "null"]},
+         "proposal_id": {"type": ["string", "integer", "null"]},
+     }, ["program_id", "kind", "choice"])},
     {"name": "program.handoff",
      "description": "Move a step that holds an agent to another agent, in the same worktree on the same branch, with "
                     "HoldSpeak's handoff brief as its first message. preview true returns the brief, what was redacted "
@@ -223,7 +293,16 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return service.create(principal, **{key: value for key, value in args.items()})
     if name == "program.plan":
         return service.plan(principal, str(args.get("program_id") or ""), steps=list(args.get("steps") or []),
-                            size=args.get("size"), replace=bool(args.get("replace")))
+                            size=args.get("size"), replace=bool(args.get("replace")), before=args.get("before") or None,
+                            waits=args.get("waits") is not False)
+    if name == "program.require":
+        program_id = str(args.pop("program_id"))
+        return service.require(principal, program_id, **{key: value for key, value in args.items() if value is not None})
+    if name == "program.step_update":
+        program_id, step_id = str(args.pop("program_id")), str(args.pop("step_id"))
+        return service.change_step(principal, program_id, step_id, **args)
+    if name == "program.amend":
+        return service.amend(principal, str(args["program_id"]), str(args["step_id"]), args.get("line"))
     if name == "program.update":
         program_id = str(args.pop("program_id"))
         return service.update(principal, program_id, **args)
@@ -234,7 +313,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name == "program.resume":
         return service.resume(principal, str(args["program_id"]))
     if name == "program.list":
-        return service.list(principal)
+        return service.list(principal, q=args.get("q"), project_id=args.get("project_id"), person_id=args.get("person_id"))
     if name == "program.checkpoint":
         return service.checkpoint(principal, args.get("program_id"), str(args["step_id"]), str(args.get("line") or ""))
     if name == "program.step_done":
@@ -248,8 +327,9 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return service.handoff(principal, str(args["program_id"]), str(args["step_id"]), args.get("to"),
                                preview=bool(args.get("preview")))
     return service.decide(
-        principal, str(args["program_id"]), str(args["step_id"]), kind=str(args.get("kind") or ""),
+        principal, str(args["program_id"]), str(args.get("step_id") or ""), kind=str(args.get("kind") or ""),
         choice=str(args.get("choice") or ""), finding_id=args.get("finding_id"), reason=args.get("reason"),
+        requirement_id=args.get("requirement_id"), proposal_id=args.get("proposal_id"),
     )
 
 

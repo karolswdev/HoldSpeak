@@ -1,0 +1,600 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-31T17:04:17.064571+00:00",
+      "by": "agent",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 9,
+      "kind": "step_amend",
+      "line": "The orchestrator adds to step 1: Keep the port at 5060",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "step-388368bc9166",
+      "undo": {
+        "line": "Keep the port at 5060",
+        "title": "The orchestrator adds to step 1: Keep the port at 5060"
+      }
+    },
+    {
+      "at": "2026-10-31T17:04:17.061258+00:00",
+      "by": "agent",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 8,
+      "kind": "step_change",
+      "line": "The orchestrator changes step 2: title",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "step-5dda8f3d81c8",
+      "undo": {
+        "fields": {
+          "title": "The Line window"
+        },
+        "title": "The orchestrator changes step 2: title"
+      }
+    },
+    {
+      "at": "2026-10-31T17:04:17.059989+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 7,
+      "kind": null,
+      "line": "The program waits on you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-31T17:04:17.059673+00:00",
+      "by": "agent",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 6,
+      "kind": "requirement_proposed",
+      "line": "An agent proposes a requirement on step 1: The line answers in two rings",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "step-388368bc9166",
+      "undo": {
+        "each_step": false,
+        "kind": "review",
+        "required": true,
+        "spec": {},
+        "step_id": "step-388368bc9166",
+        "text": "The line answers in two rings",
+        "title": "An agent proposes a requirement on step 1: The line answers in two rings"
+      }
+    },
+    {
+      "at": "2026-10-31T17:04:16.970203+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-5dda8f3d81c8",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-5dda8f3d81c8/1",
+      "ref_commit": "a91f710557f2cdfc23c5af1b74a2bf336669e672",
+      "rule": null,
+      "step_id": "step-5dda8f3d81c8",
+      "undo": {
+        "pin": {
+          "commit": "a91f710557f2cdfc23c5af1b74a2bf336669e672",
+          "head": "ecf176707bed47160ddbe5d02fb5e9cf564ea602",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-5dda8f3d81c8/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T17:04:16.824080+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-388368bc9166",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-388368bc9166/1",
+      "ref_commit": "aafcd610836d0bb06bb43dfed3e83d0ca1988bc8",
+      "rule": null,
+      "step_id": "step-388368bc9166",
+      "undo": {
+        "pin": {
+          "commit": "aafcd610836d0bb06bb43dfed3e83d0ca1988bc8",
+          "head": "ecf176707bed47160ddbe5d02fb5e9cf564ea602",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-388368bc9166/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T17:04:16.765583+00:00",
+      "by": "agent",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-31T17:04:16.764356+00:00",
+      "by": "agent",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 2 steps",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-31T17:04:16.762693+00:00",
+      "by": "agent",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "normal",
+  "control_word": "Normal",
+  "created_at": "2026-10-31T17:04:16.762421+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "done": 0,
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "",
+  "id": "program-981066caa491",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-10-31T17:04:17.064571+00:00",
+    "by": "agent",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 9,
+    "kind": "step_amend",
+    "line": "The orchestrator adds to step 1: Keep the port at 5060",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "step-388368bc9166",
+    "undo": {
+      "line": "Keep the port at 5060",
+      "title": "The orchestrator adds to step 1: Keep the port at 5060"
+    }
+  },
+  "may_call": false,
+  "may_handoff": false,
+  "note_id": "program-program-981066caa491",
+  "note_window": "pullout:note:program-program-981066caa491",
+  "origin_ref": null,
+  "persons": [],
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "prefer_idle": false,
+  "project": null,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bie3lgqq/rig-proposals/app"
+  },
+  "requirements": [],
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 6,
+  "search_words": "the phone line the sip runner the line window",
+  "spend_limit_usd": null,
+  "state": "waiting",
+  "state_word": "Your turn",
+  "status_line": "Your turn · 0 of 2 done · 3 waits on you · check: fake_program_check.sh · control Normal",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/the-phone-line/1-the-sip-runner",
+      "brief": "Run baresip under the hub.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "editable": [
+        "title",
+        "amend",
+        "runs_on_then",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "for_person",
+        "may_call"
+      ],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "brief": "The agent has read it",
+        "effort": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-388368bc9166",
+      "last_checkpoint": {
+        "at": "2026-10-31T17:04:17.064571+00:00",
+        "by": "agent",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 9,
+        "kind": "step_amend",
+        "line": "The orchestrator adds to step 1: Keep the port at 5060",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "step-388368bc9166",
+        "undo": {
+          "line": "Keep the port at 5060",
+          "title": "The orchestrator adds to step 1: Keep the port at 5060"
+        }
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-31T17:04:16.823793+00:00",
+      "state": "working",
+      "state_word": "Working",
+      "station": 1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "The SIP runner",
+      "updated_at": "2026-10-31T17:04:17.062740+00:00",
+      "worktree": "hs-program-step-388368bc9166"
+    },
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/the-phone-line/2-the-line-window",
+      "brief": "Draw the line.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "editable": [
+        "title",
+        "amend",
+        "runs_on_then",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "for_person",
+        "may_call"
+      ],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "brief": "The agent has read it",
+        "effort": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-5dda8f3d81c8",
+      "last_checkpoint": {
+        "at": "2026-10-31T17:04:17.061258+00:00",
+        "by": "agent",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 8,
+        "kind": "step_change",
+        "line": "The orchestrator changes step 2: title",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "step-5dda8f3d81c8",
+        "undo": {
+          "fields": {
+            "title": "The Line window"
+          },
+          "title": "The orchestrator changes step 2: title"
+        }
+      },
+      "launch_id": "L2",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 2,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-31T17:04:16.969848+00:00",
+      "state": "working",
+      "state_word": "Working",
+      "station": 1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "The line window",
+      "updated_at": "2026-10-31T17:04:17.062876+00:00",
+      "worktree": "hs-program-step-5dda8f3d81c8"
+    }
+  ],
+  "template": null,
+  "title": "The phone line",
+  "total": 2,
+  "updated_at": "2026-10-31T17:04:17.064627+00:00",
+  "usage_warning_share": null,
+  "your_turn": 3,
+  "your_turn_items": [
+    {
+      "choices": [
+        "send",
+        "skip"
+      ],
+      "for_person_id": null,
+      "id": "proposal:9",
+      "kind": "step_amend",
+      "launch_id": "L1",
+      "ordinal": 1,
+      "pr": null,
+      "program_id": "program-981066caa491",
+      "program_title": "The phone line",
+      "project_id": null,
+      "proposal_id": 9,
+      "since": "2026-10-31T17:04:17.062740+00:00",
+      "step_id": "step-388368bc9166",
+      "step_title": "The SIP runner",
+      "title": "The orchestrator adds to step 1: Keep the port at 5060"
+    },
+    {
+      "choices": [
+        "apply",
+        "skip"
+      ],
+      "for_person_id": null,
+      "id": "proposal:8",
+      "kind": "step_change",
+      "launch_id": "L2",
+      "ordinal": 2,
+      "pr": null,
+      "program_id": "program-981066caa491",
+      "program_title": "The phone line",
+      "project_id": null,
+      "proposal_id": 8,
+      "since": "2026-10-31T17:04:17.062876+00:00",
+      "step_id": "step-5dda8f3d81c8",
+      "step_title": "The line window",
+      "title": "The orchestrator changes step 2: title"
+    },
+    {
+      "choices": [
+        "add",
+        "skip"
+      ],
+      "for_person_id": null,
+      "id": "proposal:6",
+      "kind": "requirement_proposed",
+      "launch_id": "L1",
+      "ordinal": 1,
+      "pr": null,
+      "program_id": "program-981066caa491",
+      "program_title": "The phone line",
+      "project_id": null,
+      "proposal_id": 6,
+      "since": "2026-10-31T17:04:17.062740+00:00",
+      "step_id": "step-388368bc9166",
+      "step_title": "The SIP runner",
+      "title": "An agent proposes a requirement on step 1: The line answers in two rings"
+    }
+  ]
+}

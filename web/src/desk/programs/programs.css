@@ -43,7 +43,7 @@
 .pg-list-head,
 .pg-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) 116px 96px 156px minmax(0, 1.5fr);
+  grid-template-columns: minmax(180px, 1.3fr) 116px 96px 112px 150px minmax(0, 1.3fr);
   align-items: center;
   column-gap: 12px;
 }
@@ -94,6 +94,36 @@
   white-space: nowrap;
 }
 .pg-row-in[data-tone="ok"] { color: var(--wb-ok-ink); font-weight: 600; }
+/* PG-REQ §7: the Met column. Ok ink when all are met; an ember dot when
+   one is Unmet or waits on his word; the 12 px floor; never a zero. */
+.pg-row-met {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pg-row-met[data-all] { color: var(--wb-ok-ink); font-weight: 500; }
+.pg-row-met .kit-dot { width: 7px; height: 7px; }
+.pg-row-meta { display: none; }
+.pg-band-count { color: var(--wb-faint); font-weight: 500; }
+
+/* PG-REQ §7: Find a program in the toolbar (the Terminals species), and
+   the 393 fold: Templates, Project, Person and Group go into More ▾. */
+.pg-find { display: inline-flex; min-width: 0; width: 240px; flex: 0 1 240px; }
+.pg-find .gadget-string,
+.pg-find > * { min-width: 0; width: 100%; }
+.desk-next .pg-window .kit-toolbar .btn.pg-narrow { display: none; }
+@container surface (max-width: 520px) {
+  .desk-next .pg-window .kit-toolbar .btn.pg-wide { display: none; }
+  .desk-next .pg-window .kit-toolbar .btn.pg-narrow { display: inline-flex; }
+  .pg-find { flex: 1 1 auto; width: auto; }
+  .pg-window[data-testid="programs-window"] .kit-toolbar-trailing { display: none; }
+}
 
 /* ── the Your turn well: the ember rule, the soft plate (AskWell family) ── */
 .pg-turn {
@@ -143,7 +173,7 @@
   font: 600 12px / 1.3 var(--font-sans);
 }
 .pg-step {
-  --pg-cols: minmax(190px, 1.3fr) 246px 190px 96px minmax(0, 1.2fr) 88px;
+  --pg-cols: minmax(160px, 1.2fr) 246px 70px 150px 64px minmax(0, 1fr) 88px;
 }
 .desk-next .kit-listrow.pg-step {
   display: grid;
@@ -224,6 +254,27 @@
 .pg-step-word[data-tone="ask"] { color: var(--wb-ember-ink); }
 .pg-step-word[data-tone="warn"] { color: var(--wb-warn-ink); }
 .pg-step-verbs { display: inline-flex; justify-content: flex-end; }
+/* PG-REQ §7: the board's Met column ("2 of 3", "3 to meet"). */
+.pg-step-met {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pg-step-met[data-all] { color: var(--wb-ok-ink); font-weight: 500; }
+.pg-step-met[data-tone="fail"] { color: var(--wb-danger-ink); }
+.pg-step-met[data-tone="ask"] { color: var(--wb-ember-ink); }
+.pg-step-met .kit-dot { width: 7px; height: 7px; }
+/* Delight (§9): the last one goes Met, the dot breathes once (2.4 s, a
+   box-shadow, never a loop; none under reduced motion). */
+@media (prefers-reduced-motion: no-preference) {
+  .pg-step-met[data-settled] .kit-dot { animation: kit-lamp-live 2.4s ease-in-out 1; }
+}
 .desk-next .pg-step-verbs .btn { white-space: nowrap; }
 .pg-step-chip,
 .pg-step-meta { display: none; }
@@ -540,4 +591,346 @@
   .pg-handoff { grid-template-columns: auto minmax(0, 1fr); row-gap: 4px; padding: 6px 10px; }
   .pg-handoff-words { white-space: normal; }
   .pg-handoff > :last-child { grid-column: 1 / -1; justify-self: start; }
+}
+
+/* ── PG-REQ §9: the Requirements board (direction A, the checklist) ── */
+.pg-req-board { margin: 6px 12px 0; }
+.pg-req-list { display: flex; flex-direction: column; min-width: 0; }
+.pg-req-head,
+.pg-req-row {
+  display: grid;
+  grid-template-columns: 30px 112px minmax(0, 1fr) 84px 150px minmax(0, 190px) auto;
+  align-items: center;
+  column-gap: 10px;
+}
+.pg-req-head {
+  min-height: 26px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  color: var(--wb-muted);
+  font: 600 12px / 1.3 var(--font-sans);
+}
+.pg-req-band .kit-listday-label { padding-left: 4px; }
+.pg-reqs { margin: 0; padding: 0; list-style: none; }
+.pg-req { border-bottom: 1px solid var(--wb-rule-soft); }
+.pg-req-row { min-height: 32px; padding: 0 4px; }
+.pg-req-row > * { min-width: 0; }
+.pg-req[data-his] > .pg-req-row,
+.pg-req[data-state="unmet"] > .pg-req-row { background: color-mix(in srgb, var(--lamp-ask) 6%, var(--wb-paper)); }
+.pg-req[data-selected] > .pg-req-row { background: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper)); }
+.pg-req-id {
+  color: var(--wb-faint);
+  font: 400 12px / 1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.pg-req-word { font-size: 12px; white-space: nowrap; }
+.pg-req-word[data-tone="ok"] { color: var(--wb-ok-ink); }
+.pg-req-word[data-tone="fail"] { color: var(--wb-danger-ink); }
+.pg-req-word[data-tone="ask"] { color: var(--wb-ember-ink); }
+.pg-req-word[data-tone="info"] { color: var(--wb-info-ink); }
+/* Not yet: a hollow dot (the station track's ahead dot). */
+.pg-req[data-state="not_yet"] .pg-req-word[data-tone="idle"] .kit-dot {
+  background: var(--wb-paper);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--wb-steel) 70%, var(--wb-muted));
+}
+.desk-next .pg-req .btn.pg-req-text,
+.pg-req-text {
+  display: block;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
+  font: 500 13px / 30px var(--font-sans);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .pg-req .btn.pg-req-text:hover:not(:disabled),
+.desk-next .pg-req .btn.pg-req-text:active:not(:disabled) { background: transparent; transform: none; }
+.pg-req-code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--wb-field);
+  font: 12px / 1.3 var(--font-mono);
+}
+.pg-req[data-state="waived"] .pg-req-text { color: var(--wb-muted); font-weight: 400; text-decoration: line-through; }
+.pg-req-kind { display: inline-flex; min-width: 0; }
+.pg-kind[data-kind="check"] { color: var(--wb-info-ink); background: color-mix(in srgb, var(--lamp-info) 8%, var(--wb-paper)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-info) 30%, var(--wb-rule-soft)); }
+.pg-kind[data-kind="shot"] { color: var(--wb-ok-ink); background: color-mix(in srgb, var(--lamp-ok) 9%, var(--wb-paper)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-ok) 35%, var(--wb-rule-soft)); }
+.pg-kind[data-kind="word"] { color: var(--wb-ember-ink); background: color-mix(in srgb, var(--lamp-ask) 9%, var(--wb-paper)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-ask) 35%, var(--wb-rule-soft)); }
+.pg-req-where,
+.pg-req-proof {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  white-space: nowrap;
+}
+.pg-req-proof-words { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pg-req-verbs { display: inline-flex; gap: 6px; justify-content: flex-end; }
+.desk-next .pg-req-verbs .btn,
+.desk-next .pg-req-proof .btn { white-space: nowrap; }
+/* Every step: six small dots, one per step (the station track's dots). */
+.pg-req-dots { display: inline-flex; align-items: center; gap: 3px; flex: none; }
+.pg-req-dots[data-numbered] { gap: 10px; }
+.pg-req-dot-cell { display: inline-flex; align-items: center; gap: 4px; }
+.pg-req-dot {
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wb-paper);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--wb-steel) 70%, var(--wb-muted));
+}
+.pg-req-dot[data-state="met"] { background: var(--lamp-ok); box-shadow: none; }
+.pg-req-dot[data-state="unmet"] { background: var(--lamp-fail); box-shadow: none; }
+.pg-req-dot[data-state="waived"] { background: color-mix(in srgb, var(--wb-muted) 45%, var(--wb-paper)); box-shadow: none; }
+.pg-req-dot-n { color: var(--wb-muted); font: 400 12px / 1 var(--font-sans); font-variant-numeric: tabular-nums; }
+/* The well under a selected row (two lines: its facts, the shot, Edit). */
+.pg-req-well {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 4px 6px 42px;
+  padding: 6px 10px 8px;
+  border-radius: 0 0 6px 6px;
+  background: var(--wb-well);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
+}
+.pg-req-facts {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 5px 12px;
+  margin: 0;
+  min-width: 0;
+  font: 400 12.5px / 1.4 var(--font-sans);
+}
+.pg-req-facts dt { color: var(--wb-muted); font-size: 12px; }
+.pg-req-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.pg-req-facts .surface-code { margin: 0; padding: 2px 6px; white-space: pre-wrap; }
+.pg-req-fact-sub { color: var(--wb-muted); }
+.pg-req-well-verbs { display: inline-flex; gap: 6px; }
+.pg-req-thumb {
+  display: block;
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+  min-height: 60px;
+  border-radius: 5px;
+  background: var(--wb-field);
+  box-shadow: 0 0 0 1px var(--wb-rule);
+}
+span.pg-req-thumb { height: 150px; }
+.pg-req-log { margin: 0 4px 6px 42px; }
+.pg-req-log .surface-code { max-height: 220px; overflow: auto; margin: 0; white-space: pre-wrap; }
+.pg-req-ask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 4px 6px 42px;
+  padding: 4px 0;
+}
+.pg-req-ask-field { flex: 1 1 auto; min-width: 0; }
+/* Add requirement: the Drafting row's species, the last row. */
+.pg-req-add { border-bottom: 0; }
+.pg-req-add-row {
+  display: grid;
+  grid-template-columns: 30px minmax(160px, 1fr) 112px 132px auto auto auto;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 38px;
+  padding: 5px 4px;
+  background: color-mix(in srgb, var(--wb-field) 35%, var(--wb-paper));
+}
+.pg-req-add-row > * { min-width: 0; }
+.pg-req-add-field { display: inline-flex; gap: 6px; }
+.pg-req-add-command { display: inline-flex; width: 240px; }
+.pg-req-add-command input { font-family: var(--font-mono); font-size: 12.5px; }
+.pg-req-add-shot { display: inline-flex; gap: 6px; }
+.pg-req-add-why { padding: 0 4px 6px 44px; }
+
+/* ── PG-REQ §7, §8: the step fold ── */
+.pg-stepfold .pg-sf { display: flex; flex-direction: column; min-width: 0; }
+.pg-sf-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 2px 0;
+}
+.pg-sf-head .surface-filter-tokens { min-width: 0; }
+.pg-sf-verbs { display: inline-flex; gap: 6px; margin-left: auto; }
+.desk-next .pg-sf-verbs .btn { white-space: nowrap; }
+.pg-sf-body { padding: 2px 0 8px; min-width: 0; }
+.pg-sf-brief { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pg-sf-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.pg-sf-title { flex: 1 1 220px; min-width: 0; }
+.pg-sf-owns { display: inline-flex; gap: 4px; min-width: 0; overflow: hidden; }
+.pg-sf-pad { min-width: 0; }
+.pg-sf-frozen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  min-height: 26px;
+  font: 400 12px / 1.35 var(--font-sans);
+  color: var(--wb-muted);
+}
+.pg-sf-frozen-facts { display: inline-flex; flex-wrap: wrap; gap: 4px 14px; min-width: 0; }
+.pg-frozen { min-width: 0; color: var(--wb-ink); }
+.pg-frozen-name { color: var(--wb-muted); }
+.pg-sf-brieftext {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--wb-well);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
+  font: 400 13px / 1.5 var(--font-sans);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pg-sf-amendment {
+  display: block;
+  padding-top: 6px;
+  border-top: 1px dashed var(--wb-rule);
+}
+.pg-sf-amendment b { display: block; color: var(--wb-muted); font-size: 12px; font-weight: 600; }
+.pg-sf-amendment:not([data-sent]) b { color: var(--wb-ember-ink); }
+.pg-sf-amend { display: flex; align-items: center; gap: 8px; }
+.pg-sf-amend-field { flex: 1 1 auto; min-width: 0; }
+.pg-sf-insert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 5px 0 7px;
+  background: color-mix(in srgb, var(--wb-field) 35%, var(--wb-paper));
+}
+.pg-sf-insert-n { width: 18px; color: var(--wb-muted); text-align: right; font: 400 12px / 1 var(--font-sans); }
+.pg-sf-insert-title { flex: 1 1 220px; min-width: 0; }
+.pg-sf-findings { margin: 0; padding: 0; list-style: none; }
+.pg-sf-finding {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  font: 400 12.5px / 1.35 var(--font-sans);
+}
+.pg-sf-finding-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-sf-finding-decision { color: var(--wb-muted); font-size: 12px; }
+
+/* ── PG-REQ §7: the ledger, one sub-fold per step ── */
+.pg-ledger-folds { display: flex; flex-direction: column; gap: 2px; }
+.pg-ledger-sub { margin: 0; }
+
+/* ── PG-REQ (REQ12): the shot pullout, an image frame ── */
+.pg-shot-frame {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  background: var(--wb-well);
+}
+.pg-shot-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--wb-rule), var(--depth-row, none);
+}
+.pg-shot-wait { width: 240px; height: 150px; border-radius: 5px; background: var(--wb-field); }
+
+/* ── the Your turn well's line (Unmet, Waive ask one line, in place) ── */
+.pg-turn-ask { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 240px; min-width: 0; }
+.pg-turn-ask > :first-child { flex: 1 1 auto; min-width: 0; }
+
+@container surface (max-width: 520px) {
+  .desk-next .kit-listrow.pg-row {
+    grid-template-areas: "main state" "meta meta";
+  }
+  .pg-row-steps,
+  .pg-row-met { display: none; }
+  .pg-row-meta {
+    grid-area: meta;
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    padding-left: 42px;
+    color: var(--wb-muted);
+    font: 400 12px / 1.35 var(--font-sans);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pg-step-met { display: none; }
+  /* The checklist rows take two lines: R3 · state · sentence / kind ·
+     where · proof · verbs; plated verbs own 44 x 44. */
+  .pg-req-head { display: none; }
+  .pg-req-row {
+    grid-template-columns: 26px auto minmax(0, 1fr);
+    grid-template-areas: "id state text" ". line line";
+    row-gap: 4px;
+    padding: 6px 4px 8px;
+  }
+  .pg-req-id { grid-area: id; }
+  .pg-req-state { grid-area: state; }
+  .pg-req-text { grid-area: text; font-size: 14px; }
+  .pg-req-kind,
+  .pg-req-where,
+  .pg-req-proof,
+  .pg-req-verbs { grid-row: 2; }
+  .pg-req-kind { grid-column: 2; }
+  .pg-req-where { grid-column: 3; }
+  .pg-req-proof { grid-column: 2 / -1; grid-row: 3; flex-wrap: wrap; white-space: normal; }
+  .pg-req-verbs { grid-column: 2 / -1; grid-row: 4; justify-content: flex-start; flex-wrap: wrap; }
+  .pg-req-proof:empty,
+  .pg-req-verbs:empty { display: none; }
+  .desk-next .pg-req-verbs .btn,
+  .desk-next .pg-req-proof .btn,
+  .desk-next .pg-req-well .btn,
+  .desk-next .pg-req-ask .btn,
+  .desk-next .pg-req-add .btn,
+  .desk-next .pg-sf .btn,
+  .desk-next .pg-turn-ask .btn { min-height: 44px; min-width: 44px; }
+  .pg-req-well,
+  .pg-req-log,
+  .pg-req-ask { margin-left: 4px; }
+  .pg-req-well { flex-direction: column; }
+  .pg-req-facts { grid-template-columns: minmax(0, 1fr); }
+  .pg-req-facts dt { display: none; }
+  .pg-req-add-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+  }
+  .pg-req-add-row > .pg-req-id { flex: 0 0 26px; }
+  .pg-req-add-row > .pg-req-add-text { flex: 1 1 calc(100% - 40px); }
+  .pg-req-add-row > :nth-child(n+3) { flex: 0 1 auto; }
+  .pg-req-add-row > .pg-req-add-field:empty { display: none; }
+  .pg-req-add-command { width: 100%; }
+  .pg-sf-head { flex-wrap: wrap; }
+  .pg-sf-verbs { margin-left: 0; flex-wrap: wrap; }
+  .pg-sf-finding { grid-template-columns: minmax(0, 1fr); }
+  .pg-sf-amend { flex-wrap: wrap; }
+  .pg-turn-ask { flex-basis: 100%; }
 }

@@ -1,32 +1,47 @@
 {
   "allowed_profiles": [],
   "asks": 0,
-  "check_command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-10-28T23:53:35.273519+00:00",
+      "at": "2026-10-31T16:26:03.379450+00:00",
       "by": "owner",
       "choice": null,
-      "id": 76,
+      "decision_record_id": null,
+      "id": 85,
       "kind": null,
       "line": "Added 2 steps",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
       "rule": null,
       "step_id": "",
       "undo": {}
     },
     {
-      "at": "2026-10-28T23:53:35.272437+00:00",
+      "at": "2026-10-31T16:26:03.377550+00:00",
       "by": "owner",
       "choice": null,
-      "id": 75,
+      "decision_record_id": null,
+      "id": 84,
       "kind": null,
       "line": "Made the program from the Overnight on the home box template",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
       "rule": null,
       "step_id": "",
       "undo": {}
@@ -35,7 +50,7 @@
   "closed_at": null,
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-10-28T23:53:35.272344+00:00",
+  "created_at": "2026-10-31T16:26:03.377454+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "pi",
@@ -56,28 +71,35 @@
     ]
   },
   "done": 0,
+  "for_person": null,
   "for_person_id": null,
   "goal": "Calls on the home box.",
-  "id": "program-bd0cc5ff30f8",
+  "id": "program-aae3f29b9fe5",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-10-28T23:53:35.273519+00:00",
+    "at": "2026-10-31T16:26:03.379450+00:00",
     "by": "owner",
     "choice": null,
-    "id": 76,
+    "decision_record_id": null,
+    "id": 85,
     "kind": null,
     "line": "Added 2 steps",
     "operation_id": null,
     "overturnable": false,
     "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
     "rule": null,
     "step_id": "",
     "undo": {}
   },
+  "may_call": true,
   "may_handoff": false,
-  "note_id": "program-program-bd0cc5ff30f8",
-  "note_window": "pullout:note:program-program-bd0cc5ff30f8",
+  "note_id": "program-program-aae3f29b9fe5",
+  "note_window": "pullout:note:program-program-aae3f29b9fe5",
   "origin_ref": null,
+  "persons": [],
   "place": {
     "origin": null,
     "person": null,
@@ -87,11 +109,104 @@
     }
   },
   "prefer_idle": true,
+  "project": {
+    "id": "proj-holdspeak",
+    "name": "HoldSpeak"
+  },
   "project_id": "proj-holdspeak",
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-j2iw2dqz/rig/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-a73wsh5g/rig/app"
+  },
+  "requirements": [
+    {
+      "by": "template",
+      "choices": [
+        "waive"
+      ],
+      "created_at": "2026-10-31T16:26:03.377638+00:00",
+      "evidence": {},
+      "id": "req-6244a7859a68",
+      "judged_at": null,
+      "judged_commit": null,
+      "kind": "review",
+      "kind_word": "Review",
+      "label": "R1",
+      "ordinal": 1,
+      "parent_id": null,
+      "program_id": "program-aae3f29b9fe5",
+      "required": true,
+      "rounds": 0,
+      "running": false,
+      "scope": "every_step",
+      "spec": {},
+      "stale": false,
+      "state": "not_yet",
+      "state_word": "Not yet",
+      "step_id": null,
+      "steps": [
+        {
+          "ordinal": 1,
+          "state": "not_yet",
+          "step_id": "step-1797c157d82e"
+        },
+        {
+          "ordinal": 2,
+          "state": "not_yet",
+          "step_id": "step-16f380332faf"
+        }
+      ],
+      "text": "The change does only what its brief says.",
+      "waived_reason": null
+    },
+    {
+      "by": "template",
+      "choices": [
+        "waive"
+      ],
+      "created_at": "2026-10-31T16:26:03.377765+00:00",
+      "evidence": {},
+      "id": "req-019f14b4ac2e",
+      "judged_at": null,
+      "judged_commit": null,
+      "kind": "review",
+      "kind_word": "Review",
+      "label": "R2",
+      "ordinal": 2,
+      "parent_id": null,
+      "program_id": "program-aae3f29b9fe5",
+      "required": true,
+      "rounds": 0,
+      "running": false,
+      "scope": "every_step",
+      "spec": {},
+      "stale": false,
+      "state": "not_yet",
+      "state_word": "Not yet",
+      "step_id": null,
+      "steps": [
+        {
+          "ordinal": 1,
+          "state": "not_yet",
+          "step_id": "step-1797c157d82e"
+        },
+        {
+          "ordinal": 2,
+          "state": "not_yet",
+          "step_id": "step-16f380332faf"
+        }
+      ],
+      "text": "Each new behaviour has a test.",
+      "waived_reason": null
+    }
+  ],
+  "requirements_met": {
+    "his": 0,
+    "met": 0,
+    "total": 4,
+    "unmet": 0,
+    "waived": 0
   },
   "reviewer": {
     "agent": "Claude Code",
@@ -99,6 +214,7 @@
     "profile": "claude-default"
   },
   "revision": 1,
+  "search_words": "calls on the home box calls on the home box. holdspeak overnight the call runner the calls window overnight on the home box",
   "spend_limit_usd": null,
   "state": "drafting",
   "state_word": "Drafting",
@@ -107,10 +223,11 @@
     {
       "after": [],
       "agent": "pi",
+      "amendments": [],
       "branch": null,
       "brief": "Run a call turn on qwen.",
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -120,6 +237,24 @@
         "verdict": null
       },
       "contenders": [],
+      "editable": [
+        "title",
+        "brief",
+        "owns",
+        "after",
+        "effort",
+        "agent",
+        "runs_on_then",
+        "race",
+        "gate_check",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "position",
+        "for_person",
+        "may_call"
+      ],
       "effort": "medium",
       "elapsed": "",
       "elapsed_seconds": null,
@@ -133,6 +268,7 @@
       "findings": [],
       "for_person": null,
       "for_person_id": null,
+      "frozen": {},
       "gate": {
         "check": true,
         "merge": "level",
@@ -141,10 +277,12 @@
       },
       "handoffs": [],
       "held_reason": null,
-      "id": "step-ebeda0cc282b",
+      "history": null,
+      "id": "step-1797c157d82e",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
+      "may_call": true,
       "ordinal": 1,
       "origin_ref": null,
       "owns": [],
@@ -156,6 +294,71 @@
       "race": 0,
       "race_of": null,
       "report": null,
+      "requirements": [
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T16:26:03.379203+00:00",
+          "evidence": {},
+          "id": "req-a3b5e9e8016c",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R1",
+          "ordinal": 1,
+          "parent_id": "req-6244a7859a68",
+          "program_id": "program-aae3f29b9fe5",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": "step-1797c157d82e",
+          "text": "The change does only what its brief says.",
+          "waived_reason": null
+        },
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T16:26:03.379342+00:00",
+          "evidence": {},
+          "id": "req-16bce97f5542",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R2",
+          "ordinal": 2,
+          "parent_id": "req-019f14b4ac2e",
+          "program_id": "program-aae3f29b9fe5",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": "step-1797c157d82e",
+          "text": "Each new behaviour has a test.",
+          "waived_reason": null
+        }
+      ],
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 2,
+        "unmet": 0,
+        "waived": 0
+      },
       "review": {
         "reviewer": null,
         "round": null,
@@ -183,7 +386,7 @@
         "merge"
       ],
       "title": "The call runner",
-      "updated_at": "2026-10-28T23:53:35.273306+00:00",
+      "updated_at": "2026-10-31T16:26:03.378994+00:00",
       "worktree": null
     },
     {
@@ -191,10 +394,11 @@
         1
       ],
       "agent": "pi",
+      "amendments": [],
       "branch": null,
       "brief": "Draw the call.",
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-ng-rf1/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-pg-req-hub/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -204,6 +408,24 @@
         "verdict": null
       },
       "contenders": [],
+      "editable": [
+        "title",
+        "brief",
+        "owns",
+        "after",
+        "effort",
+        "agent",
+        "runs_on_then",
+        "race",
+        "gate_check",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "position",
+        "for_person",
+        "may_call"
+      ],
       "effort": "medium",
       "elapsed": "",
       "elapsed_seconds": null,
@@ -217,6 +439,7 @@
       "findings": [],
       "for_person": null,
       "for_person_id": null,
+      "frozen": {},
       "gate": {
         "check": true,
         "merge": "level",
@@ -225,10 +448,12 @@
       },
       "handoffs": [],
       "held_reason": null,
-      "id": "step-6278edbdf71d",
+      "history": null,
+      "id": "step-16f380332faf",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
+      "may_call": true,
       "ordinal": 2,
       "origin_ref": null,
       "owns": [],
@@ -240,6 +465,71 @@
       "race": 0,
       "race_of": null,
       "report": null,
+      "requirements": [
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T16:26:03.379203+00:00",
+          "evidence": {},
+          "id": "req-3d35d71322e8",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R1",
+          "ordinal": 1,
+          "parent_id": "req-6244a7859a68",
+          "program_id": "program-aae3f29b9fe5",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": "step-16f380332faf",
+          "text": "The change does only what its brief says.",
+          "waived_reason": null
+        },
+        {
+          "by": "template",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-10-31T16:26:03.379342+00:00",
+          "evidence": {},
+          "id": "req-d52972d88b2f",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R2",
+          "ordinal": 2,
+          "parent_id": "req-019f14b4ac2e",
+          "program_id": "program-aae3f29b9fe5",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "every_step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": "step-16f380332faf",
+          "text": "Each new behaviour has a test.",
+          "waived_reason": null
+        }
+      ],
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 2,
+        "unmet": 0,
+        "waived": 0
+      },
       "review": {
         "reviewer": null,
         "round": null,
@@ -267,14 +557,14 @@
         "merge"
       ],
       "title": "The calls window",
-      "updated_at": "2026-10-28T23:53:35.273306+00:00",
+      "updated_at": "2026-10-31T16:26:03.378994+00:00",
       "worktree": null
     }
   ],
   "template": "overnight",
   "title": "Calls on the home box",
   "total": 2,
-  "updated_at": "2026-10-28T23:53:35.273566+00:00",
+  "updated_at": "2026-10-31T16:26:03.379491+00:00",
   "usage_warning_share": null,
   "your_turn": 0,
   "your_turn_items": []

@@ -4,7 +4,7 @@
 import type { ChipState } from "../surface";
 import type { ObjectTone } from "../surface/objects/kinds";
 import { stateWords } from "../surface/words";
-import type { ProgramState, ProgramStep, ProgramSummary, StationKey, StepState } from "./types";
+import type { ProgramState, ProgramStep, ProgramSummary, Requirement, RequirementKind, RequirementsMet, StationKey, StepState } from "./types";
 
 export type Tone = ObjectTone | "idle";
 
@@ -212,4 +212,103 @@ export function stationsOf(step: ProgramStep): StationView[] {
       live: state === "current" && stepBreathes(step.state),
     };
   });
+}
+
+/* ── PG-REQ (PROGRAMS-REQUIREMENTS-2026-10-31 §4, §7, §9) ── */
+
+/** A requirement's tone: Met ok, Unmet fail, Checking info, his word ask
+ *  (ember), Not yet and Waived idle (Not yet draws a hollow dot). */
+export function requirementTone(row: Pick<Requirement, "state" | "running" | "state_word" | "kind">): Tone {
+  if (row.state === "met") return "ok";
+  if (row.state === "unmet") return "fail";
+  if (row.running) return "info";
+  if (row.state === "not_yet" && /waits for you/i.test(row.state_word)) return "ask";
+  return "idle";
+}
+
+/** His word on a requirement (`Checking` while it is judged). */
+export function requirementWord(row: Pick<Requirement, "state_word" | "running">): string {
+  return row.running ? "Checking" : stateWords(row.state_word || "Not yet");
+}
+
+/** An every-step parent's state, read off its copies: Unmet when one is,
+ *  Met when every copy is Met or Waived, else the parent's own. */
+export function everyStepState(row: Requirement): { state: Requirement["state"]; word: string; met: number; total: number } {
+  const copies = row.steps ?? [];
+  const met = copies.filter((copy) => copy.state === "met" || copy.state === "waived").length;
+  if (row.state === "waived") return { state: "waived", word: "Waived", met, total: copies.length };
+  if (copies.some((copy) => copy.state === "unmet")) return { state: "unmet", word: "Unmet", met, total: copies.length };
+  if (copies.length && met === copies.length) return { state: "met", word: "Met", met, total: copies.length };
+  return { state: row.state, word: requirementWord(row), met, total: copies.length };
+}
+
+/** The Programs list's Met cell (§7): `4 of 5 met`, `7 requirements` while
+ *  none is judged (never `0 of 7 met`), nothing when there is none. */
+export function metWords(met: RequirementsMet | null | undefined): { text: string; tone: Tone | null; all: boolean; title?: string } | null {
+  if (!met || !met.total) return null;
+  const waived = met.waived ? `${met.waived} waived` : undefined;
+  if (!met.met && !met.unmet) {
+    return { text: `${met.total} ${met.total === 1 ? "requirement" : "requirements"}`, tone: met.his ? "ask" : null, all: false };
+  }
+  const all = met.met >= met.total;
+  return { text: `${met.met} of ${met.total} met`, tone: all ? "ok" : met.unmet || met.his ? "ask" : null, all, title: waived };
+}
+
+/** A step's Met cell on the board (§7): `2 of 3`, `3 to meet` while none of
+ *  its three is met, nothing when it has none. */
+export function stepMetWords(met: RequirementsMet | null | undefined, his = false): { text: string; tone: Tone | null; all: boolean } | null {
+  if (!met || !met.total) return null;
+  const all = met.met >= met.total;
+  const tone: Tone | null = all ? "ok" : met.unmet ? "fail" : his || met.his ? "ask" : null;
+  if (!met.met) return { text: `${met.total} to meet`, tone, all: false };
+  return { text: `${met.met} of ${met.total}`, tone, all };
+}
+
+/** The kind by rule as he types (design §4, decision 5; the hub's
+ *  `program_requirements.guess`): backticks are a Check with that command;
+ *  "<name> window at 393|1440" is a Shot; anything else a Review. Your
+ *  word is only his choice. */
+export function guessKind(text: string): { kind: RequirementKind; command?: string; case?: string; width?: number } {
+  const command = /`([^`]+)`/.exec(text);
+  if (command && command[1].trim()) return { kind: "check", command: command[1].trim() };
+  const shot = /\b([A-Za-z][\w-]*)\s+window\s+at\s+(393|1440)\b/i.exec(text);
+  if (shot) return { kind: "shot", case: shot[1].toLowerCase(), width: Number(shot[2]) };
+  return { kind: "review" };
+}
+
+export const KIND_WORDS: Record<RequirementKind, string> = { check: "Check", review: "Review", shot: "Shot", word: "Your word" };
+
+/** Find a program (§7): every typed word is in the row's `search_words`. */
+export function matchesFind(row: Pick<ProgramSummary, "search_words" | "title">, query: string): boolean {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return true;
+  const hay = `${row.search_words ?? ""} ${row.title}`.toLowerCase();
+  return words.every((word) => hay.includes(word));
+}
+
+/** The persons a summary names (the step persons and the Program's own). */
+export function personsOf(row: Pick<ProgramSummary, "persons" | "for_person">): { id: string; name: string }[] {
+  const out = new Map<string, string>();
+  for (const person of row.persons ?? []) out.set(person.id, person.name);
+  if (row.for_person) out.set(row.for_person.id, row.for_person.name);
+  return [...out].map(([id, name]) => ({ id, name }));
+}
+
+const STATE_RANK: Record<string, number> = { waiting: 0, failed: 1, running: 2, drafting: 3, done: 4, parked: 5 };
+
+/** Group by project (§7): bands by project name, "No project" last; inside
+ *  a band the worst state first, then the most recently changed. */
+export function bandedByProject(programs: readonly ProgramSummary[]): { key: string; word: string; rows: ProgramSummary[] }[] {
+  const bands = new Map<string, { key: string; word: string; rows: ProgramSummary[] }>();
+  for (const row of programs) {
+    const key = row.project?.id ?? row.project_id ?? "";
+    const word = row.project?.name ?? (key ? key : "No project");
+    if (!bands.has(key)) bands.set(key, { key, word, rows: [] });
+    bands.get(key)!.rows.push(row);
+  }
+  for (const band of bands.values()) {
+    band.rows.sort((a, b) => (STATE_RANK[a.state] ?? 9) - (STATE_RANK[b.state] ?? 9)
+      || String(b.updated_at).localeCompare(String(a.updated_at)));
+  }
+  return [...bands.values()].sort((a, b) => (a.key ? 0 : 1) - (b.key ? 0 : 1) || a.word.localeCompare(b.word));
 }

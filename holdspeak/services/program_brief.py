@@ -57,6 +57,26 @@ def acceptance(program: Mapping[str, Any], step: Mapping[str, Any]) -> list[str]
     return lines
 
 
+def requirement_lines(store: ProgramStore, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[str]:
+    """PG-REQ §6, "What must be true": the step's own requirements and its
+    every-step copies, each with how HoldSpeak proves it, then the
+    Program's own (judged after the last step). A waived one is left out."""
+    from .program_requirements import label, proof_words
+
+    rows = [row for row in store.list_requirements(program["id"]) if row.get("state") != "waived"]
+    owner_id = step.get("race_of") or step["id"]
+    own = [row for row in rows if row.get("step_id") == owner_id]
+    whole = [row for row in rows if not row.get("step_id") and not row.get("each_step")]
+    if not own and not whole:
+        return []
+    out = ["What must be true (the owner's requirements; HoldSpeak checks each one):"]
+    out += [f"- {label(row['ordinal'])} · {redact(row['text'])} · {proof_words(row)}" for row in own]
+    if whole:
+        out.append("For the whole program (judged after the last step): "
+                   + "; ".join(f"{label(row['ordinal'])} · {redact(row['text'])}" for row in whole))
+    return out
+
+
 def compose(
     db: Any, step_id: str, *, control_mode: str = "yolo", repo_path: Optional[str] = None,
     worktree: Optional[str] = None, branch: Optional[str] = None, round_: int = 1,
@@ -89,6 +109,12 @@ def compose(
     if program.get("goal_markdown"):
         lines += ["", "The goal of the program, in the owner's words:", redact(program["goal_markdown"])]
     lines += ["", "This step:", redact(step.get("brief_markdown") or step["title"])]
+    added = [item for item in (step.get("facts") or {}).get("amendments") or [] if item.get("line")]
+    for item in added:
+        lines += [f"Added by {'the owner' if item.get('by') == 'owner' else 'the orchestrator'}: {redact(item['line'])}"]
+    wanted = requirement_lines(store, program, step)
+    if wanted:
+        lines += [""] + wanted
     if step.get("owns"):
         lines += ["", "The files this step owns:"] + [f"- {path}" for path in step["owns"]]
     others = theirs(steps, step)
@@ -97,6 +123,8 @@ def compose(
         for other in others:
             lines.append(f"- step {other['ordinal']} “{other['title']}”: " + ", ".join(other["files"]))
     checks = acceptance(program, step)
+    if wanted:
+        checks.append("Do not claim a requirement is met. HoldSpeak judges each one on your commit.")
     lines += ["", "The rules and the proof:"] + [f"- {line}" for line in checks]
     facts = _hs_block(str(program.get("repo_root") or repo_path or ""))
     if facts is not None:
@@ -115,4 +143,4 @@ def compose(
     }
 
 
-__all__ = ["acceptance", "compose", "theirs"]
+__all__ = ["acceptance", "compose", "requirement_lines", "theirs"]

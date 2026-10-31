@@ -1,0 +1,8 @@
+{
+  "body": {
+    "code": "line_required",
+    "detail": "Say in one line why you waive it.",
+    "error": "line_required"
+  },
+  "status": 400
+}

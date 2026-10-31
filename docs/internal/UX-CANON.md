@@ -124,6 +124,18 @@ Each line names the ruling, its canvas or design note, and the PR.
   `betterment/line/LINE-DESIGN-2026-10-29.md` (with "Built"), recipe
   `betterment/line/RECIPE.md`, user doc `docs/calls.md` "The Line"; #1606,
   #1607, #1608 and the LINE-4b PR.
+- **Program requirements, browse and adjust (owner 2026-10-31: "not that
+  clear to browse, adjust … how to add additional requirements/checks, see
+  how they are met").** Kit only, no modal: the Requirements board (canvas
+  direction A, the checklist: 32 px `ListView` rows `R3 · DotWord · sentence
+  · Token(kind) · scope · evidence · library Button verbs`, the Add
+  requirement row), Find a program (`StringGadget` with mic), Project ▾,
+  Person ▾ and Group ▾ (`WorkMenu`), the Met column ("4 of 5 met"; never "0
+  of n"), the step fold with `FilterTokens`, the Ledger folded per step, and
+  frozen fields drawn as text with their reason as the hover title. Design
+  `betterment/programs/PROGRAMS-REQUIREMENTS-2026-10-31.md` (#1664), recipe
+  `betterment/programs/RECIPE.md` "PG-REQ", user doc `docs/programs.md`; the
+  PG-REQ PR.
 
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
