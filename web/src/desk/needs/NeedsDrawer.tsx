@@ -64,6 +64,7 @@ import { openHand } from "../agentHand";
 import { Disclosure } from "../surface/patterns/Disclosure";
 import { AddToProject } from "../AddToProject";
 import "./needs.css";
+import { briefable, copyPageLink, revokePage } from "../reach";
 import { openPhoneWing } from "../calls/phoneFocus";
 import { Token } from "../surface/Token";
 
@@ -180,6 +181,9 @@ const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   continue: "Continue", wait: "Wait",
   // PG-REQ: his word on a requirement, and one unmet after the rounds.
   met: "Met", unmet: "Unmet", send_back: "Send back",
+  // PG-DIRECTION DIR3: a core question, a race winner, an added step, what an
+  // agent proposed (they read as raw wire keys before).
+  go_on: "Go on", park: "Park", pick: "Pick", add: "Add", apply: "Apply", send: "Send",
 };
 
 function NeedVerbsView({ face, primary, onWell, well }: {
@@ -251,6 +255,19 @@ function NeedVerbsView({ face, primary, onWell, well }: {
                 }), face.id, (event.currentTarget as Element).closest("li"))}>{word}</Button>
             );
           })}
+          {/* PG-DIRECTION DIR3: the item's briefing page. Revoke ends the
+              token, not the item. */}
+          {v.ref && briefable(v.itemKind) ? (
+            v.page ? (
+              <Button dense variant="ghost" loading={busy} disabled={busy} aria-label={named("Revoke the page")}
+                data-testid="needs-row-verb" data-verb="program-revoke-page"
+                onClick={() => void act("Revoke", () => revokePage(String(v.page?.package_id)), face.id)}>Revoke</Button>
+            ) : (
+              <Button dense variant="ghost" loading={busy} disabled={busy} aria-label={named("Copy page link")}
+                data-testid="needs-row-verb" data-verb="program-copy-link"
+                onClick={() => void act("Copy page link", () => copyPageLink(String(v.ref)), face.id)}>Copy page link</Button>
+            )
+          ) : null}
         </>
       );
     case "allow-helper":

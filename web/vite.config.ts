@@ -48,7 +48,7 @@ function computeBuildId(): string {
       digest.update(readFileSync(file));
     }
   }
-  for (const manifest of ["package.json", "index.html", "vite.config.ts"]) {
+  for (const manifest of ["package.json", "index.html", "briefing.html", "vite.config.ts"]) {
     try {
       digest.update(readFileSync(join(here, manifest)));
     } catch {
@@ -111,9 +111,69 @@ function feedbackFontDescriptors() {
   };
 }
 
+const REACT_CHUNK = /\/node_modules\/(react|react-dom|react-router-dom|react-router|scheduler)\//;
+const DESK_ROOT = resolve(here, "src/desk/DeskApp.tsx");
+const BRIEFING_ROOT = resolve(here, "src/briefing/main.tsx");
+const BRIEFING_DIR = resolve(here, "src/briefing") + "/";
+type ModuleGraph = { getModuleInfo(id: string): { importedIds: readonly string[] } | null };
+const reach = new Map<string, Set<string>>();
+
+function reachable(root: string, graph: ModuleGraph): Set<string> {
+  const known = reach.get(root);
+  if (known) return known;
+  const seen = new Set<string>();
+  const queue = [root];
+  while (queue.length) {
+    const id = queue.pop() as string;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    for (const next of graph.getModuleInfo(id)?.importedIds ?? []) queue.push(next);
+  }
+  reach.set(root, seen);
+  return seen;
+}
+
+function chunkFor(id: string, graph: ModuleGraph): string | undefined {
+  if (REACT_CHUNK.test(id)) return "react";
+  // Rollup's own helpers (\0commonjsHelpers …) follow their importers: a
+  // helper the react chunk needs placed in "kit" made the two chunks import
+  // each other, and React was undefined when the page ran.
+  if (id.startsWith("\0")) return undefined;
+  // Its own named chunk: a manual chunk pulls in the unassigned modules it
+  // imports, so a shared module left unassigned would land in "desk".
+  if (reachable(BRIEFING_ROOT, graph).has(id)) return id.startsWith(BRIEFING_DIR) ? undefined : "kit";
+  if (reachable(DESK_ROOT, graph).has(id)) return "desk";
+  return undefined;
+}
+
+/** PG-DIRECTION DIR2 (§8 "The page's script reads the desk's owner token"):
+ *  the build fails when any chunk the briefing page loads holds the desk's
+ *  auth client. */
+function briefingKeepsNoAuth() {
+  return {
+    name: "holdspeak-briefing-keeps-no-auth",
+    generateBundle(_options: unknown, bundle: Record<string, { type: string; name?: string; isEntry?: boolean; imports?: string[]; moduleIds?: string[] }>) {
+      const entry = Object.entries(bundle).find(([, chunk]) => chunk.type === "chunk" && chunk.isEntry && chunk.name === "briefing");
+      if (!entry) return;
+      const queue = [entry[0]];
+      const seen = new Set<string>();
+      while (queue.length) {
+        const name = queue.pop() as string;
+        if (seen.has(name)) continue;
+        seen.add(name);
+        const chunk = bundle[name];
+        if (!chunk || chunk.type !== "chunk") continue;
+        const auth = (chunk.moduleIds ?? []).find((moduleId) => moduleId.endsWith("/src/lib/auth.ts"));
+        if (auth) throw new Error(`the briefing page loads ${name}, which holds the desk's auth client (${auth})`);
+        queue.push(...(chunk.imports ?? []));
+      }
+    },
+  };
+}
+
 export default defineConfig({
   base: "/_built/",
-  plugins: [react(), feedbackFontDescriptors(), buildStamp()],
+  plugins: [react(), feedbackFontDescriptors(), buildStamp(), briefingKeepsNoAuth()],
   optimizeDeps: { exclude: ["html-to-image"] },
   define: { __HOLDSPEAK_BUILD__: JSON.stringify(BUILD_ID) },
   build: {
@@ -123,11 +183,15 @@ export default defineConfig({
     assetsDir: "assets",
     sourcemap: process.env.HOLDSPEAK_WEB_SOURCEMAPS === "1",
     rollupOptions: {
+      // PG-DIRECTION DIR2 (2026-10-31): the briefing page is its own entry
+      // (briefing.html → /_built/briefing.html, served at /b/<token>). It
+      // shares the material and the kit, never the desk's auth client.
+      input: { index: resolve(here, "index.html"), briefing: resolve(here, "briefing.html") },
       output: {
-        manualChunks: {
-          desk: ["./src/desk/DeskApp.tsx"],
-          react: ["react", "react-dom", "react-router-dom"],
-        },
+        // The desk chunk holds DeskApp's static graph, as before, LESS what
+        // the briefing page imports: those modules form the "kit" chunk, so
+        // the page never loads (or runs) the desk and its auth client.
+        manualChunks: chunkFor,
       },
     },
   },

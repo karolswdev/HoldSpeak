@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 88  # informational; 88 (PG-REQ, additive): program_requirements and its index; 87 (PG14, additive): workbenches.program_template, program_control, program_runs_on_json, program_may_call, program_may_handoff; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
+SCHEMA_VERSION = 89  # informational; 89 (PG-DIRECTION DIR1, additive): briefing_packages, program_checkpoints.via; 88 (PG-REQ, additive): program_requirements and its index; 87 (PG14, additive): workbenches.program_template, program_control, program_runs_on_json, program_may_call, program_may_handoff; 86→87: phone_devices, phone_messages, phone_calls, phone_events, programs.may_call, program_steps.may_call (Phone 2026-10-28); 86 (PG19, additive): programs.default_runs_on_json, allowed_profiles_json, may_handoff, usage_warning_share; program_steps.runs_on_json, handoffs_json; 85→86: programs, program_steps, program_checkpoints (Programs 2026-10-28); 84→85: desk_windows, desk_window_desk (PHILO-16 16b); 83→84: agent_session_events (PHILO-14 C0); 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -5295,7 +5295,24 @@ CREATE TABLE IF NOT EXISTS program_checkpoints (
     rule TEXT,
     overturnable INTEGER NOT NULL DEFAULT 0,
     overturned_at TEXT,
-    undo_json TEXT NOT NULL DEFAULT '{}'
+    undo_json TEXT NOT NULL DEFAULT '{}',
+    via TEXT
+);
+-- PG-DIRECTION DIR1 (2026-10-31, DIRECTION-2026-10-31.md §11): a briefing
+-- package is one held item (or, later, a digest) frozen for a channel. Its
+-- page token is never stored: only its SHA-256. answers_json holds the one
+-- answer per ref ({choice, via, at, later_until?}).
+CREATE TABLE IF NOT EXISTS briefing_packages (
+    id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    refs_json TEXT NOT NULL,
+    body_json TEXT NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT,
+    sent_json TEXT NOT NULL DEFAULT '[]',
+    answers_json TEXT NOT NULL DEFAULT '{}'
 );
 -- Programs PG-REQ (2026-10-31, PROGRAMS-REQUIREMENTS-2026-10-31.md §11): one
 -- sentence of the owner's on a Program or a step, with the way it is proven

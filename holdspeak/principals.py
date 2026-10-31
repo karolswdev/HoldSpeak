@@ -38,6 +38,10 @@ class PrincipalKind(str, Enum):
     # code. Its credential reaches the Line's three wire routes and nothing else
     # (not the node link, not the mesh, not an owner read).
     LINE_NODE = "line-node"
+    # PG-DIRECTION DIR1 (2026-10-31): a briefing page, proven by the token in
+    # its path. Its one right answers that one package; the handler checks the
+    # token's hash, expiry and revocation (``services/briefing_service.py``).
+    BRIEFING = "briefing"
     NONE = "none"
 
 
@@ -53,6 +57,7 @@ class PrincipalRight(str, Enum):
     SELF_REVOKE = "self.revoke"
     NODE_LINK = "node.link"
     LINE_LINK = "line.link"
+    BRIEFING_ANSWER = "briefing.answer"
 
 
 _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
@@ -70,6 +75,7 @@ _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
     PrincipalKind.SERVICE: frozenset(),
     PrincipalKind.BRIEF_CONDUCTOR: frozenset({PrincipalRight.READ}),
     PrincipalKind.LINE_NODE: frozenset({PrincipalRight.LINE_LINK}),
+    PrincipalKind.BRIEFING: frozenset({PrincipalRight.BRIEFING_ANSWER}),
     PrincipalKind.NONE: frozenset(),
 }
 
@@ -824,6 +830,28 @@ def phone_device_route(method: str, path: str) -> bool:
     return any(verb == want and pattern.match(path) for want, pattern in _PHONE_DEVICE_ROUTES)
 
 
+# PG-DIRECTION DIR1 (DIRECTION-2026-10-31.md §6 "At the edge"): the briefing
+# page's data routes. The token is the path segment, never ``?token=`` (the
+# edge reads that as the owner token). The edge lets exactly these through; the
+# handler (``web/routes/briefing.py``) is the only authority, and the token
+# reaches no other route (fence: ``tests/unit/test_reach_packages.py``).
+_BRIEFING_TOKEN = r"[A-Za-z0-9_-]{43}"
+_BRIEFING_ROUTES: tuple[tuple[str, Any], ...] = tuple(
+    (verb, re.compile("^" + pattern + "$"))
+    for verb, pattern in (
+        ("GET", rf"/api/b/{_BRIEFING_TOKEN}"),
+        ("GET", rf"/api/b/{_BRIEFING_TOKEN}/evidence/[^/]+/[^/]+"),
+        ("POST", rf"/api/b/{_BRIEFING_TOKEN}/answer"),
+    )
+)
+
+
+def briefing_route(method: str, path: str) -> bool:
+    """True for exactly the briefing page's data routes."""
+    verb = str(method or "").upper()
+    return any(verb == want and pattern.match(path) for want, pattern in _BRIEFING_ROUTES)
+
+
 #: The Line's wire (LINE design §4): the only routes a line-node credential
 #: reaches. The owner (a local node on the hub token) reaches them too.
 LINE_WIRE_ROUTES = frozenset({"/api/calls/line/hello", "/api/calls/line/events", "/api/calls/line/next"})
@@ -849,6 +877,8 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return None
     if phone_device_route(verb, path):
         return None  # the handler admits the owner, an agent or a paired phone
+    if briefing_route(verb, path):
+        return None  # the handler checks the token's hash, expiry and revocation
     if verb == "POST" and path in LINE_WIRE_ROUTES:
         return PrincipalRight.LINE_LINK
     if verb == "POST" and path == LINE_ENROL_ROUTE:

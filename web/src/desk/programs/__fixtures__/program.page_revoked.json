@@ -1,0 +1,514 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "sh /repo/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-31T20:08:18.596500+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 10,
+      "kind": null,
+      "line": "The program waits on you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-31T20:08:18.510051+00:00",
+      "by": "engine",
+      "choice": "message",
+      "decision_record_id": null,
+      "id": 9,
+      "kind": "reach",
+      "line": "Reached you: a message",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/6",
+      "ref_commit": "8f752fb1a1874df763f8744260f4459db00e5297",
+      "rule": "YOLO: the program may not call, so a message",
+      "step_id": "step-2e07845b4150",
+      "undo": {
+        "pin": {
+          "commit": "8f752fb1a1874df763f8744260f4459db00e5297",
+          "head": "1b60370414636a248c4fa7c541d210078a8f5212",
+          "n": 6,
+          "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/6",
+          "tree": "f240676b79e7926a6a009c9ddab43804bd2e5960"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T20:08:18.407259+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 8,
+      "kind": null,
+      "line": "A core question for you: it touches files no step owns (holdspeak/db/schema.py)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/5",
+      "ref_commit": "c659d2f5e8a66208913751a3fad9984559abcff9",
+      "rule": null,
+      "step_id": "step-2e07845b4150",
+      "undo": {
+        "pin": {
+          "commit": "c659d2f5e8a66208913751a3fad9984559abcff9",
+          "head": "1b60370414636a248c4fa7c541d210078a8f5212",
+          "n": 5,
+          "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/5",
+          "tree": "f240676b79e7926a6a009c9ddab43804bd2e5960"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T20:08:18.271372+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 7,
+      "kind": null,
+      "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-2e07845b4150/.tmp/program-check/step-2e07845b4150/20261031T200818Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/4",
+      "ref_commit": "f98b9f0b16e1cdbb023a2fb27cf7d209559038a5",
+      "rule": null,
+      "step_id": "step-2e07845b4150",
+      "undo": {
+        "pin": {
+          "commit": "f98b9f0b16e1cdbb023a2fb27cf7d209559038a5",
+          "head": "1b60370414636a248c4fa7c541d210078a8f5212",
+          "n": 4,
+          "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/4",
+          "tree": "f240676b79e7926a6a009c9ddab43804bd2e5960"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T20:08:18.125356+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 6,
+      "kind": null,
+      "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/3",
+      "ref_commit": "c2a418166473d240ef6358e4f4703442da68ad15",
+      "rule": null,
+      "step_id": "step-2e07845b4150",
+      "undo": {
+        "pin": {
+          "commit": "c2a418166473d240ef6358e4f4703442da68ad15",
+          "head": "1b60370414636a248c4fa7c541d210078a8f5212",
+          "n": 3,
+          "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/3",
+          "tree": "3cd13087f2092fd7caeedcc99545de7abf644fb6"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T20:08:18.037410+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "New commit 1b603704; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/2",
+      "ref_commit": "ef919a093abc9b4f3bb9fedea11bc05a749f30ab",
+      "rule": null,
+      "step_id": "step-2e07845b4150",
+      "undo": {
+        "pin": {
+          "commit": "ef919a093abc9b4f3bb9fedea11bc05a749f30ab",
+          "head": "1b60370414636a248c4fa7c541d210078a8f5212",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/2",
+          "tree": "3cd13087f2092fd7caeedcc99545de7abf644fb6"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T20:08:17.892991+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-2e07845b4150",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/1",
+      "ref_commit": "660632f9ea634f7db0666cb9223a733d8b4db8c4",
+      "rule": null,
+      "step_id": "step-2e07845b4150",
+      "undo": {
+        "pin": {
+          "commit": "660632f9ea634f7db0666cb9223a733d8b4db8c4",
+          "head": "d0a9a579118bb9a52fa332ae2e8430f66f7f9c73",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        }
+      }
+    },
+    {
+      "at": "2026-10-31T20:08:17.829239+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-31T20:08:17.827965+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-31T20:08:17.825924+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "yolo",
+  "control_word": "YOLO",
+  "created_at": "2026-10-31T20:08:17.825593+00:00",
+  "decided_for_you": [
+    {
+      "at": "2026-10-31T20:08:18.510051+00:00",
+      "choice": "message",
+      "decision_record_id": null,
+      "id": 9,
+      "kind": "reach",
+      "line": "Reached you: a message",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "YOLO: the program may not call, so a message",
+      "step_id": "step-2e07845b4150"
+    }
+  ],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "done": 0,
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Stop the stalls.",
+  "id": "program-409db75ab9d9",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-10-31T20:08:18.596500+00:00",
+    "by": "engine",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 10,
+    "kind": null,
+    "line": "The program waits on you",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "may_call": false,
+  "may_handoff": false,
+  "note_id": "program-program-409db75ab9d9",
+  "note_window": "pullout:note:program-program-409db75ab9d9",
+  "origin_ref": null,
+  "persons": [],
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "prefer_idle": false,
+  "project": null,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "requirements": [],
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 3,
+  "search_words": "overnight on the home box stop the stalls. fast-cycle store the stall reason fast cycle",
+  "spend_limit_usd": null,
+  "state": "waiting",
+  "state_word": "Your turn",
+  "status_line": "Your turn · 0 of 1 done · 1 waits on you · check: fake_program_check.sh · control YOLO",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/overnight-on-the-home-box/1-store-the-stall-reason",
+      "brief": "Store the stall reason in its own column.\nKeep the old reads.",
+      "check": {
+        "command": "sh /repo/tests/fixtures/fake_program_check.sh",
+        "commit": "1b60370414636a248c4fa7c541d210078a8f5212",
+        "log": "/tmp/rig/hs-program-step-2e07845b4150/.tmp/program-check/step-2e07845b4150/20261031T200818Z.log",
+        "minutes": 0.0,
+        "reasons": [],
+        "running": false,
+        "sections": [
+          {
+            "name": "build",
+            "state": "green"
+          },
+          {
+            "name": "vitest",
+            "state": "green"
+          },
+          {
+            "name": "pytest",
+            "state": "green"
+          },
+          {
+            "name": "sweep",
+            "state": "green"
+          },
+          {
+            "name": "canon",
+            "state": "green"
+          },
+          {
+            "name": "repo",
+            "state": "green"
+          }
+        ],
+        "verdict": "green"
+      },
+      "contenders": [],
+      "editable": [
+        "title",
+        "amend",
+        "runs_on_then",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "for_person",
+        "may_call"
+      ],
+      "effort": "low",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "brief": "The agent has read it",
+        "effort": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-2e07845b4150",
+      "last_checkpoint": {
+        "at": "2026-10-31T20:08:18.510051+00:00",
+        "by": "engine",
+        "choice": "message",
+        "decision_record_id": null,
+        "id": 9,
+        "kind": "reach",
+        "line": "Reached you: a message",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/6",
+        "ref_commit": "8f752fb1a1874df763f8744260f4459db00e5297",
+        "rule": "YOLO: the program may not call, so a message",
+        "step_id": "step-2e07845b4150",
+        "undo": {
+          "pin": {
+            "commit": "8f752fb1a1874df763f8744260f4459db00e5297",
+            "head": "1b60370414636a248c4fa7c541d210078a8f5212",
+            "n": 6,
+            "ref": "refs/holdspeak/checkpoints/step-2e07845b4150/6",
+            "tree": "f240676b79e7926a6a009c9ddab43804bd2e5960"
+          }
+        }
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [
+        "src/a.py"
+      ],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-10-31T20:08:17.892644+00:00",
+      "state": "checking",
+      "state_word": "Checking",
+      "station": 2,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Store the stall reason",
+      "updated_at": "2026-10-31T20:08:18.406847+00:00",
+      "worktree": "hs-program-step-2e07845b4150"
+    }
+  ],
+  "template": "fast-cycle",
+  "title": "Overnight on the home box",
+  "total": 1,
+  "updated_at": "2026-10-31T20:08:18.596388+00:00",
+  "usage_warning_share": null,
+  "your_turn": 1,
+  "your_turn_items": [
+    {
+      "choices": [
+        "go_on",
+        "park"
+      ],
+      "core": true,
+      "for_person_id": null,
+      "id": "step-2e07845b4150:core",
+      "kind": "core",
+      "launch_id": "L1",
+      "ordinal": 1,
+      "pr": null,
+      "program_id": "program-409db75ab9d9",
+      "program_title": "Overnight on the home box",
+      "project_id": null,
+      "reason": "it touches files no step owns (holdspeak/db/schema.py)",
+      "since": "2026-10-31T20:08:18.406847+00:00",
+      "step_id": "step-2e07845b4150",
+      "step_title": "Store the stall reason",
+      "title": "Step 1 “store the stall reason”: it touches files no step owns (holdspeak/db/schema.py)"
+    }
+  ]
+}

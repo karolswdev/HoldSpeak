@@ -898,6 +898,36 @@
       "consumers": []
     },
     {
+      "path": "/api/b/{token}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.briefing",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/b/{token}/answer",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.briefing",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/b/{token}/evidence/{ref}/{pane}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.briefing",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/bookmark",
       "methods": [
         "POST"
@@ -6471,6 +6501,36 @@
       ]
     },
     {
+      "path": "/api/reach/packages",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.briefing",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/reach/packages",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.briefing",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/reach/packages/{package_id}/revoke",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.briefing",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/recipes",
       "methods": [
         "GET"
@@ -8453,6 +8513,14 @@
         "ios",
         "web"
       ]
+    },
+    {
+      "path": "/b/{token}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.briefing",
+      "consumers": []
     },
     {
       "path": "/cadence",

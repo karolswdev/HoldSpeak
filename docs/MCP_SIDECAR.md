@@ -391,7 +391,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 312 tools across 52 families.
+**Registry totals:** 313 tools across 52 families.
 
 #### agent (6)
 
@@ -634,8 +634,9 @@ database, FTS index or Cadence.
 - `people.resolve`
 - `people.suggestions`
 
-#### phone (4)
+#### phone (5)
 
+- `phone.brief`
 - `phone.call`
 - `phone.get_replies`
 - `phone.send_message`

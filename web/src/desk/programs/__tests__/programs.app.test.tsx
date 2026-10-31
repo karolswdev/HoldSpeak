@@ -47,6 +47,13 @@ import amendedFixture from "../__fixtures__/program.adjust.amended.json";
 import titledFixture from "../__fixtures__/program.adjust.titled.json";
 import proposalsFixture from "../__fixtures__/program.proposals.json";
 import proposalsAddedFixture from "../__fixtures__/program.proposals.added.json";
+// PG-DIRECTION DIR3: recorded by tests/integration/test_desk_reach.py.
+import pageNoneFixture from "../__fixtures__/program.page_none.json";
+import pageOpenFixture from "../__fixtures__/program.page_open.json";
+import revokeOpenFixture from "../__fixtures__/program.revoke_open.json";
+import pageRevokedFixture from "../__fixtures__/program.page_revoked.json";
+import reachPackageFixture from "../__fixtures__/reach.package.json";
+import reachRevokedFixture from "../__fixtures__/reach.revoked.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -932,8 +939,9 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     expect(kinds.sort()).toEqual(["requirement_proposed", "step_amend", "step_change"]);
     const words = (kind: string) => [...within(within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === kind)!)
       .getAllByRole("button")].map((button) => button.textContent);
-    expect(words("step_change")).toEqual(["Apply", "Skip"]);
-    expect(words("step_amend")).toEqual(["Send", "Skip"]);
+    // PG-DIRECTION DIR3: each also makes its briefing page (Copy page link).
+    expect(words("step_change")).toEqual(["Apply", "Skip", "Copy page link"]);
+    expect(words("step_amend")).toEqual(["Send", "Skip", "Copy page link"]);
     const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "requirement_proposed")!;
     expect(row.textContent).toContain("The line answers in two rings");
     fireEvent.click(within(row).getByTestId("programs-turn-add"));
@@ -1161,3 +1169,49 @@ describe("REQ12: the shot (pullout:program-shot) and the evidence thumbnail", ()
     expect(mocks.openPullout).toHaveBeenCalledWith(`program:${reqProgram.id}`);
   });
 });
+
+describe("the briefing page link (PG-DIRECTION DIR3)", () => {
+  it("Copy page link makes the page, copies its link, and the row says the page is open", async () => {
+    const before = pageNoneFixture as unknown as Program;
+    const after = pageOpenFixture as unknown as Program;
+    const core = before.your_turn_items.find((item) => item.kind === "core")!;
+    const writeText = vi.fn(async () => undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    let made = false;
+    hub({
+      [`GET /api/programs/${before.id}`]: () => (made ? after : before),
+      "POST /api/reach/packages": () => { made = true; return reachPackageFixture; },
+    });
+    render(<ProgramBody programId={before.id} />);
+    const well = await screen.findByTestId("programs-your-turn");
+    const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "core")!;
+    expect(within(row).queryByTestId("programs-turn-page")).toBeNull();
+    fireEvent.click(within(row).getByTestId("programs-turn-copy-link"));
+    await waitFor(() => expect(screen.getByTestId("programs-turn-page").textContent).toMatch(/^Page link copied · open until \d\d:\d\d$/));
+    expect(calls).toContain(`POST /api/reach/packages ${JSON.stringify({ refs: [`program:${before.id}:${core.id}`] })}`);
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}${reachPackageFixture.path}`);
+    expect(screen.getByTestId("programs-turn-revoke").textContent).toBe("Revoke");
+    expect(screen.queryByTestId("programs-turn-copy-link")).toBeNull();
+    // No chip: the page is said in the row's line.
+    expect(within(screen.getByTestId("programs-your-turn")).queryAllByText(/^(Telegram|Page)$/)).toHaveLength(0);
+  });
+
+  it("Revoke ends the page and the item stays in Your turn", async () => {
+    const open = revokeOpenFixture as unknown as Program;
+    const after = pageRevokedFixture as unknown as Program;
+    const core = open.your_turn_items.find((item) => item.kind === "core")!;
+    let revoked = false;
+    hub({
+      [`GET /api/programs/${open.id}`]: () => (revoked ? after : open),
+      [`POST /api/reach/packages/${core.page!.package_id}/revoke`]: () => { revoked = true; return reachRevokedFixture; },
+    });
+    render(<ProgramBody programId={open.id} />);
+    expect((await screen.findByTestId("programs-turn-page")).textContent).toMatch(/^Page open until \d\d:\d\d$/);
+    fireEvent.click(screen.getByTestId("programs-turn-revoke"));
+    await waitFor(() => expect(screen.queryByTestId("programs-turn-page")).toBeNull());
+    expect(screen.getByTestId("programs-turn-copy-link").textContent).toBe("Copy page link");
+    expect(within(screen.getByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")
+      .some((node) => node.getAttribute("data-kind") === "core")).toBe(true);
+  });
+});
+

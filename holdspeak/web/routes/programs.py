@@ -16,7 +16,7 @@ POST   /api/programs/{id}/plan                     {steps: [...], size: "auto"|n
 POST   /api/programs/{id}/from-desk                one step per open action of its Project
 POST   /api/programs/{id}/start | /park | /resume
 POST   /api/programs/{id}/steps/{sid}/checkpoint   {line}
-POST   /api/programs/{id}/steps/{sid}/decide       {kind, choice, finding_id?, reason?}
+POST   /api/programs/{id}/steps/{sid}/decide       {kind, choice, finding_id?, reason?, via?}
 POST   /api/programs/{id}/steps/{sid}/race         {n}
 POST   /api/programs/{id}/steps/{sid}/handoff      {to: profile | {profile, engine}, preview: bool} (owner only;
                                                    PG19: preview returns the brief, nothing moves)
@@ -176,7 +176,7 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         principal, body = _principal(request), await _body(request)
         return await _call(lambda: _service().decide(
             principal, program_id, step_id, kind=str(body.get("kind") or ""), choice=str(body.get("choice") or ""),
-            finding_id=body.get("finding_id"), reason=body.get("reason"),
+            finding_id=body.get("finding_id"), reason=body.get("reason"), via=body.get("via"),
         ))
 
     @router.post("/api/programs/{program_id}/steps/{step_id}/race")

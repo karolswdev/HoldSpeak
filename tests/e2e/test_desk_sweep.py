@@ -481,12 +481,14 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             }, token=TOKEN)
             note_id = thought["thought"]["working_note"]["id"]
             program_id = _seed_program(page, tmp)
+            briefing = _seed_briefing(page, tmp)
             ctx.close()
             _seed_finished_receipts()
             automation = _seed_automation(note_id)
             automation_program = _seed_program_automation(program_id)
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
-                   "automation": automation, "program": program_id, "automation_program": automation_program}
+                   "automation": automation, "program": program_id, "automation_program": automation_program,
+                   "briefing": briefing}
         finally:
             server.stop()
 
@@ -520,6 +522,37 @@ def _seed_program(page: Any, tmp: Path) -> str:
         _api(page, "POST", f"/api/programs/{program_id}/requirements", body, token=TOKEN)
     _api(page, "POST", f"/api/programs/{program_id}/start", {}, token=TOKEN)
     return program_id
+
+
+def _seed_briefing(page: Any, tmp: Path) -> str:
+    """PG-DIRECTION DIR2: a second Program whose step 1 waits on a core
+    question (the runner is off, so the question is written on the step as
+    the engine writes it), and its briefing page. Returns the page token."""
+    from holdspeak.services.program_service import default_program_service
+
+    repo = tmp / "briefing-repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "-c", "user.name=Sweep", "-c", "user.email=sweep@example.com",
+                    "commit", "-q", "--allow-empty", "-m", "start"], check=True)
+    made = _api(page, "POST", "/api/programs", {
+        "title": "Overnight on the home box", "goal": "The hub stops stalling overnight.",
+        "repository": str(repo), "template": "fast-cycle", "check_command": "true", "control": "yolo",
+    }, token=TOKEN)
+    program_id = str(made.get("id") or (made.get("program") or {}).get("id"))
+    _api(page, "POST", f"/api/programs/{program_id}/plan", {"replace": True, "steps": [
+        {"title": "Store the stall reason", "brief": "Store the stall reason in its own column.",
+         "owns": ["holdspeak/services/stall.py"]},
+    ]}, token=TOKEN)
+    _api(page, "POST", f"/api/programs/{program_id}/start", {}, token=TOKEN)
+    service = default_program_service()
+    step = service.store.list_steps(program_id)[0]
+    step.setdefault("facts", {})["core"] = {"kind": "outside_owned",
+                                            "reason": "it touches files no step owns (holdspeak/db/schema.py)"}
+    service.store.save_step(step)
+    item = next(row for row in service.needs_you_items() if row["program_id"] == program_id and row["kind"] == "core")
+    page_made = _api(page, "POST", "/api/reach/packages", {"refs": [f"program:{program_id}:{item['id']}"]}, token=TOKEN)
+    return str(page_made["token"])
 
 
 def _seed_automation(note_id: str) -> str:
@@ -1609,6 +1642,47 @@ def test_every_html_route_loads_clean(desk: dict[str, Any], pw_browser: Any, rou
         page.evaluate(RECORD_JS, [None, STILL_MS])
         problems += [e for e in errors if "ResizeObserver" not in e]
         assert not problems, f"{route}: {problems}"
+    finally:
+        ctx.close()
+
+
+@pytest.mark.timeout(120)
+@pytest.mark.parametrize("width", [1440, 393])
+def test_the_briefing_page_holds_the_fences(desk: dict[str, Any], pw_browser: Any, width: int) -> None:
+    """PG-DIRECTION DIR2 (T3): the briefing page at /b/<token>, opened with no
+    owner token, holds the window fences (readable, floor, contrast, clipped,
+    overlap, library, still, target, clean, egress); its choices are 44 px
+    library Buttons; a bad token draws the expired face with no data."""
+    base = desk["base"]
+    ctx, page, errors, requests = _page(pw_browser, width, base)
+    try:
+        page.goto(f"{base}/b/{desk['briefing']}", wait_until="load")
+        try:
+            page.locator("[data-testid=briefing-well]").wait_for(timeout=T)
+        except Exception as exc:
+            raise AssertionError(f"the page drew no well: {errors} {page.evaluate('document.body.innerText')[:300]!r}") from exc
+        page.locator("[data-testid=briefing-choice-go_on]").wait_for(timeout=T)
+        sweep = _Case(page, base, "", errors, requests)
+        sweep.sel = "[data-testid=briefing-page]"
+        sweep.shot = f"briefing-{width}"
+        sweep.fences()
+        heights = page.evaluate("""() => [...document.querySelectorAll('[data-testid=briefing-choices] button')]
+          .map((b) => Math.round(b.getBoundingClientRect().height))""")
+        if not heights or min(heights) < 44:
+            sweep.failures.setdefault("target", []).append(f"the choices are {heights} px, not 44")
+        stored = page.evaluate("() => [document.cookie, localStorage.length, sessionStorage.length]")
+        if stored != ["", 0, 0]:
+            sweep.failures.setdefault("clean", []).append(f"the page stored something: {stored}")
+        _verdict("briefing", width, sweep.failures)
+    finally:
+        ctx.close()
+    ctx, page, errors, _ = _page(pw_browser, width, base)
+    try:
+        page.goto(f"{base}/b/{'x' * 43}", wait_until="load")
+        page.locator("[data-testid=briefing-expired]").wait_for(timeout=T)
+        assert page.locator("[data-testid=briefing-well]").count() == 0
+        # The one 404 is the honest answer (the shell, then the read); nothing else.
+        assert all("404" in error for error in errors), errors
     finally:
         ctx.close()
 

@@ -23,6 +23,7 @@ target.
 """
 from __future__ import annotations
 
+import contextvars
 import json
 import os
 import re
@@ -159,6 +160,26 @@ DECIDE_CHOICES = {
 #: he answers).
 PROPOSAL_KINDS = ("requirement_proposed", "step_change", "step_amend")
 
+
+
+#: PG-DIRECTION DIR1 (DIRECTION-2026-10-31.md §3 "The decision record"):
+#: where his answer came from. ``desk`` (or none) is the desk; each other
+#: channel names itself in the ledger line and in ``program_checkpoints.via``.
+VIA_CHANNELS = ("desk", "phone", "call", "telegram", "page")
+VIA_WORDS = {"phone": "decided on your phone", "call": "decided on a call", "telegram": "decided from Telegram",
+             "page": "decided from the briefing page"}
+#: The channel of the decide call in progress (set by ``decide``, read by
+#: ``_checkpoint``): every owner line that call writes names it.
+_VIA: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("program_decide_via", default=None)
+
+
+def via_of(value: Any) -> Optional[str]:
+    """The channel of a decide call: ``None`` for the desk, else one of
+    ``VIA_CHANNELS``; anything else is refused by name."""
+    via = str(value or "desk").strip().lower()
+    if via not in VIA_CHANNELS:
+        raise ProgramRefused("via_invalid", f"via takes {', '.join(VIA_CHANNELS)}.", status=400)
+    return None if via == "desk" else via
 
 
 #: ``HOLDSPEAK_PROGRAMS=off``: the runner does not tick (every rig hub).
@@ -756,7 +777,8 @@ class ProgramService:
               requirements: Optional[list[dict[str, Any]]] = None,
               checkpoints: Optional[list[dict[str, Any]]] = None) -> list[dict[str, Any]]:
         reqs = requirements if requirements is not None else self.requirements(program["id"])
-        return your_turn(program, steps, reqs, self.proposals(program["id"], checkpoints))
+        items = your_turn(program, steps, reqs, self.proposals(program["id"], checkpoints))
+        return _with_pages(self.db, program["id"], items)
 
     def _state(self, program: Mapping[str, Any], steps: list[Mapping[str, Any]], *,
                requirements: Optional[list[dict[str, Any]]] = None,
@@ -1942,11 +1964,25 @@ class ProgramService:
     def decide(
         self, principal: Any, program_id: str, step_id: str, *, kind: str, choice: str,
         finding_id: Optional[str] = None, reason: Optional[str] = None,
-        requirement_id: Optional[str] = None, proposal_id: Any = None,
+        requirement_id: Optional[str] = None, proposal_id: Any = None, via: Any = None,
     ) -> dict[str, Any]:
         """His press on a your-turn item (owner only). PG-REQ: ``requirement``
         (with ``requirement_id``) and the proposal kinds (with
-        ``proposal_id``) go to their own verbs."""
+        ``proposal_id``) go to their own verbs. PG-DIRECTION: ``via`` names
+        the channel (desk by default); each owner line the call writes says it
+        ("Go on: … · decided from the briefing page") and stores it."""
+        token = _VIA.set(via_of(via))
+        try:
+            return self._decide(principal, program_id, step_id, kind=kind, choice=choice, finding_id=finding_id,
+                                reason=reason, requirement_id=requirement_id, proposal_id=proposal_id)
+        finally:
+            _VIA.reset(token)
+
+    def _decide(
+        self, principal: Any, program_id: str, step_id: str, *, kind: str, choice: str,
+        finding_id: Optional[str] = None, reason: Optional[str] = None,
+        requirement_id: Optional[str] = None, proposal_id: Any = None,
+    ) -> dict[str, Any]:
         self._require_owner(principal, "decide")
         program = self._program(program_id)
         kind, choice = str(kind or ""), str(choice or "")
@@ -2190,8 +2226,9 @@ class ProgramService:
         operation_id = self._kernel_record(program, step, line) if kernel and by == "engine" else None
         ids = [str(rid) for rid in requirement_ids]
         undo: dict[str, Any] = {"requirement_id": ids[0]} if len(ids) == 1 else {"requirement_ids": ids}
+        line, via = _via_line(by, line[:400])
         self.store.add_checkpoint(step_id=str((step or {}).get("id") or ""), program_id=program["id"], at=self._clock(),
-                                  by=by, line=line[:400], operation_id=operation_id, kind="requirement", undo=undo)
+                                  by=by, line=line, operation_id=operation_id, kind="requirement", undo=undo, via=via)
 
     def require(
         self, principal: Any, program_id: str, *, text: Any = None, kind: Any = None, step_id: Any = None,
@@ -3528,8 +3565,10 @@ class ProgramService:
         pin = self.pin(step, line)
         if pin:
             undo["pin"] = pin
+        line, via = _via_line(by, line)
         ident = self.store.add_checkpoint(step_id=str((step or {}).get("id") or ""), program_id=program["id"],
-                                          at=at, by=by, line=line, operation_id=operation_id, undo=undo or None)
+                                          at=at, by=by, line=line, operation_id=operation_id, undo=undo or None,
+                                          via=via)
         return {"id": ident, "step_id": (step or {}).get("id") or "", "at": at, "by": by, "line": line,
                 "operation_id": operation_id, "decision_record_id": decision_record_id,
                 "ref": (pin or {}).get("ref")}
@@ -3770,6 +3809,34 @@ _CHANGE_FIELDS = {
 _STORE_KEY = {"brief": "brief_markdown"}
 
 
+def _with_pages(db: Any, program_id: str, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """PG-DIRECTION DIR3: an item with an open briefing page carries
+    ``page`` ({package_id, expires_at}); the key is absent otherwise."""
+    if not items:
+        return items
+    try:
+        from ..db.briefing import BriefingStore
+
+        pages = BriefingStore(db).open_pages(f"program:{program_id}:", utc_now_iso())
+    except Exception as exc:  # a store that cannot read keeps the items as they are
+        log.debug(f"briefing pages not read: {exc}")
+        return items
+    for item in items:
+        page = pages.get(f"program:{program_id}:{item['id']}")
+        if page:
+            item["page"] = page
+    return items
+
+
+def _via_line(by: str, line: str) -> tuple[str, Optional[str]]:
+    """An owner line written inside a decide call from another channel says
+    the channel; ``(line, via)``."""
+    via = _VIA.get()
+    if by != "owner" or not via:
+        return line, None
+    return f"{line} \u00b7 {VIA_WORDS[via]}"[:400], via
+
+
 def _change_words(step: Mapping[str, Any], fields: Mapping[str, Any]) -> str:
     """"moves step 6 before step 5", "changes step 4: title, brief"."""
     names = [key for key in fields if key != "before"]
@@ -3943,6 +4010,6 @@ __all__ = [
     "ACTIVE_STATES", "AGENT_LABELS", "CLOSED_STATES", "DECIDE_CHOICES", "FINISHED_STATES", "MAX_RACE",
     "MAX_ROUNDS", "PROGRAMS_ENV", "PROGRAM_STATES", "PROGRAM_WORDS", "ProgramRefused", "ProgramService",
     "RACE_PROFILES", "STATIONS", "STEP_STATES", "STEP_TRANSITIONS", "STEP_WORDS", "agent_label",
-    "default_program_service", "duration_words", "history_of", "history_words", "name_words", "program_state",
+    "VIA_CHANNELS", "VIA_WORDS", "via_of", "default_program_service", "duration_words", "history_of", "history_words", "name_words", "program_state",
     "programs_on", "spoken_state", "step_origin", "triage_effort", "your_turn",
 ]

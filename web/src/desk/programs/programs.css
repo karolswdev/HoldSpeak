@@ -163,6 +163,13 @@
   white-space: nowrap;
 }
 .pg-turn-verbs { flex: none; display: inline-flex; gap: 6px; }
+/* PG-DIRECTION DIR3: the item's open briefing page, in its line (no chip). */
+.pg-turn-page {
+  flex: none;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  white-space: nowrap;
+}
 
 /* ── the board: one row per step (C, the ledger) ── */
 .pg-board { flex: none; }
@@ -476,6 +483,7 @@
   .pg-turn-item { flex-wrap: wrap; padding: 8px 10px 10px 14px; }
   .pg-turn-words { flex-basis: 100%; white-space: normal; }
   .pg-turn-fact { display: none; }
+  .pg-turn-page { flex-basis: 100%; white-space: normal; }
   .desk-next .pg-turn-verbs .btn,
   .desk-next .pg-toolbar-trailing .btn,
   .desk-next .pg-window .kit-toolbar .btn { min-height: 44px; min-width: 44px; }

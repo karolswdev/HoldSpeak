@@ -1,0 +1,41 @@
+{
+  "items": [
+    {
+      "ageToken": "2026-10-31T20:08:17.101717+00:00",
+      "dueAt": null,
+      "dueWord": "now",
+      "group": "Overnight on the home box",
+      "id": "program:program-eb5278122cf3:step-30d70e38aae8:core",
+      "kind": "program",
+      "openRef": "program:program-eb5278122cf3",
+      "personId": null,
+      "program": {
+        "choices": [
+          "go_on",
+          "park"
+        ],
+        "decide": "/api/programs/program-eb5278122cf3/steps/step-30d70e38aae8/decide",
+        "findingId": null,
+        "kind": "core",
+        "ordinal": 1,
+        "page": {
+          "expires_at": "2026-11-01T06:30:00+00:00",
+          "package_id": "pkg-d38d71f78ecb"
+        },
+        "pr": null,
+        "programId": "program-eb5278122cf3",
+        "requirementId": null,
+        "stepId": "step-30d70e38aae8"
+      },
+      "projectId": "",
+      "projectName": "",
+      "ref": "program:program-eb5278122cf3:step-30d70e38aae8:core",
+      "severity": "warning",
+      "since": "2026-10-31T20:08:17.101717+00:00",
+      "source": "program",
+      "title": "Step 1 “store the stall reason”: it touches files no step owns (holdspeak/db/schema.py)",
+      "verbHref": null,
+      "why": "TO DECIDE"
+    }
+  ]
+}
