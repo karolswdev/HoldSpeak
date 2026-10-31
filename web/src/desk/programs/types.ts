@@ -348,7 +348,7 @@ export interface ProgramStep {
   amendments?: StepAmendment[];
 }
 
-export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "race" | "add_step" | "close" | "limited"
+export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "commit" | "race" | "add_step" | "close" | "limited"
   // PG-REQ §9: his word, a requirement left after the rounds, and what an agent proposes.
   | "requirement_word" | "requirement_left" | "requirement_proposed" | "step_change" | "step_amend";
 

@@ -311,6 +311,8 @@ PROGRAM_WHY = {
     "limited": "TO DECIDE",
     # PG-REQ: his word on a requirement, and one still unmet after the rounds.
     "requirement_word": "TO CONFIRM", "requirement_left": "TO DECIDE",
+    # 2026-10-31: the step's agent's commit (the hold ended, the change waits).
+    "commit": "TO ALLOW",
 }
 
 
@@ -326,6 +328,8 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
         requirement = str(item.get("requirement_id") or "")
         if kind not in PROGRAM_WHY or not item.get("program_id") or not (item.get("step_id") or kind == "close" or requirement):
             continue
+        if kind == "commit" and item.get("hold"):
+            continue  # the gate's own row carries a live hold (one ask, one row)
         ref = f"{PROGRAM_SOURCE}:{item['program_id']}:{item['id']}"
         since = str(item.get("since") or "")
         rows.append({

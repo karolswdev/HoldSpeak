@@ -149,6 +149,7 @@ class ProgramRunner:
         async_checks: bool = True,
         principal: Any = None,
         review_words: Optional[Callable[[str], str]] = None,
+        gate: Any = None,
     ) -> None:
         self.service = service
         self.db = service.db
@@ -161,6 +162,7 @@ class ProgramRunner:
         self._idle = idle
         self._async = async_checks
         self._review_words = review_words
+        self._gate = gate
         if principal is None:
             from ..kernel.program_ops import RUNNER
 
@@ -192,6 +194,13 @@ class ProgramRunner:
         except Exception as exc:
             log.debug(f"flight not read: {exc}")
             return {}
+
+    def gate(self) -> Any:
+        """The gate's held calls of a launch, and a decision on one
+        (:class:`HubGate`; a test passes its own)."""
+        if self._gate is None:
+            self._gate = HubGate(self.db)
+        return self._gate
 
     def engine_idle(self, engine_id: Optional[str]) -> tuple[bool, str]:
         """Whether the engine a pi step runs on is idle now, and its short
@@ -827,7 +836,9 @@ class ProgramRunner:
         path = self._worktree_path(program, str(worktree.get("name") or ""))
         base = self._git(path, "rev-parse", "HEAD") if path else ""
         facts = dict(step.get("facts") or {})
-        facts.update({"base_commit": base or None, "last_turn": None, "nudged": False,
+        facts.pop("commit_ask", None)
+        facts.pop("held_commit", None)
+        facts.update({"base_commit": base or None, "last_turn": None, "nudged": False, "said_done": False,
                       "running_on": {"profile": profile, "engine": engine}})
         who = agent_label(profile)
         found = self.service.engine(engine) if engine else None
@@ -874,10 +885,15 @@ class ProgramRunner:
     def _follow(self, program: dict[str, Any], step: dict[str, Any]) -> None:
         flight = self.flight(str(step.get("launch_id") or ""))
         state = str(flight.get("state") or "")
+        facts = dict(step.get("facts") or {})
+        if self._commit_landed(program, step, facts):
+            return
         if state not in ("starting", "") and state not in _STOPPED and self._limit_follow(program, step, flight):
             return
         facts = dict(step.get("facts") or {})
         if state in ("starting", ""):
+            return
+        if state not in _STOPPED and self._held_commit(program, step, facts):
             return
         if state in _STOPPED:
             self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE,
@@ -905,9 +921,14 @@ class ProgramRunner:
         if not turn and step["state"] == "check_failed" and head == step.get("head_commit"):
             return  # no turn id: wait for the commit of the fix
         if head and head != step.get("head_commit"):
-            facts["nudged"] = False
+            self._clear_commit_wait(facts)
             self.service.transition(program, step, "checking", head_commit=head, facts=facts,
                                     line=f"New commit {head[:8]}; the check runs")
+            return
+        if self._worktree_changed(step):
+            # The work is in the worktree, not in a commit (the gate held the
+            # agent's commit and the hold ended): his row, or YOLO's rule.
+            self._commit_not_made(program, step, facts)
             return
         if facts.get("nudged"):
             self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, facts=facts,
@@ -923,6 +944,107 @@ class ProgramRunner:
             self.service._checkpoint(program, step, "engine", "The turn ended with no commit; asked the agent to commit")
         except Exception as exc:
             log.info(f"commit nudge not typed: {exc}")
+            self.service._checkpoint(program, step, "engine", "The turn ended with no commit; the engine could not "
+                                     "ask the agent to commit. It waits for a commit on the branch")
+
+    # ── a held commit never strands a step (2026-10-31) ──────────────
+
+    @staticmethod
+    def _clear_commit_wait(facts: dict[str, Any]) -> None:
+        for key in ("nudged", "said_done", "commit_ask", "held_commit"):
+            facts.pop(key, None)
+        facts["nudged"] = False
+
+    def _commit_landed(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any]) -> bool:
+        """After the agent said it is done, after a turn end the engine read
+        with no commit, or while his commit row is open, every tick reads the
+        branch head: a new commit (from anyone) moves the step to the check."""
+        if not (facts.get("said_done") or facts.get("nudged") or facts.get("commit_ask")):
+            return False
+        head = self._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
+        if not head or head == step.get("head_commit"):
+            return False
+        self._clear_commit_wait(facts)
+        self.service.transition(program, step, "checking", head_commit=head, facts=facts,
+                                line=f"New commit {head[:8]}; the check runs")
+        return True
+
+    def _worktree_changed(self, step: Mapping[str, Any]) -> bool:
+        worktree = str(step.get("worktree") or "")
+        return bool(worktree and self._git(worktree, "status", "--porcelain", "--", ".", _NOT_CHECK_LOGS))
+
+    def _held_commit(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any]) -> bool:
+        """A commit of the step's agent that the gate holds now: YOLO allows
+        it by rule (and a change of control to YOLO releases it); Secure and
+        Normal show it as his row (``commit``). True when the tick allowed it."""
+        try:
+            holds = [hold for hold in self.gate().held(str(step.get("launch_id") or "")) if hold.get("commit")]
+        except Exception as exc:
+            log.debug(f"gate holds not read: {exc}")
+            return False
+        hold = holds[0] if holds else None
+        known = facts.get("held_commit")
+        if hold is None:
+            if known:
+                facts.pop("held_commit", None)
+                step["facts"] = facts
+                self.service.save_step(step)
+            return False
+        outcome = decide(program.get("control"), "held_commit", {})
+        if not outcome.to_owner and hold.get("scope") == "inside":
+            try:
+                self.gate().decide(hold["proposal_id"], approve=True, reason=outcome.rule[:200])
+            except Exception as exc:
+                log.info(f"held commit not allowed: {exc}")
+                return False
+            facts.pop("held_commit", None)
+            step["facts"] = facts
+            self.service.save_step(step)
+            self.service.engine_decision(program, step, "held_commit", outcome, "Allowed the agent's commit")
+            return True
+        if not known or known.get("proposal_id") != hold["proposal_id"]:
+            facts["held_commit"] = {"proposal_id": hold["proposal_id"], "head": str(hold.get("head") or "")[:200],
+                                    "at": self.service._clock()}
+            step["facts"] = facts
+            self.service.save_step(step)
+            self.service._checkpoint(program, step, "engine", "The gate holds the agent's commit; it waits for you")
+        return False
+
+    def _commit_not_made(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any]) -> None:
+        """The turn ended with the change in the worktree and no commit. YOLO:
+        the engine commits it on the step's branch and says so. Secure and
+        Normal: his row (Allow the commit / Not now); never silent."""
+        outcome = decide(program.get("control"), "held_commit", {})
+        if not outcome.to_owner:
+            step["facts"] = facts
+            self.service.save_step(step)
+            head = self.commit_worktree(program, step)
+            if head:
+                self.service.engine_decision(program, step, "held_commit", outcome,
+                                             f"Committed the agent's change ({head[:8]})")
+                self._clear_commit_wait(facts)
+                self.service.transition(program, step, "checking", head_commit=head, facts=facts,
+                                        line=f"New commit {head[:8]}; the check runs")
+                return
+        facts["commit_ask"] = {"at": self.service._clock()}
+        step["facts"] = facts
+        self.service.save_step(step)
+        self.service._checkpoint(program, step, "engine",
+                                 "The turn ended with the change not committed; the commit waits for you")
+
+    def commit_worktree(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> str:
+        """Commit the step's worktree as it is, on its own branch (the
+        agent's change, his press or YOLO's rule); the new head or ``""``."""
+        worktree = str(step.get("worktree") or "")
+        if not worktree:
+            return ""
+        before = self._git(worktree, "rev-parse", "HEAD")
+        if self._run(["git", "-C", worktree, "add", "-A", "--", ".", _NOT_CHECK_LOGS], cwd=worktree).returncode != 0:
+            return ""
+        message = f"{step.get('title') or 'Program step'}\n\nProgram: {program.get('title') or ''}, step {step.get('ordinal')}"
+        proc = self._run(["git", "-C", worktree, "commit", "-m", message], cwd=worktree)
+        head = self._git(worktree, "rev-parse", "HEAD")
+        return head if proc.returncode == 0 and head and head != before else ""
 
     def _amend_at_turn_end(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any], turn: str) -> bool:
         """PG-REQ §6: his amendments are typed at the turn boundary, never
@@ -1793,6 +1915,48 @@ class ProgramRunner:
 
 
 _DEFAULT: Optional[ProgramRunner] = None
+
+
+#: The engine's own check logs in a worktree are never the agent's change.
+_NOT_CHECK_LOGS = ":(exclude).tmp/program-check"
+_COMMIT = re.compile(r"(^|[\s;&|(])git(\s+-C\s+\S+)?\s+commit\b")
+
+
+class HubGate:
+    """The gate as the engine reads it: the held, unexpired calls of one
+    launch (``tool_call.launch_id`` on the proposal, Conductor K5) and a
+    decision on one (``GateService.decide``)."""
+
+    def __init__(self, db: Any) -> None:
+        self.db = db
+
+    def held(self, launch_id: str) -> list[dict[str, Any]]:
+        from ..db.gate import HELD, command_view
+
+        if not launch_id:
+            return []
+        now = time.time()
+        rows = []
+        for proposal in self.db.gate.list_state(HELD, limit=200):
+            verdict = (proposal.operation or {}).get("tool_call") or {}
+            if str(verdict.get("launch_id") or "") != launch_id:
+                continue
+            if proposal.expires_at and proposal.expires_at <= now:
+                continue
+            head = str(command_view(proposal.args_head, (proposal.operation or {}).get("args_len"))["command"] or "")
+            rows.append({"proposal_id": proposal.id, "tool": proposal.tool, "head": head,
+                         "scope": str(verdict.get("scope") or ""),
+                         "commit": proposal.tool == "Bash" and bool(_COMMIT.search(head))})
+        return rows
+
+    def decide(self, proposal_id: str, *, approve: bool, reason: str, principal: Any = None) -> Any:
+        from ..db.gate import APPROVED, DENIED
+        from ..principals import Principal, PrincipalKind
+        from .gate_service import CONTROL_MODE_IDENTITY, GateService
+
+        who = principal if principal is not None else Principal(PrincipalKind.OWNER, CONTROL_MODE_IDENTITY)
+        return GateService(self.db).decide(who, proposal_id, {"decision": APPROVED if approve else DENIED,
+                                                               "reason": reason[:200]})
 
 
 def default_runner(service: Optional[ProgramService] = None) -> ProgramRunner:

@@ -337,7 +337,7 @@ TOOLS: list[dict[str, Any]] = [
                                             "description": "Steps the plan lacks (YOLO adds them; else the owner decides)."}},
                             ["step_id", "report"])},
     {"name": "program.decide",
-     "description": "The owner's decision on a step: a merge (merge, not_yet), a finding (fix_now, later, skip), a "
+     "description": "The owner's decision on a step: a merge (merge, not_yet), the agent's held commit (commit: allow, not_now), a finding (fix_now, later, skip), a "
                     "parked step (resume, skip), a person review (prepare: a send is prepared, he presses Send), "
                     "an agent at its usage limit (limited: continue, wait), a requirement (requirement with "
                     "requirement_id: met, unmet, waive with reason, send_back), what an agent proposed "

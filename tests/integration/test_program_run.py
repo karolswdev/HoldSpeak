@@ -476,3 +476,161 @@ def test_the_one_on_one_brief_lists_a_merged_step_to_show(tmp_path) -> None:
     assert lines[0]["line"].startswith("For Alice · 1 of 1")
     later = PeopleService._brief_programs(rig.db, "p-alice", "2999-01-01T00:00:00+00:00")
     assert later[0]["to_show"] == []
+
+
+# ── 2026-10-31: a held commit never strands a step ────────────────────
+# The owner's desk, program-6a76cd35f048: Normal held the agent's
+# ``git commit``, the hold expired, the agent said it is done, the commit
+# nudge could not be typed (steering_grant_required), and every later tick
+# returned on the turn it had read: his own commit on the branch moved
+# nothing for minutes.
+
+def _held_step(rig: Rig, control: str) -> tuple[str, dict]:
+    pid = _program(rig, title="Briefing page check", template="fast-cycle", control=control)
+    rig.service.plan(OWNER, pid, steps=[{"title": "Add one line to the README", "brief": "Append one line."}])
+    rig.service.start(OWNER, pid)
+    step = rig.step(pid, 1)
+    worktree = Path(rig.ledger.get(step["launch_id"])["worktree_path"])
+    (worktree / "README.md").write_text("# app\nHello from the briefing page.\n", encoding="utf-8")
+    return pid, step
+
+
+def _say_done(rig: Rig, monkeypatch, pid: str, step: dict) -> None:
+    from holdspeak.mcp import palettes
+    from holdspeak.principals import AgentCredentialStore
+
+    store = AgentCredentialStore()
+    credential = store.issue(f"agent:launch:{step['launch_id']}", palette=palettes.resolve_palette("CONDUCTOR"),
+                             palette_name="CONDUCTOR", launch_id=step["launch_id"])
+    monkeypatch.setattr("holdspeak.principals.agent_credentials", store)
+    rig.service.step_done(credential.principal, pid, step["id"], "README.md edited; the commit was held.")
+
+
+def _refuse_prompts(rig: Rig) -> None:
+    def refused(launch_id: str, text: str) -> None:
+        raise RuntimeError("steering_grant_required")
+
+    rig.runner._prompt = refused
+
+
+def test_a_held_commit_is_his_row_then_after_expiry_his_allow_commits(tmp_path, monkeypatch) -> None:
+    rig = Rig(tmp_path)
+    pid, step = _held_step(rig, "normal")
+    rig.gate.hold_commit(step["launch_id"])
+    rig.tick()
+    items = rig.program(pid)["your_turn_items"]
+    assert [(item["kind"], item["hold"], item["choices"]) for item in items] == [("commit", True, ["allow", "not_now"])]
+    assert items[0]["title"] == "Step 1 “Add one line to the README”: the agent's commit waits for you"
+    assert program_items(rig.service.needs_you_items()) == []  # the gate's own row carries a live hold
+    # The hold expires with no decision; the agent says done and ends its turn.
+    rig.gate.expire(step["launch_id"])
+    _refuse_prompts(rig)
+    _say_done(rig, monkeypatch, pid, step)
+    rig.agent.end_turn(step["launch_id"])
+    rig.tick()
+    assert rig.step(pid, 1)["state"] == "working"
+    items = rig.program(pid)["your_turn_items"]
+    assert [(item["kind"], item["hold"]) for item in items] == [("commit", False)]
+    assert [row["why"] for row in program_items(rig.service.needs_you_items())] == ["TO ALLOW"]
+    rig.service.decide(OWNER, pid, step["id"], kind="commit", choice="allow")
+    step = rig.step(pid, 1)
+    assert step["state"] not in ("working", "waiting") and step["check"]["verdict"] == "green", step
+    assert all(item["kind"] != "commit" for item in rig.program(pid)["your_turn_items"])
+    worktree = Path(rig.ledger.get(step["launch_id"])["worktree_path"])
+    assert git(worktree, "status", "--porcelain", "--", ".", ":(exclude).tmp/program-check") == ""
+    assert "Hello from the briefing page." in git(worktree, "show", "HEAD:README.md")
+
+
+def test_after_said_done_the_tick_reads_the_branch_head_and_a_hand_commit_moves_the_step(tmp_path, monkeypatch) -> None:
+    rig = Rig(tmp_path)
+    pid, step = _held_step(rig, "normal")
+    _refuse_prompts(rig)
+    _say_done(rig, monkeypatch, pid, step)
+    rig.agent.end_turn(step["launch_id"])
+    rig.tick(3)
+    assert rig.step(pid, 1)["state"] == "working"
+    # His commit by hand in the agent's worktree, the launch still set.
+    worktree = Path(rig.ledger.get(step["launch_id"])["worktree_path"])
+    git(worktree, "add", "-A")
+    git(worktree, "commit", "-m", "Add one line to the README")
+    rig.tick()
+    step = rig.step(pid, 1)
+    assert step["launch_id"] and step["check"]["verdict"] == "green", step
+    assert step["state"] not in ("working", "waiting")
+
+
+def test_the_record_his_desk_holds_moves_on_the_next_tick(tmp_path) -> None:
+    """program-6a76cd35f048 as it stands: the turn read, ``nudged`` saved,
+    the nudge never typed, no ``said_done`` fact, a commit on the branch."""
+    rig = Rig(tmp_path)
+    pid, step = _held_step(rig, "yolo")
+    rig.agent.end_turn(step["launch_id"])
+    row = rig.service.store.get_step(step["id"])
+    row["facts"] = {**row["facts"], "last_turn": f"turn-{rig.agent.turns}", "nudged": True, "turns": 1}
+    rig.service.store.save_step(row)
+    worktree = Path(rig.ledger.get(step["launch_id"])["worktree_path"])
+    git(worktree, "add", "-A")
+    git(worktree, "commit", "-m", "Add one line to the README")
+    rig.tick()
+    assert rig.step(pid, 1)["check"]["verdict"] == "green"
+
+
+def test_yolo_allows_a_held_commit_by_rule_and_commits_a_change_left_uncommitted(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid, step = _held_step(rig, "yolo")
+    rig.gate.hold_commit(step["launch_id"])
+    rig.tick()
+    assert rig.gate.decisions == [("gate-1", True, "YOLO: the agent's commit on its own branch goes on by rule")]
+    assert rig.program(pid)["your_turn_items"] == []
+    # The hold ended anyway (a hook gone), the change in the worktree: the
+    # engine commits it on the step's branch and says so.
+    rig.agent.end_turn(step["launch_id"])
+    rig.tick()
+    step = rig.step(pid, 1)
+    assert step["check"]["verdict"] == "green", step
+    decided = [row for row in rig.program(pid)["decided_for_you"] if row["kind"] == "held_commit"]
+    assert [row["line"].split(" (")[0] for row in decided] == ["Committed the agent's change", "Allowed the agent's commit"]
+
+
+def test_a_change_of_control_to_yolo_releases_the_held_commit(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid, step = _held_step(rig, "normal")
+    rig.gate.hold_commit(step["launch_id"])
+    rig.tick()
+    assert [item["kind"] for item in rig.program(pid)["your_turn_items"]] == ["commit"]
+    assert rig.gate.decisions == []
+    rig.service.update(OWNER, pid, control="yolo")
+    assert [(pid_, ok) for pid_, ok, _ in rig.gate.decisions] == [("gate-1", True)]
+    assert rig.program(pid)["your_turn_items"] == []
+
+
+def test_not_now_denies_the_held_commit_and_parks_the_step(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid, step = _held_step(rig, "normal")
+    rig.gate.hold_commit(step["launch_id"])
+    rig.tick()
+    rig.service.decide(OWNER, pid, step["id"], kind="commit", choice="not_now")
+    assert [(p, ok) for p, ok, _ in rig.gate.decisions] == [("gate-1", False)]
+    step = rig.step(pid, 1)
+    assert step["state"] == "parked" and step["parked_by"] == "owner"
+    assert all(item["kind"] != "commit" for item in rig.program(pid)["your_turn_items"])
+
+
+def test_the_hub_gate_reads_a_launchs_held_commit_from_the_gate_table(tmp_path) -> None:
+    import json
+
+    from holdspeak.db import Database
+    from holdspeak.services.program_runner import HubGate
+
+    db = Database(tmp_path / "hub.db")
+    call = {"command": 'git add README.md && git commit -m "Add one line to the README"', "description": "Commit"}
+    for proposal_id, launch, command in (("p-commit", "L1", call), ("p-read", "L1", {"command": "git status"}),
+                                         ("p-other", "L2", call)):
+        db.gate.propose(proposal_id=proposal_id, session_key="claude:s", agent="claude", tool="Bash",
+                        args_sha256=proposal_id, cwd=str(tmp_path), ttl_seconds=240,
+                        args_head=json.dumps(command, separators=(",", ":"), sort_keys=True)[:120],
+                        operation={"tool_call": {"launch_id": launch, "scope": "inside", "rule": "in_worktree"}})
+    rows = HubGate(db).held("L1")
+    assert sorted((row["proposal_id"], row["commit"], row["scope"]) for row in rows) == [
+        ("p-commit", True, "inside"), ("p-read", False, "inside")]
+    assert HubGate(db).held("") == []

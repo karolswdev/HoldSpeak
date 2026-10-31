@@ -187,3 +187,10 @@ def test_proposals_by_level() -> None:
 @pytest.mark.parametrize("level", [S, N, Y])
 def test_a_requirement_with_no_proof_is_a_core_question(level) -> None:
     _him(decide(level, "requirement_unprovable"), core=True)
+
+
+def test_a_held_commit_is_his_at_secure_and_normal_and_goes_on_at_yolo() -> None:
+    assert isinstance(decide("secure", "held_commit"), CoreQuestion)
+    assert isinstance(decide("normal", "held_commit"), CoreQuestion)
+    outcome = decide("yolo", "held_commit")
+    assert isinstance(outcome, Decision) and outcome.choice == "commit"
