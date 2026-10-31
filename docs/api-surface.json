@@ -6628,6 +6628,14 @@
       "consumers": []
     },
     {
+      "path": "/api/repositories/{repository_id}/diff",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
       "path": "/api/repositories/{repository_id}/file/{path:path}",
       "methods": [
         "GET"

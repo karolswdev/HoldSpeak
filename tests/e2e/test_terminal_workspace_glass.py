@@ -84,6 +84,311 @@ def _type(frame: Any, words: str) -> None:
     helper.press("Enter")
 
 
+def _git(root: Path, *args: str) -> str:
+    return subprocess.run(["git", "-C", str(root), *args], check=True,
+                          capture_output=True, text=True, timeout=12).stdout.strip()
+
+
+def _workspace_face(page: Any, inventory: Any, name: str) -> None:
+    # A restored frame mounts before its lazy core publishes the wings.
+    # Wait for that actual chrome before choosing its wide or folded form.
+    inventory.locator(".desk-wings").wait_for(state="visible")
+    tab = inventory.get_by_role("tab", name=name, exact=True)
+    if tab.is_visible():
+        tab.click()
+    else:
+        inventory.get_by_role("button", name=re.compile(r"^Window faces:")).click()
+        page.get_by_role("menuitemcheckbox", name=name, exact=True).click()
+
+
+@pytest.mark.parametrize(("width", "height"), [(1440, 900), (393, 852)])
+def test_connected_workspace_keeps_exact_worktree_draft_and_context(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int,
+) -> None:
+    """Real private Git/tmux/hub: metadata is seeded, no agent is executed."""
+    import holdspeak.delivery.registry as registry_module
+    import holdspeak.delivery.factory_launch as launch_module
+    from holdspeak.db import get_database
+    from holdspeak.delivery import DeliveryRegistry
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from scripts.record_connected_workspace_fixture import seed_connected_records
+    from playwright.sync_api import expect, sync_playwright
+
+    _ensure_build()
+    sockets = Path(tempfile.mkdtemp(prefix="hsconn-", dir="/tmp"))
+    monkeypatch.setenv("TMUX_TMPDIR", str(sockets))
+    monkeypatch.setenv("BASH_SILENCE_DEPRECATION_WARNING", "1")
+    monkeypatch.delenv("TMUX", raising=False)
+    registry_path = tmp_path / "home" / ".holdspeak" / "delivery_sources.json"
+    launch_path = tmp_path / "home" / ".holdspeak" / "factory_launches.json"
+    monkeypatch.setattr(registry_module, "DEFAULT_REGISTRY_PATH", registry_path)
+    monkeypatch.setattr(launch_module, "DEFAULT_LAUNCHES_PATH", launch_path)
+    server = None
+    connected_shots = evidence_dir("connected-workspace")
+    connected_shots.mkdir(parents=True, exist_ok=True)
+    try:
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        main = sockets / "repository"
+        main.mkdir()
+        _git(main, "init", "-b", "main")
+        _git(main, "config", "user.email", "fixture@example.test")
+        _git(main, "config", "user.name", "Connected fixture")
+        (main / "app.txt").write_text("main checkout\n", encoding="utf-8")
+        (main / "README.md").write_text("# Private connected fixture\n", encoding="utf-8")
+        _git(main, "add", "app.txt", "README.md")
+        _git(main, "commit", "-m", "Seed private workspace")
+        review, scratch = sockets / "review", sockets / "scratch"
+        _git(main, "worktree", "add", "-b", "work/review", str(review))
+        _git(main, "worktree", "add", "-b", "work/scratch", str(scratch))
+        (review / "app.txt").write_text("review worktree\n", encoding="utf-8")
+        (scratch / "app.txt").write_text("scratch worktree\n", encoding="utf-8")
+        before_main, before_scratch = _git(main, "rev-parse", "HEAD"), _git(scratch, "rev-parse", "HEAD")
+        _tmux("-f", "/dev/null", "new-session", "-d", "-s", "connected-review", "-c", str(review), "bash --noprofile --norc")
+        _tmux("new-session", "-d", "-s", "connected-scratch", "-c", str(scratch), "bash --noprofile --norc")
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": height}, has_touch=width == 393,
+                                    reduced_motion="reduce")
+            page.set_default_timeout(20_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            registered = _api(page, "POST", "/api/repositories", {"path": str(main), "label": "Workspace fixture"}, token=TOKEN)
+            source_id = registered["repository"]["id"]
+            for worktree in (review, scratch):
+                _api(page, "POST", "/api/repositories", {"path": str(worktree)}, token=TOKEN)
+            rows = _api(page, "GET", "/api/delivery/terminal/sessions", token=TOKEN)["sessions"]
+            first = next(row for row in rows if row["session"] == "connected-review")
+            second = next(row for row in rows if row["session"] == "connected-scratch")
+            registry = DeliveryRegistry.read_only_snapshot(registry_path)
+            source = registry.get(source_id)
+            worktree = next(row for row in source.worktrees if Path(row.path).resolve() == review.resolve())
+            seeded = seed_connected_records(get_database(), registry, LaunchLedger(launch_path), source,
+                                             worktree, first["target"], main, session="connected-review")
+            page.goto(f"{base}/terminals?token={TOKEN}", wait_until="load")
+            inventory = page.locator('[id="surface-terminals"]')
+            inventory.wait_for(state="visible")
+            terminal = _open(page, first)
+            _type(terminal, "git diff -- app.txt")
+            _eventually(lambda: "+review worktree" in _capture(first["pane_id"]))
+            terminal.get_by_role("button", name="View only", exact=True).click()
+            terminal.get_by_test_id("terminal-workspace").click()
+            expect(inventory).to_have_class(re.compile(r"\bis-front\b"))
+            if width == 1440:
+                _api(page, "POST", "/api/desk/windows/arrange", {"rects": {
+                    # Positions are offsets from the work band's centre.
+                    "surface-terminals": {"x": "-50% + 10", "y": "-50% + 50", "w": "720px", "h": "680px"},
+                    f"terminal:{first['id']}": {"x": "40px", "y": "-50% + 50", "w": "660px", "h": "680px"},
+                }}, token=TOKEN)
+                _settle(page)
+            files = inventory.get_by_test_id("terminal-workspace-files")
+            files.locator('tr[aria-label="app.txt"]').click()
+            expect(files.get_by_test_id("repo-file-content")).to_contain_text("review worktree")
+            expect(files.get_by_test_id("repo-file-content")).not_to_contain_text("main checkout")
+            page.screenshot(path=str(connected_shots / f"files-{width}.png"))
+            files.get_by_role("button", name="Edit file", exact=True).click()
+            editor = files.locator('[contenteditable="true"][aria-label="Edit app.txt"]')
+            editor.fill("owner draft kept\n")
+            (review / "app.txt").write_text("agent changed after open\n", encoding="utf-8")
+            page.reload(wait_until="load")
+            inventory.wait_for(state="visible")
+            _workspace_face(page, inventory, "Sessions")
+            terminal = _open(page, first)
+            terminal.get_by_test_id("terminal-workspace").click()
+            files = inventory.get_by_test_id("terminal-workspace-files")
+            files.locator('tr[aria-label="app.txt"]').click()
+            files.get_by_role("button", name="Edit file", exact=True).click()
+            editor = files.locator('[contenteditable="true"][aria-label="Edit app.txt"]')
+            expect(editor).to_have_text("owner draft kept\n")
+            # Tabs must not replace a draft's base hash with a newer file hash.
+            _workspace_face(page, inventory, "Context")
+            context = inventory.get_by_test_id("terminal-workspace-context")
+            expect(context).to_contain_text("Workspace fixture")
+            expect(context).to_contain_text("Connected workspace")
+            expect(context).to_contain_text("Configured")
+            expect(context).not_to_contain_text("Review complete")
+            expect(context).not_to_contain_text("registered")
+            expect(context).to_contain_text("Keep one Desk")
+            _settle(page)
+            page.screenshot(path=str(connected_shots / f"context-summary-{width}.png"))
+            context.get_by_role("button", name="Connected workspace · Step 1", exact=True).click()
+            program = page.locator(f'[id="pullout:program:{seeded["program_id"]}"]')
+            program.wait_for(state="visible")
+            expect(program.get_by_role("textbox", name="Step 1 title", exact=True)).to_have_value("Build the workspace")
+            program.get_by_role("button", name=re.compile(r"^Back from " if width == 393 else r"^Close ")).click()
+            _inventory(page, base)
+            context.locator(".surface-row").filter(has=page.get_by_text("Keep one Desk", exact=True)).get_by_role("button", name="Open", exact=True).click()
+            decision = page.locator('[id="pullout:decision:decision-connected-workspace"]')
+            decision.wait_for(state="visible")
+            expect(decision).to_contain_text("Keep one Desk")
+            decision.get_by_role("button", name=re.compile(r"^Back from " if width == 393 else r"^Close ")).click()
+            _inventory(page, base)
+            _settle(page)
+            if width == 393:
+                from .test_desk_sweep import TARGET_JS
+
+                assert not page.evaluate(TARGET_JS, '[id="surface-terminals"]')
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+            page.screenshot(path=str(connected_shots / f"context-{width}.png"))
+            _workspace_face(page, inventory, "Files")
+            files = inventory.get_by_test_id("terminal-workspace-files")
+            files.locator('tr[aria-label="app.txt"]').click()
+            files.get_by_role("button", name="Edit file", exact=True).click()
+            editor = files.locator('[contenteditable="true"][aria-label="Edit app.txt"]')
+            expect(editor).to_have_text("owner draft kept\n")
+            with page.expect_response(lambda response: response.request.method == "PUT"
+                                      and f"/api/repositories/{source_id}/file/app.txt" in response.url) as refused_save:
+                files.get_by_role("button", name="Save file", exact=True).click()
+            assert refused_save.value.status == 409
+            assert refused_save.value.json()["error"] == "file changed before write"
+            expect(files.get_by_role("alert")).to_contain_text("Your edit stays")
+            expect(editor).to_have_text("owner draft kept\n")
+            assert (review / "app.txt").read_text() == "agent changed after open\n"
+            if width == 393:
+                assert not page.evaluate(TARGET_JS, '[id="surface-terminals"]')
+            page.screenshot(path=str(connected_shots / f"conflict-{width}.png"))
+            # Recover without discarding the owner's words. The review uses
+            # actual latest disk bytes and still sends an expected revision.
+            with page.expect_response(lambda response: response.request.method == "GET"
+                                      and f"/api/repositories/{source_id}/file/app.txt" in response.url) as latest_read:
+                files.get_by_role("button", name="Read latest", exact=True).click()
+            latest = latest_read.value.json()
+            assert latest["content"] == "agent changed after open\n"
+            assert f"worktree_id={worktree.worktree_id}" in latest_read.value.url
+            expect(files).to_contain_text("agent changed after open")
+            expect(editor).to_have_text("owner draft kept\n")
+            editor.fill("owner reviewed change\n")
+            page.screenshot(path=str(connected_shots / f"review-latest-{width}.png"))
+            with page.expect_request(lambda request: request.method == "PUT"
+                                     and f"/api/repositories/{source_id}/file/app.txt" in request.url) as reviewed_write:
+                files.get_by_role("button", name="Save reviewed edit", exact=True).click()
+            assert reviewed_write.value.post_data_json["expected_sha256"] == latest["sha256"]
+            expect(files).to_contain_text("File saved")
+            assert (review / "app.txt").read_text() == "owner reviewed change\n"
+            files.get_by_role("button", name="Changes", exact=True).click()
+            changes = inventory.get_by_test_id("terminal-workspace-changes")
+            expect(changes).to_contain_text("+owner reviewed change")
+            changes.get_by_role("checkbox", name="Select app.txt for Git", exact=True).check()
+            stage_lock = Path(_git(review, "rev-parse", "--git-path", "index.lock"))
+            if not stage_lock.is_absolute():
+                stage_lock = review / stage_lock
+            stage_lock.touch(exist_ok=False)
+            with page.expect_response(lambda response: response.request.method == "POST"
+                                      and f"/api/repositories/{source_id}/stage" in response.url) as refused_stage:
+                changes.get_by_role("button", name=re.compile(r"^Stage")).click()
+            assert refused_stage.value.status == 409
+            expect(changes.get_by_role("checkbox", name="Select app.txt for Git", exact=True)).to_be_checked()
+            stage_lock.unlink()
+            changes.get_by_role("button", name="Retry", exact=True).click()
+            expect(changes).to_contain_text("1 file staged")
+            expect(changes.locator(".surface-well").filter(has=page.get_by_text("Staged diff", exact=True))).to_contain_text("+owner reviewed change")
+            commit_words = " Review connected workspace change "
+            changes.get_by_role("textbox", name="Commit message", exact=True).fill(commit_words)
+            page.screenshot(path=str(connected_shots / f"changes-{width}.png"))
+            hook = main / ".git" / "hooks" / "pre-commit"
+            hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+            hook.chmod(0o700)
+            with page.expect_response(lambda response: response.request.method == "POST"
+                                      and f"/api/repositories/{source_id}/commit" in response.url) as refused_commit:
+                changes.get_by_role("button", name="Commit", exact=True).click()
+            assert refused_commit.value.status == 409
+            expect(changes.get_by_role("textbox", name="Commit message", exact=True)).to_have_value(commit_words)
+            assert "+owner reviewed change" in _git(review, "diff", "--cached")
+            hook.unlink()
+            changes.get_by_role("button", name="Retry", exact=True).click()
+            expect(changes).to_contain_text("Changes committed")
+            expect(changes.get_by_role("textbox", name="Commit message", exact=True)).to_have_value("")
+            assert _git(review, "log", "-1", "--format=%s") == "Review connected workspace change"
+            assert _git(main, "rev-parse", "HEAD") == before_main
+            assert _git(scratch, "rev-parse", "HEAD") == before_scratch
+            assert (main / "app.txt").read_text() == "main checkout\n"
+            assert (scratch / "app.txt").read_text() == "scratch worktree\n"
+            _workspace_face(page, inventory, "Sessions")
+            # The second private shell gets its own source/worktree context,
+            # never the first shell's launch, MCP or Program association.
+            terminal_b = _open(page, second)
+            terminal_b.get_by_test_id("terminal-workspace").click()
+            files_b = inventory.get_by_test_id("terminal-workspace-files")
+            files_b.locator('tr[aria-label="app.txt"]').click()
+            expect(files_b.get_by_test_id("repo-file-content")).to_contain_text("scratch worktree")
+            _workspace_face(page, inventory, "Context")
+            expect(context).not_to_contain_text("Connected workspace")
+            expect(context).to_contain_text("Worktree only")
+            sibling_context = next(row for row in _api(page, "GET", "/api/delivery/terminal/sessions", token=TOKEN)["sessions"] if row["id"] == second["id"])["context"]
+            assert all(sibling_context[key] is None for key in ("launch", "project", "program", "mcp"))
+            # Existing local work needs a complete UI setup path too. This
+            # independent Git source is deliberately not in the registry.
+            local = sockets / "existing-local"
+            local.mkdir()
+            _git(local, "init", "-b", "main")
+            _git(local, "config", "user.email", "fixture@example.test")
+            _git(local, "config", "user.name", "Connected fixture")
+            (local / "app.txt").write_text("existing local work\n", encoding="utf-8")
+            _git(local, "add", "app.txt")
+            _git(local, "commit", "-m", "Existing local source")
+            _tmux("new-session", "-d", "-s", "connected-existing", "-c", str(local), "bash --noprofile --norc")
+            _workspace_face(page, inventory, "Sessions")
+            inventory.get_by_role("combobox", name="Project", exact=True).select_option("all")
+            refresh = inventory.get_by_test_id("terminal-refresh")
+            if refresh.is_visible():
+                refresh.click()
+            else:
+                inventory.get_by_role("button", name="More", exact=True).click()
+                page.get_by_role("menuitem", name="Refresh", exact=True).click()
+            third = _eventually(lambda: next((row for row in _api(
+                page, "GET", "/api/delivery/terminal/sessions", token=TOKEN,
+            )["sessions"] if row["session"] == "connected-existing"), None))
+            assert third["context"]["status"] == "unbound"
+            third_terminal = _open(page, third)
+            third_terminal.get_by_test_id("terminal-workspace").click()
+            _workspace_face(page, inventory, "Context")
+            folder = context.get_by_role("textbox", name="Repository folder", exact=True)
+            expect(folder).to_have_value(str(local.resolve()))
+            _settle(page)
+            page.screenshot(path=str(connected_shots / f"register-{width}.png"))
+            context.get_by_role("button", name="Register folder", exact=True).click()
+            expect(context).to_contain_text("Worktree only")
+            inventory.get_by_role("combobox", name="Project", exact=True).select_option(seeded["registration_project_id"])
+            expect(inventory.get_by_role("combobox", name="Session", exact=True).locator("option:checked")).to_have_text(third["label"])
+            context.get_by_role("button", name="Use repository in project", exact=True).click()
+            expect(context).to_contain_text("Repository added to project")
+            final_rows = _api(page, "GET", "/api/delivery/terminal/sessions", token=TOKEN)["sessions"]
+            third_bound = next(row for row in final_rows if row["id"] == third["id"])
+            assert third_bound["context"]["status"] == "worktree"
+            assert third_bound["context"]["launch"] is None and third_bound["context"]["mcp"] is None
+            filed = _api(page, "GET", f"/api/projects/{seeded['registration_project_id']}/resources", token=TOKEN)
+            assert f"repository:{third_bound['context']['source']['id']}" in {row["resource_ref"] for row in filed["resources"]}
+            _workspace_face(page, inventory, "Sessions")
+            expect(inventory.get_by_test_id(f"terminal-row-{third['id']}")).to_be_visible()
+            assert not errors, errors
+            (connected_shots / f"observation-{width}.json").write_text(json.dumps({
+                "engine_mode": "none", "agent_metadata": "real producer seed; no agent process",
+                "git": "private real main + two worktrees", "tmux": "private real socket",
+                "health": _api(page, "GET", "/health", token=TOKEN),
+                "build": json.loads((Path(__file__).resolve().parents[2] / "holdspeak/static/_built/.builds.json").read_text())[0],
+                "db": str(tmp_path / "holdspeak.db"),
+                "project_id": seeded["project_id"], "exact_worktree_edit": True,
+                "draft_and_hash_retained_across_wings": True, "real_409_keeps_owner_draft": True,
+                "draft_and_hash_retained_across_reload": True,
+                "conflict_review_keeps_draft": True,
+                "local_stage_and_commit": True, "main_and_sibling_unchanged": True,
+                "real_git_failures_keep_selection_and_message": True,
+                "matching_program_context": True, "page_errors": errors,
+                "matching_program_door": True, "filed_decision_door": True,
+                "local_folder_registration": True, "explicit_project_repository_binding": True,
+            }, indent=2) + "\n", encoding="utf-8")
+            browser.close()
+    finally:
+        if server is not None:
+            server.stop()
+        try:
+            _tmux("kill-server")
+        except subprocess.CalledProcessError:
+            pass
+        shutil.rmtree(sockets, ignore_errors=True)
+
+
 @pytest.mark.parametrize(("width", "height"), [(1440, 900), (393, 852)])
 def test_independent_input_persistent_views_and_close_without_kill(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int,

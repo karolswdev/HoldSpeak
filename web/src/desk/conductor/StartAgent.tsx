@@ -6,7 +6,7 @@
  *  same way as a hand from the work. At the limit the hand waits for a free
  *  agent (`queue: true`). Three presses: Start an agent, the words (or the
  *  mic), Start. */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
 import { ActionNotice } from "../surface";
@@ -28,6 +28,13 @@ const REVIEW_BY = [
   { value: "pi", label: "pi" },
 ] as const;
 const PROJECT_KEY = "hs.agents.start.project";
+
+interface StartIntent {
+  words: string;
+  projectId: string;
+  noteId: string;
+  filed: boolean;
+}
 
 function rememberedProject(): string {
   try {
@@ -53,10 +60,12 @@ function failureWords(step: "note" | "file" | "hand", error: unknown, agent: Age
   return step === "note" ? `The note was not made${status}` : `The note was not filed in the project${status}`;
 }
 
-export function StartAgent({ onStarted, onCancel }: {
+export function StartAgent({ onStarted, onStarting, onCancel, initialProjectId }: {
   /** The new agent's row (`launch:<id>` or `queue:<id>`), or null. */
-  onStarted(row: string | null): void;
+  onStarted(row: string | null, context?: { projectId: string; noteId: string; agent: AgentId; reviewBy: string; requestEpoch?: number }): void;
+  onStarting?(): number | void;
   onCancel(): void;
+  initialProjectId?: string | null;
 }) {
   const [words, setWords] = useState("");
   const [projects, setProjects] = useState<ProjectRow[] | null>(null);
@@ -65,6 +74,7 @@ export function StartAgent({ onStarted, onCancel }: {
   const [reviewBy, setReviewBy] = useState("none");
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const intent = useRef<StartIntent | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -76,7 +86,10 @@ export function StartAgent({ onStarted, onCancel }: {
           .map((p) => ({ id: String(p.id), name: String(p.name ?? p.id) }));
         setProjects(rows);
         const remembered = rememberedProject();
-        const pick = rows.find((p) => p.id === remembered)?.id ?? rows[0]?.id ?? "";
+        const pick = rows.find((p) => p.id === initialProjectId)?.id
+          ?? rows.find((p) => p.id === remembered)?.id
+          ?? rows[0]?.id
+          ?? "";
         setProjectId(pick);
         setAgent(rememberedAgent(pick) ?? "claude");
       })
@@ -91,32 +104,49 @@ export function StartAgent({ onStarted, onCancel }: {
   const start = async () => {
     const text = words.trim();
     if (!text || !projectId || busy) return;
+    const requestEpoch = onStarting?.();
     setBusy(true);
     setFailure(null);
     let step: "note" | "file" | "hand" = "note";
     try {
-      const made = await apiFetch<{ note?: { note_id?: string; id?: string } }>("/api/notes", {
-        method: "POST",
-        json: { title: noteTitle(text), body_markdown: text, tags: ["agent"] },
-      });
-      const noteId = String(made?.note?.note_id ?? made?.note?.id ?? "");
-      step = "file";
-      await apiFetch(`/api/projects/${encodeURIComponent(projectId)}/resources/${encodeURIComponent(`note:${noteId}`)}`, {
-        method: "PUT",
-        json: {},
-      });
+      const previous = intent.current;
+      const reusable = previous && previous.words === text && previous.projectId === projectId ? previous : null;
+      let noteId = reusable?.noteId ?? "";
+      let filed = reusable?.filed ?? false;
+      if (!noteId) {
+        const made = await apiFetch<{ note?: { note_id?: string; id?: string } }>("/api/notes", {
+          method: "POST",
+          json: { title: noteTitle(text), body_markdown: text, tags: ["agent"] },
+        });
+        noteId = String(made?.note?.note_id ?? made?.note?.id ?? "");
+        if (!noteId) throw new Error("The hub did not return a note");
+        intent.current = { words: text, projectId, noteId, filed: false };
+      }
+      if (!filed) {
+        step = "file";
+        await apiFetch(`/api/projects/${encodeURIComponent(projectId)}/resources/${encodeURIComponent(`note:${noteId}`)}`, {
+          method: "PUT",
+          json: {},
+        });
+        filed = true;
+        intent.current = { words: text, projectId, noteId, filed: true };
+      }
       step = "hand";
       const answer = await apiFetch<{ launch_id?: string; queue_id?: string }>("/api/agent/hand", {
         method: "POST",
         json: { kind: "note", id: noteId, profile: AGENT_PROFILE[agent], project_id: projectId, queue: true, review_by: reviewBy },
       });
+      intent.current = null;
       try {
         localStorage.setItem(PROJECT_KEY, projectId);
       } catch {
         /* a per-viewer convenience */
       }
       rememberAgent(projectId, agent);
-      onStarted(answer?.launch_id ? `launch:${answer.launch_id}` : answer?.queue_id ? `queue:${answer.queue_id}` : null);
+      onStarted(
+        answer?.launch_id ? `launch:${answer.launch_id}` : answer?.queue_id ? `queue:${answer.queue_id}` : null,
+        { projectId, noteId, agent, reviewBy, ...(typeof requestEpoch === "number" ? { requestEpoch } : {}) },
+      );
     } catch (error) {
       setFailure(failureWords(step, error, agent));
     } finally {

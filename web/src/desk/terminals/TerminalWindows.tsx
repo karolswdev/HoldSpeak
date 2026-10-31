@@ -10,6 +10,7 @@ import { useCompactViewport } from "../useCompactViewport";
 import { AGENT_CHANGE_KINDS, useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { createTerminalSession } from "./terminalSession";
 import type { TerminalDescriptor, TerminalKey, TerminalSessionState } from "./types";
+import { selectWorkspaceSession } from "./workspaceSelection";
 import {
   refreshTerminalInventory,
   terminalDescriptorId,
@@ -121,6 +122,11 @@ function TerminalWindow({
   const [messageOpen, setMessageOpen] = useState(() => Boolean(draft.trim()));
   const close = () => useDesk.getState().closeTerminalWindow(descriptorId);
   const backToInventory = () => useDesk.getState().openSurfaceWindow("open-terminals");
+  const openWorkspace = () => {
+    if (!descriptor) return;
+    selectWorkspaceSession(descriptor, "files");
+    useDesk.getState().openSurfaceWindow("open-terminals");
+  };
   const sendText = async () => {
     if (!session || !draft.trim()) return;
     const capturedDraft = draft;
@@ -260,6 +266,9 @@ function TerminalWindow({
             data-testid="terminal-message-toggle"
           >
             Message
+          </Button>
+          <Button dense variant="ghost" disabled={!descriptor} onClick={openWorkspace} data-testid="terminal-workspace">
+            Workspace
           </Button>
           <span className="terminals-toolbar-spacer" />
           {descriptor ? <span className="terminals-toolbar-path" title={descriptor.current_path}>{descriptor.current_path || descriptor.session}</span> : null}

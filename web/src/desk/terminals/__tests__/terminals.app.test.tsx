@@ -5,8 +5,11 @@ import { TerminalsCore } from "../TerminalsCore";
 import { TerminalWindows } from "../TerminalWindows";
 import { refreshTerminalInventory, TERMINALS_WINDOW_ID, terminalInventorySnapshot } from "../windows";
 import fixture from "./fixtures/sessions.recorded.json";
+import connectedFixture from "./fixtures/connected.recorded.json";
 import * as api from "../../../lib/api";
+import { fromWireDecision } from "../../api";
 import { useDesk } from "../../store";
+import { queueWorkspaceLaunch, selectWorkspaceFace, setWorkspaceSelection, workspaceSelectionSnapshot } from "../workspaceSelection";
 
 const runtimeBus = vi.hoisted(() => ({
   handlers: new Map<string, Set<(frame: { type: string; data: unknown }) => void>>(),
@@ -129,6 +132,7 @@ beforeEach(() => {
   runtimeBus.handlers.clear();
   terminalHarness.reset();
   vi.restoreAllMocks();
+  setWorkspaceSelection({ projectId: null, sessionId: null, face: "sessions", pendingLaunch: null, pendingKind: null, pendingProjectId: null, pendingHandoffs: [] });
 });
 
 function serveInventory() {
@@ -148,6 +152,7 @@ describe("Terminals inventory", () => {
     expect(screen.getByTitle("/work/scratch")).toBeTruthy();
     fireEvent.click(screen.getByTestId(`terminal-open-${sessions[1].id}`));
     expect(useDesk.getState().terminalWindows).toEqual([{ id: sessions[1].id, origin: null }]);
+    expect(workspaceSelectionSnapshot().sessionId).toBe(sessions[1].id);
   });
 
   it("creates a named shell through the audited factory payload and opens the discovered descriptor", async () => {
@@ -293,6 +298,134 @@ describe("Terminals inventory", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
     await waitFor(() => expect(sendText).toHaveBeenCalledWith("keep this", true));
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("keep this");
+  });
+
+  it("opens the workspace app at the exact terminal selected by its Workspace door", async () => {
+    serveInventory();
+    await refreshTerminalInventory();
+    useDesk.setState({ terminalWindows: [{ id: sessions[0].id, origin: null }] });
+    render(<TerminalWindows />);
+
+    fireEvent.click(await screen.findByTestId("terminal-workspace"));
+    expect(workspaceSelectionSnapshot().sessionId).toBe(sessions[0].id);
+    expect(workspaceSelectionSnapshot().face).toBe("files");
+  });
+
+  it("opens recorded connected workspace files and shows app bytes before editing", async () => {
+    const connectedSessions = connectedFixture.inventory.sessions;
+    vi.spyOn(api, "apiFetch").mockImplementation(async (path) => {
+      const url = String(path);
+      if (url === "/api/delivery/terminal/sessions") return connectedFixture.inventory as never;
+      if (url === "/api/projects") return connectedFixture.projects as never;
+      if (url.includes("/tree")) return connectedFixture.repository.tree as never;
+      if (url.includes("/file/app.txt")) return connectedFixture.repository.file as never;
+      if (url.includes("/status")) return connectedFixture.repository.status as never;
+      if (url.includes("/diff")) return connectedFixture.repository.diff as never;
+      return { status: "ok" } as never;
+    });
+    render(<TerminalsCore />);
+    await screen.findByTestId(`terminal-row-${connectedSessions[0].id}`);
+    fireEvent.click(screen.getByTestId(`terminal-open-${connectedSessions[0].id}`));
+    act(() => selectWorkspaceFace("files"));
+    fireEvent.click(await screen.findByRole("row", { name: "app.txt" }));
+    expect(await screen.findByTestId("repo-file-content")).toHaveTextContent("review worktree");
+    expect(screen.queryByTestId("terminal-file-editor")).toBeTruthy();
+    expect(screen.queryByTestId("terminal-file-edit")).toBeTruthy();
+  });
+
+  it("offers recorded shell cwd registration before Project binding", async () => {
+    const shell = connectedFixture.inventory.sessions[1];
+    const unbound = { ...shell, context: { ...shell.context, status: "unbound", project: null, source: null, worktree: null } };
+    let registration: { method?: string; body?: string } | undefined;
+    vi.spyOn(api, "apiFetch").mockImplementation(async (path, init) => {
+      const url = String(path);
+      if (url === "/api/delivery/terminal/sessions") return { ...connectedFixture.inventory, sessions: [unbound] } as never;
+      if (url === "/api/projects") return connectedFixture.projects as never;
+      if (url === "/api/repositories" && init?.method === "POST") {
+        registration = { method: init.method, body: String(init.body ?? "") };
+        return { repository: { id: "registered-source", name: "Registered shell" } } as never;
+      }
+      return { status: "ok" } as never;
+    });
+    render(<TerminalsCore />);
+    await screen.findByTestId(`terminal-row-${unbound.id}`);
+    fireEvent.click(screen.getByTestId(`terminal-open-${unbound.id}`));
+    act(() => selectWorkspaceFace("context"));
+    const folder = await screen.findByRole("textbox", { name: "Repository folder" });
+    expect(folder).toHaveValue(unbound.current_path);
+    fireEvent.click(screen.getByRole("button", { name: "Register folder" }));
+    await waitFor(() => expect(registration).toEqual({ method: "POST", body: JSON.stringify({ path: unbound.current_path }) }));
+    expect(await screen.findByText("Folder registered")).toBeTruthy();
+  });
+
+  it("keeps a newer Start agent form open when an older hand returns late", async () => {
+    let handResolve: ((answer: unknown) => void) | null = null;
+    vi.spyOn(api, "apiFetch").mockImplementation(async (path, init) => {
+      const url = String(path);
+      if (url === "/api/delivery/terminal/sessions") return connectedFixture.inventory as never;
+      if (url === "/api/projects") return connectedFixture.projects as never;
+      if (url === "/api/notes" && init?.method === "POST") return { note: { id: "note-late-start" } } as never;
+      if (url.includes("/resources/note%3A")) return { status: "ok" } as never;
+      if (url === "/api/agent/hand") return new Promise((resolve) => { handResolve = resolve; }) as never;
+      return { status: "ok" } as never;
+    });
+    render(<TerminalsCore />);
+    await screen.findByTestId(`terminal-row-${connectedFixture.inventory.sessions[0].id}`);
+    fireEvent.click(screen.getByTestId("terminal-start-agent"));
+    const words = await screen.findByTestId("conductor-start-words");
+    fireEvent.change(words, { target: { value: "Late start" } });
+    fireEvent.click(screen.getByTestId("conductor-start-go"));
+    await waitFor(() => expect(handResolve).toBeTruthy());
+    fireEvent.click(screen.getByTestId("terminal-start-agent"));
+    await waitFor(() => expect(screen.queryByTestId("conductor-start-form")).toBeNull());
+    fireEvent.click(screen.getByTestId("terminal-start-agent"));
+    await screen.findByTestId("conductor-start-form");
+    await act(async () => { handResolve?.({ launch_id: "launch-late-start" }); });
+    expect(screen.getByTestId("conductor-start-form")).toBeTruthy();
+  });
+
+  it("keeps a recorded non-note project resource named by the Desk object index", async () => {
+    const connectedSessions = connectedFixture.inventory.sessions;
+    const decision = fromWireDecision(connectedFixture.decisions.decisions[0]);
+    expect(decision?.title).toBe("Keep one Desk");
+    useDesk.setState((state) => ({ items: { ...state.items, decision: decision ? [decision] : [] } }));
+    vi.spyOn(api, "apiFetch").mockImplementation(async (path) => {
+      const url = String(path);
+      if (url === "/api/delivery/terminal/sessions") return connectedFixture.inventory as never;
+      if (url === "/api/projects") return connectedFixture.projects as never;
+      if (url.includes("/resources")) return connectedFixture.resources as never;
+      if (url.startsWith("/api/coders/sessions")) return { sessions: [], flights: [] } as never;
+      if (url.includes("/notes/")) return connectedFixture.notes["note-connected-brief"] as never;
+      return { status: "ok" } as never;
+    });
+    render(<TerminalsCore />);
+    await screen.findByTestId(`terminal-row-${connectedSessions[0].id}`);
+    fireEvent.click(screen.getByTestId(`terminal-open-${connectedSessions[0].id}`));
+    act(() => selectWorkspaceFace("context"));
+    expect(await screen.findByText("Keep one Desk")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /^Open$/ }).length).toBeGreaterThan(0);
+  });
+
+  it("joins a queued arrival by its captured Note and Project when queue_id is gone", async () => {
+    const connectedSessions = connectedFixture.inventory.sessions;
+    let arrived = false;
+    vi.spyOn(api, "apiFetch").mockImplementation(async (path) => {
+      const url = String(path);
+      if (url === "/api/delivery/terminal/sessions") return { ...connectedFixture.inventory, sessions: arrived ? connectedSessions : [] } as never;
+      if (url === "/api/projects") return connectedFixture.projects as never;
+      if (url.includes("/resources")) return connectedFixture.resources as never;
+      return { status: "ok" } as never;
+    });
+    render(<TerminalsCore />);
+    await screen.findByText("No terminal sessions");
+    const queued = connectedFixture.queued;
+    queueWorkspaceLaunch(queued.entry.queue_id, queued.entry.project_id, "queue", workspaceSelectionSnapshot().requestEpoch, queued.flights[0].origin_ref);
+    expect(await screen.findByText("Agent queued · waiting for its terminal")).toBeTruthy();
+    arrived = true;
+    await act(async () => { await refreshTerminalInventory(); });
+    await waitFor(() => expect(workspaceSelectionSnapshot().pendingHandoffs).toHaveLength(0));
+    expect(workspaceSelectionSnapshot().sessionId).toBe(connectedSessions[0].id);
+    expect(useDesk.getState().terminalWindows).toEqual([{ id: connectedSessions[0].id, origin: null }]);
   });
 
   it.each([

@@ -194,6 +194,40 @@ class TestWireHygiene:
         assert "path" not in json.dumps(wire["sources"])
 
 
+class TestReadOnlySnapshot:
+    def test_missing_snapshot_is_empty_without_creating_or_importing(self, tmp_path):
+        registry_path = tmp_path / "registry.json"
+        map_path = tmp_path / "delivery_workbench.json"
+        map_path.write_text(json.dumps({"projects": {}}), encoding="utf-8")
+
+        loaded = DeliveryRegistry.read_only_snapshot(registry_path)
+
+        assert loaded.sources() == []
+        assert not registry_path.exists()
+
+    def test_snapshot_reuses_stored_parser_without_rewriting(self, tmp_path):
+        repo = _make_repo(tmp_path)
+        registry_path = tmp_path / "registry.json"
+        original = _registry(tmp_path)
+        source, worktree = original.register(str(repo), label="Demo")
+        before = registry_path.read_bytes()
+
+        loaded = DeliveryRegistry.read_only_snapshot(registry_path)
+
+        assert loaded.get(source.source_id).worktrees[0].worktree_id == worktree.worktree_id
+        assert registry_path.read_bytes() == before
+
+    def test_malformed_snapshot_refuses_without_legacy_import_or_rewrite(self, tmp_path):
+        registry_path = tmp_path / "registry.json"
+        registry_path.write_text('{"registry_schema": 999}', encoding="utf-8")
+        before = registry_path.read_bytes()
+
+        with pytest.raises(RegistryError, match="unknown delivery registry format"):
+            DeliveryRegistry.read_only_snapshot(registry_path)
+
+        assert registry_path.read_bytes() == before
+
+
 class TestV1MapImport:
     def _v1_map(self, tmp_path: Path, repo: Path) -> Path:
         map_path = tmp_path / "delivery_workbench.json"

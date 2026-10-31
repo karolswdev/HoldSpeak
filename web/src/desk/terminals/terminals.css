@@ -31,6 +31,132 @@
   padding: var(--terminals-gap) var(--terminals-gap) var(--space-1);
 }
 
+.desk-next .terminals-scope {
+  flex: none;
+  padding: 0 var(--terminals-gap) var(--space-1);
+}
+
+.desk-next .terminals-scope .gadget-cycle {
+  max-width: 100%;
+}
+
+.desk-next .terminals-workspace-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--terminals-gap);
+  border-top: var(--wb-frame) solid var(--line);
+  border-bottom: var(--wb-frame) solid var(--line);
+  background: var(--wb-well);
+}
+
+.desk-next .terminals-workspace-faces {
+  display: flex;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.desk-next .terminals-workspace-selected {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--font-size-xs) / var(--line-height-tight) var(--font-mono);
+}
+
+.desk-next .terminals-workspace {
+  flex: 1 1 var(--space-8);
+  min-height: calc(var(--desk-surface-row-h) * 4);
+  overflow: auto;
+  border-top: var(--wb-frame) solid var(--line);
+  background: var(--wb-paper);
+}
+
+.desk-next .terminals-workspace-files,
+.desk-next .terminals-workspace-changes,
+.desk-next .terminals-workspace-context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 100%;
+  padding: var(--space-2) var(--terminals-gap);
+}
+
+.desk-next .terminals-workspace-subtoolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--desk-control-h);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.desk-next .terminals-workspace-files .repo-browser {
+  min-height: calc(var(--desk-surface-row-h) * 4);
+}
+
+.desk-next .terminals-workspace-context .surface-well {
+  flex: none;
+}
+
+/* Context is one reading surface. The workspace owns the scroll; its fact,
+ * brief and resource sections must not each become a clipped 40cqh well. */
+.desk-next .terminals-workspace-context .surface-well-body {
+  max-height: none;
+  overflow: visible;
+}
+
+.desk-next .terminals-workspace-brief {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--wb-ink);
+  line-height: var(--line-height-normal);
+}
+
+.desk-next .terminals-workspace-diff {
+  margin: 0;
+  max-height: calc(var(--space-8) * 5);
+  overflow: auto;
+  white-space: pre;
+  font: var(--font-size-xs) / var(--line-height-normal) var(--font-mono);
+}
+
+.desk-next .terminals-workspace-actions {
+  display: flex;
+  align-items: end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.desk-next .terminals-workspace-actions .gadget-string {
+  flex: 1 1 var(--space-8);
+  min-width: var(--space-8);
+}
+
+.desk-next .terminals-file-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-top: var(--wb-frame) solid var(--line);
+  padding-top: var(--space-2);
+}
+
+.desk-next .terminals-file-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font: var(--font-size-xs) / var(--line-height-tight) var(--font-mono);
+}
+
+.desk-next .terminals-file-editor .cm-editor {
+  min-height: calc(var(--desk-surface-row-h) * 4);
+  border: var(--wb-frame) solid var(--line);
+}
+
 .desk-next .terminals-search .gadget-string {
   width: 100%;
 }
@@ -140,6 +266,19 @@
   }
 
   .desk-next .terminals-composer {
+    align-items: stretch;
+  }
+
+  .desk-next .terminals-workspace-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .desk-next .terminals-workspace-selected {
+    margin-left: 0;
+  }
+
+  .desk-next .terminals-workspace-actions {
     align-items: stretch;
   }
 }

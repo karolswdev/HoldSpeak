@@ -30,6 +30,15 @@ const descriptor = (id: string): TerminalDescriptor => ({
     target_generation: "generation-1",
   },
   pane_id: `%${id}`,
+  context: {
+    status: "unbound",
+    project: null,
+    source: null,
+    worktree: null,
+    launch: null,
+    program: null,
+    mcp: null,
+  },
 });
 
 const response = (body: Record<string, unknown>, status = 200) => ({

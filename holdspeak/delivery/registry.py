@@ -163,13 +163,28 @@ class DeliveryRegistry:
         *,
         map_path: Optional[Path] = None,
         git_runner: Optional[GitRunner] = None,
+        read_only: bool = False,
     ) -> None:
         self._path = Path(path) if path else DEFAULT_REGISTRY_PATH
         self._map_path = map_path
         self._run = git_runner or _default_git_runner
         self._instance = uuid.uuid4().hex
         self._sources: list[SourceRecord] = []
-        self._load_or_import()
+        if read_only:
+            self._load_stored_only()
+        else:
+            self._load_or_import()
+
+    @classmethod
+    def read_only_snapshot(cls, path: Optional[Path] = None) -> "DeliveryRegistry":
+        """Load the persisted registry without importing or saving anything.
+
+        Context projections must be able to observe the registry while another
+        service owns registration.  In particular, a missing or malformed
+        snapshot must not trigger the legacy project-map importer or rewrite a
+        file merely because a read path happened first.
+        """
+        return cls(path, read_only=True)
 
     # ── persistence ──────────────────────────────────────────────
 
@@ -190,6 +205,24 @@ class DeliveryRegistry:
         # Fresh registry: import the v1 map without touching it.
         self._import_v1_map()
         self._save()
+
+    def _load_stored_only(self) -> None:
+        """Read only the versioned registry document, with no side effects."""
+        try:
+            raw = json.loads(self._path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            self._sources = []
+            return
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            raise RegistryError("delivery registry unavailable") from exc
+        if not (isinstance(raw, dict) and raw.get("registry_schema") == REGISTRY_SCHEMA):
+            raise RegistryError("unknown delivery registry format")
+        self._instance = str(raw.get("instance") or self._instance)
+        self._sources = [
+            self._source_from_stored(entry)
+            for entry in raw.get("sources") or []
+            if isinstance(entry, dict)
+        ]
 
     @staticmethod
     def _source_from_stored(entry: dict[str, Any]) -> SourceRecord:

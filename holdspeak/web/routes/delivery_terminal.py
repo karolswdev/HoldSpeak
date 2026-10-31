@@ -77,6 +77,8 @@ def build_delivery_terminal_router(
     workspace: Any = None,
     link: Any = None,
     hub_db: Any = None,
+    registry_path: Optional[Path] = None,
+    launches_path: Optional[Path] = None,
     ledger_path: Optional[Path] = None,
     local_node_id: str = "local",
     mode_loader: Any = None,
@@ -117,9 +119,12 @@ def build_delivery_terminal_router(
         if holder["workspace"] is None:
             if delivery_service is None:
                 raise RuntimeError("DeliveryService must be supplied at application composition")
-            holder["workspace"] = delivery_service.terminal_workspace_service(
-                targets=_targets(), local_node_id=local_node_id
-            )
+            workspace_args = {"targets": _targets(), "local_node_id": local_node_id}
+            if registry_path is not None:
+                workspace_args["registry_path"] = registry_path
+            if launches_path is not None:
+                workspace_args["launches_path"] = launches_path
+            holder["workspace"] = delivery_service.terminal_workspace_service(**workspace_args)
         return holder["workspace"]
 
     def _service() -> Any:

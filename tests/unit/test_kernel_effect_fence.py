@@ -763,11 +763,16 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "confined raw desktop driver",
     (
-        "holdspeak/web/routes/repositories.py",
-        "_run",
+        "holdspeak/services/repository_workspace.py",
+        "_run_git",
         "run",
         1,
-    ): "authenticated owner read (git)",
+    ): (
+        "legacy authenticated-owner Git read/edit surface, not a new "
+        "kernel-admitted operation: one bounded subprocess helper preserves "
+        "text and raw NUL-delimited paths; the repository route calls only "
+        "this pure workspace service and does not expose a second process site"
+    ),
     (
         "holdspeak/web/routes/roadmaps.py",
         "_run",

@@ -121,6 +121,7 @@ class TerminalWorkspaceService:
         runner: Optional[Runner] = None,
         pane_loader: Optional[PaneLoader] = None,
         session_loader: Optional[SessionLoader] = None,
+        context: Any = None,
     ) -> None:
         self.targets = targets
         self.local_node_id = str(local_node_id or "local")
@@ -129,6 +130,7 @@ class TerminalWorkspaceService:
             lambda: coder_steering.list_panes(runner=self.runner)
         )
         self._session_loader = session_loader or self._default_sessions
+        self._context = context
 
     @staticmethod
     def _default_sessions() -> list[Any]:
@@ -159,6 +161,16 @@ class TerminalWorkspaceService:
             hooks = list(self._session_loader() or [])
         except Exception:
             hooks = []
+
+        # The connected context is one composed read for this inventory.  A
+        # failed context read is represented on each row; it never hides a
+        # live pane from the owner.
+        context_snapshot = None
+        if self._context is not None:
+            try:
+                context_snapshot = self._context.snapshot()
+            except Exception:
+                context_snapshot = None
 
         rows: list[dict[str, Any]] = []
         for raw_pane in listed.get("panes") or []:
@@ -219,6 +231,26 @@ class TerminalWorkspaceService:
                 },
                 "pane_id": issued["pane_id"],
             }
+            if self._context is not None:
+                try:
+                    row["context"] = self._context.for_terminal(
+                        snapshot=context_snapshot,
+                        issued=issued,
+                        current_path=row["current_path"],
+                        verify=self.targets.verify,
+                    )
+                except Exception:
+                    # Context is additive.  A broken ledger, registry or DB
+                    # read must never make a terminal disappear.
+                    row["context"] = {
+                        "status": "unavailable",
+                        "project": None,
+                        "source": None,
+                        "worktree": None,
+                        "launch": None,
+                        "program": None,
+                        "mcp": None,
+                    }
             rows.append(row)
         return {"status": "ok", "sessions": rows}
 
