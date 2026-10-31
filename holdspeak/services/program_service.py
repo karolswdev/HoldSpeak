@@ -3532,6 +3532,20 @@ class ProgramService:
         self.engine_decision(program, step, "reach", outcome, str(result.get("line") or "Reached you"))
         return result
 
+    # ── a call that decides (PG-DIRECTION DIR8) ──────────────────────
+
+    def call_line(self, program_id: str, step_id: Optional[str], line: str, *,
+                  note_ref: Optional[str] = None) -> int:
+        """One ledger line a call writes about a held item it read: when it
+        was asked, what came of it, and the call's transcript Note
+        (``undo.note_ref``). It changes nothing else on the Program."""
+        program = self._program(program_id)
+        ident = self.store.add_checkpoint(step_id=str(step_id or ""), program_id=program["id"], at=self._clock(),
+                                          by="owner", line=" ".join(str(line or "").split())[:400], via="call",
+                                          undo={"note_ref": note_ref} if note_ref else None)
+        self.changed(program["id"], step_id or None, verb="checkpoint")
+        return ident
+
     # ── Decided for you (design §6, §8) ──────────────────────────────
 
     def engine_decision(

@@ -89,9 +89,11 @@ class NumberTransport:
         return False
 
     def place(self, *, reason: str, context: str, on_end: Callable[[dict[str, Any]], None],
-              on_failed: Callable[[str, str], None]) -> Optional[str]:
+              on_failed: Callable[[str, str], None], about: str = "") -> Optional[str]:
         """Place the call (from a worker thread). The Calls record id, or None
-        when it did not connect (``on_failed(reason_word, detail)``)."""
+        when it did not connect (``on_failed(reason_word, detail)``).
+        ``about``: the Program step the call is about (DIR8: its held items
+        are read first)."""
         from ..calls.runner import speakable
         from ..services.errors import ServiceError
 
@@ -112,7 +114,8 @@ class NumberTransport:
             })
 
         try:
-            summary = calls._on_loop(calls.place(greeting=greeting, context=context, reason=reason, on_end=ended),
+            summary = calls._on_loop(calls.place(greeting=greeting, context=context, reason=reason, on_end=ended,
+                                                 about=about),
                                      timeout=120.0)
         except ServiceError as exc:
             on_failed(str(exc.context.get("reason") or exc.code), exc.detail)

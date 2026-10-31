@@ -456,7 +456,8 @@ def test_a_program_starts_on_a_call_only_after_his_spoken_yes(hub, monkeypatch, 
     assert program["state"] == state and _started(hub.db, program_id) == starts, program["state"]
     offered = {tool["function"]["name"] for tool in seen[0]["tools"]}
     assert {"program.start", "program.get"} <= offered
-    assert not offered & {"program.create", "program.decide", "program.plan", "program.handoff"}
+    # DIR8: program.decide is on a call, held for his spoken yes; nothing else that makes or plans.
+    assert not offered & {"program.create", "program.plan", "program.handoff"}
     [record] = service.list()
     if starts:
         assert record["results"] == [{"kind": "program", "label": "Overnight on the home box",

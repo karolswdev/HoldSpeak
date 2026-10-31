@@ -49,6 +49,8 @@ FRAME = "call_state"
 START_PROGRAM = "Start the program"
 #: LANG5: a held ``program.shape``, in words (the Calls window's row).
 CHANGE_PROGRAM = "Change the program"
+#: DIR8: a held ``program.decide``, in words (the Calls window's row).
+DECIDE_PROGRAM = "Decide"
 
 #: The system prompt of a call's turn.
 CALL_PROMPT = (
@@ -65,6 +67,8 @@ CALL_PROMPT = (
     "call program.shape with its name and his sentence (the words after the name): it reads the changes back and "
     "waits for his spoken yes; then say its spoken line. "
     "To say how a program is doing, call program.get with its name and say its spoken line. "
+    "When he answers what waits on him, call program.decide with his choice and via call: it reads his choice "
+    "back and waits for his spoken yes. A waive, a send, an allow and a buy wait for him on the desk. "
     "When there is no program with that name, say so; never make one. Never change settings. "
     "Then say in one sentence what you did."
 )
@@ -159,6 +163,10 @@ class DeskTurns:
         self._context = ""
         #: LANG5: a held program.shape's read back, by tool call id.
         self._shaped: dict[str, dict[str, Any]] = {}
+        #: DIR8: a held program.decide's package and choice, by tool call id;
+        #: the ids of the decide calls a call may not take (refused).
+        self._deciding: dict[str, dict[str, Any]] = {}
+        self._refused: set[str] = set()
 
     def set_context(self, context: str) -> None:
         """Phone (2026-10-28): the desk called him; the turn knows why."""
@@ -224,6 +232,11 @@ class DeskTurns:
                     return f"{START_PROGRAM} {found['title']}"
             if tool == "program.shape" and tool_call_id in self._shaped:
                 return f"{CHANGE_PROGRAM} {self._shaped[tool_call_id]['title']}"
+            if tool == "program.decide" and tool_call_id in self._deciding:
+                from .decide import where_words
+
+                held = self._deciding[tool_call_id]
+                return f"{DECIDE_PROGRAM} {held['label']} for {where_words(held['body'])}"
             if tool == "nudge.send" and args.get("text"):
                 return "Post this nudge on GitHub: " + str(args["text"])[:160]
             data = args.get("data") if isinstance(args.get("data"), dict) else {}
@@ -264,15 +277,63 @@ class DeskTurns:
                 return True
             self._shaped[tool_call_id] = held
             return held["state"] != "asked"
+        if tool == "program.decide":
+            return self._prepare_decide(tool_call_id)
         if tool != "program.start":
             return False
         handle = self._handle(tool_call_id)
         found = self._program(dict(getattr(handle, "args", {}) or {}))
         return found is None or found.get("state") not in ("drafting", "parked")
 
+    def _prepare_decide(self, tool_call_id: str) -> bool:
+        """DIR8: a held ``program.decide`` is asked as the read back of the
+        package's choice. A call takes only a choice the package offers, on an
+        item that waits on him now, always ``via="call"``; anything else (a
+        waive, an item answered already) is refused without a question
+        (``decide`` then denies it)."""
+        from ..services.briefing_service import BriefingService
+        from ..services.program_service import default_program_service
+
+        handle = self._handle(tool_call_id)
+        args = getattr(handle, "args", None)
+        if not isinstance(args, dict):
+            self._refused.add(tool_call_id)
+            return True
+        service = default_program_service(self._db)
+        briefing = BriefingService(self._db, programs=lambda: service)
+        choice = str(args.get("choice") or "")
+        body = None
+        try:
+            for item in service.needs_you_items():
+                if item.get("program_id") != args.get("program_id"):
+                    continue
+                if args.get("step_id") and item.get("step_id") != args.get("step_id"):
+                    continue
+                if args.get("kind") and args["kind"] not in (item.get("kind"), "requirement"):
+                    continue
+                found = briefing.compose(f"program:{item['program_id']}:{item['id']}")
+                if found is not None and choice in {row["id"] for row in found["choices"]}:
+                    body = found
+                    break
+        except Exception as exc:
+            log.info(f"the held decide was not read: {exc}")
+        if body is None:
+            self._refused.add(tool_call_id)
+            return True
+        args["via"] = "call"  # his spoken yes is a call's answer, whatever the model wrote
+        label = next(row["label"] for row in body["choices"] if row["id"] == choice)
+        self._deciding[tool_call_id] = {"body": body, "choice": choice, "label": label}
+        return False
+
     def hold_question(self, tool_call_id: str, tool: str) -> str:
         """LANG5: a held ``program.shape`` is asked as its read back (one
-        sentence a row, then "Apply?"); "" for every other tool."""
+        sentence a row, then "Apply?"); DIR8: a held ``program.decide`` as
+        its choice's read back; "" for every other tool."""
+        if tool == "program.decide" and tool_call_id in self._deciding:
+            from .decide import read_back_words
+
+            held = self._deciding[tool_call_id]
+            return read_back_words(held["body"], held["choice"])
         held = self._shaped.get(tool_call_id) if tool == "program.shape" else None
         return str((held or {}).get("question") or "")
 
@@ -284,6 +345,21 @@ class DeskTurns:
         handle = self._handle(tool_call_id)
         if handle is None or handle.state != "awaiting_decision":
             return False
+        if tool_call_id in self._refused:
+            self._refused.discard(tool_call_id)
+            ThreadService._tool_executor.decide(handle, "deny")
+            return True
+        deciding = self._deciding.pop(tool_call_id, None)
+        if deciding is not None and decision == "later":
+            # DIR8: Later on a decision hold decides nothing; it defers.
+            from .decide import DeskHeld
+
+            try:
+                DeskHeld(self._db).later(deciding["body"], "later")
+            except Exception as exc:
+                log.info(f"later was not recorded: {exc}")
+            ThreadService._tool_executor.decide(handle, "deny")
+            return True
         held = self._shaped.pop(tool_call_id, None)
         if held is not None:
             from ..services import program_spoken
@@ -322,6 +398,8 @@ class CallsService:
         self._lock = threading.Lock()
         #: Phone (2026-10-28): a slow hand's answer after the hang-up.
         self._later_fn: Optional[Callable[[CallRecord, str], None]] = None
+        #: PG-DIRECTION DIR8: what waits on him (``calls.decide.DeskHeld``).
+        self._held_fn: Optional[Callable[[], Any]] = None
 
     # ── wiring ────────────────────────────────────────────────────────
 
@@ -330,7 +408,10 @@ class CallsService:
         thread_factory: Optional[Callable[..., Any]] = None, db: Optional[Callable[[], Any]] = None,
         phone: Optional[Callable[[], Optional[AiPhone]]] = None, turns: Optional[Callable[[], Optional[Turns]]] = None,
         later: Optional[Callable[[CallRecord, str], None]] = None,
+        held: Optional[Callable[[], Any]] = None,
     ) -> None:
+        if held is not None:
+            self._held_fn = held
         if broadcast is not None:
             self._broadcast = broadcast
         if thread_factory is not None:
@@ -434,6 +515,13 @@ class CallsService:
         if self._thread_factory is None:
             return None
         return DeskTurns(self._db(), self._thread_factory, profile_override=self._override_profile())
+
+    def _held(self) -> Any:
+        if self._held_fn is not None:
+            return self._held_fn()
+        from .decide import DeskHeld
+
+        return DeskHeld(self._db())
 
     # ── reads ─────────────────────────────────────────────────────────
 
@@ -601,7 +689,7 @@ class CallsService:
         runner = CallRunner(
             phone, record, turns=turns, passphrase=cfg.passphrase, allowed_numbers=cfg.allowed_numbers,
             greeting=greeting or cfg.greeting, emit=self._emit, save_note=self._save_note,
-            engine_ready=engine_ready, later=self._answer_later,
+            engine_ready=engine_ready, later=self._answer_later, held=self._held(),
         )
         self._runners[record.id] = runner
         self._emit(reason, record)
@@ -615,13 +703,15 @@ class CallsService:
 
     async def place(
         self, to: str = "", *, greeting: Optional[str] = None, context: str = "", reason: str = "",
-        on_end: Optional[Callable[[CallRecord], None]] = None,
+        on_end: Optional[Callable[[CallRecord], None]] = None, about: str = "",
     ) -> dict[str, Any]:
         """``call <to> --relay``; the call runs like an incoming one. ``to``
         defaults to his number (``calls.allowed_numbers[0]``). Phone
         (2026-10-28): ``greeting`` is said after the passphrase (the reason
         the desk called), ``context`` briefs the call's turn, ``on_end``
-        gets the record when the call is over."""
+        gets the record when the call is over. PG-DIRECTION DIR8: ``about``
+        is the Program step the desk calls him about; its held items are read
+        first."""
         from ..services.errors import ServiceError
 
         cfg = _settings()
@@ -645,7 +735,7 @@ class CallsService:
             raise ServiceError("calls_place_failed", reply.error or f"The call did not connect ({reason}).",
                                context={"status": 409, "reason": reason})
         record = CallRecord(phone_call_id=str(reply.data.get("call_id") or ""), direction="out", remote=target,
-                            context=str(context or ""), reason=str(reason or ""))
+                            context=str(context or ""), reason=str(reason or ""), about=str(about or ""))
         self._keep(record)
 
         async def run_then_listen() -> None:
