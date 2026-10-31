@@ -22,6 +22,10 @@ import { ProjectRoomCore } from "../../../features/project-room/ProjectRoomCore"
 import { TitleSlotContext } from "../../surface/title";
 import { WingSlotContext } from "../../surface/wings";
 import { useDrawers } from "../../drawer/store";
+// PG-DIRECTION DIR3: recorded by tests/integration/test_desk_reach.py.
+import needsPageNone from "../../programs/__fixtures__/needs_you.page_none.json";
+import needsPageOpen from "../../programs/__fixtures__/needs_you.page_open.json";
+import reachPackage from "../../programs/__fixtures__/reach.package.json";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -1391,3 +1395,59 @@ describe("Phone: asked on your phone, a missed call, a held call", () => {
     expect(pressed).toHaveLength(1);
   });
 });
+
+describe("the briefing page on a Program row (PG-DIRECTION DIR3)", () => {
+  const read = (items: unknown[]) => ({ items, blockers: [], failedMeetings: [], coverage: [], complete: true });
+
+  it("Copy page link makes the page and copies its link; the row's line then says the page is open, with Revoke", async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    const posts: { path: string; json: unknown }[] = [];
+    let made = false;
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) return read(made ? needsPageOpen.items : needsPageNone.items) as never;
+      if (value === "/api/reach/packages") {
+        posts.push({ path: value, json: (init as { json?: unknown })?.json });
+        made = true;
+        return reachPackage as never;
+      }
+      if (value === "/api/door") return DOOR as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    const title = needsPageNone.items[0].title;
+    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Copy page link"]));
+    expect(face(row(title)).fact).not.toMatch(/Page/);
+    fireEvent.click(within(row(title)).getByRole("button", { name: /Copy page link/ }));
+    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Revoke"]));
+    expect(posts).toEqual([{ path: "/api/reach/packages", json: { refs: [needsPageNone.items[0].id] } }]);
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}${reachPackage.path}`);
+    expect(face(row(title)).fact).toMatch(/Page link copied · open until \d\d:\d\d$/);
+  });
+
+  it("Revoke ends the page; the item stays with its own verbs", async () => {
+    let revoked = false;
+    const page = needsPageOpen.items[0].program.page;
+    const posts: string[] = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value.startsWith("/api/desk/needs-you")) return read(revoked ? needsPageNone.items : needsPageOpen.items) as never;
+      if (value.startsWith("/api/reach/packages/")) {
+        posts.push(value);
+        revoked = true;
+        return { id: page.package_id, revoked: true } as never;
+      }
+      if (value === "/api/door") return DOOR as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    const title = needsPageOpen.items[0].title;
+    // (The copy above, in this module, marked the same recorded page copied.)
+    await waitFor(() => expect(face(row(title)).fact).toMatch(/(Page open|Page link copied · open) until \d\d:\d\d$/));
+    fireEvent.click(within(row(title)).getByRole("button", { name: /Revoke the page/ }));
+    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Copy page link"]));
+    expect(posts).toEqual([`/api/reach/packages/${page.package_id}/revoke`]);
+  });
+});
+

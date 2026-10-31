@@ -37,8 +37,9 @@ import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
-import { closeProgram, decide, decideProposal, decideRequirement, overturn, planProgram, programVerb, race, updateProgram, useProgram,
-  type RequirementChoice } from "./api";
+import { closeProgram, decide, decideProposal, decideRequirement, overturn, planProgram, programVerb, race, readProgram, updateProgram,
+  useProgram, type RequirementChoice } from "./api";
+import { briefable, copyPageLink, pageWords, programRef, revokePage } from "../reach";
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
 import { RequirementsBoard, openShot } from "./Requirements";
 import { StepFold, isPlanned, moveStep } from "./StepFold";
@@ -129,6 +130,22 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
   const [line, setLine] = useState("");
   const items = program.your_turn_items;
   if (!items.length) return null;
+  // PG-DIRECTION DIR3: Copy page link makes the item's briefing page and
+  // copies its link; Revoke ends it. The row's line says the page is open.
+  const page = async (item: YourTurnItem, verb: "copy" | "revoke") => {
+    setBusy(`${item.id}:${verb}`);
+    setFailed(null);
+    try {
+      if (verb === "copy") await copyPageLink(programRef(program.id, item.id));
+      else if (item.page) await revokePage(item.page.package_id);
+      onDecided(await readProgram(program.id));
+    } catch (error) {
+      setFailed(plainFail(verb === "copy" ? "The page link was not made" : "The page was not revoked", error,
+        "The item is unchanged", "Try again"));
+    } finally {
+      setBusy("");
+    }
+  };
   const press = async (item: YourTurnItem, choice: string, line?: string) => {
     if (item.kind === "answer") return;
     // Unmet and Waive ask one line, in place.
@@ -171,6 +188,7 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
               data-asking={asking ? "" : undefined}>
               <span className="pg-turn-words">{itemWords(item, step)}</span>
               {fact ? <span className="pg-turn-fact">{fact}</span> : null}
+              {item.page ? <span className="pg-turn-page" data-testid="programs-turn-page">{pageWords(item.page)}</span> : null}
               {asking ? (
                 <span className="pg-turn-ask" data-testid="programs-turn-ask">
                   <StringGadget label={asking.choice === "waive" ? "Why you waive it" : "What is missing"} value={line} onChange={setLine}
@@ -196,6 +214,13 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
                     {verbWord(item, verb)}
                   </Button>
                 ))}
+                {briefable(item.kind) ? (
+                  <Button dense variant="ghost" loading={busy === `${item.id}:${item.page ? "revoke" : "copy"}`}
+                    disabled={Boolean(busy)} onClick={() => void page(item, item.page ? "revoke" : "copy")}
+                    data-testid={item.page ? "programs-turn-revoke" : "programs-turn-copy-link"}>
+                    {item.page ? "Revoke" : "Copy page link"}
+                  </Button>
+                ) : null}
               </span>
             </li>
           );

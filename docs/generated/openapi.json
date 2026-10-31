@@ -5546,6 +5546,141 @@
         ]
       }
     },
+    "/api/b/{token}": {
+      "get": {
+        "operationId": "api_briefing_read_api_b__token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Briefing Read Api B  Token  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Briefing Read"
+      }
+    },
+    "/api/b/{token}/answer": {
+      "post": {
+        "operationId": "api_briefing_answer_api_b__token__answer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Briefing Answer Api B  Token  Answer Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Briefing Answer"
+      }
+    },
+    "/api/b/{token}/evidence/{ref}/{pane}": {
+      "get": {
+        "operationId": "api_briefing_evidence_api_b__token__evidence__ref___pane__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "pane",
+            "required": true,
+            "schema": {
+              "title": "Pane",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Briefing Evidence Api B  Token  Evidence  Ref   Pane  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Briefing Evidence"
+      }
+    },
     "/api/bookmark": {
       "post": {
         "operationId": "api_bookmark_api_bookmark_post",
@@ -28070,6 +28205,79 @@
         "tags": [
           "providers"
         ]
+      }
+    },
+    "/api/reach/packages": {
+      "get": {
+        "operationId": "api_reach_packages_api_reach_packages_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Packages Api Reach Packages Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach Packages"
+      },
+      "post": {
+        "operationId": "api_reach_package_make_api_reach_packages_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Package Make Api Reach Packages Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Reach Package Make"
+      }
+    },
+    "/api/reach/packages/{package_id}/revoke": {
+      "post": {
+        "operationId": "api_reach_package_revoke_api_reach_packages__package_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "package_id",
+            "required": true,
+            "schema": {
+              "title": "Package Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Reach Package Revoke Api Reach Packages  Package Id  Revoke Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Reach Package Revoke"
       }
     },
     "/api/recipes": {

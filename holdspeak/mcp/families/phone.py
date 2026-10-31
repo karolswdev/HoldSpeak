@@ -13,6 +13,10 @@ etiquette coded, not only written (its ``skills/agentring/SKILL.md``):
   and the level is not Secure. It returns when the call is over:
   ``{transcript, end_reason, duration_s, decision}``.
 - ``phone.status``: the paired phones, the line, quiet hours, the last reach.
+- ``phone.brief`` (PG-DIRECTION DIR1): the owner makes a briefing page for
+  one held item of a Program and gets its link (the token is in the link
+  only). Owner only; it reads nothing of the phone, so it works with the
+  phone off. Telegram and the push are later slices.
 """
 from __future__ import annotations
 
@@ -75,6 +79,24 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "phone.brief",
+        "description": (
+            "Owner only. Make a briefing page for one held item (a Needs you row id, program:<program>:<item>) "
+            "and return its page path /b/<token>, open for 24 hours, decided once. send is none: Telegram and the "
+            "phone push are not built yet."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "refs": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 1},
+                "kind": {"type": ["string", "null"], "enum": ["item", None]},
+                "send": {"type": ["string", "null"], "enum": ["none", None]},
+            },
+            "required": ["refs"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "phone.status",
         "description": "Read the owner's phone: the paired phones, the line, quiet hours, the reach rules at the "
                        "desk's level, and the last reach.",
@@ -89,6 +111,12 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call. Raises LookupError for unowned names."""
     if name not in NAMES:
         raise LookupError(name)
+    if name == "phone.brief":
+        from holdspeak.services.briefing_service import default_briefing_service
+
+        args = dict(arguments or {})
+        return default_briefing_service().make(principal, args.get("refs"), kind=args.get("kind") or "item",
+                                               send=args.get("send"))
     from holdspeak.phone import phone_on
     from holdspeak.phone.service import PhoneRefused, default_phone_service
 

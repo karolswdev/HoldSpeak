@@ -346,6 +346,8 @@ TOOLS: list[dict[str, Any]] = [
          "reason": {"type": ["string", "null"], "maxLength": 400},
          "requirement_id": {"type": ["string", "null"]},
          "proposal_id": {"type": ["string", "integer", "null"]},
+         "via": {"type": ["string", "null"], "enum": ["desk", "phone", "call", "telegram", "page", None],
+                 "description": "Where he answered (desk by default); the ledger line names it."},
      }, ["program_id", "kind", "choice"])},
     {"name": "program.handoff",
      "description": "Move a step that holds an agent to another agent, in the same worktree on the same branch, with "
@@ -438,7 +440,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     return service.decide(
         principal, str(args["program_id"]), str(args.get("step_id") or ""), kind=str(args.get("kind") or ""),
         choice=str(args.get("choice") or ""), finding_id=args.get("finding_id"), reason=args.get("reason"),
-        requirement_id=args.get("requirement_id"), proposal_id=args.get("proposal_id"),
+        requirement_id=args.get("requirement_id"), proposal_id=args.get("proposal_id"), via=args.get("via"),
     )
 
 

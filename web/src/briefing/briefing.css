@@ -1,0 +1,211 @@
+@import "../styles/global.css";
+@import "../styles/react-app.css";
+@import "../desk/desk.css";
+@import "../desk/surface/surface.css";
+@import "../desk/surface/gadgets.css";
+@import "../desk/programs/programs.css";
+
+/* The briefing page (PG-DIRECTION DIR2): one desk window alone on a page,
+   phone width first. The window shell, the title bar, the lamp, the ember
+   well (.pg-turn's rule), the Buttons, the folds and the status bar are the
+   desk's own material; this file only places them on a page. Interior
+   reflow is the `surface` container, never viewport media. */
+
+.briefing.desk-next {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 0;
+  background: var(--wb-backdrop);
+}
+
+.briefing .desk-window.desk-window-shell.briefing-window {
+  position: relative;
+  inset: auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 760px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+  background: var(--wb-paper);
+  container: surface / inline-size;
+}
+
+.briefing .briefing-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: var(--wb-field);
+}
+.briefing .briefing-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--wb-ink);
+  font: 600 14px / 1.3 var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.briefing .briefing-body {
+  flex: 1 1 auto;
+  padding: var(--space-3) var(--space-4) var(--space-5);
+}
+
+/* The question well: the Your turn ember (.pg-turn), one item, roomier. */
+.briefing .pg-turn.briefing-well {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-4) calc(var(--space-4) + 3px);
+}
+.briefing .briefing-well[data-state="decided"],
+.briefing .briefing-well[data-state="gone"] {
+  background: color-mix(in srgb, var(--lamp-ok) 8%, var(--wb-paper));
+  box-shadow: inset 3px 0 0 var(--lamp-ok), inset 0 0 0 1px color-mix(in srgb, var(--lamp-ok) 30%, var(--wb-rule-soft));
+}
+.briefing .briefing-facts-line {
+  margin: 0 0 var(--space-2);
+  color: var(--wb-ember-ink);
+  font: 600 12px / 1.4 var(--font-sans);
+}
+.briefing .briefing-question {
+  margin: 0 0 var(--space-3);
+  color: var(--wb-ink);
+  font: 600 20px / 1.3 var(--font-display);
+  overflow-wrap: anywhere;
+}
+.briefing .briefing-outcome {
+  margin: 0 0 var(--space-3);
+  color: var(--wb-ink);
+  font: 600 15px / 1.4 var(--font-sans);
+}
+.briefing .briefing-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.briefing .briefing-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.briefing .briefing-choice > .btn {
+  min-height: 44px;
+  justify-content: center;
+}
+.briefing .briefing-consequence {
+  color: var(--wb-muted);
+  font: 400 13px / 1.4 var(--font-sans);
+}
+
+.briefing .briefing-line {
+  margin: 0;
+  color: var(--wb-muted);
+  font: 400 13px / 1.45 var(--font-sans);
+}
+.briefing .briefing-failure {
+  margin: 0 0 var(--space-3);
+  color: var(--wb-ember-ink);
+}
+
+.briefing .briefing-section {
+  margin: 0 0 var(--space-4);
+}
+.briefing .briefing-caption {
+  margin: 0 0 var(--space-1);
+  color: var(--wb-muted);
+  font: 600 12px / 1.4 var(--font-sans);
+}
+.briefing .briefing-changed {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.briefing .briefing-change {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--wb-rule-soft);
+  font: 400 13px / 1.4 var(--font-sans);
+}
+.briefing .briefing-clock {
+  flex: none;
+  color: var(--wb-muted);
+  font: 400 12px / 1.6 var(--font-mono);
+}
+.briefing .briefing-change-line {
+  min-width: 0;
+  color: var(--wb-ink);
+  overflow-wrap: anywhere;
+}
+
+.briefing .briefing-pane {
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.briefing .briefing-pane .surface-code {
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.briefing .briefing-facts {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+}
+.briefing .briefing-fact {
+  display: flex;
+  gap: var(--space-3);
+  font: 400 13px / 1.4 var(--font-sans);
+}
+.briefing .briefing-fact dt {
+  flex: 0 0 72px;
+  color: var(--wb-muted);
+}
+.briefing .briefing-fact dd {
+  margin: 0;
+  color: var(--wb-ink);
+}
+
+.briefing .briefing-expired,
+.briefing .briefing-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-7) var(--space-4);
+  text-align: center;
+}
+.briefing .briefing-expired-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--wb-muted);
+}
+
+.briefing .briefing-status {
+  flex: none;
+}
+
+/* A wide page: the choices in a row, each with what it does under it. */
+@container surface (min-width: 640px) {
+  .briefing .briefing-choices {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .briefing .briefing-choice {
+    flex: 1 1 160px;
+  }
+  .briefing .desk-window.desk-window-shell.briefing-window {
+    border-radius: var(--desk-window-radius);
+  }
+}

@@ -444,6 +444,8 @@ LAUNCH_RULES.update({
 LAUNCH_RULES.update({
     "phone.get_replies": (READ, "", ""),
     "phone.send_message": (CREATE, "phone_message", "id"),
+    # PG-DIRECTION DIR1: a briefing page is the owner's; no launch makes one.
+    "phone.brief": (NEVER, "", ""),
 })
 # Betterment AG11: the helper a launch starts is recorded as its own
 # (``launch:<id>``); every other helper tool names it.
