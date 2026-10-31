@@ -252,7 +252,7 @@ A new worktree has no installed packages. If your check needs them, put a comman
 program_runner.py). The window faces (the Requirements board, the Add
 requirement row, Find, the step fold, Move and Insert before) are written as
 designed in docs/internal/betterment/programs/PROGRAMS-REQUIREMENTS-2026-10-31.md
-§7–§9; the FACES lane ships them in the same PR. -->
+§7 to §9; the FACES lane ships them in the same PR. -->
 
 A requirement is one sentence that you want true, with the way HoldSpeak proves it. Examples: "`uv run pytest -q tests/unit/test_program_rules.py` is green", "The People window at 393 has no clipped text", "No new route skips the residual set", "I tried it on my desk".
 
