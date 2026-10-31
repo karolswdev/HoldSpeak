@@ -1,11 +1,15 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
-import { armTerminal, disarmTerminal, readTerminalSubscription, sendTerminalCommand } from "./api";
+import { armTerminal, disarmTerminal, readTerminalLive, readTerminalSubscription, resizeTerminal, sendTerminalCommand } from "./api";
 import { decodeTerminalInput, normalizeTerminalKeys } from "./input";
 import type {
   TerminalDescriptor,
   TerminalKey,
   TerminalPaneGeometry,
   TerminalReceipt,
+  TerminalDimensions,
+  TerminalOutputFrame,
+  TerminalOutputSource,
+  TerminalResizeState,
   TerminalSessionState,
   TerminalStatus,
 } from "./types";
@@ -13,6 +17,10 @@ import type {
 export const TERMINAL_FOCUSED_POLL_MS = 350;
 export const TERMINAL_VISIBLE_POLL_MS = 1_200;
 export const TERMINAL_INPUT_BATCH_MS = 30;
+export const TERMINAL_LIVE_RECONNECT_MS = 250;
+export const TERMINAL_LIVE_RECONNECT_MAX_MS = 5_000;
+export const TERMINAL_LIVE_HEADER_TIMEOUT_MS = 10_000;
+export const TERMINAL_LIVE_IDLE_TIMEOUT_MS = 30_000;
 
 // eslint-disable-next-line no-control-regex
 const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]|\u001b\][\s\S]*?(?:\u0007|\u001b\\)|\u001b[@-Z\\-_]/g;
@@ -24,6 +32,75 @@ function toLines(raw: string): string[] {
 
 function capRaw(raw: string): string {
   return raw.length > RAW_MAX_CHARS ? raw.slice(-RAW_MAX_CHARS) : raw;
+}
+
+function createOutputSource(): { source: TerminalOutputSource; emit(frame: TerminalOutputFrame): void; setResync(handler: () => void): void; markResync(): void } {
+  let current: TerminalOutputFrame | null = null;
+  let snapshot: TerminalOutputFrame | null = null;
+  const backlog: TerminalOutputFrame[] = [];
+  let backlogBytes = 0;
+  let requestResync: () => void = () => undefined;
+  const listeners = new Set<(frame: TerminalOutputFrame) => void>();
+  const resyncListeners = new Set<() => void>();
+  return {
+    source: {
+      subscribe(listener) {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      subscribeResync(listener) {
+        resyncListeners.add(listener);
+        return () => resyncListeners.delete(listener);
+      },
+      current: () => current,
+      replay: (afterSequence = 0) => {
+        const first = backlog[0];
+        if (first && first.sequence > afterSequence + 1) return null;
+        return backlog.filter((frame) => frame.sequence > afterSequence);
+      },
+      snapshot: () => snapshot,
+      requestResync: () => requestResync(),
+    },
+    emit(frame) {
+      current = frame;
+      if (frame.kind === "snapshot" || frame.kind === "resync") {
+        snapshot = frame;
+        backlog.length = 0;
+        backlogBytes = 0;
+      }
+      backlog.push(frame);
+      backlogBytes += frame.data.byteLength;
+      while (backlog.length > 512 || backlogBytes > 512 * 1024) {
+        const removed = backlog.shift();
+        if (removed) backlogBytes -= removed.data.byteLength;
+      }
+      for (const listener of [...listeners]) listener(frame);
+    },
+    setResync(handler) { requestResync = handler; },
+    markResync() { for (const listener of [...resyncListeners]) listener(); },
+  };
+}
+
+function decodeBase64(value: string): Uint8Array | null {
+  if (!value) return new Uint8Array();
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(value) || value.length % 4 === 1) return null;
+  try {
+    const binary = atob(value);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+    return bytes;
+  } catch {
+    return null;
+  }
+}
+
+function frameBytes(value: unknown, encoding: unknown): Uint8Array | null {
+  if (typeof value !== "string") return null;
+  return encoding === "base64" ? decodeBase64(value) : new TextEncoder().encode(value);
+}
+
+function dimensionsEqual(left: TerminalDimensions | null, right: TerminalDimensions | null): boolean {
+  return Boolean(left && right && left.cols === right.cols && left.rows === right.rows);
 }
 
 function paneGeometry(value: unknown): TerminalPaneGeometry | null {
@@ -66,6 +143,7 @@ function targetKey(descriptor: TerminalDescriptor): string {
  */
 export function createTerminalSession(
   descriptor: TerminalDescriptor,
+  options: { mode?: "poll" | "live" } = {},
 ): StoreApi<TerminalSessionState> {
   const controllerDescriptor: TerminalDescriptor = {
     ...descriptor,
@@ -90,6 +168,20 @@ export function createTerminalSession(
   // erase the last "not sent" reason until the operator tries new input or
   // explicitly disarms/re-arms the controller.
   let commandError: string | null = null;
+  const mode = options.mode ?? "poll";
+  const output = createOutputSource();
+  let liveAbort: AbortController | null = null;
+  let liveIdleTimer: ReturnType<typeof setTimeout> | null = null;
+  let liveReconnect: ReturnType<typeof setTimeout> | null = null;
+  let liveStreamId: string | null = null;
+  let liveSequence = 0;
+  let liveBackoff = TERMINAL_LIVE_RECONNECT_MS;
+  let liveRebindRefused = false;
+  let liveReconnectWanted = false;
+  let liveResyncPending = false;
+  let liveForceSnapshot = false;
+  let resizeDesired: TerminalDimensions | null = null;
+  let resizeInFlight: TerminalDimensions | null = null;
 
   const clearTimer = () => {
     if (timer !== null) clearTimeout(timer);
@@ -102,6 +194,16 @@ export function createTerminalSession(
   const clearTypingTimer = () => {
     if (typingTimer !== null) clearTimeout(typingTimer);
     typingTimer = null;
+  };
+  const clearLiveReconnect = () => {
+    if (liveReconnect !== null) clearTimeout(liveReconnect);
+    liveReconnect = null;
+  };
+  const abortLive = () => {
+    if (liveIdleTimer !== null) clearTimeout(liveIdleTimer);
+    liveIdleTimer = null;
+    liveAbort?.abort();
+    liveAbort = null;
   };
   const resolveItems = (items: PendingItem[], ok: boolean) => {
     for (const item of items) item.resolve?.(ok);
@@ -232,6 +334,297 @@ export function createTerminalSession(
       void poll(atLifecycle);
     };
 
+    const scheduleLiveReconnect = (atLifecycle: number) => {
+      clearLiveReconnect();
+      if (mode !== "live" || !running || atLifecycle !== lifecycle || !activity.visible || liveRebindRefused) return;
+      const delay = liveBackoff;
+      liveBackoff = Math.min(TERMINAL_LIVE_RECONNECT_MAX_MS, Math.max(TERMINAL_LIVE_RECONNECT_MS, liveBackoff * 2));
+      liveReconnect = setTimeout(() => {
+        liveReconnect = null;
+        if (running && atLifecycle === lifecycle && activity.visible) void readLive(atLifecycle);
+      }, delay);
+    };
+
+    output.setResync(() => {
+      if (mode !== "live" || !running || !activity.visible) return;
+      liveResyncPending = true;
+      liveForceSnapshot = true;
+      liveReconnectWanted = true;
+      output.markResync();
+      set({ status: "resyncing", error: "Terminal replay expired; resyncing" });
+      abortLive();
+    });
+
+    const handleLiveFrame = (value: unknown, atLifecycle: number): boolean => {
+      if (!running || atLifecycle !== lifecycle || liveRebindRefused) return false;
+      const row = value && typeof value === "object" ? value as Record<string, unknown> : {};
+      const wireStatus = String(row.status ?? row.type ?? "").toLowerCase();
+      // A typed absence is authoritative even when it repeats the last output
+      // cursor or arrives under a new stream id. Sequence/epoch handling is
+      // only for data-bearing frames.
+      if (["target_gone", "generation_mismatch", "unauthorized", "tmux_absent", "stream_unavailable"].includes(wireStatus)) {
+        if (wireStatus !== "stream_unavailable") liveRebindRefused = true;
+        invalidateInputQueue();
+        clearTypingTimer();
+        set({
+          status: statusFromResponse(wireStatus, wireStatus === "unauthorized" ? 401 : wireStatus === "target_gone" ? 404 : wireStatus === "generation_mismatch" ? 409 : 503),
+          error: String(row.detail || wireStatus),
+          raw: null,
+          lines: [],
+          pane: null,
+          canType: false,
+        });
+        return false;
+      }
+      const rowStreamId = typeof row.stream_id === "string" ? row.stream_id : null;
+      const newStreamEpoch = Boolean(rowStreamId && liveStreamId && rowStreamId !== liveStreamId);
+      if (rowStreamId) {
+        liveStreamId = rowStreamId;
+        if (newStreamEpoch && wireStatus !== "snapshot" && wireStatus !== "resync_required") {
+          set({ status: "resyncing", error: "Terminal stream resumed; waiting for snapshot" });
+          liveForceSnapshot = true;
+          liveReconnectWanted = true;
+          abortLive();
+          return false;
+        }
+        if (newStreamEpoch) liveSequence = 0;
+      }
+      const sequence = Number(row.sequence);
+      const orderedFrame = ["snapshot", "resync_required", "heartbeat", "output", "data", "live"].includes(wireStatus);
+      if (orderedFrame && Number.isFinite(sequence) && sequence > 0) {
+        if (liveSequence > 0 && sequence > liveSequence + 1 && wireStatus !== "snapshot" && wireStatus !== "resync_required") {
+          set({ status: "resyncing", error: "Output gap; resyncing terminal" });
+          liveForceSnapshot = true;
+          liveReconnectWanted = true;
+          abortLive();
+          return false;
+        }
+        if (sequence <= liveSequence && wireStatus !== "snapshot" && wireStatus !== "resync_required") return true;
+      }
+      const pane = paneGeometry(row.pane);
+      if (wireStatus === "heartbeat") {
+        if (sequence > liveSequence) liveSequence = sequence;
+        set({ status: "live", error: commandError, pane: pane || get().pane });
+        return true;
+      }
+      const rawData = row.data ?? row.content ?? row.raw;
+      if (wireStatus === "resync_required" && rawData == null) {
+        liveResyncPending = true;
+        output.markResync();
+        set({ status: "resyncing", error: "Terminal output resync required" });
+        return true;
+      }
+      const data = frameBytes(rawData, row.encoding);
+      if (!data || ((wireStatus === "snapshot" || wireStatus === "output" || wireStatus === "data" || wireStatus === "live") && rawData == null)) {
+        liveResyncPending = true;
+        liveForceSnapshot = true;
+        liveReconnectWanted = true;
+        set({ status: "resyncing", error: "Invalid terminal stream bytes" });
+        abortLive();
+        return false;
+      }
+      const sequenceValue = Number.isFinite(sequence) && sequence > 0 ? sequence : liveSequence + 1;
+      if (wireStatus === "resync_required" && data.byteLength === 0) {
+        liveResyncPending = true;
+        set({ status: "resyncing", error: "Terminal output resync required" });
+        return true;
+      }
+      if (liveResyncPending && wireStatus !== "snapshot" && wireStatus !== "resync_required") {
+        set({ status: "resyncing", error: "Waiting for terminal snapshot" });
+        liveReconnectWanted = true;
+        abortLive();
+        return false;
+      }
+      if (wireStatus === "snapshot" || wireStatus === "resync_required") {
+        if (wireStatus === "snapshot") liveForceSnapshot = false;
+        liveResyncPending = false;
+        liveSequence = sequenceValue;
+        const text = new TextDecoder().decode(data);
+        output.emit({ kind: wireStatus === "resync_required" ? "resync" : "snapshot", data, sequence: liveSequence, pane, streamId: liveStreamId });
+        set({
+          status: wireStatus === "resync_required" ? "resyncing" : "live",
+          raw: capRaw(text),
+          lines: toLines(text),
+          pane: pane || get().pane,
+          sequence: liveSequence,
+          hash: null,
+          changedAt: Date.now(),
+          error: commandError,
+        });
+        return true;
+      }
+      if (wireStatus === "output" || wireStatus === "data" || wireStatus === "live") {
+        if (sequenceValue > liveSequence + 1 && liveSequence > 0) {
+          set({ status: "resyncing", error: "Output gap; resyncing terminal" });
+          liveForceSnapshot = true;
+          liveReconnectWanted = true;
+          abortLive();
+          return false;
+        }
+        liveSequence = sequenceValue;
+        output.emit({ kind: "output", data, sequence: liveSequence, pane, streamId: liveStreamId });
+        set({ status: "live", sequence: liveSequence, pane: pane || get().pane, changedAt: Date.now(), error: commandError });
+        return true;
+      }
+      if (wireStatus) set({ status: "live", error: commandError });
+      return true;
+    };
+
+    const readLive = async (atLifecycle = lifecycle): Promise<void> => {
+      if (mode !== "live" || !running || atLifecycle !== lifecycle || !activity.visible || liveAbort || liveRebindRefused) return;
+      const abortController = new AbortController();
+      liveAbort = abortController;
+      let headerTimer: ReturnType<typeof setTimeout> | null = null;
+      const armIdleDeadline = () => {
+        if (liveIdleTimer !== null) clearTimeout(liveIdleTimer);
+        liveIdleTimer = setTimeout(() => {
+          if (liveAbort !== abortController || !running || atLifecycle !== lifecycle) return;
+          liveReconnectWanted = true;
+          set({ status: "stream_unavailable", error: "Terminal stream idle" });
+          abortController.abort();
+        }, TERMINAL_LIVE_IDLE_TIMEOUT_MS);
+      };
+      try {
+        const response = await Promise.race([
+          readTerminalLive(
+            controllerDescriptor.target,
+            liveForceSnapshot ? null : liveStreamId,
+            liveForceSnapshot ? 0 : liveSequence,
+            abortController.signal,
+          ),
+          new Promise<Response>((_, reject) => {
+            headerTimer = setTimeout(() => {
+              liveReconnectWanted = true;
+              set({ status: "stream_unavailable", error: "Terminal stream header timeout" });
+              abortController.abort();
+              reject(new Error("Terminal stream header timeout"));
+            }, TERMINAL_LIVE_HEADER_TIMEOUT_MS);
+          }),
+        ]);
+        if (headerTimer !== null) clearTimeout(headerTimer);
+        headerTimer = null;
+        if (!running || atLifecycle !== lifecycle || abortController.signal.aborted) return;
+        if (!response.ok || !response.body) {
+          let errorBodyTimer: ReturnType<typeof setTimeout> | null = null;
+          const body = await Promise.race([
+            response.json().catch(() => ({})),
+            new Promise<Record<string, unknown>>((resolve) => {
+              errorBodyTimer = setTimeout(() => resolve({}), 2_000);
+            }),
+          ]) as Record<string, unknown>;
+          if (errorBodyTimer !== null) clearTimeout(errorBodyTimer);
+          if (!running || atLifecycle !== lifecycle || abortController.signal.aborted) return;
+          const bodyStatus = String(body.status || "");
+          const wireStatus = bodyStatus || (
+            response.status === 401 ? "unauthorized"
+              : response.status === 404 ? "target_gone"
+                : response.status === 409 ? "generation_mismatch"
+                  : "stream_unavailable"
+          );
+          if (["target_gone", "generation_mismatch", "unauthorized", "tmux_absent"].includes(wireStatus)) liveRebindRefused = true;
+          invalidateInputQueue();
+          clearTypingTimer();
+          set({
+            status: statusFromResponse(wireStatus, response.status),
+            error: String(body.detail || body.error || wireStatus),
+            raw: null,
+            lines: [],
+            pane: null,
+            canType: false,
+          });
+          return;
+        }
+        liveBackoff = TERMINAL_LIVE_RECONNECT_MS;
+        set({ status: liveSequence ? "live" : "loading", error: commandError });
+        armIdleDeadline();
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let stopReading = false;
+        while (!abortController.signal.aborted && running && atLifecycle === lifecycle && !stopReading) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          armIdleDeadline();
+          buffer += decoder.decode(chunk.value, { stream: true });
+          let newline = buffer.indexOf("\n");
+          while (newline >= 0) {
+            const line = buffer.slice(0, newline).trim();
+            buffer = buffer.slice(newline + 1);
+            if (line) {
+              try {
+                if (!handleLiveFrame(JSON.parse(line), atLifecycle)) {
+                  stopReading = true;
+                  void reader.cancel().catch(() => {});
+                  break;
+                }
+              } catch {
+                liveResyncPending = true;
+                liveForceSnapshot = true;
+                liveReconnectWanted = true;
+                set({ status: "resyncing", error: "Invalid terminal stream frame" });
+                abortLive();
+                stopReading = true;
+                void reader.cancel().catch(() => {});
+                break;
+              }
+            }
+            newline = buffer.indexOf("\n");
+          }
+        }
+        buffer += decoder.decode();
+        if (!stopReading && !abortController.signal.aborted && buffer.trim()) {
+          try { handleLiveFrame(JSON.parse(buffer.trim()), atLifecycle); } catch {
+            liveResyncPending = true;
+            liveReconnectWanted = true;
+            set({ status: "resyncing", error: "Invalid terminal stream frame" });
+            abortLive();
+          }
+        }
+      } catch (error) {
+        if (!abortController.signal.aborted && running && atLifecycle === lifecycle) {
+          set({ status: "stream_unavailable", error: error instanceof Error ? error.message : "Terminal stream unavailable" });
+        }
+      } finally {
+        if (headerTimer !== null) clearTimeout(headerTimer);
+        if (liveIdleTimer !== null) clearTimeout(liveIdleTimer);
+        liveIdleTimer = null;
+        if (liveAbort === abortController) liveAbort = null;
+        const reconnect = liveReconnectWanted || !abortController.signal.aborted;
+        liveReconnectWanted = false;
+        if (running && atLifecycle === lifecycle && activity.visible && reconnect && !liveRebindRefused) {
+          scheduleLiveReconnect(atLifecycle);
+        }
+      }
+    };
+
+    const sendResize = async (atLifecycle = lifecycle): Promise<boolean> => {
+      if (mode !== "live" || !running || atLifecycle !== lifecycle || !activity.visible || !activity.focused || !get().canType || resizeInFlight || !resizeDesired) return false;
+      const captured = resizeDesired;
+      resizeInFlight = captured;
+      set({ resize: { ...get().resize, busy: true, error: null } });
+      try {
+        const result = await resizeTerminal(controllerDescriptor, captured);
+        if (!running || atLifecycle !== lifecycle) return false;
+        // A newer local fit wins. Do not let an older ACK overwrite it.
+        if (!dimensionsEqual(captured, resizeDesired)) return result.ok;
+        if (result.ok && dimensionsEqual(result.dimensions, captured)) {
+          const currentPane = get().pane;
+          set({
+            resize: { desired: captured, acknowledged: result.dimensions, busy: false, error: null },
+            pane: currentPane
+              ? { ...currentPane, width: result.dimensions.cols, height: result.dimensions.rows }
+              : { width: result.dimensions.cols, height: result.dimensions.rows, cursorX: 0, cursorY: 0 },
+          });
+        } else {
+          set({ resize: { ...get().resize, busy: false, error: result.ok ? "Resize was not acknowledged at the requested size" : result.error }, canType: !result.ok && result.revoke ? false : get().canType });
+        }
+        return result.ok && dimensionsEqual(result.dimensions, captured);
+      } finally {
+        if (dimensionsEqual(resizeInFlight, captured)) resizeInFlight = null;
+        if (running && atLifecycle === lifecycle && activity.visible && activity.focused && get().canType && resizeDesired && !dimensionsEqual(resizeDesired, captured) && !resizeInFlight) void sendResize(atLifecycle);
+      }
+    };
+
     const deliver = async (items: PendingItem[], atLifecycle = lifecycle): Promise<void> => {
       if (!items.length || sendEpoch === atLifecycle || !running || atLifecycle !== lifecycle) return;
       sendEpoch = atLifecycle;
@@ -314,6 +707,9 @@ export function createTerminalSession(
 
     return {
       descriptor: controllerDescriptor,
+      output: mode === "live" ? output.source : null,
+      live: mode === "live",
+      resize: { desired: null, acknowledged: null, busy: false, error: null },
       status: "idle",
       raw: null,
       lines: [],
@@ -333,15 +729,23 @@ export function createTerminalSession(
         running = true;
         refreshRequested = false;
         commandError = null;
+        liveResyncPending = false;
+        liveForceSnapshot = false;
         set({ status: "loading", error: null });
-        void poll(lifecycle);
+        if (mode === "live") void readLive(lifecycle);
+        else void poll(lifecycle);
       },
       stop() {
         lifecycle += 1;
         running = false;
         refreshRequested = false;
         commandError = null;
+        liveResyncPending = false;
+        liveForceSnapshot = false;
         clearTimer();
+        clearLiveReconnect();
+        liveReconnectWanted = false;
+        abortLive();
         clearTypingTimer();
         invalidateInputQueue();
         const shouldDisarm = get().canType;
@@ -356,10 +760,32 @@ export function createTerminalSession(
         if (!activity.visible) {
           clearTimer();
           refreshRequested = false;
-        } else if (running) void poll(lifecycle);
+          clearLiveReconnect();
+          liveReconnectWanted = false;
+          if (mode === "live") abortLive();
+        } else if (running) {
+          if (mode === "live") {
+            if (!liveAbort && liveReconnect === null) void readLive(lifecycle);
+          }
+          else void poll(lifecycle);
+        }
+      },
+      setHostGeometry(next) {
+        const dimensions = { cols: Math.max(1, Math.floor(next.cols)), rows: Math.max(1, Math.floor(next.rows)) };
+        if (mode !== "live" || !activity.visible || !activity.focused || !get().canType) return;
+        resizeDesired = dimensions;
+        const current = get().resize;
+        if (dimensionsEqual(current.desired, dimensions) && (current.busy || dimensionsEqual(current.acknowledged, dimensions))) return;
+        set({ resize: { ...current, desired: dimensions, error: null } });
+        void sendResize(lifecycle);
+      },
+      async retryResize() {
+        if (!resizeDesired || !activity.visible || !activity.focused || !get().canType) return false;
+        set({ resize: { ...get().resize, busy: false, error: null } });
+        return sendResize(lifecycle);
       },
       async enableTyping() {
-        if (!running || !["live", "not_modified"].includes(get().status)) return false;
+        if (!running || !["live", "not_modified", "loading", "resyncing"].includes(get().status)) return false;
         const atLifecycle = lifecycle;
         commandError = null;
         set({ error: null });

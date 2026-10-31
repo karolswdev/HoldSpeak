@@ -12,6 +12,7 @@ including ``indeterminate_after_node_reset``.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import threading
 from types import SimpleNamespace
 
 import pytest
@@ -31,6 +32,7 @@ from holdspeak.delivery.commands import (
 )
 from holdspeak.delivery.terminal import TerminalTargetRegistry
 from holdspeak.operation_policy import POLICY_VERSION
+from holdspeak.principals import Principal, PrincipalKind
 
 T0 = datetime(2026, 7, 15, 12, 0, 0, tzinfo=timezone.utc)
 KEY = "claude:hs94"
@@ -112,6 +114,12 @@ class Transport:
         self.sent.append(kw)
 
 
+class ResizeTransport(Transport):
+    def __call__(self, **kw):
+        self.sent.append(kw)
+        return {"actual_dimensions": {"cols": kw["width"], "rows": kw["height"]}}
+
+
 @pytest.fixture(autouse=True)
 def _fresh_grants():
     clear_grants()
@@ -131,6 +139,7 @@ def rig(tmp_path, tmux):
     ledger = NodeReceiptLedger(tmp_path / "ledger.db")
     transport = Transport()
     keys_transport = Transport()
+    resize_transport = ResizeTransport()
     audit_rows: list[dict] = []
     processor = NodeCommandProcessor(
         node_id="local",
@@ -140,6 +149,7 @@ def rig(tmp_path, tmux):
         audit=lambda **kw: audit_rows.append(kw) or len(audit_rows),
         text_transport=transport,
         keys_transport=keys_transport,
+        resize_transport=resize_transport,
         wall_now=lambda: T0,
     )
     db = Database(tmp_path / "hub.db")
@@ -158,6 +168,7 @@ def rig(tmp_path, tmux):
         service=service,
         transport=transport,
         keys_transport=keys_transport,
+        resize_transport=resize_transport,
         audit_rows=audit_rows,
         modes=modes,
         db=db,
@@ -250,6 +261,112 @@ def test_duplicate_envelope_returns_same_receipt_and_executes_once(rig, tmux) ->
     assert again == first  # the SAME receipt, byte for byte
     assert len(rig.transport.sent) == 1  # ONE keystroke ever reached tmux
     assert rig.processor.executions == 1
+
+
+def test_resize_is_admitted_claimed_verified_and_idempotent(rig, tmux) -> None:
+    _arm(tmux)
+    target = _issued(rig)
+    command_id = "aaaaaaaa-bbbb-cccc-dddd-eeeeffff0011"
+    request = {
+        "command_id": command_id,
+        "node_id": "local",
+        "target_id": target["target_id"],
+        "target_generation": target["target_generation"],
+        "operation": {"family": "coder_steering", "verb": "process.resize@1"},
+        "payload": {
+            "cols": 100,
+            "rows": 30,
+            "session_key": KEY,
+            "expected_pane_id": "%5",
+        },
+        "expected_sequence": 1,
+    }
+    owner = Principal(PrincipalKind.OWNER, "owner-session")
+    first = rig.service.submit_process_resize(request, owner, include_result=True)
+    assert first["receipt"]["state"] == "succeeded"
+    assert first["receipt"]["outcome"] == "delivered"
+    assert first["result"]["actual_dimensions"] == {"cols": 100, "rows": 30}
+    assert len(rig.resize_transport.sent) == 1
+
+    duplicate = rig.service.submit_process_resize(request, owner, include_result=True)
+    assert duplicate["duplicate"] is True
+    assert duplicate["receipt"]["receipt_id"] == first["receipt"]["receipt_id"]
+    assert len(rig.resize_transport.sent) == 1
+
+    with pytest.raises(CommandRefused) as principal:
+        rig.service.submit_process_resize(
+            request,
+            Principal(PrincipalKind.OWNER, "other-owner"),
+        )
+    assert principal.value.reason == "process_resize_principal_mismatch"
+
+    conflict = {**request, "payload": {**request["payload"], "cols": 120}}
+    with pytest.raises(CommandRefused) as payload:
+        rig.service.submit_process_resize(
+            conflict,
+            owner,
+        )
+    assert payload.value.reason == "idempotency_payload_mismatch"
+
+    expired = {**request, "command_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeffff0012", "expires_in_seconds": 0}
+    with pytest.raises(CommandRefused) as ttl:
+        rig.service.submit_process_resize(
+            expired,
+            owner,
+        )
+    assert ttl.value.reason == "process_resize_ttl_invalid"
+    assert len(rig.resize_transport.sent) == 1
+
+
+def test_concurrent_resize_and_input_share_target_sequence(rig, tmux) -> None:
+    _arm(tmux)
+    target = _issued(rig)
+    owner = Principal(PrincipalKind.OWNER, "owner-session")
+    resize = {
+        "command_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeffff0021",
+        "node_id": "local",
+        "target_id": target["target_id"],
+        "target_generation": target["target_generation"],
+        "operation": {"family": "coder_steering", "verb": "process.resize@1"},
+        "payload": {
+            "cols": 100,
+            "rows": 30,
+            "session_key": KEY,
+            "expected_pane_id": "%5",
+        },
+    }
+    typed = {
+        "command_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeffff0022",
+        "node_id": "local",
+        "target_id": target["target_id"],
+        "target_generation": target["target_generation"],
+        "operation": {"family": "coder_steering", "verb": "terminal.text"},
+        "payload": {
+            "text": "after resize",
+            "submit": False,
+            "session_key": KEY,
+            "expected_pane_id": "%5",
+        },
+    }
+    gate = threading.Barrier(3)
+    results: list[dict] = []
+
+    def submit(request, method):
+        gate.wait()
+        results.append(method(request, owner))
+
+    input_thread = threading.Thread(target=submit, args=(typed, rig.service.submit_process_input))
+    resize_thread = threading.Thread(target=submit, args=(resize, rig.service.submit_process_resize))
+    input_thread.start()
+    resize_thread.start()
+    gate.wait()
+    input_thread.join(timeout=10)
+    resize_thread.join(timeout=10)
+    assert not input_thread.is_alive() and not resize_thread.is_alive()
+    assert [item["receipt"]["outcome"] for item in results] == ["delivered", "delivered"]
+    assert sorted(item["receipt"]["applied_sequence"] for item in results) == [1, 2]
+    assert len(rig.transport.sent) == 1
+    assert len(rig.resize_transport.sent) == 1
 
 
 def test_expired_command_refuses_before_anything(rig, tmux) -> None:

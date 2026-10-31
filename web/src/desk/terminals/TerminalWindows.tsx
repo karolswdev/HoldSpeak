@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { flushSync } from "react-dom";
 import type { StoreApi } from "zustand/vanilla";
 import { Button } from "../../components/signal/Signal";
-import { PaneWell, StatusBar, StringGadget, ToolGlyph, Toolbar, ToolbarFold } from "../surface";
+import { ActionNotice, PaneWell, StatusBar, StringGadget, ToolGlyph, Toolbar, ToolbarFold } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { useFrontWindowId } from "../components/window/windowRegistry";
 import { useDesk } from "../store";
@@ -47,13 +47,13 @@ function useTerminalInventory(hasOpenWindows: boolean, inventoryOpen: boolean) {
   return snapshot;
 }
 
-function useSession(descriptor: TerminalDescriptor | null): TerminalSessionState | null {
+function useSession(descriptor: TerminalDescriptor | null, mode: "poll" | "live" = "poll"): TerminalSessionState | null {
   const key = descriptor
     ? `${descriptor.id}|${descriptor.target.node_id}|${descriptor.target.target_id}|${descriptor.target.target_generation}`
     : "";
   const store = useMemo<StoreApi<TerminalSessionState> | null>(
-    () => descriptor ? createTerminalSession(descriptor) : null,
-    [key],
+    () => descriptor ? createTerminalSession(descriptor, { mode }) : null,
+    [key, mode],
   );
   const snapshot = useSyncExternalStore(
     store?.subscribe ?? (() => () => undefined),
@@ -109,7 +109,7 @@ function TerminalWindow({
   inventory: TerminalInventoryState;
 }) {
   const descriptorId = terminalDescriptorId(id) ?? id.slice("terminal:".length);
-  const session = useSession(descriptor);
+  const session = useSession(descriptor, "live");
   const frontWindow = useFrontWindowId();
   const compact = useCompactViewport();
   const minimized = useDesk((state) => state.panelMin.includes(id));
@@ -287,8 +287,20 @@ function TerminalWindow({
             inputEnabled={Boolean(session?.canType)}
             focusSignal={focusSignal || undefined}
             onFocus={() => session?.setActivity({ focused: true, visible: true })}
+            output={session?.output}
+            outputSequence={session?.sequence}
+            fitLocal={Boolean(session?.canType && session.focused && session.visible)}
+            onSize={(size) => session?.setHostGeometry?.(size)}
           />
         </div>
+        {session?.resize?.error ? (
+          <ActionNotice tone="danger" role="alert">
+            Resize failed · {session.resize.error}
+            <Button dense variant="ghost" disabled={session.resize.busy || !session.canType} loading={session.resize.busy} onClick={() => void session.retryResize?.()}>
+              Retry resize
+            </Button>
+          </ActionNotice>
+        ) : null}
         {messageOpen ? (
           <div className="terminals-composer" id={`terminal-composer-${descriptorId}`} data-testid="terminal-composer">
             <StringGadget label="Message" value={draft} onChange={(value) => setDraft(draftKey, value)} placeholder="Say or type a message" />
@@ -302,7 +314,10 @@ function TerminalWindow({
           items={[{
             lamp: session?.error ? "warn" : session?.canType || live ? "ok" : "info",
             text: statusWords(session),
-          }]}
+          }, session?.resize?.acknowledged ? {
+            lamp: "info",
+            text: `Size ${session.resize.acknowledged.cols} × ${session.resize.acknowledged.rows}`,
+          } : null]}
           trailing={descriptor ? `${descriptor.agent !== "pane" ? descriptor.agent : "Shell"} · ${descriptor.session}` : undefined}
         />
       </div>

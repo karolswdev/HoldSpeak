@@ -1,0 +1,56 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>HoldSpeak · Native live terminal workspace</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #172033;
+    --muted: #697489;
+    --line: #cfd7e4;
+    --paper: #f5f7fb;
+    --well: #e8edf5;
+    --screen: #0f1115;
+    --blue: #3569d4;
+    --ok: #23876b;
+    --warn: #aa6d2e;
+    font: 14px/1.4 Inter, system-ui, sans-serif;
+  }
+  body { margin: 0; padding: 32px; color: var(--ink); background: #dfe5ef; }
+  h1 { margin: 0 0 8px; font-size: 22px; }
+  p { margin: 0 0 20px; color: var(--muted); }
+  .frame { width: min(960px, 100%); margin: auto; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); box-shadow: 0 18px 50px #1a284622; }
+  .title { display: flex; align-items: center; gap: 12px; min-height: 42px; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--line); font-weight: 650; }
+  .title small { color: var(--muted); font: 12px/1.2 ui-monospace, monospace; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toolbar { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--paper); }
+  button { min-height: 32px; border: 1px solid var(--line); border-radius: 6px; padding: 0 12px; color: var(--ink); background: #fff; font: inherit; }
+  button.primary { color: #fff; border-color: var(--blue); background: var(--blue); }
+  .spacer { flex: 1; }
+  .status { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+  .terminal { min-height: 380px; display: grid; place-items: stretch; padding: 14px; background: var(--screen); color: #edf2fb; font: 13px/1.45 ui-monospace, SFMono-Regular, monospace; }
+  pre { margin: 0; overflow: auto; white-space: pre-wrap; }
+  .terminal .dim { color: #98a6bb; }
+  .bottom { display: flex; align-items: center; gap: 12px; min-height: 32px; padding: 0 12px; border-top: 1px solid #263041; color: #98a6bb; background: var(--screen); font: 11px/1.2 ui-monospace, monospace; }
+  .resize-note { padding: 12px 14px; border-top: 1px solid var(--line); background: var(--well); color: var(--muted); font-size: 12px; }
+  .resize-note strong { color: var(--ink); }
+  @media (max-width: 560px) { body { padding: 12px; } .frame { border-radius: 7px; } .toolbar { flex-wrap: wrap; padding-block: 6px; } .terminal { min-height: 300px; } .toolbar button { min-height: 44px; } }
+</style>
+<h1>Live terminal · native workspace</h1>
+<p>One terminal window keeps its target, stream, scrollback and local geometry. Output grows in place; a resize receipt names the actual host size.</p>
+<section class="frame" aria-label="Native live terminal">
+  <header class="title">Shell · build-agent <small>/Users/karol/dev/tools/HoldSpeak</small></header>
+  <div class="toolbar">
+    <button class="primary">Type</button>
+    <button>Keys</button>
+    <button>Find</button>
+    <button>Workspace</button>
+    <span class="spacer"></span>
+    <span class="status"><i class="dot"></i> Live · View only</span>
+  </div>
+  <div class="terminal"><pre><span class="dim">$ </span>uv run pytest tests/unit/test_terminal_live.py
+collecting ...
+tests/unit/test_terminal_live.py ............. <b>13 passed</b>
+<span class="dim">$ </span><span class="dim">▌</span></pre></div>
+  <div class="bottom"><span>RAW</span><span>LINES 4</span><span>Δ 2S</span><span class="spacer"></span><span>build-agent · hs-tty</span></div>
+  <div class="resize-note"><strong>Host size 118 × 31</strong> · follows this window · resize saved</div>
+</section>

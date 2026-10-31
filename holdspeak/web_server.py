@@ -730,6 +730,9 @@ class MeetingWebServer:
         self._kernel_liveness_task: Optional[asyncio.Task[None]] = None
         self._agent_spool_task: Optional[asyncio.Task[None]] = None
         self._agent_pr_poll_task: Optional[asyncio.Task[None]] = None
+        # Shared by the continuous terminal route and closed before uvicorn
+        # begins graceful shutdown so blocked stream readers wake promptly.
+        self._delivery_live: Optional[Any] = None
 
         self.app = self._create_app()
 
@@ -906,6 +909,8 @@ class MeetingWebServer:
         log.info("Stopping meeting web server")
         # HSM-15-10: unregister the LAN advertisement before tearing down.
         self._stop_mesh_advertising()
+        if self._delivery_live is not None:
+            self._delivery_live.close()
         self._server.should_exit = True
 
         if self._thread is not None:
@@ -1762,6 +1767,9 @@ class MeetingWebServer:
         app.state.node_token_store = _delivery_link.token_store
         _delivery_targets = TerminalTargetRegistry()
         _signin_targets["targets"] = _delivery_targets
+        self._delivery_live = web_ctx.delivery_service.terminal_live_service(
+            targets=_delivery_targets
+        )
         from .kernel.runtime import _service as _kernel_service
 
         _delivery_cmd = HubCommandService(
@@ -1786,6 +1794,7 @@ class MeetingWebServer:
                 service=_delivery_cmd,
                 targets=_delivery_targets,
                 link=_delivery_link,
+                live=self._delivery_live,
             )
         )
         # The factory shares the terminal command service and target
