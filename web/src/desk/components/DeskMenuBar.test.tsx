@@ -209,7 +209,7 @@ describe("DeskMenuBar at 393", () => {
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(labels(menu)).toEqual([
       "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents", "Ask AI", "Speak",
-      "Automations", "Memory", "Calls", "Voice commands", "Terminals", "Archive",
+      "Automations", "Memory", "Calls", "Terminals", "Archive",
       "New",
     ]);
     expect(menu.querySelectorAll(".desk-menu-keycaps, kbd")).toHaveLength(0);

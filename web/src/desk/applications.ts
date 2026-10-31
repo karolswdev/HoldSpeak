@@ -544,7 +544,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Map spoken phrases to registered actions.",
     glyph: "⌘",
     href: "/commands",
-    go: { group: "work", order: 2, label: "Voice commands" },
+    // Not on the phone's Go: the Commands wing is in Speak, which is on the
+    // phone's Go; the Terminals row made Go one row taller than 393 x 852
+    // (TERMINAL-REDS 2026-10-31).
+    go: { group: "work", order: 2, label: "Voice commands", desktop: true },
     group: "tool",
   },
   {

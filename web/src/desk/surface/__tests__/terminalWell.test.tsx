@@ -11,6 +11,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const fakes = vi.hoisted(() => {
   class FakeTerminal {
     static instances: FakeTerminal[] = [];
+    /** Hold write callbacks, as xterm does when it parses on a later tick. */
+    static deferWrites = false;
+    pendingWrites: Array<() => void> = [];
     options: any;
     cols = 80;
     rows = 24;
@@ -42,14 +45,19 @@ const fakes = vi.hoisted(() => {
     }
     write(data: string, done?: () => void) {
       this.writes.push(data);
-      done?.();
+      if (FakeTerminal.deferWrites) {
+        if (done) this.pendingWrites.push(done);
+      } else done?.();
     }
     resize(cols: number, rows: number) {
       this.cols = cols;
       this.rows = rows;
       this.resizes.push([cols, rows]);
     }
-    scrollToBottom() {}
+    scrollToBottom() {
+      // xterm: a disposed terminal has no render service ("reading 'dimensions'").
+      if (this.disposed) throw new TypeError("Cannot read properties of undefined (reading 'dimensions')");
+    }
     dispose() {
       this.disposed = true;
     }
@@ -93,6 +101,7 @@ async function mountedTerminal(): Promise<InstanceType<typeof FakeTerminal>> {
 
 beforeEach(() => {
   FakeTerminal.instances.length = 0;
+  FakeTerminal.deferWrites = false;
   FakeSearchAddon.calls.length = 0;
   FakeFitAddon.fits = 0;
 });
@@ -176,6 +185,16 @@ describe("PaneWell xterm interior (HS-111-11)", () => {
     );
     expect(screen.getByText(/pane gone/)).toBeTruthy();
     expect(container.querySelector(".terminal-well")).toBeNull();
+  });
+
+  it("a write that lands after the view closed does not scroll the disposed terminal", async () => {
+    FakeTerminal.deferWrites = true;
+    const view = render(<PaneWell live lines={[]} raw={COLORED} />);
+    const term = await mountedTerminal();
+    await waitFor(() => expect(term.pendingWrites.length).toBe(1));
+    view.unmount();
+    expect(term.disposed).toBe(true);
+    expect(() => term.pendingWrites.forEach((done) => done())).not.toThrow();
   });
 
   it("keeps one emulator when the controller callback changes", async () => {

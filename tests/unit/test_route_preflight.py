@@ -38,6 +38,7 @@ PAGE_ROUTES = [
     "/cadence",
     "/profiles",
     "/models",
+    "/terminals",
     "/docs/dictation-runtime",
     "/design/components",
 ]

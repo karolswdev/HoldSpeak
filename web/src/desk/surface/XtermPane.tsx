@@ -229,6 +229,9 @@ export default function XtermPane({
     const followTail = !active || viewportY >= active.baseY;
     lastFrameRef.current = frame;
     term.write(frame, () => {
+      // The view can close while the write is pending; a disposed terminal
+      // has no render service, so a scroll then throws (TERMINAL-REDS).
+      if (termRef.current !== term) return;
       if (followTail) term.scrollToBottom();
       else if (typeof term.scrollToLine === "function") term.scrollToLine(viewportY);
     });
