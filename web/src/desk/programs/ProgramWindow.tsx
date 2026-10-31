@@ -533,6 +533,9 @@ export function ProgramBody({ programId }: { programId: string }) {
     setProposal(null);
   };
 
+  // A new answer is a new well (his presses on the old rows do not carry).
+  const wellKey = proposal ? [proposal.source, proposal.answer.revision, proposal.text, proposal.answer.changes.map((row) => row.id + row.verdict).join()].join(":") : "";
+
   if (loading || (error && !program) || !program) {
     return <SurfaceState loading={loading} error={error ? "The program did not load. Nothing on it changed. Try again." : undefined} onRetry={() => void reload()} />;
   }
@@ -646,7 +649,7 @@ export function ProgramBody({ programId }: { programId: string }) {
         {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
         <YourTurnWell program={program} onDecided={apply} />
         {proposal ? (
-          <ProgramChangeWell key={`${proposal.source}:${proposal.answer.revision}:${proposal.text.length}:${proposal.answer.changes.length}`}
+          <ProgramChangeWell key={wellKey}
             programId={program.id} proposal={proposal} settling={settling}
             onApplied={applied} onAnswer={setProposal} onDismiss={notThis} />
         ) : null}

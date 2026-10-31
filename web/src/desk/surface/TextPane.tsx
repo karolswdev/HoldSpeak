@@ -236,7 +236,7 @@ export function TextPane({
       event.preventDefault();
       const next = [...lines];
       next.splice(index, 2, { ...lines[index], text: text + lines[index + 1].text });
-      write(next, { index, caret: text.length });
+      write(next, { index, caret: from });
       return;
     }
     if ((event.key === "ArrowUp" || event.key === "ArrowDown") && !event.shiftKey && !event.altKey && !event.metaKey && !event.ctrlKey) {
@@ -310,8 +310,8 @@ export function TextPane({
                   onChange={(event) => setText(index, event.target.value.replace(/\r?\n/g, " "))}
                   onKeyDown={(event) => onKeyDown(index, event)}
                   onPaste={(event) => onPaste(index, event)}
-                  onSelect={(event) => { last.current = { index, caret: event.currentTarget.selectionStart ?? 0 }; }}
-                  onFocus={(event) => { last.current = { index, caret: event.currentTarget.selectionStart ?? 0 }; }}
+                  onSelect={(event) => { last.current = { index, caret: event.currentTarget.selectionStart }; }}
+                  onFocus={(event) => { last.current = { index, caret: event.currentTarget.selectionStart }; }}
                 />
               )}
             </span>
