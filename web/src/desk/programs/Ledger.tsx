@@ -11,7 +11,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { spriteUrl } from "../sprites";
-import { DotWord, FoldGadget, SurfaceWell } from "../surface";
+import { DotWord, FoldGadget, SurfaceWell, countWords } from "../surface";
 import { plainFail } from "../surface/plainFailure";
 import { startFrom } from "./api";
 import { agentKey } from "./model";
@@ -148,7 +148,7 @@ export function LedgerRows({ program, rows, busy, onStart, "data-testid": testId
         return (
           <li key={row.id} className="pg-ledger-row">
             <span className="pg-ledger-by">
-              {by.sprite ? <img src={by.sprite} alt="" width={20} height={20} /> : <span className="pg-ledger-you" aria-hidden="true">You</span>}
+              {by.sprite ? <img src={by.sprite} alt="" width={20} height={20} /> : <span className="pg-ledger-you" aria-hidden="true" />}
               <span>{by.who}</span>
             </span>
             <span className="pg-ledger-line" data-proposed={row.decision_record_id && !row.overturned_at ? "" : undefined}>
@@ -177,7 +177,7 @@ export function StepLedger({ program, step, onStarted }: { program: Program; ste
 }
 
 function linesWords(rows: readonly ProgramCheckpoint[]): string {
-  return [`${rows.length} ${rows.length === 1 ? "line" : "lines"}`, rows[0] ? `last ${whenWords(rows[0].at)}` : ""].filter(Boolean).join(" · ");
+  return [rows.length ? countWords(rows.length, "line") : "", rows[0] ? `last ${whenWords(rows[0].at)}` : ""].filter(Boolean).join(" · ");
 }
 
 /** The window's Ledger fold, one sub-fold per step. */

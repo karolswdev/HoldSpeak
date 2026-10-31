@@ -138,7 +138,7 @@ export function ProgramsCore(_props: CoreProps) {
     { key: "failed", lamp: "warn", text: failed.words, testId: "programs-failure" },
   ] : [
     worst ? { key: "worst", lamp: worstTone === "idle" ? undefined : worstTone, live: worst === "running", text: worstWord, testId: "programs-status-worst" } : null,
-    filtered ? { key: "shown", text: `${shown.length} of ${countWords(list.programs.length, "program")}`, testId: "programs-status-shown" } : null,
+    filtered && shown.length ? { key: "shown", text: `${shown.length || ""} of ${countWords(list.programs.length, "program")}`, testId: "programs-status-shown" } : null,
     filtered && query.trim() ? { key: "q", text: <span>{`“${query.trim()}”`}</span> } : null,
     filtered && projectName ? { key: "project", text: <span>{projectName}</span> } : null,
     filtered && personName ? { key: "person", text: <span>{personName}</span> } : null,

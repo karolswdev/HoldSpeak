@@ -919,10 +919,14 @@ span.pg-req-thumb { height: 150px; }
   .pg-req-facts { grid-template-columns: minmax(0, 1fr); }
   .pg-req-facts dt { display: none; }
   .pg-req-add-row {
-    grid-template-columns: 26px minmax(0, 1fr);
-    row-gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
   }
-  .pg-req-add-row > :nth-child(n+3) { grid-column: 2; }
+  .pg-req-add-row > .pg-req-id { flex: 0 0 26px; }
+  .pg-req-add-row > .pg-req-add-text { flex: 1 1 calc(100% - 40px); }
+  .pg-req-add-row > :nth-child(n+3) { flex: 0 1 auto; }
+  .pg-req-add-row > .pg-req-add-field:empty { display: none; }
   .pg-req-add-command { width: 100%; }
   .pg-sf-head { flex-wrap: wrap; }
   .pg-sf-verbs { margin-left: 0; flex-wrap: wrap; }

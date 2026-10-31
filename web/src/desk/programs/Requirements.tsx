@@ -272,7 +272,7 @@ function RequirementWell({ program, row, busy, onApplied, onFailed, waive }: {
     try {
       onApplied(await editRequirement(program.id, row.id, { text }));
     } catch (cause) {
-      onFailed(plainFail(`${row.label} was not changed`, cause, "The sentence is as it was", "Try again"));
+      onFailed(plainFail("The sentence was not saved", cause, "It is as it was", "Try again"));
     }
   };
   return (
@@ -398,7 +398,7 @@ export function AddRequirementRow({ program, onApplied, defaultScope = "every" }
   if (kind === "check") {
     field = (
       <span className="pg-req-add-command">
-        <StringGadget label="Command" value={command} mic={false} placeholder="Command"
+        <StringGadget label="Command" value={command} placeholder="Command"
           onChange={(value) => { setCommand(value); setCommandPicked(true); }} />
       </span>
     );
