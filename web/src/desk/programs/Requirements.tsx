@@ -106,7 +106,9 @@ function whereWords(row: Requirement, steps: readonly ProgramStep[]): string {
   if (row.scope === "program") return "The program";
   if (row.scope === "every_step") {
     const view = everyStepState(row);
-    return view.total ? `${view.met} of ${view.total} steps` : "Every step";
+    // Never "0 of 3 steps" (the zero law): the count of steps until one is met.
+    if (!view.total) return "Every step";
+    return view.met ? `${view.met} of ${view.total} steps` : `${view.total} ${view.total === 1 ? "step" : "steps"}`;
   }
   const step = steps.find((candidate) => candidate.id === row.step_id);
   return step ? `Step ${step.ordinal}` : "A step";
