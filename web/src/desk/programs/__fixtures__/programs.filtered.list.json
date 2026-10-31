@@ -13,16 +13,16 @@
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-10-31T16:26:06.332455+00:00",
+      "created_at": "2026-10-31T16:49:20.206916+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-22d46004ad51",
-      "in_state_seconds": 1,
+      "id": "program-c21ce9748e7d",
+      "in_state_seconds": 3,
       "last_checkpoint": {
-        "at": "2026-10-31T16:26:10.183679+00:00",
+        "at": "2026-10-31T16:49:27.554828+00:00",
         "by": "engine",
         "choice": "retry",
         "decision_record_id": null,
@@ -33,17 +33,17 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-9ced529228da/5",
-        "ref_commit": "60378f9e885dc4fc47967697288a19f432e5669b",
+        "ref": "refs/holdspeak/checkpoints/step-3614bcb4d8e4/5",
+        "ref_commit": "5f93c36b731100c08d649a7b5c062085c36d4e83",
         "rule": "a red requirement goes back to the builder (round 2 of 2)",
-        "step_id": "step-9ced529228da",
+        "step_id": "step-3614bcb4d8e4",
         "undo": {
           "pin": {
-            "commit": "60378f9e885dc4fc47967697288a19f432e5669b",
-            "head": "527bf8d4a17f8829201273470da398d286c5271a",
+            "commit": "5f93c36b731100c08d649a7b5c062085c36d4e83",
+            "head": "16f679cb774797eccfee1dd8c4211a4e5bd0e6af",
             "n": 5,
-            "ref": "refs/holdspeak/checkpoints/step-9ced529228da/5",
-            "tree": "b5605b3f50c2553f9c65a30d6af73ffb25c106dd"
+            "ref": "refs/holdspeak/checkpoints/step-3614bcb4d8e4/5",
+            "tree": "53f97d186bf40e7e3953bff6312ccfb86b268a4a"
           }
         }
       },
@@ -70,7 +70,7 @@
       "state_word": "Your turn",
       "title": "The hub stops stalling",
       "total": 6,
-      "updated_at": "2026-10-31T16:26:09.705519+00:00",
+      "updated_at": "2026-10-31T16:49:26.323107+00:00",
       "your_turn": 1
     }
   ],

@@ -20,7 +20,12 @@ requirement of each kind and state, an every-step parent with six copies, a
 waived one), program.requirement_word.json (a step at its merge waits for
 his word), program.adjust.json (a Planned step moved, one inserted, a
 started step amended), programs.filtered.list.json (``q``, project,
-person). ``--only program.race.json`` writes one file.
+person); the faces lane's answers to his presses on the same records
+(program.requirement_word.met.json, program.requirements.send_back.json,
+.waive_refused.json, .waived.json, .added.json; program.adjust.moved.json,
+.inserted.json, .amended.json, .titled.json, .refused.json) and an
+orchestrator's proposals (program.proposals.json, .added.json).
+``--only program.race.json`` writes one file.
 """
 from __future__ import annotations
 
@@ -238,8 +243,33 @@ def record_requirements(root: Path) -> dict[str, Any]:
     rig.agent.finish(rig.step(word, 1)["launch_id"], {"web/src/desk/dock/lamp.ts": "export {};\n"})
     rig.tick(3)
     filtered = _get(client, "/api/programs?q=stalling&project_id=proj-holdspeak&person_id=p-alice")
-    return {"program.requirements.json": wire, "programs.filtered.list.json": filtered,
-            "program.requirement_word.json": _get(client, f"/api/programs/{word}")}
+    word_wire = _get(client, f"/api/programs/{word}")
+    out = {"program.requirements.json": wire, "programs.filtered.list.json": filtered,
+           "program.requirement_word.json": word_wire}
+    # PG-REQ faces (REQ10): the hub's answers to his presses, on the same
+    # records, so a face test drives each press to the rendered outcome.
+    label = {row["label"]: row["id"] for row in wire["requirements"]}
+    label.update({row["label"]: row["id"] for step in wire["steps"] for row in step["requirements"]})
+    turn = word_wire["your_turn_items"][0]
+    out["program.requirement_word.met.json"] = _press(
+        client, f"/api/programs/{word}/requirements/{turn['requirement_id']}/decide", {"choice": "met"})
+    out["program.requirements.send_back.json"] = _press(
+        client, f"/api/programs/{pid}/requirements/{label['R3']}/decide", {"choice": "send_back", "line": "Add the entry"})
+    refused = client.post(f"/api/programs/{pid}/requirements/{label['R5']}/decide", json={"choice": "waive"})
+    out["program.requirements.waive_refused.json"] = {"status": refused.status_code, "body": refused.json()}
+    out["program.requirements.waived.json"] = _press(
+        client, f"/api/programs/{pid}/requirements/{label['R5']}/decide", {"choice": "waive", "line": "The rig has no routes"})
+    out["program.requirements.added.json"] = _press(
+        client, f"/api/programs/{pid}/requirements", {"text": "The Programs window at 393 has no clipped text",
+                                                      "step_id": s[5]["id"]})
+    return out
+
+
+def _press(client: TestClient, path: str, body: dict[str, Any], method: str = "post") -> Any:
+    """One press through the real route; the hub's answer as it is sent."""
+    answer = getattr(client, method)(path, json=body)
+    assert answer.status_code < 300, answer.text
+    return answer.json()
 
 
 def record_adjust(root: Path) -> Any:
@@ -266,7 +296,62 @@ def record_adjust(root: Path) -> Any:
     rig.agent.end_turn(first["launch_id"])
     rig.tick()  # typed at the turn boundary
     client.post(f"/api/programs/{pid}/steps/{first['id']}/amend", json={"line": "Use the new index"})
-    return _get(client, f"/api/programs/{pid}")
+    wire = _get(client, f"/api/programs/{pid}")
+    out = {"program.adjust.json": wire}
+    # PG-REQ faces (REQ11): the answers to his adjust presses, in order, on
+    # the same records: Move up (step 3 before step 2), Insert before step 4,
+    # Amend brief on step 1, a title edit on step 5, and the refusal of a
+    # move of the started step 1.
+    steps = {step["ordinal"]: step["id"] for step in wire["steps"]}
+    out["program.adjust.moved.json"] = _press(client, f"/api/programs/{pid}/steps/{steps[3]}", {"before": steps[2]}, "patch")
+    out["program.adjust.inserted.json"] = _press(client, f"/api/programs/{pid}/plan", {
+        "steps": [{"title": "The retry"}], "before": steps[4], "waits": True})
+    out["program.adjust.amended.json"] = _press(client, f"/api/programs/{pid}/steps/{steps[1]}/amend",
+                                                {"line": "Log each turn"})
+    out["program.adjust.titled.json"] = _press(client, f"/api/programs/{pid}/steps/{steps[5]}",
+                                               {"title": "The ring timer, ten minutes"}, "patch")
+    refused = client.patch(f"/api/programs/{pid}/steps/{steps[1]}", json={"before": steps[2]})
+    out["program.adjust.refused.json"] = {"status": refused.status_code, "body": refused.json()}
+    return out
+
+
+def record_proposals(root: Path) -> dict[str, Any]:
+    """PG-REQ §6, §9: an orchestrating agent at Normal proposes a requirement
+    on a step, a change to a planned step and an amendment to a running
+    step; each waits in Your turn for his Add, Apply or Send."""
+    from holdspeak.mcp import palettes
+    from holdspeak.mcp.families import program as family
+    import holdspeak.principals as principals
+    from holdspeak.principals import AgentCredentialStore
+
+    rig = Rig(root / "rig-proposals", people=lambda: People())
+    client = _client(rig)
+    store = AgentCredentialStore()
+    agent = store.issue("agent:orchestrator", palette=palettes.resolve_palette("CONDUCTOR"), palette_name="CONDUCTOR",
+                        launch_id="L-orch").principal
+    saved = (principals.agent_credentials, program_module.default_program_service)
+    principals.agent_credentials = store
+    program_module.default_program_service = lambda db=None: rig.service
+    try:
+        made = family.dispatch("program.create", {"title": "The phone line", "repository": str(rig.repo),
+                                                  "control": "normal", "check_command": f"sh {FAKE_CHECK}"}, agent)
+        pid = made["id"]
+        family.dispatch("program.plan", {"program_id": pid, "steps": [
+            {"title": "The SIP runner", "brief": "Run baresip under the hub."},
+            {"title": "The line window", "brief": "Draw the line."}]}, agent)
+        family.dispatch("program.start", {"program_id": pid}, agent)
+        one, two = rig.step(pid, 1), rig.step(pid, 2)
+        family.dispatch("program.require", {"program_id": pid, "text": "The line answers in two rings",
+                                            "step_id": one["id"]}, agent)
+        family.dispatch("program.step_update", {"program_id": pid, "step_id": two["id"], "title": "The Line window"}, agent)
+        family.dispatch("program.amend", {"program_id": pid, "step_id": one["id"], "line": "Keep the port at 5060"}, agent)
+    finally:
+        principals.agent_credentials, program_module.default_program_service = saved
+    wire = _get(client, f"/api/programs/{pid}")
+    item = next(i for i in wire["your_turn_items"] if i["kind"] == "requirement_proposed")
+    return {"program.proposals.json": wire,
+            "program.proposals.added.json": _press(client, f"/api/programs/{pid}/proposals/{item['proposal_id']}/decide",
+                                                   {"choice": "add"})}
 
 
 def record(root: Path) -> dict[str, Any]:
@@ -385,7 +470,8 @@ def record(root: Path) -> dict[str, Any]:
     fixtures["program.limited.json"] = record_limited(root)
     fixtures["program.race.json"] = record_race(root)
     fixtures.update(record_requirements(root))
-    fixtures["program.adjust.json"] = record_adjust(root)
+    fixtures.update(record_adjust(root))
+    fixtures.update(record_proposals(root))
     return fixtures
 
 
@@ -434,6 +520,13 @@ def _check(fixtures: dict[str, Any]) -> None:
     assert lines == ["Keep the 14-day rule", "Use the new index"], lines
     assert adjust["steps"][0]["amendments"][0]["sent_at"] and not adjust["steps"][0]["amendments"][1]["sent_at"]
     assert adjust["steps"][0]["frozen"]["brief"] == "The agent has read it"
+    # PG-REQ faces: the answers to his presses.
+    assert fixtures["program.requirements.waive_refused.json"]["status"] == 400
+    assert fixtures["program.adjust.refused.json"]["status"] == 409
+    moved = fixtures["program.adjust.moved.json"]
+    assert [step["title"] for step in moved["steps"]][:3] == ["The call runner", "The calls window", "The phone route"]
+    proposals = fixtures["program.proposals.json"]
+    assert {item["kind"] for item in proposals["your_turn_items"]} >= {"requirement_proposed", "step_change", "step_amend"}
 
 
 def main(argv: list[str]) -> int:
