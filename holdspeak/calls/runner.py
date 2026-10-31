@@ -215,6 +215,8 @@ _KIND_WORDS = {
     "action_item": "Added a task", "action": "Added a task", "note": "Wrote a note",
     "desk_decision": "Proposed a decision", "decision": "Proposed a decision",
     "project_item": "Added a project item",
+    # PG15: on a call the one Program write is program.start (the CALL palette).
+    "program": "Started the program",
 }
 
 
@@ -228,7 +230,8 @@ def read_back(used: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
         kind = str(row.get("kind") or "")
         words = _KIND_WORDS.get(kind, "Changed")
         parts.append(f"{words}: {label}." if label else f"{words}.")
-        rows.append({"kind": kind, "label": label, "ref": str(row.get("ref") or ""), "effect": "wrote"})
+        rows.append({"kind": kind, "label": label, "ref": str(row.get("ref") or ""),
+                     "effect": "started" if kind == "program" else "wrote"})
     for row in (used or {}).get("prepared") or []:
         label = str(row.get("label") or "a send").strip()
         parts.append(f"Prepared {label}.")
@@ -537,6 +540,12 @@ class CallRunner:
         """Say a held call as a question; his next words decide it. False
         when the call ended."""
         assert self._turns is not None
+        nothing = getattr(self._turns, "nothing_to_ask", None)
+        if nothing is not None and nothing(tool_call_id, tool):
+            # PG15: nothing would change (no Program has that name): no
+            # question; the tool answers so and the turn says it.
+            self._turns.decide(tool_call_id, "approve")
+            return True
         words = self._turns.hold_words(tool_call_id, tool)
         self.record.hold = {"tool": tool, "words": words, "call_id": tool_call_id}
         self._emit("hold", self.record)

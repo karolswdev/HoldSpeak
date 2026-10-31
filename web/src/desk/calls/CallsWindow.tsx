@@ -101,10 +101,11 @@ const EFFECT_WORDS: Record<CallResult["effect"], string> = {
   wrote: "Wrote",
   prepared: "Prepared",
   sent: "Sent on your yes",
+  started: "Started on your yes",
 };
 
 /** A result's kind mark: the toolbar glyph of its kind (kit ToolGlyph). */
-const KIND_MARK: Record<string, ToolGlyphKind> = { note: "note", action: "done", task: "done", send: "send", decision: "summary", project: "project" };
+const KIND_MARK: Record<string, ToolGlyphKind> = { note: "note", action: "done", task: "done", send: "send", decision: "summary", project: "project", program: "run" };
 
 function ResultRow({ kind, label, word, onOpen, testId }: {
   kind: string; label: string; word: string; onOpen?: () => void; testId?: string;

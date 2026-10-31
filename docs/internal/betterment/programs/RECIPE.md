@@ -367,13 +367,20 @@ State: **Shipped** means in this PR. **Left** means a later slice.
   results are the Programs); the Program id is on the run's result item, not
   a column of `workbench_runs`.
 
-## PG15. Start a program on a call (Left)
+## PG15. Start a program on a call (Built)
 
 - **Goal**: "start the overnight program on the hub" on a call is
   `program.start` behind his spoken yes.
-- **Files**: `hs/calls/`.
+- **Files**: `hs/calls/` (`service.py`: the CALL prompt, the start's hold
+  words, `nothing_to_ask`; `runner.py`: no question when nothing would
+  start, the read back "Started the program"), `hs/mcp/palettes.py`
+  (`CALL_HELD`, `CALL_PROGRAM_READS`), `hs/mcp/families/program.py`
+  (`name` on start and get, `spoken`), `hs/services/program_service.py`
+  (`find`, `name_words`, `spoken_state`), `web/src/desk/calls/CallsWindow.tsx`
+  ("Started on your yes").
 - **Changes**: `program.start` and `program.get` in the call palette; start
-  held for his yes (the Calls gate, as built).
+  held for his yes (the Calls gate, as built). The Line and ai-phone share
+  the palette (one `DeskTurns`).
 - **Done when**: the fake ai-phone rig starts a Program after a spoken yes.
 - **Tests**: T1 the Calls rig.
 - **Not in this slice**: decide on a call.

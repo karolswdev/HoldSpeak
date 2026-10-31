@@ -530,6 +530,32 @@ class ProgramService:
         steps = self.store.list_steps(program["id"])
         return self._wire(program, steps)
 
+    def find(self, principal: Any, *, program_id: Any = None, name: Any = None,
+             startable: bool = False) -> dict[str, Any]:
+        """PG15: one Program by its id, or by the words he said ("the
+        overnight program"): every word must be in its title or its template.
+        ``startable`` puts a Drafting or Parked match first. Nothing matches:
+        ``program_not_found``; it never makes a Program."""
+        if program_id:
+            found = self.store.get_program(str(program_id))
+            if found is not None:
+                return found
+        said = str(name or program_id or "").strip()
+        words = name_words(said)
+        if not words:
+            raise ProgramRefused("program_name_required", "Say the name of the program.", status=400)
+        matches = []
+        for program in self.store.list_programs():
+            own = set(name_words(str(program.get("title") or ""))) | set(name_words(str(program.get("template") or "")))
+            if all(word in own for word in words):
+                matches.append(program)
+        if not matches:
+            raise ProgramRefused("program_not_found", f"There is no program with the name {said}. I did not start a program.",
+                                 status=404)
+        if startable:
+            matches.sort(key=lambda row: row.get("state") not in ("drafting", "parked"))
+        return matches[0]
+
     def for_project(self, project_id: str) -> list[dict[str, Any]]:
         """The Room's Programs fold (§9b): one row per Program, worst first."""
         rows = [
@@ -2163,6 +2189,46 @@ class ProgramService:
             self.store.save_program(program)
 
 
+#: The words that do not name a Program ("start the overnight program on the hub").
+_NAME_FILLER = frozenset({"the", "a", "an", "my", "our", "program", "programs", "programme", "on", "hub",
+                          "please", "this", "that", "called", "named"})
+
+
+def name_words(text: str) -> list[str]:
+    """The words of a Program's name, lower case, without the filler."""
+    return [word for word in re.findall(r"[a-z0-9]+", str(text or "").lower()) if word not in _NAME_FILLER]
+
+
+#: The state of a Program, said on a call.
+_SPOKEN_STATE = {
+    "drafting": "is not started", "running": "runs", "waiting": "waits on you", "done": "is done",
+    "parked": "is parked", "failed": "failed",
+}
+
+
+def spoken_state(wire: Mapping[str, Any]) -> str:
+    """PG15: one or two spoken sentences from a Program's state: its steps,
+    what waits on him, the last decision. No count of zero."""
+    title = str(wire.get("title") or "The program").strip().rstrip(".")
+    state = _SPOKEN_STATE.get(str(wire.get("state") or ""), "has no state")
+    total, done = int(wire.get("total") or 0), int(wire.get("done") or 0)
+    first = f"{title} {state}"
+    if total:
+        first += f": {done} of {total} {'step is' if total == 1 else 'steps are'} done"
+    parts = [first + "."]
+    more = []
+    turn = int(wire.get("your_turn") or 0) + int(wire.get("asks") or 0)
+    if turn:
+        more.append(f"{turn} {'thing waits' if turn == 1 else 'things wait'} on you")
+    decided = [row for row in (wire.get("decided_for_you") or []) if row.get("line")]
+    if decided:
+        more.append("the last decision: " + str(decided[0]["line"]).strip().rstrip("."))
+    if more:
+        sentence = ", and ".join(more)
+        parts.append(sentence[0].upper() + sentence[1:] + ".")
+    return " ".join(parts)
+
+
 def _check_name(command: str) -> str:
     """``quick_check.sh`` for ``FOO=1 sh scripts/quick_check.sh --x``."""
     import shlex
@@ -2256,6 +2322,6 @@ __all__ = [
     "ACTIVE_STATES", "AGENT_LABELS", "CLOSED_STATES", "DECIDE_CHOICES", "FINISHED_STATES", "MAX_RACE",
     "MAX_ROUNDS", "PROGRAMS_ENV", "PROGRAM_STATES", "PROGRAM_WORDS", "ProgramRefused", "ProgramService",
     "RACE_PROFILES", "STATIONS", "STEP_STATES", "STEP_TRANSITIONS", "STEP_WORDS", "agent_label",
-    "default_program_service", "duration_words", "program_state", "programs_on", "step_origin",
-    "triage_effort", "your_turn",
+    "default_program_service", "duration_words", "name_words", "program_state", "programs_on", "step_origin",
+    "spoken_state", "triage_effort", "your_turn",
 ]

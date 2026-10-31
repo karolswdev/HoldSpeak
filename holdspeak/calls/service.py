@@ -45,6 +45,8 @@ KEEP = 20
 RETRY_SECONDS = 15.0
 
 FRAME = "call_state"
+#: PG15: a held ``program.start``, in words ("I want to start the program …").
+START_PROGRAM = "Start the program"
 
 #: The system prompt of a call's turn.
 CALL_PROMPT = (
@@ -55,7 +57,10 @@ CALL_PROMPT = (
     "propose a decision (status proposed), add a project item, prepare a send with channel.prepare. "
     "Read a record only when you need it to answer or to act (memory.page first, then the records). "
     "To send a prepared send, call channel.send with its send_id; to post a nudge, call nudge.send: "
-    "each one waits for his spoken yes, so call it and the call asks him. Never change settings. "
+    "each one waits for his spoken yes, so call it and the call asks him. "
+    "To start a program (\"start the overnight program\"), call program.start with its name: it waits for his "
+    "spoken yes. To say how a program is doing, call program.get with its name and say its spoken line. "
+    "When there is no program with that name, say so; never make one. Never change settings. "
     "Then say in one sentence what you did."
 )
 
@@ -153,7 +158,7 @@ class DeskTurns:
         self._context = str(context or "").strip()
 
     def _service(self) -> Any:
-        from ..mcp.palettes import CALL, CALL_HELD_EGRESS, resolve_palette
+        from ..mcp.palettes import CALL, CALL_HELD, resolve_palette
 
         prompt = CALL_PROMPT
         if self._context:
@@ -163,7 +168,7 @@ class DeskTurns:
             )
         return self._factory(
             system_prompt=prompt, palette=resolve_palette(CALL),
-            capability_id=CAPABILITY, held_egress=CALL_HELD_EGRESS,
+            capability_id=CAPABILITY, held_egress=CALL_HELD,
         )
 
     def new_thread(self, title: str) -> str:
@@ -206,6 +211,10 @@ class DeskTurns:
                 where = str(destination.get("name") or "")
                 if title or where:
                     return "Send " + (title or "the document") + (f" to {where}" if where else "")
+            if tool == "program.start":
+                found = self._program(args)
+                if found is not None:
+                    return f"{START_PROGRAM} {found['title']}"
             if tool == "nudge.send" and args.get("text"):
                 return "Post this nudge on GitHub: " + str(args["text"])[:160]
             data = args.get("data") if isinstance(args.get("data"), dict) else {}
@@ -215,6 +224,28 @@ class DeskTurns:
         except Exception as exc:  # the words are never a gate
             log.info(f"hold words not read: {exc}")
         return hold_words(tool)
+
+    def _program(self, args: dict[str, Any]) -> Optional[dict[str, Any]]:
+        """PG15: the Program a held ``program.start`` names; None when none
+        has that name."""
+        from ..services.errors import ServiceError
+        from ..services.program_service import default_program_service
+
+        try:
+            return default_program_service(self._db).find(
+                OWNER, program_id=args.get("program_id"), name=args.get("name"), startable=True)
+        except ServiceError:
+            return None
+
+    def nothing_to_ask(self, tool_call_id: str, tool: str) -> bool:
+        """True when a held call would change nothing, so the call asks no
+        question: a ``program.start`` that names no Program, or one that runs
+        already. The tool then answers why, and the turn says it."""
+        if tool != "program.start":
+            return False
+        handle = self._handle(tool_call_id)
+        found = self._program(dict(getattr(handle, "args", {}) or {}))
+        return found is None or found.get("state") not in ("drafting", "parked")
 
     def decide(self, tool_call_id: str, decision: str) -> bool:
         from ..services.thread_service import ThreadService

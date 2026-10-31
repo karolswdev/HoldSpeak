@@ -69,6 +69,15 @@ _STEP = {
 }
 
 
+#: PG15: a Program by its id or by the words he said.
+_BY_NAME = {
+    "program_id": {"type": ["string", "null"], "maxLength": 128},
+    "name": {"type": ["string", "null"], "maxLength": 200,
+             "description": "Words of the Program's title or its template (fast-cycle, build-and-review, race, "
+                            "from-the-desk, overnight)."},
+}
+
+
 def _schema(properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
     return {"type": "object", "properties": properties, "required": required, "additionalProperties": False}
 
@@ -121,16 +130,19 @@ TOOLS: list[dict[str, Any]] = [
          "may_call": {"type": ["boolean", "null"]},
          **_HANDOFF,
      }, ["program_id"])},
-    {"name": "program.start", "description": "Start a Program: its ready steps are handed to agents.",
-     "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
+    {"name": "program.start", "description": "Start a Program: its ready steps are handed to agents. Name it by "
+                                            "program_id, or by name (words of its title or its template, "
+                                            "\"overnight\"). It never makes a Program.",
+     "inputSchema": _schema(_BY_NAME, [])},
     {"name": "program.park", "description": "Park a Program. The worktrees stay; Resume brings it back.",
      "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
     {"name": "program.resume", "description": "Resume a parked Program.",
      "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
     {"name": "program.get",
-     "description": "Read one Program: its steps (state, agent, engine, check, review, PR), its checkpoints (each with "
-                    "the hidden ref it pinned the step's worktree to, ref and ref_commit) and what waits on the owner.",
-     "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
+     "description": "Read one Program, by program_id or by name: its steps (state, agent, engine, check, review, PR), "
+                    "its checkpoints (each with the hidden ref it pinned the step's worktree to, ref and ref_commit), "
+                    "what waits on the owner, and spoken (its state in one or two sentences to say on a call).",
+     "inputSchema": _schema(_BY_NAME, [])},
     {"name": "program.list", "description": "List the Programs, waiting first.",
      "inputSchema": _schema({}, [])},
     {"name": "program.checkpoint",
@@ -201,14 +213,12 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name == "program.update":
         program_id = str(args.pop("program_id"))
         return service.update(principal, program_id, **args)
-    if name == "program.start":
-        return service.start(principal, str(args["program_id"]))
+    if name in ("program.start", "program.get"):
+        return _by_name(service, name, args, principal)
     if name == "program.park":
         return service.park(principal, str(args["program_id"]))
     if name == "program.resume":
         return service.resume(principal, str(args["program_id"]))
-    if name == "program.get":
-        return service.get(principal, str(args["program_id"]))
     if name == "program.list":
         return service.list(principal)
     if name == "program.checkpoint":
@@ -227,6 +237,33 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         principal, str(args["program_id"]), str(args["step_id"]), kind=str(args.get("kind") or ""),
         choice=str(args.get("choice") or ""), finding_id=args.get("finding_id"), reason=args.get("reason"),
     )
+
+
+def _by_name(service: Any, name: str, args: dict[str, Any], principal: Principal) -> Any:
+    """PG15: ``program.start`` and ``program.get`` by id or by his words.
+
+    By ``name`` (a call says "the overnight program"), no match and a start of
+    a Program that runs already are answers, not errors: ``spoken`` says what
+    is so, and nothing starts. By ``program_id`` alone the refusals stay.
+    Each answer carries ``spoken``: the state in one or two sentences."""
+    from holdspeak.services.program_service import ProgramRefused, spoken_state
+
+    def said(wire: dict[str, Any], **more: Any) -> dict[str, Any]:
+        return {**wire, **more, "spoken": spoken_state(wire)}
+
+    by_name = bool(str(args.get("name") or "").strip())
+    start = name == "program.start"
+    try:
+        found = service.find(principal, program_id=args.get("program_id"), name=args.get("name"), startable=start)
+    except ProgramRefused as refused:
+        if by_name and refused.code == "program_not_found":
+            return {"found": False, "started": False, "spoken": refused.detail}
+        raise
+    if not start:
+        return said(service.get(principal, str(found["id"])))
+    if by_name and found.get("state") not in ("drafting", "parked"):
+        return said(service.get(principal, str(found["id"])), started=False)
+    return said(service.start(principal, str(found["id"])), started=True)
 
 
 __all__ = ["NAMES", "TOOLS", "dispatch"]

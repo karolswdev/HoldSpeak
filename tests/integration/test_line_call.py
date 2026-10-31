@@ -27,12 +27,14 @@ pytestmark = pytest.mark.timeout(180, method="thread")
 SIP = {"account": {"kind": "sip", "user": "holdspeak"}, "daily_limit": 20, "owner": "Karol"}
 
 
-def _run(hub: Any, monkeypatch: pytest.MonkeyPatch, caller: list[dict[str, Any]]) -> tuple:
+def _run(hub: Any, monkeypatch: pytest.MonkeyPatch, caller: list[dict[str, Any]],
+         seen: list[dict[str, Any]] | None = None) -> tuple:
     _write_config()
     monkeypatch.delenv("HOLDSPEAK_AI_PHONE", raising=False)
     frames: list[tuple[str, Any]] = []
     passes = [dict(p) for p in RECORDED["passes"]]
-    service = _service(hub, monkeypatch, lambda model: _RecordedHomeEngine(model, passes, []), frames)
+    seen = [] if seen is None else seen
+    service = _service(hub, monkeypatch, lambda model: _RecordedHomeEngine(model, passes, seen), frames)
 
     async def call() -> tuple:
         async with running_node({"incoming": {"remote": REMOTE}, "caller": caller}, config=SIP) as rig:
@@ -47,10 +49,14 @@ def _run(hub: Any, monkeypatch: pytest.MonkeyPatch, caller: list[dict[str, Any]]
 
 def test_a_call_on_the_line_hears_him_does_the_job_and_says_the_answer(hub, monkeypatch) -> None:
     """A heard question → the turn adds the task → the answer is said with the
-    read back; "that's all" ends it; the call is a Note."""
+    read back; "that's all" ends it; the call is a Note. The turn gets the
+    same CALL palette as on ai-phone (PG15: the Program's read and start)."""
+    seen: list[dict[str, Any]] = []
     outcome, service, frames, commands, heard = _run(hub, monkeypatch, [
-        {"say": "Blue heron."}, {"say": RECORDED["question"]}, {"say": "That's all, thanks."}])
+        {"say": "Blue heron."}, {"say": RECORDED["question"]}, {"say": "That's all, thanks."}], seen)
     assert outcome == "call"
+    offered = {tool["function"]["name"] for tool in seen[0]["tools"]}
+    assert {"door.add_item", "channel.send", "nudge.send", "program.start", "program.get"} <= offered
     [task] = _action_items(hub.db)
     assert task["task"] == "Nudge Tomás about the runbook" and task["owner"] == "Me", task
     [record] = service.list()
