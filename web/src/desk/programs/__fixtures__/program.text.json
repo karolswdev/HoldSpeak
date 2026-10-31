@@ -1,0 +1,6 @@
+{
+  "program_id": "program-39d4dbf6f569",
+  "revision": 3,
+  "text": "# program text 1\nprogram The hub stops stalling                    # Running · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check sh /Users/karol/dev/tools/wt-pg-lang1/tests/fixtures/fake_program_check.sh\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nstep 1 Indexes                                    # In review · Claude Code · under a minute\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Working · Claude Code · under a minute\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `echo 12 passed` is green             # Not yet\n\nstep 3 The fan-out                                # Planned\n  after 1, 2\n  brief\n  > One frame per change, not one per row.\n",
+  "version": 1
+}

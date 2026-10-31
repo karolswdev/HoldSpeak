@@ -24,7 +24,10 @@ person); the faces lane's answers to his presses on the same records
 (program.requirement_word.met.json, program.requirements.send_back.json,
 .waive_refused.json, .waived.json, .added.json; needs_you.requirements.json; program.requirements.evidence.json; program.adjust.moved.json,
 .inserted.json, .amended.json, .titled.json, .refused.json) and an
-orchestrator's proposals (program.proposals.json, .added.json).
+orchestrator's proposals (program.proposals.json, .added.json); PG-LANG LANG1:
+program.text.json (a running Program's text with its lamps) and
+program.text_apply.json (a dry run with a refused row and a row that lowers
+the bar, then the applied answer).
 ``--only program.race.json`` writes one file.
 """
 from __future__ import annotations
@@ -325,6 +328,46 @@ def record_adjust(root: Path) -> Any:
     return out
 
 
+def record_text(root: Path) -> dict[str, Any]:
+    """PG-LANG LANG1: a running Program as its text (GET), a changed text
+    previewed (a frozen brief refused, control up the ladder lowers the
+    bar, a new step, a merge on his press, a '+' line), then applied with
+    the lowering passed and the refused line put back (``allowed_text``)."""
+    rig = Rig(root / "rig-text", people=lambda: People(), working_at_once=2)
+    with rig.db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
+    client = _client(rig)
+    pid = _create(rig, "The hub stops stalling", goal="Every route under 100 ms while a meeting records.",
+                  template="build-and-review", control="normal", reviewer_profile="codex-default",
+                  project_id="proj-holdspeak")
+    rig.service.plan(OWNER, pid, steps=[
+        {"title": "Indexes", "brief": "Add the three indexes.", "owns": ["holdspeak/db/schema.py"]},
+        {"title": "People routes", "brief": "31 handlers through run_in_threadpool.",
+         "owns": ["holdspeak/web/routes/people.py"]},
+        {"title": "The fan-out", "brief": "One frame per change, not one per row.", "after": [1, 2]},
+    ])
+    rig.service.require(OWNER, pid, text="`echo 12 passed` is green", step_id=rig.step(pid, 2)["id"])
+    rig.service.start(OWNER, pid)
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"holdspeak/db/schema.py": "-- indexes\n"})
+    rig.tick()
+    got = _get(client, f"/api/programs/{pid}/text")
+    text = got["text"]
+    changed = (text.replace("  control normal", "  control yolo")
+               .replace("  > 31 handlers through run_in_threadpool.",
+                        "  > 31 handlers through run_in_threadpool, and the avatar route.\n  + Also the avatar route.")
+               .replace("\nstep 3 The fan-out", "\nstep + The loop watch\n  after 2\n  agent Codex · effort low\n"
+                        "  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out")
+               .replace("  > One frame per change, not one per row.",
+                        "  > One frame per change, not one per row.\n  merge owner"))
+    preview = client.post(f"/api/programs/{pid}/text", json={"text": changed, "base": text})
+    assert preview.status_code == 200, preview.text
+    dry = preview.json()
+    applied = client.post(f"/api/programs/{pid}/text", json={
+        "text": dry["allowed_text"], "base": text, "dry_run": False, "allow_lower": dry["lowers"]})
+    assert applied.status_code == 200, applied.text
+    return {"program.text.json": got, "program.text_apply.json": {"dry_run": dry, "applied": applied.json()}}
+
+
 def record_proposals(root: Path) -> dict[str, Any]:
     """PG-REQ §6, §9: an orchestrating agent at Normal proposes a requirement
     on a step, a change to a planned step and an amendment to a running
@@ -482,6 +525,7 @@ def record(root: Path) -> dict[str, Any]:
     fixtures.update(record_requirements(root))
     fixtures.update(record_adjust(root))
     fixtures.update(record_proposals(root))
+    fixtures.update(record_text(root))
     return fixtures
 
 
@@ -539,11 +583,21 @@ def _check(fixtures: dict[str, Any]) -> None:
     assert {item["kind"] for item in proposals["your_turn_items"]} >= {"requirement_proposed", "step_change", "step_amend"}
 
 
+def _check_text(fixtures: dict[str, Any]) -> None:
+    text = fixtures["program.text.json"]["text"]
+    assert text.startswith("# program text 1\n") and "  # " in text, text
+    apply = fixtures["program.text_apply.json"]
+    verdicts = {row["verdict"] for row in apply["dry_run"]["changes"]}
+    assert {"refused", "lowers", "allowed"} <= verdicts, verdicts
+    assert apply["applied"]["applied"] is True, apply["applied"].get("changes")
+
+
 def main(argv: list[str]) -> int:
     only = argv[argv.index("--only") + 1:] if "--only" in argv else []
     with tempfile.TemporaryDirectory(prefix="program-fixtures-") as tmp:
         fixtures = record(Path(tmp))
     _check(fixtures)
+    _check_text(fixtures)
     OUT.mkdir(parents=True, exist_ok=True)
     for name, value in fixtures.items():
         if only and name not in only:

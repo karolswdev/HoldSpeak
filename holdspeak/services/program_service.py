@@ -645,6 +645,9 @@ class ProgramService:
         self._engines = engines
         self._people = people
         self._runner = runner
+        #: LANG1: a text apply holds the frames and the ticks of the verbs it
+        #: calls, then sends one frame (per thread: other writers go on).
+        self._held = threading.local()
 
     # ── seams ────────────────────────────────────────────────────────
 
@@ -2852,6 +2855,314 @@ class ProgramService:
             git = None
         write_amendment(step, f"Added by {who} at {_clock_words(at)}", line, git=git)
 
+    # ── PG-LANG LANG1: the Program text (get and apply) ──────────────
+
+    def text_get(self, principal: Any, program_id: str) -> dict[str, Any]:
+        """The Program's text, printed from the tables now, with its lamps
+        (PROGRAM-LANGUAGE §3.6)."""
+        from .program_text import VERSION, print_program
+
+        wire = self.get(principal, program_id)
+        return {"program_id": wire["id"], "text": print_program(wire), "revision": int(wire.get("revision") or 0),
+                "version": VERSION}
+
+    def _project_named(self, name: Any) -> Optional[str]:
+        words = " ".join(str(name or "").split()).casefold()
+        with self.db._connection() as conn:
+            rows = conn.execute("SELECT id, name FROM projects WHERE is_archived=0").fetchall()
+        found = [str(row["id"]) for row in rows if str(row["name"]).casefold() == words or str(row["id"]) == words]
+        return found[0] if len(found) == 1 else None
+
+    def _person_named(self, name: Any) -> Optional[str]:
+        words = " ".join(str(name or "").split())
+        if not words:
+            return None
+        try:
+            names = dict(self._people_service().display_names() or {})
+        except Exception:
+            names = {}
+        if words in names:
+            return words
+        found = [pid for pid, said in names.items() if str(said).casefold() == words.casefold()]
+        return found[0] if len(found) == 1 else None
+
+    @staticmethod
+    def _entries(agents: Any) -> list[dict[str, Any]]:
+        return [{"profile": profile, "engine": engine} for profile, engine in agents or []]
+
+    def _check_text_rows(self, principal: Any, program: Mapping[str, Any], wire: Mapping[str, Any],
+                         rows: list[Any]) -> None:
+        """Refuse by name, before anything is written, what the verbs would
+        refuse: an unknown agent or engine, a project or a person the desk
+        does not know, a requirement that cannot be proven, his-only edits
+        by an agent."""
+        owner = _is_owner(principal)
+
+        def guard(row: Any, check: Callable[[], Any]) -> None:
+            if row.verdict not in ("allowed", "lowers"):
+                return
+            try:
+                check()
+            except ProgramRefused as exc:
+                row.refuse(exc.code, exc.detail)
+
+        for row in rows:
+            data = row.data
+            kind = data.get("kind")
+            if kind == "head":
+                name, value = data["name"], data["value"]
+                if name == "agents":
+                    guard(row, lambda value=value: self._runs_on(self._entries(value), "agent"))
+                elif name == "reviewer":
+                    guard(row, lambda value=value: self._engine_id(value[1], self._profile(value[0], "reviewer"), "reviewer"))
+                elif name == "allow":
+                    guard(row, lambda value=value: self._allowed_profiles(list(value)))
+                elif name == "project" and value and self._project_named(value) is None:
+                    row.refuse("project_unknown", f"There is no project {value!r}.")
+                elif name == "project" and not value:
+                    row.refuse("text_bad_value", "A program stays filed to its project.")
+            elif kind in ("step", "add_step"):
+                step = data.get("step")
+                agents = data.get("agents") if kind == "step" else (step.agents if step is not None else None)
+                if (kind == "add_step" or data.get("name") == "agents") and agents:
+                    guard(row, lambda agents=agents: self._runs_on(self._entries(agents), "agent"))
+                person = data.get("value") if data.get("name") == "for_person" else (
+                    step.for_person if kind == "add_step" and step is not None else None)
+                if person and self._person_named(person) is None and row.verdict in ("allowed", "lowers"):
+                    row.refuse("person_unknown", f"There is no person {person!r} in People.")
+                if kind == "add_step" and step is not None and step.merged:
+                    guard(row, lambda step=step: _history_input(step.merged, 1))
+                if kind == "add_step" and step is not None:
+                    for req in step.requirements:
+                        if req.rid is not None:
+                            row.refuse("text_bad_value", f"Line {req.line}: a new step's requirement is R+.")
+            elif kind in ("edit_requirement", "waive") and not owner:
+                row.refuse("owner_required", "Only the owner changes or waives a requirement.")
+            if kind in ("edit_requirement", "require"):
+                req = data["row"]
+                guard(row, lambda req=req: self._requirement_input(program, req.text, req.kind, req.spec))
+
+    def text_apply(self, principal: Any, program_id: str, text: Any, *, dry_run: bool = True,
+                   base: Any = None, allow_lower: Iterable[str] = ()) -> dict[str, Any]:
+        """A changed text applied through the service verbs (§3.6): the
+        change rows (allowed, refused with the frozen reason, conflict,
+        lowers the bar); ``dry_run`` writes nothing. A real apply writes
+        only when no row is refused or in conflict and every row that lowers
+        the bar is named in ``allow_lower``; then each change goes through
+        its verb (update, plan, change_step, amend, require, edit, waive)
+        under the lock, one checkpoint names the text's changes, and one
+        ``program_changed`` frame says ``text``."""
+        from .program_text import (
+            VERSION, allowed_model, diff_program_text, parse_program_text, patch, print_program, render,
+        )
+
+        if not isinstance(text, str) or not text.strip():
+            raise ProgramRefused("text_required", "Give the program text.", status=400)
+        program = self._program(program_id)
+        wire = self.get(principal, program_id)
+        current = print_program(wire)
+        base_text = str(base) if isinstance(base, str) and base.strip() else current
+        base_model, new_model = parse_program_text(base_text), parse_program_text(text)
+        rows = diff_program_text(base_model, new_model, record=wire)
+        if base_text != current:
+            # §3.6: a field that changed since he read it is a conflict.
+            since = {row.id: row for row in diff_program_text(base_model, parse_program_text(current), record=wire)}
+            for row in rows:
+                moved = since.get(row.id)
+                if moved is not None and row.verdict in ("allowed", "lowers"):
+                    row.verdict, row.code = "conflict", "text_conflict"
+                    what = row.where[0].upper() + row.where[1:]
+                    row.reason = f"{what}'s {row.field} changed since you read it: now {moved.after or 'none'}."
+        self._check_text_rows(principal, program, wire, rows)
+        allow = {str(item) for item in allow_lower or []}
+        blocked = [row for row in rows if row.verdict in ("refused", "conflict")
+                   or (row.verdict == "lowers" and row.id not in allow)]
+        answer: dict[str, Any] = {
+            "program_id": program["id"], "changes": [row.to_wire() for row in rows], "patch": patch(base_text, text),
+            "allowed_text": render(allowed_model(base_model, new_model, rows)), "applied": False,
+            "text": current, "revision": int(wire.get("revision") or 0), "version": VERSION,
+            "refused": sum(1 for row in rows if row.verdict in ("refused", "conflict")),
+            "lowers": [row.id for row in rows if row.lowers_bar and row.verdict == "lowers"],
+        }
+        if dry_run or blocked or not rows:
+            return answer
+        self._apply_text(principal, program, wire, base_model, new_model, rows)
+        fresh = self.get(principal, program["id"])
+        answer.update(applied=True, text=print_program(fresh), revision=int(fresh.get("revision") or 0),
+                      program=fresh)
+        return answer
+
+    def _apply_text(self, principal: Any, program: Mapping[str, Any], wire: Mapping[str, Any], base_model: Any,
+                    new_model: Any, rows: list[Any]) -> None:
+        pid = program["id"]
+        by = "owner" if _is_owner(principal) else "agent"
+        by_number = {int(step["ordinal"]): step for step in wire.get("steps") or []}
+        keys: dict[str, str] = {f"s{n}": step["id"] for n, step in by_number.items()}
+
+        def kinds(kind: str) -> list[Any]:
+            return [row for row in rows if row.data.get("kind") == kind]
+
+        self._held.on = True
+        done = 0
+        try:
+            with _LOCK:
+                # 1. The Program.
+                fields: dict[str, Any] = {}
+                for row in kinds("head"):
+                    name, value = row.data["name"], row.data["value"]
+                    if name == "agents":
+                        fields["runs_on"] = self._entries(value)
+                    elif name == "reviewer":
+                        fields["reviewer_profile"], fields["reviewer_engine"] = value[0], value[1]
+                    elif name == "project":
+                        fields["project_id"] = self._project_named(value)
+                    else:
+                        fields[{"when_idle": "prefer_idle", "may_hand_off": "may_handoff", "spend": "spend_limit_usd",
+                                "usage_warning": "usage_warning_share", "allow": "allowed_profiles"}.get(name, name)] = value
+                if fields:
+                    self.update(principal, pid, **fields)
+                    done += len(kinds("head"))
+                # 2. New steps, appended in their order, then placed.
+                added = kinds("add_step")
+                if added:
+                    before = {step["id"] for step in self.store.list_steps(pid)}
+                    raws = []
+                    for row in added:
+                        step = row.data["step"]
+                        raw: dict[str, Any] = {"title": step.title, "brief": step.brief, "owns": list(step.owns),
+                                               "after": list(step.after), "prefer_idle": step.when_idle,
+                                               "may_call": step.may_call, "origin_ref": step.origin}
+                        if step.agents:
+                            raw["runs_on"] = self._entries(step.agents)
+                        for key, value in (("effort", step.effort), ("race", step.race), ("gate_check", step.check),
+                                           ("gate_review", step.review), ("review_depth", step.depth),
+                                           ("gate_merge", step.merge)):
+                            if value is not None:
+                                raw[key] = value
+                        if step.for_person:
+                            raw["for_person_id"] = self._person_named(step.for_person)
+                        if step.merged:
+                            raw["history"] = dict(step.merged)
+                        raws.append(raw)
+                    self.plan(principal, pid, steps=raws)
+                    made = sorted((step for step in self.store.list_steps(pid) if step["id"] not in before
+                                   and not step.get("race_of")), key=lambda step: int(step["ordinal"]))
+                    for row, step in zip(added, made):
+                        keys[row.data["key"]] = step["id"]
+                    done += len(added)
+                # 3. Field changes of the steps that were there.
+                changes: dict[int, dict[str, Any]] = {}
+                after_rows = []
+                for row in kinds("step"):
+                    name, value, number = row.data["name"], row.data["value"], row.data["number"]
+                    if name == "after":
+                        after_rows.append(row)
+                        continue
+                    target = changes.setdefault(number, {})
+                    if name == "agents":
+                        target["runs_on"] = self._entries(value)
+                    elif name == "for_person":
+                        target["for_person_id"] = self._person_named(value) if value else None
+                    else:
+                        target[{"check": "gate_check", "review": "gate_review", "depth": "review_depth",
+                                "merge": "gate_merge"}.get(name, name)] = value
+                for number, step_fields_now in changes.items():
+                    self.change_step(principal, pid, keys[f"s{number}"], **step_fields_now)
+                    done += 1
+                # 4. Order: an ``after`` that loses a step first, then the
+                # moves (each one keeps every ``after`` true), then the rest.
+                def ordinals() -> dict[str, int]:
+                    return {step["id"]: int(step["ordinal"]) for step in self._top_order(pid)}
+
+                def ids(values: Iterable[Any]) -> set[str]:
+                    return {keys[value] for value in values if value in keys}
+
+                for row in after_rows:
+                    sid = keys[f"s{row.data['number']}"]
+                    old = set(by_number[row.data["number"]].get("after") or [])
+                    kept = ids(f"s{value}" for value in old) & ids(row.data["value"])
+                    now = ordinals()
+                    if len(kept) < len(old):
+                        self.change_step(principal, pid, sid, after=sorted(now[item] for item in kept))
+                moves = kinds("move")
+                if moves:
+                    top = max((step.number for step in base_model.steps if step.number is not None), default=0)
+                    order, counter = [], top
+                    for step in new_model.steps:
+                        if step.number is None:
+                            counter += 1
+                            order.append(keys.get(f"n{counter}"))
+                        elif f"s{step.number}" in keys:
+                            order.append(keys[f"s{step.number}"])
+                    order = [sid for sid in order if sid]
+                    if by != "owner":
+                        for row in moves:
+                            succ = row.data.get("before")
+                            self.change_step(principal, pid, keys[row.data["key"]],
+                                             before=keys[succ] if succ else "end")
+                    else:
+                        guard = 0
+                        index = 0
+                        while index < len(order) and guard < len(order) * len(order) + 4:
+                            guard += 1
+                            current = [step["id"] for step in self._top_order(pid)]
+                            if current[index] == order[index]:
+                                index += 1
+                                continue
+                            wanted = self.store.get_step(order[index]) or {}
+                            if wanted.get("state") in ("planned", "ready"):
+                                self.change_step(principal, pid, order[index], before=current[index])
+                            else:
+                                # A started step keeps its place: the step in
+                                # its way goes to where it belongs.
+                                other = current[index]
+                                at = order.index(other)
+                                self.change_step(principal, pid, other,
+                                                 before=order[at + 1] if at + 1 < len(order) else "end")
+                    done += len(moves)
+                for row in after_rows:
+                    sid = keys[f"s{row.data['number']}"]
+                    now = ordinals()
+                    want = sorted(now[item] for item in ids(row.data["value"]))
+                    if want != sorted(int(v) for v in (self.store.get_step(sid) or {}).get("after") or []):
+                        self.change_step(principal, pid, sid, after=want)
+                    done += 1
+                # 5. Lines added to started briefs.
+                for row in kinds("amend"):
+                    self.amend(principal, pid, keys[f"s{row.data['number']}"], row.data["line"])
+                    done += 1
+                # 6. Requirements: his edits and waives, then the new ones.
+                reqs = self.requirements(pid)
+                by_rid = {int(item["ordinal"]): item for item in reqs if not item.get("parent_id")}
+                for row in kinds("edit_requirement"):
+                    req = row.data["row"]
+                    self.edit_requirement(principal, pid, by_rid[row.data["rid"]]["id"], text=req.text, kind=req.kind,
+                                          required=req.required, spec=dict(req.spec))
+                    done += 1
+                for row in kinds("waive"):
+                    self.decide_requirement(principal, pid, by_rid[row.data["rid"]]["id"], "waive", line=row.data["line"])
+                    done += 1
+                for row in kinds("require"):
+                    req, scope, key = row.data["row"], row.data["scope"], row.data.get("key")
+                    self.require(principal, pid, text=req.text, kind=req.kind, spec=dict(req.spec),
+                                 required=req.required, each_step=scope == "every step",
+                                 step_id=keys.get(key) if key else None)
+                    done += 1
+                fresh = self._program(pid)
+                lines = sorted({row.line for row in rows if row.line})
+                self._checkpoint(fresh, None, by, f"Changed by the text: {done} change{'s' if done != 1 else ''}"
+                                 + (f" (line{'s' if len(lines) != 1 else ''} {', '.join(map(str, lines[:12]))})"
+                                    if lines else ""))
+                self._touch(fresh)
+        except ProgramRefused as exc:
+            raise ProgramRefused(exc.code, f"{exc.detail} The text stopped there: {done} change"
+                                 f"{'s' if done != 1 else ''} before it are written.",
+                                 **{key: value for key, value in exc.context.items()})
+        finally:
+            self._held.on = False
+            self.changed(pid, verb="text", text=True)
+        self._tick_now(pid)
+
     # ── Phone: the engine reaches him (Phone design §6) ──────────────
 
     def reach_phone(
@@ -3250,7 +3561,7 @@ class ProgramService:
             return None
 
     def changed(self, program_id: str, step_id: Optional[str] = None, *, verb: str = "step",
-                requirement_id: Optional[str] = None) -> None:
+                requirement_id: Optional[str] = None, text: bool = False) -> None:
         """Recompute the Program's state, rewrite its note, emit the frames.
         PG-REQ: the frame names the requirement and the count when one moved."""
         from .program_requirements import counts as requirement_counts
@@ -3285,6 +3596,11 @@ class ProgramService:
         met = requirement_counts(reqs, len([item for item in turn if item["kind"] in ("requirement_word", "requirement_left")]))
         if met:
             frame["requirements_met"] = met
+        if text:
+            # LANG1: the definition changed; the Text view takes a new base.
+            frame["text"] = True
+        if getattr(self._held, "on", False):
+            return
         self._broadcast("program_changed", frame)
         try:
             from ..runtime import composition
@@ -3295,7 +3611,7 @@ class ProgramService:
 
     def _tick_now(self, program_id: str) -> None:
         """A press moves the program at once (not on the next 30 s tick)."""
-        if not programs_on():
+        if not programs_on() or getattr(self._held, "on", False):
             return
         try:
             self.runner().tick_program(program_id)

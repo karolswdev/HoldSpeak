@@ -197,7 +197,7 @@ program-line  = "goal" NL { "  > " TEXT NL }
               | "check " ( COMMAND | "none" )
               | "agent " AGENTS                     (* the default Runs on list *)
               | "reviewer " AGENT [ " at " DEPTH ]
-              | "planner " AGENT                    (* the engine that plans and shapes, §4.3 *)
+              | "planner " ENGINE                   (* the engine of the library that plans and shapes, §4.3, §5.5 *)
               | "budget " TOKENS                    (* the context budget, §5.4 *)
               | "when idle" | "may call" | "may hand off"
               | "allow " AGENT { ", " AGENT }       (* allowed agents *)
@@ -707,7 +707,13 @@ tail. The 0.5 is a constant with a name (`WORKING_SHARE`), not a setting.
 one concern per step, at most three owned files, a brief under 400 words,
 `effort low` or `medium` only, and the repo map pre-cut to the step's owned
 folders. The draft's rows show each step's estimate as a lamp ("# 18k of
-64k").
+32k").
+
+**One denominator** (reconciled with the journeys, #1667): every size word
+names the working share, `WORKING_SHARE × budget`, never the whole budget.
+With `budget 64k` a step's lamp reads "# 18k of 32k" and a step that does
+not fit reads "Too big for qwen · 41k of 32k". The same number is the fit
+rule's bound, so a lamp at or under its denominator always fits.
 
 **At dispatch**, the runner refuses to hand a step that does not fit
 (`program_runner._dispatch`, before the hand): the step is held with the

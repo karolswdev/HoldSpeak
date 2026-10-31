@@ -336,6 +336,8 @@ TOOL_AUTHORITY: dict[str, str] = {
     "program.require": WORK,  # PG-REQ: his at once; an agent's is a proposal up the ladder
     "program.step_update": WORK,  # PG-REQ: his at once; an orchestrator's change goes up the ladder
     "program.amend": WORK,  # PG-REQ: his at once; an orchestrator's amendment goes up the ladder
+    "program.text": WORK,  # PG-LANG LANG1: the Program as its text (a read)
+    "program.text_apply": WORK,  # PG-LANG LANG1: a batch of the verbs above, each with its own rule
     "program.decide": AUTHORITY,  # a merge and a finding's fate are the owner's press
     "program.overturn": AUTHORITY,  # undoing the engine's decision is the owner's press
     "program.handoff": AUTHORITY,  # PG19: which agent reads the repository next is the owner's press
