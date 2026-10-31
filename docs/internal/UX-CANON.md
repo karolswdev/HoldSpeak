@@ -136,6 +136,34 @@ Each line names the ruling, its canvas or design note, and the PR.
   `betterment/programs/PROGRAMS-REQUIREMENTS-2026-10-31.md` (#1664), recipe
   `betterment/programs/RECIPE.md` "PG-REQ", user doc `docs/programs.md`; the
   PG-REQ PR.
+- **The Program text and the change well (PG-LANG LANG2).** Board · Text
+  (`FilterTokens`, in More ▾ at 393); the kit's `TextPane` (gutter lamp and
+  mark, lamps at the line end, never in the value) and the `ChangeWell` of
+  `DiffRow`s: Preview, Apply / Apply n, Not this, Apply this on a row that
+  lowers the bar. Canvas direction S-A; `docs/programs.md` "The Program
+  text"; #1670.
+- **The shaping bar (LANG4, LANG5).** `StringGadget` "Change the program"
+  with its one mic and Shape under the toolbar; "Reading the program ·
+  engine" lamp; "Heard: …"; the ShapedWell with Overturn and Keep at YOLO.
+  `docs/programs.md` "Shape it by a sentence"; #1673, #1675.
+- **The planning draft (LANG7).** Plan it on the Drafting toolbar,
+  "Planning · engine", drafted rows with size lamps ("7k of 32k", "Too big
+  for … · 61k of 32k") and Split. `docs/programs.md` "Plan it from a goal";
+  #1676.
+- **The round strip (LANG10, direction R-A).** Ask me first; the strip of
+  five rounds as `FilterTokens` with lamps; one `QuestionRow` at a time;
+  answered questions as `QuestionFold`; Skip question, Skip round, Done
+  with, Ask more. `docs/programs.md` "The interview rounds"; #1680.
+- **The briefing page (DIR2, direction A).** `/b/<token>`, its own entry
+  with the thin kit: the question first, 44 px library Buttons with what
+  each does, Later ▾, the evidence folded and read only, the expired face
+  with no data. Copy page link and Revoke on the rows, the row's line
+  ("Page open until 06:30"), no chips. `docs/programs.md` "Decide from
+  anywhere"; #1674.
+- **Settings ▸ Reach (DIR6).** Notices renamed Reach: Channels, Pair
+  Telegram with its code sheet, Bot token "Stored in your keystore", When
+  to reach you, quiet hours, Digest and Later, egress said once. Needs you
+  rows gain Later ▾ and Send ▾. `docs/reach.md`; #1678.
 
 ## Owner direction — crisp illustrated icons (2026-10-22)
 

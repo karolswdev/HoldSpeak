@@ -685,7 +685,7 @@ At YOLO, Later on a core question parks its step for now, and the other steps go
 
 ### On a call
 
-A call can change a program by your sentence (see "Change it on a call"). What a call can decide is in [Calls](calls.md#what-a-call-can-do).
+When the desk calls you about a step, or when you say "what waits on me", HoldSpeak reads each item that waits on you: where it is from, the question, what changed, and the choices. Say a choice. HoldSpeak reads it back once and asks for your yes; only yes decides, and the Ledger says "decided on a call". Say "later" (with a time or without one) to decide later. A waive stays on the desk. If the call ends before your yes, nothing is decided. See [Decide on a call](calls.md#decide-on-a-call). A call can also change a program by your sentence (see "Change it on a call").
 
 ### What is not there yet
 
