@@ -830,3 +830,48 @@ def test_a_message_queued_at_23_30_goes_out_when_quiet_hours_end_and_not_before(
     assert phone.store.list_calls() == []  # the 10 minutes start at the release, not at 23:30
     phone.tick()
     assert len(phone.push().sent) == 2  # once
+
+
+# ── JRN6: the item's verbs on a phone message ───────────────────────────
+
+def test_a_held_message_carries_the_items_verbs_and_a_press_on_the_paired_phone_decides(
+        hub, monkeypatch, tmp_path) -> None:
+    from holdspeak.services import program_service as program_module
+    from holdspeak.services.program_service import ProgramService
+    from tests.integration.program_rig import make_repo
+
+    phone = _phone(hub, monkeypatch, number=_NoNumber())
+    device = _paired(hub)
+    programs = ProgramService(_db(hub), phone=lambda: phone)
+    monkeypatch.setattr(program_module, "default_program_service", lambda db=None: programs)
+    repo = make_repo(tmp_path / "git")
+    made = programs.create(OWNER, title="Overnight on the home box", repository=str(repo), control="normal",
+                           check_command="true")
+    programs.plan(OWNER, made["id"], steps=[{"title": "Schema", "brief": "Add the table."}])
+    program = programs.store.get_program(made["id"])
+    program["state"] = "running"  # as Start leaves it; no agent runs in this hub
+    programs.store.save_program(program)
+    step = programs.store.list_steps(made["id"])[0]
+    programs.runner().raise_core(program, step, "diff", "the fix needs holdspeak/db/")
+    listed = device.get("/api/phone/messages")
+    assert listed.status_code == 200, listed.text
+    [message] = [row for row in listed.json()["messages"] if row.get("program_step_id") == step["id"]]
+    actions = message["actions"]
+    assert actions["kind"] == "core" and [c["label"] for c in actions["choices"]] == ["Go on", "Park"]
+    assert actions["question"] == "Let the step go on with this, or park it?"
+    # An unpaired token is refused; the paired phone's press is his press.
+    stranger = hub.client.post(f"/api/phone/messages/{message['id']}/decide", json={"choice": "go_on"},
+                               headers={"Authorization": "Bearer a.b.c", "X-HoldSpeak-Token": ""})
+    assert stranger.status_code == 401
+    pressed = device.post(f"/api/phone/messages/{message['id']}/decide", {"choice": "go_on"})
+    assert pressed.status_code == 200, pressed.text
+    assert pressed.json()["decided"] is True
+    lines = [row["line"] for row in programs.store.list_checkpoints(made["id"])]
+    assert any(line.startswith("Go on: ") and line.endswith("decided on your phone") for line in lines), lines
+    # A second press hears that it is answered, in the page's words.
+    again = device.post(f"/api/phone/messages/{message['id']}/decide", {"choice": "park"})
+    assert again.status_code == 409 and again.json()["detail"].startswith("Answered at "), again.text
+    assert again.json()["detail"].endswith("from your phone")
+    # Once answered, the message carries no verbs.
+    [after] = [row for row in device.get("/api/phone/messages").json()["messages"] if row["id"] == message["id"]]
+    assert "actions" not in after
