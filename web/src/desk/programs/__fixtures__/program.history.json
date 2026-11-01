@@ -12,7 +12,7 @@
   "check_command": null,
   "checkpoints": [
     {
-      "at": "2026-11-01T17:43:15.576033+00:00",
+      "at": "2026-11-01T19:47:21.011013+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T17:43:15.552280+00:00",
+      "at": "2026-11-01T19:47:20.995997+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -51,7 +51,7 @@
   "closed_at": "2026-10-28T18:14:50Z",
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-11-01T17:43:15.551889+00:00",
+  "created_at": "2026-11-01T19:47:20.995591+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -84,10 +84,10 @@
     "prs": 3,
     "words": "Merged 3 PRs · 28 Oct"
   },
-  "id": "program-c7c76b80dfd4",
+  "id": "program-37bed399854d",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T17:43:15.576033+00:00",
+    "at": "2026-11-01T19:47:21.011013+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -108,8 +108,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-c7c76b80dfd4",
-  "note_window": "pullout:note:program-program-c7c76b80dfd4",
+  "note_id": "program-program-37bed399854d",
+  "note_window": "pullout:note:program-program-37bed399854d",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -208,7 +208,7 @@
         "pr_number": 1584,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1584"
       },
-      "id": "step-e199f7fd9a25",
+      "id": "step-cf63514784d2",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -274,7 +274,7 @@
       "story": [],
       "taken": false,
       "title": "The dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing",
-      "updated_at": "2026-11-01T17:43:15.575197+00:00",
+      "updated_at": "2026-11-01T19:47:21.008856+00:00",
       "wait": null,
       "worktree": null
     },
@@ -343,7 +343,7 @@
         "pr_number": 1585,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1585"
       },
-      "id": "step-a1a51838fdf7",
+      "id": "step-b4501f14a212",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -409,7 +409,7 @@
       "story": [],
       "taken": false,
       "title": "The hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop",
-      "updated_at": "2026-11-01T17:43:15.575197+00:00",
+      "updated_at": "2026-11-01T19:47:21.008856+00:00",
       "wait": null,
       "worktree": null
     },
@@ -478,7 +478,7 @@
         "pr_number": 1598,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1598"
       },
-      "id": "step-27e910eabd78",
+      "id": "step-ce37bd490656",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -544,7 +544,7 @@
       "story": [],
       "taken": false,
       "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard",
-      "updated_at": "2026-11-01T17:43:15.575197+00:00",
+      "updated_at": "2026-11-01T19:47:21.008856+00:00",
       "wait": null,
       "worktree": null
     }
@@ -569,7 +569,7 @@
       "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard"
     }
   ],
-  "updated_at": "2026-11-01T17:43:15.576119+00:00",
+  "updated_at": "2026-11-01T19:47:21.011123+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

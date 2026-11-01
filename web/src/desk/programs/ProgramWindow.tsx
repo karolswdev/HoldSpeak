@@ -706,7 +706,8 @@ function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy
             </span>
           ) : null}
           <span className="pg-choice" data-choice="plan">
-            <Button variant={steps.length ? "secondary" : "primary"} loading={planner.busy} disabled={held} onClick={onPlan}
+            {/* One primary: Start when it is offered (a night program has it with no steps). */}
+            <Button variant={steps.length || program.night ? "secondary" : "primary"} loading={planner.busy} disabled={held} onClick={onPlan}
               data-testid="program-plan-it">Plan it</Button>
             <span className="pg-choice-cons">{steps.length ? "The engine drafts the steps again from the goal. You apply the rows you want." : "The engine drafts the steps from the goal."}</span>
           </span>

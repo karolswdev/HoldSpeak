@@ -1000,6 +1000,9 @@ class ProgramService:
             # JRN9, JRN10: the findings to file (Secure) and the fix program.
             items += program_audit.turn_items(program, steps, checkpoints if checkpoints is not None
                                               else self.store.list_checkpoints(program["id"]))
+        # The live walk (2026-11-01): Close is the last thing he is asked, after
+        # the audit's and the lessons' rows (they are added after your_turn's).
+        items = [item for item in items if item["kind"] != "close"] + [item for item in items if item["kind"] == "close"]
         if program.get("closed_at") and program_delivery.target(program) is not None:
             # LANG13: a delivery that failed, or that waits for his merge.
             item = program_delivery.turn_item(program, program_delivery.last_line(self, program["id"]))

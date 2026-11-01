@@ -445,6 +445,8 @@ describe("the Program window (direction C, the ledger)", () => {
     expect(within(screen.getByTestId("programs-draft-goal")).getByText(drafting.goal.split("\n")[0], { exact: false })).toBeTruthy();
     const tray = screen.getByTestId("programs-tray");
     expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
+    // One primary in the tray (the live walk, 2026-11-01): Plan it is secondary beside Start.
+    expect(within(tray).getByTestId("program-plan-it").className).not.toMatch(/primary/);
     expect(within(tray).getByTestId("programs-start-words").textContent).toMatch(/^Start will check the repository/);
     expect(within(screen.getByTestId("program-toolbar")).queryByTestId("program-start")).toBeNull();
     // A press opens the step in place: its title with its mic, its gate as plain words with the pickers.
@@ -2647,8 +2649,10 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     render(<ProgramBody programId={audit.id} />);
     await screen.findByTestId("programs-your-turn");
     const row = turnRow("audit_file")!;
-    expect(row.textContent).toContain(`The program: ${item.brief!.happened} ${item.brief!.question}`);
-    expect(within(row).getAllByRole("button").map((button) => button.textContent)).toEqual(["File", "Skip", "Copy page link"]);
+    // Close is asked last (the live walk): File the findings is the headline.
+    expect(row.textContent).toContain(item.brief!.question);
+    expect(screen.getAllByTestId("programs-turn-item").map((node) => node.getAttribute("data-kind"))).toEqual(["audit_file", "fix_program", "close"]);
+    expect(within(row).getAllByRole("button").map((button) => button.textContent).slice(0, 2)).toEqual(["File", "Skip"]);
     expect(within(screen.getByTestId("programs-findings")).queryAllByTestId("programs-finding-task")).toHaveLength(0);
     fireEvent.click(within(row).getByTestId("programs-turn-file"));
     await waitFor(() => expect(calls).toContain(

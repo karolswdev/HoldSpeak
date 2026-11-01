@@ -164,7 +164,11 @@ def delivery_where(program: Mapping[str, Any]) -> str:
 def doing_words(kind: str, program: Mapping[str, Any], step: Optional[Mapping[str, Any]]) -> str:
     """What the held thing was doing: the step, or the program's delivery."""
     if kind == "delivery":
-        return sentence(f"The program is done. It delivers its record to {delivery_where(program)}")
+        # The live walk (2026-11-01): "The program is done" is the happened
+        # line's; said here too it read twice. A delivery with no dw record
+        # read "delivers its record to its record".
+        where = delivery_where(program)
+        return sentence("It delivers its record" + ("" if where == "its record" else f" to {where}"))
     return doing_line(step)
 
 
