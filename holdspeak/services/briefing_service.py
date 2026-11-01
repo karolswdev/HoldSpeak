@@ -57,7 +57,7 @@ PROGRAM_REF = "program:"
 #: The held items a page answers (§3 "The held item"); an agent's question
 #: (``answer``), a review ask (it prepares a send) and Close stay on the desk.
 BRIEFABLE = frozenset({"core", "commit", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word",
-                       "requirement_left", "requirement_proposed", "step_change", "step_amend"})
+                       "requirement_left", "requirement_proposed", "step_change", "step_amend", "delivery"})
 #: A choice the page does not offer yet: a waive needs his typed reason.
 _DESK_ONLY_CHOICES = frozenset({"waive"})
 
@@ -66,7 +66,7 @@ KIND_WORDS = {
     "limited": "Agent at its limit", "race": "Race winner", "add_step": "Added step",
     "requirement_word": "Your word", "requirement_left": "Requirement left",
     "requirement_proposed": "Proposed requirement", "step_change": "Proposed change",
-    "step_amend": "Proposed amendment",
+    "step_amend": "Proposed amendment", "delivery": "Delivery",
 }
 
 #: Each choice's label and what it does (§3 "The choices", ASD-STE100).
@@ -90,6 +90,9 @@ CHOICE_WORDS: dict[str, dict[str, tuple[str, str]]] = {
     "requirement_proposed": {"add": ("Add", "The requirement is added."), "skip": ("Skip", "Nothing is added.")},
     "step_change": {"apply": ("Apply", "The step changes."), "skip": ("Skip", "The step stays as it is.")},
     "step_amend": {"send": ("Send", "The agent gets the line."), "skip": ("Skip", "Nothing is sent.")},
+    # LANG13: the delivery at Done (Merge at Secure; Retry after a failure).
+    "delivery": {"merge": ("Merge", "The delivery PR merges."), "retry": ("Retry", "The delivery runs again."),
+                 "skip": ("Skip", "The program stays Done, not delivered.")},
 }
 
 #: Later's next touches the page offers (§7 "The words"); "At a time…" is DIR4.
@@ -330,7 +333,7 @@ class BriefingService:
         ordinal = (step or {}).get("ordinal") or item.get("ordinal")
         head = f"{program['title']} · step {ordinal}" if ordinal else str(program["title"])
         goal = words.goal_line(program)
-        doing = words.doing_line(step)
+        doing = words.doing_words(kind, program, step)
         happened = words.happened_line(kind, item, step)
         question = words.question_line(kind, item)
         changed = []

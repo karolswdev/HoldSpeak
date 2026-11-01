@@ -15,7 +15,7 @@ export type LaterMark = { until: string; via: string };
 /** The held items a page answers (the hub's `BRIEFABLE`). */
 const BRIEFABLE = new Set([
   "core", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word",
-  "requirement_left", "requirement_proposed", "step_change", "step_amend",
+  "requirement_left", "requirement_proposed", "step_change", "step_amend", "delivery",
 ]);
 
 export function briefable(kind: string): boolean {

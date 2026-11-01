@@ -356,7 +356,9 @@ export interface ProgramStep {
 
 export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "commit" | "race" | "add_step" | "close" | "limited"
   // PG-REQ §9: his word, a requirement left after the rounds, and what an agent proposes.
-  | "requirement_word" | "requirement_left" | "requirement_proposed" | "step_change" | "step_amend";
+  | "requirement_word" | "requirement_left" | "requirement_proposed" | "step_change" | "step_amend"
+  // LANG13: the delivery at Done (Merge at Secure, or Retry after a failure; Skip).
+  | "delivery";
 
 export interface YourTurnItem {
   id: string;

@@ -79,7 +79,15 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   requirement_proposed: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
   step_change: [{ choice: "apply", word: "Apply", primary: true }, { choice: "skip", word: "Skip" }],
   step_amend: [{ choice: "send", word: "Send", primary: true }, { choice: "skip", word: "Skip" }],
+  // LANG13: the hub's choices decide which (merge, skip at Secure; retry, skip after a failure).
+  delivery: [{ choice: "merge", word: "Merge", primary: true }, { choice: "retry", word: "Retry", primary: true }, { choice: "skip", word: "Skip" }],
 };
+
+/** The verbs an item offers: its kind's, kept to the choices the hub sent. */
+function verbsFor(item: YourTurnItem): { choice: string; word: string; primary?: boolean }[] {
+  const all = VERBS[item.kind] ?? [];
+  return item.kind === "delivery" ? all.filter((verb) => item.choices.includes(verb.choice)) : all;
+}
 
 const REQUIREMENT_KINDS = new Set(["requirement_word", "requirement_left"]);
 const PROPOSAL_KINDS = new Set(["requirement_proposed", "step_change", "step_amend"]);
@@ -105,6 +113,7 @@ function itemFact(item: YourTurnItem, step: ProgramStep | undefined, program: Pr
   if (item.kind === "parked") return step?.parked_reason ? "Parked" : "";
   if (item.kind === "core") return "A core question";
   if (item.kind === "limited") return item.warning ? "Near its limit" : "Limited";
+  if (item.kind === "delivery") return "The delivery";
   if (item.kind === "requirement_word") return step ? "Your word · holds the merge" : "Your word";
   if (item.kind === "requirement_left") return requirementOf(program, item)?.kind_word ?? "";
   return "";
@@ -190,7 +199,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
         onDecided(await decideRequirement(program.id, item.requirement_id, choice as RequirementChoice, line || undefined));
       } else if (PROPOSAL_KINDS.has(item.kind) && item.proposal_id != null) {
         onDecided(await decideProposal(program.id, item.proposal_id, choice));
-      } else onDecided(await decide(program.id, item.step_id, body));
+      } else onDecided(await decide(program.id, item.step_id || "program", body));
       setAsk(null);
     } catch (error) {
       setFailed(plainFail("Your answer did not reach the program", error, "The step is unchanged", "Try again"));
@@ -217,7 +226,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
         {item.kind === "answer" ? choice("answer", (
           <Button dense={!withCons} variant="primary" onClick={() => item.launch_id && openRef(`launch:${item.launch_id}`)}
             disabled={!item.launch_id} data-testid="programs-turn-answer">Answer</Button>
-        )) : (VERBS[item.kind] ?? []).map((verb) => choice(verb.choice, (
+        )) : verbsFor(item).map((verb) => choice(verb.choice, (
           <Button key={verb.choice} dense={!withCons} variant={verb.primary ? "primary" : "secondary"}
             loading={busy === `${item.id}:${verb.choice}`} disabled={Boolean(busy)}
             onClick={() => void press(item, verb.choice)} data-testid={`programs-turn-${verb.choice.replace("_", "-")}`}>
@@ -576,6 +585,19 @@ function ViewMore({ view, onView }: { view: ProgramView; onView(next: ProgramVie
   );
 }
 
+/** LANG13: a Done program's delivery settles to one line under the track
+ *  ("Delivered to dw app/1 (PR #12)"), from the ledger's delivery row. */
+function DeliveredLine({ program }: { program: Program }) {
+  if (program.state !== "done") return null;
+  const row = program.checkpoints.find((line) => line.kind === "delivery");
+  if (!row || row.choice !== "delivered") return null;
+  return (
+    <p className="pg-line-settle" data-testid="programs-delivered">
+      <DotWord tone="ok">{row.line}</DotWord>
+    </p>
+  );
+}
+
 /** A held step's row says what happened, in the hub's words. */
 function heldWords(program: Program, step: ProgramStep): string | undefined {
   return program.your_turn_items.find((item) => item.step_id === step.id && item.brief?.happened)?.brief?.happened;
@@ -909,6 +931,7 @@ export function ProgramBody({ programId }: { programId: string }) {
         {/* PG-WINDOW: the body says it goes on (the kit's ScrollHint fade). */}
         <ScrollHint axis="y" scrollRef={bodyRef} className="pg-body-scroll">
         {view === "board" ? <ProgramLine program={program} goal={!drafting} /> : null}
+        {view === "board" ? <DeliveredLine program={program} /> : null}
         {drafting && view === "board" ? (
           <DraftHead program={program} goal={goal ?? program.goal} busy={busy} planner={planner}
             canAsk={!(program.rounds ?? []).some((round) => round.asked)} askBusy={rounds.busy === "ask"} anyRoundBusy={Boolean(rounds.busy)}
