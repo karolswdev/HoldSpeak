@@ -163,7 +163,7 @@ def test_at_secure_the_delivery_pr_waits_for_his_merge(tmp_path, monkeypatch) ->
     brief = wire["your_turn_items"][0]["brief"]
     assert brief["question"] == "Merge the delivery pull request, or skip the delivery?"
     assert brief["consequences"]["merge"] == "Merge the delivery pull request. The program is then delivered."
-    assert brief["doing"] == "The program is done. It delivers its record to dw app/1."
+    assert brief["doing"] == "It delivers its record to dw app/1."
     [line] = _delivery_lines(rig, pid)
     number = max(rig.gh.prs)
     assert line["choice"] == "pr_open" and line["line"] == (

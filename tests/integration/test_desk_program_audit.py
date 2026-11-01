@@ -186,6 +186,8 @@ def test_audit_levels_file_by_rule_or_ask(tmp_path, monkeypatch) -> None:
     assert _tasks(rig) == []
     items = rig.program(pid)["your_turn_items"]
     asks = {item["kind"]: item for item in items}
+    # The live walk: Close is asked last, after the audit's own rows.
+    assert [item["kind"] for item in items] == ["audit_file", "fix_program", "close"]
     assert asks["audit_file"]["title"] == "3 findings to file as Door tasks"
     assert asks["audit_file"]["choices"] == ["file", "skip"] and "fix_program" in asks
     # The face's answers: the wire, the rows in Needs you, and his File through the route.

@@ -445,6 +445,8 @@ describe("the Program window (direction C, the ledger)", () => {
     expect(within(screen.getByTestId("programs-draft-goal")).getByText(drafting.goal.split("\n")[0], { exact: false })).toBeTruthy();
     const tray = screen.getByTestId("programs-tray");
     expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
+    // One primary in the tray (the live walk, 2026-11-01): Plan it is secondary beside Start.
+    expect(within(tray).getByTestId("program-plan-it").className).not.toMatch(/primary/);
     expect(within(tray).getByTestId("programs-start-words").textContent).toMatch(/^Start will check the repository/);
     expect(within(screen.getByTestId("program-toolbar")).queryByTestId("program-start")).toBeNull();
     // A press opens the step in place: its title with its mic, its gate as plain words with the pickers.
