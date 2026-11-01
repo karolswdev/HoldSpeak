@@ -1852,6 +1852,22 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
     expect(field().value).toBe("");
   });
 
+  it("\"program: …\" is the shape intent: the address is read off by rule and the sentence goes to the hub", async () => {
+    const id = voice.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: voice.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+      [`POST /api/programs/${id}/shape`]: () => clone(voice.shapes[0]),
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    await speak(`Program: ${voice.shapes[0].sentence}`);
+    await waitFor(() => expect(posts(id, "shape")).toHaveLength(1));
+    expect(posts(id, "shape")[0]).toEqual({ sentence: voice.shapes[0].sentence, apply: false });
+    await screen.findByTestId("programs-change-well");
+  });
+
   it("three sentences in a row: each goes with the rows that wait; the one well holds all three; one Apply lands them", async () => {
     const id = voice.program.id;
     let turn = 0;
