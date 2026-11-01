@@ -4258,14 +4258,18 @@ class ProgramService:
     # ── a call that decides (PG-DIRECTION DIR8) ──────────────────────
 
     def call_line(self, program_id: str, step_id: Optional[str], line: str, *,
-                  note_ref: Optional[str] = None) -> int:
+                  note_ref: Optional[str] = None, because: Optional[Mapping[str, Any]] = None,
+                  refusal: Optional[str] = None) -> int:
         """One ledger line a call writes about a held item it read: when it
         was asked, what came of it, and the call's transcript Note
         (``undo.note_ref``). It changes nothing else on the Program."""
         program = self._program(program_id)
+        undo = {key: value for key, value in (("note_ref", note_ref), ("because", dict(because or {}) or None),
+                                              ("refusal", refusal)) if value}
+        # DIR8a: the line keeps why the item was on the call and a late answer's refusal.
         ident = self.store.add_checkpoint(step_id=str(step_id or ""), program_id=program["id"], at=self._clock(),
                                           by="owner", line=" ".join(str(line or "").split())[:400], via="call",
-                                          undo={"note_ref": note_ref} if note_ref else None)
+                                          undo=undo or None)
         self.changed(program["id"], step_id or None, verb="checkpoint")
         return ident
 

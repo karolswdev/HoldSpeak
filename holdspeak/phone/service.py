@@ -150,6 +150,8 @@ class PhoneService:
         self._contexts: dict[str, str] = {}
         #: PG-DIRECTION DIR8: the Program step a call is about, by call id.
         self._about: dict[str, str] = {}
+        #: DIR8a: the ``because`` of each call the reach rules placed.
+        self._because: dict[str, dict[str, Any]] = {}
         self._answers: dict[str, dict[str, Any]] = {}
         self._waiters: dict[str, threading.Event] = {}
         self._fell_back: set[str] = set()
@@ -533,6 +535,7 @@ class PhoneService:
     def call(
         self, principal: Any, *, reason: str, context: str = "", urgent: bool = False, wait: bool = False,
         program_step_id: Optional[str] = None, origin_ref: Optional[str] = None, gate: bool = True,
+        because: Optional[Mapping[str, Any]] = None,
     ) -> dict[str, Any]:
         """The phone rings. EGRESS: the owner's press, or an agent's call that
         waits in Needs you unless its Program may call and the level allows."""
@@ -566,6 +569,8 @@ class PhoneService:
             self._contexts[row["id"]] = context
             if program_step_id:
                 self._about[row["id"]] = str(program_step_id)
+            if because:
+                self._because[row["id"]] = dict(because)  # DIR8a: why the call goes, for the call to keep
             self._waiters[row["id"]] = threading.Event()
             self.store.save_call(row)
         if not allowed:
@@ -667,8 +672,10 @@ class PhoneService:
 
         def run() -> None:
             about = self._about.get(call_id)
+            because = self._because.get(call_id)
             placed = self.number.place(reason=row["reason"], context=self._contexts.get(call_id, ""),
-                                       on_end=on_end, on_failed=on_failed, **({"about": about} if about else {}))
+                                       on_end=on_end, on_failed=on_failed, **({"about": about} if about else {}),
+                                       **({"because": because} if because else {}))
             if placed:
                 with self._lock:
                     current = self._call(call_id)
@@ -880,9 +887,13 @@ class PhoneService:
             line = "Reached you: a message, held for the morning"
         elif outcome.channel == "call":
             try:
+                from ..services.briefing_service import because_of
+
                 made = self.call(OWNER, reason=reason or text[:MAX_REASON], context=context or text,
                                  urgent=outcome.urgent, origin_ref=origin_ref, program_step_id=program_step_id,
-                                 gate=False)
+                                 gate=False, because=because_of(_HELD_KIND.get(kind, kind), rule=outcome.rule,
+                                                                level=level, reach=kind,
+                                                                urgent=bool(outcome.urgent) or None))
                 result.update({"held": False, "channel": "call", "urgent": outcome.urgent, "call_id": made["call_id"]})
                 line = "Reached you: a call" + (", urgent" if outcome.urgent else "")
             except PhoneRefused as exc:
@@ -1131,3 +1142,7 @@ def default_phone_service(db: Any = None) -> PhoneService:
 
 __all__ = ["FRAME", "PhoneRefused", "PhoneService", "SILENCE", "call_wire", "default_phone_service", "device_wire",
            "message_wire"]
+
+
+#: DIR8a: the held item kind a reach kind calls him about (its ``because``).
+_HELD_KIND = {"core_question": "core", "agent_question": "answer"}

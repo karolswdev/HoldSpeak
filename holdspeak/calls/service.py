@@ -23,7 +23,7 @@ import time
 import uuid
 from collections import OrderedDict
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
 from ..principals import Principal, PrincipalKind
@@ -704,6 +704,7 @@ class CallsService:
     async def place(
         self, to: str = "", *, greeting: Optional[str] = None, context: str = "", reason: str = "",
         on_end: Optional[Callable[[CallRecord], None]] = None, about: str = "",
+        because: Optional[Mapping[str, Any]] = None,
     ) -> dict[str, Any]:
         """``call <to> --relay``; the call runs like an incoming one. ``to``
         defaults to his number (``calls.allowed_numbers[0]``). Phone
@@ -735,7 +736,8 @@ class CallsService:
             raise ServiceError("calls_place_failed", reply.error or f"The call did not connect ({reason}).",
                                context={"status": 409, "reason": reason})
         record = CallRecord(phone_call_id=str(reply.data.get("call_id") or ""), direction="out", remote=target,
-                            context=str(context or ""), reason=str(reason or ""), about=str(about or ""))
+                            context=str(context or ""), reason=str(reason or ""), about=str(about or ""),
+                            because=dict(because or {}))
         self._keep(record)
 
         async def run_then_listen() -> None:

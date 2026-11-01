@@ -214,7 +214,7 @@ def answered_words(body: Mapping[str, Any], how: str) -> str:
     """"Step 7 of Overnight on the home box is answered already: Go on: … ·
     decided from the briefing page." (§4.4: the first answer wins)."""
     where = where_words(body)
-    return _sentence(f"{where[:1].upper()}{where[1:]} is answered already: {how}")
+    return _sentence(f"{where[:1].upper()}{where[1:]}: {how}")
 
 
 def count_words(n: int) -> str:
@@ -291,7 +291,7 @@ class DeskHeld:
 
         return default_program_service(self._db)
 
-    def items(self, about: str = "") -> tuple[list[dict[str, Any]], int]:
+    def items(self, about: str = "", because: Optional[Mapping[str, Any]] = None) -> tuple[list[dict[str, Any]], int]:
         """``(packages, desk_only)``: each Program held item a call can
         answer, the one the call is about first (``about``: a step id), as
         Needs you ranks them; ``desk_only`` counts the rest."""
@@ -304,6 +304,11 @@ class DeskHeld:
             if body is None:
                 desk_only += 1
                 continue
+            if about and body.get("step_id") == about and because:
+                # DIR8a: the item the desk called about carries the reach's why.
+                body["because"] = {**dict(body.get("because") or {}), **dict(because), "via": "call"}
+            else:
+                body["because"] = {**dict(body.get("because") or {}), "rule": "asked_on_call", "via": "call"}
             bodies.append(body)
         if about:
             bodies.sort(key=lambda body: 0 if body.get("step_id") == about else 1)
@@ -312,11 +317,12 @@ class DeskHeld:
     def answered(self, body: Mapping[str, Any]) -> str:
         """``""`` while the item waits on him; else how it was answered (the
         step's last owner line), for "Step 7 is answered already: …"."""
+        from ..services.briefing_service import not_pending
+
         if self.briefing().compose(str(body["ref"])) is not None:
             return ""
-        lines = [row for row in self.programs().store.list_checkpoints(str(body["program_id"]))  # newest first
-                 if row.get("by") == "owner" and (not body.get("step_id") or row.get("step_id") == body["step_id"])]
-        return str(lines[0]["line"]) if lines else "on your desk"
+        # IMP5: the same words as the page and Telegram ("Answered at 21:46 from the desk").
+        return str(not_pending(*self.briefing()._decided_where(str(body["ref"]))).detail)
 
     def decide(self, body: Mapping[str, Any], choice: str) -> None:
         """His spoken yes: the item's own verb, as his press, ``via="call"``.
@@ -353,7 +359,8 @@ class DeskHeld:
             body = row["body"]
             try:
                 programs.call_line(str(body["program_id"]), str(body.get("step_id") or "") or None,
-                                   ledger_words(row, note_title), note_ref=note_ref or None)
+                                   ledger_words(row, note_title), note_ref=note_ref or None,
+                                   because=body.get("because"), refusal=row.get("refusal"))
             except Exception as exc:  # the ledger line is not a gate
                 log.warning(f"the call's ledger line was not written: {exc}")
 
