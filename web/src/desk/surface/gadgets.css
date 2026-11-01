@@ -1053,14 +1053,31 @@ button.gadget-chip-egress {
 .gadget-fold > summary::-webkit-details-marker {
   display: none;
 }
-.gadget-fold > summary::before {
-  content: "▸";
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  transition: transform var(--duration-short) var(--ease-quart);
+/* THE FOLD (owner 2026-11-01: "that left chevron something: fuck off";
+   canvas betterment/canvases/fold-2026-11-01.html, direction B): no
+   triangle. The title and its count on the left; at the right the verb the
+   press does, Show or Hide (the open state is also aria-expanded on the
+   summary's details). The open body sits under a hairline rule. */
+.gadget-fold > summary {
+  width: 100%;
 }
-.gadget-fold[open] > summary::before {
-  transform: rotate(90deg);
+.gadget-fold > summary::after {
+  content: "Show";
+  flex: none;
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--wb-sel);
+}
+.gadget-fold[data-token] > summary::after {
+  margin-left: 0;
+}
+.gadget-fold[open] > summary::after {
+  content: "Hide";
+}
+.gadget-fold[open] > .gadget-fold-body {
+  border-top: 1px solid var(--wb-rule-soft);
 }
 .gadget-fold > summary:hover {
   background: var(--wash-1);

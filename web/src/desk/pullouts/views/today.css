@@ -411,6 +411,16 @@
   text-align: left;
   cursor: pointer;
 }
+/* THE FOLD (2026-11-01, direction B): Today's folds say Show or Hide at
+   the right, no triangle; a fold with nothing in it has no verb. */
+.desk-next .today-fold-head[aria-expanded] { width: 100%; }
+.desk-next .today-fold-head[aria-expanded]::after {
+  content: "Show";
+  margin-left: auto;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-sel);
+}
+.desk-next .today-fold-head[aria-expanded="true"]::after { content: "Hide"; }
 .desk-next .today-fold-mark {
   display: inline-block;
   width: 12px;

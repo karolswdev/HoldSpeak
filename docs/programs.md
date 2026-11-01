@@ -682,7 +682,7 @@ A program with the line `delivery dw <project>/<phase>` or `delivery dw <project
 3. `dw story evidence` writes the program's Done: the PR numbers, the requirements and their lines, the Decided for you counts and the handover note. `dw story status … done` marks the story done.
 4. HoldSpeak commits, pushes and opens one PR, "Delivery: <title> done". At Normal and YOLO, HoldSpeak merges it. At Secure, a Your turn row asks you: **Merge** or **Skip**.
 
-The log says "Delivered to dw app/1 (PR #12)". When a part fails, the log says it in words, for example "Could not deliver to dw app/1/07: Delivery Workbench did not take the evidence", and a Your turn row asks you: **Retry** or **Skip**. **Skip** leaves the program Done, with no delivery. Delivery Workbench never gets the steps, the briefs, the checkpoints, the findings or the worktree paths.
+The log says "Delivered to dw app/1 (PR #12)". When a part fails, the log says it in words, for example "Could not deliver to dw app/1/07: Delivery Workbench did not take the evidence", and a Your turn row asks you: **Retry** or **Skip**. **Skip** leaves the program Done, with no delivery. At Secure the row asks you to **Merge** the delivery pull request or **Skip**. In the Program window this row is the headline, with what each choice does under it; you can also answer it from a briefing page. After the merge, the Done window says "Delivered to dw app/1 (PR #12)" under its step line. Delivery Workbench never gets the steps, the briefs, the checkpoints, the findings or the worktree paths.
 
 Not there yet: the link when you make the program (the story's acceptance lines as proposed requirements), and `dw phase close` for a whole phase.
 

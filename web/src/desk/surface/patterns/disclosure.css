@@ -56,6 +56,26 @@
   transform: rotate(90deg);
 }
 
+/* THE FOLD (2026-11-01, direction B): no caret; the verb at the right,
+   Show or Hide (aria-expanded carries the state). */
+.desk-next .surface-disclosure:not([data-variant="raw"]) .surface-disclosure-trigger {
+  width: 100%;
+}
+.desk-next .surface-disclosure:not([data-variant="raw"]) .surface-disclosure-trigger::after {
+  content: "Show";
+  flex: none;
+  margin-left: auto;
+  padding-left: 12px;
+  font-weight: 500;
+  color: var(--wb-sel);
+}
+.desk-next .surface-disclosure[data-token]:not([data-variant="raw"]) .surface-disclosure-trigger::after {
+  margin-left: 0;
+}
+.desk-next .surface-disclosure[data-open]:not([data-variant="raw"]) .surface-disclosure-trigger::after {
+  content: "Hide";
+}
+
 @media (prefers-reduced-motion: reduce) {
   .surface-disclosure-caret {
     transition: none;

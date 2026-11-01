@@ -58,6 +58,9 @@ import reachRevokedFixture from "../__fixtures__/reach.revoked.json";
 // changed text (a refused brief, control up the ladder, a new step, a merge
 // on his press, a + line), recorded through the real routes.
 import textFixture from "../__fixtures__/program.text.json";
+import deliveryFailedFixture from "../__fixtures__/program.delivery_failed.json";
+import deliveryMergeFixture from "../__fixtures__/program.delivery_merge.json";
+import deliveryMergedFixture from "../__fixtures__/program.delivery_merged.json";
 import textApplyFixture from "../__fixtures__/program.text_apply.json";
 // PG-LANG LANG3/4: a sentence shaped by the REAL qwen3.8-27b replies
 // (tests/fixtures/program_shape_reply.json) replayed through the hub's runner,
@@ -267,6 +270,10 @@ describe("the Program window (direction C, the ledger)", () => {
     await screen.findByTestId("programs-board");
     const words = screen.getAllByTestId("programs-step").map((row) => within(row).getByTestId("programs-step-word").textContent);
     expect(words).toEqual(["Done", "PR open", "Check failed · log", "Asks you", "Ready · waiting for qwen", "Planned", "Working"]);
+    // Open lane only where the lane is alive (a working step), never on a done one.
+    const working = running.steps.find((step) => step.state === "working" && step.launch_id);
+    if (working) expect(within(stepRow(working.ordinal)).getByTestId("programs-step-open")).toBeTruthy();
+    expect(within(stepRow(1)).queryByTestId("programs-step-open")).toBeNull();
     // The pi step names its engine beside the sprite.
     expect(stepRow(5).textContent).toContain("pi · qwen3.8-27b on karol");
     // The question is in the well with Answer (it opens the step's lane).
@@ -501,8 +508,46 @@ describe("PG-WINDOW: the Program window as one object (canvas program-window-202
   });
 });
 
+describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/test_program_delivery.py)", () => {
+  it("a failed delivery is the headline in his words, with Retry and Skip and what each does", async () => {
+    const failed = deliveryFailedFixture as unknown as Program;
+    const item = failed.your_turn_items[0];
+    hub({ [`GET /api/programs/${failed.id}`]: failed });
+    render(<ProgramBody programId={failed.id} />);
+    const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+    expect(headline.getAttribute("data-kind")).toBe("delivery");
+    expect(within(headline).getByTestId("programs-brief-question").textContent).toBe("Try the delivery again, or skip it?");
+    expect(within(headline).getByTestId("programs-brief-happened").textContent).toBe(item.brief!.happened);
+    const tray = within(headline).getByTestId("programs-tray");
+    expect(within(tray).getAllByRole("button").map((button) => button.textContent)).toEqual(["Retry", "Skip"]);
+    expect(within(tray).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
+      .toEqual(["Try the delivery again.", "Skip it. The program stays Done, not delivered."]);
+  });
+
+  it("at Secure, Merge presses through and the Done window settles to Delivered to dw app/1 (PR #n)", async () => {
+    const waiting = deliveryMergeFixture as unknown as Program;
+    const merged = (deliveryMergedFixture as unknown as { program: Program }).program;
+    hub({
+      [`GET /api/programs/${waiting.id}`]: waiting,
+      [`POST /api/programs/${waiting.id}/steps/program/decide`]: deliveryMergedFixture,
+    });
+    render(<ProgramBody programId={waiting.id} />);
+    const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+    expect(within(headline).getByTestId("programs-brief-question").textContent).toBe("Merge the delivery pull request, or skip the delivery?");
+    expect(within(headline).getAllByTestId("programs-turn-consequence")[0].textContent)
+      .toBe("Merge the delivery pull request. The program is then delivered.");
+    expect(screen.queryByTestId("programs-delivered")).toBeNull();
+    fireEvent.click(within(headline).getByTestId("programs-turn-merge"));
+    await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
+    expect(calls).toContain(`POST /api/programs/${waiting.id}/steps/program/decide ${JSON.stringify({ kind: "delivery", choice: "merge" })}`);
+    const pr = merged.checkpoints.find((row) => row.kind === "delivery" && row.choice === "delivered")!;
+    expect(screen.getByTestId("programs-delivered").textContent).toBe(pr.line);
+    expect(pr.line).toMatch(/^Delivered to dw app\/1 \(PR #\d+\)$/);
+  });
+});
+
 describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
-  it("the contender is indented under the step, the loser says Lost the race to Codex · 34 min, Open lane on each", async () => {
+  it("the contender is indented under the step, the loser says Lost the race to Codex · 34 min, no Open lane on an ended lane", async () => {
     hub({ [`GET /api/programs/${raced.id}`]: raced });
     render(<ProgramBody programId={raced.id} />);
     await screen.findByTestId("programs-board");
@@ -521,10 +566,10 @@ describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
     expect(within(contender).getByTestId("programs-step-select").textContent).toContain("Codex");
     expect(within(contender).getByTestId("programs-step-word").textContent).toBe("Done");
     expect(contender.textContent).toContain("Merged #101");
-    // Open lane on each: the loser's lane and the winner's.
-    fireEvent.click(within(lead).getByTestId("programs-step-open"));
-    fireEvent.click(within(contender).getByTestId("programs-step-open"));
-    expect(mocks.openRef.mock.calls).toEqual([["launch:L1"], ["launch:L2"]]);
+    // Both lanes ended (the loser parked, the winner merged): Open lane is a
+    // dead verb then, so neither row draws it (owner catch 2026-11-01).
+    expect(within(lead).queryByTestId("programs-step-open")).toBeNull();
+    expect(within(contender).queryByTestId("programs-step-open")).toBeNull();
     // The engine's choice is under Decided for you.
     expect(screen.getByTestId("programs-decided").textContent).toContain("Codex won the race in 34 min");
   });

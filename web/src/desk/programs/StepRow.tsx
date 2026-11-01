@@ -22,6 +22,9 @@ import type { PlanSize, PlanStep, ProgramStep } from "./types";
 /** PG-WINDOW: the row's line in his terms: the hub's story (brief_words),
  *  never the engine's raw checkpoint ("git push failed; parked"). A planned
  *  step says its size. */
+/** The states in which the step's agent lane is alive. */
+const LANE_LIVE = new Set(["briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings"]);
+
 export function rowWords(step: ProgramStep): string {
   const story = step.story ?? [];
   if (story.length) return story[story.length - 1].line;
@@ -137,7 +140,8 @@ export function StepRow({
         data-fits={sized ? (step.estimate?.fits === false ? "no" : step.estimate?.fits ? "yes" : undefined) : undefined}
         data-testid={history ? "programs-step-pr" : sized ? "programs-draft-size" : "programs-step-words"}>{line}</span>
       <span className="pg-step-verbs">
-        {step.launch_id ? (
+        {/* A dead verb is a lie: the lane is gone once the step parks or ends. */}
+        {step.launch_id && LANE_LIVE.has(step.state) ? (
           <Button dense variant="secondary" onClick={() => openRef(`launch:${step.launch_id}`)} data-testid="programs-step-open">Open lane</Button>
         ) : null}
       </span>

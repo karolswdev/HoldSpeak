@@ -32,7 +32,7 @@ import { useDesk } from "../store";
 import { keepPlace } from "../deskMemory";
 import { useCompactViewport } from "../useCompactViewport";
 import {
-  CheckGadget, DotWord, EditInPlace, FilterTokens, FoldGadget, ListView, StatusBar, StringGadget, SurfaceState, Toolbar, countWords,
+  CheckGadget, DotWord, EditInPlace, ScrollHint, FilterTokens, FoldGadget, ListView, StatusBar, StringGadget, SurfaceState, Toolbar, countWords,
   type StatusBarItem,
 } from "../surface";
 import { useWindowInterior } from "../surface/interior";
@@ -79,7 +79,15 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   requirement_proposed: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
   step_change: [{ choice: "apply", word: "Apply", primary: true }, { choice: "skip", word: "Skip" }],
   step_amend: [{ choice: "send", word: "Send", primary: true }, { choice: "skip", word: "Skip" }],
+  // LANG13: the hub's choices decide which (merge, skip at Secure; retry, skip after a failure).
+  delivery: [{ choice: "merge", word: "Merge", primary: true }, { choice: "retry", word: "Retry", primary: true }, { choice: "skip", word: "Skip" }],
 };
+
+/** The verbs an item offers: its kind's, kept to the choices the hub sent. */
+function verbsFor(item: YourTurnItem): { choice: string; word: string; primary?: boolean }[] {
+  const all = VERBS[item.kind] ?? [];
+  return item.kind === "delivery" ? all.filter((verb) => item.choices.includes(verb.choice)) : all;
+}
 
 const REQUIREMENT_KINDS = new Set(["requirement_word", "requirement_left"]);
 const PROPOSAL_KINDS = new Set(["requirement_proposed", "step_change", "step_amend"]);
@@ -105,6 +113,7 @@ function itemFact(item: YourTurnItem, step: ProgramStep | undefined, program: Pr
   if (item.kind === "parked") return step?.parked_reason ? "Parked" : "";
   if (item.kind === "core") return "A core question";
   if (item.kind === "limited") return item.warning ? "Near its limit" : "Limited";
+  if (item.kind === "delivery") return "The delivery";
   if (item.kind === "requirement_word") return step ? "Your word · holds the merge" : "Your word";
   if (item.kind === "requirement_left") return requirementOf(program, item)?.kind_word ?? "";
   return "";
@@ -190,7 +199,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
         onDecided(await decideRequirement(program.id, item.requirement_id, choice as RequirementChoice, line || undefined));
       } else if (PROPOSAL_KINDS.has(item.kind) && item.proposal_id != null) {
         onDecided(await decideProposal(program.id, item.proposal_id, choice));
-      } else onDecided(await decide(program.id, item.step_id, body));
+      } else onDecided(await decide(program.id, item.step_id || "program", body));
       setAsk(null);
     } catch (error) {
       setFailed(plainFail("Your answer did not reach the program", error, "The step is unchanged", "Try again"));
@@ -217,7 +226,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
         {item.kind === "answer" ? choice("answer", (
           <Button dense={!withCons} variant="primary" onClick={() => item.launch_id && openRef(`launch:${item.launch_id}`)}
             disabled={!item.launch_id} data-testid="programs-turn-answer">Answer</Button>
-        )) : (VERBS[item.kind] ?? []).map((verb) => choice(verb.choice, (
+        )) : verbsFor(item).map((verb) => choice(verb.choice, (
           <Button key={verb.choice} dense={!withCons} variant={verb.primary ? "primary" : "secondary"}
             loading={busy === `${item.id}:${verb.choice}`} disabled={Boolean(busy)}
             onClick={() => void press(item, verb.choice)} data-testid={`programs-turn-${verb.choice.replace("_", "-")}`}>
@@ -576,9 +585,29 @@ function ViewMore({ view, onView }: { view: ProgramView; onView(next: ProgramVie
   );
 }
 
+/** LANG13: a Done program's delivery settles to one line under the track
+ *  ("Delivered to dw app/1 (PR #12)"), from the ledger's delivery row. */
+function DeliveredLine({ program }: { program: Program }) {
+  if (program.state !== "done") return null;
+  const row = program.checkpoints.find((line) => line.kind === "delivery");
+  if (!row || row.choice !== "delivered") return null;
+  return (
+    <p className="pg-line-settle" data-testid="programs-delivered">
+      <DotWord tone="ok">{row.line}</DotWord>
+    </p>
+  );
+}
+
 /** A held step's row says what happened, in the hub's words. */
 function heldWords(program: Program, step: ProgramStep): string | undefined {
   return program.your_turn_items.find((item) => item.step_id === step.id && item.brief?.happened)?.brief?.happened;
+}
+
+/** The goal's first sentence (the phone's line before the tray). */
+function firstSentence(goal: string): string {
+  const text = goal.trim().replace(/\s+/g, " ");
+  const found = /^(.+?[.?!])(\s|$)/.exec(text);
+  return found ? found[1] : text;
 }
 
 /** What Start checks before any agent works (#1686, start_precheck): the
@@ -608,6 +637,9 @@ function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy
           <DotWord tone="idle">Drafting</DotWord>
           <span className="pg-brief-place">{`· ${countWords(steps.length, "step") ?? "No steps yet"}`}</span>
         </p>
+        {firstSentence(goal) !== goal.trim() ? (
+          <p className="pg-draft-goal-first" data-testid="programs-draft-goal-first">{firstSentence(goal)}</p>
+        ) : null}
         <div className="pg-draft-goal" data-testid="programs-draft-goal">
           <EditInPlace label="Goal" multiline value={goal} placeholder="Say what the program is for" onCommit={onGoal} />
         </div>
@@ -639,6 +671,7 @@ function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy
 export function ProgramBody({ programId }: { programId: string }) {
   const { loading, error, program, reload, apply } = useProgram(programId);
   const [selected, setSelected] = useState<string | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   // The part the headline's Brief asked for (one press opens the step on it).
   const [askPart, setAskPart] = useState<{ step: string; part: StepPart } | null>(null);
   const [checksOpen, setChecksOpen] = useState(false);
@@ -894,8 +927,11 @@ export function ProgramBody({ programId }: { programId: string }) {
         ) : null}
         <ViewMore view={view} onView={setView} />
       </Toolbar>
-      <div className="pg-body">
+      <div className="pg-body" ref={bodyRef}>
+        {/* PG-WINDOW: the body says it goes on (the kit's ScrollHint fade). */}
+        <ScrollHint axis="y" scrollRef={bodyRef} className="pg-body-scroll">
         {view === "board" ? <ProgramLine program={program} goal={!drafting} /> : null}
+        {view === "board" ? <DeliveredLine program={program} /> : null}
         {drafting && view === "board" ? (
           <DraftHead program={program} goal={goal ?? program.goal} busy={busy} planner={planner}
             canAsk={!(program.rounds ?? []).some((round) => round.asked)} askBusy={rounds.busy === "ask"} anyRoundBusy={Boolean(rounds.busy)}
@@ -927,7 +963,7 @@ export function ProgramBody({ programId }: { programId: string }) {
             onLines={(next) => { text.setLines(next); if (proposal?.source === "text") setProposal(null); }} />
         ) : steps.length || drafting ? (
           <ListView label="Steps" className="pg-board" data-testid="programs-board">
-            {steps.length ? <h3 className="pg-board-caption">Steps</h3> : null}
+            {steps.length ? <h3 className="pg-board-caption">Steps<span className="pg-fold-sub">{` · ${steps.length}`}</span></h3> : null}
             <ul className="kit-listrows">
               {steps.map((step) => (
                 <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} landed={landed[step.id]}
@@ -952,6 +988,7 @@ export function ProgramBody({ programId }: { programId: string }) {
         {view === "board" && !drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
         {view === "board" && !drafting ? <ReachLine program={program} /> : null}
         {view === "board" && !drafting ? <LedgerFold program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
+        </ScrollHint>
       </div>
       {program.state !== "done" ? (
         <ShapeBar program={program} pending={proposal?.source === "sentence" ? proposal.text : null}
