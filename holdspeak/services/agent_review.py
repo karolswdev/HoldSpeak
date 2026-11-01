@@ -109,8 +109,11 @@ def parse_findings(words: Any) -> list[dict[str, str]]:
         # "MUST: none." (a closing mark) is none; "MUST: 1 remains (…)" is the
         # reviewer's count of the findings above, never a finding (the first
         # real night, 2026-11-01: both went back to the builder as findings).
-        plain = detail.strip(" .!;,").strip()
-        if re.fullmatch(r"(?:no|none|zero|nothing)(?:\s+(?:findings?|left|remain(?:s|ing)?))?", plain, re.I):
+        # "SHOULD · docs/index.md:5 · None required." (the fourth real night):
+        # a leading place is not the finding; "none required" is none.
+        plain = re.sub(r"^[·\-:\s]*(?:[\w./-]+:\d+\s*[·\-:]\s*)?", "", detail).strip(" .!;,").strip()
+        if re.fullmatch(r"(?:no|none|zero|nothing)(?:\s+(?:findings?|left|remain(?:s|ing)?|required|needed))?", plain, re.I) \
+                or re.match(r"^(?:no|none|nothing)\s+(?:required|needed)\b", plain, re.I):
             continue
         if re.match(r"^\d+\s+(?:remains?|left|open|found|findings?)\b", plain, re.I):
             continue
