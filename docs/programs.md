@@ -800,7 +800,7 @@ The MCP tools are in the `program` family:
 |---|---|---|
 | `program.create` | Make a program (title, goal, repository or project, base branch, control, check command, agent and engine, template). | You, or the orchestrating agent |
 | `program.plan` | Replace or add steps. `size: "auto"` sets each step's effort by rule. `before: <step id>` inserts the steps before a Planned or Ready step (`waits`, default true: that step also comes after them). | You, or the orchestrating agent |
-| `program.update` | Change the title, goal, control, project, spend limit, agent or engine. | You, or the orchestrating agent |
+| `program.update` | Change the title, goal, control, project, spend limit, agent or engine. An agent cannot make the control wider than its own (its step's program, else the desk's Control mode): "Refused: a program runs no wider than what made it". A program an agent makes is made at most at that level. You can widen it. | You, or the orchestrating agent |
 | `program.start`, `program.park`, `program.resume` | Start, park or resume a program. `program.park` takes an optional `reason`: `proof` (a run that proved the engine) or `done-with-it`. The list folds such a program (`parked_as`). | You, or the orchestrating agent |
 | `program.get`, `program.list` | Read programs, their steps, checkpoints, requirements and your turn. `program.list` takes `q`, `project_id` and `person_id`. `program.start` and `program.get` also take `name` (words of the title or the template); by name, the answer has `spoken`, and a name with no program is an answer that starts nothing. | Everyone |
 | `program.checkpoint` | Write one line on a step. | The step's own agent, you |

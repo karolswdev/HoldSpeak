@@ -181,7 +181,8 @@ def test_an_orchestrators_change_goes_up_the_ladder(tmp_path, monkeypatch) -> No
                                        "proposal_id": item["proposal_id"]}, OWNER)
     assert rig.step(pid, 2)["title"] == "B, better"
     # YOLO applies it and says so; Overturn while the step is still planned.
-    family.dispatch("program.update", {"program_id": pid, "control": "yolo"}, agent)
+    # IMP4: an agent never widens its Program; the owner does.
+    rig.service.update(OWNER, pid, control="yolo")
     family.dispatch("program.step_update", {"program_id": pid, "step_id": b["id"], "title": "B, best"}, agent)
     assert rig.step(pid, 2)["title"] == "B, best"
     decided = next(r for r in rig.program(pid)["decided_for_you"] if r["kind"] == "step_change")
@@ -244,7 +245,7 @@ def test_an_orchestrators_removal_goes_up_the_ladder(tmp_path, monkeypatch) -> N
     family.dispatch("program.decide", {"program_id": pid, "kind": "step_change", "choice": "apply",
                                        "proposal_id": item["proposal_id"]}, OWNER)
     assert [title for _n, title, _a in _titles(rig, pid)] == ["A", "C"]
-    family.dispatch("program.update", {"program_id": pid, "control": "yolo"}, agent)
+    rig.service.update(OWNER, pid, control="yolo")  # IMP4: the owner widens it, never the agent
     family.dispatch("program.step_remove", {"program_id": pid, "step_id": rig.step(pid, 2)["id"]}, agent)
     assert [title for _n, title, _a in _titles(rig, pid)] == ["A"]  # YOLO removes it and says so
     assert any(row["kind"] == "step_change" and "removes step 2, C" in row["line"]

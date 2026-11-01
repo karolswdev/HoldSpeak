@@ -364,7 +364,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Shipped (PG-IMPORT IMP1 PR) | `brief_words.step_report`; `seen` on engine checkpoints; `facts.files`. |
 | IMP2 | The to-do row (Done, Can't do it); the ending word | Open | After IMP1. |
 | IMP3 | Wait sentences; Since you were last here on Today | Open |  |
-| IMP4 | Never wider than the parent (closes the open ruling) | Open |  |
+| IMP4 | Never wider than the parent (closes the open ruling) | Shipped (this PR) | `program_service.parent_level`/`wider`: an agent's create is capped and says so; its update or text to a wider control is refused ("Refused: a program runs no wider than what made it", ledger line); step launches, handoffs, race entrants and helpers run at the Program's or parent's level (fenced). |
 | IMP5 | The `because` on each routed request; four honest refusals of a late answer | Open |  |
 | IMP6 | Take it over, hand it back, on a step's lane | Open |  |
 | IMP7 | The forest | Later | With handoffs and J5. |
