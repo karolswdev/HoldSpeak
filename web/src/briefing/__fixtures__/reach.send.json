@@ -48,8 +48,8 @@
       "program_id": null,
       "program_title": "",
       "question": "Send it to Team folder?",
-      "ref": "send:chs_aa475624cb3c7447fc953c63",
-      "since": "2026-11-01T18:00:52+00:00",
+      "ref": "send:chs_baf912d4a77bd3516a335cfa",
+      "since": "2026-11-01T22:32:30+00:00",
       "source": "send",
       "state": "open",
       "step_id": "",
@@ -60,7 +60,7 @@
   ],
   "later": [
     {
-      "at": "14:00",
+      "at": "18:32",
       "id": "in_1h",
       "label": "In 1 hour"
     },
@@ -82,11 +82,11 @@
   ],
   "package": {
     "desk": "/",
-    "expires_at": "2026-11-02T18:00:52.847139+00:00",
+    "expires_at": "2026-11-02T22:32:30.071651+00:00",
     "expires_words": "Expires in 23 h",
     "head": "Payments ledger cutover — update r1 (2026-11-01) · to Team folder",
     "hub": "Karols-MacBook-Pro",
-    "id": "pkg-b8911fb90d16",
+    "id": "pkg-42cb9fae2499",
     "kind": "item"
   }
 }

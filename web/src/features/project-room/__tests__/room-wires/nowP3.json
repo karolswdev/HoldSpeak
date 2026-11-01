@@ -1,14 +1,14 @@
 {
  "_recorded": "tests/integration/test_desk_project_room.py::test_the_now_wing_says_where_it_stands_from_this_weeks_meetings_and_notes (HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads)",
  "proposals": {
-  "project_id": "proj-706e6b35c4f4",
+  "project_id": "proj-06e21341f85c",
   "proposals": [
    {
     "acceptance": "unreviewed",
     "action_item_id": null,
     "claim_kind": "proposal",
     "commitment_id": null,
-    "created_at": "2026-10-19T18:52:48.090028+00:00",
+    "created_at": "2026-11-01T22:32:16.962754+00:00",
     "decided_at": null,
     "decision_record_id": null,
     "deferred_until": null,
@@ -18,7 +18,7 @@
     "edited_at": null,
     "extraction_model": null,
     "extraction_revision": null,
-    "id": "prop-e79c67bd98cd49f0",
+    "id": "prop-419c835d5d9f4359",
     "job_attempt": null,
     "job_id": null,
     "kind": "decision",
@@ -28,7 +28,7 @@
     "owner": null,
     "owner_hint": null,
     "owner_supplied": null,
-    "project_id": "proj-706e6b35c4f4",
+    "project_id": "proj-06e21341f85c",
     "rationale": null,
     "retry_key": null,
     "segment_index": null,
@@ -55,10 +55,10 @@
      "after_hash": null,
      "before_hash": null,
      "change_kind": "project.resource.linked",
-     "command_id": "pcmd_406dc51a910a4fff840487a3d01dee3b",
-     "created_at": "2026-10-19T18:52:48.092181+00:00",
-     "id": "pchg_4acc64dbd3f94a8273ea1236268709ba",
-     "project_id": "proj-706e6b35c4f4",
+     "command_id": "pcmd_918f7b55e21d453087e95f2bae72a45d",
+     "created_at": "2026-11-01T22:32:16.966189+00:00",
+     "id": "pchg_edbc2a5c0d61f8b818c302db7147d503",
+     "project_id": "proj-06e21341f85c",
      "project_revision": 2,
      "summary_json": "{\"resource_ref\": \"note:p3-risks\"}",
      "target_ref": "note:p3-risks"
@@ -68,13 +68,13 @@
      "after_hash": "82ef315b9d12069553333219e57b6ff5",
      "before_hash": null,
      "change_kind": "project.created",
-     "command_id": "p3-f3e28fbd",
-     "created_at": "2026-10-19T18:52:48.083960+00:00",
-     "id": "pchg_d1c91b1c88adc8f2b24c71d1f1d40b9e",
-     "project_id": "proj-706e6b35c4f4",
+     "command_id": "p3-9b5406b0",
+     "created_at": "2026-11-01T22:32:16.931079+00:00",
+     "id": "pchg_80840a96896fd44886d6cbf5901a587f",
+     "project_id": "proj-06e21341f85c",
      "project_revision": 1,
      "summary_json": "{\"name\": \"Payments migration\"}",
-     "target_ref": "project:proj-706e6b35c4f4"
+     "target_ref": "project:proj-06e21341f85c"
     }
    ],
    "state": "ok"
@@ -86,8 +86,8 @@
   "decisions": {
    "items": [
     {
-     "at": "2026-10-19T18:52:48.090992+00:00",
-     "id": "record-74245798b6ef485292c0c596d2c791a4",
+     "at": "2026-11-01T22:32:16.963856+00:00",
+     "id": "record-16238c9c6444400eb1e4005fd48baeec",
      "kind": "decision",
      "lifecycle": "active",
      "source_id": "dec-901b285036dd4f3cec0b",
@@ -97,6 +97,7 @@
      "url": null
     }
    ],
+   "proposed": [],
    "state": "ok"
   },
   "health": {
@@ -166,7 +167,7 @@
     "id": "p3-one-on-one",
     "intel_status": "disabled",
     "source": "test",
-    "started_at": "2026-10-18T21:00:00+00:00",
+    "started_at": "2026-10-31T19:00:00+00:00",
     "title": "1:1 with Mira"
    },
    "state": "ok"
@@ -177,12 +178,12 @@
     {
      "action_item_id": "p3-mira-1",
      "direction": "theirs",
-     "due_at": "2026-10-19",
+     "due_at": "2026-11-01",
      "kind": "action_item",
      "meeting_id": "p3-sync",
      "owner": "Mira",
      "severity": "warning",
-     "since": "2026-10-19T18:52:48.088602+00:00",
+     "since": "2026-11-01T22:32:16.961149+00:00",
      "source": "meeting",
      "title": "Review PLAT-212",
      "url": null,
@@ -192,12 +193,12 @@
     {
      "action_item_id": "p3-theo-1",
      "direction": "theirs",
-     "due_at": "2026-10-21",
+     "due_at": "2026-11-03",
      "kind": "action_item",
      "meeting_id": "p3-sync",
      "owner": "Theo",
      "severity": "info",
-     "since": "2026-10-19T18:52:48.088426+00:00",
+     "since": "2026-11-01T22:32:16.960945+00:00",
      "source": "meeting",
      "title": "Review the rollback runbook",
      "url": null,
@@ -207,12 +208,12 @@
     {
      "action_item_id": "p3-theo-2",
      "direction": "theirs",
-     "due_at": "2026-10-20",
+     "due_at": "2026-11-02",
      "kind": "action_item",
      "meeting_id": "p3-sync",
      "owner": "Theo",
      "severity": "info",
-     "since": "2026-10-19T18:52:48.088564+00:00",
+     "since": "2026-11-01T22:32:16.961110+00:00",
      "source": "meeting",
      "title": "Estimate the Kafka cost",
      "url": null,
@@ -222,12 +223,12 @@
     {
      "action_item_id": "p3-jun-1",
      "direction": "theirs",
-     "due_at": "2026-10-22",
+     "due_at": "2026-11-04",
      "kind": "action_item",
      "meeting_id": "p3-sync",
      "owner": "Jun",
      "severity": "info",
-     "since": "2026-10-19T18:52:48.088581+00:00",
+     "since": "2026-11-01T22:32:16.961127+00:00",
      "source": "meeting",
      "title": "Get a date for the HSM ceremony",
      "url": null,
@@ -237,12 +238,12 @@
     {
      "action_item_id": "p3-jun-2",
      "direction": "theirs",
-     "due_at": "2026-10-24",
+     "due_at": "2026-11-06",
      "kind": "action_item",
      "meeting_id": "p3-sync",
      "owner": "Jun",
      "severity": "info",
-     "since": "2026-10-19T18:52:48.088592+00:00",
+     "since": "2026-11-01T22:32:16.961139+00:00",
      "source": "meeting",
      "title": "Write the ledger ADR",
      "url": null,
@@ -257,7 +258,7 @@
      "meeting_id": "p3-sync",
      "owner": "Me",
      "severity": "info",
-     "since": "2026-10-19T18:52:48.088612+00:00",
+     "since": "2026-11-01T22:32:16.961159+00:00",
      "source": "meeting",
      "title": "Put Mira on the guild agenda (Nov)",
      "url": null,
@@ -266,26 +267,26 @@
     },
     {
      "action_item_id": null,
-     "created_at": "2026-10-19T18:52:48.090028+00:00",
+     "created_at": "2026-11-01T22:32:16.962754+00:00",
      "direction": "mine",
      "due_hint": null,
      "host": null,
      "kind": "proposal",
      "meeting_id": "p3-arch",
-     "meeting_started_at": "2026-10-18T13:00:00",
+     "meeting_started_at": "2026-10-31T13:00:00",
      "meeting_title": "Architecture review",
      "original_text": "Kafka for ledger events",
      "owner_hint": null,
-     "proposal_id": "prop-e79c67bd98cd49f0",
+     "proposal_id": "prop-419c835d5d9f4359",
      "proposal_kind": "decision",
      "severity": "info",
-     "since": "2026-10-19T18:52:48.090028+00:00",
+     "since": "2026-11-01T22:32:16.962754+00:00",
      "source": "proposal",
      "speaker_label": null,
      "title": "Kafka for ledger events",
      "url": null,
      "verb": "confirm",
-     "verbHref": "/api/proposals/prop-e79c67bd98cd49f0/confirm",
+     "verbHref": "/api/proposals/prop-419c835d5d9f4359/confirm",
      "why": "PROPOSED \u00b7 Architecture review"
     }
    ],
@@ -295,16 +296,16 @@
   "now": {
    "decided": [
     {
-     "at": "2026-10-19T18:52:48.090992+00:00",
-     "id": "record-74245798b6ef485292c0c596d2c791a4",
-     "ref": "decision_record:record-74245798b6ef485292c0c596d2c791a4",
+     "at": "2026-11-01T22:32:16.963856+00:00",
+     "id": "record-16238c9c6444400eb1e4005fd48baeec",
+     "ref": "decision_record:record-16238c9c6444400eb1e4005fd48baeec",
      "source": "",
      "source_ref": "meeting:p3-arch",
      "text": "Keep the old ledger read-only for 30 days"
     }
    ],
    "last_update_at": null,
-   "meetings_this_week": 0,
+   "meetings_this_week": 3,
    "next_date": null,
    "risks": [
     {
@@ -312,7 +313,7 @@
      "ref": "meeting:p3-sync",
      "source": "Payments platform sync",
      "text": "Card tokenization is blocked on the HSM key ceremony.",
-     "token": "MTG 10-18"
+     "token": "MTG 10-31"
     },
     {
      "opens": true,
@@ -331,13 +332,17 @@
    ],
    "state": "ok"
   },
-  "observed_at": "2026-10-19T12:52:48.092181",
+  "observed_at": "2026-11-01T17:32:16.966189",
+  "programs": {
+   "programs": [],
+   "state": "ok"
+  },
   "project": {
    "context": {},
-   "created_at": "2026-10-19T12:52:48.083960",
+   "created_at": "2026-11-01T17:32:16.931079",
    "description": "",
    "detection_threshold": 0.4,
-   "id": "proj-706e6b35c4f4",
+   "id": "proj-06e21341f85c",
    "is_archived": false,
    "keywords": [],
    "last_review_at": null,
@@ -358,22 +363,22 @@
    "target_at": null,
    "team_members": [],
    "template_key": null,
-   "updated_at": "2026-10-19T12:52:48.092181"
+   "updated_at": "2026-11-01T17:32:16.966189"
   },
-  "project_id": "proj-706e6b35c4f4",
+  "project_id": "proj-06e21341f85c",
   "receipts": {
    "items": [
     {
-     "at": 1792435968.080987,
+     "at": 1793572336.924843,
      "caller": null,
-     "id": "1e73c15c-a503-4732-8063-db08e3be8b86",
+     "id": "4fc5a535-bf48-4c15-abd2-17a73e21e94d",
      "identity": null,
      "label": "ProjectService.create_project",
      "op": "create_project",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1792435968.080987,
+     "timestamp": 1793572336.924843,
      "title": "ProjectService.create_project"
     }
    ],
@@ -383,11 +388,11 @@
    "count": 4,
    "latest": {
     "confidence": 1.0,
-    "created_at": "2026-10-19T18:52:48.092181+00:00",
+    "created_at": "2026-11-01T22:32:16.966189+00:00",
     "deleted": false,
-    "id": "proj-706e6b35c4f4|note:p3-risks",
-    "last_modified": "2026-10-19T18:52:48.092181+00:00",
-    "project_id": "proj-706e6b35c4f4",
+    "id": "proj-06e21341f85c|note:p3-risks",
+    "last_modified": "2026-11-01T22:32:16.966189+00:00",
+    "project_id": "proj-06e21341f85c",
     "relationship": "member",
     "resource_ref": "note:p3-risks",
     "source": "manual"
@@ -426,6 +431,7 @@
    "targetAt": null
   },
   "updates": {
+   "automation": null,
    "count": 0,
    "counts": {},
    "latest_published": null,

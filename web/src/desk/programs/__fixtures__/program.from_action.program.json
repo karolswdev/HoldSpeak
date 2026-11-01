@@ -12,7 +12,7 @@
   "check_command": null,
   "checkpoints": [
     {
-      "at": "2026-11-01T14:12:38.993244+00:00",
+      "at": "2026-11-01T22:32:03.262852+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -33,7 +33,7 @@
   "closed_at": null,
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-11-01T14:12:38.992899+00:00",
+  "created_at": "2026-11-01T22:32:03.261759+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -50,13 +50,17 @@
   },
   "delivery": null,
   "done": 0,
+  "family": {
+    "children": [],
+    "parent": null
+  },
   "for_person": null,
   "for_person_id": null,
   "goal": "Move the People routes off the event loop and prove no handler holds it over 100 ms",
-  "id": "program-95eac8dfcbc5",
+  "id": "program-61c403cf6af0",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T14:12:38.993244+00:00",
+    "at": "2026-11-01T22:32:03.262852+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -77,8 +81,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-95eac8dfcbc5",
-  "note_window": "pullout:note:program-program-95eac8dfcbc5",
+  "note_id": "program-program-61c403cf6af0",
+  "note_window": "pullout:note:program-program-61c403cf6af0",
   "origin_ref": "action:ai_runme",
   "persons": [],
   "place": {
@@ -127,7 +131,7 @@
   "title": "Move the People routes off the event loop and prove no handler holds it over…",
   "total": 0,
   "track": [],
-  "updated_at": "2026-11-01T14:12:38.992899+00:00",
+  "updated_at": "2026-11-01T22:32:03.261759+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

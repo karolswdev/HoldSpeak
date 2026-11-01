@@ -43,7 +43,7 @@
   ],
   "later": [
     {
-      "at": "14:00",
+      "at": "18:32",
       "id": "in_1h",
       "label": "In 1 hour"
     },
@@ -65,11 +65,11 @@
   ],
   "package": {
     "desk": "/",
-    "expires_at": "2026-11-02T18:00:52.757500+00:00",
+    "expires_at": "2026-11-02T22:32:30.770030+00:00",
     "expires_words": "Expires in 23 h",
     "head": "Claude Code · Fix the flaky test",
     "hub": "Karols-MacBook-Pro",
-    "id": "pkg-f45fd22537ba",
+    "id": "pkg-8770912d44e8",
     "kind": "item"
   }
 }
