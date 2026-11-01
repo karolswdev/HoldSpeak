@@ -549,7 +549,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     refusePreference = false;
     fireEvent.click(within(screen.getByTestId("settings-save-failure")).getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
-  });
+  }, 15_000); // ~2 s alone; over 5 s when the related set shares a loaded machine
 
   it("offers primary Retry in the footer while a failed preference remains pending", async () => {
     const base = hub.fetchStub;
@@ -701,7 +701,7 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     expect(hub.state.calls.some((c) => c.path === "/api/settings" && c.method === "PUT")).toBe(false);
     await waitFor(() => expect(document.querySelector(".pref-status-bar")?.textContent ?? "").toMatch(/Saved/));
     expect(rawButtons(document.querySelector(".settings-page")!)).toEqual([]);
-  });
+  }, 15_000); // ~2 s alone; over 5 s when the related set shares a loaded machine
 
   it("the sweep and the loops are behind Advanced, read only when he opens them", async () => {
     render(<SettingsCore scope="rhythm" />);
