@@ -1363,7 +1363,6 @@ span.pg-req-thumb { height: 150px; }
   .pg-row-met { display: none; }
 }
 
-<<<<<<< HEAD
 /* #1697: a night program's first station, asleep until its window. */
 .pg-line .pg-station[data-mark="night"] .pg-station-dot { border-style: dashed; }
 .pg-line .pg-station[data-mark="night"] .pg-station-word { color: var(--wb-info-ink); }
@@ -1372,11 +1371,10 @@ span.pg-req-thumb { height: 150px; }
 .pg-row-fold { list-style: none; padding: 0 12px 0 0; border-bottom: 1px solid var(--wb-rule-soft); }
 .pg-row-fold .gadget-fold > summary { padding-left: 12px; }
 .pg-row-fold .kit-listrows { margin: 0; padding: 0; }
-=======
+
 /* PG-IMPORT IMP2: a to-do's walk lines (numbered, plain) and its optional
    note, between the brief and the tray. */
 .pg-todo { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; min-width: 0; }
 .pg-turn-item .pg-todo { flex: 1 1 100%; margin: 4px 0; }
 .pg-todo-walk { margin: 0; padding-left: 20px; font: 400 13px / 1.5 var(--font-sans); }
 .pg-todo-note { display: block; max-width: 520px; min-width: 0; }
->>>>>>> origin/main
