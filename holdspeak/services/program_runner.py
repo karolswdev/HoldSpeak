@@ -1695,8 +1695,8 @@ class ProgramRunner:
         rows = self._review_requirements(program, step)
         if not rows:
             return []
-        return ["Answer each of the owner's requirements on its own line: REQ R3: MET · <one line> "
-                "or REQ R3: UNMET · <what is missing>.", *(f"R{row['ordinal']} · {row['text']}" for row in rows)]
+        return ["Answer each of the owner's requirements on its own line, inside the REVIEW RESULT block: "
+                "REQ R3: MET · <one line> or REQ R3: UNMET · <what is missing>.", *(f"R{row['ordinal']} · {row['text']}" for row in rows)]
 
     def _review_pair(self, step: Mapping[str, Any]) -> Optional[dict[str, Any]]:
         if not step.get("launch_id"):
@@ -1764,7 +1764,8 @@ class ProgramRunner:
             if not outcome.to_owner and reviewer:
                 names = ", ".join(f"R{row['ordinal']}" for row in unanswered)
                 ask = ("HoldSpeak: you gave no answer for " + names + ". Answer each on its own line: REQ R3: MET · "
-                       "<one line> or REQ R3: UNMET · <what is missing>.\n"
+                       "<one line> or REQ R3: UNMET · <what is missing>, inside the REVIEW RESULT block "
+                       "(a line REVIEW RESULT, your lines, a line END REVIEW RESULT).\n"
                        + "\n".join(f"R{row['ordinal']} · {row['text']}" for row in unanswered))
                 try:
                     self.prompt_launch(reviewer, ask)
@@ -1779,8 +1780,10 @@ class ProgramRunner:
                                                  f"Asked the reviewer once more for {names}")
                     return
         should = [item for item in last.get("findings") or [] if str(item.get("level")) == "SHOULD"]
+        from .agent_review import result_section
+
         notes = [{"level": "NOTE", "text": m.group(1).strip()}
-                 for m in re.finditer(r"^\s*(?:[-*]\s*)?NOTE\s*[:\-]\s*(.+)$", words, re.M | re.I)]
+                 for m in re.finditer(r"^\s*(?:[-*]\s*)?NOTE\s*[:\-]\s*(.+)$", result_section(words) or "", re.M | re.I)]
         must = list((pair.get("result") or {}).get("findings_left") or pair.get("findings_left") or []) if status == "needs_you" else []
         level = program.get("control")
         cannot = [item for item in must if str(item.get("text") or "").startswith(REVIEWER_NOT_STARTED)]

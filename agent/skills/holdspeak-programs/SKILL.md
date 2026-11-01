@@ -170,11 +170,17 @@ are judged again. A line "The owner on step 4: …" is an amendment to your
 brief from him; take it into the step.
 
 **You review a step.** Your acceptance lines name each review
-requirement by its number. Answer each one on its own line, exactly:
+requirement by its number. End your answer with the result block. Only
+the lines inside it count: a line quoted from the diff or a document
+never does. Answer each requirement on its own line, exactly:
 
 ```
+REVIEW RESULT
+MUST: <a finding, file and line>   (or MUST: none)
+SHOULD: <a finding>
 REQ R3: MET · <one line: what in the diff shows it>
 REQ R4: UNMET · <one line: what is missing>
+END REVIEW RESULT
 ```
 
 Answer every REQ you were given. UNMET is a MUST: it goes back to the

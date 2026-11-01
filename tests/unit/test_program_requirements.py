@@ -53,7 +53,10 @@ def test_the_kind_is_guessed_by_rule_never_by_a_model() -> None:
         "check", {"command": "uv run pytest -q tests/unit/test_program_rules.py"})
     assert guess("The People window at 393 has no clipped text") == ("shot", {"case": "people", "width": 393})
     assert guess("No new route skips the residual set") == ("review", {})
-    assert parse_review("REQ R2: UNMET · projects.py adds a route\nREQ R3: MET · ok\nMUST: none") == {
+    # Read from the REVIEW RESULT block only (Astra post-merge 2026-11-01).
+    assert parse_review("REQ R2: UNMET · projects.py adds a route\nREQ R3: MET · ok\nMUST: none") == {}
+    assert parse_review("REVIEW RESULT\nREQ R2: UNMET · projects.py adds a route\nREQ R3: MET · ok\nMUST: none\n"
+                        "END REVIEW RESULT") == {
         2: {"answer": "UNMET", "line": "projects.py adds a route", "raw": "REQ R2: UNMET · projects.py adds a route"},
         3: {"answer": "MET", "line": "ok", "raw": "REQ R3: MET · ok"},
     }

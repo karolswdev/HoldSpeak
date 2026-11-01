@@ -7,6 +7,7 @@ are retained on the builder launch record so the pair survives a hub restart.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -36,6 +37,49 @@ _CLEAR_FINDING = re.compile(
     r"^\s*(?:[-*]\s*)?MUST\s*[:\-]?\s*(?:none|no|zero)(?:\s+findings?)?\s*[.!]?\s*$",
     re.I,
 )
+#: Astra post-merge 2026-11-01 (ruling the same day): the review result is
+#: read from its own block only; text quoted elsewhere (a diff, a document)
+#: never counts. The review brief asks for it.
+RESULT_START = "REVIEW RESULT"
+RESULT_END = "END REVIEW RESULT"
+RESULT_ASK = (f"End your answer with the result block: a line {RESULT_START}, then one finding per line "
+              f"(MUST: … or SHOULD: …, file and line when known; MUST: none when no MUST finding remains), "
+              f"and the REQ lines you were asked for, then a line {RESULT_END}. Only the lines in that block count.")
+_RESULT_START = re.compile(r"^\s*(?:[#*>`]+\s*)?REVIEW RESULT\s*:?\s*\**\s*$", re.I)
+_RESULT_END = re.compile(r"^\s*(?:[#*`]+\s*)?END REVIEW RESULT\s*\**\s*$", re.I)
+
+
+def result_section(words: Any) -> Optional[str]:
+    """The reviewer's result: the lines of its LAST ``REVIEW RESULT`` block
+    (to ``END REVIEW RESULT``, or to the end of its words). A marker inside a
+    fenced block (a quoted diff) or on a quoted ``>`` line is not a block;
+    lines in a fence or quoted inside the block never count. None when the
+    words have no block."""
+    lines = str(words or "").splitlines()
+    fence = False
+    start: Optional[int] = None
+    for index, line in enumerate(lines):
+        if line.strip().startswith("```"):
+            fence = not fence
+            continue
+        if not fence and not line.lstrip().startswith(">") and _RESULT_START.match(line):
+            start = index
+    if start is None:
+        return None
+    body: list[str] = []
+    fence = False
+    for line in lines[start + 1:]:
+        if line.strip().startswith("```"):
+            fence = not fence
+            continue
+        if fence or line.lstrip().startswith(">"):
+            continue
+        if _RESULT_END.match(line):
+            break
+        body.append(line)
+    return "\n".join(body)
+
+
 _CLEAR_VERDICT = re.compile(
     r"^\s*(?:[-*]\s*)?(?:VERDICT|RESULT|STATUS)\s*[:\-]?\s*"
     r"(?:clear|clean|pass(?:ed)?|approved|no\s+findings?)\s*[.!]?\s*$",
@@ -115,7 +159,11 @@ def parse_findings(words: Any) -> list[dict[str, str]]:
         if re.fullmatch(r"(?:no|none|zero|nothing)(?:\s+(?:findings?|left|remain(?:s|ing)?|required|needed))?", plain, re.I) \
                 or re.match(r"^(?:no|none|nothing)\s+(?:required|needed)\b", plain, re.I):
             continue
-        if re.match(r"^\d+\s+(?:remains?|left|open|found|findings?)\b", plain, re.I):
+        # A count line is the whole line ("1 remains", "2 MUST left (the
+        # index)"); a MUST with words after its number is a finding (Astra
+        # post-merge: "1 open connection per request leaks …" was dropped).
+        if re.fullmatch(r"\d+\s+(?:MUSTs?\s+|SHOULDs?\s+|findings?\s+)?(?:remains?|remaining|left|open|found|findings?)"
+                        r"(?:\s+(?:remains?|remaining|left|open))?(?:\s*\(.*\))?", plain, re.I):
             continue
         found.append({"level": match.group(1).upper(), "text": detail})
     if not found and re.search(r"\b(?:no|none|zero)\s+(?:MUST\s+)?findings?\b", text, re.I):
@@ -129,9 +177,11 @@ def _review_result(words: Any) -> tuple[list[dict[str, str]], bool]:
     A blank, prose-only, or malformed Done result is unknown.  It must never
     close a pair simply because the parser found no ``MUST`` line.
     """
-    text = str(words or "")
-    findings = parse_findings(text)
-    explicit_clear = any(_CLEAR_FINDING.match(line) or _CLEAR_VERDICT.match(line) for line in text.splitlines())
+    section = result_section(words)
+    if section is None:
+        return [], False  # no result block: unknown, never a pass
+    findings = parse_findings(section)
+    explicit_clear = any(_CLEAR_FINDING.match(line) or _CLEAR_VERDICT.match(line) for line in section.splitlines())
     return findings, explicit_clear
 
 
@@ -289,7 +339,8 @@ class AgentReviewLoop:
             f"Acceptance checks:\n{checks}\n\n"
             "Read the worktree only. Change nothing and do not commit.\n"
             "List findings one per line with MUST or SHOULD, file and line when known. "
-            "End with MUST: none when no MUST finding remains."
+            "End with MUST: none when no MUST finding remains.\n"
+            f"{RESULT_ASK}"
         )
 
     def _start_reviewer(self, builder: Mapping[str, Any], pair: dict[str, Any], commit: str) -> dict[str, Any]:
@@ -371,6 +422,23 @@ class AgentReviewLoop:
             pair["empty_reads"] = int(pair.get("empty_reads") or 0) + 1
             return None
         pair.pop("empty_reads", None)
+        if result_section(words) is None:
+            # No result block: ask the reviewer once for it, then wait for
+            # new words; still none is unclear (never a pass).
+            seen = hashlib.sha256(str(words or "").encode()).hexdigest()
+            if not pair.get("block_asked"):
+                try:
+                    self._prompt_builder(reviewer_id, f"HoldSpeak: {RESULT_ASK}")
+                    pair["block_asked"], pair["block_seen"] = True, seen
+                    return None
+                except Exception as exc:
+                    log.debug("review block ask failed: %s", exc)
+            elif pair.get("block_seen") == seen and int(pair.get("block_waits") or 0) < EMPTY_READS_WAIT:
+                pair["block_waits"] = int(pair.get("block_waits") or 0) + 1
+                return None
+        pair.pop("block_asked", None)
+        pair.pop("block_seen", None)
+        pair.pop("block_waits", None)
         findings, explicit_clear = _review_result(words)
         must = [item for item in findings if item.get("level") == "MUST"]
         round_ = int(pair.get("round") or 0)
