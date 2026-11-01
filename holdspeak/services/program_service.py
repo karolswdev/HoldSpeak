@@ -1933,15 +1933,19 @@ class ProgramService:
                 raise ProgramRefused("spend_limit_invalid", "The spend limit is zero or more dollars.", status=400)
         root, project_id = self._repository(repository, project_id or None)
         profile = self._profile(default_profile, "default_profile") or defaults.get("default_profile") or "claude-default"
+        # A template's engine is for its pi; a profile he chose instead (Claude
+        # Code) runs on its own model and takes no engine.
         engine = self._engine_id(default_engine, profile, "default_engine") if default_engine else (
             self._engine_id(defaults.get("default_engine"), profile, "default_engine", optional_missing=True)
-            if defaults.get("default_engine") else None)
+            if defaults.get("default_engine") and profile == "pi-default" else None)
         listed = self._runs_on(runs_on, "runs_on")
         if listed:
             profile, engine = listed[0]["profile"], listed[0]["engine"]
         allowed = self._allowed_profiles(allowed_profiles)
         reviewer = self._profile(reviewer_profile, "reviewer_profile") or defaults.get("reviewer_profile")
-        reviewer_engine_id = self._engine_id(reviewer_engine, reviewer, "reviewer_engine") if reviewer_engine else None
+        reviewer_engine_id = self._engine_id(reviewer_engine, reviewer, "reviewer_engine") if reviewer_engine else (
+            self._engine_id(defaults.get("reviewer_engine"), reviewer, "reviewer_engine", optional_missing=True)
+            if defaults.get("reviewer_engine") and reviewer == "pi-default" else None)
         command, _sections = self._check_command(root, check_command)
         if origin_ref:
             kind, _, ident = str(origin_ref).partition(":")
