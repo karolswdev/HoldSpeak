@@ -462,6 +462,16 @@ export function DoneWhen({ program, onApplied }: { program: Program; onApplied(n
   if (!own.length && !every.length && finished) return null;
   const rows = [...every, ...own];
   const met = rows.length && rows.every((row) => row.state === "met" || row.state === "waived");
+  // No requirement yet: no empty section, only the verb on its own line.
+  if (!rows.length && !adding) {
+    return (
+      <li className="pg-done-when" data-empty="" data-testid="programs-done-when">
+        <Button dense variant="ghost" aria-expanded={false} onClick={() => setAdding(true)} data-testid="programs-done-add-requirement">
+          Add a requirement
+        </Button>
+      </li>
+    );
+  }
   return (
     <li className="pg-done-when" aria-label="Done when" data-testid="programs-done-when" data-met={met ? "" : undefined}>
       <div className="pg-done-when-head">
