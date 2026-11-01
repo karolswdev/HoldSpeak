@@ -56,3 +56,17 @@ def test_the_check_is_named_by_its_script_never_a_flag() -> None:
     assert _check_name("FOO=1 sh scripts/quick_check.sh --fast") == "quick_check.sh"
     assert _check_name('sh -c "test -f README.md && grep -q Hello README.md"') == "test"
     assert _check_name("uv run pytest -q tests/unit/test_a.py") == "pytest"
+
+
+def test_the_engines_own_ledger_words_read_in_his_terms() -> None:
+    """The live window quoted "Skipped the step" and "Could not hand the
+    step: worktree_duplicate" (2026-11-01): the story says them plainly and
+    never carries a wire code."""
+    assert words.changed_line("Skipped the step") == "You skipped the step."
+    assert words.changed_line("Resumed the step") == ""  # the brief and the row say it already
+    assert words.changed_line("Could not hand the step: worktree_duplicate") == "HoldSpeak could not give the step to an agent."
+    assert words.changed_line("Said it is done; the engine waits for the commit") == "The agent said it is done."
+    assert words.changed_line("Handed to Claude Code in hs-program-step-c2f418bb1a7f") == "Handed to Claude Code."
+    assert words.changed_line("git push failed; parked") == ""
+    assert words.changed_line("The engine said: some_code here") == ""
+    assert words.changed_line("Checked · green · under a minute · /tmp/a_b/step_x.log") == "The check ran green in under a minute."

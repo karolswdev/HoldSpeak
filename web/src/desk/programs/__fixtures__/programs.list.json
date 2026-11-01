@@ -9,13 +9,13 @@
     {
       "asks": 0,
       "control": "secure",
-      "created_at": "2026-11-01T03:49:01.041842+00:00",
+      "created_at": "2026-11-01T05:21:27.653034+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-94fb2abf7c73",
-      "in_state_seconds": 6,
+      "id": "program-54cb411e75ad",
+      "in_state_seconds": 3,
       "last_checkpoint": {
-        "at": "2026-11-01T03:49:08.488505+00:00",
+        "at": "2026-11-01T05:21:30.753363+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -26,17 +26,17 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-a38189c75c4c/8",
-        "ref_commit": "6bd8a24b36d99821507bdb127a293fb35f025ef9",
+        "ref": "refs/holdspeak/checkpoints/step-2535600e9e66/8",
+        "ref_commit": "e51a3967916bc16ef79d05910d6660d7b22a7a06",
         "rule": null,
-        "step_id": "step-a38189c75c4c",
+        "step_id": "step-2535600e9e66",
         "undo": {
           "pin": {
-            "commit": "6bd8a24b36d99821507bdb127a293fb35f025ef9",
-            "head": "cc9c23b2ab22a483ddd4804bed2a7b9434c01341",
+            "commit": "e51a3967916bc16ef79d05910d6660d7b22a7a06",
+            "head": "f797bf5ee4cc02932138466dedfa86baca9f2ad4",
             "n": 8,
-            "ref": "refs/holdspeak/checkpoints/step-a38189c75c4c/8",
-            "tree": "4f5ce58ee03eb8d469a9f4e4412caceeb960d864"
+            "ref": "refs/holdspeak/checkpoints/step-2535600e9e66/8",
+            "tree": "10c3b49c41824da0c35f071d9fad5e13b1c4625c"
           }
         }
       },
@@ -59,42 +59,42 @@
       "state_word": "Your turn",
       "title": "The words wave",
       "total": 3,
-      "updated_at": "2026-11-01T03:49:06.293617+00:00",
+      "updated_at": "2026-11-01T05:21:29.812902+00:00",
       "your_turn": 4
     },
     {
       "asks": 1,
       "control": "yolo",
-      "created_at": "2026-11-01T03:48:54.863780+00:00",
+      "created_at": "2026-11-01T05:21:24.782129+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-7130a4ebcb30",
-      "in_state_seconds": 12,
+      "id": "program-c023e05a87ff",
+      "in_state_seconds": 5,
       "last_checkpoint": {
-        "at": "2026-11-01T03:49:06.439394+00:00",
+        "at": "2026-11-01T05:21:29.880514+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 45,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-5da79d47df96",
+        "line": "Handed to Claude Code in hs-program-step-4387d4b3b441",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-5da79d47df96/1",
-        "ref_commit": "d78da82ae0d72934a18b3464c733bdf7137d1c57",
+        "ref": "refs/holdspeak/checkpoints/step-4387d4b3b441/1",
+        "ref_commit": "422539b198fdd7a08e68f798bb6dc30b3aca3920",
         "rule": null,
-        "step_id": "step-5da79d47df96",
+        "step_id": "step-4387d4b3b441",
         "undo": {
           "pin": {
-            "commit": "d78da82ae0d72934a18b3464c733bdf7137d1c57",
-            "head": "9879df8d29ebc50deb6c8d29dc5247df6e804855",
+            "commit": "422539b198fdd7a08e68f798bb6dc30b3aca3920",
+            "head": "9d20d53046d7805a0d76e4640162cdd5648da985",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-5da79d47df96/1",
+            "ref": "refs/holdspeak/checkpoints/step-4387d4b3b441/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           }
         }
@@ -116,19 +116,19 @@
       "state_word": "Your turn",
       "title": "The hub stops stalling",
       "total": 7,
-      "updated_at": "2026-11-01T03:49:00.752825+00:00",
+      "updated_at": "2026-11-01T05:21:27.505197+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T03:49:13.094542+00:00",
+      "created_at": "2026-11-01T05:21:32.896481+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-b062f18746c9",
+      "id": "program-7c001dc42af3",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T03:49:13.104312+00:00",
+        "at": "2026-11-01T05:21:32.898514+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -164,20 +164,20 @@
       "state_word": "Drafting",
       "title": "Calls on the home box",
       "total": 2,
-      "updated_at": "2026-11-01T03:49:13.104392+00:00",
+      "updated_at": "2026-11-01T05:21:32.898555+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T03:49:08.692901+00:00",
+      "created_at": "2026-11-01T05:21:30.848185+00:00",
       "done": 1,
       "done_in": "under a minute",
       "for_person": null,
-      "id": "program-98076b1d9b26",
-      "in_state_seconds": 2,
+      "id": "program-a89925e8390d",
+      "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-01T03:49:10.462073+00:00",
+        "at": "2026-11-01T05:21:31.734297+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -206,19 +206,19 @@
       "state_word": "Done",
       "title": "Wave 6 of the atlas",
       "total": 1,
-      "updated_at": "2026-11-01T03:49:10.461835+00:00",
+      "updated_at": "2026-11-01T05:21:31.734246+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T03:49:10.472732+00:00",
+      "created_at": "2026-11-01T05:21:31.738906+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-629e36697efa",
+      "id": "program-d20b13a74405",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T03:49:13.088426+00:00",
+        "at": "2026-11-01T05:21:32.894217+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -244,7 +244,7 @@
       "state_word": "Parked",
       "title": "Retire the old ledger",
       "total": 2,
-      "updated_at": "2026-11-01T03:49:13.088174+00:00",
+      "updated_at": "2026-11-01T05:21:32.894137+00:00",
       "your_turn": 0
     }
   ],

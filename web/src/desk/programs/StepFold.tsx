@@ -38,7 +38,7 @@ import { runsOnLabel } from "./StepRow";
 import type { Program, ProgramStep } from "./types";
 
 type Failure = { words: string; title: string } | null;
-type Part = "brief" | "gate" | "findings" | "handoffs" | "ledger";
+export type Part = "brief" | "gate" | "findings" | "handoffs" | "ledger";
 
 const PART_WORDS: Record<Part, string> = {
   brief: "Brief", gate: "Gate", findings: "Findings", handoffs: "Handoffs", ledger: "Ledger",
@@ -114,6 +114,33 @@ function Frozen({ name, value, reason, testId }: { name: string; value: string; 
   );
 }
 
+const REVIEWS = [{ value: "none", label: "No review" }, { value: "agent", label: "An agent reviews" }, { value: "person", label: "A person reviews" }];
+const MERGES = [{ value: "level", label: "Merge by the level" }, { value: "owner", label: "You merge" }, { value: "none", label: "No PR, keep the branch" }];
+
+/** PG-WINDOW: the step's gate as plain words with the library pickers
+ *  (what it must pass before it merges), while it is Planned. */
+function GateLine({ step, editable, onSave }: {
+  step: ProgramStep; editable: Set<string>; onSave(body: Parameters<typeof changeStep>[2]): void;
+}) {
+  if (!editable.has("gate_check") && !editable.has("gate_review") && !editable.has("gate_merge")) return null;
+  return (
+    <div className="pg-sf-gate" role="group" aria-label={`Step ${step.ordinal} gate`} data-testid="programs-step-gate">
+      <span className="pg-sf-gate-word">Gate</span>
+      {editable.has("gate_check") ? (
+        <CheckGadget variant="token" label="The check" checked={step.gate.check} onChange={(next) => onSave({ gate_check: next })} />
+      ) : null}
+      {editable.has("gate_review") ? (
+        <CycleGadget label={`Step ${step.ordinal} review`} value={step.gate.review} options={REVIEWS}
+          onChange={(value) => onSave({ gate_review: value as "none" | "agent" | "person" })} />
+      ) : null}
+      {editable.has("gate_merge") ? (
+        <CycleGadget label={`Step ${step.ordinal} merge`} value={step.gate.merge ?? "level"} options={MERGES}
+          onChange={(value) => onSave({ gate_merge: value as "level" | "owner" | "none" })} />
+      ) : null}
+    </div>
+  );
+}
+
 /** A Planned step's brief: its fields, edited in place. */
 function PlannedBrief({ program, step, onApplied, onFailed }: {
   program: Program; step: ProgramStep; onApplied(next: Program | null): void; onFailed(failure: Failure): void;
@@ -160,6 +187,7 @@ function PlannedBrief({ program, step, onApplied, onFailed }: {
           </span>
         ) : null}
       </div>
+      <GateLine step={step} editable={editable} onSave={(body) => void save(body)} />
       {editable.has("brief") ? (
         <div className="pg-sf-pad">
           <PadGadget label={`Step ${step.ordinal} brief`} rows={3} value={brief} onChange={setBrief}
@@ -314,8 +342,10 @@ function StepProve({ program, step, onApplied }: { program: Program; step: Progr
   const canAdd = Boolean(step.editable?.includes("requirements")) && !program.closed_at;
   if (!rows.length && !canAdd) return null;
   return (
-    <section className="pg-sf-prove" aria-label="What it must prove" data-testid="programs-step-requirements">
-      <h4 className="pg-sf-cap">What it must prove</h4>
+    <section className="pg-sf-prove" aria-label="What it must prove" data-testid="programs-step-requirements"
+      data-empty={rows.length ? undefined : ""}>
+      {/* No empty section: with nothing to prove the verb stands alone. */}
+      {rows.length ? <h4 className="pg-sf-cap">What it must prove</h4> : null}
       {rows.length || adding ? (
         <ul className="pg-reqs">
           {rows.map((row) => <RequirementRow key={row.id} program={program} row={row} onApplied={onApplied} />)}
@@ -333,11 +363,13 @@ function StepProve({ program, step, onApplied }: { program: Program; step: Progr
   );
 }
 
-export function StepFold({ program, step, onApplied }: {
+export function StepFold({ program, step, onApplied, initialPart }: {
   program: Program; step: ProgramStep; onApplied(next: Program | null): void;
+  /** A part the window asked for (the headline's Brief). */
+  initialPart?: Part;
 }) {
   const parts = partsOf(program, step);
-  const [part, setPart] = useState<Part | "">(() => firstPart(step, parts));
+  const [part, setPart] = useState<Part | "">(() => (initialPart && parts.includes(initialPart) ? initialPart : firstPart(step, parts)));
   const [inserting, setInserting] = useState(false);
   const [busy, setBusy] = useState("");
   const [failed, setFailed] = useState<Failure>(null);
@@ -345,7 +377,8 @@ export function StepFold({ program, step, onApplied }: {
   const handOpener = useRef<HTMLButtonElement | null>(null);
   const amendRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
-    setPart(firstPart(step, partsOf(program, step)));
+    const now = partsOf(program, step);
+    setPart(initialPart && now.includes(initialPart) ? initialPart : firstPart(step, now));
     setInserting(false);
     setFailed(null);
   }, [step.id]); // eslint-disable-line react-hooks/exhaustive-deps

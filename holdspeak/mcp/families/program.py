@@ -247,8 +247,8 @@ TOOLS: list[dict[str, Any]] = [
                     "step), on every step (each_step), or on one step (step_id). kind: check (a command, in "
                     "backticks or spec.command), review (the step's reviewer answers REQ Rn: MET or UNMET), shot "
                     "(spec.case and spec.width, 393 or 1440), word (the owner presses Met; spec.walk lists his "
-                    "steps), measure (spec.command and a bound: metric, op, bound, unit; it stays Not measured yet "
-                    "until its verifier exists and does not hold a merge). No kind: the rule "
+                    "steps), measure (spec.command and a bound: metric, op, bound, unit; HoldSpeak runs it at CHECK "
+                    "and the last line naming the metric gives the value, judged against the bound). No kind: the rule "
                     "guesses it. An agent's requirement is a proposal: at YOLO it is added and listed under "
                     "Decided for you; at Secure and Normal the owner adds or skips it. With requirement_id it "
                     "changes one (the owner only). No tool marks a requirement met.",

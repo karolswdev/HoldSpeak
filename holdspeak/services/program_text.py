@@ -1227,8 +1227,6 @@ def _lowers_step(name: str, before: Any, after: Any) -> bool:
 def _lowers_requirement(before: Requirement, after: Requirement) -> bool:
     if before.required and not after.required:
         return True
-    if before.kind != "measure" and after.kind == "measure":
-        return True  # a Measure does not gate until its verifier (LANG11)
     return before.kind in _STRONG_KINDS and after.kind == "review"
 
 

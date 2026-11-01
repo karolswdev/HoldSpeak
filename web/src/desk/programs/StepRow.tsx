@@ -19,8 +19,14 @@ import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { stateWords } from "../surface/words";
 import type { PlanSize, PlanStep, ProgramStep } from "./types";
 
-function quote(line: string | undefined | null): string {
-  return line ? `“${line}”` : "";
+/** PG-WINDOW: the row's line in his terms: the hub's story (brief_words),
+ *  never the engine's raw checkpoint ("git push failed; parked"). A planned
+ *  step says its size. */
+export function rowWords(step: ProgramStep): string {
+  const story = step.story ?? [];
+  if (story.length) return story[story.length - 1].line;
+  if (step.estimate?.words && (step.state === "planned" || step.state === "ready")) return step.estimate.words;
+  return "";
 }
 
 /** PG-REQ §9 Delight: the step's Met cell. When its last required
@@ -57,6 +63,7 @@ export function StepRow({
   contender = false,
   his = false,
   landed,
+  words,
 }: {
   step: ProgramStep;
   selected?: boolean;
@@ -66,6 +73,9 @@ export function StepRow({
   his?: boolean;
   /** PG-LANG §9.7: the step an applied text added (born) or changed. */
   landed?: "born" | "changed";
+  /** The row's line when the window knows better words (a held step's
+   *  "what happened"); else its story. */
+  words?: string;
 }) {
   const word = stepWord(step);
   const agent = agentKey(step.profile, step.agent);
@@ -77,7 +87,8 @@ export function StepRow({
   const runsOn = runsOnWords(step.agent, step.engine);
   const when = history ? mergedWords(history.merged_at) : step.elapsed;
   const after = afterWords(step.after);
-  const line = history ? `PR #${history.pr_number}` : quote(step.last_checkpoint?.line);
+  const line = history ? `PR #${history.pr_number}` : (words || rowWords(step));
+  const sized = !history && !words && !(step.story ?? []).length && Boolean(step.estimate?.words);
   return (
     <li
       className="kit-listrow pg-step"
@@ -88,6 +99,7 @@ export function StepRow({
       data-step={step.id}
       data-history={history ? "" : undefined}
       data-landed={landed}
+      style={landed ? ({ "--i": step.ordinal - 1 } as CSSProperties) : undefined}
     >
       <Button variant="chrome" className="pg-step-main" aria-pressed={selected} onClick={onSelect}
         aria-label={`Step ${step.ordinal}: ${step.title}, ${word}`} data-testid="programs-step-select">
@@ -121,8 +133,9 @@ export function StepRow({
         {line ? <span className="pg-step-meta-line"> · {line}</span> : null}
       </span>
       <span className="pg-step-when">{started ? when : ""}</span>
-      <span className="pg-step-line" title={history ? history.pr_url ?? undefined : step.last_checkpoint?.line ?? undefined}
-        data-testid={history ? "programs-step-pr" : undefined}>{line}</span>
+      <span className="pg-step-line" title={history ? history.pr_url ?? undefined : line || undefined}
+        data-fits={sized ? (step.estimate?.fits === false ? "no" : step.estimate?.fits ? "yes" : undefined) : undefined}
+        data-testid={history ? "programs-step-pr" : sized ? "programs-draft-size" : "programs-step-words"}>{line}</span>
       <span className="pg-step-verbs">
         {step.launch_id ? (
           <Button dense variant="secondary" onClick={() => openRef(`launch:${step.launch_id}`)} data-testid="programs-step-open">Open lane</Button>

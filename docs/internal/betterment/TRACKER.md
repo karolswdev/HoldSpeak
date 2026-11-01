@@ -314,7 +314,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | LANG8 | Sizing: `budget`, the estimate, `step_too_big`, the split | Shipped #1687 (2026-10-31) | `holdspeak/services/program_split.py`: the dispatcher holds a step over its share; YOLO splits (Overturn), Secure and Normal get a `step_change` proposal (Apply splits, Skip runs it as it is); no planner is a core question. Open: the harness's fixed cost (`HARNESS_TOKENS` 0); the Program's `planner` line is not read (the desk's `agent.plan`). |
 | LANG9 | Interview rounds, hub | Shipped #1680 (2026-10-31) | Fields #1671. Rounds never gate Start. |
 | LANG10 | The round strip and the question row | Shipped #1680 (2026-10-31) | `Rounds.tsx`. |
-| LANG11 | The Measure kind; walk lines on Your word | Open | Kind and walk lines #1671; the verifier open. |
+| LANG11 | The Measure kind; walk lines on Your word | Done | Kind and walk lines #1671; the verifier (`verify_measure_log`, "Measured 1.4 s, under 2 s"), word bounds, unit change, the walk on his row: this PR. |
 | LANG12 | Dreaming: template, night, within, backlog, digest | Partly #1687 (2026-10-31) | `holdspeak/services/program_night.py`: the window ("sleeps until 23:30"), `at most`, the night planner per item inside `within`, "Since last night" in the note and through Reach. Open: the Dreaming template, the backlog read by rule, the stop after two red steps, a Working step parked at the end, `within` as a core question on the diff. |
 | LANG13 | Delivery Workbench: link and the Done PR | Open | `delivery dw` stored #1671. |
 | LANG14 | The SDK: Python client and `holdspeak program` CLI | Open |  |
