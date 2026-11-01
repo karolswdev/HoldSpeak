@@ -58,6 +58,9 @@ import reachRevokedFixture from "../__fixtures__/reach.revoked.json";
 // changed text (a refused brief, control up the ladder, a new step, a merge
 // on his press, a + line), recorded through the real routes.
 import textFixture from "../__fixtures__/program.text.json";
+import deliveryFailedFixture from "../__fixtures__/program.delivery_failed.json";
+import deliveryMergeFixture from "../__fixtures__/program.delivery_merge.json";
+import deliveryMergedFixture from "../__fixtures__/program.delivery_merged.json";
 import textApplyFixture from "../__fixtures__/program.text_apply.json";
 // PG-LANG LANG3/4: a sentence shaped by the REAL qwen3.8-27b replies
 // (tests/fixtures/program_shape_reply.json) replayed through the hub's runner,
@@ -502,6 +505,44 @@ describe("PG-WINDOW: the Program window as one object (canvas program-window-202
     const bar = screen.getByTestId("program-shape-bar");
     expect(bar.previousElementSibling?.className).toContain("pg-body");
     expect((within(bar).getByRole("textbox", { name: "Change the program" }) as HTMLInputElement).placeholder).toBe("Tell the program what to change");
+  });
+});
+
+describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/test_program_delivery.py)", () => {
+  it("a failed delivery is the headline in his words, with Retry and Skip and what each does", async () => {
+    const failed = deliveryFailedFixture as unknown as Program;
+    const item = failed.your_turn_items[0];
+    hub({ [`GET /api/programs/${failed.id}`]: failed });
+    render(<ProgramBody programId={failed.id} />);
+    const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+    expect(headline.getAttribute("data-kind")).toBe("delivery");
+    expect(within(headline).getByTestId("programs-brief-question").textContent).toBe("Try the delivery again, or skip it?");
+    expect(within(headline).getByTestId("programs-brief-happened").textContent).toBe(item.brief!.happened);
+    const tray = within(headline).getByTestId("programs-tray");
+    expect(within(tray).getAllByRole("button").map((button) => button.textContent)).toEqual(["Retry", "Skip"]);
+    expect(within(tray).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
+      .toEqual(["Try the delivery again.", "Skip it. The program stays Done, not delivered."]);
+  });
+
+  it("at Secure, Merge presses through and the Done window settles to Delivered to dw app/1 (PR #n)", async () => {
+    const waiting = deliveryMergeFixture as unknown as Program;
+    const merged = (deliveryMergedFixture as unknown as { program: Program }).program;
+    hub({
+      [`GET /api/programs/${waiting.id}`]: waiting,
+      [`POST /api/programs/${waiting.id}/steps/program/decide`]: deliveryMergedFixture,
+    });
+    render(<ProgramBody programId={waiting.id} />);
+    const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+    expect(within(headline).getByTestId("programs-brief-question").textContent).toBe("Merge the delivery pull request, or skip the delivery?");
+    expect(within(headline).getAllByTestId("programs-turn-consequence")[0].textContent)
+      .toBe("Merge the delivery pull request. The program is then delivered.");
+    expect(screen.queryByTestId("programs-delivered")).toBeNull();
+    fireEvent.click(within(headline).getByTestId("programs-turn-merge"));
+    await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
+    expect(calls).toContain(`POST /api/programs/${waiting.id}/steps/program/decide ${JSON.stringify({ kind: "delivery", choice: "merge" })}`);
+    const pr = merged.checkpoints.find((row) => row.kind === "delivery" && row.choice === "delivered")!;
+    expect(screen.getByTestId("programs-delivered").textContent).toBe(pr.line);
+    expect(pr.line).toMatch(/^Delivered to dw app\/1 \(PR #\d+\)$/);
   });
 });
 

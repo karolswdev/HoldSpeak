@@ -155,6 +155,23 @@ def doing_line(step: Optional[Mapping[str, Any]]) -> str:
     return line if clean(line) else sentence(f"{where}: {scrub(title).rstrip('.') or 'a step'}")
 
 
+def delivery_where(program: Mapping[str, Any]) -> str:
+    """``dw app/1`` for a Program's ``delivery_ref`` ``dw:app/1`` (LANG13)."""
+    ref = str(program.get("delivery_ref") or "")
+    return f"dw {ref[3:]}" if ref.startswith("dw:") else "its record"
+
+
+def doing_words(kind: str, program: Mapping[str, Any], step: Optional[Mapping[str, Any]]) -> str:
+    """What the held thing was doing: the step, or the program's delivery."""
+    if kind == "delivery":
+        return sentence(f"The program is done. It delivers its record to {delivery_where(program)}")
+    return doing_line(step)
+
+
+_DELIVER_FAILED = re.compile(r"^Deliver “.*” to (.+?): it (.+)$")
+_DELIVER_MERGE = re.compile(r"PR #(\d+)")
+
+
 _NO_REMOTE = re.compile(r"does not appear to be a git repository|No configured push destination|No such remote|"
                         r"no remote|remote .* not found", re.I)
 _ACCESS = re.compile(r"Permission denied|access rights|Authentication failed|could not read Username|403", re.I)
@@ -250,6 +267,15 @@ def happened_line(kind: str, item: Mapping[str, Any], step: Optional[Mapping[str
         must = str(finding.get("level") or item.get("level") or "").upper() in ("MUST", "REQUIRED")
         line = sentence(f"The reviewer found a required fix: {text}" if must else f"The reviewer found: {text}")
         return line if clean(line) else ("The reviewer found a required fix." if must else "The reviewer found one fix.")
+    if kind == "delivery":
+        title = _squash(item.get("title"))
+        failed = _DELIVER_FAILED.match(title)
+        if failed:
+            line = sentence(f"Could not deliver to {failed.group(1)}: {failed.group(2)}")
+            return line if clean(line) else sentence(f"Could not deliver to {failed.group(1)}")
+        number = _DELIVER_MERGE.search(title)
+        pr = f"PR #{number.group(1)}" if number else "Its PR"
+        return sentence(f"The program is done. The delivery {pr} is open and waits for your merge")
     if kind == "limited":
         until = f" until {item['until_words']}" if item.get("until_words") else ""
         return sentence(f"{item.get('agent') or 'The agent'} is at its usage limit{until}")
@@ -299,6 +325,9 @@ QUESTIONS = {
 
 
 def question_line(kind: str, item: Mapping[str, Any]) -> str:
+    if kind == "delivery":
+        return ("Try the delivery again, or skip it?" if "retry" in (item.get("choices") or [])
+                else "Merge the delivery pull request, or skip the delivery?")
     if kind == "limited":
         nxt = (item.get("next") or {}).get("label") or "the next agent"
         return sentence(f"Continue in {nxt} now, or wait for the reset?")
@@ -365,6 +394,10 @@ def consequence(kind: str, choice: str, item: Mapping[str, Any], step: Optional[
         return "The step changes." if choice == "apply" else "The step stays as it is."
     if kind == "step_amend":
         return "The agent gets the line." if choice == "send" else "Nothing is sent."
+    if kind == "delivery":
+        return {"merge": "Merge the delivery pull request. The program is then delivered.",
+                "retry": "Try the delivery again.",
+                "skip": "Skip it. The program stays Done, not delivered."}.get(choice, "")
     return ""
 
 
@@ -384,6 +417,8 @@ _SETTLED = {
     ("requirement_proposed", "add"): "The requirement is added.", ("requirement_proposed", "skip"): "Nothing is added.",
     ("step_change", "apply"): "The step changes.", ("step_change", "skip"): "The step stays as it is.",
     ("step_amend", "send"): "The agent gets the line.", ("step_amend", "skip"): "Nothing is sent.",
+    ("delivery", "merge"): "The program is delivered.", ("delivery", "retry"): "The delivery runs again.",
+    ("delivery", "skip"): "The program stays Done, not delivered.",
 }
 
 _COUNT = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine"}
@@ -535,7 +570,7 @@ def item_brief(program: Mapping[str, Any], steps: list[Mapping[str, Any]], item:
         if said:
             consequences[str(choice)] = said
     return {
-        "goal": goal_line(program), "doing": doing_line(step), "happened": happened_line(kind, item, step),
+        "goal": goal_line(program), "doing": doing_words(kind, program, step), "happened": happened_line(kind, item, step),
         "question": question_line(kind, item),
         "blocked": [int(row["ordinal"]) for row in blocked], "blocked_words": blocked_words(blocked) if blocked else "",
         "consequences": consequences,
@@ -573,5 +608,5 @@ def window_words(program: Mapping[str, Any], steps: list[Mapping[str, Any]], tur
 
 
 __all__ = ["brief_lines", "blocked_steps", "blocked_words", "changed_line", "changed_lines", "clean", "consequence", "doing_line",
-           "fence_hits", "first_sentence", "goal_line", "happened_line", "item_brief", "step_story", "window_words", "parked_cause", "question_line",
+           "delivery_where", "doing_words", "fence_hits", "first_sentence", "goal_line", "happened_line", "item_brief", "step_story", "window_words", "parked_cause", "question_line",
            "rest_words", "scrub", "sentence", "settle_words", "waits_words"]

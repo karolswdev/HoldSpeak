@@ -1299,3 +1299,8 @@ span.pg-req-thumb { height: 150px; }
   .pg-draft-top .pg-draft-goal .surface-edit-in-place { font-weight: 400; color: var(--wb-muted); }
   .pg-draft-top .pg-plan-line { order: 5; }
 }
+
+/* LANG13: the delivery's one settled line under the track. */
+.pg-line-settle { margin: 0; padding: 0 16px 6px; }
+.pg-line-settle .kit-dotword { color: var(--wb-ok-ink); font-size: 13px; }
+@container surface (max-width: 520px) { .pg-line-settle { padding: 0 12px 6px; } }
