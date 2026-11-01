@@ -509,6 +509,10 @@ class ProgramRunner:
         room = program_night.night_room(self, program, ready)
         if room == 0:
             return
+        # JRN3: no step is handed while the base branch is red (one makes it green first).
+        ready = program_night.red_main_filter(self, program, ready)
+        if not ready:
+            return
         slots = self._free_slots()
         busy_engines = {self._engine_of(program, other) for other in steps
                         if other["state"] in ACTIVE_STATES and self._profile_of(program, other) == "pi-default"}
@@ -962,6 +966,12 @@ class ProgramRunner:
         turn = str(flight.get("turn_id") or "")
         if turn and turn == facts.get("last_turn"):
             return  # the turn the engine already read (it prompted after it)
+        if facts.pop("commit_turn_open", None):
+            # The end of the turn whose commit the engine took already.
+            facts["last_turn"] = turn or None
+            step["facts"] = facts
+            self.service.save_step(step)
+            return
         if self._amend_at_turn_end(program, step, facts, turn):
             return
         head = self._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
@@ -1014,6 +1024,14 @@ class ProgramRunner:
         if not head or head == step.get("head_commit"):
             return False
         self._clear_commit_wait(facts)
+        # The turn that made this commit is read here: when it has ended, its
+        # id; while it still runs, its end is read once as this commit's
+        # (never as "a turn with no commit" after a red check's prompt).
+        flight = self.flight(str(step.get("launch_id") or ""))
+        if str(flight.get("state") or "") in _TURN_END and flight.get("turn_id"):
+            facts["last_turn"] = str(flight["turn_id"])
+        else:
+            facts["commit_turn_open"] = True
         self.service.transition(program, step, "checking", head_commit=head, facts=facts,
                                 line=f"New commit {head[:8]}; the check runs")
         return True
@@ -1861,6 +1879,15 @@ class ProgramRunner:
         if push.returncode != 0:
             self._pr_failed(program, step, "git push", push)
             return
+        if not self._on_github(worktree):
+            # A remote that is not on GitHub (a bare repository, a server of
+            # his own) has no PR: HoldSpeak merges the branch into the base
+            # itself, by the same merge rule (the live proof, 2026-11-01).
+            facts = dict(step.get("facts") or {})
+            facts["local_merge"] = True
+            self.service.transition(program, step, "pr_open", facts=facts,
+                                    line=f"Pushed its branch; the remote is not on GitHub, so HoldSpeak merges it into {base}")
+            return
         created = self._run(["gh", "pr", "create", "--base", base, "--head", branch, "--title", title, "--body", body],
                             cwd=worktree)
         if created.returncode != 0:
@@ -1885,7 +1912,48 @@ class ProgramRunner:
 
     # ── 5. the PR to its merge ───────────────────────────────────────
 
+    def _on_github(self, worktree: str) -> bool:
+        """The step's ``origin`` is a GitHub repository (``gh`` opens its PRs)."""
+        url = self._git(worktree, "config", "--get", "remote.origin.url")  # as written (no insteadOf)
+        return "github.com" in url.lower()
+
+    def _merge_local(self, program: dict[str, Any], step: dict[str, Any], *, by: str, outcome: Any = None) -> dict[str, Any]:
+        """Merge the step's branch into the base on a remote that is not on
+        GitHub: the branch is rebased on the remote's base and pushed to it
+        (fast forward). A conflict parks nothing: the rebase is undone, the
+        log says why in words, and the step waits as it was."""
+        worktree, base = str(step.get("worktree") or ""), str(program.get("base_branch") or "main")
+        self._run(["git", "-C", worktree, "fetch", "-q", "origin", base], cwd=worktree)
+        rebase = self._run(["git", "-C", worktree, "rebase", "-q", f"origin/{base}"], cwd=worktree)
+        if rebase.returncode != 0:
+            self._run(["git", "-C", worktree, "rebase", "--abort"], cwd=worktree)
+            self.service._checkpoint(program, step, "engine",
+                                     f"Could not merge step {step['ordinal']}: its branch conflicts with {base}")
+            raise ProgramRefused("merge_failed", f"The step's branch conflicts with {base}.")
+        push = self._run(["git", "-C", worktree, "push", "-q", "origin", f"HEAD:refs/heads/{base}"], cwd=worktree)
+        if push.returncode != 0:
+            from .brief_words import pr_failure_words
+
+            raw = " ".join(f"{push.stderr or ''} {push.stdout or ''}".split())
+            words = pr_failure_words(f"git push failed: {raw}") or f"could not push to {base}"
+            self.service._checkpoint(program, step, "engine", f"Could not merge step {step['ordinal']}: {words}",
+                                     detail=raw[:2000])
+            raise ProgramRefused("merge_failed", f"git could not push to {base}.")
+        head = self._git(worktree, "rev-parse", "HEAD")
+        facts = dict(step.get("facts") or {})
+        facts["merged_by"], facts["merged_commit"] = by, head or None
+        line = f"Merged step {step['ordinal']} into {base} on the remote ({head[:8]})"
+        if by == "owner" or outcome is None:
+            self.service.transition(program, step, "merged", facts=facts, by="owner", line=f"{line} on his press")
+        else:
+            self.service.transition(program, step, "merged", facts=facts, line="")
+            self.service.engine_decision(program, step, "merge", outcome, line)
+        return {"merge": {"local": True, "commit": head, "by": by}}
+
     def _pr(self, program: dict[str, Any], step: dict[str, Any]) -> None:
+        if (step.get("facts") or {}).get("local_merge"):
+            self._decide_merge(program, step, dict(step.get("facts") or {}), "")
+            return
         record = {}
         try:
             record = self.ledger().get(str(step.get("launch_id") or "")) or {}
@@ -1935,6 +2003,13 @@ class ProgramRunner:
             return
         if ci not in ("passing", "none"):
             return
+        self._decide_merge(program, step, facts, f"PR #{step.get('pr_number')}")
+
+    def _decide_merge(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any], what: str) -> None:
+        """The merge rule on a green, reviewed and met step: the engine merges
+        (YOLO, Normal) or his Merge row (Secure, or a step whose merge is his)."""
+        if facts.get("merge_requested_at"):
+            return
         met = self.service.requirements_met(program, step)
         if not met:
             return  # PG-REQ decision 1: a requirement holds the merge at every level (his rows say which)
@@ -1951,12 +2026,14 @@ class ProgramRunner:
             return
         if step["state"] == "pr_open" and not facts.get("merge_declined_at"):
             self.service.transition(program, step, "merge_ask",
-                                    line=f"Merge? PR #{step.get('pr_number')}: check green"
+                                    line=f"Merge? {what or 'Step ' + str(step['ordinal'])}: check green"
                                          f"{', review passed' if step.get('review_verdict') == 'pass' else ''}")
 
     def merge(self, program: dict[str, Any], step: dict[str, Any], *, by: str, outcome: Any = None) -> dict[str, Any]:
         """``gh pr merge --squash`` on his press or by delegation. The merge
         itself is the follow-through's receipt (the next tick reads it)."""
+        if (step.get("facts") or {}).get("local_merge"):
+            return self._merge_local(program, step, by=by, outcome=outcome)
         number = step.get("pr_number")
         if not number:
             raise ProgramRefused("pr_unknown", "The step has no PR number yet.")

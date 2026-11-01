@@ -46,7 +46,14 @@ def git(cwd: Path, *args: str) -> str:
     return proc.stdout.strip()
 
 
-def make_repo(root: Path) -> Path:
+#: The rig's ``origin`` as written in the repository: a GitHub URL that git
+#: rewrites to the bare repository (``url.<bare>.insteadOf``), so pushes are
+#: real and ``gh`` (FakeGitHub) owns the PRs. ``github=False``: the bare path
+#: itself (a remote with no PRs: HoldSpeak merges into the base itself).
+RIG_GITHUB_URL = "https://github.com/acme/app.git"
+
+
+def make_repo(root: Path, *, github: bool = True) -> Path:
     origin = root / "origin.git"
     subprocess.run(["git", "init", "--bare", "-b", "main", str(origin)], capture_output=True, check=True)
     repo = root / "app"
@@ -57,7 +64,11 @@ def make_repo(root: Path) -> Path:
     (repo / "README.md").write_text("# app\n", encoding="utf-8")
     git(repo, "add", "-A")
     git(repo, "commit", "-m", "seed")
-    git(repo, "remote", "add", "origin", str(origin))
+    if github:
+        git(repo, "config", f"url.{origin}.insteadOf", RIG_GITHUB_URL)
+        git(repo, "remote", "add", "origin", RIG_GITHUB_URL)
+    else:
+        git(repo, "remote", "add", "origin", str(origin))
     git(repo, "push", "-u", "origin", "main")
     return repo
 
@@ -165,6 +176,9 @@ class FakeGitHub:
         self.ci = "passing"
         #: A PR's own CI rollup (by number), over ``ci``.
         self.ci_by_number: dict[int, str] = {}
+        #: The base branch's runs, newest first (``gh run list``; JRN3), as
+        #: GitHub answers them: ``{status, conclusion, name, headSha}``.
+        self.runs: list[dict[str, Any]] = []
 
     def __call__(self, argv: list[str], cwd: Optional[str] = None, **kwargs: Any) -> Any:
         if argv[:1] != ["gh"]:
@@ -181,6 +195,10 @@ class FakeGitHub:
             self.prs[number]["state"] = "merged"
             self.sweep()
             return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if argv[1:3] == ["run", "list"]:
+            import json
+
+            return SimpleNamespace(returncode=0, stdout=json.dumps(self.runs), stderr="")
         return SimpleNamespace(returncode=1, stdout="", stderr="unknown gh call")
 
     def sweep(self) -> None:
@@ -274,9 +292,10 @@ def frozen_quiet_phone(db: Any) -> Any:
 
 class Rig:
     def __init__(self, tmp_path: Path, *, kernel: bool = False, people: Any = None,
-                 engines: Any = None, idle: Any = None, working_at_once: int = 6, clock: Any = None) -> None:
+                 engines: Any = None, idle: Any = None, working_at_once: int = 6, clock: Any = None,
+                 github: bool = True) -> None:
         self.db = Database(tmp_path / "hub.db")
-        self.repo = make_repo(tmp_path)
+        self.repo = make_repo(tmp_path, github=github)
         self.ledger = Ledger()
         self.states: dict[str, dict[str, Any]] = {}
         self.words: dict[str, str] = {}

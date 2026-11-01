@@ -642,6 +642,35 @@ def test_trust_prompt_for_this_worktree_gets_exactly_one_confirm(tmp_path, db, m
     assert len(rig.typed) == 1 and "action:ai_1" in rig.typed[0][1]  # then the brief
 
 
+def test_a_down_the_prompt_did_not_take_is_pressed_again_then_one_confirm(tmp_path, db, monkeypatch) -> None:
+    """The live proof (2026-11-01): the first Down landed while the prompt
+    still drew; the cursor stayed on "No, exit" and the launch timed out."""
+    monkeypatch.setattr("holdspeak.delivery.first_message.TRUST_MOVE_RETRY_SECONDS", 0.05)
+    monkeypatch.setattr("holdspeak.delivery.first_message.TRUST_WAIT_SECONDS", 5.0)
+    rig = _rig(
+        tmp_path, db, monkeypatch,
+        screen=lambda worktree: _trust_screen(worktree),
+        register_when=lambda tmux: all("trust" not in m["content"] for m in tmux.meta.values()),
+    )
+    rig.worktree = (rig.repo.parent / "hs-action-ai_1").resolve()
+    _trusting_tmux(rig)
+    taken = rig.tmux.on_keys
+    ignored = {"n": 0}
+
+    def first_down_lost(pane, keys):
+        if keys == ["Down"] and ignored["n"] == 0:
+            ignored["n"] += 1
+            return  # the prompt was still drawing
+        taken(pane, keys)
+
+    rig.tmux.on_keys = first_down_lost
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    record = _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
+    rig.tmux.ended = True
+    assert record["trust_state"] == "answered" and record["trust_moves"] == 2
+    assert [key for _pane, keys in rig.keys_sent for key in keys] == ["Down", "Down", "Enter"]
+
+
 def test_any_other_screen_gets_nothing(tmp_path, db, monkeypatch) -> None:
     rig = _rig(
         tmp_path, db, monkeypatch,

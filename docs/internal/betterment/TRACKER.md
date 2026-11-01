@@ -315,7 +315,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | LANG9 | Interview rounds, hub | Shipped #1680 (2026-10-31) | Fields #1671. Rounds never gate Start. |
 | LANG10 | The round strip and the question row | Shipped #1680 (2026-10-31) | `Rounds.tsx`. |
 | LANG11 | The Measure kind; walk lines on Your word | Done | Kind and walk lines #1671; the verifier (`verify_measure_log`, "Measured 1.4 s, under 2 s"), word bounds, unit change, the walk on his row: this PR. |
-| LANG12 | Dreaming: template, night, within, backlog, digest | Partly #1687 (2026-10-31) | `holdspeak/services/program_night.py`: the window ("sleeps until 23:30"), `at most`, the night planner per item inside `within`, "Since last night" in the note and through Reach. Open: the Dreaming template, the backlog read by rule, the stop after two red steps, a Working step parked at the end, `within` as a core question on the diff. |
+| LANG12 | Dreaming: template, night, within, backlog, digest | Hub done #1687 + this PR | `holdspeak/services/program_night.py`: the window ("sleeps until 23:30"), `at most`, the night planner per item inside `within`, "Since last night" in the note and through Reach. Open: the Dreaming template, the backlog read by rule, the stop after two red steps, a Working step parked at the end, `within` as a core question on the diff. Then: the Dreaming template, the backlog by rule (Door tasks with "dream", the Program's own Later tasks), the stop after two red steps, the window's end (commit and park, next night goes on); open: canon/test-report backlog sources, `within` on the diff, the New program picker (faces). |
 | LANG13 | Delivery Workbench: link and the Done PR | Done in part | `delivery dw` stored #1671; the Done writer (one PR, story create/evidence/status, the merge rule, his Retry/Merge/Skip row): this PR. Open: the link (read `dw context` at create, acceptance lines as proposed requirements), the milestone's `dw phase close`, off for HoldSpeak's own repository. |
 | LANG14 | The SDK: Python client and `holdspeak program` CLI | Open |  |
 | LANG15 | The documents | Shipped (PG-DOCS-2 PR) | `docs/programs.md`, the skill, RECIPE, UX-CANON, STATUS. |
@@ -326,8 +326,8 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 |---|---|---|---|
 | JRN1 | The draft proposes several Programs | Open | After LANG7. |
 | JRN2 | Add to tonight: the dreaming backlog mark | Hub shipped #1687 (2026-10-31) | `program.add_to_night`, `POST /api/programs/tonight` (Door task, note line, program step). Open: the faces (the Add to tonight verb, the Door row's "Tonight") and the call rig. |
-| JRN3 | The red-main hold for a night | Open | After LANG12. |
-| JRN4 | The night's end reaches him on the phone | Open | After LANG12. |
+| JRN3 | The red-main hold for a night | Done (hub) | The base branch's newest finished GitHub run (`gh run list`); one "Make main green" step first, the rest "waits: main is red"; the digest says how long. This PR. |
+| JRN4 | The night's end reaches him on the phone | Done in part | The night's line is the morning's one Telegram message at the digest hour, with the held count and the first item's briefing page (no second plain digest). Open: one page for several items (DIR9). This PR. |
 | JRN5 | A spoken answer becomes a prepared answer | Open | After LANG5; the default, no ruling. |
 | JRN6 | The item's verbs on a phone message | Open | After LANG5. |
 | JRN7 | `program.decide` behind a spoken yes | Shipped #1679 (2026-10-31) | Built as PG-DIRECTION DIR8. |
@@ -355,6 +355,19 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | DIR10 | The other held items as packages | Open |  |
 | DIR11 | The documents (`docs/reach.md` and the rest) | Shipped (PG-DOCS-2 PR) | `docs/reach.md` and the rest. |
 | DIR12 | Email as a channel | Parked | Until he asks. |
+
+**PG-IMPORT** (open, 7 slices IMP1–IMP7; design `programs/BROCREW-IMPORT-2026-11-01.md`): the best of BroCrew, the owner's sister project, rebuilt on our engine: the step report in registers, the to-do row and the ending word, wait sentences and Since you were last here, never wider than the parent, knowledge escalates and authority never does, take it over and hand it back, the forest.
+
+| Slice | What | State | Note |
+|---|---|---|---|
+| IMP0 | The design note | Shipped (PG-IMPORT design PR) |  |
+| IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Open | Next PR. |
+| IMP2 | The to-do row (Done, Can't do it); the ending word | Open | After IMP1. |
+| IMP3 | Wait sentences; Since you were last here on Today | Open |  |
+| IMP4 | Never wider than the parent (closes the open ruling) | Open |  |
+| IMP5 | The `because` on each routed request; four honest refusals of a late answer | Open |  |
+| IMP6 | Take it over, hand it back, on a step's lane | Open |  |
+| IMP7 | The forest | Later | With handoffs and J5. |
 
 ## Phone (`phone/RECIPE.md`): 0 of 16
 

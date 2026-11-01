@@ -28,7 +28,9 @@ sys.path.insert(0, str(REPO))
 
 from holdspeak.services import program_night, program_sizing, program_split  # noqa: E402
 from holdspeak.services.program_shaper import read_answer  # noqa: E402,F401
-from tests.integration.program_night_seed import NIGHT_ITEMS, SPLIT_STEP, make_night, make_split  # noqa: E402
+from tests.integration.program_night_seed import (  # noqa: E402
+    NIGHT_ITEMS, SPLIT_STEP, make_dreaming, make_night, make_split,
+)
 from tests.integration.program_rig import OWNER, Rig  # noqa: E402
 
 OUT = REPO / "tests" / "fixtures" / "program_night_reply.json"
@@ -52,6 +54,8 @@ def main() -> None:
     parser.add_argument("--base-url", default="http://100.118.33.80:8080/v1")
     parser.add_argument("--key", default="local")
     parser.add_argument("--model", default="qwen3.8-27b")
+    parser.add_argument("--only", choices=("split_night", "backlog"), default=None,
+                        help="record one case group and keep the others as recorded")
     args = parser.parse_args()
     exchanges: list[dict] = []
 
@@ -82,27 +86,63 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="program-night-") as tmp:
         rig = Rig(Path(tmp))
         _wire_live(rig, LiveEngine())
-        pid, step_id = make_split(rig, repository=str(REPO))
-        program, step = rig.service.store.get_program(pid), rig.service.store.get_step(step_id)
-        size = program_split.step_size(rig.service, program, step, step.get("profile") or program["default_profile"],
-                                       None)
-        print("the step:", size["words"], flush=True)
-        parts, engine, reason = program_split.ask(rig.service, OWNER, program, step, size)
-        owned = set(SPLIT_STEP["owns"]) | {path for part in parts or [] for path in part["owns"]}
-        cases["split"] = {"step": SPLIT_STEP, "size": size, "exchanges": list(exchanges), "parts": parts,
-                          "engine": engine, "reason": reason,
-                          "file_bytes": {path: program_sizing.path_bytes(str(REPO), path) for path in sorted(owned)}}
-        print(json.dumps(parts, indent=1), flush=True)
-        items = []
-        night_pid, step_ids = make_night(rig, repository=str(REPO))
-        night = rig.service.store.get_program(night_pid)
-        for line, sid in zip(NIGHT_ITEMS, step_ids):
-            before = len(exchanges)
-            fields, engine, reason = program_night.ask_item(rig.service, OWNER, night, rig.service.store.get_step(sid))
-            items.append({"line": line, "exchanges": exchanges[before:], "fields": fields, "engine": engine,
-                          "reason": reason})
-            print(line, "->", json.dumps(fields), flush=True)
-        cases["night"] = {"items": items}
+        if args.only != "backlog":
+            _split_and_night(rig, cases, exchanges)
+        if args.only != "split_night":
+            _backlog(rig, cases, exchanges)
+    if args.only and OUT.exists():
+        cases = {**json.loads(OUT.read_text(encoding="utf-8"))["cases"], **cases}
+    _write(args, cases)
+
+
+def _split_and_night(rig: Rig, cases: dict, exchanges: list) -> None:
+    pid, step_id = make_split(rig, repository=str(REPO))
+    program, step = rig.service.store.get_program(pid), rig.service.store.get_step(step_id)
+    size = program_split.step_size(rig.service, program, step, step.get("profile") or program["default_profile"],
+                                   None)
+    print("the step:", size["words"], flush=True)
+    parts, engine, reason = program_split.ask(rig.service, OWNER, program, step, size)
+    owned = set(SPLIT_STEP["owns"]) | {path for part in parts or [] for path in part["owns"]}
+    cases["split"] = {"step": SPLIT_STEP, "size": size, "exchanges": list(exchanges), "parts": parts,
+                      "engine": engine, "reason": reason,
+                      "file_bytes": {path: program_sizing.path_bytes(str(REPO), path) for path in sorted(owned)}}
+    print(json.dumps(parts, indent=1), flush=True)
+    items = []
+    night_pid, step_ids = make_night(rig, repository=str(REPO))
+    night = rig.service.store.get_program(night_pid)
+    for line, sid in zip(NIGHT_ITEMS, step_ids):
+        before = len(exchanges)
+        fields, engine, reason = program_night.ask_item(rig.service, OWNER, night, rig.service.store.get_step(sid))
+        items.append({"line": line, "exchanges": exchanges[before:], "fields": fields, "engine": engine,
+                      "reason": reason})
+        print(line, "->", json.dumps(fields), flush=True)
+    cases["night"] = {"items": items}
+
+
+def _backlog(rig: Rig, cases: dict, exchanges: list) -> None:
+    """J2's standing backlog (Door tasks with the word "dream"), read by rule."""
+    from holdspeak.principals import Principal, PrincipalKind
+
+    backlog = []
+    dream_pid = make_dreaming(rig, repository=str(REPO))
+    dream = rig.service.store.get_program(dream_pid)
+    engine_principal = Principal(PrincipalKind.AGENT, "program-engine:night-backlog")
+    for item in program_night.backlog_items(rig.service, dream):
+        added = program_night.add_to_night(rig.service, engine_principal, kind="action", item_id=item["id"],
+                                           program_id=dream_pid)
+        before = len(exchanges)
+        fields, engine, reason = program_night.ask_item(rig.service, OWNER, rig.service.store.get_program(dream_pid),
+                                                        rig.service.store.get_step(added["step_id"]))
+        backlog.append({"line": item["task"], "exchanges": exchanges[before:], "fields": fields, "engine": engine,
+                        "reason": reason})
+        print(item["task"], "->", json.dumps(fields), flush=True)
+    owned_backlog = {path for row in backlog for path in (row["fields"] or {}).get("owns") or []}
+    cases["backlog"] = {"items": backlog, "within": list(dream.get("within") or []),
+                        "file_bytes": {path: program_sizing.path_bytes(str(REPO), path)
+                                       for path in sorted(owned_backlog)}}
+
+
+def _write(args: argparse.Namespace, cases: dict) -> None:
     OUT.write_text(json.dumps({
         "_source": "A real engine's replies to program.split@1 (holdspeak/services/program_split.py) and "
                    "program.night_item@1 (holdspeak/services/program_night.py) over the cases of "

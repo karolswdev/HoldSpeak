@@ -148,7 +148,7 @@ def test_a_push_that_fails_says_it_in_words_and_resume_pushes_again_in_the_same_
     pid = _program(rig)
     rig.service.plan(OWNER, pid, steps=[{"title": "Add a welcome line", "brief": "x"}])
     rig.service.start(OWNER, pid)
-    origin = git(rig.repo, "remote", "get-url", "origin")
+    origin = git(rig.repo, "config", "--get", "remote.origin.url")  # as written (the rig's GitHub URL)
     git(rig.repo, "remote", "remove", "origin")  # gone after Start: the runtime path
     step = rig.step(pid, 1)
     worktree = _worktree(rig, step)
@@ -255,3 +255,79 @@ def test_a_parked_program_asks_nothing_and_its_pages_revoke_resume_raises_them_a
     assert BriefingStore(rig.db).get(made["id"])["revoked_at"]
     rig.service.resume(OWNER, pid)
     assert [row["kind"] for row in rig.program(pid)["your_turn_items"]] == ["parked"]
+
+
+# ── the live proof's two causes (2026-11-01, his hub, program-2633c39e2151) ─
+
+def test_execution_perfection_a_bare_remote_and_a_plain_check_reach_done_with_no_press(tmp_path) -> None:
+    """His proof repository: a bare ``origin`` beside it (no GitHub, no PR)
+    and a plain check command (``sh -c 'test -f README.md'``, no verdict
+    line). The check is green by its exit; HoldSpeak merges each step into
+    main on the remote itself; Done with zero Your turn items and no gh."""
+    rig = Rig(tmp_path, github=False)
+    pid = _program(rig, check="sh -c 'test -f README.md'")
+    rig.service.plan(OWNER, pid, steps=[
+        {"title": "Add a line to the README", "brief": "x"},
+        {"title": "Link the README from the docs", "brief": "y", "after": [1]},
+        {"title": "Add a CHANGELOG line", "brief": "z", "after": [2]},
+    ])
+    rig.service.start(OWNER, pid)
+    files = {1: {"README.md": "# app\nProof.\n"}, 2: {"docs/index.md": "See ../README.md\n"},
+             3: {"CHANGELOG.md": "- The proof ran.\n"}}
+    for ordinal in (1, 2, 3):
+        rig.tick()
+        step = rig.step(pid, ordinal)
+        rig.agent.finish(step["launch_id"], files[ordinal], message=f"Step {ordinal}")
+        for _ in range(4):
+            rig.tick()
+            assert rig.program(pid)["your_turn_items"] == []
+        assert rig.step(pid, ordinal)["check"]["verdict"] == "green"
+        assert rig.step(pid, ordinal)["state"] in ("merged", "done"), rig.step(pid, ordinal)
+    rig.tick(2)
+    program = rig.program(pid)
+    assert program["state"] == "done" and program["done"] == 3, program["status_line"]
+    assert _owner_presses(rig, pid) == [] and [call for call in rig.gh.calls if call[:2] == ["gh", "pr"]] == []
+    git(rig.repo, "fetch", "-q", "origin", "main")
+    shipped = git(rig.repo, "ls-tree", "-r", "--name-only", "FETCH_HEAD").splitlines()
+    assert {"README.md", "docs/index.md", "CHANGELOG.md"} <= set(shipped)
+    lines = [row["line"] for row in program["checkpoints"]]
+    assert sum(1 for line in lines if line.startswith("Merged step ") and " into main on the remote" in line) == 3
+    assert not any("asked the agent to commit" in line for line in lines)
+
+
+def test_at_secure_a_bare_remote_merge_is_his_row_and_his_press_merges_it(tmp_path) -> None:
+    rig = Rig(tmp_path, github=False)
+    pid = _program(rig, control="secure", check="sh -c 'test -f README.md'")
+    rig.service.plan(OWNER, pid, steps=[{"title": "Add a line", "brief": "x"}])
+    rig.service.start(OWNER, pid)
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"README.md": "# app\nProof.\n"})
+    rig.tick(3)
+    [item] = rig.program(pid)["your_turn_items"]
+    assert item["kind"] == "merge" and item["title"] == "Merge step 1 “Add a line”? (into main, check green)"
+    rig.service.decide(OWNER, pid, rig.step(pid, 1)["id"], kind="merge", choice="merge")
+    rig.tick()
+    assert rig.step(pid, 1)["state"] in ("merged", "done")
+
+
+def test_a_red_checks_prompt_is_never_read_as_a_turn_with_no_commit(tmp_path) -> None:
+    """The proof's ledger: "New commit …; the check runs", the check red, then
+    "The turn ended with no commit; asked the agent to commit" for the turn
+    that MADE the commit (it was still ending when the engine took it)."""
+    rig = Rig(tmp_path)
+    pid = _program(rig, control="normal", check="sh -c 'exit 1'")
+    rig.service.plan(OWNER, pid, steps=[{"title": "One", "brief": "x"}])
+    rig.service.start(OWNER, pid)
+    step = rig.step(pid, 1)
+    worktree = Path(rig.ledger.get(step["launch_id"])["worktree_path"])
+    (worktree / "a.txt").write_text("1\n", encoding="utf-8")
+    git(worktree, "add", "-A")
+    git(worktree, "commit", "-m", "work")  # the agent commits; its turn still runs
+    row = rig.service.store.get_step(step["id"])
+    row["facts"] = {**row["facts"], "said_done": True}
+    rig.service.store.save_step(row)
+    rig.tick()
+    assert rig.step(pid, 1)["check"]["verdict"] == "red" and rig.step(pid, 1)["rounds"] == 1
+    rig.agent.end_turn(step["launch_id"])  # the turn that made the commit ends now
+    rig.tick()
+    lines = [row["line"] for row in rig.program(pid)["checkpoints"]]
+    assert not any("turn ended with no commit" in line for line in lines), lines

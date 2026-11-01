@@ -74,6 +74,7 @@ A program can hold work that merged before the program existed. Each merged pull
 | **Race** | One brief, two agents (Claude Code and Codex) in two worktrees. | The check. | None. The first contender that satisfies its configured gate wins; HoldSpeak parks the other. |
 | **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | Claude Code reviews. The program runs at YOLO and its merge gate is `level`. |
 | **From the desk** | One step for each open action of a project. | The check. | None. |
+| **Dreaming** | At night only (`night 23:30-07:00 · at most 8 steps`), from the backlog. pi builds on your home engine when it is idle, in steps that fit `budget 64k`. | The check. | Claude Code reviews at a glance. The program runs at YOLO. |
 
 You can change all values after you pick a template. Each template also gives each new program its default requirements (see "The template defaults").
 
@@ -641,9 +642,19 @@ A program with a `night` line runs only at night, for example `night 23:30-07:00
 
 **Planned at the start of the night.** At the first tick in the window, the planning engine cuts each item into one small step: one concern, at most three files, each file in the `within` folders, and a size that fits. Until then, the step says "Ready · planning for tonight". With no planning engine, the step runs as you wrote it.
 
-**Since last night.** After the window, HoldSpeak writes one line, one time a night, for example "Since last night: 4 steps done, 1 waits on you, 1 split", with the PR numbers that merged. It is at the top of the program's note, and it goes to Telegram when Telegram is on (not in quiet hours: it waits until they end). A night that did nothing writes no line.
+**The Dreaming template.** It gives a program the night line `23:30-07:00 · at most 8 steps`, control YOLO, pi on your home engine when it is idle, `budget 64k`, Claude Code's review at a glance, the home engine as the planner (when your library has it), and `within` with the folders `web/src/desk/`, `docs/` and `tests/unit/` that your repository has. A night program can start with no steps: its backlog fills it.
 
-Not yet: the Dreaming template, a backlog that HoldSpeak reads by itself, the stop after two red steps, a step that parks when the night ends, `within` as a core question for the diff, and the hold while the base branch is red.
+**The backlog.** At the start of the window, HoldSpeak reads the backlog one time: each open Door task with the word "dream" and each Later task from the program's own findings. Each one becomes a step for tonight's planner, up to the night's `at most`. At YOLO, HoldSpeak adds them and says so in Decided for you (**Overturn**). At Secure and Normal, one log line says how many wait; **Add to tonight** takes each one.
+
+**When main is red.** At the start of each hand, HoldSpeak reads the newest finished run of the base branch on GitHub. When it failed, the night plans one step first, "Make main green", and the other steps say "Ready · waits: main is red". When a run is green again, the log says "Main is green again; the night goes on". The "Since last night" line says how long the night waited.
+
+**Two red steps.** After two red steps in a row, the night stops: the other steps say "Ready · the night stopped after 2 red steps", and the "Since last night" line says so.
+
+**When the night ends.** A step whose agent still works gets the message "the night ended: commit what you have". When its turn ends (or 10 minutes later), HoldSpeak commits what is left on the step's branch and parks the step: "Night ended; parked with a commit". It is not a Your turn row. The next night it goes on from that commit, in the same worktree.
+
+**Since last night.** After the window (and after the steps that were still working park), HoldSpeak writes one line, one time a night, for example "Since last night: 4 steps done, 1 parked, 1 waits on you, 1 split", with the PR numbers that merged. It is at the top of the program's note. It is also the morning's one Telegram message: HoldSpeak sends it at your digest hour (Settings ▸ Reach), not in quiet hours, with how many items of the night wait on you and the briefing page of the first one. On that morning, the plain digest does not go as a second message. A night that did nothing writes no line.
+
+Not yet: the canon scanner's findings and the failing tests of the last main run as backlog items, `within` as a core question for the diff, one briefing page for several items, and the Dreaming template in the New program picker (it is in the hub and in the program text: `template dreaming`).
 
 
 ## The interview rounds

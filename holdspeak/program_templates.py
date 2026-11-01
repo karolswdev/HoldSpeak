@@ -30,6 +30,10 @@ BUILD_AND_REVIEW = "build-and-review"
 RACE = "race"
 FROM_THE_DESK = "from-the-desk"
 OVERNIGHT = "overnight"
+DREAMING = "dreaming"
+#: Dreaming's bounds (PG-LANG §5.5): the folders a night may own; a template
+#: plants the ones its repository has.
+DREAMING_WITHIN = ("web/src/desk/", "docs/", "tests/unit/")
 
 #: The one sentence every template ships on every step (decision 8).
 ONLY_THE_BRIEF = "The change does only what its brief says."
@@ -92,6 +96,31 @@ TEMPLATES: list[dict[str, Any]] = [
         "requirements": [{"text": ONLY_THE_BRIEF, "kind": "review", "each_step": True, "required": True},
                          {"text": HAS_A_TEST, "kind": "review", "each_step": True, "required": True}],
     },
+    {
+        # PG-LANG §5.5 and journey J2 (LANG12): small fixes from the backlog,
+        # at night, on the idle home engine, planned by the cheap planner.
+        "id": DREAMING,
+        "name": "Dreaming",
+        "description": (
+            "At night, 23:30 to 07:00: the backlog becomes tiny steps that fit 64k. pi builds on the home "
+            "engine when it is idle; Claude Code reviews at a glance. YOLO: a green, reviewed step merges. "
+            "At most 8 steps a night."
+        ),
+        "program": {
+            "control": "yolo", "reviewer_profile": "claude-default", "reviewer_engine": None,
+            "default_profile": "pi-default", "default_engine": HOME_ENGINE_PROFILE, "prefer_idle": True,
+        },
+        #: The Program lines (``ProgramService._update_language_fields``); the
+        #: planner is the home engine when the library has it (it costs
+        #: nothing), else the desk's ``agent.plan``; ``within`` keeps the
+        #: folders the repository has.
+        "language": {
+            "review_depth": "glance", "budget_tokens": "64k", "night": "23:30–07:00 · at most 8 steps",
+            "within": list(DREAMING_WITHIN), "planner_engine": HOME_ENGINE_PROFILE,
+        },
+        "step": {"gate_check": True, "gate_review": True, "review_depth": "glance", "gate_merge": "level", "race": 0},
+        "requirements": [{"text": ONLY_THE_BRIEF, "kind": "review", "each_step": True, "required": True}],
+    },
 ]
 
 TEMPLATE_IDS = tuple(template["id"] for template in TEMPLATES)
@@ -115,7 +144,8 @@ def requirements_for(template: Optional[dict[str, Any]], *, review: Optional[boo
 
 
 __all__ = [
-    "BUILD_AND_REVIEW", "FAST_CYCLE", "FROM_THE_DESK", "HOME_ENGINE_PROFILE", "OVERNIGHT", "RACE",
+    "BUILD_AND_REVIEW", "DREAMING", "DREAMING_WITHIN", "FAST_CYCLE", "FROM_THE_DESK", "HOME_ENGINE_PROFILE",
+    "OVERNIGHT", "RACE",
     "FROM_ACTION", "HAS_A_TEST", "ONLY_THE_BRIEF", "TEMPLATES", "TEMPLATE_IDS", "get_template", "requirements_for",
     "reviewed",
 ]

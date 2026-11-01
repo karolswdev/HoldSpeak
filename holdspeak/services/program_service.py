@@ -299,8 +299,14 @@ def triage_effort(brief: str, owns: Iterable[str]) -> str:
 # ── the Program's state: worst wins ──────────────────────────────────
 
 
+#: A step the night parked at its window's end goes on the next night (LANG12):
+#: it is the night's, not his.
+NIGHT_ENDED = "Night ended"
+
+
 def _engine_parked(step: Mapping[str, Any]) -> bool:
-    return step.get("state") == "parked" and step.get("parked_by") == PARKED_BY_ENGINE
+    return (step.get("state") == "parked" and step.get("parked_by") == PARKED_BY_ENGINE
+            and not str(step.get("parked_reason") or "").startswith(NIGHT_ENDED))
 
 
 def _live(steps: Iterable[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
@@ -434,7 +440,8 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
                                    f"continue in {nxt.get('label') or agent_label(nxt.get('profile'))} now, or wait?"})
         elif state == "merge_ask":
             number = step.get("pr_number")
-            pr = f"PR #{number}" if number else "the PR"
+            pr = f"PR #{number}" if number else (
+                f"into {program.get('base_branch') or 'main'}" if facts.get("local_merge") else "the PR")
             items.append({**base, "id": f"{step['id']}:merge", "kind": "merge",
                           "choices": list(DECIDE_CHOICES["merge"]),
                           "title": f"Merge {label}? ({pr}, check green"
@@ -1643,6 +1650,16 @@ class ProgramService:
             # where the Reach rules allow it; default off, on in Overnight.
             "may_call": bool(may_call if may_call is not None else defaults.get("may_call")),
         }
+        language = dict((shape or {}).get("language") or {})
+        if language:
+            # LANG12: a template's Program lines (Dreaming's night, budget,
+            # within, depth, planner); a planner the library lacks, or a
+            # bound the repository lacks, is left out.
+            if language.get("planner_engine") and self.engine(language["planner_engine"]) is None:
+                language.pop("planner_engine")
+            if language.get("within"):
+                language["within"] = [path for path in language["within"] if (Path(root) / path).exists()]
+            self._update_language_fields(program, language)
         with _LOCK:
             self.store.save_program(program)
             self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent",
@@ -1962,7 +1979,8 @@ class ProgramService:
         program = self._program(program_id)
         self._require_writer(principal, program, "start")
         steps = self.store.list_steps(program["id"])
-        if not steps:
+        if not steps and not program.get("night"):
+            # LANG12: a night Program may start empty; its backlog fills it.
             raise ProgramRefused("steps_required", "Add a step before you start the program.")
         if program["state"] not in ("drafting", "parked"):
             raise ProgramRefused("program_started", "The program runs already.")
@@ -4701,7 +4719,9 @@ def start_precheck(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]
         return None
     if not Path(root).is_dir() or not git(root, "rev-parse", "--git-dir"):
         return ProgramRefused("repository_not_git", "The repository is not a git folder. Name a git repository.")
-    pushes = any(str(step.get("gate_merge") or "level") != "none" for step in steps)
+    steps = list(steps)
+    pushes = any(str(step.get("gate_merge") or "level") != "none" for step in steps) or (
+        not steps and bool(program.get("night")))  # a night's steps come from its backlog
     if pushes and not git(root, "remote", "get-url", "origin"):
         return ProgramRefused("repository_no_remote", "The repository has no remote to push to. Add one named "
                               "origin, or set each step to merge: none to keep its branch local.")
