@@ -17,7 +17,7 @@
       "on": true,
       "paired": null,
       "pairing": {
-        "expires_at": "2026-10-31T21:37:51.790126+00:00"
+        "expires_at": "2026-11-01T07:27:01.034786+00:00"
       },
       "token": "keystore"
     }
@@ -75,7 +75,7 @@
   "open_packages": [],
   "quiet_hours": {
     "end": 8,
-    "now": false,
+    "now": true,
     "start": 22
   }
 }

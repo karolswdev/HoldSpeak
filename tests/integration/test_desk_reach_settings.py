@@ -115,6 +115,11 @@ def test_settings_reach_reads_and_saves_its_rows(desk) -> None:
     assert saved.json()["ladder"]["telegram"] == "after_10" and saved.json()["digest"] == {"at": 7, "hour": 7}
     _record("reach.saved.json", saved.json(), desk)
     assert client.put("/api/reach", json={"telegram": "loud"}).json()["code"] == "telegram_invalid"
+    # DIR7: the ladder's Phone rung (the Phone app channel) as its own picker.
+    phone_off = client.put("/api/reach", json={"phone_app": "off"})
+    assert phone_off.status_code == 200 and phone_off.json()["channels"]["phone_app"]["on"] is False
+    assert phone_off.json()["ladder"]["order"] == ["desk", "phone_app", "telegram", "call"]
+    _record("reach.phone_off.json", phone_off.json(), desk)
 
     unpaired_again = client.delete("/api/reach/telegram/pair")
     assert unpaired_again.json() == {"paired": None}

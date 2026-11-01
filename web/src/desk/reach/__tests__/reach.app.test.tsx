@@ -14,6 +14,7 @@ import pairing from "../__fixtures__/reach.pairing.json";
 import pairingOpen from "../__fixtures__/reach.pairing_open.json";
 import saved from "../__fixtures__/reach.saved.json";
 import unpaired from "../__fixtures__/reach.unpaired.json";
+import phoneOff from "../__fixtures__/reach.phone_off.json";
 import needsLater from "../__fixtures__/needs_you.later.json";
 import needsSent from "../__fixtures__/needs_you.sent.json";
 
@@ -126,6 +127,20 @@ describe("Settings ▸ Reach", () => {
     fireEvent.click(screen.getByTestId("reach-unpair"));
     await waitFor(() => expect(calls).toContain("DELETE /api/reach/telegram/pair"));
     await waitFor(() => expect(screen.getByTestId("reach-telegram-state").textContent).toBe("Not paired"), { timeout: 5_000 });
+  });
+
+  it("DIR7: the ladder's rungs in the hub's order, each with its wait; Phone saves through PUT /api/reach", async () => {
+    hub({ "GET /api/reach": paired, "PUT /api/reach": phoneOff });
+    pane();
+    const ladder = await screen.findByTestId("reach-ladder");
+    await waitFor(() => expect(within(ladder).getAllByRole("combobox").length).toBe(2));
+    const labels = [...ladder.querySelectorAll(".gadget-row-label")].map((node) => node.childNodes[0]?.textContent?.trim());
+    expect(labels).toEqual(["Desk", "Phone", "Telegram", "Call"]);
+    expect(within(ladder).getByTestId("reach-rung-desk").textContent).toBe("At once");
+    expect(within(ladder).getByRole("combobox", { name: "Phone" })).toHaveValue("on");
+    fireEvent.change(within(ladder).getByRole("combobox", { name: "Phone" }), { target: { value: "off" } });
+    await waitFor(() => expect(calls).toContain('PUT /api/reach {"phone_app":"off"}'));
+    await waitFor(() => expect(within(screen.getByTestId("reach-ladder")).getByRole("combobox", { name: "Phone" })).toHaveValue("off"));
   });
 
   it("Telegram's rung, the digest and Later means save through PUT /api/reach", async () => {

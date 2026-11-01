@@ -28,6 +28,8 @@ Note: no real bot was paired when these docs were written. The pairing is tested
 
 ## When to reach you
 
+The ladder shows each rung in the order HoldSpeak tries them, with its wait: **Desk** (at once, always), **Phone** (the Phone app's push: **At once** or **Off**), **Telegram** (the choices below) and **Call** (by your **Reach you** rules, when Calls is set). An answer on any rung stops the ladder.
+
 **Telegram** sets when an item goes to Telegram:
 
 | Choice | What HoldSpeak does |
