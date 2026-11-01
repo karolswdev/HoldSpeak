@@ -249,7 +249,7 @@ def classify_edit(tool_input: Optional[Mapping[str, Any]], *, cwd: str, root: st
         real = _real_target(joined)
     except (OSError, ValueError):
         return BashCall(UNPARSED, "edit_path_unreadable")
-    if not _inside(real, real_root):
+    if not _inside(real, real_root) and not _in_scratch(real, real_root):
         return BashCall(OUTSIDE, "edit_outside_worktree", target=target)
     return BashCall(INSIDE, EDIT_INSIDE_RULE)
 
@@ -691,6 +691,25 @@ def _inside(path: str, root: str) -> bool:
     return path == root or path.startswith(root.rstrip(os.sep) + os.sep)
 
 
+def agent_scratch_roots(root: str) -> list[str]:
+    """Claude Code's own scratch folder for a session in ``root``:
+    ``<tmp>/claude-<uid>/<root with each non-alphanumeric as ->/`` (its
+    session scratchpad, where it writes logs). Writing there is the agent's
+    own scratch, not outside its worktree (the live proof, 2026-11-01: two
+    commits that also wrote a check log there were refused)."""
+    try:
+        uid = os.getuid()
+    except AttributeError:  # pragma: no cover - not POSIX
+        return []
+    encoded = re.sub(r"[^A-Za-z0-9]", "-", os.path.realpath(root))
+    bases = {"/tmp", "/private/tmp", os.environ.get("TMPDIR") or "/tmp"}
+    return sorted({os.path.realpath(os.path.join(base, f"claude-{uid}", encoded)) for base in bases if base})
+
+
+def _in_scratch(path: str, root: str) -> bool:
+    return any(_inside(path, scratch) for scratch in agent_scratch_roots(root))
+
+
 class _Reader:
     def __init__(self, root: str, cwd: str) -> None:
         self.root = root
@@ -1105,7 +1124,7 @@ class _Reader:
         real = os.path.realpath(joined)
         if real in _HARMLESS_PATHS or word in _HARMLESS_PATHS:
             return
-        if not _inside(real, self.root):
+        if not _inside(real, self.root) and not _in_scratch(real, self.root):
             if _inside(os.path.normpath(joined), self.root):
                 # The text is in the worktree; a symlink on the way leads out.
                 raise _Outside(SYMLINK_OUT_RULE, word)
