@@ -5309,6 +5309,14 @@
       ]
     },
     {
+      "path": "/api/phone/messages/{message_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.phone",
+      "consumers": []
+    },
+    {
       "path": "/api/phone/messages/{message_id}/read",
       "methods": [
         "POST"
