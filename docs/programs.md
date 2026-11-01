@@ -165,6 +165,18 @@ The program is **Drafting**, **Running**, **Your turn**, **Done**, **Parked** or
 
 A stopped step also says how its work ended, after its state: **Parked · interrupted** (the agent's lane was cut off, the PR was closed without a merge, or the night ended) or **Parked · failed** (the check or a requirement stayed red after the rounds, or the push or the PR failed). The Programs list says it after its line ("Step 2 of 3 waits on you since 21:43 · interrupted").
 
+When a step waits on something that does not come by itself, its row and the Programs list say so in one sentence:
+
+| The row says | What happened |
+|---|---|
+| Step 4 with Claude Code is waiting on something that has ended. | It waits on a step that HoldSpeak parked, that failed, or that is no longer in the plan. |
+| Step 1 with Claude Code is waiting on something HoldSpeak can no longer find. | The hub has no record of the step's agent lane. |
+| Step 2 with Claude Code is waiting: the hold on its commit ended with no answer. | The gate held the agent's commit, and the hold ended before you answered here. |
+| Step 2 with Claude Code picks up again after the hub restart. | The hub restarted and the agent resumes. |
+| Step 3 with Claude Code waits on you, and the message to you did not arrive. | A Telegram message about the step was not delivered. |
+
+**Since you were last here.** When you come back to the desk after 30 minutes or more away, Today starts with a few lines about the Programs, one for each Program, for example "README touch: 2 steps merged, 1 decided for you". A press opens that Program. A night program's line is its "Since last night" line. When part of the record could not be read, or only the newest 40 rows were read, a line under them says so. When nothing happened, Today shows nothing here.
+
 A step moves on a receipt, not on a claim. "Done" from the agent is not enough: HoldSpeak waits for a new commit on the step's branch. "Green" is a green check log. "Merged" is the merge that GitHub reports.
 
 ### The step report

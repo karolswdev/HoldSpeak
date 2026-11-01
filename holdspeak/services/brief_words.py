@@ -611,6 +611,27 @@ def step_story(checkpoints: Iterable[Mapping[str, Any]], step_id: Any, limit: in
     return sorted(reversed(out), key=lambda row: str(row.get("at") or ""))
 
 
+# ── what a step waits on (PG-IMPORT IMP3) ────────────────────────────
+
+#: BroCrew's rule (``shared/tasks.ts``, WAITING_STANDS_FOR): "each one says
+#: what the LEDGER holds and never who must move". One sentence for each
+#: cause the engine writes or derives (``ProgramService.step_wait``); a face
+#: never words a cause of its own.
+WAIT_SENTENCES = {
+    "target_ended": "is waiting on something that has ended",
+    "lane_missing": "is waiting on something HoldSpeak can no longer find",
+    "hold_expired": "is waiting: the hold on its commit ended with no answer",
+    "recovery": "picks up again after the hub restart",
+    "notice_lost": "waits on you, and the message to you did not arrive",
+}
+
+
+def wait_line(ordinal: Any, agent: str, cause: str) -> str:
+    """"Step 4 with Claude Code is waiting on something that has ended."."""
+    said = WAIT_SENTENCES.get(cause)
+    return f"Step {int(ordinal or 0)} with {agent} {said}." if said else ""
+
+
 # ── the step report (PG-IMPORT IMP1) ─────────────────────────────────
 
 #: The step states that carry a report (Done, Merged, Parked or Skipped,
@@ -899,4 +920,4 @@ def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str
 
 __all__ = ["brief_lines", "blocked_steps", "blocked_words", "changed_line", "changed_lines", "clean", "consequence", "doing_line",
            "delivery_where", "doing_words", "fence_hits", "first_sentence", "goal_line", "list_line", "list_track", "happened_line", "item_brief", "step_story", "window_words", "parked_cause", "question_line",
-           "rest_words", "scrub", "sentence", "settle_words", "step_report", "waits_words"]
+           "rest_words", "scrub", "sentence", "settle_words", "step_report", "wait_line", "waits_words"]

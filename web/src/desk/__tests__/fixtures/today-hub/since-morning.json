@@ -1,42 +1,42 @@
 {
  "_source": "The hub's own answers, captured by tests/unit/test_desk_today.py (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
  "/api/today/since-morning": {
-  "since": "2026-10-29T04:00:00Z",
+  "since": "2026-11-01T05:00:00Z",
   "items": [
    {
     "kind": "action",
     "ref": "action_item:a-tick",
     "title": "Email Dana the cutover plan",
     "word": "Done",
-    "at": "2026-10-30T02:25:04Z"
+    "at": "2026-11-01T08:59:15Z"
    },
    {
     "kind": "note",
-    "ref": "note:note_0c163da98873",
+    "ref": "note:note_06868804123f",
     "title": "Cutover notes",
     "word": "Filed in Payments",
-    "at": "2026-10-30T02:25:04Z"
+    "at": "2026-11-01T08:59:15Z"
    },
    {
     "kind": "send",
     "ref": "meeting:m-today",
     "title": "Payments weekly summary",
     "word": "Sent",
-    "at": "2026-10-30T02:20:04Z"
+    "at": "2026-11-01T08:54:15Z"
    },
    {
     "kind": "decision",
     "ref": "decision_record:r-today",
     "title": "Freeze the ledger on Nov 12",
     "word": "Recorded",
-    "at": "2026-10-30T02:15:04Z"
+    "at": "2026-11-01T08:49:15Z"
    },
    {
     "kind": "meeting",
     "ref": "meeting:m-today",
     "title": "Payments weekly",
     "word": "Summary stored",
-    "at": "2026-10-30T02:05:04Z"
+    "at": "2026-11-01T08:39:15Z"
    }
   ],
   "programs": {
@@ -45,6 +45,7 @@
    "waiting": 0,
    "done": 0,
    "merged": 0
-  }
+  },
+  "since_last_here": null
  }
 }

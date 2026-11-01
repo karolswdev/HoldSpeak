@@ -34,6 +34,18 @@ class TodayService:
 
             get_logger("today_service").warning(f"programs not read for Since this morning: {exc}")
             read["programs"] = None
+        # PG-IMPORT IMP3: "Since you were last here" (None when nothing
+        # happened, or the hub does not know when he was here).
+        try:
+            from holdspeak.services.last_here import last_here, since_last_here
+            from holdspeak.services.program_service import ProgramService
+
+            read["since_last_here"] = since_last_here(self._db, ProgramService(self._db), last_here(self._db))
+        except Exception as exc:
+            from holdspeak.logging_config import get_logger
+
+            get_logger("today_service").warning(f"since last here not read: {exc}")
+            read["since_last_here"] = None
         return read
 
 

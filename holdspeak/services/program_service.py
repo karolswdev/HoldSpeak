@@ -35,7 +35,7 @@ from typing import Any, Callable, Iterable, Mapping, Optional
 from ..db.programs import ProgramStore
 from ..logging_config import get_logger
 from ..timestamps import local_now, utc_now_iso
-from .brief_words import REPORT_STATES, step_report
+from .brief_words import REPORT_STATES, WAIT_SENTENCES, step_report, wait_line
 from .errors import NotFound, ServiceError
 from .program_rules import LEVEL_WORDS, level_word
 
@@ -733,6 +733,32 @@ def seen_of(step: Optional[Mapping[str, Any]]) -> Optional[dict[str, Any]]:
     return {key: value for key, value in seen.items() if value not in (None, "")}
 
 
+def step_wait(program: Mapping[str, Any], step: Mapping[str, Any],
+              steps: Iterable[Mapping[str, Any]]) -> Optional[dict[str, Any]]:
+    """PG-IMPORT IMP3: what a step waits on, as ``{cause, line, at?}``, or
+    ``None``. The engine's own record first (``facts.wait``: the lane it can
+    no longer find, a recovery, a hold that ended, a message that did not
+    arrive); else a Planned step that waits on a step that ended without a
+    merge (parked by the engine, failed) or is gone from the plan."""
+    facts = step.get("facts") or {}
+    agent = agent_label(((facts.get("running_on") or {}).get("profile") if isinstance(facts.get("running_on"), Mapping)
+                         else None) or step.get("profile") or program.get("default_profile"))
+    wait = facts.get("wait") if isinstance(facts.get("wait"), Mapping) else None
+    if wait and wait.get("cause") in WAIT_SENTENCES:
+        return {"cause": wait["cause"], "at": wait.get("at"),
+                "line": wait_line(step.get("ordinal"), agent, str(wait["cause"]))}
+    if step.get("state") not in ("planned", "ready") or step.get("race_of"):
+        return None
+    steps = [row for row in steps if not row.get("race_of")]
+    for ordinal in step.get("after") or []:
+        named = [row for row in steps if int(row.get("ordinal") or 0) == int(ordinal)]
+        ended = not named or all(row.get("state") == "failed" or (
+            row.get("state") == "parked" and row.get("parked_by") != PARKED_BY_OWNER) for row in named)
+        if ended:
+            return {"cause": "target_ended", "line": wait_line(step.get("ordinal"), agent, "target_ended")}
+    return None
+
+
 def program_state(program: Mapping[str, Any], steps: list[Mapping[str, Any]],
                   requirements: Optional[Iterable[Mapping[str, Any]]] = None,
                   proposals: Optional[Iterable[Mapping[str, Any]]] = None) -> str:
@@ -1175,6 +1201,13 @@ class ProgramService:
         summary["line"] = list_line(state, top, turn, history=history, done_in=summary.get("done_in", ""),
                                     ended=max((str(step.get("ended_at") or "") for step in steps), default="")
                                     or program.get("closed_at") or program["updated_at"])
+        if state in ("running", "waiting"):
+            # PG-IMPORT IMP3: a step that waits on something the plan cannot
+            # give it is the program's line ("Step 4 with Claude Code is
+            # waiting on something that has ended.").
+            wait = next((found for found in (step_wait(program, step, top) for step in top) if found), None)
+            if wait:
+                summary["line"] = wait["line"]
         return summary
 
     def _ordinal_finished(self, steps: Iterable[Mapping[str, Any]], ordinal: int) -> bool:
@@ -1303,6 +1336,9 @@ class ProgramService:
             "report": step_report(step, checkpoints, requirements if requirements is not None
                                   else self.requirements(program["id"])),
             "report_text": step.get("report"), "last_checkpoint": last,
+            # PG-IMPORT IMP3: what it waits on ({cause, line}), or None.
+            "wait": step_wait(program, step, list((steps_by_id or {}).values())
+                              or self.store.list_steps(program["id"])),
             # PG-IMPORT IMP2: finished | failed | interrupted | none.
             "ending": facts.get("ending") if facts.get("ending") in ENDINGS else "none",
             "started_at": step.get("started_at"), "ended_at": step.get("ended_at"),
@@ -4413,6 +4449,8 @@ class ProgramService:
         step.update(fields)
         now = self._clock()
         step["state"] = to
+        if to != current and isinstance((step.get("facts") or {}).get("wait"), Mapping):
+            step["facts"] = {key: value for key, value in (step.get("facts") or {}).items() if key != "wait"}
         if to in REPORT_STATES and to != current:
             self._report_files(program, step)
         # PG-IMPORT IMP2 (BroCrew's ending word): how the lane ended, apart
@@ -4444,6 +4482,27 @@ class ProgramService:
         if line:
             self._checkpoint(program, step, by, line, detail=detail)
         return step
+
+    def notice_lost(self, program_id: str, step_id: str, via: str) -> None:
+        """PG-IMPORT IMP3: a message to him about this step did not arrive
+        (``via``: telegram). The step's row and the list say so until the
+        step moves; the ledger keeps one line."""
+        step = self.store.get_step(str(step_id or ""))
+        if step is None or step.get("program_id") != program_id:
+            return
+        facts = dict(step.get("facts") or {})
+        if (facts.get("wait") or {}).get("cause") == "notice_lost":
+            return
+        program = self.store.get_program(program_id)
+        facts["wait"] = {"cause": "notice_lost", "at": self._clock(), "via": str(via)}
+        step["facts"] = facts
+        with _LOCK:
+            self._save(step)
+            if program is not None:
+                self.store.add_checkpoint(step_id=step["id"], program_id=program_id, at=self._clock(), by="engine",
+                                          kind="notice_lost", line=f"The message to you on {via} did not arrive",
+                                          undo={"via": str(via)})
+                self.changed(program_id, step["id"], verb="notice_lost")
 
     def _report_files(self, program: Mapping[str, Any], step: dict[str, Any]) -> None:
         """PG-IMPORT IMP1: the step's diff file names against its base, read

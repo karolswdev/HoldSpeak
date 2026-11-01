@@ -764,3 +764,24 @@
   min-width: 0;
   border-bottom: 1px solid var(--wb-rule-soft);
 }
+
+/* PG-IMPORT IMP3: Since you were last here, a few rows over the day, each
+   opening its Program; the honest lines quiet under them. */
+.desk-next .today-since-last {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.desk-next .today-since-last-head {
+  margin: 0;
+  padding: 8px 16px 2px;
+  color: var(--wb-muted);
+  font: 600 12px / 1.3 var(--font-sans);
+}
+.desk-next .today-since-last-honest {
+  margin: 0;
+  padding: 2px 16px 8px;
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+}
