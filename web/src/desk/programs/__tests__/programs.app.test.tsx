@@ -2649,8 +2649,10 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     render(<ProgramBody programId={audit.id} />);
     await screen.findByTestId("programs-your-turn");
     const row = turnRow("audit_file")!;
-    expect(row.textContent).toContain(`The program: ${item.brief!.happened} ${item.brief!.question}`);
-    expect(within(row).getAllByRole("button").map((button) => button.textContent)).toEqual(["File", "Skip"]);
+    // Close is asked last (the live walk): File the findings is the headline.
+    expect(row.textContent).toContain(item.brief!.question);
+    expect(screen.getAllByTestId("programs-turn-item").map((node) => node.getAttribute("data-kind"))).toEqual(["audit_file", "fix_program", "close"]);
+    expect(within(row).getAllByRole("button").map((button) => button.textContent).slice(0, 2)).toEqual(["File", "Skip"]);
     expect(within(screen.getByTestId("programs-findings")).queryAllByTestId("programs-finding-task")).toHaveLength(0);
     fireEvent.click(within(row).getByTestId("programs-turn-file"));
     await waitFor(() => expect(calls).toContain(
