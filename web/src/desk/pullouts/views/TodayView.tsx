@@ -215,7 +215,6 @@ function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs
     <section className="today-fold today-done" data-testid="today-done" aria-label="Since this morning">
       <Button variant="chrome" className="today-fold-head" aria-expanded={rows.length ? shown : undefined}
         data-testid="today-done-toggle" onClick={onToggle} disabled={!rows.length}>
-        <span className="today-fold-mark" aria-hidden="true">{rows.length ? (shown ? "▾" : "▸") : ""}</span>
         <span className="today-fold-label">Since this morning</span>
         <span className="today-fold-counts" data-testid="today-done-counts">
           {rows.length ? `${rows.length} done` : "Nothing done yet"}
@@ -349,7 +348,6 @@ function ThisWeek({ days }: { days: readonly WeekCount[] }) {
     <section className="today-fold" data-testid="today-week" aria-label="This week">
       <Button variant="chrome" className="today-fold-head" aria-expanded={open} data-testid="today-week-toggle"
         onClick={() => setOpen((value) => !value)} disabled={!line}>
-        <span className="today-fold-mark" aria-hidden="true">{line ? (open ? "▾" : "▸") : ""}</span>
         <span className="today-fold-label">This week</span>
         <span className="today-fold-counts" data-testid="today-week-counts">{line || "Nothing this week"}</span>
       </Button>

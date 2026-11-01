@@ -945,7 +945,7 @@ function MatchRows({ entry, firstId, projects }: {
         verbs={(
           <Button dense variant="secondary" aria-label={`${open ? "Hide" : "Show"}: ${name}`} aria-expanded={open}
             data-testid="needs-match-toggle" onClick={() => setOpen((was) => !was)}>
-            {open ? "Hide ▴" : "Show ▾"}
+            {open ? "Hide" : "Show"}
           </Button>
         )}
       />

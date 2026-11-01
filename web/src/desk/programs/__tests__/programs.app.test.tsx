@@ -267,6 +267,10 @@ describe("the Program window (direction C, the ledger)", () => {
     await screen.findByTestId("programs-board");
     const words = screen.getAllByTestId("programs-step").map((row) => within(row).getByTestId("programs-step-word").textContent);
     expect(words).toEqual(["Done", "PR open", "Check failed · log", "Asks you", "Ready · waiting for qwen", "Planned", "Working"]);
+    // Open lane only where the lane is alive (a working step), never on a done one.
+    const working = running.steps.find((step) => step.state === "working" && step.launch_id);
+    if (working) expect(within(stepRow(working.ordinal)).getByTestId("programs-step-open")).toBeTruthy();
+    expect(within(stepRow(1)).queryByTestId("programs-step-open")).toBeNull();
     // The pi step names its engine beside the sprite.
     expect(stepRow(5).textContent).toContain("pi · qwen3.8-27b on karol");
     // The question is in the well with Answer (it opens the step's lane).
@@ -502,7 +506,7 @@ describe("PG-WINDOW: the Program window as one object (canvas program-window-202
 });
 
 describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
-  it("the contender is indented under the step, the loser says Lost the race to Codex · 34 min, Open lane on each", async () => {
+  it("the contender is indented under the step, the loser says Lost the race to Codex · 34 min, no Open lane on an ended lane", async () => {
     hub({ [`GET /api/programs/${raced.id}`]: raced });
     render(<ProgramBody programId={raced.id} />);
     await screen.findByTestId("programs-board");
@@ -521,10 +525,10 @@ describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
     expect(within(contender).getByTestId("programs-step-select").textContent).toContain("Codex");
     expect(within(contender).getByTestId("programs-step-word").textContent).toBe("Done");
     expect(contender.textContent).toContain("Merged #101");
-    // Open lane on each: the loser's lane and the winner's.
-    fireEvent.click(within(lead).getByTestId("programs-step-open"));
-    fireEvent.click(within(contender).getByTestId("programs-step-open"));
-    expect(mocks.openRef.mock.calls).toEqual([["launch:L1"], ["launch:L2"]]);
+    // Both lanes ended (the loser parked, the winner merged): Open lane is a
+    // dead verb then, so neither row draws it (owner catch 2026-11-01).
+    expect(within(lead).queryByTestId("programs-step-open")).toBeNull();
+    expect(within(contender).queryByTestId("programs-step-open")).toBeNull();
     // The engine's choice is under Decided for you.
     expect(screen.getByTestId("programs-decided").textContent).toContain("Codex won the race in 34 min");
   });

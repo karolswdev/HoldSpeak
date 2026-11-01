@@ -613,8 +613,13 @@ verb becomes `Show fewer`.
 - `ariaLabel?: string` — an accessible name richer than the visible label
   (`Sources: Priya confirms the freeze window` over `2 SOURCES`).
 - `variant="dense"` — the caption-step trigger that rides a ledger row's
-  meta line (`▸ 2 SOURCES`); its styling lives in `disclosure.css`, so no
+  meta line (`2 SOURCES … Show`); its styling lives in `disclosure.css`, so no
   face restyles a library trigger.
+- THE FOLD (owner 2026-11-01, canvas `betterment/canvases/fold-2026-11-01.html`,
+  direction B): `FoldGadget` and `Disclosure` draw no triangle and no chevron.
+  The title and its count sit on the left; the verb the press does, **Show**
+  or **Hide**, sits at the right; the open body sits under a hairline rule.
+  A Button that opens a menu (More ▾) keeps its caret: a menu is not a fold.
 - `controlsId?: string` — the id of a body rendered ELSEWHERE, such as a
   `SurfaceLedgerRow`'s own expansion slot (`open` + `children`), so a body
   that must span the row's full width is not trapped inside a cell. The
