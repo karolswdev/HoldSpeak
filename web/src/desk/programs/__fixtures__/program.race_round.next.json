@@ -1,0 +1,6 @@
+{
+  "code": "no_engine",
+  "detail": "No engine is set for planning. The program is unchanged. Choose one in Engines.",
+  "engine": null,
+  "error": "no_engine"
+}

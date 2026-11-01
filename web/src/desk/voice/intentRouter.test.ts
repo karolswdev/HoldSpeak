@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { runAsk } from "../ask";
 import { editorVoiceGrammar } from "./grammars/editor";
+import { addressesProgram, programSentence, programVoiceGrammar } from "./grammars/program";
 import { routeVoiceIntent } from "./intentRouter";
 
 vi.mock("../ask", () => ({ runAsk: vi.fn() }));
@@ -55,5 +56,28 @@ describe("voice intent router", () => {
       intentId: "dictation",
       confidence: 0,
     });
+  });
+});
+
+describe("the program grammar (PG-LANG LANG5)", () => {
+  it("reads \"program: …\" as the shape intent locally, with the sentence and no egress", async () => {
+    vi.mocked(runAsk).mockClear();
+    const proposal = await routeVoiceIntent({
+      transcript: "Program, put step 4 on Codex.", surfaceKind: "program", selectionState: { hasSelection: false },
+      grammar: programVoiceGrammar,
+    });
+    expect(proposal).toMatchObject({ intentId: "shape", params: { sentence: "put step 4 on Codex." }, requiresLLM: false });
+    expect(runAsk).not.toHaveBeenCalled();
+  });
+
+  it("words with no address are dictation, and the sentence is the words", async () => {
+    const proposal = await routeVoiceIntent({
+      transcript: "step 6 first", surfaceKind: "program", selectionState: { hasSelection: false },
+      grammar: programVoiceGrammar,
+    });
+    expect(proposal.intentId).toBe("dictation");
+    expect(programSentence("step 6 first")).toBe("step 6 first");
+    expect(addressesProgram("program:")).toBe(false);
+    expect(addressesProgram("programs are great")).toBe(false);
   });
 });

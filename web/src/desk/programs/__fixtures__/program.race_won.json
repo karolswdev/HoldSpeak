@@ -1,0 +1,802 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "budget_tokens": null,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "sh -c 'echo ok'",
+  "checkpoints": [
+    {
+      "at": "2026-11-01T18:13:34.675397+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 12,
+      "kind": null,
+      "line": "Opened PR #101",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/6",
+      "ref_commit": "55d59bf05f5049f526a55a9b05797f7782231f08",
+      "rule": null,
+      "step_id": "step-a5aaf76ea194-r2",
+      "undo": {
+        "pin": {
+          "commit": "55d59bf05f5049f526a55a9b05797f7782231f08",
+          "head": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "n": 6,
+          "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/6",
+          "tree": "9954218026a650acd3befcd35c66c08e52e1d12a"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "commit": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "pr": 101,
+          "state": "pr_open"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:34.496460+00:00",
+      "by": "engine",
+      "choice": "pick",
+      "decision_record_id": null,
+      "id": 11,
+      "kind": "race_winner",
+      "line": "Codex won the race · under a minute",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/5",
+      "ref_commit": "196324a310df44770c84cf61b904ba4ddd0df4eb",
+      "rule": "Normal: the first green, reviewed contender wins",
+      "step_id": "step-a5aaf76ea194-r2",
+      "undo": {
+        "pin": {
+          "commit": "196324a310df44770c84cf61b904ba4ddd0df4eb",
+          "head": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "n": 5,
+          "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/5",
+          "tree": "9954218026a650acd3befcd35c66c08e52e1d12a"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "commit": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:34.402089+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 10,
+      "kind": null,
+      "line": "Lost the race to Codex",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194/2",
+      "ref_commit": "4d72ef25ee0f06da6714ca92d17285f9b9d01f97",
+      "rule": null,
+      "step_id": "step-a5aaf76ea194",
+      "undo": {
+        "pin": {
+          "commit": "4d72ef25ee0f06da6714ca92d17285f9b9d01f97",
+          "head": "acc88fafc2026297ae5d218d25a066fa74812f93",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194/2",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        },
+        "seen": {
+          "state": "parked"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:34.264150+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 9,
+      "kind": null,
+      "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-a5aaf76ea194-r2/.tmp/program-check/step-a5aaf76ea194-r2/20261101T181334Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/4",
+      "ref_commit": "ed34ec74ab21fb7d8dda96266e04d1940fd5c8ea",
+      "rule": null,
+      "step_id": "step-a5aaf76ea194-r2",
+      "undo": {
+        "pin": {
+          "commit": "ed34ec74ab21fb7d8dda96266e04d1940fd5c8ea",
+          "head": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "n": 4,
+          "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/4",
+          "tree": "9954218026a650acd3befcd35c66c08e52e1d12a"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "commit": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:34.130140+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 8,
+      "kind": null,
+      "line": "Running the check: sh -c 'echo ok'",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/3",
+      "ref_commit": "60104ca3ddcd1240c047b4711dca10c2cbbf1817",
+      "rule": null,
+      "step_id": "step-a5aaf76ea194-r2",
+      "undo": {
+        "pin": {
+          "commit": "60104ca3ddcd1240c047b4711dca10c2cbbf1817",
+          "head": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "n": 3,
+          "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/3",
+          "tree": "2f19e0c3b999bdee9e42c5bdb0e3bfb998b0c90b"
+        },
+        "seen": {
+          "commit": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:34.036890+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 7,
+      "kind": null,
+      "line": "New commit 67c4fd73; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/2",
+      "ref_commit": "fa1669d12844e4a80fc7f0a469e93ce8b1652ad5",
+      "rule": null,
+      "step_id": "step-a5aaf76ea194-r2",
+      "undo": {
+        "pin": {
+          "commit": "fa1669d12844e4a80fc7f0a469e93ce8b1652ad5",
+          "head": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/2",
+          "tree": "2f19e0c3b999bdee9e42c5bdb0e3bfb998b0c90b"
+        },
+        "seen": {
+          "commit": "67c4fd736f08372d52effefef2779bc1f25637e3",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:33.861907+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 6,
+      "kind": null,
+      "line": "Handed to Codex in hs-program-step-a5aaf76ea194-r2",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/1",
+      "ref_commit": "7b17acb446c33e2e7c605fb3a2886d140961a9c1",
+      "rule": null,
+      "step_id": "step-a5aaf76ea194-r2",
+      "undo": {
+        "pin": {
+          "commit": "7b17acb446c33e2e7c605fb3a2886d140961a9c1",
+          "head": "acc88fafc2026297ae5d218d25a066fa74812f93",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        },
+        "seen": {
+          "state": "briefed"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:33.690454+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-a5aaf76ea194",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194/1",
+      "ref_commit": "7f137f70b326db88da8a9c8367dbd2b084fc64b1",
+      "rule": null,
+      "step_id": "step-a5aaf76ea194",
+      "undo": {
+        "pin": {
+          "commit": "7f137f70b326db88da8a9c8367dbd2b084fc64b1",
+          "head": "acc88fafc2026297ae5d218d25a066fa74812f93",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        },
+        "seen": {
+          "state": "briefed"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:33.622982+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "A race: Claude Code, Codex",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": "No worktree to pin yet",
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "step-a5aaf76ea194",
+      "undo": {
+        "pin": {
+          "note": "No worktree to pin yet"
+        },
+        "seen": {
+          "state": "ready"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T18:13:33.620492+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T18:13:33.592589+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T18:13:33.590228+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Race template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "normal",
+  "control_word": "Normal",
+  "created_at": "2026-11-01T18:13:33.589856+00:00",
+  "decided_for_you": [
+    {
+      "at": "2026-11-01T18:13:34.496460+00:00",
+      "choice": "pick",
+      "decision_record_id": null,
+      "id": 11,
+      "kind": "race_winner",
+      "line": "Codex won the race · under a minute",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "Normal: the first green, reviewed contender wins",
+      "step_id": "step-a5aaf76ea194-r2"
+    }
+  ],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "delivery": null,
+  "done": 0,
+  "family": {
+    "children": [],
+    "parent": null
+  },
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Find words in fences.",
+  "id": "program-13c645934022",
+  "in_state_seconds": 1,
+  "last_checkpoint": {
+    "at": "2026-11-01T18:13:34.675397+00:00",
+    "by": "engine",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 12,
+    "kind": null,
+    "line": "Opened PR #101",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/6",
+    "ref_commit": "55d59bf05f5049f526a55a9b05797f7782231f08",
+    "rule": null,
+    "step_id": "step-a5aaf76ea194-r2",
+    "undo": {
+      "pin": {
+        "commit": "55d59bf05f5049f526a55a9b05797f7782231f08",
+        "head": "67c4fd736f08372d52effefef2779bc1f25637e3",
+        "n": 6,
+        "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/6",
+        "tree": "9954218026a650acd3befcd35c66c08e52e1d12a"
+      },
+      "seen": {
+        "check": "green",
+        "checked": "67c4fd736f08372d52effefef2779bc1f25637e3",
+        "commit": "67c4fd736f08372d52effefef2779bc1f25637e3",
+        "pr": 101,
+        "state": "pr_open"
+      }
+    }
+  },
+  "line": "Runs",
+  "may_call": false,
+  "may_handoff": false,
+  "night": null,
+  "note_id": "program-program-13c645934022",
+  "note_window": "pullout:note:program-program-13c645934022",
+  "origin_ref": null,
+  "persons": [],
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "planner": null,
+  "prefer_idle": false,
+  "project": null,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "requirements": [],
+  "review_depth": null,
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 2,
+  "rounds": [],
+  "rounds_before_start": false,
+  "search_words": "mermaid words in notes search find words in fences. race find words inside mermaid fences #101 race",
+  "skipped": 0,
+  "spend_limit_usd": null,
+  "state": "running",
+  "state_word": "Running",
+  "status_line": "Running · 0 of 1 done · check: echo · control Normal",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/mermaid-words-in-notes-search/1-find-words-inside-mermaid-fences",
+      "brief": "Search fences.",
+      "budget_tokens": null,
+      "check": {
+        "command": "sh -c 'echo ok'",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [
+        {
+          "after": [],
+          "agent": "Codex",
+          "amendments": [],
+          "branch": "program/mermaid-words-in-notes-search/1-find-words-inside-mermaid-fences-194-r2",
+          "brief": "Search fences.",
+          "budget_tokens": null,
+          "check": {
+            "command": "sh -c 'echo ok'",
+            "commit": "67c4fd736f08372d52effefef2779bc1f25637e3",
+            "log": "/tmp/rig/hs-program-step-a5aaf76ea194-r2/.tmp/program-check/step-a5aaf76ea194-r2/20261101T181334Z.log",
+            "minutes": 0.0,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": "green"
+          },
+          "editable": [
+            "title",
+            "gate_merge",
+            "requirements",
+            "for_person",
+            "may_call"
+          ],
+          "effort": "medium",
+          "elapsed": "under a minute",
+          "elapsed_seconds": 0,
+          "ended_at": null,
+          "ending": "none",
+          "engine": null,
+          "estimate": null,
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {
+            "after": "The agent has read it",
+            "agent": "The worktree and the agent are set",
+            "amend": "The agent has read it",
+            "brief": "The agent has read it",
+            "budget": "The worktree and the agent are set",
+            "effort": "The worktree and the agent are set",
+            "gate_check": "The bar does not come down while it runs",
+            "gate_review": "The bar does not come down while it runs",
+            "owns": "The agent has read it",
+            "position": "The worktree and the agent are set",
+            "prefer_idle": "The worktree and the agent are set",
+            "race": "The worktree and the agent are set",
+            "review_depth": "The agent has read it",
+            "runs_on_then": "The worktree and the agent are set"
+          },
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "none",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-a5aaf76ea194-r2",
+          "last_checkpoint": {
+            "at": "2026-11-01T18:13:34.675397+00:00",
+            "by": "engine",
+            "choice": null,
+            "decision_record_id": null,
+            "id": 12,
+            "kind": null,
+            "line": "Opened PR #101",
+            "operation_id": null,
+            "overturnable": false,
+            "overturned_at": null,
+            "pin_note": null,
+            "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/6",
+            "ref_commit": "55d59bf05f5049f526a55a9b05797f7782231f08",
+            "rule": null,
+            "step_id": "step-a5aaf76ea194-r2",
+            "undo": {
+              "pin": {
+                "commit": "55d59bf05f5049f526a55a9b05797f7782231f08",
+                "head": "67c4fd736f08372d52effefef2779bc1f25637e3",
+                "n": 6,
+                "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194-r2/6",
+                "tree": "9954218026a650acd3befcd35c66c08e52e1d12a"
+              },
+              "seen": {
+                "check": "green",
+                "checked": "67c4fd736f08372d52effefef2779bc1f25637e3",
+                "commit": "67c4fd736f08372d52effefef2779bc1f25637e3",
+                "pr": 101,
+                "state": "pr_open"
+              }
+            }
+          },
+          "launch_id": "L2",
+          "limit": null,
+          "may_call": false,
+          "ordinal": 1,
+          "origin_ref": null,
+          "owns": [],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": {
+            "number": 101,
+            "url": "https://github.com/acme/app/pull/101"
+          },
+          "prefer_idle": false,
+          "profile": "codex-default",
+          "race": 0,
+          "race_of": "step-a5aaf76ea194",
+          "report": null,
+          "report_text": null,
+          "requirements": [],
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Codex",
+              "engine": null,
+              "label": "Codex",
+              "profile": "codex-default"
+            },
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": "2026-11-01T18:13:33.861497+00:00",
+          "state": "pr_open",
+          "state_word": "PR open",
+          "station": 4,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "story": [
+            {
+              "at": "2026-11-01T18:13:34.036890+00:00",
+              "line": "The agent made a new commit."
+            },
+            {
+              "at": "2026-11-01T18:13:34.264150+00:00",
+              "line": "The check ran green in under a minute."
+            },
+            {
+              "at": "2026-11-01T18:13:34.675397+00:00",
+              "line": "Opened PR #101."
+            }
+          ],
+          "taken": false,
+          "title": "Find words inside Mermaid fences",
+          "updated_at": "2026-11-01T18:13:34.674247+00:00",
+          "wait": null,
+          "worktree": "hs-program-step-a5aaf76ea194-r2"
+        }
+      ],
+      "editable": [
+        "title",
+        "requirements"
+      ],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": "2026-11-01T18:13:34.387640+00:00",
+      "ending": "none",
+      "engine": null,
+      "estimate": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "amend": "The agent has read it",
+        "brief": "The agent has read it",
+        "budget": "The worktree and the agent are set",
+        "effort": "The worktree and the agent are set",
+        "for_person": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "gate_merge": "The worktree and the agent are set",
+        "gate_review": "The bar does not come down while it runs",
+        "may_call": "The worktree and the agent are set",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "prefer_idle": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set",
+        "review_depth": "The agent has read it",
+        "runs_on_then": "The worktree and the agent are set"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-a5aaf76ea194",
+      "last_checkpoint": {
+        "at": "2026-11-01T18:13:34.402089+00:00",
+        "by": "engine",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 10,
+        "kind": null,
+        "line": "Lost the race to Codex",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194/2",
+        "ref_commit": "4d72ef25ee0f06da6714ca92d17285f9b9d01f97",
+        "rule": null,
+        "step_id": "step-a5aaf76ea194",
+        "undo": {
+          "pin": {
+            "commit": "4d72ef25ee0f06da6714ca92d17285f9b9d01f97",
+            "head": "acc88fafc2026297ae5d218d25a066fa74812f93",
+            "n": 2,
+            "ref": "refs/holdspeak/checkpoints/step-a5aaf76ea194/2",
+            "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+          },
+          "seen": {
+            "state": "parked"
+          }
+        }
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": "race",
+      "parked_reason": "Lost the race to Codex",
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 2,
+      "race_of": null,
+      "report": {
+        "claimed": [],
+        "files": [],
+        "files_more": 0,
+        "not_checked": [
+          {
+            "line": "The check did not run"
+          }
+        ],
+        "observed": [],
+        "words": {
+          "claimed": "The agent says:",
+          "files": "Files:",
+          "not_checked": "Not checked:",
+          "observed": "Checked:"
+        }
+      },
+      "report_text": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-11-01T18:13:33.690042+00:00",
+      "state": "parked",
+      "state_word": "Parked",
+      "station": -1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "story": [
+        {
+          "at": "2026-11-01T18:13:33.622982+00:00",
+          "line": "A race: Claude Code, Codex."
+        },
+        {
+          "at": "2026-11-01T18:13:33.690454+00:00",
+          "line": "Handed to Claude Code."
+        },
+        {
+          "at": "2026-11-01T18:13:34.402089+00:00",
+          "line": "Lost the race to Codex."
+        }
+      ],
+      "taken": false,
+      "title": "Find words inside Mermaid fences",
+      "updated_at": "2026-11-01T18:13:34.401678+00:00",
+      "wait": null,
+      "worktree": "hs-program-step-a5aaf76ea194"
+    }
+  ],
+  "template": "race",
+  "title": "Mermaid words in Notes search",
+  "total": 1,
+  "track": [
+    {
+      "mark": "parked",
+      "ordinal": 1,
+      "title": "Find words inside Mermaid fences"
+    }
+  ],
+  "updated_at": "2026-11-01T18:13:33.620180+00:00",
+  "usage_warning_share": null,
+  "within": [],
+  "your_turn": 0,
+  "your_turn_items": []
+}

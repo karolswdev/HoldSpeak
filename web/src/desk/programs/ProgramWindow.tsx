@@ -53,10 +53,10 @@ import { runsOnLabel, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
 import { ProgramChangeWell, ProgramTextPane, landedSteps, useProgramText, type TextProposal } from "./ProgramText";
 import { ShapeBar, ShapedWell, engineFact } from "./ShapeBar";
-import { PlanLine, usePlanIt } from "./PlanDraft";
+import { PlanLine, ProgramsSplitWell, usePlanIt } from "./PlanDraft";
 import { RoundPanel, useRounds } from "./Rounds";
 import type {
-  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
+  Control, DecidedRow, DecideBody, PlanAnswer, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
 import { AuditLine, FindingsBoard } from "./Findings";
@@ -298,6 +298,20 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
       </span>
     </div>
   );
+  /** J5: a race parked as one step names each contender's red log. */
+  const raceLogs = (item: YourTurnItem) => item.kind !== "parked" || !item.race || !item.logs?.length ? null : (
+    <ul className="pg-race-logs" data-testid="programs-race-logs">
+      {item.logs.map((row) => (
+        <li key={row.step_id} className="pg-race-log" data-step={row.step_id}>
+          <span className="pg-race-agent">{row.agent}</span>
+          <Button dense variant="secondary" aria-label={`Open ${row.agent}'s log`}
+            onClick={() => openRef(row.log.startsWith("note:") ? row.log : `note:${row.log}`)} data-testid="programs-race-open-log">
+            Open log
+          </Button>
+        </li>
+      ))}
+    </ul>
+  );
   const askWell = (item: YourTurnItem) => {
     const asking = ask?.id === item.id ? ask : null;
     if (!asking) return null;
@@ -337,6 +351,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
         ) : null}
         {first.page ? <p className="pg-turn-page" data-testid="programs-turn-page">{pageWords(first.page)}</p> : null}
         {todoWell(first)}
+        {raceLogs(first)}
         {askWell(first)}
         <div className="pg-tray" data-testid="programs-tray">{verbsOf(first, true)}</div>
         <p className="pg-brief-ev" data-testid="programs-turn-words">{wordsOf(first, true)}</p>
@@ -354,6 +369,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
                 </span>
                 {item.page ? <span className="pg-turn-page" data-testid="programs-turn-page">{pageWords(item.page)}</span> : null}
                 {todoWell(item)}
+                {raceLogs(item)}
                 {askWell(item)}
                 <span className="pg-turn-verbs">{verbsOf(item, false)}{wordsOf(item, false)}</span>
               </li>
@@ -646,6 +662,11 @@ export function startWords(program: Program): string {
   const pushes = program.steps.some((step) => !step.race_of && (step.gate?.merge ?? "level") !== "none");
   const parts = ["the repository", pushes ? "the remote" : "", program.check_command ? "the check command" : ""].filter(Boolean);
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+  // JRN1: a Program split from a draft waits on the one before it.
+  const origin = program.place?.origin;
+  if (origin?.kind === "program") {
+    return `It starts after ${origin.title || "the program before it"} is done. Then Start will check ${list}.`;
+  }
   const night = program.night;
   if (night) {
     // #1697: a night program sleeps until its window, then fills itself.
@@ -985,7 +1006,10 @@ export function ProgramBody({ programId }: { programId: string }) {
             onOverturned={(next) => { apply(next); setShaped(null); setProposal(null); if (next) void text.read(); }}
             onKeep={() => setShaped(null)} />
         ) : null}
-        {proposal ? (
+        {proposal && proposal.source === "plan" && ((proposal.answer as PlanAnswer).programs?.length ?? 0) >= 2 ? (
+          <ProgramsSplitWell key={wellKey} program={program} answer={proposal.answer as PlanAnswer}
+            onApplied={(next) => { if (next) apply(next); }} onDismiss={() => setProposal(null)} />
+        ) : proposal ? (
           <ProgramChangeWell key={wellKey}
             programId={program.id} proposal={proposal} settling={settling}
             onApplied={applied} onAnswer={setProposal} onDismiss={notThis}

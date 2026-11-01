@@ -1376,6 +1376,38 @@ span.pg-req-thumb { height: 150px; }
 .pg-todo-walk { margin: 0; padding-left: 20px; font: 400 13px / 1.5 var(--font-sans); }
 .pg-todo-note { display: block; max-width: 520px; min-width: 0; }
 
+/* ── JRN1: the draft proposes several Programs (one row each) ── */
+.pg-split { margin: 8px 16px; border-top: 1px solid var(--wb-rule-soft); border-bottom: 1px solid var(--wb-rule-soft); }
+.pg-split-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 36px; font: 400 13px / 1.4 var(--font-sans); }
+.pg-split-head b { font-weight: 600; }
+.pg-split-fact { color: var(--wb-muted); font-size: 12px; }
+.pg-split-verbs { display: inline-flex; gap: 6px; margin-left: auto; }
+.pg-split-rows { margin: 0; padding: 0; list-style: none; }
+.pg-split-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(0, 200px) auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 6px 0;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.pg-split-n { color: var(--wb-faint); font-size: 12px; text-align: right; }
+.pg-split-words { display: flex; flex-direction: column; min-width: 0; font: 400 13px / 1.4 var(--font-sans); }
+.pg-split-title { font-weight: 600; }
+.pg-split-goal, .pg-split-hands { color: var(--wb-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-split-steps { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; }
+.pg-split-steps .pg-track[data-form="dots"] .pg-station + .pg-station::before { content: none; }
+.pg-split-steps .pg-track { gap: 3px; }
+.pg-split-count { color: var(--wb-muted); font-size: 12px; white-space: nowrap; }
+.pg-split-made { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 8px; }
+@container surface (max-width: 520px) {
+  .pg-split { margin: 8px 12px; }
+  .pg-split-row { grid-template-columns: 22px minmax(0, 1fr); }
+  .pg-split-steps, .pg-split-verb { grid-column: 2; }
+  .pg-split-goal, .pg-split-hands { white-space: normal; }
+  .desk-next .pg-split .btn { min-height: 44px; }
+}
+
 /* ── PG-LANG JRN8 to JRN10: the audit (Findings.tsx) ── */
 .pg-audit-line { margin: 0; padding: 2px 12px 6px; color: var(--wb-muted); font: 400 12px / 1.35 var(--font-sans); }
 .pg-findings { flex: none; }
@@ -1422,4 +1454,8 @@ span.pg-req-thumb { height: 150px; }
   .pg-row-family > .kit-listrows { padding-left: 12px; }
 }
 
+/* ── J5: a race parked as one step, each contender's log ── */
+.pg-race-logs { margin: 4px 0 8px; padding: 0; list-style: none; }
+.pg-race-log { display: flex; align-items: center; gap: 10px; min-height: 32px; font: 400 13px / 1.35 var(--font-sans); }
+.pg-race-agent { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pg-findings-fix { margin: 0; padding: 2px 12px 6px; }

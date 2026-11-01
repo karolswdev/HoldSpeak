@@ -1,0 +1,337 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "budget_tokens": null,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "sh -c 'echo ok'",
+  "checkpoints": [
+    {
+      "at": "2026-11-01T18:13:32.589229+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T18:13:32.582290+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Race template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "normal",
+  "control_word": "Normal",
+  "created_at": "2026-11-01T18:13:32.581788+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "delivery": null,
+  "done": 0,
+  "family": {
+    "children": [],
+    "parent": null
+  },
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Find words in fences.",
+  "id": "program-6010934d4351",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-11-01T18:13:32.589229+00:00",
+    "by": "owner",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 2,
+    "kind": null,
+    "line": "Added 1 step",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "line": "Drafting, 1 step",
+  "may_call": false,
+  "may_handoff": false,
+  "night": null,
+  "note_id": "program-program-6010934d4351",
+  "note_window": "pullout:note:program-program-6010934d4351",
+  "origin_ref": null,
+  "persons": [],
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "planner": null,
+  "prefer_idle": false,
+  "project": null,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "requirements": [],
+  "review_depth": null,
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 3,
+  "rounds": [
+    {
+      "answered": 0,
+      "asked": 0,
+      "became": 0,
+      "name": "Architecture",
+      "order": 1,
+      "questions": [],
+      "state": "open",
+      "waiting": null
+    },
+    {
+      "answered": 0,
+      "asked": 0,
+      "became": 0,
+      "name": "Product",
+      "order": 2,
+      "questions": [],
+      "state": "open",
+      "waiting": null
+    },
+    {
+      "answered": 0,
+      "asked": 0,
+      "became": 0,
+      "name": "Stack",
+      "order": 3,
+      "questions": [],
+      "state": "open",
+      "waiting": null
+    },
+    {
+      "answered": 0,
+      "asked": 1,
+      "became": 0,
+      "name": "Verification",
+      "order": 4,
+      "questions": [
+        {
+          "answer": null,
+          "answered_by": null,
+          "at": null,
+          "became": [],
+          "choices": [
+            "Each reviews the other",
+            "No review"
+          ],
+          "id": "q-3ad565eec6",
+          "rule": "race_review",
+          "skipped": false,
+          "text": "Review each contender?",
+          "why": "The race winner is the first green and reviewed branch, and no step of the race has a review."
+        }
+      ],
+      "state": "asking",
+      "waiting": "q-3ad565eec6"
+    },
+    {
+      "answered": 0,
+      "asked": 0,
+      "became": 0,
+      "name": "Delivery",
+      "order": 5,
+      "questions": [],
+      "state": "open",
+      "waiting": null
+    }
+  ],
+  "rounds_before_start": false,
+  "search_words": "mermaid words in notes search find words in fences. race find words inside mermaid fences race",
+  "skipped": 0,
+  "spend_limit_usd": null,
+  "state": "drafting",
+  "state_word": "Drafting",
+  "status_line": "Drafting · 0 of 1 done · check: echo · control Normal",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": null,
+      "brief": "Search fences.",
+      "budget_tokens": null,
+      "check": {
+        "command": "sh -c 'echo ok'",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "editable": [
+        "title",
+        "brief",
+        "owns",
+        "after",
+        "effort",
+        "agent",
+        "runs_on_then",
+        "race",
+        "gate_check",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "position",
+        "for_person",
+        "may_call",
+        "prefer_idle",
+        "budget"
+      ],
+      "effort": "medium",
+      "elapsed": "",
+      "elapsed_seconds": null,
+      "ended_at": null,
+      "ending": "none",
+      "engine": null,
+      "estimate": {
+        "budget": null,
+        "code": null,
+        "engine": "Claude Code",
+        "fits": null,
+        "share": null,
+        "tokens": 384,
+        "words": "1k"
+      },
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {},
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-f632b2f51380",
+      "last_checkpoint": null,
+      "launch_id": null,
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 2,
+      "race_of": null,
+      "report": null,
+      "report_text": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": null,
+      "state": "planned",
+      "state_word": "Planned",
+      "station": -1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "story": [],
+      "taken": false,
+      "title": "Find words inside Mermaid fences",
+      "updated_at": "2026-11-01T18:13:32.588813+00:00",
+      "wait": null,
+      "worktree": null
+    }
+  ],
+  "template": "race",
+  "title": "Mermaid words in Notes search",
+  "total": 1,
+  "track": [
+    {
+      "mark": "planned",
+      "ordinal": 1,
+      "title": "Find words inside Mermaid fences"
+    }
+  ],
+  "updated_at": "2026-11-01T18:13:32.598123+00:00",
+  "usage_warning_share": null,
+  "within": [],
+  "your_turn": 0,
+  "your_turn_items": []
+}

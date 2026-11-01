@@ -434,6 +434,10 @@ export interface YourTurnItem {
   /** PG-WINDOW W1: the brief in his terms (brief_words.item_brief), the
    *  same lines the briefing page reads. */
   brief?: ItemBrief | null;
+  /** J5: a race step parked because every contender is red: one row, each
+   *  contender's check log. */
+  race?: boolean;
+  logs?: { agent: string; log: string; step_id: string }[];
   /** audit_file / fix_program: the findings it is about. */
   count?: number;
   /** lesson (JRN11): its ledger row (sent as `lesson_id`), the cause, the steps. */
@@ -725,6 +729,20 @@ export interface PlanAnswer extends TextApplyAnswer {
   split: { place: number; title: string; words: string; owns: string[] }[];
   proposed_text: string;
   base: string;
+  /** JRN1: the Programs the draft proposes when the goal is several goals (2 to 4, in order). */
+  programs?: ProposedProgram[];
+}
+
+/** JRN1: one Program a draft proposes. */
+export interface ProposedProgram {
+  title: string;
+  goal: string;
+  /** What it gives the next one ("" for the last). */
+  hands: string;
+  /** Its whole Program text. */
+  text: string;
+  steps: string[];
+  sizes: PlanSize[];
 }
 
 /** `POST /api/programs/{id}/text`: the rows, and on a real apply the Program. */

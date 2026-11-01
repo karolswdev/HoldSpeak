@@ -80,6 +80,7 @@ import shapeFixture from "../__fixtures__/program.shape.json";
 // (tests/fixtures/program_plan_reply.json) replayed through the hub's runner,
 // recorded through the real routes (tests/integration/test_desk_program_plan.py).
 import planFixture from "../__fixtures__/program.plan_draft.json";
+import splitFixture from "../__fixtures__/program.plan_programs.json";
 // PG-LANG LANG9/10: J1's interview rounds asked and shaped by the REAL
 // qwen3.8-27b replies (tests/fixtures/program_round_reply.json) replayed
 // through the hub's runner, recorded through the real routes
@@ -1857,6 +1858,22 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
     expect(field().value).toBe("");
   });
 
+  it("\"program: …\" is the shape intent: the address is read off by rule and the sentence goes to the hub", async () => {
+    const id = voice.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: voice.program,
+      [`GET /api/programs/${id}/shape`]: shapeFixture.engine,
+      [`POST /api/programs/${id}/shape`]: () => clone(voice.shapes[0]),
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    await speak(`Program: ${voice.shapes[0].sentence}`);
+    await waitFor(() => expect(posts(id, "shape")).toHaveLength(1));
+    expect(posts(id, "shape")[0]).toEqual({ sentence: voice.shapes[0].sentence, apply: false });
+    await screen.findByTestId("programs-change-well");
+  });
+
   it("three sentences in a row: each goes with the rows that wait; the one well holds all three; one Apply lands them", async () => {
     const id = voice.program.id;
     let turn = 0;
@@ -1934,6 +1951,57 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
     fireEvent.click(within(well).getByTestId("programs-well-not-this"));
     await waitFor(() => expect(calls).toContain(`DELETE /api/programs/${id}/shape/held`));
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+  });
+});
+
+describe("JRN1: the draft proposes several Programs (the REAL qwen reply to a three-goal paste)", () => {
+  type Plan = import("../types").PlanAnswer;
+  const split = splitFixture as unknown as {
+    program: Program; draft: Plan; applied: { program: Program; made: { id: string; title: string }[] }; second: Program;
+    start_refused: { status: number; body: { detail: string } };
+  };
+
+  it("one row per proposed Program with its goal and steps; Apply all makes this the first and links the others", async () => {
+    const id = split.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: split.program,
+      [`GET /api/programs/${id}/shape`]: planFixture.engine,
+      [`POST /api/programs/${id}/plan/draft`]: split.draft,
+      [`POST /api/programs/${id}/plan/programs`]: split.applied,
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    fireEvent.click(screen.getByTestId("program-plan-it"));
+    const well = await screen.findByTestId("programs-split-well");
+    const programs = split.draft.programs!;
+    expect(well.textContent).toContain(`Split into ${programs.length} programs`);
+    const rows = within(well).getAllByTestId("programs-split-row");
+    expect(rows.map((row) => row.querySelector(".pg-split-title")!.textContent)).toEqual(programs.map((row) => row.title));
+    expect(rows.map((row) => within(row).getByTestId("programs-split-steps").textContent))
+      .toEqual(programs.map((row) => `${row.steps.length} ${row.steps.length === 1 ? "step" : "steps"}`));
+    expect(rows[0].querySelectorAll(".pg-station")).toHaveLength(programs[0].steps.length);
+    // No diff rows for a split: the well is the programs.
+    expect(screen.queryByTestId("programs-change-well")).toBeNull();
+    fireEvent.click(within(well).getByTestId("programs-split-apply-all"));
+    await waitFor(() => expect(within(screen.getByTestId("programs-split-made")).getAllByRole("button").map((b) => b.textContent))
+      .toEqual(split.applied.made.map((row) => `Open ${row.title}`)));
+    const sent = calls.find((call) => call.startsWith(`POST /api/programs/${id}/plan/programs `))!;
+    const body = JSON.parse(sent.slice(sent.indexOf("{")));
+    expect(body.which).toBe("all");
+    expect(body.programs.map((row: { title: string }) => row.title)).toEqual(programs.map((row) => row.title));
+    // The window is now the first program, with its steps.
+    await waitFor(() => expect(screen.getAllByTestId("programs-step")).toHaveLength(split.applied.program.steps.length));
+  });
+
+  it("a later Program waits on the one before it: Start says so", async () => {
+    const second = split.second;
+    hub({ [`GET /api/programs/${second.id}`]: second });
+    render(<ProgramBody programId={second.id} />);
+    await screen.findByTestId("programs-board");
+    expect(screen.getByTestId("programs-start-words").textContent)
+      .toMatch(new RegExp(`^It starts after ${split.draft.programs![0].title} is done\\.`));
+    expect(split.start_refused.body.detail).toBe(`It starts after ${split.draft.programs![0].title} is done.`);
   });
 });
 
@@ -2485,6 +2553,76 @@ describe("PG-IMPORT IMP7: the forest (recorded: scripts/record_program_fixtures.
     expect(screen.getAllByTestId("programs-row").filter((row) => kids.includes(row.getAttribute("data-program")))).toHaveLength(kids.length);
     const parentRow = screen.getAllByTestId("programs-row").find((row) => row.getAttribute("data-program") === parent.id)!;
     expect(within(parentRow).getByTestId("programs-row-kin").textContent).toBe(`· its programs: ${parent.kin!.worst_word}`);
+  });
+});
+
+// PG-JOURNEYS J5 "The race", recorded through the real engine and routes
+// (tests/integration/test_program_race.py).
+import raceParkedFixture from "../__fixtures__/program.race_parked.json";
+import raceResumedFixture from "../__fixtures__/program.race_resumed.json";
+import raceWonFixture from "../__fixtures__/program.race_won.json";
+import raceRoundFixture from "../__fixtures__/program.race_round.json";
+import raceRoundAnsweredFixture from "../__fixtures__/program.race_round.answered.json";
+import raceRoundNextFixture from "../__fixtures__/program.race_round.next.json";
+
+describe("PG-JOURNEYS J5: the race in the Program window (recorded: test_program_race.py)", () => {
+  it("both contenders red: one Parked row names each contender's log; Resume sends them all back", async () => {
+    const race = raceParkedFixture as unknown as Program;
+    const item = race.your_turn_items.find((row) => row.kind === "parked")!;
+    hub({
+      [`GET /api/programs/${race.id}`]: race,
+      [`POST /api/programs/${race.id}/steps/${item.step_id}/decide`]: raceResumedFixture,
+    });
+    render(<ProgramBody programId={race.id} />);
+    await screen.findByTestId("programs-your-turn");
+    expect(screen.getAllByTestId("programs-turn-item")).toHaveLength(1);
+    const logs = screen.getByTestId("programs-race-logs");
+    expect([...logs.querySelectorAll(".pg-race-agent")].map((node) => node.textContent)).toEqual(["Claude Code", "Codex"]);
+    fireEvent.click(within(logs).getByRole("button", { name: "Open Codex's log" }));
+    expect(mocks.openRef).toHaveBeenCalledWith(`note:${item.logs![1].log}`);
+    fireEvent.click(screen.getByTestId("programs-turn-resume"));
+    await waitFor(() => expect(calls).toContain(
+      `POST /api/programs/${race.id}/steps/${item.step_id}/decide {"kind":"parked","choice":"resume"}`));
+    await waitFor(() => expect(screen.queryByTestId("programs-race-logs")).toBeNull());
+    const after = (raceResumedFixture as unknown as { program: Program }).program ?? (raceResumedFixture as unknown as Program);
+    expect(after.your_turn_items.filter((row) => row.kind === "parked")).toEqual([]);
+  });
+
+  it("the winner: Decided for you says who won and how long, with its rule and no Overturn", async () => {
+    const race = raceWonFixture as unknown as Program;
+    const row = race.decided_for_you!.find((entry) => entry.kind === "race_winner")!;
+    hub({ [`GET /api/programs/${race.id}`]: race });
+    render(<ProgramBody programId={race.id} />);
+    await screen.findByTestId("programs-board");
+    const fold = screen.getAllByRole("button").find((button) => button.textContent?.startsWith("Decided for you"));
+    if (fold && fold.getAttribute("aria-expanded") === "false") fireEvent.click(fold);
+    const line = (await screen.findAllByTestId("programs-decided-row")).find((node) => node.getAttribute("data-decision") === String(row.id))!;
+    expect(line.textContent).toContain(row.line);
+    expect(row.line).toMatch(/^Codex won the race · /);
+    expect(line.textContent).toContain(`· ${row.rule}`);
+    expect(within(line).queryByTestId("programs-overturn")).toBeNull();
+  });
+
+  it("the Verification round asks by rule: Each reviews the other turns the race's review on", async () => {
+    const race = raceRoundFixture as unknown as Program;
+    const round = race.rounds!.find((entry) => entry.name === "Verification")!;
+    const question = round.questions[0];
+    hub({
+      [`GET /api/programs/${race.id}`]: race,
+      [`POST /api/programs/${race.id}/rounds/Verification/answer`]: raceRoundAnsweredFixture,
+      // The hub's recorded refusal of the next Ask (the rig has no planning engine).
+      [`POST /api/programs/${race.id}/rounds/Verification/next`]: () => { throw new ApiError(409, "Conflict", raceRoundNextFixture); },
+    });
+    render(<ProgramBody programId={race.id} />);
+    const asked = await screen.findByTestId("program-question");
+    expect(within(asked).getByText("Review each contender?")).toBeInTheDocument();
+    const choices = within(asked).getAllByTestId("kit-question-choice");
+    expect(choices.map((node) => node.textContent)).toEqual(["Each reviews the other", "No review"]);
+    fireEvent.click(choices[0]);
+    await waitFor(() => expect(calls).toContain(
+      `POST /api/programs/${race.id}/rounds/Verification/answer ${JSON.stringify({ question_id: question.id, option: "Each reviews the other", apply: false })}`));
+    const fold = await screen.findByTestId("program-round-fold");
+    expect(fold.textContent).toContain("→ step 1 review");
   });
 });
 

@@ -114,6 +114,8 @@ def main() -> None:
             answer, _error = read_answer(exchange["reply_text"])
             if answer and answer.get("text"):
                 owned |= {path for step in parse_program_text(answer["text"]).steps for path in step.owns}
+            for row in (answer or {}).get("programs") or []:
+                owned |= {path for step in parse_program_text(str(row.get("text") or "")).steps for path in step.owns}
         cases[key] = {
             "goal": case["goal"], "title": case["title"], "budget": case.get("budget"),
             "exchanges": exchanges[:split_from],
@@ -122,7 +124,10 @@ def main() -> None:
                              "sizes": split_result.sizes} if split_result is not None else None,
             "file_bytes": {path: program_sizing.path_bytes(str(REPO), path) for path in sorted(owned)},
             "result": {"proposed_text": result.proposed_text, "sizes": result.sizes, "say": result.say,
-                       "split": result.split, "latency_ms": result.latency_ms, "attempts": result.attempts},
+                       "split": result.split, "latency_ms": result.latency_ms, "attempts": result.attempts,
+                       # JRN1: the Programs the draft proposes ([] for one goal).
+                       "programs": [{"title": row["title"], "goal": row["goal"], "hands": row["hands"],
+                                     "steps": row["steps"]} for row in result.programs]},
         }
         print(result.proposed_text)
         for row in result.sizes:
