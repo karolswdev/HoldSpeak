@@ -541,7 +541,7 @@ The text changes what the record lets you change, by the same rules as the board
 | Remove the project | A program stays filed to its project. |
 | Any change to a closed program | The program is closed. |
 
-Some lines are in the record and in the text, but HoldSpeak does not act on them yet: `planner` (shaping and planning use the desk's engine), `night`, `within`, `delivery dw` and `rounds before start` (the rounds never stop **Start**). A step's `budget` sizes the planning draft (see "Plan it from a goal"), but HoldSpeak does not yet stop a step that is too big from starting. A `measure` requirement is "Not measured yet".
+Some lines are in the record and in the text, but HoldSpeak does not act on them yet: `planner` (shaping, planning and the split use the desk's engine), `delivery dw` and `rounds before start` (the rounds never stop **Start**). `within` bounds only the night's planning (see "Night programs"); a file outside it is not yet a core question. A step's `budget` sizes the planning draft and stops a step that is too big from starting (see "Too big at the start"). A `measure` requirement is "Not measured yet".
 
 ### Preview, Apply, Not this
 
@@ -613,9 +613,32 @@ While it plans, the window says "Planning · <engine>". A plan can take some min
 
 **The size lamp.** Each drafted step has a size, for example "7k of 32k". HoldSpeak counts it by a rule, not by a model: the brief and its frame, the requirement lines, and the files that the step owns (bytes divided by 4). The second number is the working share: half of the agent's budget. The other half stays free for the agent's own reads, edits and the check log. The budget is the `budget` line of the step or of the program (for example `budget 64k`). With no budget line, a pi step uses its engine's context window. Claude Code and Codex steps have no budget unless you give one, and then the lamp shows only the estimate.
 
-**Too big.** A step over the working share goes back to the engine one time, to be split. A step that is still too big says, for example, "Too big for Claude Code · 61k of 32k", with **Split**: press it to ask the engine to split that step again. HoldSpeak does not yet stop a step that is too big from starting.
+**Too big.** A step over the working share goes back to the engine one time, to be split. A step that is still too big says, for example, "Too big for Claude Code · 61k of 32k", with **Split**: press it to ask the engine to split that step again.
 
 Note: the size does not yet count the agent's own fixed cost (its system prompt and tools).
+
+### Too big at the start
+
+Before HoldSpeak hands a step to its agent, it counts the step's size again by the same rule. A step over the working share is not handed. Its row says, for example, "Ready · Too big for qwen · 41k of 32k", and the log says "Step 3 is too big for one agent run (about 41k tokens against 32k, half of the 64k budget)". Then the engine asks the planning engine one time to cut the step into 2 to 4 parts. Together the parts own the files that the step owned. The parts take the step's place, each part comes after the part before it, and the step after it waits for the last part. The last part keeps the step's own requirements and its origin; each part gets the every-step requirements.
+
+| Secure | Normal | YOLO |
+|---|---|---|
+| Your turn: "Split step 3 … into 3 parts: … Skip runs it as it is." **Apply** splits it. **Skip** hands the step as it is. | the same | The engine splits it. Decided for you: "Split step 3 (too big for qwen · 41k of 32k) into 3 parts: steps 3 to 5" · **Overturn** while no part started. Overturn puts the step back, and the split waits for you. |
+
+When there is no planning engine, when its answer cannot be used two times, or when a part of a split is still too big, the step is a core question: **Go on** hands it as it is, **Park** parks it.
+
+## Night programs
+
+A program with a `night` line runs only at night, for example `night 23:30-07:00 · at most 8 steps`. Outside the window, each Ready step says "Ready · sleeps until 23:30". In the window, the engine hands steps as usual (with `when idle`, only when the engine is idle). With `at most`, it hands that many steps in one night, then says "Ready · the night's 8 steps ran".
+
+**Add to tonight.** Put one item in tonight's program: a Door task, a line of a note, or a step of another program. Agents and scripts use the tool `program.add_to_night` (`kind`: `action`, `note` with `line`, or `program_step`; `item_id`; `program_id` when more than one program has a night line), or `POST /api/programs/tonight`. The item becomes a Planned step of the night program. The same item two times is one step. A Door task's step closes the task when it merges. A night program that was Done opens again. An agent's add lands only at YOLO, with a Decided for you row and **Overturn**.
+
+**Planned at the start of the night.** At the first tick in the window, the planning engine cuts each item into one small step: one concern, at most three files, each file in the `within` folders, and a size that fits. Until then, the step says "Ready · planning for tonight". With no planning engine, the step runs as you wrote it.
+
+**Since last night.** After the window, HoldSpeak writes one line, one time a night, for example "Since last night: 4 steps done, 1 waits on you, 1 split", with the PR numbers that merged. It is at the top of the program's note, and it goes to Telegram when Telegram is on (not in quiet hours: it waits until they end). A night that did nothing writes no line.
+
+Not yet: the Dreaming template, a backlog that HoldSpeak reads by itself, the stop after two red steps, a step that parks when the night ends, `within` as a core question for the diff, and the hold while the base branch is red.
+
 
 ## The interview rounds
 

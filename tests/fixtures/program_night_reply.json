@@ -1,0 +1,187 @@
+{
+ "_source": "A real engine's replies to program.split@1 (holdspeak/services/program_split.py) and program.night_item@1 (holdspeak/services/program_night.py) over the cases of tests/integration/program_night_seed.py, recorded by scripts/record_program_night_reply.py with this repository as the Program's repository. Never hand-edit it.",
+ "recorded_at": "2026-11-01T03:01:48+00:00",
+ "engine": {
+  "base_url": "http://100.118.33.80:8080/v1",
+  "model": "qwen3.8-27b"
+ },
+ "cases": {
+  "split": {
+   "step": {
+    "title": "Name the design section in each planning module",
+    "brief": "Each planning module of the Programs engine starts with a docstring. Make the first line of each docstring name its design section (PROGRAM-LANGUAGE §4, §5, §6). No behaviour changes; the tests stay green.",
+    "owns": [
+     "holdspeak/services/program_rounds.py",
+     "holdspeak/services/program_shaper.py",
+     "holdspeak/services/program_planner.py",
+     "holdspeak/services/program_verifier.py",
+     "holdspeak/services/program_requirements.py",
+     "holdspeak/services/program_rules.py",
+     "holdspeak/services/program_handoff.py"
+    ]
+   },
+   "size": {
+    "tokens": 37198,
+    "budget": 65536,
+    "share": 32768,
+    "fits": false,
+    "words": "Too big for Claude Code · 36k of 32k",
+    "engine": "Claude Code",
+    "code": "step_too_big"
+   },
+   "exchanges": [
+    {
+     "system_prompt": "You split one step of a HoldSpeak Program into smaller steps that a small model can build. You answer JSON only: {\"say\": \"...\", \"parts\": [{\"title\": \"...\", \"brief\": \"...\", \"owns\": [\"...\"]}]}.\n\nRULES\n- Cut the step into 2 to 4 parts, in the order they run: each part comes after the part before it.\n- Together the parts own what the step owns, and nothing else. A part may own a file inside an owned folder.\n  Each part owns at most 3 paths.\n- One concern per part. Its brief is one to four sentences, under 400 words: what the change does and how\n  the part is checked.\n- Each part must fit in the size given below, with its brief and the files it owns.\n- \"say\": one short line: the parts and why.\n\nSIZE\nThe agent that builds each part (Claude Code) has a context of 64k tokens; a part must fit in 32k tokens with its brief and the files it owns.",
+     "user_prompt": "THE PROGRAM\nThe planning modules say where they are from\nEvery planning module names its design section.\n\nTHE STEP (too big: about 36k of 32k tokens)\nstep 1 Name the design section in each planning module\nbrief\n> Each planning module of the Programs engine starts with a docstring. Make the first line of each docstring name its design section (PROGRAM-LANGUAGE §4, §5, §6). No behaviour changes; the tests stay green.\n\nIT OWNS (size in tokens)\n- holdspeak/services/program_rounds.py  (6k)\n- holdspeak/services/program_shaper.py  (10k)\n- holdspeak/services/program_planner.py  (7k)\n- holdspeak/services/program_verifier.py  (2k)\n- holdspeak/services/program_requirements.py  (3k)\n- holdspeak/services/program_rules.py  (4k)\n- holdspeak/services/program_handoff.py  (4k)",
+     "max_tokens": 8000,
+     "reply_text": "{\"parts\": [{\"brief\": \"Edit the first line of the module docstring in program_planner.py, program_shaper.py, and program_rounds.py so it names the design section it implements (e.g. 'PROGRAM-LANGUAGE §4'). No code or behaviour changes. Check: run the existing test suite for the Programs engine; all tests must stay green, and a grep for 'PROGRAM-LANGUAGE' in each file's first docstring line confirms the tag is present.\", \"owns\": [\"holdspeak/services/program_planner.py\", \"holdspeak/services/program_shaper.py\", \"holdspeak/services/program_rounds.py\"], \"title\": \"Tag core planning modules\"}, {\"brief\": \"Edit the first line of the module docstring in program_verifier.py, program_requirements.py, and program_rules.py so it names the design section it implements (e.g. 'PROGRAM-LANGUAGE §5'). No code or behaviour changes. Check: run the existing test suite; all tests stay green, and each file's docstring first line contains the correct section reference.\", \"owns\": [\"holdspeak/services/program_verifier.py\", \"holdspeak/services/program_requirements.py\", \"holdspeak/services/program_rules.py\"], \"title\": \"Tag verification and rules modules\"}, {\"brief\": \"Edit the first line of the module docstring in program_handoff.py so it names the design section it implements (e.g. 'PROGRAM-LANGUAGE §6'). No code or behaviour changes. Check: run the existing test suite; all tests stay green, and the docstring first line contains the correct section reference.\", \"owns\": [\"holdspeak/services/program_handoff.py\"], \"title\": \"Tag handoff module\"}], \"say\": \"Three parts, each adding the PROGRAM-LANGUAGE section tag to the docstring first line of its assigned modules; no behaviour changes.\"}",
+     "seconds": 10.73,
+     "usage": {
+      "completion_tokens": 923,
+      "prompt_tokens": 460,
+      "total_tokens": 1383,
+      "prompt_tokens_details": {
+       "cached_tokens": 0
+      }
+     },
+     "model": "qwen3.8-27b"
+    }
+   ],
+   "parts": [
+    {
+     "title": "Tag core planning modules",
+     "brief": "Edit the first line of the module docstring in program_planner.py, program_shaper.py, and program_rounds.py so it names the design section it implements (e.g. 'PROGRAM-LANGUAGE §4'). No code or behaviour changes. Check: run the existing test suite for the Programs engine; all tests must stay green, and a grep for 'PROGRAM-LANGUAGE' in each file's first docstring line confirms the tag is present.",
+     "owns": [
+      "holdspeak/services/program_planner.py",
+      "holdspeak/services/program_shaper.py",
+      "holdspeak/services/program_rounds.py"
+     ]
+    },
+    {
+     "title": "Tag verification and rules modules",
+     "brief": "Edit the first line of the module docstring in program_verifier.py, program_requirements.py, and program_rules.py so it names the design section it implements (e.g. 'PROGRAM-LANGUAGE §5'). No code or behaviour changes. Check: run the existing test suite; all tests stay green, and each file's docstring first line contains the correct section reference.",
+     "owns": [
+      "holdspeak/services/program_verifier.py",
+      "holdspeak/services/program_requirements.py",
+      "holdspeak/services/program_rules.py"
+     ]
+    },
+    {
+     "title": "Tag handoff module",
+     "brief": "Edit the first line of the module docstring in program_handoff.py so it names the design section it implements (e.g. 'PROGRAM-LANGUAGE §6'). No code or behaviour changes. Check: run the existing test suite; all tests stay green, and the docstring first line contains the correct section reference.",
+     "owns": [
+      "holdspeak/services/program_handoff.py"
+     ]
+    }
+   ],
+   "engine": "qwen3.8-27b",
+   "reason": null,
+   "file_bytes": {
+    "holdspeak/services/program_handoff.py": 16121,
+    "holdspeak/services/program_planner.py": 27024,
+    "holdspeak/services/program_requirements.py": 12811,
+    "holdspeak/services/program_rounds.py": 25760,
+    "holdspeak/services/program_rules.py": 16289,
+    "holdspeak/services/program_shaper.py": 39060,
+    "holdspeak/services/program_verifier.py": 10189
+   }
+  },
+  "night": {
+   "items": [
+    {
+     "line": "The Calls window's status bar says \"Line starting\" for 40 s after the Line is up.",
+     "exchanges": [
+      {
+       "system_prompt": "You plan one tiny step of a HoldSpeak Program that runs at night on a small model. You answer JSON only: {\"say\": \"...\", \"title\": \"...\", \"brief\": \"...\", \"owns\": [\"...\"]}.\n\nRULES\n- One tiny step: one concern, at most 3 owned paths (the files the change edits), each inside the bounds below.\n- \"title\": what the change does, under 80 characters.\n- \"brief\": one to four sentences, under 400 words: what the change does and how it is checked.\n- \"owns\": the paths. Use a path from the files below when it exists; a new path when the file is new.\n- The step must fit in the size given below, with its brief and the files it owns.\n- \"say\": one short line.\n\nBOUNDS\n- web/src/desk/\n- docs/\n- tests/unit/\n\nSIZE\nThe agent that builds the step (Claude Code) has a context of 64k tokens; the step must fit in 32k tokens with its brief and the files it owns.",
+       "user_prompt": "THE PROGRAM\nDreaming · HoldSpeak\nSmall fixes on the idle engine at night.\n\nTHE ITEM (the owner's words)\nThe Calls window's status bar says \"Line starting\" for 40 s after the Line is up.\n\nWHERE IT IS FROM\nA task on the Door\n\nFILES THE ITEM IS LIKELY ABOUT (size in tokens)\ntests/integration/test_line_call.py  (1k)\nweb/src/desk/calls/CallsWindow.tsx  (5k)\nweb/src/desk/calls/LineSettings.tsx  (6k)\nweb/src/desk/calls/__fixtures__/status.notRunning.ts  (1k)\nweb/src/desk/calls/__fixtures__/status.off.ts  (1k)\nweb/src/desk/calls/__fixtures__/status.ready.ts  (1k)\napple/Sources/Contracts/SetupStatus.swift  (1k)\napple/Sources/Providers/Desktop/HTTPDesktopClient+SetupStatus.swift  (1k)\napple/Tests/ProvidersTests/SetupStatusClientTests.swift  (2k)\napple/Tests/RuntimeCoreTests/SlidingWindowTests.swift  (2k)\nholdspeak/config/calls.py  (1k)\nholdspeak/db/pipeline_events_retention.py  (2k)\nholdspeak/desk_window_operations.py  (2k)\nholdspeak/device_status.py  (4k)\nholdspeak/intent_timeline.py  (1k)\nholdspeak/kernel/line_ops.py  (1k)\nholdspeak/kernel/tool_call.py  (2k)\nholdspeak/mcp/families/calls.py  (1k)\nholdspeak/mcp/families/desk_windows.py  (1k)\nholdspeak/phone/calls.py  (1k)\nholdspeak/plugins/builtin/incident_timeline.py  (1k)\nholdspeak/plugins/dictation/pipeline.py  (3k)\nholdspeak/plugins/pipeline.py  (2k)\nholdspeak/services/desk_window_service.py  (10k)\nholdspeak/services/recall_service.py  (8k)\nholdspeak/setup_status.py  (3k)\nholdspeak/web/routes/calls.py  (4k)\nholdspeak/web/routes/desk_windows.py  (1k)\nholdspeak/web/routes/dictation/pipeline.py  (18k)\nscripts/check_web_baseline.py  (1k)\nscripts/desk_walk/pages/workbench_window.py  (1k)\nscripts/hs109_06_process_window_walk.py  (2k)\nscripts/line/measure_line.py  (2k)\nscripts/phase93_desk_windows_evidence.py  (2k)\nscripts/philo13_meetings_headline_fixture.py  (2k)\nscripts/record_call_turn_reply.py  (1k)\nscripts/record_line_fixtures.py  (3k)\ntests/e2e/chair_windows.py  (1k)\ntests/e2e/test_modern_window_heads_glass.py  (2k)\ntests/e2e/test_native_repository_windows_glass.py  (5k)",
+       "max_tokens": 6000,
+       "reply_text": "{\"brief\":\"In CallsWindow.tsx the status bar shows 'Line starting' based on a fixed 40-second timer rather than the actual line readiness signal. Replace the elapsed-time check with a direct read of the line status (ready vs. starting) so the label flips to 'Line ready' the moment the backend reports the line is up. Verified by the existing unit fixture status.ready.ts which asserts the ready label, and by a quick manual walk of the Calls window after a line start.\",\"owns\":[\"web/src/desk/calls/CallsWindow.tsx\"],\"say\":\"Swap the 40 s timer for the real line-status signal in the Calls status bar.\",\"title\":\"Calls status bar: use line status instead of 40 s timer\"}",
+       "seconds": 5.98,
+       "usage": {
+        "completion_tokens": 421,
+        "prompt_tokens": 928,
+        "total_tokens": 1349,
+        "prompt_tokens_details": {
+         "cached_tokens": 0
+        }
+       },
+       "model": "qwen3.8-27b"
+      }
+     ],
+     "fields": {
+      "say": "Swap the 40 s timer for the real line-status signal in the Calls status bar.",
+      "title": "Calls status bar: use line status instead of 40 s timer",
+      "brief": "In CallsWindow.tsx the status bar shows 'Line starting' based on a fixed 40-second timer rather than the actual line readiness signal. Replace the elapsed-time check with a direct read of the line status (ready vs. starting) so the label flips to 'Line ready' the moment the backend reports the line is up. Verified by the existing unit fixture status.ready.ts which asserts the ready label, and by a quick manual walk of the Calls window after a line start.",
+      "owns": [
+       "web/src/desk/calls/CallsWindow.tsx"
+      ]
+     },
+     "engine": "qwen3.8-27b",
+     "reason": null
+    },
+    {
+     "line": "The Terminals window has raw buttons.",
+     "exchanges": [
+      {
+       "system_prompt": "You plan one tiny step of a HoldSpeak Program that runs at night on a small model. You answer JSON only: {\"say\": \"...\", \"title\": \"...\", \"brief\": \"...\", \"owns\": [\"...\"]}.\n\nRULES\n- One tiny step: one concern, at most 3 owned paths (the files the change edits), each inside the bounds below.\n- \"title\": what the change does, under 80 characters.\n- \"brief\": one to four sentences, under 400 words: what the change does and how it is checked.\n- \"owns\": the paths. Use a path from the files below when it exists; a new path when the file is new.\n- The step must fit in the size given below, with its brief and the files it owns.\n- \"say\": one short line.\n\nBOUNDS\n- web/src/desk/\n- docs/\n- tests/unit/\n\nSIZE\nThe agent that builds the step (Claude Code) has a context of 64k tokens; the step must fit in 32k tokens with its brief and the files it owns.",
+       "user_prompt": "THE PROGRAM\nDreaming · HoldSpeak\nSmall fixes on the idle engine at night.\n\nTHE ITEM (the owner's words)\nThe Terminals window has raw buttons.\n\nWHERE IT IS FROM\nA task on the Door\n\nFILES THE ITEM IS LIKELY ABOUT (size in tokens)\nweb/src/desk/components/DeliveryTerminalWindow.tsx  (2k)\nweb/src/desk/components/__tests__/windowFeedbackButton.test.tsx  (1k)\nweb/src/desk/terminals/TerminalWindows.tsx  (4k)\nweb/src/desk/terminals/windows.ts  (1k)\napple/Tests/RuntimeCoreTests/SlidingWindowTests.swift  (2k)\nholdspeak/delivery/terminal.py  (5k)\nholdspeak/delivery/terminal_live.py  (11k)\nholdspeak/desk_window_operations.py  (2k)\nholdspeak/kernel/parent_terminal.py  (2k)\nholdspeak/mcp/families/desk_windows.py  (1k)\nholdspeak/services/desk_window_service.py  (10k)\nholdspeak/services/terminal_workspace.py  (3k)\nholdspeak/services/terminal_workspace_context.py  (3k)\nholdspeak/web/routes/delivery_terminal.py  (4k)\nholdspeak/web/routes/desk_windows.py  (1k)\nscripts/desk_walk/pages/workbench_window.py  (1k)\nscripts/hs109_06_process_window_walk.py  (2k)\nscripts/hs111_11_terminal_walk.py  (2k)\nscripts/phase93_desk_windows_evidence.py  (2k)\nscripts/record_terminal_workspace_fixture.py  (1k)\ntests/e2e/chair_windows.py  (1k)\ntests/e2e/test_modern_window_heads_glass.py  (2k)\ntests/e2e/test_native_repository_windows_glass.py  (5k)\ntests/e2e/test_native_window_growth_glass.py  (4k)\ntests/e2e/test_terminal_workspace_glass.py  (17k)\ntests/e2e/test_windows_follow_the_bus_glass.py  (2k)\ntests/e2e/test_windows_glass.py  (35k)\ntests/integration/test_delivery_terminal_live.py  (2k)\ntests/integration/test_terminal_live_stream.py  (4k)\ntests/unit/test_delivery_terminal_routes.py  (4k)\ntests/unit/test_delivery_terminal_stream.py  (3k)\ntests/unit/test_desk_window_service.py  (6k)\ntests/unit/test_desk_windows.py  (1k)\ntests/unit/test_desk_windows_mcp.py  (3k)\ntests/unit/test_desk_windows_routes.py  (2k)\ntests/unit/test_terminal_live.py  (2k)\ntests/unit/test_terminal_workspace.py  (2k)\ntests/unit/test_terminal_workspace_context.py  (4k)\nweb/src/_parked/desk/__tests__/factoryWindowsFloat.philo1301.test.ts  (1k)\nweb/src/_parked/desk/components/__tests__/windowWings.test.ts  (1k)",
+       "max_tokens": 6000,
+       "reply_text": "{\"brief\":\"The Terminals window renders bare <button> elements with no design-system classes, so they look unstyled next to the rest of the desk chrome. This step wraps each action button in the shared desk button class (or an equivalent inline style token already used elsewhere in the desk) so the Terminals window matches the visual language of the other windows. Verified by a unit test that renders the window and asserts the buttons carry the expected class attribute.\",\"owns\":[\"web/src/desk/terminals/TerminalWindows.tsx\"],\"say\":\"Style the raw buttons in the Terminals window to match desk chrome.\",\"title\":\"Style raw buttons in Terminals window\"}",
+       "seconds": 7.14,
+       "usage": {
+        "completion_tokens": 540,
+        "prompt_tokens": 940,
+        "total_tokens": 1480,
+        "prompt_tokens_details": {
+         "cached_tokens": 245
+        }
+       },
+       "model": "qwen3.8-27b"
+      }
+     ],
+     "fields": {
+      "say": "Style the raw buttons in the Terminals window to match desk chrome.",
+      "title": "Style raw buttons in Terminals window",
+      "brief": "The Terminals window renders bare <button> elements with no design-system classes, so they look unstyled next to the rest of the desk chrome. This step wraps each action button in the shared desk button class (or an equivalent inline style token already used elsewhere in the desk) so the Terminals window matches the visual language of the other windows. Verified by a unit test that renders the window and asserts the buttons carry the expected class attribute.",
+      "owns": [
+       "web/src/desk/terminals/TerminalWindows.tsx"
+      ]
+     },
+     "engine": "qwen3.8-27b",
+     "reason": null
+    },
+    {
+     "line": "The Engines rows at 393 clip the readiness word.",
+     "exchanges": [
+      {
+       "system_prompt": "You plan one tiny step of a HoldSpeak Program that runs at night on a small model. You answer JSON only: {\"say\": \"...\", \"title\": \"...\", \"brief\": \"...\", \"owns\": [\"...\"]}.\n\nRULES\n- One tiny step: one concern, at most 3 owned paths (the files the change edits), each inside the bounds below.\n- \"title\": what the change does, under 80 characters.\n- \"brief\": one to four sentences, under 400 words: what the change does and how it is checked.\n- \"owns\": the paths. Use a path from the files below when it exists; a new path when the file is new.\n- The step must fit in the size given below, with its brief and the files it owns.\n- \"say\": one short line.\n\nBOUNDS\n- web/src/desk/\n- docs/\n- tests/unit/\n\nSIZE\nThe agent that builds the step (Claude Code) has a context of 64k tokens; the step must fit in 32k tokens with its brief and the files it owns.",
+       "user_prompt": "THE PROGRAM\nDreaming · HoldSpeak\nSmall fixes on the idle engine at night.\n\nTHE ITEM (the owner's words)\nThe Engines rows at 393 clip the readiness word.\n\nWHERE IT IS FROM\nA task on the Door\n\nFILES THE ITEM IS LIKELY ABOUT (size in tokens)\napple/App/MeetingCapture/DeskMiniGame_Word.swift  (6k)\napple/Sources/RuntimeCore/MeetingIntelligence/ArtifactGenerationEngine.swift  (2k)\napple/Sources/RuntimeCore/Sync/SyncEngine.swift  (2k)\napple/Tests/RuntimeCoreTests/ArtifactGenerationEngineTests.swift  (1k)\napple/Tests/RuntimeCoreTests/SyncEngineTests.swift  (2k)\napple/scripts/mg-word-shot.sh  (1k)\nholdspeak/engine_lanes.py  (2k)\nholdspeak/intel/cli_engine.py  (10k)\nholdspeak/intel/cli_engine_runs.py  (1k)\nholdspeak/intel/engine.py  (13k)\nholdspeak/kernel/process_words.py  (2k)\nholdspeak/meeting_session/live_readiness.py  (1k)\nholdspeak/memory/engine.py  (5k)\nholdspeak/services/brief_words.py  (6k)\nholdspeak/services/engine_tool_loop.py  (6k)\nholdspeak/services/lan_engine_discovery.py  (4k)\nholdspeak/speech_session/browser_mic.py  (3k)\nholdspeak/wake_word.py  (3k)\nscripts/philo5_his_words.py  (16k)\nscripts/record_engines_fixture.py  (5k)\ntests/e2e/engine_stub_rig.py  (1k)\ntests/integration/test_concierge_readiness.py  (2k)\ntests/integration/test_desk_engines.py  (11k)\ntests/integration/test_desk_engines_http_tools.py  (3k)\ntests/integration/test_desk_engines_mcp.py  (2k)\ntests/integration/test_desk_engines_tools.py  (6k)\ntests/integration/test_hub_answers_while_engine_is_down.py  (2k)\ntests/integration/test_meeting_plugins_engines.py  (6k)\ntests/integration/test_settings_wake_word.py  (1k)\ntests/integration/test_web_dictation_readiness_api.py  (3k)\ntests/integration/test_workbench_run_no_engine_route.py  (1k)\ntests/memory_bench/engines.py  (2k)\ntests/unit/test_browser_mic_pipeline.py  (4k)\ntests/unit/test_cli_engine.py  (7k)\ntests/unit/test_doctor_plain_words.py  (4k)\ntests/unit/test_engine_off_the_loop.py  (2k)\ntests/unit/test_engines_add_by_kind.py  (1k)\ntests/unit/test_engines_name_guard.py  (1k)\ntests/unit/test_lamp_words_guard.py  (3k)\ntests/unit/test_lan_engine_discovery.py  (5k)",
+       "max_tokens": 6000,
+       "reply_text": "{\"brief\":\"The readiness word in the Engines row (around line 393) is clipped by a width or overflow constraint. Widen the cell or remove the text-overflow clip so the full readiness word renders. Verified by rendering the row and confirming the word is not truncated.\",\"owns\":[\"web/src/desk/engines_row.swift\"],\"say\":\"Unclip the readiness word in the Engines row.\",\"title\":\"Fix readiness word clip in Engines row\"}",
+       "seconds": 9.21,
+       "usage": {
+        "completion_tokens": 677,
+        "prompt_tokens": 915,
+        "total_tokens": 1592,
+        "prompt_tokens_details": {
+         "cached_tokens": 245
+        }
+       },
+       "model": "qwen3.8-27b"
+      }
+     ],
+     "fields": {
+      "say": "Unclip the readiness word in the Engines row.",
+      "title": "Fix readiness word clip in Engines row",
+      "brief": "The readiness word in the Engines row (around line 393) is clipped by a width or overflow constraint. Widen the cell or remove the text-overflow clip so the full readiness word renders. Verified by rendering the row and confirming the word is not truncated.",
+      "owns": [
+       "web/src/desk/engines_row.swift"
+      ]
+     },
+     "engine": "qwen3.8-27b",
+     "reason": null
+    }
+   ]
+  }
+ }
+}

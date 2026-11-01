@@ -38,6 +38,20 @@ the record; the engine drives the agents. Read first:
    engine ticks every 30 s, after each press, and about 1 s after a step's
    agent ends its turn.
 
+## Size and the night (PG-LANG LANG8, LANG12)
+
+- A step whose size is over half its budget is not handed: it is held
+  "Too big for qwen · 41k of 32k". At YOLO the engine splits it (Decided for
+  you); at Secure and Normal the split is a `step_change` proposal (Apply
+  splits, Skip runs it as it is). Keep steps small: one concern, at most
+  three owned files.
+- A Program with `night` hands steps only inside its window ("sleeps until
+  23:30"), at most `at most` a night. `program.add_to_night` (`kind`
+  `action`, `note` with `line`, or `program_step`; `item_id`) puts an item in
+  tonight's Program; an agent's add lands only at YOLO. Do not put a big
+  task there: the night planner cuts each item into one small step inside
+  `within`.
+
 ## Read and write the Program text
 
 `program.text` (by `program_id` or `name`) returns the Program as text, one

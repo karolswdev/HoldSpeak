@@ -53,6 +53,7 @@ from .program_service import (
     ACTIVE_STATES, PARKED_BY_ENGINE, PARKED_BY_RACE, RACE_PROFILES,
     ProgramRefused, ProgramService, agent_label, duration_words, history_of, programs_on,
 )
+from . import program_night, program_split
 from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
 from .program_verifier import log_tail, verify_log, verify_requirement_log
 
@@ -150,8 +151,11 @@ class ProgramRunner:
         principal: Any = None,
         review_words: Optional[Callable[[str], str]] = None,
         gate: Any = None,
+        reach: Optional[Callable[[], Any]] = None,
     ) -> None:
         self.service = service
+        #: PG-LANG LANG12: where the night's digest line goes (``ReachService``).
+        self._reach = reach
         self.db = service.db
         self._hand = hand
         self._ledger = ledger
@@ -336,6 +340,11 @@ class ProgramRunner:
             except Exception as exc:
                 log.warning(f"review tick failed: {exc}")
         moved = []
+        try:
+            # PG-LANG LANG12: plan tonight's items at the window's start, the digest at its end.
+            moved += program_night.tick_nights(self)
+        except Exception as exc:
+            log.error(f"night tick failed: {exc}", exc_info=True)
         for program in self.service.store.list_programs():
             if program["state"] not in _TICKED:
                 continue
@@ -496,6 +505,10 @@ class ProgramRunner:
                 self._make_contenders(program, step, steps)
         steps = self.service.store.list_steps(program["id"])
         ready = [step for step in steps if step["state"] == "ready"]
+        # PG-LANG LANG12: a Program with a night line hands only inside it.
+        room = program_night.night_room(self, program, ready)
+        if room == 0:
+            return
         slots = self._free_slots()
         busy_engines = {self._engine_of(program, other) for other in steps
                         if other["state"] in ACTIVE_STATES and self._profile_of(program, other) == "pi-default"}
@@ -505,6 +518,10 @@ class ProgramRunner:
                 self._hold(step, "waiting for an agent's limit to reset")
                 continue
             profile, engine = entry["profile"], entry.get("engine")
+            # PG-LANG LANG12 (planned for tonight first) and LANG8 (too big for its budget).
+            if program_night.step_hold(self, program, step) or program_split.dispatch_hold(
+                    self, program, step, profile, engine):
+                continue
             if profile == "pi-default" and (step.get("prefer_idle") or program.get("prefer_idle")):
                 idle, name = self.engine_idle(engine)
                 if not idle or engine in busy_engines:
@@ -523,6 +540,10 @@ class ProgramRunner:
                 slots -= 1
                 if profile == "pi-default":
                     busy_engines.add(engine)
+                if room is not None:
+                    room -= 1
+                    if room <= 0:
+                        break
 
     def _spend_core(self, program: Mapping[str, Any], step: Mapping[str, Any], profile: str,
                     engine: Optional[str]) -> str:

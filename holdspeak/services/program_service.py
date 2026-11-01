@@ -1745,6 +1745,7 @@ class ProgramService:
     def plan(
         self, principal: Any, program_id: str, *, steps: list[Mapping[str, Any]],
         size: Optional[str] = None, replace: bool = False, before: Optional[str] = None, waits: bool = True,
+        by: Optional[str] = None,
     ) -> dict[str, Any]:
         """Replace or append steps. A step: ``title``, ``brief``, ``owns``,
         ``after`` (ordinals), ``profile``, ``engine``, ``prefer_idle``,
@@ -1874,7 +1875,7 @@ class ProgramService:
                 program["closed_at"] = max(str(step["ended_at"]) for step in [*kept, *made])
             for step in made:
                 self.store.save_step(step)
-            by = "owner" if _is_owner(principal) else "agent"
+            by = by or ("owner" if _is_owner(principal) else "agent")
             line = f"{'Planned' if replace else 'Added'} {len(made)} step{'s' if len(made) != 1 else ''}"
             if imported:
                 line += f"; imported {len(imported)} merged PR{'s' if len(imported) != 1 else ''}"
@@ -2858,8 +2859,20 @@ class ProgramService:
         step = self.store.get_step(str(row.get("step_id") or "")) if row.get("step_id") else None
         answer: dict[str, Any] = {}
         with _LOCK:
-            if choice == "skip":
+            split = (payload.get("fields") or {}).get("split") if kind == "step_change" else None
+            if split and step is None:
+                raise NotFound("program_step", str(row.get("step_id")))
+            if choice == "skip" and split:
+                # PG-LANG LANG8: Skip on a split runs the step as it is.
+                from .program_split import run_as_it_is
+
+                run_as_it_is(self, program, step, by="owner")
+            elif choice == "skip":
                 self._checkpoint(program, step, "owner", f"Skipped: {payload.get('title') or row['line']}"[:400])
+            elif split:
+                from .program_split import apply_split
+
+                apply_split(self, program, step, list(split.get("parts") or []), by="owner")
             elif kind == "requirement_proposed":
                 from .program_requirements import label
 
@@ -3246,6 +3259,20 @@ class ProgramService:
         write_amendment(step, f"Added by {who} at {_clock_words(at)}", line, git=git)
 
     # ── PG-LANG LANG1: the Program text (get and apply) ──────────────
+
+    def add_to_night(self, principal: Any, *, kind: Any, item_id: Any, line: Any = None,
+                     program_id: Any = None) -> dict[str, Any]:
+        """PG-LANG LANG12 / JRN2, Add to tonight: a Door task (``action``), a
+        note line (``note`` with ``line``) or a step of another Program
+        (``program_step``) becomes a Planned step of the night Program,
+        planned by the cheap planner at the window's start
+        (``program_night``). His add lands at once; an agent's is a step the
+        plan lacked (YOLO adds it and says so; below YOLO it is refused)."""
+        from .program_night import add_to_night
+
+        answer = add_to_night(self, principal, kind=kind, item_id=item_id, line=line, program_id=program_id)
+        self._tick_now(answer["program_id"])
+        return answer
 
     def text_get(self, principal: Any, program_id: str) -> dict[str, Any]:
         """The Program's text, printed from the tables now, with its lamps
@@ -3899,6 +3926,11 @@ class ProgramService:
                 for key, value in dict(undo["fields_before"]).items():
                     step[_STORE_KEY.get(key, key)] = value
                 self._save(step)
+            elif choice == "split" and undo.get("split"):
+                # PG-LANG LANG8: YOLO's split, while every part is Planned or Ready.
+                from .program_split import overturn_split
+
+                overturn_split(self, program, row)
             elif choice == "add" and undo.get("step_id"):
                 added = self.store.get_step(str(undo["step_id"]))
                 if added is not None:
@@ -4237,6 +4269,10 @@ class ProgramService:
         if summary["your_turn"]:
             head.append(f"{summary['your_turn']} wait{'s' if summary['your_turn'] == 1 else ''} on you")
         lines += [" · ".join(head), ""]
+        # PG-LANG LANG12: the night's digest on top, while it is fresh.
+        from .program_night import note_section
+
+        lines += note_section(self, program)
         place = self._place(program)
         where = []
         if place["project"]:
