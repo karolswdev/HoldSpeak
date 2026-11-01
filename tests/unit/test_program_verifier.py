@@ -108,3 +108,42 @@ def test_no_requirement_log_is_never_met(tmp_path) -> None:
     assert verify_requirement_log(str(tmp_path / "nope.log"))["reasons"] == ["the log is not there"]
     (tmp_path / "empty.log").write_text("")
     assert not verify_requirement_log(str(tmp_path / "empty.log"))["met"]
+
+
+# ── PG-LANG LANG11: the Measure form ─────────────────────────────────
+
+import pytest  # noqa: E402
+
+from holdspeak.services.program_requirements import parse_bound  # noqa: E402
+from holdspeak.services.program_verifier import verify_measure_log, verify_measure_text  # noqa: E402
+
+
+def _measure_log(*lines: str, exit_code: int = 0, clean: bool = True) -> str:
+    return ("program-check: commit 0123abcd\n" + ("program-check: tree clean\n" if clean else "program-check: tree dirty (1 files)\n")
+            + "program-check: command sh bench.sh\n" + "".join(f"{line}\n" for line in lines)
+            + f"program-check: exit {exit_code}\n")
+
+
+@pytest.mark.parametrize("bound, lines, met, said", [
+    ("total under 2 s", ["total 1.4 s"], True, "Measured 1.4 s, under 2 s"),
+    ("total < 2 s", ["total 1400 ms"], True, "Measured 1.4 s, under 2 s"),
+    ("files at most 3", ["files changed: 3"], True, "Measured 3, at most 3"),
+    ("errors equal to 0", ["errors 0"], True, "Measured 0, equal to 0"),
+    ("p95 < 100 ms", ["p95 120 ms", "p95 84 ms"], True, "Measured 84 ms, under 100 ms"),  # the last line wins
+    ("p95 < 100 ms", ["p95 84 ms", "p95 120 ms"], False, "Measured 120 ms, not under 100 ms"),
+    ("rows at least 10", ["rows 9"], False, "Measured 9, not at least 10"),
+])
+def test_a_measure_reads_the_last_value_and_compares_it_with_its_bound(bound, lines, met, said) -> None:
+    result = verify_measure_text(_measure_log(*lines), parse_bound(bound))
+    assert (result["met"], result["line"]) == (met, said), result
+
+
+def test_a_measure_that_did_not_run_says_why_in_words(tmp_path) -> None:
+    spec = parse_bound("total < 2 s")
+    assert verify_measure_text(_measure_log("total 1 s", exit_code=127), spec)["line"] == \
+        "Not measured: the command ended with exit 127"
+    assert verify_measure_text(_measure_log("nothing"), spec)["line"] == "Not measured: the command printed no total number"
+    assert verify_measure_text(_measure_log("total 1 kb"), spec)["line"] == \
+        "Not measured: the command printed kb, which is not s"
+    assert verify_measure_log(None, spec)["line"] == "Not measured: the command did not run"
+    assert verify_measure_log(str(tmp_path / "gone.log"), spec)["met"] is False
