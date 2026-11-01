@@ -6,7 +6,7 @@
 // storage, no referrer. These three calls are its whole wire.
 
 export type BriefingChoice = { id: string; label: string; consequence: string; primary: boolean };
-export type BriefingPane = { pane: "pr" | "log" | "brief" | "text" | string; label: string; token: string };
+export type BriefingPane = { pane: "error" | "pr" | "log" | "brief" | "text" | string; label: string; token: string };
 export type BriefingOutcome = {
   words: string;
   choice?: string;
@@ -15,12 +15,23 @@ export type BriefingOutcome = {
   at?: string | null;
   later_until?: string | null;
 };
+export type TrackStep = { ordinal: number; title: string; mark: "here" | "blocked" | "done" | "parked" | "planned" | "running" | string };
 export type BriefingItem = {
   ref: string;
   kind: string;
   kind_words: string;
   head: string;
+  /** The owner's BRIEF RULE (2026-10-31): the goal, the step, what happened. */
+  note: string[];
+  goal: string;
+  doing: string;
+  happened: string;
   question: string;
+  /** "Step 1 of 3 · started 21:14 · waited 1 h 20". */
+  place: string;
+  track: TrackStep[];
+  blocked: { ordinal: number; title: string }[];
+  blocked_words: string;
   level: string;
   since: string;
   program_title: string;
@@ -34,7 +45,16 @@ export type BriefingItem = {
 };
 export type LaterOption = { id: string; label: string; at: string };
 export type BriefingPage = {
-  package: { id: string; kind: string; head: string; expires_at: string; expires_words: string; hub: string };
+  package: {
+    id: string;
+    kind: string;
+    head: string;
+    expires_at: string;
+    expires_words: string;
+    hub: string;
+    /** The desk on this hub, the program open ("/?open=program:<id>"); null when the hub serves none. */
+    desk?: string | null;
+  };
   items: BriefingItem[];
   later: LaterOption[];
 };

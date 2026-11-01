@@ -220,7 +220,7 @@ def test_the_bot_token_moves_from_the_config_file_into_the_keystore_once(tmp_pat
 # ── the message ──────────────────────────────────────────────────────
 
 
-def test_the_message_is_eight_lines_with_the_choices_later_and_the_page_link(tmp_path) -> None:
+def test_the_message_is_the_brief_with_the_choices_later_and_the_page_link(tmp_path) -> None:
     desk = Desk(tmp_path)
     desk.pair()
     pid, item = desk.core()
@@ -228,10 +228,15 @@ def test_the_message_is_eight_lines_with_the_choices_later_and_the_page_link(tmp
     made = desk.telegram.brief(f"program:{pid}:{item['id']}")
     (sent,) = desk.bot.of("sendMessage")
     lines = sent["text"].split("\n")
-    assert len(lines) <= 8, lines
+    assert len(lines) <= 10, lines
     assert lines[0].startswith("Overnight on the home box · step 1 · waits ")
-    assert "files no step owns (other/b.py)" in lines[1]
-    assert "Go on: The step goes on with this change." in lines and "Park: The step stops. The other steps go on." in lines
+    # The owner's BRIEF RULE (2026-10-31): the page's lines in the page's order.
+    assert lines[1] == "Goal: Stop the stalls."
+    assert lines[2].startswith("Step 1")
+    assert "files no step owns (b.py)" in lines[3]
+    assert lines[4] == "Let the step go on with this, or park it?"
+    assert "Go on: The step goes on with this change." in lines
+    assert any(line.startswith("Park: Stop this step.") for line in lines), lines
     assert lines[-1].startswith("Open the page: https://hub.tail.ts.net/b/")
     assert "parse_mode" not in sent  # plain text: a title cannot break Markdown
     keyboard = sent["reply_markup"]["inline_keyboard"]
@@ -287,7 +292,7 @@ def test_a_tap_decides_once_from_telegram_and_the_message_settles(tmp_path, capl
     assert desk.briefing.store.get(made["id"])["answers"][item_ref(pid, item)]["via"] == "telegram"
     again = desk.tap(message, f"r1|{made['id']}|park")
     assert again["action"] == "refused" and again["code"] == "answered_already"
-    assert again["words"].startswith("Answered already: Go on · decided")
+    assert again["words"].startswith("Answered already: Go on · "), again["words"]
     assert TOKEN not in caplog.text and all(token == TOKEN for token in desk.bot.tokens)
 
 

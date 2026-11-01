@@ -1781,9 +1781,9 @@ def test_the_briefing_page_holds_the_fences(desk: dict[str, Any], pw_browser: An
     try:
         page.goto(f"{base}/b/{desk['briefing']}", wait_until="load")
         try:
-            page.locator("[data-testid=briefing-well]").wait_for(timeout=T)
+            page.locator("[data-testid=briefing-question]").wait_for(timeout=T)
         except Exception as exc:
-            raise AssertionError(f"the page drew no well: {errors} {page.evaluate('document.body.innerText')[:300]!r}") from exc
+            raise AssertionError(f"the page drew no question: {errors} {page.evaluate('document.body.innerText')[:300]!r}") from exc
         page.locator("[data-testid=briefing-choice-go_on]").wait_for(timeout=T)
         sweep = _Case(page, base, "", errors, requests)
         sweep.sel = "[data-testid=briefing-page]"
@@ -1803,7 +1803,7 @@ def test_the_briefing_page_holds_the_fences(desk: dict[str, Any], pw_browser: An
     try:
         page.goto(f"{base}/b/{'x' * 43}", wait_until="load")
         page.locator("[data-testid=briefing-expired]").wait_for(timeout=T)
-        assert page.locator("[data-testid=briefing-well]").count() == 0
+        assert page.locator("[data-testid=briefing-question]").count() == 0
         # The one 404 is the honest answer (the shell, then the read); nothing else.
         assert all("404" in error for error in errors), errors
     finally:

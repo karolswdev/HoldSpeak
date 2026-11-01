@@ -2,9 +2,11 @@
 // (web/src/briefing/__fixtures__/reach.page.json, recorded by
 // tests/integration/test_desk_reach.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it).
 //
-// A press on Go on renders the settled outcome and no verbs; Later ▾ at 13:00
-// renders "Later · back at …" and keeps the choices; the expired face has no
-// data; an evidence fold loads its pane when it opens. The guard: nothing
+// The recorded case is the owner's first real page (2026-10-31): a step
+// parked because the repository has no remote. The brief reads in his terms
+// in the rule's order; a press on Resume settles the page to one line; Later
+// at 13:00 settles the same way; the expired face has no data; an evidence
+// word opens its pane in place, loaded when it opens. The guard: nothing
 // under web/src/briefing reaches the desk's auth client (src/lib/auth.ts) or
 // src/lib/api.ts, by the transitive import walk.
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
@@ -32,7 +34,8 @@ function hub(answers: { open?: unknown; status?: number; post?: unknown; postSta
       status = answers.postStatus ?? 200;
       body = answers.post;
     } else if (url.includes("/evidence/")) {
-      body = url.endsWith("/brief") ? recorded.brief : url.endsWith("/log") ? recorded.log : recorded.text;
+      body = url.endsWith("/brief") ? recorded.brief : url.endsWith("/log") ? recorded.log
+        : url.endsWith("/error") ? recorded.error : recorded.text;
     } else {
       status = answers.status ?? 200;
       body = answers.open;
@@ -47,61 +50,92 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-describe("the briefing page (direction A, the brief)", () => {
+describe("the briefing page (the owner's BRIEF RULE, direction A)", () => {
+  const shown = recorded.open.items[0];
+
   it("reads its token from the path only", () => {
     expect(tokenFromPath(`/b/${TOKEN}`)).toBe(TOKEN);
     expect(tokenFromPath(`/b/${TOKEN}/x`)).toBe("");
     expect(tokenFromPath("/b/short")).toBe("");
   });
 
-  it("shows the question first, each choice with what it does, and Later last", async () => {
+  it("reads like a note: the goal, where we are, the step, what happened, then the question", async () => {
     hub({ open: recorded.open });
     render(<BriefingApp token={TOKEN} />);
-    const well = await screen.findByTestId("briefing-well");
-    expect(screen.getByTestId("briefing-head").textContent).toBe(recorded.open.package.head);
-    expect(within(well).getByTestId("briefing-question").textContent).toBe(recorded.open.items[0].question);
-    const choices = within(well).getByTestId("briefing-choices");
-    const verbs = within(choices).getAllByRole("button").map((button) => button.textContent?.trim());
-    expect(verbs).toEqual(["Go on", "Park", "Later"]);
-    for (const choice of recorded.open.items[0].choices) expect(choices.textContent).toContain(choice.consequence);
-    expect(screen.getByTestId("briefing-status").textContent).toContain(recorded.open.package.expires_words);
-    expect(screen.getByTestId("briefing-status").textContent).toContain(`from HoldSpeak on ${recorded.open.package.hub}`);
-    // Every verb is the library Button.
-    for (const button of screen.getAllByRole("button")) expect(button.className).toMatch(/\bbtn\b/);
+    await screen.findByTestId("briefing-question");
+    const text = document.body.textContent ?? "";
+    const order = [shown.kind_words, recorded.open.package.head, shown.goal, shown.place, shown.doing, shown.happened,
+      shown.question, shown.blocked_words].map((line) => text.indexOf(line));
+    expect(order.every((at) => at >= 0)).toBe(true);
+    expect(order).toEqual([...order].sort((x, y) => x - y));
+    expect(screen.getByTestId("briefing-happened").textContent).toBe(
+      "The step could not push its branch: this repository has no remote.");
+    expect(screen.getByTestId("briefing-question").textContent).toBe("Start the step again, or stop it?");
+    expect(screen.getByTestId("briefing-question").tagName).toBe("H2");
+    // No raw text on the face: the git error is only in its fold.
+    expect(text).not.toMatch(/fatal:|error:|\/tmp\/|sh -c/);
   });
 
-  it("a press on Go on settles the well: the outcome, and nothing to press", async () => {
+  it("draws the step line with this step lit and the steps that wait on it marked", async () => {
+    hub({ open: recorded.open });
+    render(<BriefingApp token={TOKEN} />);
+    const track = await screen.findByTestId("briefing-track");
+    const stations = Array.from(track.querySelectorAll("li"));
+    expect(stations.map((li) => li.getAttribute("data-state"))).toEqual(["current", "ahead", "ahead"]);
+    expect(stations.map((li) => li.getAttribute("data-mark"))).toEqual([null, "blocked", "blocked"]);
+    expect(stations[0].querySelector(".pg-station-dot")?.hasAttribute("data-live")).toBe(true);
+    expect(track.getAttribute("aria-label")).toBe("Step 1 of 3, here; steps 2, 3 wait on it");
+    expect(screen.getByTestId("briefing-blocked").textContent).toBe("2 steps wait on this: 2 Link the README, 3 Announce it.");
+  });
+
+  it("each choice says what it does in his terms, and Later opens its times in place", async () => {
+    hub({ open: recorded.open });
+    render(<BriefingApp token={TOKEN} />);
+    const tray = await screen.findByTestId("briefing-choices");
+    expect(within(tray).getAllByRole("button").map((button) => button.textContent?.trim())).toEqual(["Resume", "Skip", "Later"]);
+    expect(tray.textContent).toContain("Try the step again. It will fail the same way until the repository has a remote.");
+    expect(tray.textContent).toContain("Stop this step. The 2 steps that wait on it wait too.");
+    fireEvent.click(screen.getByTestId("briefing-later"));
+    const times = screen.getByTestId("briefing-times");
+    expect(within(times).getAllByRole("button")).toHaveLength(4);
+    expect(screen.queryByRole("menu")).toBeNull();
+    // No disclosure marker anywhere.
+    expect(document.body.textContent).not.toMatch(/[▸▾]/);
+    for (const button of screen.getAllByRole("button")) expect(button.className).toMatch(/\bbtn\b/);
+    expect(screen.getByTestId("briefing-status").textContent).toContain(recorded.open.package.expires_words);
+  });
+
+  it("a press on Resume settles the page to one line and Open on the desk", async () => {
     const calls = hub({ open: recorded.open, post: recorded.decided });
     render(<BriefingApp token={TOKEN} />);
-    fireEvent.click(await screen.findByTestId("briefing-choice-go_on"));
+    fireEvent.click(await screen.findByTestId("briefing-choice-resume"));
     const outcome = await screen.findByTestId("briefing-outcome");
     expect(outcome.textContent).toBe(recorded.decided.item.outcome.words);
-    expect(outcome.textContent).toMatch(/^Go on · decided here · \d\d:\d\d$/);
-    expect(screen.queryByTestId("briefing-choices")).toBeNull();
-    expect(within(screen.getByTestId("briefing-well")).queryAllByRole("button")).toHaveLength(0);
+    expect(outcome.textContent).toMatch(/^Resume · \d\d:\d\d\. The step starts again\. Nothing else waits on you\.$/);
+    for (const gone of ["briefing-choices", "briefing-evidence", "briefing-changed", "briefing-question", "briefing-track"]) {
+      expect(screen.queryByTestId(gone)).toBeNull();
+    }
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["Open on the desk"]);
     const post = calls.find((call) => call.method === "POST");
     expect(post?.url).toBe(`/api/b/${TOKEN}/answer`);
-    expect(post?.body).toEqual({ ref: recorded.open.items[0].ref, choice: "go_on" });
+    expect(post?.body).toEqual({ ref: shown.ref, choice: "resume" });
   });
 
-  it("Later ▾ at 13:00 says when it comes back and keeps the choices", async () => {
+  it("Later at 13:00 settles the same way, to its one line", async () => {
     const calls = hub({ open: recorded.open, post: recorded.later });
     render(<BriefingApp token={TOKEN} />);
     fireEvent.click(await screen.findByTestId("briefing-later"));
-    fireEvent.click(await screen.findByRole("menuitem", { name: /At 13:00/ }));
+    fireEvent.click(screen.getByTestId("briefing-later-at_13"));
     const outcome = await screen.findByTestId("briefing-outcome");
-    expect(outcome.textContent).toBe(recorded.later.item.outcome.words);
-    expect(outcome.textContent).toMatch(/^Later · back at \d\d:\d\d$/);
-    expect(screen.getByTestId("briefing-choices")).toBeTruthy();
-    expect(calls.find((call) => call.method === "POST")?.body).toEqual({
-      ref: recorded.open.items[0].ref, choice: "later", later: "at_13",
-    });
+    expect(outcome.textContent).toBe("Later · back at 13:00.");
+    expect(screen.queryByTestId("briefing-choices")).toBeNull();
+    expect(calls.find((call) => call.method === "POST")?.body).toEqual({ ref: shown.ref, choice: "later", later: "at_13" });
   });
 
   it("a second answer hears answered already and reads the page again", async () => {
     hub({ open: recorded.open, post: recorded.again, postStatus: 409 });
     render(<BriefingApp token={TOKEN} />);
-    fireEvent.click(await screen.findByTestId("briefing-choice-park"));
+    fireEvent.click(await screen.findByTestId("briefing-choice-skip"));
     expect((await screen.findByTestId("briefing-failure")).textContent).toBe(recorded.again.detail);
   });
 
@@ -111,23 +145,25 @@ describe("the briefing page (direction A, the brief)", () => {
     const face = await screen.findByTestId("briefing-expired");
     expect(face.textContent).toContain("This page has expired.");
     expect(face.textContent).toContain("Open the item on your desk.");
-    expect(document.body.textContent).not.toContain(recorded.open.items[0].question);
+    expect(document.body.textContent).not.toContain(shown.question);
     expect(document.body.textContent).not.toContain(recorded.open.package.head);
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
-  it("an evidence fold loads its pane when it opens, read only", async () => {
+  it("the evidence is one line of words; a pane opens in place with Close", async () => {
     const calls = hub({ open: recorded.open });
     render(<BriefingApp token={TOKEN} />);
-    await screen.findByTestId("briefing-evidence");
+    const evidence = await screen.findByTestId("briefing-evidence");
+    expect(within(evidence).getAllByRole("button").map((button) => button.textContent)).toEqual(
+      ["The error", "Check log", "Brief", "Program text"]);
     expect(calls.filter((call) => call.url.includes("/evidence/"))).toHaveLength(0);
-    const fold = screen.getByText("Brief").closest("details") as HTMLDetailsElement;
-    fold.open = true;
-    fireEvent(fold, new Event("toggle"));
-    const pane = await screen.findByTestId("briefing-pane-brief");
-    await waitFor(() => expect(pane.textContent).toContain(recorded.brief.text.split("\n")[0]));
-    expect(calls.some((call) => call.url === `/api/b/${TOKEN}/evidence/${encodeURIComponent(recorded.open.items[0].ref)}/brief`)).toBe(true);
+    fireEvent.click(screen.getByTestId("briefing-open-error"));
+    const pane = await screen.findByTestId("briefing-pane-error");
+    await waitFor(() => expect(pane.textContent).toContain("does not appear to be a git repository"));
+    expect(calls.some((call) => call.url === `/api/b/${TOKEN}/evidence/${encodeURIComponent(shown.ref)}/error`)).toBe(true);
     expect(within(pane).queryAllByRole("textbox")).toHaveLength(0);
+    fireEvent.click(screen.getByTestId("briefing-pane-close"));
+    expect(screen.queryByTestId("briefing-pane-error")).toBeNull();
   });
 });
 

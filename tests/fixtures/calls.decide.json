@@ -24,7 +24,7 @@
     },
     {
       "who": "holdspeak",
-      "text": "Overnight on the home box, step 1. Step 1 asks you: it touches files no step owns (other/b.py). Changed: checked, green, under a minute. Go on: the step goes on with this change. Park: the step stops. The other steps go on. Say Go on, Park, or later."
+      "text": "Overnight on the home box, step 1. Goal: Stop the stalls. Step 1, “Owned”: Store the stall reason. The step's change touches files no step owns (b.py). Let the step go on with this, or park it? Go on: the step goes on with this change. Park: stop this step. The program has no other step to run. Say Go on, Park, or later."
     },
     {
       "who": "you",

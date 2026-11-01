@@ -9,3 +9,5 @@ export { FoldGadget } from "./fold";
 export { SurfaceCode } from "./code";
 export { DotWord, StatusBar, Toolbar, type StatusBarItem } from "./kit";
 export { sentenceChildren } from "./words";
+// The briefing page's step line (2026-10-31): the Programs station track.
+export { StationTrack, trackLabel, type TrackStation } from "./programTrack";

@@ -5,11 +5,15 @@
 @import "../desk/surface/gadgets.css";
 @import "../desk/programs/programs.css";
 
-/* The briefing page (PG-DIRECTION DIR2): one desk window alone on a page,
-   phone width first. The window shell, the title bar, the lamp, the ember
-   well (.pg-turn's rule), the Buttons, the folds and the status bar are the
-   desk's own material; this file only places them on a page. Interior
-   reflow is the `surface` container, never viewport media. */
+/* The briefing page (the owner's verdicts of 2026-10-31; canvas
+   docs/internal/betterment/programs/canvases/briefing-page-2026-10-31.html,
+   direction A). The brief IS the page: the words sit on the paper itself.
+   No tinted fills, no left accent bars, no bordered cards, no disclosure
+   markers. The choice tray is the only raised thing (the kit's depth
+   token). The lamps are the desk's (kit-lamp-live, 2.4 s); the step line is
+   the Programs station track; the steps that wait on this one light once
+   on load; the body fades up on first paint; a press settles the page in
+   green. Interior reflow is the `surface` container, never viewport media. */
 
 .briefing.desk-next {
   display: flex;
@@ -17,85 +21,164 @@
   min-height: 100vh;
   min-height: 100dvh;
   padding: 0;
-  background: var(--wb-backdrop);
-}
-
-.briefing .desk-window.desk-window-shell.briefing-window {
-  position: relative;
-  inset: auto;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 760px;
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  border-radius: 0;
   background: var(--wb-paper);
   container: surface / inline-size;
 }
 
-.briefing .briefing-head {
+.briefing .briefing-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--wb-paper);
+}
+
+.briefing .briefing-read {
+  flex: 1 0 auto;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .briefing .briefing-read { animation: briefing-rise 160ms var(--ease-standard, ease-out) 1 both; }
+}
+@keyframes briefing-rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The kind word with its lamp. */
+.briefing .briefing-kind {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  padding: 0 var(--space-4);
-  border-bottom: 1px solid var(--wb-rule-soft);
-  background: var(--wb-field);
-}
-.briefing .briefing-title {
-  flex: 0 1 auto;
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  color: var(--wb-ink);
-  font: 600 14px / 1.3 var(--font-sans);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.briefing .briefing-body {
-  flex: 1 1 auto;
-  padding: var(--space-3) var(--space-4) var(--space-5);
-}
-
-/* The question well: the Your turn ember (.pg-turn), one item, roomier. */
-.briefing .pg-turn.briefing-well {
-  margin: 0 0 var(--space-4);
-  padding: var(--space-3) var(--space-4) var(--space-4) calc(var(--space-4) + 3px);
-}
-.briefing .briefing-well[data-state="decided"],
-.briefing .briefing-well[data-state="gone"] {
-  background: color-mix(in srgb, var(--lamp-ok) 8%, var(--wb-paper));
-  box-shadow: inset 3px 0 0 var(--lamp-ok), inset 0 0 0 1px color-mix(in srgb, var(--lamp-ok) 30%, var(--wb-rule-soft));
-}
-.briefing .briefing-facts-line {
-  margin: 0 0 var(--space-2);
+  gap: 8px;
+  margin: 0 0 var(--space-3);
   color: var(--wb-ember-ink);
   font: 600 12px / 1.4 var(--font-sans);
 }
-.briefing .briefing-question {
-  margin: 0 0 var(--space-3);
+.briefing .briefing-lamp {
+  --dot-tone: var(--lamp-ask);
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot-tone);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--dot-tone) 45%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--dot-tone) 18%, transparent);
+}
+.briefing .briefing-lamp[data-tone="ok"] { --dot-tone: var(--lamp-ok); }
+.briefing .briefing-lamp[data-tone="info"] { --dot-tone: var(--lamp-info); }
+.briefing .briefing-lamp[data-tone="idle"] { --dot-tone: color-mix(in srgb, var(--wb-muted) 70%, var(--wb-paper)); box-shadow: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .briefing .briefing-lamp[data-live] { animation: kit-lamp-live 2.4s ease-in-out infinite; }
+}
+
+/* The program: its sprite, its title, its goal. */
+.briefing .briefing-program { margin: 0 0 var(--space-3); }
+.briefing .briefing-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 2px;
   color: var(--wb-ink);
-  font: 600 20px / 1.3 var(--font-display);
+  font: 600 15px / 1.35 var(--font-sans);
   overflow-wrap: anywhere;
 }
-.briefing .briefing-outcome {
-  margin: 0 0 var(--space-3);
+.briefing .briefing-seat { flex: none; width: 20px; height: 20px; image-rendering: pixelated; }
+.briefing .briefing-goal {
+  margin: 0;
   color: var(--wb-ink);
-  font: 600 15px / 1.4 var(--font-sans);
+  font: 400 14px / 1.45 var(--font-sans);
 }
-.briefing .briefing-choices {
+
+/* Where we are: the program's step line with this step lit. */
+.briefing .briefing-where { margin: 0 0 var(--space-4); }
+.briefing .briefing-where .pg-track { margin: 0 0 6px; }
+.briefing .briefing-where .pg-track[data-form="words"] .pg-station + .pg-station::before { width: 18px; margin: 0 6px 0 2px; }
+.briefing .briefing-where .pg-station { font-size: 13px; }
+.briefing .briefing-where .pg-station-dot { width: 10px; height: 10px; }
+.briefing .briefing-where .pg-station[data-state="current"] .pg-station-dot { width: 12px; height: 12px; }
+.briefing .briefing-where .pg-station[data-mark="blocked"] .pg-station-dot {
+  border-color: var(--lamp-warn);
+  background: color-mix(in srgb, var(--lamp-warn) 35%, var(--wb-paper));
+}
+.briefing .briefing-where .pg-station[data-mark="blocked"] .pg-station-word { color: var(--wb-warn-ink); font-weight: 600; }
+.briefing .briefing-where .pg-station[data-mark="running"] .pg-station-dot { border-color: var(--lamp-info); }
+@media (prefers-reduced-motion: no-preference) {
+  .briefing .briefing-where .pg-station[data-mark="blocked"] .pg-station-dot {
+    animation: briefing-light 900ms var(--ease-standard, ease-out) 300ms 1 both;
+  }
+  .briefing .briefing-where .pg-station[data-mark="blocked"] + .pg-station[data-mark="blocked"] .pg-station-dot { animation-delay: 420ms; }
+}
+@keyframes briefing-light {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lamp-warn) 0%, transparent); }
+  40% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--lamp-warn) 32%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lamp-warn) 0%, transparent); }
+}
+.briefing .briefing-place {
+  margin: 0;
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+}
+
+/* What the step was doing and what happened, in body type. */
+.briefing .briefing-note { margin: 0 0 var(--space-3); }
+.briefing .briefing-doing,
+.briefing .briefing-happened {
+  margin: 0 0 6px;
+  color: var(--wb-ink);
+  font: 400 15px / 1.45 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.briefing .briefing-happened { font-weight: 500; }
+
+/* The question: the page's headline. */
+.briefing .briefing-question {
+  margin: 0 0 6px;
+  color: var(--wb-ink);
+  font: 600 24px / 1.25 var(--font-display);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.briefing .briefing-blocked {
+  margin: 0 0 var(--space-3);
+  color: var(--wb-muted);
+  font: 400 13px / 1.45 var(--font-sans);
+}
+.briefing .briefing-blocked[data-blocked] { color: var(--wb-warn-ink); font-weight: 500; }
+
+.briefing .briefing-changed { margin: 0; }
+.briefing .briefing-caption {
+  margin: 0 0 2px;
+  color: var(--wb-muted);
+  font: 600 12px / 1.4 var(--font-sans);
+}
+.briefing .briefing-change {
+  margin: 0;
+  color: var(--wb-ink);
+  font: 400 13px / 1.45 var(--font-sans);
+}
+
+/* The choice tray: the only raised thing, at the bottom in thumb reach. */
+.briefing .briefing-tray {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-3);
+  border-radius: 14px 14px 0 0;
+  background: var(--wb-paper);
+  box-shadow: var(--depth-card);
 }
 .briefing .briefing-choice {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-1);
+  gap: 4px;
   min-width: 0;
 }
 .briefing .briefing-choice > .btn {
@@ -104,7 +187,71 @@
 }
 .briefing .briefing-consequence {
   color: var(--wb-muted);
-  font: 400 13px / 1.4 var(--font-sans);
+  font: 400 12px / 1.4 var(--font-sans);
+}
+.briefing .briefing-times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.briefing .briefing-times > .btn { min-height: 44px; justify-content: center; }
+
+/* The evidence: one line of words; a pane opens in place under it. */
+.briefing .briefing-evidence { padding: var(--space-1) var(--space-4) var(--space-2); }
+.briefing .briefing-evidence-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+.briefing .briefing-evidence-word { display: inline-flex; align-items: center; }
+.briefing .briefing-dot { padding: 0 2px; color: var(--wb-muted); }
+.briefing .btn.briefing-link {
+  min-height: 44px;
+  padding: 0 6px;
+  color: var(--wb-sel);
+  font-weight: 500;
+}
+.briefing .briefing-pane { margin: var(--space-2) 0 0; }
+.briefing .briefing-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 4px;
+}
+.briefing .briefing-pane-title { color: var(--wb-ink); font: 600 13px / 1.4 var(--font-sans); }
+.briefing .briefing-pane .surface-code {
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.briefing .briefing-facts { display: grid; gap: var(--space-1); margin: 0 0 var(--space-2); }
+.briefing .briefing-fact { display: flex; gap: var(--space-3); font: 400 13px / 1.4 var(--font-sans); }
+.briefing .briefing-fact dt { flex: 0 0 72px; color: var(--wb-muted); }
+.briefing .briefing-fact dd { margin: 0; color: var(--wb-ink); }
+
+/* After his press: one sentence with a lamp, where the question was. */
+.briefing .briefing-settled { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+.briefing .briefing-program-small {
+  margin: 0;
+  color: var(--wb-muted);
+  font: 600 12px / 1.4 var(--font-sans);
+}
+.briefing .briefing-outcome {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+  color: var(--wb-ink);
+  font: 600 22px / 1.3 var(--font-display);
+  overflow-wrap: anywhere;
+}
+.briefing .briefing-outcome > .briefing-lamp { flex: none; transform: translateY(-3px); }
+@media (prefers-reduced-motion: no-preference) {
+  .briefing .briefing-settled .briefing-outcome > .briefing-lamp[data-tone="ok"] {
+    animation: kit-lamp-pulse 600ms var(--ease-standard, ease-out) 1;
+  }
 }
 
 .briefing .briefing-line {
@@ -112,100 +259,29 @@
   color: var(--wb-muted);
   font: 400 13px / 1.45 var(--font-sans);
 }
-.briefing .briefing-failure {
-  margin: 0 0 var(--space-3);
-  color: var(--wb-ember-ink);
-}
+.briefing .briefing-failure { padding: 0 var(--space-4) var(--space-3); color: var(--wb-ember-ink); }
+.briefing .briefing-loading,
+.briefing .briefing-expired { display: flex; flex-direction: column; gap: var(--space-2); }
 
-.briefing .briefing-section {
-  margin: 0 0 var(--space-4);
-}
-.briefing .briefing-caption {
-  margin: 0 0 var(--space-1);
-  color: var(--wb-muted);
-  font: 600 12px / 1.4 var(--font-sans);
-}
-.briefing .briefing-changed {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.briefing .briefing-change {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-2) 0;
-  border-top: 1px solid var(--wb-rule-soft);
-  font: 400 13px / 1.4 var(--font-sans);
-}
-.briefing .briefing-clock {
-  flex: none;
-  color: var(--wb-muted);
-  font: 400 12px / 1.6 var(--font-mono);
-}
-.briefing .briefing-change-line {
-  min-width: 0;
-  color: var(--wb-ink);
-  overflow-wrap: anywhere;
-}
+.briefing .briefing-status { flex: none; }
 
-.briefing .briefing-pane {
-  border-top: 1px solid var(--wb-rule-soft);
-}
-.briefing .briefing-pane .surface-code {
-  max-height: 320px;
-  overflow: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.briefing .briefing-facts {
-  display: grid;
-  gap: var(--space-1);
-  margin: 0 0 var(--space-2);
-}
-.briefing .briefing-fact {
-  display: flex;
-  gap: var(--space-3);
-  font: 400 13px / 1.4 var(--font-sans);
-}
-.briefing .briefing-fact dt {
-  flex: 0 0 72px;
-  color: var(--wb-muted);
-}
-.briefing .briefing-fact dd {
-  margin: 0;
-  color: var(--wb-ink);
-}
-
-.briefing .briefing-expired,
-.briefing .briefing-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-7) var(--space-4);
-  text-align: center;
-}
-.briefing .briefing-expired-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--wb-muted);
-}
-
-.briefing .briefing-status {
-  flex: none;
-}
-
-/* A wide page: the choices in a row, each with what it does under it. */
+/* A wide page: the choices in a row, each with what it does under it; the
+   tray is a raised strip under the brief, no longer pinned. */
 @container surface (min-width: 640px) {
-  .briefing .briefing-choices {
+  .briefing .briefing-read { padding: var(--space-6) var(--space-6) var(--space-4); }
+  .briefing .briefing-question { font-size: 30px; }
+  .briefing .briefing-tray {
+    position: static;
     flex-direction: row;
     flex-wrap: wrap;
+    margin: 0 var(--space-6);
+    padding: var(--space-4);
+    border-radius: 14px;
   }
-  .briefing .briefing-choice {
-    flex: 1 1 160px;
-  }
-  .briefing .desk-window.desk-window-shell.briefing-window {
-    border-radius: var(--desk-window-radius);
-  }
+  .briefing .briefing-choice { flex: 1 1 160px; }
+  .briefing .briefing-times { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .briefing .briefing-later:has(.briefing-times) { flex-basis: 100%; }
+  .briefing .briefing-evidence { padding: var(--space-3) var(--space-6) var(--space-5); }
+  .briefing .briefing-sheet { min-height: auto; margin: var(--space-6) 0; }
+  .briefing .briefing-read { flex: none; }
 }

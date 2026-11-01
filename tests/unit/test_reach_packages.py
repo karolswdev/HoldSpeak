@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -86,7 +87,11 @@ def test_a_core_question_reads_many_and_is_decided_once_from_the_page(tmp_path) 
     shown = page["items"][0]
     assert page["package"]["head"] == "Overnight on the home box · step 1"
     assert shown["state"] == "open" and shown["kind_words"] == "Core question" and shown["level"] == "YOLO"
-    assert "files no step owns (other/b.py)" in shown["question"]
+    # The owner's BRIEF RULE (2026-10-31): the goal, the step, what happened
+    # in plain words, then the question in one sentence.
+    assert shown["note"] == ["Goal: Stop the stalls.", "Step 1, “Owned”: Store the stall reason.",
+                             "The step's change touches files no step owns (b.py)."]
+    assert shown["question"] == "Let the step go on with this, or park it?"
     assert [(c["id"], c["label"]) for c in shown["choices"]] == [("go_on", "Go on"), ("park", "Park")]
     assert all(c["consequence"] for c in shown["choices"])
     assert page["package"]["expires_words"] == "Expires in 24 h"
@@ -97,7 +102,9 @@ def test_a_core_question_reads_many_and_is_decided_once_from_the_page(tmp_path) 
 
     answered = briefing.answer(made["token"], _ref(pid, item), "go_on")
     assert answered["item"]["state"] == "decided"
-    assert answered["item"]["outcome"]["words"].startswith("Go on · decided here · ")
+    # It settles to one line (rule 3).
+    assert re.fullmatch(r"Go on · \d\d:\d\d\. The step goes on\. Nothing else waits on you\.",
+                        answered["item"]["outcome"]["words"]), answered["item"]["outcome"]
     lines = [row for row in rig.program(pid)["checkpoints"] if row.get("via") == "page"]
     assert lines and lines[0]["line"].endswith("· decided from the briefing page"), lines
     assert lines[0]["line"].startswith("Go on: ")
@@ -140,7 +147,7 @@ def test_later_records_the_next_touch_and_decides_nothing(tmp_path) -> None:
     later = briefing.answer(made["token"], _ref(pid, item), "later", later="at_13")
     assert later["item"]["state"] == "later"
     assert later["item"]["outcome"]["words"] == "Later · back at " + later_until(
-        "at_13", Clock().now).astimezone().strftime("%H:%M")
+        "at_13", Clock().now).astimezone().strftime("%H:%M") + "."
     assert [row["kind"] for row in rig.service.needs_you_items()] == ["core"]
     with pytest.raises(BriefingRefused) as bad:
         briefing.answer(made["token"], _ref(pid, item), "later", later="after the standup")
