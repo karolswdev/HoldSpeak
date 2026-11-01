@@ -207,7 +207,13 @@ export interface StepAmendment {
   sent_at: string | null;
 }
 
+/** PG-WINDOW List: one dot of a row's mini track. */
+export interface ListMark { ordinal: number; title: string; mark: "done" | "here" | "running" | "red" | "parked" | "planned" }
+
 export interface ProgramSummary {
+  /** PG-WINDOW List: the row's line in his terms (brief_words.list_line). */
+  line?: string;
+  track?: ListMark[];
   id: string;
   title: string;
   state: ProgramState;

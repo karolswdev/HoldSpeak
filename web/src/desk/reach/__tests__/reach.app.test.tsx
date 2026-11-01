@@ -118,12 +118,14 @@ describe("Settings ▸ Reach", () => {
     expect(calls).toContain("POST /api/reach/telegram/pair {}");
     state = paired;
     await act(async () => { vi.advanceTimersByTime(3_100); });
-    await waitFor(() => expect(screen.queryByTestId("reach-pair-sheet")).toBeNull());
+    // Under a loaded machine the poll's read can take more than the default
+    // second (it flaked in quick checks 2026-11-01): wait up to five.
+    await waitFor(() => expect(screen.queryByTestId("reach-pair-sheet")).toBeNull(), { timeout: 5_000 });
     expect(screen.getByTestId("reach-telegram-state").textContent).toBe("Paired · Karol");
     expect(screen.getByTestId("reach-digest-now")).not.toBeDisabled();
     fireEvent.click(screen.getByTestId("reach-unpair"));
     await waitFor(() => expect(calls).toContain("DELETE /api/reach/telegram/pair"));
-    await waitFor(() => expect(screen.getByTestId("reach-telegram-state").textContent).toBe("Not paired"));
+    await waitFor(() => expect(screen.getByTestId("reach-telegram-state").textContent).toBe("Not paired"), { timeout: 5_000 });
   });
 
   it("Telegram's rung, the digest and Later means save through PUT /api/reach", async () => {

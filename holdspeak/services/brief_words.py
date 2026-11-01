@@ -607,6 +607,92 @@ def window_words(program: Mapping[str, Any], steps: list[Mapping[str, Any]], tur
     return briefs, stories
 
 
+# ── the Programs list (PG-WINDOW List, 2026-11-01) ────────────────────
+
+_LIST_RUNNING = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review",
+                           "findings", "pr_open", "merge_ask"})
+
+
+def _wall(stamp: Any) -> Optional[Any]:
+    from datetime import datetime
+
+    try:
+        value = datetime.fromisoformat(str(stamp))
+    except (TypeError, ValueError):
+        return None
+    return value.astimezone() if value.tzinfo else value
+
+
+def list_track(steps: list[Mapping[str, Any]], turn: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """One mark per step for the list's mini track: ``done``, ``here`` (it
+    waits on him), ``running``, ``red``, ``parked``, ``planned``."""
+    held = {str(item.get("step_id")) for item in turn if item.get("step_id")}
+    out = []
+    for row in steps:
+        state = str(row.get("state") or "")
+        if state in ("merged", "done"):
+            mark = "done"
+        elif str(row.get("id")) in held:
+            mark = "here"
+        elif state in ("check_failed", "failed"):
+            mark = "red"
+        elif state == "parked":
+            mark = "parked"
+        elif state in _LIST_RUNNING:
+            mark = "running"
+        else:
+            mark = "planned"
+        out.append({"ordinal": int(row["ordinal"]), "title": _squash(row.get("title")), "mark": mark})
+    return out
+
+
+def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str, Any]], *,
+              history: Optional[Mapping[str, Any]] = None, done_in: str = "", ended: Any = None) -> str:
+    """The Programs list's one line for a program, as a chief of staff says
+    it: "Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude
+    Code, 11 min", "Done, 14 PRs, 28 Oct", "Drafting, 8 steps"."""
+    from .program_service import agent_label, duration_words
+
+    total = len(steps)
+    of = f" of {total}" if total else ""
+    if state == "waiting" and turn:
+        item = turn[0]
+        since = _wall(item.get("since"))
+        when = f" since {since.strftime('%H:%M')}" if since else ""
+        ordinal = int(item.get("ordinal") or 0)
+        return f"Step {ordinal}{of} waits on you{when}" if ordinal else f"The program waits on you{when}"
+    if state == "running":
+        live = next((row for row in steps if row.get("state") in _LIST_RUNNING), None)
+        if live is None:
+            nxt = next((row for row in steps if row.get("state") in ("planned", "ready")), None)
+            return f"Runs, step {int(nxt['ordinal'])}{of} is next" if nxt else "Runs"
+        started = _wall(live.get("started_at"))
+        took = ""
+        if started:
+            from datetime import datetime
+
+            took = duration_words(int((datetime.now(started.tzinfo) - started).total_seconds()))
+        parts = [f"Runs step {int(live['ordinal'])}{of}", agent_label(live.get("profile")), took]
+        return ", ".join(part for part in parts if part)
+    if state == "drafting":
+        return f"Drafting, {total} {'step' if total == 1 else 'steps'}" if total else "Drafting, no steps yet"
+    if state == "done":
+        if history and history.get("words"):
+            words = str(history["words"]).replace(" · ", ", ")
+            return f"Done, {words[:1].lower()}{words[1:]}"
+        prs = sum(1 for row in steps if row.get("pr_number") and row.get("state") in ("merged", "done"))
+        day = _wall(ended)
+        parts = ["Done", f"{prs} {'PR' if prs == 1 else 'PRs'}" if prs else "",
+                 f"{day.day} {day.strftime('%b')}" if day else ""]
+        line = ", ".join(part for part in parts if part)
+        return line if prs or day else (f"Done in {done_in}" if done_in else "Done")
+    if state in ("parked", "failed"):
+        stopped = next((row for row in steps if row.get("state") in ("parked", "failed", "check_failed")), None)
+        word = "Parked" if state == "parked" else "Failed"
+        return f"{word} at step {int(stopped['ordinal'])}{of}" if stopped else word
+    return ""
+
+
 __all__ = ["brief_lines", "blocked_steps", "blocked_words", "changed_line", "changed_lines", "clean", "consequence", "doing_line",
-           "delivery_where", "doing_words", "fence_hits", "first_sentence", "goal_line", "happened_line", "item_brief", "step_story", "window_words", "parked_cause", "question_line",
+           "delivery_where", "doing_words", "fence_hits", "first_sentence", "goal_line", "list_line", "list_track", "happened_line", "item_brief", "step_story", "window_words", "parked_cause", "question_line",
            "rest_words", "scrub", "sentence", "settle_words", "waits_words"]

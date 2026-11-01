@@ -1304,3 +1304,43 @@ span.pg-req-thumb { height: 150px; }
 .pg-line-settle { margin: 0; padding: 0 16px 6px; }
 .pg-line-settle .kit-dotword { color: var(--wb-ok-ink); font-size: 13px; }
 @container surface (max-width: 520px) { .pg-line-settle { padding: 0 12px 6px; } }
+
+/* ── PG-WINDOW List (direction A): the title, the lamp and the hub's line,
+   the mini track, the Met count; no column heads. ── */
+.desk-next .kit-listrow.pg-row {
+  grid-template-columns: minmax(180px, 280px) minmax(0, 1fr) minmax(60px, 170px) 116px;
+  grid-template-areas: none;
+  min-height: 40px;
+}
+.pg-row-state { min-width: 0; }
+.pg-row-state .pg-row-say { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--wb-ink); }
+.pg-row[data-state="waiting"] .pg-row-say,
+.pg-row[data-state="failed"] .pg-row-say { color: var(--wb-ember-ink); }
+.pg-row[data-state="drafting"] .pg-row-say,
+.pg-row[data-state="parked"] .pg-row-say,
+.pg-row[data-state="done"] .pg-row-say { color: var(--wb-muted); }
+.pg-row-track { min-width: 0; overflow: hidden; }
+.pg-row-track .pg-track { gap: 3px; flex-wrap: nowrap; }
+.pg-row-track .pg-track[data-form="dots"] .pg-station + .pg-station::before { content: none; }
+.pg-row-track .pg-station-dot { width: 7px; height: 7px; }
+.pg-row-track .pg-station[data-mark="done"] .pg-station-dot { border-color: transparent; background: color-mix(in srgb, var(--wb-muted) 70%, var(--wb-paper)); }
+.pg-row[data-state="done"] .pg-row-track .pg-station[data-mark="done"] .pg-station-dot { background: var(--lamp-ok); }
+.pg-row-track .pg-station[data-mark="here"] .pg-station-dot,
+.pg-row-track .pg-station[data-mark="running"] .pg-station-dot,
+.pg-row-track .pg-station[data-mark="red"] .pg-station-dot { width: 7px; height: 7px; border-color: transparent; background: var(--dot-tone); }
+.pg-row-met { text-align: right; justify-content: flex-end; }
+
+@container surface (max-width: 520px) {
+  .desk-next .kit-listrow.pg-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "main track" "state state";
+    row-gap: 0;
+    min-height: 60px;
+    padding: 4px 12px 8px 0;
+  }
+  .pg-row-main { grid-area: main; }
+  .pg-row-track { grid-area: track; display: block; }
+  .pg-row-state { grid-area: state; display: block; padding-left: 42px; }
+  .pg-row-state .pg-row-say { white-space: normal; }
+  .pg-row-met { display: none; }
+}
