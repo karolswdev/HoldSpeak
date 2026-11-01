@@ -1872,6 +1872,13 @@ class ProgramService:
                                                           "than what made it", kernel=False)
             self._plant_requirements(program, shape)
             self.changed(program["id"], verb="create")
+        from . import program_dw
+
+        if program_dw.has_rails(program.get("repo_root")) and not program_dw.own_repository(program.get("repo_root")):
+            try:
+                program_dw.link(self, program)  # JRN5: the dw context for every step's brief, read once
+            except Exception as exc:  # the link never stops the make
+                log.warning(f"program {program['id']}: dw context not read: {exc}")
         return self.get(principal, program["id"])
 
     def update(self, principal: Any, program_id: str, **fields: Any) -> dict[str, Any]:
@@ -5327,6 +5334,12 @@ def _delivery(value: Any, root: str) -> Optional[str]:
                              status=400)
     if not (Path(str(root or "")) / ".githooks" / "dw").exists():
         raise ProgramRefused("delivery_no_rails", "This repository has no Delivery Workbench.", status=409)
+    from .program_dw import own_repository
+
+    if own_repository(root):
+        # The owner's rule: dw at major points only, never the engine on itself.
+        raise ProgramRefused("delivery_own_repository",
+                             "HoldSpeak does not deliver its own programs to dw. Use dw for your projects.", status=409)
     return "dw:" + "/".join(part.strip() for part in parts)
 
 

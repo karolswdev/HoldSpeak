@@ -47,7 +47,7 @@
       "program_title": "",
       "question": "Accept: The cut-over date moved to Friday?",
       "ref": "project-proposal:pprop_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      "since": "2026-11-01 13:10:26",
+      "since": "2026-11-01 14:12:47",
       "source": "project-proposal",
       "state": "open",
       "step_id": "",
@@ -84,7 +84,7 @@
     "expires_words": "Expires in 24 h",
     "head": "The billing move · the project review",
     "hub": "the rig hub",
-    "id": "pkg-6144152f9ec1",
+    "id": "pkg-612e8a354343",
     "kind": "item"
   }
 }

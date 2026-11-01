@@ -280,6 +280,15 @@ Logs are written to: {LOG_FILE}
     )
     _build_gate_subparsers(gate_parser)
 
+    # program subcommand (PG-LANG LANG14) — the Programs verbs over the hub
+    program_parser = subparsers.add_parser(
+        "program",
+        help="Programs: create, start, read and decide, over the running hub (--json for the answer)",
+    )
+    from .commands.program import build_program_subparsers
+
+    build_program_subparsers(program_parser)
+
     # cadence subcommand (CAD-1-05) — inspect the Cadence Engine
     cadence_parser = subparsers.add_parser(
         "cadence",
@@ -537,6 +546,11 @@ Logs are written to: {LOG_FILE}
         from .commands.gate import run_gate_command
 
         raise SystemExit(run_gate_command(args))
+
+    if args.command == "program":
+        from .commands.program import run_program_command
+
+        raise SystemExit(run_program_command(args))
 
     if args.command == "cadence":
         raise SystemExit(run_cadence_command(args))

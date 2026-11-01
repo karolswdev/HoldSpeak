@@ -34,12 +34,12 @@
     "schedule_enabled": false,
     "schedule_revision": 2,
     "item_order": [],
-    "created_at": "2026-11-01T13:10:29Z",
-    "last_modified": "2026-11-01T13:10:29Z",
+    "created_at": "2026-11-01T14:12:55Z",
+    "last_modified": "2026-11-01T14:12:55Z",
     "deleted": false,
     "items": [
      {
-      "id": "wbprog_94111f483e71",
+      "id": "wbprog_a946e45948a4",
       "workbench_id": "wb-nightly",
       "title": "Nightly fixes · Sun 1 Nov",
       "body": "Fix each bug with a test.",
@@ -49,31 +49,31 @@
       "context": {
        "occurrence": true,
        "program": {
-        "program_id": "program-01a71a6791a3",
+        "program_id": "program-09fedc951a21",
         "steps": 2,
         "title": "Nightly fixes · Sun 1 Nov"
        },
-       "run_id": "wbrun_94111f483e71"
+       "run_id": "wbrun_a946e45948a4"
       },
       "result": "Started the program Nightly fixes · Sun 1 Nov · 2 steps",
       "result_artifact_id": null,
       "result_egress": null,
       "mint_attempted": false,
       "tokens_consumed": 0,
-      "created_at": "2026-11-01T13:10:29.517282+00:00",
-      "last_modified": "2026-11-01T13:10:30.766961+00:00",
-      "claimed_at": "2026-11-01T13:10:29.517282+00:00",
-      "completed_at": "2026-11-01T13:10:30.766961+00:00",
+      "created_at": "2026-11-01T14:12:55.105107+00:00",
+      "last_modified": "2026-11-01T14:12:55.955292+00:00",
+      "claimed_at": "2026-11-01T14:12:55.105107+00:00",
+      "completed_at": "2026-11-01T14:12:55.955292+00:00",
       "parked": false
      }
     ],
     "item_count": 1,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_94111f483e71",
+     "id": "wbrun_a946e45948a4",
      "workbench_id": "wb-nightly",
-     "started_at": "2026-11-01T13:10:29.516209+00:00",
-     "completed_at": "2026-11-01T13:10:30.767160+00:00",
+     "started_at": "2026-11-01T14:12:55.104861+00:00",
+     "completed_at": "2026-11-01T14:12:55.955510+00:00",
      "items_attempted": 1,
      "items_completed": 1,
      "items_failed": 0,
@@ -106,24 +106,24 @@
      "may_handoff": false,
      "project_id": "proj-app",
      "latest": {
-      "id": "program-01a71a6791a3",
+      "id": "program-09fedc951a21",
       "title": "Nightly fixes · Sun 1 Nov",
       "state": "running",
       "state_word": "Running",
-      "window": "pullout:program:program-01a71a6791a3"
+      "window": "pullout:program:program-09fedc951a21"
      }
     },
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbprog_94111f483e71",
+      "item_id": "wbprog_a946e45948a4",
       "title": "Nightly fixes · Sun 1 Nov",
       "status": "done",
       "artifact_id": null,
       "new": false,
       "error": null,
       "text": "Started the program Nightly fixes · Sun 1 Nov · 2 steps",
-      "completed_at": "2026-11-01T13:10:30.766961+00:00",
+      "completed_at": "2026-11-01T14:12:55.955292+00:00",
       "seconds": 1,
       "model": "",
       "boundary": "",
@@ -131,13 +131,13 @@
       "cost_usd": null,
       "used": null,
       "program": {
-       "id": "program-01a71a6791a3",
+       "id": "program-09fedc951a21",
        "title": "Nightly fixes · Sun 1 Nov",
        "state": "running",
        "state_word": "Running",
        "done": 0,
        "total": 2,
-       "window": "pullout:program:program-01a71a6791a3"
+       "window": "pullout:program:program-09fedc951a21"
       }
      }
     ],
@@ -204,11 +204,11 @@
   }
  },
  "ran": {
-  "run_id": "wbrun_94111f483e71",
+  "run_id": "wbrun_a946e45948a4",
   "status": "completed",
   "program_started": true,
-  "program_id": "program-01a71a6791a3",
-  "program_window": "pullout:program:program-01a71a6791a3",
+  "program_id": "program-09fedc951a21",
+  "program_window": "pullout:program:program-09fedc951a21",
   "items_attempted": 1,
   "items_completed": 1,
   "items_failed": 0

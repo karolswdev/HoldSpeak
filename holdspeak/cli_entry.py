@@ -30,6 +30,14 @@ def _skill(argv: Sequence[str]) -> Optional[int]:
 
 
 def _fast(argv: Sequence[str]) -> Optional[int]:
+    if tuple(argv[:1]) == ("program",):
+        # PG-LANG LANG14: the Programs verbs are thin calls to the hub; they
+        # start without the whole product (for his shell and for pi).
+        from .commands.program import build_program_subparsers, run_program_command
+
+        parser = argparse.ArgumentParser(prog="holdspeak")
+        build_program_subparsers(parser.add_subparsers(dest="command").add_parser("program"))
+        return run_program_command(parser.parse_args(list(argv)))
     if len(argv) < 2 or (argv[0], argv[1]) not in FAST_VERBS:
         return None
     parser = argparse.ArgumentParser(prog="holdspeak")
