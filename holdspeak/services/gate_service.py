@@ -225,6 +225,11 @@ class GateService:
             if decided.state == APPROVED:
                 line = f"Allowed by rule (YOLO): {verb}" if by_rule else f"Allowed: {proposal.tool}"
                 facts = {"gate_allows": True, "unparsed_inside": by_rule}
+            elif str(policy.get("reason_code") or "") == "audit_reads_only":
+                # The live audit proof: an audit step's refused run said the
+                # YOLO outside-or-destructive rule; it is the audit's own rule.
+                line = f"Refused by rule (audit, reads only): {verb}"
+                facts = {"gate_refuses": True, "audit": True}
             else:
                 line = f"Refused by rule (YOLO): {verdict.get('destructive') or verb}"
                 facts = {"gate_refuses": True}

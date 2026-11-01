@@ -194,3 +194,10 @@ def test_a_held_commit_is_his_at_secure_and_normal_and_goes_on_at_yolo() -> None
     assert isinstance(decide("normal", "held_commit"), CoreQuestion)
     outcome = decide("yolo", "held_commit")
     assert isinstance(outcome, Decision) and outcome.choice == "commit"
+
+
+def test_an_audit_refusal_names_the_audits_rule() -> None:
+    from holdspeak.services.program_rules import decide
+
+    outcome = decide("yolo", "gate_approval", {"gate_refuses": True, "audit": True})
+    assert outcome.choice == "refuse" and outcome.rule == "YOLO: an audit step reads only; a write or a run is refused by rule"

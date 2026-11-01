@@ -74,6 +74,8 @@ FRAME_LOCK_WAIT_SECONDS = 30
 _STOPPED = frozenset({"ended", "expired", "stopped_by_restart", "resume_failed", "checked"})
 #: Flight states of a turn that ended.
 _TURN_END = frozenset({"done", "pr_open", "merged"})
+#: AG12's words when the review loop could not start the reviewer.
+REVIEWER_NOT_STARTED = "Reviewer could not start"
 #: Programs the tick walks.
 _TICKED = frozenset({"running", "waiting", "failed"})
 
@@ -1781,6 +1783,16 @@ class ProgramRunner:
                  for m in re.finditer(r"^\s*(?:[-*]\s*)?NOTE\s*[:\-]\s*(.+)$", words, re.M | re.I)]
         must = list((pair.get("result") or {}).get("findings_left") or pair.get("findings_left") or []) if status == "needs_you" else []
         level = program.get("control")
+        cannot = [item for item in must if str(item.get("text") or "").startswith(REVIEWER_NOT_STARTED)]
+        if cannot and len(cannot) == len(must):
+            # The live audit proof: "Reviewer could not start: Codex will not
+            # run the HoldSpeak hooks" went back to the builder every tick (it
+            # cannot fix a desk setting). The step parks once with the words;
+            # his Resume tries the review again.
+            reason = str(cannot[0].get("text") or "")[:300]
+            self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, parked_reason=reason,
+                                    line=f"Parked: {reason}", ending="interrupted")
+            return
         if status == "needs_you" and must and not any("unclear" in str(item.get("text") or "") for item in must):
             outcome = decide(level, "finding_required", {"round": round_, "finding_text": " ".join(
                 str(item.get("text") or "") for item in must)})
