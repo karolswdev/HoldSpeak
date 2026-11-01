@@ -6,7 +6,7 @@
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T16:07:34.670084+00:00",
+      "created_at": "2026-11-01T16:23:50.196185+00:00",
       "done": 3,
       "done_in": "2 h 38",
       "finished": "finished",
@@ -18,10 +18,10 @@
         "prs": 3,
         "words": "Merged 3 PRs · 28 Oct"
       },
-      "id": "program-77944c7a6d07",
+      "id": "program-3f39b7db0cd1",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T16:07:34.681875+00:00",
+        "at": "2026-11-01T16:23:50.201829+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -65,7 +65,7 @@
           "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard"
         }
       ],
-      "updated_at": "2026-11-01T16:07:34.682014+00:00",
+      "updated_at": "2026-11-01T16:23:50.201932+00:00",
       "your_turn": 0
     }
   ],

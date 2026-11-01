@@ -12,7 +12,7 @@
   "check_command": "sh /Users/karol/dev/tools/wt-pg-imp6/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-01T16:05:41.552122+00:00",
+      "at": "2026-11-01T16:22:58.356160+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -23,42 +23,42 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-d2160c452294/2",
-      "ref_commit": "4c1e05bd22543812d373a152339040137cd7c297",
+      "ref": "refs/holdspeak/checkpoints/step-ffae88c412f1/2",
+      "ref_commit": "186c637e3b25a2ef306da1768c1643418dc70bf1",
       "rule": null,
-      "step_id": "step-d2160c452294",
+      "step_id": "step-ffae88c412f1",
       "undo": {
         "pin": {
-          "commit": "4c1e05bd22543812d373a152339040137cd7c297",
-          "head": "4f6ef601a58b100b5ab83151ebf0691421d047ab",
+          "commit": "186c637e3b25a2ef306da1768c1643418dc70bf1",
+          "head": "9fd045d046810bab889e32d9b1c067b059a42f0b",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-d2160c452294/2",
+          "ref": "refs/holdspeak/checkpoints/step-ffae88c412f1/2",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         }
       }
     },
     {
-      "at": "2026-11-01T16:05:40.396690+00:00",
+      "at": "2026-11-01T16:22:58.013385+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 4,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-d2160c452294",
+      "line": "Handed to Claude Code in hs-program-step-ffae88c412f1",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-d2160c452294/1",
-      "ref_commit": "60c4ccb994020df18f21598ca636e78ad5fe0cb9",
+      "ref": "refs/holdspeak/checkpoints/step-ffae88c412f1/1",
+      "ref_commit": "e1993430feae2cadff0ac2b01f789175885fd49d",
       "rule": null,
-      "step_id": "step-d2160c452294",
+      "step_id": "step-ffae88c412f1",
       "undo": {
         "pin": {
-          "commit": "60c4ccb994020df18f21598ca636e78ad5fe0cb9",
-          "head": "4f6ef601a58b100b5ab83151ebf0691421d047ab",
+          "commit": "e1993430feae2cadff0ac2b01f789175885fd49d",
+          "head": "9fd045d046810bab889e32d9b1c067b059a42f0b",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-d2160c452294/1",
+          "ref": "refs/holdspeak/checkpoints/step-ffae88c412f1/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -67,7 +67,7 @@
       }
     },
     {
-      "at": "2026-11-01T16:05:39.805004+00:00",
+      "at": "2026-11-01T16:22:57.392377+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -85,7 +85,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T16:05:39.617166+00:00",
+      "at": "2026-11-01T16:22:57.265787+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -103,7 +103,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T16:05:39.614378+00:00",
+      "at": "2026-11-01T16:22:57.257831+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -124,7 +124,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-01T16:05:39.614061+00:00",
+  "created_at": "2026-11-01T16:22:57.257387+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -148,10 +148,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "Atlas lane.",
-  "id": "program-8a832c86bf64",
-  "in_state_seconds": 2,
+  "id": "program-84161299c396",
+  "in_state_seconds": 1,
   "last_checkpoint": {
-    "at": "2026-11-01T16:05:41.552122+00:00",
+    "at": "2026-11-01T16:22:58.356160+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -162,16 +162,16 @@
     "overturnable": false,
     "overturned_at": null,
     "pin_note": null,
-    "ref": "refs/holdspeak/checkpoints/step-d2160c452294/2",
-    "ref_commit": "4c1e05bd22543812d373a152339040137cd7c297",
+    "ref": "refs/holdspeak/checkpoints/step-ffae88c412f1/2",
+    "ref_commit": "186c637e3b25a2ef306da1768c1643418dc70bf1",
     "rule": null,
-    "step_id": "step-d2160c452294",
+    "step_id": "step-ffae88c412f1",
     "undo": {
       "pin": {
-        "commit": "4c1e05bd22543812d373a152339040137cd7c297",
-        "head": "4f6ef601a58b100b5ab83151ebf0691421d047ab",
+        "commit": "186c637e3b25a2ef306da1768c1643418dc70bf1",
+        "head": "9fd045d046810bab889e32d9b1c067b059a42f0b",
         "n": 2,
-        "ref": "refs/holdspeak/checkpoints/step-d2160c452294/2",
+        "ref": "refs/holdspeak/checkpoints/step-ffae88c412f1/2",
         "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
       }
     }
@@ -180,8 +180,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-8a832c86bf64",
-  "note_window": "pullout:note:program-program-8a832c86bf64",
+  "note_id": "program-program-84161299c396",
+  "note_window": "pullout:note:program-program-84161299c396",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -196,7 +196,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-pevc2_a8/lane/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-ciu6ha3a/lane/app"
   },
   "requirements": [],
   "review_depth": null,
@@ -246,7 +246,7 @@
       ],
       "effort": "medium",
       "elapsed": "under a minute",
-      "elapsed_seconds": 1,
+      "elapsed_seconds": 0,
       "ended_at": null,
       "ending": "none",
       "engine": null,
@@ -275,9 +275,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-d2160c452294",
+      "id": "step-ffae88c412f1",
       "last_checkpoint": {
-        "at": "2026-11-01T16:05:41.552122+00:00",
+        "at": "2026-11-01T16:22:58.356160+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -288,16 +288,16 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-d2160c452294/2",
-        "ref_commit": "4c1e05bd22543812d373a152339040137cd7c297",
+        "ref": "refs/holdspeak/checkpoints/step-ffae88c412f1/2",
+        "ref_commit": "186c637e3b25a2ef306da1768c1643418dc70bf1",
         "rule": null,
-        "step_id": "step-d2160c452294",
+        "step_id": "step-ffae88c412f1",
         "undo": {
           "pin": {
-            "commit": "4c1e05bd22543812d373a152339040137cd7c297",
-            "head": "4f6ef601a58b100b5ab83151ebf0691421d047ab",
+            "commit": "186c637e3b25a2ef306da1768c1643418dc70bf1",
+            "head": "9fd045d046810bab889e32d9b1c067b059a42f0b",
             "n": 2,
-            "ref": "refs/holdspeak/checkpoints/step-d2160c452294/2",
+            "ref": "refs/holdspeak/checkpoints/step-ffae88c412f1/2",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           }
         }
@@ -332,7 +332,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-11-01T16:05:40.389733+00:00",
+      "started_at": "2026-11-01T16:22:58.012872+00:00",
       "state": "working",
       "state_word": "Working",
       "station": 1,
@@ -346,19 +346,19 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T16:05:40.396690+00:00",
+          "at": "2026-11-01T16:22:58.013385+00:00",
           "line": "Handed to Claude Code."
         },
         {
-          "at": "2026-11-01T16:05:41.552122+00:00",
+          "at": "2026-11-01T16:22:58.356160+00:00",
           "line": "You took the lane over."
         }
       ],
       "taken": true,
       "title": "Atlas anchors",
-      "updated_at": "2026-11-01T16:05:41.551526+00:00",
+      "updated_at": "2026-11-01T16:22:58.355859+00:00",
       "wait": null,
-      "worktree": "hs-program-step-d2160c452294"
+      "worktree": "hs-program-step-ffae88c412f1"
     }
   ],
   "template": "fast-cycle",
@@ -371,7 +371,7 @@
       "title": "Atlas anchors"
     }
   ],
-  "updated_at": "2026-11-01T16:05:39.803564+00:00",
+  "updated_at": "2026-11-01T16:22:57.391994+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

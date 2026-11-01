@@ -13,7 +13,7 @@
     "check_command": "sh /Users/karol/dev/tools/wt-pg-imp6/tests/fixtures/fake_program_check.sh",
     "checkpoints": [
       {
-        "at": "2026-11-01T16:05:38.400720+00:00",
+        "at": "2026-11-01T16:22:56.406906+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -27,19 +27,19 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-29478544bb62",
+        "step_id": "step-f41d570669ba",
         "undo": {
           "line": "The owner did R1 by hand: The atlas reads well at 393. Done. The owner: Looks right on my phone"
         }
       },
       {
-        "at": "2026-11-01T16:05:38.400572+00:00",
+        "at": "2026-11-01T16:22:56.406758+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
         "id": 9,
         "kind": "requirement",
-        "line": "R1 · Met · You · 11:05 · Looks right on my phone",
+        "line": "R1 · Met · You · 11:22 · Looks right on my phone",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
@@ -47,13 +47,13 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-29478544bb62",
+        "step_id": "step-f41d570669ba",
         "undo": {
-          "requirement_id": "req-956ff76ce0b7"
+          "requirement_id": "req-bf974356518f"
         }
       },
       {
-        "at": "2026-11-01T16:05:37.897714+00:00",
+        "at": "2026-11-01T16:22:55.991494+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -64,16 +64,16 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-031b6880cb7e/2",
-        "ref_commit": "c7a0b2428dce8423227ea7d28ec7769b959aa27f",
+        "ref": "refs/holdspeak/checkpoints/step-b06684fa1cfa/2",
+        "ref_commit": "1fbd9b3b0123dcfe32229e5073323bd32676afca",
         "rule": null,
-        "step_id": "step-031b6880cb7e",
+        "step_id": "step-b06684fa1cfa",
         "undo": {
           "pin": {
-            "commit": "c7a0b2428dce8423227ea7d28ec7769b959aa27f",
-            "head": "b14530db61b7d0e0932353d4c05240f963a682ab",
+            "commit": "1fbd9b3b0123dcfe32229e5073323bd32676afca",
+            "head": "46314f105e79c3a65c8fea054fbf1401128667cb",
             "n": 2,
-            "ref": "refs/holdspeak/checkpoints/step-031b6880cb7e/2",
+            "ref": "refs/holdspeak/checkpoints/step-b06684fa1cfa/2",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -82,7 +82,7 @@
         }
       },
       {
-        "at": "2026-11-01T16:05:37.759825+00:00",
+        "at": "2026-11-01T16:22:55.942810+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -100,27 +100,27 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T16:05:37.306618+00:00",
+        "at": "2026-11-01T16:22:55.584948+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 6,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-031b6880cb7e",
+        "line": "Handed to Claude Code in hs-program-step-b06684fa1cfa",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-031b6880cb7e/1",
-        "ref_commit": "61032a8ddb7b97aad3665bb61fb5a0591b91ffbf",
+        "ref": "refs/holdspeak/checkpoints/step-b06684fa1cfa/1",
+        "ref_commit": "627b12ba11beb4961dd54d1cf906317c0d6621c0",
         "rule": null,
-        "step_id": "step-031b6880cb7e",
+        "step_id": "step-b06684fa1cfa",
         "undo": {
           "pin": {
-            "commit": "61032a8ddb7b97aad3665bb61fb5a0591b91ffbf",
-            "head": "b14530db61b7d0e0932353d4c05240f963a682ab",
+            "commit": "627b12ba11beb4961dd54d1cf906317c0d6621c0",
+            "head": "46314f105e79c3a65c8fea054fbf1401128667cb",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-031b6880cb7e/1",
+            "ref": "refs/holdspeak/checkpoints/step-b06684fa1cfa/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -129,27 +129,27 @@
         }
       },
       {
-        "at": "2026-11-01T16:05:36.487101+00:00",
+        "at": "2026-11-01T16:22:55.083383+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 5,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-29478544bb62",
+        "line": "Handed to Claude Code in hs-program-step-f41d570669ba",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-29478544bb62/1",
-        "ref_commit": "bb4b5468b012351235b1a5b4a6e7856a3c9cbb69",
+        "ref": "refs/holdspeak/checkpoints/step-f41d570669ba/1",
+        "ref_commit": "0e6c353c80bf137011ef2240b404273bdc541d30",
         "rule": null,
-        "step_id": "step-29478544bb62",
+        "step_id": "step-f41d570669ba",
         "undo": {
           "pin": {
-            "commit": "bb4b5468b012351235b1a5b4a6e7856a3c9cbb69",
-            "head": "b14530db61b7d0e0932353d4c05240f963a682ab",
+            "commit": "0e6c353c80bf137011ef2240b404273bdc541d30",
+            "head": "46314f105e79c3a65c8fea054fbf1401128667cb",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-29478544bb62/1",
+            "ref": "refs/holdspeak/checkpoints/step-f41d570669ba/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -158,7 +158,7 @@
         }
       },
       {
-        "at": "2026-11-01T16:05:36.116764+00:00",
+        "at": "2026-11-01T16:22:54.838102+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -176,7 +176,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T16:05:35.910051+00:00",
+        "at": "2026-11-01T16:22:54.784309+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -190,13 +190,13 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-29478544bb62",
+        "step_id": "step-f41d570669ba",
         "undo": {
-          "requirement_id": "req-956ff76ce0b7"
+          "requirement_id": "req-bf974356518f"
         }
       },
       {
-        "at": "2026-11-01T16:05:35.894717+00:00",
+        "at": "2026-11-01T16:22:54.781580+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -214,7 +214,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T16:05:35.861470+00:00",
+        "at": "2026-11-01T16:22:54.776378+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -235,7 +235,7 @@
     "closed_at": null,
     "control": "normal",
     "control_word": "Normal",
-    "created_at": "2026-11-01T16:05:35.847359+00:00",
+    "created_at": "2026-11-01T16:22:54.776045+00:00",
     "decided_for_you": [],
     "default": {
       "agent": "Claude Code",
@@ -259,10 +259,10 @@
     "for_person": null,
     "for_person_id": null,
     "goal": "Atlas at 393.",
-    "id": "program-43c7403e9756",
+    "id": "program-c4108f1f5fd9",
     "in_state_seconds": 0,
     "last_checkpoint": {
-      "at": "2026-11-01T16:05:38.400720+00:00",
+      "at": "2026-11-01T16:22:56.406906+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -276,17 +276,17 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-29478544bb62",
+      "step_id": "step-f41d570669ba",
       "undo": {
         "line": "The owner did R1 by hand: The atlas reads well at 393. Done. The owner: Looks right on my phone"
       }
     },
-    "line": "Step 2 of 3 waits on you since 11:05 · interrupted",
+    "line": "Step 2 of 3 waits on you since 11:22 · interrupted",
     "may_call": false,
     "may_handoff": false,
     "night": null,
-    "note_id": "program-program-43c7403e9756",
-    "note_window": "pullout:note:program-program-43c7403e9756",
+    "note_id": "program-program-c4108f1f5fd9",
+    "note_window": "pullout:note:program-program-c4108f1f5fd9",
     "origin_ref": null,
     "persons": [],
     "place": {
@@ -301,7 +301,7 @@
     "repository": {
       "base_branch": "main",
       "label": "app",
-      "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-pevc2_a8/todo/app"
+      "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-ciu6ha3a/todo/app"
     },
     "requirements": [],
     "requirements_met": {
@@ -332,7 +332,7 @@
         "agent": "Claude Code",
         "amendments": [
           {
-            "at": "2026-11-01T16:05:38.400720+00:00",
+            "at": "2026-11-01T16:22:56.406906+00:00",
             "by": "owner",
             "line": "The owner did R1 by hand: The atlas reads well at 393. Done. The owner: Looks right on my phone",
             "sent_at": null
@@ -394,9 +394,9 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-29478544bb62",
+        "id": "step-f41d570669ba",
         "last_checkpoint": {
-          "at": "2026-11-01T16:05:38.400720+00:00",
+          "at": "2026-11-01T16:22:56.406906+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -410,7 +410,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-29478544bb62",
+          "step_id": "step-f41d570669ba",
           "undo": {
             "line": "The owner did R1 by hand: The atlas reads well at 393. Done. The owner: Looks right on my phone"
           }
@@ -437,23 +437,23 @@
               "unmet",
               "waive"
             ],
-            "created_at": "2026-11-01T16:05:35.909824+00:00",
+            "created_at": "2026-11-01T16:22:54.784144+00:00",
             "evidence": {
-              "at": "2026-11-01T16:05:38.400375+00:00",
+              "at": "2026-11-01T16:22:56.406556+00:00",
               "by": "owner",
-              "commit": "b14530db61b7d0e0932353d4c05240f963a682ab",
+              "commit": "46314f105e79c3a65c8fea054fbf1401128667cb",
               "kind": "press",
-              "line": "You · 11:05 · Looks right on my phone"
+              "line": "You · 11:22 · Looks right on my phone"
             },
-            "id": "req-956ff76ce0b7",
-            "judged_at": "2026-11-01T16:05:38.400375+00:00",
-            "judged_commit": "b14530db61b7d0e0932353d4c05240f963a682ab",
+            "id": "req-bf974356518f",
+            "judged_at": "2026-11-01T16:22:56.406556+00:00",
+            "judged_commit": "46314f105e79c3a65c8fea054fbf1401128667cb",
             "kind": "word",
             "kind_word": "Your word",
             "label": "R1",
             "ordinal": 1,
             "parent_id": null,
-            "program_id": "program-43c7403e9756",
+            "program_id": "program-c4108f1f5fd9",
             "required": true,
             "rounds": 0,
             "running": false,
@@ -467,7 +467,7 @@
             "stale": false,
             "state": "met",
             "state_word": "Met",
-            "step_id": "step-29478544bb62",
+            "step_id": "step-f41d570669ba",
             "text": "The atlas reads well at 393",
             "waived_reason": null
           }
@@ -493,7 +493,7 @@
             "profile": "claude-default"
           }
         ],
-        "started_at": "2026-11-01T16:05:36.486608+00:00",
+        "started_at": "2026-11-01T16:22:55.082973+00:00",
         "state": "working",
         "state_word": "Working",
         "station": 1,
@@ -507,15 +507,15 @@
         ],
         "story": [
           {
-            "at": "2026-11-01T16:05:36.487101+00:00",
+            "at": "2026-11-01T16:22:55.083383+00:00",
             "line": "Handed to Claude Code."
           }
         ],
         "taken": false,
         "title": "Atlas anchors",
-        "updated_at": "2026-11-01T16:05:38.400724+00:00",
+        "updated_at": "2026-11-01T16:22:56.406911+00:00",
         "wait": null,
-        "worktree": "hs-program-step-29478544bb62"
+        "worktree": "hs-program-step-f41d570669ba"
       },
       {
         "after": [],
@@ -542,7 +542,7 @@
         "effort": "medium",
         "elapsed": "under a minute",
         "elapsed_seconds": 0,
-        "ended_at": "2026-11-01T16:05:37.784485+00:00",
+        "ended_at": "2026-11-01T16:22:55.950540+00:00",
         "ending": "interrupted",
         "engine": null,
         "estimate": null,
@@ -577,9 +577,9 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-031b6880cb7e",
+        "id": "step-b06684fa1cfa",
         "last_checkpoint": {
-          "at": "2026-11-01T16:05:37.897714+00:00",
+          "at": "2026-11-01T16:22:55.991494+00:00",
           "by": "engine",
           "choice": null,
           "decision_record_id": null,
@@ -590,16 +590,16 @@
           "overturnable": false,
           "overturned_at": null,
           "pin_note": null,
-          "ref": "refs/holdspeak/checkpoints/step-031b6880cb7e/2",
-          "ref_commit": "c7a0b2428dce8423227ea7d28ec7769b959aa27f",
+          "ref": "refs/holdspeak/checkpoints/step-b06684fa1cfa/2",
+          "ref_commit": "1fbd9b3b0123dcfe32229e5073323bd32676afca",
           "rule": null,
-          "step_id": "step-031b6880cb7e",
+          "step_id": "step-b06684fa1cfa",
           "undo": {
             "pin": {
-              "commit": "c7a0b2428dce8423227ea7d28ec7769b959aa27f",
-              "head": "b14530db61b7d0e0932353d4c05240f963a682ab",
+              "commit": "1fbd9b3b0123dcfe32229e5073323bd32676afca",
+              "head": "46314f105e79c3a65c8fea054fbf1401128667cb",
               "n": 2,
-              "ref": "refs/holdspeak/checkpoints/step-031b6880cb7e/2",
+              "ref": "refs/holdspeak/checkpoints/step-b06684fa1cfa/2",
               "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
             },
             "seen": {
@@ -653,7 +653,7 @@
             "profile": "claude-default"
           }
         ],
-        "started_at": "2026-11-01T16:05:37.302747+00:00",
+        "started_at": "2026-11-01T16:22:55.584496+00:00",
         "state": "parked",
         "state_word": "Parked",
         "station": -1,
@@ -667,19 +667,19 @@
         ],
         "story": [
           {
-            "at": "2026-11-01T16:05:37.306618+00:00",
+            "at": "2026-11-01T16:22:55.584948+00:00",
             "line": "Handed to Claude Code."
           },
           {
-            "at": "2026-11-01T16:05:37.897714+00:00",
+            "at": "2026-11-01T16:22:55.991494+00:00",
             "line": "The agent stopped (ended)."
           }
         ],
         "taken": false,
         "title": "Atlas index",
-        "updated_at": "2026-11-01T16:05:37.897277+00:00",
+        "updated_at": "2026-11-01T16:22:55.989637+00:00",
         "wait": null,
-        "worktree": "hs-program-step-031b6880cb7e"
+        "worktree": "hs-program-step-b06684fa1cfa"
       },
       {
         "after": [
@@ -749,7 +749,7 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-af2eb27464e4",
+        "id": "step-277cd6f97e37",
         "last_checkpoint": null,
         "launch_id": null,
         "limit": null,
@@ -796,7 +796,7 @@
         "story": [],
         "taken": false,
         "title": "Atlas links",
-        "updated_at": "2026-11-01T16:05:35.894150+00:00",
+        "updated_at": "2026-11-01T16:22:54.780780+00:00",
         "wait": {
           "cause": "target_ended",
           "line": "Step 3 with Claude Code is waiting on something that has ended."
@@ -824,7 +824,7 @@
         "title": "Atlas links"
       }
     ],
-    "updated_at": "2026-11-01T16:05:38.433926+00:00",
+    "updated_at": "2026-11-01T16:22:56.441925+00:00",
     "usage_warning_share": null,
     "within": [],
     "your_turn": 1,
@@ -849,20 +849,20 @@
           "skip"
         ],
         "for_person_id": null,
-        "id": "step-031b6880cb7e:parked",
+        "id": "step-b06684fa1cfa:parked",
         "kind": "parked",
         "launch_id": "L2",
         "ordinal": 2,
         "pr": null,
-        "program_id": "program-43c7403e9756",
+        "program_id": "program-c4108f1f5fd9",
         "program_title": "Atlas at 393",
         "project_id": null,
-        "since": "2026-11-01T16:05:37.897277+00:00",
-        "step_id": "step-031b6880cb7e",
+        "since": "2026-11-01T16:22:55.989637+00:00",
+        "step_id": "step-b06684fa1cfa",
         "step_title": "Atlas index",
         "title": "Parked step 2 “Atlas index”: The agent stopped before the step was done"
       }
     ]
   },
-  "requirement_id": "req-956ff76ce0b7"
+  "requirement_id": "req-bf974356518f"
 }
