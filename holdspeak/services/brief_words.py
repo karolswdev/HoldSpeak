@@ -325,6 +325,8 @@ QUESTIONS = {
 
 
 def question_line(kind: str, item: Mapping[str, Any]) -> str:
+    if kind == "answer":
+        return "What do you answer the agent?"
     if kind == "delivery":
         return ("Try the delivery again, or skip it?" if "retry" in (item.get("choices") or [])
                 else "Merge the delivery pull request, or skip the delivery?")

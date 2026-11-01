@@ -2253,6 +2253,28 @@ class ProgramService:
             return step, program
         raise ProgramRefused("not_your_step", f"Only this step's own agent, or the owner, may {verb} this step.", status=403)
 
+    def answer_agent(self, principal: Any, program_id: str, step_id: str, text: str, *, via: Any = None) -> dict[str, Any]:
+        """His answer to the step's agent's question (DIR10: from the page or
+        Telegram as text): typed to the agent; one owner line on the step
+        ("Answered the agent · decided from the briefing page")."""
+        self._require_owner(principal, "answer an agent")
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        said = " ".join(str(text or "").split())
+        if not said:
+            raise ProgramRefused("answer_required", "Write your answer.", status=400)
+        if step.get("state") != "waiting" or not step.get("launch_id"):
+            raise ProgramRefused("not_asking", "The step's agent asks nothing now.")
+        token = _VIA.set(via_of(via))
+        try:
+            self.runner().prompt_builder(step, said)
+            with _LOCK:
+                self._checkpoint(program, step, "owner", f"Answered the agent: {said[:120]}")
+                self.changed(program["id"], step["id"], verb="answer")
+        finally:
+            _VIA.reset(token)
+        return {"answered": True, "step_id": step["id"]}
+
     def decide(
         self, principal: Any, program_id: str, step_id: str, *, kind: str, choice: str,
         finding_id: Optional[str] = None, reason: Optional[str] = None,

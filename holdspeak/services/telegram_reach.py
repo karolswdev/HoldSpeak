@@ -832,6 +832,15 @@ class TelegramReach:
                         if target in {row["id"] for row in choices}})
         message_id = next((row.get("message_id") for row in package["sent"]
                            if isinstance(row, dict) and row.get("via") == "telegram"), None)
+        if isinstance(body.get("text"), Mapping) and not is_later_words(words):
+            # DIR10: the agent asks; his reply in words is the answer.
+            try:
+                self.briefing().answer_package(package["id"], ref, "answer", via="telegram", reason=text)
+            except ServiceError as exc:
+                self._send(chat_id, exc.detail)
+                return {"action": "refused", "code": exc.code}
+            self._send(chat_id, "Typed to the agent.")
+            return {"action": "answered", "choice": "answer"}
         if words.startswith("waive"):
             link = "Open it on your desk."
             self._send(chat_id, f"Waive on the page, with your reason. {link}")

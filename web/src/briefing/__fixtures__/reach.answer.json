@@ -1,0 +1,104 @@
+{
+  "items": [
+    {
+      "blocked": [],
+      "blocked_words": "Nothing else waits on this.",
+      "changed": [
+        {
+          "at": "2026-11-01T07:55:52.145312+00:00",
+          "clock": "02:55",
+          "line": "The agent asks a question."
+        },
+        {
+          "at": "2026-11-01T07:55:51.936704+00:00",
+          "clock": "02:55",
+          "line": "Handed to Claude Code."
+        }
+      ],
+      "choices": [],
+      "doing": "Step 2, “Ask first”: Ask which column name to use.",
+      "evidence": [
+        {
+          "label": "Brief",
+          "pane": "brief",
+          "token": ""
+        },
+        {
+          "label": "Program text",
+          "pane": "text",
+          "token": "read only"
+        }
+      ],
+      "goal": "Goal: Stop the stalls.",
+      "happened": "The agent asks: Which name: stall reason or stalled because?",
+      "head": "Overnight on the home box · step 2",
+      "kind": "answer",
+      "kind_words": "The agent asks",
+      "level": "YOLO",
+      "note": [
+        "Goal: Stop the stalls.",
+        "Step 2, “Ask first”: Ask which column name to use.",
+        "The agent asks: Which name: stall reason or stalled because?"
+      ],
+      "place": "Step 2 of 2 · started 02:55 · waited under a minute",
+      "program_id": "program-4705c24f7606",
+      "program_title": "Overnight on the home box",
+      "question": "What do you answer the agent?",
+      "ref": "program:program-4705c24f7606:step-107f617f1279:answer",
+      "since": "2026-11-01T07:55:52.145133+00:00",
+      "state": "open",
+      "step_id": "step-107f617f1279",
+      "step_ordinal": 2,
+      "step_title": "Ask first",
+      "text": {
+        "consequence": "HoldSpeak types your answer to the agent. The step goes on.",
+        "id": "answer",
+        "label": "Your answer",
+        "max": 2000
+      },
+      "track": [
+        {
+          "mark": "running",
+          "ordinal": 1,
+          "title": "Store the stall reason"
+        },
+        {
+          "mark": "here",
+          "ordinal": 2,
+          "title": "Ask first"
+        }
+      ]
+    }
+  ],
+  "later": [
+    {
+      "at": "02:30",
+      "id": "in_1h",
+      "label": "In 1 hour"
+    },
+    {
+      "at": "13:00",
+      "id": "at_13",
+      "label": "At 13:00"
+    },
+    {
+      "at": "19:00",
+      "id": "tonight",
+      "label": "Tonight"
+    },
+    {
+      "at": "07:00",
+      "id": "tomorrow",
+      "label": "Tomorrow at 07:00"
+    }
+  ],
+  "package": {
+    "desk": "/?open=program:program-4705c24f7606",
+    "expires_at": "2026-11-02T06:30:00+00:00",
+    "expires_words": "Expires in 24 h",
+    "head": "Overnight on the home box · step 2",
+    "hub": "the rig hub",
+    "id": "pkg-544c97372bc8",
+    "kind": "item"
+  }
+}

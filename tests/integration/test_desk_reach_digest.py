@@ -108,3 +108,122 @@ def test_a_digest_names_its_items_and_refuses_a_send(tmp_path, monkeypatch) -> N
     sent = client.post("/api/reach/packages", json={"refs": [_decision(rig)], "kind": "digest", "send": "telegram"})
     assert sent.status_code == 400 and sent.json()["code"] == "send_unavailable"
     assert OWNER  # the owner made every page here (the rig's edge)
+
+
+# ── DIR10, the rest: proposals with their preview, an agent's question, digest lines ─
+
+def _meeting_proposal(rig, ident: str = "6f1c2a4e-0d6b-4f5a-9c1e-2b7d3e4f5a61") -> str:
+    from datetime import datetime
+
+    from holdspeak.meeting_session import MeetingState
+
+    rig.db.meetings.save_meeting(MeetingState(id="m-weekly", started_at=datetime.now(), title="Weekly sync",
+                                              segments=[]))
+    rig.db.actuators.record_proposal(
+        meeting_id="m-weekly", window_id="w1", plugin_id="followup_ticket_actuator", plugin_version="1.0.0",
+        idempotency_key=f"key-{ident}", target="github", action="create_issue",
+        preview="Open a follow-up issue in acme/app\nTitle: Follow up on the rate limiter\nAssignee: Priya",
+        payload={"repo": "acme/app", "title": "Follow up on the rate limiter"}, reversible=True, proposal_id=ident)
+    return f"meeting-proposal:{ident}"
+
+
+def _project_proposal(rig, ident: str = "pprop_" + "b" * 32) -> str:
+    with rig.db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name, description, keywords_json, team_members_json, context_json, "
+                     "detection_threshold, revision, created_at, updated_at) VALUES ('proj-rv', 'The billing move', "
+                     "'', '[]', '[]', '{}', 0.4, 1, datetime('now'), datetime('now'))")
+    rig.db.project_observations.insert_proposal(
+        proposal_id=ident, project_id="proj-rv", review_window_key="", proposal_kind="review_flag",
+        target_ref="", title="The cut-over date moved to Friday", rationale="Two meetings say Friday now.",
+        lifecycle="open")
+    return f"project-proposal:{ident}"
+
+
+def test_a_meeting_proposal_shows_its_preview_first_and_not_this_does_nothing(tmp_path, monkeypatch) -> None:
+    clock = Clock()
+    rig, _pid, client = _rig(tmp_path, monkeypatch, clock)
+    ref = _meeting_proposal(rig)
+    made = client.post("/api/reach/packages", json={"refs": [ref]})
+    assert made.status_code == 201, made.text
+    token = made.json()["token"]
+    page = client.get(f"/api/b/{token}").json()
+    _fixture(PAGE_FIXTURES / "reach.meeting_proposal.json", page, tmp_path, token)
+    item = page["items"][0]
+    assert item["head"] == "Weekly sync · after the meeting"
+    assert item["question"] == "Do it: create issue to github?"
+    assert item["preview"] == {"destination": "github", "reversible": True, "lines": [
+        "Open a follow-up issue in acme/app", "Title: Follow up on the rate limiter", "Assignee: Priya"]}
+    assert [c["id"] for c in item["choices"]] == ["approve", "reject"]
+    answer = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "reject"})
+    assert answer.status_code == 200, answer.text
+    assert rig.db.actuators.get_proposal("6f1c2a4e-0d6b-4f5a-9c1e-2b7d3e4f5a61").status != "proposed"
+    assert client.get(f"/api/b/{token}").json()["items"][0]["state"] == "decided"
+
+
+def test_a_project_review_proposal_says_what_accept_adds_and_accept_records_it(tmp_path, monkeypatch) -> None:
+    clock = Clock()
+    rig, _pid, client = _rig(tmp_path, monkeypatch, clock)
+    ref = _project_proposal(rig)
+    made = client.post("/api/reach/packages", json={"refs": [ref]})
+    assert made.status_code == 201, made.text
+    token = made.json()["token"]
+    page = client.get(f"/api/b/{token}").json()
+    _fixture(PAGE_FIXTURES / "reach.project_proposal.json", page, tmp_path, token)
+    item = page["items"][0]
+    assert item["head"] == "The billing move · the project review"
+    assert item["question"] == "Accept: The cut-over date moved to Friday?"
+    assert item["preview"]["lines"][0] == "Accept records: The cut-over date moved to Friday"
+    answer = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "accept"})
+    assert answer.status_code == 200, answer.text
+    assert rig.db.project_observations.get_proposal("pprop_" + "b" * 32)["lifecycle"] != "open"
+
+
+def test_an_agents_question_is_answered_with_text_from_the_page(tmp_path, monkeypatch) -> None:
+    clock = Clock()
+    rig, pid, client = _rig(tmp_path, monkeypatch, clock)
+    rig.service.plan(OWNER, pid, steps=[{"title": "Ask first", "brief": "Ask which column name to use."}])
+    rig.tick()
+    step = rig.step(pid, 2)
+    rig.service.checkpoint(OWNER, pid, step["id"], "Which name: stall_reason or stalled_because?")
+    with rig.db._connection() as conn:
+        conn.execute("UPDATE program_checkpoints SET by_kind='agent' WHERE step_id=? AND line LIKE 'Which name%'",
+                     (step["id"],))
+    rig.states[step["launch_id"]] = {"state": "waiting", "turn_id": None}
+    rig.tick()
+    item = next(row for row in client.get(f"/api/programs/{pid}").json()["your_turn_items"] if row["kind"] == "answer")
+    ref = f"program:{pid}:{item['id']}"
+    made = client.post("/api/reach/packages", json={"refs": [ref]})
+    assert made.status_code == 201, made.text
+    token = made.json()["token"]
+    page = client.get(f"/api/b/{token}").json()
+    _fixture(PAGE_FIXTURES / "reach.answer.json", page, tmp_path, token)
+    shown = page["items"][0]
+    assert shown["question"] == "What do you answer the agent?" and shown["choices"] == []
+    assert shown["text"]["id"] == "answer" and shown["happened"].startswith("The agent asks: Which name")
+    empty = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer", "reason": " "})
+    assert empty.status_code == 400 and empty.json()["code"] == "answer_required"
+    answered = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer",
+                                                            "reason": "Use stall_reason."})
+    assert answered.status_code == 200, answered.text
+    assert rig.prompts[-1] == (step["launch_id"], "Use stall_reason.")
+    lines = [row["line"] for row in client.get(f"/api/programs/{pid}").json()["checkpoints"]]
+    assert any(line.startswith("Answered the agent: Use stall_reason.") and "briefing page" in line for line in lines)
+    assert answered.json()["item"]["state"] == "decided"
+
+
+def test_a_digest_carries_door_tasks_and_blockers_as_lines_with_no_buttons(tmp_path, monkeypatch) -> None:
+    from tests.integration.program_night_seed import door_task
+
+    clock = Clock()
+    rig, _pid, client = _rig(tmp_path, monkeypatch, clock)
+    for words in ("Send the deck", "Book the room"):
+        ident = door_task(rig, words)
+        with rig.db._connection() as conn:
+            conn.execute("UPDATE action_items SET due=? WHERE id=?", ("2026-01-01", ident))
+    made = client.post("/api/reach/packages", json={
+        "refs": [_decision(rig)], "kind": "digest",
+        "lines": ["The meeting recorder has no microphone.", "see /tmp/x.log"]})
+    assert made.status_code == 201, made.text
+    lines = client.get(f"/api/b/{made.json()['token']}").json()["package"]["lines"]
+    assert lines == [{"kind": "door", "line": "2 tasks are due today."},
+                     {"kind": "line", "line": "The meeting recorder has no microphone."}]  # a raw line is left out

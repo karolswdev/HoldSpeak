@@ -352,7 +352,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | DIR7 | The ladder and the one morning digest (JRN4 folded in) | Open | Telegram rung and a plain digest in #1678. |
 | DIR8 | The call that decides (= JRN7); `docs/calls.md` table replaced | Shipped #1679 (2026-10-31) | = JRN7. |
 | DIR9 | A Telegram sentence becomes a shaping preview | Partly | Telegram half in #1678; the page half (one page carries up to 12 items in order, each decided alone; the morning message links it): this PR. Open: the sentence to `program.shape` preview with Apply on the page. |
-| DIR10 | The other held items as packages | Partly | `briefing_sources`: a decision to review (Confirm) and a held call (Call now · Let it wait) as packages, answered through their own verbs; Later records the next touch. Open: meeting proposals, project review proposals, agents' questions, sends and gate holds (page only), Door tasks and blockers as digest lines. This PR. |
+| DIR10 | The other held items as packages | Done in part (hub) | #1703: decisions, held calls. This PR: meeting proposals and project review proposals with their preview first; a Program step agent's question answered with text on the page and by a Telegram reply (`ProgramService.answer_agent`); Door tasks due today and the desk's blocker lines as digest lines. Open: a desk agent's question outside Programs, sends and gate holds (page only), the faces. |
 | DIR11 | The documents (`docs/reach.md` and the rest) | Shipped (PG-DOCS-2 PR) | `docs/reach.md` and the rest. |
 | DIR12 | Email as a channel | Parked | Until he asks. |
 
