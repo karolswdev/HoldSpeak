@@ -1204,8 +1204,11 @@ class ProgramService:
         if state in ("running", "waiting"):
             # PG-IMPORT IMP3: a step that waits on something the plan cannot
             # give it is the program's line ("Step 4 with Claude Code is
-            # waiting on something that has ended.").
-            wait = next((found for found in (step_wait(program, step, top) for step in top) if found), None)
+            # waiting on something that has ended."). While the program waits
+            # on him, only the held step's own wait replaces its line.
+            held = {str(item.get("step_id")) for item in turn[:1]}
+            wait = next((found for found in (step_wait(program, step, top) for step in top
+                                             if state == "running" or str(step["id"]) in held) if found), None)
             if wait:
                 summary["line"] = wait["line"]
         return summary
