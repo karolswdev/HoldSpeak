@@ -109,12 +109,14 @@ def window(night: Mapping[str, Any], moment: datetime) -> tuple[datetime, dateti
     local = moment.astimezone()
     sh, sm = _hm(night["start"])
     eh, em = _hm(night["end"])
-    start = local.replace(hour=sh, minute=sm, second=0, microsecond=0)
+    from .wall_clock import at_local
+
+    start = at_local(local, sh, sm)
     if start > local:
-        start -= timedelta(days=1)
-    end = start.replace(hour=eh, minute=em)
+        start = at_local(local, sh, sm, days=-1)
+    end = at_local(start, eh, em)
     if end <= start:
-        end += timedelta(days=1)
+        end = at_local(start, eh, em, days=1)
     return start, end
 
 
