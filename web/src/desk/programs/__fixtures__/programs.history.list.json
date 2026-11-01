@@ -6,7 +6,7 @@
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T05:11:29.711632+00:00",
+      "created_at": "2026-11-01T05:21:51.314784+00:00",
       "done": 3,
       "done_in": "2 h 38",
       "for_person": null,
@@ -16,10 +16,10 @@
         "prs": 3,
         "words": "Merged 3 PRs · 28 Oct"
       },
-      "id": "program-d0f3d0b2e998",
+      "id": "program-84d6cdb87049",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T05:11:29.716460+00:00",
+        "at": "2026-11-01T05:21:51.319707+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -45,7 +45,7 @@
       "state_word": "Done",
       "title": "The hub stops stalling",
       "total": 3,
-      "updated_at": "2026-11-01T05:11:29.716572+00:00",
+      "updated_at": "2026-11-01T05:21:51.319888+00:00",
       "your_turn": 0
     }
   ],
