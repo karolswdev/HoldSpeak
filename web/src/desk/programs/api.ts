@@ -168,6 +168,18 @@ export async function changeStep(programId: string, stepId: string, body: StepCh
 }
 
 /** A line added to a started step's brief, typed at the next turn boundary. */
+/** PG-IMPORT IMP6: he takes the step's lane over (the engine types nothing
+ *  into it), or hands it back. No confirmation: each undoes the other. */
+export async function takeLane(programId: string, stepId: string): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/steps/${encodeURIComponent(stepId)}/take`, { method: "POST", json: {} }));
+}
+
+export async function handLaneBack(programId: string, stepId: string): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(
+    `${base(programId)}/steps/${encodeURIComponent(stepId)}/hand-back`, { method: "POST", json: {} }));
+}
+
 export async function amendStep(programId: string, stepId: string, line: string): Promise<Program | null> {
   return unwrap(await apiFetch<Program | { program?: Program }>(
     `${base(programId)}/steps/${encodeURIComponent(stepId)}/amend`, { method: "POST", json: { line } }));

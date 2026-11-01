@@ -17,7 +17,9 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { afterWords, agentKey, mergedWords, runsOnWords, stepBreathes, stepChip, stepMetWords, stepTone, stepWord } from "./model";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { stateWords } from "../surface/words";
-import type { PlanSize, PlanStep, ProgramStep } from "./types";
+import { handLaneBack, takeLane } from "./api";
+import { plainFail } from "../surface/plainFailure";
+import type { PlanSize, PlanStep, Program, ProgramStep } from "./types";
 
 /** PG-WINDOW: the row's line in his terms: the hub's story (brief_words),
  *  never the engine's raw checkpoint ("git push failed; parked"). A planned
@@ -26,6 +28,8 @@ import type { PlanSize, PlanStep, ProgramStep } from "./types";
 const LANE_LIVE = new Set(["briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings"]);
 
 export function rowWords(step: ProgramStep): string {
+  // PG-IMPORT IMP6: he has the lane; the engine types nothing into it.
+  if (step.taken) return "You have the lane";
   // PG-IMPORT IMP3: what the step waits on, in the hub's words, comes first.
   if (step.wait?.line) return step.wait.line;
   const story = step.story ?? [];
@@ -69,8 +73,13 @@ export function StepRow({
   his = false,
   landed,
   words,
+  programId,
+  onApplied,
 }: {
   step: ProgramStep;
+  /** PG-IMPORT IMP6: the Program the lane verbs write to, and its answer. */
+  programId?: string;
+  onApplied?(next: Program | null): void;
   selected?: boolean;
   onSelect?: () => void;
   contender?: boolean;
@@ -144,10 +153,47 @@ export function StepRow({
       <span className="pg-step-verbs">
         {/* A dead verb is a lie: the lane is gone once the step parks or ends. */}
         {step.launch_id && LANE_LIVE.has(step.state) ? (
-          <Button dense variant="secondary" onClick={() => openRef(`launch:${step.launch_id}`)} data-testid="programs-step-open">Open lane</Button>
+          programId ? <LaneVerbs programId={programId} step={step} onApplied={onApplied} />
+            : <Button dense variant="secondary" onClick={() => openRef(`launch:${step.launch_id}`)} data-testid="programs-step-open">Open lane</Button>
         ) : null}
       </span>
     </li>
+  );
+}
+
+/** PG-IMPORT IMP6 (BroCrew's taking-over.ts and handing-it-back.ts): Take it
+ *  over tells the engine he has the lane and opens it; Hand it back gives it
+ *  back. Each undoes the other, so neither asks first. */
+function LaneVerbs({ programId, step, onApplied }: {
+  programId: string; step: ProgramStep; onApplied?(next: Program | null): void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
+  const press = async () => {
+    setBusy(true);
+    setFailed(null);
+    try {
+      const next = step.taken ? await handLaneBack(programId, step.id) : await takeLane(programId, step.id);
+      if (!step.taken) openRef(`launch:${step.launch_id}`);
+      onApplied?.(next);
+    } catch (cause) {
+      setFailed(plainFail(step.taken ? "The lane was not handed back" : "The lane was not taken over", cause,
+        "The step is as it was", "Try again"));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      {step.taken ? (
+        <Button dense variant="secondary" onClick={() => openRef(`launch:${step.launch_id}`)} data-testid="programs-step-open">Open lane</Button>
+      ) : null}
+      <Button dense variant="secondary" loading={busy} disabled={busy} onClick={() => void press()} title={failed?.title}
+        data-testid={step.taken ? "programs-step-hand-back" : "programs-step-take"}>
+        {step.taken ? "Hand it back" : "Take it over"}
+      </Button>
+      {failed ? <span className="pg-failure" role="status" data-testid="programs-step-lane-failure">{failed.words}</span> : null}
+    </>
   );
 }
 

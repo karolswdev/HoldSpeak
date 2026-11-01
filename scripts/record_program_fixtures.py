@@ -324,6 +324,22 @@ def record_todo(root: Path) -> dict[str, Any]:
     return {"program.todo.json": todo, "program.todo.done.json": done}
 
 
+def record_lane(root: Path) -> dict[str, Any]:
+    """PG-IMPORT IMP6: a running step, his Take it over, then Hand it back,
+    each through the real routes."""
+    rig = Rig(root / "lane")
+    client = _client(rig)
+    pid = _create(rig, "Atlas lane", template="fast-cycle", control="normal")
+    rig.service.plan(OWNER, pid, steps=[{"title": "Atlas anchors", "brief": "Cite each anchor once."}])
+    rig.service.start(OWNER, pid)
+    rig.tick()
+    sid = rig.step(pid, 1)["id"]
+    lane = _get(client, f"/api/programs/{pid}")
+    taken = _press(client, f"/api/programs/{pid}/steps/{sid}/take", {})
+    back = _press(client, f"/api/programs/{pid}/steps/{sid}/hand-back", {})
+    return {"program.lane.json": lane, "program.lane.taken.json": taken, "program.lane.back.json": back}
+
+
 def record_adjust(root: Path) -> Any:
     """PG-REQ §8, in a rig of its own: a step inserted before a Planned one,
     a Planned step moved, a started step amended (one line typed at its turn
@@ -595,6 +611,7 @@ def record(root: Path) -> dict[str, Any]:
     fixtures.update(record_proposals(root))
     fixtures.update(record_text(root))
     fixtures.update(record_todo(root))
+    fixtures.update(record_lane(root))
     return fixtures
 
 
@@ -612,6 +629,8 @@ def _check(fixtures: dict[str, Any]) -> None:
     report = fixtures["program.done.json"]["steps"][0]["report"]
     assert report["observed"] and report["claimed"] and report["files"], report
     assert fixtures["program.done.json"]["finished_words"] == "finished"
+    assert fixtures["program.lane.taken.json"]["steps"][0]["taken"] is True
+    assert fixtures["program.lane.back.json"]["steps"][0]["taken"] is False
     todo = fixtures["program.todo.json"]
     assert "todo" in [row["kind"] for row in todo["your_turn_items"]], todo["your_turn_items"]
     assert any(step["ending"] == "interrupted" for step in todo["steps"]), [s["ending"] for s in todo["steps"]]
