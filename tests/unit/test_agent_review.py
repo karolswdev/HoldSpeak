@@ -284,3 +284,74 @@ def test_done_without_new_commit_is_inert_and_round_two_must_stays_needs_you():
 def test_row_words_keep_builder_reviewer_and_round_visible():
     assert review_row_words({"builder": "Claude Code", "requested": "codex", "round": 1}) == "Claude Code builds · Codex reviews · round 1"
     assert review_row_words({"role": "reviewer", "builder": "Claude Code", "requested": "codex", "round": 2}) == "Codex reviews · Claude Code builds · round 2"
+
+
+# ── the first real night (2026-11-01): the reviewers' recorded words ──
+
+def _night_words(name: str) -> str:
+    from pathlib import Path
+
+    return (Path(__file__).resolve().parents[1] / "fixtures" / f"review_words_night_{name}.txt").read_text(encoding="utf-8")
+
+
+def test_the_nights_real_clear_review_has_no_finding():
+    """Claude Code's real review of step 1 ("- MUST: none." with its end mark,
+    then "MUST: none"): no finding, and the pair is clear."""
+    from holdspeak.services.agent_review import _review_result
+
+    findings, clear = _review_result(_night_words("clear"))
+    assert [row for row in findings if row["level"] == "MUST"] == [] and clear is True
+
+
+def test_the_nights_real_must_review_has_one_must_not_its_count_line():
+    """Step 3's real review: one "- MUST · docs/faq.md:5 · …" finding and the
+    closing "MUST: 1 remains (…)" count, which is not a second finding."""
+    from holdspeak.services.agent_review import _review_result
+
+    findings, _clear = _review_result(_night_words("must"))
+    musts = [row for row in findings if row["level"] == "MUST"]
+    assert len(musts) == 1 and "docs/faq.md:5" in musts[0]["text"]
+    assert parse_findings("MUST: none.\nSHOULD: none!") == []
+    assert parse_findings("MUST: 2 left") == []
+
+
+def test_an_empty_read_of_a_finished_reviewer_waits_before_it_is_unclear():
+    """The turn ended before its Stop words landed: an empty read is read
+    again on the next ticks; the words that land then are the result."""
+    from holdspeak.services.agent_review import EMPTY_READS_WAIT
+
+    pair = initial_review("codex")
+    pair.update({"round": 1, "reviewer_launch_id": "R1", "last_builder_commit": "c1", "status": "reviewing",
+                 "rounds": [{"round": 1, "builder_commit": "c1", "reviewer_launch_id": "R1"}]})
+    ledger = Ledger(builder(review=pair), {"launch_id": "R1", "state": "registered", "helper_of": "B1"})
+    words = {"R1": ""}
+    loop = AgentReviewLoop(None, object(), ledger=ledger, state_reader=lambda launch_id: "done",
+                           commit_reader=lambda record: "c1", result_reader=lambda launch_id: words["R1"])
+    for _ in range(EMPTY_READS_WAIT):
+        loop.tick()
+        assert ledger.get("B1")["review"]["status"] == "reviewing"
+    words["R1"] = "Findings:\n- MUST: none.\n\nMUST: none"
+    loop.tick()
+    assert ledger.get("B1")["review"]["status"] == "done"
+
+
+def test_an_empty_read_that_stays_empty_is_unclear_after_the_wait():
+    from holdspeak.services.agent_review import EMPTY_READS_WAIT
+
+    pair = initial_review("codex")
+    pair.update({"round": 1, "reviewer_launch_id": "R1", "last_builder_commit": "c1",
+                 "rounds": [{"round": 1, "builder_commit": "c1", "reviewer_launch_id": "R1"}]})
+    ledger = Ledger(builder(review=pair), {"launch_id": "R1", "state": "registered", "helper_of": "B1"})
+    loop = AgentReviewLoop(None, object(), ledger=ledger, state_reader=lambda launch_id: "done",
+                           commit_reader=lambda record: "c1", result_reader=lambda launch_id: "")
+    for _ in range(EMPTY_READS_WAIT + 1):
+        loop.tick()
+    assert ledger.get("B1")["review"]["result"]["reason"] == "review_result_unclear"
+
+
+def test_a_should_none_required_after_its_place_is_no_finding():
+    """The fourth real night: "SHOULD · docs/index.md:5 · None required. The
+    heading style … match the brief." became a Later Door task."""
+    words = ("- SHOULD · docs/index.md:5 · None required. The heading style and single sentence match the brief.\n"
+             "- SHOULD · docs/faq.md:5 · The phrase is not supported by the docs.\nMUST: none")
+    assert parse_findings(words) == [{"level": "SHOULD", "text": "· docs/faq.md:5 · The phrase is not supported by the docs."}]

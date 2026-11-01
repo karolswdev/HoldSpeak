@@ -104,6 +104,8 @@ def test_audit_files_findings_dedupes_and_proposes_a_fix_program(tmp_path, monke
     assert row["kind"] == "fix_program" and row["choices"] == ["make", "skip"] and row["count"] == 2
     assert row["title"] == "A fix program from 2 MUST findings"
     assert row["brief"]["question"] == "Make a fix program from the MUST findings?"
+    # About the whole program: its doing line is the program's status line, never a step's.
+    assert row["brief"]["doing"] == f"The program: {wire['status_line']}."
     [needs] = [item for item in program_items(rig.service.needs_you_items()) if item["program"]["kind"] == "fix_program"]
     assert needs["why"] == "TO DECIDE" and needs["program"]["decide"].endswith(f"/steps/{row['step_id']}/decide")
     _fixture("audit.board.json", wire, tmp_path)

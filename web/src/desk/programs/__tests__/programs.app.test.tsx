@@ -2159,6 +2159,26 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
     fireEvent.click(within(refusal).getByTestId("program-plan-text"));
     await screen.findByTestId("programs-text");
   });
+
+  it("a press before the engine's read lands reads it first: nothing is sent, the refusal is the same (the sweep's 409)", async () => {
+    const id = none.program.id;
+    let release: (() => void) | null = null;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    let reads = 0;
+    hub({
+      [`GET /api/programs/${id}`]: none.program,
+      // The first read is slow (still out when he presses); the press reads again.
+      [`GET /api/programs/${id}/shape`]: () => { reads += 1; return reads === 1 ? held.then(() => none.engine) : none.engine; },
+      [`POST /api/programs/${id}/plan/draft`]: () => { throw new ApiError(none.status, String(none.body.detail), none.body); },
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    fireEvent.click(screen.getByTestId("program-plan-it"));
+    const refusal = await screen.findByTestId("program-plan-refusal");
+    expect(refusal.textContent).toContain("No engine is set for planning");
+    expect(posts(id, "plan/draft")).toHaveLength(0);
+    release!();
+  });
 });
 
 describe("LANG10: the interview rounds, one question in place (PROGRAM-LANGUAGE §6.2, §9.4 R-A)", () => {
@@ -2701,6 +2721,10 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     const row = turnRow("lesson")!;
     expect(screen.getByTestId("programs-brief-question").textContent).toBe("Keep this lesson, and where?");
     expect(row.textContent).toContain(item.brief!.happened);
+    // About the whole program: the doing line is its status line, never "Step N".
+    expect(item.brief!.doing).toMatch(/^The program: Running · /);
+    expect(row.textContent).toContain(item.brief!.doing);
+    expect(row.textContent).not.toMatch(/Step \d/);
     expect(within(screen.getByTestId("programs-tray")).getAllByRole("button").map((button) => button.textContent))
       .toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
     // The briefing page takes it too (the hub's BRIEFABLE): Copy page link under the tray.
@@ -2709,5 +2733,29 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     await waitFor(() => expect(calls).toContain(
       `POST /api/programs/${program.id}/steps/${item.step_id}/decide {"kind":"lesson","choice":"keep_program","lesson_id":${item.lesson_id}}`));
     await waitFor(() => expect(turnRow("lesson")).toBeUndefined());
+  });
+});
+
+// The owner's ruling of 2026-11-01: park stops the steps (recorded:
+// tests/integration/test_program_park_steps.py).
+import parkedStepsFixture from "../__fixtures__/program.parked_steps.json";
+
+describe("park stops the steps (the live walk's finding)", () => {
+  it("each open step of a parked Program reads one wait sentence; no breathing dot, no Take it over", async () => {
+    const parked = parkedStepsFixture as unknown as Program;
+    hub({ [`GET /api/programs/${parked.id}`]: parked });
+    render(<ProgramBody programId={parked.id} />);
+    await screen.findByTestId("programs-board");
+    expect(parked.state).toBe("parked");
+    for (const ordinal of [2, 3]) {
+      const row = stepRow(ordinal);
+      expect(row.getAttribute("data-state")).toBe("parked");
+      expect(within(row).getByTestId("programs-step-words").textContent)
+        .toBe(`Step ${ordinal} with Claude Code is parked with the program.`);
+      expect(row.querySelector("[data-live]")).toBeNull();
+      expect(within(row).queryByTestId("programs-step-take")).toBeNull();
+      expect(within(row).queryByTestId("programs-step-open")).toBeNull();
+    }
+    expect(screen.queryByTestId("programs-your-turn")).toBeNull();
   });
 });

@@ -153,6 +153,10 @@ DEFAULT_REVIEWER = {"claude-default": "codex-default", "codex-default": "claude-
 
 #: ``parked_by``: who parked a step. Only an engine park is his turn.
 PARKED_BY_OWNER, PARKED_BY_ENGINE, PARKED_BY_RACE = "owner", "engine", "race"
+#: The owner's ruling of 2026-11-01: park stops the steps. A step parked with
+#: its Program keeps the state it had in ``facts.park_from``; Resume puts it back.
+PARKED_BY_PROGRAM = "program"
+PARKED_WITH_PROGRAM = "Parked with the program"
 
 #: Your-turn kinds and the choices of each (the REST decide body).
 DECIDE_CHOICES = {
@@ -807,6 +811,8 @@ def step_wait(program: Mapping[str, Any], step: Mapping[str, Any],
     facts = step.get("facts") or {}
     agent = agent_label(((facts.get("running_on") or {}).get("profile") if isinstance(facts.get("running_on"), Mapping)
                          else None) or step.get("profile") or program.get("default_profile"))
+    if step.get("state") == "parked" and step.get("parked_by") == PARKED_BY_PROGRAM:
+        return {"cause": "program_parked", "line": wait_line(step.get("ordinal"), agent, "program_parked")}
     wait = facts.get("wait") if isinstance(facts.get("wait"), Mapping) else None
     if wait and wait.get("cause") in WAIT_SENTENCES:
         return {"cause": wait["cause"], "at": wait.get("at"),
@@ -1558,8 +1564,8 @@ class ProgramService:
                     # PG14: an automation made it; its place line names it.
                     wb = self.db.workbenches.get(ident, include_deleted=True)
                     title = str(getattr(wb, "name", "") or "")
-                elif kind == "program":
-                    # JRN1: the Program it was split from (and waits on).
+                elif kind in ("program", "after"):
+                    # The Program it came from; JRN1's ``after``: the one it waits on.
                     title = str((self.store.get_program(ident) or {}).get("title") or "")
                 else:
                     from .agent_hand_service import item_title
@@ -1583,7 +1589,7 @@ class ProgramService:
         # PG-WINDOW: the held items' briefs and the steps' stories, in his terms.
         from .brief_words import window_words
 
-        briefs, stories = window_words(program, steps, turn, checkpoints)
+        briefs, stories = window_words(program, steps, turn, checkpoints, status=self._status_line(program, summary))
         turn = [{**item, "brief": briefs.get(str(item.get("id")))} for item in turn]
         his = {str(item.get("requirement_id")) for item in turn if item.get("requirement_id")}
         by_id = {step["id"]: step for step in steps}
@@ -1933,15 +1939,19 @@ class ProgramService:
                 raise ProgramRefused("spend_limit_invalid", "The spend limit is zero or more dollars.", status=400)
         root, project_id = self._repository(repository, project_id or None)
         profile = self._profile(default_profile, "default_profile") or defaults.get("default_profile") or "claude-default"
+        # A template's engine is for its pi; a profile he chose instead (Claude
+        # Code) runs on its own model and takes no engine.
         engine = self._engine_id(default_engine, profile, "default_engine") if default_engine else (
             self._engine_id(defaults.get("default_engine"), profile, "default_engine", optional_missing=True)
-            if defaults.get("default_engine") else None)
+            if defaults.get("default_engine") and profile == "pi-default" else None)
         listed = self._runs_on(runs_on, "runs_on")
         if listed:
             profile, engine = listed[0]["profile"], listed[0]["engine"]
         allowed = self._allowed_profiles(allowed_profiles)
         reviewer = self._profile(reviewer_profile, "reviewer_profile") or defaults.get("reviewer_profile")
-        reviewer_engine_id = self._engine_id(reviewer_engine, reviewer, "reviewer_engine") if reviewer_engine else None
+        reviewer_engine_id = self._engine_id(reviewer_engine, reviewer, "reviewer_engine") if reviewer_engine else (
+            self._engine_id(defaults.get("reviewer_engine"), reviewer, "reviewer_engine", optional_missing=True)
+            if defaults.get("reviewer_engine") and reviewer == "pi-default" else None)
         command, _sections = self._check_command(root, check_command)
         if origin_ref:
             kind, _, ident = str(origin_ref).partition(":")
@@ -2370,6 +2380,18 @@ class ProgramService:
         with _LOCK:
             program["state"] = "parked"
             self._touch(program)
+            # Park stops the steps: every open step is parked with it (the
+            # engine hands, nudges and checks nothing on them; a running
+            # agent turn is left to end). Not a move of the engine's table:
+            # the step keeps where it was, and Resume puts it back there.
+            for step in self.store.list_steps(program["id"]):
+                if step["state"] in CLOSED_STATES or step["state"] == "failed":
+                    continue
+                facts = dict(step.get("facts") or {})
+                facts["park_from"] = step["state"]
+                facts.pop("wait", None)
+                step.update(state="parked", parked_by=PARKED_BY_PROGRAM, parked_reason=PARKED_WITH_PROGRAM, facts=facts)
+                self._save(step)
             self.store.add_checkpoint(step_id="", program_id=program["id"], at=self._clock(),
                                       by="owner" if _is_owner(principal) else "agent",
                                       line="Parked the program; the worktrees stay" + (
@@ -2409,6 +2431,13 @@ class ProgramService:
         with _LOCK:
             program["state"] = "running"
             for step in self.store.list_steps(program["id"]):
+                if step["state"] == "parked" and step.get("parked_by") == PARKED_BY_PROGRAM:
+                    # Back to where it was when the Program was parked.
+                    facts = dict(step.get("facts") or {})
+                    back = str(facts.pop("park_from", "") or "ready")
+                    step.update(state=back, parked_by=None, parked_reason=None, facts=facts)
+                    self._save(step)
+                    continue
                 if step["state"] == "failed":
                     self.transition(program, step, "ready", by="owner", line="Resumed after the failure")
             self._touch(program)
@@ -3943,9 +3972,11 @@ class ProgramService:
 
     def _waits_on(self, program: Mapping[str, Any]) -> Optional["ProgramRefused"]:
         """JRN1: a Program made from a draft's later Program waits on the one
-        before it (``origin_ref = program:<id>``) until that one is Done."""
+        before it (``origin_ref = after:<id>``) until that one is Done. A
+        Program another one made (``program:<id>``: a fix program, an agent's
+        child) never waits on it."""
         kind, _, ident = str(program.get("origin_ref") or "").partition(":")
-        if kind != "program" or not ident:
+        if kind != "after" or not ident:
             return None
         before = self.store.get_program(ident)
         if before is None or before.get("closed_at") or before.get("state") == "done":
@@ -4855,7 +4886,7 @@ class ProgramService:
         item_id = origin.split(":", 1)[1]
         evidence = {key: value for key, value in (
             ("pr_url", step.get("pr_url")), ("pr_number", step.get("pr_number")),
-            ("merged_sha", step.get("head_commit")), ("merged_at", self._clock()),
+            ("merged_sha", facts.get("merged_commit") or step.get("head_commit")), ("merged_at", self._clock()),
             ("launch_id", step.get("launch_id"))) if value}
         try:
             from ..principals import Principal, PrincipalKind
@@ -4869,7 +4900,8 @@ class ProgramService:
         facts["origin_closed"] = item_id
         step["facts"] = facts
         self.store.save_step(step)
-        what = f"PR #{step['pr_number']}" if step.get("pr_number") else f"the merge {str(step.get('head_commit') or '')[:8]}".rstrip()
+        merged = str(facts.get("merged_commit") or step.get("head_commit") or "")
+        what = f"PR #{step['pr_number']}" if step.get("pr_number") else f"the merge {merged[:8]}".rstrip()
         self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="engine",
                                   line=f"Closed its Door task with {what} as evidence"[:400])
 

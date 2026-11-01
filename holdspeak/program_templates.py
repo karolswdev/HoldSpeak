@@ -83,11 +83,14 @@ TEMPLATES: list[dict[str, Any]] = [
         "id": OVERNIGHT,
         "name": "Overnight on the home box",
         "description": (
-            "One step per brief. pi builds on the home engine when it is idle; Claude Code reviews. "
+            "One step per brief. pi builds and reviews on the home engine when it is idle. "
             "It runs at YOLO: a green, reviewed step merges without you."
         ),
         "program": {
-            "control": "yolo", "reviewer_profile": "claude-default", "reviewer_engine": None,
+            # The night spends no cloud tokens (ruling 2026-11-01): pi builds
+            # and reviews on the home engine. Claude Code stays choosable
+            # through the profile.
+            "control": "yolo", "reviewer_profile": "pi-default", "reviewer_engine": HOME_ENGINE_PROFILE,
             "default_profile": "pi-default", "default_engine": HOME_ENGINE_PROFILE, "prefer_idle": True,
             # Phone (2026-10-28): overnight, the engine may call him where the
             # Reach rules allow it (a core question at YOLO rings at once).
@@ -104,11 +107,14 @@ TEMPLATES: list[dict[str, Any]] = [
         "name": "Dreaming",
         "description": (
             "At night, 23:30 to 07:00: the backlog becomes tiny steps that fit 64k. pi builds on the home "
-            "engine when it is idle; Claude Code reviews at a glance. YOLO: a green, reviewed step merges. "
+            "engine when it is idle, and reviews there at a glance. YOLO: a green, reviewed step merges. "
             "At most 8 steps a night."
         ),
         "program": {
-            "control": "yolo", "reviewer_profile": "claude-default", "reviewer_engine": None,
+            # The night spends no cloud tokens (ruling 2026-11-01): pi builds
+            # and reviews on the home engine. Claude Code stays choosable
+            # through the profile.
+            "control": "yolo", "reviewer_profile": "pi-default", "reviewer_engine": HOME_ENGINE_PROFILE,
             "default_profile": "pi-default", "default_engine": HOME_ENGINE_PROFILE, "prefer_idle": True,
         },
         #: The Program lines (``ProgramService._update_language_fields``); the

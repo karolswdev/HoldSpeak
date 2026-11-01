@@ -19,7 +19,7 @@ import { ApiError } from "../../lib/api";
 import { openSurfaceOr } from "../shell";
 import { DotWord } from "../surface";
 import { failureTitle } from "../surface/plainFailure";
-import { applyPrograms, planDraft } from "./api";
+import { applyPrograms, planDraft, readShapeEngine } from "./api";
 import { openProgram } from "./open";
 import { StationTrack } from "./StationTrack";
 import { engineFact, useShapeEngine } from "./ShapeBar";
@@ -52,7 +52,10 @@ export function usePlanIt(programId: string, program: Program | null, onAnswer: 
 
   const plan = useCallback(async (goal?: string) => {
     if (!program || busy) return;
-    if (engine === null) {
+    // The engine's read may not have landed yet: read it now, as the bar does
+    // (a press before it sent the plan and drew the hub's 409 on the console).
+    const known = engine === undefined ? await readShapeEngine(program.id).then((answer) => answer?.engine ?? null, () => undefined) : engine;
+    if (known === null) {
       // The hub said no engine plans on this desk: nothing is sent or guessed.
       setRefusal({ words: "No engine is set for planning", title: "No engine is set for planning. The program is unchanged. Choose one in Engines.", code: "no_engine" });
       return;

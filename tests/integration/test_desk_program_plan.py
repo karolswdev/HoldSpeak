@@ -135,9 +135,9 @@ def test_a_three_goal_paste_proposes_three_programs_and_apply_all_links_them(tmp
     assert [row["title"] for row in applied["made"]] == [programs[1]["title"], programs[2]["title"]]
     second = _ok(client.get(f"/api/programs/{applied['made'][0]['id']}"))
     third = _ok(client.get(f"/api/programs/{applied['made'][1]['id']}"))
-    assert second["state"] == "drafting" and second["origin_ref"] == f"program:{pid}"
-    assert second["place"]["origin"] == {"ref": f"program:{pid}", "kind": "program", "id": pid, "title": programs[0]["title"]}
-    assert third["origin_ref"] == f"program:{second['id']}"
+    assert second["state"] == "drafting" and second["origin_ref"] == f"after:{pid}"
+    assert second["place"]["origin"] == {"ref": f"after:{pid}", "kind": "after", "id": pid, "title": programs[0]["title"]}
+    assert third["origin_ref"] == f"after:{second['id']}"
     assert [step["title"] for step in second["steps"]] == programs[1]["steps"]
     # The second waits on the first: Start says so in words.
     start = client.post(f"/api/programs/{second['id']}/start", json={})
@@ -146,3 +146,21 @@ def test_a_three_goal_paste_proposes_three_programs_and_apply_all_links_them(tmp
     _fixture("program.plan_programs.json", {"program": before, "draft": draft, "applied": applied, "second": second,
                                             "start_refused": {"status": start.status_code, "body": start.json()}},
              tmp_path)
+
+
+def test_a_program_another_made_never_waits_on_it(tmp_path) -> None:
+    """Only JRN1's split chain (``after:<id>``) waits on the Program before
+    it; a Program made by another (``program:<id>``: a fix program, an
+    orchestrating agent's child) starts while that one still runs."""
+    from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig
+
+    rig = Rig(tmp_path)
+    parent = rig.service.create(OWNER, title="Parent", goal="Run.", repository=str(rig.repo),
+                                check_command=f"sh {FAKE_CHECK}", template="fast-cycle")["id"]
+    rig.service.plan(OWNER, parent, steps=[{"title": "One", "brief": "Do one."}])
+    rig.service.start(OWNER, parent)
+    child = rig.service.create(OWNER, title="Child", goal="Run too.", repository=str(rig.repo),
+                               check_command=f"sh {FAKE_CHECK}", template="fast-cycle",
+                               origin_ref=f"program:{parent}")["id"]
+    rig.service.plan(OWNER, child, steps=[{"title": "Two", "brief": "Do two."}])
+    assert rig.service.start(OWNER, child)["state"] != "drafting"
