@@ -147,3 +147,19 @@ def test_a_measure_that_did_not_run_says_why_in_words(tmp_path) -> None:
         "Not measured: the command printed kb, which is not s"
     assert verify_measure_log(None, spec)["line"] == "Not measured: the command did not run"
     assert verify_measure_log(str(tmp_path / "gone.log"), spec)["met"] is False
+
+
+# ── a plain check command (the live proof, 2026-11-01) ───────────────
+
+def test_a_plain_check_with_no_verdict_line_is_judged_by_its_exit() -> None:
+    def log(exit_code: int, *lines: str) -> str:
+        return ("program-check: commit 0123abcd\nprogram-check: tree clean\n"
+                "program-check: command sh -c 'test -f README.md'\n" + "".join(f"{line}\n" for line in lines)
+                + f"program-check: exit {exit_code}\n")
+
+    green = verify_text(log(0), required=[])
+    assert green["green"] and green["reasons"] == []
+    assert verify_text(log(1), required=[])["reasons"] == ["the check ended with exit 1"]
+    assert verify_text(log(0, "FAILED tests/x.py"), required=[])["reasons"] == ["a line is red: FAILED tests/x.py"]
+    # The quick check form keeps its rules.
+    assert "the log does not end with the check's verdict line" in verify_text(log(0))["reasons"]

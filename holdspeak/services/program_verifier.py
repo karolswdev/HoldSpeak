@@ -135,10 +135,24 @@ def verify_text(text: str, *, required: Iterable[str] = QUICK_CHECK_REQUIRED) ->
                 reasons.append(f"the section {name} is red")
     last = next((line.strip() for line in reversed(output_lines) if line.strip()), "")
     verdict = _VERDICT.match(last)
-    if verdict is None:
+    required = list(required)
+    if verdict is None and not order and not required and not any(_VERDICT.match(line.strip()) for line in output_lines):
+        # A plain command (``sh -c 'test -f README.md'``): no sections and no
+        # verdict line. Its receipt is the engine's own exit line, and no
+        # output line may be red (the requirement form's rules).
+        if exit_code is None:
+            reasons.append("the log has no exit line of the engine")
+        elif exit_code != 0:
+            reasons.append(f"the check ended with exit {exit_code}")
+        red = next((line.strip() for line in output_lines if _red_line(line)), "")
+        if red:
+            reasons.append(f"a line is red: {red[:160]}")
+    elif verdict is None:
         reasons.append("the log does not end with the check's verdict line")
     elif verdict.group(1) == "RED":
         reasons.append("the check's verdict is RED")
+    if exit_code not in (None, 0) and not any("ended with exit" in reason for reason in reasons):
+        reasons.append(f"the check ended with exit {exit_code}")
     return {
         "green": not reasons,
         "verdict": "green" if not reasons else "red",
