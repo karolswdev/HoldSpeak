@@ -23,9 +23,20 @@ the record is the same whatever the channel:
   (``ProjectDeltaService.decide_proposal``, the review's own verbs).
 
 A Program step's agent question is the Program's item (``program:…:answer``,
-answered with text on the page). Not here: a desk agent's question outside a
-Program, a prepared send and a gate hold (the page only, by the owner's
-authority rule).
+answered with text on the page).
+
+- ``send:<id>``: a prepared send (``channel_sends`` ``prepared``). The page
+  only (``page_only``): its preview names the destination and the lines it
+  sends (UX-CANON A.9); **Send** runs ``channel.send`` and **Discard**
+  ``channel.discard`` through the kernel's operation path; never a Telegram tap.
+- ``coder:<agent>:<session>``: a desk agent's question outside a Program
+  (a HoldSpeak-launched agent's lane), answered with his text. The answer is
+  typed into the agent's own pane through the steering path
+  (``AgentResponder._deliver``, the path the desk's own answers take).
+  A permission prompt is authority and stays on the desk (IMP5).
+
+Not here: a gate hold (IMP5, #1711: a permission never travels, which
+supersedes DIRECTION §3's "the page only").
 """
 from __future__ import annotations
 
@@ -42,6 +53,8 @@ class Source:
     prefix = ""
     kind = ""
     kind_words = ""
+    #: DIRECTION §3: decided on the page only, never by a Telegram tap.
+    page_only = False
 
     def __init__(self, db: Any) -> None:
         self.db = db
@@ -57,6 +70,10 @@ class Source:
 
     def decide(self, ref: str, item: Mapping[str, Any], choice: str, *, via: str) -> dict[str, Any]:  # pragma: no cover
         raise NotImplementedError
+
+    def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str) -> dict[str, Any]:
+        """His text answer (a question source only)."""
+        raise ValueError("answer")
 
     def _base(self, ref: str, *, head: str, question: str, note: list[str], since: str,
               choices: list[tuple[str, str, str]]) -> dict[str, Any]:
@@ -281,7 +298,136 @@ class ProjectProposalSource(Source):
             choice, review_id=str(item.get("review_window_key") or "") or None)
 
 
-SOURCES = (DecisionSource, PhoneCallSource, MeetingProposalSource, ProjectProposalSource)
+class SendSource(Source):
+    """A prepared send that waits for his Send (the page only)."""
+
+    prefix, kind, kind_words = "send:", "send", "Ready to send"
+    page_only = True
+
+    def _registry(self) -> Any:
+        from .. import operations
+        from ..runtime.composition import notify_desk_changed
+        from .channel_service import ChannelService
+
+        return operations.for_runtime(channel_service=lambda: ChannelService(self.db, on_changed=notify_desk_changed))
+
+    def held(self, ref: str) -> Optional[dict[str, Any]]:
+        try:
+            row = self.db.channel_sends.get(self.ident(ref))
+        except Exception as exc:
+            log.debug(f"send {ref} not read: {exc}")
+            return None
+        return dict(row) if row and str(row.get("state") or "") == "prepared" else None
+
+    def body(self, ref: str, item: Mapping[str, Any]) -> dict[str, Any]:
+        import json as _json
+
+        document = item.get("document_json")
+        if isinstance(document, str):
+            try:
+                document = _json.loads(document or "{}")
+            except ValueError:
+                document = {}
+        document = document if isinstance(document, Mapping) else {}
+        title = " ".join(str(document.get("title") or item.get("document_ref") or "A document").split())
+        name = item.get("destination_name")
+        if not name:
+            try:
+                name = (self.db.channel_destinations.get(str(item.get("destination_id") or "")) or {}).get("name")
+            except Exception:
+                name = None
+        destination = " ".join(str(name or "its destination").split())
+        body = self._base(ref, head=f"{title} · to {destination}", question=f"Send it to {destination}?",
+                          note=[_sentence(f"{title} is ready to send to {destination}")],
+                          since=str(item.get("created_at") or ""),
+                          choices=[("send", "Send", f"HoldSpeak sends it to {destination} now."),
+                                   ("discard", "Discard", "Nothing is sent. The prepared send is dropped.")])
+        # UX-CANON A.9: egress is disclosed at the act, on the page that sends it.
+        payload = item.get("payload")
+        if isinstance(payload, (bytes, bytearray, memoryview)):
+            payload = bytes(payload).decode("utf-8", "replace")
+        # The frozen bytes the Send dispatches: what it sends, word for word.
+        body["preview"] = {"destination": destination, "lines": _preview_lines(payload or ""), "reversible": False}
+        body["page_only"] = True
+        return body
+
+    def decide(self, ref: str, item: Mapping[str, Any], choice: str, *, via: str) -> dict[str, Any]:
+        from ..principals import Principal, PrincipalKind
+
+        if via == "telegram":
+            raise ValueError(choice)  # the page only (DIRECTION §3)
+        name = {"send": "channel.send", "discard": "channel.discard"}.get(choice)
+        if name is None:
+            raise ValueError(choice)
+        result, _kernel = self._registry().invoke_receipted(Principal(PrincipalKind.OWNER, f"briefing-{via}"), name,
+                                                            {"send_id": self.ident(ref)})
+        return dict(result or {})
+
+
+class CoderQuestionSource(Source):
+    """A desk agent's question outside a Program, answered with his text."""
+
+    prefix, kind, kind_words = "coder:", "answer", "An agent asks"
+
+    def _responder(self) -> Any:
+        from .agent_responder import default_agent_responder
+
+        return default_agent_responder(self.db)
+
+    def held(self, ref: str) -> Optional[dict[str, Any]]:
+        from ..agent_context.models import is_blocked, wait_kind
+
+        key = self.ident(ref)
+        try:
+            responder = self._responder()
+            session = next((row for row in responder._sessions() if responder._key(row) == key), None)
+            launch = responder._launch_for(key)
+        except Exception as exc:
+            log.debug(f"agent question {ref} not read: {exc}")
+            return None
+        if session is None or launch is None or not is_blocked(session):
+            return None
+        if wait_kind(session) == "approve":
+            return None  # a permission prompt stays on the desk (IMP5)
+        question = str(getattr(session, "question", "") or "").strip()
+        if not question:
+            return None
+        return {"key": key, "agent": str(getattr(session, "agent", "") or ""), "question": question,
+                "launch": dict(launch), "since": str(getattr(session, "wait_started_at", "")
+                                                     or getattr(session, "updated_at", "") or "")}
+
+    def body(self, ref: str, item: Mapping[str, Any]) -> dict[str, Any]:
+        launch = item.get("launch") or {}
+        who = {"claude": "Claude Code", "codex": "Codex", "pi": "pi"}.get(str(item.get("agent") or ""),
+                                                                            "An agent")
+        title = " ".join(str(launch.get("title") or launch.get("story_title") or "").split())
+        body = self._base(ref, head=f"{who} · {title}" if title else who,
+                          question=_sentence(item.get("question"), 400),
+                          note=[_sentence(f"{who} asks you a question")], since=str(item.get("since") or ""),
+                          choices=[])
+        from .briefing_service import ANSWER_MAX_CHARS
+
+        body["text"] = {"id": "answer", "label": "Your answer", "max": ANSWER_MAX_CHARS,
+                        "consequence": f"HoldSpeak types your answer to {who}."}
+        return body
+
+    def decide(self, ref: str, item: Mapping[str, Any], choice: str, *, via: str) -> dict[str, Any]:
+        raise ValueError(choice)  # answered with text only
+
+    def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str) -> dict[str, Any]:
+        from .errors import ServiceError
+
+        said = " ".join(str(text or "").split())
+        sent = self._responder()._deliver(item.get("launch") or {}, str(item.get("key") or ""),
+                                          str(item.get("agent") or ""), said)
+        if str((sent or {}).get("status") or "") != "delivered":
+            raise ServiceError("not_kept", "Your answer did not reach the agent. Nothing was typed. Try again.",
+                               context={"status": 409})
+        return {"answered": True, "key": item.get("key")}
+
+
+SOURCES = (DecisionSource, PhoneCallSource, MeetingProposalSource, ProjectProposalSource, SendSource,
+           CoderQuestionSource)
 
 
 def source_for(db: Any, ref: Any) -> Optional[Source]:
@@ -293,5 +439,5 @@ def source_for(db: Any, ref: Any) -> Optional[Source]:
     return None
 
 
-__all__ = ["DecisionSource", "MeetingProposalSource", "PhoneCallSource", "ProjectProposalSource", "SOURCES", "Source",
-           "source_for"]
+__all__ = ["CoderQuestionSource", "DecisionSource", "MeetingProposalSource", "PhoneCallSource", "ProjectProposalSource",
+           "SOURCES", "SendSource", "Source", "source_for"]
