@@ -212,6 +212,23 @@ def _approved_by(reviews: Any) -> list[str]:
     })
 
 
+def _changes_requested(reviews: Any) -> list[dict[str, str]]:
+    """JRN14: the latest reviews that ask for changes (``CHANGES_REQUESTED``),
+    each ``{login, body, at}``: a person gate sends their words to the
+    builder as a round."""
+    if not isinstance(reviews, list):
+        return []
+    out = []
+    for review in reviews:
+        if not isinstance(review, dict) or str(review.get("state") or "").upper() != "CHANGES_REQUESTED":
+            continue
+        login = str((review.get("author") or {}).get("login") or "") if isinstance(review.get("author"), dict) else ""
+        if login:
+            out.append({"login": login, "body": str(review.get("body") or "").strip()[:4000],
+                        "at": str(review.get("submittedAt") or "")})
+    return sorted(out, key=lambda row: (row["at"], row["login"]))
+
+
 def _github_repo(url: str) -> str:
     path = urlparse(str(url or "")).path.strip("/").split("/")
     if len(path) >= 2 and urlparse(str(url or "")).hostname == "github.com":
@@ -436,6 +453,8 @@ class PrReceiptsService:
                 "review_decision": str(pr.get("reviewDecision") or "").lower(),
                 # Programs (§9b): the logins whose latest review approves it.
                 "approved_by": _approved_by(pr.get("latestReviews")),
+                # JRN14: who asked for changes, with their words.
+                "changes_requested": _changes_requested(pr.get("latestReviews")),
                 "merged_at": str(pr.get("mergedAt") or ""),
                 # PHILO-15 B58: when the PR was opened (the Brief's PR row).
                 "created_at": str(pr.get("createdAt") or ""),

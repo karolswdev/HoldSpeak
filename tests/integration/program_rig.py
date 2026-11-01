@@ -211,7 +211,9 @@ class FakeGitHub:
             follow = dict(record.get("follow_through") or {})
             ci = self.ci_by_number.get(pr["number"], self.ci)
             follow["pr"] = {"url": pr["url"], "number": pr["number"], "state": pr["state"], "ci": ci,
-                            "approved_by": list(pr["approved_by"])}
+                            "approved_by": list(pr["approved_by"]),
+                            # JRN14: a review that asks for changes, with its words.
+                            **({"changes_requested": list(pr["changes_requested"])} if pr.get("changes_requested") else {})}
             follow["pr_state"] = f"pr_{pr['state']}"
             self.rig.ledger.update(record["launch_id"], follow_through=follow)
 
