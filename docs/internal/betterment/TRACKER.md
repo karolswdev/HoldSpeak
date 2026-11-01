@@ -356,6 +356,19 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | DIR11 | The documents (`docs/reach.md` and the rest) | Shipped (PG-DOCS-2 PR) | `docs/reach.md` and the rest. |
 | DIR12 | Email as a channel | Parked | Until he asks. |
 
+**PG-IMPORT** (open, 7 slices IMP1–IMP7; design `programs/BROCREW-IMPORT-2026-11-01.md`): the best of BroCrew, the owner's sister project, rebuilt on our engine: the step report in registers, the to-do row and the ending word, wait sentences and Since you were last here, never wider than the parent, knowledge escalates and authority never does, take it over and hand it back, the forest.
+
+| Slice | What | State | Note |
+|---|---|---|---|
+| IMP0 | The design note | Shipped (PG-IMPORT design PR) |  |
+| IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Open | Next PR. |
+| IMP2 | The to-do row (Done, Can't do it); the ending word | Open | After IMP1. |
+| IMP3 | Wait sentences; Since you were last here on Today | Open |  |
+| IMP4 | Never wider than the parent (closes the open ruling) | Open |  |
+| IMP5 | The `because` on each routed request; four honest refusals of a late answer | Open |  |
+| IMP6 | Take it over, hand it back, on a step's lane | Open |  |
+| IMP7 | The forest | Later | With handoffs and J5. |
+
 ## Phone (`phone/RECIPE.md`): 0 of 16
 
 | Slice | What | State | Note |
