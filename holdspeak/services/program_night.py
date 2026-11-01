@@ -22,10 +22,32 @@ approved (§15, 2026-10-31).
   ``night_digest`` checkpoint), on top of the handover note as "Since last
   night", and sent through Reach (``ReachService.night_line``).
 
-Not built here: the Dreaming template, the backlog read by rule (canon
-scanner residues, failing tests), the stop after two red steps, a Working
-step parked at the window's end, ``within`` as a core-question bound on the
-diff, and the red-main hold (JRN3).
+2026-11-01 (J2 on the hub, the rest of LANG12, JRN3, JRN4):
+
+- **The Dreaming template** (``program_templates.DREAMING``).
+- **The backlog by rule** (:func:`read_backlog`), once at the window's
+  start: the open Door tasks with the word "dream", and the Later tasks of
+  the Program's own findings; each becomes one step for tonight's planner
+  (as Add to tonight; YOLO adds it and says so; below YOLO one line says how
+  many wait for his Add to tonight), never more than the night's room.
+- **The red-main hold** (JRN3, :func:`red_main_filter`): when the base
+  branch's newest finished run on GitHub (``gh run list``) failed, the night
+  plans ONE step "Make main green" first and holds the rest ("waits: main is
+  red") until a run is green again.
+- **Two red steps in a row stop the night** ("the night stopped after two
+  red steps"; the digest says so).
+- **The window's end** (:func:`end_working`): a step whose agent still works
+  is asked to commit what it has; at its turn's end (or 10 minutes later) the
+  engine commits what is left and parks it: "Night ended; parked with a
+  commit".
+- **The morning digest goes through Reach** (JRN4): ``night_line`` carries
+  the night's Your turn items; Reach sends it at the digest hour as the one
+  morning message, with a briefing page link for the first held item.
+
+Not built here: the canon scanner's residues and the failing tests of the
+last main run as backlog sources, ``within`` as a core-question bound on the
+diff, and one briefing page for several items (the page's digest half is
+DIR9).
 """
 from __future__ import annotations
 
@@ -52,6 +74,18 @@ NOTE_HOURS = 20
 ITEM_KINDS = ("action", "note", "program_step")
 #: The checkpoint kind of a night's digest.
 DIGEST_KIND = "night_digest"
+#: The checkpoint kinds of a night's backlog read, its red-main hold and its stop.
+BACKLOG_KIND, RED_MAIN_KIND, STOP_KIND = "night_backlog", "night_red_main", "night_stop"
+#: A night stops after this many red steps in a row (PG-LANG §5.5).
+RED_IN_A_ROW = 2
+#: How long a step's agent has to commit what it has after the window's end.
+END_MINUTES = 10
+#: How long the base branch's state is read again (seconds).
+RED_READ_SECONDS = 120
+_DREAM = __import__("re").compile(r"\bdream(s|ing)?\b", __import__("re").I)
+_RED_CACHE: dict[str, tuple[float, Optional[str]]] = {}
+#: The step states a working agent holds at the window's end.
+_AGENT_STATES = ("briefed", "working", "waiting", "limited", "check_failed")
 _PLANNING: dict[str, threading.Thread] = {}
 
 ITEM_RULES = """RULES
@@ -122,6 +156,11 @@ def night_room(runner: Any, program: Mapping[str, Any], ready: list[dict[str, An
         for step in ready:
             runner._hold(step, f"sleeps until {night['start']}")
         return 0
+    stopped = _red_in_a_row(runner, program, start, end)
+    if stopped:
+        for step in ready:
+            runner._hold(step, f"the night stopped after {RED_IN_A_ROW} red steps")
+        return 0
     most = night.get("max_steps")
     if not most:
         return None
@@ -133,6 +172,268 @@ def night_room(runner: Any, program: Mapping[str, Any], ready: list[dict[str, An
             runner._hold(step, f"the night's {most} step{'s' if int(most) != 1 else ''} ran")
         return 0
     return room
+
+
+def _night_rows(runner: Any, program: Mapping[str, Any], start: datetime, end: datetime) -> list[dict[str, Any]]:
+    return [step for step in runner.service.store.list_steps(program["id"])
+            if not step.get("race_of") and _between(step.get("started_at"), start, end)]
+
+
+def _red(step: Mapping[str, Any]) -> bool:
+    from .program_service import PARKED_BY_ENGINE
+
+    return step.get("state") == "failed" or (step.get("state") == "parked" and step.get("parked_by") == PARKED_BY_ENGINE
+                                             and not str(step.get("parked_reason") or "").startswith("Night ended"))
+
+
+def _red_in_a_row(runner: Any, program: Mapping[str, Any], start: datetime, end: datetime) -> bool:
+    """The night's last ``RED_IN_A_ROW`` finished steps are all red; the
+    first time, one ``night_stop`` line says so."""
+    from .program_service import CLOSED_STATES
+
+    ended = sorted((step for step in _night_rows(runner, program, start, end)
+                    if step.get("state") in CLOSED_STATES or step.get("state") == "failed"),
+                   key=lambda step: str(step.get("ended_at") or step.get("updated_at") or ""))
+    last = ended[-RED_IN_A_ROW:]
+    if len(last) < RED_IN_A_ROW or not all(_red(step) for step in last):
+        return False
+    key = night_key(start)
+    service = runner.service
+    if not any(row.get("kind") == STOP_KIND and (row.get("undo") or {}).get("night") == key
+               for row in service.store.list_checkpoints(program["id"])):
+        service.store.add_checkpoint(step_id="", program_id=program["id"], at=service._clock(), by="engine",
+                                     line=f"The night stopped after {RED_IN_A_ROW} red steps in a row",
+                                     kind=STOP_KIND, undo={"night": key})
+    return True
+
+
+# ── JRN3: no step is handed while the base branch is red ─────────────
+
+def base_red(runner: Any, program: Mapping[str, Any]) -> Optional[str]:
+    """The base branch's newest finished run on GitHub (``gh run list``), in
+    words when it failed ("Nightly failed on 1a2b3c4d"); ``None`` when it is
+    green, still running, or cannot be read (no gh, no remote: the night is
+    never held on a guess). Read again after ``RED_READ_SECONDS``."""
+    import json as _json
+
+    root = str(program.get("repo_root") or "")
+    base = str(program.get("base_branch") or "main")
+    key = f"{program['id']}:{root}:{base}"
+    cached = _RED_CACHE.get(key)
+    if cached is not None and time.monotonic() - cached[0] < RED_READ_SECONDS:
+        return cached[1]
+    words: Optional[str] = None
+    try:
+        proc = runner._run(["gh", "run", "list", "--branch", base, "--limit", "5", "--json",
+                            "conclusion,status,name,headSha"], cwd=root)
+        rows = _json.loads(proc.stdout or "[]") if proc.returncode == 0 else []
+    except Exception as exc:
+        log.debug(f"the base branch's runs not read: {exc}")
+        rows = []
+    done = [row for row in rows if isinstance(row, Mapping) and str(row.get("status") or "") == "completed"]
+    if done and str(done[0].get("conclusion") or "") in ("failure", "timed_out", "startup_failure"):
+        words = f"{done[0].get('name') or 'the check'} failed on {str(done[0].get('headSha') or '')[:8]}".strip()
+    _RED_CACHE[key] = (time.monotonic(), words)
+    return words
+
+
+def _green_step(steps: list[Mapping[str, Any]], key: str) -> Optional[Mapping[str, Any]]:
+    from .program_service import CLOSED_STATES
+
+    return next((step for step in steps if ((step.get("facts") or {}).get("night_green") or {}).get("night") == key
+                 and step.get("state") not in CLOSED_STATES), None)
+
+
+def red_main_filter(runner: Any, program: Mapping[str, Any], ready: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The Ready steps the night may hand now. Main red: ONE step "Make main
+    green" is planned first (once a night) and is the only one handed; the
+    rest wait ("waits: main is red"). Green again: one line, and all go on."""
+    night = program.get("night")
+    if not isinstance(night, Mapping) or not night.get("start"):
+        return ready
+    service = runner.service
+    start, _end = window(night, runner._now())
+    key = night_key(start)
+    red = base_red(runner, program)
+    rows = [row for row in service.store.list_checkpoints(program["id"]) if row.get("kind") == RED_MAIN_KIND
+            and (row.get("undo") or {}).get("night") == key]
+    if red is None:
+        if rows and rows[0].get("choice") == "red":
+            service.store.add_checkpoint(step_id="", program_id=program["id"], at=service._clock(), by="engine",
+                                         line="Main is green again; the night goes on", kind=RED_MAIN_KIND,
+                                         choice="green", undo={"night": key})
+        return ready
+    steps = service.store.list_steps(program["id"])
+    green = _green_step(steps, key)
+    if green is None:
+        from ..kernel.program_ops import RUNNER
+
+        base = str(program.get("base_branch") or "main")
+        first = next((step for step in steps if step["state"] in ("planned", "ready") and not step.get("race_of")), None)
+        before = {row["id"] for row in steps}
+        service.plan(RUNNER, program["id"], steps=[{
+            "title": f"Make {base} green",
+            "brief": (f"The base branch {base} is red: {red}. Find the cause in that run's log and make it green. "
+                      "Change only what the red run names; add no feature."),
+        }], before=first["id"] if first else None, waits=False, by="engine")
+        green = next(row for row in service.store.list_steps(program["id"]) if row["id"] not in before)
+        facts = dict(green.get("facts") or {})
+        facts["night_green"] = {"night": key, "red": red}
+        green["facts"] = facts
+        service.save_step(green)
+        service.store.add_checkpoint(step_id=green["id"], program_id=program["id"], at=service._clock(), by="engine",
+                                     line=f"Main is red ({red}): step {green['ordinal']} makes it green first; "
+                                          "the rest wait", kind=RED_MAIN_KIND, choice="red", undo={"night": key})
+        service.changed(program["id"], green["id"], verb="night")
+    elif not rows or rows[0].get("choice") != "red":
+        service.store.add_checkpoint(step_id=green["id"], program_id=program["id"], at=service._clock(), by="engine",
+                                     line=f"Main is red again ({red}); the rest wait", kind=RED_MAIN_KIND,
+                                     choice="red", undo={"night": key})
+    # The insert renumbered the steps: read the Ready rows again.
+    ready = [fresh for fresh in (service.store.get_step(step["id"]) for step in ready) if fresh is not None]
+    allowed = []
+    for step in ready:
+        if step["id"] == green["id"]:
+            allowed.append(step)
+        else:
+            runner._hold(step, "waits: main is red")
+    return allowed
+
+
+# ── the window's end: a working step commits what it has and parks ───
+
+def end_working(runner: Any, program: Mapping[str, Any], start: datetime, end: datetime) -> int:
+    """After the window: each step whose agent still holds it is asked once
+    to commit what it has; at its turn's end, or ``END_MINUTES`` after the
+    ask, the engine commits what is left and parks it. The steps still
+    waiting for their agent."""
+    from .program_service import PARKED_BY_ENGINE
+
+    service = runner.service
+    waiting = 0
+    now = runner._now()
+    for step in _night_rows(runner, program, start, end):
+        if step.get("state") not in _AGENT_STATES or not step.get("launch_id"):
+            continue
+        facts = dict(step.get("facts") or {})
+        asked = facts.get("night_end")
+        flight = runner.flight(str(step["launch_id"]))
+        turn_over = str(flight.get("state") or "") not in ("working", "starting", "")
+        if not asked:
+            if not turn_over:
+                try:
+                    runner.prompt_builder(step, "HoldSpeak: the night ended. Commit what you have on this branch "
+                                                "now, then end your turn.")
+                except Exception as exc:
+                    log.info(f"the night's end was not typed: {exc}")
+                facts["night_end"] = {"at": service._clock(), "turn": str(flight.get("turn_id") or "")}
+                step["facts"] = facts
+                service.save_step(step)
+                service._checkpoint(program, step, "engine", "The night ended: asked the agent to commit what it has")
+                waiting += 1
+                continue
+        else:
+            at = _parse(asked.get("at"))
+            late = at is not None and now - at >= timedelta(minutes=END_MINUTES)
+            ended = turn_over and str(flight.get("turn_id") or "") != str(asked.get("turn") or "")
+            if not (ended or late or turn_over):
+                waiting += 1
+                continue
+        head = runner.commit_worktree(program, step) or runner._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
+        with_commit = bool(head) and head != (facts.get("base_commit") or step.get("head_commit") or "")
+        facts.pop("night_end", None)
+        service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, facts=facts,
+                           head_commit=head or step.get("head_commit"),
+                           parked_reason="Night ended; parked with a commit" if with_commit else "Night ended; parked",
+                           line="Night ended; parked with a commit" if with_commit else "Night ended; parked")
+    return waiting
+
+
+# ── the backlog by rule, at the window's start ───────────────────────
+
+def backlog_items(service: Any, program: Mapping[str, Any]) -> list[dict[str, str]]:
+    """The open Door tasks the night may take, by rule (never invented):
+    the word "dream" in the task, or a Later task of one of this Program's
+    own findings. ``[{kind, id, task}]``, oldest first."""
+    own = {step["id"] for step in service.store.list_steps(program["id"])}
+    out = []
+    try:
+        rows = service.db.meetings.list_action_items(include_completed=False)
+    except Exception as exc:
+        log.debug(f"the backlog was not read: {exc}")
+        return []
+    for row in reversed(rows):
+        task = str(getattr(row, "task", "") or "")
+        source_type = str(getattr(row, "source_type", "") or "")
+        source_ref = str(getattr(row, "source_ref", "") or "")
+        later = source_type == "program_step" and source_ref.split(":")[1:2] and source_ref.split(":")[1] in own
+        if _DREAM.search(task) or later:
+            out.append({"kind": "action", "id": str(row.id), "task": task})
+    return out
+
+
+def wake_parked(runner: Any, program: Mapping[str, Any]) -> int:
+    """At the window's start, a step the last night parked at its end goes
+    on from its checkpoint, in its own worktree (Resume's path)."""
+    from .program_service import NIGHT_ENDED
+
+    service = runner.service
+    woke = 0
+    for step in service.store.list_steps(program["id"]):
+        if step.get("state") == "parked" and str(step.get("parked_reason") or "").startswith(NIGHT_ENDED):
+            step["parked_by"], step["parked_reason"] = None, None
+            service.transition(program, step, "ready", line="Goes on tonight from where the night ended")
+            woke += 1
+    if woke:
+        fresh = service._program(program["id"])
+        if fresh.get("closed_at"):
+            # A Done night Program opens again for tonight (one record, one Note).
+            fresh["closed_at"] = None
+            service.store.save_program(fresh)
+            service._checkpoint(fresh, None, "engine", "Opened again for tonight")
+        service.changed(program["id"], None, verb="night")
+    return woke
+
+
+def read_backlog(runner: Any, program: Mapping[str, Any], start: datetime, end: datetime) -> int:
+    """Once a night, at its start: the backlog's items become steps for
+    tonight's planner, up to the night's room. YOLO adds them and says so
+    (Overturn); below YOLO one line says how many wait for his Add to
+    tonight. The count added."""
+    from ..principals import Principal, PrincipalKind
+    from .program_rules import level_of
+    from .program_service import CLOSED_STATES
+
+    service = runner.service
+    key = night_key(start)
+    if any(row.get("kind") == BACKLOG_KIND and (row.get("undo") or {}).get("night") == key
+           for row in service.store.list_checkpoints(program["id"])):
+        return 0
+    taken = {((step.get("facts") or {}).get("night_item") or {}).get("ref") for step in service.store.list_steps(program["id"])}
+    items = [item for item in backlog_items(service, program) if f"action:{item['id']}" not in taken]
+    night = program.get("night") or {}
+    open_now = sum(1 for step in service.store.list_steps(program["id"])
+                   if step.get("state") not in CLOSED_STATES and step.get("state") != "failed")
+    room = max(0, int(night.get("max_steps") or len(items) + open_now) - open_now)
+    items = items[:room]
+    added = 0
+    if items and level_of(program.get("control")) == "yolo":
+        engine = Principal(PrincipalKind.AGENT, "program-engine:night-backlog")
+        for item in items:
+            try:
+                if add_to_night(service, engine, kind=item["kind"], item_id=item["id"], program_id=program["id"])["added"]:
+                    added += 1
+            except Exception as exc:
+                log.info(f"backlog item {item['id']} not added: {exc}")
+        line = f"Read the backlog for tonight: {added} item{'s' if added != 1 else ''} added"
+    elif items:
+        line = (f"The backlog has {len(items)} item{'s' if len(items) != 1 else ''} for tonight; "
+                "Add to tonight takes each")
+    else:
+        line = "Read the backlog for tonight: nothing new"
+    service.store.add_checkpoint(step_id="", program_id=program["id"], at=service._clock(), by="engine", line=line,
+                                 kind=BACKLOG_KIND, undo={"night": key, "items": [item["id"] for item in items]})
+    return added
 
 
 def step_hold(runner: Any, program: Mapping[str, Any], step: dict[str, Any]) -> bool:
@@ -312,7 +613,7 @@ def digest_lines(service: Any, program: Mapping[str, Any], start: datetime, end:
     done = [step for step in steps if not step.get("race_of") and step.get("state") in FINISHED_STATES
             and _between(step.get("ended_at"), start, end)]
     parked = [step for step in steps if step.get("state") == "parked"
-              and _between(step.get("ended_at") or step.get("updated_at"), start, end)]
+              and _between(step.get("ended_at") or step.get("updated_at"), start, end + timedelta(hours=DIGEST_HOURS))]
     waits = [item for item in service._turn(program, steps) if item.get("kind") != "answer"]
     splits = 0
     for row in service.store.list_checkpoints(program["id"]):
@@ -322,11 +623,27 @@ def digest_lines(service: Any, program: Mapping[str, Any], start: datetime, end:
             splits += 1
         elif row.get("kind") == "step_change" and ((row.get("undo") or {}).get("fields") or {}).get("split"):
             splits += 1
+    stopped = any(row.get("kind") == STOP_KIND and (row.get("undo") or {}).get("night") == night_key(start)
+                  for row in service.store.list_checkpoints(program["id"]))
+    red_rows = sorted((row for row in service.store.list_checkpoints(program["id"])
+                       if row.get("kind") == RED_MAIN_KIND and (row.get("undo") or {}).get("night") == night_key(start)),
+                      key=lambda row: str(row.get("at") or ""))
+    waited = ""
+    if red_rows:
+        began = _parse(red_rows[0].get("at"))
+        green = next((row for row in red_rows if row.get("choice") == "green"), None)
+        until = _parse(green.get("at")) if green else end
+        if began and until:
+            from .program_service import duration_words
+
+            waited = f"waited {duration_words(int((until - began).total_seconds()))} for a green main"
     parts = [part for part in (
         _plural(len(done), "{n} step done", "{n} steps done") if done else "",
         f"{len(parked)} parked" if parked else "",
         _plural(len(waits), "{n} waits on you", "{n} wait on you") if waits else "",
         f"{splits} split" if splits else "",
+        waited,
+        f"stopped after {RED_IN_A_ROW} red steps" if stopped else "",
     ) if part]
     if not parts:
         return []
@@ -377,8 +694,11 @@ def write_digest(runner: Any, program: Mapping[str, Any], start: datetime, end: 
                                  line=lines[0][:400], kind=DIGEST_KIND, undo={"night": key, "lines": lines})
     service.changed(program["id"], None, verb="night")
     sent: Optional[dict[str, Any]] = None
+    held = [f"program:{program['id']}:{item['id']}" for item in service._turn(program, service.store.list_steps(program["id"]))
+            if item.get("kind") != "answer"]
     try:
-        sent = _reach(runner).night_line(f"program:{program['id']}:night:{key}", f"{program['title']}\n{lines[0]}")
+        sent = _reach(runner).night_line(f"program:{program['id']}:night:{key}", f"{program['title']}\n{lines[0]}",
+                                         items=held)
     except Exception as exc:
         log.info(f"the night's digest was not sent: {exc}")
     return {"night": key, "lines": lines, "reach": sent}
@@ -396,6 +716,12 @@ def tick_nights(runner: Any) -> list[str]:
         start, end = window(night, now)
         local = now.astimezone()
         if start <= local < end:
+            if program.get("state") in ("running", "waiting", "failed") or program.get("closed_at"):
+                try:
+                    if wake_parked(runner, program) + read_backlog(runner, program, start, end):
+                        moved.append(program["id"])
+                except Exception as exc:
+                    log.error(f"the backlog of {program['id']} was not read: {exc}", exc_info=True)
             pending = [step for step in runner.service.store.list_steps(program["id"])
                        if (step.get("facts") or {}).get("night_plan") == "pending"
                        and step["state"] in ("planned", "ready")]
@@ -411,6 +737,8 @@ def tick_nights(runner: Any) -> list[str]:
             continue
         # After the window (the window that started last has ended): its digest.
         if end <= local < end + timedelta(hours=DIGEST_HOURS):
+            if end_working(runner, program, start, end):
+                continue  # the digest waits for the parked rows
             if write_digest(runner, program, start, end) is not None:
                 moved.append(program["id"])
     return moved
@@ -520,6 +848,7 @@ def add_to_night(service: Any, principal: Any, *, kind: Any, item_id: Any, line:
             "say": line_words, "program": service.get(principal, program["id"])}
 
 
-__all__ = ["CONTRACT", "DIGEST_KIND", "ITEM_KINDS", "add_to_night", "ask_item", "digest_lines", "inside",
-           "messages", "night_program", "night_room", "note_section", "plan_pending", "read_item", "step_hold",
-           "tick_nights", "window", "write_digest"]
+__all__ = ["BACKLOG_KIND", "CONTRACT", "DIGEST_KIND", "ITEM_KINDS", "RED_MAIN_KIND", "STOP_KIND", "add_to_night",
+           "ask_item", "backlog_items", "base_red", "wake_parked", "digest_lines", "end_working", "inside", "messages",
+           "night_program", "night_room", "note_section", "plan_pending", "read_backlog", "read_item",
+           "red_main_filter", "step_hold", "tick_nights", "window", "write_digest"]

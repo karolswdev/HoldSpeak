@@ -90,4 +90,26 @@ def make_night(rig: Rig, *, repository: Optional[str] = None, control: str = "yo
     return pid, steps
 
 
-__all__ = ["NIGHT_ITEMS", "NIGHT_LINE", "SPLIT_STEP", "WITHIN", "door_task", "make_night", "make_split"]
+#: Journey J2's standing backlog (PG-LANG §5.5): Door tasks with the word
+#: "dream", read by rule at the window's start (no Add to tonight press).
+BACKLOG_ITEMS = (
+    "dream: The Notes window's empty state is a grey sentence; give it the kit's empty object.",
+    "dream: The Programs window's status bar says \"0 skipped\" when nothing was skipped.",
+)
+
+
+def make_dreaming(rig: Rig, *, repository: Optional[str] = None) -> str:
+    """Journey J2's Program from the Dreaming template, with the backlog's
+    Door tasks on the Door (not added: the window's start reads them).
+    Started; the check is the rig's."""
+    for words in BACKLOG_ITEMS:
+        door_task(rig, words)
+    pid = rig.service.create(OWNER, title="Dreaming · HoldSpeak", goal="Small fixes on the idle engine at night.",
+                             repository=repository or str(rig.repo), check_command=f"sh {FAKE_CHECK}",
+                             template="dreaming")["id"]
+    rig.service.start(OWNER, pid)  # empty: the night's backlog fills it
+    return pid
+
+
+__all__ = ["BACKLOG_ITEMS", "NIGHT_ITEMS", "NIGHT_LINE", "SPLIT_STEP", "WITHIN", "door_task", "make_dreaming",
+           "make_night", "make_split"]
