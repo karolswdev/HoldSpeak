@@ -771,7 +771,7 @@ Design `DIRECTION-2026-10-31.md` (#1669; slices §12), canvas
 | DIR4 | HUB + FACES | `held_later` (schema 91), `hs/services/reach_service.py`, Later ▾, `phone.later`, YOLO's provisional park | Merged #1678 |
 | DIR5 | HUB | `hs/services/telegram_reach.py`: keystore, pairing, poll, buttons, replies | Merged #1678 |
 | DIR6 | FACES | Settings ▸ Reach (`ReachSettings.tsx`), Reach you moved from Calls ▸ Phone | Merged #1678 |
-| DIR7 | HUB + FACES | the ladder and the morning digest: Telegram's rung and a plain digest (#1678), the ladder in Settings ▸ Reach (#1704), Since last night in the night's morning message (#1697); the Cadence brief in the digest is not | Open (the Cadence brief) |
+| DIR7 | HUB + FACES | the ladder and the morning digest: Telegram's rung and a plain digest (#1678), the ladder in Settings ▸ Reach (#1704), Since last night in the night's morning message (#1697), the Cadence brief's line in the one morning message (#1749) | Merged |
 | DIR8 | HUB | the call that decides (= JRN7), `hs/calls/decide.py`, `docs/calls.md` "Decide on a call" | Merged #1679 |
 | DIR9 | HUB + FACES | a Telegram sentence as a shaping preview with Apply · Not this (#1678); one page for several held items (#1703, face #1735) | Merged |
 | DIR10 | HUB + FACES | the other held items as packages: a decision and a held call (#1703), proposals with their preview, an agent's question, Door and blocker lines (#1708), a prepared send on its page only, a desk agent's question (#1739). A gate hold stays on the desk (IMP5, #1711) | Merged |
@@ -800,7 +800,7 @@ Design `DIRECTION-2026-10-31.md` (#1669; slices §12), canvas
   but the answer goes through `reach_service.parse_later`, where "tomorrow" is
   the hour quiet hours end (08:00 by default).
 
-**Open.** DIR7's Cadence brief in the digest; his live verdict on the page and
+**Open.** His live verdict on the page and
 Settings ▸ Reach.
 
 ## PG-JOURNEYS. Slices from the journeys (2026-10-31)

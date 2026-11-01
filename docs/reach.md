@@ -47,7 +47,15 @@ Reach and the Phone use one set of quiet hours. During quiet hours, Telegram sen
 
 **Digest** sets the time of the daily digest: **End of quiet hours** (the default), or 06:00, 07:00, 08:00, 09:00, 10:00, 12:00 or 18:00. HoldSpeak sends one digest a day at that time, only when something waits on you, and not when Telegram is **Off**. **Send the digest now** sends it at once (Telegram must be paired).
 
-The digest is a plain list today: "3 wait on you", one line for each item ("Finding · <program> · step 2"), and "Open your desk to see each one." It has no buttons.
+The digest is a plain list: "3 wait on you", one line for each item ("Finding · <program> · step 2"), and "Open your desk to see each one." It has no buttons.
+
+**One morning message.** In the morning you get one message, not three:
+
+- After a night program, the message is the night's "Since last night" line, with how many of the night's items wait on you and their page link.
+- Else it is the digest, when something waits on you.
+- When a Cadence loop is due, the same message ends with the Cadence brief's line, for example "Cadence: Create issue: watchdog. 3 open loops." When nothing waits, that line goes alone.
+
+While Telegram is not **Off**, Cadence sends no morning brief of its own. Send `/brief` to the bot for the whole brief with its buttons.
 
 **Later means** sets what a plain "later" means:
 

@@ -45,6 +45,9 @@ POLICY = "reach"
 #: PG-LANG LANG12: the night digest lines (one per night per Program), kept the last 30.
 NIGHT_POLICY = "reach_night_lines"
 NIGHT_KEPT = 30
+#: PG-DIRECTION DIR7: Cadence's daily push row. The morning message that
+#: carries the Cadence line marks it sent, so Cadence pushes no second one.
+CADENCE_DAILY = "daily_brief"
 #: Settings ▸ Reach ▸ When to reach you ▸ Telegram.
 TELEGRAM_MODES = ("at_once", "after_10", "digest", "off")
 TELEGRAM_MODE_WORDS = {"at_once": "At once", "after_10": "After 10 min", "digest": "Only the digest", "off": "Off"}
@@ -533,11 +536,15 @@ class ReachService:
             for row in rows:
                 if row.get("sent_at") or not self._night_due(row, now):
                     continue
+                text = self._night_text(telegram, row)
+                cadence = self._cadence_today(now)  # DIR7: the one morning message carries it
                 try:
-                    telegram.line(self._night_text(telegram, row))
+                    telegram.line(f"{text}\n{cadence}" if cadence else text)
                 except ServiceError as exc:
                     log.info(f"reach: the night line was not sent: {exc.code}")
                     continue
+                if cadence:
+                    self._cadence_carried(now)
                 row["sent_at"] = _utc(now)
                 sent.append(str(row.get("ref")))
             if sent:
@@ -579,7 +586,9 @@ class ReachService:
 
     def _maybe_digest(self, telegram: Any, now: datetime, quiet: tuple[int, int],
                       items: Mapping[str, Mapping[str, Any]]) -> Optional[dict[str, Any]]:
-        """One message a day at his digest time, only when something waits."""
+        """One message a day at his digest time, only when something waits:
+        the held items, and the Cadence brief's one line when a loop is due
+        (DIR7). The night's line, when it went, was that message."""
         if self.settings()["telegram"] == "off" or in_quiet(now, quiet):
             return None
         local = now.astimezone()
@@ -588,13 +597,54 @@ class ReachService:
         day = local.strftime("%Y-%m-%d")
         last = self._digest_day()
         if last == day:
-            return None
+            return None  # the night's line was the one message
         waiting = [item for item in items.values() if not item.get("later")]
-        if not waiting:
+        cadence = self._cadence_today(now)
+        if not waiting and not cadence:
             return None
-        sent = telegram.digest(list(waiting))
+        sent = telegram.digest(list(waiting), tail=cadence) if waiting else telegram.line(cadence or "")
         self._set_digest_day(day)
+        if cadence:
+            self._cadence_carried(now)
         return sent
+
+    # ── PG-DIRECTION DIR7: the Cadence brief's one line ──────────────
+
+    def cadence_line(self) -> Optional[str]:
+        """The Cadence brief's one line when a loop is due (the loops its
+        morning push names), else None: "Cadence: Reply to Ana. 3 open loops." """
+        try:
+            from ..cadence.brief import build_brief
+
+            brief = build_brief(self.db, now=self.now())
+        except Exception as exc:
+            log.debug(f"reach: no cadence brief: {exc}")
+            return None
+        if brief.is_empty:
+            return None
+        loops = "1 open loop" if brief.open_count == 1 else f"{brief.open_count} open loops"
+        head = str(brief.headline or "").strip().rstrip(".")
+        return f"Cadence: {head}. {loops}."[:300]
+
+    def _cadence_today(self, now: datetime) -> Optional[str]:
+        """The line, once a day, at or after the digest hour."""
+        local = now.astimezone()
+        if local.hour < self.digest_hour():
+            return None
+        try:
+            policy = self.db.cadence.get_policy(CADENCE_DAILY)
+            last = (getattr(policy, "config", None) or {}).get("last_sent_date") if policy else None
+        except Exception:
+            last = None
+        if last == local.strftime("%Y-%m-%d"):
+            return None
+        return self.cadence_line()
+
+    def _cadence_carried(self, now: datetime) -> None:
+        from ..cadence.models import CadencePolicy
+
+        self.db.cadence.upsert_policy(CadencePolicy(name=CADENCE_DAILY,
+                                                    config={"last_sent_date": now.astimezone().strftime("%Y-%m-%d")}))
 
     def _digest_day(self) -> Optional[str]:
         try:
@@ -617,7 +667,7 @@ class ReachService:
         waiting = [item for item in self._open_items().values() if not item.get("later")]
         if not waiting:
             raise ReachRefused("nothing_waits", "Nothing waits on you now. No digest was sent.", status=409)
-        return telegram.digest(waiting)
+        return telegram.digest(waiting, tail=self.cadence_line())
 
     # ── the reach thread ─────────────────────────────────────────────
 
@@ -661,6 +711,21 @@ class ReachService:
     def stop(self) -> None:
         self._stop.set()
         self._wake.set()
+
+
+def carries_cadence(db: Any) -> bool:
+    """DIR7: Reach's morning message carries the Cadence brief's line while
+    its Telegram rung is on, so Cadence's own daily push stays quiet."""
+    from .telegram_reach import telegram_on
+
+    if not telegram_on():
+        return False
+    try:
+        policy = db.cadence.get_policy(POLICY)
+        mode = (getattr(policy, "config", None) or {}).get("telegram") if policy else None
+    except Exception:
+        mode = None
+    return (mode or DEFAULTS["telegram"]) != "off"
 
 
 def _utc_cmp(stamp: Any) -> str:
