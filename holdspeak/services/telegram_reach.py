@@ -535,9 +535,10 @@ class TelegramReach:
         self._changed(package_id, "sent")
         return {"id": package_id, "message_id": message_id, "text": text}
 
-    def digest(self, items: list[Mapping[str, Any]]) -> dict[str, Any]:
+    def digest(self, items: list[Mapping[str, Any]], *, tail: Optional[str] = None) -> dict[str, Any]:
         """One message: the count and one line per item with its kind word
-        (§5 "The digest"). No buttons for the items."""
+        (§5 "The digest"), and ``tail`` (DIR7: the Cadence brief's line). No
+        buttons for the items."""
         from .briefing_service import KIND_WORDS
 
         chat = paired_chat()
@@ -545,9 +546,11 @@ class TelegramReach:
             raise TelegramRefused("telegram_not_paired", "Pair Telegram first.")
         rows = items[:12]
         head = "1 waits on you" if len(items) == 1 else f"{len(items)} wait on you"
-        lines = [head] + [_line(f"{KIND_WORDS.get(str(item.get('kind')), 'Waits on you')} · "
-                                f"{item.get('program_title')} · step {item.get('ordinal')}") for item in rows]
+        lines = [head] + [_line(f"{KIND_WORDS.get(str(item.get('kind')), 'Waits on you')} · {item.get('program_title')}"
+                                + (f" · step {item['ordinal']}" if item.get("ordinal") else "")) for item in rows]
         lines.append("Open your desk to see each one.")
+        if tail:
+            lines.append(_line(tail))
         text = fence("\n".join(lines))
         result = self._api("sendMessage", {"chat_id": chat["id"], "text": text})
         return {"ok": bool(result.get("ok")), "text": text, "items": len(rows)}

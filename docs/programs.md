@@ -61,7 +61,7 @@ Each run makes one program and starts it:
 
 The run's result is the program: its row in **Results** shows the program and its state now, and a press opens the Program window. The Program window says "From the automation Nightly fixes". While the last program that the automation made still runs, a new run starts nothing and says so.
 
-When the model library has an engine that pi can run on, **New automation** also offers **Overnight on the home box**: each weekday at 23:30, pi builds on that engine when it is idle, Claude Code reviews, and the program runs at YOLO. Its schedule stays off until you turn it on. Phone calls are off for it.
+When the model library has an engine that pi can run on, **New automation** also offers **Overnight on the home box**: each weekday at 23:30, pi builds and reviews on that engine when it is idle, and the program runs at YOLO. Its schedule stays off until you turn it on. Phone calls are off for it.
 
 Tools and agents use `automation.create` with `do: "run_program"` and the fields `program_template`, `program_control`, `program_runs_on`, `program_may_call` and `program_may_handoff`. Only you can set the level, the agents and the two permissions.
 
@@ -76,17 +76,19 @@ A program can hold work that merged before the program existed. Each merged pull
 | **Fast cycle** | One step for each brief you paste. | The repository's check. | None. The step's merge gate uses your Control level. |
 | **Build and review** | One step for each brief. | The check. | Codex reviews each change at the configured depth. |
 | **Race** | One brief, two agents (Claude Code and Codex) in two worktrees. | The check. | None. The first contender that satisfies its configured gate wins; HoldSpeak parks the other. |
-| **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | Claude Code reviews. The program runs at YOLO and its merge gate is `level`. |
+| **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | pi reviews on your home engine. The program runs at YOLO and its merge gate is `level`. |
 | **From the desk** | One step for each open action of a project. | The check. | None. |
-| **Dreaming** | At night only (`night 23:30-07:00 · at most 8 steps`), from the backlog. pi builds on your home engine when it is idle, in steps that fit `budget 64k`. | The check. | Claude Code reviews at a glance. The program runs at YOLO. |
+| **Dreaming** | At night only (`night 23:30-07:00 · at most 8 steps`), from the backlog. pi builds on your home engine when it is idle, in steps that fit `budget 64k`. | The check. | pi reviews on your home engine, at a glance. The program runs at YOLO. |
+| **Audit** | One step for each surface to read (some windows of the desk, the routes of a change). The agent reads and changes nothing. | None. | None. Nothing merges: each finding becomes a Door task (see "The audit"). |
 
 You can change all values after you pick a template. Each template also gives each new program its default requirements (see "The template defaults").
 
 ### Overnight on the home box
 
 Use this template for work you want done while you sleep. pi does the steps on
-your home engine (for example qwen3.8-27b over Tailscale). Claude Code reviews
-each change. The program runs at YOLO and its default step has a check, an agent
+your home engine (for example qwen3.8-27b over Tailscale), and pi reviews
+each change there too: the night spends no cloud tokens. To have Claude Code
+build or review instead, choose it as the agent or the reviewer. The program runs at YOLO and its default step has a check, an agent
 review, and a level merge gate, so a green and reviewed step can merge without
 you. In the morning you find the merged pull requests, a note that tells what
 HoldSpeak decided for you, and only the core questions in Needs you. Phone
@@ -270,6 +272,8 @@ apply. Without a paired phone or configured Line, the call is held or falls
 back to a message according to the service result. If **May call** is off, the
 program uses the normal message or desk path.
 
+A message to your paired phone about a step that waits on you carries that item's own choices (never Waive). A press on the paired phone decides the item through the same verb as the desk, and the Ledger says "· decided on your phone". After the item is answered, the choices go away; a second press says "Answered at 06:41 from your phone".
+
 ## The gate and its log
 
 Each program has a check command. The default is the `check` command in the repository's `.holdspeak/program.json`, then `scripts/quick_check.sh` if the repository has it.
@@ -291,7 +295,7 @@ A new worktree has no installed packages. If your check needs them, put a comman
 holdspeak/services/program_requirements.py, program_service.py and
 program_runner.py; the faces are web/src/desk/programs/Requirements.tsx
 (#1665). The Measure kind and walk lines are from #1671; the Measure
-verifier is not built yet. -->
+verifier is LANG11 (#1691). -->
 
 A requirement is one sentence that you want true, with the way HoldSpeak proves it. Examples: "`uv run pytest -q tests/unit/test_program_rules.py` is green", "The People window at 393 has no clipped text", "No new route skips the residual set", "I tried it on my desk".
 
@@ -328,7 +332,7 @@ A log that is not there is not green.
 
 **The kind is set by a rule, not by a model.** Text in backticks is a Check with that command. A window name followed by "window at 393" or "window at 1440" is a Shot of that window at that width. All other text is a Review. Only you choose **Your word**. You can change the kind on the row. The **Add requirement** row offers Check, Review, Shot and Your word. To add a Measure, write it in the Program text (see "The Program text") or give `kind: "measure"` to `program.require`.
 
-**A Measure** has a `run` line (the command) and a `bound` line (`p95 < 100 ms`, `total < 6 min`) under it in the text. Its verifier is not built yet, so today a Measure records what you want measured and nothing more. A text change that makes a Check, Shot or Review into a Measure lowers the bar, because a Measure does not stop a step yet.
+**A Measure** has a `run` line (the command) and a `bound` line (`p95 < 100 ms`, `total < 6 min`) under it in the text. HoldSpeak runs the command at the check, on the step's commit, and reads the last line of its output that names the metric and a number. Under the bound, the Measure is Met with its value, for example "Measured 1.4 s, under 2 s". Over the bound, it is a red round, as a red check is. Until HoldSpeak measured it on the current commit, it says **Not measured yet**. A text change that makes a Check, Shot or Measure into a Review lowers the bar.
 
 **Walk lines on Your word.** Under a Your word requirement, each `walk` line is one thing that you will do before you press **Met** ("walk Open People at 393"). HoldSpeak keeps them in order and prints them in the text. They are for you; HoldSpeak does not run them.
 
@@ -640,7 +644,7 @@ If something goes wrong, HoldSpeak says what and changes nothing: "No engine is 
 
 ### Change it by voice
 
-Press the mic in **Change the program**, say the change, and press the mic again. HoldSpeak puts the words in the bar and sends them at once; you do not press **Shape**. While the engine reads, the bar shows "Heard:" and your words. The change rows open in the change well.
+Press the mic in **Change the program**, say the change, and press the mic again. HoldSpeak puts the words in the bar and sends them at once; you do not press **Shape**. You can start with "program:" ("program: put step 4 on Codex"): HoldSpeak knows the words are for the program by that rule, with no model call, and sends the rest as the sentence. While the engine reads, the bar shows "Heard:" and your words. The change rows open in the change well.
 
 Say the next change while the rows wait: HoldSpeak sends it with them, and the well then holds the rows of each sentence. The head of the well keeps one line for each sentence. **Apply** applies all of them; **Not this** removes all of them.
 
@@ -703,8 +707,42 @@ A program with a `night` line runs only at night, for example `night 23:30-07:00
 
 **Since last night.** After the window (and after the steps that were still working park), HoldSpeak writes one line, one time a night, for example "Since last night: 4 steps done, 1 parked, 1 waits on you, 1 split", with the PR numbers that merged. It is at the top of the program's note. It is also the morning's one Telegram message: HoldSpeak sends it at your digest hour (Settings ▸ Reach), not in quiet hours, with how many items of the night wait on you and the briefing page of the first one. On that morning, the plain digest does not go as a second message. A night that did nothing writes no line.
 
-Not yet: the canon scanner's findings and the failing tests of the last main run as backlog items, `within` as a core question for the diff, one briefing page for several items, and the Dreaming template in the New program picker (it is in the hub and in the program text: `template dreaming`).
+**The canon as a backlog.** When the night still has room after the Door tasks, HoldSpeak reads its own repository by rule, with no model: the desk sweep's known reds and the findings of the UX-canon scanner (the windows with the most findings first). Each one becomes a Door task that the night takes like any backlog task: at most 5 a night, only inside `within`, and never the same item again while its task is open.
 
+**The Door task closes.** When a step made from a Door task merges (Add to tonight, the night's backlog, From the desk), HoldSpeak closes the task, with the merge as its evidence. The log says "Closed its Door task with PR #12 as evidence". A parked step leaves its task open.
+
+The Dreaming template is in **New program ▸ Templates**. In Drafting, a night program's first station says "Sleeps until 23:30", and you can press **Start** with no steps. The morning message links one briefing page for all the items that wait on you (see "Decide from anywhere").
+
+Not yet: the failing tests of the last main run as backlog items, and `within` as a core question for the diff.
+
+
+## The audit
+
+An audit is a program that reads and changes nothing. Use the **Audit** template: one step for each surface to read (some windows of the desk, the routes of a change). In Drafting, the line under the track says "Reviewer only: nothing is written", and a step's row says what it reads ("Reads web/src/desk/notes/"). An audit step's stations are BRIEF · WORK · REVIEW · FILE.
+
+- **It only reads.** The gate refuses an audit step's writes by rule at Normal and YOLO; at Secure it holds each call for you, as for any step. A commit on an audit step is a core question.
+- **Its report.** The agent reports each finding on one line: "MUST: <what> · <evidence>", "SHOULD: …", "NOTE: …", or "No findings". With no report, HoldSpeak asks the agent once, then parks the step.
+- **Findings become Door tasks.** "Must fix: …", "Should fix: …", "Noted: …". One finding is one task, also when several steps found it. At YOLO, HoldSpeak files every finding; at Normal, the MUST and SHOULD findings; at Secure, it files none and asks you (**File** · **Skip**).
+- **The Findings board.** Under the steps, the window shows each finding with the steps that found it and its evidence in plain words, and **Open Door task** on a filed row. Its head says how many there are ("4 findings · 2 MUST").
+- **The fix program.** When every step has reported and a MUST finding exists, a Your turn row offers **Make** · **Skip** (also in Needs you). **Make** makes a Drafting program with one step for each MUST finding and the Review requirement "<finding> is fixed". It comes from the audit (see "The family"). No rule starts it.
+
+## Lessons
+
+When the same thing goes wrong again, HoldSpeak proposes a lesson. The rule uses no model: the same red check cause on two steps, or the same review finding on three steps, makes one Lesson. It is a log line and a Your turn row (also in Needs you, and on a Done program) with three choices:
+
+- **Keep for this program**: every step of this program gets a Review requirement for it.
+- **Keep for HoldSpeak**: HoldSpeak adds a step "Keep the lesson: …" that adds one requirement to the repository's `.holdspeak/program.json`. The step is checked, reviewed and merged as any step; a closed program opens again to run it. Each new program in that repository then plants the requirement.
+- **Skip**: HoldSpeak does not propose the same cause again in this program.
+
+No rule keeps a lesson, at any level. It is always your press.
+
+## A race
+
+A **Race** step gives one brief to two agents in two worktrees.
+
+- **The review question.** When a race step has no review, the Verification round asks you by rule, with no model: "Review each contender?" **Each reviews the other** turns the review on: each contender is reviewed by the other agent. **No review** keeps the gate as it is.
+- **The winner.** The first contender that passes its gate wins. Decided for you says "Codex won the race · 34 min", with its rule. A race winner has no **Overturn**.
+- **Both red.** When both contenders are red after their rounds, the race fails as one step: one Parked row names each contender with **Open log**, and **Resume** or **Skip** on that row moves both.
 
 ## The interview rounds
 
@@ -735,7 +773,13 @@ A program with the line `delivery dw <project>/<phase>` or `delivery dw <project
 
 The log says "Delivered to dw app/1 (PR #12)". When a part fails, the log says it in words, for example "Could not deliver to dw app/1/07: Delivery Workbench did not take the evidence", and a Your turn row asks you: **Retry** or **Skip**. **Skip** leaves the program Done, with no delivery. At Secure the row asks you to **Merge** the delivery pull request or **Skip**. In the Program window this row is the headline, with what each choice does under it; you can also answer it from a briefing page. After the merge, the Done window says "Delivered to dw app/1 (PR #12)" under its step line. Delivery Workbench never gets the steps, the briefs, the checkpoints, the findings or the worktree paths.
 
-Not there yet: the link when you make the program (the story's acceptance lines as proposed requirements), and `dw phase close` for a whole phase.
+**A whole phase.** A line with no story (`delivery dw <project>/<phase>`) also closes the phase in the same PR (`dw phase close`). The log then says "Delivered to dw app/1 (PR #12) · phase closed"; at Secure, "… waits for your merge · it closes the phase". When Delivery Workbench refuses the close, the log says "· the phase stays open".
+
+**When you make the program.** In a repository with Delivery Workbench, HoldSpeak reads its roadmap once (`dw context`) and keeps a short summary (each project, its next story, its active phase, its open stories) in the log. Each step's brief carries it as data. When the read fails, one log line says so and the program goes on.
+
+**Never on HoldSpeak itself.** HoldSpeak's own repository never takes a `delivery dw` line, and HoldSpeak does not read its roadmap.
+
+Not there yet: the story's acceptance lines as proposed requirements.
 
 ## A held commit
 
@@ -767,7 +811,7 @@ The page reads like a note: the kind of item, the program and its goal, the prog
 - **A waive stays on the desk.** A waive needs your typed reason, so the page does not offer it.
 - **One page for several items.** The morning message after a night program links one page for all the items that wait on you (up to 12, in order). Each item is its own note with its own choices. Decide them one at a time: an item you decide shows its one line, and the others stay as they were. The top of the page says how many still wait ("2 wait on you."). The page is open for 12 hours.
 
-These items can have a page: a core question, a held commit (Telegram and the page; the desk row has no **Copy page link** yet), a merge, a finding, a parked step, an agent at its limit, a race winner, an added step, your word, a requirement left after its rounds, a proposed requirement, a proposed step change and a proposed amendment. A review request and Close stay on the desk. Outside Programs, these can have a page too: a decision to review, a meeting's proposed action, a project review proposal, a call an agent asks to place, an agent's question (you write your answer on the page and HoldSpeak types it to the agent), and a document that is ready to send. A send is decided on its page only: the page shows where it goes and the lines it sends, and Telegram has no Send button for it. A permission (a held tool call, an agent's permission prompt) stays on the desk.
+These items can have a page: a core question, a held commit (Telegram and the page; the desk row has no **Copy page link** yet), a merge, a finding, a parked step, an agent at its limit, a race winner, an added step, your word, a requirement left after its rounds, a proposed requirement, a proposed step change, a proposed amendment, a to-do, a delivery that failed or waits for your merge, a step agent's question, the audit's findings to file, a fix program to make and a lesson. A review request and Close stay on the desk. Outside Programs, these can have a page too: a decision to review, a meeting's proposed action, a project review proposal, a call an agent asks to place, an agent's question (you write your answer on the page and HoldSpeak types it to the agent), and a document that is ready to send. A send is decided on its page only: the page shows where it goes and the lines it sends, and Telegram has no Send button for it. A permission (a held tool call, an agent's permission prompt) stays on the desk.
 
 ### Telegram
 
@@ -777,6 +821,8 @@ Pair Telegram one time in **Settings ▸ Reach** (see [Reach](reach.md)). Then:
 - The buttons are the item's own choices and **Later**. Tap a choice to decide. **Merge**, and **Skip** on a proposed requirement, ask for a second tap. After your answer, the message changes: the buttons go and the last line tells the outcome.
 - You can also reply in words: the word of a choice ("go on", "park"), "yes" or "no" when that is clear, or "later 2h". "waive" is refused: waive on the desk, with your reason.
 - Any other sentence on a program's item is a shaping sentence. HoldSpeak replies with the changes and **Apply** · **Not this**.
+- A tap or a reply on an item that was already answered says where and when: "Answered at 21:46 from the desk".
+- A document that is ready to send has no Send button on Telegram: the message links its page.
 
 ### Later, and when it comes back
 
@@ -788,13 +834,11 @@ At YOLO, Later on a core question parks its step for now, and the other steps go
 
 ### On a call
 
-When the desk calls you about a step, or when you say "what waits on me", HoldSpeak reads each item that waits on you: where it is from, the question, what changed, and the choices. Say a choice. HoldSpeak reads it back once and asks for your yes; only yes decides, and the Ledger says "decided on a call". Say "later" (with a time or without one) to decide later. A waive stays on the desk. If the call ends before your yes, nothing is decided. See [Decide on a call](calls.md#decide-on-a-call). A call can also change a program by your sentence (see "Change it on a call").
+When the desk calls you about a step, or when you say "what waits on me", HoldSpeak reads each item that waits on you: where it is from, the question, what changed, and the choices. Say a choice. HoldSpeak reads it back once and asks for your yes; only yes decides, and the Ledger says "decided on a call". Say "later" (with a time or without one) to decide later. A waive stays on the desk. If the call ends before your yes, nothing is decided. When the item was answered somewhere else first, the call says so in the page's words: "Answered at 12:10 from the briefing page". A Later that the call cannot keep says "Could not keep that for later; it still waits". See [Decide on a call](calls.md#decide-on-a-call). A call can also change a program by your sentence (see "Change it on a call").
 
 ### What is not there yet
 
 - The Telegram digest is a plain list: one line for each item, with no buttons ("3 wait on you", then "Finding · <program> · step 2", then "Open your desk to see each one.").
-- No real Telegram bot was paired for these docs. The pairing and the messages are tested against the Bot API's documented shapes only.
-- The page and Telegram are only for Program items today.
 
 ## The handover note
 
@@ -818,7 +862,7 @@ A program is a desk object, like a meeting or a note.
 - **The person it is for.** A program or a step can name a person. The person's room shows the program under their commitments. Your 1:1 brief with that person lists a merged step under "To show them", and a finding they own under "To ask".
 - **A human review.** A step can name a person as its reviewer. Then Needs you shows "Ask Alice to review PR #1591" with **Send…** (a prepared send; you press Send). The merge waits until that person approves the pull request on GitHub. No agent reviewer reads such a step: its Review requirements are your word at the merge (**Met** or **Unmet** in Your turn). When the person asks for changes on GitHub, their comments go to the step's agent as one more round on the same branch and pull request; the log says "Alice asked for changes on GitHub; round 1 goes back to the agent".
 - **What it leaves.** Today shows one line, such as "Programs: 1 running, 1 waits on you", on a day a Program moved. Each merged step is a result on Today and in the timelines of the project and the person. A **Later** decision makes a task for you, filed to the project and to the person. A **Skip** writes one line with your reason in the note.
-- **Proposed decisions.** When you skip a finding, HoldSpeak makes a proposed decision. When the rules skip a finding that is more than a NOTE, HoldSpeak also makes one, and it names the rule. When the rules skip a NOTE finding, HoldSpeak makes no proposed decision: the note line and the Decided for you row are sufficient. When HoldSpeak merges a pull request by the rule of Normal or YOLO, it also makes a proposed decision. The decision tells the reason, the rule, the level and the step. It is linked to the program and to the pull request of the step. The project's drawer shows it in the **Proposed decisions** fold, with its program and its pull request. Press **Open** to read it in the Decisions window, and accept it there. HoldSpeak does not accept it for you. In the Program window, the row of the decision says "Proposed as a decision". If you overturn a Skip, its proposed decision goes away.
+- **Proposed decisions.** When you skip a finding, HoldSpeak makes a proposed decision. When the rules skip a finding that is more than a NOTE, HoldSpeak also makes one, and it names the rule. When the rules skip a NOTE finding, HoldSpeak makes no proposed decision: the note line and the Decided for you row are sufficient. When HoldSpeak merges a pull request by the rule of Normal or YOLO, it also makes a proposed decision. The decision tells the reason, the rule, the level and the step. It is linked to the program and to the pull request of the step. The project's drawer shows it in the **Proposed decisions** fold, with its program and its pull request. Press **Open** to read it in the Decisions window, and accept it there. HoldSpeak does not accept it for you. In the Program window, the row of the decision says "Proposed as a decision"; press it to open the record. If you overturn a Skip, its proposed decision goes away.
 
 ## For tools and agents
 
@@ -843,7 +887,7 @@ The MCP tools are in the `program` family:
 | `program.require` | Add a requirement (`text`, `kind`, `step_id` or `each_step`, `required`, `spec`). With `requirement_id`, change one: you only. | You at once; an orchestrating agent or a step's own agent by the Control level (YOLO adds it, Secure and Normal ask you) |
 | `program.step_update` | Change a step: the fields that its state leaves open. `before` moves a Planned or Ready step. A frozen field is refused with `step_frozen` and its reason. | You at once; an orchestrating agent by the Control level |
 | `program.amend` | Add one line to a started step's brief. HoldSpeak types it at the next turn end. | You at once; an orchestrating agent by the Control level |
-| `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. Kind `requirement` with `requirement_id`: `met`, `unmet`, `waive` (with `reason`), `send_back`. With `proposal_id`: `requirement_proposed` (`add`, `skip`), `step_change` (`apply`, `skip`), `step_amend` (`send`, `skip`). | You only |
+| `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. Kind `requirement` with `requirement_id`: `met`, `unmet`, `waive` (with `reason`), `send_back`. With `proposal_id`: `requirement_proposed` (`add`, `skip`), `step_change` (`apply`, `skip`), `step_amend` (`send`, `skip`). A to-do: kind `requirement`, `done` or `cant`. Kind `delivery`: `retry`, `merge`, `skip`. Kind `audit_file`: `file`, `skip`. Kind `fix_program`: `make`, `skip`. Kind `lesson` with `lesson_id`: `keep_program`, `keep_repo`, `skip`. | You only |
 | `program.overturn` | Undo a decision of HoldSpeak. | You only |
 | `program.start_from` | Add a step whose worktree starts at a checkpoint's ref. When an agent asks, the control level decides. | You, the step's own agent |
 | `program.handoff` | Move a running step to another agent, with the handoff brief. `preview: true` shows the brief and sends nothing. The next agent uses the same worktree and branch. | You only |
@@ -852,6 +896,7 @@ The MCP tools are in the `program` family:
 | `program.text_apply` | Change a program by its whole text. `dry_run` (the default, true) returns the change rows and writes nothing. `dry_run: false` applies only when no row is refused or in conflict, and a row that lowers the bar only when its id is in `allow_lower`. `base` is the text that you read. `allowed_text` is your text with each refused change put back. | You; an agent's rows go through the same verbs and rules (it cannot change or waive your requirements, or answer a round, in the text) |
 | `program.shape` | Change a program by one sentence: one engine call, the same rows as `program.text_apply`, with `say`, `engine` and `latency_ms`. Nothing is written; `apply: true` applies the allowed rows at once only at YOLO. `pending` adds the sentence to rows that wait. On a call, it waits for your spoken yes. | You, or the orchestrating agent |
 | `program.plan_draft` | Draft the steps of a program in Drafting from its goal: one engine call; the rows with their size. With `text` and `split`, split one drafted step. Nothing is written. | You, or the orchestrating agent |
+| `program.propose_fix` | From an audit, make the fix program in Drafting: one step for each MUST finding, each with a Review requirement that it is fixed. It never starts it. | You, or the agent that made the audit |
 | `program.round` | The interview rounds: `open`, `next` (one question), `answer` (the rows it implies), `skip_question`, `not_this`, `done`, `skip`, `reopen`. | You, or the agent that made the program. Answer for yourself: a `=` line in the text from an agent is refused. |
 | `phone.brief` | Make the briefing page for one held item, and with `send: "telegram"` send it to your Telegram chat. | You only |
 | `phone.later` | Later on one held item, with your words for the time. It decides nothing. | You only |
