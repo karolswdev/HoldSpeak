@@ -13,16 +13,16 @@
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T13:52:54.445012+00:00",
+      "created_at": "2026-11-01T14:16:17.976284+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-99c198b22866",
-      "in_state_seconds": 5,
+      "id": "program-07724b804351",
+      "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-01T13:53:08.368897+00:00",
+        "at": "2026-11-01T14:16:25.119253+00:00",
         "by": "engine",
         "choice": "retry",
         "decision_record_id": null,
@@ -33,27 +33,27 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-3a1edbe7cd85/5",
-        "ref_commit": "93afaf660cc50d969c54ad820c066da27e58b370",
+        "ref": "refs/holdspeak/checkpoints/step-00a55ecfcfee/5",
+        "ref_commit": "3ae6e8aff954934baa0bb10f7d4cbad787e43740",
         "rule": "a red requirement goes back to the builder (round 2 of 2)",
-        "step_id": "step-3a1edbe7cd85",
+        "step_id": "step-00a55ecfcfee",
         "undo": {
           "pin": {
-            "commit": "93afaf660cc50d969c54ad820c066da27e58b370",
-            "head": "c7a141ba980665eb570205a4381258103bba6be6",
+            "commit": "3ae6e8aff954934baa0bb10f7d4cbad787e43740",
+            "head": "996f276c2f8ae9763e92ac3d1a1e4d8ff983c7e2",
             "n": 5,
-            "ref": "refs/holdspeak/checkpoints/step-3a1edbe7cd85/5",
-            "tree": "e8756811f03de93a2cb5b78b946f7a0ad10a76fa"
+            "ref": "refs/holdspeak/checkpoints/step-00a55ecfcfee/5",
+            "tree": "dc80970ef9533df4e57134775ea5f25577699296"
           },
           "seen": {
             "check": "green",
-            "checked": "c7a141ba980665eb570205a4381258103bba6be6",
-            "commit": "c7a141ba980665eb570205a4381258103bba6be6",
+            "checked": "996f276c2f8ae9763e92ac3d1a1e4d8ff983c7e2",
+            "commit": "996f276c2f8ae9763e92ac3d1a1e4d8ff983c7e2",
             "state": "check_failed"
           }
         }
       },
-      "line": "Step 3 of 6 waits on you since 08:53",
+      "line": "Step 3 of 6 waits on you since 09:16",
       "persons": [
         {
           "id": "p-alice",
@@ -110,7 +110,7 @@
           "title": "The fan-out"
         }
       ],
-      "updated_at": "2026-11-01T13:53:06.499623+00:00",
+      "updated_at": "2026-11-01T14:16:24.439835+00:00",
       "your_turn": 1
     }
   ],
