@@ -40,8 +40,10 @@ def test_audit_reads_pass_and_writes_are_refused_by_rule(tmp_path) -> None:
 
 
 def test_audit_writes_into_its_own_scratch_pass(tmp_path, monkeypatch) -> None:
-    """The agent's own scratch (its Claude Code session scratchpad, $TMPDIR)
-    is not the repository: an audit step may write its shots and logs there."""
+    """The agent's own scratch (its Claude Code session scratchpad) is not
+    the repository: an audit step may write its notes there. Since the ruling
+    of 2026-11-01 the rest of $TMPDIR is not its scratch: a write there is
+    refused (Astra's post-merge check: a checkout can sit under $TMPDIR)."""
     import os
 
     from holdspeak.tool_gate_rules import agent_scratch_roots
@@ -54,12 +56,15 @@ def test_audit_writes_into_its_own_scratch_pass(tmp_path, monkeypatch) -> None:
     pad = agent_scratch_roots(str(repo))[0]
     for mode in ("yolo", "neutral"):
         for tool, tool_input in (
-            ("Bash", {"command": f"git diff > {tmp}/audit.log"}),
             ("Bash", {"command": f"cat README.md > {pad}/scratchpad/notes.txt"}),
-            ("Write", {"file_path": f"{tmp}/shot-notes.md"}),
             ("Write", {"file_path": f"{pad}/scratchpad/report.md"}),
         ):
             assert _outcome(repo, tool, tool_input, mode) == ("allowed", "audit_read_allowed"), (mode, tool_input)
+        for tool, tool_input in (
+            ("Bash", {"command": f"git diff > {tmp}/audit.log"}),
+            ("Write", {"file_path": f"{tmp}/shot-notes.md"}),
+        ):
+            assert _outcome(repo, tool, tool_input, mode) == ("refused", "audit_reads_only"), (mode, tool_input)
         # A write in the repository, or one that also writes there, is still refused.
         assert _outcome(repo, "Bash", {"command": f"git diff > {tmp}/a.log && echo x > a.py"}, mode)[0] == "refused"
         assert _outcome(repo, "Write", {"file_path": str(repo / "a.py")}, mode)[0] == "refused"
