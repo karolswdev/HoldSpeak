@@ -6,7 +6,7 @@
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T05:21:51.314784+00:00",
+      "created_at": "2026-11-01T06:47:58.830976+00:00",
       "done": 3,
       "done_in": "2 h 38",
       "for_person": null,
@@ -16,10 +16,10 @@
         "prs": 3,
         "words": "Merged 3 PRs · 28 Oct"
       },
-      "id": "program-84d6cdb87049",
+      "id": "program-23cc4d7d3603",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T05:21:51.319707+00:00",
+        "at": "2026-11-01T06:47:58.838137+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -36,6 +36,7 @@
         "step_id": "",
         "undo": {}
       },
+      "line": "Done, merged 3 PRs, 28 Oct",
       "persons": [],
       "project": null,
       "project_id": null,
@@ -45,7 +46,24 @@
       "state_word": "Done",
       "title": "The hub stops stalling",
       "total": 3,
-      "updated_at": "2026-11-01T05:21:51.319888+00:00",
+      "track": [
+        {
+          "mark": "done",
+          "ordinal": 1,
+          "title": "The dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing"
+        },
+        {
+          "mark": "done",
+          "ordinal": 2,
+          "title": "The hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop"
+        },
+        {
+          "mark": "done",
+          "ordinal": 3,
+          "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard"
+        }
+      ],
+      "updated_at": "2026-11-01T06:47:58.838266+00:00",
       "your_turn": 0
     }
   ],

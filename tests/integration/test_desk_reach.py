@@ -43,7 +43,10 @@ RECORDED_TOKEN = "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
 
 class Clock:
     def __init__(self) -> None:
-        self.now = datetime(2026, 10, 31, 6, 30, tzinfo=timezone.utc)
+        # 06:30 UTC on today's date: the hub's page lookup reads the real
+        # clock, so a fixed day turned every page expired once the real time
+        # passed it (2026-11-01 06:30 UTC, red on main). The hour stays fixed.
+        self.now = datetime.now(timezone.utc).replace(hour=6, minute=30, second=0, microsecond=0)
 
     def __call__(self) -> str:
         return self.now.isoformat()

@@ -13,16 +13,16 @@
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T05:21:36.178096+00:00",
+      "created_at": "2026-11-01T06:47:46.425974+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-5f9b958d2ef1",
+      "id": "program-4860a439973b",
       "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-01T05:21:40.054470+00:00",
+        "at": "2026-11-01T06:47:50.033176+00:00",
         "by": "engine",
         "choice": "retry",
         "decision_record_id": null,
@@ -33,20 +33,21 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-f080cd3e4f3d/5",
-        "ref_commit": "dc578a8fba4702afca5410deacd7a1ce97ea117b",
+        "ref": "refs/holdspeak/checkpoints/step-e8fca286754c/5",
+        "ref_commit": "e02216dc9d86efd3a8873b542466f4482258d040",
         "rule": "a red requirement goes back to the builder (round 2 of 2)",
-        "step_id": "step-f080cd3e4f3d",
+        "step_id": "step-e8fca286754c",
         "undo": {
           "pin": {
-            "commit": "dc578a8fba4702afca5410deacd7a1ce97ea117b",
-            "head": "e1b3d7156722df97675e68043a17b44e78c758f7",
+            "commit": "e02216dc9d86efd3a8873b542466f4482258d040",
+            "head": "0bfad0fab6464a747202a2255e2a63fd0f3ea526",
             "n": 5,
-            "ref": "refs/holdspeak/checkpoints/step-f080cd3e4f3d/5",
-            "tree": "db92166749a63f493750ab6eef3526330c10c2b8"
+            "ref": "refs/holdspeak/checkpoints/step-e8fca286754c/5",
+            "tree": "57dd687ba5135cb3f01bd6500619ff5714791158"
           }
         }
       },
+      "line": "Step 3 of 6 waits on you since 01:47",
       "persons": [
         {
           "id": "p-alice",
@@ -71,7 +72,39 @@
       "state_word": "Your turn",
       "title": "The hub stops stalling",
       "total": 6,
-      "updated_at": "2026-11-01T05:21:39.472044+00:00",
+      "track": [
+        {
+          "mark": "done",
+          "ordinal": 1,
+          "title": "Indexes"
+        },
+        {
+          "mark": "running",
+          "ordinal": 2,
+          "title": "Retention"
+        },
+        {
+          "mark": "here",
+          "ordinal": 3,
+          "title": "Projections off the loop"
+        },
+        {
+          "mark": "red",
+          "ordinal": 4,
+          "title": "People routes"
+        },
+        {
+          "mark": "running",
+          "ordinal": 5,
+          "title": "Projects routes"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 6,
+          "title": "The fan-out"
+        }
+      ],
+      "updated_at": "2026-11-01T06:47:49.499014+00:00",
       "your_turn": 1
     }
   ],

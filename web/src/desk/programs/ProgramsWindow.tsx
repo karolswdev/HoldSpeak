@@ -21,24 +21,39 @@ import type { CoreProps } from "../../pages/cores/core-types";
 import { WorkMenu } from "../components/DeskMenu";
 import { spriteUrl } from "../sprites";
 import { openProgram } from "./open";
-import { ListView, StateChip, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
+import { DotWord, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 import { useWindowInterior } from "../surface/interior";
 import { plainFail } from "../surface/plainFailure";
 import { TEMPLATES, createProgram, usePrograms } from "./api";
-import { banded, bandedByProject, durationWords, matchesFind, metWords, personsOf, programChip, programTone } from "./model";
-import type { ProgramState, ProgramSummary } from "./types";
+import { banded, bandedByProject, durationWords, matchesFind, metWords, personsOf, programTone } from "./model";
+import type { ListMark, ProgramState, ProgramSummary } from "./types";
+import { StationTrack, type TrackStation } from "./StationTrack";
 import "./programs.css";
 
 export { openProgram };
 
+const MARK_STATION: Record<ListMark["mark"], { state: TrackStation["state"]; tone: string; live?: boolean }> = {
+  done: { state: "passed", tone: "ok" }, here: { state: "current", tone: "ask", live: true },
+  running: { state: "ahead", tone: "info", live: true }, red: { state: "ahead", tone: "fail" },
+  parked: { state: "ahead", tone: "idle" }, planned: { state: "ahead", tone: "idle" },
+};
+
+/** PG-WINDOW List (direction A): one row per Program that reads like a
+ *  line from a chief of staff: the title, a lamp and the hub's line
+ *  ("Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude
+ *  Code, 11 min", "Done, 14 PRs, 28 Oct"), the mini track (one dot per
+ *  step), and the Met count when it has requirements. */
 function ProgramRow({ row }: { row: ProgramSummary }) {
   // PG17: a Program of imported PRs says what merged and when.
-  const inState = row.state === "done" && row.history ? row.history.words
-    : row.state === "done" && row.done_in ? `Done in ${row.done_in}` : durationWords(row.in_state_seconds);
-  const line = row.last_checkpoint?.line;
+  const fallback = row.state === "done" && row.history ? row.history.words
+    : row.state === "done" && row.done_in ? `Done in ${row.done_in}` : `${row.state_word} · ${durationWords(row.in_state_seconds)}`;
+  const line = row.line || fallback;
   const met = metWords(row.requirements_met);
-  const steps = row.total ? `${row.done} of ${row.total} ${row.total === 1 ? "step" : "steps"}` : "No steps";
+  const tone = programTone(row.state);
+  const stations: TrackStation[] = (row.track ?? []).map((dot) => ({
+    key: String(dot.ordinal), word: `${dot.ordinal} ${dot.title}`, mark: dot.mark, ...MARK_STATION[dot.mark],
+  }));
   return (
     <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}>
       <Button variant="chrome" className="pg-row-main" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`}
@@ -46,15 +61,15 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
         <img className="kit-listrow-glyph" src={spriteUrl("program", row.id, "rest", null, 20)} alt="" width={20} height={20} />
         <span className="pg-row-title">{row.title}</span>
       </Button>
-      <span className="pg-row-state"><StateChip state={programChip(row.state)} label={row.state_word} data-testid="programs-row-state" /></span>
-      <span className="pg-row-steps">{steps}</span>
+      <span className="pg-row-state">
+        <DotWord tone={tone} live={row.state === "waiting" || row.state === "running"} className="pg-row-say"
+          title={row.state_word} data-testid="programs-row-state">{line}</DotWord>
+      </span>
+      <span className="pg-row-track">{stations.length ? <StationTrack stations={stations} label={`${row.done} of ${row.total} done`} /> : null}</span>
       <span className="pg-row-met" data-testid="programs-row-met" data-all={met?.all ? "" : undefined} title={met?.title}>
         {met?.tone && !met.all ? <span className="kit-dot" data-tone={met.tone} aria-hidden="true" /> : null}
         {met?.text ?? ""}
       </span>
-      <span className="pg-row-in" data-tone={row.state === "done" ? "ok" : undefined}>{inState}</span>
-      <span className="pg-row-line" title={line ?? undefined}>{line ? `“${line}”` : ""}</span>
-      <span className="pg-row-meta" aria-hidden="true">{[steps, met?.text, inState].filter(Boolean).join(" · ")}</span>
     </li>
   );
 }
@@ -165,9 +180,6 @@ export function ProgramsCore(_props: CoreProps) {
   } else {
     body = (
       <ListView label="Programs" className="pg-list" data-testid="programs-list">
-        <div className="pg-list-head" aria-hidden="true">
-          <span>Program</span><span>State</span><span>Steps</span><span>Met</span><span>In state</span><span>Last checkpoint</span>
-        </div>
         {bands.map((band) => (
           <section key={band.key} className="kit-listday pg-band" aria-label={band.word} data-band={band.key} data-testid="programs-band">
             <h3 className="kit-listday-label">{band.word}{band.count ? <span className="pg-band-count">{` · ${band.count}`}</span> : null}</h3>

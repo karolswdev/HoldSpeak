@@ -70,3 +70,17 @@ def test_the_engines_own_ledger_words_read_in_his_terms() -> None:
     assert words.changed_line("git push failed; parked") == ""
     assert words.changed_line("The engine said: some_code here") == ""
     assert words.changed_line("Checked · green · under a minute · /tmp/a_b/step_x.log") == "The check ran green in under a minute."
+
+
+def test_the_list_row_reads_like_a_line_from_a_chief_of_staff(tmp_path) -> None:
+    """PG-WINDOW List: each Program's list row carries its line and its mini
+    track, in plain words with no zero count."""
+    import re
+
+    rig, pid = _no_remote(tmp_path)
+    [row] = [item for item in rig.service.list(None)["programs"] if item["id"] == pid]
+    assert re.fullmatch(r"Step 1 of 3 waits on you since \d\d:\d\d", row["line"]), row["line"]
+    assert [dot["mark"] for dot in row["track"]] == ["here", "planned", "planned"]
+    assert words.fence_hits(row["line"]) == []
+    assert words.list_line("drafting", [], []) == "Drafting, no steps yet"
+    assert words.list_line("done", [], [], history={"words": "Merged 14 PRs · 28 Oct"}) == "Done, merged 14 PRs, 28 Oct"

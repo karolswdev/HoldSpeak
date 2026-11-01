@@ -9,13 +9,13 @@
     {
       "asks": 0,
       "control": "secure",
-      "created_at": "2026-11-01T05:21:27.653034+00:00",
+      "created_at": "2026-11-01T06:47:36.336852+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-54cb411e75ad",
-      "in_state_seconds": 3,
+      "id": "program-c4b094e5dfaf",
+      "in_state_seconds": 4,
       "last_checkpoint": {
-        "at": "2026-11-01T05:21:30.753363+00:00",
+        "at": "2026-11-01T06:47:39.797832+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -26,20 +26,21 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-2535600e9e66/8",
-        "ref_commit": "e51a3967916bc16ef79d05910d6660d7b22a7a06",
+        "ref": "refs/holdspeak/checkpoints/step-eda8af00c001/8",
+        "ref_commit": "093a820ce578b2315635f95f97228ac1ccb98d41",
         "rule": null,
-        "step_id": "step-2535600e9e66",
+        "step_id": "step-eda8af00c001",
         "undo": {
           "pin": {
-            "commit": "e51a3967916bc16ef79d05910d6660d7b22a7a06",
-            "head": "f797bf5ee4cc02932138466dedfa86baca9f2ad4",
+            "commit": "093a820ce578b2315635f95f97228ac1ccb98d41",
+            "head": "efc2899faf81dda442aac3e65435f2b5c893f261",
             "n": 8,
-            "ref": "refs/holdspeak/checkpoints/step-2535600e9e66/8",
-            "tree": "10c3b49c41824da0c35f071d9fad5e13b1c4625c"
+            "ref": "refs/holdspeak/checkpoints/step-eda8af00c001/8",
+            "tree": "ede11aa19712bb3a40633bb2853242ec4603632b"
           }
         }
       },
+      "line": "Step 1 of 3 waits on you since 01:47",
       "persons": [],
       "project": {
         "id": "proj-holdspeak",
@@ -59,46 +60,64 @@
       "state_word": "Your turn",
       "title": "The words wave",
       "total": 3,
-      "updated_at": "2026-11-01T05:21:29.812902+00:00",
+      "track": [
+        {
+          "mark": "here",
+          "ordinal": 1,
+          "title": "Settings words"
+        },
+        {
+          "mark": "here",
+          "ordinal": 2,
+          "title": "Dock words"
+        },
+        {
+          "mark": "here",
+          "ordinal": 3,
+          "title": "Door words"
+        }
+      ],
+      "updated_at": "2026-11-01T06:47:38.493178+00:00",
       "your_turn": 4
     },
     {
       "asks": 1,
       "control": "yolo",
-      "created_at": "2026-11-01T05:21:24.782129+00:00",
+      "created_at": "2026-11-01T06:47:33.708482+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-c023e05a87ff",
-      "in_state_seconds": 5,
+      "id": "program-8e90ff187a31",
+      "in_state_seconds": 6,
       "last_checkpoint": {
-        "at": "2026-11-01T05:21:29.880514+00:00",
+        "at": "2026-11-01T06:47:38.572321+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 45,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-4387d4b3b441",
+        "line": "Handed to Claude Code in hs-program-step-df7f20cf2d21",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-4387d4b3b441/1",
-        "ref_commit": "422539b198fdd7a08e68f798bb6dc30b3aca3920",
+        "ref": "refs/holdspeak/checkpoints/step-df7f20cf2d21/1",
+        "ref_commit": "5892cfc11843901fd883a8f91aaeb25e15271f29",
         "rule": null,
-        "step_id": "step-4387d4b3b441",
+        "step_id": "step-df7f20cf2d21",
         "undo": {
           "pin": {
-            "commit": "422539b198fdd7a08e68f798bb6dc30b3aca3920",
-            "head": "9d20d53046d7805a0d76e4640162cdd5648da985",
+            "commit": "5892cfc11843901fd883a8f91aaeb25e15271f29",
+            "head": "ce5bd41008fda300d023ac845f594f84fb5b5ca7",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-4387d4b3b441/1",
+            "ref": "refs/holdspeak/checkpoints/step-df7f20cf2d21/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           }
         }
       },
+      "line": "Step 4 of 7 waits on you since 01:47",
       "persons": [
         {
           "id": "p-alice",
@@ -116,19 +135,56 @@
       "state_word": "Your turn",
       "title": "The hub stops stalling",
       "total": 7,
-      "updated_at": "2026-11-01T05:21:27.505197+00:00",
+      "track": [
+        {
+          "mark": "done",
+          "ordinal": 1,
+          "title": "Indexes"
+        },
+        {
+          "mark": "running",
+          "ordinal": 2,
+          "title": "Retention"
+        },
+        {
+          "mark": "red",
+          "ordinal": 3,
+          "title": "Projections off the loop"
+        },
+        {
+          "mark": "here",
+          "ordinal": 4,
+          "title": "People routes"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 5,
+          "title": "Overnight sweep on qwen"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 6,
+          "title": "The fan-out"
+        },
+        {
+          "mark": "running",
+          "ordinal": 7,
+          "title": "Write the docs"
+        }
+      ],
+      "updated_at": "2026-11-01T06:47:36.216396+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T05:21:32.896481+00:00",
+      "created_at": "2026-11-01T06:47:42.655363+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-7c001dc42af3",
+      "id": "program-a5437d79506b",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T05:21:32.898514+00:00",
+        "at": "2026-11-01T06:47:42.658404+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -145,6 +201,7 @@
         "step_id": "",
         "undo": {}
       },
+      "line": "Drafting, 2 steps",
       "persons": [],
       "project": {
         "id": "proj-holdspeak",
@@ -164,20 +221,32 @@
       "state_word": "Drafting",
       "title": "Calls on the home box",
       "total": 2,
-      "updated_at": "2026-11-01T05:21:32.898555+00:00",
+      "track": [
+        {
+          "mark": "planned",
+          "ordinal": 1,
+          "title": "The call runner"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 2,
+          "title": "The calls window"
+        }
+      ],
+      "updated_at": "2026-11-01T06:47:42.658462+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T05:21:30.848185+00:00",
+      "created_at": "2026-11-01T06:47:39.968645+00:00",
       "done": 1,
       "done_in": "under a minute",
       "for_person": null,
-      "id": "program-a89925e8390d",
+      "id": "program-189b9a0c1cd1",
       "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-01T05:21:31.734297+00:00",
+        "at": "2026-11-01T06:47:41.201376+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -194,6 +263,7 @@
         "step_id": "",
         "undo": {}
       },
+      "line": "Done, 1 PR, 1 Nov",
       "persons": [],
       "project": {
         "id": "proj-holdspeak",
@@ -206,19 +276,26 @@
       "state_word": "Done",
       "title": "Wave 6 of the atlas",
       "total": 1,
-      "updated_at": "2026-11-01T05:21:31.734246+00:00",
+      "track": [
+        {
+          "mark": "done",
+          "ordinal": 1,
+          "title": "Atlas anchors"
+        }
+      ],
+      "updated_at": "2026-11-01T06:47:41.201318+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T05:21:31.738906+00:00",
+      "created_at": "2026-11-01T06:47:41.206416+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-d20b13a74405",
+      "id": "program-5d835884aeae",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T05:21:32.894217+00:00",
+        "at": "2026-11-01T06:47:42.652605+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -235,6 +312,7 @@
         "step_id": "",
         "undo": {}
       },
+      "line": "Parked at step 1 of 2",
       "persons": [],
       "project": null,
       "project_id": null,
@@ -244,7 +322,19 @@
       "state_word": "Parked",
       "title": "Retire the old ledger",
       "total": 2,
-      "updated_at": "2026-11-01T05:21:32.894137+00:00",
+      "track": [
+        {
+          "mark": "parked",
+          "ordinal": 1,
+          "title": "Drop the ledger"
+        },
+        {
+          "mark": "running",
+          "ordinal": 2,
+          "title": "Tidy"
+        }
+      ],
+      "updated_at": "2026-11-01T06:47:42.652480+00:00",
       "your_turn": 0
     }
   ],
