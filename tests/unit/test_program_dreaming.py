@@ -221,3 +221,29 @@ def test_the_nights_line_goes_at_the_digest_hour_with_a_page_link_and_no_second_
     assert "Open the page: https://hub.tail.ts.net/b/" in message["text"]
     desk.reach.tick()
     assert len(desk.bot.of("sendMessage")) == 1  # one morning message: no second digest that day
+
+
+def test_a_morning_with_two_held_items_links_one_page_for_both(tmp_path, monkeypatch) -> None:
+    """DIR9: the morning message links ONE page that carries the night's held items in order."""
+    from holdspeak.db.briefing import BriefingStore
+    from tests.unit.test_reach_telegram import Desk
+
+    monkeypatch.setenv("HOLDSPEAK_TELEGRAM", "on")
+    monkeypatch.setenv("HOLDSPEAK_CHANNEL_KEYSTORE_FILE", str(tmp_path / "home" / "channel-keys.json"))
+    desk = Desk(tmp_path)
+    desk.pair()
+    pid, item = desk.core()
+    pid2, item2 = desk.merge()
+    morning = local_noon().replace(hour=9)
+    desk.reach._clock = lambda: morning.isoformat()
+    desk.reach.quiet = lambda: (22, 7)
+    desk.reach.save_settings(OWNER, {"digest": 8, "telegram": "digest"})
+    desk.bot.calls.clear()
+    refs = [f"program:{pid}:{item['id']}", f"program:{pid2}:{item2['id']}"]
+    desk.reach.night_line(f"program:{pid}:night:tonight", "Dreaming · HoldSpeak\nSince last night: 2 steps done",
+                          items=refs)
+    [message] = desk.bot.of("sendMessage")
+    assert "\n2 wait on you.\nOpen the page: https://hub.tail.ts.net/b/" in message["text"]
+    [package] = [row for row in BriefingStore(desk.rig.db).open_like(f"program:{pid}:", morning.isoformat())
+                 if row["kind"] == "digest"]
+    assert package["refs"] == refs and package["body"]["head"] == "Since last night: 2 steps done"

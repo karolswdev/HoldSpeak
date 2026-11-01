@@ -40,6 +40,10 @@ from .errors import ServiceError
 
 log = get_logger("services.briefing")
 
+#: DIR9: one page carries up to this many held items, in order, each decided alone.
+DIGEST_MAX = 12
+#: §3: a digest's page lives 12 hours.
+DIGEST_HOURS = 12
 #: §8: 256 random bits; the page path carries the base64url form.
 TOKEN_BYTES = 32
 TOKEN_PATTERN = r"[A-Za-z0-9_-]{43}"
@@ -404,14 +408,51 @@ class BriefingService:
             "changed": changed, "choices": choices, "evidence": evidence, "error": raw,
         }
 
+    # ── DIR10: a held item outside Programs ───────────────────────────
+
+    def _source(self, ref: Any) -> Any:
+        from .briefing_sources import source_for
+
+        return source_for(self.db, ref)
+
+    def body_for(self, ref: str) -> dict[str, Any]:
+        """The package body of one held item now (a Program's, or another
+        source's, DIR10). Refused by name when nothing waits there or the
+        item is answered on the desk only."""
+        source = self._source(ref)
+        if source is not None:
+            item = source.held(ref)
+            if item is None:
+                raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
+            return source.body(ref, item)
+        program, step, item = self._held(ref)
+        if item is None:
+            raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
+        if str(item.get("kind") or "") not in BRIEFABLE:
+            raise BriefingRefused("not_briefable", "This item is answered on your desk.", status=409)
+        return self._compose(ref, program, step, item)
+
+    @staticmethod
+    def bodies(package: Mapping[str, Any]) -> list[dict[str, Any]]:
+        """The items of a package, in order (DIR9: a digest holds several)."""
+        body = dict(package.get("body") or {})
+        if body.get("kind") == "digest":
+            return [dict(item) for item in body.get("items") or []]
+        return [body]
+
     # ── the owner's verbs ────────────────────────────────────────────
 
-    def make(self, principal: Any, refs: Any, *, kind: Any = "item", send: Any = None) -> dict[str, Any]:
-        """One package and its page token for one held item. The token is in
-        this answer only (the link); the hub keeps its hash."""
+    def make(self, principal: Any, refs: Any, *, kind: Any = "item", send: Any = None,
+             head: Any = None) -> dict[str, Any]:
+        """One package and its page token: one held item (``item``), or up to
+        twelve in order on one page (``digest``, DIR9: each decided alone).
+        The token is in this answer only (the link); the hub keeps its hash."""
         self._require_owner(principal)
-        if str(kind or "item") != "item":
-            raise BriefingRefused("digest_later", "A digest is not built yet. Make a page for one item.", status=400)
+        kind = str(kind or "item")
+        if kind not in ("item", "digest"):
+            raise BriefingRefused("kind_invalid", "A page is one item or a digest.", status=400)
+        if kind == "digest":
+            return self._make_digest(refs, send=send, head=head)
         sends = [send] if isinstance(send, str) else list(send or [])
         sends = [str(row) for row in sends if row not in (None, "", "none")]
         if any(row != "telegram" for row in sends):
@@ -431,12 +472,7 @@ class BriefingService:
         if len(refs) != 1:
             raise BriefingRefused("refs_invalid", "Name one item (refs: [ref]).", status=400)
         ref = refs[0]
-        program, step, item = self._held(ref)
-        if item is None:
-            raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
-        if str(item.get("kind") or "") not in BRIEFABLE:
-            raise BriefingRefused("not_briefable", "This item is answered on your desk.", status=409)
-        body = self._compose(ref, program, step, item)
+        body = self.body_for(ref)
         now = self._now()
         expires = now + timedelta(hours=ITEM_HOURS)
         token = mint_token()
@@ -450,6 +486,37 @@ class BriefingService:
             made["telegram"] = telegram.send_package(package_id, made["path"])
             made["telegram"].pop("text", None)  # it holds the link, and the link holds the token
         return made
+
+    def _make_digest(self, refs: Any, *, send: Any = None, head: Any = None) -> dict[str, Any]:
+        """DIR9: one page for several held items, in the order given (Needs
+        you's order), each composed and decided alone. An item that does not
+        wait any more is left out; none left: refused."""
+        if send not in (None, "", "none", [], ()):
+            raise BriefingRefused("send_unavailable", "A digest goes as its link (the morning message).", status=400)
+        refs = [str(ref) for ref in (refs if isinstance(refs, (list, tuple)) else [refs]) if ref]
+        refs = list(dict.fromkeys(refs))[:DIGEST_MAX]
+        items: list[dict[str, Any]] = []
+        for ref in refs:
+            try:
+                items.append(self.body_for(ref))
+            except BriefingRefused as exc:
+                if exc.code not in ("not_waiting", "not_briefable", "ref_unknown"):
+                    raise
+        if not items:
+            raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
+        words = "1 waits on you" if len(items) == 1 else f"{len(items)} wait on you"
+        body = {"kind": "digest", "ref": None, "head": " ".join(str(head or "").split())[:200] or words,
+                "count_words": words, "items": items}
+        now = self._now()
+        expires = now + timedelta(hours=DIGEST_HOURS)
+        token = mint_token()
+        package_id = f"pkg-{uuid.uuid4().hex[:12]}"
+        kept = [item["ref"] for item in items]
+        self.store.add(package_id=package_id, kind="digest", refs=kept, body=body, token_hash=token_hash(token),
+                       created_at=_utc(now), expires_at=_utc(expires))
+        self._changed(package_id, "sent")
+        return {"id": package_id, "token": token, "path": f"{PAGE_PREFIX}{token}", "expires_at": _utc(expires),
+                "expires_clock": expires.astimezone().strftime("%H:%M"), "refs": kept}
 
     def revoke(self, principal: Any, package_id: str) -> dict[str, Any]:
         self._require_owner(principal)
@@ -475,13 +542,7 @@ class BriefingService:
         (a call reads it): composed now, never stored, no token. ``None`` when
         nothing waits on him there or the item is answered on the desk only."""
         try:
-            program, step, item = self._held(str(ref))
-        except BriefingRefused:
-            return None
-        if item is None or str(item.get("kind") or "") not in BRIEFABLE:
-            return None
-        try:
-            return self._compose(str(ref), program, step, item)
+            return self.body_for(str(ref))
         except BriefingRefused:
             return None
 
@@ -490,6 +551,14 @@ class BriefingService:
         item's own verb. Refused by name when nothing waits there now or the
         choice is not one the package offers (a waive stays on the desk)."""
         self._require_owner(principal)
+        source = self._source(ref)
+        if source is not None:
+            item = source.held(str(ref))
+            if item is None:
+                raise BriefingRefused("answered_already", "Answered already.")
+            if str(choice) not in {row["id"] for row in source.body(str(ref), item)["choices"]}:
+                raise BriefingRefused("choice_invalid", "This choice waits for you on the desk.", status=400)
+            return self._decide_source(source, str(ref), item, str(choice), via)
         program, step, item = self._held(str(ref))
         if item is None:
             raise BriefingRefused("answered_already", "Answered already.")
@@ -498,6 +567,14 @@ class BriefingService:
             raise BriefingRefused("choice_invalid", "This choice waits for you on the desk.", status=400)
         return self.programs().decide(principal, str(program["id"]), str(item.get("step_id") or ""), via=via,
                                       choice=str(choice), **_decide_args(item))
+
+    @staticmethod
+    def _decide_source(source: Any, ref: str, item: Mapping[str, Any], choice: str, via: str) -> dict[str, Any]:
+        """The item's own verb; a refusal of the verb reads as the page's."""
+        try:
+            return source.decide(ref, item, choice, via=via)
+        except ServiceError as exc:
+            raise BriefingRefused(exc.code, exc.detail, status=int((exc.context or {}).get("status", 409))) from exc
 
     # ── the page's verbs (the token is the authority) ────────────────
 
@@ -539,10 +616,14 @@ class BriefingService:
                                  "" if via == "page" else _VIA_SETTLE.get(str(via), ""))
             return {"state": "decided", "outcome": {
                 "choice": answer["choice"], "label": label, "via": via, "at": answer.get("at"), "words": words}}
-        try:
-            _program, step, item = self._held(ref)
-        except BriefingRefused:
-            step, item = None, None
+        source = self._source(ref)
+        if source is not None:
+            step, item = None, source.held(ref)
+        else:
+            try:
+                _program, step, item = self._held(ref)
+            except BriefingRefused:
+                step, item = None, None
         if item is None:
             merged = step is not None and step.get("state") in ("merged", "done")
             words = "This step is merged." if merged else "Answered already on your desk."
@@ -561,24 +642,35 @@ class BriefingService:
         package = self._package(token)
         now = self._now()
         body = dict(package.get("body") or {})
-        body.pop("error", None)  # the raw reason opens as its fold only
-        item = {**body, **self._item_state(package, body)}
+        items = []
+        for row in self.bodies(package):
+            row.pop("error", None)  # the raw reason opens as its fold only
+            items.append({**row, **self._item_state(package, row)})
+        first = items[0] if items else {}
         expires = _parse(package["expires_at"]) or now
-        return {
+        out = {
             "package": {"id": package["id"], "kind": package["kind"], "head": body.get("head") or "",
                         "expires_at": package["expires_at"],
                         "expires_words": f"Expires in {_left_words((expires - now).total_seconds())}",
                         "hub": hub_name(),
-                        "desk": f"/?open=program:{body.get('program_id')}" if desk_in_reach() else None},
-            "items": [item],
+                        "desk": (f"/?open=program:{first.get('program_id')}" if first.get("program_id") else "/")
+                        if desk_in_reach() else None},
+            "items": items,
             "later": later_options(now),
         }
+        if package["kind"] == "digest":
+            # DIR9: the page's count says what still waits on this page.
+            open_now = sum(1 for item in items if item.get("state") == "open")
+            out["package"]["open"] = open_now
+            out["package"]["open_words"] = ("Nothing on this page waits on you." if not open_now else
+                                            "1 waits on you." if open_now == 1 else f"{open_now} wait on you.")
+        return out
 
     def evidence(self, token: Any, ref: str, pane: str) -> dict[str, Any]:
         """One evidence pane, read only, loaded when it opens."""
         package = self._package(token)
-        body = dict(package.get("body") or {})
-        if str(ref) != str(body.get("ref")) or pane not in {row["pane"] for row in body.get("evidence") or []}:
+        body = next((row for row in self.bodies(package) if str(row.get("ref")) == str(ref)), {})
+        if not body or pane not in {row["pane"] for row in body.get("evidence") or []}:
             raise BriefingRefused("pane_unknown", "This page has no such pane.", status=404)
         service = self.programs()
         step = service.store.get_step(str(body.get("step_id") or "")) if body.get("step_id") else None
@@ -619,9 +711,10 @@ class BriefingService:
 
     def _answer(self, package: dict[str, Any], ref: Any, choice: Any, *, via: str, reason: Any = None,
                 later: Any = None) -> dict[str, Any]:
-        body = dict(package.get("body") or {})
-        ref, choice = str(ref or body.get("ref") or ""), str(choice or "")
-        if ref != str(body.get("ref")):
+        rows = self.bodies(package)
+        ref, choice = str(ref or (rows[0].get("ref") if len(rows) == 1 else "") or ""), str(choice or "")
+        body = next((row for row in rows if str(row.get("ref")) == ref), None)
+        if body is None:
             raise BriefingRefused("ref_unknown", "This page does not hold that item.", status=404)
         state = self._item_state(package, body)
         if state["state"] in ("decided", "gone"):
@@ -640,11 +733,18 @@ class BriefingService:
         else:
             if choice not in {row["id"] for row in body.get("choices") or []}:
                 raise BriefingRefused("choice_invalid", "This choice is not on the page.", status=400)
-            _program, _step, item = self._held(ref)
-            if item is None:
-                raise BriefingRefused("answered_already", "Answered already on your desk.")
-            self.programs().decide(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),
-                                   via=via, choice=choice, reason=reason, **_decide_args(item))
+            source = self._source(ref)
+            if source is not None:
+                held = source.held(ref)
+                if held is None:
+                    raise BriefingRefused("answered_already", "Answered already on your desk.")
+                self._decide_source(source, ref, held, choice, via)
+            else:
+                _program, _step, item = self._held(ref)
+                if item is None:
+                    raise BriefingRefused("answered_already", "Answered already on your desk.")
+                self.programs().decide(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),
+                                       via=via, choice=choice, reason=reason, **_decide_args(item))
             answers[ref] = {"choice": choice, "via": via, "at": _utc(now)}
             self.store.answer(package["id"], answers)
             self._changed(package["id"], "answered")

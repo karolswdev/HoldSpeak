@@ -61,6 +61,23 @@ The digest is a plain list today: "3 wait on you", one line for each item ("Find
 
 Later decides nothing. A deferred item leaves the Needs you count, and its row says "Later · back at 13:00". At that time it comes back. When you deferred it on Telegram or on the briefing page, Telegram sends it again. The times you can say are in [Programs](programs.md#later-and-when-it-comes-back).
 
+## One page for several items
+
+A briefing page can hold up to 12 items that wait on you, in order. Each item has its own question and choices, and you decide each one alone. A decided item shows its one line; the others stay open. The top of the page says how many still wait, for example "1 waits on you.". The page lives 12 hours. The morning message after a night program links one page for all the items of that night that wait on you.
+
+Tools make such a page with `POST /api/reach/packages` and `{"refs": [...], "kind": "digest"}`. A digest goes as its link only: it takes no `send`.
+
+## Items from outside a program
+
+A page can also hold these items. Each choice runs the same action as the button on your desk:
+
+| Item | Ref | Choices |
+|---|---|---|
+| A decision to review | `decision:<id>` | **Confirm**: the decision is accepted and leaves your review list. |
+| A call that an agent asks to make | `phone-call:<id>` | **Call now**: your phone rings now. **Let it wait**: no call, and it stays on your desk. |
+
+When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. Not yet on a page: a meeting's proposals, a project's review proposals, an agent's question, a prepared send and a held tool call.
+
 ## The ladder
 
 The ladder has a fixed order today: the desk, the Phone app, Telegram, a call. You cannot change it.

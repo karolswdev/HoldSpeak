@@ -118,7 +118,9 @@ def test_after_his_press_the_page_settles_to_one_line(tmp_path) -> None:
 def test_later_settles_to_its_one_line(tmp_path) -> None:
     rig, pid = _no_remote(tmp_path)
     clock = Clock()
-    clock.now = datetime(2026, 10, 31, 6, 30, tzinfo=timezone.utc)  # 13:00 is later today
+    from tests.integration.program_rig import local_noon
+
+    clock.now = local_noon().replace(hour=9).astimezone(timezone.utc)  # 13:00 is later today
     briefing = BriefingService(rig.db, programs=lambda: rig.service, clock=clock)
     item = next(row for row in rig.program(pid)["your_turn_items"] if row["kind"] == "parked")
     made = briefing.make(OWNER, [f"program:{pid}:{item['id']}"])
