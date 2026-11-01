@@ -876,3 +876,24 @@ holdspeak program decide program-1d3cbc4a0b72 step-4a1b9c0d2e3f --kind core --ch
 - The hub is `--url`, else `HOLDSPEAK_URL`, else the hub that runs on this machine.
 - The credential is `--token`, else `HOLDSPEAK_AGENT_CREDENTIAL` (an agent such as pi: the agent rules apply), else `HOLDSPEAK_TOKEN`, else the owner token of the hub on this machine. HoldSpeak sends that token only to a loopback address, and never across a redirect.
 - If no hub answers, the command says so and the exit code is 1.
+
+## From Python: `holdspeak.sdk.programs`
+
+The Python client makes the same calls as `holdspeak program`. It has no rules of its own.
+
+```python
+from holdspeak.sdk.programs import Programs, ProgramsRefused
+
+programs = Programs()  # the hub on this machine
+made = programs.create("Overnight", repository="/Users/me/dev/app", template="fast-cycle", control="normal")
+text = programs.text(made["id"])                      # the program text and its revision
+rows = programs.text(made["id"], text["text"] + "\nstep +  Docs\n  brief\n  > Write the docs.\n", base=text["text"])
+programs.text(made["id"], text["text"] + "\nstep +  Docs\n  brief\n  > Write the docs.\n", base=text["text"], apply=True)
+programs.start(made["id"])
+program = programs.get(made["id"])                   # the steps, the checkpoints, your turn
+programs.decide(made["id"], step_id, kind="core", choice="go_on")
+```
+
+- `text(id)` reads the program as its text. `text(id, new_text)` is a dry run: it returns the change rows and writes nothing. With `apply=True`, it applies the rows when no row is refused.
+- A refusal raises `ProgramsRefused` with `status`, `code` and the hub's words (`detail`).
+- The hub and the credential are found as for `holdspeak program`: `url` and `token`, then `HOLDSPEAK_URL`, `HOLDSPEAK_AGENT_CREDENTIAL` (an agent such as pi: the agent rules apply), `HOLDSPEAK_TOKEN`, then the hub on this machine.
