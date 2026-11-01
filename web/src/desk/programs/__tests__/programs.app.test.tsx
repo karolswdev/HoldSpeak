@@ -70,6 +70,8 @@ import todoDoneFixture from "../__fixtures__/program.todo.done.json";
 import laneFixture from "../__fixtures__/program.lane.json";
 import laneTakenFixture from "../__fixtures__/program.lane.taken.json";
 import laneBackFixture from "../__fixtures__/program.lane.back.json";
+// PG-IMPORT IMP7: an audit and the two Programs it made (scripts/record_program_fixtures.py).
+import familyFixture from "../__fixtures__/family.row.json";
 // PG-LANG LANG3/4: a sentence shaped by the REAL qwen3.8-27b replies
 // (tests/fixtures/program_shape_reply.json) replayed through the hub's runner,
 // recorded through the real routes (tests/integration/test_desk_program_shape.py).
@@ -2367,5 +2369,54 @@ describe("PG-IMPORT IMP6: take it over, hand it back (recorded: scripts/record_p
     await waitFor(() => expect(within(stepRow(1)).queryByTestId("programs-step-take")).not.toBeNull());
     expect(stepRow(1).textContent).not.toContain("You have the lane");
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("PG-IMPORT IMP7: the forest (recorded: scripts/record_program_fixtures.py, family.row.json)", () => {
+  const family = familyFixture as unknown as { program: Program; child: Program; list: ProgramList };
+
+  it("the window lists the Programs it made as plain rows; a press opens that Program", async () => {
+    const program = family.program;
+    hub({ [`GET /api/programs/${program.id}`]: program });
+    render(<ProgramBody programId={program.id} />);
+    const section = await screen.findByTestId("programs-family");
+    expect(within(section).queryByTestId("programs-family-parent")).toBeNull();
+    const rows = within(within(section).getByTestId("programs-family-children")).getAllByTestId("programs-family-row");
+    expect(rows.map((row) => row.getAttribute("data-program"))).toEqual(program.family!.children.map((row) => row.id));
+    const done = program.family!.children.find((row) => row.ending === "finished")!;
+    const doneRow = rows.find((row) => row.getAttribute("data-program") === done.id)!;
+    expect(doneRow.textContent).toContain(`${done.name}${done.state_word} · finished${done.line}`);
+    expect(doneRow.querySelector(".kit-chip, .kit-badge")).toBeNull();
+    fireEvent.click(within(doneRow).getByTestId("programs-family-open"));
+    expect(mocks.openPullout).toHaveBeenCalledWith(`program:${done.id}`);
+  });
+
+  it("a child names the Program it came from; a Program with no family draws nothing", async () => {
+    hub({ [`GET /api/programs/${family.child.id}`]: family.child });
+    render(<ProgramBody programId={family.child.id} />);
+    const parent = await screen.findByTestId("programs-family-parent");
+    expect(parent.textContent).toContain(family.program.title);
+    fireEvent.click(within(parent).getByTestId("programs-family-open"));
+    expect(mocks.openPullout).toHaveBeenCalledWith(`program:${family.program.id}`);
+    cleanup();
+    hub({ [`GET /api/programs/${done.id}`]: done });
+    render(<ProgramBody programId={done.id} />);
+    await screen.findByTestId("programs-board");
+    expect(screen.queryByTestId("programs-family")).toBeNull();
+  });
+
+  it("on the list the family folds under its first Program, whose line carries the family's worst state", async () => {
+    hub({ "GET /api/programs": family.list });
+    render(<ProgramsCore />);
+    const fold = await screen.findByTestId("programs-family-fold");
+    const parent = family.list.programs.find((row) => row.kin)!;
+    expect(fold.getAttribute("data-parent")).toBe(parent.id);
+    expect(fold.textContent).toContain("2 programs it made");
+    const kids = within(fold).getAllByTestId("programs-row").map((row) => row.getAttribute("data-program"));
+    expect(kids.sort()).toEqual(family.list.programs.filter((row) => row.parent_id === parent.id).map((row) => row.id).sort());
+    // Each child is drawn once: under its parent, never also in its own band.
+    expect(screen.getAllByTestId("programs-row").filter((row) => kids.includes(row.getAttribute("data-program")))).toHaveLength(kids.length);
+    const parentRow = screen.getAllByTestId("programs-row").find((row) => row.getAttribute("data-program") === parent.id)!;
+    expect(within(parentRow).getByTestId("programs-row-kin").textContent).toBe(`· its programs: ${parent.kin!.worst_word}`);
   });
 });
