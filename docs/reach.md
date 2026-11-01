@@ -24,8 +24,6 @@ HoldSpeak uses one bot (the same bot as Cadence) and one chat: yours.
 
 While a chat is paired, no other chat can pair. **Unpair** removes the chat. **Pair Telegram** is off until the token is stored.
 
-Note: no real bot was paired when these docs were written. The pairing is tested against the documented shapes of the Telegram Bot API only.
-
 ## When to reach you
 
 The ladder shows each rung in the order HoldSpeak tries them, with its wait: **Desk** (at once, always), **Phone** (the Phone app's push: **At once** or **Off**), **Telegram** (the choices below) and **Call** (by your **Reach you** rules, when Calls is set). An answer on any rung stops the ladder.
@@ -77,9 +75,12 @@ A page can also hold these items. Each choice runs the same action as the button
 | A call that an agent asks to make | `phone-call:<id>` | **Call now**: your phone rings now. **Let it wait**: no call, and it stays on your desk. |
 | A meeting's proposed action | `meeting-proposal:<id>` | The page shows the preview first: where it goes and the lines it sends or writes. **Do it**: HoldSpeak does it now. **Not this**: nothing is done or sent. |
 | A project review's proposal | `project-proposal:<id>` | The page shows what **Accept** adds or records. **Accept** or **Dismiss**. |
+| An audit's findings, its fix program, a lesson | `program:<id>:<item id>` (the id of its Your turn row) | The same choices as on the desk: **File** or **Skip**; **Make** or **Skip**; **Keep for this program**, **Keep for HoldSpeak** or **Skip**. The page names the program as the place, not a step. |
 | A program step's agent asks a question | `program:<id>:<step>:answer` | One text field, the only input on the page: your answer. HoldSpeak types it to the agent. On Telegram, reply to the message with your answer. |
+| A document that is ready to send | `send:<id>` | The page shows the preview first: the destination and the lines that go. **Send**: HoldSpeak sends it now. **Discard**: nothing is sent. This item goes on the page only: a Telegram message for it has no Send button. |
+| A desk agent asks a question outside a program | `coder:<agent>:<session>` | One text field: your answer. HoldSpeak types it to the agent. |
 
-When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. A page with several items also shows plain lines with no buttons: the Door tasks due today, and the lines the desk adds (a blocker, for example "The meeting recorder has no microphone."). Not yet on a page: a desk agent's question outside a program, a prepared send and a held tool call.
+When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. A page with several items also shows plain lines with no buttons: the Door tasks due today, and the lines the desk adds (a blocker, for example "The meeting recorder has no microphone."). A held tool call never goes on a page: it stays on your desk.
 
 ## What may travel, and a late answer
 
