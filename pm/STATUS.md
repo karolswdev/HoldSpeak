@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-11-01. Today's folds (Since …, This week): the Show / Hide word was drawn over the fold's label at 1440. The library Button's `::after` is its hit face (absolute, inset 0); Today's fold word used that pseudo-element, so it sat at the left over the label. It now flows at the right (`today.css`), and wraps to its own line when the label needs the width. Found by the live walk of the Program window.
+**Last updated:** 2026-11-01. Today's folds (Since …, This week): the Show / Hide word was drawn over the fold's label at 1440. The library Button's `::after` is its hit face (absolute, inset 0); Today's fold word used that pseudo-element, so it sat at the left over the label. It is now the fold head's `::before`, last in its row at the right (`today.css`; the Button keeps its hit face), and wraps to its own line when the label needs the width. Found by the live walk of the Program window.
 
 **Before it:** 2026-11-01. Not this keeps its reason: a Door task dismissed through follow-through `complete` with `payload.reason` ("proof") keeps the reason on its `commitment.dismissed` receipt (at most 200 characters); the row stays (dismissed, never deleted). Used to resolve the night proof's two Later tasks about the scratch repository. Test in `tests/unit/test_phase200_continuity.py`.
 
