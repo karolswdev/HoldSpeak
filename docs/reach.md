@@ -75,6 +75,7 @@ A page can also hold these items. Each choice runs the same action as the button
 | A call that an agent asks to make | `phone-call:<id>` | **Call now**: your phone rings now. **Let it wait**: no call, and it stays on your desk. |
 | A meeting's proposed action | `meeting-proposal:<id>` | The page shows the preview first: where it goes and the lines it sends or writes. **Do it**: HoldSpeak does it now. **Not this**: nothing is done or sent. |
 | A project review's proposal | `project-proposal:<id>` | The page shows what **Accept** adds or records. **Accept** or **Dismiss**. |
+| An audit's findings, its fix program, a lesson | `program:<id>:<item id>` (the id of its Your turn row) | The same choices as on the desk: **File** or **Skip**; **Make** or **Skip**; **Keep for this program**, **Keep for HoldSpeak** or **Skip**. The page names the program as the place, not a step. |
 | A program step's agent asks a question | `program:<id>:<step>:answer` | One text field, the only input on the page: your answer. HoldSpeak types it to the agent. On Telegram, reply to the message with your answer. |
 | A document that is ready to send | `send:<id>` | The page shows the preview first: the destination and the lines that go. **Send**: HoldSpeak sends it now. **Discard**: nothing is sent. This item goes on the page only: a Telegram message for it has no Send button. |
 | A desk agent asks a question outside a program | `coder:<agent>:<session>` | One text field: your answer. HoldSpeak types it to the agent. |
