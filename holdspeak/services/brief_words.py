@@ -794,6 +794,34 @@ def _wall(stamp: Any) -> Optional[Any]:
     return value.astimezone() if value.tzinfo else value
 
 
+def _skipped(row: Mapping[str, Any]) -> bool:
+    """An owner's Skip: the step is finished without a merge."""
+    return "skipped" in str(row.get("parked_reason") or "").lower()
+
+
+def _done_words(steps: list[Mapping[str, Any]], *, history: Optional[Mapping[str, Any]], done_in: str, ended: Any) -> str:
+    """"Done, 14 PRs, 28 Oct", "Done, 3 merges, 1 Nov", "Done, 1 skipped, 31 Oct"."""
+    if history and history.get("words"):
+        words = str(history["words"]).replace(" · ", ", ")
+        return f"Done, {words[:1].lower()}{words[1:]}"
+    merged = [row for row in steps if row.get("state") in ("merged", "done")]
+    prs = sum(1 for row in merged if row.get("pr_number"))
+    skipped = sum(1 for row in steps if row.get("state") == "parked" and _skipped(row))
+    day = _wall(ended)
+    parts = ["Done",
+             f"{prs} {'PR' if prs == 1 else 'PRs'}" if prs else
+             (f"{len(merged)} {'merge' if len(merged) == 1 else 'merges'}" if merged else ""),
+             f"{skipped} skipped" if skipped else "",
+             f"{day.day} {day.strftime('%b')}" if day else ""]
+    line = ", ".join(part for part in parts if part)
+    return line if line != "Done" else (f"Done in {done_in}" if done_in else "Done")
+
+
+def _finished(steps: list[Mapping[str, Any]]) -> bool:
+    return bool(steps) and all(row.get("state") in ("merged", "done") or (row.get("state") == "parked" and _skipped(row))
+                               for row in steps)
+
+
 def list_track(steps: list[Mapping[str, Any]], turn: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
     """One mark per step for the list's mini track: ``done``, ``here`` (it
     waits on him), ``running``, ``red``, ``parked``, ``planned``."""
@@ -807,6 +835,8 @@ def list_track(steps: list[Mapping[str, Any]], turn: list[Mapping[str, Any]]) ->
             mark = "here"
         elif state in ("check_failed", "failed"):
             mark = "red"
+        elif state == "parked" and row.get("parked_by") == "owner" and _skipped(row):
+            mark = "skipped"
         elif state == "parked":
             mark = "parked"
         elif state in _LIST_RUNNING:
@@ -852,15 +882,10 @@ def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str
     if state == "drafting":
         return f"Drafting, {total} {'step' if total == 1 else 'steps'}" if total else "Drafting, no steps yet"
     if state == "done":
-        if history and history.get("words"):
-            words = str(history["words"]).replace(" · ", ", ")
-            return f"Done, {words[:1].lower()}{words[1:]}"
-        prs = sum(1 for row in steps if row.get("pr_number") and row.get("state") in ("merged", "done"))
-        day = _wall(ended)
-        parts = ["Done", f"{prs} {'PR' if prs == 1 else 'PRs'}" if prs else "",
-                 f"{day.day} {day.strftime('%b')}" if day else ""]
-        line = ", ".join(part for part in parts if part)
-        return line if prs or day else (f"Done in {done_in}" if done_in else "Done")
+        return _done_words(steps, history=history, done_in=done_in, ended=ended)
+    if state == "parked" and _finished(steps):
+        # Done is a fact parking does not erase (owner catch 2026-11-01).
+        return f"{_done_words(steps, history=history, done_in=done_in, ended=ended)} · parked"
     if state in ("parked", "failed"):
         stopped = next((row for row in steps if row.get("state") in ("parked", "failed", "check_failed")), None)
         word = "Parked" if state == "parked" else "Failed"

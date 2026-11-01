@@ -50,6 +50,12 @@ export function lineStations(program: Program): TrackStation[] {
   const here = items[0]?.step_id || null;
   const blocked = new Set(items[0]?.brief?.blocked ?? []);
   const stations = steps.map((step) => stationOf(step, held, blocked, here));
+  // #1697: a night program sleeps until its window (Drafting, or Running
+  // before the night): the first station says so.
+  if (program.night && (program.state === "drafting" || !steps.some((step) => step.state !== "planned" && step.state !== "ready"))) {
+    stations.unshift({ key: "night", word: `Sleeps until ${program.night.start}`, note: program.night.line,
+      state: "ahead", tone: "idle", mark: "night" });
+  }
   const own = (program.requirements ?? []).filter((row) => row.scope === "program" || row.scope === "every_step");
   if (own.length) {
     const met = own.every((row) => row.state === "met" || row.state === "waived");

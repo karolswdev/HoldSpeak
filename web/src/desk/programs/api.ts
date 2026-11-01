@@ -216,6 +216,8 @@ export const TEMPLATES = [
   { id: "race", name: "Race", line: "One brief, two agents; the first green one wins.", agent: "claude" },
   { id: "overnight", name: "Overnight on the home box", line: "qwen builds when the engine is idle; Claude Code reviews; it merges on green.", agent: "pi" },
   { id: "from-the-desk", name: "From the desk", line: "A step for each open action of a project.", agent: "" },
+  // #1697: the night program (23:30–07:00, YOLO, pi on the home engine, 64k a step).
+  { id: "dreaming", name: "Dreaming", line: "Runs at night on the idle home engine; fills itself from tasks marked Tonight", agent: "pi" },
 ] as const;
 
 /** One frame names a Program (`program_changed`, or `desk_changed` kind

@@ -53,3 +53,17 @@ def test_add_to_tonight_over_rest_and_mcp(tmp_path, monkeypatch) -> None:
     over_mcp = program_family.dispatch("program.add_to_night", {"kind": "action", "item_id": other}, OWNER)
     assert over_mcp["added"] is True and over_mcp["ordinal"] == 5
     assert [step["ordinal"] for step in rig.program(pid)["steps"]] == [1, 2, 3, 4, 5]
+
+
+def test_a_dreaming_program_in_drafting_is_recorded_for_its_face(tmp_path, monkeypatch) -> None:
+    """#1697's Dreaming template, made through the real route and read in
+    Drafting: the face's fixture (``program.dreaming.json``): its night line
+    tells the window when it sleeps and what the night will do."""
+    rig = Rig(tmp_path)
+    client = _client(rig, monkeypatch)
+    made = _ok(client.post("/api/programs", json={"title": "Dreaming · HoldSpeak", "template": "dreaming",
+                                                   "repository": str(rig.repo)}), 201)
+    pid = str(made.get("id") or (made.get("program") or {}).get("id"))
+    wire = _ok(client.get(f"/api/programs/{pid}"))
+    assert wire["state"] == "drafting" and wire["template"] == "dreaming" and wire["night"]
+    _fixture("program.dreaming.json", wire, tmp_path)

@@ -558,6 +558,12 @@ def record(root: Path) -> dict[str, Any]:
     rig.tick()
     rig.service.park(OWNER, parked)
 
+    # ── Two proof runs he parked as proofs (#1707's reason; the list folds them) ──
+    for title in ("Proof · README docs changelog", "Proof 2 · README docs changelog"):
+        proof = _create(rig, title, template="fast-cycle", control="yolo")
+        rig.service.plan(OWNER, proof, steps=[{"title": "Add a line to the README", "brief": "x"}])
+        rig.service.park(OWNER, proof, reason="proof")
+
     # ── Drafting ──
     drafting = _create(rig, "Calls on the home box", template="overnight", project_id="proj-holdspeak")
     rig.service.plan(OWNER, drafting, steps=[{"title": "The call runner", "brief": "Run a call turn on qwen."},

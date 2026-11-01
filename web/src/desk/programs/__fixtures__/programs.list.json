@@ -2,20 +2,20 @@
   "counts": {
     "done": 1,
     "drafting": 1,
-    "parked": 1,
+    "parked": 3,
     "waiting": 2
   },
   "programs": [
     {
       "asks": 0,
       "control": "secure",
-      "created_at": "2026-11-01T08:21:42.463327+00:00",
+      "created_at": "2026-11-01T09:08:12.733090+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-b494056fe623",
-      "in_state_seconds": 7,
+      "id": "program-e098a7f5d6ef",
+      "in_state_seconds": 3,
       "last_checkpoint": {
-        "at": "2026-11-01T08:21:48.493304+00:00",
+        "at": "2026-11-01T09:08:16.377008+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -26,27 +26,27 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-486805d23eea/8",
-        "ref_commit": "b42e099462bee39fa72f81c26ce2d7ef8fc6a27f",
+        "ref": "refs/holdspeak/checkpoints/step-7fac4f940f1d/8",
+        "ref_commit": "5f3665576a9a42bfb37faf9006e94ae700f350bb",
         "rule": null,
-        "step_id": "step-486805d23eea",
+        "step_id": "step-7fac4f940f1d",
         "undo": {
           "pin": {
-            "commit": "b42e099462bee39fa72f81c26ce2d7ef8fc6a27f",
-            "head": "1f653a605185c33a491716d4b056bd1a7e283b68",
+            "commit": "5f3665576a9a42bfb37faf9006e94ae700f350bb",
+            "head": "ef0af16f13060923b889255f76786df48474d317",
             "n": 8,
-            "ref": "refs/holdspeak/checkpoints/step-486805d23eea/8",
-            "tree": "40124f442f1cdff77bd17bb4e94df3f5670c60b2"
+            "ref": "refs/holdspeak/checkpoints/step-7fac4f940f1d/8",
+            "tree": "11a26b5d95a204d589e731dabb1c587db761e8be"
           },
           "seen": {
             "check": "green",
-            "checked": "a54fb6fb2fead984d2e2c0f7e5933401cc1490fc",
-            "commit": "a54fb6fb2fead984d2e2c0f7e5933401cc1490fc",
+            "checked": "c4a5afa7df3151e8f4ff614637c12db3e4eda2f5",
+            "commit": "c4a5afa7df3151e8f4ff614637c12db3e4eda2f5",
             "state": "findings"
           }
         }
       },
-      "line": "Step 1 of 3 waits on you since 03:21",
+      "line": "Step 1 of 3 waits on you since 04:08",
       "persons": [],
       "project": {
         "id": "proj-holdspeak",
@@ -83,42 +83,42 @@
           "title": "Door words"
         }
       ],
-      "updated_at": "2026-11-01T08:21:46.465331+00:00",
+      "updated_at": "2026-11-01T09:08:15.334637+00:00",
       "your_turn": 4
     },
     {
       "asks": 1,
       "control": "yolo",
-      "created_at": "2026-11-01T08:21:36.837103+00:00",
+      "created_at": "2026-11-01T09:08:08.802370+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-f0d2b4358e3d",
-      "in_state_seconds": 11,
+      "id": "program-aff6508021c2",
+      "in_state_seconds": 6,
       "last_checkpoint": {
-        "at": "2026-11-01T08:21:46.615379+00:00",
+        "at": "2026-11-01T09:08:15.417613+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 45,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-2e59bdab68a3",
+        "line": "Handed to Claude Code in hs-program-step-7a9522622f0a",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-2e59bdab68a3/1",
-        "ref_commit": "e47aa1d2f4f038a52838c17aa65316e89de22fc7",
+        "ref": "refs/holdspeak/checkpoints/step-7a9522622f0a/1",
+        "ref_commit": "6b535fb0fc44b9dedc94fdc6f8bb9bce6510c2c9",
         "rule": null,
-        "step_id": "step-2e59bdab68a3",
+        "step_id": "step-7a9522622f0a",
         "undo": {
           "pin": {
-            "commit": "e47aa1d2f4f038a52838c17aa65316e89de22fc7",
-            "head": "dcd6d03fa4ade953017d2467fc4d39e58e082eeb",
+            "commit": "6b535fb0fc44b9dedc94fdc6f8bb9bce6510c2c9",
+            "head": "919c9098ec7160b1fcf81083d6dc4f8d4c8a23b9",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-2e59bdab68a3/1",
+            "ref": "refs/holdspeak/checkpoints/step-7a9522622f0a/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -126,7 +126,7 @@
           }
         }
       },
-      "line": "Step 4 of 7 waits on you since 03:21",
+      "line": "Step 4 of 7 waits on you since 04:08",
       "persons": [
         {
           "id": "p-alice",
@@ -181,23 +181,23 @@
           "title": "Write the docs"
         }
       ],
-      "updated_at": "2026-11-01T08:21:42.235929+00:00",
+      "updated_at": "2026-11-01T09:08:12.594064+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T08:21:53.561562+00:00",
+      "created_at": "2026-11-01T09:08:19.124319+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-ef306636e02e",
+      "id": "program-bf02e2ba2187",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T08:21:53.567046+00:00",
+        "at": "2026-11-01T09:08:19.126417+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
-        "id": 87,
+        "id": 93,
         "kind": null,
         "line": "Added 2 steps",
         "operation_id": null,
@@ -242,22 +242,22 @@
           "title": "The calls window"
         }
       ],
-      "updated_at": "2026-11-01T08:21:53.567109+00:00",
+      "updated_at": "2026-11-01T09:08:19.126459+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T08:21:48.683025+00:00",
+      "created_at": "2026-11-01T09:08:16.511150+00:00",
       "done": 1,
       "done_in": "under a minute",
       "finished": "finished",
       "finished_words": "finished",
       "for_person": null,
-      "id": "program-9f422da76740",
-      "in_state_seconds": 2,
+      "id": "program-67276fb2ab3a",
+      "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-01T08:21:50.985670+00:00",
+        "at": "2026-11-01T09:08:17.804307+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -294,19 +294,113 @@
           "title": "Atlas anchors"
         }
       ],
-      "updated_at": "2026-11-01T08:21:50.985583+00:00",
+      "updated_at": "2026-11-01T09:08:17.804258+00:00",
+      "your_turn": 0
+    },
+    {
+      "asks": 0,
+      "control": "yolo",
+      "created_at": "2026-11-01T09:08:19.120748+00:00",
+      "done": 0,
+      "for_person": null,
+      "id": "program-1151d73f596e",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-11-01T09:08:19.123190+00:00",
+        "by": "owner",
+        "choice": "proof",
+        "decision_record_id": null,
+        "id": 91,
+        "kind": "program_park",
+        "line": "Parked the program; the worktrees stay (a proof run)",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      "line": "Parked",
+      "parked_as": "proof",
+      "persons": [],
+      "project": null,
+      "project_id": null,
+      "search_words": "proof 2 · readme docs changelog proof 2 · readme docs changelog. fast-cycle add a line to the readme fast cycle",
+      "skipped": 0,
+      "state": "parked",
+      "state_word": "Parked",
+      "title": "Proof 2 · README docs changelog",
+      "total": 1,
+      "track": [
+        {
+          "mark": "planned",
+          "ordinal": 1,
+          "title": "Add a line to the README"
+        }
+      ],
+      "updated_at": "2026-11-01T09:08:19.123140+00:00",
+      "your_turn": 0
+    },
+    {
+      "asks": 0,
+      "control": "yolo",
+      "created_at": "2026-11-01T09:08:19.117094+00:00",
+      "done": 0,
+      "for_person": null,
+      "id": "program-077cd42cd0f1",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-11-01T09:08:19.119587+00:00",
+        "by": "owner",
+        "choice": "proof",
+        "decision_record_id": null,
+        "id": 88,
+        "kind": "program_park",
+        "line": "Parked the program; the worktrees stay (a proof run)",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      "line": "Parked",
+      "parked_as": "proof",
+      "persons": [],
+      "project": null,
+      "project_id": null,
+      "search_words": "proof · readme docs changelog proof · readme docs changelog. fast-cycle add a line to the readme fast cycle",
+      "skipped": 0,
+      "state": "parked",
+      "state_word": "Parked",
+      "title": "Proof · README docs changelog",
+      "total": 1,
+      "track": [
+        {
+          "mark": "planned",
+          "ordinal": 1,
+          "title": "Add a line to the README"
+        }
+      ],
+      "updated_at": "2026-11-01T09:08:19.119524+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T08:21:50.993072+00:00",
+      "created_at": "2026-11-01T09:08:17.809942+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-9729cd78a94f",
+      "id": "program-a43621b5c7f3",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T08:21:53.557992+00:00",
+        "at": "2026-11-01T09:08:19.114464+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -346,7 +440,7 @@
           "title": "Tidy"
         }
       ],
-      "updated_at": "2026-11-01T08:21:53.557862+00:00",
+      "updated_at": "2026-11-01T09:08:19.114383+00:00",
       "your_turn": 0
     }
   ],
