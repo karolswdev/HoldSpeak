@@ -290,8 +290,12 @@ def test_the_night_line_goes_to_telegram_once_and_waits_out_quiet_hours(tmp_path
     telegram_desk = Desk(tmp_path)
     telegram_desk.pair()
     reach = telegram_desk.reach
+    from tests.integration.program_rig import local_noon
+
+    noon = local_noon()  # the test reads no wall clock
+    reach._clock = lambda: noon.isoformat()
     telegram_desk.bot.calls.clear()
-    hour = datetime.now().astimezone().hour
+    hour = noon.hour
     reach.quiet = lambda: (hour, (hour + 2) % 24)  # quiet now
     held = reach.night_line("program:p1:night:2026-11-02", "Dreaming · HoldSpeak\nSince last night: 1 step done")
     assert held == {"ref": "program:p1:night:2026-11-02", "queued": True, "sent": False}

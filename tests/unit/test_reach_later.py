@@ -62,10 +62,11 @@ def test_anything_else_asks_for_a_time(words: str) -> None:
 
 def test_later_means_is_his_default(tmp_path) -> None:
     rig = Rig(tmp_path)
-    reach = ReachService(rig.db, programs=lambda: rig.service)
+    noon = _local(12)
+    reach = ReachService(rig.db, programs=lambda: rig.service, clock=lambda: noon.isoformat())
     reach.save_settings(OWNER, {"later_means": "tomorrow"})
     until = reach.later_until("later")
-    assert until.hour == 8 and until.date() > datetime.now().astimezone().date()
+    assert until.hour == 8 and until.date() > noon.date()
     with pytest.raises(ReachRefused):
         reach.save_settings(AGENT, {"later_means": "in_2h"})
     with pytest.raises(ReachRefused) as bad:

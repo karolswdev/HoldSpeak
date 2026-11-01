@@ -247,6 +247,31 @@ class FakeGate:
         self.holds.pop(launch_id, None)
 
 
+def local_noon() -> Any:
+    """Today 12:00 on the hub's wall clock: outside every default quiet
+    hours, so a reach or a recorded answer never depends on the hour the
+    test runs (a night run wrote "held for the morning")."""
+    from datetime import datetime
+
+    # Naive first, then the zone: on a DST change day (2026-11-01) the offset
+    # at 12:00 is not the offset of the hour the test runs.
+    return datetime.now().replace(hour=12, minute=0, second=0, microsecond=0).astimezone()
+
+
+def frozen_quiet_phone(db: Any) -> Any:
+    """The hub's Phone service over ``db`` whose quiet hours are read at
+    :func:`local_noon` (an explicit instant still reads as given)."""
+    from holdspeak.phone.service import default_phone_service
+
+    phone = default_phone_service(db)
+    if not getattr(phone, "_quiet_frozen", False):
+        read = phone._quiet
+        noon = local_noon()
+        phone._quiet = lambda at=None: read(at if at is not None else noon)
+        phone._quiet_frozen = True
+    return phone
+
+
 class Rig:
     def __init__(self, tmp_path: Path, *, kernel: bool = False, people: Any = None,
                  engines: Any = None, idle: Any = None, working_at_once: int = 6, clock: Any = None) -> None:
@@ -264,6 +289,7 @@ class Rig:
             self.db, broadcast=self._frame, people=people, engines=engines,
             kernel=None if kernel else (lambda **_kw: None),
             runner=lambda: self.runner, **({"clock": clock} if clock is not None else {}),
+            phone=lambda: frozen_quiet_phone(self.db),
         )
         self.frames: list[tuple[str, dict[str, Any]]] = []
         self.review = AgentReviewLoop(
