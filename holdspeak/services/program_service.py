@@ -153,6 +153,10 @@ DEFAULT_REVIEWER = {"claude-default": "codex-default", "codex-default": "claude-
 
 #: ``parked_by``: who parked a step. Only an engine park is his turn.
 PARKED_BY_OWNER, PARKED_BY_ENGINE, PARKED_BY_RACE = "owner", "engine", "race"
+#: The owner's ruling of 2026-11-01: park stops the steps. A step parked with
+#: its Program keeps the state it had in ``facts.park_from``; Resume puts it back.
+PARKED_BY_PROGRAM = "program"
+PARKED_WITH_PROGRAM = "Parked with the program"
 
 #: Your-turn kinds and the choices of each (the REST decide body).
 DECIDE_CHOICES = {
@@ -807,6 +811,8 @@ def step_wait(program: Mapping[str, Any], step: Mapping[str, Any],
     facts = step.get("facts") or {}
     agent = agent_label(((facts.get("running_on") or {}).get("profile") if isinstance(facts.get("running_on"), Mapping)
                          else None) or step.get("profile") or program.get("default_profile"))
+    if step.get("state") == "parked" and step.get("parked_by") == PARKED_BY_PROGRAM:
+        return {"cause": "program_parked", "line": wait_line(step.get("ordinal"), agent, "program_parked")}
     wait = facts.get("wait") if isinstance(facts.get("wait"), Mapping) else None
     if wait and wait.get("cause") in WAIT_SENTENCES:
         return {"cause": wait["cause"], "at": wait.get("at"),
@@ -2374,6 +2380,18 @@ class ProgramService:
         with _LOCK:
             program["state"] = "parked"
             self._touch(program)
+            # Park stops the steps: every open step is parked with it (the
+            # engine hands, nudges and checks nothing on them; a running
+            # agent turn is left to end). Not a move of the engine's table:
+            # the step keeps where it was, and Resume puts it back there.
+            for step in self.store.list_steps(program["id"]):
+                if step["state"] in CLOSED_STATES or step["state"] == "failed":
+                    continue
+                facts = dict(step.get("facts") or {})
+                facts["park_from"] = step["state"]
+                facts.pop("wait", None)
+                step.update(state="parked", parked_by=PARKED_BY_PROGRAM, parked_reason=PARKED_WITH_PROGRAM, facts=facts)
+                self._save(step)
             self.store.add_checkpoint(step_id="", program_id=program["id"], at=self._clock(),
                                       by="owner" if _is_owner(principal) else "agent",
                                       line="Parked the program; the worktrees stay" + (
@@ -2413,6 +2431,13 @@ class ProgramService:
         with _LOCK:
             program["state"] = "running"
             for step in self.store.list_steps(program["id"]):
+                if step["state"] == "parked" and step.get("parked_by") == PARKED_BY_PROGRAM:
+                    # Back to where it was when the Program was parked.
+                    facts = dict(step.get("facts") or {})
+                    back = str(facts.pop("park_from", "") or "ready")
+                    step.update(state=back, parked_by=None, parked_reason=None, facts=facts)
+                    self._save(step)
+                    continue
                 if step["state"] == "failed":
                     self.transition(program, step, "ready", by="owner", line="Resumed after the failure")
             self._touch(program)
