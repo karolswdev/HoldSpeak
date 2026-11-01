@@ -79,6 +79,31 @@ export function readPrepared(text: string): PreparedDay {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/** An address is egress, never a label (owner rule: no host:port chips). */
+const ADDRESS = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[\w-]+(?:\.[\w-]+)*):\d+$|^https?:\/\//i;
+/** A raw id (8+ hex) is never his words. */
+const RAW_ID = /\b[0-9a-f]{8,}\b/i;
+/** The engine's word for a meeting record it could not read. */
+const NO_RECORD = /\b(?:time|title)\s+unavailable\b|\bmeeting\s+[0-9a-f]{6,}\b/i;
+
+/** "Prepared 18:27 · Claude Code": the time, and the engine's name when it
+ *  is a name (an address is left out). */
+export function preparedBy(time: string, engine: string | null | undefined): string {
+  const name = String(engine ?? "").trim();
+  return [time, name && !ADDRESS.test(name) ? name : ""].filter(Boolean).join(" · ");
+}
+
+/** The chief-of-staff line when the result holds nothing for him: what the
+ *  automation prepared and why, in his words. ``null`` when there is work. */
+export function nothingLine(text: string, day: PreparedDay): string | null {
+  if (day.cards.length || day.mine.length || day.nudges.length || day.other.some((line) => !RAW_ID.test(line))) {
+    return null;
+  }
+  return NO_RECORD.test(String(text ?? ""))
+    ? "The automation prepared nothing: the meeting record has no time or title"
+    : "The automation prepared nothing for today";
+}
+
 /** Add a suggested point to this person's next 1:1 (the prep's own path:
  *  the open 1:1, else a new one, then its agenda item). */
 async function addToAgenda(relationshipId: string, body: string): Promise<void> {
@@ -137,6 +162,8 @@ export function PreparedBlock({ read, events }: { read: PreparedRead | null; eve
   const prepared = read?.prepared;
   if (!prepared?.result?.text) return null;
   const day = readPrepared(prepared.result.text);
+  const nothingWords = nothingLine(prepared.result.text, day);
+  const other = day.other.filter((line) => !RAW_ID.test(line));
   const at = prepared.result.completed_at ? new Date(prepared.result.completed_at) : null;
   const time = at && !Number.isNaN(at.getTime()) ? `${pad(at.getHours())}:${pad(at.getMinutes())}` : "";
   const looked = (prepared.result.used?.looked_at ?? []).map((row) => row.label || row.ref).filter(Boolean);
@@ -148,7 +175,7 @@ export function PreparedBlock({ read, events }: { read: PreparedRead | null; eve
       <header className="today-prepared-bar">
         <span className="today-prepared-label">Prepared</span>
         <span className="today-prepared-by" data-testid="today-prepared-by">
-          {[time, prepared.engine].filter(Boolean).join(" · ")}
+          {preparedBy(time, prepared.engine)}
         </span>
         {prepared.result.new ? <span className="kit-pill" data-tone="info" data-testid="today-prepared-new">NEW</span> : null}
         <span className="today-head-sp" />
@@ -171,8 +198,11 @@ export function PreparedBlock({ read, events }: { read: PreparedRead | null; eve
           <ul>{day.nudges.map((line, i) => <li key={i}>{line}</li>)}</ul>
         </div>
       ) : null}
-      {day.other.length ? (
-        <div className="today-prepared-list"><ul>{day.other.map((line, i) => <li key={i}>{line}</li>)}</ul></div>
+      {nothingWords ? (
+        <p className="today-prepared-nothing" data-testid="today-prepared-nothing">{nothingWords}</p>
+      ) : null}
+      {other.length && !nothingWords ? (
+        <div className="today-prepared-list"><ul>{other.map((line, i) => <li key={i}>{line}</li>)}</ul></div>
       ) : null}
       {looked.length ? (
         <p className="today-prepared-looked" data-testid="today-prepared-looked">Looked at: {looked.join(", ")}</p>

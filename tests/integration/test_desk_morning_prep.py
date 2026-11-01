@@ -221,3 +221,40 @@ def test_put_it_in_today_is_a_choice_and_a_wrong_target_names_it(hub: _HttpHub) 
     assert refused.status_code == 400 and "today" in refused.text, refused.text
     # The automation Prepare now runs is the live one whose Put it in is Today.
     assert _ok(hub.client.get("/api/automations/prepared"))["automation"] == {"id": wb, "name": "Day notes"}
+
+
+def test_a_morning_prep_that_prepared_nothing_is_recorded_for_todays_line(
+    hub: _HttpHub, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The owner's desk, 2026-11-01: the engine answered that a meeting record
+    had no time ("Time unavailable — Meeting c4e978fc"). The answers are
+    recorded for Today's chief-of-staff line (fixtures/daily-week/
+    today-prepared-nothing.json): the block says what was prepared, in his
+    words, never the raw id."""
+    from holdspeak.services.automation_runs import ensure_morning_prep
+    from holdspeak.workbench_templates import MORNING_PREP_ID
+    from tests.fixtures.daily_week import WIRE_DAY, pin_wire_day, seed
+    from tests.unit.test_desk_speak import _record
+
+    pin_wire_day(hub, monkeypatch)
+    seeded = seed(hub, monday=WIRE_DAY, engine=True)
+    _connect_claude(hub)
+    assert ensure_morning_prep(hub.db) == MORNING_PREP_ID
+    set_tool_plan(hub.bin_dir, "claude", [{"name": "desk.needs_you", "arguments": {}}], once=True)  # type: ignore[attr-defined]
+    set_claude_answer(hub.bin_dir, "## Time unavailable — Meeting c4e978fc\n- Nothing.")  # type: ignore[attr-defined]
+    _ok(hub.client.post(f"/api/workbenches/{MORNING_PREP_ID}/run", json={}))
+    after = _ok(hub.client.get("/api/automations/prepared"))
+    assert after["prepared"]["result"]["text"].startswith("## Time unavailable — Meeting c4e978fc"), after
+    reads = {
+        "/api/desk/needs-you?fresh=1": _ok(hub.client.get("/api/desk/needs-you?fresh=1")),
+        "/api/door": _ok(hub.client.get("/api/door")),
+        "/api/meetings?limit=40": _ok(hub.client.get("/api/meetings?limit=40")),
+        "/api/automations/new": _ok(hub.client.get("/api/automations/new")),
+        "/api/automations/prepared": after,
+    }
+    text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(), "gets": reads})
+    text = text.replace(seeded["project"], "proj-daily-week")  # the seed's ids, fixed (as the run above)
+    for name in ("Mira", "Theo", "Jun"):
+        text = text.replace(seeded[name], f"rel-{name.lower()}")
+    _record("today-prepared-nothing", json.loads(text), Path(hub.db.db_path).parent,
+            "tests/integration/test_desk_morning_prep.py", folder=WIRES)
