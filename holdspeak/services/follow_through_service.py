@@ -524,6 +524,10 @@ class FollowThroughService:
                 if evidence and normalized_verb == "done":
                     # Conductor K4: the merged PR that closed the commitment.
                     facts["evidence"] = evidence
+                reason = " ".join(str(data.get("reason") or "").split())[:200]
+                if reason and normalized_verb == "dismiss":
+                    # Not this, with its reason ("proof"): kept on the receipt.
+                    facts["reason"] = reason
                 self._receipt(
                     conn, principal,
                     event_type=("commitment.completed" if normalized_verb == "done"

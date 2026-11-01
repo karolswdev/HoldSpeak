@@ -763,3 +763,20 @@ def test_the_recall_and_lifecycle_routes(client) -> None:
     sealed = http.post(f"/api/decision-records/{rid}/supersede", json={"successor_id": newest["id"]}).json()
     assert sealed["lifecycle"] == "superseded"
     assert http.post(f"/api/decision-records/{rid}/supersede", json={"successor_id": newest["id"]}).status_code == 409
+
+
+def test_not_this_keeps_its_reason_on_the_receipt(tmp_path: Path) -> None:
+    """A Door task dismissed (Not this) with a reason keeps the reason on its
+    receipt; the row stays (dismissed, never deleted)."""
+    import json
+
+    db = _db(tmp_path)
+    chain = _chain(db)
+    ft = FollowThroughService(db)
+    aid = chain["cmt"]["action_item_id"]
+    ft.complete(OWNER, aid, "dismiss", {"reason": "proof"})
+    with db._connection() as conn:
+        row = conn.execute("SELECT status FROM action_items WHERE id=?", (aid,)).fetchone()
+        facts = [json.loads(r["facts_json"]) for r in conn.execute(
+            "SELECT facts_json FROM service_events WHERE event_type='commitment.dismissed'").fetchall()]
+    assert row["status"] == "dismissed" and facts[-1]["reason"] == "proof"
