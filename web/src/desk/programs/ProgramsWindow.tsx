@@ -93,7 +93,8 @@ function foldsOf(rows: readonly ProgramSummary[]): { reason: string; words: stri
   for (const row of rows) if (row.parked_as) out.set(row.parked_as, [...(out.get(row.parked_as) ?? []), row]);
   return [...out].map(([reason, folded]) => {
     const [one, many] = PARKED_WORDS[reason] ?? ["parked", "parked"];
-    return { reason, words: `${folded.length} ${folded.length === 1 ? one : many}`, rows: folded };
+    const n = folded.length;
+    return { reason, words: `${n} ${n === 1 ? one : many}`, rows: folded };
   });
 }
 
