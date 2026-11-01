@@ -62,7 +62,9 @@ export type NeedVerbs =
    *  its `POST …/steps/{sid}/decide`. */
   | { kind: "program"; programId: string; stepId: string; decide: string; itemKind: string; choices: string[]; findingId?: string | null;
       /** PG-DIRECTION DIR3: the row id (the page's ref) and its open page. */
-      ref?: string; page?: OpenPage | null; later?: LaterMark | null }
+      ref?: string; page?: OpenPage | null; later?: LaterMark | null;
+      /** JRN11: the lesson a Lesson row answers (`lesson_id`). */
+      lessonId?: number | null }
   /** Phone (2026-10-28): the hub's own verbs for a phone item (Call now /
    *  Let it wait, Call again / Answer here, Call / Not now); a verb that
    *  needs words (Answer here) opens the Phone wing to reply. */
@@ -414,6 +416,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const program = item.program as {
     programId?: string; stepId?: string; ordinal?: number | null; kind?: string; choices?: string[];
     findingId?: string | null; decide?: string; requirementId?: string | null; page?: OpenPage | null;
+    lessonId?: number | null;
   } | undefined;
   // PG-REQ: his word and a requirement left after the rounds decide through
   // the requirement's own route; the Program's own have no step.
@@ -433,6 +436,8 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
         // Waive asks his one line: it is pressed in the Program window (Open).
         choices: [...(program.choices ?? [])].filter((choice) => !(program.requirementId && choice === "waive")),
         findingId: program.findingId ?? null,
+        // JRN11: a Lesson row names its lesson.
+        lessonId: program.lessonId ?? null,
       },
       openRef: `program:${program.programId}`,
       kindWord: "Program",
