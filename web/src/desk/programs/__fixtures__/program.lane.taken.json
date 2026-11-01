@@ -1,0 +1,375 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "budget_tokens": null,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "sh /Users/karol/dev/tools/wt-pg-imp6/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-11-01T11:33:42.208234+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "You took the lane over",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-eb6ccf3cfa0e/2",
+      "ref_commit": "fa8e8a3872d6b30577b5ef8afd36def0af4af627",
+      "rule": null,
+      "step_id": "step-eb6ccf3cfa0e",
+      "undo": {
+        "pin": {
+          "commit": "fa8e8a3872d6b30577b5ef8afd36def0af4af627",
+          "head": "b7c5fea48137f0a1f4329d707ae52526ce5c0e42",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-eb6ccf3cfa0e/2",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T11:33:41.907507+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-eb6ccf3cfa0e",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-eb6ccf3cfa0e/1",
+      "ref_commit": "432c6c370bc6170643ba4cf60284e0738d17c448",
+      "rule": null,
+      "step_id": "step-eb6ccf3cfa0e",
+      "undo": {
+        "pin": {
+          "commit": "432c6c370bc6170643ba4cf60284e0738d17c448",
+          "head": "b7c5fea48137f0a1f4329d707ae52526ce5c0e42",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-eb6ccf3cfa0e/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        },
+        "seen": {
+          "state": "briefed"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T11:33:41.676402+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T11:33:41.597443+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T11:33:41.594644+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "normal",
+  "control_word": "Normal",
+  "created_at": "2026-11-01T11:33:41.594238+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "delivery": null,
+  "done": 0,
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Atlas lane.",
+  "id": "program-79dac4a94d03",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-11-01T11:33:42.208234+00:00",
+    "by": "owner",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 5,
+    "kind": null,
+    "line": "You took the lane over",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": "refs/holdspeak/checkpoints/step-eb6ccf3cfa0e/2",
+    "ref_commit": "fa8e8a3872d6b30577b5ef8afd36def0af4af627",
+    "rule": null,
+    "step_id": "step-eb6ccf3cfa0e",
+    "undo": {
+      "pin": {
+        "commit": "fa8e8a3872d6b30577b5ef8afd36def0af4af627",
+        "head": "b7c5fea48137f0a1f4329d707ae52526ce5c0e42",
+        "n": 2,
+        "ref": "refs/holdspeak/checkpoints/step-eb6ccf3cfa0e/2",
+        "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+      }
+    }
+  },
+  "line": "Runs step 1 of 1, Agent, under a minute",
+  "may_call": false,
+  "may_handoff": false,
+  "night": null,
+  "note_id": "program-program-79dac4a94d03",
+  "note_window": "pullout:note:program-program-79dac4a94d03",
+  "origin_ref": null,
+  "persons": [],
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "planner": null,
+  "prefer_idle": false,
+  "project": null,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-jttycbdp/lane/app"
+  },
+  "requirements": [],
+  "review_depth": null,
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 2,
+  "rounds": [],
+  "rounds_before_start": false,
+  "search_words": "atlas lane atlas lane. fast-cycle atlas anchors fast cycle",
+  "skipped": 0,
+  "spend_limit_usd": null,
+  "state": "running",
+  "state_word": "Running",
+  "status_line": "Running · 0 of 1 done · check: fake_program_check.sh · control Normal",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/atlas-lane/1-atlas-anchors",
+      "brief": "Cite each anchor once.",
+      "budget_tokens": null,
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-pg-imp6/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "editable": [
+        "title",
+        "amend",
+        "runs_on_then",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "for_person",
+        "may_call"
+      ],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": null,
+      "ending": "none",
+      "engine": null,
+      "estimate": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "brief": "The agent has read it",
+        "budget": "The worktree and the agent are set",
+        "effort": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "prefer_idle": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-eb6ccf3cfa0e",
+      "last_checkpoint": {
+        "at": "2026-11-01T11:33:42.208234+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 5,
+        "kind": null,
+        "line": "You took the lane over",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-eb6ccf3cfa0e/2",
+        "ref_commit": "fa8e8a3872d6b30577b5ef8afd36def0af4af627",
+        "rule": null,
+        "step_id": "step-eb6ccf3cfa0e",
+        "undo": {
+          "pin": {
+            "commit": "fa8e8a3872d6b30577b5ef8afd36def0af4af627",
+            "head": "b7c5fea48137f0a1f4329d707ae52526ce5c0e42",
+            "n": 2,
+            "ref": "refs/holdspeak/checkpoints/step-eb6ccf3cfa0e/2",
+            "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+          }
+        }
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "report_text": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-11-01T11:33:41.907110+00:00",
+      "state": "working",
+      "state_word": "Working",
+      "station": 1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "story": [
+        {
+          "at": "2026-11-01T11:33:41.907507+00:00",
+          "line": "Handed to Claude Code."
+        },
+        {
+          "at": "2026-11-01T11:33:42.208234+00:00",
+          "line": "You took the lane over."
+        }
+      ],
+      "taken": true,
+      "title": "Atlas anchors",
+      "updated_at": "2026-11-01T11:33:42.207957+00:00",
+      "wait": null,
+      "worktree": "hs-program-step-eb6ccf3cfa0e"
+    }
+  ],
+  "template": "fast-cycle",
+  "title": "Atlas lane",
+  "total": 1,
+  "track": [
+    {
+      "mark": "running",
+      "ordinal": 1,
+      "title": "Atlas anchors"
+    }
+  ],
+  "updated_at": "2026-11-01T11:33:41.676095+00:00",
+  "usage_warning_share": null,
+  "within": [],
+  "your_turn": 0,
+  "your_turn_items": []
+}

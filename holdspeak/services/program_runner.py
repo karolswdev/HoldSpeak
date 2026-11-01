@@ -322,6 +322,10 @@ class ProgramRunner:
         launch_id = str(step.get("launch_id") or "")
         if not launch_id:
             return None
+        if taken(step):
+            # PG-IMPORT IMP6: he has the lane; the engine types nothing into it.
+            log.info(f"step {step.get('id')}: not typed, the owner has the lane")
+            return None
         if self._prompt is not None:
             return self._prompt(launch_id, text)
         from .agent_review import AgentReviewLoop
@@ -979,6 +983,18 @@ class ProgramRunner:
             self.service.transition(program, step, "done")
 
     def _follow(self, program: dict[str, Any], step: dict[str, Any]) -> None:
+        if taken(step):
+            # PG-IMPORT IMP6 (BroCrew's take it over): he has the lane. The tick
+            # only watches the branch: a new commit (his or the agent's) goes
+            # to the check. No nudge, no prompt, no park, no hold decided or
+            # read as ended; Hand it back gives the lane to the engine again.
+            head = self._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
+            if head and head != step.get("head_commit"):
+                facts = dict(step.get("facts") or {})
+                self._clear_commit_wait(facts)
+                self.service.transition(program, step, "checking", head_commit=head, facts=facts,
+                                        line=f"New commit {head[:8]}; the check runs")
+            return
         flight = self.flight(str(step.get("launch_id") or ""))
         state = str(flight.get("state") or "")
         # PG-IMPORT IMP3: what the step waits on, as a closed cause.
@@ -2190,6 +2206,11 @@ class HubGate:
         who = principal if principal is not None else Principal(PrincipalKind.OWNER, CONTROL_MODE_IDENTITY)
         return GateService(self.db).decide(who, proposal_id, {"decision": APPROVED if approve else DENIED,
                                                                "reason": reason[:200]})
+
+
+def taken(step: Mapping[str, Any]) -> bool:
+    """PG-IMPORT IMP6: the owner took the step's lane over."""
+    return isinstance((step.get("facts") or {}).get("taken"), Mapping)
 
 
 def default_runner(service: Optional[ProgramService] = None) -> ProgramRunner:

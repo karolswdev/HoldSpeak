@@ -66,6 +66,10 @@ import textApplyFixture from "../__fixtures__/program.text_apply.json";
 // PG-IMPORT IMP2: the to-do row and his Done, the ending word (scripts/record_program_fixtures.py).
 import todoFixture from "../__fixtures__/program.todo.json";
 import todoDoneFixture from "../__fixtures__/program.todo.done.json";
+// PG-IMPORT IMP6: Take it over, Hand it back (scripts/record_program_fixtures.py).
+import laneFixture from "../__fixtures__/program.lane.json";
+import laneTakenFixture from "../__fixtures__/program.lane.taken.json";
+import laneBackFixture from "../__fixtures__/program.lane.back.json";
 // PG-LANG LANG3/4: a sentence shaped by the REAL qwen3.8-27b replies
 // (tests/fixtures/program_shape_reply.json) replayed through the hub's runner,
 // recorded through the real routes (tests/integration/test_desk_program_shape.py).
@@ -289,9 +293,10 @@ describe("the Program window (direction C, the ledger)", () => {
     await screen.findByTestId("programs-board");
     const words = screen.getAllByTestId("programs-step").map((row) => within(row).getByTestId("programs-step-word").textContent);
     expect(words).toEqual(["Done", "PR open", "Check failed · log", "Asks you", "Ready · waiting for qwen", "Planned", "Working"]);
-    // Open lane only where the lane is alive (a working step), never on a done one.
+    // PG-IMPORT IMP6: Take it over only where the lane is alive (a working step), never on a done one.
     const working = running.steps.find((step) => step.state === "working" && step.launch_id);
-    if (working) expect(within(stepRow(working.ordinal)).getByTestId("programs-step-open")).toBeTruthy();
+    if (working) expect(within(stepRow(working.ordinal)).getByTestId("programs-step-take")).toBeTruthy();
+    expect(within(stepRow(1)).queryByTestId("programs-step-take")).toBeNull();
     expect(within(stepRow(1)).queryByTestId("programs-step-open")).toBeNull();
     // The pi step names its engine beside the sprite.
     expect(stepRow(5).textContent).toContain("pi · qwen3.8-27b on karol");
@@ -2338,5 +2343,29 @@ describe("PG-IMPORT IMP3: what a step waits on (recorded: scripts/record_program
     const waiting = todo.steps.find((step) => step.wait?.cause === "target_ended")!;
     expect(waiting.wait!.line).toBe(`Step ${waiting.ordinal} with Claude Code is waiting on something that has ended.`);
     expect(stepRow(waiting.ordinal).textContent).toContain(waiting.wait!.line);
+  });
+});
+
+describe("PG-IMPORT IMP6: take it over, hand it back (recorded: scripts/record_program_fixtures.py)", () => {
+  it("Take it over opens the lane and the row says he has it; Hand it back gives it back; no confirmation", async () => {
+    const lane = laneFixture as unknown as Program;
+    const step = lane.steps[0];
+    hub({
+      [`GET /api/programs/${lane.id}`]: lane,
+      [`POST /api/programs/${lane.id}/steps/${step.id}/take`]: laneTakenFixture,
+      [`POST /api/programs/${lane.id}/steps/${step.id}/hand-back`]: laneBackFixture,
+    });
+    render(<ProgramBody programId={lane.id} />);
+    await screen.findByTestId("programs-board");
+    expect(within(stepRow(1)).queryByTestId("programs-step-hand-back")).toBeNull();
+    fireEvent.click(within(stepRow(1)).getByTestId("programs-step-take"));
+    await waitFor(() => expect(stepRow(1).textContent).toContain("You have the lane"));
+    expect(calls).toContain(`POST /api/programs/${lane.id}/steps/${step.id}/take {}`);
+    expect(mocks.openRef).toHaveBeenCalledWith(`launch:${step.launch_id}`);
+    expect(within(stepRow(1)).getByTestId("programs-step-open").textContent).toBe("Open lane");
+    fireEvent.click(within(stepRow(1)).getByTestId("programs-step-hand-back"));
+    await waitFor(() => expect(within(stepRow(1)).queryByTestId("programs-step-take")).not.toBeNull());
+    expect(stepRow(1).textContent).not.toContain("You have the lane");
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
