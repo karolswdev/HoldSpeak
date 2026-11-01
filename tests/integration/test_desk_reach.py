@@ -43,7 +43,12 @@ RECORDED_TOKEN = "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
 
 class Clock:
     def __init__(self) -> None:
-        self.now = datetime(2026, 10, 31, 6, 30, tzinfo=timezone.utc)
+        # Today's noon, local (``local_noon``): never more than a day from the
+        # hub's wall clock, which reads the open pages (a fixed 2026-10-31
+        # 06:30 expired on 2026-11-01 06:30 and the page read as gone).
+        from tests.integration.program_rig import local_noon
+
+        self.now = local_noon().astimezone(timezone.utc)
 
     def __call__(self) -> str:
         return self.now.isoformat()

@@ -318,12 +318,17 @@ class ReachService:
         channel = str(via or "desk")
         if channel not in _VIA:
             raise ReachRefused("via_invalid", f"via takes {', '.join(_VIA)}.", status=400)
-        program_id, item_id = parse_program_ref(ref)
+        from .briefing_sources import source_for
+
+        source = source_for(self.db, ref)
+        program_id, item_id = ("", "") if source is not None else parse_program_ref(ref)
         until = self.later_until(words)
         until_words = until.astimezone().strftime("%H:%M")
         with _LOCK:
-            moved = self.programs().later(principal, program_id, item_id, until=_utc(until), until_words=until_words,
-                                          via=channel)
+            # DIR10: another source's item only gets its next touch (its row
+            # stays on the desk); a Program's item also gets the engine's move.
+            moved = {} if source is not None else self.programs().later(
+                principal, program_id, item_id, until=_utc(until), until_words=until_words, via=channel)
             self.later_rows.put(ref=ref, until=_utc(until), via=channel, at=_utc(self.now()), package_id=package_id)
         self._changed(ref, "later")
         return {"ref": ref, "until": _utc(until), "until_clock": until_words, "via": channel,
@@ -481,8 +486,8 @@ class ReachService:
 
     def _night_text(self, telegram: Any, row: Mapping[str, Any]) -> str:
         """The line, and what of the night still waits on him: the count and
-        one briefing page link (the first held item; the page's digest half
-        for several items is DIR9)."""
+        one briefing page link (one item's page, or DIR9's one page for all of
+        them, in order)."""
         text = str(row.get("text") or "")
         held = [ref for ref in row.get("items") or [] if ref in self._open_items()]
         if not held:
@@ -491,7 +496,11 @@ class ReachService:
         try:
             from .telegram_reach import TELEGRAM_OWNER
 
-            made = telegram.briefing().make(TELEGRAM_OWNER, [held[0]])
+            if len(held) == 1:
+                made = telegram.briefing().make(TELEGRAM_OWNER, held)
+            else:
+                made = telegram.briefing().make(TELEGRAM_OWNER, held, kind="digest",
+                                                head=str(row.get("text") or "").splitlines()[-1][:200])
             link = telegram.link_for(made["path"])
         except Exception as exc:
             log.info(f"reach: the night's page was not made: {exc}")

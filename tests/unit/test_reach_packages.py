@@ -35,7 +35,12 @@ AGENT = Principal(PrincipalKind.AGENT, "agent-1")
 
 class Clock:
     def __init__(self) -> None:
-        self.now = datetime(2026, 10, 31, 6, 30, tzinfo=timezone.utc)
+        # Today's noon, local (``local_noon``): never more than a day from the
+        # hub's wall clock, which reads the open pages (a fixed 2026-10-31
+        # 06:30 expired on 2026-11-01 06:30 and the page read as gone).
+        from tests.integration.program_rig import local_noon
+
+        self.now = local_noon().astimezone(timezone.utc)
 
     def __call__(self) -> str:
         return self.now.isoformat()
@@ -175,7 +180,7 @@ def test_only_the_owner_makes_or_revokes_and_a_bad_ref_is_refused(tmp_path) -> N
     with pytest.raises(BriefingRefused) as agent:
         briefing.make(AGENT, [_ref(pid, item)])
     assert agent.value.code == "owner_only"
-    for refs, code in (([f"program:{pid}:nothing"], "not_waiting"), (["decision:1"], "ref_unknown"),
+    for refs, code in (([f"program:{pid}:nothing"], "not_waiting"), (["decision:1"], "not_waiting"),  # DIR10: a decision is a source; this one does not exist
                        ([_ref(pid, item), _ref(pid, item)], "refs_invalid")):
         with pytest.raises(BriefingRefused) as refused:
             briefing.make(OWNER, refs)
