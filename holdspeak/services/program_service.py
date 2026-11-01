@@ -247,6 +247,34 @@ def _launch_of(principal: Any) -> Optional[str]:
         return None
 
 
+#: IMP4: Secure < Normal < YOLO.
+_LADDER = {"secure": 0, "normal": 1, "yolo": 2}
+#: IMP4: the line an agent's wider control is refused with.
+NO_WIDER = "Refused: a program runs no wider than what made it"
+
+
+def parent_level(principal: Any, db: Any = None) -> Optional[str]:
+    """IMP4 (BROCREW-IMPORT "Never wider than the parent"): the widest
+    control an agent may give a Program: its own launch's level (a step's
+    agent runs at its Program's), else the desk's Control mode. ``None`` for
+    the owner: his own press is never capped."""
+    if _is_owner(principal):
+        return None
+    from .control_level import level_for_launch
+    from .program_rules import level_of
+
+    launch = _launch_of(principal)
+    if launch:
+        return level_for_launch(launch, db=db)
+    return level_of(_desk_control_mode())
+
+
+def wider(level: Any, than: Optional[str]) -> bool:
+    """``level`` is wider than ``than`` on the ladder (never when ``than`` is
+    ``None``: the owner)."""
+    return than is not None and _LADDER.get(str(level), 0) > _LADDER.get(str(than), 0)
+
+
 def _creator(principal: Any) -> str:
     """``owner``, ``launch:<id>`` or ``agent:<identity>``: who made a Program."""
     if _is_owner(principal):
@@ -1651,6 +1679,11 @@ class ProgramService:
         control = DESK_MODES.get(raw_control, "")
         if control not in CONTROLS:
             raise ProgramRefused("control_invalid", "Control is secure, normal or yolo.", status=400)
+        # IMP4: an agent's Program is made at most at its own level.
+        ceiling = parent_level(principal, self.db)
+        capped = wider(control, ceiling)
+        if capped:
+            control = str(ceiling)
         if spend_limit_usd is not None:
             try:
                 spend_limit_usd = float(spend_limit_usd)
@@ -1705,6 +1738,9 @@ class ProgramService:
             self.store.save_program(program)
             self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent",
                              f"Made the program{' from the ' + shape['name'] + ' template' if shape else ''}")
+            if capped:
+                self._checkpoint(program, None, "engine", f"Made at {level_word(control)}: a program runs no wider "
+                                                          "than what made it", kernel=False)
             self._plant_requirements(program, shape)
             self.changed(program["id"], verb="create")
         return self.get(principal, program["id"])
@@ -1731,6 +1767,10 @@ class ProgramService:
             control = DESK_MODES.get(str(fields["control"]).strip().lower(), "")
             if control not in CONTROLS:
                 raise ProgramRefused("control_invalid", "Control is secure, normal or yolo.", status=400)
+            if wider(control, parent_level(principal, self.db)) and wider(control, program.get("control")):
+                # IMP4: an agent never widens it; the owner can.
+                self._checkpoint(program, None, "engine", NO_WIDER, kernel=False)
+                raise ProgramRefused("control_wider", f"{NO_WIDER}. Ask the owner.")
             program["control"] = control
             changed.append(f"control {level_word(control)}")
         if fields.get("prefer_idle") is not None:
@@ -3568,6 +3608,14 @@ class ProgramService:
             kind = data.get("kind")
             if kind == "head":
                 name, value = data["name"], data["value"]
+                if name == "control" and not owner:
+                    from .program_rules import level_of
+
+                    if wider(level_of(value), parent_level(principal, self.db)) and wider(
+                            level_of(value), program.get("control")) and row.verdict in ("allowed", "lowers"):
+                        # IMP4: the text cannot widen it either.
+                        row.refuse("control_wider", f"{NO_WIDER}. Ask the owner.")
+                        continue
                 if name == "agents":
                     guard(row, lambda value=value: self._runs_on(self._entries(value), "agent"))
                 elif name == "reviewer" and value[0] != "none":
@@ -3644,6 +3692,8 @@ class ProgramService:
                     what = row.where[0].upper() + row.where[1:]
                     row.reason = f"{what}'s {row.field} changed since you read it: now {moved.after or 'none'}."
         self._check_text_rows(principal, program, wire, rows)
+        if not dry_run and any(getattr(row, "code", "") == "control_wider" for row in rows):
+            self._checkpoint(program, None, "engine", NO_WIDER, kernel=False)  # IMP4
         asked = [str(item) for item in allow_lower or [] if str(item).strip()]
         owner = _is_owner(principal)
         if asked and not owner:
