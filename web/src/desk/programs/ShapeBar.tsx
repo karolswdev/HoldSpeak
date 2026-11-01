@@ -31,6 +31,8 @@ import { ApiError } from "../../lib/api";
 import { openSurfaceOr } from "../shell";
 import { ChangeWell, DiffRow, DotWord, StringGadget } from "../surface";
 import { failureTitle } from "../surface/plainFailure";
+import { programSentence, programVoiceGrammar } from "../voice/grammars/program";
+import { routeVoiceIntent } from "../voice/intentRouter";
 import { overturn, readShapeEngine, shapeProgram } from "./api";
 import type { Program, ShapeAnswer, TextChange } from "./types";
 
@@ -129,13 +131,22 @@ export function ShapeBar({ program, pending, onAnswer, onOpenText }: {
   }, [busy, engine, onAnswer, pending, program.control, program.id, question, sentence]);
 
   // The end of the capture: the words settle into the well and go at once.
+  // LANG5: the dictation intent router reads the utterance against the
+  // `program` grammar: "program: step 4 on Codex" is the `shape` intent
+  // with the sentence "step 4 on Codex" (matched locally, no egress); any
+  // other words are the sentence as they were said.
   const dictated = (text: string) => {
-    const said = text.trim();
-    setSentence(said);
-    setNothing(false);
-    if (!said) return;
-    setSettle((n) => n + 1);
-    void shape(said, true);
+    void routeVoiceIntent({
+      transcript: text, surfaceKind: programVoiceGrammar.surfaceKind, selectionState: { hasSelection: false },
+      grammar: programVoiceGrammar,
+    }).then((proposal) => {
+      const said = proposal.intentId === "shape" ? String(proposal.params.sentence ?? "") : programSentence(text);
+      setSentence(said);
+      setNothing(false);
+      if (!said) return;
+      setSettle((n) => n + 1);
+      void shape(said, true);
+    });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {

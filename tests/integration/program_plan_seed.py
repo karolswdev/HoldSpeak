@@ -30,6 +30,16 @@ BIG_FILE_GOAL = (
     "No behaviour changes: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green."
 )
 
+#: JRN1 (PROGRAM-JOURNEYS J1 "the draft proposes several Programs"): one
+#: paste that is three separate goals, each a change that ships on its own.
+SPLIT_GOAL = (
+    "Three things before the standup review. First, after a meeting the meeting's Note should end with a short "
+    "recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n\n"
+    "Second, the Calls window should list the last ten calls with their length and who was on them, newest "
+    "first.\n\n"
+    "Third, the Programs window should export the list to a new Note, one line per program with its state."
+)
+
 CASES: dict[str, dict[str, Any]] = {
     # J1 sized for the home engine's 64k (the owner: "our context maxes out
     # at 64k tokens"): every step must fit in 32k.
@@ -40,6 +50,9 @@ CASES: dict[str, dict[str, Any]] = {
     # and the planner is asked once to split it.
     "big_file": {"title": "The text apply in its own module", "goal": BIG_FILE_GOAL, "template": "build-and-review",
                  "control": "normal", "check": "scripts/quick_check.sh", "budget": "64k"},
+    # JRN1: a three-goal paste; the draft proposes three Programs.
+    "split_programs": {"title": "Before the standup review", "goal": SPLIT_GOAL, "template": "fast-cycle",
+                       "control": "normal", "check": "scripts/quick_check.sh", "budget": "64k"},
 }
 
 
