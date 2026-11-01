@@ -176,6 +176,8 @@ DECIDE_CHOICES = {
     # and the fix program its MUST findings make.
     "audit_file": ("file", "skip"),
     "fix_program": ("make", "skip"),
+    # PG-LANG JRN11, JRN12 (journey J8): a lesson the engine saw; never kept by rule.
+    "lesson": ("keep_program", "keep_repo", "skip"),
 }
 #: PG-REQ: the proposal kinds (a checkpoint row each, ``choice`` empty until
 #: he answers).
@@ -929,6 +931,11 @@ class ProgramService:
 
         reqs = requirements if requirements is not None else self.requirements(program["id"])
         items = your_turn(program, steps, reqs, self.proposals(program["id"], checkpoints))
+        from . import program_lessons
+
+        # JRN11: the lessons the engine saw, each his to keep or skip.
+        items += program_lessons.turn_items(program, checkpoints if checkpoints is not None
+                                            else self.store.list_checkpoints(program["id"]))
         if program.get("template") == "audit":
             from . import program_audit
 
@@ -1075,11 +1082,11 @@ class ProgramService:
         """Every Program's your-turn items (``needs_you_membership.program_items``)."""
         items: list[dict[str, Any]] = []
         for program in self.store.list_programs():
-            if program["state"] == "done" and program.get("template") == "audit":
-                # JRN9, JRN10: a finished audit still asks to file its findings
-                # (Secure) and to make its fix program.
+            if program["state"] == "done":
+                # JRN9 to JRN11: a finished Program still asks to file an
+                # audit's findings, to make its fix program, and its lessons.
                 items.extend(item for item in self._turn(program, self.store.list_steps(program["id"]))
-                             if item["kind"] in ("audit_file", "fix_program"))
+                             if item["kind"] in ("audit_file", "fix_program", "lesson"))
                 continue
             if program["state"] in ("drafting", "parked", "done"):
                 continue
@@ -2500,6 +2507,16 @@ class ProgramService:
             return self.decide_requirement(principal, program_id, str(requirement_id), choice, line=reason)
         if kind in PROPOSAL_KINDS:
             return self.decide_proposal(principal, program_id, proposal_id if proposal_id is not None else finding_id, choice)
+        if kind == "lesson":
+            from . import program_lessons
+
+            if choice not in DECIDE_CHOICES[kind]:
+                raise ProgramRefused("choice_invalid", f"{kind!r} takes {', '.join(DECIDE_CHOICES[kind])}.", status=400)
+            lesson = proposal_id if proposal_id is not None else finding_id
+            with _LOCK:
+                answer = program_lessons.decide(self, principal, program, lesson, choice)
+            self._tick_now(program["id"])
+            return {**answer, "program": self.get(principal, program["id"])}
         if kind in ("audit_file", "fix_program"):
             from . import program_audit
 
@@ -4683,9 +4700,14 @@ class ProgramService:
                 requirement_id: Optional[str] = None, text: bool = False) -> None:
         """Recompute the Program's state, rewrite its note, emit the frames.
         PG-REQ: the frame names the requirement and the count when one moved."""
+        from . import program_lessons
         from .program_requirements import counts as requirement_counts
 
         program = self._program(program_id)
+        try:
+            program_lessons.scan(self, program)  # JRN11: the lesson rule, by rule, no model
+        except Exception as exc:  # a lesson never stops a move
+            log.warning(f"program {program_id}: the lesson rule did not run: {exc}")
         steps = self.store.list_steps(program_id)
         reqs = self.requirements(program_id)
         state = self._state(program, steps, requirements=reqs)

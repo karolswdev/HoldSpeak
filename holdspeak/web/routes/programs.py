@@ -216,6 +216,7 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         return await _call(lambda: _service().decide(
             principal, program_id, step_id, kind=str(body.get("kind") or ""), choice=str(body.get("choice") or ""),
             finding_id=body.get("finding_id"), reason=body.get("reason"), via=body.get("via"),
+            proposal_id=body.get("lesson_id"),  # JRN11: a Lesson row names its lesson
         ))
 
     @router.post("/api/programs/{program_id}/steps/{step_id}/race")
