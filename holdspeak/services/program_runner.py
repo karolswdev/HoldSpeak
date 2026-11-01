@@ -509,6 +509,10 @@ class ProgramRunner:
         room = program_night.night_room(self, program, ready)
         if room == 0:
             return
+        # JRN3: no step is handed while the base branch is red (one makes it green first).
+        ready = program_night.red_main_filter(self, program, ready)
+        if not ready:
+            return
         slots = self._free_slots()
         busy_engines = {self._engine_of(program, other) for other in steps
                         if other["state"] in ACTIVE_STATES and self._profile_of(program, other) == "pi-default"}

@@ -424,8 +424,12 @@ class ReachService:
                 except ServiceError as exc:
                     log.info(f"reach: {ref} not sent to Telegram: {exc.code}")
         done["settled"] = telegram.settle_gone(set(items))
-        done["digest"] = self._maybe_digest(telegram, now, quiet, items)
+        # JRN4: the night's line is the morning's one message at the digest
+        # hour; when it goes, the plain digest of that day does not.
         done["night"] = self._send_night_lines(telegram, now, quiet)
+        if done["night"]:
+            self._set_digest_day(now.astimezone().strftime("%Y-%m-%d"))
+        done["digest"] = self._maybe_digest(telegram, now, quiet, items)
         return done
 
     # ── PG-LANG LANG12: the night's digest line ──────────────────────
@@ -443,15 +447,18 @@ class ReachService:
 
         self.db.cadence.upsert_policy(CadencePolicy(name=NIGHT_POLICY, config={"lines": rows[-NIGHT_KEPT:]}))
 
-    def night_line(self, ref: str, text: str) -> dict[str, Any]:
+    def night_line(self, ref: str, text: str, *, items: Optional[list[str]] = None) -> dict[str, Any]:
         """One line set at a night's end ("Since last night: …"), once per
-        ``ref``. It goes on the ladder's Telegram rung as the digest does:
-        not when Telegram is Off, held to the end of quiet hours."""
+        ``ref``. It goes on the ladder's Telegram rung as the morning's one
+        digest (JRN4): not when Telegram is Off, held to the end of quiet
+        hours and to the digest hour; ``items`` are the night's held items
+        (their count and a briefing page link for the first one still held)."""
         with _LOCK:
             rows = self._night_rows()
             if any(row.get("ref") == ref for row in rows):
                 return {"ref": ref, "queued": False, "again": True}
-            rows.append({"ref": str(ref), "text": str(text or "")[:1000], "at": _utc(self.now()), "sent_at": None})
+            rows.append({"ref": str(ref), "text": str(text or "")[:1000], "at": _utc(self.now()), "sent_at": None,
+                         "items": [str(item) for item in items or []][:20]})
             self._save_night_rows(rows)
         sent: list[str] = []
         try:
@@ -462,6 +469,35 @@ class ReachService:
             log.info(f"reach: the night line waits: {exc}")
         return {"ref": ref, "queued": ref not in sent, "sent": ref in sent}
 
+    def _night_due(self, row: Mapping[str, Any], now: datetime) -> bool:
+        """At or after the digest hour of the day the line was set (a line set
+        after that hour goes at once)."""
+        at = _parse(row.get("at"))
+        if at is None:
+            return True
+        local = at.astimezone()
+        due = local.replace(hour=self.digest_hour() % 24, minute=0, second=0, microsecond=0)
+        return now.astimezone() >= max(due, local)
+
+    def _night_text(self, telegram: Any, row: Mapping[str, Any]) -> str:
+        """The line, and what of the night still waits on him: the count and
+        one briefing page link (the first held item; the page's digest half
+        for several items is DIR9)."""
+        text = str(row.get("text") or "")
+        held = [ref for ref in row.get("items") or [] if ref in self._open_items()]
+        if not held:
+            return text
+        words = "1 waits on you." if len(held) == 1 else f"{len(held)} wait on you."
+        try:
+            from .telegram_reach import TELEGRAM_OWNER
+
+            made = telegram.briefing().make(TELEGRAM_OWNER, [held[0]])
+            link = telegram.link_for(made["path"])
+        except Exception as exc:
+            log.info(f"reach: the night's page was not made: {exc}")
+            link = None
+        return f"{text}\n{words}" + (f"\nOpen the page: {link}" if link else "")
+
     def _send_night_lines(self, telegram: Any, now: datetime, quiet: tuple[int, int]) -> list[str]:
         if self.settings()["telegram"] == "off" or in_quiet(now, quiet):
             return []
@@ -469,10 +505,10 @@ class ReachService:
             rows = self._night_rows()
             sent: list[str] = []
             for row in rows:
-                if row.get("sent_at"):
+                if row.get("sent_at") or not self._night_due(row, now):
                     continue
                 try:
-                    telegram.line(str(row.get("text") or ""))
+                    telegram.line(self._night_text(telegram, row))
                 except ServiceError as exc:
                     log.info(f"reach: the night line was not sent: {exc.code}")
                     continue

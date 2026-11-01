@@ -53,8 +53,9 @@ class Reach:
     def __init__(self) -> None:
         self.lines: list[tuple[str, str]] = []
 
-    def night_line(self, ref: str, text: str) -> dict[str, Any]:
+    def night_line(self, ref: str, text: str, *, items: Any = None) -> dict[str, Any]:
         self.lines.append((ref, text))
+        self.items = list(items or [])
         return {"ref": ref, "sent": True}
 
 
@@ -164,10 +165,20 @@ def test_after_the_window_one_digest_line_on_top_of_the_note_and_through_reach(t
     rig.tick()
     assert [row for row in rig.service.store.list_checkpoints(pid) if row.get("kind") == "night_digest"] == []
 
+    # 07:05: steps 2 and 3 still work; each agent is asked to commit what it
+    # has, and the digest waits for them.
     clock.now = at(3, 7, 5)
     rig.tick()
+    assert [row for row in rig.service.store.list_checkpoints(pid) if row.get("kind") == "night_digest"] == []
+    lines = [row["line"] for row in rig.service.store.list_checkpoints(pid)]
+    assert lines.count("The night ended: asked the agent to commit what it has") == 2
+    assert any("the night ended" in text.lower() for _launch, text in rig.prompts)
+    # Ten minutes later the engine parks them (nothing was left to commit).
+    clock.now = at(3, 7, 16)
+    rig.tick()
+    assert [rig.step(pid, n)["parked_reason"] for n in (2, 3)] == ["Night ended; parked"] * 2
     (row,) = [row for row in rig.service.store.list_checkpoints(pid) if row.get("kind") == "night_digest"]
-    assert row["line"].startswith("Since last night: 1 step done")
+    assert row["line"].startswith("Since last night: 1 step done, 2 parked")
     pr = rig.step(pid, 1)["pr"]["number"]
     assert row["undo"] == {"night": "2026-11-02", "lines": [row["line"], f"Merged: #{pr}"]}
     assert reach.lines == [(f"program:{pid}:night:2026-11-02", f"Dreaming · HoldSpeak\n{row['line']}")]

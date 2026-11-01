@@ -165,6 +165,9 @@ class FakeGitHub:
         self.ci = "passing"
         #: A PR's own CI rollup (by number), over ``ci``.
         self.ci_by_number: dict[int, str] = {}
+        #: The base branch's runs, newest first (``gh run list``; JRN3), as
+        #: GitHub answers them: ``{status, conclusion, name, headSha}``.
+        self.runs: list[dict[str, Any]] = []
 
     def __call__(self, argv: list[str], cwd: Optional[str] = None, **kwargs: Any) -> Any:
         if argv[:1] != ["gh"]:
@@ -181,6 +184,10 @@ class FakeGitHub:
             self.prs[number]["state"] = "merged"
             self.sweep()
             return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if argv[1:3] == ["run", "list"]:
+            import json
+
+            return SimpleNamespace(returncode=0, stdout=json.dumps(self.runs), stderr="")
         return SimpleNamespace(returncode=1, stdout="", stderr="unknown gh call")
 
     def sweep(self) -> None:
