@@ -311,11 +311,11 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | LANG5 | Voice: the `program` grammar, the call's held `program.shape` | Shipped #1675 (2026-10-31) | No `program` voice grammar (no caller). |
 | LANG6 | Planning: `program.draft`; Run as a program plans | Shipped #1676 (2026-10-31) | `program.plan_draft`. |
 | LANG7 | The planning draft face | Shipped #1676 (2026-10-31) | `PlanDraft.tsx`. |
-| LANG8 | Sizing: `budget`, the estimate, `step_too_big`, the split | Shipped (PG-NIGHT PR, 2026-10-31) | `holdspeak/services/program_split.py`: the dispatcher holds a step over its share; YOLO splits (Overturn), Secure and Normal get a `step_change` proposal (Apply splits, Skip runs it as it is); no planner is a core question. Open: the harness's fixed cost (`HARNESS_TOKENS` 0); the Program's `planner` line is not read (the desk's `agent.plan`). |
+| LANG8 | Sizing: `budget`, the estimate, `step_too_big`, the split | Shipped #1687 (2026-10-31) | `holdspeak/services/program_split.py`: the dispatcher holds a step over its share; YOLO splits (Overturn), Secure and Normal get a `step_change` proposal (Apply splits, Skip runs it as it is); no planner is a core question. Open: the harness's fixed cost (`HARNESS_TOKENS` 0); the Program's `planner` line is not read (the desk's `agent.plan`). |
 | LANG9 | Interview rounds, hub | Shipped #1680 (2026-10-31) | Fields #1671. Rounds never gate Start. |
 | LANG10 | The round strip and the question row | Shipped #1680 (2026-10-31) | `Rounds.tsx`. |
 | LANG11 | The Measure kind; walk lines on Your word | Open | Kind and walk lines #1671; the verifier open. |
-| LANG12 | Dreaming: template, night, within, backlog, digest | Partly (PG-NIGHT PR, 2026-10-31) | `holdspeak/services/program_night.py`: the window ("sleeps until 23:30"), `at most`, the night planner per item inside `within`, "Since last night" in the note and through Reach. Open: the Dreaming template, the backlog read by rule, the stop after two red steps, a Working step parked at the end, `within` as a core question on the diff. |
+| LANG12 | Dreaming: template, night, within, backlog, digest | Partly #1687 (2026-10-31) | `holdspeak/services/program_night.py`: the window ("sleeps until 23:30"), `at most`, the night planner per item inside `within`, "Since last night" in the note and through Reach. Open: the Dreaming template, the backlog read by rule, the stop after two red steps, a Working step parked at the end, `within` as a core question on the diff. |
 | LANG13 | Delivery Workbench: link and the Done PR | Open | `delivery dw` stored #1671. |
 | LANG14 | The SDK: Python client and `holdspeak program` CLI | Open |  |
 | LANG15 | The documents | Shipped (PG-DOCS-2 PR) | `docs/programs.md`, the skill, RECIPE, UX-CANON, STATUS. |
@@ -325,7 +325,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | Slice | What | State | Note |
 |---|---|---|---|
 | JRN1 | The draft proposes several Programs | Open | After LANG7. |
-| JRN2 | Add to tonight: the dreaming backlog mark | Hub shipped (PG-NIGHT PR, 2026-10-31) | `program.add_to_night`, `POST /api/programs/tonight` (Door task, note line, program step). Open: the faces (the Add to tonight verb, the Door row's "Tonight") and the call rig. |
+| JRN2 | Add to tonight: the dreaming backlog mark | Hub shipped #1687 (2026-10-31) | `program.add_to_night`, `POST /api/programs/tonight` (Door task, note line, program step). Open: the faces (the Add to tonight verb, the Door row's "Tonight") and the call rig. |
 | JRN3 | The red-main hold for a night | Open | After LANG12. |
 | JRN4 | The night's end reaches him on the phone | Open | After LANG12. |
 | JRN5 | A spoken answer becomes a prepared answer | Open | After LANG5; the default, no ruling. |
