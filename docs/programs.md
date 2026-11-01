@@ -34,6 +34,10 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 4. Add the steps. Each step is one row; press it to open it in place: its title, agent, effort and "after", its brief, its **Gate** (the check, the review, who merges) and **What it must prove**. Paste a brief for each step. Give each step the files it owns. A step can start after other steps ("after 2, 3"). Or press **Plan it**, and the engine drafts the steps for you (see "Plan it from a goal"). Press **Ask me first** if you want the engine to ask you some questions before it plans (see "The interview rounds").
 5. Press **Start**. Under it the window says what Start checks first: the repository, the remote (when a step opens a pull request) and the check command.
 
+### From one action of a project
+
+In a project's Room, an action's row has **Run as a program**. HoldSpeak makes a program in Drafting from that one action: the action's words are the goal, it runs on the project's repository, and its person is the action's owner when exactly one person has that name. The program window opens. When the program's pull request merges, the action closes. Tools and scripts use `POST /api/programs/from-action` with `action_id`.
+
 ### From the desk
 
 Choose the **From the desk** template and a project. HoldSpeak makes one step for each open action of the project. When the pull request of a step merges, HoldSpeak closes its action and keeps the pull request as the evidence.

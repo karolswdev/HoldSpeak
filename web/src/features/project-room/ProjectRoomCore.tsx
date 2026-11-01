@@ -3,6 +3,7 @@
 // since I last looked? What did we decide and what do I owe people?
 // Two wings: ROOM · HISTORY. Ask well at the foot. No counters of zero,
 // no REV, no raw field names, the name said once.
+import { RunAsProgramVerb } from "../../desk/programs/RunAsProgram";
 import { HandRowVerb } from "../../desk/components/HandRowVerb";
 import { wireDate } from "../../desk/surface/format";
 import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
@@ -890,6 +891,9 @@ function NeedsYouSection({
                   {isInFlight(flight)
                     ? <FlightVerbs flight={flight} title={item.title} />
                     : <HandRowVerb item={{ title: item.title, source: item.source, actionItemId: item.actionItemId, projectId: ctrl.projectId, kind: item.kind, watchId: item.watchId, entityId: item.entityId, url: item.url }} />}
+                  {/* JRN13: an action of the Project can become a Program. */}
+                  {item.actionItemId && !isInFlight(flight)
+                    ? <RunAsProgramVerb actionId={item.actionItemId} projectId={ctrl.projectId} title={item.title} /> : null}
                   {item.verb === "decide" ? (
                     <Button dense variant="ghost" onClick={() => {
                       if (item.url) window.open(item.url, "_blank", "noopener");

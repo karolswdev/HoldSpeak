@@ -5509,6 +5509,16 @@
       ]
     },
     {
+      "path": "/api/programs/from-action",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/programs/templates",
       "methods": [
         "GET"
