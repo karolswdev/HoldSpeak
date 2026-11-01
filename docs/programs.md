@@ -61,7 +61,7 @@ Each run makes one program and starts it:
 
 The run's result is the program: its row in **Results** shows the program and its state now, and a press opens the Program window. The Program window says "From the automation Nightly fixes". While the last program that the automation made still runs, a new run starts nothing and says so.
 
-When the model library has an engine that pi can run on, **New automation** also offers **Overnight on the home box**: each weekday at 23:30, pi builds on that engine when it is idle, Claude Code reviews, and the program runs at YOLO. Its schedule stays off until you turn it on. Phone calls are off for it.
+When the model library has an engine that pi can run on, **New automation** also offers **Overnight on the home box**: each weekday at 23:30, pi builds and reviews on that engine when it is idle, and the program runs at YOLO. Its schedule stays off until you turn it on. Phone calls are off for it.
 
 Tools and agents use `automation.create` with `do: "run_program"` and the fields `program_template`, `program_control`, `program_runs_on`, `program_may_call` and `program_may_handoff`. Only you can set the level, the agents and the two permissions.
 
@@ -76,9 +76,9 @@ A program can hold work that merged before the program existed. Each merged pull
 | **Fast cycle** | One step for each brief you paste. | The repository's check. | None. The step's merge gate uses your Control level. |
 | **Build and review** | One step for each brief. | The check. | Codex reviews each change at the configured depth. |
 | **Race** | One brief, two agents (Claude Code and Codex) in two worktrees. | The check. | None. The first contender that satisfies its configured gate wins; HoldSpeak parks the other. |
-| **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | Claude Code reviews. The program runs at YOLO and its merge gate is `level`. |
+| **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | pi reviews on your home engine. The program runs at YOLO and its merge gate is `level`. |
 | **From the desk** | One step for each open action of a project. | The check. | None. |
-| **Dreaming** | At night only (`night 23:30-07:00 · at most 8 steps`), from the backlog. pi builds on your home engine when it is idle, in steps that fit `budget 64k`. | The check. | Claude Code reviews at a glance. The program runs at YOLO. |
+| **Dreaming** | At night only (`night 23:30-07:00 · at most 8 steps`), from the backlog. pi builds on your home engine when it is idle, in steps that fit `budget 64k`. | The check. | pi reviews on your home engine, at a glance. The program runs at YOLO. |
 | **Audit** | One step for each surface to read (some windows of the desk, the routes of a change). The agent reads and changes nothing. | None. | None. Nothing merges: each finding becomes a Door task (see "The audit"). |
 
 You can change all values after you pick a template. Each template also gives each new program its default requirements (see "The template defaults").
@@ -86,8 +86,9 @@ You can change all values after you pick a template. Each template also gives ea
 ### Overnight on the home box
 
 Use this template for work you want done while you sleep. pi does the steps on
-your home engine (for example qwen3.8-27b over Tailscale). Claude Code reviews
-each change. The program runs at YOLO and its default step has a check, an agent
+your home engine (for example qwen3.8-27b over Tailscale), and pi reviews
+each change there too: the night spends no cloud tokens. To have Claude Code
+build or review instead, choose it as the agent or the reviewer. The program runs at YOLO and its default step has a check, an agent
 review, and a level merge gate, so a green and reviewed step can merge without
 you. In the morning you find the merged pull requests, a note that tells what
 HoldSpeak decided for you, and only the core questions in Needs you. Phone

@@ -207,7 +207,35 @@ def test_the_overnight_template_runs_pi_on_the_home_engine_at_yolo(tmp_path) -> 
                                  check_command=f"sh {FAKE_CHECK}")
     assert program["control"] == "yolo" and program["prefer_idle"] is True
     assert program["default"]["profile"] == "pi-default" and program["default"]["engine"]["short"] == "qwen"
-    assert program["reviewer"]["profile"] == "claude-default"
+    assert program["reviewer"]["profile"] == "pi-default" and program["reviewer"]["engine"]["short"] == "qwen"
+
+
+@pytest.mark.parametrize("template", ["overnight", "dreaming"])
+def test_the_night_spends_no_cloud_tokens_by_rule(tmp_path, template) -> None:
+    """Ruling 2026-11-01: a night template builds and reviews with pi on the
+    home engine, idle only, in 64k; Claude Code stays choosable through the
+    profile."""
+    from holdspeak.program_templates import HOME_ENGINE_PROFILE, get_template
+
+    shape = get_template(template)["program"]
+    assert (shape["default_profile"], shape["default_engine"]) == ("pi-default", HOME_ENGINE_PROFILE)
+    assert (shape["reviewer_profile"], shape["reviewer_engine"]) == ("pi-default", HOME_ENGINE_PROFILE)
+    assert shape["prefer_idle"] is True
+
+    rig = _rig(tmp_path)
+    program = rig.service.create(OWNER, title="Night", repository=str(rig.repo), template=template,
+                                 check_command=f"sh {FAKE_CHECK}")
+    assert program["default"]["profile"] == "pi-default" and program["default"]["engine"]["id"] == HOME_ENGINE_PROFILE
+    assert program["reviewer"]["profile"] == "pi-default" and program["reviewer"]["engine"]["id"] == HOME_ENGINE_PROFILE
+    assert program["prefer_idle"] is True
+    if template == "dreaming":
+        assert program["budget_tokens"] == 64 * 1024
+
+    chosen = rig.service.create(OWNER, title="Night, Claude", repository=str(rig.repo), template=template,
+                                check_command=f"sh {FAKE_CHECK}", default_profile="claude-default",
+                                reviewer_profile="claude-default")
+    assert chosen["default"]["profile"] == "claude-default" and chosen["default"]["engine"] is None
+    assert chosen["reviewer"]["profile"] == "claude-default" and chosen["reviewer"]["engine"] is None
 
 
 # ── the idle gate (prefer_idle) ──────────────────────────────────────
