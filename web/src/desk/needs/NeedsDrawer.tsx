@@ -14,6 +14,7 @@
  *  (ruling in the PR body): the object's own window and the Object menu
  *  carry it.
  */
+import { TonightVerb } from "../programs/TonightVerb";
 import { AgentRow as AgentRowFace } from "../agents/AgentRow";
 import { conductorMembers, type ConductorMember } from "../conductor/members";
 import { answerMember, openMember } from "../conductor/open";
@@ -491,10 +492,15 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       const cmd = verb ? commandForDoorVerb(verb) : null;
       if (!verb || !cmd) return null;
       const label = labelFor(verb);
+      // JRN2: a Door task can go to tonight's program (a Planned step).
+      const actionId = String(v.card.target_ref ?? "").startsWith("action_item:") ? String(v.card.target_ref).slice("action_item:".length) : "";
       return (
-        <Button dense variant={lead} disabled={busy} aria-label={named(label)} data-testid="needs-row-verb" data-verb="door-verb"
-          onClick={() => void act(label, () => apiFetch(cmd.endpoint, { method: "POST", json: cmd.body }),
-            `door:${cmd.endpoint}`)}>{label}</Button>
+        <>
+          {actionId ? <TonightVerb kind="action" itemId={actionId} name={String(v.card.title ?? v.card.text ?? actionId)} /> : null}
+          <Button dense variant={lead} disabled={busy} aria-label={named(label)} data-testid="needs-row-verb" data-verb="door-verb"
+            onClick={() => void act(label, () => apiFetch(cmd.endpoint, { method: "POST", json: cmd.body }),
+              `door:${cmd.endpoint}`)}>{label}</Button>
+        </>
       );
     }
     case "link":

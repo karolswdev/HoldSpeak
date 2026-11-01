@@ -375,3 +375,22 @@ export function decideRound(id: string, round: string, choice: "done" | "skip" |
 export function planDraft(id: string, body: { goal?: string; budget?: string; text?: string; split?: number }): Promise<PlanAnswer> {
   return apiFetch<PlanAnswer>(`${base(id)}/plan/draft`, { method: "POST", json: body });
 }
+
+
+/* ── JRN2 (PG-LANG LANG12, #1687): Add to tonight ── */
+
+export interface TonightAnswer {
+  added: boolean;
+  program_id: string;
+  step_id: string;
+  ordinal: number;
+  /** "Added to tonight: step 3 · …" or "It is in tonight already: step 3". */
+  say: string;
+  program?: Program | null;
+}
+
+/** A Door task (`action`), a note line (`note` with `line`) or a program
+ *  step becomes a Planned step of the night Program. */
+export async function addToTonight(body: { kind: "action" | "note" | "program_step"; item_id: string; line?: string }): Promise<TonightAnswer> {
+  return apiFetch<TonightAnswer>("/api/programs/tonight", { method: "POST", json: body });
+}

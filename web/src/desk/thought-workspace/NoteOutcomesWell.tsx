@@ -27,6 +27,8 @@ function words(cause: unknown): string {
 }
 
 export interface NoteOutcomesState {
+  /** The note the rows were found in (JRN2: Tonight adds a row's line from it). */
+  noteId: string;
   rows: NoteOutcome[];
   finding: boolean;
   startedAt?: number;
@@ -97,7 +99,7 @@ export function useNoteOutcomes(noteId: string): NoteOutcomesState {
   }, [change, noteId]);
   const edit = useCallback((row: NoteOutcome, fields: { text: string; owner_name?: string; due?: string }) =>
     change(row, () => editNoteOutcome(noteId, row.id, fields)), [change, noteId]);
-  return { rows, finding, startedAt, failure, confirming, find, confirm, dismiss, edit };
+  return { noteId, rows, finding, startedAt, failure, confirming, find, confirm, dismiss, edit };
 }
 
 export function NoteOutcomesWell({ outcomes }: { outcomes: NoteOutcomesState }) {

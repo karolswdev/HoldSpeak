@@ -1481,3 +1481,6 @@
 .desk-next .thought-workspace-window.is-sheet .note-margin-row .note-margin-more.btn {
   width: var(--desk-button-hit-size);
 }
+
+/* JRN2: a task line sent to tonight says so under its row. */
+.note-margin-tonight { padding: 0 8px 4px 30px; }

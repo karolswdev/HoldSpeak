@@ -1,0 +1,8 @@
+{
+  "body": {
+    "code": "no_night_program",
+    "detail": "No program runs at night. Add a night line to one: night 23:30–07:00 · at most 8 steps.",
+    "error": "no_night_program"
+  },
+  "status": 409
+}
