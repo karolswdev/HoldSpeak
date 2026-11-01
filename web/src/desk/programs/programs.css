@@ -1410,3 +1410,36 @@ span.pg-req-thumb { height: 150px; }
   .pg-split-goal, .pg-split-hands { white-space: normal; }
   .desk-next .pg-split .btn { min-height: 44px; }
 }
+
+/* PG-IMPORT IMP7: the family, plain rows under the board (direction A):
+   name · state word · the hub's line; a press opens that Program. */
+.pg-family { flex: none; border-top: 1px solid var(--wb-rule-soft); }
+.desk-next .kit-listrow.pg-family-row { display: block; padding: 0; }
+.pg-family-row:hover { background: var(--wb-row-hover); }
+.desk-next .pg-family-row .pg-family-open {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
+  justify-content: stretch;
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto minmax(0, 1.4fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 12px;
+  text-align: left;
+}
+.desk-next .pg-family-row .pg-family-open:hover:not(:disabled),
+.desk-next .pg-family-row .pg-family-open:active:not(:disabled) { background: transparent; transform: none; }
+.pg-family-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px / 1.3 var(--font-sans); }
+.pg-family-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wb-muted); font: 400 12px / 1.3 var(--font-sans); }
+.pg-row-kin { color: var(--wb-muted); font: 400 12px / 1.3 var(--font-sans); white-space: nowrap; }
+.pg-row-family > .kit-listrows { padding-left: 24px; }
+@container surface (max-width: 520px) {
+  .desk-next .pg-family-row .pg-family-open { grid-template-columns: minmax(0, 1fr) auto; min-height: 44px; row-gap: 0; padding: 4px 12px; }
+  .pg-family-line { grid-column: 1 / -1; }
+  .pg-row-family > .kit-listrows { padding-left: 12px; }
+}

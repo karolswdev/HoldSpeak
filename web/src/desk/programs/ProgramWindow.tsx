@@ -46,6 +46,7 @@ import { briefable, copyPageLink, pageWords, programRef, revokePage } from "../r
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
 import { DoneWhen, openShot } from "./Requirements";
 import { ProgramLine } from "./ProgramLine";
+import { ProgramFamilyRows } from "./Family";
 import { StepFold, isPlanned, moveStep, type Part as StepPart } from "./StepFold";
 import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
 import { runsOnLabel, StepRow } from "./StepRow";
@@ -1021,6 +1022,8 @@ export function ProgramBody({ programId }: { programId: string }) {
           <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
             emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
         )}
+        {/* PG-IMPORT IMP7: the Program it came from and the Programs it made. */}
+        {view === "board" ? <ProgramFamilyRows family={program.family} /> : null}
         {view === "board" && drafting ? (
           <AllowedFold program={program} open={allowedOpen} onToggle={setAllowedOpen} busy={Boolean(busy)}
             onChange={(body) => void run("allowed", () => updateProgram(program.id, body), "The allowed agents were not saved")} />

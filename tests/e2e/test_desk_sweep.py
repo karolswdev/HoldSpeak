@@ -294,6 +294,8 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # registers (Checked, The agent says, Not checked, Files) and the
         # "finished" mark under the line.
         ("program-done", "pullout:program:{program_done}", None),
+        # PG-IMPORT IMP7: the Program the done one made: "Came from" under its board.
+        ("program-family", "pullout:program:{program_child}", None),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -508,7 +510,7 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             program_draft = _seed_draft_program(page, tmp)
             program_rounds = _seed_rounds_program(page, tmp)
             briefing, program_held = _seed_briefing(page, tmp)
-            program_done = _seed_done_program(page, tmp)
+            program_done, program_child = _seed_done_program(page, tmp)
             ctx.close()
             _seed_finished_receipts()
             automation = _seed_automation(note_id)
@@ -516,7 +518,7 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
                    "automation": automation, "program": program_id, "automation_program": automation_program,
                    "program_draft": program_draft, "program_rounds": program_rounds, "briefing": briefing,
-                   "program_held": program_held, "program_done": program_done}
+                   "program_held": program_held, "program_done": program_done, "program_child": program_child}
         finally:
             server.stop()
 
@@ -709,7 +711,15 @@ def _seed_done_program(page: Any, tmp: Path) -> str:
                        line="PR #1712 has the judged commit")
     service.transition(program, step, "merged", line="Merged #1712")
     service.transition(program, step, "done")
-    return program_id
+    # PG-IMPORT IMP7: a Program it made (the family rows under the board).
+    child = _api(page, "POST", "/api/programs", {
+        "title": "Atlas follow-up", "goal": "Index the anchors.", "repository": str(repo),
+        "template": "fast-cycle", "check_command": "true", "origin_ref": f"program:{program_id}",
+    }, token=TOKEN)
+    child_id = str(child.get("id") or (child.get("program") or {}).get("id"))
+    _api(page, "POST", f"/api/programs/{child_id}/plan", {"replace": True, "steps": [
+        {"title": "Index the anchors", "brief": "One index page."}]}, token=TOKEN)
+    return program_id, child_id
 
 
 def _seed_automation(note_id: str) -> str:
@@ -1528,6 +1538,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             win.locator("[data-testid=programs-board]").wait_for(timeout=T)
             win.locator("[data-testid=programs-step-select]").first.click()
             win.locator("[data-testid=programs-step-report]").wait_for(timeout=T)
+            win.locator("[data-testid=programs-family-row]").first.wait_for(timeout=T)
+            page.mouse.move(2, 2)
+        if case_id == "program-family":
+            win = page.locator(f'[id="{wid}"]')
+            win.locator("[data-testid=programs-family-row]").first.wait_for(timeout=T)
+            win.locator("[data-testid=programs-family]").scroll_into_view_if_needed(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "program-text":
             # PG-LANG LANG2: Text (in More ▾ at the phone width), a planned
