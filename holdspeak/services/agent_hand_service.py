@@ -593,6 +593,12 @@ class AgentHandService:
                     self._db, item_id, control_mode=mode, repo_path=source.primary_path,
                     worktree=str(worktree_path), branch=spec["branch"],
                 )
+            elif kind == "program_step" and str(instruction or "").strip():
+                # A step's helper (its reviewer): the instruction first, the
+                # step as data (never the builder's brief alone).
+                from .program_brief import compose_review
+
+                brief = compose_review(self._db, item_id, str(instruction))
             else:
                 brief = compose_agent_brief(
                     self._db,
