@@ -274,13 +274,13 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | PG9 | The Programs window and the Program window | Shipped #1602 (2026-10-28) | No race shot (no race fixture). |
 | PG10 | The seams on the faces | Shipped #1602 (2026-10-28) | Person line, Room fold, Note verb pinned in app tests only. |
 | PG11 | The documents | Shipped #1602 (2026-10-28) |  |
-| PG12 | Tick on the coder frame | Open |  |
+| PG12 | Tick on the coder frame | Shipped #1618 (2026-10-30) | A coder frame ticks its Program at once. |
 | PG13 | The Program's level drives the desk's answers | Shipped (2026-10-29) | PG13b: the launch flags and a helper follow the level too; the words say YOLO. Per-step levels are left. |
-| PG14 | Automations run a program | Open |  |
-| PG15 | Start a program on a call | Open |  |
-| PG16 | Decisions from a Program | Open |  |
-| PG17 | The first Program is the engine's own history | Open | On his desk. |
-| PG18 | Programs on Today | Open |  |
+| PG14 | Automations run a program | Shipped #1626 (2026-10-30) | Do kind `run_program`; the result row reads the Program's state and opens it (`automation_runs`). |
+| PG15 | Start a program on a call | Shipped #1663 (2026-10-31) | `program.start` behind his spoken yes; `program.get` in a sentence. |
+| PG16 | Decisions from a Program | Shipped #1644 (2026-10-30) | His Skip, a rule's Skip above NOTE and a merge by rule propose a decision record (design §9b). A core-question press is not a record yet. |
+| PG17 | The first Program is the engine's own history | Shipped #1659 (2026-10-31) | On his desk. |
+| PG18 | Programs on Today | Shipped #1618 (2026-10-30) | "Programs: 1 running, 1 waits on you" (design §9 Seams); IMP3 #1713 added Since you were last here. |
 
 **PG-REQ** (open, 13 slices REQ1–REQ13, lanes HUB/FACES/DOCS, one PR from `lane/programs-requirements-build-20261031`): requirements as a noun, browse and adjust; design `programs/PROGRAMS-REQUIREMENTS-2026-10-31.md` (#1664), canvas `programs/canvases/programs-requirements-2026-10-31.html`, recipe `programs/RECIPE.md` "PG-REQ".
 
