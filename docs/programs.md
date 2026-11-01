@@ -767,7 +767,7 @@ The page reads like a note: the kind of item, the program and its goal, the prog
 - **A waive stays on the desk.** A waive needs your typed reason, so the page does not offer it.
 - **One page for several items.** The morning message after a night program links one page for all the items that wait on you (up to 12, in order). Each item is its own note with its own choices. Decide them one at a time: an item you decide shows its one line, and the others stay as they were. The top of the page says how many still wait ("2 wait on you."). The page is open for 12 hours.
 
-These items can have a page: a core question, a held commit (Telegram and the page; the desk row has no **Copy page link** yet), a merge, a finding, a parked step, an agent at its limit, a race winner, an added step, your word, a requirement left after its rounds, a proposed requirement, a proposed step change and a proposed amendment. An agent's question, a review request and Close stay on the desk.
+These items can have a page: a core question, a held commit (Telegram and the page; the desk row has no **Copy page link** yet), a merge, a finding, a parked step, an agent at its limit, a race winner, an added step, your word, a requirement left after its rounds, a proposed requirement, a proposed step change and a proposed amendment. A review request and Close stay on the desk. Outside Programs, these can have a page too: a decision to review, a meeting's proposed action, a project review proposal, a call an agent asks to place, an agent's question (you write your answer on the page and HoldSpeak types it to the agent), and a document that is ready to send. A send is decided on its page only: the page shows where it goes and the lines it sends, and Telegram has no Send button for it. A permission (a held tool call, an agent's permission prompt) stays on the desk.
 
 ### Telegram
 
@@ -881,3 +881,24 @@ holdspeak program decide program-1d3cbc4a0b72 step-4a1b9c0d2e3f --kind core --ch
 - The hub is `--url`, else `HOLDSPEAK_URL`, else the hub that runs on this machine.
 - The credential is `--token`, else `HOLDSPEAK_AGENT_CREDENTIAL` (an agent such as pi: the agent rules apply), else `HOLDSPEAK_TOKEN`, else the owner token of the hub on this machine. HoldSpeak sends that token only to a loopback address, and never across a redirect.
 - If no hub answers, the command says so and the exit code is 1.
+
+## From Python: `holdspeak.sdk.programs`
+
+The Python client makes the same calls as `holdspeak program`. It has no rules of its own.
+
+```python
+from holdspeak.sdk.programs import Programs, ProgramsRefused
+
+programs = Programs()  # the hub on this machine
+made = programs.create("Overnight", repository="/Users/me/dev/app", template="fast-cycle", control="normal")
+text = programs.text(made["id"])                      # the program text and its revision
+rows = programs.text(made["id"], text["text"] + "\nstep +  Docs\n  brief\n  > Write the docs.\n", base=text["text"])
+programs.text(made["id"], text["text"] + "\nstep +  Docs\n  brief\n  > Write the docs.\n", base=text["text"], apply=True)
+programs.start(made["id"])
+program = programs.get(made["id"])                   # the steps, the checkpoints, your turn
+programs.decide(made["id"], step_id, kind="core", choice="go_on")
+```
+
+- `text(id)` reads the program as its text. `text(id, new_text)` is a dry run: it returns the change rows and writes nothing. With `apply=True`, it applies the rows when no row is refused.
+- A refusal raises `ProgramsRefused` with `status`, `code` and the hub's words (`detail`).
+- The hub and the credential are found as for `holdspeak program`: `url` and `token`, then `HOLDSPEAK_URL`, `HOLDSPEAK_AGENT_CREDENTIAL` (an agent such as pi: the agent rules apply), `HOLDSPEAK_TOKEN`, then the hub on this machine.

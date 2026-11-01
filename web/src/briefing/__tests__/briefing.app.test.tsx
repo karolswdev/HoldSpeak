@@ -14,6 +14,12 @@ import { dirname, join, resolve } from "node:path";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import recorded from "../__fixtures__/reach.page.json";
+// DIR10: a prepared send (the page only) and a desk agent's question, recorded
+// by tests/unit/test_reach_send_and_question.py (HOLDSPEAK_WIRE_WRITE=1).
+import sendPage from "../__fixtures__/reach.send.json";
+import sendSent from "../__fixtures__/reach.send.sent.json";
+import questionPage from "../__fixtures__/reach.question.json";
+import questionAnswered from "../__fixtures__/reach.question.answered.json";
 // DIR9: one page for three held items, and the same page after two answers
 // (tests/integration/test_desk_reach_digest.py, HOLDSPEAK_WIRE_WRITE=1).
 import digest from "../__fixtures__/reach.digest.json";
@@ -284,5 +290,34 @@ describe("the audit and lesson rows on the page (JRN9 to JRN11)", () => {
     fireEvent.click(screen.getByTestId("briefing-choice-keep_program"));
     expect((await screen.findByTestId("briefing-outcome")).textContent).toBe(lesson.kept.item.outcome.words);
     expect(calls.find((call) => call.method === "POST")?.body).toEqual({ ref: lesson.open.items[0].ref, choice: "keep_program" });
+  });
+});
+
+describe("DIR10: a prepared send and an agent's question on the page", () => {
+  it("a send shows where it goes and what it sends before Send; Send settles it", async () => {
+    const calls = hub({ open: sendPage, post: sendSent });
+    render(<BriefingApp token={TOKEN} />);
+    const preview = await screen.findByTestId("briefing-preview");
+    const item = sendPage.items[0];
+    expect(preview.textContent).toContain(`To ${item.preview.destination}`);
+    expect(preview.querySelectorAll(".briefing-preview-line")).toHaveLength(item.preview.lines.length);
+    expect(preview.querySelector("ul, li")).toBeNull();
+    fireEvent.click(screen.getByTestId("briefing-choice-send"));
+    await screen.findByTestId("briefing-outcome");
+    expect(calls.find((call) => call.method === "POST")!.body).toEqual({ ref: item.ref, choice: "send" });
+  });
+
+  it("an agent's question takes his words; the answer is sent as he wrote it", async () => {
+    const calls = hub({ open: questionPage, post: questionAnswered });
+    render(<BriefingApp token={TOKEN} />);
+    const field = await screen.findByTestId("briefing-answer-text");
+    expect(screen.getByTestId("briefing-question").textContent).toBe(questionPage.items[0].question);
+    const send = screen.getByTestId("briefing-answer-send");
+    expect(send).toBeDisabled();
+    fireEvent.change(field, { target: { value: "Base it on main." } });
+    fireEvent.click(send);
+    await screen.findByTestId("briefing-outcome");
+    expect(calls.find((call) => call.method === "POST")!.body)
+      .toEqual({ ref: questionPage.items[0].ref, choice: "answer", reason: "Base it on main." });
   });
 });

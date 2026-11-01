@@ -522,10 +522,11 @@ class TestMicAllowlist:
 
     def test_the_ledger_matches_the_census(self):
         """23 census - retired Thread checkbox + R13 + Workbench grammar
-        - the Thread number field parked with the Thread window (Q4) = 23."""
+        - the Thread number field parked with the Thread window (Q4) = 23,
+        + DIR10's briefing-page answer field (the thin kit has no mic) = 24."""
         mod = _load_scanner()
-        assert len(mod.MIC_ALLOWLIST) == 23
-        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 23
+        assert len(mod.MIC_ALLOWLIST) == 24
+        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 24
 
 
 _MIC_HOST_FIELDS = (

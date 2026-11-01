@@ -47,3 +47,33 @@ def test_the_hand_sends_a_step_helper_the_review_brief(tmp_path, db, monkeypatch
     assert text.startswith("HoldSpeak: you REVIEW step 1 of the program “The hub stops stalling”.")
     assert "Read the diff." in text and "Add the three indexes." in text
     assert "program.step_done" not in text
+
+
+def test_the_review_brief_carries_the_diff_so_the_reviewer_never_reads_outside(tmp_path) -> None:
+    """The second real night: a read-only reviewer with no shell read the
+    main checkout to compare, and Claude Code held it on its "read outside
+    the working directories" prompt. The diff is in the brief now."""
+    rig = Rig(tmp_path)
+    pid = rig.service.create(OWNER, title="Night proof", repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}",
+                             template="build-and-review", control="yolo")["id"]
+    rig.service.plan(OWNER, pid, steps=[{"title": "Define program", "brief": "Create docs/glossary.md."}])
+    rig.service.start(OWNER, pid)
+    rig.tick()
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"docs/glossary.md": "A program is a goal in steps.\n"})
+    rig.tick()
+    step = rig.service.store.list_steps(pid)[0]
+    text = compose_review(rig.db, step["id"], INSTRUCTION)["text"]
+    assert "```diff" in text and "+A program is a goal in steps." in text and "docs/glossary.md" in text
+    assert "Do not read outside your worktree." in text
+
+
+def test_a_long_diff_is_cut_in_whole_lines() -> None:
+    from types import SimpleNamespace
+
+    from holdspeak.services.program_brief import REVIEW_DIFF_BYTES, step_diff
+
+    long = "\n".join(f"+line {n} " + "x" * 60 for n in range(400)) + "\n"
+    run = lambda argv, **_kw: SimpleNamespace(returncode=0, stdout=long)  # noqa: E731
+    cut = step_diff({"worktree": "/w", "head_commit": "b", "facts": {"base_commit": "a"}}, runner=run)
+    assert len(cut.encode("utf-8")) <= REVIEW_DIFF_BYTES + 80 and cut.endswith("the rest is in your worktree's files)")
+    assert step_diff({"worktree": "/w", "head_commit": "a", "facts": {"base_commit": "a"}}, runner=run) == ""

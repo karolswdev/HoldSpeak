@@ -41,6 +41,12 @@ export type BriefingItem = {
   choices: BriefingChoice[];
   evidence: BriefingPane[];
   state: "open" | "later" | "decided" | "gone";
+  /** DIR10: what the choice sends or writes, and where (shown before it). */
+  preview?: { destination: string; lines: string[]; reversible: boolean };
+  /** DIR10: a question answered with his text (an agent asks). */
+  text?: { id: string; label: string; max: number; consequence: string };
+  /** DIR10: decided on this page only (a prepared send). */
+  page_only?: boolean;
   outcome?: BriefingOutcome;
 };
 export type LaterOption = { id: string; label: string; at: string };
@@ -94,7 +100,7 @@ export function readPage(token: string): Promise<BriefingPage> {
 
 export function answerItem(
   token: string,
-  body: { ref: string; choice: string; later?: string },
+  body: { ref: string; choice: string; later?: string; reason?: string },
 ): Promise<{ item: BriefingItem }> {
   return call(`/api/b/${token}/answer`, {
     method: "POST",

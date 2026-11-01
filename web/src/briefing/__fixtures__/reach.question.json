@@ -1,0 +1,75 @@
+{
+  "items": [
+    {
+      "because": {
+        "kind": "answer",
+        "rule": "kind",
+        "words": "a question"
+      },
+      "blocked": [],
+      "blocked_words": "",
+      "changed": [],
+      "choices": [],
+      "doing": "",
+      "evidence": [],
+      "goal": "Claude Code asks you a question.",
+      "happened": "",
+      "head": "Claude Code · Fix the flaky test",
+      "kind": "answer",
+      "kind_words": "An agent asks",
+      "level": "",
+      "note": [
+        "Claude Code asks you a question."
+      ],
+      "place": "",
+      "program_id": null,
+      "program_title": "",
+      "question": "Which branch should I base the fix on?",
+      "ref": "coder:claude:s-1",
+      "since": "2026-11-01T12:00:00+00:00",
+      "source": "coder",
+      "state": "open",
+      "step_id": "",
+      "step_ordinal": null,
+      "step_title": "",
+      "text": {
+        "consequence": "HoldSpeak types your answer to Claude Code.",
+        "id": "answer",
+        "label": "Your answer",
+        "max": 2000
+      },
+      "track": []
+    }
+  ],
+  "later": [
+    {
+      "at": "14:00",
+      "id": "in_1h",
+      "label": "In 1 hour"
+    },
+    {
+      "at": "13:00",
+      "id": "at_13",
+      "label": "At 13:00"
+    },
+    {
+      "at": "19:00",
+      "id": "tonight",
+      "label": "Tonight"
+    },
+    {
+      "at": "07:00",
+      "id": "tomorrow",
+      "label": "Tomorrow at 07:00"
+    }
+  ],
+  "package": {
+    "desk": "/",
+    "expires_at": "2026-11-02T18:00:52.757500+00:00",
+    "expires_words": "Expires in 23 h",
+    "head": "Claude Code · Fix the flaky test",
+    "hub": "Karols-MacBook-Pro",
+    "id": "pkg-f45fd22537ba",
+    "kind": "item"
+  }
+}
