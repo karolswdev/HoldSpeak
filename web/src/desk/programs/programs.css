@@ -1324,7 +1324,8 @@ span.pg-req-thumb { height: 150px; }
 .pg-row-track .pg-track[data-form="dots"] .pg-station + .pg-station::before { content: none; }
 .pg-row-track .pg-station-dot { width: 7px; height: 7px; }
 .pg-row-track .pg-station[data-mark="done"] .pg-station-dot { border-color: transparent; background: color-mix(in srgb, var(--wb-muted) 70%, var(--wb-paper)); }
-.pg-row[data-state="done"] .pg-row-track .pg-station[data-mark="done"] .pg-station-dot { background: var(--lamp-ok); }
+.pg-row[data-finished] .pg-row-track .pg-station[data-mark="done"] .pg-station-dot { background: var(--lamp-ok); }
+.pg-row-track .pg-station[data-mark="skipped"] .pg-station-dot { border-color: transparent; background: color-mix(in srgb, var(--wb-muted) 45%, var(--wb-paper)); }
 .pg-row-track .pg-station[data-mark="here"] .pg-station-dot,
 .pg-row-track .pg-station[data-mark="running"] .pg-station-dot,
 .pg-row-track .pg-station[data-mark="red"] .pg-station-dot { width: 7px; height: 7px; border-color: transparent; background: var(--dot-tone); }
@@ -1344,3 +1345,7 @@ span.pg-req-thumb { height: 150px; }
   .pg-row-state .pg-row-say { white-space: normal; }
   .pg-row-met { display: none; }
 }
+
+/* #1697: a night program's first station, asleep until its window. */
+.pg-line .pg-station[data-mark="night"] .pg-station-dot { border-style: dashed; }
+.pg-line .pg-station[data-mark="night"] .pg-station-word { color: var(--wb-info-ink); }

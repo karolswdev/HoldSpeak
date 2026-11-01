@@ -13,16 +13,16 @@
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T06:54:54.839581+00:00",
+      "created_at": "2026-11-01T07:47:45.413460+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-8dc050aa9892",
+      "id": "program-32e1799d7666",
       "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-01T06:54:59.191391+00:00",
+        "at": "2026-11-01T07:47:49.093570+00:00",
         "by": "engine",
         "choice": "retry",
         "decision_record_id": null,
@@ -33,21 +33,21 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-0cef971eb24d/5",
-        "ref_commit": "8d4d37f9dbe0a3fc857676429e95d391b1b4bc02",
+        "ref": "refs/holdspeak/checkpoints/step-b66ebb29f53b/5",
+        "ref_commit": "c46414deca964131e890cb48e6b10727de809c2b",
         "rule": "a red requirement goes back to the builder (round 2 of 2)",
-        "step_id": "step-0cef971eb24d",
+        "step_id": "step-b66ebb29f53b",
         "undo": {
           "pin": {
-            "commit": "8d4d37f9dbe0a3fc857676429e95d391b1b4bc02",
-            "head": "c273606e0a10b2c1ef4be7f106406ee2054190e2",
+            "commit": "c46414deca964131e890cb48e6b10727de809c2b",
+            "head": "fe7c05c43379acd1d69cb80b3899a219d72bf988",
             "n": 5,
-            "ref": "refs/holdspeak/checkpoints/step-0cef971eb24d/5",
-            "tree": "c78c523534c2b95c90c293f5ca910f7533fe52f5"
+            "ref": "refs/holdspeak/checkpoints/step-b66ebb29f53b/5",
+            "tree": "6ed11caf30e7ca367b58e5a40fc0d990f9726223"
           }
         }
       },
-      "line": "Step 3 of 6 waits on you since 01:54",
+      "line": "Step 3 of 6 waits on you since 02:47",
       "persons": [
         {
           "id": "p-alice",
@@ -104,7 +104,7 @@
           "title": "The fan-out"
         }
       ],
-      "updated_at": "2026-11-01T06:54:58.608224+00:00",
+      "updated_at": "2026-11-01T07:47:48.588488+00:00",
       "your_turn": 1
     }
   ],

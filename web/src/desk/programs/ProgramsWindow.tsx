@@ -34,7 +34,7 @@ import "./programs.css";
 export { openProgram };
 
 const MARK_STATION: Record<ListMark["mark"], { state: TrackStation["state"]; tone: string; live?: boolean }> = {
-  done: { state: "passed", tone: "ok" }, here: { state: "current", tone: "ask", live: true },
+  done: { state: "passed", tone: "ok" }, skipped: { state: "passed", tone: "idle" }, here: { state: "current", tone: "ask", live: true },
   running: { state: "ahead", tone: "info", live: true }, red: { state: "ahead", tone: "fail" },
   parked: { state: "ahead", tone: "idle" }, planned: { state: "ahead", tone: "idle" },
 };
@@ -51,11 +51,14 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
   const line = row.line || fallback;
   const met = metWords(row.requirements_met);
   const tone = programTone(row.state);
+  // Done is a fact parking does not erase: every step finished keeps its green.
+  const finished = Boolean(row.total) && row.done + (row.skipped ?? 0) >= row.total;
   const stations: TrackStation[] = (row.track ?? []).map((dot) => ({
     key: String(dot.ordinal), word: `${dot.ordinal} ${dot.title}`, mark: dot.mark, ...MARK_STATION[dot.mark],
   }));
   return (
-    <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}>
+    <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}
+      data-finished={finished ? "" : undefined}>
       <Button variant="chrome" className="pg-row-main" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`}
         data-testid="programs-row-open">
         <img className="kit-listrow-glyph" src={spriteUrl("program", row.id, "rest", null, 20)} alt="" width={20} height={20} />

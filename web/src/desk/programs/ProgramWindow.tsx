@@ -616,6 +616,12 @@ export function startWords(program: Program): string {
   const pushes = program.steps.some((step) => !step.race_of && (step.gate?.merge ?? "level") !== "none");
   const parts = ["the repository", pushes ? "the remote" : "", program.check_command ? "the check command" : ""].filter(Boolean);
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+  const night = program.night;
+  if (night) {
+    // #1697: a night program sleeps until its window, then fills itself.
+    const most = night.max_steps ? `at most ${night.max_steps} small steps` : "small steps";
+    return `Start will check ${list}. Then it sleeps until ${night.start}; from ${night.start} to ${night.end} it takes ${most} from the tasks marked Tonight.`;
+  }
   return `Start will check ${list}. Then the first steps go to their agents.`;
 }
 
@@ -645,7 +651,7 @@ function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy
         </div>
         <PlanLine planner={planner} onOpenText={onOpenText} />
         <div className="pg-tray" data-testid="programs-tray">
-          {steps.length ? (
+          {steps.length || program.night ? (
             <span className="pg-choice" data-choice="start">
               <Button variant="primary" loading={busy === "start"} disabled={held} onClick={onStart} data-testid="program-start">Start</Button>
               <span className="pg-choice-cons" data-testid="programs-start-words">{startWords(program)}</span>

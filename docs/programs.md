@@ -404,7 +404,7 @@ HoldSpeak's own file names the desk sweep's shot command. It has no default requ
 
 In the Programs window:
 
-- Each program is one row: its title, a lamp and one line in plain words ("Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude Code, 11 min", "Drafting, 4 steps", "Done, 14 PRs, 28 Oct", "Parked at step 1 of 2"), a small track with one dot for each step, and the Met count. The programs that wait on you are first, then running, drafting, done and parked.
+- Each program is one row: its title, a lamp and one line in plain words ("Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude Code, 11 min", "Drafting, 4 steps", "Done, 14 PRs, 28 Oct", "Parked at step 1 of 2"; a done program you then parked keeps "Done, 3 merges, 1 Nov · parked"), a small track with one dot for each step, and the Met count. The programs that wait on you are first, then running, drafting, done and parked.
 
 - **Find a program** (with its mic) keeps only the rows that have each word you type. It reads the title, the goal, the project, the persons, the step titles, the pull request numbers (type "#1591") and the template. The window finds locally; each key costs no request.
 - **Project ▾** and **Person ▾** keep only the programs of one project or one person. They list only the projects and persons that have a program. **Any project** and **Anyone** remove the filter.

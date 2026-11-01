@@ -58,6 +58,7 @@ import reachRevokedFixture from "../__fixtures__/reach.revoked.json";
 // changed text (a refused brief, control up the ladder, a new step, a merge
 // on his press, a + line), recorded through the real routes.
 import textFixture from "../__fixtures__/program.text.json";
+import dreamingFixture from "../__fixtures__/program.dreaming.json";
 import deliveryFailedFixture from "../__fixtures__/program.delivery_failed.json";
 import deliveryMergeFixture from "../__fixtures__/program.delivery_merge.json";
 import deliveryMergedFixture from "../__fixtures__/program.delivery_merged.json";
@@ -228,6 +229,8 @@ describe("the Programs window", () => {
     expect(doneRow.textContent).toMatch(/Done, 1 PR, \d+ \w{3}/);
     // No column heads.
     expect(document.querySelector(".pg-list-head")).toBeNull();
+    // A finished program's row keeps its green (Done is a fact).
+    expect(doneRow.hasAttribute("data-finished")).toBe(true);
     expect(status().textContent).toContain("Your turn");
     expect(status().textContent).toContain("2 wait on you");
     expect(status().textContent).not.toMatch(/\b0 /);
@@ -551,6 +554,26 @@ describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/t
     const pr = merged.checkpoints.find((row) => row.kind === "delivery" && row.choice === "delivered")!;
     expect(screen.getByTestId("programs-delivered").textContent).toBe(pr.line);
     expect(pr.line).toMatch(/^Delivered to dw app\/1 \(PR #\d+\)$/);
+  });
+});
+
+describe("#1697: the Dreaming template (recorded through the real route, test_desk_program_night.py)", () => {
+  it("is in Templates with its meaning; a night program in Drafting sleeps until its window and Start says what the night does", async () => {
+    const dream = dreamingFixture as unknown as Program;
+    hub({ "GET /api/programs": list });
+    render(<ProgramsCore />);
+    fireEvent.click(await screen.findByTestId("programs-templates"));
+    expect(menuWords()).toContain("Dreaming · Runs at night on the idle home engine; fills itself from tasks marked Tonight");
+    cleanup();
+    hub({ [`GET /api/programs/${dream.id}`]: dream });
+    render(<ProgramBody programId={dream.id} />);
+    const line = await screen.findByTestId("programs-line");
+    expect(line.querySelector("[data-station=night]")!.textContent).toContain(`Sleeps until ${dream.night!.start}`);
+    // No steps yet: the night fills itself, so Start is there with what it will do.
+    const tray = screen.getByTestId("programs-tray");
+    expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
+    expect(within(tray).getByTestId("programs-start-words").textContent)
+      .toBe(`Start will check the repository. Then it sleeps until ${dream.night!.start}; from ${dream.night!.start} to ${dream.night!.end} it takes at most ${dream.night!.max_steps} small steps from the tasks marked Tonight.`);
   });
 });
 
