@@ -53,10 +53,10 @@ import { runsOnLabel, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
 import { ProgramChangeWell, ProgramTextPane, landedSteps, useProgramText, type TextProposal } from "./ProgramText";
 import { ShapeBar, ShapedWell, engineFact } from "./ShapeBar";
-import { PlanLine, usePlanIt } from "./PlanDraft";
+import { PlanLine, ProgramsSplitWell, usePlanIt } from "./PlanDraft";
 import { RoundPanel, useRounds } from "./Rounds";
 import type {
-  Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
+  Control, DecidedRow, DecideBody, PlanAnswer, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
 import { AuditLine, FindingsBoard } from "./Findings";
@@ -646,6 +646,11 @@ export function startWords(program: Program): string {
   const pushes = program.steps.some((step) => !step.race_of && (step.gate?.merge ?? "level") !== "none");
   const parts = ["the repository", pushes ? "the remote" : "", program.check_command ? "the check command" : ""].filter(Boolean);
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+  // JRN1: a Program split from a draft waits on the one before it.
+  const origin = program.place?.origin;
+  if (origin?.kind === "program") {
+    return `It starts after ${origin.title || "the program before it"} is done. Then Start will check ${list}.`;
+  }
   const night = program.night;
   if (night) {
     // #1697: a night program sleeps until its window, then fills itself.
@@ -985,7 +990,10 @@ export function ProgramBody({ programId }: { programId: string }) {
             onOverturned={(next) => { apply(next); setShaped(null); setProposal(null); if (next) void text.read(); }}
             onKeep={() => setShaped(null)} />
         ) : null}
-        {proposal ? (
+        {proposal && proposal.source === "plan" && ((proposal.answer as PlanAnswer).programs?.length ?? 0) >= 2 ? (
+          <ProgramsSplitWell key={wellKey} program={program} answer={proposal.answer as PlanAnswer}
+            onApplied={(next) => { if (next) apply(next); }} onDismiss={() => setProposal(null)} />
+        ) : proposal ? (
           <ProgramChangeWell key={wellKey}
             programId={program.id} proposal={proposal} settling={settling}
             onApplied={applied} onAnswer={setProposal} onDismiss={notThis}

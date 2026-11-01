@@ -409,3 +409,12 @@ export interface TonightAnswer {
 export async function addToTonight(body: { kind: "action" | "note" | "program_step"; item_id: string; line?: string }): Promise<TonightAnswer> {
   return apiFetch<TonightAnswer>("/api/programs/tonight", { method: "POST", json: body });
 }
+
+
+/** JRN1: Apply all, or Apply this one (its place), of a draft that proposes several Programs. */
+export async function applyPrograms(programId: string, programs: { title: string; goal: string; text: string }[],
+  which: "all" | number): Promise<{ program: Program | null; made: { id: string; title: string }[] }> {
+  const answer = await apiFetch<{ program?: Program; made?: { id: string; title: string }[] }>(
+    `/api/programs/${encodeURIComponent(programId)}/plan/programs`, { method: "POST", json: { programs, which } });
+  return { program: answer.program ?? null, made: answer.made ?? [] };
+}

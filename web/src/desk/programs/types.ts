@@ -725,6 +725,20 @@ export interface PlanAnswer extends TextApplyAnswer {
   split: { place: number; title: string; words: string; owns: string[] }[];
   proposed_text: string;
   base: string;
+  /** JRN1: the Programs the draft proposes when the goal is several goals (2 to 4, in order). */
+  programs?: ProposedProgram[];
+}
+
+/** JRN1: one Program a draft proposes. */
+export interface ProposedProgram {
+  title: string;
+  goal: string;
+  /** What it gives the next one ("" for the last). */
+  hands: string;
+  /** Its whole Program text. */
+  text: string;
+  steps: string[];
+  sizes: PlanSize[];
 }
 
 /** `POST /api/programs/{id}/text`: the rows, and on a real apply the Program. */
