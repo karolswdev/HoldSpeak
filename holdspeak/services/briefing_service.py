@@ -95,7 +95,11 @@ PROGRAM_REF = "program:"
 BRIEFABLE = frozenset({"core", "commit", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word", "todo",
                        "requirement_left", "requirement_proposed", "step_change", "step_amend", "delivery",
                        # DIR10: the step's agent asks; his answer is text (the page's one field).
-                       "answer"})
+                       "answer",
+                       # PG-LANG JRN9 to JRN11: an audit's findings to file, its fix program, a lesson.
+                       "audit_file", "fix_program", "lesson"})
+#: The held items about the whole program (the desk's "The program").
+PROGRAM_LEVEL = frozenset({"audit_file", "fix_program", "lesson"})
 #: The kinds whose answer is his text, not a choice.
 TEXT_KINDS = frozenset({"answer"})
 #: The longest answer the page takes.
@@ -109,6 +113,7 @@ KIND_WORDS = {
     "requirement_word": "Your word", "requirement_left": "Requirement left", "todo": "To do",
     "requirement_proposed": "Proposed requirement", "step_change": "Proposed change",
     "step_amend": "Proposed amendment", "delivery": "Delivery", "answer": "The agent asks",
+    "audit_file": "Audit findings", "fix_program": "Fix program", "lesson": "Lesson",
 }
 
 #: Each choice's label and what it does (§3 "The choices", ASD-STE100).
@@ -138,6 +143,14 @@ CHOICE_WORDS: dict[str, dict[str, tuple[str, str]]] = {
     # LANG13: the delivery at Done (Merge at Secure; Retry after a failure).
     "delivery": {"merge": ("Merge", "The delivery PR merges."), "retry": ("Retry", "The delivery runs again."),
                  "skip": ("Skip", "The program stays Done, not delivered.")},
+    # PG-LANG JRN9 to JRN11 (the consequence lines are brief_words').
+    "audit_file": {"file": ("File", "Each finding becomes a Door task."),
+                   "skip": ("Skip", "No task is made.")},
+    "fix_program": {"make": ("Make", "HoldSpeak makes the fix program. It waits for your Start."),
+                    "skip": ("Skip", "No fix program is made.")},
+    "lesson": {"keep_program": ("Keep for this program", "Every step of this program gets it as a requirement."),
+               "keep_repo": ("Keep for HoldSpeak", "A small step adds it to the repository's program file."),
+               "skip": ("Skip", "Nothing changes.")},
 }
 
 #: Later's next touches the page offers (§7 "The words"); "At a time…" is DIR4.
@@ -399,6 +412,8 @@ class BriefingService:
             raise BriefingRefused("not_briefable", "This item has no choice the page can take. Answer it on your desk.",
                                   status=409)
         ordinal = (step or {}).get("ordinal") or item.get("ordinal")
+        if kind in PROGRAM_LEVEL:  # about the whole program: its place is the program, not its last step
+            ordinal = None
         head = f"{program['title']} · step {ordinal}" if ordinal else str(program["title"])
         goal = words.goal_line(program)
         doing = words.doing_words(kind, program, step)
@@ -934,6 +949,8 @@ def _decide_args(item: Mapping[str, Any]) -> dict[str, Any]:
         return {"kind": kind, "proposal_id": item.get("proposal_id")}
     if kind == "add_step":
         return {"kind": kind, "finding_id": item.get("proposal")}
+    if kind == "lesson":  # JRN11: the row names its lesson
+        return {"kind": kind, "proposal_id": item.get("lesson_id")}
     return {"kind": kind, "finding_id": item.get("finding_id")}
 
 

@@ -1,0 +1,452 @@
+{
+  "after": {
+    "items": [
+      {
+        "because": {
+          "kind": "audit_file",
+          "rule": "kind",
+          "words": "a choice among offered presses"
+        },
+        "blocked": [],
+        "blocked_words": "Nothing else waits on this.",
+        "changed": [
+          {
+            "at": "2026-11-01T19:01:42.156486+00:00",
+            "clock": "14:01",
+            "line": "Audited · 3 findings · 1 MUST."
+          },
+          {
+            "at": "2026-11-01T19:01:42.023361+00:00",
+            "clock": "14:01",
+            "line": "Reported its findings."
+          },
+          {
+            "at": "2026-11-01T19:01:41.874194+00:00",
+            "clock": "14:01",
+            "line": "Handed to Claude Code."
+          }
+        ],
+        "choices": [
+          {
+            "consequence": "Each finding becomes a Door task.",
+            "id": "file",
+            "label": "File",
+            "primary": true
+          },
+          {
+            "consequence": "The findings stay in the program. No task is made.",
+            "id": "skip",
+            "label": "Skip",
+            "primary": false
+          }
+        ],
+        "doing": "Step 1: Audit the Notes window.",
+        "evidence": [
+          {
+            "label": "Brief",
+            "pane": "brief",
+            "token": ""
+          },
+          {
+            "label": "Report",
+            "pane": "report",
+            "token": ""
+          },
+          {
+            "label": "Program text",
+            "pane": "text",
+            "token": "read only"
+          }
+        ],
+        "goal": "Goal: Find what is wrong on the desk.",
+        "happened": "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you.",
+        "head": "Desk audit",
+        "kind": "audit_file",
+        "kind_words": "Audit findings",
+        "level": "Secure",
+        "note": [
+          "Goal: Find what is wrong on the desk.",
+          "Step 1: Audit the Notes window.",
+          "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you."
+        ],
+        "outcome": {
+          "at": "2026-11-01T06:30:00+00:00",
+          "choice": "file",
+          "label": "File",
+          "via": "page",
+          "words": "File · 01:30. The findings are Door tasks. One more waits on you."
+        },
+        "place": "The program · started 14:01 · waited under a minute",
+        "program_id": "program-42cb1e2a2ab7",
+        "program_title": "Desk audit",
+        "question": "File the findings as Door tasks?",
+        "ref": "program:program-42cb1e2a2ab7:program-42cb1e2a2ab7:audit_file",
+        "since": "2026-11-01T19:01:42.138744+00:00",
+        "state": "decided",
+        "step_id": "step-f3c763bfb832",
+        "step_ordinal": null,
+        "step_title": "Notes window",
+        "track": [
+          {
+            "mark": "here",
+            "ordinal": 1,
+            "title": "Notes window"
+          }
+        ]
+      }
+    ],
+    "later": [
+      {
+        "at": "02:30",
+        "id": "in_1h",
+        "label": "In 1 hour"
+      },
+      {
+        "at": "13:00",
+        "id": "at_13",
+        "label": "At 13:00"
+      },
+      {
+        "at": "19:00",
+        "id": "tonight",
+        "label": "Tonight"
+      },
+      {
+        "at": "07:00",
+        "id": "tomorrow",
+        "label": "Tomorrow at 07:00"
+      }
+    ],
+    "package": {
+      "desk": "/?open=program:program-42cb1e2a2ab7",
+      "expires_at": "2026-11-02T06:30:00+00:00",
+      "expires_words": "Expires in 24 h",
+      "head": "Desk audit",
+      "hub": "the rig hub",
+      "id": "pkg-68ec2d851cb3",
+      "kind": "item"
+    }
+  },
+  "filed": {
+    "item": {
+      "because": {
+        "kind": "audit_file",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
+      "blocked": [],
+      "blocked_words": "Nothing else waits on this.",
+      "changed": [
+        {
+          "at": "2026-11-01T19:01:42.156486+00:00",
+          "clock": "14:01",
+          "line": "Audited · 3 findings · 1 MUST."
+        },
+        {
+          "at": "2026-11-01T19:01:42.023361+00:00",
+          "clock": "14:01",
+          "line": "Reported its findings."
+        },
+        {
+          "at": "2026-11-01T19:01:41.874194+00:00",
+          "clock": "14:01",
+          "line": "Handed to Claude Code."
+        }
+      ],
+      "choices": [
+        {
+          "consequence": "Each finding becomes a Door task.",
+          "id": "file",
+          "label": "File",
+          "primary": true
+        },
+        {
+          "consequence": "The findings stay in the program. No task is made.",
+          "id": "skip",
+          "label": "Skip",
+          "primary": false
+        }
+      ],
+      "doing": "Step 1: Audit the Notes window.",
+      "evidence": [
+        {
+          "label": "Brief",
+          "pane": "brief",
+          "token": ""
+        },
+        {
+          "label": "Report",
+          "pane": "report",
+          "token": ""
+        },
+        {
+          "label": "Program text",
+          "pane": "text",
+          "token": "read only"
+        }
+      ],
+      "goal": "Goal: Find what is wrong on the desk.",
+      "happened": "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you.",
+      "head": "Desk audit",
+      "kind": "audit_file",
+      "kind_words": "Audit findings",
+      "level": "Secure",
+      "note": [
+        "Goal: Find what is wrong on the desk.",
+        "Step 1: Audit the Notes window.",
+        "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you."
+      ],
+      "outcome": {
+        "at": "2026-11-01T06:30:00+00:00",
+        "choice": "file",
+        "label": "File",
+        "via": "page",
+        "words": "File · 01:30. The findings are Door tasks. Two more wait on you."
+      },
+      "place": "The program · started 14:01 · waited under a minute",
+      "program_id": "program-42cb1e2a2ab7",
+      "program_title": "Desk audit",
+      "question": "File the findings as Door tasks?",
+      "ref": "program:program-42cb1e2a2ab7:program-42cb1e2a2ab7:audit_file",
+      "since": "2026-11-01T19:01:42.138744+00:00",
+      "state": "decided",
+      "step_id": "step-f3c763bfb832",
+      "step_ordinal": null,
+      "step_title": "Notes window",
+      "track": [
+        {
+          "mark": "here",
+          "ordinal": 1,
+          "title": "Notes window"
+        }
+      ]
+    }
+  },
+  "made": {
+    "expires_at": "2026-11-02T06:30:00+00:00",
+    "expires_clock": "01:30",
+    "id": "pkg-68ec2d851cb3",
+    "link": null,
+    "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
+    "refs": [
+      "program:program-42cb1e2a2ab7:program-42cb1e2a2ab7:audit_file"
+    ],
+    "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
+  },
+  "made_fix": {
+    "item": {
+      "because": {
+        "kind": "fix_program",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
+      "blocked": [],
+      "blocked_words": "Nothing else waits on this.",
+      "changed": [
+        {
+          "at": "2026-11-01T19:01:42.156486+00:00",
+          "clock": "14:01",
+          "line": "Audited · 3 findings · 1 MUST."
+        },
+        {
+          "at": "2026-11-01T19:01:42.023361+00:00",
+          "clock": "14:01",
+          "line": "Reported its findings."
+        },
+        {
+          "at": "2026-11-01T19:01:41.874194+00:00",
+          "clock": "14:01",
+          "line": "Handed to Claude Code."
+        }
+      ],
+      "choices": [
+        {
+          "consequence": "HoldSpeak makes a program with one step for each MUST finding. It waits for your Start.",
+          "id": "make",
+          "label": "Make",
+          "primary": true
+        },
+        {
+          "consequence": "No fix program is made.",
+          "id": "skip",
+          "label": "Skip",
+          "primary": false
+        }
+      ],
+      "doing": "Step 1: Audit the Notes window.",
+      "evidence": [
+        {
+          "label": "Brief",
+          "pane": "brief",
+          "token": ""
+        },
+        {
+          "label": "Report",
+          "pane": "report",
+          "token": ""
+        },
+        {
+          "label": "Program text",
+          "pane": "text",
+          "token": "read only"
+        }
+      ],
+      "goal": "Goal: Find what is wrong on the desk.",
+      "happened": "The audit is done. It found 1 MUST finding.",
+      "head": "Desk audit",
+      "kind": "fix_program",
+      "kind_words": "Fix program",
+      "level": "Secure",
+      "note": [
+        "Goal: Find what is wrong on the desk.",
+        "Step 1: Audit the Notes window.",
+        "The audit is done. It found 1 MUST finding."
+      ],
+      "outcome": {
+        "at": "2026-11-01T06:30:00+00:00",
+        "choice": "make",
+        "label": "Make",
+        "via": "page",
+        "words": "Make · 01:30. The fix program waits for your Start. One more waits on you."
+      },
+      "place": "The program · started 14:01 · waited under a minute",
+      "program_id": "program-42cb1e2a2ab7",
+      "program_title": "Desk audit",
+      "question": "Make a fix program from the MUST findings?",
+      "ref": "program:program-42cb1e2a2ab7:program-42cb1e2a2ab7:fix_program",
+      "since": "2026-11-01T19:01:42.138744+00:00",
+      "state": "decided",
+      "step_id": "step-f3c763bfb832",
+      "step_ordinal": null,
+      "step_title": "Notes window",
+      "track": [
+        {
+          "mark": "here",
+          "ordinal": 1,
+          "title": "Notes window"
+        }
+      ]
+    }
+  },
+  "open": {
+    "items": [
+      {
+        "because": {
+          "kind": "audit_file",
+          "rule": "kind",
+          "words": "a choice among offered presses"
+        },
+        "blocked": [],
+        "blocked_words": "Nothing else waits on this.",
+        "changed": [
+          {
+            "at": "2026-11-01T19:01:42.156486+00:00",
+            "clock": "14:01",
+            "line": "Audited · 3 findings · 1 MUST."
+          },
+          {
+            "at": "2026-11-01T19:01:42.023361+00:00",
+            "clock": "14:01",
+            "line": "Reported its findings."
+          },
+          {
+            "at": "2026-11-01T19:01:41.874194+00:00",
+            "clock": "14:01",
+            "line": "Handed to Claude Code."
+          }
+        ],
+        "choices": [
+          {
+            "consequence": "Each finding becomes a Door task.",
+            "id": "file",
+            "label": "File",
+            "primary": true
+          },
+          {
+            "consequence": "The findings stay in the program. No task is made.",
+            "id": "skip",
+            "label": "Skip",
+            "primary": false
+          }
+        ],
+        "doing": "Step 1: Audit the Notes window.",
+        "evidence": [
+          {
+            "label": "Brief",
+            "pane": "brief",
+            "token": ""
+          },
+          {
+            "label": "Report",
+            "pane": "report",
+            "token": ""
+          },
+          {
+            "label": "Program text",
+            "pane": "text",
+            "token": "read only"
+          }
+        ],
+        "goal": "Goal: Find what is wrong on the desk.",
+        "happened": "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you.",
+        "head": "Desk audit",
+        "kind": "audit_file",
+        "kind_words": "Audit findings",
+        "level": "Secure",
+        "note": [
+          "Goal: Find what is wrong on the desk.",
+          "Step 1: Audit the Notes window.",
+          "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you."
+        ],
+        "place": "The program · started 14:01 · waited under a minute",
+        "program_id": "program-42cb1e2a2ab7",
+        "program_title": "Desk audit",
+        "question": "File the findings as Door tasks?",
+        "ref": "program:program-42cb1e2a2ab7:program-42cb1e2a2ab7:audit_file",
+        "since": "2026-11-01T19:01:42.138744+00:00",
+        "state": "open",
+        "step_id": "step-f3c763bfb832",
+        "step_ordinal": null,
+        "step_title": "Notes window",
+        "track": [
+          {
+            "mark": "here",
+            "ordinal": 1,
+            "title": "Notes window"
+          }
+        ]
+      }
+    ],
+    "later": [
+      {
+        "at": "02:30",
+        "id": "in_1h",
+        "label": "In 1 hour"
+      },
+      {
+        "at": "13:00",
+        "id": "at_13",
+        "label": "At 13:00"
+      },
+      {
+        "at": "19:00",
+        "id": "tonight",
+        "label": "Tonight"
+      },
+      {
+        "at": "07:00",
+        "id": "tomorrow",
+        "label": "Tomorrow at 07:00"
+      }
+    ],
+    "package": {
+      "desk": "/?open=program:program-42cb1e2a2ab7",
+      "expires_at": "2026-11-02T06:30:00+00:00",
+      "expires_words": "Expires in 24 h",
+      "head": "Desk audit",
+      "hub": "the rig hub",
+      "id": "pkg-68ec2d851cb3",
+      "kind": "item"
+    }
+  }
+}

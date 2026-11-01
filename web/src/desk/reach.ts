@@ -16,6 +16,8 @@ export type LaterMark = { until: string; via: string };
 const BRIEFABLE = new Set([
   "core", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word",
   "requirement_left", "requirement_proposed", "step_change", "step_amend", "delivery",
+  // PG-LANG JRN9 to JRN11: an audit's findings to file, its fix program, a lesson.
+  "audit_file", "fix_program", "lesson",
 ]);
 
 export function briefable(kind: string): boolean {

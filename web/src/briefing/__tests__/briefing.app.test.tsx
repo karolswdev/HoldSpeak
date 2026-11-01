@@ -251,3 +251,38 @@ describe("DIR9, the page half: several held items on one page", () => {
     expect(screen.getAllByTestId("briefing-choices")).toHaveLength(1);
   });
 });
+
+// PG-LANG JRN9 to JRN11: an audit's File the findings, its Make, and a lesson
+// on the page (tests/integration/test_reach_audit_rows.py, HOLDSPEAK_WIRE_WRITE=1).
+import audit from "../__fixtures__/reach.audit.json";
+import lesson from "../__fixtures__/reach.lesson.json";
+
+describe("the audit and lesson rows on the page (JRN9 to JRN11)", () => {
+  it("File the findings: the question, its two choices in his terms; File settles the page to one line", async () => {
+    const calls = hub({ open: audit.open, post: audit.filed });
+    render(<BriefingApp token={audit.made.token} />);
+    expect((await screen.findByTestId("briefing-question")).textContent).toBe("File the findings as Door tasks?");
+    const tray = screen.getByTestId("briefing-choices");
+    expect(within(tray).getAllByRole("button").map((button) => button.textContent?.trim())).toEqual(["File", "Skip", "Later"]);
+    expect(tray.textContent).toContain("Each finding becomes a Door task.");
+    expect(document.body.textContent).toContain("Audit findings");
+    fireEvent.click(screen.getByTestId("briefing-choice-file"));
+    const outcome = await screen.findByTestId("briefing-outcome");
+    expect(outcome.textContent).toBe(audit.filed.item.outcome.words);
+    expect(screen.queryByTestId("briefing-choices")).toBeNull();
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.body).toEqual({ ref: audit.open.items[0].ref, choice: "file" });
+  });
+
+  it("a lesson: Keep for this program · Keep for HoldSpeak · Skip; the press settles in place", async () => {
+    const calls = hub({ open: lesson.open, post: lesson.kept });
+    render(<BriefingApp token={lesson.made.token} />);
+    expect((await screen.findByTestId("briefing-question")).textContent).toBe("Keep this lesson, and where?");
+    const tray = screen.getByTestId("briefing-choices");
+    expect(within(tray).getAllByRole("button").map((button) => button.textContent?.trim()))
+      .toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip", "Later"]);
+    fireEvent.click(screen.getByTestId("briefing-choice-keep_program"));
+    expect((await screen.findByTestId("briefing-outcome")).textContent).toBe(lesson.kept.item.outcome.words);
+    expect(calls.find((call) => call.method === "POST")?.body).toEqual({ ref: lesson.open.items[0].ref, choice: "keep_program" });
+  });
+});

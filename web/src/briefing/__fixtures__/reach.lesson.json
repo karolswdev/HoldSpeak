@@ -1,0 +1,251 @@
+{
+  "kept": {
+    "item": {
+      "because": {
+        "kind": "lesson",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
+      "blocked": [],
+      "blocked_words": "Nothing else waits on this.",
+      "changed": [
+        {
+          "at": "2026-11-01T19:01:43.789534+00:00",
+          "clock": "14:01",
+          "line": "The agent made a new commit."
+        },
+        {
+          "at": "2026-11-01T19:01:42.942534+00:00",
+          "clock": "14:01",
+          "line": "Handed to Claude Code."
+        }
+      ],
+      "choices": [
+        {
+          "consequence": "Every step of this program gets it as a requirement.",
+          "id": "keep_program",
+          "label": "Keep for this program",
+          "primary": true
+        },
+        {
+          "consequence": "A small step adds it to the repository's program file. Every new program reads it.",
+          "id": "keep_repo",
+          "label": "Keep for HoldSpeak",
+          "primary": false
+        },
+        {
+          "consequence": "Nothing changes. This program does not propose it again.",
+          "id": "skip",
+          "label": "Skip",
+          "primary": false
+        }
+      ],
+      "doing": "Step 2, “Step 2”: Do part 2.",
+      "evidence": [
+        {
+          "label": "Check log",
+          "pane": "log",
+          "token": "red"
+        },
+        {
+          "label": "Brief",
+          "pane": "brief",
+          "token": ""
+        },
+        {
+          "label": "Program text",
+          "pane": "text",
+          "token": "read only"
+        }
+      ],
+      "goal": "Goal: Plain words.",
+      "happened": "The check was red for the same cause on 2 steps: FAILED.",
+      "head": "The words wave",
+      "kind": "lesson",
+      "kind_words": "Lesson",
+      "level": "YOLO",
+      "note": [
+        "Goal: Plain words.",
+        "Step 2, “Step 2”: Do part 2.",
+        "The check was red for the same cause on 2 steps: FAILED."
+      ],
+      "outcome": {
+        "at": "2026-11-01T06:30:00+00:00",
+        "choice": "keep_program",
+        "label": "Keep for this program",
+        "via": "page",
+        "words": "Keep for this program · 01:30. Kept for this program. Nothing else waits on you."
+      },
+      "place": "The program · started 14:01 · waited under a minute",
+      "program_id": "program-997d566fdb58",
+      "program_title": "The words wave",
+      "question": "Keep this lesson, and where?",
+      "ref": "program:program-997d566fdb58:program-997d566fdb58:lesson:13",
+      "since": "2026-11-01T19:01:44.162194+00:00",
+      "state": "decided",
+      "step_id": "step-91d264a5de91",
+      "step_ordinal": null,
+      "step_title": "Step 2",
+      "track": [
+        {
+          "mark": "running",
+          "ordinal": 1,
+          "title": "Step 1"
+        },
+        {
+          "mark": "here",
+          "ordinal": 2,
+          "title": "Step 2"
+        },
+        {
+          "mark": "running",
+          "ordinal": 3,
+          "title": "Step 3"
+        }
+      ]
+    }
+  },
+  "made": {
+    "expires_at": "2026-11-02T06:30:00+00:00",
+    "expires_clock": "01:30",
+    "id": "pkg-b057b79e24c9",
+    "link": null,
+    "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
+    "refs": [
+      "program:program-997d566fdb58:program-997d566fdb58:lesson:13"
+    ],
+    "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
+  },
+  "open": {
+    "items": [
+      {
+        "because": {
+          "kind": "lesson",
+          "rule": "kind",
+          "words": "a choice among offered presses"
+        },
+        "blocked": [],
+        "blocked_words": "Nothing else waits on this.",
+        "changed": [
+          {
+            "at": "2026-11-01T19:01:43.789534+00:00",
+            "clock": "14:01",
+            "line": "The agent made a new commit."
+          },
+          {
+            "at": "2026-11-01T19:01:42.942534+00:00",
+            "clock": "14:01",
+            "line": "Handed to Claude Code."
+          }
+        ],
+        "choices": [
+          {
+            "consequence": "Every step of this program gets it as a requirement.",
+            "id": "keep_program",
+            "label": "Keep for this program",
+            "primary": true
+          },
+          {
+            "consequence": "A small step adds it to the repository's program file. Every new program reads it.",
+            "id": "keep_repo",
+            "label": "Keep for HoldSpeak",
+            "primary": false
+          },
+          {
+            "consequence": "Nothing changes. This program does not propose it again.",
+            "id": "skip",
+            "label": "Skip",
+            "primary": false
+          }
+        ],
+        "doing": "Step 2, “Step 2”: Do part 2.",
+        "evidence": [
+          {
+            "label": "Check log",
+            "pane": "log",
+            "token": "red"
+          },
+          {
+            "label": "Brief",
+            "pane": "brief",
+            "token": ""
+          },
+          {
+            "label": "Program text",
+            "pane": "text",
+            "token": "read only"
+          }
+        ],
+        "goal": "Goal: Plain words.",
+        "happened": "The check was red for the same cause on 2 steps: FAILED.",
+        "head": "The words wave",
+        "kind": "lesson",
+        "kind_words": "Lesson",
+        "level": "YOLO",
+        "note": [
+          "Goal: Plain words.",
+          "Step 2, “Step 2”: Do part 2.",
+          "The check was red for the same cause on 2 steps: FAILED."
+        ],
+        "place": "The program · started 14:01 · waited under a minute",
+        "program_id": "program-997d566fdb58",
+        "program_title": "The words wave",
+        "question": "Keep this lesson, and where?",
+        "ref": "program:program-997d566fdb58:program-997d566fdb58:lesson:13",
+        "since": "2026-11-01T19:01:44.162194+00:00",
+        "state": "open",
+        "step_id": "step-91d264a5de91",
+        "step_ordinal": null,
+        "step_title": "Step 2",
+        "track": [
+          {
+            "mark": "running",
+            "ordinal": 1,
+            "title": "Step 1"
+          },
+          {
+            "mark": "here",
+            "ordinal": 2,
+            "title": "Step 2"
+          },
+          {
+            "mark": "running",
+            "ordinal": 3,
+            "title": "Step 3"
+          }
+        ]
+      }
+    ],
+    "later": [
+      {
+        "at": "02:30",
+        "id": "in_1h",
+        "label": "In 1 hour"
+      },
+      {
+        "at": "13:00",
+        "id": "at_13",
+        "label": "At 13:00"
+      },
+      {
+        "at": "19:00",
+        "id": "tonight",
+        "label": "Tonight"
+      },
+      {
+        "at": "07:00",
+        "id": "tomorrow",
+        "label": "Tomorrow at 07:00"
+      }
+    ],
+    "package": {
+      "desk": "/?open=program:program-997d566fdb58",
+      "expires_at": "2026-11-02T06:30:00+00:00",
+      "expires_words": "Expires in 24 h",
+      "head": "The words wave",
+      "hub": "the rig hub",
+      "id": "pkg-b057b79e24c9",
+      "kind": "item"
+    }
+  }
+}
