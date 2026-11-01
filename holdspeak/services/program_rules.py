@@ -192,6 +192,8 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
     if kind == "gate_approval":
         if level == "secure":
             return CoreQuestion("Secure: he allows each held call", "Secure: approvals are his")
+        if facts.get("audit") and facts.get("gate_refuses"):
+            return Decision("refuse", f"{level_word(level)}: an audit step reads only; a write or a run is refused by rule")
         if level == "yolo" and facts.get("gate_refuses"):
             return Decision("refuse", "YOLO: a call outside the step's worktree, or a destructive one, is refused by rule")
         if level == "yolo" and facts.get("unparsed_inside"):
