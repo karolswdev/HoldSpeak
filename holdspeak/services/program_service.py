@@ -157,6 +157,9 @@ DECIDE_CHOICES = {
     "requirement_proposed": ("add", "skip"),
     "step_change": ("apply", "skip"),
     "step_amend": ("send", "skip"),
+    # PG-LANG LANG13: the delivery at Done failed (retry) or waits for his
+    # merge at Secure (merge); skip leaves the Program Done, undelivered.
+    "delivery": ("retry", "merge", "skip"),
 }
 #: PG-REQ: the proposal kinds (a checkpoint row each, ``choice`` empty until
 #: he answers).
@@ -802,9 +805,28 @@ class ProgramService:
     def _turn(self, program: Mapping[str, Any], steps: list[Mapping[str, Any]], *,
               requirements: Optional[list[dict[str, Any]]] = None,
               checkpoints: Optional[list[dict[str, Any]]] = None) -> list[dict[str, Any]]:
+        from . import program_delivery
+
         reqs = requirements if requirements is not None else self.requirements(program["id"])
         items = your_turn(program, steps, reqs, self.proposals(program["id"], checkpoints))
+        if program.get("closed_at") and program_delivery.target(program) is not None:
+            # LANG13: a delivery that failed, or that waits for his merge.
+            item = program_delivery.turn_item(program, program_delivery.last_line(self, program["id"]))
+            if item is not None:
+                items.append(item)
         return _with_pages(self.db, program["id"], items, now=self._clock())
+
+    def _deliver_once(self, program: Mapping[str, Any]) -> None:
+        """LANG13: a closed Program with a delivery writes it once (the
+        ledger's delivery line is the record; a press retries it)."""
+        from . import program_delivery
+
+        if not program_delivery.pending(self, program):
+            return
+        try:
+            program_delivery.deliver(self.runner(), program)
+        except Exception as exc:  # the delivery never stops the Program's Done
+            log.error(f"program {program['id']}: the delivery did not run: {exc}", exc_info=True)
 
     def _state(self, program: Mapping[str, Any], steps: list[Mapping[str, Any]], *,
                requirements: Optional[list[dict[str, Any]]] = None,
@@ -2176,6 +2198,13 @@ class ProgramService:
         kind, choice = str(kind or ""), str(choice or "")
         if kind == "close":
             return self.close(principal, program_id)
+        if kind == "delivery":
+            from . import program_delivery
+
+            with _LOCK:
+                answer = program_delivery.decide(self.runner(), program, choice)
+                self.changed(program["id"], verb="delivery")
+            return {"delivery": answer, "program": self.get(principal, program["id"])}
         if kind == "requirement":
             if not requirement_id:
                 raise ProgramRefused("requirement_required", "Name the requirement (requirement_id).", status=400)
@@ -4257,6 +4286,8 @@ class ProgramService:
                 self._close_history(program)
                 self.store.save_program(program)
                 self.engine_decision(program, None, "program_done", outcome, "Closed the program: every step is finished")
+        if state == "done" and program.get("closed_at"):
+            self._deliver_once(program)
         if state != program["state"]:
             before = program["state"]
             program["state"] = state
