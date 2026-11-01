@@ -239,6 +239,10 @@ export interface ProgramSummary {
   in_state_seconds: number | null;
   /** Done only: `1 h 12`. */
   done_in?: string;
+  /** PG-IMPORT IMP7: the Program this one came from (when it is listed). */
+  parent_id?: string;
+  /** PG-IMPORT IMP7: a parent's family on the list: its count and one worst state. */
+  kin?: { children: number; worst: ProgramState; worst_word: string };
   /** PG-IMPORT IMP1: a Done Program's achromatic mark. */
   finished?: "finished" | "needs_decision";
   finished_words?: string;
@@ -459,7 +463,19 @@ export interface StepReport {
   words: { observed: string; claimed: string; not_checked: string; files: string };
 }
 
+/** PG-IMPORT IMP7 (BroCrew's forest): one row of a Program's family. */
+export interface FamilyRow {
+  id: string; name: string; state: ProgramState; state_word: string; line: string;
+  /** A child's ending word (`finished`, `failed`, `none`). */
+  ending?: "finished" | "failed" | "none";
+}
+
+/** PG-IMPORT IMP7: the Program it came from and the Programs it made. */
+export interface ProgramFamily { parent: FamilyRow | null; children: FamilyRow[] }
+
 export interface Program extends ProgramSummary {
+  /** PG-IMPORT IMP7: its family (an empty one has no parent and no children). */
+  family?: ProgramFamily;
   goal: string;
   repository: { root: string | null; label: string; base_branch: string | null };
   check_command: string | null;
