@@ -288,6 +288,20 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
       </span>
     </div>
   );
+  /** J5: a race parked as one step names each contender's red log. */
+  const raceLogs = (item: YourTurnItem) => item.kind !== "parked" || !item.race || !item.logs?.length ? null : (
+    <ul className="pg-race-logs" data-testid="programs-race-logs">
+      {item.logs.map((row) => (
+        <li key={row.step_id} className="pg-race-log" data-step={row.step_id}>
+          <span className="pg-race-agent">{row.agent}</span>
+          <Button dense variant="secondary" aria-label={`Open ${row.agent}'s log`}
+            onClick={() => openRef(row.log.startsWith("note:") ? row.log : `note:${row.log}`)} data-testid="programs-race-open-log">
+            Open log
+          </Button>
+        </li>
+      ))}
+    </ul>
+  );
   const askWell = (item: YourTurnItem) => {
     const asking = ask?.id === item.id ? ask : null;
     if (!asking) return null;
@@ -327,6 +341,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
         ) : null}
         {first.page ? <p className="pg-turn-page" data-testid="programs-turn-page">{pageWords(first.page)}</p> : null}
         {todoWell(first)}
+        {raceLogs(first)}
         {askWell(first)}
         <div className="pg-tray" data-testid="programs-tray">{verbsOf(first, true)}</div>
         <p className="pg-brief-ev" data-testid="programs-turn-words">{wordsOf(first, true)}</p>
@@ -344,6 +359,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
                 </span>
                 {item.page ? <span className="pg-turn-page" data-testid="programs-turn-page">{pageWords(item.page)}</span> : null}
                 {todoWell(item)}
+                {raceLogs(item)}
                 {askWell(item)}
                 <span className="pg-turn-verbs">{verbsOf(item, false)}{wordsOf(item, false)}</span>
               </li>

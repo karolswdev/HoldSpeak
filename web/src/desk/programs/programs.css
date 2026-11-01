@@ -1424,3 +1424,8 @@ span.pg-req-thumb { height: 150px; }
   .pg-family-line { grid-column: 1 / -1; }
   .pg-row-family > .kit-listrows { padding-left: 12px; }
 }
+
+/* ── J5: a race parked as one step, each contender's log ── */
+.pg-race-logs { margin: 4px 0 8px; padding: 0; list-style: none; }
+.pg-race-log { display: flex; align-items: center; gap: 10px; min-height: 32px; font: 400 13px / 1.35 var(--font-sans); }
+.pg-race-agent { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
