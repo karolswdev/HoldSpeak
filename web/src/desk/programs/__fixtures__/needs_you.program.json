@@ -2,16 +2,16 @@
   "count": 4,
   "items": [
     {
-      "ageToken": "2026-11-01T07:28:08.631344+00:00",
+      "ageToken": "2026-11-01T07:53:38.338313+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The words wave",
-      "id": "program:program-ddc01569a6e8:step-f287d3ef1721:finding:f1",
+      "id": "program:program-46b226d81350:step-4739ea430f38:finding:f1",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-ddc01569a6e8",
+      "openRef": "program:program-46b226d81350",
       "personId": null,
       "program": {
         "choices": [
@@ -19,22 +19,22 @@
           "later",
           "skip"
         ],
-        "decide": "/api/programs/program-ddc01569a6e8/steps/step-f287d3ef1721/decide",
+        "decide": "/api/programs/program-46b226d81350/steps/step-4739ea430f38/decide",
         "findingId": "f1",
         "kind": "finding",
         "ordinal": 2,
         "pr": null,
-        "programId": "program-ddc01569a6e8",
+        "programId": "program-46b226d81350",
         "requirementId": null,
-        "stepId": "step-f287d3ef1721"
+        "stepId": "step-4739ea430f38"
       },
       "projectId": "proj-holdspeak",
       "projectName": "",
       "rank": 1,
       "rankClass": "no_due_date",
-      "ref": "program:program-ddc01569a6e8:step-f287d3ef1721:finding:f1",
+      "ref": "program:program-46b226d81350:step-4739ea430f38:finding:f1",
       "severity": "warning",
-      "since": "2026-11-01T07:28:08.631344+00:00",
+      "since": "2026-11-01T07:53:38.338313+00:00",
       "source": "program",
       "title": "Finding on step 2 “Dock words”: the empty state still says nothing",
       "verbHref": null,
@@ -42,16 +42,16 @@
       "why": "TO DECIDE"
     },
     {
-      "ageToken": "2026-11-01T07:28:08.631344+00:00",
+      "ageToken": "2026-11-01T07:53:38.338313+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The words wave",
-      "id": "program:program-ddc01569a6e8:step-f287d3ef1721:finding:s1",
+      "id": "program:program-46b226d81350:step-4739ea430f38:finding:s1",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-ddc01569a6e8",
+      "openRef": "program:program-46b226d81350",
       "personId": null,
       "program": {
         "choices": [
@@ -59,22 +59,22 @@
           "later",
           "skip"
         ],
-        "decide": "/api/programs/program-ddc01569a6e8/steps/step-f287d3ef1721/decide",
+        "decide": "/api/programs/program-46b226d81350/steps/step-4739ea430f38/decide",
         "findingId": "s1",
         "kind": "finding",
         "ordinal": 2,
         "pr": null,
-        "programId": "program-ddc01569a6e8",
+        "programId": "program-46b226d81350",
         "requirementId": null,
-        "stepId": "step-f287d3ef1721"
+        "stepId": "step-4739ea430f38"
       },
       "projectId": "proj-holdspeak",
       "projectName": "",
       "rank": 2,
       "rankClass": "no_due_date",
-      "ref": "program:program-ddc01569a6e8:step-f287d3ef1721:finding:s1",
+      "ref": "program:program-46b226d81350:step-4739ea430f38:finding:s1",
       "severity": "warning",
-      "since": "2026-11-01T07:28:08.631344+00:00",
+      "since": "2026-11-01T07:53:38.338313+00:00",
       "source": "program",
       "title": "Finding on step 2 “Dock words”: sentence case the title",
       "verbHref": null,
@@ -82,23 +82,23 @@
       "why": "TO DECIDE"
     },
     {
-      "ageToken": "2026-11-01T07:28:08.273128+00:00",
+      "ageToken": "2026-11-01T07:53:37.725579+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The words wave",
-      "id": "program:program-ddc01569a6e8:step-dd0842e80fb9:merge",
+      "id": "program:program-46b226d81350:step-7dea93c51302:merge",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-ddc01569a6e8",
+      "openRef": "program:program-46b226d81350",
       "personId": null,
       "program": {
         "choices": [
           "merge",
           "not_yet"
         ],
-        "decide": "/api/programs/program-ddc01569a6e8/steps/step-dd0842e80fb9/decide",
+        "decide": "/api/programs/program-46b226d81350/steps/step-7dea93c51302/decide",
         "findingId": null,
         "kind": "merge",
         "ordinal": 1,
@@ -106,17 +106,17 @@
           "number": 103,
           "url": "https://github.com/acme/app/pull/103"
         },
-        "programId": "program-ddc01569a6e8",
+        "programId": "program-46b226d81350",
         "requirementId": null,
-        "stepId": "step-dd0842e80fb9"
+        "stepId": "step-7dea93c51302"
       },
       "projectId": "proj-holdspeak",
       "projectName": "",
       "rank": 3,
       "rankClass": "no_due_date",
-      "ref": "program:program-ddc01569a6e8:step-dd0842e80fb9:merge",
+      "ref": "program:program-46b226d81350:step-7dea93c51302:merge",
       "severity": "warning",
-      "since": "2026-11-01T07:28:08.273128+00:00",
+      "since": "2026-11-01T07:53:37.725579+00:00",
       "source": "program",
       "title": "Merge step 1 “Settings words”? (PR #103, check green, review passed)",
       "verbHref": null,
@@ -124,38 +124,38 @@
       "why": "TO MERGE"
     },
     {
-      "ageToken": "2026-11-01T07:28:06.941613+00:00",
+      "ageToken": "2026-11-01T07:53:36.325863+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The words wave",
-      "id": "program:program-ddc01569a6e8:step-47ea819f41f0:core",
+      "id": "program:program-46b226d81350:step-5660551bf87a:core",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-ddc01569a6e8",
+      "openRef": "program:program-46b226d81350",
       "personId": null,
       "program": {
         "choices": [
           "go_on",
           "park"
         ],
-        "decide": "/api/programs/program-ddc01569a6e8/steps/step-47ea819f41f0/decide",
+        "decide": "/api/programs/program-46b226d81350/steps/step-5660551bf87a/decide",
         "findingId": null,
         "kind": "core",
         "ordinal": 3,
         "pr": null,
-        "programId": "program-ddc01569a6e8",
+        "programId": "program-46b226d81350",
         "requirementId": null,
-        "stepId": "step-47ea819f41f0"
+        "stepId": "step-5660551bf87a"
       },
       "projectId": "proj-holdspeak",
       "projectName": "",
       "rank": 4,
       "rankClass": "no_due_date",
-      "ref": "program:program-ddc01569a6e8:step-47ea819f41f0:core",
+      "ref": "program:program-46b226d81350:step-5660551bf87a:core",
       "severity": "warning",
-      "since": "2026-11-01T07:28:06.941613+00:00",
+      "since": "2026-11-01T07:53:36.325863+00:00",
       "source": "program",
       "title": "Step 3 “door words”: it touches files no step owns (other/thing.py)",
       "verbHref": null,
@@ -166,19 +166,19 @@
   "members": [
     {
       "kind": "attention",
-      "ref": "program:program-ddc01569a6e8:step-f287d3ef1721:finding:f1"
+      "ref": "program:program-46b226d81350:step-4739ea430f38:finding:f1"
     },
     {
       "kind": "attention",
-      "ref": "program:program-ddc01569a6e8:step-f287d3ef1721:finding:s1"
+      "ref": "program:program-46b226d81350:step-4739ea430f38:finding:s1"
     },
     {
       "kind": "attention",
-      "ref": "program:program-ddc01569a6e8:step-dd0842e80fb9:merge"
+      "ref": "program:program-46b226d81350:step-7dea93c51302:merge"
     },
     {
       "kind": "attention",
-      "ref": "program:program-ddc01569a6e8:step-47ea819f41f0:core"
+      "ref": "program:program-46b226d81350:step-5660551bf87a:core"
     }
   ]
 }

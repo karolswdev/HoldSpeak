@@ -230,7 +230,12 @@ describe("the Programs window", () => {
     // No column heads.
     expect(document.querySelector(".pg-list-head")).toBeNull();
     // A finished program's row keeps its green (Done is a fact).
-    expect(doneRow.hasAttribute("data-finished")).toBe(true);
+    expect(doneRow.hasAttribute("data-all-done")).toBe(true);
+    // #1707: the programs he parked as proofs fold under one line (Show · Hide); the rest stay rows.
+    const proofs = list.programs.filter((row) => row.parked_as === "proof");
+    const fold = screen.getByTestId("programs-parked-fold");
+    expect(fold.querySelector("summary")!.textContent).toContain(`${proofs.length} parked proofs`);
+    expect(within(fold).getAllByTestId("programs-row").map((row) => row.getAttribute("data-program")).sort()).toEqual(proofs.map((row) => row.id).sort());
     expect(status().textContent).toContain("Your turn");
     expect(status().textContent).toContain("2 wait on you");
     expect(status().textContent).not.toMatch(/\b0 /);
@@ -968,7 +973,8 @@ describe("REQ9: the Programs list (Find, Project ▾, Person ▾, Group, Met)", 
     await screen.findAllByRole("menuitem");
     fireEvent.click(menuItem("Project"));
     const bands = screen.getAllByTestId("programs-band");
-    expect(bands.map((band) => within(band).getByRole("heading").textContent)).toEqual([`HoldSpeak · ${shown.length}`, "No project · 1"]);
+    expect(bands.map((band) => within(band).getByRole("heading").textContent)).toEqual([`HoldSpeak · ${shown.length}`,
+      `No project · ${list.programs.filter((row) => !(row.project?.id ?? row.project_id)).length}`]);
     // Inside a band: the worst state first (Your turn before Drafting before Done).
     const states = within(bands[0]).getAllByTestId("programs-row").map((row) => row.getAttribute("data-state"));
     expect(states).toEqual([...states].sort((a, b) => ["waiting", "running", "drafting", "done", "parked"].indexOf(a!) - ["waiting", "running", "drafting", "done", "parked"].indexOf(b!)));

@@ -1341,7 +1341,7 @@ span.pg-req-thumb { height: 150px; }
 .pg-row-track .pg-track[data-form="dots"] .pg-station + .pg-station::before { content: none; }
 .pg-row-track .pg-station-dot { width: 7px; height: 7px; }
 .pg-row-track .pg-station[data-mark="done"] .pg-station-dot { border-color: transparent; background: color-mix(in srgb, var(--wb-muted) 70%, var(--wb-paper)); }
-.pg-row[data-finished] .pg-row-track .pg-station[data-mark="done"] .pg-station-dot { background: var(--lamp-ok); }
+.pg-row[data-all-done] .pg-row-track .pg-station[data-mark="done"] .pg-station-dot { background: var(--lamp-ok); }
 .pg-row-track .pg-station[data-mark="skipped"] .pg-station-dot { border-color: transparent; background: color-mix(in srgb, var(--wb-muted) 45%, var(--wb-paper)); }
 .pg-row-track .pg-station[data-mark="here"] .pg-station-dot,
 .pg-row-track .pg-station[data-mark="running"] .pg-station-dot,
@@ -1366,3 +1366,8 @@ span.pg-req-thumb { height: 150px; }
 /* #1697: a night program's first station, asleep until its window. */
 .pg-line .pg-station[data-mark="night"] .pg-station-dot { border-style: dashed; }
 .pg-line .pg-station[data-mark="night"] .pg-station-word { color: var(--wb-info-ink); }
+
+/* #1707: the parked rows he gave a reason fold under one line. */
+.pg-row-fold { list-style: none; padding: 0 12px 0 0; border-bottom: 1px solid var(--wb-rule-soft); }
+.pg-row-fold .gadget-fold > summary { padding-left: 12px; }
+.pg-row-fold .kit-listrows { margin: 0; padding: 0; }

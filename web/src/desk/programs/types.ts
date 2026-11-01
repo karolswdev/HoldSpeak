@@ -211,6 +211,8 @@ export interface StepAmendment {
 export interface ListMark { ordinal: number; title: string; mark: "done" | "skipped" | "here" | "running" | "red" | "parked" | "planned" }
 
 export interface ProgramSummary {
+  /** #1707: why he parked it (`proof`, `done_with_it`); the list folds such rows. */
+  parked_as?: string | null;
   /** PG-WINDOW List: the row's line in his terms (brief_words.list_line). */
   line?: string;
   track?: ListMark[];
