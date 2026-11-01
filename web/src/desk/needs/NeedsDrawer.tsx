@@ -182,6 +182,8 @@ const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   continue: "Continue", wait: "Wait",
   // PG-REQ: his word on a requirement, and one unmet after the rounds.
   met: "Met", unmet: "Unmet", send_back: "Send back",
+  // PG-IMPORT IMP2: a to-do (a thing the agent asks him to do by hand).
+  done: "Done", cant: "Can't do it",
   // PG-DIRECTION DIR3: a core question, a race winner, an added step, what an
   // agent proposed (they read as raw wire keys before).
   go_on: "Go on", park: "Park", pick: "Pick", add: "Add", apply: "Apply", send: "Send",

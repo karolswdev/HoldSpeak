@@ -92,7 +92,7 @@ PROGRAM_REF = "program:"
 
 #: The held items a page answers (§3 "The held item"); an agent's question
 #: (``answer``), a review ask (it prepares a send) and Close stay on the desk.
-BRIEFABLE = frozenset({"core", "commit", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word",
+BRIEFABLE = frozenset({"core", "commit", "merge", "finding", "parked", "limited", "race", "add_step", "requirement_word", "todo",
                        "requirement_left", "requirement_proposed", "step_change", "step_amend", "delivery",
                        # DIR10: the step's agent asks; his answer is text (the page's one field).
                        "answer"})
@@ -106,7 +106,7 @@ _DESK_ONLY_CHOICES = frozenset({"waive"})
 KIND_WORDS = {
     "core": "Core question", "commit": "Held commit", "merge": "Merge ask", "finding": "Finding", "parked": "Parked step",
     "limited": "Agent at its limit", "race": "Race winner", "add_step": "Added step",
-    "requirement_word": "Your word", "requirement_left": "Requirement left",
+    "requirement_word": "Your word", "requirement_left": "Requirement left", "todo": "To do",
     "requirement_proposed": "Proposed requirement", "step_change": "Proposed change",
     "step_amend": "Proposed amendment", "delivery": "Delivery", "answer": "The agent asks",
 }
@@ -129,6 +129,9 @@ CHOICE_WORDS: dict[str, dict[str, tuple[str, str]]] = {
     "requirement_word": {"met": ("Met", "The requirement is met."),
                          "unmet": ("Unmet", "The requirement is not met.")},
     "requirement_left": {"send_back": ("Send back", "The agent gets one more round.")},
+    # PG-IMPORT IMP2: BroCrew's to-do presses.
+    "todo": {"done": ("Done", "The requirement is met. The agent is told."),
+             "cant": ("Can't do it", "The requirement is not met. The agent is told.")},
     "requirement_proposed": {"add": ("Add", "The requirement is added."), "skip": ("Skip", "Nothing is added.")},
     "step_change": {"apply": ("Apply", "The step changes."), "skip": ("Skip", "The step stays as it is.")},
     "step_amend": {"send": ("Send", "The agent gets the line."), "skip": ("Skip", "Nothing is sent.")},
@@ -923,7 +926,7 @@ _VIA_SETTLE = {"page": "from the briefing page", "call": "on a call", "phone": "
 def _decide_args(item: Mapping[str, Any]) -> dict[str, Any]:
     """``program.decide``'s kind and ids for one your-turn item."""
     kind = str(item.get("kind") or "")
-    if kind in ("requirement_word", "requirement_left"):
+    if kind in ("requirement_word", "requirement_left", "todo"):
         return {"kind": "requirement", "requirement_id": item.get("requirement_id")}
     if kind in ("requirement_proposed", "step_change", "step_amend"):
         return {"kind": kind, "proposal_id": item.get("proposal_id")}

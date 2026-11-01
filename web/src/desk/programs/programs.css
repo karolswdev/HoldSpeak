@@ -1361,3 +1361,10 @@ span.pg-req-thumb { height: 150px; }
   .pg-row-state .pg-row-say { white-space: normal; }
   .pg-row-met { display: none; }
 }
+
+/* PG-IMPORT IMP2: a to-do's walk lines (numbered, plain) and its optional
+   note, between the brief and the tray. */
+.pg-todo { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; min-width: 0; }
+.pg-turn-item .pg-todo { flex: 1 1 100%; margin: 4px 0; }
+.pg-todo-walk { margin: 0; padding-left: 20px; font: 400 13px / 1.5 var(--font-sans); }
+.pg-todo-note { display: block; max-width: 520px; min-width: 0; }

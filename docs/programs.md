@@ -163,6 +163,8 @@ At the top of the Program window is **the line**: one station for each step, and
 
 The program is **Drafting**, **Running**, **Your turn**, **Done**, **Parked** or **Failed**. The worst state of its steps shows in the Programs list and on the Dock.
 
+A stopped step also says how its work ended, after its state: **Parked · interrupted** (the agent's lane was cut off, the PR was closed without a merge, or the night ended) or **Parked · failed** (the check or a requirement stayed red after the rounds, or the push or the PR failed). The Programs list says it after its line ("Step 2 of 3 waits on you since 21:43 · interrupted").
+
 A step moves on a receipt, not on a claim. "Done" from the agent is not enough: HoldSpeak waits for a new commit on the step's branch. "Green" is a green check log. "Merged" is the merge that GitHub reports.
 
 ### The step report
@@ -347,6 +349,13 @@ A state changes only on evidence. A requirement is never Met because an agent sa
 An UNMET answer from the reviewer goes through the rounds as a REQUIRED finding. After the rounds, it comes to you as a finding with **Send back** and **Waive**. HoldSpeak does not park the step for it.
 
 **Your word stops the merge at every level, YOLO too.** An overnight program with a Your word requirement on a step merges that step when you press **Met** in the morning. The other steps go on.
+
+**A walk is a to-do.** A required Your word requirement with walk lines is a thing you do by hand. From the step's start to its merge, Your turn shows it as "Claude Code asks you to do this · step 3", with the walk lines, an optional note and two presses:
+
+- **Done** writes the requirement Met, with your note as its evidence.
+- **Can't do it** writes it Unmet, with your note. The step does not merge; **Send back** or **Waive** is your next choice.
+
+The agent gets your answer and your note at its next prompt. The briefing page, Telegram and a call ask the same question: "Did you do it?"
 
 **Send back** types the requirement to the step's agent ("HoldSpeak on step 5: R5 is unmet: <the sentence> (<the evidence>). The owner: <your line>") and starts one more round, also after the rounds are used. **Unmet** on Your word does the same.
 
