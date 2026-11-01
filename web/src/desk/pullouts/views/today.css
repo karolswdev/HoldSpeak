@@ -523,15 +523,22 @@
 
 /* ── Betterment daily D9: Prepared, Morning prep's newest result: one
    tinted plate; one card per meeting today in a row that wraps. ── */
+/* Plain rows (owner rules 2026-10-31/11-01): no tinted callout box and no
+   coloured left bar; the block is rows under one hairline, like Today's
+   other sections. */
 .desk-next .today-prepared {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm, 5px);
-  background: color-mix(in srgb, var(--wb-sel-vivid) 6%, var(--alive-paper, var(--wb-paper)));
-  box-shadow: inset 3px 0 0 var(--wb-sel-vivid);
+  padding: 10px 0 0;
+  border-top: 1px solid var(--wb-rule-soft);
   min-width: 0;
+}
+.desk-next .today-prepared-nothing {
+  margin: 0;
+  font: 400 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
 }
 .desk-next .today-prepared-bar {
   display: flex;

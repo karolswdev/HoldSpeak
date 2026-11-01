@@ -278,7 +278,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | PG13 | The Program's level drives the desk's answers | Shipped (2026-10-29) | PG13b: the launch flags and a helper follow the level too; the words say YOLO. Per-step levels are left. |
 | PG14 | Automations run a program | Shipped #1626 (2026-10-30) | Do kind `run_program`; the result row reads the Program's state and opens it (`automation_runs`). |
 | PG15 | Start a program on a call | Shipped #1663 (2026-10-31) | `program.start` behind his spoken yes; `program.get` in a sentence. |
-| PG16 | Decisions from a Program | Shipped #1644 (2026-10-30) | His Skip, a rule's Skip above NOTE and a merge by rule propose a decision record (design §9b). A core-question press is not a record yet. |
+| PG16 | Decisions from a Program | Shipped #1644 (2026-10-30) | His Skip, a rule's Skip above NOTE and a merge by rule propose a decision record (design §9b); the Program window's "Proposed as a decision" opens the record (PG16 ledger PR). |
 | PG17 | The first Program is the engine's own history | Shipped #1659 (2026-10-31) | On his desk. |
 | PG18 | Programs on Today | Shipped #1618 (2026-10-30) | "Programs: 1 running, 1 waits on you" (design §9 Seams); IMP3 #1713 added Since you were last here. |
 

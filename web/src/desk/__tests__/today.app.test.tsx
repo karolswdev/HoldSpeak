@@ -419,6 +419,38 @@ describe("Today's Prepared block (Betterment daily D9), on the recorded run", ()
   });
 });
 
+// The owner's desk, 2026-11-01: a Morning prep that prepared nothing (the
+// engine wrote "Time unavailable — Meeting c4e978fc"), recorded by
+// tests/integration/test_desk_morning_prep.py (today-prepared-nothing.json).
+// Owner rules: no egress chips (no host:port), no tinted callout box, no
+// raw ids; a chief-of-staff line and the one verb, the library Button.
+import PREPARED_NOTHING from "./fixtures/daily-week/today-prepared-nothing.json";
+import { preparedBy } from "../pullouts/views/PreparedBlock";
+
+describe("Today's Prepared block when it prepared nothing (plain rows)", () => {
+  const gets = PREPARED_NOTHING.gets as Gets;
+
+  it("says what was prepared in his words, never the raw id, with one library Button", async () => {
+    vi.setSystemTime(new Date(String(PREPARED_NOTHING.recordedAt)));
+    replay(gets);
+    render(<TodayView />);
+    const block = await screen.findByTestId("today-prepared");
+    expect(within(block).getByTestId("today-prepared-nothing").textContent)
+      .toBe("The automation prepared nothing: the meeting record has no time or title");
+    expect(block.textContent).not.toMatch(/c4e978fc|Time unavailable/);
+    const buttons = within(block).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual(["Open the automation"]);
+    expect(buttons[0].className).toMatch(/btn|signal/);
+    expect(within(block).getByTestId("today-prepared-by").textContent).toMatch(/^\d\d:\d\d · Claude Code$/);
+  });
+
+  it("an engine that is an address is left out of the line (no host:port)", () => {
+    expect(preparedBy("18:27", "192.168.1.43:8080")).toBe("18:27");
+    expect(preparedBy("18:27", "engine.tail.ts.net:8080")).toBe("18:27");
+    expect(preparedBy("18:27", "Claude Code")).toBe("18:27 · Claude Code");
+  });
+});
+
 /* Betterment AG9: Today's Agents line and a card per finished turn he has
  * not opened, on the hub's recorded fleet (agents.app.test's fixtures/
  * agents-ag8: two agents need him, one finished and is New). */
