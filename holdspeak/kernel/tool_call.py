@@ -20,7 +20,7 @@ _ALLOWED = frozenset({
     # names no argument text: launch id, scope, rule, read rule.
     "classification",
 })
-_VERDICT_KEYS = ("launch_id", "scope", "rule", "read_rule", "target")
+_VERDICT_KEYS = ("launch_id", "scope", "rule", "read_rule", "target", "cwd_inside", "destructive")
 
 
 @dataclass(frozen=True)
@@ -112,6 +112,14 @@ class ToolCallCodec:
         verdict = {
             key: str(raw.get(key) or "")[:200] for key in _VERDICT_KEYS
         } if isinstance(raw, Mapping) else {}
+        for key in ("cwd_inside", "destructive"):
+            if not verdict.get(key):
+                verdict.pop(key, None)  # the receipt keeps its old shape for a plain call
+        if verdict.get("launch_id") and self._db is not None:
+            from ..services.control_level import step_of_launch
+
+            if step_of_launch(verdict["launch_id"], db=self._db) is not None:
+                verdict["program_step"] = "1"
         operation = descriptor.to_dict()
         operation["kernel_operation_id"] = operation_id
         try:

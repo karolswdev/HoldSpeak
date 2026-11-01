@@ -180,9 +180,17 @@ class BashCall:
     #: worktree, a symlink out, a word the reading cannot resolve), so the
     #: hold says why (:func:`hold_reason`). Empty for a call that passes.
     target: str = ""
+    #: Programs (execution perfection, 2026-10-31): the destructive word an
+    #: ``unparsed`` call names (``sudo``, ``rm -rf``, ``git push --force``);
+    #: YOLO refuses such a call by rule and allows any other unparsed call of
+    #: a Program step in its own worktree. Empty when none.
+    destructive: str = ""
 
     def to_dict(self) -> dict[str, str]:
-        return asdict(self)
+        out = asdict(self)
+        if not out["destructive"]:
+            out.pop("destructive")  # the wire of a plain call keeps its shape
+        return out
 
 
 class _Unparsed(Exception):
@@ -266,7 +274,44 @@ def classify_tool_call(
         return BashCall(UNPARSED, "no_command")
     if not root:
         return BashCall(OUTSIDE, "cwd_outside_armed_path")
-    return classify_bash(command, cwd=cwd, root=root)
+    verdict = classify_bash(command, cwd=cwd, root=root)
+    if verdict.scope == UNPARSED:
+        word = destructive_word(command)
+        if word:
+            verdict = BashCall(verdict.scope, verdict.rule, verdict.read_rule, verdict.push_branch,
+                               verdict.target, destructive=word)
+    return verdict
+
+
+#: The programs whose run destroys or escalates, whatever their arguments.
+_DESTRUCTIVE_PROGRAMS = frozenset({
+    "sudo", "su", "doas", "dd", "shutdown", "reboot", "halt", "killall", "pkill", "launchctl",
+    "diskutil", "chown", "crontab",
+})
+_DESTRUCTIVE_PATTERNS = (
+    ("rm -r/-f", re.compile(r"(?:^|[\s;&|(`$])rm\s+(?:-[A-Za-z]*[rRf][A-Za-z]*\b|--recursive\b|--force\b)")),
+    ("mkfs", re.compile(r"(?:^|[\s;&|(`$])mkfs(?:\.\w+)?\b")),
+    ("git push --force", re.compile(r"\bgit\b[^;&|]*\bpush\b[^;&|]*(?:\s--force\S*|\s-[A-Za-z]*f\b|\s--mirror\b|\s--delete\b|\s:\S)")),
+    ("git reset --hard", re.compile(r"\bgit\b[^;&|]*\breset\b[^;&|]*--hard\b")),
+    ("git clean", re.compile(r"\bgit\b[^;&|]*\bclean\b")),
+    ("chmod -R", re.compile(r"(?:^|[\s;&|(`$])chmod\s+-[A-Za-z]*R")),
+    ("curl into a shell", re.compile(r"\b(?:curl|wget)\b[^;&]*\|\s*(?:sudo\s+)?(?:ba|z|da|k)?sh\b")),
+)
+
+
+def destructive_word(command: str) -> str:
+    """The destructive word a command names (``sudo``, ``rm -rf``, ``git push
+    --force`` …), or ``""``. A plain scan of the whole text, inside any
+    substitution too: it is read only for a call the gate cannot otherwise
+    read (``unparsed``)."""
+    text = str(command or "")
+    for word in re.findall(r"(?:^|[\s;&|(`$])([A-Za-z][\w.+-]*)", text):
+        if word in _DESTRUCTIVE_PROGRAMS:
+            return word
+    for name, pattern in _DESTRUCTIVE_PATTERNS:
+        if pattern.search(text):
+            return name
+    return ""
 
 
 def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
@@ -1390,7 +1435,7 @@ def classification_from_wire(raw: Any) -> Optional[dict[str, str]]:
     if scope not in SCOPES:
         return None
     clean: dict[str, str] = {"scope": scope}
-    for key in ("rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256", "target"):
+    for key in ("rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256", "target", "destructive"):
         value = raw.get(key)
         if value is None:
             value = ""
@@ -1412,5 +1457,6 @@ __all__ = [
     "classify_bash",
     "classify_edit",
     "classify_tool_call",
+    "destructive_word",
     "hold_reason",
 ]

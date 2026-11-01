@@ -214,6 +214,30 @@ class FakeGate:
     def held(self, launch_id: str) -> list[dict[str, Any]]:
         return list(self.holds.get(launch_id, []))
 
+    def propose(self, launch_id: str, command: str, *, worktree: Path, mode: str = "yolo") -> str:
+        """One Bash call of a step's agent through the REAL hook verdict
+        (``classify_tool_call``) and the REAL tool-gate policy
+        (``resolve_policy``) as the hub runs them for a Program step: it is
+        held here only when the policy answers ``authorization_required``.
+        Returns the policy's outcome."""
+        from holdspeak.operation_policy import describe_operation, resolve_policy
+        from holdspeak.tool_gate_rules import UNPARSED, classify_tool_call
+
+        verdict = classify_tool_call("Bash", {"command": command}, cwd=str(worktree), root=str(worktree)).to_dict()
+        tool_call = {"launch_id": launch_id, "scope": verdict["scope"], "rule": verdict["rule"],
+                     "read_rule": verdict["read_rule"], "destructive": verdict.get("destructive", ""),
+                     "cwd_inside": "1" if verdict["scope"] == UNPARSED else "", "program_step": "1"}
+        operation = describe_operation(
+            operation_id=f"op-{len(self.decisions)}", family="tool_gate", effect_class="agent/tool_call_hold",
+            actor="agent", destination=str(worktree), data_classes=("tool_arguments_redacted",),
+            resource_scope="Bash", fixed_destination=True, consequence="execute_on_approval")
+        outcome = resolve_policy(operation, mode=mode, source="config", tool_call=tool_call).outcome
+        if outcome == "authorization_required":
+            self.holds.setdefault(launch_id, []).append({
+                "proposal_id": f"gate-call-{len(self.holds)}", "tool": "Bash", "scope": verdict["scope"],
+                "commit": False, "cwd": str(worktree), "head": command})
+        return outcome
+
     def decide(self, proposal_id: str, *, approve: bool, reason: str, principal: Any = None) -> None:
         self.decisions.append((proposal_id, approve, reason))
         for rows in self.holds.values():

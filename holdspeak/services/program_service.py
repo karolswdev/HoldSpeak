@@ -371,9 +371,15 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
     steps, race winners, added steps, the Program's Done. At Normal and YOLO:
     core questions, findings left after the rounds, a person to ask for a
     review, and the failed steps once nothing else runs ("one row to him at
-    the end")."""
+    the end").
+
+    A parked Program asks nothing of him: its items are retired while it is
+    parked, and Resume raises again what is still held (they are read off
+    the steps, never stored)."""
     from .program_rules import level_of
 
+    if str(program.get("state") or "") == "parked":
+        return []
     steps = list(steps)
     level = level_of(program.get("control"))
     live = _live(steps)
@@ -1945,7 +1951,30 @@ class ProgramService:
             self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent",
                              "Parked the program; the worktrees stay")
             self.changed(program["id"], verb="park")
+        self._revoke_pages(program["id"])
         return self.get(principal, program["id"])
+
+    def _revoke_pages(self, program_id: str) -> int:
+        """A parked Program's open briefing pages are revoked (their items
+        are retired; a page answers nothing now). The count revoked."""
+        try:
+            from ..db.briefing import BriefingStore
+
+            store = BriefingStore(self.db)
+            now = utc_now_iso()
+            pages = store.open_like(f"program:{program_id}:", now)
+            for page in pages:
+                store.revoke(page["id"], now)
+                try:
+                    from ..runtime import composition
+
+                    composition.notify_desk_changed("reach", page["id"], "revoked")
+                except Exception:
+                    pass
+            return len(pages)
+        except Exception as exc:
+            log.warning(f"briefing pages of {program_id} not revoked: {exc}")
+            return 0
 
     def resume(self, principal: Any, program_id: str) -> dict[str, Any]:
         program = self._program(program_id)
