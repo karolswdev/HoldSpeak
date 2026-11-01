@@ -255,12 +255,10 @@ def classify_edit(tool_input: Optional[Mapping[str, Any]], *, cwd: str, root: st
         real = _real_target(joined)
     except (OSError, ValueError):
         return BashCall(UNPARSED, "edit_path_unreadable")
-    if not _inside(real, real_root) and _in_own_scratch(real, real_root):
-        # The agent's own scratch: inside for the session scratchpad (#1705),
-        # outside for the rest of $TMPDIR; an audit step may write either.
-        scope = INSIDE if _in_scratch(real, real_root) else OUTSIDE
-        return BashCall(scope, EDIT_INSIDE_RULE if scope == INSIDE else "edit_outside_worktree",
-                        target="" if scope == INSIDE else target, scratch_only="1")
+    if not _inside(real, real_root) and _in_scratch(real, real_root):
+        # The agent's own session scratch (#1705): inside; an audit step may
+        # write there.
+        return BashCall(INSIDE, EDIT_INSIDE_RULE, scratch_only="1")
     if not _inside(real, real_root):
         return BashCall(OUTSIDE, "edit_outside_worktree", target=target)
     return BashCall(INSIDE, EDIT_INSIDE_RULE)
@@ -303,7 +301,8 @@ _DESTRUCTIVE_PROGRAMS = frozenset({
 _DESTRUCTIVE_PATTERNS = (
     ("rm -r/-f", re.compile(r"(?:^|[\s;&|(`$])rm\s+(?:-[A-Za-z]*[rRf][A-Za-z]*\b|--recursive\b|--force\b)")),
     ("mkfs", re.compile(r"(?:^|[\s;&|(`$])mkfs(?:\.\w+)?\b")),
-    ("git push --force", re.compile(r"\bgit\b[^;&|]*\bpush\b[^;&|]*(?:\s--force\S*|\s-[A-Za-z]*f\b|\s--mirror\b|\s--delete\b|\s:\S)")),
+    # Astra post-merge 2026-11-01: a ``+ref`` refspec is a force push too.
+    ("git push --force", re.compile(r"\bgit\b[^;&|]*\bpush\b[^;&|]*(?:\s--force\S*|\s-[A-Za-z]*f\b|\s--mirror\b|\s--delete\b|\s:\S|\s['\"]?\+\S)")),
     ("git reset --hard", re.compile(r"\bgit\b[^;&|]*\breset\b[^;&|]*--hard\b")),
     ("git clean", re.compile(r"\bgit\b[^;&|]*\bclean\b")),
     ("chmod -R", re.compile(r"(?:^|[\s;&|(`$])chmod\s+-[A-Za-z]*R")),
@@ -324,6 +323,94 @@ def destructive_word(command: str) -> str:
         if pattern.search(text):
             return name
     return ""
+
+
+_URL = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
+_PATH_OPTIONS = frozenset({"-C", "--git-dir", "--work-tree", "--prefix", "-o", "--output", "-f", "--file"})
+_REDIRECTS = frozenset({">", ">>", "<", "&>", "&>>", "2>", "2>>", ">|", "<>", "1>", "1>>"})
+
+
+def _call_words(command: str, depth: int = 0) -> Optional[list[str]]:
+    """Every word of a command, with the string after ``-c``, ``-e`` or
+    ``eval`` (``sh -c``, ``bash -c``, ``python -c``) split again. None when it cannot be
+    split (the call is not admitted)."""
+    if depth > 3:
+        return None
+    try:
+        lexer = shlex.shlex(command, posix=True, punctuation_chars=";&|<>()")
+        lexer.whitespace_split = True
+        words = list(lexer)
+    except ValueError:
+        return None
+    out: list[str] = []
+    previous = ""
+    for word in words:
+        out.append(word)
+        if previous in ("-c", "-e", "eval") or os.path.basename(previous) in ("eval", "exec"):
+            # ``sh -c '…'``, ``bash -c``, ``python -c``, ``node -e``, ``eval '…'``
+            inner = _call_words(word, depth + 1)
+            if inner is None:
+                return None
+            out.extend(inner)
+        previous = word
+    return out
+
+
+def unparsed_paths_inside(command: str, *, cwd: str, root: str) -> bool:
+    """Ruling 2026-11-01 (Astra post-merge): an unparsed call at YOLO goes on
+    only when every path it names resolves (realpath: symlinks, ``..``) in
+    the step's worktree or the agent's own session scratch. A path is any
+    word with a ``/``, ``.``/``..``, ``~``, a word that names an existing
+    file, the word after a redirect or a path option (``-C``,
+    ``--git-dir`` …), and the value of ``name=value``. ``sh -c`` strings are
+    read again. A command substitution or a variable used as a path is not
+    admitted (its path cannot be read)."""
+    real_root = os.path.realpath(root)
+    real_cwd = os.path.realpath(cwd or root)
+    if not _inside(real_cwd, real_root):
+        return False
+    words = _call_words(str(command or ""))
+    if words is None:
+        return False
+
+    def ok(path: str) -> bool:
+        if not path:
+            return True
+        if path.startswith("~") or "$(" in path or "`" in path:
+            return False
+        if "$" in path:
+            return False
+        joined = path if os.path.isabs(path) else os.path.join(real_cwd, path)
+        try:
+            real = os.path.realpath(joined)
+        except (OSError, ValueError):
+            return False
+        return _inside(real, real_root) or _in_scratch(real, real_root)
+
+    previous = ""
+    for word in words:
+        if word in _REDIRECTS or set(word) <= set(";&|<>()"):
+            previous = word
+            continue
+        candidates = [word]
+        if "=" in word:
+            candidates.append(word.split("=", 1)[1])
+        for candidate in candidates:
+            if not candidate or _URL.match(candidate):
+                continue
+            pathy = ("/" in candidate or candidate in (".", "..") or candidate.startswith("~")
+                     or previous in _REDIRECTS or previous in _PATH_OPTIONS)
+            if not pathy and candidate.startswith("$") and previous in _REDIRECTS:
+                return False
+            if not pathy:
+                try:
+                    pathy = os.path.lexists(os.path.join(real_cwd, candidate))
+                except (OSError, ValueError):
+                    pathy = False
+            if pathy and not ok(candidate):
+                return False
+        previous = word
+    return True
 
 
 def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
@@ -729,23 +816,43 @@ def agent_scratch_roots(root: str) -> list[str]:
         return []
     encoded = re.sub(r"[^A-Za-z0-9]", "-", os.path.realpath(root))
     bases = {"/tmp", "/private/tmp", os.environ.get("TMPDIR") or "/tmp"}
-    return sorted({os.path.realpath(os.path.join(base, f"claude-{uid}", encoded)) for base in bases if base})
+    roots = set()
+    for base in bases:
+        if not base:
+            continue
+        # Astra post-merge 2026-11-01: only the base folder is resolved. A
+        # scratch folder that is itself a symlink (into another worktree) is
+        # not the agent's scratch.
+        lexical = os.path.join(os.path.realpath(base), f"claude-{uid}", encoded)
+        if os.path.realpath(lexical) == lexical:
+            roots.add(lexical)
+    return sorted(roots)
+
+
+def in_a_repository(path: str) -> bool:
+    """True when ``path`` (resolved) is in a git checkout: a folder on its
+    way up has ``.git``."""
+    here = os.path.realpath(path)
+    while True:
+        if os.path.lexists(os.path.join(here, ".git")):
+            return True
+        parent = os.path.dirname(here)
+        if parent == here:
+            return False
+        here = parent
 
 
 def _in_scratch(path: str, root: str) -> bool:
-    return any(_inside(path, scratch) for scratch in agent_scratch_roots(root))
-
-
-def _tmp_roots() -> list[str]:
-    """``$TMPDIR`` (the user's own temporary folder), resolved."""
-    tmp = os.environ.get("TMPDIR") or ""
-    return [os.path.realpath(tmp)] if tmp.strip() else []
+    """The agent's own scratch: its session folder (Claude Code's
+    ``<tmp>/claude-<uid>/<root>``), never another path under ``$TMPDIR`` and
+    never a path in a repository (ruling 2026-11-01)."""
+    return any(_inside(path, scratch) for scratch in agent_scratch_roots(root)) and not in_a_repository(path)
 
 
 def _in_own_scratch(path: str, root: str) -> bool:
-    """The agent's own scratch in the wide sense: its session scratchpad or
-    ``$TMPDIR`` (an audit's shots and logs; never the repository)."""
-    return _in_scratch(path, root) or any(_inside(path, tmp) for tmp in _tmp_roots())
+    """Since the ruling of 2026-11-01 the same as :func:`_in_scratch`: the
+    whole ``$TMPDIR`` is not the agent's scratch."""
+    return _in_scratch(path, root)
 
 
 class _Reader:
@@ -1522,4 +1629,6 @@ __all__ = [
     "classify_tool_call",
     "destructive_word",
     "hold_reason",
+    "in_a_repository",
+    "unparsed_paths_inside",
 ]
