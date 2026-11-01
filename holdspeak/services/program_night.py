@@ -345,7 +345,8 @@ def end_working(runner: Any, program: Mapping[str, Any], start: datetime, end: d
         service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, facts=facts,
                            head_commit=head or step.get("head_commit"),
                            parked_reason="Night ended; parked with a commit" if with_commit else "Night ended; parked",
-                           line="Night ended; parked with a commit" if with_commit else "Night ended; parked")
+                           line="Night ended; parked with a commit" if with_commit else "Night ended; parked",
+                           ending="interrupted")
     return waiting
 
 
