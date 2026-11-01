@@ -1270,7 +1270,8 @@ class ProgramService:
         for step in self._top_steps(steps):
             row = self.step_wire(program, step, checkpoints, requirements=reqs, his=his, steps_by_id=by_id)
             row["story"] = stories.get(str(step["id"]), [])
-            row["contenders"] = [self.step_wire(program, other, checkpoints, requirements=reqs, his=his, steps_by_id=by_id)
+            row["contenders"] = [{**self.step_wire(program, other, checkpoints, requirements=reqs, his=his, steps_by_id=by_id),
+                                  "story": stories.get(str(other["id"]), [])}
                                  for other in steps if other.get("race_of") == step["id"]]
             top.append(row)
         config = repository_config(program.get("repo_root"))

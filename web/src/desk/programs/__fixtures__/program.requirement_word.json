@@ -9,10 +9,10 @@
     "shot_reason": null,
     "word": true
   },
-  "check_command": "sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
+  "check_command": "sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-01T03:49:26.795227+00:00",
+      "at": "2026-11-01T05:21:41.080495+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T03:49:26.687248+00:00",
+      "at": "2026-11-01T05:21:40.984413+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -41,22 +41,22 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-362a57c52590/5",
-      "ref_commit": "4960a735660a6cb6cf153218fd026257457f61b5",
+      "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/5",
+      "ref_commit": "6f2e0522eb480b5ae80be47e3b9cc8be411541b1",
       "rule": null,
-      "step_id": "step-362a57c52590",
+      "step_id": "step-b9b2ea8fc06d",
       "undo": {
         "pin": {
-          "commit": "4960a735660a6cb6cf153218fd026257457f61b5",
-          "head": "88ec92438fab3417ef2fd1f64120dfcb1867e948",
+          "commit": "6f2e0522eb480b5ae80be47e3b9cc8be411541b1",
+          "head": "bb5328e23bfe6d2a8f4c337ab481d4cca05d3cc2",
           "n": 5,
-          "ref": "refs/holdspeak/checkpoints/step-362a57c52590/5",
-          "tree": "51545b4a31196015e5380679335cc9fe88cdbe32"
+          "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/5",
+          "tree": "17dc3be950fe0257dc3c48044db55add5d064cd7"
         }
       }
     },
     {
-      "at": "2026-11-01T03:49:26.591347+00:00",
+      "at": "2026-11-01T05:21:40.892059+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -70,117 +70,117 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-362a57c52590",
+      "step_id": "step-b9b2ea8fc06d",
       "undo": {
-        "requirement_id": "req-3eedce512766"
+        "requirement_id": "req-858566281093"
       }
     },
     {
-      "at": "2026-11-01T03:49:26.468601+00:00",
+      "at": "2026-11-01T05:21:40.781314+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 53,
       "kind": null,
-      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-brsls5c4/rig-requirements/hs-program-step-362a57c52590/.tmp/program-check/step-362a57c52590/20261101T034926Z.log",
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-xy41tm28/rig-requirements/hs-program-step-b9b2ea8fc06d/.tmp/program-check/step-b9b2ea8fc06d/20261101T052140Z.log",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-362a57c52590/4",
-      "ref_commit": "5807276c989460b93e25d72cc09c45baf54d4743",
+      "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/4",
+      "ref_commit": "2e9e15ba8c098af2d3c16928b5d1aeceba7dbb87",
       "rule": null,
-      "step_id": "step-362a57c52590",
+      "step_id": "step-b9b2ea8fc06d",
       "undo": {
         "pin": {
-          "commit": "5807276c989460b93e25d72cc09c45baf54d4743",
-          "head": "88ec92438fab3417ef2fd1f64120dfcb1867e948",
+          "commit": "2e9e15ba8c098af2d3c16928b5d1aeceba7dbb87",
+          "head": "bb5328e23bfe6d2a8f4c337ab481d4cca05d3cc2",
           "n": 4,
-          "ref": "refs/holdspeak/checkpoints/step-362a57c52590/4",
-          "tree": "51545b4a31196015e5380679335cc9fe88cdbe32"
+          "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/4",
+          "tree": "17dc3be950fe0257dc3c48044db55add5d064cd7"
         }
       }
     },
     {
-      "at": "2026-11-01T03:49:26.242384+00:00",
+      "at": "2026-11-01T05:21:40.573959+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 52,
       "kind": null,
-      "line": "Running the check: sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-362a57c52590/3",
-      "ref_commit": "9e55b95ee6827d1343ab2dc06dfd00da2431ca2b",
+      "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/3",
+      "ref_commit": "b229b07e808b4070bfe2f63cf5a31b7bf80994c6",
       "rule": null,
-      "step_id": "step-362a57c52590",
+      "step_id": "step-b9b2ea8fc06d",
       "undo": {
         "pin": {
-          "commit": "9e55b95ee6827d1343ab2dc06dfd00da2431ca2b",
-          "head": "88ec92438fab3417ef2fd1f64120dfcb1867e948",
+          "commit": "b229b07e808b4070bfe2f63cf5a31b7bf80994c6",
+          "head": "bb5328e23bfe6d2a8f4c337ab481d4cca05d3cc2",
           "n": 3,
-          "ref": "refs/holdspeak/checkpoints/step-362a57c52590/3",
+          "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/3",
           "tree": "087e7f79faf2828b6752b483bb2530373cf54bdb"
         }
       }
     },
     {
-      "at": "2026-11-01T03:49:26.130223+00:00",
+      "at": "2026-11-01T05:21:40.479833+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 51,
       "kind": null,
-      "line": "New commit 88ec9243; the check runs",
+      "line": "New commit bb5328e2; the check runs",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-362a57c52590/2",
-      "ref_commit": "ffd2da3f269e1aa289273d4d5a1f25d7005b1966",
+      "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/2",
+      "ref_commit": "17030e795c843e202394a4f14589ee3ffd850d12",
       "rule": null,
-      "step_id": "step-362a57c52590",
+      "step_id": "step-b9b2ea8fc06d",
       "undo": {
         "pin": {
-          "commit": "ffd2da3f269e1aa289273d4d5a1f25d7005b1966",
-          "head": "88ec92438fab3417ef2fd1f64120dfcb1867e948",
+          "commit": "17030e795c843e202394a4f14589ee3ffd850d12",
+          "head": "bb5328e23bfe6d2a8f4c337ab481d4cca05d3cc2",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-362a57c52590/2",
+          "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/2",
           "tree": "087e7f79faf2828b6752b483bb2530373cf54bdb"
         }
       }
     },
     {
-      "at": "2026-11-01T03:49:25.839200+00:00",
+      "at": "2026-11-01T05:21:40.309629+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 50,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-362a57c52590",
+      "line": "Handed to Claude Code in hs-program-step-b9b2ea8fc06d",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-362a57c52590/1",
-      "ref_commit": "bc5a58780ec08a7a84fa16c034207a0192e0ba61",
+      "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/1",
+      "ref_commit": "906e9625658651518a9d738dae205740c9d495b3",
       "rule": null,
-      "step_id": "step-362a57c52590",
+      "step_id": "step-b9b2ea8fc06d",
       "undo": {
         "pin": {
-          "commit": "bc5a58780ec08a7a84fa16c034207a0192e0ba61",
-          "head": "280d50bb1e93b3ae359944bc85a3b00d7c5896a0",
+          "commit": "906e9625658651518a9d738dae205740c9d495b3",
+          "head": "96b1998163fa426d514b3e7bc18acd7c2198685a",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-362a57c52590/1",
+          "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/1",
           "tree": "fe3267677476d455cd38af3cf468f708b38f9100"
         }
       }
     },
     {
-      "at": "2026-11-01T03:49:25.699560+00:00",
+      "at": "2026-11-01T05:21:40.238206+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -198,7 +198,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T03:49:25.657380+00:00",
+      "at": "2026-11-01T05:21:40.209355+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -212,13 +212,13 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-362a57c52590",
+      "step_id": "step-b9b2ea8fc06d",
       "undo": {
-        "requirement_id": "req-3eedce512766"
+        "requirement_id": "req-858566281093"
       }
     },
     {
-      "at": "2026-11-01T03:49:25.642050+00:00",
+      "at": "2026-11-01T05:21:40.206733+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -232,13 +232,13 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-362a57c52590",
+      "step_id": "step-b9b2ea8fc06d",
       "undo": {
-        "requirement_id": "req-ce4684d3bd93"
+        "requirement_id": "req-48cef13e83bd"
       }
     },
     {
-      "at": "2026-11-01T03:49:25.631833+00:00",
+      "at": "2026-11-01T05:21:40.204351+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -256,7 +256,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T03:49:25.628944+00:00",
+      "at": "2026-11-01T05:21:40.202821+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -277,7 +277,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-01T03:49:25.628665+00:00",
+  "created_at": "2026-11-01T05:21:40.202613+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -297,10 +297,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "The dock lamp.",
-  "id": "program-126e03ad4cf0",
+  "id": "program-7156253d664d",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T03:49:26.795227+00:00",
+    "at": "2026-11-01T05:21:41.080495+00:00",
     "by": "engine",
     "choice": null,
     "decision_record_id": null,
@@ -320,8 +320,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-126e03ad4cf0",
-  "note_window": "pullout:note:program-program-126e03ad4cf0",
+  "note_id": "program-program-7156253d664d",
+  "note_window": "pullout:note:program-program-7156253d664d",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -342,7 +342,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-brsls5c4/rig-requirements/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-xy41tm28/rig-requirements/app"
   },
   "requirements": [],
   "requirements_met": {
@@ -376,9 +376,9 @@
       "brief": "Light the lamp when a step waits.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
-        "commit": "88ec92438fab3417ef2fd1f64120dfcb1867e948",
-        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-brsls5c4/rig-requirements/hs-program-step-362a57c52590/.tmp/program-check/step-362a57c52590/20261101T034926Z.log",
+        "command": "sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
+        "commit": "bb5328e23bfe6d2a8f4c337ab481d4cca05d3cc2",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-xy41tm28/rig-requirements/hs-program-step-b9b2ea8fc06d/.tmp/program-check/step-b9b2ea8fc06d/20261101T052140Z.log",
         "minutes": 0.0,
         "reasons": [],
         "running": false,
@@ -420,7 +420,7 @@
       ],
       "effort": "medium",
       "elapsed": "under a minute",
-      "elapsed_seconds": 1,
+      "elapsed_seconds": 0,
       "ended_at": null,
       "engine": null,
       "estimate": null,
@@ -452,9 +452,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-362a57c52590",
+      "id": "step-b9b2ea8fc06d",
       "last_checkpoint": {
-        "at": "2026-11-01T03:49:26.687248+00:00",
+        "at": "2026-11-01T05:21:40.984413+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -465,17 +465,17 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-362a57c52590/5",
-        "ref_commit": "4960a735660a6cb6cf153218fd026257457f61b5",
+        "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/5",
+        "ref_commit": "6f2e0522eb480b5ae80be47e3b9cc8be411541b1",
         "rule": null,
-        "step_id": "step-362a57c52590",
+        "step_id": "step-b9b2ea8fc06d",
         "undo": {
           "pin": {
-            "commit": "4960a735660a6cb6cf153218fd026257457f61b5",
-            "head": "88ec92438fab3417ef2fd1f64120dfcb1867e948",
+            "commit": "6f2e0522eb480b5ae80be47e3b9cc8be411541b1",
+            "head": "bb5328e23bfe6d2a8f4c337ab481d4cca05d3cc2",
             "n": 5,
-            "ref": "refs/holdspeak/checkpoints/step-362a57c52590/5",
-            "tree": "51545b4a31196015e5380679335cc9fe88cdbe32"
+            "ref": "refs/holdspeak/checkpoints/step-b9b2ea8fc06d/5",
+            "tree": "17dc3be950fe0257dc3c48044db55add5d064cd7"
           }
         }
       },
@@ -504,9 +504,9 @@
             "unmet",
             "waive"
           ],
-          "created_at": "2026-11-01T03:49:25.636075+00:00",
+          "created_at": "2026-11-01T05:21:40.206613+00:00",
           "evidence": {},
-          "id": "req-ce4684d3bd93",
+          "id": "req-48cef13e83bd",
           "judged_at": null,
           "judged_commit": null,
           "kind": "word",
@@ -514,7 +514,7 @@
           "label": "R1",
           "ordinal": 1,
           "parent_id": null,
-          "program_id": "program-126e03ad4cf0",
+          "program_id": "program-7156253d664d",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -523,7 +523,7 @@
           "stale": false,
           "state": "not_yet",
           "state_word": "Waits for you",
-          "step_id": "step-362a57c52590",
+          "step_id": "step-b9b2ea8fc06d",
           "text": "I tried it on my desk",
           "waived_reason": null
         },
@@ -532,29 +532,29 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T03:49:25.655875+00:00",
+          "created_at": "2026-11-01T05:21:40.209260+00:00",
           "evidence": {
-            "at": "2026-11-01T03:49:26.591227+00:00",
+            "at": "2026-11-01T05:21:40.891922+00:00",
             "by": "engine",
             "case": "dock",
             "command": "mkdir -p .tmp/shots && printf png > .tmp/shots/dock-393.png && echo '1 passed'",
-            "commit": "88ec92438fab3417ef2fd1f64120dfcb1867e948",
+            "commit": "bb5328e23bfe6d2a8f4c337ab481d4cca05d3cc2",
             "kind": "shot",
             "line": "1 passed",
-            "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-brsls5c4/rig-requirements/hs-program-step-362a57c52590/.tmp/program-check/step-362a57c52590/20261101T034926Z-R2.log",
-            "ref": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-brsls5c4/rig-requirements/hs-program-step-362a57c52590/.tmp/shots/dock-393.png",
-            "url": "/api/programs/program-126e03ad4cf0/requirements/req-3eedce512766/evidence",
+            "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-xy41tm28/rig-requirements/hs-program-step-b9b2ea8fc06d/.tmp/program-check/step-b9b2ea8fc06d/20261101T052140Z-R2.log",
+            "ref": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-xy41tm28/rig-requirements/hs-program-step-b9b2ea8fc06d/.tmp/shots/dock-393.png",
+            "url": "/api/programs/program-7156253d664d/requirements/req-858566281093/evidence",
             "width": 393
           },
-          "id": "req-3eedce512766",
-          "judged_at": "2026-11-01T03:49:26.591227+00:00",
-          "judged_commit": "88ec92438fab3417ef2fd1f64120dfcb1867e948",
+          "id": "req-858566281093",
+          "judged_at": "2026-11-01T05:21:40.891922+00:00",
+          "judged_commit": "bb5328e23bfe6d2a8f4c337ab481d4cca05d3cc2",
           "kind": "shot",
           "kind_word": "Shot",
           "label": "R2",
           "ordinal": 2,
           "parent_id": null,
-          "program_id": "program-126e03ad4cf0",
+          "program_id": "program-7156253d664d",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -566,7 +566,7 @@
           "stale": false,
           "state": "met",
           "state_word": "Met",
-          "step_id": "step-362a57c52590",
+          "step_id": "step-b9b2ea8fc06d",
           "text": "The Dock window at 393 has no clipped text",
           "waived_reason": null
         }
@@ -592,7 +592,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-11-01T03:49:25.838894+00:00",
+      "started_at": "2026-11-01T05:21:40.309331+00:00",
       "state": "pr_open",
       "state_word": "PR open",
       "station": 4,
@@ -606,27 +606,27 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T03:49:26.130223+00:00",
+          "at": "2026-11-01T05:21:40.479833+00:00",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-01T03:49:26.468601+00:00",
+          "at": "2026-11-01T05:21:40.781314+00:00",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-01T03:49:26.687248+00:00",
+          "at": "2026-11-01T05:21:40.984413+00:00",
           "line": "Opened PR #103."
         }
       ],
       "title": "Dock lamp",
-      "updated_at": "2026-11-01T03:49:26.686888+00:00",
-      "worktree": "hs-program-step-362a57c52590"
+      "updated_at": "2026-11-01T05:21:40.984068+00:00",
+      "worktree": "hs-program-step-b9b2ea8fc06d"
     }
   ],
   "template": "fast-cycle",
   "title": "The dock lamp",
   "total": 1,
-  "updated_at": "2026-11-01T03:49:26.795131+00:00",
+  "updated_at": "2026-11-01T05:21:41.080393+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 1,
@@ -649,7 +649,7 @@
         "unmet"
       ],
       "for_person_id": null,
-      "id": "req-ce4684d3bd93:word",
+      "id": "req-48cef13e83bd:word",
       "kind": "requirement_word",
       "launch_id": "L7",
       "ordinal": 1,
@@ -657,12 +657,12 @@
         "number": 103,
         "url": "https://github.com/acme/app/pull/103"
       },
-      "program_id": "program-126e03ad4cf0",
+      "program_id": "program-7156253d664d",
       "program_title": "The dock lamp",
       "project_id": "proj-holdspeak",
-      "requirement_id": "req-ce4684d3bd93",
-      "since": "2026-11-01T03:49:26.686888+00:00",
-      "step_id": "step-362a57c52590",
+      "requirement_id": "req-48cef13e83bd",
+      "since": "2026-11-01T05:21:40.984068+00:00",
+      "step_id": "step-b9b2ea8fc06d",
       "step_title": "Dock lamp",
       "title": "Step 1 · Dock lamp: R1 · I tried it on my desk"
     }

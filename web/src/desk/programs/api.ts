@@ -156,6 +156,10 @@ export interface StepChangeBody {
   profile?: string | null;
   engine?: string | null;
   before?: string;
+  /** PG-WINDOW: the step's gate, while it is Planned. */
+  gate_check?: boolean;
+  gate_review?: "none" | "agent" | "person";
+  gate_merge?: "level" | "owner" | "none";
 }
 
 export async function changeStep(programId: string, stepId: string, body: StepChangeBody): Promise<Program | null> {

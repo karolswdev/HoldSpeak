@@ -30,9 +30,9 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 
 1. Open **Go ▸ Programs** (after Agents), or press ⌃7.
 2. Press **New program**. The Program window opens in **Drafting**.
-3. Type the goal. Choose the repository (or a project, which gives its repository).
-4. Add the steps. Paste a brief for each step. Give each step the files it owns. A step can start after other steps ("after 2, 3"). Or press **Plan it**, and the engine drafts the steps for you (see "Plan it from a goal"). Press **Ask me first** if you want the engine to ask you some questions before it plans (see "The interview rounds").
-5. Press **Start**.
+3. Press the goal at the top and type it. Choose the repository (or a project, which gives its repository).
+4. Add the steps. Each step is one row; press it to open it in place: its title, agent, effort and "after", its brief, its **Gate** (the check, the review, who merges) and **What it must prove**. Paste a brief for each step. Give each step the files it owns. A step can start after other steps ("after 2, 3"). Or press **Plan it**, and the engine drafts the steps for you (see "Plan it from a goal"). Press **Ask me first** if you want the engine to ask you some questions before it plans (see "The interview rounds").
+5. Press **Start**. Under it the window says what Start checks first: the repository, the remote (when a step opens a pull request) and the check command.
 
 ### From the desk
 
@@ -184,7 +184,7 @@ HoldSpeak decides what it can decide by rule at the program's control level. A *
 - **Safety.** A finding about security or data loss, a deleted test, a migration that drops or changes rows.
 - **No rule.** HoldSpeak has no rule for the choice.
 
-Each item of your turn is a row in Needs you, in a group with the program's title. In the Program window, the first item is under the line, in the words of the briefing page: what the step was doing, what happened, the question, and which steps wait on your answer. Under it, each verb has one line that says what it does ("HoldSpeak merges the PR. The step that waits on it can start."). The other items are one line each under the verbs. The verbs are **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
+Each item of your turn is a row in Needs you, in a group with the program's title. In the Program window, the first item is under the line, in the words of the briefing page: what the step was doing, what happened, the question, and which steps wait on your answer. Under it, each verb has one line that says what it does ("HoldSpeak merges the PR. The step that waits on it can start."). Under the verbs, one row of words opens more: **Brief** (the step's brief), **Program text** and **Copy page link**. These are not choices. The other items are one line each under the verbs. The verbs are **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
 
 ![The Program window at 1440: Your turn with a merge, two findings and a core question](assets/programs/program-your-turn-1440.png)
 
@@ -414,7 +414,7 @@ At 393, Templates, Project, Person and Group are in **More ▾**.
 In the Program window:
 
 - Each step row on the board has a **Met** cell: "2 of 3", or "3 to meet" before any is met.
-- Press a step to open it under its row. Press it again to close it. The step that waits for you is open first. An open step shows **What it must prove**: each requirement on one line, with its lamp, its kind, its proof and its verbs. **Add a requirement** adds one to this step: type the sentence; the kind follows the rule as you type; you can change Where (The program, Every step, Step n); press **Add**.
+- Press a step to open it under its row. Press it again to close it. When something waits for you, no step opens by itself, so every step stays in view; otherwise the running step is open first. Each step row says the last thing that happened to it, in plain words. An open step shows **What it must prove**: each requirement on one line (a step with none shows only **Add a requirement**), with its lamp, its kind, its proof and its verbs. **Add a requirement** adds one to this step: type the sentence; the kind follows the rule as you type; you can change Where (The program, Every step, Step n); press **Add**.
 - Under it, **What the agent did**: up to three plain lines from the step's ledger, with their times.
 - Then **Brief**, **Gate**, **Findings**, **Handoffs** and **Ledger**. A part with nothing in it is not shown. Gate opens by itself when the check is red, Findings when the reviewer found problems. Press an open part again to close it.
 - **Done when** is the last row of the board. It has the requirements of the whole program (judged after the last step) and the Every step requirements, and its own **Add a requirement**.
@@ -611,7 +611,7 @@ The changes that wait stay until you press **Apply** or **Not this**, or until t
 
 ## Plan it from a goal
 
-In Drafting, type the goal (one or two paragraphs are enough) and press **Plan it** in the toolbar, or press Return in the goal. Shift+Return makes a new line. **Plan it** is the first button while the program has no steps. The engine is the same as for shaping. It gets the goal (or the note that the program came from), the template's shape and requirements, a map of the repository (the top folders, the likely files and their size, the headings of CLAUDE.md or AGENTS.md, the last commit subjects) and the project's open actions. It writes the steps, with their briefs, the files they own and their order.
+In Drafting, write the goal (one or two paragraphs are enough) and press **Plan it** under it. **Plan it** is the first button while the program has no steps. The engine is the same as for shaping. It gets the goal (or the note that the program came from), the template's shape and requirements, a map of the repository (the top folders, the likely files and their size, the headings of CLAUDE.md or AGENTS.md, the last commit subjects) and the project's open actions. It writes the steps, with their briefs, the files they own and their order.
 
 While it plans, the window says "Planning · <engine>". A plan can take some minutes on a home engine; HoldSpeak waits up to 240 s. The drafted steps open in the change well as rows. Press **Apply** to make them the program's steps, or **Not this**. HoldSpeak keeps the title, the goal, `in`, `template`, `from` and `budget` as they are, whatever the engine writes.
 

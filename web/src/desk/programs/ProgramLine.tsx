@@ -36,7 +36,10 @@ function stationOf(step: ProgramStep, held: Set<string>, blocked: Set<number>, h
     return { key: step.id, word, sub, note: stepWord(step), state: here ? "ahead" : "current", tone: "info", live: true, mark: "running" };
   }
   const tone = stepTone(step.state);
-  return { key: step.id, word, sub, note: stepWord(step), state: "ahead", tone: tone === "idle" ? "idle" : tone, mark: tone === "fail" ? "red" : "planned" };
+  // A planned step says its size by rule (`Planned · 3k`).
+  const size = (step.state === "planned" || step.state === "ready") && step.estimate?.words && step.estimate.fits !== false
+    ? ` · ${step.estimate.words.split(" of ")[0]}` : "";
+  return { key: step.id, word, sub, note: `${stepWord(step)}${size}`, state: "ahead", tone: tone === "idle" ? "idle" : tone, mark: tone === "fail" ? "red" : "planned" };
 }
 
 /** The stations of the line, the held step lit. */
@@ -70,16 +73,16 @@ function lineLabel(program: Program, stations: readonly TrackStation[]): string 
   return parts.join(", ");
 }
 
-export function ProgramLine({ program }: { program: Program }) {
+export function ProgramLine({ program, goal = true }: { program: Program; /** Drafting edits the goal in its headline. */ goal?: boolean }) {
   const stations = lineStations(program);
   if (!stations.length) return null;
   const asked = (program.rounds ?? []).filter((round) => round.answered > 0);
   return (
     <div className="pg-line" data-testid="programs-line">
       <StationTrack stations={stations} form="words" label={lineLabel(program, stations)} />
-      {program.goal || asked.length ? (
+      {(goal && program.goal) || asked.length ? (
         <p className="pg-line-goal">
-          {program.goal ? <span className="pg-line-goal-words" title={program.goal}>{`Goal: ${program.goal.split("\n")[0]}`}</span> : null}
+          {goal && program.goal ? <span className="pg-line-goal-words" title={program.goal}>{`Goal: ${program.goal.split("\n")[0]}`}</span> : null}
           {asked.length ? <Token>{`Asked first: ${asked.map((round) => round.name).join(" · ")}`}</Token> : null}
         </p>
       ) : null}

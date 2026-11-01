@@ -410,12 +410,30 @@ _DROP = re.compile(r"^(?:Running the check|git push failed|gh pr create failed|C
                    r"Could not open its PR|Parked|Resumed)", re.I)
 
 
+#: The engine's own ledger words, in his terms (PG-WINDOW follow-up: the
+#: window quoted "Skipped the step" and "Could not hand the step:
+#: worktree_duplicate").
+_PLAIN: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"^Skipped the step", re.I), "You skipped the step."),
+    (re.compile(r"^Could not hand the step\b", re.I), "HoldSpeak could not give the step to an agent."),
+    (re.compile(r"^Said it is done\b", re.I), "The agent said it is done."),
+    (re.compile(r"^Allowed the agent's commit\b", re.I), "You allowed the agent's commit."),
+)
+_WIRE_WORD = re.compile(r"\b[a-z]+_[a-z0-9_]+\b")
+
+
 def changed_line(line: Any) -> str:
     """One checkpoint line in plain words, or "" when it says nothing plain
-    (a command, a path, the failure the brief already names)."""
+    (a command, a path, a wire code, the failure the brief already names)."""
     text = _squash(line)
     if not text or _DROP.match(text):
         return ""
+    for pattern, words in _PLAIN:
+        if pattern.match(text):
+            return words
+    handed = re.match(r"^Handed to (.+?) in \S+$", text)
+    if handed and clean(handed.group(1)):
+        return sentence(f"Handed to {handed.group(1)}")
     parts = [part.strip() for part in text.split(" · ")]
     if parts[0] == "Checked" and len(parts) >= 2:
         took = next((part for part in parts[2:] if clean(part) and ("min" in part or "minute" in part
@@ -424,7 +442,7 @@ def changed_line(line: Any) -> str:
     if re.match(r"New commit\b", text):
         return "The agent made a new commit."
     words = sentence(" · ".join(part for part in parts if clean(part)))
-    return words if words and clean(words) else ""
+    return words if words and clean(words) and not _WIRE_WORD.search(words) else ""
 
 
 def changed_lines(rows: Iterable[Mapping[str, Any]], limit: int = 3) -> list[str]:
@@ -539,7 +557,8 @@ def step_story(checkpoints: Iterable[Mapping[str, Any]], step_id: Any, limit: in
         out.append({"at": row.get("at"), "line": line})
         if len(out) >= limit:
             break
-    return sorted(out, key=lambda row: str(row.get("at") or ""))
+    # Newest first from the store; the same second keeps the store's order.
+    return sorted(reversed(out), key=lambda row: str(row.get("at") or ""))
 
 
 def window_words(program: Mapping[str, Any], steps: list[Mapping[str, Any]], turn: Iterable[Mapping[str, Any]],
