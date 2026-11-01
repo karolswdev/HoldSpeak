@@ -290,6 +290,10 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # question: the line with the step lit, the brief as the headline,
         # the tray, and the open step under its row.
         ("program-held", "pullout:program:{program_held}", None),
+        # PG-IMPORT IMP1: a Done Program, its step open: the report in its
+        # registers (Checked, The agent says, Not checked, Files) and the
+        # "finished" mark under the line.
+        ("program-done", "pullout:program:{program_done}", None),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -504,6 +508,7 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             program_draft = _seed_draft_program(page, tmp)
             program_rounds = _seed_rounds_program(page, tmp)
             briefing, program_held = _seed_briefing(page, tmp)
+            program_done = _seed_done_program(page, tmp)
             ctx.close()
             _seed_finished_receipts()
             automation = _seed_automation(note_id)
@@ -511,7 +516,7 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
                    "automation": automation, "program": program_id, "automation_program": automation_program,
                    "program_draft": program_draft, "program_rounds": program_rounds, "briefing": briefing,
-                   "program_held": program_held}
+                   "program_held": program_held, "program_done": program_done}
         finally:
             server.stop()
 
@@ -648,6 +653,63 @@ def _seed_briefing(page: Any, tmp: Path) -> tuple[str, str]:
     item = next(row for row in service.needs_you_items() if row["program_id"] == program_id and row["kind"] == "core")
     page_made = _api(page, "POST", "/api/reach/packages", {"refs": [f"program:{program_id}:{item['id']}"]}, token=TOKEN)
     return str(page_made["token"]), program_id
+
+
+def _seed_done_program(page: Any, tmp: Path) -> str:
+    """PG-IMPORT IMP1: a Done Program whose one step went the engine's way
+    (handed, a commit, the check green, a PR, merged). The rig hub's runner
+    is off, so the moves are written here as the engine writes them (each
+    engine checkpoint records what it saw); the agent's line and report are
+    its own."""
+    from holdspeak.services.program_service import default_program_service
+
+    repo = tmp / "done-repo"
+    repo.mkdir()
+    run = lambda *args: subprocess.run(["git", "-C", str(repo), "-c", "user.name=Sweep", "-c",  # noqa: E731
+                                        "user.email=sweep@example.com", *args], check=True, capture_output=True,
+                                       text=True).stdout.strip()
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    run("commit", "-q", "--allow-empty", "-m", "start")
+    subprocess.run(["git", "init", "-q", "--bare", str(tmp / "done-repo-origin.git")], check=True)
+    run("remote", "add", "origin", str(tmp / "done-repo-origin.git"))
+    made = _api(page, "POST", "/api/programs", {
+        "title": "Wave 6 of the atlas", "goal": "Every anchor in the atlas is cited once.",
+        "repository": str(repo), "template": "fast-cycle", "check_command": "true",
+    }, token=TOKEN)
+    program_id = str(made.get("id") or (made.get("program") or {}).get("id"))
+    _api(page, "POST", f"/api/programs/{program_id}/plan", {"replace": True, "steps": [
+        {"title": "Atlas anchors", "brief": "Cite each anchor once.", "owns": ["docs/atlas.md"]},
+    ]}, token=TOKEN)
+    steps = _api(page, "GET", f"/api/programs/{program_id}", token=TOKEN)["steps"]
+    _api(page, "POST", f"/api/programs/{program_id}/requirements",
+         {"text": "I read the atlas at 393", "kind": "word", "step_id": steps[0]["id"], "required": False}, token=TOKEN)
+    _api(page, "POST", f"/api/programs/{program_id}/start", {}, token=TOKEN)
+    service = default_program_service()
+    program = service.store.get_program(program_id)
+    step = service.store.list_steps(program_id)[0]
+    base = run("rev-parse", "HEAD")
+    (repo / "docs").mkdir()
+    (repo / "docs" / "atlas.md").write_text("# Atlas\n")
+    (repo / "docs" / "anchors.md").write_text("# Anchors\n")
+    run("add", "-A")
+    run("commit", "-q", "-m", "Cite each anchor once")
+    head = run("rev-parse", "HEAD")
+    if step["state"] == "planned":
+        service.transition(program, step, "ready")
+    service.transition(program, step, "briefed", head_commit=base, facts={"base_commit": base},
+                       line="Handed to Claude Code in done-repo")
+    service.store.add_checkpoint(step_id=step["id"], program_id=program_id, at=service._clock(), by="agent",
+                                 line="Twelve anchors cited, two left")
+    step["report"] = "## Summary\n- Cited every anchor in the atlas once.\n- Ran the docs build; it is green.\n"
+    service.transition(program, step, "checking", head_commit=head, line=f"New commit {head[:8]}; the check runs")
+    step.update({"check_verdict": "green", "checked_commit": head})
+    service.save_step(step)
+    service._checkpoint(program, step, "engine", "Checked · green · under a minute")
+    service.transition(program, step, "pr_open", pr_number=1712, pr_url="https://github.com/acme/atlas/pull/1712",
+                       line="PR #1712 has the judged commit")
+    service.transition(program, step, "merged", line="Merged #1712")
+    service.transition(program, step, "done")
+    return program_id
 
 
 def _seed_automation(note_id: str) -> str:
@@ -1460,6 +1522,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             # Brief on the words row opens the held step under its row.
             win.get_by_test_id("programs-turn-brief").click()
             win.locator("[data-testid=programs-step-fold]").wait_for(timeout=T)
+            page.mouse.move(2, 2)
+        if case_id == "program-done":
+            win = page.locator(f'[id="{wid}"]')
+            win.locator("[data-testid=programs-board]").wait_for(timeout=T)
+            win.locator("[data-testid=programs-step-select]").first.click()
+            win.locator("[data-testid=programs-step-report]").wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "program-text":
             # PG-LANG LANG2: Text (in More ▾ at the phone width), a planned

@@ -35,7 +35,7 @@ function hub(answers: { open?: unknown; status?: number; post?: unknown; postSta
       body = answers.post;
     } else if (url.includes("/evidence/")) {
       body = url.endsWith("/brief") ? recorded.brief : url.endsWith("/log") ? recorded.log
-        : url.endsWith("/error") ? recorded.error : recorded.text;
+        : url.endsWith("/error") ? recorded.error : url.endsWith("/report") ? recorded.report : recorded.text;
     } else {
       status = answers.status ?? 200;
       body = answers.open;
@@ -155,7 +155,7 @@ describe("the briefing page (the owner's BRIEF RULE, direction A)", () => {
     render(<BriefingApp token={TOKEN} />);
     const evidence = await screen.findByTestId("briefing-evidence");
     expect(within(evidence).getAllByRole("button").map((button) => button.textContent)).toEqual(
-      ["The error", "Check log", "Brief", "Program text"]);
+      ["The error", "Check log", "Brief", "Report", "Program text"]);
     expect(calls.filter((call) => call.url.includes("/evidence/"))).toHaveLength(0);
     fireEvent.click(screen.getByTestId("briefing-open-error"));
     const pane = await screen.findByTestId("briefing-pane-error");
@@ -164,6 +164,12 @@ describe("the briefing page (the owner's BRIEF RULE, direction A)", () => {
     expect(within(pane).queryAllByRole("textbox")).toHaveLength(0);
     fireEvent.click(screen.getByTestId("briefing-pane-close"));
     expect(screen.queryByTestId("briefing-pane-error")).toBeNull();
+    // PG-IMPORT IMP1: Report opens the step's registers as rows, read only.
+    fireEvent.click(screen.getByTestId("briefing-open-report"));
+    const report = await screen.findByTestId("briefing-pane-report");
+    await waitFor(() => expect(report.textContent).toContain("Checked:"));
+    expect(report.textContent).toContain("Files:");
+    expect(within(report).queryAllByRole("textbox")).toHaveLength(0);
   });
 });
 

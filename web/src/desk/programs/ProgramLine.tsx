@@ -77,9 +77,14 @@ export function ProgramLine({ program, goal = true }: { program: Program; /** Dr
   const stations = lineStations(program);
   if (!stations.length) return null;
   const asked = (program.rounds ?? []).filter((round) => round.answered > 0);
+  // PG-IMPORT IMP1: a Done program's second mark, achromatic.
+  const finished = program.state === "done" ? program.finished_words : undefined;
   return (
     <div className="pg-line" data-testid="programs-line">
-      <StationTrack stations={stations} form="words" label={lineLabel(program, stations)} />
+      <StationTrack stations={stations} form="words"
+        label={finished ? `${lineLabel(program, stations)}, ${finished}` : lineLabel(program, stations)} />
+      {finished ? <p className="pg-line-finished"><span className="pg-finished" data-finished={program.finished}
+        data-testid="programs-line-finished">{finished}</span></p> : null}
       {(goal && program.goal) || asked.length ? (
         <p className="pg-line-goal">
           {goal && program.goal ? <span className="pg-line-goal-words" title={program.goal}>{`Goal: ${program.goal.split("\n")[0]}`}</span> : null}
