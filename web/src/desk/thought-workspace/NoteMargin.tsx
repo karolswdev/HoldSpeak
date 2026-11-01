@@ -25,6 +25,7 @@ import { spriteUrl } from "../sprites";
 import type { NoteOutcome } from "../noteOutcomes";
 import type { NoteOutcomesState } from "./NoteOutcomesWell";
 import { decisionLines, findLine, ownerInitials, type LineRange } from "./marginText";
+import { useTonight } from "../programs/TonightVerb";
 
 export interface MarginCard {
   key: string;
@@ -125,6 +126,8 @@ function OutcomeMarginRow({
   testId: string;
 }) {
   const { confirming, confirm, dismiss, edit } = outcomes;
+  // JRN2: a task line can go to tonight's program, from its menu.
+  const tonight = useTonight({ kind: "note", item_id: outcomes.noteId, line: row.text });
   const [more, setMore] = useState<{ x: number; y: number; autoFocus: boolean } | null>(null);
   const [editing, setEditing] = useState<{ text: string; owner: string; due: string } | null>(null);
   const moreRef = useRef<HTMLButtonElement | null>(null);
@@ -136,6 +139,7 @@ function OutcomeMarginRow({
     { type: "item", id: `edit-${row.id}`, label: editing ? "Close edit" : "Edit",
       onSelect: () => setEditing(editing ? null : { text: row.text, owner: row.owner, due: row.due }) },
     { type: "item", id: `dismiss-${row.id}`, label: "Dismiss", onSelect: () => void dismiss(row) },
+    ...(task && !tonight.done ? [{ type: "item" as const, id: `tonight-${row.id}`, label: "Tonight", onSelect: () => void tonight.press() }] : []),
   ];
   const save = async () => {
     if (!editing) return;
@@ -168,6 +172,12 @@ function OutcomeMarginRow({
       {more ? <WorkMenu label={`More actions for ${row.text}`} x={more.x} y={more.y} entries={entries}
         autoFocus={more.autoFocus} returnFocus={() => moreRef.current?.focus()} onClose={() => setMore(null)} /> : null}
     </div>
+    {tonight.done || tonight.failed ? (
+      <div className="note-margin-tonight">
+        <DotWord tone={tonight.done ? "info" : "warn"} title={tonight.failed || undefined}
+          data-testid={tonight.done ? "tonight-done" : "tonight-failed"}>{tonight.done || tonight.failed}</DotWord>
+      </div>
+    ) : null}
     {editing ? <div className="note-outcome-edit" data-testid="note-outcome-edit">
       <StringGadget label={task ? "Task" : "Decision"} value={editing.text}
         onChange={(value) => setEditing({ ...editing, text: value })} disabled={Boolean(confirming)} />

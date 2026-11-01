@@ -3,7 +3,9 @@
 ``POST /api/programs/tonight`` {kind, item_id, line?, program_id?} and the
 MCP tool ``program.add_to_night`` reach the one ``ProgramService`` verb
 (``tests/unit/test_program_night.py`` covers the rules): the answer names
-the step and says it in his words; a refusal is a named code.
+the step and says it in his words; a refusal is a named code. The answers
+are stored for the Tonight verb's face (``tonight.added.json``,
+``tonight.refused.json`` under ``web/src/desk/programs/__fixtures__``).
 """
 from __future__ import annotations
 
@@ -14,7 +16,7 @@ from holdspeak.mcp.families import program as program_family
 from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
 from tests.integration.program_night_seed import door_task, make_night
 from tests.integration.program_rig import OWNER, Rig
-from tests.integration.test_desk_programs import _client
+from tests.integration.test_desk_programs import _client, _fixture
 
 
 def _ok(response: Any, status: int = 200) -> Any:
@@ -27,12 +29,15 @@ def test_add_to_tonight_over_rest_and_mcp(tmp_path, monkeypatch) -> None:
     client = _client(rig, monkeypatch)
     none = client.post("/api/programs/tonight", json={"kind": "action", "item_id": door_task(rig, "x")})
     assert none.status_code == 409 and none.json()["code"] == "no_night_program"
+    # The face's half (JRN2, the Tonight verb) replays these answers.
+    _fixture("tonight.refused.json", {"status": none.status_code, "body": none.json()}, tmp_path)
 
     pid, sids = make_night(rig)
     task = door_task(rig, "The Notes toolbar wraps at 520.")
     added = _ok(client.post("/api/programs/tonight", json={"kind": "action", "item_id": task}))
     assert added["added"] is True and added["program_id"] == pid and added["ordinal"] == 4
     assert added["say"] == "Added to tonight: step 4 · The Notes toolbar wraps at 520."
+    _fixture("tonight.added.json", added, tmp_path)
     step = next(row for row in added["program"]["steps"] if row["id"] == added["step_id"])
     assert step["origin_ref"] == f"action:{task}" and step["state"] in ("planned", "ready")
     again = _ok(client.post("/api/programs/tonight", json={"kind": "action", "item_id": task, "program_id": pid}))
