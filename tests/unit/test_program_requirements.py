@@ -603,7 +603,9 @@ def test_a_walk_is_his_word_only_and_his_row_shows_its_lines(tmp_path) -> None:
     rig.agent.finish(rig.step(pid, 1)["launch_id"], {"a.py": "1\n"})
     rig.tick(3)
     item = next(item for item in rig.program(pid)["your_turn_items"] if item.get("requirement_id") == rid)
-    assert item["kind"] == "requirement_word" and item["walk"] == ["Open Programs at 393", "Press Plan it"]
+    # PG-IMPORT IMP2: a walk is a to-do (Done, Can't do it), with its lines.
+    assert item["kind"] == "todo" and item["walk"] == ["Open Programs at 393", "Press Plan it"]
+    assert item["choices"] == ["done", "cant"]
     assert _req(rig, pid, rid)["state"] == "not_yet"  # never run, never judged by the engine
 
 
