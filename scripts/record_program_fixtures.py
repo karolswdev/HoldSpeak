@@ -414,6 +414,13 @@ def record_text(root: Path) -> dict[str, Any]:
     with rig.db._connection() as conn:
         conn.execute("INSERT INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
     client = _client(rig)
+    # The Program has a night line (23:30–07:00): the engine hands its steps
+    # only inside it, so the recording reads the engine's clock at 23:45 (a
+    # run after 07:00 left every step "sleeps until 23:30" and recorded nothing).
+    from datetime import datetime as _dt, timezone as _tz
+
+    night_now = _dt.now().replace(hour=23, minute=45, second=0, microsecond=0).astimezone().astimezone(_tz.utc)
+    rig.runner._now = lambda: night_now
     pid = _create(rig, "The hub stops stalling", goal="Every route under 100 ms while a meeting records.",
                   template="build-and-review", control="normal", reviewer_profile="codex-default",
                   project_id="proj-holdspeak")

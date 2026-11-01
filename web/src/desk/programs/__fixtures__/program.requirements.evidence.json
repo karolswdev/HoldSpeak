@@ -1,7 +1,7 @@
 {
   "log": {
     "status": 200,
-    "text": "program-check: commit 325403916c92ef3c6f03802cd50e47a8ea19b183\nprogram-check: tree clean\nprogram-check: command if [ -f /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-v0aq4zj6/requirements-red ]; then echo '1 failed, 30 passed'; exit 1; fi; echo '31 passed'\n1 failed, 30 passed\nprogram-check: exit 1\n",
+    "text": "program-check: commit dfc301af68d1c10f74c924a8ef296f2e575da265\nprogram-check: tree clean\nprogram-check: command if [ -f /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-jkr8v13p/requirements-red ]; then echo '1 failed, 30 passed'; exit 1; fi; echo '31 passed'\n1 failed, 30 passed\nprogram-check: exit 1\n",
     "type": "text/plain; charset=utf-8"
   },
   "shot": {
