@@ -855,3 +855,21 @@ An agent can make and start a program, but it cannot decide for you, and it does
 The routes are under `/api/programs` (see [API surface](API_SURFACE.md)): `GET` and `POST /api/programs/{id}/text`, `GET` and `POST /api/programs/{id}/shape`, `DELETE /api/programs/{id}/shape/held`, `POST /api/programs/{id}/plan/draft`, `POST /api/programs/{id}/rounds`, `/rounds/{name}/next`, `/rounds/{name}/answer` and `/rounds/{name}/decide`, and `POST /api/programs/{id}/steps/{sid}/remove`. The briefing page is `/b/<token>` and `GET /api/b/{token}`, with `POST /api/b/{token}/answer`. The owner's reach routes are under `/api/reach` (see [Reach](reach.md)). Each change of a program is a `program_changed` frame.
 
 `HOLDSPEAK_PROGRAMS=off` stops the engine: it hands, checks and merges nothing. Test hubs set it.
+
+## From your shell: `holdspeak program`
+
+The `holdspeak program` commands use the same service as the desk and the MCP tools. They have no rules of their own.
+
+```sh
+holdspeak program create --title "Overnight" --repo ~/dev/app --template fast-cycle --control normal
+holdspeak program start program-1d3cbc4a0b72
+holdspeak program get program-1d3cbc4a0b72 --json
+holdspeak program decide program-1d3cbc4a0b72 step-4a1b9c0d2e3f --kind core --choice go_on
+```
+
+- Each command writes one line: the program's id, its title and its state in your words. With `--json`, it writes the hub's answer as it is.
+- A refusal writes the hub's own words ("Refused: …") and the exit code is 1.
+- `decide` takes `--kind` and `--choice`, the same values as `program.decide`. A lesson also takes `--lesson-id`, and a finding takes `--finding-id`.
+- The hub is `--url`, else `HOLDSPEAK_URL`, else the hub that runs on this machine.
+- The credential is `--token`, else `HOLDSPEAK_AGENT_CREDENTIAL` (an agent such as pi: the agent rules apply), else `HOLDSPEAK_TOKEN`, else the owner token of the hub on this machine. HoldSpeak sends that token only to a loopback address, and never across a redirect.
+- If no hub answers, the command says so and the exit code is 1.
