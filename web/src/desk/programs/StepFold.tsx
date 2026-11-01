@@ -34,6 +34,7 @@ import { amendStep, changeStep, handoff, insertStep } from "./api";
 import { GateFacts } from "./GateFold";
 import { HandoffLine, StepLedger, clock } from "./Ledger";
 import { AddRequirementRow, RequirementRow } from "./Requirements";
+import { isAuditStep } from "./model";
 import { runsOnLabel } from "./StepRow";
 import type { Program, ProgramStep } from "./types";
 
@@ -166,7 +167,13 @@ function PlannedBrief({ program, step, onApplied, onFailed }: {
           <StringGadget label={`Step ${step.ordinal} title`} value={title} onChange={setTitle}
             inputProps={{ onBlur: () => { if (title.trim() && title !== step.title) void save({ title: title.trim() }); } }} />
         </span>
-        {step.owns.length ? <span className="pg-sf-owns">{step.owns.slice(0, 2).map((path) => <Token key={path} code>{path}</Token>)}</span> : null}
+        {step.owns.length ? (
+          <span className="pg-sf-owns" data-testid="programs-step-owns">
+            {/* PG-LANG JRN8: an audit step reads its surface; it owns nothing. */}
+            {isAuditStep(step) ? <span className="pg-sf-reads">Reads</span> : null}
+            {step.owns.slice(0, 2).map((path) => <Token key={path} code>{path}</Token>)}
+          </span>
+        ) : null}
         {editable.has("agent") ? (
           <span className="pg-sf-agent">
             <CycleGadget label={`Step ${step.ordinal} agent`} value={step.profile ?? program.default.profile ?? "claude-default"}
@@ -245,7 +252,7 @@ function StartedBrief({ program, step, onApplied, onFailed, amendRef }: {
       <div className="pg-sf-frozen" data-testid="programs-step-frozen">
         <DotWord title={why}>{`Frozen · ${why.charAt(0).toLowerCase()}${why.slice(1)}`}</DotWord>
         <span className="pg-sf-frozen-facts">
-          <Frozen name="Owns" value={step.owns.length ? step.owns.join(", ") : "nothing named"} reason={frozen.owns} testId="programs-frozen-owns" />
+          <Frozen name={isAuditStep(step) ? "Reads" : "Owns"} value={step.owns.length ? step.owns.join(", ") : "nothing named"} reason={frozen.owns} testId="programs-frozen-owns" />
           <Frozen name="Effort" value={(step.effort ?? "medium").replace(/^./, (c) => c.toUpperCase())} reason={frozen.effort} testId="programs-frozen-effort" />
           <Frozen name="After" value={step.after.length ? step.after.join(", ") : "none"} reason={frozen.after} testId="programs-frozen-after" />
           <Frozen name="Agent" value={runsOnLabel(step.profile, step.engine)} reason={frozen.agent} testId="programs-frozen-agent" />

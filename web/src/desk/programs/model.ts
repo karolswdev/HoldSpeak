@@ -31,7 +31,7 @@ export function controlWord(raw: string | null | undefined): string {
 /** The six stations of a step (BRIEF · WORK · CHECK · REVIEW · PR · MERGE). */
 export const STATIONS: readonly StationKey[] = ["brief", "work", "check", "review", "pr", "merge"];
 export const STATION_WORDS: Record<StationKey, string> = {
-  brief: "Brief", work: "Work", check: "Check", review: "Review", pr: "PR", merge: "Merge",
+  brief: "Brief", work: "Work", check: "Check", review: "Review", pr: "PR", merge: "Merge", file: "File",
 };
 
 /** A step state's tone: blue while an agent works, ember when it waits on
@@ -194,15 +194,30 @@ export interface StationView {
   person?: string;
 }
 
+/** PG-LANG JRN8: an audit step (its track ends at FILE): it reads its
+ *  surface and writes nothing. */
+export function isAuditStep(step: Pick<ProgramStep, "stations">): boolean {
+  return Boolean(step.stations?.includes("file"));
+}
+
+/** An audit step's surface, in place of Owns (`Reads web/src/desk/notes/`). */
+export function readsWords(step: Pick<ProgramStep, "owns">): string {
+  return step.owns?.length ? `Reads ${step.owns.join(", ")}` : "";
+}
+
 /** The stations of one step. */
 export function stationsOf(step: ProgramStep): StationView[] {
   const lit = step.station;
   const tone = stepTone(step.state);
   const finished = step.state === "merged" || step.state === "done";
-  return STATIONS.map((key, index) => {
+  // The hub's track: the six, or an audit's BRIEF · WORK · REVIEW · FILE
+  // (its findings are read, so its Review is never skipped).
+  const keys = step.stations?.length ? step.stations : STATIONS;
+  const audit = isAuditStep(step);
+  return keys.map((key, index) => {
     let state: StationState = index < lit ? "passed" : index === lit ? "current" : "ahead";
-    if (finished) state = index === STATIONS.length - 1 ? "current" : "passed";
-    if (key === "review" && step.gate.review === "none" && state !== "current") state = "skip";
+    if (finished) state = index === keys.length - 1 ? "current" : "passed";
+    if (key === "review" && !audit && step.gate.review === "none" && state !== "current") state = "skip";
     if (key === "merge" && step.gate.merge === "none" && state !== "current") state = "skip";
     let sub: string | undefined;
     if (key === "check" && step.check.verdict) sub = step.check.verdict === "green" ? "green" : "log";

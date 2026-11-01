@@ -100,6 +100,14 @@ _STATION_OF = {
     "check_failed": 2, "review": 3, "findings": 3, "pr_open": 4, "merge_ask": 5, "merged": 5,
     "done": 5, "parked": -1, "failed": -1,
 }
+#: PG-LANG JRN8: an audit step's track. It reads, its findings are read,
+#: and they are filed; nothing is checked, opened as a PR or merged.
+AUDIT_STATIONS = ("brief", "work", "review", "file")
+_AUDIT_STATION_OF = {
+    "planned": -1, "ready": -1, "briefed": 0, "working": 1, "waiting": 1, "limited": 1, "checking": 1,
+    "check_failed": 1, "review": 2, "findings": 2, "pr_open": 3, "merge_ask": 3, "merged": 3,
+    "done": 3, "parked": -1, "failed": -1,
+}
 
 #: The words a state reads on a face (sentence case; ``stateWords`` draws them).
 STEP_WORDS = {
@@ -1328,9 +1336,11 @@ class ProgramService:
         if state == "limited":
             word = limit_words(limit)
         check = facts.get("check") or {}
+        audit = program.get("template") == "audit"
         return {
             "id": step["id"], "ordinal": step["ordinal"], "title": step["title"], "state": state,
-            "state_word": word, "station": _STATION_OF.get(state, -1), "stations": list(STATIONS),
+            "state_word": word, "station": (_AUDIT_STATION_OF if audit else _STATION_OF).get(state, -1),
+            "stations": list(AUDIT_STATIONS if audit else STATIONS),
             "brief": step.get("brief_markdown") or "", "owns": list(step.get("owns") or []),
             "after": list(step.get("after") or []), "effort": step.get("effort"),
             "profile": profile, "agent": agent_label(profile), "engine": self._engine_wire(profile, engine_id),

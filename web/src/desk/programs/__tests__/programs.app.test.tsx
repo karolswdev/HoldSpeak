@@ -2369,3 +2369,56 @@ describe("PG-IMPORT IMP6: take it over, hand it back (recorded: scripts/record_p
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
+
+// PG-LANG JRN8 to JRN10: the audit, recorded through the real engine and
+// routes (tests/integration/test_desk_program_audit.py).
+import auditDraftingFixture from "../__fixtures__/audit.drafting.json";
+import auditBoardFixture from "../__fixtures__/audit.board.json";
+
+describe("PG-LANG JRN8 to JRN10: an audit in the Program window (recorded: test_desk_program_audit.py)", () => {
+  it("in Drafting it says it writes nothing, and each step names the surface it reads", async () => {
+    const audit = auditDraftingFixture as unknown as Program;
+    hub({ [`GET /api/programs/${audit.id}`]: audit });
+    render(<ProgramBody programId={audit.id} />);
+    await screen.findByTestId("programs-board");
+    expect(screen.getByTestId("programs-audit-line").textContent).toBe("Reviewer only: nothing is written");
+    expect(within(stepRow(1)).getByTestId("programs-step-words").textContent).toBe("Reads web/src/desk/notes/");
+    expect(within(stepRow(2)).getByTestId("programs-step-words").textContent).toBe("Reads web/src/desk/programs/");
+    // The step's fold says Reads, not Owns.
+    fireEvent.click(within(stepRow(1)).getByTestId("programs-step-select"));
+    expect((await screen.findByTestId("programs-step-owns")).textContent).toBe("Readsweb/src/desk/notes/");
+    // No board before a report.
+    expect(screen.queryByTestId("programs-findings")).toBeNull();
+  });
+
+  it("a done audit: its track ends at File, and its findings are rows in the window, filed ones open their Door task", async () => {
+    const audit = auditBoardFixture as unknown as Program;
+    hub({ [`GET /api/programs/${audit.id}`]: audit });
+    render(<ProgramBody programId={audit.id} />);
+    await screen.findByTestId("programs-board");
+    expect(screen.queryByTestId("programs-audit-line")).toBeNull();
+    const board = screen.getByTestId("programs-findings");
+    expect(within(board).getByRole("heading").textContent).toBe("Findings · 4 findings · 2 MUST");
+    const rows = within(board).getAllByTestId("programs-finding");
+    expect(rows.map((row) => row.querySelector(".pg-finding-text")!.textContent)).toEqual([
+      "Must fix: The Notes toolbar wraps at 520",
+      "Must fix: The Programs list cuts the title at 393",
+      "Should fix: The Notes title is grey on grey",
+      "Noted: Notes is fine at 393",
+    ]);
+    expect(rows[0].textContent).toContain(
+      "Steps 1 and 2 · Evidence: .tmp/evidence-shots/notes-520.png, .tmp/evidence-shots/programs-notes.png");
+    expect(rows[3].textContent).toContain("Step 1");
+    expect(rows[3].textContent).not.toContain("Evidence");
+    fireEvent.click(within(rows[1]).getByTestId("programs-finding-task"));
+    expect(mocks.openRef).toHaveBeenCalledWith(`action:${audit.findings_board!.rows[1].task_id}`);
+    // The step's track: Brief · Work · Review · File; nothing is merged.
+    fireEvent.click(within(stepRow(1)).getByTestId("programs-step-select"));
+    fireEvent.click(within(await screen.findByTestId("programs-step-fold")).getByRole("button", { name: "Gate" }));
+    const track = within(await screen.findByTestId("programs-gate")).getByTestId("programs-gate-track");
+    expect(track.textContent).toContain("File");
+    expect(track.textContent).toContain("Review");
+    expect(track.textContent).not.toContain("Merge");
+    expect(track.textContent).not.toContain("Check");
+  });
+});

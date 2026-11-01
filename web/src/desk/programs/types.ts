@@ -10,7 +10,9 @@ export type StepState =
   | "planned" | "ready" | "briefed" | "working" | "waiting" | "limited" | "checking" | "check_failed"
   | "review" | "findings" | "pr_open" | "merge_ask" | "merged" | "done" | "parked" | "failed";
 
-export type StationKey = "brief" | "work" | "check" | "review" | "pr" | "merge";
+export type StationKey = "brief" | "work" | "check" | "review" | "pr" | "merge"
+  // PG-LANG JRN8: an audit step's last station (BRIEF · WORK · REVIEW · FILE).
+  | "file";
 
 /** The desk's Control mode ladder (design §6, owner 2026-10-28): Secure ·
  *  Normal · YOLO. The desk's own policy wire says `safe` / `neutral`. */
@@ -459,6 +461,28 @@ export interface StepReport {
   words: { observed: string; claimed: string; not_checked: string; files: string };
 }
 
+/** PG-LANG JRN9 (``program_audit.board``): one row per finding, across steps. */
+export interface FindingRow {
+  key: string;
+  level: "MUST" | "SHOULD" | "NOTE" | string;
+  /** "Must fix", "Should fix", "Noted". */
+  words: string;
+  text: string;
+  evidence: string[];
+  steps: number[];
+  task_id: string | null;
+  filed: boolean;
+}
+
+export interface FindingsBoard {
+  head: string;
+  total: number;
+  must: number;
+  should: number;
+  note: number;
+  rows: FindingRow[];
+}
+
 export interface Program extends ProgramSummary {
   goal: string;
   repository: { root: string | null; label: string; base_branch: string | null };
@@ -472,6 +496,10 @@ export interface Program extends ProgramSummary {
   reviewer: { profile: string | null; agent: string | null; engine: ProgramEngine | null };
   prefer_idle: boolean;
   template: string | null;
+  /** PG-LANG JRN9: an audit's findings, every finding once (absent before a report). */
+  findings_board?: FindingsBoard | null;
+  /** PG-LANG JRN10: the fix program his Make made from the MUST findings. */
+  fix_program_id?: string | null;
   origin_ref: string | null;
   for_person_id: string | null;
   note_id: string | null;
