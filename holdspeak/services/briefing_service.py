@@ -143,6 +143,12 @@ def _left_words(seconds: float) -> str:
     return f"{max(1, int(seconds // 60))} min"
 
 
+def desk_in_reach() -> bool:
+    """The hub that serves the page serves the desk too (its built bundle is
+    there): the settled page offers Open on the desk."""
+    return (Path(__file__).resolve().parents[1] / "static" / "_built" / "index.html").is_file()
+
+
 def hub_name() -> str:
     """The hub's device name (no address, UX-CANON A.9)."""
     name = socket.gethostname().split(".")[0].strip()
@@ -293,35 +299,59 @@ class BriefingService:
 
     def _compose(self, ref: str, program: Mapping[str, Any], step: Optional[Mapping[str, Any]],
                  item: Mapping[str, Any]) -> dict[str, Any]:
-        """The frozen package body for one held item (§3 "The briefing package")."""
+        """The frozen package body for one held item (§3 "The briefing
+        package"), in his terms (``brief_words``, the owner's BRIEF RULE of
+        2026-10-31): ``note`` is the goal, the step and what happened, one
+        short line each; then the one-sentence ``question``; then each choice
+        with its consequence. The page, Telegram and the call read these
+        lines in this order. The raw reason rides as ``error`` (the page's
+        "The error" fold; never in a line)."""
+        from . import brief_words as words
         from .program_rules import level_word
 
         kind = str(item.get("kind") or "")
-        words = CHOICE_WORDS.get(kind, {})
+        labels = CHOICE_WORDS.get(kind, {})
+        steps = [row for row in self.programs().store.list_steps(program["id"]) if not row.get("race_of")]
+        blocked = words.blocked_steps(steps, step)
+        freed = words.freed_steps(steps, step)
+        others_open = any(row.get("state") not in ("merged", "done", "parked") for row in steps
+                          if step is None or row["id"] != step["id"])
+        rest = words.rest_words(blocked, others_open)
         choices = []
         for index, choice in enumerate(item.get("choices") or []):
-            if choice in _DESK_ONLY_CHOICES or choice not in words:
+            if choice in _DESK_ONLY_CHOICES or choice not in labels:
                 continue
-            label, consequence = words[choice]
-            choices.append({"id": choice, "label": label, "consequence": consequence, "primary": index == 0})
+            label, plain = labels[choice]
+            said = words.consequence(kind, choice, item, step, rest, len(freed)) or plain
+            choices.append({"id": choice, "label": label, "consequence": said, "primary": index == 0})
         if not choices:
             raise BriefingRefused("not_briefable", "This item has no choice the page can take. Answer it on your desk.",
                                   status=409)
         ordinal = (step or {}).get("ordinal") or item.get("ordinal")
         head = f"{program['title']} · step {ordinal}" if ordinal else str(program["title"])
-        question = str(item.get("reason") or item.get("title") or "")
-        if kind == "core" and item.get("reason"):
-            question = f"Step {ordinal} asks you: {item['reason']}" if ordinal else str(item["reason"])
-        else:
-            question = str(item.get("title") or question)
+        goal = words.goal_line(program)
+        doing = words.doing_line(step)
+        happened = words.happened_line(kind, item, step)
+        question = words.question_line(kind, item)
         changed = []
         if step is not None:
-            reason = str(item.get("reason") or "")
             rows = [row for row in self.programs().store.list_checkpoints(program["id"])
-                    if row.get("step_id") == step["id"] and not row.get("kind")
-                    and not (reason and reason in str(row.get("line") or ""))]
-            changed = [{"at": row["at"], "clock": clock_words(row["at"]), "line": row["line"]} for row in rows[:3]]
+                    if row.get("step_id") == step["id"] and not row.get("kind")]
+            seen: list[str] = []
+            for row in rows:
+                line = words.changed_line(row.get("line"))
+                if not line or line in seen:
+                    continue
+                seen.append(line)
+                changed.append({"at": row["at"], "clock": clock_words(row["at"]), "line": line})
+                if len(changed) >= 3:
+                    break
+        raw = ""
+        if kind == "parked":
+            raw = str((step or {}).get("parked_reason") or "")
         evidence = []
+        if raw:
+            evidence.append({"pane": "error", "label": "The error", "token": ""})
         if step is not None and step.get("pr_url"):
             evidence.append({"pane": "pr", "label": f"PR #{step.get('pr_number')}" if step.get("pr_number") else "PR",
                              "token": str(step.get("check_verdict") or "").replace("_", " ")})
@@ -331,13 +361,44 @@ class BriefingService:
         if step is not None and str(step.get("brief_markdown") or "").strip():
             evidence.append({"pane": "brief", "label": "Brief", "token": ""})
         evidence.append({"pane": "text", "label": "Program text", "token": "read only"})
+        now = self._now()
+        since = _parse(item.get("since"))
+        started = _parse((step or {}).get("started_at"))
+        from .program_service import duration_words
+
+        place = [f"Step {ordinal} of {len(steps)}" if ordinal else "The program"]
+        if started:
+            place.append(f"started {clock_words(started.isoformat())}")
+        if since:
+            place.append(f"waited {duration_words(max(0, int((now - since).total_seconds())))}")
+        blocked_ids = {row["id"] for row in blocked}
+        track = []
+        for row in steps:
+            state = str(row.get("state") or "")
+            if step is not None and row["id"] == step["id"]:
+                mark = "here"
+            elif row["id"] in blocked_ids:
+                mark = "blocked"
+            elif state in ("merged", "done"):
+                mark = "done"
+            elif state == "parked":
+                mark = "parked"
+            elif state in ("planned", "ready"):
+                mark = "planned"
+            else:
+                mark = "running"
+            track.append({"ordinal": row["ordinal"], "title": row.get("title") or "", "mark": mark})
         return {
             "ref": ref, "kind": kind, "kind_words": KIND_WORDS.get(kind, "Waits on you"),
             "program_id": program["id"], "program_title": program["title"],
             "step_id": (step or {}).get("id") or "", "step_ordinal": ordinal or None,
-            "step_title": (step or {}).get("title") or "", "head": head, "question": question,
+            "step_title": (step or {}).get("title") or "", "head": head,
+            "goal": goal, "doing": doing, "happened": happened, "note": [goal, doing, happened],
+            "question": question, "place": " · ".join(place), "track": track,
+            "blocked": [{"ordinal": row["ordinal"], "title": row.get("title") or ""} for row in blocked],
+            "blocked_words": words.blocked_words(blocked),
             "level": level_word(program.get("control")), "since": item.get("since") or "",
-            "changed": changed, "choices": choices, "evidence": evidence,
+            "changed": changed, "choices": choices, "evidence": evidence, "error": raw,
         }
 
     # ── the owner's verbs ────────────────────────────────────────────
@@ -448,17 +509,33 @@ class BriefingService:
             raise _gone()
         return package
 
+    def _others_waiting(self, ref: str) -> int:
+        """How many other items wait on him now (Needs you, Later left out)."""
+        try:
+            items = self.programs().needs_you_items()
+        except Exception:
+            return 0
+        return sum(1 for row in items if not row.get("later")
+                   and f"{PROGRAM_REF}{row.get('program_id')}:{row.get('id')}" != ref)
+
     def _item_state(self, package: Mapping[str, Any], body: Mapping[str, Any]) -> dict[str, Any]:
+        """The item's state now. A decided item settles to one line (the
+        owner's rule 3): "Resume · 18:18. The step starts again. Nothing else
+        waits on you."; Later: "Later · back at 13:00."."""
+        from .brief_words import settle_words
+
         ref = str(body.get("ref") or "")
         answers = package.get("answers") or {}
         answer = answers.get(ref) if isinstance(answers, dict) else None
         labels = {choice["id"]: choice["label"] for choice in body.get("choices") or []}
         if isinstance(answer, dict) and answer.get("choice") and answer.get("choice") != "later":
             label = labels.get(answer["choice"], str(answer["choice"]))
-            here = "decided here" if answer.get("via") == "page" else "decided"
+            via = answer.get("via")
+            words = settle_words(str(body.get("kind") or ""), str(answer["choice"]), label,
+                                 clock_words(answer.get("at")), self._others_waiting(ref),
+                                 "" if via == "page" else _VIA_SETTLE.get(str(via), ""))
             return {"state": "decided", "outcome": {
-                "choice": answer["choice"], "label": label, "via": answer.get("via"), "at": answer.get("at"),
-                "words": f"{label} · {here} · {clock_words(answer.get('at'))}"}}
+                "choice": answer["choice"], "label": label, "via": via, "at": answer.get("at"), "words": words}}
         try:
             _program, step, item = self._held(ref)
         except BriefingRefused:
@@ -472,7 +549,7 @@ class BriefingService:
             return {"state": "later", "outcome": {
                 "choice": "later", "label": "Later", "via": answer.get("via"), "at": answer.get("at"),
                 "later_until": answer.get("later_until"),
-                "words": f"Later · back at {clock_words(answer.get('later_until'))}"}}
+                "words": f"Later · back at {clock_words(answer.get('later_until'))}."}}
         return {"state": "open"}
 
     def read(self, token: Any) -> dict[str, Any]:
@@ -481,13 +558,15 @@ class BriefingService:
         package = self._package(token)
         now = self._now()
         body = dict(package.get("body") or {})
+        body.pop("error", None)  # the raw reason opens as its fold only
         item = {**body, **self._item_state(package, body)}
         expires = _parse(package["expires_at"]) or now
         return {
             "package": {"id": package["id"], "kind": package["kind"], "head": body.get("head") or "",
                         "expires_at": package["expires_at"],
                         "expires_words": f"Expires in {_left_words((expires - now).total_seconds())}",
-                        "hub": hub_name()},
+                        "hub": hub_name(),
+                        "desk": f"/?open=program:{body.get('program_id')}" if desk_in_reach() else None},
             "items": [item],
             "later": later_options(now),
         }
@@ -500,6 +579,8 @@ class BriefingService:
             raise BriefingRefused("pane_unknown", "This page has no such pane.", status=404)
         service = self.programs()
         step = service.store.get_step(str(body.get("step_id") or "")) if body.get("step_id") else None
+        if pane == "error":
+            return {"pane": pane, "kind": "code", "text": str(body.get("error") or "")}
         if pane == "pr":
             step = step or {}
             rows = [{"label": "PR", "value": f"#{step.get('pr_number')}" if step.get("pr_number") else "Open"},
@@ -566,6 +647,7 @@ class BriefingService:
             self._changed(package["id"], "answered")
         fresh = self.store.get(package["id"]) or package
         state = {**body, **self._item_state(fresh, body)}
+        state.pop("error", None)
         if via != "telegram":
             words = (state.get("outcome") or {}).get("words") or ""
             if state.get("state") == "decided":
@@ -574,7 +656,8 @@ class BriefingService:
         return {"item": state}
 
 
-_VIA_SETTLE = {"page": "from the briefing page", "call": "on a call", "phone": "on your phone", "desk": "on your desk"}
+_VIA_SETTLE = {"page": "from the briefing page", "call": "on a call", "phone": "on your phone", "desk": "on your desk",
+               "telegram": "from Telegram"}
 
 
 def _decide_args(item: Mapping[str, Any]) -> dict[str, Any]:

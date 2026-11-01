@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Briefing page canvas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material, copied from direction-2026-10-31.html (which copies
+   web/src/styles/tokens.css and the kit). The page parts at the end are the
+   briefing page's own (web/src/briefing/briefing.css). */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9;
+  --wb-ok-ink:#1d5c2e; --wb-warn-ink:#6b4a00; --wb-ember-ink:#7a4a2c;
+  --lamp-ok:#34d399; --lamp-warn:#fbbf24; --lamp-info:#3b5d93; --lamp-ask:#da9868;
+  --depth-card:0 10px 28px rgba(8,14,22,.22);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  --page:#e9eef4; --page-ink:#253449;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1b2531; --page-ink:#e3e9f1; }
+}
+:root[data-theme="dark"]{ --page:#1b2531; --page-ink:#e3e9f1; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font:15px/1.5 var(--font-ui);min-width:1440px}
+main{padding:32px 24px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+p{margin:0 0 10px;max-width:1100px}
+code{font:12.5px var(--font-mono)}
+section.part{margin:44px 0 0;padding:24px 0 0;border-top:2px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#7b8aa0}
+.rec{border-left:4px solid var(--wb-sel-vivid);padding:12px 18px;background:color-mix(in srgb,var(--wb-sel-vivid) 8%,transparent);border-radius:0 8px 8px 0;max-width:1180px;margin:14px 0}
+.note{font-size:13.5px;opacity:.85;max-width:1200px}
+.row{display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;margin-top:14px}
+.cap{font:600 13px var(--font-ui);margin:0 0 8px}
+
+/* ── the phone and the wide page ── */
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:var(--wb-paper);font-family:var(--font-ui);color:var(--wb-ink);display:flex;flex-direction:column}
+.wide{width:1040px;height:640px;overflow:hidden;border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule);background:var(--wb-paper);color:var(--wb-ink);display:flex;justify-content:center}
+.wide .sheet{width:720px;padding:36px 0 0;display:flex;flex-direction:column}
+.read{padding:18px 16px 10px;flex:1 0 auto}
+.wide .read{flex:none;padding:0 24px 16px}
+.kind{display:flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--wb-ember-ink);font:600 12px/1.4 var(--font-ui)}
+.lamp{width:10px;height:10px;border-radius:50%;background:var(--t,var(--lamp-ask));box-shadow:0 0 0 1px color-mix(in srgb,var(--t,var(--lamp-ask)) 45%,transparent),0 0 0 4px color-mix(in srgb,var(--t,var(--lamp-ask)) 20%,transparent);flex:none}
+.lamp.ok{--t:var(--lamp-ok)}
+.title{display:flex;align-items:center;gap:8px;margin:0 0 2px;font:600 15px/1.35 var(--font-ui)}
+.seat{width:20px;height:20px;border-radius:4px;background:linear-gradient(135deg,#5f86c9,#2f4f86);box-shadow:inset 0 0 0 2px #1f3560}
+.goal{margin:0 0 12px;font:400 14px/1.45 var(--font-ui)}
+.track{display:flex;align-items:center;gap:0;margin:0 0 6px;padding:0;list-style:none;font:400 13px var(--font-ui)}
+.track li{display:inline-flex;align-items:center;gap:6px;color:var(--wb-muted)}
+.track li+li::before{content:"";width:18px;height:1px;margin:0 6px 0 2px;background:var(--wb-rule)}
+.dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--wb-rule)}
+.here .dot{width:12px;height:12px;border:0;background:var(--lamp-ask);box-shadow:0 0 0 4px color-mix(in srgb,var(--lamp-ask) 22%,transparent)}
+.here{color:var(--wb-ember-ink)!important;font-weight:600}
+.blk .dot{border-color:var(--lamp-warn);background:color-mix(in srgb,var(--lamp-warn) 35%,var(--wb-paper));box-shadow:0 0 0 5px color-mix(in srgb,var(--lamp-warn) 28%,transparent)}
+.blk{color:var(--wb-warn-ink)!important;font-weight:600}
+.done .dot{border:0;background:color-mix(in srgb,var(--wb-muted) 70%,var(--wb-paper))}
+.place{margin:0 0 16px;color:var(--wb-muted);font:400 12px/1.4 var(--font-ui)}
+.body{margin:0 0 6px;font:400 15px/1.45 var(--font-ui)}
+.body.b{font-weight:500}
+.q{margin:8px 0 6px;font:600 24px/1.25 var(--font-display);letter-spacing:-.01em}
+.wide .q{font-size:30px}
+.blocked{margin:0 0 12px;color:var(--wb-warn-ink);font:500 13px/1.45 var(--font-ui)}
+.capt{margin:0 0 2px;color:var(--wb-muted);font:600 12px/1.4 var(--font-ui)}
+.chg{margin:0;font:400 13px/1.45 var(--font-ui)}
+.tray{position:sticky;bottom:0;display:flex;flex-direction:column;gap:12px;padding:12px 16px;border-radius:14px 14px 0 0;background:var(--wb-paper);box-shadow:var(--depth-card)}
+.wide .tray{flex-direction:row;margin:0 24px;border-radius:14px;padding:16px}
+.choice{display:flex;flex-direction:column;gap:4px;flex:1}
+.btn{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:6px;border:1px solid var(--wb-rule);background:var(--wb-field);font:500 15px var(--font-ui);color:var(--wb-ink)}
+.btn.primary{background:var(--wb-sel);border-color:var(--wb-sel);color:#fff}
+.cons{color:var(--wb-muted);font:400 12px/1.4 var(--font-ui)}
+.ev{display:flex;gap:8px;padding:8px 22px 10px;color:var(--wb-sel);font:500 14px var(--font-ui)}
+.ev i{font-style:normal;color:var(--wb-muted)}
+.sb{flex:none;padding:6px 10px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);color:var(--wb-muted);font:400 12px var(--font-ui)}
+.settled{display:flex;flex-direction:column;gap:16px;padding:20px 16px;flex:1}
+.small{color:var(--wb-muted);font:600 12px var(--font-ui);margin:0}
+.out{display:flex;gap:12px;align-items:baseline;margin:0;font:600 22px/1.3 var(--font-display)}
+.out .lamp{transform:translateY(-3px)}
+.foot{border-top:1px solid var(--wb-rule-soft);padding:12px 16px 10px}
+.shot{display:block;border-radius:8px;box-shadow:0 0 0 1px var(--wb-rule)}
+</style>
+</head>
+<body>
+<main>
+<h1>The briefing page, in his terms</h1>
+<p>Owner, 2026-10-31, on his phone, on the first real page: "I saw this briefing. And to be honest? It didn't even make sense to me. I didn't get enough context plus I felt like I answered, so why is there more…?" Then: "That left chevron something: fuck off. Invent something a lot clearer." Then: "Like, a visual of where in the program we are? What is being blocked by this answer, and so on? What happened with our paradigm of delighting the user fully…?"</p>
+<p class="note">The words are fixed by the BRIEF RULE (<code>holdspeak/services/brief_words.py</code>): the goal, the step, what happened in plain words, the question in one sentence, each choice with its consequence in his terms; the raw error, the log, the brief and the text behind one line of words; after the press, one line. This canvas picks where the step line and the blocked steps sit. Both directions: nothing boxed, the choices the only raised thing, no chevron, the step line is the Programs station track (<code>web/src/desk/surface/programTrack.tsx</code>), this step's lamp breathes, the steps that wait on it light once on load.</p>
+
+<div class="rec" id="recommendation">
+  <p><b>Recommendation: A, where we are, then the question.</b> It reads in the order of the rule, the order a chief of staff speaks: the program and its goal, the step line with this step lit and the two steps that wait on it lit, then what the step was doing, what happened, and the question as the headline with "2 steps wait on this" right under it. The tray sits at the bottom in thumb reach. At 393 a single item fits one screen (measured on the build: scroll height 852 = the viewport).</p>
+  <p style="margin:0">B puts the question first and the step line in the footer under the choices. The question is sooner, but the "why" (the goal, where the step is) comes after the press, and the blocked steps are far from the question they hang on.</p>
+</div>
+
+<section class="part" id="a-393">
+  <h2>A · where we are, then the question, at 393 <span class="tag">Recommended</span></h2>
+  <div class="row">
+    <div><p class="cap">Before the press</p>
+      <div class="phone">
+        <div class="read">
+          <p class="kind"><span class="lamp"></span>Parked step</p>
+          <p class="title"><span class="seat"></span>README touch · step 1</p>
+          <p class="goal">Goal: Show the repo has a friendly README.</p>
+          <ol class="track"><li class="here"><span class="dot"></span>1</li><li class="blk"><span class="dot"></span>2</li><li class="blk"><span class="dot"></span>3</li></ol>
+          <p class="place">Step 1 of 3 · started 17:59 · waited 1 h 20</p>
+          <p class="body">Step 1, “Add one line to the README”: Append one line under the title.</p>
+          <p class="body b">The step could not push its branch: this repository has no remote.</p>
+          <p class="q">Start the step again, or stop it?</p>
+          <p class="blocked">2 steps wait on this: 2 Link the README, 3 Announce it.</p>
+          <p class="capt">What changed</p><p class="chg">The check ran green in under a minute.</p><p class="chg">The agent made a new commit.</p>
+        </div>
+        <div class="tray">
+          <div class="choice"><span class="btn primary">Resume</span><span class="cons">Try the step again. It will fail the same way until the repository has a remote.</span></div>
+          <div class="choice"><span class="btn">Skip</span><span class="cons">Stop this step. The 2 steps that wait on it wait too.</span></div>
+          <div class="choice"><span class="btn">Later</span><span class="cons">It waits. Nothing changes.</span></div>
+        </div>
+        <div class="ev">The error <i>·</i> Check log <i>·</i> Brief <i>·</i> Program text</div>
+        <div class="sb">Expires in 23 h · from HoldSpeak on Karol's MacBook Pro</div>
+      </div>
+    </div>
+    <div><p class="cap">After Resume: one line</p>
+      <div class="phone">
+        <div class="settled">
+          <p class="small">README touch · step 1</p>
+          <p class="out"><span class="lamp ok"></span><span>Resume · 18:18. The step starts again. Nothing else waits on you.</span></p>
+          <div><span class="btn" style="display:inline-flex;padding:0 18px">Open on the desk</span></div>
+        </div>
+        <div class="sb">Expires in 23 h · from HoldSpeak on Karol's MacBook Pro</div>
+      </div>
+    </div>
+    <div><p class="cap">As built (the rig, 393)</p>
+      <img class="shot" src="shots/briefing-page-2026-10-31/briefing-393-before.png" width="300" alt="The built page at 393 before the press">
+    </div>
+    <div><p class="cap">As built, after</p>
+      <img class="shot" src="shots/briefing-page-2026-10-31/briefing-393-after.png" width="300" alt="The built page at 393 after the press">
+    </div>
+  </div>
+</section>
+
+<section class="part" id="a-1440">
+  <h2>A at 1440</h2>
+  <p class="note">The same sheet, 720 px wide on the paper; the tray is a raised strip right under the brief with the choices in a row.</p>
+  <div class="row">
+    <div class="wide"><div class="sheet">
+      <div class="read">
+        <p class="kind"><span class="lamp"></span>Parked step</p>
+        <p class="title"><span class="seat"></span>README touch · step 1</p>
+        <p class="goal">Goal: Show the repo has a friendly README.</p>
+        <ol class="track"><li class="here"><span class="dot"></span>1</li><li class="blk"><span class="dot"></span>2</li><li class="blk"><span class="dot"></span>3</li></ol>
+        <p class="place">Step 1 of 3 · started 17:59 · waited 1 h 20</p>
+        <p class="body">Step 1, “Add one line to the README”: Append one line under the title.</p>
+        <p class="body b">The step could not push its branch: this repository has no remote.</p>
+        <p class="q">Start the step again, or stop it?</p>
+        <p class="blocked">2 steps wait on this: 2 Link the README, 3 Announce it.</p>
+      </div>
+      <div class="tray">
+        <div class="choice"><span class="btn primary">Resume</span><span class="cons">Try the step again. It will fail the same way until the repository has a remote.</span></div>
+        <div class="choice"><span class="btn">Skip</span><span class="cons">Stop this step. The 2 steps that wait on it wait too.</span></div>
+        <div class="choice"><span class="btn">Later</span><span class="cons">It waits. Nothing changes.</span></div>
+      </div>
+      <div class="ev">The error <i>·</i> Check log <i>·</i> Brief <i>·</i> Program text</div>
+    </div></div>
+    <div><p class="cap">As built, before and after (1440)</p>
+      <img class="shot" src="shots/briefing-page-2026-10-31/briefing-1440-before.png" width="380" alt="The built page at 1440 before the press"><br><br>
+      <img class="shot" src="shots/briefing-page-2026-10-31/briefing-1440-after.png" width="380" alt="The built page at 1440 after the press">
+    </div>
+  </div>
+</section>
+
+<section class="part" id="b-393">
+  <h2>B · the question first, the step line as the footer, at 393 <span class="tag alt">Direction</span></h2>
+  <div class="row">
+    <div><p class="cap">Before the press</p>
+      <div class="phone">
+        <div class="read">
+          <p class="kind"><span class="lamp"></span>Parked step · README touch · step 1</p>
+          <p class="q" style="margin-top:0">Start the step again, or stop it?</p>
+          <p class="body b">The step could not push its branch: this repository has no remote.</p>
+          <p class="body">Step 1, “Add one line to the README”: Append one line under the title.</p>
+        </div>
+        <div class="tray">
+          <div class="choice"><span class="btn primary">Resume</span><span class="cons">Try the step again. It will fail the same way until the repository has a remote.</span></div>
+          <div class="choice"><span class="btn">Skip</span><span class="cons">Stop this step. The 2 steps that wait on it wait too.</span></div>
+          <div class="choice"><span class="btn">Later</span><span class="cons">It waits. Nothing changes.</span></div>
+        </div>
+        <div class="foot">
+          <p class="goal" style="margin-bottom:6px">Goal: Show the repo has a friendly README.</p>
+          <ol class="track"><li class="here"><span class="dot"></span>1</li><li class="blk"><span class="dot"></span>2</li><li class="blk"><span class="dot"></span>3</li></ol>
+          <p class="place" style="margin:0">2 steps wait on this: 2 Link the README, 3 Announce it.</p>
+        </div>
+        <div class="ev">The error <i>·</i> Check log <i>·</i> Brief <i>·</i> Program text</div>
+        <div class="sb">Expires in 23 h · from HoldSpeak on Karol's MacBook Pro</div>
+      </div>
+    </div>
+    <div><p class="cap">After Resume (the same one line as A)</p>
+      <div class="phone">
+        <div class="settled">
+          <p class="small">README touch · step 1</p>
+          <p class="out"><span class="lamp ok"></span><span>Resume · 18:18. The step starts again. Nothing else waits on you.</span></p>
+          <div><span class="btn" style="display:inline-flex;padding:0 18px">Open on the desk</span></div>
+        </div>
+        <div class="sb">Expires in 23 h · from HoldSpeak on Karol's MacBook Pro</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="part" id="delight">
+  <h2>Delight, in our system</h2>
+  <p>The kind word's lamp and this step's dot breathe (<code>kit-lamp-live</code>, 2.4 s). The steps that wait on this one light once on load, 300 ms after the first paint, one after the other. The brief fades up under nothing, 160 ms. The choice tray is the only thing with depth (<code>--depth-card</code>). After the press the ok lamp pulses once (<code>kit-lamp-pulse</code>, 600 ms) beside the one line. All motion stops under reduced motion.</p>
+  <p class="note">Could not establish: a Program kind hue. The tokens have <code>--kind-project</code>, <code>--kind-pr</code>, <code>--kind-agent</code> and five more, and no <code>--kind-program</code>; the page uses the Program sprite as the seat and the Your turn ember for the lamp, and adds no new hue.</p>
+</section>
+</main>
+</body>
+</html>

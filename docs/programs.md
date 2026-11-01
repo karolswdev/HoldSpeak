@@ -656,7 +656,7 @@ What waits on you does not need the desk. You can decide it from a page on your 
 
 On a Your turn row (in the Program window or in Needs you), press **Copy page link**. In Needs you, it is in **Send ▾**. HoldSpeak makes a page for that one item and puts its link on the clipboard. The row's line then says "Page link copied · open until 06:30".
 
-The page shows the question first, then each choice with what it does, **Later ▾**, and the evidence, folded and read only. Press a choice to decide. The page then shows what you decided.
+The page reads like a note: the kind of item, the program and its goal, the program's steps with this step lit and the steps that wait on it marked, what the step was doing, what happened, and then the question. Under the question, the choices, each with what it does, and **Later**, which shows four times in place. Under the choices, one line opens the evidence in place, read only: **The error**, **Check log**, **Brief**, **Program text**. Press a choice to decide. The page then shows one line, for example "Resume · 18:18. The step starts again. Nothing else waits on you.", and **Open on the desk**.
 
 - **The token.** The link holds a token: 32 random bytes. The hub keeps only its hash. Nobody can read the page without the link.
 - **Its life.** The page is open for 24 hours. You can read it many times. You can decide it once. An item that you decided on another channel shows its answer.

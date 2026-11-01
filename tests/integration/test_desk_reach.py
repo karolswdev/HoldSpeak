@@ -81,11 +81,16 @@ def _rig(tmp_path: Path, monkeypatch, clock: Clock) -> tuple[Rig, str, TestClien
     step = rig.step(pid, 1)
     rig.agent.finish(step["launch_id"], {"src/a.py": "a\n", "holdspeak/db/schema.py": "b\n"})
     rig.tick()
+    return _rig_of(rig, pid, tmp_path, monkeypatch, clock)
+
+
+def _rig_of(rig: Rig, pid: str, tmp_path: Path, monkeypatch, clock: Clock) -> tuple[Rig, str, TestClient]:
     briefing = BriefingService(rig.db, programs=lambda: rig.service, clock=clock)
     monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)
     monkeypatch.setattr(briefing_module, "default_briefing_service", lambda db=None: briefing)
     monkeypatch.setattr(briefing_module, "MISSES", briefing_module._Misses())
     monkeypatch.setattr(briefing_module, "hub_name", lambda: "the rig hub")
+    monkeypatch.setattr(briefing_module, "desk_in_reach", lambda: True)
     monkeypatch.setenv("HOLDSPEAK_RECORDINGS", "off")  # the rig reads no Tailscale
     app = FastAPI()
 
@@ -125,7 +130,8 @@ def test_the_page_reads_a_core_question_and_decides_it_once(tmp_path, monkeypatc
 
     opened = client.get(f"/api/b/{token}").json()
     assert opened["items"][0]["state"] == "open"
-    assert opened["items"][0]["question"].startswith("Step 1 asks you: it touches files no step owns")
+    assert opened["items"][0]["question"] == "Let the step go on with this, or park it?"
+    assert opened["items"][0]["happened"] == "The step's change touches files no step owns (schema.py)."
     assert [pane["pane"] for pane in opened["items"][0]["evidence"]] == ["log", "brief", "text"]
 
     # The desk says the page is open: the Program window and the Needs you row.
@@ -149,7 +155,7 @@ def test_the_page_reads_a_core_question_and_decides_it_once(tmp_path, monkeypatc
     assert later["item"]["state"] == "later" and later["item"]["outcome"]["words"].startswith("Later · back at ")
     decided = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "go_on"})
     assert decided.status_code == 200, decided.text
-    assert decided.json()["item"]["outcome"]["words"].startswith("Go on · decided here · ")
+    assert decided.json()["item"]["outcome"]["words"].startswith("Go on · ")
     again = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "park"})
     assert again.status_code == 409 and again.json()["code"] == "answered_already"
     after = client.get(f"/api/b/{token}").json()
@@ -165,9 +171,65 @@ def test_the_page_reads_a_core_question_and_decides_it_once(tmp_path, monkeypatc
     assert expired.status_code == 404 and expired.json()["code"] == "page_expired"
     assert set(expired.json()) == {"error", "code", "detail"}  # no data
 
+
+
+def test_the_page_reads_a_parked_push_in_his_terms_and_settles(tmp_path, monkeypatch) -> None:
+    """The owner's first real page (2026-10-31): a step parked because the
+    repository has no remote. The brief reads in his terms; after his
+    Resume the page settles to one line. Recorded for the page's T2."""
+    from tests.integration.program_rig import git
+
+    clock = Clock()
+    rig = Rig(tmp_path)
+    pid = rig.service.create(OWNER, title="README touch", goal="Show the repo has a friendly README.",
+                             repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}", template="fast-cycle",
+                             control="secure")["id"]
+    rig.service.plan(OWNER, pid, steps=[
+        {"title": "Add one line to the README", "brief": "Append one line under the title.\nKeep the rest."},
+        {"title": "Link the README", "brief": "Link it from the docs.", "after": [1]},
+        {"title": "Announce it", "brief": "Say so in the changelog.", "after": [2]},
+    ])
+    git(rig.repo, "remote", "remove", "origin")
+    rig.service.start(OWNER, pid)
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"README.md": "# app\nHello from the briefing page.\n"})
+    rig.tick()
+    assert rig.step(pid, 1)["state"] == "parked"
+    rig, pid, client = _rig_of(rig, pid, tmp_path, monkeypatch, clock)
+    item = next(row for row in client.get(f"/api/programs/{pid}").json()["your_turn_items"] if row["kind"] == "parked")
+    ref = f"program:{pid}:{item['id']}"
+    made = client.post("/api/reach/packages", json={"refs": [ref]})
+    assert made.status_code == 201, made.text
+    token = made.json()["token"]
+    opened = client.get(f"/api/b/{token}").json()
+    shown = opened["items"][0]
+    assert shown["note"] == ["Goal: Show the repo has a friendly README.",
+                             "Step 1, “Add one line to the README”: Append one line under the title.",
+                             "The step could not push its branch: this repository has no remote."]
+    assert shown["question"] == "Start the step again, or stop it?"
+    assert shown["blocked_words"] == "2 steps wait on this: 2 Link the README, 3 Announce it."
+    assert [pane["label"] for pane in shown["evidence"]] == ["The error", "Check log", "Brief", "Program text"]
+    assert "error" not in shown and opened["package"]["desk"] == f"/?open=program:{pid}"
+    error = client.get(f"/api/b/{token}/evidence/{ref}/error").json()
+    assert error["text"].startswith("git push failed: fatal:")
+    brief = client.get(f"/api/b/{token}/evidence/{ref}/brief").json()
+    text = client.get(f"/api/b/{token}/evidence/{ref}/text").json()
+    log = client.get(f"/api/b/{token}/evidence/{ref}/log").json()
+    later = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "later", "later": "at_13"}).json()
+    assert later["item"]["state"] == "later"
+    decided = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "resume"})
+    assert decided.status_code == 200, decided.text
+    assert re.fullmatch(r"Resume · \d\d:\d\d\. The step starts again\. Nothing else waits on you\.",
+                        decided.json()["item"]["outcome"]["words"]), decided.json()["item"]["outcome"]
+    again = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "skip"})
+    assert again.status_code == 409 and again.json()["code"] == "answered_already"
+    after = client.get(f"/api/b/{token}").json()
+    assert after["items"][0]["state"] == "decided"
+    clock.now += timedelta(hours=24, seconds=1)
+    expired = client.get(f"/api/b/{token}")
+    assert expired.status_code == 404
     _fixture(PAGE_FIXTURES / "reach.page.json", {
         "made": made.json(), "open": opened, "later": later, "decided": decided.json(), "again": again.json(),
-        "after": after, "expired": expired.json(), "brief": brief, "text": text, "log": log,
+        "after": after, "expired": expired.json(), "brief": brief, "text": text, "log": log, "error": error,
     }, tmp_path, token)
 
 

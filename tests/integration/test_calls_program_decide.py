@@ -90,7 +90,9 @@ def test_what_waits_on_me_is_read_chosen_read_back_and_decided_on_a_call(hub, mo
 
     said = _said(state)
     assert said[0] == "Hello. Say your passphrase."
-    assert said[2].startswith("Overnight on the home box, step 1. Step 1 asks you: ")
+    # The owner's BRIEF RULE (2026-10-31): the page's lines, in the page's order.
+    assert said[2].startswith("Overnight on the home box, step 1. Goal: "), said[2]
+    assert "Let the step go on with this, or park it?" in said[2]
     assert said[2].endswith("Say Go on, Park, or later.")
     assert said[3] == ("You said Go on for step 1 of Overnight on the home box: the step goes on with this change. "
                        "Say yes to decide, or no.")

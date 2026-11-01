@@ -2,38 +2,50 @@
   "after": {
     "items": [
       {
+        "blocked": [
+          {
+            "ordinal": 2,
+            "title": "Link the README"
+          },
+          {
+            "ordinal": 3,
+            "title": "Announce it"
+          }
+        ],
+        "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
         "changed": [
           {
-            "at": "2026-10-31T21:29:44.954504+00:00",
-            "clock": "17:29",
-            "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
+            "at": "2026-11-01T01:14:07.737670+00:00",
+            "clock": "21:14",
+            "line": "The check ran green in under a minute."
           },
           {
-            "at": "2026-10-31T21:29:44.809170+00:00",
-            "clock": "17:29",
-            "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
-          },
-          {
-            "at": "2026-10-31T21:29:44.708284+00:00",
-            "clock": "17:29",
-            "line": "New commit 67147874; the check runs"
+            "at": "2026-11-01T01:14:07.525472+00:00",
+            "clock": "21:14",
+            "line": "The agent made a new commit."
           }
         ],
         "choices": [
           {
-            "consequence": "The step goes on with this change.",
-            "id": "go_on",
-            "label": "Go on",
+            "consequence": "Try the step again. It will fail the same way until the repository has a remote.",
+            "id": "resume",
+            "label": "Resume",
             "primary": true
           },
           {
-            "consequence": "The step stops. The other steps go on.",
-            "id": "park",
-            "label": "Park",
+            "consequence": "Stop this step. The 2 steps that wait on it wait too.",
+            "id": "skip",
+            "label": "Skip",
             "primary": false
           }
         ],
+        "doing": "Step 1, “Add one line to the README”: Append one line under the title.",
         "evidence": [
+          {
+            "label": "The error",
+            "pane": "error",
+            "token": ""
+          },
           {
             "label": "Check log",
             "pane": "log",
@@ -50,26 +62,51 @@
             "token": "read only"
           }
         ],
-        "head": "Overnight on the home box · step 1",
-        "kind": "core",
-        "kind_words": "Core question",
-        "level": "YOLO",
+        "goal": "Goal: Show the repo has a friendly README.",
+        "happened": "The step could not push its branch: this repository has no remote.",
+        "head": "README touch · step 1",
+        "kind": "parked",
+        "kind_words": "Parked step",
+        "level": "Secure",
+        "note": [
+          "Goal: Show the repo has a friendly README.",
+          "Step 1, “Add one line to the README”: Append one line under the title.",
+          "The step could not push its branch: this repository has no remote."
+        ],
         "outcome": {
           "at": "2026-10-31T06:30:00+00:00",
-          "choice": "go_on",
-          "label": "Go on",
+          "choice": "resume",
+          "label": "Resume",
           "via": "page",
-          "words": "Go on · decided here · 02:30"
+          "words": "Resume · 02:30. The step starts again. Nothing else waits on you."
         },
-        "program_id": "program-73f237f0d806",
-        "program_title": "Overnight on the home box",
-        "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
-        "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
-        "since": "2026-10-31T21:29:45.076884+00:00",
+        "place": "Step 1 of 3 · started 21:14 · waited under a minute",
+        "program_id": "program-a3a46ec35356",
+        "program_title": "README touch",
+        "question": "Start the step again, or stop it?",
+        "ref": "program:program-a3a46ec35356:step-628658227c0f:parked",
+        "since": "2026-11-01T01:14:07.902106+00:00",
         "state": "decided",
-        "step_id": "step-f2ff5de6b5c0",
+        "step_id": "step-628658227c0f",
         "step_ordinal": 1,
-        "step_title": "Store the stall reason"
+        "step_title": "Add one line to the README",
+        "track": [
+          {
+            "mark": "here",
+            "ordinal": 1,
+            "title": "Add one line to the README"
+          },
+          {
+            "mark": "blocked",
+            "ordinal": 2,
+            "title": "Link the README"
+          },
+          {
+            "mark": "blocked",
+            "ordinal": 3,
+            "title": "Announce it"
+          }
+        ]
       }
     ],
     "later": [
@@ -95,65 +132,78 @@
       }
     ],
     "package": {
+      "desk": "/?open=program:program-a3a46ec35356",
       "expires_at": "2026-11-01T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
-      "head": "Overnight on the home box · step 1",
+      "head": "README touch · step 1",
       "hub": "the rig hub",
-      "id": "pkg-4577b05e8a7f",
+      "id": "pkg-851880ed6bdb",
       "kind": "item"
     }
   },
   "again": {
     "code": "answered_already",
-    "detail": "Answered already: Go on · decided here · 02:30",
+    "detail": "Answered already: Resume · 02:30. The step starts again. Nothing else waits on you.",
     "error": "answered_already",
     "outcome": {
       "at": "2026-10-31T06:30:00+00:00",
-      "choice": "go_on",
-      "label": "Go on",
+      "choice": "resume",
+      "label": "Resume",
       "via": "page",
-      "words": "Go on · decided here · 02:30"
+      "words": "Resume · 02:30. The step starts again. Nothing else waits on you."
     }
   },
   "brief": {
     "kind": "code",
     "pane": "brief",
-    "text": "Store the stall reason in its own column.\nKeep the old reads."
+    "text": "Append one line under the title.\nKeep the rest."
   },
   "decided": {
     "item": {
+      "blocked": [
+        {
+          "ordinal": 2,
+          "title": "Link the README"
+        },
+        {
+          "ordinal": 3,
+          "title": "Announce it"
+        }
+      ],
+      "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
       "changed": [
         {
-          "at": "2026-10-31T21:29:44.954504+00:00",
-          "clock": "17:29",
-          "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
+          "at": "2026-11-01T01:14:07.737670+00:00",
+          "clock": "21:14",
+          "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-10-31T21:29:44.809170+00:00",
-          "clock": "17:29",
-          "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
-        },
-        {
-          "at": "2026-10-31T21:29:44.708284+00:00",
-          "clock": "17:29",
-          "line": "New commit 67147874; the check runs"
+          "at": "2026-11-01T01:14:07.525472+00:00",
+          "clock": "21:14",
+          "line": "The agent made a new commit."
         }
       ],
       "choices": [
         {
-          "consequence": "The step goes on with this change.",
-          "id": "go_on",
-          "label": "Go on",
+          "consequence": "Try the step again. It will fail the same way until the repository has a remote.",
+          "id": "resume",
+          "label": "Resume",
           "primary": true
         },
         {
-          "consequence": "The step stops. The other steps go on.",
-          "id": "park",
-          "label": "Park",
+          "consequence": "Stop this step. The 2 steps that wait on it wait too.",
+          "id": "skip",
+          "label": "Skip",
           "primary": false
         }
       ],
+      "doing": "Step 1, “Add one line to the README”: Append one line under the title.",
       "evidence": [
+        {
+          "label": "The error",
+          "pane": "error",
+          "token": ""
+        },
         {
           "label": "Check log",
           "pane": "log",
@@ -170,27 +220,57 @@
           "token": "read only"
         }
       ],
-      "head": "Overnight on the home box · step 1",
-      "kind": "core",
-      "kind_words": "Core question",
-      "level": "YOLO",
+      "goal": "Goal: Show the repo has a friendly README.",
+      "happened": "The step could not push its branch: this repository has no remote.",
+      "head": "README touch · step 1",
+      "kind": "parked",
+      "kind_words": "Parked step",
+      "level": "Secure",
+      "note": [
+        "Goal: Show the repo has a friendly README.",
+        "Step 1, “Add one line to the README”: Append one line under the title.",
+        "The step could not push its branch: this repository has no remote."
+      ],
       "outcome": {
         "at": "2026-10-31T06:30:00+00:00",
-        "choice": "go_on",
-        "label": "Go on",
+        "choice": "resume",
+        "label": "Resume",
         "via": "page",
-        "words": "Go on · decided here · 02:30"
+        "words": "Resume · 02:30. The step starts again. Nothing else waits on you."
       },
-      "program_id": "program-73f237f0d806",
-      "program_title": "Overnight on the home box",
-      "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
-      "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
-      "since": "2026-10-31T21:29:45.076884+00:00",
+      "place": "Step 1 of 3 · started 21:14 · waited under a minute",
+      "program_id": "program-a3a46ec35356",
+      "program_title": "README touch",
+      "question": "Start the step again, or stop it?",
+      "ref": "program:program-a3a46ec35356:step-628658227c0f:parked",
+      "since": "2026-11-01T01:14:07.902106+00:00",
       "state": "decided",
-      "step_id": "step-f2ff5de6b5c0",
+      "step_id": "step-628658227c0f",
       "step_ordinal": 1,
-      "step_title": "Store the stall reason"
+      "step_title": "Add one line to the README",
+      "track": [
+        {
+          "mark": "here",
+          "ordinal": 1,
+          "title": "Add one line to the README"
+        },
+        {
+          "mark": "blocked",
+          "ordinal": 2,
+          "title": "Link the README"
+        },
+        {
+          "mark": "blocked",
+          "ordinal": 3,
+          "title": "Announce it"
+        }
+      ]
     }
+  },
+  "error": {
+    "kind": "code",
+    "pane": "error",
+    "text": "git push failed: fatal: 'origin' does not appear to be a git repository fatal: Could not read from remote repository. Please make sure you have the correct access rights and the repository exists."
   },
   "expired": {
     "code": "page_expired",
@@ -199,38 +279,50 @@
   },
   "later": {
     "item": {
+      "blocked": [
+        {
+          "ordinal": 2,
+          "title": "Link the README"
+        },
+        {
+          "ordinal": 3,
+          "title": "Announce it"
+        }
+      ],
+      "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
       "changed": [
         {
-          "at": "2026-10-31T21:29:44.954504+00:00",
-          "clock": "17:29",
-          "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
+          "at": "2026-11-01T01:14:07.737670+00:00",
+          "clock": "21:14",
+          "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-10-31T21:29:44.809170+00:00",
-          "clock": "17:29",
-          "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
-        },
-        {
-          "at": "2026-10-31T21:29:44.708284+00:00",
-          "clock": "17:29",
-          "line": "New commit 67147874; the check runs"
+          "at": "2026-11-01T01:14:07.525472+00:00",
+          "clock": "21:14",
+          "line": "The agent made a new commit."
         }
       ],
       "choices": [
         {
-          "consequence": "The step goes on with this change.",
-          "id": "go_on",
-          "label": "Go on",
+          "consequence": "Try the step again. It will fail the same way until the repository has a remote.",
+          "id": "resume",
+          "label": "Resume",
           "primary": true
         },
         {
-          "consequence": "The step stops. The other steps go on.",
-          "id": "park",
-          "label": "Park",
+          "consequence": "Stop this step. The 2 steps that wait on it wait too.",
+          "id": "skip",
+          "label": "Skip",
           "primary": false
         }
       ],
+      "doing": "Step 1, “Add one line to the README”: Append one line under the title.",
       "evidence": [
+        {
+          "label": "The error",
+          "pane": "error",
+          "token": ""
+        },
         {
           "label": "Check log",
           "pane": "log",
@@ -247,80 +339,117 @@
           "token": "read only"
         }
       ],
-      "head": "Overnight on the home box · step 1",
-      "kind": "core",
-      "kind_words": "Core question",
-      "level": "YOLO",
+      "goal": "Goal: Show the repo has a friendly README.",
+      "happened": "The step could not push its branch: this repository has no remote.",
+      "head": "README touch · step 1",
+      "kind": "parked",
+      "kind_words": "Parked step",
+      "level": "Secure",
+      "note": [
+        "Goal: Show the repo has a friendly README.",
+        "Step 1, “Add one line to the README”: Append one line under the title.",
+        "The step could not push its branch: this repository has no remote."
+      ],
       "outcome": {
         "at": "2026-10-31T06:30:00+00:00",
         "choice": "later",
         "label": "Later",
         "later_until": "2026-10-31T17:00:00+00:00",
         "via": "page",
-        "words": "Later · back at 13:00"
+        "words": "Later · back at 13:00."
       },
-      "program_id": "program-73f237f0d806",
-      "program_title": "Overnight on the home box",
-      "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
-      "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
-      "since": "2026-10-31T21:29:45.076884+00:00",
+      "place": "Step 1 of 3 · started 21:14 · waited under a minute",
+      "program_id": "program-a3a46ec35356",
+      "program_title": "README touch",
+      "question": "Start the step again, or stop it?",
+      "ref": "program:program-a3a46ec35356:step-628658227c0f:parked",
+      "since": "2026-11-01T01:14:07.902106+00:00",
       "state": "later",
-      "step_id": "step-f2ff5de6b5c0",
+      "step_id": "step-628658227c0f",
       "step_ordinal": 1,
-      "step_title": "Store the stall reason"
+      "step_title": "Add one line to the README",
+      "track": [
+        {
+          "mark": "here",
+          "ordinal": 1,
+          "title": "Add one line to the README"
+        },
+        {
+          "mark": "blocked",
+          "ordinal": 2,
+          "title": "Link the README"
+        },
+        {
+          "mark": "blocked",
+          "ordinal": 3,
+          "title": "Announce it"
+        }
+      ]
     }
   },
   "log": {
     "kind": "code",
     "pane": "log",
-    "text": "program-check: commit 6714787419bc3170b0726c387e0bd17cb401d4e9\nprogram-check: tree clean\nprogram-check: command sh /repo/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
+    "text": "program-check: commit 3ad6c00fb1ee5729776519efe7a5e8cb01eb08c8\nprogram-check: tree clean\nprogram-check: command sh /repo/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
   },
   "made": {
     "expires_at": "2026-11-01T06:30:00+00:00",
     "expires_clock": "01:30",
-    "id": "pkg-4577b05e8a7f",
+    "id": "pkg-851880ed6bdb",
     "link": null,
     "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
     "refs": [
-      "program:program-73f237f0d806:step-f2ff5de6b5c0:core"
+      "program:program-a3a46ec35356:step-628658227c0f:parked"
     ],
     "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
   },
   "open": {
     "items": [
       {
+        "blocked": [
+          {
+            "ordinal": 2,
+            "title": "Link the README"
+          },
+          {
+            "ordinal": 3,
+            "title": "Announce it"
+          }
+        ],
+        "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
         "changed": [
           {
-            "at": "2026-10-31T21:29:44.954504+00:00",
-            "clock": "17:29",
-            "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-f2ff5de6b5c0/.tmp/program-check/step-f2ff5de6b5c0/20261031T212944Z.log"
+            "at": "2026-11-01T01:14:07.737670+00:00",
+            "clock": "21:14",
+            "line": "The check ran green in under a minute."
           },
           {
-            "at": "2026-10-31T21:29:44.809170+00:00",
-            "clock": "17:29",
-            "line": "Running the check: sh /repo/tests/fixtures/fake_program_check.sh"
-          },
-          {
-            "at": "2026-10-31T21:29:44.708284+00:00",
-            "clock": "17:29",
-            "line": "New commit 67147874; the check runs"
+            "at": "2026-11-01T01:14:07.525472+00:00",
+            "clock": "21:14",
+            "line": "The agent made a new commit."
           }
         ],
         "choices": [
           {
-            "consequence": "The step goes on with this change.",
-            "id": "go_on",
-            "label": "Go on",
+            "consequence": "Try the step again. It will fail the same way until the repository has a remote.",
+            "id": "resume",
+            "label": "Resume",
             "primary": true
           },
           {
-            "consequence": "The step stops. The other steps go on.",
-            "id": "park",
-            "label": "Park",
+            "consequence": "Stop this step. The 2 steps that wait on it wait too.",
+            "id": "skip",
+            "label": "Skip",
             "primary": false
           }
         ],
+        "doing": "Step 1, “Add one line to the README”: Append one line under the title.",
         "evidence": [
+          {
+            "label": "The error",
+            "pane": "error",
+            "token": ""
+          },
           {
             "label": "Check log",
             "pane": "log",
@@ -337,19 +466,44 @@
             "token": "read only"
           }
         ],
-        "head": "Overnight on the home box · step 1",
-        "kind": "core",
-        "kind_words": "Core question",
-        "level": "YOLO",
-        "program_id": "program-73f237f0d806",
-        "program_title": "Overnight on the home box",
-        "question": "Step 1 asks you: it touches files no step owns (holdspeak/db/schema.py)",
-        "ref": "program:program-73f237f0d806:step-f2ff5de6b5c0:core",
-        "since": "2026-10-31T21:29:45.076884+00:00",
+        "goal": "Goal: Show the repo has a friendly README.",
+        "happened": "The step could not push its branch: this repository has no remote.",
+        "head": "README touch · step 1",
+        "kind": "parked",
+        "kind_words": "Parked step",
+        "level": "Secure",
+        "note": [
+          "Goal: Show the repo has a friendly README.",
+          "Step 1, “Add one line to the README”: Append one line under the title.",
+          "The step could not push its branch: this repository has no remote."
+        ],
+        "place": "Step 1 of 3 · started 21:14 · waited under a minute",
+        "program_id": "program-a3a46ec35356",
+        "program_title": "README touch",
+        "question": "Start the step again, or stop it?",
+        "ref": "program:program-a3a46ec35356:step-628658227c0f:parked",
+        "since": "2026-11-01T01:14:07.902106+00:00",
         "state": "open",
-        "step_id": "step-f2ff5de6b5c0",
+        "step_id": "step-628658227c0f",
         "step_ordinal": 1,
-        "step_title": "Store the stall reason"
+        "step_title": "Add one line to the README",
+        "track": [
+          {
+            "mark": "here",
+            "ordinal": 1,
+            "title": "Add one line to the README"
+          },
+          {
+            "mark": "blocked",
+            "ordinal": 2,
+            "title": "Link the README"
+          },
+          {
+            "mark": "blocked",
+            "ordinal": 3,
+            "title": "Announce it"
+          }
+        ]
       }
     ],
     "later": [
@@ -375,17 +529,18 @@
       }
     ],
     "package": {
+      "desk": "/?open=program:program-a3a46ec35356",
       "expires_at": "2026-11-01T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
-      "head": "Overnight on the home box · step 1",
+      "head": "README touch · step 1",
       "hub": "the rig hub",
-      "id": "pkg-4577b05e8a7f",
+      "id": "pkg-851880ed6bdb",
       "kind": "item"
     }
   },
   "text": {
     "kind": "code",
     "pane": "text",
-    "text": "# program text 1\nprogram Overnight on the home box                 # Your turn · 0 of 1 done\n  goal\n  > Stop the stalls.\n  in app · main\n  template fast cycle\n  control yolo\n  check sh /repo/tests/fixtures/fake_program_check.sh\n\nstep 1 Store the stall reason                     # Checking · Claude Code · under a minute\n  owns src/a.py\n  brief\n  > Store the stall reason in its own column.\n  > Keep the old reads.\n"
+    "text": "# program text 1\nprogram README touch                              # Your turn · 0 of 3 done\n  goal\n  > Show the repo has a friendly README.\n  in app · main\n  template fast cycle\n  control secure\n  check sh /repo/tests/fixtures/fake_program_check.sh\n\nstep 1 Add one line to the README                 # Parked · under a minute\n  brief\n  > Append one line under the title.\n  > Keep the rest.\n\nstep 2 Link the README                            # Planned\n  after 1\n  brief\n  > Link it from the docs.\n\nstep 3 Announce it                                # Planned\n  after 2\n  brief\n  > Say so in the changelog.\n"
   }
 }

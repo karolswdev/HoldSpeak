@@ -69,9 +69,13 @@ The ladder has a fixed order today: the desk, the Phone app, Telegram, a call. Y
 - Telegram never sends one item two times in five minutes, and never more than three messages in one hour for one step.
 - An answer on any channel stops the ladder. A Telegram message about an item that you answered somewhere else changes to show the answer.
 
+## What a brief says
+
+The briefing page, the Telegram message and a call say the same lines in the same order. First, what the program is for (its goal). Then what the step was doing (its title and the first sentence of its brief). Then what happened, in plain words: for example "The step could not push its branch: this repository has no remote." or "The check went red on pytest.". Then the question in one sentence, for example "Start the step again, or stop it?", and the steps that wait on this answer. Then each choice with what it does to the program, for example **Resume**: "Try the step again. It will fail the same way until the repository has a remote." A brief line never holds a path, a command, a hash or the raw error text. The raw error, the check log, the brief and the program text are behind their own words on the page. After you decide, the page shows one line, for example "Resume · 18:18. The step starts again. Nothing else waits on you.", and nothing else.
+
 ## What is never sent
 
-A Telegram message holds only the item: where it is from, the question, what changed, each choice with what it does, and the page link. It never holds a secret, a diff, a file, a brief, a transcript, a log or another person's notes. HoldSpeak checks each message before it leaves and stops a message that holds a diff, a bot token or a private key.
+A Telegram message holds only the item: where it is from, the brief's lines, each choice with what it does, and the page link. It never holds a secret, a diff, a file, a brief, a transcript, a log or another person's notes. HoldSpeak checks each message before it leaves and stops a message that holds a diff, a bot token or a private key.
 
 Each send is egress. Its record names the destination ("Telegram · owner chat") and a digest of the message. It never holds the bot token.
 

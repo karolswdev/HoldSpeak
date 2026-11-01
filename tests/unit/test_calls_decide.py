@@ -175,8 +175,12 @@ def test_a_core_question_is_read_chosen_read_back_and_decided_on_his_yes(tmp_pat
     rig, pid = _core(tmp_path)
     said, record = _call(rig, ["What waits on me?", "Go on.", "Yes.", "That's all, thanks."])
     package, read_back = said[2], said[3]
-    assert package.startswith("Overnight on the home box, step 1. Step 1 asks you: ")
-    assert "Go on: the step goes on with this change. Park: the step stops." in package
+    # The owner's BRIEF RULE (2026-10-31): the call reads the page's lines in
+    # the page's order: the goal, the step, what happened, the question.
+    assert package.startswith("Overnight on the home box, step 1. Goal: Stop the stalls. Step 1"), package
+    assert package.index("Goal: ") < package.index("files no step owns") < package.index(
+        "Let the step go on with this, or park it?")
+    assert "Go on: the step goes on with this change. Park: stop this step." in package
     assert package.endswith("Say Go on, Park, or later."), package
     assert read_back == ("You said Go on for step 1 of Overnight on the home box: the step goes on with this "
                          "change. Say yes to decide, or no.")
@@ -194,7 +198,7 @@ def test_no_changes_nothing_and_the_question_is_asked_again_once(tmp_path) -> No
     rig, pid = _core(tmp_path)
     said, _ = _call(rig, ["What waits on me?", "Go on.", "No.", "Park.", "Yes."])
     assert said[4] == "Nothing changed. Say Go on, Park, or later.", said
-    assert said[5].startswith("You said Park for step 1 of Overnight on the home box: the step stops.")
+    assert said[5].startswith("You said Park for step 1 of Overnight on the home box: stop this step.")
     assert said[6] == "Decided."
     decided = _lines(rig, pid)[0]
     assert decided.startswith("Park") and decided.endswith(" · decided on a call"), decided
@@ -282,7 +286,7 @@ def test_a_call_the_desk_placed_about_a_step_reads_it_first_without_being_asked(
     rig, pid = _core(tmp_path)
     step = rig.step(pid, 1)
     said, _ = _call(rig, ["Park.", "Yes."], about=step["id"])
-    assert said[2].startswith("Overnight on the home box, step 1. Step 1 asks you: "), said
+    assert said[2].startswith("Overnight on the home box, step 1. Goal: Stop the stalls. "), said
     assert said[4:6] == ["Decided.", "That is all. One decided."]
     assert rig.step(pid, 1)["state"] == "parked"
 

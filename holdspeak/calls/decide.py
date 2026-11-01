@@ -5,9 +5,10 @@ and he can defer with no pressure. This module is the hub's part of that
 call, with no model in it:
 
 - **The package, in his words.** For each held item of a Program
-  (``briefing_service.BRIEFABLE``) the call says the head, the question, at
-  most one line of what changed, each choice with its consequence, and ends
-  with "or later".
+  (``briefing_service.BRIEFABLE``) the call says the head, the brief's lines
+  (the goal, the step, what happened, the question, what the answer blocks:
+  the same lines in the same order as the page and Telegram), each choice
+  with its consequence, and ends with "or later".
 - **A spoken choice is read back once, then decided.** His words are matched
   to a choice of the package (:func:`match_choice`, the labels of
   ``briefing_service.CHOICE_WORDS``); the read back names the title, the step
@@ -185,15 +186,16 @@ def spoken_change(line: Any) -> str:
 
 
 def package_words(body: Mapping[str, Any]) -> str:
-    """The package read aloud (§4.1): the head, the question, at most one
-    line of what changed, each choice with its consequence, "or later"."""
+    """The package read aloud (§4.1, the owner's BRIEF RULE of 2026-10-31):
+    the head, then the same lines the page and Telegram show, in the same
+    order (``brief_words.brief_lines``: the goal, the step, what
+    happened, the question, what the answer blocks), each choice with its
+    consequence, "or later"."""
+    from ..services.brief_words import brief_lines
     from .runner import speakable
 
     head = str(body.get("head") or "").replace(" · ", ", ")
-    parts = [_sentence(head), _sentence(body.get("question"))]
-    changed = spoken_change((body.get("changed") or [{}])[0].get("line"))
-    if changed:
-        parts.append(_sentence(f"Changed: {_lower_first(changed)}"))
+    parts = [_sentence(head), *(_sentence(line) for line in brief_lines(body))]
     for choice in body.get("choices") or []:
         parts.append(_sentence(f"{choice['label']}: {_lower_first(choice.get('consequence') or '')}"))
     parts.append(choices_words(body))

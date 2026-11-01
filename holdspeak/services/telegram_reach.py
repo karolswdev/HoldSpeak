@@ -9,9 +9,10 @@
   the rig's ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE``), and so is the paired chat.
   :func:`repair_token` moves a token found in the config file into the
   keystore once and blanks it in the file, with one log line.
-- **The message.** At most eight lines of plain text (no Markdown): the
-  head, the question, what changed, each choice with what it does, the page
-  link. Inline buttons: the item's own choices and **Later**; Later opens a
+- **The message.** At most ten lines of plain text (no Markdown): the
+  head, the brief's lines in the package's order (the goal, the step, what
+  happened, the question: ``briefing_service`` composes them, the owner's
+  BRIEF RULE of 2026-10-31), each choice with what it does, the page link. Inline buttons: the item's own choices and **Later**; Later opens a
   second row (1 h · 13:00 · Tonight · Tomorrow). A choice that cannot be
   undone (Merge; a Skip that drops a proposed requirement) asks a second tap
   in place, good for two minutes. After the answer the message edits itself:
@@ -63,7 +64,10 @@ CONNECTOR = "reach-telegram"
 DESTINATION_WORDS = "Telegram · owner chat"
 PAIR_MINUTES = 10
 SECOND_TAP_SECONDS = 120
-MAX_LINES = 8
+#: §5 said eight; the owner's BRIEF RULE (2026-10-31) adds the goal, the step,
+#: what happened and what the answer blocks, so ten: head, four brief lines,
+#: the blocked line, three choices, the link.
+MAX_LINES = 10
 MAX_LINE = 200
 CALLBACK = "r1"
 _API = "https://api.telegram.org/bot{token}/{method}"
@@ -310,13 +314,14 @@ def _waits(since: Any, now: datetime) -> str:
 
 
 def render(body: Mapping[str, Any], link: Optional[str], now: datetime) -> str:
-    """The package in at most eight lines of plain text (§5 "The message")."""
+    """The package in at most ten lines of plain text (§5 "The message"):
+    the head, the brief's lines, each choice with what it does (as many as
+    fit; the buttons carry every choice), the page link."""
+    from .brief_words import brief_lines
+
     head = str(body.get("head") or "")
     waits = _waits(body.get("since"), now)
-    lines = [_line(" · ".join(part for part in (head, waits) if part)), _line(body.get("question"))]
-    changed = [row.get("line") for row in body.get("changed") or [] if row.get("line")]
-    if changed:
-        lines.append(_line(f"Changed: {changed[0]}"))
+    lines = [_line(" · ".join(part for part in (head, waits) if part))] + [_line(row) for row in brief_lines(body)]
     choices = list(body.get("choices") or [])
     room = MAX_LINES - len(lines) - 1
     for choice in choices[: max(0, room)]:
@@ -555,7 +560,7 @@ class TelegramReach:
 
     def _settled_text(self, body: Mapping[str, Any], package: Mapping[str, Any], words: str,
                       link: Optional[str] = None) -> str:
-        lines = [_line(body.get("head")), _line(body.get("question"))]
+        lines = [_line(body.get("head"))]
         if link:
             lines.append(f"Open the page: {link}")
         return fence("\n".join(lines + [words]))
