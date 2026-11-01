@@ -278,7 +278,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | PG13 | The Program's level drives the desk's answers | Shipped (2026-10-29) | PG13b: the launch flags and a helper follow the level too; the words say YOLO. Per-step levels are left. |
 | PG14 | Automations run a program | Shipped #1626 (2026-10-30) | Do kind `run_program`; the result row reads the Program's state and opens it (`automation_runs`). |
 | PG15 | Start a program on a call | Shipped #1663 (2026-10-31) | `program.start` behind his spoken yes; `program.get` in a sentence. |
-| PG16 | Decisions from a Program | Shipped #1644 (2026-10-30) | His Skip, a rule's Skip above NOTE and a merge by rule propose a decision record (design §9b); the Program window's "Proposed as a decision" opens the record (PG16 ledger PR). |
+| PG16 | Decisions from a Program | Shipped #1644 (2026-10-30) | His Skip, a rule's Skip above NOTE and a merge by rule propose a decision record (design §9b); the Program window's "Proposed as a decision" opens the record (#1733). |
 | PG17 | The first Program is the engine's own history | Shipped #1659 (2026-10-31) | On his desk. |
 | PG18 | Programs on Today | Shipped #1618 (2026-10-30) | "Programs: 1 running, 1 waits on you" (design §9 Seams); IMP3 #1713 added Since you were last here. |
 
@@ -351,7 +351,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | DIR6 | Settings ▸ Reach (Notices renamed) | Shipped #1678 (2026-10-31) | `ReachSettings.tsx`. |
 | DIR7 | The ladder and the one morning digest (JRN4 folded in) | Open | Telegram rung and a plain digest in #1678. |
 | DIR8 | The call that decides (= JRN7); `docs/calls.md` table replaced | Shipped #1679 (2026-10-31) | = JRN7. |
-| DIR9 | A Telegram sentence becomes a shaping preview | Partly | Telegram half in #1678; the page half (one page carries up to 12 items in order, each decided alone; the morning message links it): this PR. Open: the sentence to `program.shape` preview with Apply on the page. |
+| DIR9 | A Telegram sentence becomes a shaping preview | Partly | Telegram half in #1678; the page half: the hub #1703 (one page carries up to 12 items in order, each decided alone; the morning message links it), the face (DIR9 page PR: each item its own brief and tray, settling item by item). Open: the sentence to `program.shape` preview with Apply on the page. |
 | DIR10 | The other held items as packages | Done in part (hub) | #1703: decisions, held calls. This PR: meeting proposals and project review proposals with their preview first; a Program step agent's question answered with text on the page and by a Telegram reply (`ProgramService.answer_agent`); Door tasks due today and the desk's blocker lines as digest lines. Open: a desk agent's question outside Programs, sends and gate holds (page only), the faces. |
 | DIR11 | The documents (`docs/reach.md` and the rest) | Shipped (PG-DOCS-2 PR) | `docs/reach.md` and the rest. |
 | DIR12 | Email as a channel | Parked | Until he asks. |
