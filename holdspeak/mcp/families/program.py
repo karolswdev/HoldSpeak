@@ -173,7 +173,7 @@ TOOLS: list[dict[str, Any]] = [
                      "description": "The Control level: Secure (he merges and decides), Normal, YOLO (hands off). "
                                     "Default: the desk's Control mode. Core questions reach him at every level."},
          "check_command": {"type": ["string", "null"], "description": "Default: .holdspeak/program.json, else scripts/quick_check.sh."},
-         "template": {"type": ["string", "null"], "description": "fast-cycle, build-and-review, race, from-the-desk or overnight."},
+         "template": {"type": ["string", "null"], "description": "fast-cycle, build-and-review, race, from-the-desk, overnight, dreaming or audit."},
          "default_profile": _RUNS_ON["profile"], "default_engine": _RUNS_ON["engine"],
          "reviewer_profile": _RUNS_ON["profile"], "reviewer_engine": _RUNS_ON["engine"],
          "prefer_idle": _RUNS_ON["prefer_idle"],

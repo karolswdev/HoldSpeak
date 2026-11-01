@@ -698,14 +698,14 @@ defaults approved 2026-10-31 (#1672). One PR per slice in the fast cycle.
 | LANG5 | FACES + HUB | voice into the bar; `pending`; `program.shape` held on a call, `DELETE …/shape/held` | Merged #1675 |
 | LANG6 | HUB | `hs/services/program_planner.py`, `program_sizing.py`, `program.plan_draft` | Merged #1676 |
 | LANG7 | FACES | `PlanDraft.tsx`: Plan it, Planning · engine, size lamps, Split | Merged #1676 |
-| LANG8 | HUB | sizing: the `budget` field (#1671) and the estimate and words (#1676) are in; the dispatcher's refusal, `step_too_big` by level, the split by level and the harness cost are not | Open |
+| LANG8 | HUB | sizing: the `budget` field (#1671), the estimate and words (#1676), the dispatcher's refusal and the split by level (#1687); the harness cost is 0 until measured (`program_sizing.py`) | Merged #1687 |
 | LANG9 | HUB | `hs/services/program_rounds.py`, `program.round`, the round routes | Merged #1680 |
 | LANG10 | FACES | `Rounds.tsx`: Ask me first, the round strip, `QuestionRow`, `QuestionFold` | Merged #1680 |
-| LANG11 | HUB | the Measure verifier (the kind and `walk` lines are in, #1671) | Open |
-| LANG12 | HUB | Dreaming: the template, the night stop, the backlog reader, the digest (`night`, `within` stored, #1671) | Open |
-| LANG13 | HUB | Delivery Workbench link and the Done PR (`delivery dw` stored, #1671) | Open |
-| LANG14 | HUB | the SDK and `holdspeak program` CLI | Open |
-| LANG15 | DOCS | `docs/programs.md`, the skill, this recipe, TRACKER, UX-CANON, STATUS | This PR (PG-DOCS-2) |
+| LANG11 | HUB | the Measure verifier: run at the check, Met under the bound, red over it | Merged #1691 |
+| LANG12 | HUB + FACES | Dreaming: the night window (#1687), the template, the backlog by rule, the red-main hold, the night's end and its morning message (#1697), the Tonight verb (#1702), the list's sleeping night (#1712), the canon as the third source (#1728) | Merged |
+| LANG13 | HUB + FACES | the delivery at Done (#1693), its row in the window (#1696), dw context at create and a phase close, never dw on HoldSpeak itself (#1722) | Merged |
+| LANG14 | HUB | `holdspeak program create`, `start`, `get`, `decide` (#1724); `holdspeak.sdk.programs` (#1742) | Merged |
+| LANG15 | DOCS | `docs/programs.md`, the skill, this recipe, TRACKER, UX-CANON, STATUS | Merged #1681; swept again by PG-DOCS-3 |
 
 Not a slice, merged the same day: #1677, a held commit never strands a step
 (the `commit` Your turn row, Allow the commit / Not now; the tick reads the
@@ -747,14 +747,15 @@ control to YOLO releases the hold).
 
 - The quick forms of §4.1 (`quick.py`) are not built: every sentence goes to
   the engine.
-- `planner`, `night`, `within` and `delivery dw` are stored and printed, and
-  nothing acts on them yet (shaping and planning use the desk's assignment).
+- `planner` is stored and printed, and nothing acts on it yet (shaping and
+  planning use the desk's assignment). `night`, `within` and `delivery dw`
+  act since LANG12 and LANG13.
 - `program.round` takes `answer`, `done` and `skip` from the agent that made the
   Program (`_require_writer`), while `text_apply` refuses a round row from any
   agent (`owner_required`). The skill tells agents not to answer his rounds.
 
-**Open.** LANG8, LANG11, LANG12, LANG13, LANG14; the faces' live verdict on his
-desk.
+**Open.** The harness cost in LANG8's estimate (0 until measured); the quick
+forms; the faces' live verdict on his desk.
 
 ## PG-DIRECTION. Decide from anywhere (2026-10-31)
 
@@ -770,11 +771,11 @@ Design `DIRECTION-2026-10-31.md` (#1669; slices §12), canvas
 | DIR4 | HUB + FACES | `held_later` (schema 91), `hs/services/reach_service.py`, Later ▾, `phone.later`, YOLO's provisional park | Merged #1678 |
 | DIR5 | HUB | `hs/services/telegram_reach.py`: keystore, pairing, poll, buttons, replies | Merged #1678 |
 | DIR6 | FACES | Settings ▸ Reach (`ReachSettings.tsx`), Reach you moved from Calls ▸ Phone | Merged #1678 |
-| DIR7 | HUB | the ladder and the morning digest: Telegram's rung and a plain digest message are in (#1678); the composed digest (Since last night, the Cadence brief) is not | Open |
+| DIR7 | HUB + FACES | the ladder and the morning digest: Telegram's rung and a plain digest (#1678), the ladder in Settings ▸ Reach (#1704), Since last night in the night's morning message (#1697); the Cadence brief in the digest is not | Open (the Cadence brief) |
 | DIR8 | HUB | the call that decides (= JRN7), `hs/calls/decide.py`, `docs/calls.md` "Decide on a call" | Merged #1679 |
-| DIR9 | HUB | a Telegram sentence as a shaping preview with Apply · Not this is in (#1678); the page's read-only change well is not | Open |
-| DIR10 | HUB + FACES | the other held items as packages | Open |
-| DIR11 | DOCS | `docs/reach.md`, `docs/phone.md`, `docs/calls.md`, `docs/programs.md` "Decide from anywhere", the skill | This PR (PG-DOCS-2) |
+| DIR9 | HUB + FACES | a Telegram sentence as a shaping preview with Apply · Not this (#1678); one page for several held items (#1703, face #1735) | Merged |
+| DIR10 | HUB + FACES | the other held items as packages: a decision and a held call (#1703), proposals with their preview, an agent's question, Door and blocker lines (#1708), a prepared send on its page only, a desk agent's question (#1739). A gate hold stays on the desk (IMP5, #1711) | Merged |
+| DIR11 | DOCS | `docs/reach.md`, `docs/phone.md`, `docs/calls.md`, `docs/programs.md` "Decide from anywhere", the skill | Merged #1681; swept again by PG-DOCS-3 |
 | DIR12 | (parked) | email as a channel | Parked |
 
 **What did not survive the code.**
@@ -784,7 +785,7 @@ Design `DIRECTION-2026-10-31.md` (#1669; slices §12), canvas
 - #1678: DIR6 was built here (the design named it a slice of its own). The
   Telegram fixture `tests/fixtures/reach/telegram.updates.json` is the Bot API's
   documented shapes, not a recording from a real bot (its `_source` says so).
-  The digest is a plain list with no buttons.
+  The owner paired a real bot (@HoldSpeakBot) on 2026-11-01. The digest is a plain list with no buttons.
 - #1679: Later on a call hands off to `ReachService.later` when it is on the hub
   (it is, since #1678). `program.decide` is the one authority tool on the call
   palette, held, always `via=call`; a waive is denied on a call.
@@ -799,11 +800,39 @@ Design `DIRECTION-2026-10-31.md` (#1669; slices §12), canvas
   but the answer goes through `reach_service.parse_later`, where "tomorrow" is
   the hour quiet hours end (08:00 by default).
 
-**Open.** DIR7, DIR9 (the page half), DIR10; the first real Telegram pairing
-(needs his bot token); his live verdict on the page and Settings ▸ Reach.
+**Open.** DIR7's Cadence brief in the digest; his live verdict on the page and
+Settings ▸ Reach.
 
 ## PG-JOURNEYS. Slices from the journeys (2026-10-31)
 
 Design `PROGRAM-JOURNEYS-2026-10-31.md` (#1667); slices in
-`PROGRAM-LANGUAGE-2026-10-31.md` §13b. JRN7 is DIR8, merged #1679. JRN1 to JRN6
-and JRN8 to JRN14 are open.
+`PROGRAM-LANGUAGE-2026-10-31.md` §13b. JRN7 is DIR8, merged #1679 (and #1720).
+
+| Slice | What | State |
+|---|---|---|
+| JRN1 | the draft proposes several Programs for several goals | Merged #1726 |
+| JRN2 to JRN4 | Tonight, the red-main hold, the night's end message | Merged #1697, #1702 |
+| JRN5 | a spoken answer on a call as a prepared answer | Open |
+| JRN6 | a phone message carries its item's verbs | Merged #1727 |
+| JRN8 to JRN10 | the Audit template, findings as Door tasks, the fix program | Merged #1715, #1719, faces #1734, #1736 |
+| JRN11, JRN12 | the lesson rule and the Lesson row | Merged #1717 |
+| JRN13 | Run as a program on a project's action row | Merged #1716 |
+| JRN14 | a person gate reads her requirements and comments | Merged #1721 |
+
+Also merged from the journeys: J5 the race (#1725, the window #1740); a step
+made from a Door task closes the task at merge (#1741).
+
+## PG-IMPORT. The best of BroCrew (2026-11-01)
+
+Design `BROCREW-IMPORT-2026-11-01.md` (#1699). No code came from BroCrew; each
+idea is built on our engine.
+
+| Slice | What | State |
+|---|---|---|
+| IMP1 | the step report in registers (Checked, The agent says, Not checked, Files); the finished mark | Merged #1706 |
+| IMP2 | the to-do row (Done, Can't do it); the ending word | Merged #1710 |
+| IMP3 | wait sentences on the step row and the list; Since you were last here on Today | Merged #1713 |
+| IMP4 | never wider than the parent (`control_wider`) | Merged #1709 |
+| IMP5 | knowledge escalates, authority never does; four honest refusals | Merged #1711 |
+| IMP6 | take it over, hand it back, on a step's lane | Merged #1718 |
+| IMP7 | the forest (Came from, It made); the family fold on the list | Merged #1723 |
