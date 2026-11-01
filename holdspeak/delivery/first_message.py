@@ -41,7 +41,14 @@ REGISTRATION_WAIT_SECONDS = 30 * 60
 
 #: How long a launch looks for Claude Code's folder-trust prompt. No matching
 #: prompt in this window: ``trust_state: not_seen``, and nothing is typed.
-TRUST_WAIT_SECONDS = 20.0
+#: (60 s: a cold start under load shows the prompt late; the live proof of
+#: 2026-11-01 saw the move land before the prompt took keys.)
+TRUST_WAIT_SECONDS = 60.0
+#: A Down that the prompt did not take (it arrived while the prompt still
+#: drew: the cursor stays on "No, exit") is pressed again after this long,
+#: at most ``TRUST_MAX_MOVES`` times. Down only moves the selection.
+TRUST_MOVE_RETRY_SECONDS = 1.5
+TRUST_MAX_MOVES = 3
 
 #: How often the launch waiter looks at the pane and the rider registry.
 LAUNCH_POLL_SECONDS = 1.0
@@ -663,8 +670,9 @@ class _Trust:
         self.state: Optional[str] = None if self._path else "not_seen"
         self._seen = False
         # The progress lives on the launch record, so a second waiter (a
-        # resume, a restarted hub) never moves or confirms again.
-        self._moved = bool(record.get("trust_moved"))
+        # resume, a restarted hub) never moves past the limit or confirms again.
+        self._moves = int(record.get("trust_moves") or (1 if record.get("trust_moved") else 0))
+        self._moved_at = 0.0
         self._confirmed = bool(record.get("trust_confirmed"))
 
     def _set(self, state: str) -> None:
@@ -701,9 +709,11 @@ class _Trust:
             if self._press(["Enter"]):
                 self._confirmed = True
                 self._svc._ledger.update(self._launch_id, trust_confirmed=True)
-        elif prompt["cursor"] == "no" and not self._moved:
-            self._moved = True
-            self._svc._ledger.update(self._launch_id, trust_moved=True)
+        elif prompt["cursor"] == "no" and self._moves < TRUST_MAX_MOVES and (
+                not self._moves or time.monotonic() - self._moved_at >= TRUST_MOVE_RETRY_SECONDS):
+            self._moves += 1
+            self._moved_at = time.monotonic()
+            self._svc._ledger.update(self._launch_id, trust_moved=True, trust_moves=self._moves)
             self._press(["Down"])
 
     def _press(self, keys: list[str]) -> bool:
@@ -763,9 +773,11 @@ class _CodexStart(_Trust):
             if self._press(["Enter"]):
                 self._confirmed = True
                 self._svc._ledger.update(self._launch_id, trust_confirmed=True)
-        elif prompt["cursor"] == "other" and not self._moved:
-            self._moved = True
-            self._svc._ledger.update(self._launch_id, trust_moved=True)
+        elif prompt["cursor"] == "other" and self._moves < TRUST_MAX_MOVES and (
+                not self._moves or time.monotonic() - self._moved_at >= TRUST_MOVE_RETRY_SECONDS):
+            self._moves += 1
+            self._moved_at = time.monotonic()
+            self._svc._ledger.update(self._launch_id, trust_moved=True, trust_moves=self._moves)
             self._press(["Up"])
 
 
