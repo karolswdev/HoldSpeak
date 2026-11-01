@@ -328,6 +328,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "program.start": WORK,
     "program.park": WORK,
     "program.resume": WORK,
+    "program.propose_fix": WORK,  # JRN10: a Drafting Program from an audit's MUST findings
     "program.get": WORK,
     "program.list": WORK,
     "program.checkpoint": WORK,

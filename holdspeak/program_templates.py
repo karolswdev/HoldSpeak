@@ -31,6 +31,7 @@ RACE = "race"
 FROM_THE_DESK = "from-the-desk"
 OVERNIGHT = "overnight"
 DREAMING = "dreaming"
+AUDIT = "audit"
 #: Dreaming's bounds (PG-LANG §5.5): the folders a night may own; a template
 #: plants the ones its repository has.
 DREAMING_WITHIN = ("web/src/desk/", "docs/", "tests/unit/")
@@ -120,6 +121,20 @@ TEMPLATES: list[dict[str, Any]] = [
         },
         "step": {"gate_check": True, "gate_review": True, "review_depth": "glance", "gate_merge": "level", "race": 0},
         "requirements": [{"text": ONLY_THE_BRIEF, "kind": "review", "each_step": True, "required": True}],
+    },
+    {
+        # PG-LANG §13b JRN8 and journey J7: a reviewer-only program. Each step
+        # reads one surface and reports findings; nothing is built, checked,
+        # reviewed or merged (``services/program_audit.py``).
+        "id": AUDIT,
+        "name": "Audit",
+        "description": (
+            "One step per surface (windows of the desk, the routes of a change). The agent reads and changes "
+            "nothing; each finding becomes a Door task. The MUST findings can become a fix program."
+        ),
+        "program": {"reviewer_profile": None, "default_profile": "claude-default"},
+        "step": {"gate_check": False, "gate_review": False, "gate_merge": "none", "race": 0},
+        "requirements": [],
     },
 ]
 

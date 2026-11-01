@@ -313,6 +313,8 @@ PROGRAM_WHY = {
     "requirement_word": "TO CONFIRM", "requirement_left": "TO DECIDE", "todo": "TO DO",
     # 2026-10-31: the step's agent's commit (the hold ended, the change waits).
     "commit": "TO ALLOW",
+    # PG-LANG JRN9, JRN10: an audit's findings to file, its fix program.
+    "audit_file": "TO DECIDE", "fix_program": "TO DECIDE",
 }
 
 

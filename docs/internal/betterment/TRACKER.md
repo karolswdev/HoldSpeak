@@ -331,9 +331,9 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | JRN5 | A spoken answer becomes a prepared answer | Open | After LANG5; the default, no ruling. |
 | JRN6 | The item's verbs on a phone message | Open | After LANG5. |
 | JRN7 | `program.decide` behind a spoken yes | Shipped #1679 (2026-10-31) | Built as PG-DIRECTION DIR8. |
-| JRN8 | The Audit template | Open |  |
-| JRN9 | Findings filed as Door tasks; the Findings board | Open |  |
-| JRN10 | A proposed fix program from findings | Open |  |
+| JRN8 | The Audit template | Hub shipped (2026-11-01) | `program_templates.AUDIT`, `services/program_audit.py`: no check, no reviewer, `merge none`; the brief says read only and the report shape; the gate refuses an audit step's writes by rule (`audit_reads_only`, Normal and YOLO; Secure holds as always); a commit is a core question; the report is `program.step_done` or the turn's last words (asked once, then parked). Open: the stations BRIEF · WORK · REVIEW · FILE (faces); writes to the agent's own scratch (shots) are refused too. |
+| JRN9 | Findings filed as Door tasks; the Findings board | Hub shipped (2026-11-01) | MUST/SHOULD/NOTE lines become Door tasks ("Must fix: …", "Should fix: …", "Noted: …", `source_ref program_step:<id>:finding:<key>`), one task for one finding across steps; YOLO files all, Normal MUST and SHOULD, Secure asks (`audit_file`: File · Skip). The wire's `findings_board`. Open: the board face (window lane). |
+| JRN10 | A proposed fix program from findings | Hub shipped (2026-11-01) | `fix_program` row (Make · Skip) when every step reported and a MUST exists; `program.propose_fix` / `POST /api/programs/{id}/propose_fix`: a Drafting Program, one step per MUST with the Review requirement "<finding> is fixed", `origin_ref program:<audit>`; never started by rule. Open: the face. |
 | JRN11 | The lesson rule and the Lesson row | Open |  |
 | JRN12 | Keep a lesson for the repository | Open |  |
 | JRN13 | Run as a program on a project action row | Open | With LANG6. |
