@@ -185,8 +185,8 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/programs/{program_id}/park")
     async def api_programs_park(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().park(principal, program_id))
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().park(principal, program_id, reason=body.get("reason")))
 
     @router.post("/api/programs/{program_id}/resume")
     async def api_programs_resume(program_id: str, request: Request) -> Any:

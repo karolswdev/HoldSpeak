@@ -95,7 +95,7 @@ def test_a_parked_push_with_no_remote_reads_in_his_terms(tmp_path) -> None:
     # The raw reason is the fold "The error", first, and never a line.
     assert body["evidence"][0] == {"pane": "error", "label": "The error", "token": ""}
     assert "fatal:" in body["error"]
-    assert [row["label"] for row in body["evidence"]] == ["The error", "Check log", "Brief", "Program text"]
+    assert [row["label"] for row in body["evidence"]] == ["The error", "Check log", "Brief", "Report", "Program text"]
     assert [row["line"] for row in body["changed"]][:1] == ["The check ran green in under a minute."]
 
 
@@ -108,6 +108,12 @@ def test_after_his_press_the_page_settles_to_one_line(tmp_path) -> None:
     page = briefing.read(made["token"])
     assert "error" not in page["items"][0]  # the raw reason opens as its fold only
     assert briefing.evidence(made["token"], ref, "error")["text"].startswith("git push failed: fatal:")
+    # PG-IMPORT IMP1: the step's report in registers, read only.
+    report = briefing.evidence(made["token"], ref, "report")
+    assert report["kind"] == "rows"
+    labels = [row["label"] for row in report["rows"] if row["label"]]
+    assert labels[0] == "Checked:" and "Files:" in labels, report["rows"]
+    assert {"label": "Files:", "value": "README.md"} in report["rows"]
     done = briefing.answer(made["token"], ref, "resume")["item"]
     assert done["state"] == "decided"
     assert re.fullmatch(r"Resume · \d\d:\d\d\. The step starts again\. Nothing else waits on you\.",

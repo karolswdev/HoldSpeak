@@ -124,9 +124,9 @@ class GateService:
         if proposal is None:
             raise ServiceError("proposal_not_admitted", "proposal was not admitted", context={"handle": handle, "status": 409})
         if proposal.state == HELD and (proposal.policy_snapshot or {}).get("outcome") == "allowed":
-            proposal = self._decide_by_mode(proposal)
+            proposal = self._decide_by_mode(proposal, full=str(payload.get("args_full") or ""))
         elif proposal.state == HELD and (proposal.policy_snapshot or {}).get("outcome") == "refused":
-            proposal = self._decide_by_mode(proposal, approve=False)
+            proposal = self._decide_by_mode(proposal, approve=False, full=str(payload.get("args_full") or ""))
         if proposal.state == HELD and tool.startswith(MCP_TOOL_PREFIX):
             proposal = self._decide_mcp(principal, proposal, tool)
         args_full = payload.get("args_full")
@@ -185,7 +185,7 @@ class GateService:
 
     # ── Conductor K5: the Control-mode decision ──────────────────────
 
-    def _decide_by_mode(self, proposal: Any, *, approve: bool = True) -> Any:
+    def _decide_by_mode(self, proposal: Any, *, approve: bool = True, full: str = "") -> Any:
         """Approve a held call the Control mode allows (or deny one it
         refuses: a Program step's call at YOLO aimed outside its worktree or
         naming a destructive word), as the ``control-mode`` principal; the
@@ -228,7 +228,16 @@ class GateService:
             else:
                 line = f"Refused by rule (YOLO): {verdict.get('destructive') or verb}"
                 facts = {"gate_refuses": True}
+            # The live proof (2026-11-01): a refusal names the whole redacted
+            # call and the folder the gate saw, so its cause can be read.
+            from ..memory.defense import redact
+
+            whole = redact(full) if full and redact(full).startswith(proposal.args_head) else ""
+            shown = str(command_view(whole, 0)["command"] or whole) if whole else words
+            detail = (f"cwd {proposal.cwd}\nrule {verdict.get('rule') or 'none'} · scope {verdict.get('scope') or ''}\n"
+                      f"{shown}")[:4000]
             record_decision(str(verdict["launch_id"]), "gate_approval", line[:200], facts=facts, db=self._db,
+                            detail=detail,
                             dedupe=True)
         return decided
 

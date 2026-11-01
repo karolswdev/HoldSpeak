@@ -133,7 +133,7 @@ def mode_for_request(
 
 def record_decision(
     launch_id: Any, kind: str, line: str, *, facts: Optional[Mapping[str, Any]] = None,
-    db: Any = None, dedupe: bool = False,
+    db: Any = None, dedupe: bool = False, detail: str = "",
 ) -> Optional[dict[str, Any]]:
     """One Decided-for-you line on the step's Program (``kind``
     ``agent_question`` or ``gate_approval``), with the §6 rule of its level.
@@ -158,7 +158,7 @@ def record_decision(
             for row in service.decided_for_you(program["id"])
         ):
             return None
-        row = service.engine_decision(program, step, kind, outcome, line)
+        row = service.engine_decision(program, step, kind, outcome, line, undo={"detail": detail} if detail else None)
         service.changed(program["id"], step["id"], verb="decided")
         return row
     except Exception as exc:

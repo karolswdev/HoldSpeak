@@ -596,6 +596,162 @@ def step_story(checkpoints: Iterable[Mapping[str, Any]], step_id: Any, limit: in
     return sorted(reversed(out), key=lambda row: str(row.get("at") or ""))
 
 
+# ── the step report (PG-IMPORT IMP1) ─────────────────────────────────
+
+#: The step states that carry a report (Done, Merged, Parked or Skipped,
+#: Failed).
+REPORT_STATES = frozenset({"merged", "done", "parked", "failed"})
+#: The registers, in the order the face reads them.
+REPORT_WORDS = {"observed": "Checked:", "claimed": "The agent says:", "not_checked": "Not checked:",
+                "files": "Files:"}
+#: At most this many file names; the rest is "and N more".
+REPORT_FILES = 12
+_REPORT_CLAIMS = 4
+
+
+def _short(commit: Any) -> str:
+    return str(commit or "")[:8]
+
+
+def _engine_rows(checkpoints: Iterable[Mapping[str, Any]], step_id: Any) -> list[Mapping[str, Any]]:
+    """The step's engine checkpoints, oldest first."""
+    rows = [row for row in checkpoints if row.get("step_id") == step_id and row.get("by") == "engine"]
+    return sorted(rows, key=lambda row: (str(row.get("at") or ""), int(row.get("id") or 0)))
+
+
+def _cite(rows: list[Mapping[str, Any]], test: Any) -> Optional[Mapping[str, Any]]:
+    """The first engine checkpoint whose ``seen`` record passes ``test``."""
+    for row in rows:
+        seen = (row.get("undo") or {}).get("seen")
+        if isinstance(seen, Mapping) and test(seen):
+            return row
+    return None
+
+
+def _requirement_cite(rows: list[Mapping[str, Any]], requirement_id: str) -> Optional[Mapping[str, Any]]:
+    """The newest engine checkpoint that judged this requirement."""
+    found = None
+    for row in rows:
+        if row.get("kind") != "requirement":
+            continue
+        undo = row.get("undo") or {}
+        if undo.get("requirement_id") == requirement_id or requirement_id in (undo.get("requirement_ids") or []):
+            found = row
+    return found
+
+
+def _observed(line: str, row: Mapping[str, Any]) -> dict[str, Any]:
+    return {"line": line, "checkpoint": row.get("id"), "at": row.get("at")}
+
+
+def step_report(step: Mapping[str, Any], checkpoints: Iterable[Mapping[str, Any]],
+                requirements: Iterable[Mapping[str, Any]]) -> Optional[dict[str, Any]]:
+    """BroCrew's report rule, on our engine: "a finished piece of work comes
+    back with its outcome, what was checked, what wasn't, and where the
+    files are." Four registers, each built from the step's own fields and
+    the ledger's ``by``, never from a line's prose:
+
+    - ``observed`` ("Checked:"): what the engine saw (the commit, the
+      check, the PR, the merge, each requirement it judged). Each line cites
+      the engine checkpoint that saw it (``seen`` on the checkpoint); a fact
+      no engine checkpoint saw is left out.
+    - ``claimed`` ("The agent says:"): the agent's own report and its own
+      checkpoint lines.
+    - ``not_checked`` ("Not checked:"): requirements nobody judged, a
+      review that did not run, a gate check that was off.
+    - ``files`` ("Files:"): the step's diff file names, bounded.
+
+    ``None`` for a step that is not Done, Merged, Parked or Failed."""
+    from .program_requirements import KIND_WORDS, STATE_WORDS, label
+
+    state = str(step.get("state") or "")
+    if state not in REPORT_STATES:
+        return None
+    facts = step.get("facts") or {}
+    rows = _engine_rows(checkpoints, step.get("id"))
+    observed: list[dict[str, Any]] = []
+    head = step.get("head_commit")
+    base = facts.get("base_commit")
+    if head and head != base:
+        row = _cite(rows, lambda seen: seen.get("commit") == head)
+        if row is not None:
+            observed.append(_observed(f"Commit {_short(head)}", row))
+    verdict = str(step.get("check_verdict") or "")
+    checked = step.get("checked_commit")
+    if verdict and verdict != "none":
+        row = _cite(rows, lambda seen: seen.get("check") == verdict and seen.get("checked") == checked)
+        if row is not None:
+            on = f" on {_short(checked)}" if checked else ""
+            observed.append(_observed(f"Check {verdict.replace('_', ' ')}{on}", row))
+    number = step.get("pr_number")
+    if number:
+        row = _cite(rows, lambda seen: seen.get("pr") == number)
+        if row is not None:
+            observed.append(_observed(f"PR #{number} opened", row))
+    if state in ("merged", "done"):
+        row = _cite(rows, lambda seen: seen.get("state") in ("merged", "done"))
+        if row is not None:
+            observed.append(_observed(f"PR #{number} merged" if number else "Merged", row))
+    owner_id = step.get("race_of") or step.get("id")
+    own = sorted((row for row in requirements if row.get("step_id") == owner_id),
+                 key=lambda row: int(row.get("ordinal") or 0))
+    not_checked: list[dict[str, Any]] = []
+    for req in own:
+        name = f"{label(req.get('ordinal'))} {_squash(req.get('text'))}"
+        kind = str(req.get("kind") or "")
+        req_state = str(req.get("state") or "")
+        evidence = req.get("evidence") or {}
+        if req_state in ("met", "unmet") and evidence.get("by") == "engine":
+            row = _requirement_cite(rows, str(req.get("id")))
+            if row is not None:
+                value = evidence.get("value")
+                unit = str((req.get("spec") or {}).get("unit") or "")
+                tail = f" · {value}{(' ' + unit) if unit else ''}" if value is not None else ""
+                observed.append(_observed(f"{name} · {STATE_WORDS.get(req_state, req_state)}{tail}", row))
+        elif req_state == "waived":
+            not_checked.append({"line": f"{name}: waived" + (f" · {_squash(req.get('waived_reason'))}"
+                                                             if req.get("waived_reason") else "")})
+        elif req_state == "not_yet":
+            why = {"word": "nobody judged it", "review": "no review ran"}.get(kind, "it did not run")
+            not_checked.append({"line": f"{name}: {why}"})
+    if not step.get("gate_check"):
+        not_checked.append({"line": "The gate check was off"})
+    elif verdict == "none":
+        not_checked.append({"line": "No check command ran"})
+    elif not verdict:
+        not_checked.append({"line": "The check did not run"})
+    if step.get("gate_review") in ("agent", "person") and not step.get("review_verdict") \
+            and not facts.get("person_approved"):
+        not_checked.append({"line": "The review did not run"})
+    claimed: list[dict[str, Any]] = []
+    seen_lines: list[str] = []
+    for raw in str(step.get("report") or "").splitlines():
+        text = raw.strip()
+        if not text or text.startswith(("#", "```", "|")):
+            continue  # a heading, a fence or a table row says nothing plain
+        words = first_sentence(scrub(text.lstrip("-*+> ").lstrip("0123456789.) ")), 200)
+        if len(words.split()) >= 2 and words not in seen_lines:
+            seen_lines.append(words)
+            claimed.append({"line": words})
+        if len(claimed) >= _REPORT_CLAIMS:
+            break
+    agent_rows = sorted((row for row in checkpoints if row.get("step_id") == step.get("id")
+                         and row.get("by") == "agent" and not row.get("kind")),
+                        key=lambda row: (str(row.get("at") or ""), int(row.get("id") or 0)))
+    for row in agent_rows:
+        words = changed_line(row.get("line"))
+        if words and words not in seen_lines and len(claimed) < _REPORT_CLAIMS + 2:
+            seen_lines.append(words)
+            claimed.append({"line": words, "checkpoint": row.get("id"), "at": row.get("at")})
+    files = facts.get("files") if isinstance(facts.get("files"), Mapping) else {}
+    names = [str(name) for name in (files.get("names") or [])]
+    return {
+        "observed": observed, "claimed": claimed, "not_checked": not_checked,
+        "files": names[:REPORT_FILES], "files_more": max(0, int(files.get("count") or len(names)) - REPORT_FILES),
+        "words": dict(REPORT_WORDS),
+    }
+
+
 def window_words(program: Mapping[str, Any], steps: list[Mapping[str, Any]], turn: Iterable[Mapping[str, Any]],
                  checkpoints: Iterable[Mapping[str, Any]]) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
     """The Program window's words: each held item's brief (by item id) and
@@ -720,4 +876,4 @@ def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str
 
 __all__ = ["brief_lines", "blocked_steps", "blocked_words", "changed_line", "changed_lines", "clean", "consequence", "doing_line",
            "delivery_where", "doing_words", "fence_hits", "first_sentence", "goal_line", "list_line", "list_track", "happened_line", "item_brief", "step_story", "window_words", "parked_cause", "question_line",
-           "rest_words", "scrub", "sentence", "settle_words", "waits_words"]
+           "rest_words", "scrub", "sentence", "settle_words", "step_report", "waits_words"]

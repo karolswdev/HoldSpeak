@@ -335,6 +335,47 @@ function StepStory({ step }: { step: ProgramStep }) {
   );
 }
 
+type Register = "observed" | "claimed" | "not_checked";
+const REGISTERS: readonly Register[] = ["observed", "claimed", "not_checked"];
+
+/** PG-IMPORT IMP1 (BROCREW-IMPORT-2026-11-01): the step's report at Done,
+ *  Parked or Skipped, in its registers and in this order: what the engine
+ *  checked, what the agent says, what was not checked, the files. Each
+ *  register is a plain label over its lines; an empty one is not drawn. */
+export function StepReport({ step }: { step: ProgramStep }) {
+  const report = step.report;
+  if (!report) return null;
+  const files = report.files ?? [];
+  const drawn = REGISTERS.filter((key) => (report[key] ?? []).length);
+  if (!drawn.length && !files.length) return null;
+  return (
+    <section className="pg-sf-report" aria-label="Report" data-testid="programs-step-report">
+      {drawn.map((key) => (
+        <div key={key} className="pg-sf-register" data-register={key} data-testid={`programs-report-${key}`}>
+          <h4 className="pg-sf-cap">{report.words[key]}</h4>
+          <ul className="pg-sf-report-lines">
+            {report[key].map((row, index) => (
+              <li key={`${key}-${index}`} className="pg-sf-report-line" title={row.at ? clock(row.at) : undefined}
+                data-checkpoint={row.checkpoint ?? undefined}>{row.line}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      {files.length ? (
+        <div className="pg-sf-register" data-register="files" data-testid="programs-report-files">
+          <h4 className="pg-sf-cap">{report.words.files}</h4>
+          <p className="pg-sf-report-files">
+            {files.map((name, index) => (
+              <span key={name}><code className="pg-sf-report-file">{name}</code>{index < files.length - 1 ? ", " : ""}</span>
+            ))}
+            {report.files_more ? <span className="pg-sf-report-more">{` and ${report.files_more} more`}</span> : null}
+          </p>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 /** What it must prove: the step's requirement lines and Add a requirement. */
 function StepProve({ program, step, onApplied }: { program: Program; step: ProgramStep; onApplied(next: Program | null): void }) {
   const [adding, setAdding] = useState(false);
@@ -464,7 +505,8 @@ export function StepFold({ program, step, onApplied, initialPart }: {
   return (
     <div className="pg-sf" data-testid="programs-step-fold" data-step={step.id} data-part={shown || undefined}>
       <StepProve program={program} step={step} onApplied={onApplied} />
-      <StepStory step={step} />
+      {/* A finished step reads its report; the story is the running one's. */}
+      {step.report ? <StepReport step={step} /> : <StepStory step={step} />}
       <div className="pg-sf-head">
         <FilterTokens label={`Step ${step.ordinal}`} value={shown} emptyLabel="Parts"
           onChange={(next) => setPart((now) => (now === next ? "" : next as Part))}

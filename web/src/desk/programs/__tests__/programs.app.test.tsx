@@ -2235,3 +2235,53 @@ describe("LANG10: the interview rounds, one question in place (PROGRAM-LANGUAGE 
     expect(token("Architecture").querySelector(".surface-filter-lamp")).toHaveAttribute("data-tone", "idle");
   });
 });
+
+describe("PG-IMPORT IMP1: the step report and the second mark (recorded: scripts/record_program_fixtures.py, test_program_delivery.py)", () => {
+  it("a Done step's open row reads its report in four registers, in order, as plain labels", async () => {
+    hub({ [`GET /api/programs/${done.id}`]: done });
+    render(<ProgramBody programId={done.id} />);
+    await screen.findByTestId("programs-board");
+    const fold = openStep(1);
+    const report = within(fold).getByTestId("programs-step-report");
+    // The registers in BroCrew's order; each a plain label, no chip or badge.
+    expect([...report.querySelectorAll(".pg-sf-cap")].map((node) => node.textContent))
+      .toEqual(["Checked:", "The agent says:", "Files:"]);
+    expect(report.querySelector(".kit-chip, .kit-badge, .kit-token")).toBeNull();
+    const step = done.steps[0];
+    const lines = (key: string) => [...within(report).getByTestId(`programs-report-${key}`).querySelectorAll("li")].map((node) => node.textContent);
+    expect(lines("observed")).toEqual(step.report!.observed.map((row) => row.line));
+    expect(lines("observed").some((line) => /^PR #\d+ merged$/.test(line ?? ""))).toBe(true);
+    expect(lines("claimed")).toContain("Cited every anchor in the atlas once.");
+    // Every Checked line cites a checkpoint the engine wrote.
+    const engine = new Set(done.checkpoints.filter((row) => row.by === "engine").map((row) => row.id));
+    for (const row of step.report!.observed) expect(engine.has(row.checkpoint as number)).toBe(true);
+    expect(within(report).getByTestId("programs-report-files").textContent).toContain(step.report!.files[0]);
+    // A finished step reads its report, not the running story.
+    expect(within(fold).queryByTestId("programs-step-story")).toBeNull();
+  });
+
+  it("a Done program that needs nothing says finished; one that raised a decision says so, never the ask lamp", async () => {
+    hub({ [`GET /api/programs/${done.id}`]: done });
+    render(<ProgramBody programId={done.id} />);
+    expect((await screen.findByTestId("programs-line-finished")).textContent).toBe("finished");
+    cleanup();
+    const waiting = deliveryMergeFixture as unknown as Program;
+    expect(waiting.state).toBe("done");
+    hub({ [`GET /api/programs/${waiting.id}`]: waiting });
+    render(<ProgramBody programId={waiting.id} />);
+    const mark = await screen.findByTestId("programs-line-finished");
+    expect(mark.textContent).toBe("finished · needs a decision");
+    expect(mark.closest("[data-tone]")).toBeNull();
+    expect(mark.querySelector(".kit-dot")).toBeNull();
+  });
+
+  it("the list's Done row carries the mark in place of its last line", async () => {
+    hub({ "GET /api/programs": list });
+    render(<ProgramsCore />);
+    const row = (await screen.findAllByTestId("programs-row")).find((node) => node.getAttribute("data-state") === "done")!;
+    const summary = list.programs.find((item) => item.id === row.getAttribute("data-program"))!;
+    expect(summary.finished_words).toBe("finished");
+    expect(within(row).getByTestId("programs-row-finished").textContent).toBe("finished");
+    expect(within(row).getByTestId("programs-row-state").textContent).toContain(summary.state_word);
+  });
+});

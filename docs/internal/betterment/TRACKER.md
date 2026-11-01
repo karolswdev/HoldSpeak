@@ -360,8 +360,8 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 
 | Slice | What | State | Note |
 |---|---|---|---|
-| IMP0 | The design note | Shipped (PG-IMPORT design PR) |  |
-| IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Open | Next PR. |
+| IMP0 | The design note | Shipped #1699 (2026-11-01) |  |
+| IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Shipped (PG-IMPORT IMP1 PR) | `brief_words.step_report`; `seen` on engine checkpoints; `facts.files`. |
 | IMP2 | The to-do row (Done, Can't do it); the ending word | Open | After IMP1. |
 | IMP3 | Wait sentences; Since you were last here on Today | Open |  |
 | IMP4 | Never wider than the parent (closes the open ruling) | Open |  |
