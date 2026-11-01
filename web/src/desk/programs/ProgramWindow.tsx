@@ -664,7 +664,7 @@ export function startWords(program: Program): string {
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
   // JRN1: a Program split from a draft waits on the one before it.
   const origin = program.place?.origin;
-  if (origin?.kind === "program") {
+  if (origin?.kind === "after") {
     return `It starts after ${origin.title || "the program before it"} is done. Then Start will check ${list}.`;
   }
   const night = program.night;
