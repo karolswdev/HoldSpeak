@@ -617,7 +617,7 @@ describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
     expect(within(lead).queryByTestId("programs-step-open")).toBeNull();
     expect(within(contender).queryByTestId("programs-step-open")).toBeNull();
     // The engine's choice is under Decided for you.
-    expect(screen.getByTestId("programs-decided").textContent).toContain("Codex won the race in 34 min");
+    expect(screen.getByTestId("programs-decided").textContent).toContain("Codex won the race · 34 min");
   });
 });
 
