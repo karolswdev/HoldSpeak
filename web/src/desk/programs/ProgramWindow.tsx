@@ -640,13 +640,6 @@ function heldWords(program: Program, step: ProgramStep): string | undefined {
   return program.your_turn_items.find((item) => item.step_id === step.id && item.brief?.happened)?.brief?.happened;
 }
 
-/** The goal's first sentence (the phone's line before the tray). */
-function firstSentence(goal: string): string {
-  const text = goal.trim().replace(/\s+/g, " ");
-  const found = /^(.+?[.?!])(\s|$)/.exec(text);
-  return found ? found[1] : text;
-}
-
 /** What Start checks before any agent works (#1686, start_precheck): the
  *  repository, its remote when a step opens a PR, the check's program. */
 export function startWords(program: Program): string {
@@ -680,9 +673,6 @@ function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy
           <DotWord tone="idle">Drafting</DotWord>
           <span className="pg-brief-place">{`· ${countWords(steps.length, "step") ?? "No steps yet"}`}</span>
         </p>
-        {firstSentence(goal) !== goal.trim() ? (
-          <p className="pg-draft-goal-first" data-testid="programs-draft-goal-first">{firstSentence(goal)}</p>
-        ) : null}
         <div className="pg-draft-goal" data-testid="programs-draft-goal">
           <EditInPlace label="Goal" multiline value={goal} placeholder="Say what the program is for" onCommit={onGoal} />
         </div>

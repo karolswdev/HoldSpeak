@@ -2396,6 +2396,15 @@ describe("PG-LANG JRN8 to JRN10: an audit in the Program window (recorded: test_
     expect((await screen.findByTestId("programs-step-owns")).textContent).toBe("Readsweb/src/desk/notes/");
     // No board before a report.
     expect(screen.queryByTestId("programs-findings")).toBeNull();
+    // The owner, 2026-11-01: with no requirement, no empty Done when section;
+    // only Add a requirement, on its own line. The goal is drawn once.
+    expect(audit.requirements ?? []).toEqual([]);
+    const done = screen.getByTestId("programs-done-when");
+    expect(done.textContent).toBe("Add a requirement");
+    expect(done.querySelector(".pg-done-when-mark")).toBeNull();
+    expect(screen.getAllByText(audit.goal)).toHaveLength(1);
+    fireEvent.click(within(done).getByTestId("programs-done-add-requirement"));
+    expect(within(screen.getByTestId("programs-done-when")).getByText("Done when")).toBeTruthy();
   });
 
   it("a done audit: its track ends at File, and its findings are rows in the window, filed ones open their Door task", async () => {
