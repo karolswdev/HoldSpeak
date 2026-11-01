@@ -331,8 +331,11 @@ def render(body: Mapping[str, Any], link: Optional[str], now: datetime) -> str:
 
 
 def choice_buttons(package_id: str, body: Mapping[str, Any]) -> list[list[dict[str, str]]]:
-    row = [{"text": choice["label"], "callback_data": f"{CALLBACK}|{package_id}|{choice['id']}"}
-           for choice in body.get("choices") or []]
+    # DIRECTION §3: a page-only item (a prepared send) has no tap here; the
+    # message links its page, where the preview names the destination.
+    row = [] if body.get("page_only") else [
+        {"text": choice["label"], "callback_data": f"{CALLBACK}|{package_id}|{choice['id']}"}
+        for choice in body.get("choices") or []]
     row.append({"text": "Later ▾", "callback_data": f"{CALLBACK}|{package_id}|later"})
     return [row]
 

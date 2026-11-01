@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "because": {
+        "kind": "send",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
+      "blocked": [],
+      "blocked_words": "",
+      "changed": [],
+      "choices": [
+        {
+          "consequence": "HoldSpeak sends it to Team folder now.",
+          "id": "send",
+          "label": "Send",
+          "primary": true
+        },
+        {
+          "consequence": "Nothing is sent. The prepared send is dropped.",
+          "id": "discard",
+          "label": "Discard",
+          "primary": false
+        }
+      ],
+      "doing": "",
+      "evidence": [],
+      "goal": "Payments ledger cutover — update r1 (2026-11-01) is ready to send to Team folder.",
+      "happened": "",
+      "head": "Payments ledger cutover — update r1 (2026-11-01) · to Team folder",
+      "kind": "send",
+      "kind_words": "Ready to send",
+      "level": "",
+      "note": [
+        "Payments ledger cutover — update r1 (2026-11-01) is ready to send to Team folder."
+      ],
+      "page_only": true,
+      "place": "",
+      "preview": {
+        "destination": "Team folder",
+        "lines": [
+          "# Payments ledger cutover · Update · 2026-11-01",
+          "## Progress",
+          "The ledger cutover is on track."
+        ],
+        "reversible": false
+      },
+      "program_id": null,
+      "program_title": "",
+      "question": "Send it to Team folder?",
+      "ref": "send:chs_aa475624cb3c7447fc953c63",
+      "since": "2026-11-01T18:00:52+00:00",
+      "source": "send",
+      "state": "open",
+      "step_id": "",
+      "step_ordinal": null,
+      "step_title": "",
+      "track": []
+    }
+  ],
+  "later": [
+    {
+      "at": "14:00",
+      "id": "in_1h",
+      "label": "In 1 hour"
+    },
+    {
+      "at": "13:00",
+      "id": "at_13",
+      "label": "At 13:00"
+    },
+    {
+      "at": "19:00",
+      "id": "tonight",
+      "label": "Tonight"
+    },
+    {
+      "at": "07:00",
+      "id": "tomorrow",
+      "label": "Tomorrow at 07:00"
+    }
+  ],
+  "package": {
+    "desk": "/",
+    "expires_at": "2026-11-02T18:00:52.847139+00:00",
+    "expires_words": "Expires in 23 h",
+    "head": "Payments ledger cutover — update r1 (2026-11-01) · to Team folder",
+    "hub": "Karols-MacBook-Pro",
+    "id": "pkg-b8911fb90d16",
+    "kind": "item"
+  }
+}
