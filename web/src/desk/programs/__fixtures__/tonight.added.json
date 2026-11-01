@@ -12,10 +12,10 @@
       "shot_reason": "No shot command in this repository",
       "word": true
     },
-    "check_command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
+    "check_command": "sh /Users/karol/dev/tools/wt-j5/tests/fixtures/fake_program_check.sh",
     "checkpoints": [
       {
-        "at": "2026-11-01T10:34:09.770107+00:00",
+        "at": "2026-11-01T14:15:54.127355+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -29,7 +29,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-2b073828d8c5",
+        "step_id": "step-457fd9d100ed",
         "undo": {
           "pin": {
             "note": "No worktree to pin yet"
@@ -37,7 +37,7 @@
         }
       },
       {
-        "at": "2026-11-01T10:34:09.765247+00:00",
+        "at": "2026-11-01T14:15:54.120103+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -55,7 +55,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T10:34:09.741039+00:00",
+        "at": "2026-11-01T14:15:54.090323+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -73,7 +73,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T10:34:09.678398+00:00",
+        "at": "2026-11-01T14:15:54.014301+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -87,7 +87,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-242961ad5754",
+        "step_id": "step-401caa4ac6b5",
         "undo": {
           "pin": {
             "note": "No worktree to pin yet"
@@ -95,7 +95,7 @@
         }
       },
       {
-        "at": "2026-11-01T10:34:09.673382+00:00",
+        "at": "2026-11-01T14:15:54.010758+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -113,7 +113,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T10:34:09.670003+00:00",
+        "at": "2026-11-01T14:15:54.006037+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -127,7 +127,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-4389921524c7",
+        "step_id": "step-105a0651ba22",
         "undo": {
           "pin": {
             "note": "No worktree to pin yet"
@@ -135,7 +135,7 @@
         }
       },
       {
-        "at": "2026-11-01T10:34:09.664272+00:00",
+        "at": "2026-11-01T14:15:54.002861+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -153,7 +153,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T10:34:09.659975+00:00",
+        "at": "2026-11-01T14:15:53.999678+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -167,7 +167,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-b7e791733f71",
+        "step_id": "step-02439cb035eb",
         "undo": {
           "pin": {
             "note": "No worktree to pin yet"
@@ -175,7 +175,7 @@
         }
       },
       {
-        "at": "2026-11-01T10:34:09.656856+00:00",
+        "at": "2026-11-01T14:15:53.996268+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -193,7 +193,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T10:34:09.655250+00:00",
+        "at": "2026-11-01T14:15:53.991982+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -211,7 +211,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T10:34:09.652604+00:00",
+        "at": "2026-11-01T14:15:53.986948+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -232,7 +232,7 @@
     "closed_at": null,
     "control": "yolo",
     "control_word": "YOLO",
-    "created_at": "2026-11-01T10:34:09.649942+00:00",
+    "created_at": "2026-11-01T14:15:53.986670+00:00",
     "decided_for_you": [],
     "default": {
       "agent": "Claude Code",
@@ -252,10 +252,10 @@
     "for_person": null,
     "for_person_id": null,
     "goal": "Small fixes on the idle engine at night.",
-    "id": "program-366c10d3689d",
+    "id": "program-ac21a3107eca",
     "in_state_seconds": 0,
     "last_checkpoint": {
-      "at": "2026-11-01T10:34:09.770107+00:00",
+      "at": "2026-11-01T14:15:54.127355+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -269,7 +269,7 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-2b073828d8c5",
+      "step_id": "step-457fd9d100ed",
       "undo": {
         "pin": {
           "note": "No worktree to pin yet"
@@ -285,8 +285,8 @@
       "max_steps": 8,
       "start": "23:30"
     },
-    "note_id": "program-program-366c10d3689d",
-    "note_window": "pullout:note:program-program-366c10d3689d",
+    "note_id": "program-program-ac21a3107eca",
+    "note_window": "pullout:note:program-program-ac21a3107eca",
     "origin_ref": null,
     "persons": [],
     "place": {
@@ -328,7 +328,7 @@
         "brief": "The Calls window's status bar says \"Line starting\" for 40 s after the Line is up.",
         "budget_tokens": null,
         "check": {
-          "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
+          "command": "sh /Users/karol/dev/tools/wt-j5/tests/fixtures/fake_program_check.sh",
           "commit": null,
           "log": null,
           "minutes": null,
@@ -384,11 +384,11 @@
           "review_depth": "delta"
         },
         "handoffs": [],
-        "held_reason": "planning for tonight",
+        "held_reason": "sleeps until 23:30",
         "history": null,
-        "id": "step-b7e791733f71",
+        "id": "step-02439cb035eb",
         "last_checkpoint": {
-          "at": "2026-11-01T10:34:09.659975+00:00",
+          "at": "2026-11-01T14:15:53.999678+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -402,7 +402,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-b7e791733f71",
+          "step_id": "step-02439cb035eb",
           "undo": {
             "pin": {
               "note": "No worktree to pin yet"
@@ -413,7 +413,7 @@
         "limit": null,
         "may_call": false,
         "ordinal": 1,
-        "origin_ref": "action:ai_f2e66ab573da4c7c89fbcc141f7b7ae3",
+        "origin_ref": "action:ai_8b8df5bf830343ef852fe682c1e66528",
         "owns": [],
         "parked_by": null,
         "parked_reason": null,
@@ -441,7 +441,7 @@
         ],
         "started_at": null,
         "state": "ready",
-        "state_word": "Ready · planning for tonight",
+        "state_word": "Ready · sleeps until 23:30",
         "station": -1,
         "stations": [
           "brief",
@@ -453,12 +453,13 @@
         ],
         "story": [
           {
-            "at": "2026-11-01T10:34:09.659975+00:00",
+            "at": "2026-11-01T14:15:53.999678+00:00",
             "line": "Added to tonight: step 1 · The Calls window's status bar says \"Line starting\" for 40 s after the Line is up."
           }
         ],
+        "taken": false,
         "title": "The Calls window's status bar says \"Line starting\" for 40 s after the Line is up.",
-        "updated_at": "2026-11-01T10:34:09.749439+00:00",
+        "updated_at": "2026-11-01T14:15:54.099988+00:00",
         "wait": null,
         "worktree": null
       },
@@ -470,7 +471,7 @@
         "brief": "The Terminals window has raw buttons.",
         "budget_tokens": null,
         "check": {
-          "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
+          "command": "sh /Users/karol/dev/tools/wt-j5/tests/fixtures/fake_program_check.sh",
           "commit": null,
           "log": null,
           "minutes": null,
@@ -526,11 +527,11 @@
           "review_depth": "delta"
         },
         "handoffs": [],
-        "held_reason": "planning for tonight",
+        "held_reason": "sleeps until 23:30",
         "history": null,
-        "id": "step-4389921524c7",
+        "id": "step-105a0651ba22",
         "last_checkpoint": {
-          "at": "2026-11-01T10:34:09.670003+00:00",
+          "at": "2026-11-01T14:15:54.006037+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -544,7 +545,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-4389921524c7",
+          "step_id": "step-105a0651ba22",
           "undo": {
             "pin": {
               "note": "No worktree to pin yet"
@@ -555,7 +556,7 @@
         "limit": null,
         "may_call": false,
         "ordinal": 2,
-        "origin_ref": "action:ai_f1f05f7913ee428aa7f393c07fe2a452",
+        "origin_ref": "action:ai_e6ef82909a2a41f4ac0ce0ed403b5346",
         "owns": [],
         "parked_by": null,
         "parked_reason": null,
@@ -583,7 +584,7 @@
         ],
         "started_at": null,
         "state": "ready",
-        "state_word": "Ready · planning for tonight",
+        "state_word": "Ready · sleeps until 23:30",
         "station": -1,
         "stations": [
           "brief",
@@ -595,12 +596,13 @@
         ],
         "story": [
           {
-            "at": "2026-11-01T10:34:09.670003+00:00",
+            "at": "2026-11-01T14:15:54.006037+00:00",
             "line": "Added to tonight: step 2 · The Terminals window has raw buttons."
           }
         ],
+        "taken": false,
         "title": "The Terminals window has raw buttons.",
-        "updated_at": "2026-11-01T10:34:09.749955+00:00",
+        "updated_at": "2026-11-01T14:15:54.100171+00:00",
         "wait": null,
         "worktree": null
       },
@@ -612,7 +614,7 @@
         "brief": "The Engines rows at 393 clip the readiness word.",
         "budget_tokens": null,
         "check": {
-          "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
+          "command": "sh /Users/karol/dev/tools/wt-j5/tests/fixtures/fake_program_check.sh",
           "commit": null,
           "log": null,
           "minutes": null,
@@ -668,11 +670,11 @@
           "review_depth": "delta"
         },
         "handoffs": [],
-        "held_reason": "planning for tonight",
+        "held_reason": "sleeps until 23:30",
         "history": null,
-        "id": "step-242961ad5754",
+        "id": "step-401caa4ac6b5",
         "last_checkpoint": {
-          "at": "2026-11-01T10:34:09.678398+00:00",
+          "at": "2026-11-01T14:15:54.014301+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -686,7 +688,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-242961ad5754",
+          "step_id": "step-401caa4ac6b5",
           "undo": {
             "pin": {
               "note": "No worktree to pin yet"
@@ -697,7 +699,7 @@
         "limit": null,
         "may_call": false,
         "ordinal": 3,
-        "origin_ref": "action:ai_b1276c06e397479791bfdfb44acbf029",
+        "origin_ref": "action:ai_ed2a14a6599a4002ab6e4634fc3c272b",
         "owns": [],
         "parked_by": null,
         "parked_reason": null,
@@ -725,7 +727,7 @@
         ],
         "started_at": null,
         "state": "ready",
-        "state_word": "Ready · planning for tonight",
+        "state_word": "Ready · sleeps until 23:30",
         "station": -1,
         "stations": [
           "brief",
@@ -737,12 +739,13 @@
         ],
         "story": [
           {
-            "at": "2026-11-01T10:34:09.678398+00:00",
+            "at": "2026-11-01T14:15:54.014301+00:00",
             "line": "Added to tonight: step 3 · The Engines rows at 393 clip the readiness word."
           }
         ],
+        "taken": false,
         "title": "The Engines rows at 393 clip the readiness word.",
-        "updated_at": "2026-11-01T10:34:09.750449+00:00",
+        "updated_at": "2026-11-01T14:15:54.101431+00:00",
         "wait": null,
         "worktree": null
       },
@@ -754,7 +757,7 @@
         "brief": "The Notes toolbar wraps at 520.",
         "budget_tokens": null,
         "check": {
-          "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
+          "command": "sh /Users/karol/dev/tools/wt-j5/tests/fixtures/fake_program_check.sh",
           "commit": null,
           "log": null,
           "minutes": null,
@@ -812,9 +815,9 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-2b073828d8c5",
+        "id": "step-457fd9d100ed",
         "last_checkpoint": {
-          "at": "2026-11-01T10:34:09.770107+00:00",
+          "at": "2026-11-01T14:15:54.127355+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -828,7 +831,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-2b073828d8c5",
+          "step_id": "step-457fd9d100ed",
           "undo": {
             "pin": {
               "note": "No worktree to pin yet"
@@ -839,7 +842,7 @@
         "limit": null,
         "may_call": false,
         "ordinal": 4,
-        "origin_ref": "action:ai_79f26123401b49f3b9af3c4ae700e865",
+        "origin_ref": "action:ai_dbc0d075fa2046b59b9ed55814440c84",
         "owns": [],
         "parked_by": null,
         "parked_reason": null,
@@ -879,12 +882,13 @@
         ],
         "story": [
           {
-            "at": "2026-11-01T10:34:09.770107+00:00",
+            "at": "2026-11-01T14:15:54.127355+00:00",
             "line": "Added to tonight: step 4 · The Notes toolbar wraps at 520."
           }
         ],
+        "taken": false,
         "title": "The Notes toolbar wraps at 520.",
-        "updated_at": "2026-11-01T10:34:09.769814+00:00",
+        "updated_at": "2026-11-01T14:15:54.127169+00:00",
         "wait": null,
         "worktree": null
       }
@@ -914,7 +918,7 @@
         "title": "The Notes toolbar wraps at 520."
       }
     ],
-    "updated_at": "2026-11-01T10:34:09.770369+00:00",
+    "updated_at": "2026-11-01T14:15:54.127495+00:00",
     "usage_warning_share": null,
     "within": [
       "web/src/desk/",
@@ -924,7 +928,7 @@
     "your_turn": 0,
     "your_turn_items": []
   },
-  "program_id": "program-366c10d3689d",
+  "program_id": "program-ac21a3107eca",
   "say": "Added to tonight: step 4 · The Notes toolbar wraps at 520.",
-  "step_id": "step-2b073828d8c5"
+  "step_id": "step-457fd9d100ed"
 }

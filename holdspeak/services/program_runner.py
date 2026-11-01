@@ -1561,6 +1561,16 @@ class ProgramRunner:
         if not outcome.to_owner:
             self.service.engine_decision(program, step, "step_failed", outcome,
                                          f"Parked step {step['ordinal']} and carried on: {reason}")
+        from .program_service import race_all_red, race_group
+
+        group = race_group(self.service.store.list_steps(program["id"]), step)
+        if race_all_red(group):
+            # J5: the race fails as one step, with every contender's log.
+            logs = "; ".join(f"{agent_label(row.get('profile'))}: {row.get('check_log') or 'no log'}" for row in group)
+            parent = next(row for row in group if not row.get("race_of"))
+            self.service._checkpoint(program, parent, "engine",
+                                     "Both contenders are red after their rounds" if len(group) == 2
+                                     else "Every contender is red after its rounds", detail=logs)
         self.service.reach_phone(
             program, step, "step_red",
             f"{program['title']}, step {step['ordinal']} is red after its rounds: {reason}. "
@@ -1929,7 +1939,13 @@ class ProgramRunner:
         if outcome.to_owner:
             self.service._checkpoint(program, step, "owner", f"Picked {winner} as the winner")
         else:
-            self.service.engine_decision(program, step, "race_winner", outcome, f"{winner} won the race in {took}")
+            # J5: "Codex won the race · 34 min" (the rule rides on the row).
+            self.service.engine_decision(program, step, "race_winner", outcome,
+                                         f"{winner} won the race · {took}" if took else f"{winner} won the race")
+        facts = dict(step.get("facts") or {})
+        facts["race_won"] = {"by": winner, "took": took or None}
+        step["facts"] = facts
+        self.service.save_step(step)
         return True
 
     @staticmethod
