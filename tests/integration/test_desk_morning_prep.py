@@ -237,7 +237,7 @@ def test_a_morning_prep_that_prepared_nothing_is_recorded_for_todays_line(
     from tests.unit.test_desk_speak import _record
 
     pin_wire_day(hub, monkeypatch)
-    seed(hub, monday=WIRE_DAY, engine=True)
+    seeded = seed(hub, monday=WIRE_DAY, engine=True)
     _connect_claude(hub)
     assert ensure_morning_prep(hub.db) == MORNING_PREP_ID
     set_tool_plan(hub.bin_dir, "claude", [{"name": "desk.needs_you", "arguments": {}}], once=True)  # type: ignore[attr-defined]
@@ -252,5 +252,9 @@ def test_a_morning_prep_that_prepared_nothing_is_recorded_for_todays_line(
         "/api/automations/new": _ok(hub.client.get("/api/automations/new")),
         "/api/automations/prepared": after,
     }
-    _record("today-prepared-nothing", {"recordedAt": datetime.now().astimezone().isoformat(), "gets": reads},
-            Path(hub.db.db_path).parent, "tests/integration/test_desk_morning_prep.py", folder=WIRES)
+    text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(), "gets": reads})
+    text = text.replace(seeded["project"], "proj-daily-week")  # the seed's ids, fixed (as the run above)
+    for name in ("Mira", "Theo", "Jun"):
+        text = text.replace(seeded[name], f"rel-{name.lower()}")
+    _record("today-prepared-nothing", json.loads(text), Path(hub.db.db_path).parent,
+            "tests/integration/test_desk_morning_prep.py", folder=WIRES)
