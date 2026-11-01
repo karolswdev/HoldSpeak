@@ -140,7 +140,10 @@ const EXPECTED = [
 
 async function renderDrawer() {
   const view = render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
-  await screen.findByRole("button", { name: /^Jordan Patel, Person/ });
+  // The drawer's first read lands past the default 1 s when the quick check
+  // runs this file beside 140 others on a loaded machine (2026-11-01, load 30
+  // to 50); alone it lands at once.
+  await screen.findByRole("button", { name: /^Jordan Patel, Person/ }, { timeout: 10_000 });
   return view;
 }
 

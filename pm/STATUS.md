@@ -4,7 +4,9 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-11-01. `settings.app.test.tsx` runs with a 20 s budget per test (`vi.setConfig`): its long walks passed 5 s in every quick check of the day at load 30 to 50 and blocked unrelated merges; alone they take well under 1 s.
+**Last updated:** 2026-11-01. `drawer.test.tsx` waits up to 10 s for the drawer's first read (`renderDrawer`): W3-B missed the default 1 s under the quick check's load and blocked unrelated merges.
+
+**Before it:** 2026-11-01. `settings.app.test.tsx` runs with a 20 s budget per test (`vi.setConfig`): its long walks passed 5 s in every quick check of the day at load 30 to 50 and blocked unrelated merges; alone they take well under 1 s.
 
 
 **Before it:** 2026-11-01. The Dreaming backlog's third source, the canon (`holdspeak/services/program_canon.py`): a night with no "dream" task still has work. At the window's start, after the Door's own items and only while the night has room, the night Program's own repository is read by rule (no model): the desk sweep's `KNOWN_REDS` (`tests/e2e/test_desk_sweep.py`, its syntax read, never run; on main today 8 named reds) and the UX-canon scanner's findings (`scripts/ux_canon_scan.py --json`, run through the engine's process site; 132 on main today, the faces with the most first). Each becomes a Door task ("Fix the desk sweep's known red (desk at 1440): …", "Fix the UX-canon finding (A8) in web/src/…:969: …"; `source_type canon`, `source_ref canon:<key>`) the night then takes like any backlog task: at most 5 a night, inside `within`, never the same item while its task is open (a done item may come back if it is still in the canon). Test `tests/unit/test_program_night_canon.py` (3).
