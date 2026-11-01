@@ -2328,3 +2328,15 @@ describe("PG-IMPORT IMP2: the to-do row and the ending word (recorded: scripts/r
     expect(stepRow(cut.ordinal).textContent).toContain("Parked · interrupted");
   });
 });
+
+describe("PG-IMPORT IMP3: what a step waits on (recorded: scripts/record_program_fixtures.py)", () => {
+  it("a step after one that ended says so on its row, in the hub's words", async () => {
+    const todo = todoFixture as unknown as Program;
+    hub({ [`GET /api/programs/${todo.id}`]: todo });
+    render(<ProgramBody programId={todo.id} />);
+    await screen.findByTestId("programs-board");
+    const waiting = todo.steps.find((step) => step.wait?.cause === "target_ended")!;
+    expect(waiting.wait!.line).toBe(`Step ${waiting.ordinal} with Claude Code is waiting on something that has ended.`);
+    expect(stepRow(waiting.ordinal).textContent).toContain(waiting.wait!.line);
+  });
+});

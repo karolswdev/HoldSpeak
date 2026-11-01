@@ -529,3 +529,41 @@ describe("PG18: the Programs line on Today", () => {
     expect(screen.queryByTestId("today-done")).toBeNull();
   });
 });
+
+// PG-IMPORT IMP3: "Since you were last here" (recorded by
+// tests/unit/test_desk_today.py over the Programs rig: he was last here two
+// hours ago; one Program merged a step and decided one for him since).
+describe("PG-IMPORT IMP3: Since you were last here", () => {
+  const recorded = (sinceMorningPrograms as Record<string, unknown>)["/api/today/since-morning"] as {
+    since_last_here: { lines: { program_id: string; title: string; line: string }[] };
+  };
+  const day = (answer: unknown) => hub({
+    "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+    "/api/meetings?limit=40": () => json({ meetings: [] }),
+    "/api/desk/needs-you": () => json({ items: [] }),
+    "/api/today/since-morning": () => json(answer),
+  });
+
+  it("one row per Program, each opening it; no honest line when the read was whole", async () => {
+    vi.setSystemTime(new Date(2026, 10, 1, 9, 0, 0));
+    day(recorded);
+    const openPullout = vi.fn();
+    useDesk.setState({ openPullout } as never);
+    render(<TodayView />);
+    const block = await screen.findByTestId("today-since-last");
+    const rows = within(block).getAllByTestId("today-since-last-row");
+    expect(rows.map((row) => row.textContent)).toEqual(recorded.since_last_here.lines.map((row) => `${row.title}${row.line}`));
+    expect(within(block).queryByTestId("today-since-last-partial")).toBeNull();
+    expect(within(block).queryByTestId("today-since-last-capped")).toBeNull();
+    fireEvent.click(rows[0]);
+    expect(openPullout).toHaveBeenCalledWith(`program:${recorded.since_last_here.lines[0].program_id}`);
+  });
+
+  it("nothing happened: no section", async () => {
+    vi.setSystemTime(new Date(2026, 10, 1, 9, 0, 0));
+    day({ ...recorded, since_last_here: null });
+    render(<TodayView />);
+    await screen.findByTestId("today-body");
+    await waitFor(() => expect(screen.queryByTestId("today-since-last")).toBeNull());
+  });
+});

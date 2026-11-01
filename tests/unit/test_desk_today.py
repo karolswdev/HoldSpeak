@@ -156,9 +156,18 @@ def _programs_day(tmp_path: Path) -> tuple[Any, Any]:
 
 
 def test_since_morning_counts_the_programs_that_moved_today(tmp_path: Path) -> None:
+    from holdspeak.services import last_here
+
     rig, client = _programs_day(tmp_path)
+    # PG-IMPORT IMP3: he was last here two hours ago (a visit, then this one).
+    now = datetime.now(timezone.utc)
+    last_here.touch(rig.db, (now - timedelta(hours=2)).isoformat())
+    last_here.touch(rig.db, now.isoformat())
     body = _ok(client.get("/api/today/since-morning"))
     assert body["programs"] == {"moved": 2, "running": 1, "waiting": 1, "done": 0, "merged": 1}, body["programs"]
+    since = body["since_last_here"]
+    assert {row["title"] for row in since["lines"]} >= {"The hub stops stalling"}, since
+    assert not since["partial"] and not since["capped"]
     _record("since-morning.programs", {"/api/today/since-morning": body}, tmp_path,
             "tests/unit/test_desk_today.py (the Programs rig)", folder=TODAY_FIXTURES)
     # Tomorrow nothing moved: the block says so with moved 0.

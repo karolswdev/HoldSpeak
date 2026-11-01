@@ -306,7 +306,9 @@ def record_todo(root: Path) -> dict[str, Any]:
     client = _client(rig)
     pid = _create(rig, "Atlas at 393", template="fast-cycle", control="normal")
     rig.service.plan(OWNER, pid, steps=[{"title": "Atlas anchors", "brief": "Cite each anchor once."},
-                                        {"title": "Atlas index", "brief": "Index the anchors."}])
+                                        {"title": "Atlas index", "brief": "Index the anchors."},
+                                        # PG-IMPORT IMP3: waits on step 2, which the cut-off ends.
+                                        {"title": "Atlas links", "brief": "Link the index.", "after": [2]}])
     step = rig.step(pid, 1)
     rig.service.require(OWNER, pid, text="The atlas reads well at 393", kind="word", step_id=step["id"],
                         spec={"walk": ["Open the atlas at 393", "Read the first section"]})
@@ -613,6 +615,7 @@ def _check(fixtures: dict[str, Any]) -> None:
     todo = fixtures["program.todo.json"]
     assert "todo" in [row["kind"] for row in todo["your_turn_items"]], todo["your_turn_items"]
     assert any(step["ending"] == "interrupted" for step in todo["steps"]), [s["ending"] for s in todo["steps"]]
+    assert any((step.get("wait") or {}).get("cause") == "target_ended" for step in todo["steps"]), todo["steps"]
     assert fixtures["program.parked.json"]["state"] == "parked"
     assert fixtures["program.drafting.json"]["state"] == "drafting"
     assert fixtures["needs_you.program.json"]["items"]

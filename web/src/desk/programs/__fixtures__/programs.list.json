@@ -9,13 +9,13 @@
     {
       "asks": 0,
       "control": "secure",
-      "created_at": "2026-11-01T09:08:12.733090+00:00",
+      "created_at": "2026-11-01T09:55:28.567292+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-e098a7f5d6ef",
-      "in_state_seconds": 3,
+      "id": "program-2164947cee52",
+      "in_state_seconds": 7,
       "last_checkpoint": {
-        "at": "2026-11-01T09:08:16.377008+00:00",
+        "at": "2026-11-01T09:55:35.407691+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -26,27 +26,27 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-7fac4f940f1d/8",
-        "ref_commit": "5f3665576a9a42bfb37faf9006e94ae700f350bb",
+        "ref": "refs/holdspeak/checkpoints/step-62257dc58edc/8",
+        "ref_commit": "27f04c85e28649ed095b2c2183fdad02b34a1ecf",
         "rule": null,
-        "step_id": "step-7fac4f940f1d",
+        "step_id": "step-62257dc58edc",
         "undo": {
           "pin": {
-            "commit": "5f3665576a9a42bfb37faf9006e94ae700f350bb",
-            "head": "ef0af16f13060923b889255f76786df48474d317",
+            "commit": "27f04c85e28649ed095b2c2183fdad02b34a1ecf",
+            "head": "2ea961d689411caf5144f6ba1e54cfe382557dfd",
             "n": 8,
-            "ref": "refs/holdspeak/checkpoints/step-7fac4f940f1d/8",
-            "tree": "11a26b5d95a204d589e731dabb1c587db761e8be"
+            "ref": "refs/holdspeak/checkpoints/step-62257dc58edc/8",
+            "tree": "ed227a17c8bb4e86b2a7d95778c4139caf0d4349"
           },
           "seen": {
             "check": "green",
-            "checked": "c4a5afa7df3151e8f4ff614637c12db3e4eda2f5",
-            "commit": "c4a5afa7df3151e8f4ff614637c12db3e4eda2f5",
+            "checked": "37cfbd5fcdea57e18ae4c32727598bdcaccadeee",
+            "commit": "37cfbd5fcdea57e18ae4c32727598bdcaccadeee",
             "state": "findings"
           }
         }
       },
-      "line": "Step 1 of 3 waits on you since 04:08",
+      "line": "Step 1 of 3 waits on you since 04:55",
       "persons": [],
       "project": {
         "id": "proj-holdspeak",
@@ -83,42 +83,42 @@
           "title": "Door words"
         }
       ],
-      "updated_at": "2026-11-01T09:08:15.334637+00:00",
+      "updated_at": "2026-11-01T09:55:33.322401+00:00",
       "your_turn": 4
     },
     {
       "asks": 1,
       "control": "yolo",
-      "created_at": "2026-11-01T09:08:08.802370+00:00",
+      "created_at": "2026-11-01T09:55:23.524109+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-aff6508021c2",
-      "in_state_seconds": 6,
+      "id": "program-509ffa65d6b4",
+      "in_state_seconds": 12,
       "last_checkpoint": {
-        "at": "2026-11-01T09:08:15.417613+00:00",
+        "at": "2026-11-01T09:55:33.419611+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 45,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-7a9522622f0a",
+        "line": "Handed to Claude Code in hs-program-step-26177defe835",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-7a9522622f0a/1",
-        "ref_commit": "6b535fb0fc44b9dedc94fdc6f8bb9bce6510c2c9",
+        "ref": "refs/holdspeak/checkpoints/step-26177defe835/1",
+        "ref_commit": "ada5aca4ec8bb7f6d57d2d24e4585f875a4444de",
         "rule": null,
-        "step_id": "step-7a9522622f0a",
+        "step_id": "step-26177defe835",
         "undo": {
           "pin": {
-            "commit": "6b535fb0fc44b9dedc94fdc6f8bb9bce6510c2c9",
-            "head": "919c9098ec7160b1fcf81083d6dc4f8d4c8a23b9",
+            "commit": "ada5aca4ec8bb7f6d57d2d24e4585f875a4444de",
+            "head": "e1dea20c0196b90bf8569ecb80bc66657b6c2e03",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-7a9522622f0a/1",
+            "ref": "refs/holdspeak/checkpoints/step-26177defe835/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -126,7 +126,7 @@
           }
         }
       },
-      "line": "Step 4 of 7 waits on you since 04:08",
+      "line": "Step 4 of 7 waits on you since 04:55",
       "persons": [
         {
           "id": "p-alice",
@@ -181,19 +181,19 @@
           "title": "Write the docs"
         }
       ],
-      "updated_at": "2026-11-01T09:08:12.594064+00:00",
+      "updated_at": "2026-11-01T09:55:28.365363+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T09:08:19.124319+00:00",
+      "created_at": "2026-11-01T09:55:41.149984+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-bf02e2ba2187",
+      "id": "program-0defa33b178e",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T09:08:19.126417+00:00",
+        "at": "2026-11-01T09:55:41.156932+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -242,22 +242,22 @@
           "title": "The calls window"
         }
       ],
-      "updated_at": "2026-11-01T09:08:19.126459+00:00",
+      "updated_at": "2026-11-01T09:55:41.157024+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T09:08:16.511150+00:00",
+      "created_at": "2026-11-01T09:55:35.644937+00:00",
       "done": 1,
       "done_in": "under a minute",
       "finished": "finished",
       "finished_words": "finished",
       "for_person": null,
-      "id": "program-67276fb2ab3a",
-      "in_state_seconds": 1,
+      "id": "program-3a30af63bb48",
+      "in_state_seconds": 2,
       "last_checkpoint": {
-        "at": "2026-11-01T09:08:17.804307+00:00",
+        "at": "2026-11-01T09:55:38.593028+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -294,19 +294,19 @@
           "title": "Atlas anchors"
         }
       ],
-      "updated_at": "2026-11-01T09:08:17.804258+00:00",
+      "updated_at": "2026-11-01T09:55:38.592970+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T09:08:19.120748+00:00",
+      "created_at": "2026-11-01T09:55:41.142610+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-1151d73f596e",
+      "id": "program-c7d1500de70b",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T09:08:19.123190+00:00",
+        "at": "2026-11-01T09:55:41.146778+00:00",
         "by": "owner",
         "choice": "proof",
         "decision_record_id": null,
@@ -341,19 +341,19 @@
           "title": "Add a line to the README"
         }
       ],
-      "updated_at": "2026-11-01T09:08:19.123140+00:00",
+      "updated_at": "2026-11-01T09:55:41.146715+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-01T09:08:19.117094+00:00",
+      "created_at": "2026-11-01T09:55:41.132803+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-077cd42cd0f1",
+      "id": "program-dd8434099de2",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T09:08:19.119587+00:00",
+        "at": "2026-11-01T09:55:41.140247+00:00",
         "by": "owner",
         "choice": "proof",
         "decision_record_id": null,
@@ -388,19 +388,19 @@
           "title": "Add a line to the README"
         }
       ],
-      "updated_at": "2026-11-01T09:08:19.119524+00:00",
+      "updated_at": "2026-11-01T09:55:41.140172+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T09:08:17.809942+00:00",
+      "created_at": "2026-11-01T09:55:38.599628+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-a43621b5c7f3",
+      "id": "program-1c2132d0a0ef",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T09:08:19.114464+00:00",
+        "at": "2026-11-01T09:55:41.125197+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -440,7 +440,7 @@
           "title": "Tidy"
         }
       ],
-      "updated_at": "2026-11-01T09:08:19.114383+00:00",
+      "updated_at": "2026-11-01T09:55:41.125101+00:00",
       "your_turn": 0
     }
   ],

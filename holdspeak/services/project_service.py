@@ -1326,7 +1326,12 @@ class ProjectService:
                     days = None
                     try:
                         opened_dt = datetime.fromisoformat(opened.replace("Z", "+00:00"))
-                        days = max(0, (now.replace(tzinfo=None) - opened_dt.astimezone().replace(tzinfo=None)).days)
+                        if opened_dt.tzinfo is None:
+                            opened_dt = opened_dt.astimezone()
+                        # Elapsed time on aware instants: the naive wall clocks
+                        # lost an hour on the day the clocks went back (2 D read 1 D).
+                        current = now if now.tzinfo else now.astimezone()
+                        days = max(0, (current - opened_dt).days)
                     except (ValueError, TypeError):
                         pass
                     needs.append({

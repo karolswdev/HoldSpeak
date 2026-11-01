@@ -14,6 +14,7 @@ import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../shell";
 import { programsTodayLine, type ProgramsSinceMorning } from "../../programs/lamp";
 import { useProgramFrames } from "../../programs/api";
+import { openProgram } from "../../programs/open";
 import { openSourceRef } from "../../surface/citations";
 import { calendarOpener, openDecisionRecord, openRef } from "../../openObject";
 import { useDesk } from "../../store";
@@ -154,7 +155,14 @@ function writeDaySaid(key: string): void {
 export const EVENING_HOUR = 17;
 export const EVENING_SAID_KEY = "holdspeak.today.eveningSaid";
 export type DoneRow = { kind: string; ref: string; title: string; word: string; at: string };
-type DoneRead = { since?: string; items?: DoneRow[]; programs?: ProgramsSinceMorning | null };
+/** PG-IMPORT IMP3: what the Programs did while he was away (the hub's
+ *  `since_last_here`; null when nothing happened). */
+export type SinceLastHere = {
+  since: string;
+  lines: { program_id: string; title: string; line: string; at: string }[];
+  partial?: boolean; capped?: boolean; partial_words?: string; capped_words?: string;
+};
+type DoneRead = { since?: string; items?: DoneRow[]; programs?: ProgramsSinceMorning | null; since_last_here?: SinceLastHere | null };
 function readEveningSaid(): string | null {
   try { return window.localStorage.getItem(EVENING_SAID_KEY); } catch { return null; }
 }
@@ -181,6 +189,28 @@ function ProgramsLine({ words }: { words: string }) {
       <img src={`${GLYPHS}program.png`} alt="" width={20} height={20} draggable={false} />
       <span className="today-done-title">{words}</span>
     </Button>
+  );
+}
+
+/** PG-IMPORT IMP3 (BroCrew's "Since you were last here"): one line per
+ *  Program, each opening it, and the honest lines when the read was not
+ *  whole. Nothing happened: nothing is drawn (no zero section). */
+export function SinceLastHereBlock({ read }: { read: SinceLastHere | null }) {
+  if (!read || (!read.lines.length && !read.partial)) return null;
+  return (
+    <section className="today-since-last" data-testid="today-since-last" aria-label="Since you were last here">
+      <p className="today-since-last-head">Since you were last here</p>
+      {read.lines.map((row) => (
+        <Button key={row.program_id} variant="chrome" className="today-done-row" data-kind="program"
+          data-testid="today-since-last-row" onClick={() => openProgram(row.program_id)}>
+          <img src={`${GLYPHS}program.png`} alt="" width={20} height={20} draggable={false} />
+          <span className="today-done-title">{row.title}</span>
+          <span className="today-done-word">{row.line}</span>
+        </Button>
+      ))}
+      {read.partial_words ? <p className="today-since-last-honest" data-testid="today-since-last-partial">{read.partial_words}</p> : null}
+      {read.capped_words ? <p className="today-since-last-honest" data-testid="today-since-last-capped">{read.capped_words}</p> : null}
+    </section>
   );
 }
 
@@ -425,11 +455,13 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const eveningRef = useRef(evening);
   eveningRef.current = evening;
   const [done, setDone] = useState<{ rows: DoneRow[]; failed: boolean } | null>(null);
+  const [sinceLast, setSinceLast] = useState<SinceLastHere | null>(null);
   const readSince = useCallback(async () => {
     const doneRead = await apiFetch<DoneRead>("/api/today/since-morning")
       .then((v) => ({ ok: true as const, v }), () => ({ ok: false as const }));
     // A failed read keeps the last Programs line (never invents none).
     if (doneRead.ok) setProgramsBlock(doneRead.v?.programs ?? null);
+    if (doneRead.ok) setSinceLast(doneRead.v?.since_last_here ?? null);
     if (eveningRef.current) {
       // A read that fails says so; one that answers keeps the hub's order (newest first).
       setDone((current) => doneRead.ok ? { rows: doneRead.v?.items ?? [], failed: false }
@@ -845,6 +877,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           {actError?.key === "prepare" ? <span role="status"><DotWord tone="fail">{actError.text}</DotWord></span> : null}
         </Toolbar>
         <div className="today-scroll">
+          <SinceLastHereBlock read={sinceLast} />
           {evening && done ? (
             <SinceThisMorning rows={done.rows} failed={done.failed} open={sinceShown} now={now} programs={programsToday} phone={phoneToday}
               onToggle={() => setSinceOpen(!sinceShown)} onRetry={retry} />

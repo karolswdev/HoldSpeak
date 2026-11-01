@@ -437,6 +437,12 @@ class ReachService:
                         "returned": bool(back) or None}))
                 except ServiceError as exc:
                     log.info(f"reach: {ref} not sent to Telegram: {exc.code}")
+                    # PG-IMPORT IMP3: the step says the message did not arrive.
+                    try:
+                        self.programs().notice_lost(str(item.get("program_id") or ""), str(item.get("step_id") or ""),
+                                                    "Telegram")
+                    except Exception as lost:
+                        log.debug(f"reach: notice_lost not written: {lost}")
         done["settled"] = telegram.settle_gone(set(items))
         # JRN4: the night's line is the morning's one message at the digest
         # hour; when it goes, the plain digest of that day does not.
