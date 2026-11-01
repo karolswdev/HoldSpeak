@@ -6,6 +6,12 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// The quick check runs this file beside 140 others on a loaded machine; its
+// longest walks (the heartbeat's quiet hours, the secret replacement) then
+// pass 5 s, while alone they take well under 1 s. 2026-11-01: they timed out
+// in every quick check of the day at load 30 to 50.
+vi.setConfig({ testTimeout: 20_000 });
 import { SettingsCore } from "../../pages/cores/SettingsCore";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import connectionsWire from "./fixtures/connections-wire/connections-cold.json";
