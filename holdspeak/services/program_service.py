@@ -35,6 +35,7 @@ from typing import Any, Callable, Iterable, Mapping, Optional
 from ..db.programs import ProgramStore
 from ..logging_config import get_logger
 from ..timestamps import local_now, utc_now_iso
+from .brief_words import REPORT_STATES, step_report
 from .errors import NotFound, ServiceError
 from .program_rules import LEVEL_WORDS, level_word
 
@@ -79,6 +80,8 @@ STEP_TRANSITIONS: dict[str, frozenset[str]] = {
 ACTIVE_STATES = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings"})
 #: Finished: its dependents may run.
 FINISHED_STATES = frozenset({"merged", "done"})
+#: PG-IMPORT IMP1: the achromatic mark of a Done Program.
+FINISHED_WORDS = {"finished": "finished", "needs_decision": "finished · needs a decision"}
 #: Nothing more happens to it unless he says so.
 CLOSED_STATES = frozenset({"merged", "done", "parked"})
 
@@ -655,6 +658,20 @@ def limit_words(limit: Optional[Mapping[str, Any]]) -> str:
     return f"{head} · waits for the reset"
 
 
+def seen_of(step: Optional[Mapping[str, Any]]) -> Optional[dict[str, Any]]:
+    """PG-IMPORT IMP1: what the engine sees on a step as it writes a
+    checkpoint (the head commit when it moved off the base, the checked
+    commit and its verdict, the PR number, the state). The step report's
+    Checked lines cite the checkpoint that saw each fact."""
+    if not step or not step.get("id"):
+        return None
+    head = step.get("head_commit")
+    base = (step.get("facts") or {}).get("base_commit")
+    seen = {"commit": head if head and head != base else None, "checked": step.get("checked_commit"),
+            "check": step.get("check_verdict"), "pr": step.get("pr_number"), "state": step.get("state")}
+    return {key: value for key, value in seen.items() if value not in (None, "")}
+
+
 def program_state(program: Mapping[str, Any], steps: list[Mapping[str, Any]],
                   requirements: Optional[Iterable[Mapping[str, Any]]] = None,
                   proposals: Optional[Iterable[Mapping[str, Any]]] = None) -> str:
@@ -1072,6 +1089,17 @@ class ProgramService:
         if history:
             summary["history"] = history
         if state == "done":
+            # PG-IMPORT IMP1 (BroCrew's second mark): finished and needs
+            # nothing, or finished and raised a decision (a delivery row, a
+            # finding or a proposed step nobody decided). Never the Your
+            # turn lamp: the work is not frozen.
+            needs = bool(turn) or any(
+                (not finding.get("decision") and finding.get("to_owner", True))
+                for step in steps for finding in step.get("findings") or []) or any(
+                not proposal.get("decision") for step in steps
+                for proposal in (step.get("facts") or {}).get("proposed_steps") or [])
+            summary["finished"] = "needs_decision" if needs else "finished"
+            summary["finished_words"] = FINISHED_WORDS[summary["finished"]]
             ended = max((str(step.get("ended_at") or "") for step in steps), default="") or program["updated_at"]
             began = min(str(program["created_at"]), history["first"]) if history else program["created_at"]
             summary["done_in"] = duration_words(_seconds_between(began, ended))
@@ -1205,7 +1233,11 @@ class ProgramService:
             "parked_reason": step.get("parked_reason"), "parked_by": step.get("parked_by"),
             "origin_ref": step.get("origin_ref"), "for_person_id": step.get("for_person_id"),
             "for_person": self.person_name(step.get("for_person_id")) or None,
-            "report": step.get("report"), "last_checkpoint": last,
+            # PG-IMPORT IMP1: the report in registers (Checked, The agent
+            # says, Not checked, Files); the agent's own text is report_text.
+            "report": step_report(step, checkpoints, requirements if requirements is not None
+                                  else self.requirements(program["id"])),
+            "report_text": step.get("report"), "last_checkpoint": last,
             "started_at": step.get("started_at"), "ended_at": step.get("ended_at"),
             "updated_at": step.get("updated_at"),
             "elapsed_seconds": _seconds_between(step.get("started_at"), step.get("ended_at")),
@@ -2581,6 +2613,9 @@ class ProgramService:
         operation_id = self._kernel_record(program, step, line) if kernel and by == "engine" else None
         ids = [str(rid) for rid in requirement_ids]
         undo: dict[str, Any] = {"requirement_id": ids[0]} if len(ids) == 1 else {"requirement_ids": ids}
+        seen = seen_of(step) if by == "engine" else None
+        if seen:
+            undo["seen"] = seen
         line, via = _via_line(by, line[:400])
         self.store.add_checkpoint(step_id=str((step or {}).get("id") or ""), program_id=program["id"], at=self._clock(),
                                   by=by, line=line, operation_id=operation_id, kind="requirement", undo=undo, via=via)
@@ -3941,6 +3976,9 @@ class ProgramService:
             pin = self.pin(step, line)
             if pin:
                 undo["pin"] = pin
+        seen = seen_of(step)
+        if seen:
+            undo.setdefault("seen", seen)
         ident = self.store.add_checkpoint(
             step_id=str((step or {}).get("id") or ""), program_id=program["id"], at=at, by="engine", line=line,
             operation_id=operation_id, kind=kind, choice=getattr(outcome, "choice", None),
@@ -4209,6 +4247,8 @@ class ProgramService:
         step.update(fields)
         now = self._clock()
         step["state"] = to
+        if to in REPORT_STATES and to != current:
+            self._report_files(program, step)
         if to != "ready":
             step["held_reason"] = None if to != current else step.get("held_reason")
         if to == "briefed" and not step.get("started_at"):
@@ -4227,6 +4267,24 @@ class ProgramService:
         if line:
             self._checkpoint(program, step, by, line, detail=detail)
         return step
+
+    def _report_files(self, program: Mapping[str, Any], step: dict[str, Any]) -> None:
+        """PG-IMPORT IMP1: the step's diff file names against its base, read
+        once as it reaches Done, Merged, Parked or Failed (``facts.files``).
+        A git failure leaves the register empty, never stops the move."""
+        facts = step.get("facts") or {}
+        head = step.get("head_commit")
+        if not head or not facts.get("base_commit") or (facts.get("files") or {}).get("commit") == head:
+            return
+        try:
+            reader = getattr(self.runner(), "step_files", None)
+            names = list(reader(program, step) or []) if reader else None
+        except Exception as exc:
+            log.debug(f"step files not read: {exc}")
+            names = None
+        if names is None:
+            return
+        step["facts"] = {**facts, "files": {"commit": head, "names": names[:50], "count": len(names)}}
 
     def _close_history(self, program: Mapping[str, Any]) -> None:
         """PG17: the Program closed; its imported steps go Merged → Done (the
@@ -4258,6 +4316,9 @@ class ProgramService:
         undo: dict[str, Any] = {"decision_record_id": decision_record_id} if decision_record_id else {}
         if detail:
             undo["detail"] = str(detail)  # the raw words behind the line (the evidence fold), never the line
+        seen = seen_of(step) if by == "engine" else None
+        if seen:
+            undo["seen"] = seen
         pin = self.pin(step, line)
         if pin:
             undo["pin"] = pin

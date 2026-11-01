@@ -54,6 +54,7 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
   const stations: TrackStation[] = (row.track ?? []).map((dot) => ({
     key: String(dot.ordinal), word: `${dot.ordinal} ${dot.title}`, mark: dot.mark, ...MARK_STATION[dot.mark],
   }));
+  const finished = row.state === "done" ? row.finished_words : undefined;
   return (
     <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}>
       <Button variant="chrome" className="pg-row-main" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`}
@@ -64,6 +65,9 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
       <span className="pg-row-state">
         <DotWord tone={tone} live={row.state === "waiting" || row.state === "running"} className="pg-row-say"
           title={row.state_word} data-testid="programs-row-state">{line}</DotWord>
+        {/* PG-IMPORT IMP1: a Done program's second mark, achromatic (never
+            the Your turn lamp). */}
+        {finished ? <span className="pg-finished" data-finished={row.finished} data-testid="programs-row-finished">{finished}</span> : null}
       </span>
       <span className="pg-row-track">{stations.length ? <StationTrack stations={stations} label={`${row.done} of ${row.total} done`} /> : null}</span>
       <span className="pg-row-met" data-testid="programs-row-met" data-all={met?.all ? "" : undefined} title={met?.title}>

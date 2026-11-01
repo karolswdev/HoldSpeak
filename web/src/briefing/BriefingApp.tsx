@@ -137,8 +137,8 @@ function Panes({ token, item }: { token: string; item: BriefingItem }) {
           {body?.kind === "rows" ? (
             <>
               <dl className="briefing-facts">
-                {body.rows.map((row) => (
-                  <div key={row.label} className="briefing-fact">
+                {body.rows.map((row, index) => (
+                  <div key={`${row.label}-${index}`} className="briefing-fact">
                     <dt>{row.label}</dt>
                     <dd>{row.value}</dd>
                   </div>

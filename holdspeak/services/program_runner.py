@@ -237,6 +237,28 @@ class ProgramRunner:
             return ""
         return str(proc.stdout or "").strip() if proc.returncode == 0 else ""
 
+    def step_files(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> Optional[list[str]]:
+        """PG-IMPORT IMP1: the file names the step's commits changed (its base
+        to its head), for the report's Files register; ``None`` when git
+        cannot say."""
+        base = (step.get("facts") or {}).get("base_commit")
+        head = step.get("head_commit")
+        cwd = str(step.get("worktree") or "")
+        if not cwd or not Path(cwd).is_dir():
+            cwd = str(program.get("repo_root") or "")
+        if not (base and head and cwd):
+            return None
+        try:
+            proc = self._run(["git", "-C", cwd, "diff", "--name-only", str(base), str(head)], cwd=cwd)
+        except Exception as exc:
+            log.debug(f"git diff failed: {exc}")
+            return None
+        if proc.returncode != 0:
+            return None
+        # The engine's own check logs are not the agent's change.
+        return [line.strip() for line in str(proc.stdout or "").splitlines()
+                if line.strip() and not line.strip().startswith(".tmp/program-check/")]
+
     # ── PG20: a checkpoint pins the worktree to a hidden ref ─────────
 
     def pin_checkpoint(self, step: Mapping[str, Any], line: str) -> dict[str, Any]:

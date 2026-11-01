@@ -224,6 +224,27 @@ MISSES = _Misses()
 PAGE_OWNER = Principal(PrincipalKind.OWNER, "briefing-page")
 
 
+def report_rows(service: Any, step: Optional[Mapping[str, Any]]) -> list[dict[str, str]]:
+    """PG-IMPORT IMP1: the step report as the page's rows, register by
+    register (the label on the first line of each)."""
+    from . import brief_words as words
+
+    if not step:
+        return []
+    program_id = str(step.get("program_id") or "")
+    report = words.step_report(step, service.store.list_checkpoints(program_id), service.requirements(program_id))
+    if not report:
+        return []
+    rows: list[dict[str, str]] = []
+    for key in ("observed", "claimed", "not_checked"):
+        for index, row in enumerate(report[key]):
+            rows.append({"label": report["words"][key] if index == 0 else "", "value": str(row["line"])})
+    names = list(report["files"]) + ([f"and {report['files_more']} more"] if report["files_more"] else [])
+    for index, name in enumerate(names):
+        rows.append({"label": report["words"]["files"] if index == 0 else "", "value": name})
+    return rows
+
+
 class BriefingService:
     def __init__(self, db: Any, *, programs: Optional[Callable[[], Any]] = None,
                  clock: Callable[[], str] = utc_now_iso, reach: Any = None,
@@ -367,6 +388,9 @@ class BriefingService:
                              "token": str(step.get("check_verdict") or "").replace("_", " ")})
         if step is not None and str(step.get("brief_markdown") or "").strip():
             evidence.append({"pane": "brief", "label": "Brief", "token": ""})
+        if step is not None and step.get("state") in words.REPORT_STATES:
+            # PG-IMPORT IMP1: the step's report in registers, read only.
+            evidence.append({"pane": "report", "label": "Report", "token": ""})
         evidence.append({"pane": "text", "label": "Program text", "token": "read only"})
         now = self._now()
         since = _parse(item.get("since"))
@@ -684,6 +708,8 @@ class BriefingService:
             return {"pane": pane, "kind": "rows", "rows": rows, "url": step.get("pr_url") or None}
         if pane == "log":
             return {"pane": pane, "kind": "code", "text": _tail((step or {}).get("check_log"), 40)}
+        if pane == "report":
+            return {"pane": pane, "kind": "rows", "rows": report_rows(service, step), "url": None}
         if pane == "brief":
             lines = str((step or {}).get("brief_markdown") or "").splitlines()[:40]
             return {"pane": pane, "kind": "code", "text": "\n".join(lines)}

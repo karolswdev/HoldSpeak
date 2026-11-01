@@ -1222,6 +1222,20 @@ span.pg-req-thumb { height: 150px; }
 }
 .pg-sf-story-at { color: var(--wb-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
 .pg-step-open .pg-sf-head { margin-top: 8px; }
+/* PG-IMPORT IMP1: a Done program's second mark: achromatic words, never
+   the Your turn lamp (BroCrew: "a second mark on the row rather than a
+   re-hue of the first"). */
+.pg-finished { color: var(--wb-muted); font: 400 12px / 1.3 var(--font-sans); white-space: nowrap; }
+.pg-row-state:has(.pg-finished) { display: flex; align-items: center; gap: 6px; }
+.pg-row-state:has(.pg-finished) .pg-row-say { flex: 0 1 auto; min-width: 0; }
+.pg-row-state .pg-finished { flex: none; }
+.pg-line-finished { margin: 6px 0 0; }
+/* PG-IMPORT IMP1: the report's registers, plain labels over plain lines. */
+.pg-sf-report-lines { margin: 0; padding: 0; list-style: none; }
+.pg-sf-report-line { font: 400 13px / 1.5 var(--font-sans); overflow-wrap: anywhere; }
+.pg-sf-report-files { margin: 0; font: 400 13px / 1.5 var(--font-sans); overflow-wrap: anywhere; }
+.pg-sf-report-file { font: 400 12px / 1.5 var(--font-mono); }
+.pg-sf-report-more { color: var(--wb-muted); }
 .pg-done-when { list-style: none; padding: 6px 16px 8px 12px; border-bottom: 1px solid var(--wb-rule-soft); }
 .pg-done-when-head { display: flex; align-items: center; gap: 8px; min-height: 32px; font: 400 13px / 1.3 var(--font-sans); }
 .pg-done-when-head b { font-weight: 600; }

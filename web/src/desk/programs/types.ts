@@ -237,6 +237,9 @@ export interface ProgramSummary {
   in_state_seconds: number | null;
   /** Done only: `1 h 12`. */
   done_in?: string;
+  /** PG-IMPORT IMP1: a Done Program's achromatic mark. */
+  finished?: "finished" | "needs_decision";
+  finished_words?: string;
   /** PG17: the imported merged PRs: `Merged 15 PRs · 28 Oct to 29 Oct`. */
   history?: ProgramHistory;
   /** PG-REQ: omitted when the Program has no required requirement. */
@@ -333,7 +336,10 @@ export interface ProgramStep {
   origin_ref: string | null;
   for_person_id: string | null;
   for_person: string | null;
-  report: string | null;
+  /** PG-IMPORT IMP1: the report in registers (Done, Merged, Parked, Failed). */
+  report: StepReport | null;
+  /** The agent's own report text, as it sent it. */
+  report_text?: string | null;
   last_checkpoint: ProgramCheckpoint | null;
   started_at: string | null;
   ended_at: string | null;
@@ -422,6 +428,21 @@ export interface ProgramPlace {
   project: { id: string; name: string } | null;
   origin: { ref: string; kind: string; id: string; title: string } | null;
   person: { id: string; name: string } | null;
+}
+
+/** PG-IMPORT IMP1: one report line; an observed line cites the engine
+ *  checkpoint that saw it. */
+export interface StepReportLine { line: string; checkpoint?: number | null; at?: string | null }
+
+/** PG-IMPORT IMP1: what the engine checked, what the agent says, what was
+ *  not checked, and the files (BROCREW-IMPORT-2026-11-01). */
+export interface StepReport {
+  observed: StepReportLine[];
+  claimed: StepReportLine[];
+  not_checked: StepReportLine[];
+  files: string[];
+  files_more: number;
+  words: { observed: string; claimed: string; not_checked: string; files: string };
 }
 
 export interface Program extends ProgramSummary {
