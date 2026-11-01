@@ -1583,7 +1583,7 @@ class ProgramService:
         # PG-WINDOW: the held items' briefs and the steps' stories, in his terms.
         from .brief_words import window_words
 
-        briefs, stories = window_words(program, steps, turn, checkpoints)
+        briefs, stories = window_words(program, steps, turn, checkpoints, status=self._status_line(program, summary))
         turn = [{**item, "brief": briefs.get(str(item.get("id")))} for item in turn]
         his = {str(item.get("requirement_id")) for item in turn if item.get("requirement_id")}
         by_id = {step["id"]: step for step in steps}
