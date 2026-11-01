@@ -112,3 +112,37 @@ def test_a_program_made_from_a_note_is_planned_from_the_note(tmp_path, monkeypat
     answer = rig.service.plan_draft(OWNER, pid, budget="64k")  # a Program with no budget line: he names one
     assert "THE NOTE THE PROGRAM CAME FROM\n" + CASES["j1"]["goal"] in engine.prompts[0]["user_prompt"]
     assert answer["counts"]["steps"] == 4
+
+
+def test_a_three_goal_paste_proposes_three_programs_and_apply_all_links_them(tmp_path, monkeypatch) -> None:
+    """JRN1: the REAL qwen reply to a three-goal paste (``split_programs``)
+    proposes three Programs; Apply all makes this Program the first and two
+    new Programs in Drafting, each linked to and waiting on the one before
+    it; the face replays ``program.plan_programs.json``."""
+    rig, engine, pid, client = _desk(tmp_path, monkeypatch, "split_programs")
+    before = _ok(client.get(f"/api/programs/{pid}"))
+    engine.replies = replies("split_programs")
+    draft = _ok(client.post(f"/api/programs/{pid}/plan/draft", json={}))
+    programs = draft["programs"]
+    assert [row["title"] for row in programs] == [row["title"] for row in case("split_programs")["result"]["programs"]]
+    assert len(programs) == 3 and all(row["steps"] and row["text"].startswith("# program text") for row in programs)
+    assert [len(row["sizes"]) for row in programs] == [len(row["steps"]) for row in programs]
+    # Apply all: the first is this program, the others are new and chained.
+    applied = _ok(client.post(f"/api/programs/{pid}/plan/programs", json={
+        "programs": [{key: row[key] for key in ("title", "goal", "text")} for row in programs], "which": "all"}))
+    assert applied["program"]["title"] == programs[0]["title"]
+    assert [step["title"] for step in applied["program"]["steps"]] == programs[0]["steps"]
+    assert [row["title"] for row in applied["made"]] == [programs[1]["title"], programs[2]["title"]]
+    second = _ok(client.get(f"/api/programs/{applied['made'][0]['id']}"))
+    third = _ok(client.get(f"/api/programs/{applied['made'][1]['id']}"))
+    assert second["state"] == "drafting" and second["origin_ref"] == f"program:{pid}"
+    assert second["place"]["origin"] == {"ref": f"program:{pid}", "kind": "program", "id": pid, "title": programs[0]["title"]}
+    assert third["origin_ref"] == f"program:{second['id']}"
+    assert [step["title"] for step in second["steps"]] == programs[1]["steps"]
+    # The second waits on the first: Start says so in words.
+    start = client.post(f"/api/programs/{second['id']}/start", json={})
+    assert start.status_code == 409 and start.json()["code"] == "waits_on_program"
+    assert start.json()["detail"] == f"It starts after {programs[0]['title']} is done."
+    _fixture("program.plan_programs.json", {"program": before, "draft": draft, "applied": applied, "second": second,
+                                            "start_refused": {"status": start.status_code, "body": start.json()}},
+             tmp_path)

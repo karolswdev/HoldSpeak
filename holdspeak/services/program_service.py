@@ -1430,6 +1430,9 @@ class ProgramService:
                     # PG14: an automation made it; its place line names it.
                     wb = self.db.workbenches.get(ident, include_deleted=True)
                     title = str(getattr(wb, "name", "") or "")
+                elif kind == "program":
+                    # JRN1: the Program it was split from (and waits on).
+                    title = str((self.store.get_program(ident) or {}).get("title") or "")
                 else:
                     from .agent_hand_service import item_title
 
@@ -2208,7 +2211,7 @@ class ProgramService:
             raise ProgramRefused("steps_required", "Add a step before you start the program.")
         if program["state"] not in ("drafting", "parked"):
             raise ProgramRefused("program_started", "The program runs already.")
-        refused = start_precheck(program, self._top_steps(steps), git=self.runner()._git)
+        refused = self._waits_on(program) or start_precheck(program, self._top_steps(steps), git=self.runner()._git)
         if refused is not None:
             raise refused
         with _LOCK:
@@ -3744,6 +3747,28 @@ class ProgramService:
         from .program_rounds import act
 
         return act(self, principal, program_id, action, **kw)
+
+    def apply_programs(self, principal: Any, program_id: str, programs: Any, which: Any = "all") -> dict[str, Any]:
+        """JRN1: Apply all / Apply this one of a draft that proposes several
+        Programs (program_planner.apply_programs)."""
+        from .program_planner import apply_programs
+
+        return apply_programs(self, principal, program_id, programs, which)
+
+    def _waits_on(self, program: Mapping[str, Any]) -> Optional["ProgramRefused"]:
+        """JRN1: a Program made from a draft's later Program waits on the one
+        before it (``origin_ref = program:<id>``) until that one is Done."""
+        kind, _, ident = str(program.get("origin_ref") or "").partition(":")
+        if kind != "program" or not ident:
+            return None
+        before = self.store.get_program(ident)
+        if before is None or before.get("closed_at") or before.get("state") == "done":
+            return None
+        steps = self.store.list_steps(ident)
+        if steps and self._state(before, steps) == "done":
+            return None
+        return ProgramRefused("waits_on_program", f"It starts after {before['title']} is done.",
+                              program_id=ident)
 
     def plan_draft(self, principal: Any, program_id: str, *, goal: Any = None, template: Any = None,
                    budget: Any = None, text: Any = None, split: Any = None) -> dict[str, Any]:

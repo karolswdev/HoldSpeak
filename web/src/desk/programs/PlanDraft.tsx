@@ -19,7 +19,9 @@ import { ApiError } from "../../lib/api";
 import { openSurfaceOr } from "../shell";
 import { DotWord } from "../surface";
 import { failureTitle } from "../surface/plainFailure";
-import { planDraft } from "./api";
+import { applyPrograms, planDraft } from "./api";
+import { openProgram } from "./open";
+import { StationTrack } from "./StationTrack";
 import { engineFact, useShapeEngine } from "./ShapeBar";
 import type { TextProposal } from "./ProgramText";
 import type { PlanAnswer, Program } from "./types";
@@ -104,5 +106,96 @@ export function PlanLine({ planner, onOpenText }: { planner: ReturnType<typeof u
         <Button dense variant="ghost" onClick={() => void planner.plan()} data-testid="program-plan-retry">Try again</Button>
       )}
     </div>
+  );
+}
+
+/** JRN1 (PROGRAM-JOURNEYS J1, PROGRAM-LANGUAGE §13b JRN1): the draft
+ *  proposes several Programs when the goal is several goals. One row per
+ *  proposed Program: its title, its goal's first line, its steps (a mini
+ *  track, one hollow dot each) and what it hands the next; Apply this one
+ *  on each row, Apply all and Not this on the well. The first is this
+ *  Program; each other is a new Program in Drafting that waits on the one
+ *  before it. The made Programs are named, with Open, in place. */
+function stepsWords(steps: readonly string[]): string {
+  const n = steps.length;
+  return n === 1 ? "1 step" : `${n} steps`;
+}
+
+export function ProgramsSplitWell({ program, answer, onApplied, onDismiss }: {
+  program: Program;
+  answer: PlanAnswer;
+  onApplied(next: Program | null): void;
+  onDismiss(): void;
+}) {
+  const programs = answer.programs ?? [];
+  const [busy, setBusy] = useState<string>("");
+  const [failed, setFailed] = useState<Refusal | null>(null);
+  const [made, setMade] = useState<{ id: string; title: string }[] | null>(null);
+  const [done, setDone] = useState<Set<number>>(new Set());
+  const apply = async (which: "all" | number) => {
+    setBusy(String(which));
+    setFailed(null);
+    try {
+      const out = await applyPrograms(program.id, programs.map(({ title, goal, text }) => ({ title, goal, text })), which);
+      onApplied(out.program);
+      setMade((now) => [...(now ?? []), ...out.made]);
+      setDone((now) => new Set([...now, ...(which === "all" ? programs.map((_row, index) => index) : [which])]));
+    } catch (cause) {
+      setFailed(refusalOf(cause));
+    } finally {
+      setBusy("");
+    }
+  };
+  const count = programs.length;
+  const all = done.size >= count;
+  return (
+    <section className="pg-split" aria-label="The draft proposes several programs" data-testid="programs-split-well">
+      <div className="pg-split-head">
+        <b>{`Split into ${programs.length > 1 ? programs.length : 2} programs`}</b>
+        <span className="pg-split-fact">{engineFact(answer)}</span>
+        <span className="pg-split-verbs">
+          {all ? (
+            <Button dense variant="secondary" onClick={onDismiss} data-testid="programs-split-close">Done</Button>
+          ) : (
+            <>
+              <Button dense variant="primary" loading={busy === "all"} disabled={Boolean(busy) || done.size > 0}
+                onClick={() => void apply("all")} data-testid="programs-split-apply-all">Apply all</Button>
+              <Button dense variant="ghost" disabled={Boolean(busy)} onClick={onDismiss} data-testid="programs-split-not-this">Not this</Button>
+            </>
+          )}
+        </span>
+      </div>
+      <ol className="pg-split-rows">
+        {programs.map((row, index) => (
+          <li key={`${index}-${row.title}`} className="pg-split-row" data-testid="programs-split-row" data-done={done.has(index) ? "" : undefined}>
+            <span className="pg-split-n" aria-hidden="true">{index + 1}</span>
+            <span className="pg-split-words">
+              <b className="pg-split-title">{row.title}</b>
+              <span className="pg-split-goal">{row.goal.split("\n")[0]}</span>
+              {row.hands ? <span className="pg-split-hands">{`Hands the next: ${row.hands}`}</span> : null}
+            </span>
+            <span className="pg-split-steps">
+              <StationTrack stations={row.steps.map((title, place) => ({ key: String(place), word: title, state: "ahead" as const, tone: "idle" }))}
+                label={stepsWords(row.steps)} />
+              <span className="pg-split-count" data-testid="programs-split-steps">{stepsWords(row.steps)}</span>
+            </span>
+            <span className="pg-split-verb">
+              {done.has(index) ? <DotWord tone="ok">{index === 0 ? "This program" : "Made"}</DotWord> : (
+                <Button dense variant="ghost" loading={busy === String(index)} disabled={Boolean(busy)}
+                  onClick={() => void apply(index)} data-testid="programs-split-apply-one">Apply this one</Button>
+              )}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {made?.length ? (
+        <p className="pg-split-made" data-testid="programs-split-made">
+          {made.map((row) => (
+            <Button key={row.id} dense variant="ghost" onClick={() => openProgram(row.id)}>{`Open ${row.title}`}</Button>
+          ))}
+        </p>
+      ) : null}
+      {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="programs-split-failure">{failed.words}</p> : null}
+    </section>
   );
 }

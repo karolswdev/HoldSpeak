@@ -74,6 +74,7 @@ import shapeFixture from "../__fixtures__/program.shape.json";
 // (tests/fixtures/program_plan_reply.json) replayed through the hub's runner,
 // recorded through the real routes (tests/integration/test_desk_program_plan.py).
 import planFixture from "../__fixtures__/program.plan_draft.json";
+import splitFixture from "../__fixtures__/program.plan_programs.json";
 // PG-LANG LANG9/10: J1's interview rounds asked and shaped by the REAL
 // qwen3.8-27b replies (tests/fixtures/program_round_reply.json) replayed
 // through the hub's runner, recorded through the real routes
@@ -1922,6 +1923,57 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
     fireEvent.click(within(well).getByTestId("programs-well-not-this"));
     await waitFor(() => expect(calls).toContain(`DELETE /api/programs/${id}/shape/held`));
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
+  });
+});
+
+describe("JRN1: the draft proposes several Programs (the REAL qwen reply to a three-goal paste)", () => {
+  type Plan = import("../types").PlanAnswer;
+  const split = splitFixture as unknown as {
+    program: Program; draft: Plan; applied: { program: Program; made: { id: string; title: string }[] }; second: Program;
+    start_refused: { status: number; body: { detail: string } };
+  };
+
+  it("one row per proposed Program with its goal and steps; Apply all makes this the first and links the others", async () => {
+    const id = split.program.id;
+    hub({
+      [`GET /api/programs/${id}`]: split.program,
+      [`GET /api/programs/${id}/shape`]: planFixture.engine,
+      [`POST /api/programs/${id}/plan/draft`]: split.draft,
+      [`POST /api/programs/${id}/plan/programs`]: split.applied,
+    });
+    render(<ProgramBody programId={id} />);
+    await screen.findByTestId("programs-board");
+    await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
+    fireEvent.click(screen.getByTestId("program-plan-it"));
+    const well = await screen.findByTestId("programs-split-well");
+    const programs = split.draft.programs!;
+    expect(well.textContent).toContain(`Split into ${programs.length} programs`);
+    const rows = within(well).getAllByTestId("programs-split-row");
+    expect(rows.map((row) => row.querySelector(".pg-split-title")!.textContent)).toEqual(programs.map((row) => row.title));
+    expect(rows.map((row) => within(row).getByTestId("programs-split-steps").textContent))
+      .toEqual(programs.map((row) => `${row.steps.length} ${row.steps.length === 1 ? "step" : "steps"}`));
+    expect(rows[0].querySelectorAll(".pg-station")).toHaveLength(programs[0].steps.length);
+    // No diff rows for a split: the well is the programs.
+    expect(screen.queryByTestId("programs-change-well")).toBeNull();
+    fireEvent.click(within(well).getByTestId("programs-split-apply-all"));
+    await waitFor(() => expect(within(screen.getByTestId("programs-split-made")).getAllByRole("button").map((b) => b.textContent))
+      .toEqual(split.applied.made.map((row) => `Open ${row.title}`)));
+    const sent = calls.find((call) => call.startsWith(`POST /api/programs/${id}/plan/programs `))!;
+    const body = JSON.parse(sent.slice(sent.indexOf("{")));
+    expect(body.which).toBe("all");
+    expect(body.programs.map((row: { title: string }) => row.title)).toEqual(programs.map((row) => row.title));
+    // The window is now the first program, with its steps.
+    await waitFor(() => expect(screen.getAllByTestId("programs-step")).toHaveLength(split.applied.program.steps.length));
+  });
+
+  it("a later Program waits on the one before it: Start says so", async () => {
+    const second = split.second;
+    hub({ [`GET /api/programs/${second.id}`]: second });
+    render(<ProgramBody programId={second.id} />);
+    await screen.findByTestId("programs-board");
+    expect(screen.getByTestId("programs-start-words").textContent)
+      .toMatch(new RegExp(`^It starts after ${split.draft.programs![0].title} is done\\.`));
+    expect(split.start_refused.body.detail).toBe(`It starts after ${split.draft.programs![0].title} is done.`);
   });
 });
 

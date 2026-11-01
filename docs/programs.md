@@ -674,6 +674,11 @@ Before HoldSpeak hands a step to its agent, it counts the step's size again by t
 
 When there is no planning engine, when its answer cannot be used two times, or when a part of a split is still too big, the step is a core question: **Go on** hands it as it is, **Park** parks it.
 
+
+### When the goal is several goals
+
+When what you paste is two to four separate goals (each a change that can ship on its own), the draft proposes that many programs instead of one long list of steps. The change well says "Split into 3 programs" and shows one row for each: its title, its goal, its steps as small dots and what it hands the next. **Apply all** makes this program the first one and makes the others in Drafting, each linked to the one before it; a later program starts only after the one before it is Done (its Start says "It starts after … is done"). **Apply this one** makes only that row. **Not this** keeps the program as it was.
+
 ## Night programs
 
 A program with a `night` line runs only at night, for example `night 23:30-07:00 · at most 8 steps`. Outside the window, each Ready step says "Ready · sleeps until 23:30". In the window, the engine hands steps as usual (with `when idle`, only when the engine is idle). With `at most`, it hands that many steps in one night, then says "Ready · the night's 8 steps ran".
