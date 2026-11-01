@@ -377,7 +377,11 @@ def read_answer(output: str) -> tuple[Optional[dict[str, Any]], Optional[str]]:
         return None, "\n".join(error.words if error.words.startswith("Line ") else f"Line {error.line}: {error.words}" for error in model.errors[:8])
     if not model.head.title:
         return None, "The text has no 'program <title>' line."
-    return {"say": " ".join(str(data.get("say") or "").split())[:300], "text": text, "question": question}, None
+    # JRN1: a draft may propose several Programs (the planner reads them).
+    programs = [row for row in data.get("programs") or [] if isinstance(row, dict)] \
+        if isinstance(data.get("programs"), list) else []
+    return {"say": " ".join(str(data.get("say") or "").split())[:300], "text": text, "question": question,
+            "programs": programs}, None
 
 
 # ── the guard (§4.5) ─────────────────────────────────────────────────

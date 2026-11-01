@@ -76,7 +76,13 @@ PLAN_RULES = """RULES FOR A DRAFT
 - Never change the title, the goal, 'in', 'template' or 'from'. Never remove or change an R line.
 - Never write 'check off', 'review none', 'merge none', 'optional' or 'waived'.
 - Leave out the agent line unless the goal names an agent: the program's agent builds each step.
-- "say": one short line: the number of steps and what they do."""
+- "say": one short line: the number of steps and what they do.
+- "programs": [] when the goal is one goal. When it is two to four separate goals (each a change
+  that could merge and ship on its own), list them in "programs" in the order they should run:
+  each {"title": "<a short title>", "goal": "<one or two sentences, the owner's words where you can>",
+  "hands": "<one line: what it gives the next program; \"\" for the last>",
+  "text": "<that program's WHOLE text, made by these rules, with its own title and goal>"};
+  "text" is then the first program's text. Never split one goal into programs."""
 
 SPLIT_RULES = """SPLIT A STEP
 - Replace only the steps named below, each by 2 to 4 'step +' steps in its place, that together own
@@ -103,6 +109,8 @@ class PlanResult:
     budget: Optional[int] = None
     #: The steps the planner was asked to split (their place and size).
     split: list[dict[str, Any]] = field(default_factory=list)
+    #: JRN1: the Programs the draft proposes (2 to 4), in their order; [] for one.
+    programs: list[dict[str, Any]] = field(default_factory=list)
     prompts: list[dict[str, Any]] = field(default_factory=list, repr=False)
 
 
@@ -118,8 +126,16 @@ def token_cap(text: str) -> int:
 
 def response_format() -> dict[str, Any]:
     return {"type": "json_schema", "json_schema": {"name": "program_plan", "strict": True, "schema": {
-        "type": "object", "additionalProperties": False, "required": ["say", "text"],
-        "properties": {"say": {"type": "string", "maxLength": 300}, "text": {"type": "string"}}}}}
+        "type": "object", "additionalProperties": False, "required": ["say", "text", "programs"],
+        "properties": {"say": {"type": "string", "maxLength": 300}, "text": {"type": "string"},
+                       # JRN1: the draft proposes several Programs when the goal is several goals.
+                       "programs": {"type": "array", "maxItems": 4, "items": {
+                           "type": "object", "additionalProperties": False,
+                           "required": ["title", "goal", "hands", "text"],
+                           "properties": {"title": {"type": "string", "maxLength": 120},
+                                          "goal": {"type": "string", "maxLength": 1200},
+                                          "hands": {"type": "string", "maxLength": 300},
+                                          "text": {"type": "string"}}}}}}}}
 
 
 # ── grounding (§5.2) ─────────────────────────────────────────────────
@@ -383,6 +399,7 @@ def plan(service: Any, principal: Any, program_id: str, *, goal_text: Any = None
                                               "Try again.", status=502, engine=model or label, parse_error=error)
         draft = _keep_fixed(parse_program_text(answer["text"]), seed, explicit, bool(explicit))
         proposed_text, say = render(draft), answer["say"]
+        proposed_programs = _programs(service, wire, seed, answer.get("programs") or [], explicit)
     sizes = size_steps(service, wire, draft, explicit_budget=explicit)
     wanted = [row for row in sizes if row["fits"] is False and (split is None or int(row["place"]) == int(split))]
     if text is not None and split is not None and not wanted:
@@ -404,6 +421,8 @@ def plan(service: Any, principal: Any, program_id: str, *, goal_text: Any = None
             log.warning(f"program planning split could not be read: {error}")
     latency = int((time.monotonic() - started) * 1000)
     engine = model or label
+    if text is not None and split is not None:
+        proposed_programs = []
     _base, _new, rows = shaper._rows_for(service, principal, program, wire, printed, proposed_text)
     for row in rows:
         row.data["source"] = "plan"
@@ -418,7 +437,91 @@ def plan(service: Any, principal: Any, program_id: str, *, goal_text: Any = None
                 "template": template_id, "budget": budget_now}
     return PlanResult(proposed_text=proposed_text, rows=rows, grounded_on=grounded, sizes=sizes, engine=engine,
                       latency_ms=latency, say=say, attempts=len(prompts), capability=capability, base_text=printed,
-                      budget=budget_now, split=split_rows, prompts=prompts)
+                      budget=budget_now, split=split_rows, programs=proposed_programs, prompts=prompts)
+
+
+MAX_PROGRAMS = 4
+
+
+def _programs(service: Any, wire: Mapping[str, Any], seed: Any, rows: list[Any],
+              explicit: Optional[int]) -> list[dict[str, Any]]:
+    """JRN1: the Programs a draft proposes (2 to 4, in their order), each with
+    its own title, goal, what it hands the next, its whole text (the seed's
+    ``in``, template, origin and budget kept), its steps and their sizes.
+    Fewer than two readable ones is one Program: []."""
+    from .program_text import parse_program_text, render
+
+    out: list[dict[str, Any]] = []
+    for row in rows[:MAX_PROGRAMS]:
+        title = " ".join(str(row.get("title") or "").split())[:120]
+        goal = str(row.get("goal") or "").strip()
+        model = parse_program_text(str(row.get("text") or ""))
+        if not title or model.errors or not model.head.title:
+            continue
+        model = _keep_fixed(model, seed, explicit, bool(explicit))
+        model.head.title, model.head.goal = title, goal
+        sizes = size_steps(service, wire, model, explicit_budget=explicit)
+        out.append({"title": title, "goal": goal, "hands": " ".join(str(row.get("hands") or "").split())[:300],
+                    "text": render(model), "steps": [step.title for step in model.steps], "sizes": sizes})
+    return out if len(out) >= 2 else []
+
+
+def apply_programs(service: Any, principal: Any, program_id: str, programs: Any, which: Any = "all") -> dict[str, Any]:
+    """JRN1, Apply all / Apply this one: the first proposed Program is this
+    one (its title, goal and steps); each other is a new Program in Drafting
+    on the same repository and template, linked to the one before it
+    (``origin_ref = program:<id>``), which it waits on: it starts after that
+    one is Done. Apply this one (not the first) makes that one, linked to
+    this Program."""
+    from .program_text import print_program
+
+    program = service._program(program_id)
+    service._require_writer(principal, program, "plan")
+    if program.get("state") != "drafting":
+        raise _refused("plan_drafting_only", "The programs apply while this program is in Drafting.")
+    rows = [row for row in (programs or []) if isinstance(row, Mapping)]
+    if not rows or len(rows) > MAX_PROGRAMS:
+        raise _refused("programs_invalid", f"Give one to {MAX_PROGRAMS} programs.", status=400)
+    picked = list(range(len(rows))) if str(which) == "all" else [int(which)] if str(which).isdigit() else []
+    if not picked or any(index >= len(rows) for index in picked):
+        raise _refused("programs_invalid", "Name the program: all, or its place.", status=400)
+
+    def _write(target_id: str, row: Mapping[str, Any]) -> None:
+        from .program_text import parse_program_text, render
+
+        wire = service.get(principal, target_id)
+        printed = print_program(wire)
+        # The steps and requirements are the proposal's; the head (title,
+        # goal, in, template, from, budget) is the Program's own as made.
+        own = parse_program_text(shaper.stripped_text(printed))
+        text = render(_keep_fixed(parse_program_text(str(row.get("text") or "")), own, None, False))
+        answer = service.text_apply(principal, target_id, text, dry_run=False, base=printed)
+        if answer.get("refused"):
+            raise _refused("programs_refused", f"The steps of {row.get('title')} were not written.",
+                           changes=answer.get("changes"))
+
+    made: list[dict[str, Any]] = []
+    before = program["id"]
+    for index in picked:
+        row = rows[index]
+        title = " ".join(str(row.get("title") or "").split()) or program["title"]
+        goal = str(row.get("goal") or "").strip()
+        if index == 0:
+            service.update(principal, program["id"], title=title, goal=goal)
+            _write(program["id"], {**row, "title": title})
+            continue
+        new = service.create(principal, title=title, goal=goal, repository=program.get("repo_root") or None,
+                             project_id=program.get("project_id"), template=program.get("template") or None,
+                             control=program.get("control"), check_command=program.get("check_command"),
+                             origin_ref=f"program:{before if str(which) == 'all' else program['id']}")
+        if program.get("budget_tokens"):
+            # The budget it was planned for stays with each part.
+            service.update(principal, new["id"], budget_tokens=program["budget_tokens"])
+        _write(new["id"], row)
+        made.append({"id": new["id"], "title": title})
+        if str(which) == "all":
+            before = new["id"]
+    return {"program": service.get(principal, program["id"]), "made": made}
 
 
 def _program_budget(service: Any, wire: Mapping[str, Any], seed: Any, explicit: Optional[int]) -> tuple[Optional[int], str]:
@@ -470,9 +573,10 @@ def plan_draft(service: Any, principal: Any, program_id: str, *, goal: Any = Non
                seconds=round(result.latency_ms / 1000, 1), grounded_on=result.grounded_on, sizes=result.sizes,
                budget=result.budget, share=sizing.share_of(result.budget) if result.budget else None,
                split=result.split, attempts=result.attempts, capability=result.capability,
-               proposed_text=result.proposed_text, base=result.base_text, source="plan")
+               proposed_text=result.proposed_text, base=result.base_text, source="plan",
+               programs=result.programs)
     return out
 
 
-__all__ = ["CONTRACT", "DEADLINE_SECONDS", "PLAN_RULES", "PlanResult", "SPLIT_RULES", "messages", "plan", "plan_draft",
+__all__ = ["CONTRACT", "DEADLINE_SECONDS", "PLAN_RULES", "PlanResult", "SPLIT_RULES", "apply_programs", "messages", "plan", "plan_draft",
            "repo_ground", "response_format", "size_steps", "template_card", "token_cap"]
