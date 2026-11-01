@@ -709,10 +709,12 @@ def test_the_time_limit_is_per_item_so_a_long_queue_finishes(tmp_path, monkeypat
     """Recon 2026-10-17 step 14: four ~20 s items under one 60 s run limit.
     The run expired on item 4, skipped it and recorded 0/0 · cancelled."""
     db, broker, workbench, items, state = _setup_runner(tmp_path, monkeypatch, item_count=3)
-    state["delays"] = {1: .3, 2: .3, 3: .3}
+    # The items together (1.2 s) outlast the limit (1 s); each one (0.4 s)
+    # is far inside it, so a loaded machine (a run of 8 000 tests) passes too.
+    state["delays"] = {1: .4, 2: .4, 3: .4}
     from holdspeak.services.workbench_runner import WorkbenchRunner
 
-    result = asyncio.run(WorkbenchRunner(db, broker).run(OWNER, workbench.id, memory_enabled=False, deadline_seconds=.5))
+    result = asyncio.run(WorkbenchRunner(db, broker).run(OWNER, workbench.id, memory_enabled=False, deadline_seconds=1.0))
 
     run = _run_row(db, result["run_id"])
     assert (run["status"], run["items_attempted"], run["items_completed"]) == ("completed", 3, 3)

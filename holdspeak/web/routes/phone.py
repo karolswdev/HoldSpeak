@@ -159,6 +159,17 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
             by = "phone"
         return await _call(lambda: _service().mark_read(message_id, by=by))
 
+    @router.post("/api/phone/messages/{message_id}/decide")
+    async def api_phone_message_decide(message_id: str, request: Request) -> Any:
+        """JRN6: a press on a message's verb: his paired phone, or the owner."""
+        principal, device = _principal(request), None
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            device = await _device(request)
+            if device is None:
+                return _unauthorized()
+        body = await _body(request)
+        return await _call(lambda: _service().decide(message_id, body.get("choice"), device=device))
+
     @router.post("/api/phone/messages/{message_id}/wait")
     async def api_phone_message_wait(message_id: str, request: Request) -> Any:
         principal = _principal(request)

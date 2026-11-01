@@ -419,6 +419,15 @@ def read_backlog(runner: Any, program: Mapping[str, Any], start: datetime, end: 
                    if step.get("state") not in CLOSED_STATES and step.get("state") != "failed")
     room = max(0, int(night.get("max_steps") or len(items) + open_now) - open_now)
     items = items[:room]
+    if len(items) < room:
+        # The third source (2026-11-01): the canon, by rule, so a night with
+        # no "dream" task still has work (at most 5; never twice while open).
+        from . import program_canon
+
+        try:
+            items += program_canon.file_items(runner, program, limit=room - len(items))
+        except Exception as exc:  # the canon never stops the night
+            log.info(f"the canon was not read for tonight: {exc}")
     added = 0
     if items and level_of(program.get("control")) == "yolo":
         engine = Principal(PrincipalKind.AGENT, "program-engine:night-backlog")
