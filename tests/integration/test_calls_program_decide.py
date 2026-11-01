@@ -103,7 +103,8 @@ def test_what_waits_on_me_is_read_chosen_read_back_and_decided_on_a_call(hub, mo
     assert ledger[1]["line"].startswith("Asked on a call 12:10 · Go on, decided · transcript: Call · ")
     [call] = service.list()
     note_ref = call["note_ref"]
-    assert note_ref and ledger[1]["undo"] == {"note_ref": note_ref}
+    assert note_ref and ledger[1]["undo"] == {"note_ref": note_ref, "because": {
+        "rule": "asked_on_call", "kind": "core", "words": "a question", "via": "call"}}
     note = hub.db.notes.get(note_ref.split(":", 1)[1]).body_markdown
     assert "You said Go on for step 1" in note and "blue heron" not in note.lower()
     assert call["results"][-1]["effect"] == "decided"

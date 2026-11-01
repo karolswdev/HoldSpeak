@@ -176,6 +176,8 @@ DECIDE_CHOICES = {
     # and the fix program its MUST findings make.
     "audit_file": ("file", "skip"),
     "fix_program": ("make", "skip"),
+    # PG-LANG JRN11, JRN12 (journey J8): a lesson the engine saw; never kept by rule.
+    "lesson": ("keep_program", "keep_repo", "skip"),
 }
 #: PG-REQ: the proposal kinds (a checkpoint row each, ``choice`` empty until
 #: he answers).
@@ -619,6 +621,14 @@ def todo_head(agent: str, ordinal: Any) -> str:
     return f"{agent} asks you to do this" + (f" · step {int(ordinal)}" if ordinal else "")
 
 
+def his_word(row: Mapping[str, Any], step: Optional[Mapping[str, Any]]) -> bool:
+    """A requirement his press judges: Your word, and (JRN14) a Review on a
+    step whose review is a person's (no agent reviewer reads it; his word
+    at MERGE stands for the person gate)."""
+    kind = row.get("kind")
+    return kind == "word" or (kind == "review" and (step or {}).get("gate_review") == "person")
+
+
 def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
                       requirements: Optional[Iterable[Mapping[str, Any]]],
                       proposals: Optional[Iterable[Mapping[str, Any]]]) -> list[dict[str, Any]]:
@@ -667,7 +677,7 @@ def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, A
         where = f"Step {step['ordinal']} · {step['title']}"
         own = [row for row in reqs if row.get("step_id") == step["id"]]
         for row in own:
-            if row.get("kind") != "word" or not row.get("required") or row.get("state") != "not_yet":
+            if not his_word(row, step) or not row.get("required") or row.get("state") != "not_yet":
                 continue
             if (row.get("spec") or {}).get("walk") and state in TODO_STATES:
                 # PG-IMPORT IMP2 (BroCrew's to-do): a walk is a thing the agent
@@ -929,6 +939,11 @@ class ProgramService:
 
         reqs = requirements if requirements is not None else self.requirements(program["id"])
         items = your_turn(program, steps, reqs, self.proposals(program["id"], checkpoints))
+        from . import program_lessons
+
+        # JRN11: the lessons the engine saw, each his to keep or skip.
+        items += program_lessons.turn_items(program, checkpoints if checkpoints is not None
+                                            else self.store.list_checkpoints(program["id"]))
         if program.get("template") == "audit":
             from . import program_audit
 
@@ -1075,11 +1090,11 @@ class ProgramService:
         """Every Program's your-turn items (``needs_you_membership.program_items``)."""
         items: list[dict[str, Any]] = []
         for program in self.store.list_programs():
-            if program["state"] == "done" and program.get("template") == "audit":
-                # JRN9, JRN10: a finished audit still asks to file its findings
-                # (Secure) and to make its fix program.
+            if program["state"] == "done":
+                # JRN9 to JRN11: a finished Program still asks to file an
+                # audit's findings, to make its fix program, and its lessons.
                 items.extend(item for item in self._turn(program, self.store.list_steps(program["id"]))
-                             if item["kind"] in ("audit_file", "fix_program"))
+                             if item["kind"] in ("audit_file", "fix_program", "lesson"))
                 continue
             if program["state"] in ("drafting", "parked", "done"):
                 continue
@@ -1275,7 +1290,7 @@ class ProgramService:
         frozen = bool(program.get("closed_at")) or step_state in FROZEN_STEP_STATES
         if frozen or state == "waived":
             choices: list[str] = []
-        elif kind == "word":
+        elif his_word(row, step):
             choices = ["met", "send_back", "waive"] if state == "unmet" else (["unmet", "waive"] if state == "met" else ["met", "unmet", "waive"])
         elif state == "unmet":
             choices = ["send_back", "waive"] if (step or {}).get("launch_id") else ["waive"]
@@ -1355,6 +1370,8 @@ class ProgramService:
             "report": step_report(step, checkpoints, requirements if requirements is not None
                                   else self.requirements(program["id"])),
             "report_text": step.get("report"), "last_checkpoint": last,
+            # PG-IMPORT IMP6: he has the lane (Take it over).
+            "taken": isinstance(facts.get("taken"), Mapping),
             # PG-IMPORT IMP3: what it waits on ({cause, line}), or None.
             "wait": step_wait(program, step, list((steps_by_id or {}).values())
                               or self.store.list_steps(program["id"])),
@@ -2503,6 +2520,16 @@ class ProgramService:
             return self.decide_requirement(principal, program_id, str(requirement_id), choice, line=reason)
         if kind in PROPOSAL_KINDS:
             return self.decide_proposal(principal, program_id, proposal_id if proposal_id is not None else finding_id, choice)
+        if kind == "lesson":
+            from . import program_lessons
+
+            if choice not in DECIDE_CHOICES[kind]:
+                raise ProgramRefused("choice_invalid", f"{kind!r} takes {', '.join(DECIDE_CHOICES[kind])}.", status=400)
+            lesson = proposal_id if proposal_id is not None else finding_id
+            with _LOCK:
+                answer = program_lessons.decide(self, principal, program, lesson, choice)
+            self._tick_now(program["id"])
+            return {**answer, "program": self.get(principal, program["id"])}
         if kind in ("audit_file", "fix_program"):
             from . import program_audit
 
@@ -3101,7 +3128,7 @@ class ProgramService:
             return {"requirement_id": row["id"], "program": self.get(principal, program["id"])}
         with _LOCK:
             if choice in ("met", "unmet"):
-                if row.get("kind") != "word":
+                if not his_word(row, step):
                     raise ProgramRefused("not_his_word", "HoldSpeak judges this requirement on the commit. Waive it, "
                                          "or send it back.")
                 said = f"You · {_clock_words(self._clock())}" + (f" · {words}" if words else "")
@@ -4264,14 +4291,18 @@ class ProgramService:
     # ── a call that decides (PG-DIRECTION DIR8) ──────────────────────
 
     def call_line(self, program_id: str, step_id: Optional[str], line: str, *,
-                  note_ref: Optional[str] = None) -> int:
+                  note_ref: Optional[str] = None, because: Optional[Mapping[str, Any]] = None,
+                  refusal: Optional[str] = None) -> int:
         """One ledger line a call writes about a held item it read: when it
         was asked, what came of it, and the call's transcript Note
         (``undo.note_ref``). It changes nothing else on the Program."""
         program = self._program(program_id)
+        undo = {key: value for key, value in (("note_ref", note_ref), ("because", dict(because or {}) or None),
+                                              ("refusal", refusal)) if value}
+        # DIR8a: the line keeps why the item was on the call and a late answer's refusal.
         ident = self.store.add_checkpoint(step_id=str(step_id or ""), program_id=program["id"], at=self._clock(),
                                           by="owner", line=" ".join(str(line or "").split())[:400], via="call",
-                                          undo={"note_ref": note_ref} if note_ref else None)
+                                          undo=undo or None)
         self.changed(program["id"], step_id or None, verb="checkpoint")
         return ident
 
@@ -4595,6 +4626,39 @@ class ProgramService:
             self._checkpoint(program, step, by, line, detail=detail)
         return step
 
+    def take_over(self, principal: Any, program_id: str, step_id: str) -> dict[str, Any]:
+        """PG-IMPORT IMP6 (BroCrew: "It says 'take it over', because it IS that
+        act"): he has the step's lane. The engine types nothing into it and
+        decides nothing for it until Hand it back; a commit on the branch still
+        goes to the check. Reversible, so no confirmation."""
+        self._require_owner(principal, "take a lane over")
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        if not step.get("launch_id") or step.get("state") in CLOSED_STATES or step.get("state") in ("planned", "ready"):
+            raise ProgramRefused("no_lane", f"Step {step['ordinal']} has no running lane to take over.")
+        if not isinstance((step.get("facts") or {}).get("taken"), Mapping):
+            with _LOCK:
+                step["facts"] = {**(step.get("facts") or {}), "taken": {"by": "owner", "at": self._clock()}}
+                self._save(step)
+                self._checkpoint(program, step, "owner", "You took the lane over", kernel=False)
+                self.changed(program["id"], step["id"], verb="take_over")
+        return self.get(principal, program["id"])
+
+    def hand_back(self, principal: Any, program_id: str, step_id: str) -> dict[str, Any]:
+        """PG-IMPORT IMP6: the inverse of Take it over; the tick goes on from
+        the branch head. No confirmation: taking it again undoes it."""
+        self._require_owner(principal, "hand a lane back")
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        if isinstance((step.get("facts") or {}).get("taken"), Mapping):
+            with _LOCK:
+                step["facts"] = {key: value for key, value in (step.get("facts") or {}).items() if key != "taken"}
+                self._save(step)
+                self._checkpoint(program, step, "owner", "You handed the lane back", kernel=False)
+                self.changed(program["id"], step["id"], verb="hand_back")
+            self._tick_now(program["id"])
+        return self.get(principal, program["id"])
+
     def notice_lost(self, program_id: str, step_id: str, via: str) -> None:
         """PG-IMPORT IMP3: a message to him about this step did not arrive
         (``via``: telegram). The step's row and the list say so until the
@@ -4708,9 +4772,14 @@ class ProgramService:
                 requirement_id: Optional[str] = None, text: bool = False) -> None:
         """Recompute the Program's state, rewrite its note, emit the frames.
         PG-REQ: the frame names the requirement and the count when one moved."""
+        from . import program_lessons
         from .program_requirements import counts as requirement_counts
 
         program = self._program(program_id)
+        try:
+            program_lessons.scan(self, program)  # JRN11: the lesson rule, by rule, no model
+        except Exception as exc:  # a lesson never stops a move
+            log.warning(f"program {program_id}: the lesson rule did not run: {exc}")
         steps = self.store.list_steps(program_id)
         reqs = self.requirements(program_id)
         state = self._state(program, steps, requirements=reqs)

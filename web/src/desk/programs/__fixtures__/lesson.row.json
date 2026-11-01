@@ -1,0 +1,41 @@
+{
+  "brief": {
+    "blocked": [],
+    "blocked_words": "",
+    "consequences": {
+      "keep_program": "Every step of this program gets it as a requirement.",
+      "keep_repo": "A small step adds it to the repository's program file. Every new program reads it.",
+      "skip": "Nothing changes. This program does not propose it again."
+    },
+    "doing": "Step 2, “Step 2”: Do part 2.",
+    "goal": "Goal: Plain words.",
+    "happened": "The check was red for the same cause on 2 steps: FAILED.",
+    "question": "Keep this lesson, and where?"
+  },
+  "choices": [
+    "keep_program",
+    "keep_repo",
+    "skip"
+  ],
+  "for_person_id": null,
+  "id": "program-d9ecc33fa6dd:lesson:13",
+  "kind": "lesson",
+  "launch_id": null,
+  "lesson_id": 13,
+  "ordinal": 2,
+  "pr": null,
+  "program_id": "program-d9ecc33fa6dd",
+  "program_title": "The words wave",
+  "project_id": null,
+  "requirement": "The check is not red with “FAILED”",
+  "since": "2026-11-01T13:10:20.531465+00:00",
+  "source": "red",
+  "step_id": "step-0be1282c225b",
+  "step_title": "",
+  "steps": [
+    1,
+    2
+  ],
+  "title": "Lesson · the check is red with “FAILED”: 2 steps red for it",
+  "words": "FAILED"
+}

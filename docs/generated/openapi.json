@@ -24486,6 +24486,54 @@
         "summary": "Api Programs Decide"
       }
     },
+    "/api/programs/{program_id}/steps/{step_id}/hand-back": {
+      "post": {
+        "operationId": "api_programs_step_hand_back_api_programs__program_id__steps__step_id__hand_back_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "title": "Step Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Step Hand Back Api Programs  Program Id  Steps  Step Id  Hand Back Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Programs Step Hand Back"
+      }
+    },
     "/api/programs/{program_id}/steps/{step_id}/handoff": {
       "post": {
         "operationId": "api_programs_handoff_api_programs__program_id__steps__step_id__handoff_post",
@@ -24628,6 +24676,54 @@
           }
         },
         "summary": "Api Programs Step Remove"
+      }
+    },
+    "/api/programs/{program_id}/steps/{step_id}/take": {
+      "post": {
+        "operationId": "api_programs_step_take_api_programs__program_id__steps__step_id__take_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "title": "Step Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Step Take Api Programs  Program Id  Steps  Step Id  Take Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Programs Step Take"
       }
     },
     "/api/programs/{program_id}/text": {

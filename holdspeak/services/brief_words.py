@@ -286,6 +286,11 @@ def happened_line(kind: str, item: Mapping[str, Any], step: Optional[Mapping[str
     if kind == "fix_program":
         count = int(item.get("count") or 0)
         return sentence(f"The audit is done. It found {count} MUST finding{'s' if count != 1 else ''}")
+    if kind == "lesson":
+        steps = item.get("steps") or []
+        what = (f"The check was red for the same cause on {len(steps)} steps: {item.get('words')}"
+                if item.get("source") == "red" else f"The reviewer found the same thing on {len(steps)} steps: {item.get('words')}")
+        return sentence(what)
     if kind == "race":
         from .program_service import agent_label
 
@@ -338,6 +343,7 @@ QUESTIONS = {
     "ask_review": "Send it for review?",
     "audit_file": "File the findings as Door tasks?",
     "fix_program": "Make a fix program from the MUST findings?",
+    "lesson": "Keep this lesson, and where?",
 }
 
 
@@ -407,6 +413,10 @@ def consequence(kind: str, choice: str, item: Mapping[str, Any], step: Optional[
     if kind == "fix_program":
         return ("HoldSpeak makes a program with one step for each MUST finding. It waits for your Start."
                 if choice == "make" else "No fix program is made.")
+    if kind == "lesson":
+        return {"keep_program": "Every step of this program gets it as a requirement.",
+                "keep_repo": "A small step adds it to the repository's program file. Every new program reads it.",
+                "skip": "Nothing changes. This program does not propose it again."}.get(choice, "")
     if kind == "add_step":
         return "The step is added to the plan." if choice == "add" else "No step is added. The plan stays as it is."
     if kind == "todo":
@@ -451,6 +461,8 @@ _SETTLED = {
     ("delivery", "skip"): "The program stays Done, not delivered.",
     ("audit_file", "file"): "The findings are Door tasks.", ("audit_file", "skip"): "No task is made.",
     ("fix_program", "make"): "The fix program waits for your Start.", ("fix_program", "skip"): "No fix program.",
+    ("lesson", "keep_program"): "Kept for this program.", ("lesson", "keep_repo"): "A step keeps it for the repository.",
+    ("lesson", "skip"): "Skipped.",
 }
 
 _COUNT = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine"}

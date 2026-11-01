@@ -16,7 +16,7 @@
       "destination": "Telegram · owner chat",
       "on": true,
       "paired": {
-        "at": "2026-11-01T07:28:00.271348+00:00",
+        "at": "2026-11-01T13:10:28.510022+00:00",
         "name": "Karol"
       },
       "pairing": null,
@@ -76,7 +76,7 @@
   "open_packages": [],
   "quiet_hours": {
     "end": 8,
-    "now": true,
+    "now": false,
     "start": 22
   }
 }

@@ -185,11 +185,17 @@ class BashCall:
     #: YOLO refuses such a call by rule and allows any other unparsed call of
     #: a Program step in its own worktree. Empty when none.
     destructive: str = ""
+    #: PG-LANG JRN8 (2026-11-01): "1" when the call's only writes land in the
+    #: agent's own scratch (its Claude Code session scratchpad, ``$TMPDIR``)
+    #: and the rest is a read: an audit step's call that changes nothing in
+    #: the repository. Empty otherwise.
+    scratch_only: str = ""
 
     def to_dict(self) -> dict[str, str]:
         out = asdict(self)
-        if not out["destructive"]:
-            out.pop("destructive")  # the wire of a plain call keeps its shape
+        for key in ("destructive", "scratch_only"):
+            if not out[key]:
+                out.pop(key)  # the wire of a plain call keeps its shape
         return out
 
 
@@ -249,7 +255,13 @@ def classify_edit(tool_input: Optional[Mapping[str, Any]], *, cwd: str, root: st
         real = _real_target(joined)
     except (OSError, ValueError):
         return BashCall(UNPARSED, "edit_path_unreadable")
-    if not _inside(real, real_root) and not _in_scratch(real, real_root):
+    if not _inside(real, real_root) and _in_own_scratch(real, real_root):
+        # The agent's own scratch: inside for the session scratchpad (#1705),
+        # outside for the rest of $TMPDIR; an audit step may write either.
+        scope = INSIDE if _in_scratch(real, real_root) else OUTSIDE
+        return BashCall(scope, EDIT_INSIDE_RULE if scope == INSIDE else "edit_outside_worktree",
+                        target="" if scope == INSIDE else target, scratch_only="1")
+    if not _inside(real, real_root):
         return BashCall(OUTSIDE, "edit_outside_worktree", target=target)
     return BashCall(INSIDE, EDIT_INSIDE_RULE)
 
@@ -315,7 +327,21 @@ def destructive_word(command: str) -> str:
 
 
 def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
-    """Read one Bash command against the worktree ``root``."""
+    """Read one Bash command against the worktree ``root``. A call that is
+    not a plain read is read once more with the agent's own scratch as its
+    own (``scratch_only``: its only writes are redirects into the session
+    scratchpad or ``$TMPDIR``)."""
+    verdict = _classify_bash(command, cwd=cwd, root=root)
+    if verdict.scope == INSIDE and verdict.read_rule:
+        return verdict
+    wide = _classify_bash(command, cwd=cwd, root=root, own_scratch=True)
+    if wide.scope == INSIDE and wide.read_rule:
+        return BashCall(verdict.scope, verdict.rule, verdict.read_rule, verdict.push_branch, verdict.target,
+                        verdict.destructive, scratch_only="1")
+    return verdict
+
+
+def _classify_bash(command: str, *, cwd: str, root: str, own_scratch: bool = False) -> BashCall:
     try:
         real_root = os.path.realpath(root)
         real_cwd = os.path.realpath(cwd or root)
@@ -325,7 +351,7 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         activate = _venv_activate(command, cwd=real_cwd, root=real_root)
         if activate is not None:
             return activate
-        reader = _Reader(real_root, real_cwd)
+        reader = _Reader(real_root, real_cwd, own_scratch=own_scratch)
         segments = _segments(_tokens(
             command, cat_is_system=reader.identity("cat") == SYSTEM, bodies=reader.heredocs,
             stdin=reader.stdin_bodies, expansions=reader.expansions,
@@ -710,10 +736,25 @@ def _in_scratch(path: str, root: str) -> bool:
     return any(_inside(path, scratch) for scratch in agent_scratch_roots(root))
 
 
+def _tmp_roots() -> list[str]:
+    """``$TMPDIR`` (the user's own temporary folder), resolved."""
+    tmp = os.environ.get("TMPDIR") or ""
+    return [os.path.realpath(tmp)] if tmp.strip() else []
+
+
+def _in_own_scratch(path: str, root: str) -> bool:
+    """The agent's own scratch in the wide sense: its session scratchpad or
+    ``$TMPDIR`` (an audit's shots and logs; never the repository)."""
+    return _in_scratch(path, root) or any(_inside(path, tmp) for tmp in _tmp_roots())
+
+
 class _Reader:
-    def __init__(self, root: str, cwd: str) -> None:
+    def __init__(self, root: str, cwd: str, *, own_scratch: bool = False) -> None:
         self.root = root
         self.cwd = cwd
+        #: JRN8: the agent's own scratch ($TMPDIR too) counts as its own, and
+        #: a write redirect into it keeps the call a read.
+        self.own_scratch = own_scratch
         self.read_rules: list[str] = []
         self.all_read = True
         self.push_branch = ""
@@ -784,9 +825,10 @@ class _Reader:
                 stdin.append(self.stdin_bodies[int(target[len(_STDIN_MARK):])])
                 continue  # a here-document body: standard input, not a path
             self._path(target, cwd=self.cwd, rule="redirect_outside_worktree")
-            if op in _WRITE_REDIRECTS and os.path.realpath(
-                os.path.join(self.cwd, target)
-            ) not in _HARMLESS_PATHS:
+            landing = os.path.realpath(os.path.join(self.cwd, target))
+            if op in _WRITE_REDIRECTS and landing not in _HARMLESS_PATHS and not (
+                self.own_scratch and not _inside(landing, self.root) and _in_own_scratch(landing, self.root)
+            ):
                 self.all_read = False  # a write is never a Normal read
         words = list(words)
         while words and _ENV_ASSIGN.match(words[0]):
@@ -1124,7 +1166,8 @@ class _Reader:
         real = os.path.realpath(joined)
         if real in _HARMLESS_PATHS or word in _HARMLESS_PATHS:
             return
-        if not _inside(real, self.root) and not _in_scratch(real, self.root):
+        scratch = _in_own_scratch if self.own_scratch else _in_scratch
+        if not _inside(real, self.root) and not scratch(real, self.root):
             if _inside(os.path.normpath(joined), self.root):
                 # The text is in the worktree; a symlink on the way leads out.
                 raise _Outside(SYMLINK_OUT_RULE, word)
@@ -1454,7 +1497,8 @@ def classification_from_wire(raw: Any) -> Optional[dict[str, str]]:
     if scope not in SCOPES:
         return None
     clean: dict[str, str] = {"scope": scope}
-    for key in ("rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256", "target", "destructive"):
+    for key in ("rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256", "target", "destructive",
+                "scratch_only"):
         value = raw.get(key)
         if value is None:
             value = ""

@@ -18,7 +18,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Awaitable, Callable, Optional, Protocol
+from typing import Any, Awaitable, Callable, Mapping, Optional, Protocol
 
 from ..logging_config import get_logger
 from ..timestamps import local_now
@@ -116,6 +116,9 @@ class CallRecord:
     #: PG-DIRECTION DIR8: the Program step the desk called him about; its
     #: held items are read first, after the passphrase.
     about: str = ""
+    #: DIR8a: why the desk called (the reach rule's ``because``), kept on
+    #: each item the call reads about that step and on its ledger line.
+    because: dict[str, Any] = field(default_factory=dict)
 
     def add(self, who: str, text: str, *, interrupted: bool = False) -> None:
         text = str(text or "").strip()
@@ -379,7 +382,7 @@ class CallRunner:
                 if record.context and hasattr(self._turns, "set_context"):
                     self._turns.set_context(record.context)
             if self._held is not None and record.about:
-                await self.read_held(about=record.about)
+                await self.read_held(about=record.about, because=record.because)
             while record.state != "ended":
                 heard = await self._listen_or_late()
                 if heard is None:
@@ -646,13 +649,13 @@ class CallRunner:
 
     # ── the call that decides (PG-DIRECTION DIR8) ─────────────────────
 
-    async def read_held(self, *, about: str = "") -> None:
+    async def read_held(self, *, about: str = "", because: Optional[Mapping[str, Any]] = None) -> None:
         """Read what waits on him, one item at a time (§4): the package, his
         choice, the read back, his yes; Later; the next. A call that ends
         decides nothing more; what it did not decide stays held."""
         assert self._held is not None
         try:
-            bodies, desk_only = await asyncio.to_thread(self._held.items, about)
+            bodies, desk_only = await asyncio.to_thread(self._held.items, about, because)
         except Exception as exc:
             log.warning(f"what waits on him was not read: {exc}")
             await self.say(DID_NOT_ANSWER)
@@ -719,6 +722,8 @@ class CallRunner:
                 except Exception as exc:
                     detail = str(getattr(exc, "detail", "") or exc) or "It was not decided."
                     row["outcome"] = "answered" if getattr(exc, "code", "") == "answered_already" else ""
+                    # IMP5 on the call: the refusal's name rides on the ledger line.
+                    row["refusal"] = str((getattr(exc, "context", None) or {}).get("refusal") or "") or None
                     return "next" if await self.say(speakable(detail, 200)) else None
                 label = next((c["label"] for c in body["choices"] if c["id"] == choice), choice)
                 row.update(outcome="decided", choice=choice, label=label)
@@ -770,8 +775,11 @@ class CallRunner:
                     return None
                 heard = heard if decide.is_later(heard) else f"later {heard}"
             except Exception as exc:
+                from ..services.briefing_service import NOT_KEPT
+
                 log.warning(f"later was not recorded: {exc}")
-                return "next" if await self.say(DID_NOT_ANSWER) else None
+                row["refusal"] = "not_kept"  # IMP5: the same words as the page and Telegram
+                return "next" if await self.say(f"{NOT_KEPT}.") else None
         row.update(outcome="later", until_clock=decide.clock(until))
         return "next" if await self.say(f"Later, at {decide.clock(until)}. I will ask again then.") else None
 

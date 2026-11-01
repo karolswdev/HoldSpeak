@@ -322,6 +322,10 @@ class ProgramRunner:
         launch_id = str(step.get("launch_id") or "")
         if not launch_id:
             return None
+        if taken(step):
+            # PG-IMPORT IMP6: he has the lane; the engine types nothing into it.
+            log.info(f"step {step.get('id')}: not typed, the owner has the lane")
+            return None
         if self._prompt is not None:
             return self._prompt(launch_id, text)
         from .agent_review import AgentReviewLoop
@@ -979,6 +983,18 @@ class ProgramRunner:
             self.service.transition(program, step, "done")
 
     def _follow(self, program: dict[str, Any], step: dict[str, Any]) -> None:
+        if taken(step):
+            # PG-IMPORT IMP6 (BroCrew's take it over): he has the lane. The tick
+            # only watches the branch: a new commit (his or the agent's) goes
+            # to the check. No nudge, no prompt, no park, no hold decided or
+            # read as ended; Hand it back gives the lane to the engine again.
+            head = self._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
+            if head and head != step.get("head_commit"):
+                facts = dict(step.get("facts") or {})
+                self._clear_commit_wait(facts)
+                self.service.transition(program, step, "checking", head_commit=head, facts=facts,
+                                        line=f"New commit {head[:8]}; the check runs")
+            return
         flight = self.flight(str(step.get("launch_id") or ""))
         state = str(flight.get("state") or "")
         # PG-IMPORT IMP3: what the step waits on, as a closed cause.
@@ -1503,6 +1519,9 @@ class ProgramRunner:
             self._after_check(program, step)
             return
         why = "; ".join(result["reasons"][:3])
+        from . import program_lessons
+
+        program_lessons.note_red(facts, list(result["reasons"]))  # JRN11: the red's cause, for the lesson rule
         done_rounds = int(step.get("rounds") or 0) + 1
         step["rounds"] = done_rounds
         outcome = decide(program.get("control"), "check_failed",
@@ -1618,6 +1637,8 @@ class ProgramRunner:
         self.pass_gate(program, step)
 
     def _review_requirements(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[dict[str, Any]]:
+        if step.get("gate_review") == "person":
+            return []  # JRN14: a person's gate: her Review requirements are his word at MERGE, no agent reads them
         return [row for row in self.service.step_requirements(program, step)
                 if row.get("kind") == "review" and row.get("state") != "waived"]
 
@@ -1792,6 +1813,9 @@ class ProgramRunner:
             else:
                 self.service.apply_finding_rule(program, step, finding, outcome)
         his = [finding for finding in findings if finding.get("to_owner") and not finding.get("decision")]
+        from . import program_lessons
+
+        program_lessons.note_findings(facts, findings)  # JRN11: the review's findings, for the lesson rule
         step["findings"] = findings
         step["review_verdict"] = "pass" if status == "done" else "fail"
         facts["reviewed_commit"] = str(pair.get("last_builder_commit") or "") or None
@@ -2034,6 +2058,8 @@ class ProgramRunner:
             return
         if step.get("gate_review") == "person" and not facts.get("person_approved"):
             logins = self.service.person_logins(step.get("for_person_id") or program.get("for_person_id"))
+            if self._person_changes(program, step, facts, pr, logins):
+                return
             approved = {str(login).casefold() for login in pr.get("approved_by") or []}
             if logins and approved & logins:
                 facts["person_approved"] = True
@@ -2058,6 +2084,39 @@ class ProgramRunner:
         if ci not in ("passing", "none"):
             return
         self._decide_merge(program, step, facts, f"PR #{step.get('pr_number')}")
+
+    def _person_changes(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any],
+                        pr: Mapping[str, Any], logins: set[str]) -> bool:
+        """JRN14: the person asked for changes on GitHub. Their words go to the
+        builder as one round of REQUIRED findings on the same branch and PR,
+        once per review (``person_changes_at``); the step goes back to work.
+        True when a round was sent."""
+        theirs = [row for row in pr.get("changes_requested") or []
+                  if isinstance(row, Mapping) and str(row.get("login") or "").casefold() in logins]
+        if not logins or not theirs:
+            return False
+        latest = max(str(row.get("at") or "") for row in theirs) or "seen"
+        if facts.get("person_changes_at") == latest:
+            return False
+        person = step.get("for_person_id") or program.get("for_person_id")
+        name = self.service.person_name(person) or "The reviewer"
+        round_ = int(step.get("rounds") or 0) + 1
+        words = [str(row.get("body") or "").strip() for row in theirs if str(row.get("body") or "").strip()]
+        findings = [{"id": f"p{round_}c{index}", "level": "REQUIRED", "text": text, "decision": "fix_now",
+                     "to_owner": False, "by": name} for index, text in enumerate(words or ["Changes requested, with no comment"], start=1)]
+        facts["person_changes_at"] = latest
+        number = step.get("pr_number") or pr.get("number")
+        ask = (f"HoldSpeak on step {step['ordinal']}: {name} asked for changes on PR #{number} on GitHub:\n"
+               + "\n".join(f"- {row['text']}" for row in findings)
+               + "\nFix them, commit on this branch, and end your turn.")
+        try:
+            self.prompt_builder(step, ask)
+        except Exception as exc:
+            log.info(f"the person's changes were not typed: {exc}")
+        step["rounds"] = round_
+        self.service.transition(program, step, "working", findings=findings, facts=facts, rounds=round_,
+                                line=f"{name} asked for changes on GitHub; round {round_} goes back to the agent")
+        return True
 
     def _decide_merge(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any], what: str) -> None:
         """The merge rule on a green, reviewed and met step: the engine merges
@@ -2184,6 +2243,11 @@ class HubGate:
         who = principal if principal is not None else Principal(PrincipalKind.OWNER, CONTROL_MODE_IDENTITY)
         return GateService(self.db).decide(who, proposal_id, {"decision": APPROVED if approve else DENIED,
                                                                "reason": reason[:200]})
+
+
+def taken(step: Mapping[str, Any]) -> bool:
+    """PG-IMPORT IMP6: the owner took the step's lane over."""
+    return isinstance((step.get("facts") or {}).get("taken"), Mapping)
 
 
 def default_runner(service: Optional[ProgramService] = None) -> ProgramRunner:
