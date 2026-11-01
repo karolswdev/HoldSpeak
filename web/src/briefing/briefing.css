@@ -290,3 +290,18 @@
    one after the other; a decided item is its one settled line. */
 .briefing .briefing-digest-head { padding-bottom: 0; }
 .briefing .briefing-item + .briefing-item { border-top: 1px solid var(--wb-rule-soft); margin-top: var(--space-4); }
+
+/* DIR10: a send's preview (where, then the lines), and an agent's question
+   answered with his words. Plain text; the tray stays the one raised thing. */
+.briefing .briefing-preview { padding: 0 var(--space-4) var(--space-3); }
+.briefing .briefing-preview-line { margin: 0; font: 400 14px / 1.5 var(--font-sans); overflow-wrap: anywhere; }
+.briefing .briefing-answer { display: flex; flex-direction: column; gap: var(--space-3); }
+.briefing .briefing-answer-text {
+  width: 100%;
+  min-height: 88px;
+  padding: var(--space-3);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 8px;
+  font: 400 16px / 1.4 var(--font-sans);
+  resize: vertical;
+}

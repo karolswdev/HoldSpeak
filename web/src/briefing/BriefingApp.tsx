@@ -198,12 +198,42 @@ function ChoiceTray({ page, item, busy, onAnswer }: {
   );
 }
 
+/** DIR10: what the choice sends or writes, and where, before the choice
+ *  (UX-CANON A.9: egress at the act). Plain lines, no box. */
+function Preview({ preview }: { preview: NonNullable<BriefingItem["preview"]> }) {
+  return (
+    <section className="briefing-preview" aria-label="What it sends" data-testid="briefing-preview">
+      <p className="briefing-caption">{`To ${preview.destination}`}</p>
+      {preview.lines.map((line, index) => <p key={`${index}:${line}`} className="briefing-preview-line">{line}</p>)}
+    </section>
+  );
+}
+
+/** DIR10: an agent's question, answered with his words. */
+function TextAnswer({ field, busy, onAnswer }: {
+  field: NonNullable<BriefingItem["text"]>; busy: string; onAnswer(choice: string, later?: string, reason?: string): void;
+}) {
+  const [said, setSaid] = useState("");
+  return (
+    <section className="briefing-tray briefing-answer" aria-label={field.label} data-testid="briefing-answer">
+      <label className="briefing-caption" htmlFor="briefing-answer-text">{field.label}</label>
+      <textarea id="briefing-answer-text" className="briefing-answer-text" rows={3} maxLength={field.max} value={said}
+        onChange={(event) => setSaid(event.target.value)} data-testid="briefing-answer-text" />
+      <div className="briefing-choice">
+        <Button variant="primary" loading={busy === field.id} disabled={Boolean(busy) || !said.trim()}
+          onClick={() => onAnswer(field.id, undefined, said.trim())} data-testid="briefing-answer-send">Send the answer</Button>
+        <span className="briefing-consequence">{field.consequence}</span>
+      </div>
+    </section>
+  );
+}
+
 function Brief({ page, item, busy, onAnswer, token, own }: {
   page: BriefingPage;
   item: BriefingItem;
   busy: string;
   token: string;
-  onAnswer(choice: string, later?: string): void;
+  onAnswer(choice: string, later?: string, reason?: string): void;
   /** DIR9: on a page of several items each brief keeps its own head. */
   own?: boolean;
 }) {
@@ -238,6 +268,8 @@ function Brief({ page, item, busy, onAnswer, token, own }: {
           </section>
         ) : null}
       </div>
+      {item.preview ? <Preview preview={item.preview} /> : null}
+      {item.text ? <TextAnswer field={item.text} busy={busy} onAnswer={onAnswer} /> : null}
       <ChoiceTray page={page} item={item} busy={busy} onAnswer={onAnswer} />
       <Panes token={token} item={item} />
     </>
@@ -307,11 +339,11 @@ export function BriefingApp({ token }: { token: string }) {
   }
   if (page.items.length > 1) return <DigestFace token={token} page={page} setPage={setPage} onGone={() => setGone(true)} />;
   const item = page.items[0];
-  const answer = async (choice: string, later?: string) => {
+  const answer = async (choice: string, later?: string, reason?: string) => {
     setBusy(choice);
     setFailed("");
     try {
-      const done = await answerItem(token, { ref: item.ref, choice, ...(later ? { later } : {}) });
+      const done = await answerItem(token, { ref: item.ref, choice, ...(later ? { later } : {}), ...(reason ? { reason } : {}) });
       setPage({ ...page, items: [done.item] });
       top.current?.scrollIntoView?.({ block: "start" });
     } catch (error) {
@@ -329,7 +361,7 @@ export function BriefingApp({ token }: { token: string }) {
     <PageFrame settled={settled} status={[page.package.expires_words, `from HoldSpeak on ${page.package.hub}`]}>
       <div ref={top} />
       {settled ? <Settled page={page} item={item} /> : (
-        <Brief page={page} item={item} busy={busy} token={token} onAnswer={(choice, later) => void answer(choice, later)} />
+        <Brief page={page} item={item} busy={busy} token={token} onAnswer={(choice, later, reason) => void answer(choice, later, reason)} />
       )}
       {failed ? <p className="briefing-line briefing-failure" role="status" data-testid="briefing-failure">{failed}</p> : null}
     </PageFrame>
@@ -351,11 +383,11 @@ function DigestFace({ token, page, setPage, onGone }: {
 }) {
   const [busy, setBusy] = useState<{ ref: string; choice: string } | null>(null);
   const [failed, setFailed] = useState<Record<string, string>>({});
-  const answer = async (item: BriefingItem, choice: string, later?: string) => {
+  const answer = async (item: BriefingItem, choice: string, later?: string, reason?: string) => {
     setBusy({ ref: item.ref, choice });
     setFailed((now) => ({ ...now, [item.ref]: "" }));
     try {
-      const done = await answerItem(token, { ref: item.ref, choice, ...(later ? { later } : {}) });
+      const done = await answerItem(token, { ref: item.ref, choice, ...(later ? { later } : {}), ...(reason ? { reason } : {}) });
       setPage({ ...page, items: page.items.map((row) => (row.ref === item.ref ? done.item : row)) });
     } catch (error) {
       if (error instanceof PageRefusal && error.code === "page_expired") onGone();
@@ -382,7 +414,7 @@ function DigestFace({ token, page, setPage, onGone }: {
         <section key={item.ref} className="briefing-item" data-testid="briefing-item" data-ref={item.ref} data-state={item.state}>
           {SETTLED.has(item.state) ? <Settled page={page} item={item} own /> : (
             <Brief page={page} item={item} own token={token} busy={busy?.ref === item.ref ? busy.choice : busy ? "other" : ""}
-              onAnswer={(choice, later) => void answer(item, choice, later)} />
+              onAnswer={(choice, later, reason) => void answer(item, choice, later, reason)} />
           )}
           {failed[item.ref] ? <p className="briefing-line briefing-failure" role="status" data-testid="briefing-failure">{failed[item.ref]}</p> : null}
         </section>

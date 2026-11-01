@@ -54,6 +54,10 @@ NOT_USABLE = "Choose one"
 NOT_KEPT = "Could not keep that for later; it still waits"
 
 
+#: DIRECTION §3: the words when a page-only item is answered elsewhere.
+PAGE_ONLY = "This is decided on its page, where it shows what it sends. Open the page."
+
+
 def because_of(kind: Any, *, rule: str = "kind", **more: Any) -> dict[str, Any]:
     """IMP5: why a held item travels: a question, a choice among offered
     presses, or a to-do; never a permission (those never become packages)."""
@@ -685,6 +689,8 @@ class BriefingService:
                 raise not_pending(*self._decided_where(str(ref)))
             if not str(choice or "").strip():
                 raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
+            if getattr(source, "page_only", False) and via != "page":
+                raise BriefingRefused("page_only", PAGE_ONLY, status=409, refusal="not_offered", words=PAGE_ONLY)
             if str(choice) not in {row["id"] for row in source.body(str(ref), item)["choices"]}:
                 raise BriefingRefused("not_offered", NOT_OFFERED, status=400, refusal="not_offered", words=NOT_OFFERED)
             return self._decide_source(source, str(ref), item, str(choice), via)
@@ -856,6 +862,10 @@ class BriefingService:
             raise not_pending(*self._decided_where(ref, package))
         if not choice.strip():
             raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
+        if body.get("page_only") and via != "page" and choice != "later":
+            # DIRECTION §3: a prepared send is decided on its page, where its
+            # preview names the destination; never a Telegram tap.
+            raise BriefingRefused("page_only", PAGE_ONLY, status=409, refusal="not_offered", words=PAGE_ONLY)
         answers = dict(package.get("answers") or {})
         now = self._now()
         if choice == "later":
@@ -881,11 +891,23 @@ class BriefingService:
                 if len(said) > ANSWER_MAX_CHARS:
                     raise BriefingRefused("answer_too_long", f"An answer is at most {ANSWER_MAX_CHARS} characters.",
                                           status=400)
-                _program, step, item = self._held(ref)
-                if item is None:
-                    raise not_pending(*self._decided_where(ref, package))
-                self.programs().answer_agent(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),
-                                             said, via=via)
+                source = self._source(ref)
+                if source is not None:
+                    # DIR10: a desk agent's question outside a Program.
+                    held = source.held(ref)
+                    if held is None:
+                        raise not_pending(*self._decided_where(ref, package))
+                    try:
+                        source.answer_text(ref, held, said, via=via)
+                    except ServiceError as exc:
+                        raise BriefingRefused(exc.code, exc.detail, status=int((exc.context or {}).get("status", 409)),
+                                              refusal="not_kept", words=exc.detail) from exc
+                else:
+                    _program, step, item = self._held(ref)
+                    if item is None:
+                        raise not_pending(*self._decided_where(ref, package))
+                    self.programs().answer_agent(PAGE_OWNER, str(body["program_id"]),
+                                                 str(item.get("step_id") or ""), said, via=via)
                 answers[ref] = {"choice": "answer", "via": via, "at": _utc(now), "text": said[:200]}
                 self.store.answer(package["id"], answers)
                 self._changed(package["id"], "answered")

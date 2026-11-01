@@ -1,0 +1,66 @@
+{
+  "item": {
+    "because": {
+      "kind": "send",
+      "rule": "kind",
+      "words": "a choice among offered presses"
+    },
+    "blocked": [],
+    "blocked_words": "",
+    "changed": [],
+    "choices": [
+      {
+        "consequence": "HoldSpeak sends it to Team folder now.",
+        "id": "send",
+        "label": "Send",
+        "primary": true
+      },
+      {
+        "consequence": "Nothing is sent. The prepared send is dropped.",
+        "id": "discard",
+        "label": "Discard",
+        "primary": false
+      }
+    ],
+    "doing": "",
+    "evidence": [],
+    "goal": "Payments ledger cutover — update r1 (2026-11-01) is ready to send to Team folder.",
+    "happened": "",
+    "head": "Payments ledger cutover — update r1 (2026-11-01) · to Team folder",
+    "kind": "send",
+    "kind_words": "Ready to send",
+    "level": "",
+    "note": [
+      "Payments ledger cutover — update r1 (2026-11-01) is ready to send to Team folder."
+    ],
+    "outcome": {
+      "at": "2026-11-01T18:00:52.982931+00:00",
+      "choice": "send",
+      "label": "Send",
+      "via": "page",
+      "words": "Send · 13:00. Nothing else waits on you."
+    },
+    "page_only": true,
+    "place": "",
+    "preview": {
+      "destination": "Team folder",
+      "lines": [
+        "# Payments ledger cutover · Update · 2026-11-01",
+        "## Progress",
+        "The ledger cutover is on track."
+      ],
+      "reversible": false
+    },
+    "program_id": null,
+    "program_title": "",
+    "question": "Send it to Team folder?",
+    "ref": "send:chs_aa475624cb3c7447fc953c63",
+    "since": "2026-11-01T18:00:52+00:00",
+    "source": "send",
+    "state": "decided",
+    "step_id": "",
+    "step_ordinal": null,
+    "step_title": "",
+    "track": []
+  }
+}
