@@ -140,7 +140,8 @@ const EXPECTED = [
 
 async function renderDrawer() {
   const view = render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
-  await screen.findByRole("button", { name: /^Jordan Patel, Person/ });
+  // Under a loaded related run the first paint takes over the default 1 s.
+  await screen.findByRole("button", { name: /^Jordan Patel, Person/ }, { timeout: 5000 });
   return view;
 }
 
