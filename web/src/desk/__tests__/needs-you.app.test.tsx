@@ -551,9 +551,11 @@ describe("Needs you: File, Make and a lesson are TO DECIDE rows that press the s
     const file = await rowOf("3 findings to file as Door tasks");
     expect((needsAudit.items as any[]).filter((row) => row.source === "program" && row.program.kind !== "close").map((row) => row.why))
       .toEqual(["TO DECIDE", "TO DECIDE"]);
-    expect(verbs(file)).toEqual(["File", "Skip"]);
+    // The choices, then Later and Send (the briefing page takes these rows too).
+    expect(verbs(file).slice(0, 2)).toEqual(["File", "Skip"]);
+    expect(verbs(file).slice(2).map((word) => word?.replace(/\s*▾$/, ""))).toEqual(["Later", "Send"]);
     const make = await rowOf("A fix program from 1 MUST finding");
-    expect(verbs(make)).toEqual(["Make", "Skip"]);
+    expect(verbs(make).slice(0, 2)).toEqual(["Make", "Skip"]);
     const item = needsAudit.items.find((row: any) => row.program?.kind === "fix_program") as any;
     fireEvent.click(make.querySelector("[data-verb='program-make']")!);
     await waitFor(() => expect(posts).toContainEqual({ url: item.program.decide, json: { kind: "fix_program", choice: "make" } }));
@@ -564,7 +566,7 @@ describe("Needs you: File, Make and a lesson are TO DECIDE rows that press the s
     const item = needsLesson.items.find((row: any) => row.program?.kind === "lesson") as any;
     render(<NeedsDrawer />);
     const li = await rowOf(item.title);
-    expect(verbs(li)).toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
+    expect(verbs(li).slice(0, 3)).toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
     fireEvent.click(li.querySelector("[data-verb='program-keep-repo']")!);
     await waitFor(() => expect(posts).toContainEqual({
       url: item.program.decide, json: { kind: "lesson", choice: "keep_repo", lesson_id: item.program.lessonId } }));

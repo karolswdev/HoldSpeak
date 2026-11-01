@@ -2703,6 +2703,8 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     expect(row.textContent).toContain(item.brief!.happened);
     expect(within(screen.getByTestId("programs-tray")).getAllByRole("button").map((button) => button.textContent))
       .toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
+    // The briefing page takes it too (the hub's BRIEFABLE): Copy page link under the tray.
+    expect(within(row).getByTestId("programs-turn-copy-link").textContent).toBe("Copy page link");
     fireEvent.click(within(row).getByTestId("programs-turn-keep-program"));
     await waitFor(() => expect(calls).toContain(
       `POST /api/programs/${program.id}/steps/${item.step_id}/decide {"kind":"lesson","choice":"keep_program","lesson_id":${item.lesson_id}}`));
