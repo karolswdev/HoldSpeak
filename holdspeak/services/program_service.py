@@ -629,6 +629,14 @@ def todo_head(agent: str, ordinal: Any) -> str:
     return f"{agent} asks you to do this" + (f" · step {int(ordinal)}" if ordinal else "")
 
 
+def his_word(row: Mapping[str, Any], step: Optional[Mapping[str, Any]]) -> bool:
+    """A requirement his press judges: Your word, and (JRN14) a Review on a
+    step whose review is a person's (no agent reviewer reads it; his word
+    at MERGE stands for the person gate)."""
+    kind = row.get("kind")
+    return kind == "word" or (kind == "review" and (step or {}).get("gate_review") == "person")
+
+
 def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
                       requirements: Optional[Iterable[Mapping[str, Any]]],
                       proposals: Optional[Iterable[Mapping[str, Any]]]) -> list[dict[str, Any]]:
@@ -677,7 +685,7 @@ def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, A
         where = f"Step {step['ordinal']} · {step['title']}"
         own = [row for row in reqs if row.get("step_id") == step["id"]]
         for row in own:
-            if row.get("kind") != "word" or not row.get("required") or row.get("state") != "not_yet":
+            if not his_word(row, step) or not row.get("required") or row.get("state") != "not_yet":
                 continue
             if (row.get("spec") or {}).get("walk") and state in TODO_STATES:
                 # PG-IMPORT IMP2 (BroCrew's to-do): a walk is a thing the agent
@@ -1290,7 +1298,7 @@ class ProgramService:
         frozen = bool(program.get("closed_at")) or step_state in FROZEN_STEP_STATES
         if frozen or state == "waived":
             choices: list[str] = []
-        elif kind == "word":
+        elif his_word(row, step):
             choices = ["met", "send_back", "waive"] if state == "unmet" else (["unmet", "waive"] if state == "met" else ["met", "unmet", "waive"])
         elif state == "unmet":
             choices = ["send_back", "waive"] if (step or {}).get("launch_id") else ["waive"]
@@ -3127,7 +3135,7 @@ class ProgramService:
             return {"requirement_id": row["id"], "program": self.get(principal, program["id"])}
         with _LOCK:
             if choice in ("met", "unmet"):
-                if row.get("kind") != "word":
+                if not his_word(row, step):
                     raise ProgramRefused("not_his_word", "HoldSpeak judges this requirement on the commit. Waive it, "
                                          "or send it back.")
                 said = f"You · {_clock_words(self._clock())}" + (f" · {words}" if words else "")
