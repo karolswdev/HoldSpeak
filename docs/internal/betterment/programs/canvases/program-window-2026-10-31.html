@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Program window canvas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material. The values are copied from web/src/styles/tokens.css and the
+   kit (web/src/desk/surface/kit.css, objects/list-view.css) through
+   canvases/programs-requirements-2026-10-31.html; the brief and the tray are
+   the briefing page's (canvases/briefing-page-2026-10-31.html, #1684). The
+   parts at the end are this window's own. */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9;
+  --wb-ok-ink:#1d5c2e; --wb-warn-ink:#6b4a00; --wb-danger-ink:#9b2219; --wb-info-ink:#2f4f86; --wb-ember-ink:#7a4a2c;
+  --lamp-ok:#34d399; --lamp-warn:#fbbf24; --lamp-fail:#f87171; --lamp-info:#3b5d93; --lamp-ask:#da9868;
+  --kind-pr:#2b7a4a; --kind-agent:#a84a1c; --kind-project:#3b62c4; --kind-decision:#6a4bc4;
+  --depth-paper:0 22px 48px rgba(22,40,62,.24),0 4px 12px rgba(22,40,62,.12);
+  --depth-row:0 1px 3px rgba(22,40,62,.12);
+  --depth-card:0 10px 28px rgba(8,14,22,.22);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  --page:#e9eef4; --page-ink:#253449;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1b2531; --page-ink:#e3e9f1; }
+}
+:root[data-theme="dark"]{ --page:#1b2531; --page-ink:#e3e9f1; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font:15px/1.5 var(--font-ui);min-width:1440px}
+main{padding:32px 24px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+p{margin:0 0 10px;max-width:1100px}
+code{font:12.5px var(--font-mono)}
+section.part{margin:44px 0 0;padding:24px 0 0;border-top:2px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#7b8aa0}
+.rec{padding:14px 18px;background:color-mix(in srgb,var(--wb-sel-vivid) 8%,transparent);border-radius:8px;max-width:1180px;margin:14px 0}
+.rec p{max-width:none}
+.note{font-size:13.5px;opacity:.85;max-width:1200px}
+.row{display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;margin-top:14px}
+.cap{font:600 13px var(--font-ui);margin:0 0 8px}
+ul.facts{max-width:1150px;font-size:14px;margin:6px 0 0;padding-left:20px}
+ul.facts li{margin:2px 0}
+
+/* ── the desk and the window frame ── */
+.desk{position:relative;width:1440px;height:900px;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);
+  background:radial-gradient(120% 90% at 20% 0%,#45607f 0%,#2f435b 45%,#233244 100%);font-family:var(--font-ui);color:var(--wb-ink)}
+.menubar{position:absolute;left:0;right:0;top:0;height:36px;background:#fbfcfe;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13.5px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.menubar b{font-weight:600}.menubar .grow{flex:1}
+.win{position:absolute;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--depth-paper);overflow:hidden;display:flex;flex-direction:column}
+.desk .win{left:150px;top:58px;width:1140px;height:800px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:var(--wb-paper);font-family:var(--font-ui);color:var(--wb-ink)}
+.phone .win{inset:0;border:0;border-radius:0;box-shadow:none}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.phone .tb{flex-basis:44px;padding-top:0}
+.tb .chip{width:22px;height:22px;border-radius:5px;background:var(--wb-paper);display:grid;place-items:center;box-shadow:0 0 0 1px var(--wb-rule-soft)}
+.tb .chip i{width:14px;height:12px;border-radius:2px;background:linear-gradient(135deg,#5f86c9,#2f4f86);box-shadow:inset 0 0 0 1.5px #1f3560}
+.tb .name{font:600 13.5px/1 var(--font-ui);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .lampt{width:9px;height:9px;border-radius:50%;background:var(--lamp-ask);box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.tb .gad{display:flex;gap:4px}
+.tb .gad i{width:26px;height:20px;display:grid;place-items:center}
+.tb .gad i::before{content:"";width:11px;height:10px;border:1.5px solid #f7f9fc;border-radius:2px}
+.toolbar{flex:0 0 36px;display:flex;align-items:center;gap:4px;padding:3px 8px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper)}
+.phone .toolbar{flex-basis:50px}
+.toolbar .grow{flex:1}
+.content{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap;overflow:hidden}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .it+.it::before{content:"·";margin:0 7px 0 1px;opacity:.7}
+.sb b{color:var(--wb-ink);font-weight:500}
+
+/* library Button, FilterTokens, Token, DotWord, lamps */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap;border:1px solid transparent;background:transparent}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc}
+.btn.plate{background:var(--wb-steel-2);border-color:var(--wb-rule);box-shadow:inset 0 1px 0 #fff}
+.btn.sm{height:24px;font-size:12.5px;padding:0 9px}
+.phone .btn{min-height:36px}
+.btn .caret{font-size:10px;color:var(--wb-muted)}
+.ft{display:inline-flex;border:1px solid var(--wb-rule-soft);border-radius:6px;overflow:hidden}
+.ft span{padding:0 10px;height:26px;display:grid;place-items:center;font:500 12.5px var(--font-ui);color:var(--wb-muted)}
+.ft span.on{background:var(--wb-blue);color:var(--wb-sel)}
+.tok{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:4px;background:var(--wb-field);font:500 12px var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.dw{display:inline-flex;align-items:center;gap:6px;font:500 12px/1.35 var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:color-mix(in srgb,var(--wb-muted) 55%,var(--wb-paper));--t:var(--wb-muted)}
+.dot.ok{background:var(--lamp-ok);--t:var(--lamp-ok)} .dot.info{background:var(--lamp-info);--t:var(--lamp-info)}
+.dot.ask{background:var(--lamp-ask);--t:var(--lamp-ask)} .dot.fail{background:var(--lamp-fail);--t:var(--lamp-fail)}
+.dot.no{background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.dw.ok{color:var(--wb-ok-ink)} .dw.info{color:var(--wb-info-ink)} .dw.ask{color:var(--wb-ember-ink)} .dw.fail{color:var(--wb-danger-ink)}
+@keyframes live{0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 45%,transparent),0 0 0 2px color-mix(in srgb,var(--t) 16%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--t) 60%,transparent),0 0 0 5px color-mix(in srgb,var(--t) 26%,transparent)}}
+@media (prefers-reduced-motion: no-preference){ .live{animation:live 2.4s ease-in-out infinite} }
+.mic{width:30px;height:30px;border-radius:6px;display:grid;place-items:center;border:1px solid var(--wb-rule);background:var(--wb-steel-2)}
+.mic svg{width:14px;height:14px;stroke:var(--wb-muted);fill:none;stroke-width:1.6;stroke-linecap:round}
+.seat{width:20px;height:20px;border-radius:5px;flex:none;display:grid;place-items:center;font:700 10px var(--font-ui);color:#fff}
+.seat.agent{background:var(--kind-agent)} .seat.pr{background:var(--kind-pr)}
+
+/* ── the line: the program's steps as one station track (programTrack.tsx) ── */
+.line{display:flex;align-items:flex-start;gap:0;margin:0;padding:0;list-style:none}
+.line li{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex:1;min-width:0;position:relative;font-size:12px;color:var(--wb-muted)}
+.line li::before{content:"";position:absolute;left:12px;right:0;top:5px;height:1.5px;background:#cbd5e1}
+.line li:last-child::before{display:none}
+.line li.done::before{background:#8ea0b6}
+.line .st{position:relative;z-index:1;width:12px;height:12px;border-radius:50%;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2}
+.line li.done .st{background:#8ea0b6;box-shadow:none}
+.line li.run .st{background:var(--lamp-info);box-shadow:none;--t:var(--lamp-info)}
+.line li.here .st{background:var(--lamp-ask);box-shadow:none;--t:var(--lamp-ask);width:14px;height:14px;margin-top:-1px}
+.line li.blk .st{background:color-mix(in srgb,var(--lamp-warn) 35%,var(--wb-paper));box-shadow:inset 0 0 0 1.5px var(--lamp-warn)}
+.line li.end .st{border-radius:3px}
+.line .w{font:500 12px/1.3 var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:96%}
+.line .w b{font-weight:600;color:var(--wb-ink)}
+.line li.here .w,.line li.here .w b{color:var(--wb-ember-ink)}
+.line li.run .w b{color:var(--wb-info-ink)}
+.line li.blk .w{color:var(--wb-warn-ink)}
+.line .s{font-size:12px;color:var(--wb-faint);white-space:nowrap}
+.line li.here .s{color:var(--wb-ember-ink)}
+.line li.done .s{color:var(--kind-pr)}
+
+/* ── the brief: the held thing is the headline (no box) ── */
+.brief{padding:14px 18px 6px}
+.kind{display:flex;align-items:center;gap:8px;margin:0 0 6px;color:var(--wb-ember-ink);font:600 12px/1.4 var(--font-ui)}
+.q{margin:2px 0 8px;font:600 24px/1.25 var(--font-display);letter-spacing:-.01em;color:var(--wb-ink)}
+.phone .q{font-size:21px}
+.say{margin:0 0 4px;font:400 14px/1.45 var(--font-ui);max-width:760px}
+.say.b{font-weight:500}
+.blocked{margin:6px 0 0;color:var(--wb-warn-ink);font:500 13px/1.45 var(--font-ui)}
+.tray{display:flex;gap:12px;margin:12px 18px 4px;padding:12px;border-radius:12px;background:var(--wb-paper);box-shadow:var(--depth-card)}
+.phone .tray{flex-direction:column;margin:10px 12px 4px;gap:10px}
+.choice{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.choice .btn{height:36px;font-size:14px;border:1px solid var(--wb-rule);background:var(--wb-field)}
+.choice .btn.primary{background:var(--wb-sel);border-color:var(--wb-sel)}
+.phone .choice .btn{height:44px}
+.cons{color:var(--wb-muted);font:400 12px/1.4 var(--font-ui)}
+.trayend{display:flex;flex-direction:column;justify-content:flex-start;gap:6px}
+.more{display:flex;align-items:center;gap:10px;padding:8px 18px 4px;font-size:13px;color:var(--wb-muted)}
+.more b{color:var(--wb-ink);font-weight:600}
+
+/* ── the steps: one 32 px row each; the open one carries its proof and its story ── */
+.cap2{display:flex;align-items:center;gap:8px;height:28px;padding:0 18px;margin-top:10px;font:600 12px var(--font-ui);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.srow{height:34px;display:grid;grid-template-columns:22px minmax(0,1fr) 150px 130px 70px 92px;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid #e9eef4;font-size:13px;white-space:nowrap}
+.srow>*{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.srow .n{color:var(--wb-faint);font-size:12px;text-align:right}
+.srow .t{font-weight:600}
+.srow .t .af{font-weight:400;color:var(--wb-muted);font-size:12px;margin-left:6px}
+.srow .ag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.srow .m{color:var(--wb-muted);font-size:12px}
+.srow .rq{display:flex;align-items:center;gap:4px;justify-content:flex-end;font-size:12px;color:var(--wb-muted)}
+.srow.open{background:color-mix(in srgb,#3b5d93 7%,#fafbfc);border-bottom:0}
+.phone .srow{grid-template-columns:20px minmax(0,1fr) auto;height:auto;min-height:44px;padding:6px 12px;row-gap:2px}
+.phone .srow .ag,.phone .srow .m.x{display:none}
+.open-body{padding:4px 18px 12px 50px;background:color-mix(in srgb,#3b5d93 7%,#fafbfc);border-bottom:1px solid var(--wb-rule-soft)}
+.phone .open-body{padding:2px 12px 12px 38px}
+.sub{font:600 12px var(--font-ui);color:var(--wb-muted);margin:8px 0 2px}
+.req{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;align-items:center;gap:8px;min-height:30px;font-size:13px}
+.phone .req{grid-template-columns:24px minmax(0,1fr) auto;row-gap:0}
+.phone .req .tok{display:none}
+.req .lb{color:var(--wb-faint);font-size:12px}
+.req .tx{display:flex;align-items:center;gap:7px;min-width:0}
+.req .tx span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.req .pf{font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.req .pf.fail{color:var(--wb-danger-ink)}
+.story{margin:0;padding:0;list-style:none}
+.story li{display:grid;grid-template-columns:44px 1fr;gap:8px;font-size:13px;line-height:1.5}
+.story li i{font-style:normal;color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums}
+.verbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.endrow{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:10px 18px;font-size:13px;border-bottom:1px solid #e9eef4}
+.endrow .n{display:grid;place-items:center}
+.endrow .n i{width:10px;height:10px;border-radius:3px;box-shadow:inset 0 0 0 1.5px #b5c2d2}
+
+/* ── the composer: the shape bar at the foot, like a conversation ── */
+.composer{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--wb-rule-soft);background:var(--wb-steel-2)}
+.composer .fld{flex:1;height:32px;border:1px solid var(--wb-rule);border-radius:16px;background:var(--wb-well);display:flex;align-items:center;padding:0 12px;font-size:13px;color:var(--wb-faint)}
+.phone .composer{padding:8px 10px}
+.phone .composer .fld{height:44px;border-radius:22px}
+.phone .composer .mic{width:44px;height:44px;border-radius:22px}
+.composer .heard{font-size:12px;color:var(--wb-muted)}
+
+/* ── direction B: the rail and the page ── */
+.split{display:grid;grid-template-columns:300px 1fr;height:100%}
+.rail{border-right:1px solid var(--wb-rule-soft);background:var(--wb-steel-2);padding:12px 0;overflow:hidden}
+.rail h4{margin:0 14px 8px;font:600 12px var(--font-ui);color:var(--wb-muted)}
+.rail .goal{margin:0 14px 12px;font-size:13px}
+.vt{list-style:none;margin:0;padding:0}
+.vt li{display:grid;grid-template-columns:28px 1fr;gap:6px;padding:6px 14px 6px 10px;position:relative;font-size:13px}
+.vt li::before{content:"";position:absolute;left:23px;top:22px;bottom:-8px;width:1.5px;background:#cbd5e1}
+.vt li:last-child::before{display:none}
+.vt li.done::before{background:#8ea0b6}
+.vt .st{width:12px;height:12px;border-radius:50%;margin:3px auto 0;background:var(--wb-paper);box-shadow:inset 0 0 0 1.5px #b5c2d2;position:relative;z-index:1}
+.vt li.done .st{background:#8ea0b6;box-shadow:none}
+.vt li.run .st{background:var(--lamp-info);box-shadow:none;--t:var(--lamp-info)}
+.vt li.here .st{background:var(--lamp-ask);box-shadow:none;--t:var(--lamp-ask)}
+.vt li.blk .st{background:color-mix(in srgb,var(--lamp-warn) 35%,var(--wb-paper));box-shadow:inset 0 0 0 1.5px var(--lamp-warn)}
+.vt li.end .st{border-radius:3px}
+.vt li.sel{background:var(--wb-paper);box-shadow:var(--depth-row)}
+.vt .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt .m{font-size:12px;color:var(--wb-muted);display:flex;gap:6px;align-items:center}
+.vt li.here .t,.vt li.here .m{color:var(--wb-ember-ink)}
+.page{overflow:hidden;padding-bottom:12px}
+.page .head{display:flex;align-items:center;gap:10px;padding:14px 18px 0;font:600 15px var(--font-ui)}
+.page .head .m{font:400 12px var(--font-ui);color:var(--wb-muted)}
+.page .block{padding:0 18px}
+
+/* ── direction C: the conversation ── */
+.thread{padding:12px 18px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.msg{display:grid;grid-template-columns:28px 1fr;gap:10px;font-size:13px}
+.msg .who{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:#fff;font:700 11px var(--font-ui)}
+.msg .who.you{background:#1f7a6b}.msg .who.agent{background:var(--kind-agent)}.msg .who.hs{background:var(--wb-sel)}
+.msg .hd{font:600 13px var(--font-ui);display:flex;gap:8px;align-items:center}
+.msg .hd .m{font-weight:400;color:var(--wb-muted);font-size:12px}
+.msg p{margin:2px 0 0;line-height:1.5}
+.msg .reqs{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.msg.dim{opacity:.72}
+.phone .thread{padding:10px 12px}
+</style>
+</head>
+<body>
+<main>
+<h1>The Program window as one object</h1>
+<p>Owner, 2026-10-31: Programs are the flagship; they are "not that clear to browse, adjust… not clear how to add additional requirements/checks, see how they are met"; "UX will be key. If it means canvas? It means that." On tonight's window ("README touch" at 1440) the one thing that needed him was a tinted "Your turn" box with raw git stderr as its line; a shape bar that read as a search box sat above it; a bare "R1 Add a requirement / Review / Every step / Required / Add" form floated over the steps; five grey dots meant nothing; the brief hid under a "Step 1 · … · Parked" fold with four tabs.</p>
+<p class="note">Every direction draws the same real state: the program "The hub stops stalling", five steps, mid-run. 1 Indexes and 2 Retention are done (merged). 3 Projections off the loop runs (Claude Code, round 2, sent back on R2). 4 People routes is held on him: its gate asks for the merge of PR #1612. 5 Docs is planned and waits on 3 and 4. Two requirements: R1 "the quick check is green" on every step (met on 1, 2 and 4) and R2 on step 3 "no handler holds the loop over 100 ms" (unmet: the reviewer's line). Three interview rounds were answered before Start (Architecture, Product, Stack). The words of the brief are the hub's (<code>holdspeak/services/brief_words.py</code>): the goal, what the step was doing, what happened in plain words, the question, each choice with its consequence, what waits on this answer.</p>
+<p class="note">The rules for all three: no tinted box around the thing that needs him (the brief is the window's headline, the choice tray is the only raised thing); no "▸ label" rows; where we are is the program's station track (<code>web/src/desk/surface/programTrack.tsx</code>), this step lit and breathing, the steps that wait on it marked; a step's requirements are lines with a lamp inside the step, with Add a requirement as a verb at the step; what the agent did is a short story per step (at most three plain lines; the whole ledger one press away); one composer at the foot: "Tell the program what to change", the mic, Shape. Board · Text stays the view switch. Every verb is the library Button.</p>
+
+<div class="rec" id="recommendation">
+  <p><b>Recommendation: A, the line and the note.</b> One column, the same object at 1440 and at 393. The line at the top answers "where are we" in one look: two stations done, one breathing blue, his breathing ember, the planned one marked "waits on 4". The held thing is the headline straight under it, in the brief's order, with the tray as the one raised thing. The steps follow as rows; the open step (his, by default) carries its proof as lamp lines and its story in three plain lines, with Add a requirement right there. The composer is at the foot, where he expects to talk. It reflows by the window's container alone, so a narrow window on a wide desk is the 393 face, and the build reuses the rows and requirement lines that exist (StepRow, RequirementRow, the step's parts).</p>
+  <p>B, the rail and the page, browses a long program well at 1440, but it is two places to look, the headline moves when he selects another step, and at 393 the rail must fold to the line anyway: at the phone width it becomes A. C, the conversation, tells the story best once, but browsing twelve steps means scrolling a log, and adjust (move a step, add a requirement) has no fixed place to live.</p>
+  <p style="margin:0">Go with suggestions (2026-10-27): A is built next; the owner judges it live on his desk.</p>
+</div>
+
+<!-- ═════════════════════════ A ═════════════════════════ -->
+<section class="part" id="a-1440">
+  <h2>A · the line and the note, at 1440 <span class="tag">Recommended</span></h2>
+  <div class="row">
+    <div class="desk">
+      <div class="menubar"><b>HoldSpeak</b><span>File</span><span>Go</span><span>Window</span><span class="grow"></span><span>Needs you 1</span><span>Sat 22:40</span></div>
+      <div class="win">
+        <div class="tb"><span class="chip"><i></i></span><span class="name">The hub stops stalling</span><span class="lampt live" style="--t:var(--lamp-ask)"></span><span class="gad"><i></i><i></i></span></div>
+        <div class="toolbar">
+          <span class="btn plate">Park</span><span class="btn">Add step</span><span class="grow"></span>
+          <span class="ft"><span class="on">Board</span><span>Text</span></span>
+          <span class="btn">Agent: Claude Code <span class="caret">▾</span></span>
+          <span class="btn">Control: Normal <span class="caret">▾</span></span>
+        </div>
+        <div class="content">
+          <div style="padding:14px 18px 4px">
+            <ol class="line">
+              <li class="done"><span class="st"></span><span class="w"><b>1</b> Indexes</span><span class="s">PR #1601 merged</span></li>
+              <li class="done"><span class="st"></span><span class="w"><b>2</b> Retention</span><span class="s">PR #1605 merged</span></li>
+              <li class="run"><span class="st live"></span><span class="w"><b>3</b> Projections off the loop</span><span class="s">Working · round 2</span></li>
+              <li class="here"><span class="st live"></span><span class="w"><b>4</b> People routes</span><span class="s">Waits on you</span></li>
+              <li class="blk"><span class="st"></span><span class="w"><b>5</b> Docs</span><span class="s">Waits on 3 and 4</span></li>
+              <li class="end"><span class="st"></span><span class="w">Done when</span><span class="s">R1 on every step</span></li>
+            </ol>
+            <p class="say" style="margin-top:10px;color:var(--wb-muted)">Goal: Stop the hub stalls when a window opens. <span class="tok" style="margin-left:6px">Asked first: Architecture · Product · Stack</span></p>
+          </div>
+          <div class="brief">
+            <p class="kind"><span class="dot ask live"></span>Waits on you · step 4, People routes</p>
+            <p class="q">Merge the PR, or keep it open?</p>
+            <p class="say">Step 4, “People routes”: Move the People routes off the event loop.</p>
+            <p class="say b">The step is ready to merge. PR #1612 is open, the check is green, and the review passed.</p>
+            <p class="blocked">1 step waits on this: 5 Docs.</p>
+          </div>
+          <div class="tray">
+            <div class="choice"><span class="btn primary">Merge</span><span class="cons">HoldSpeak merges the PR. The step that waits on it can start.</span></div>
+            <div class="choice"><span class="btn">Not yet</span><span class="cons">The PR stays open. Nothing merges.</span></div>
+            <div class="trayend"><span class="btn sm">Copy page link</span><span class="btn sm">Open PR</span></div>
+          </div>
+          <div class="cap2">Steps</div>
+          <div class="srow"><span class="n">1</span><span class="t">Indexes</span><span class="dw"><span class="dot"></span>Merged</span><span class="ag"><span class="seat agent">C</span>Claude Code</span><span class="m">10:12</span><span class="rq"><span class="dot ok"></span>1 of 1</span></div>
+          <div class="srow"><span class="n">2</span><span class="t">Retention</span><span class="dw"><span class="dot"></span>Merged</span><span class="ag"><span class="seat agent">X</span>Codex</span><span class="m">11:40</span><span class="rq"><span class="dot ok"></span>1 of 1</span></div>
+          <div class="srow"><span class="n">3</span><span class="t">Projections off the loop</span><span class="dw info"><span class="dot info live"></span>Working</span><span class="ag"><span class="seat agent">C</span>Claude Code</span><span class="m">12 min</span><span class="rq"><span class="dot fail"></span>0 of 2</span></div>
+          <div class="srow open"><span class="n">4</span><span class="t">People routes <span class="af">after 2</span></span><span class="dw ask"><span class="dot ask live"></span>Waits on you</span><span class="ag"><span class="seat agent">C</span>Claude Code</span><span class="m">20 min</span><span class="rq"><span class="dot ok"></span>1 of 1</span></div>
+          <div class="open-body">
+            <p class="sub">What it must prove</p>
+            <div class="req"><span class="lb">R1</span><span class="tx"><span class="dot ok"></span><span><code>scripts/quick_check.sh</code> is green</span></span><span class="tok">Check</span><span class="pf">Met · 22:18 · <span class="btn sm plate">Open log</span></span></div>
+            <div class="verbs" style="margin-top:2px"><span class="btn sm">Add a requirement</span></div>
+            <p class="sub">What the agent did</p>
+            <ul class="story">
+              <li><i>22:05</i>Moved the four People routes into the thread pool.</li>
+              <li><i>22:18</i>The check ran green in 3 min.</li>
+              <li><i>22:20</i>Opened PR #1612. The review passed.</li>
+            </ul>
+            <div class="verbs"><span class="btn sm plate">Open lane</span><span class="btn sm">Brief</span><span class="btn sm">Gate</span><span class="btn sm">The whole ledger</span><span class="btn sm">Hand off</span></div>
+          </div>
+          <div class="srow"><span class="n">5</span><span class="t">Docs <span class="af">after 3, 4</span></span><span class="dw"><span class="dot no"></span>Planned</span><span class="ag"><span class="seat agent" style="opacity:.55">C</span>Claude Code</span><span class="m"></span><span class="rq"><span class="dot no"></span>1 to meet</span></div>
+          <div class="endrow"><span class="n"><i></i></span><span><b>Done when</b> <span style="color:var(--wb-muted)">· R1 holds on every step · judged after step 5</span> <span class="btn sm" style="margin-left:8px">Add a requirement</span></span></div>
+        </div>
+        <div class="composer"><span class="fld">Tell the program what to change</span><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg></span><span class="btn plate">Shape</span></div>
+        <div class="sb"><span class="it"><span class="dot ask"></span><b>Waits on you</b></span><span class="it">2 of 5 done</span><span class="it">1 waits on you</span><span class="it">3 of 5 met</span><span class="it">check: quick_check.sh</span><span class="it">control Normal</span><span class="it">Project ▸ HoldSpeak</span></div>
+      </div>
+    </div>
+  </div>
+  <ul class="facts">
+    <li>The line is the Programs' own station track in its word form: one station per step plus the end ("Done when"); done stations are grey and filled with their PR in merge green; the running one breathes blue; his breathes ember; a step that waits on his answer is marked in warn ink. It is a picture, not a control: the rows below are what he presses.</li>
+    <li>The brief has no box: the kind line with the breathing lamp, the question in display type (the face's one display element), the step, what happened, and what waits on it. The tray is the only raised thing (the depth scale's card step). Each choice is a library Button with its consequence under it, in the hub's words. Copy page link sits at the tray's end.</li>
+    <li>When more than one thing waits on him, the first is the headline and the rest are one line each under the tray ("One more waits on you: Step 3 · R2 Send back · Waive").</li>
+    <li>The open step (his by default, else the one that runs) unfolds in place under its row: no fold head, no tabs first. "What it must prove": each requirement is a line with its lamp, its kind as a Token, its proof one press away (Open log, Open shot, the reviewer's line) and the verbs its state allows. Add a requirement is a verb at the step; the sentence row opens in place with this step as its Where.</li>
+    <li>"What the agent did" is the step's story: at most three plain lines from its ledger, in the brief's words (no command, no path, no hash). Brief, Gate, the whole ledger, Hand off, Move up and Insert before are verbs under the story.</li>
+    <li>Done when is the last row: the program's own requirements and the every-step ones, with its own Add a requirement.</li>
+    <li>The composer is the shape bar at the foot. Return or Shape sends; the mic is the window's one mic. While the engine reads, its lamp line sits on the composer ("Reading the program · qwen3.8-27b"); the rows open in the change well over the steps, as today.</li>
+    <li>The status bar keeps its facts and drops the noise: "check: quick_check.sh" (never "check: -c"), the ladder word, the place line.</li>
+  </ul>
+</section>
+
+<section class="part" id="a-393">
+  <h2>A at 393</h2>
+  <div class="row">
+    <div><p class="cap">The top of the window</p>
+      <div class="phone"><div class="win">
+        <div class="tb"><span class="chip"><i></i></span><span class="name">The hub stops stalling</span><span class="lampt live" style="--t:var(--lamp-ask)"></span></div>
+        <div class="toolbar"><span class="btn plate">Park</span><span class="btn">Add step</span><span class="grow"></span><span class="btn">More <span class="caret">▾</span></span></div>
+        <div class="content">
+          <div style="padding:12px 12px 2px">
+            <ol class="line">
+              <li class="done"><span class="st"></span><span class="w"><b>1</b></span></li>
+              <li class="done"><span class="st"></span><span class="w"><b>2</b></span></li>
+              <li class="run"><span class="st live"></span><span class="w"><b>3</b></span></li>
+              <li class="here"><span class="st live"></span><span class="w"><b>4</b></span></li>
+              <li class="blk"><span class="st"></span><span class="w"><b>5</b></span></li>
+              <li class="end" style="flex:0 0 auto"><span class="st"></span><span class="w">Done</span></li>
+            </ol>
+            <p class="say" style="margin-top:8px;color:var(--wb-muted);font-size:13px">Goal: Stop the hub stalls when a window opens.</p>
+          </div>
+          <div class="brief" style="padding:10px 12px 2px">
+            <p class="kind"><span class="dot ask live"></span>Waits on you · step 4</p>
+            <p class="q">Merge the PR, or keep it open?</p>
+            <p class="say">Step 4, “People routes”: Move the People routes off the event loop.</p>
+            <p class="say b">The step is ready to merge. PR #1612 is open, the check is green, and the review passed.</p>
+            <p class="blocked">1 step waits on this: 5 Docs.</p>
+          </div>
+          <div class="tray">
+            <div class="choice"><span class="btn primary">Merge</span><span class="cons">HoldSpeak merges the PR. The step that waits on it can start.</span></div>
+            <div class="choice"><span class="btn">Not yet</span><span class="cons">The PR stays open. Nothing merges.</span></div>
+          </div>
+          <div class="cap2" style="padding:0 12px">Steps</div>
+          <div class="srow"><span class="n">1</span><span class="t">Indexes</span><span class="dw"><span class="dot"></span>Merged</span></div>
+          <div class="srow"><span class="n">2</span><span class="t">Retention</span><span class="dw"><span class="dot"></span>Merged</span></div>
+        </div>
+        <div class="composer"><span class="fld">Tell the program what to change</span><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg></span></div>
+        <div class="sb"><span class="it"><span class="dot ask"></span><b>Waits on you</b></span><span class="it">2 of 5 done</span><span class="it">control Normal</span></div>
+      </div></div>
+    </div>
+    <div><p class="cap">Scrolled to the open step</p>
+      <div class="phone"><div class="win">
+        <div class="tb"><span class="chip"><i></i></span><span class="name">The hub stops stalling</span><span class="lampt live" style="--t:var(--lamp-ask)"></span></div>
+        <div class="toolbar"><span class="btn plate">Park</span><span class="btn">Add step</span><span class="grow"></span><span class="btn">More <span class="caret">▾</span></span></div>
+        <div class="content">
+          <div class="srow"><span class="n">3</span><span class="t">Projections off the loop</span><span class="dw info"><span class="dot info live"></span>Working</span></div>
+          <div class="srow open"><span class="n">4</span><span class="t">People routes</span><span class="dw ask"><span class="dot ask live"></span>Waits on you</span></div>
+          <div class="open-body">
+            <p class="sub">What it must prove</p>
+            <div class="req"><span class="lb">R1</span><span class="tx"><span class="dot ok"></span><span><code>quick_check.sh</code> is green</span></span><span class="pf">Met</span></div>
+            <div class="verbs" style="margin-top:2px"><span class="btn sm plate">Open log</span><span class="btn sm">Add a requirement</span></div>
+            <p class="sub">What the agent did</p>
+            <ul class="story">
+              <li><i>22:05</i>Moved the four People routes into the thread pool.</li>
+              <li><i>22:18</i>The check ran green in 3 min.</li>
+              <li><i>22:20</i>Opened PR #1612. The review passed.</li>
+            </ul>
+            <div class="verbs"><span class="btn sm plate">Open lane</span><span class="btn sm">Brief</span><span class="btn sm">Gate</span><span class="btn sm">Ledger</span></div>
+          </div>
+          <div class="srow"><span class="n">5</span><span class="t">Docs <span class="af">after 3, 4</span></span><span class="dw"><span class="dot no"></span>Planned</span></div>
+          <div class="endrow" style="padding:10px 12px"><span class="n"><i></i></span><span><b>Done when</b><br><span style="color:var(--wb-muted)">R1 holds on every step</span><br><span class="btn sm" style="margin-top:4px;padding-left:0">Add a requirement</span></span></div>
+        </div>
+        <div class="composer"><span class="fld">Tell the program what to change</span><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg></span></div>
+        <div class="sb"><span class="it"><span class="dot ask"></span><b>Waits on you</b></span><span class="it">2 of 5 done</span><span class="it">control Normal</span></div>
+      </div></div>
+    </div>
+    <div style="max-width:460px"><p class="cap">At 393</p>
+      <ul class="facts" style="font-size:13.5px">
+        <li>The line keeps one station per step, numbers only; the lit one still breathes. The step names live in the rows.</li>
+        <li>The tray stacks; each choice is a 44 px Button with its consequence under it.</li>
+        <li>A step row is two lines when its title needs it; the agent and the time go into the open step.</li>
+        <li>The composer is 44 px high with a 44 px mic; Shape is Return on the phone keyboard and a Button once a sentence is typed.</li>
+        <li>Board · Text and the Agent and Control pickers fold into More ▾, as today.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ B ═════════════════════════ -->
+<section class="part" id="b-1440">
+  <h2>B · the rail and the page, at 1440 <span class="tag alt">Direction</span></h2>
+  <div class="row">
+    <div class="desk">
+      <div class="menubar"><b>HoldSpeak</b><span>File</span><span>Go</span><span>Window</span><span class="grow"></span><span>Needs you 1</span><span>Sat 22:40</span></div>
+      <div class="win">
+        <div class="tb"><span class="chip"><i></i></span><span class="name">The hub stops stalling</span><span class="lampt live" style="--t:var(--lamp-ask)"></span><span class="gad"><i></i><i></i></span></div>
+        <div class="toolbar"><span class="btn plate">Park</span><span class="btn">Add step</span><span class="grow"></span><span class="ft"><span class="on">Board</span><span>Text</span></span><span class="btn">Agent: Claude Code <span class="caret">▾</span></span><span class="btn">Control: Normal <span class="caret">▾</span></span></div>
+        <div class="content">
+          <div class="split">
+            <div class="rail">
+              <h4>The program</h4>
+              <p class="goal">Goal: Stop the hub stalls when a window opens.</p>
+              <ol class="vt">
+                <li class="done"><span class="st"></span><span><span class="t">1 Indexes</span><span class="m"><span class="dot ok"></span>PR #1601 merged</span></span></li>
+                <li class="done"><span class="st"></span><span><span class="t">2 Retention</span><span class="m"><span class="dot ok"></span>PR #1605 merged</span></span></li>
+                <li class="run"><span class="st live"></span><span><span class="t">3 Projections off the loop</span><span class="m"><span class="dot fail"></span>Working · round 2 · R2 unmet</span></span></li>
+                <li class="here sel"><span class="st live"></span><span><span class="t">4 People routes</span><span class="m"><span class="dot ok"></span>Waits on you · merge</span></span></li>
+                <li class="blk"><span class="st"></span><span><span class="t">5 Docs</span><span class="m">Waits on 3 and 4</span></span></li>
+                <li class="end"><span class="st"></span><span><span class="t">Done when</span><span class="m">R1 on every step</span></span></li>
+              </ol>
+              <h4 style="margin-top:14px">Asked first</h4>
+              <p class="goal" style="color:var(--wb-muted)">Architecture · Product · Stack, 3 answered</p>
+            </div>
+            <div class="page">
+              <div class="brief">
+                <p class="kind"><span class="dot ask live"></span>Waits on you · step 4, People routes</p>
+                <p class="q">Merge the PR, or keep it open?</p>
+                <p class="say">Step 4, “People routes”: Move the People routes off the event loop.</p>
+                <p class="say b">The step is ready to merge. PR #1612 is open, the check is green, and the review passed.</p>
+                <p class="blocked">1 step waits on this: 5 Docs.</p>
+              </div>
+              <div class="tray">
+                <div class="choice"><span class="btn primary">Merge</span><span class="cons">HoldSpeak merges the PR. The step that waits on it can start.</span></div>
+                <div class="choice"><span class="btn">Not yet</span><span class="cons">The PR stays open. Nothing merges.</span></div>
+                <div class="trayend"><span class="btn sm">Copy page link</span></div>
+              </div>
+              <div class="block">
+                <p class="sub" style="margin-top:14px">What it must prove</p>
+                <div class="req"><span class="lb">R1</span><span class="tx"><span class="dot ok"></span><span><code>scripts/quick_check.sh</code> is green</span></span><span class="tok">Check</span><span class="pf">Met · 22:18 · <span class="btn sm plate">Open log</span></span></div>
+                <div class="verbs" style="margin-top:2px"><span class="btn sm">Add a requirement</span></div>
+                <p class="sub">What the agent did</p>
+                <ul class="story">
+                  <li><i>22:05</i>Moved the four People routes into the thread pool.</li>
+                  <li><i>22:18</i>The check ran green in 3 min.</li>
+                  <li><i>22:20</i>Opened PR #1612. The review passed.</li>
+                </ul>
+                <div class="verbs"><span class="btn sm plate">Open lane</span><span class="btn sm">Brief</span><span class="btn sm">Gate</span><span class="btn sm">The whole ledger</span><span class="btn sm">Hand off</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="composer"><span class="fld">Tell the program what to change</span><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg></span><span class="btn plate">Shape</span></div>
+        <div class="sb"><span class="it"><span class="dot ask"></span><b>Waits on you</b></span><span class="it">2 of 5 done</span><span class="it">1 waits on you</span><span class="it">3 of 5 met</span><span class="it">control Normal</span><span class="it">Project ▸ HoldSpeak</span></div>
+      </div>
+    </div>
+  </div>
+  <ul class="facts">
+    <li>The rail is the station track drawn down the left: each step a station with its state and its requirement lamp; the selected station is lifted (the row depth step).</li>
+    <li>The page is the selected step: the brief and the tray when it waits on him, then what it must prove and what the agent did. A press on another station changes the page; the held one stays lit on the rail.</li>
+    <li>Cost: the headline is the selected step's, so once he browses away the thing that waits on him is only a lamp on the rail.</li>
+  </ul>
+</section>
+
+<section class="part" id="b-393">
+  <h2>B at 393</h2>
+  <div class="row">
+    <div class="phone"><div class="win">
+      <div class="tb"><span class="chip"><i></i></span><span class="name">The hub stops stalling</span><span class="lampt live" style="--t:var(--lamp-ask)"></span></div>
+      <div class="toolbar"><span class="btn plate">Park</span><span class="btn">Steps <span class="caret">▾</span></span><span class="grow"></span><span class="btn">More <span class="caret">▾</span></span></div>
+      <div class="content">
+        <div style="padding:12px 12px 2px">
+          <ol class="line">
+            <li class="done"><span class="st"></span><span class="w"><b>1</b></span></li>
+            <li class="done"><span class="st"></span><span class="w"><b>2</b></span></li>
+            <li class="run"><span class="st live"></span><span class="w"><b>3</b></span></li>
+            <li class="here"><span class="st live"></span><span class="w"><b>4</b></span></li>
+            <li class="blk"><span class="st"></span><span class="w"><b>5</b></span></li>
+            <li class="end" style="flex:0 0 auto"><span class="st"></span><span class="w">Done</span></li>
+          </ol>
+        </div>
+        <div class="brief" style="padding:10px 12px 2px">
+          <p class="kind"><span class="dot ask live"></span>Waits on you · step 4</p>
+          <p class="q">Merge the PR, or keep it open?</p>
+          <p class="say b">The step is ready to merge. PR #1612 is open, the check is green, and the review passed.</p>
+          <p class="blocked">1 step waits on this: 5 Docs.</p>
+        </div>
+        <div class="tray">
+          <div class="choice"><span class="btn primary">Merge</span><span class="cons">HoldSpeak merges the PR. The step that waits on it can start.</span></div>
+          <div class="choice"><span class="btn">Not yet</span><span class="cons">The PR stays open. Nothing merges.</span></div>
+        </div>
+        <div style="padding:0 12px"><p class="sub">What it must prove</p>
+        <div class="req"><span class="lb">R1</span><span class="tx"><span class="dot ok"></span><span><code>quick_check.sh</code> is green</span></span><span class="pf">Met</span></div></div>
+      </div>
+      <div class="composer"><span class="fld">Tell the program what to change</span><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg></span></div>
+      <div class="sb"><span class="it"><span class="dot ask"></span><b>Waits on you</b></span><span class="it">2 of 5 done</span></div>
+    </div></div>
+    <div style="max-width:460px"><ul class="facts" style="font-size:13.5px">
+      <li>At 393 the rail folds to the line and a Steps ▾ menu picks the page: the phone face is A without the step rows, one step at a time.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ C ═════════════════════════ -->
+<section class="part" id="c-1440">
+  <h2>C · the conversation, at 1440 <span class="tag alt">Direction</span></h2>
+  <div class="row">
+    <div class="desk">
+      <div class="menubar"><b>HoldSpeak</b><span>File</span><span>Go</span><span>Window</span><span class="grow"></span><span>Needs you 1</span><span>Sat 22:40</span></div>
+      <div class="win">
+        <div class="tb"><span class="chip"><i></i></span><span class="name">The hub stops stalling</span><span class="lampt live" style="--t:var(--lamp-ask)"></span><span class="gad"><i></i><i></i></span></div>
+        <div class="toolbar"><span class="btn plate">Park</span><span class="btn">Add step</span><span class="grow"></span><span class="ft"><span class="on">Board</span><span>Text</span></span><span class="btn">Control: Normal <span class="caret">▾</span></span></div>
+        <div class="content">
+          <div style="padding:12px 18px 0">
+            <ol class="line">
+              <li class="done"><span class="st"></span><span class="w"><b>1</b> Indexes</span></li>
+              <li class="done"><span class="st"></span><span class="w"><b>2</b> Retention</span></li>
+              <li class="run"><span class="st live"></span><span class="w"><b>3</b> Projections</span></li>
+              <li class="here"><span class="st live"></span><span class="w"><b>4</b> People routes</span></li>
+              <li class="blk"><span class="st"></span><span class="w"><b>5</b> Docs</span></li>
+            </ol>
+          </div>
+          <div class="thread">
+            <div class="msg dim"><span class="who you">K</span><div><div class="hd">You <span class="m">Goal · 09:40</span></div><p>Stop the hub stalls when a window opens. Answered Architecture, Product and Stack.</p></div></div>
+            <div class="msg dim"><span class="who agent">C</span><div><div class="hd">Step 1 · Indexes <span class="m">Claude Code · merged PR #1601 · 10:12</span></div><p>Added three indexes on the event log. The check ran green in 4 min.</p><div class="reqs"><span class="dw ok"><span class="dot ok"></span>R1 met</span></div></div></div>
+            <div class="msg dim"><span class="who agent">X</span><div><div class="hd">Step 2 · Retention <span class="m">Codex · merged PR #1605 · 11:40</span></div><p>Prunes read receipts after 14 days in a daemon thread.</p><div class="reqs"><span class="dw ok"><span class="dot ok"></span>R1 met</span></div></div></div>
+            <div class="msg"><span class="who agent">C</span><div><div class="hd">Step 3 · Projections off the loop <span class="m">Claude Code · working · 12 min</span></div><p>The reviewer found the windows read still on the loop. Round 2 moves it into the thread pool.</p><div class="reqs"><span class="dw fail"><span class="dot fail"></span>R2 unmet</span><span class="dw info"><span class="dot info live"></span>R1 running</span></div></div></div>
+            <div class="msg"><span class="who hs">H</span><div>
+              <div class="hd" style="color:var(--wb-ember-ink)"><span class="dot ask live"></span>Step 4 · People routes waits on you</div>
+              <p class="q" style="margin-top:4px">Merge the PR, or keep it open?</p>
+              <p class="say b">The step is ready to merge. PR #1612 is open, the check is green, and the review passed.</p>
+              <p class="blocked">1 step waits on this: 5 Docs.</p>
+              <div class="tray" style="margin:10px 0 0">
+                <div class="choice"><span class="btn primary">Merge</span><span class="cons">HoldSpeak merges the PR. The step that waits on it can start.</span></div>
+                <div class="choice"><span class="btn">Not yet</span><span class="cons">The PR stays open. Nothing merges.</span></div>
+              </div>
+            </div></div>
+            <div class="msg dim"><span class="who hs">5</span><div><div class="hd">Next · Docs <span class="m">waits on 3 and 4</span></div></div></div>
+          </div>
+        </div>
+        <div class="composer"><span class="fld">Tell the program what to change</span><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg></span><span class="btn plate">Shape</span></div>
+        <div class="sb"><span class="it"><span class="dot ask"></span><b>Waits on you</b></span><span class="it">2 of 5 done</span><span class="it">control Normal</span></div>
+      </div>
+    </div>
+  </div>
+  <ul class="facts">
+    <li>The program is a thread, newest at the foot by the composer: his goal and rounds, each step as the agent's message with its requirement lamps, the held one as HoldSpeak's message with the tray.</li>
+    <li>Cost: browse and adjust have no place. Move a step, read its brief, add a requirement to step 5: each needs a menu on a message. A long program is a long scroll.</li>
+  </ul>
+</section>
+
+<section class="part" id="c-393">
+  <h2>C at 393</h2>
+  <div class="row">
+    <div class="phone"><div class="win">
+      <div class="tb"><span class="chip"><i></i></span><span class="name">The hub stops stalling</span><span class="lampt live" style="--t:var(--lamp-ask)"></span></div>
+      <div class="toolbar"><span class="btn plate">Park</span><span class="grow"></span><span class="btn">More <span class="caret">▾</span></span></div>
+      <div class="content">
+        <div class="thread">
+          <div class="msg"><span class="who agent">C</span><div><div class="hd">Step 3 · Projections</div><p>The reviewer found the windows read still on the loop. Round 2 moves it into the thread pool.</p><div class="reqs"><span class="dw fail"><span class="dot fail"></span>R2 unmet</span></div></div></div>
+          <div class="msg"><span class="who hs">H</span><div>
+            <div class="hd" style="color:var(--wb-ember-ink)"><span class="dot ask live"></span>Step 4 waits on you</div>
+            <p class="q" style="margin-top:4px">Merge the PR, or keep it open?</p>
+            <p class="say b">PR #1612 is open, the check is green, and the review passed.</p>
+            <p class="blocked">1 step waits on this: 5 Docs.</p>
+            <div class="tray" style="margin:10px 0 0"><div class="choice"><span class="btn primary">Merge</span><span class="cons">HoldSpeak merges the PR.</span></div><div class="choice"><span class="btn">Not yet</span><span class="cons">The PR stays open.</span></div></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="composer"><span class="fld">Tell the program what to change</span><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg></span></div>
+      <div class="sb"><span class="it"><span class="dot ask"></span><b>Waits on you</b></span><span class="it">2 of 5 done</span></div>
+    </div></div>
+  </div>
+</section>
+
+<section class="part" id="slices">
+  <h2>What is built for A (the slices)</h2>
+  <ul class="facts">
+    <li><b>W1 · the hub's words on the wire.</b> Each <code>your_turn_items</code> row gains <code>brief</code> (the goal, what the step was doing, what happened, the question, each choice's consequence, what waits on it), and each step gains <code>story</code> (at most three plain lines), both from <code>brief_words.py</code>. Additive; nothing else on the wire changes.</li>
+    <li><b>W2 · the line and the headline.</b> The program's station track at the top; the held item as the brief with the choice tray; the others one line each. The tinted Your turn box is parked.</li>
+    <li><b>W3 · the open step.</b> The selected step unfolds under its row: what it must prove (the requirement lines, Add a requirement with this step as its Where), what the agent did (the story), then the verbs (Open lane, Brief, Gate, Ledger, Hand off, Move up, Move down, Insert before). Done when closes the list with the program's own and the every-step requirements. The Requirements board above the steps is parked.</li>
+    <li><b>W4 · the composer.</b> The shape bar moves to the foot, above the status bar, with the placeholder "Tell the program what to change".</li>
+    <li><b>W5 · the status line.</b> "check:" names the script, never a flag.</li>
+  </ul>
+</section>
+</main>
+</body>
+</html>
