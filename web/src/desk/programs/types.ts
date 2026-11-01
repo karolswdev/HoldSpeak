@@ -10,7 +10,9 @@ export type StepState =
   | "planned" | "ready" | "briefed" | "working" | "waiting" | "limited" | "checking" | "check_failed"
   | "review" | "findings" | "pr_open" | "merge_ask" | "merged" | "done" | "parked" | "failed";
 
-export type StationKey = "brief" | "work" | "check" | "review" | "pr" | "merge";
+export type StationKey = "brief" | "work" | "check" | "review" | "pr" | "merge"
+  // PG-LANG JRN8: an audit step's last station (BRIEF · WORK · REVIEW · FILE).
+  | "file";
 
 /** The desk's Control mode ladder (design §6, owner 2026-10-28): Secure ·
  *  Normal · YOLO. The desk's own policy wire says `safe` / `neutral`. */
@@ -385,7 +387,11 @@ export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_revi
   // LANG13: the delivery at Done (Merge at Secure, or Retry after a failure; Skip).
   | "delivery"
   // PG-IMPORT IMP2: a thing the agent asks him to do by hand (a Your word walk).
-  | "todo";
+  | "todo"
+  // PG-LANG JRN9 / JRN10: file an audit's findings (Secure), make its fix program.
+  | "audit_file" | "fix_program"
+  // PG-LANG JRN11: a lesson (the same cause on several steps).
+  | "lesson";
 
 export interface YourTurnItem {
   id: string;
@@ -428,6 +434,14 @@ export interface YourTurnItem {
   /** PG-WINDOW W1: the brief in his terms (brief_words.item_brief), the
    *  same lines the briefing page reads. */
   brief?: ItemBrief | null;
+  /** audit_file / fix_program: the findings it is about. */
+  count?: number;
+  /** lesson (JRN11): its ledger row (sent as `lesson_id`), the cause, the steps. */
+  lesson_id?: number;
+  source?: "red" | "finding" | string;
+  words?: string;
+  steps?: number[];
+  requirement?: string;
 }
 
 export interface ItemBrief {
@@ -463,6 +477,27 @@ export interface StepReport {
   words: { observed: string; claimed: string; not_checked: string; files: string };
 }
 
+/** PG-LANG JRN9 (``program_audit.board``): one row per finding, across steps. */
+export interface FindingRow {
+  key: string;
+  level: "MUST" | "SHOULD" | "NOTE" | string;
+  /** "Must fix", "Should fix", "Noted". */
+  words: string;
+  text: string;
+  evidence: string[];
+  steps: number[];
+  task_id: string | null;
+  filed: boolean;
+}
+
+export interface FindingsBoard {
+  head: string;
+  total: number;
+  must: number;
+  should: number;
+  note: number;
+  rows: FindingRow[];
+}
 /** PG-IMPORT IMP7 (BroCrew's forest): one row of a Program's family. */
 export interface FamilyRow {
   id: string; name: string; state: ProgramState; state_word: string; line: string;
@@ -488,6 +523,10 @@ export interface Program extends ProgramSummary {
   reviewer: { profile: string | null; agent: string | null; engine: ProgramEngine | null };
   prefer_idle: boolean;
   template: string | null;
+  /** PG-LANG JRN9: an audit's findings, every finding once (absent before a report). */
+  findings_board?: FindingsBoard | null;
+  /** PG-LANG JRN10: the fix program his Make made from the MUST findings. */
+  fix_program_id?: string | null;
   origin_ref: string | null;
   for_person_id: string | null;
   note_id: string | null;
@@ -585,6 +624,8 @@ export interface DecideBody {
   choice: string;
   finding_id?: string;
   reason?: string;
+  /** JRN11: the lesson a Lesson row answers. */
+  lesson_id?: number;
 }
 
 /** The step a Drafting row writes (`POST …/plan`). */

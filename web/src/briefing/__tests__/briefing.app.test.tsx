@@ -14,6 +14,10 @@ import { dirname, join, resolve } from "node:path";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import recorded from "../__fixtures__/reach.page.json";
+// DIR9: one page for three held items, and the same page after two answers
+// (tests/integration/test_desk_reach_digest.py, HOLDSPEAK_WIRE_WRITE=1).
+import digest from "../__fixtures__/reach.digest.json";
+import digestAnswered from "../__fixtures__/reach.digest.answered.json";
 import { BriefingApp } from "../BriefingApp";
 import { tokenFromPath } from "../api";
 
@@ -209,5 +213,41 @@ describe("the guard: the page never reaches the desk's auth client", () => {
       expect(chain, `the page reaches ${file}`).toEqual([]);
     }
     expect(seen.size).toBeGreaterThan(5);
+  });
+});
+
+describe("DIR9, the page half: several held items on one page", () => {
+  type Item = { ref: string; state: string; outcome?: { words: string } };
+  const answered = (ref: string) => (digestAnswered.items as Item[]).find((item) => item.ref === ref)!;
+
+  it("each item is its own brief in order; a press settles that item alone", async () => {
+    const decision = answered("decision:dec-1");
+    const calls = hub({ open: digest, post: { item: decision } });
+    render(<BriefingApp token={TOKEN} />);
+    const items = await screen.findAllByTestId("briefing-item");
+    expect(items.map((node) => node.getAttribute("data-ref"))).toEqual((digest.items as Item[]).map((item) => item.ref));
+    expect(screen.getByTestId("briefing-open-words").textContent).toBe("3 wait on you.");
+    // Each item has its own question and its own tray.
+    expect(items.map((node) => within(node).getByTestId("briefing-question").textContent))
+      .toEqual(digest.items.map((item) => item.question));
+    const target = items.find((node) => node.getAttribute("data-ref") === "decision:dec-1")!;
+    const confirm = within(target).getAllByRole("button").find((button) => button.textContent === "Confirm")!;
+    fireEvent.click(confirm);
+    await waitFor(() => expect(within(target).getByTestId("briefing-outcome").textContent).toBe(decision.outcome!.words));
+    const posted = calls.find((call) => call.method === "POST");
+    expect((posted!.body as { ref: string }).ref).toBe("decision:dec-1");
+    // The others stay as they were, each with its tray; the head counts what waits.
+    const others = screen.getAllByTestId("briefing-item").filter((node) => node.getAttribute("data-ref") !== "decision:dec-1");
+    for (const node of others) expect(within(node).getByTestId("briefing-choices")).toBeTruthy();
+    expect(screen.getByTestId("briefing-open-words").textContent).toBe("2 wait on you.");
+  });
+
+  it("a page read after two answers shows them settled and one open", async () => {
+    hub({ open: digestAnswered });
+    render(<BriefingApp token={TOKEN} />);
+    const items = await screen.findAllByTestId("briefing-item");
+    expect(items.map((node) => node.getAttribute("data-state"))).toEqual((digestAnswered.items as Item[]).map((item) => item.state));
+    expect(screen.getByTestId("briefing-open-words").textContent).toBe("1 waits on you.");
+    expect(screen.getAllByTestId("briefing-choices")).toHaveLength(1);
   });
 });

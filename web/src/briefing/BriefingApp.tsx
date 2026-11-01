@@ -198,19 +198,21 @@ function ChoiceTray({ page, item, busy, onAnswer }: {
   );
 }
 
-function Brief({ page, item, busy, onAnswer, token }: {
+function Brief({ page, item, busy, onAnswer, token, own }: {
   page: BriefingPage;
   item: BriefingItem;
   busy: string;
   token: string;
   onAnswer(choice: string, later?: string): void;
+  /** DIR9: on a page of several items each brief keeps its own head. */
+  own?: boolean;
 }) {
   const track = item.track ?? [];
   return (
     <>
       <div className="briefing-read">
         <KindLabel item={item} tone="ask" />
-        <ProgramHead item={item} head={page.package.head || item.head} />
+        <ProgramHead item={item} head={own ? item.head : page.package.head || item.head} />
         {track.length ? (
           <div className="briefing-where" data-testid="briefing-where">
             <StationTrack form="words" stations={stationsOf(track)} label={trackWords(track)} data-testid="briefing-track" />
@@ -243,11 +245,11 @@ function Brief({ page, item, busy, onAnswer, token }: {
 }
 
 /** After his press: one sentence with a lamp, where the question was. */
-function Settled({ page, item }: { page: BriefingPage; item: BriefingItem }) {
-  const desk = page.package.desk;
+function Settled({ page, item, own }: { page: BriefingPage; item: BriefingItem; own?: boolean }) {
+  const desk = own ? null : page.package.desk;
   return (
     <div className="briefing-read briefing-settled" data-testid="briefing-well" data-state={item.state}>
-      <p className="briefing-program-small">{page.package.head || item.head}</p>
+      <p className="briefing-program-small">{own ? item.head : page.package.head || item.head}</p>
       <p className="briefing-outcome" role="status" data-testid="briefing-outcome">
         <span className="briefing-lamp" data-tone={item.state === "later" ? "info" : "ok"} aria-hidden="true" />
         <span>{item.outcome?.words}</span>
@@ -303,6 +305,7 @@ export function BriefingApp({ token }: { token: string }) {
       </PageFrame>
     );
   }
+  if (page.items.length > 1) return <DigestFace token={token} page={page} setPage={setPage} onGone={() => setGone(true)} />;
   const item = page.items[0];
   const answer = async (choice: string, later?: string) => {
     setBusy(choice);
@@ -329,6 +332,61 @@ export function BriefingApp({ token }: { token: string }) {
         <Brief page={page} item={item} busy={busy} token={token} onAnswer={(choice, later) => void answer(choice, later)} />
       )}
       {failed ? <p className="briefing-line briefing-failure" role="status" data-testid="briefing-failure">{failed}</p> : null}
+    </PageFrame>
+  );
+}
+
+/** "2 wait on you." · "1 waits on you." · "Nothing on this page waits on you." (the hub's words). */
+export function openWords(items: readonly BriefingItem[]): string {
+  const open = items.filter((item) => !SETTLED.has(item.state)).length;
+  if (!open) return "Nothing on this page waits on you.";
+  return open === 1 ? "1 waits on you." : `${open} wait on you.`;
+}
+
+/** DIR9, the page half: one page carries up to 12 held items in order. Each
+ *  is its own brief with its own tray, decided in place; after his press that
+ *  item settles to its one line and the others stay as they were. */
+function DigestFace({ token, page, setPage, onGone }: {
+  token: string; page: BriefingPage; setPage(next: BriefingPage): void; onGone(): void;
+}) {
+  const [busy, setBusy] = useState<{ ref: string; choice: string } | null>(null);
+  const [failed, setFailed] = useState<Record<string, string>>({});
+  const answer = async (item: BriefingItem, choice: string, later?: string) => {
+    setBusy({ ref: item.ref, choice });
+    setFailed((now) => ({ ...now, [item.ref]: "" }));
+    try {
+      const done = await answerItem(token, { ref: item.ref, choice, ...(later ? { later } : {}) });
+      setPage({ ...page, items: page.items.map((row) => (row.ref === item.ref ? done.item : row)) });
+    } catch (error) {
+      if (error instanceof PageRefusal && error.code === "page_expired") onGone();
+      else {
+        const words = error instanceof PageRefusal && error.detail ? error.detail
+          : "Your answer did not reach the hub. Nothing changed. Try again.";
+        setFailed((now) => ({ ...now, [item.ref]: words }));
+        if (error instanceof PageRefusal && error.code === "answered_already") {
+          readPage(token).then(setPage, () => undefined);
+        }
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+  const open = openWords(page.items);
+  const allSettled = page.items.every((item) => SETTLED.has(item.state));
+  return (
+    <PageFrame settled={allSettled} status={[page.package.expires_words, `from HoldSpeak on ${page.package.hub}`]}>
+      <header className="briefing-read briefing-digest-head" data-testid="briefing-digest-head">
+        <p className="briefing-question" data-testid="briefing-open-words">{open}</p>
+      </header>
+      {page.items.map((item) => (
+        <section key={item.ref} className="briefing-item" data-testid="briefing-item" data-ref={item.ref} data-state={item.state}>
+          {SETTLED.has(item.state) ? <Settled page={page} item={item} own /> : (
+            <Brief page={page} item={item} own token={token} busy={busy?.ref === item.ref ? busy.choice : busy ? "other" : ""}
+              onAnswer={(choice, later) => void answer(item, choice, later)} />
+          )}
+          {failed[item.ref] ? <p className="briefing-line briefing-failure" role="status" data-testid="briefing-failure">{failed[item.ref]}</p> : null}
+        </section>
+      ))}
     </PageFrame>
   );
 }
