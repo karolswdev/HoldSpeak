@@ -75,8 +75,24 @@ A page can also hold these items. Each choice runs the same action as the button
 |---|---|---|
 | A decision to review | `decision:<id>` | **Confirm**: the decision is accepted and leaves your review list. |
 | A call that an agent asks to make | `phone-call:<id>` | **Call now**: your phone rings now. **Let it wait**: no call, and it stays on your desk. |
+| A meeting's proposed action | `meeting-proposal:<id>` | The page shows the preview first: where it goes and the lines it sends or writes. **Do it**: HoldSpeak does it now. **Not this**: nothing is done or sent. |
+| A project review's proposal | `project-proposal:<id>` | The page shows what **Accept** adds or records. **Accept** or **Dismiss**. |
+| A program step's agent asks a question | `program:<id>:<step>:answer` | One text field, the only input on the page: your answer. HoldSpeak types it to the agent. On Telegram, reply to the message with your answer. |
 
-When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. Not yet on a page: a meeting's proposals, a project's review proposals, an agent's question, a prepared send and a held tool call.
+When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. A page with several items also shows plain lines with no buttons: the Door tasks due today, and the lines the desk adds (a blocker, for example "The meeting recorder has no microphone."). Not yet on a page: a desk agent's question outside a program, a prepared send and a held tool call.
+
+## What may travel, and a late answer
+
+Only knowledge travels: a question, a choice among the presses HoldSpeak offers, or a to-do. A permission (a held tool call, an approval) never goes to a page, Telegram or a call; it stays on your desk. Each page and each Telegram message records why it went (its `because`: the kind of item and, when the ladder sent it, the rule).
+
+A late or wrong answer gets one plain answer back, and nothing else happens:
+
+| What happened | What you see |
+|---|---|
+| The item was answered already | "Answered at 21:46 from the desk" (or "from Telegram", "on the call", "from the briefing page"). |
+| The choice was not one of the item's choices | "That choice was not on offer". |
+| The answer named no choice | "Choose one". The item still waits. |
+| A Later could not be kept | "Could not keep that for later; it still waits". |
 
 ## The ladder
 

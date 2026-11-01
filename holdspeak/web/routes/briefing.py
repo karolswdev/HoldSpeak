@@ -175,7 +175,7 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
 
         def make(principal: Any) -> dict[str, Any]:
             made = _service().make(principal, body.get("refs"), kind=body.get("kind") or "item",
-                                   send=body.get("send"), head=body.get("head"))
+                                   send=body.get("send"), head=body.get("head"), lines=body.get("lines"))
             base = _tailnet_base(port)
             return {**made, "link": f"{base}{made['path']}" if base else None}
 

@@ -1,0 +1,90 @@
+{
+  "items": [
+    {
+      "because": {
+        "kind": "project_proposal",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
+      "blocked": [],
+      "blocked_words": "",
+      "changed": [],
+      "choices": [
+        {
+          "consequence": "Accept records: The cut-over date moved to Friday.",
+          "id": "accept",
+          "label": "Accept",
+          "primary": true
+        },
+        {
+          "consequence": "Nothing is added.",
+          "id": "dismiss",
+          "label": "Dismiss",
+          "primary": false
+        }
+      ],
+      "doing": "Two meetings say Friday now.",
+      "evidence": [],
+      "goal": "The cut-over date moved to Friday.",
+      "happened": "",
+      "head": "The billing move · the project review",
+      "kind": "project_proposal",
+      "kind_words": "Project review",
+      "level": "",
+      "note": [
+        "The cut-over date moved to Friday.",
+        "Two meetings say Friday now."
+      ],
+      "place": "",
+      "preview": {
+        "destination": "the project The billing move",
+        "lines": [
+          "Accept records: The cut-over date moved to Friday"
+        ],
+        "reversible": true
+      },
+      "program_id": null,
+      "program_title": "",
+      "question": "Accept: The cut-over date moved to Friday?",
+      "ref": "project-proposal:pprop_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "since": "2026-11-01 08:47:06",
+      "source": "project-proposal",
+      "state": "open",
+      "step_id": "",
+      "step_ordinal": null,
+      "step_title": "",
+      "track": []
+    }
+  ],
+  "later": [
+    {
+      "at": "02:30",
+      "id": "in_1h",
+      "label": "In 1 hour"
+    },
+    {
+      "at": "13:00",
+      "id": "at_13",
+      "label": "At 13:00"
+    },
+    {
+      "at": "19:00",
+      "id": "tonight",
+      "label": "Tonight"
+    },
+    {
+      "at": "07:00",
+      "id": "tomorrow",
+      "label": "Tomorrow at 07:00"
+    }
+  ],
+  "package": {
+    "desk": "/",
+    "expires_at": "2026-11-02T06:30:00+00:00",
+    "expires_words": "Expires in 24 h",
+    "head": "The billing move · the project review",
+    "hub": "the rig hub",
+    "id": "pkg-5d284d1cdfa4",
+    "kind": "item"
+  }
+}

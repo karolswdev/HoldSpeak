@@ -79,7 +79,7 @@ def test_the_list_row_reads_like_a_line_from_a_chief_of_staff(tmp_path) -> None:
 
     rig, pid = _no_remote(tmp_path)
     [row] = [item for item in rig.service.list(None)["programs"] if item["id"] == pid]
-    assert re.fullmatch(r"Step 1 of 3 waits on you since \d\d:\d\d", row["line"]), row["line"]
+    assert re.fullmatch(r"Step 1 of 3 waits on you since \d\d:\d\d · failed", row["line"]), row["line"]
     assert [dot["mark"] for dot in row["track"]] == ["here", "planned", "planned"]
     assert words.fence_hits(row["line"]) == []
     assert words.list_line("drafting", [], []) == "Drafting, no steps yet"

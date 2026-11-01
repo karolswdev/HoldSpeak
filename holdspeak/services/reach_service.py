@@ -425,7 +425,9 @@ class ReachService:
                 if not self.may_send(ref, item, now):
                     continue
                 try:
-                    done["sent"].append(telegram.brief(ref))
+                    done["sent"].append(telegram.brief(ref, because={
+                        "rule": mode, "level": item.get("level") or None,
+                        "returned": bool(back) or None}))
                 except ServiceError as exc:
                     log.info(f"reach: {ref} not sent to Telegram: {exc.code}")
         done["settled"] = telegram.settle_gone(set(items))

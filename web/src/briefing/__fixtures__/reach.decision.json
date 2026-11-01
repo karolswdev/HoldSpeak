@@ -1,6 +1,11 @@
 {
   "items": [
     {
+      "because": {
+        "kind": "decision",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
       "blocked": [],
       "blocked_words": "",
       "changed": [],
@@ -29,7 +34,7 @@
       "program_title": "",
       "question": "Confirm this decision?",
       "ref": "decision:dec-2",
-      "since": "2026-11-01T06:58:34Z",
+      "since": "2026-11-01T08:47:06Z",
       "source": "decision",
       "state": "open",
       "step_id": "",
@@ -40,7 +45,7 @@
   ],
   "later": [
     {
-      "at": "13:00",
+      "at": "02:30",
       "id": "in_1h",
       "label": "In 1 hour"
     },
@@ -62,11 +67,11 @@
   ],
   "package": {
     "desk": "/",
-    "expires_at": "2026-11-02T17:00:00+00:00",
+    "expires_at": "2026-11-02T06:30:00+00:00",
     "expires_words": "Expires in 24 h",
     "head": "A decision to review",
     "hub": "the rig hub",
-    "id": "pkg-d9f02272d7ef",
+    "id": "pkg-b527b2e0f644",
     "kind": "item"
   }
 }

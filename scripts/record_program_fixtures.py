@@ -299,6 +299,29 @@ def _press(client: TestClient, path: str, body: dict[str, Any], method: str = "p
     return answer.json()
 
 
+def record_todo(root: Path) -> dict[str, Any]:
+    """PG-IMPORT IMP2: a running step whose Your word has walk lines (the
+    to-do row), his Done with a note, and a lane cut off (the ending word)."""
+    rig = Rig(root / "todo")
+    client = _client(rig)
+    pid = _create(rig, "Atlas at 393", template="fast-cycle", control="normal")
+    rig.service.plan(OWNER, pid, steps=[{"title": "Atlas anchors", "brief": "Cite each anchor once."},
+                                        {"title": "Atlas index", "brief": "Index the anchors."}])
+    step = rig.step(pid, 1)
+    rig.service.require(OWNER, pid, text="The atlas reads well at 393", kind="word", step_id=step["id"],
+                        spec={"walk": ["Open the atlas at 393", "Read the first section"]})
+    rig.service.start(OWNER, pid)
+    rig.tick()
+    other = rig.step(pid, 2)
+    rig.states[other["launch_id"]] = {"state": "ended", "turn_id": None}  # its lane was cut off
+    rig.tick()
+    todo = _get(client, f"/api/programs/{pid}")
+    item = next(row for row in todo["your_turn_items"] if row["kind"] == "todo")
+    done = _press(client, f"/api/programs/{pid}/requirements/{item['requirement_id']}/decide",
+                  {"choice": "done", "line": "Looks right on my phone"})
+    return {"program.todo.json": todo, "program.todo.done.json": done}
+
+
 def record_adjust(root: Path) -> Any:
     """PG-REQ §8, in a rig of its own: a step inserted before a Planned one,
     a Planned step moved, a started step amended (one line typed at its turn
@@ -569,6 +592,7 @@ def record(root: Path) -> dict[str, Any]:
     fixtures.update(record_adjust(root))
     fixtures.update(record_proposals(root))
     fixtures.update(record_text(root))
+    fixtures.update(record_todo(root))
     return fixtures
 
 
@@ -586,6 +610,9 @@ def _check(fixtures: dict[str, Any]) -> None:
     report = fixtures["program.done.json"]["steps"][0]["report"]
     assert report["observed"] and report["claimed"] and report["files"], report
     assert fixtures["program.done.json"]["finished_words"] == "finished"
+    todo = fixtures["program.todo.json"]
+    assert "todo" in [row["kind"] for row in todo["your_turn_items"]], todo["your_turn_items"]
+    assert any(step["ending"] == "interrupted" for step in todo["steps"]), [s["ending"] for s in todo["steps"]]
     assert fixtures["program.parked.json"]["state"] == "parked"
     assert fixtures["program.drafting.json"]["state"] == "drafting"
     assert fixtures["needs_you.program.json"]["items"]

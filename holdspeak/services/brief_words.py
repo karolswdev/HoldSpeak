@@ -290,6 +290,13 @@ def happened_line(kind: str, item: Mapping[str, Any], step: Optional[Mapping[str
         title = basenames(proposal.get("title") or "")
         line = sentence(f"The agent proposes a new step: {title}" if title else "The agent proposes a new step")
         return line if clean(line) else "The agent proposes a new step."
+    if kind == "todo":
+        # PG-IMPORT IMP2: "Claude Code asks you to do this · step 3: <the walk>".
+        walk = " ".join(sentence(line) for line in item.get("walk") or [])
+        what = basenames(_after_title(item.get("title"))).split(" · ", 1)[-1]
+        agent = item.get("agent") or "The agent"
+        line = sentence(f"{agent} asks you to do this: {what}") + (f" {walk}" if walk else "")
+        return line if clean(line) else sentence(f"{agent} asks you to do this")
     if kind == "requirement_word":
         line = sentence(f"A requirement waits for your word: {basenames(_after_title(item.get('title')))}")
         return line if clean(line) else "A requirement waits for your word."
@@ -314,6 +321,7 @@ QUESTIONS = {
     "race": "Pick this agent's work as the winner?",
     "add_step": "Add this step to the plan?",
     "requirement_word": "Is the requirement met?",
+    "todo": "Did you do it?",
     "requirement_left": "Send the step back for one more round?",
     "requirement_proposed": "Add this requirement to the program?",
     "step_change": "Apply this change to the step?",
@@ -325,6 +333,8 @@ QUESTIONS = {
 
 
 def question_line(kind: str, item: Mapping[str, Any]) -> str:
+    if kind == "answer":
+        return "What do you answer the agent?"
     if kind == "delivery":
         return ("Try the delivery again, or skip it?" if "retry" in (item.get("choices") or [])
                 else "Merge the delivery pull request, or skip the delivery?")
@@ -384,6 +394,10 @@ def consequence(kind: str, choice: str, item: Mapping[str, Any], step: Optional[
         return "This agent's work wins. The step goes on."
     if kind == "add_step":
         return "The step is added to the plan." if choice == "add" else "No step is added. The plan stays as it is."
+    if kind == "todo":
+        agent = item.get("agent") or "The agent"
+        return (f"The requirement is met. {agent} is told." if choice == "done"
+                else f"The requirement is not met. {agent} is told you cannot do it. The step does not merge.")
     if kind == "requirement_word":
         return "The requirement is met." if choice == "met" else "The requirement is not met. The step does not merge."
     if kind == "requirement_left":
@@ -414,6 +428,7 @@ _SETTLED = {
     ("requirement_word", "met"): "The requirement is met.",
     ("requirement_word", "unmet"): "The requirement is not met.",
     ("requirement_left", "send_back"): "The agent gets one more round.",
+    ("todo", "done"): "Done. The agent is told.", ("todo", "cant"): "Sent. The agent is told you cannot do it.",
     ("requirement_proposed", "add"): "The requirement is added.", ("requirement_proposed", "skip"): "Nothing is added.",
     ("step_change", "apply"): "The step changes.", ("step_change", "skip"): "The step stays as it is.",
     ("step_amend", "send"): "The agent gets the line.", ("step_amend", "skip"): "Nothing is sent.",
@@ -846,7 +861,11 @@ def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str
         since = _wall(item.get("since"))
         when = f" since {since.strftime('%H:%M')}" if since else ""
         ordinal = int(item.get("ordinal") or 0)
-        return f"Step {ordinal}{of} waits on you{when}" if ordinal else f"The program waits on you{when}"
+        # PG-IMPORT IMP2: a held step whose lane failed or was cut off says so.
+        held = next((row for row in steps if row.get("id") == item.get("step_id")), None) or {}
+        ending = (held.get("facts") or {}).get("ending") if held.get("state") in ("parked", "failed") else None
+        tail = f" · {ending}" if ending in ("failed", "interrupted") else ""
+        return f"Step {ordinal}{of} waits on you{when}{tail}" if ordinal else f"The program waits on you{when}"
     if state == "running":
         live = next((row for row in steps if row.get("state") in _LIST_RUNNING), None)
         if live is None:
@@ -870,7 +889,11 @@ def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str
     if state in ("parked", "failed"):
         stopped = next((row for row in steps if row.get("state") in ("parked", "failed", "check_failed")), None)
         word = "Parked" if state == "parked" else "Failed"
-        return f"{word} at step {int(stopped['ordinal'])}{of}" if stopped else word
+        if not stopped:
+            return word
+        # PG-IMPORT IMP2: how its lane ended, beside the state.
+        ending = (stopped.get("facts") or {}).get("ending")
+        return f"{word} at step {int(stopped['ordinal'])}{of}" + (f" · {ending}" if ending in ("failed", "interrupted") else "")
     return ""
 
 

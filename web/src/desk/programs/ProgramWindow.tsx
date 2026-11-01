@@ -75,6 +75,8 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   limited: [{ choice: "continue", word: "Continue", primary: true }, { choice: "wait", word: "Wait" }],
   // PG-REQ §9: his word, a requirement left after the rounds, and what an agent proposes.
   requirement_word: [{ choice: "met", word: "Met", primary: true }, { choice: "unmet", word: "Unmet" }],
+  // PG-IMPORT IMP2 (BroCrew's to-do): a thing the agent asks him to do by hand.
+  todo: [{ choice: "done", word: "Done", primary: true }, { choice: "cant", word: "Can't do it" }],
   requirement_left: [{ choice: "send_back", word: "Send back", primary: true }, { choice: "waive", word: "Waive" }],
   requirement_proposed: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
   step_change: [{ choice: "apply", word: "Apply", primary: true }, { choice: "skip", word: "Skip" }],
@@ -89,7 +91,7 @@ function verbsFor(item: YourTurnItem): { choice: string; word: string; primary?:
   return item.kind === "delivery" ? all.filter((verb) => item.choices.includes(verb.choice)) : all;
 }
 
-const REQUIREMENT_KINDS = new Set(["requirement_word", "requirement_left"]);
+const REQUIREMENT_KINDS = new Set(["requirement_word", "requirement_left", "todo"]);
 const PROPOSAL_KINDS = new Set(["requirement_proposed", "step_change", "step_amend"]);
 
 /** The requirement an item is about (its Program's or its step's). */
@@ -115,6 +117,7 @@ function itemFact(item: YourTurnItem, step: ProgramStep | undefined, program: Pr
   if (item.kind === "limited") return item.warning ? "Near its limit" : "Limited";
   if (item.kind === "delivery") return "The delivery";
   if (item.kind === "requirement_word") return step ? "Your word · holds the merge" : "Your word";
+  if (item.kind === "todo") return item.head ?? "To do";
   if (item.kind === "requirement_left") return requirementOf(program, item)?.kind_word ?? "";
   return "";
 }
@@ -163,6 +166,8 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
   const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
   const [ask, setAsk] = useState<{ id: string; choice: string } | null>(null);
   const [line, setLine] = useState("");
+  // PG-IMPORT IMP2: each to-do's optional note, kept until its press lands.
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const items = program.your_turn_items;
   if (!items.length) return null;
   // PG-DIRECTION DIR3: Copy page link makes the item's briefing page and
@@ -188,6 +193,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
       setAsk((now) => (now?.id === item.id && now.choice === choice ? null : { id: item.id, choice }));
       return;
     }
+    if (item.kind === "todo" && line === undefined) line = (notes[item.id] ?? "").trim();
     setBusy(`${item.id}:${choice}`);
     setFailed(null);
     const body: DecideBody = { kind: item.kind as DecideBody["kind"], choice };
@@ -197,6 +203,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
       if (item.kind === "close") onDecided(await closeProgram(program.id));
       else if (REQUIREMENT_KINDS.has(item.kind) && item.requirement_id) {
         onDecided(await decideRequirement(program.id, item.requirement_id, choice as RequirementChoice, line || undefined));
+        if (item.kind === "todo") setNotes((now) => { const next = { ...now }; delete next[item.id]; return next; });
       } else if (PROPOSAL_KINDS.has(item.kind) && item.proposal_id != null) {
         onDecided(await decideProposal(program.id, item.proposal_id, choice));
       } else onDecided(await decide(program.id, item.step_id || "program", body));
@@ -263,6 +270,22 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
       </>
     );
   };
+  /** PG-IMPORT IMP2: a to-do's walk lines and its optional note. */
+  const todoWell = (item: YourTurnItem) => item.kind !== "todo" ? null : (
+    <div className="pg-todo" data-testid="programs-todo">
+      {/* The hub's brief says the walk in its "what happened" line; a row
+          with no brief lists it here. */}
+      {item.walk?.length && !item.brief?.happened ? (
+        <ol className="pg-todo-walk" data-testid="programs-todo-walk">
+          {item.walk.map((row, index) => <li key={`${index}-${row}`}>{row}</li>)}
+        </ol>
+      ) : null}
+      <span className="pg-todo-note">
+        <StringGadget label="Add a note (optional)" placeholder="Add a note (optional)" value={notes[item.id] ?? ""}
+          onChange={(value) => setNotes((now) => ({ ...now, [item.id]: value }))} />
+      </span>
+    </div>
+  );
   const askWell = (item: YourTurnItem) => {
     const asking = ask?.id === item.id ? ask : null;
     if (!asking) return null;
@@ -301,6 +324,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
           </>
         ) : null}
         {first.page ? <p className="pg-turn-page" data-testid="programs-turn-page">{pageWords(first.page)}</p> : null}
+        {todoWell(first)}
         {askWell(first)}
         <div className="pg-tray" data-testid="programs-tray">{verbsOf(first, true)}</div>
         <p className="pg-brief-ev" data-testid="programs-turn-words">{wordsOf(first, true)}</p>
@@ -317,6 +341,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
                   {item.brief ? <><b>{`${placeWords(item)}:`}</b> {[item.brief.happened, item.brief.question].filter(Boolean).join(" ")}</> : itemWords(item, step)}
                 </span>
                 {item.page ? <span className="pg-turn-page" data-testid="programs-turn-page">{pageWords(item.page)}</span> : null}
+                {todoWell(item)}
                 {askWell(item)}
                 <span className="pg-turn-verbs">{verbsOf(item, false)}{wordsOf(item, false)}</span>
               </li>

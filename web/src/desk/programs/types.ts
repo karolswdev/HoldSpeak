@@ -340,6 +340,8 @@ export interface ProgramStep {
   for_person: string | null;
   /** PG-IMPORT IMP1: the report in registers (Done, Merged, Parked, Failed). */
   report: StepReport | null;
+  /** PG-IMPORT IMP2: how the step's lane ended, apart from its state. */
+  ending?: "finished" | "failed" | "interrupted" | "none";
   /** The agent's own report text, as it sent it. */
   report_text?: string | null;
   last_checkpoint: ProgramCheckpoint | null;
@@ -372,7 +374,9 @@ export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_revi
   // PG-REQ §9: his word, a requirement left after the rounds, and what an agent proposes.
   | "requirement_word" | "requirement_left" | "requirement_proposed" | "step_change" | "step_amend"
   // LANG13: the delivery at Done (Merge at Secure, or Retry after a failure; Skip).
-  | "delivery";
+  | "delivery"
+  // PG-IMPORT IMP2: a thing the agent asks him to do by hand (a Your word walk).
+  | "todo";
 
 export interface YourTurnItem {
   id: string;
@@ -397,6 +401,9 @@ export interface YourTurnItem {
   reason?: string | null;
   /** add_step: the proposal's index (sent as `finding_id`). */
   proposal?: number;
+  /** todo (PG-IMPORT IMP2): "Claude Code asks you to do this · step 3" and the walk lines. */
+  head?: string;
+  walk?: string[];
   /** limited (PG19): the agent that would take it over, and the reset. */
   next?: RunsOnEntry;
   agent?: string;

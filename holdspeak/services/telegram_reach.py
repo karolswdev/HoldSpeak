@@ -499,15 +499,15 @@ class TelegramReach:
 
     # ── briefs ───────────────────────────────────────────────────────
 
-    def brief(self, ref: str) -> dict[str, Any]:
+    def brief(self, ref: str, *, because: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
         """Make a package for one held item and send it to the owner chat."""
         chat = paired_chat()
         if not self.live() or chat is None:
             raise TelegramRefused("telegram_not_paired", "Pair Telegram first.")
         made = self.briefing().make(TELEGRAM_OWNER, [ref])
-        return self.send_package(made["id"], made["path"])
+        return self.send_package(made["id"], made["path"], because=because)
 
-    def send_package(self, package_id: str, path: str) -> dict[str, Any]:
+    def send_package(self, package_id: str, path: str, *, because: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
         chat = paired_chat()
         package = self.store.get(package_id)
         if chat is None or package is None:
@@ -520,8 +520,14 @@ class TelegramReach:
             raise TelegramRefused("telegram_failed", "Telegram did not take the message. Nothing was sent.")
         message_id = (result.get("result") or {}).get("message_id")
         sent = list(package.get("sent") or [])
+        from .briefing_service import because_of
+
+        # IMP5: why it travelled (the item's kind, and the ladder's rule when
+        # the ladder sent it); never a permission.
+        why = {**because_of(body.get("kind")), **{key: value for key, value in dict(because or {}).items()
+                                                  if value is not None}}
         sent.append({"via": "telegram", "at": self.now().astimezone(timezone.utc).isoformat(),
-                     "message_id": message_id})
+                     "message_id": message_id, "because": why})
         self.store.set_sent(package_id, sent)
         self._changed(package_id, "sent")
         return {"id": package_id, "message_id": message_id, "text": text}
@@ -763,8 +769,8 @@ class TelegramReach:
         except ServiceError as exc:
             words = exc.detail
             if exc.code == "answered_already":
-                outcome = (exc.context or {}).get("outcome") or {}
-                words = f"Answered already: {outcome.get('words')}" if outcome.get("words") else exc.detail
+                # IMP5: when and where it was answered ("Answered at 21:46 from the desk").
+                words = str((exc.context or {}).get("words") or exc.detail)
             if message_id is not None:
                 self._edit(chat_id, message_id, self._settled_text(body, package, words, link))
             if callback_id:
@@ -832,6 +838,15 @@ class TelegramReach:
                         if target in {row["id"] for row in choices}})
         message_id = next((row.get("message_id") for row in package["sent"]
                            if isinstance(row, dict) and row.get("via") == "telegram"), None)
+        if isinstance(body.get("text"), Mapping) and not is_later_words(words):
+            # DIR10: the agent asks; his reply in words is the answer.
+            try:
+                self.briefing().answer_package(package["id"], ref, "answer", via="telegram", reason=text)
+            except ServiceError as exc:
+                self._send(chat_id, exc.detail)
+                return {"action": "refused", "code": exc.code}
+            self._send(chat_id, "Typed to the agent.")
+            return {"action": "answered", "choice": "answer"}
         if words.startswith("waive"):
             link = "Open it on your desk."
             self._send(chat_id, f"Waive on the page, with your reason. {link}")
@@ -847,13 +862,13 @@ class TelegramReach:
                                                           "add", "send"):
                 choice = choices[0]["id"]
             else:
-                self._send(chat_id, f"Which one: {' or '.join(row['label'] for row in choices)}?")
+                self._send(chat_id, f"Choose one: {' or '.join(row['label'] for row in choices)}.")
                 return {"action": "which"}
         if choice is None and words in ("no", "n", "nope"):
             if len(choices) == 2 and choices[1]["id"] in ("not_yet", "park"):
                 choice = choices[1]["id"]
             else:
-                self._send(chat_id, f"Which one: {' or '.join(row['label'] for row in choices)}?")
+                self._send(chat_id, f"Choose one: {' or '.join(row['label'] for row in choices)}.")
                 return {"action": "which"}
         if choice is not None:
             if (str(body.get("kind")), choice) in _SECOND_TAP:

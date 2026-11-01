@@ -128,7 +128,7 @@ export async function editRequirement(programId: string, requirementId: string,
     `${base(programId)}/requirements/${encodeURIComponent(requirementId)}`, { method: "PATCH", json: body }));
 }
 
-export type RequirementChoice = "met" | "unmet" | "waive" | "send_back";
+export type RequirementChoice = "met" | "unmet" | "waive" | "send_back" | "done" | "cant";
 
 /** His press on a requirement: Met / Unmet (his word), Waive (with his
  *  line), Send back (one more round). */

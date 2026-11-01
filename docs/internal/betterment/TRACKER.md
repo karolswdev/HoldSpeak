@@ -352,7 +352,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | DIR7 | The ladder and the one morning digest (JRN4 folded in) | Open | Telegram rung and a plain digest in #1678. |
 | DIR8 | The call that decides (= JRN7); `docs/calls.md` table replaced | Shipped #1679 (2026-10-31) | = JRN7. |
 | DIR9 | A Telegram sentence becomes a shaping preview | Partly | Telegram half in #1678; the page half (one page carries up to 12 items in order, each decided alone; the morning message links it): this PR. Open: the sentence to `program.shape` preview with Apply on the page. |
-| DIR10 | The other held items as packages | Partly | `briefing_sources`: a decision to review (Confirm) and a held call (Call now · Let it wait) as packages, answered through their own verbs; Later records the next touch. Open: meeting proposals, project review proposals, agents' questions, sends and gate holds (page only), Door tasks and blockers as digest lines. This PR. |
+| DIR10 | The other held items as packages | Done in part (hub) | #1703: decisions, held calls. This PR: meeting proposals and project review proposals with their preview first; a Program step agent's question answered with text on the page and by a Telegram reply (`ProgramService.answer_agent`); Door tasks due today and the desk's blocker lines as digest lines. Open: a desk agent's question outside Programs, sends and gate holds (page only), the faces. |
 | DIR11 | The documents (`docs/reach.md` and the rest) | Shipped (PG-DOCS-2 PR) | `docs/reach.md` and the rest. |
 | DIR12 | Email as a channel | Parked | Until he asks. |
 
@@ -361,11 +361,11 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | Slice | What | State | Note |
 |---|---|---|---|
 | IMP0 | The design note | Shipped #1699 (2026-11-01) |  |
-| IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Shipped (PG-IMPORT IMP1 PR) | `brief_words.step_report`; `seen` on engine checkpoints; `facts.files`. |
-| IMP2 | The to-do row (Done, Can't do it); the ending word | Open | After IMP1. |
+| IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Shipped #1706 (2026-11-01) | `brief_words.step_report`; `seen` on engine checkpoints; `facts.files`. |
+| IMP2 | The to-do row (Done, Can't do it); the ending word | Shipped (PG-IMPORT IMP2 PR) | A to-do is a required Your word with walk lines; a step whose brief asks him by hand is not detected (no prose reading). |
 | IMP3 | Wait sentences; Since you were last here on Today | Open |  |
-| IMP4 | Never wider than the parent (closes the open ruling) | Open |  |
-| IMP5 | The `because` on each routed request; four honest refusals of a late answer | Open |  |
+| IMP4 | Never wider than the parent (closes the open ruling) | Shipped (this PR) | `program_service.parent_level`/`wider`: an agent's create is capped and says so; its update or text to a wider control is refused ("Refused: a program runs no wider than what made it", ledger line); step launches, handoffs, race entrants and helpers run at the Program's or parent's level (fenced). |
+| IMP5 | The `because` on each routed request; four honest refusals of a late answer | Shipped in part (this PR) | Every package body and Telegram send row carries `because` (`briefing_service.because_of`; the ladder's rule on its sends); a permission kind or a `gate:` ref is refused (`authority_stays`) and fenced; not pending / not offered / not usable / not kept as codes with his words on the page and Telegram. Open: a `because` for the call's reads (DIR8 composes without a package), the call's last line. |
 | IMP6 | Take it over, hand it back, on a step's lane | Open |  |
 | IMP7 | The forest | Later | With handoffs and J5. |
 

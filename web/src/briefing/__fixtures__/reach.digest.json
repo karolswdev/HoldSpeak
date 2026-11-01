@@ -1,22 +1,27 @@
 {
   "items": [
     {
+      "because": {
+        "kind": "core",
+        "rule": "kind",
+        "words": "a question"
+      },
       "blocked": [],
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-01T06:58:33.759453+00:00",
-          "clock": "01:58",
+          "at": "2026-11-01T08:47:05.993345+00:00",
+          "clock": "03:47",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-01T06:58:33.495790+00:00",
-          "clock": "01:58",
+          "at": "2026-11-01T08:47:05.521652+00:00",
+          "clock": "03:47",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-01T06:58:33.323873+00:00",
-          "clock": "01:58",
+          "at": "2026-11-01T08:47:05.179585+00:00",
+          "clock": "03:47",
           "line": "Handed to Claude Code."
         }
       ],
@@ -63,14 +68,14 @@
         "Step 1: Store the stall reason in its own column.",
         "The step's change touches files no step owns (schema.py)."
       ],
-      "place": "Step 1 of 1 · started 01:58 · waited 10 h 01",
-      "program_id": "program-c41578182ae5",
+      "place": "Step 1 of 1 · started 03:47 · waited under a minute",
+      "program_id": "program-1ff470052916",
       "program_title": "Overnight on the home box",
       "question": "Let the step go on with this, or park it?",
-      "ref": "program:program-c41578182ae5:step-8e3167f65634:core",
-      "since": "2026-11-01T06:58:33.903794+00:00",
+      "ref": "program:program-1ff470052916:step-1168484f246a:core",
+      "since": "2026-11-01T08:47:06.255868+00:00",
       "state": "open",
-      "step_id": "step-8e3167f65634",
+      "step_id": "step-1168484f246a",
       "step_ordinal": 1,
       "step_title": "Store the stall reason",
       "track": [
@@ -82,6 +87,11 @@
       ]
     },
     {
+      "because": {
+        "kind": "decision",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
       "blocked": [],
       "blocked_words": "",
       "changed": [],
@@ -110,7 +120,7 @@
       "program_title": "",
       "question": "Confirm this decision?",
       "ref": "decision:dec-1",
-      "since": "2026-11-01T06:58:34Z",
+      "since": "2026-11-01T08:47:06Z",
       "source": "decision",
       "state": "open",
       "step_id": "",
@@ -119,6 +129,11 @@
       "track": []
     },
     {
+      "because": {
+        "kind": "held_call",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
       "blocked": [],
       "blocked_words": "",
       "changed": [],
@@ -163,7 +178,7 @@
   ],
   "later": [
     {
-      "at": "13:00",
+      "at": "02:30",
       "id": "in_1h",
       "label": "In 1 hour"
     },
@@ -184,13 +199,14 @@
     }
   ],
   "package": {
-    "desk": "/?open=program:program-c41578182ae5",
-    "expires_at": "2026-11-02T05:00:00+00:00",
+    "desk": "/?open=program:program-1ff470052916",
+    "expires_at": "2026-11-01T18:30:00+00:00",
     "expires_words": "Expires in 12 h",
     "head": "3 wait on you",
     "hub": "the rig hub",
-    "id": "pkg-700b0e32e433",
+    "id": "pkg-7ebadf90dac4",
     "kind": "digest",
+    "lines": [],
     "open": 3,
     "open_words": "3 wait on you."
   }
