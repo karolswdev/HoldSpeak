@@ -1424,3 +1424,5 @@ span.pg-req-thumb { height: 150px; }
   .pg-family-line { grid-column: 1 / -1; }
   .pg-row-family > .kit-listrows { padding-left: 12px; }
 }
+
+.pg-findings-fix { margin: 0; padding: 2px 12px 6px; }

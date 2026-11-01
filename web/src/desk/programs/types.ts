@@ -387,7 +387,11 @@ export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_revi
   // LANG13: the delivery at Done (Merge at Secure, or Retry after a failure; Skip).
   | "delivery"
   // PG-IMPORT IMP2: a thing the agent asks him to do by hand (a Your word walk).
-  | "todo";
+  | "todo"
+  // PG-LANG JRN9 / JRN10: file an audit's findings (Secure), make its fix program.
+  | "audit_file" | "fix_program"
+  // PG-LANG JRN11: a lesson (the same cause on several steps).
+  | "lesson";
 
 export interface YourTurnItem {
   id: string;
@@ -430,6 +434,14 @@ export interface YourTurnItem {
   /** PG-WINDOW W1: the brief in his terms (brief_words.item_brief), the
    *  same lines the briefing page reads. */
   brief?: ItemBrief | null;
+  /** audit_file / fix_program: the findings it is about. */
+  count?: number;
+  /** lesson (JRN11): its ledger row (sent as `lesson_id`), the cause, the steps. */
+  lesson_id?: number;
+  source?: "red" | "finding" | string;
+  words?: string;
+  steps?: number[];
+  requirement?: string;
 }
 
 export interface ItemBrief {
@@ -612,6 +624,8 @@ export interface DecideBody {
   choice: string;
   finding_id?: string;
   reason?: string;
+  /** JRN11: the lesson a Lesson row answers. */
+  lesson_id?: number;
 }
 
 /** The step a Drafting row writes (`POST …/plan`). */

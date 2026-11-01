@@ -2478,3 +2478,83 @@ describe("PG-IMPORT IMP7: the forest (recorded: scripts/record_program_fixtures.
     expect(within(parentRow).getByTestId("programs-row-kin").textContent).toBe(`· its programs: ${parent.kin!.worst_word}`);
   });
 });
+
+// PG-LANG JRN9 to JRN11: the audit's two rows and the lesson row, recorded
+// through the real routes (test_desk_program_audit.py, test_desk_program_lessons.py).
+import auditSecureFixture from "../__fixtures__/audit.secure.json";
+import auditFiledFixture from "../__fixtures__/audit.filed.json";
+import auditFixFixture from "../__fixtures__/audit.fix.json";
+import lessonProgramFixture from "../__fixtures__/program.lesson.json";
+import lessonKeptFixture from "../__fixtures__/program.lesson.kept.json";
+
+describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded)", () => {
+  const turnRow = (kind: string) => screen.queryAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === kind);
+
+  it("Secure: File the findings is a row of the program; File files them and the board says Open Door task", async () => {
+    const audit = auditSecureFixture as unknown as Program;
+    const item = audit.your_turn_items.find((row) => row.kind === "audit_file")!;
+    hub({
+      [`GET /api/programs/${audit.id}`]: audit,
+      [`POST /api/programs/${audit.id}/steps/${item.step_id}/decide`]: auditFiledFixture,
+    });
+    render(<ProgramBody programId={audit.id} />);
+    await screen.findByTestId("programs-your-turn");
+    const row = turnRow("audit_file")!;
+    expect(row.textContent).toContain(`The program: ${item.brief!.happened} ${item.brief!.question}`);
+    expect(within(row).getAllByRole("button").map((button) => button.textContent)).toEqual(["File", "Skip"]);
+    expect(within(screen.getByTestId("programs-findings")).queryAllByTestId("programs-finding-task")).toHaveLength(0);
+    fireEvent.click(within(row).getByTestId("programs-turn-file"));
+    await waitFor(() => expect(calls).toContain(
+      `POST /api/programs/${audit.id}/steps/${item.step_id}/decide {"kind":"audit_file","choice":"file"}`));
+    await waitFor(() => expect(turnRow("audit_file")).toBeUndefined());
+    expect(within(screen.getByTestId("programs-findings")).getAllByTestId("programs-finding-task")).toHaveLength(3);
+    expect(turnRow("fix_program")).toBeDefined();
+  });
+
+  it("a done audit: Make makes the fix program; the row settles to Open the fix program", async () => {
+    const audit = auditBoardFixture as unknown as Program;
+    const item = audit.your_turn_items.find((row) => row.kind === "fix_program")!;
+    hub({
+      [`GET /api/programs/${audit.id}`]: audit,
+      [`POST /api/programs/${audit.id}/steps/${item.step_id}/decide`]: auditFixFixture,
+    });
+    render(<ProgramBody programId={audit.id} />);
+    await screen.findByTestId("programs-your-turn");
+    // The headline: the brief's question, the program as its place, Make and Skip with their consequences.
+    expect(screen.getByTestId("programs-brief-question").textContent).toBe("Make a fix program from the MUST findings?");
+    const row = turnRow("fix_program")!;
+    expect(row.textContent).toContain("· The program");
+    expect(within(screen.getByTestId("programs-tray")).getAllByRole("button").map((button) => button.textContent)).toEqual(["Make", "Skip"]);
+    expect(within(row).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
+      .toEqual([item.brief!.consequences.make, item.brief!.consequences.skip]);
+    expect(screen.queryByTestId("programs-findings-fix")).toBeNull();
+    fireEvent.click(within(row).getByTestId("programs-turn-make"));
+    await waitFor(() => expect(calls).toContain(
+      `POST /api/programs/${audit.id}/steps/${item.step_id}/decide {"kind":"fix_program","choice":"make"}`));
+    const open = await screen.findByTestId("programs-findings-fix");
+    expect(turnRow("fix_program")).toBeUndefined();
+    expect(open.textContent).toBe("Open the fix program");
+    fireEvent.click(open);
+    expect(mocks.openPullout).toHaveBeenCalledWith(`program:${(auditFixFixture as { fix_program_id: string }).fix_program_id}`);
+  });
+
+  it("a lesson: Keep for this program · Keep for HoldSpeak · Skip; the press names its lesson", async () => {
+    const program = lessonProgramFixture as unknown as Program;
+    const item = program.your_turn_items.find((row) => row.kind === "lesson")!;
+    hub({
+      [`GET /api/programs/${program.id}`]: program,
+      [`POST /api/programs/${program.id}/steps/${item.step_id}/decide`]: lessonKeptFixture,
+    });
+    render(<ProgramBody programId={program.id} />);
+    await screen.findByTestId("programs-your-turn");
+    const row = turnRow("lesson")!;
+    expect(screen.getByTestId("programs-brief-question").textContent).toBe("Keep this lesson, and where?");
+    expect(row.textContent).toContain(item.brief!.happened);
+    expect(within(screen.getByTestId("programs-tray")).getAllByRole("button").map((button) => button.textContent))
+      .toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
+    fireEvent.click(within(row).getByTestId("programs-turn-keep-program"));
+    await waitFor(() => expect(calls).toContain(
+      `POST /api/programs/${program.id}/steps/${item.step_id}/decide {"kind":"lesson","choice":"keep_program","lesson_id":${item.lesson_id}}`));
+    await waitFor(() => expect(turnRow("lesson")).toBeUndefined());
+  });
+});
