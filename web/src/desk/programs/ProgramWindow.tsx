@@ -41,7 +41,8 @@ import { applyProgramText, closeProgram, decide, decideProposal, decideRequireme
   useProgram, type RequirementChoice } from "./api";
 import { briefable, copyPageLink, pageWords, programRef, revokePage } from "../reach";
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
-import { RequirementsBoard, openShot } from "./Requirements";
+import { DoneWhen, RequirementsBoard, openShot } from "./Requirements";
+import { ProgramLine } from "./ProgramLine";
 import { StepFold, isPlanned, moveStep } from "./StepFold";
 import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
 import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
@@ -126,6 +127,19 @@ function itemWords(item: YourTurnItem, step: ProgramStep | undefined): ReactNode
   return <><b>{head}:</b> {tail}</>;
 }
 
+/** The kind line's words when the hub sent no fact (`Waits on you`). */
+function placeWords(item: YourTurnItem): string {
+  return item.ordinal ? `Step ${item.ordinal}, ${item.step_title}` : "The program";
+}
+
+/** PG-WINDOW W2: what waits on him, as the window's headline. The first
+ *  item is the brief (canvas direction A, the briefing page's grammar,
+ *  #1684): the kind line with its breathing lamp, the question, what the
+ *  step was doing, what happened in plain words, what waits on this answer,
+ *  then the tray: each choice a library Button with its consequence under
+ *  it. No box around it; the tray is the one raised thing. The other items
+ *  are one line each under it. The hub's words (`item.brief`); an item
+ *  without them keeps its title. */
 export function YourTurnWell({ program, onDecided }: { program: Program; onDecided(next: Program | null): void }) {
   const [busy, setBusy] = useState("");
   const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
@@ -175,60 +189,107 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
       setBusy("");
     }
   };
+  const verbsOf = (item: YourTurnItem, withCons: boolean) => {
+    const step = program.steps.find((row) => row.id === item.step_id);
+    // His word on a step that has a shot: Open shot beside Met.
+    const shot = item.kind === "requirement_word"
+      ? (step?.requirements ?? []).find((row) => row.kind === "shot" && row.evidence?.url) : undefined;
+    const choice = (key: string, button: ReactNode) => {
+      const cons = withCons ? item.brief?.consequences?.[key] : undefined;
+      return withCons ? (
+        <span key={key} className="pg-choice" data-choice={key}>
+          {button}
+          {cons ? <span className="pg-choice-cons" data-testid="programs-turn-consequence">{cons}</span> : null}
+        </span>
+      ) : button;
+    };
+    return (
+      <>
+        {item.kind === "answer" ? choice("answer", (
+          <Button dense={!withCons} variant="primary" onClick={() => item.launch_id && openRef(`launch:${item.launch_id}`)}
+            disabled={!item.launch_id} data-testid="programs-turn-answer">Answer</Button>
+        )) : (VERBS[item.kind] ?? []).map((verb) => choice(verb.choice, (
+          <Button key={verb.choice} dense={!withCons} variant={verb.primary ? "primary" : "secondary"}
+            loading={busy === `${item.id}:${verb.choice}`} disabled={Boolean(busy)}
+            onClick={() => void press(item, verb.choice)} data-testid={`programs-turn-${verb.choice.replace("_", "-")}`}>
+            {verbWord(item, verb)}
+          </Button>
+        )))}
+        <span className="pg-tray-end">
+          {shot ? (
+            <Button dense variant="secondary" onClick={() => openShot(program.id, shot.id)} data-testid="programs-turn-open-shot">Open shot</Button>
+          ) : null}
+          {briefable(item.kind) ? (
+            <Button dense variant="ghost" loading={busy === `${item.id}:${item.page ? "revoke" : "copy"}`}
+              disabled={Boolean(busy)} onClick={() => void page(item, item.page ? "revoke" : "copy")}
+              data-testid={item.page ? "programs-turn-revoke" : "programs-turn-copy-link"}>
+              {item.page ? "Revoke" : "Copy page link"}
+            </Button>
+          ) : null}
+        </span>
+      </>
+    );
+  };
+  const askWell = (item: YourTurnItem) => {
+    const asking = ask?.id === item.id ? ask : null;
+    if (!asking) return null;
+    return (
+      <span className="pg-turn-ask" data-testid="programs-turn-ask">
+        <StringGadget label={asking.choice === "waive" ? "Why you waive it" : "What is missing"} value={line} onChange={setLine}
+          placeholder={asking.choice === "waive" ? "Why you waive it" : "What is missing"} autoFocus />
+        <Button dense variant="primary" loading={busy === `${item.id}:${asking.choice}`}
+          disabled={Boolean(busy) || (asking.choice === "waive" && !line.trim())}
+          onClick={() => { void press(item, asking.choice, line.trim()); setLine(""); }} data-testid="programs-turn-ask-send">
+          {asking.choice === "waive" ? "Waive" : "Unmet"}
+        </Button>
+      </span>
+    );
+  };
+  const [first, ...rest] = items;
+  const firstStep = program.steps.find((row) => row.id === first.step_id);
+  const brief = first.brief;
+  const fact = itemFact(first, firstStep, program);
   return (
-    <section className="pg-turn" aria-label="Your turn" data-testid="programs-your-turn">
-      <h3 className="pg-turn-head"><DotWord tone="ask">Your turn</DotWord></h3>
-      <ul className="pg-turn-items">
-        {items.map((item) => {
-          const step = program.steps.find((row) => row.id === item.step_id);
-          const fact = itemFact(item, step, program);
-          // His word on a step that has a shot: Open shot beside Met.
-          const shot = item.kind === "requirement_word"
-            ? (step?.requirements ?? []).find((row) => row.kind === "shot" && row.evidence?.url) : undefined;
-          const asking = ask?.id === item.id ? ask : null;
-          return (
-            <li key={item.id} className="pg-turn-item" data-kind={item.kind} data-testid="programs-turn-item" data-item={item.id}
-              data-asking={asking ? "" : undefined}>
-              <span className="pg-turn-words">{itemWords(item, step)}</span>
-              {fact ? <span className="pg-turn-fact">{fact}</span> : null}
-              {item.page ? <span className="pg-turn-page" data-testid="programs-turn-page">{pageWords(item.page)}</span> : null}
-              {asking ? (
-                <span className="pg-turn-ask" data-testid="programs-turn-ask">
-                  <StringGadget label={asking.choice === "waive" ? "Why you waive it" : "What is missing"} value={line} onChange={setLine}
-                    placeholder={asking.choice === "waive" ? "Why you waive it" : "What is missing"} autoFocus />
-                  <Button dense variant="primary" loading={busy === `${item.id}:${asking.choice}`}
-                    disabled={Boolean(busy) || (asking.choice === "waive" && !line.trim())}
-                    onClick={() => { void press(item, asking.choice, line.trim()); setLine(""); }} data-testid="programs-turn-ask-send">
-                    {asking.choice === "waive" ? "Waive" : "Unmet"}
-                  </Button>
+    <section className="pg-turn" aria-label="Waits on you" data-testid="programs-your-turn">
+      <article className="pg-brief" data-kind={first.kind} data-testid="programs-turn-item" data-item={first.id}
+        data-asking={ask?.id === first.id ? "" : undefined}>
+        <p className="pg-brief-kind">
+          <DotWord tone="ask" live>{fact || "Waits on you"}</DotWord>
+          <span className="pg-brief-place">{`· ${placeWords(first)}`}</span>
+        </p>
+        <h3 className="pg-brief-question" data-testid="programs-brief-question">
+          {brief?.question ?? itemWords(first, firstStep)}
+        </h3>
+        {brief ? (
+          <>
+            {brief.doing ? <p className="pg-brief-say">{brief.doing}</p> : null}
+            {brief.happened ? <p className="pg-brief-say pg-brief-happened" data-testid="programs-brief-happened">{brief.happened}</p> : null}
+            {brief.blocked_words ? <p className="pg-brief-blocked" data-testid="programs-brief-blocked">{brief.blocked_words}</p> : null}
+          </>
+        ) : null}
+        {first.page ? <p className="pg-turn-page" data-testid="programs-turn-page">{pageWords(first.page)}</p> : null}
+        {askWell(first)}
+        <div className="pg-tray" data-testid="programs-tray">{verbsOf(first, true)}</div>
+      </article>
+      {rest.length ? (
+        <ul className="pg-turn-items" aria-label={rest.length === 1 ? "One more waits on you" : `${rest.length} more wait on you`}>
+          {rest.map((item) => {
+            const step = program.steps.find((row) => row.id === item.step_id);
+            return (
+              <li key={item.id} className="pg-turn-item" data-kind={item.kind} data-testid="programs-turn-item" data-item={item.id}
+                data-asking={ask?.id === item.id ? "" : undefined}>
+                <span className="pg-turn-words">
+                  <span className="kit-dot" data-tone="ask" aria-hidden="true" />
+                  {item.brief ? <><b>{`${placeWords(item)}:`}</b> {[item.brief.happened, item.brief.question].filter(Boolean).join(" ")}</> : itemWords(item, step)}
                 </span>
-              ) : null}
-              <span className="pg-turn-verbs">
-                {shot ? (
-                  <Button dense variant="secondary" onClick={() => openShot(program.id, shot.id)} data-testid="programs-turn-open-shot">Open shot</Button>
-                ) : null}
-                {item.kind === "answer" ? (
-                  <Button dense variant="primary" onClick={() => item.launch_id && openRef(`launch:${item.launch_id}`)}
-                    disabled={!item.launch_id} data-testid="programs-turn-answer">Answer</Button>
-                ) : (VERBS[item.kind] ?? []).map((verb) => (
-                  <Button key={verb.choice} dense variant={verb.primary ? "primary" : "secondary"}
-                    loading={busy === `${item.id}:${verb.choice}`} disabled={Boolean(busy)}
-                    onClick={() => void press(item, verb.choice)} data-testid={`programs-turn-${verb.choice.replace("_", "-")}`}>
-                    {verbWord(item, verb)}
-                  </Button>
-                ))}
-                {briefable(item.kind) ? (
-                  <Button dense variant="ghost" loading={busy === `${item.id}:${item.page ? "revoke" : "copy"}`}
-                    disabled={Boolean(busy)} onClick={() => void page(item, item.page ? "revoke" : "copy")}
-                    data-testid={item.page ? "programs-turn-revoke" : "programs-turn-copy-link"}>
-                    {item.page ? "Revoke" : "Copy page link"}
-                  </Button>
-                ) : null}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+                {item.page ? <span className="pg-turn-page" data-testid="programs-turn-page">{pageWords(item.page)}</span> : null}
+                {askWell(item)}
+                <span className="pg-turn-verbs">{verbsOf(item, false)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
       {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="programs-turn-failure">{failed.words}</p> : null}
     </section>
   );
@@ -236,9 +297,13 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
 
 /** The check's name as the hub's status line says it (`quick_check.sh`). */
 function checkName(program: Program): string {
+  // PG-WINDOW W5: the script's name, never a flag or a shell (`sh -c …`
+  // said "check: -c" on his desk).
   const said = /check: ([^·]+)/.exec(program.status_line ?? "")?.[1]?.trim();
-  if (said) return said;
-  const words = String(program.check_command ?? "").split(/\s+/).filter((word) => !word.includes("="));
+  if (said && !said.startsWith("-")) return said;
+  const words = String(program.check_command ?? "").split(/\s+/)
+    .filter((word) => word && !word.includes("=") && !word.startsWith("-") && !/^(sh|bash|zsh|env|uv|run|python3?)$/.test(word))
+    .map((word) => word.replace(/^['"]|['"]$/g, ""));
   return (words.find((word) => /\.(sh|py)$/.test(word)) ?? words[0] ?? "").split("/").pop() ?? "";
 }
 
@@ -489,7 +554,6 @@ function ViewMore({ view, onView }: { view: ProgramView; onView(next: ProgramVie
 export function ProgramBody({ programId }: { programId: string }) {
   const { loading, error, program, reload, apply } = useProgram(programId);
   const [selected, setSelected] = useState<string | null>(null);
-  const [stepOpen, setStepOpen] = useState(true);
   const [checksOpen, setChecksOpen] = useState(false);
   const [decidedOpen, setDecidedOpen] = useState(true);
   const [allowedOpen, setAllowedOpen] = useState(false);
@@ -532,13 +596,24 @@ export function ProgramBody({ programId }: { programId: string }) {
   const steps = program?.steps ?? [];
   const chosen = useMemo(() => {
     if (!program) return null;
+    // PG-WINDOW: a press on the open step's row closes it ("").
+    if (selected === "") return null;
     const pick = steps.find((step) => step.id === selected);
     if (pick) return pick;
     // The step his eye goes to first: the one that waits on him, else a red, else a live one.
-    return steps.find((step) => ["merge_ask", "findings", "waiting"].includes(step.state))
+    const held = program.your_turn_items?.[0]?.step_id;
+    return steps.find((step) => step.id === held)
+      ?? steps.find((step) => ["merge_ask", "findings", "waiting"].includes(step.state))
       ?? steps.find((step) => step.state === "check_failed")
+      ?? steps.find((step) => ["briefed", "working", "checking", "review", "pr_open"].includes(step.state))
       ?? steps.find((step) => step.check.verdict) ?? null;
   }, [program, steps, selected]);
+
+  // PG-WINDOW: the step his eye went to stays open (the board never moves
+  // under him when the held item leaves); a press picks another.
+  useEffect(() => {
+    if (selected === null && chosen) setSelected(chosen.id);
+  }, [chosen?.id, selected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = async (kind: string, act: () => Promise<Program | null>, failedWords: string) => {
     setBusy(kind);
@@ -740,11 +815,8 @@ export function ProgramBody({ programId }: { programId: string }) {
         ) : null}
         <ViewMore view={view} onView={setView} />
       </Toolbar>
-      {program.state !== "done" ? (
-        <ShapeBar program={program} pending={proposal?.source === "sentence" ? proposal.text : null}
-          onAnswer={onShaped} onOpenText={() => setView("text")} />
-      ) : null}
       <div className="pg-body">
+        {view === "board" && !drafting ? <ProgramLine program={program} /> : null}
         <RoundPanel program={program} rounds={rounds} engine={planner.engine} />
         {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
         <YourTurnWell program={program} onDecided={apply} />
@@ -802,29 +874,31 @@ export function ProgramBody({ programId }: { programId: string }) {
               onChange={(body) => void run("allowed", () => updateProgram(program.id, body), "The allowed agents were not saved")} />
           </>
         ) : steps.length ? (
-          <>
-            <RequirementsBoard program={program} onApplied={apply} />
-            <ListView label="Steps" className="pg-board" data-testid="programs-board">
-              <h3 className="pg-board-caption">Steps</h3>
-              <ul className="kit-listrows">
-                {steps.map((step) => (
-                  <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} onSelect={() => setSelected(step.id)} landed={landed[step.id]}
-                    his={program.your_turn_items.some((item) => item.kind === "requirement_word" && item.step_id === step.id)} />
-                ))}
-              </ul>
-            </ListView>
-          </>
+          <ListView label="Steps" className="pg-board" data-testid="programs-board">
+            <h3 className="pg-board-caption">Steps</h3>
+            <ul className="kit-listrows">
+              {steps.map((step) => (
+                <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} landed={landed[step.id]}
+                  onSelect={() => setSelected(chosen?.id === step.id ? "" : step.id)}
+                  his={program.your_turn_items.some((item) => item.kind === "requirement_word" && item.step_id === step.id)}
+                  open={chosen?.id === step.id && view === "board"
+                    ? <StepFold key={step.id} program={program} step={step} onApplied={apply} /> : null} />
+              ))}
+              <DoneWhen program={program} onApplied={apply} />
+            </ul>
+          </ListView>
         ) : (
           <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
             emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
         )}
-        {view === "board" && !drafting && chosen ? (
-          <StepFold key={chosen.id} program={program} step={chosen} onApplied={apply} open={stepOpen} onToggle={setStepOpen} />
-        ) : null}
         {view === "board" && !drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
         {view === "board" && !drafting ? <ReachLine program={program} /> : null}
         {view === "board" && !drafting ? <LedgerFold program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
       </div>
+      {program.state !== "done" ? (
+        <ShapeBar program={program} pending={proposal?.source === "sentence" ? proposal.text : null}
+          onAnswer={onShaped} onOpenText={() => setView("text")} />
+      ) : null}
       <StatusBar data-testid="program-status" items={status} />
       {filing ? (
         <WorkMenu label="File in a project" x={filing.left} y={filing.top} anchor="above" opener={fileOpener.current} autoFocus
@@ -838,9 +912,10 @@ export function ProgramBody({ programId }: { programId: string }) {
   );
 }
 
-/** A step with its race's contenders indented under it. */
-function StepGroup({ step, selected, onSelect, his, landed }: {
-  step: ProgramStep; selected: boolean; onSelect(): void; his?: boolean; landed?: "born" | "changed";
+/** A step with its race's contenders indented under it, and, when it is
+ *  the open step, what it must prove and what the agent did under them. */
+function StepGroup({ step, selected, onSelect, his, landed, open }: {
+  step: ProgramStep; selected: boolean; onSelect(): void; his?: boolean; landed?: "born" | "changed"; open?: ReactNode;
 }) {
   return (
     <>
@@ -848,6 +923,7 @@ function StepGroup({ step, selected, onSelect, his, landed }: {
       {(step.contenders ?? []).map((contender) => (
         <StepRow key={contender.id} step={contender} contender onSelect={onSelect} />
       ))}
+      {open ? <li className="pg-step-open" data-step={step.id}>{open}</li> : null}
     </>
   );
 }

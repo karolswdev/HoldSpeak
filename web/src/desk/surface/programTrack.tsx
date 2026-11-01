@@ -12,6 +12,7 @@
  * dot. The lit station breathes with the kit's live lamp (`kit-lamp-live`,
  * 2.4 s, a box-shadow; none under reduced motion); nothing moves on hover.
  * A station with a `mark` carries it as `data-mark` (the page's "blocked").
+ * A `note` is a second quiet line (the Program window's line, PG-WINDOW).
  * The track is one `ol` with the whole state as its accessible name.
  *
  * It lives in the surface so the thin kit (./thin.ts) can carry it: it
@@ -32,6 +33,9 @@ export type TrackStation = {
   person?: string;
   /** A mark the face styles (`blocked`: a step that waits on the lit one). */
   mark?: string;
+  /** PG-WINDOW: a second quiet line under the word (the Program window's
+   *  line: `PR #1601 merged`, `Waits on you`). Words form only. */
+  note?: string;
 };
 
 export function trackLabel(stations: readonly TrackStation[]): string {
@@ -74,6 +78,7 @@ export function StationTrack({
               {station.sub ? <span className="pg-station-sub"> {station.sub}</span> : null}
             </span>
           ) : null}
+          {form === "words" && station.note ? <span className="pg-station-note">{station.note}</span> : null}
         </li>
       ))}
     </ol>

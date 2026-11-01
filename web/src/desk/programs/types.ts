@@ -346,6 +346,9 @@ export interface ProgramStep {
   editable?: string[];
   frozen?: Record<string, string>;
   amendments?: StepAmendment[];
+  /** PG-WINDOW W1: what the agent did, at most three plain lines from its
+   *  ledger in the order they happened (brief_words.step_story). */
+  story?: { at: string | null; line: string }[];
 }
 
 export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "commit" | "race" | "add_step" | "close" | "limited"
@@ -387,6 +390,21 @@ export interface YourTurnItem {
   proposal_id?: number | string;
   /** PG-DIRECTION DIR3: an open briefing page for the item (absent when none). */
   page?: { package_id: string; expires_at: string };
+  /** PG-WINDOW W1: the brief in his terms (brief_words.item_brief), the
+   *  same lines the briefing page reads. */
+  brief?: ItemBrief | null;
+}
+
+export interface ItemBrief {
+  goal: string;
+  doing: string;
+  happened: string;
+  question: string;
+  /** The ordinals of the steps that wait on this answer. */
+  blocked: number[];
+  blocked_words: string;
+  /** Each choice's consequence, in his terms. */
+  consequences: Record<string, string>;
 }
 
 export interface ProgramPlace {

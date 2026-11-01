@@ -140,7 +140,9 @@ company.
 
 ## The steps and their states
 
-A step goes through six stations: BRIEF · WORK · CHECK · REVIEW · PR · MERGE. The board shows the stations as dots. The lit dot is the current station.
+A step goes through six stations: BRIEF · WORK · CHECK · REVIEW · PR · MERGE. A step's **Gate** shows its stations. The lit station is the current one.
+
+At the top of the Program window is **the line**: one station for each step, and **Done when** at the end when the program has its own requirements. A merged step is grey with its pull request. A running step has a blue lamp that breathes. The step that waits for you has an orange lamp that breathes. A step that waits for your answer says "Waits on 4". The goal is under the line. At 393 the line shows only the step numbers.
 
 | The step says | What it means |
 |---|---|
@@ -182,7 +184,7 @@ HoldSpeak decides what it can decide by rule at the program's control level. A *
 - **Safety.** A finding about security or data loss, a deleted test, a migration that drops or changes rows.
 - **No rule.** HoldSpeak has no rule for the choice.
 
-Each item of your turn is a row in Needs you, in a group with the program's title. It is also on top of the Program window, with its verbs: **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
+Each item of your turn is a row in Needs you, in a group with the program's title. In the Program window, the first item is under the line, in the words of the briefing page: what the step was doing, what happened, the question, and which steps wait on your answer. Under it, each verb has one line that says what it does ("HoldSpeak merges the PR. The step that waits on it can start."). The other items are one line each under the verbs. The verbs are **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
 
 ![The Program window at 1440: Your turn with a merge, two findings and a core question](assets/programs/program-your-turn-1440.png)
 
@@ -411,9 +413,11 @@ At 393, Templates, Project, Person and Group are in **More ▾**.
 
 In the Program window:
 
-- The **Requirements** fold is above the steps. It has the requirements of the whole program, the Every step requirements, and one row for each step that has its own ("Step 4 · 2 of 3 met"). It is open when one is Unmet or waits for you. It is closed with "5 of 5 met" when all are met. The last row is **Add requirement**: type the sentence; the kind follows the rule as you type; choose the scope (The program, Every step, Step n) and press **Add**.
 - Each step row on the board has a **Met** cell: "2 of 3", or "3 to meet" before any is met.
-- When you select a step, its fold opens with **Brief**, **Requirements**, **Gate**, **Findings**, **Handoffs** and **Ledger**. A part with nothing in it is not shown. The fold opens on the part that needs you first: Gate when the check is red, Requirements when one is Unmet, Findings when one waits for you, else Brief.
+- Press a step to open it under its row. Press it again to close it. The step that waits for you is open first. An open step shows **What it must prove**: each requirement on one line, with its lamp, its kind, its proof and its verbs. **Add a requirement** adds one to this step: type the sentence; the kind follows the rule as you type; you can change Where (The program, Every step, Step n); press **Add**.
+- Under it, **What the agent did**: up to three plain lines from the step's ledger, with their times.
+- Then **Brief**, **Gate**, **Findings**, **Handoffs** and **Ledger**. A part with nothing in it is not shown. Gate opens by itself when the check is red, Findings when the reviewer found problems. Press an open part again to close it.
+- **Done when** is the last row of the board. It has the requirements of the whole program (judged after the last step) and the Every step requirements, and its own **Add a requirement**.
 - The **Ledger** fold has one part for each step ("Step 3 · 14 lines · last 18:40"). The program's own lines (start, park, plan, the end check) are first.
 
 Tools and agents use `program.list` with `q`, `project_id` and `person_id`, or `GET /api/programs?q=&project_id=&person_id=`.
@@ -571,7 +575,7 @@ A shaped sentence, a call and YOLO never apply a row that lowers the bar. It alw
 
 ## Shape it by a sentence
 
-Under the Program window's toolbar is the bar **Change the program**, with its mic and **Shape**. Type one sentence, for example "add a step after step 2 that removes the old route", and press Return or **Shape**.
+At the foot of the Program window, over the status bar, is the bar **Change the program** ("Tell the program what to change"), with its mic and **Shape**. Type one sentence, for example "add a step after step 2 that removes the old route", and press Return or **Shape**.
 
 HoldSpeak sends your sentence and the program's text to one engine. The engine is the **Agent plan** assignment in **Settings ▸ This Mac ▸ Engines**. If that assignment has no engine, HoldSpeak uses the **Ask answer** engine. The engine also gets the folders that the steps own, the note the program came from, the project's open actions and the last checkpoints. It answers with the whole changed text. HoldSpeak compares that text with the current text, so the rows are the same rows that a typed edit gets, with the same refusals.
 
