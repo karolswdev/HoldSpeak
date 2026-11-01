@@ -195,6 +195,12 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
     # "Elicitation boolean checkbox — not a text input"). It now uses CheckGadget.
     # Parked by Betterment Q4 with the Thread window: ("desk/pullouts/ThreadPullout.tsx",
     # 'type="number"', "Elicitation numeric field — a number, not dictatable text").
+    # DIR10 (2026-11-01): the briefing page is outside the desk; its thin kit
+    # carries no microphone by design (desk/surface/thin.ts and the import
+    # guard in briefing/__tests__/briefing.app.test.tsx). The phone keyboard's
+    # own dictation serves this one field.
+    ("briefing/BriefingApp.tsx", "briefing-answer-text",
+     "The briefing page's answer field: the thin kit has no microphone (outside the desk)"),
     ("desk/components/ScheduleCreateWindow.tsx", 'type="datetime-local"',
      "Date/time picker — a calendar value, not dictatable text"),
     ("features/project-room/review/ReviewPosture.tsx", "review-defer-date",
