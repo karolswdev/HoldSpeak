@@ -53,6 +53,15 @@ export const TELEGRAM_RUNG = [
   { value: "off", label: "Off" },
 ];
 
+/** DIR7: the ladder's rungs, in the hub's order when it sends none. */
+export const LADDER = ["desk", "phone_app", "telegram", "call"];
+
+/** The Phone rung: the Phone app's push, at once or off. */
+export const PHONE_RUNG = [
+  { value: "on", label: "At once" },
+  { value: "off", label: "Off" },
+];
+
 export const LATER_MEANS = [
   { value: "in_2h", label: "In 2 hours" },
   { value: "end_of_quiet", label: "End of quiet hours" },
@@ -239,11 +248,45 @@ export function ReachSettingsPane({ highlight, onSaved, quiet, cadence }: {
             data-testid="reach-calls-open">Open Calls settings</Button>
         </GadgetRow>
       </GadgetGroup>
+      {/* DIR7: the ladder, its rungs in the hub's order, each with its wait. */}
       <GadgetGroup material="inset" label="When to reach you">
-        <GadgetRow label="Telegram" highlight={highlight === "reach.ladder"} controlWidth="standard">
-          <CycleGadget label="Telegram" value={status?.ladder.telegram ?? "at_once"} options={TELEGRAM_RUNG}
-            disabled={!status || busy === "put"} onChange={(next) => put({ telegram: next })} />
-        </GadgetRow>
+        <div className="reach-ladder" data-testid="reach-ladder">
+          {(status?.ladder.order ?? LADDER).map((rung) => {
+            if (rung === "desk") {
+              return (
+                <GadgetRow key={rung} label="Desk" controlWidth="standard">
+                  <DotWord tone="ok" data-testid="reach-rung-desk">At once</DotWord>
+                </GadgetRow>
+              );
+            }
+            if (rung === "phone_app") {
+              return (
+                <GadgetRow key={rung} label="Phone" controlWidth="standard">
+                  <CycleGadget label="Phone" value={status?.channels.phone_app.on === false ? "off" : "on"} options={PHONE_RUNG}
+                    disabled={!status || busy === "put"} onChange={(next) => put({ phone_app: next })} />
+                </GadgetRow>
+              );
+            }
+            if (rung === "telegram") {
+              return (
+                <GadgetRow key={rung} label="Telegram" highlight={highlight === "reach.ladder"} controlWidth="standard">
+                  <CycleGadget label="Telegram" value={status?.ladder.telegram ?? "at_once"} options={TELEGRAM_RUNG}
+                    disabled={!status || busy === "put"} onChange={(next) => put({ telegram: next })} />
+                </GadgetRow>
+              );
+            }
+            if (rung === "call") {
+              return (
+                <GadgetRow key={rung} label="Call" controlWidth="standard"
+                  fact={<DotWord tone={status?.channels.calls.ready ? "ok" : "idle"} data-testid="reach-rung-call">
+                    {status?.channels.calls.ready ? "By your rules below" : "Not set in Settings ▸ Calls"}</DotWord>}>
+                  <span />
+                </GadgetRow>
+              );
+            }
+            return null;
+          })}
+        </div>
       </GadgetGroup>
       {status ? <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} /> : null}
       {quiet}

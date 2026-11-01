@@ -73,7 +73,7 @@
   "open_packages": [],
   "quiet_hours": {
     "end": 8,
-    "now": false,
+    "now": true,
     "start": 22
   }
 }
