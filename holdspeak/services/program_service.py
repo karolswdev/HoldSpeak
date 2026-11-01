@@ -4749,6 +4749,8 @@ class ProgramService:
         self._save(step)
         if fields.get("head_commit") and fields["head_commit"] != old_head and old_head:
             self.requirements_moved(program, step)  # PG-REQ decision 4
+        if to in FINISHED_STATES and current not in FINISHED_STATES and not history_of(step):
+            self._close_origin_task(program, step)
         if to == "pr_open" and current != "pr_open" and step.get("pr_url"):
             from . import program_decisions
 
@@ -4810,6 +4812,38 @@ class ProgramService:
                                           kind="notice_lost", line=f"The message to you on {via} did not arrive",
                                           undo={"via": str(via)})
                 self.changed(program_id, step["id"], verb="notice_lost")
+
+    def _close_origin_task(self, program: Mapping[str, Any], step: dict[str, Any]) -> None:
+        """A step made from a Door task (``origin_ref action:<id>``: Add to
+        tonight, a night's backlog, From the desk) closes that task when it
+        merges or is done, with the merge as its evidence (J4 station 5, "the
+        action closes with the PR as evidence"; the first real night: the
+        backlog's tasks stayed open after their steps merged on a remote with
+        no PR). Once; a closed task stays as it is; a failure is a log line."""
+        origin = str(step.get("origin_ref") or "")
+        facts = dict(step.get("facts") or {})
+        if not origin.startswith("action:") or facts.get("origin_closed"):
+            return
+        item_id = origin.split(":", 1)[1]
+        evidence = {key: value for key, value in (
+            ("pr_url", step.get("pr_url")), ("pr_number", step.get("pr_number")),
+            ("merged_sha", step.get("head_commit")), ("merged_at", self._clock()),
+            ("launch_id", step.get("launch_id"))) if value}
+        try:
+            from ..principals import Principal, PrincipalKind
+            from .follow_through_service import FollowThroughService
+
+            FollowThroughService(self.db).complete(Principal(PrincipalKind.OWNER, "program-engine"), item_id, "done",
+                                                   {"evidence": evidence})
+        except Exception as exc:  # the task stays open; the step is still done
+            log.info(f"program {program['id']}: the Door task {item_id} was not closed: {exc}")
+            return
+        facts["origin_closed"] = item_id
+        step["facts"] = facts
+        self.store.save_step(step)
+        what = f"PR #{step['pr_number']}" if step.get("pr_number") else f"the merge {str(step.get('head_commit') or '')[:8]}".rstrip()
+        self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="engine",
+                                  line=f"Closed its Door task with {what} as evidence"[:400])
 
     def _report_files(self, program: Mapping[str, Any], step: dict[str, Any]) -> None:
         """PG-IMPORT IMP1: the step's diff file names against its base, read
