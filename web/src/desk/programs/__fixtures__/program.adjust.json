@@ -12,7 +12,7 @@
   "check_command": "sh /Users/karol/dev/tools/wt-pg-imp6/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-01T11:33:32.528982+00:00",
+      "at": "2026-11-01T16:22:48.215040+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -26,13 +26,13 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-72ce04c3b38f",
+      "step_id": "step-f7b28becd519",
       "undo": {
         "line": "Use the new index"
       }
     },
     {
-      "at": "2026-11-01T11:33:32.326548+00:00",
+      "at": "2026-11-01T16:22:47.871857+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -43,16 +43,16 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-72ce04c3b38f/2",
-      "ref_commit": "925d0e8f9699a69c69844716b491d0be48a2cd67",
+      "ref": "refs/holdspeak/checkpoints/step-f7b28becd519/2",
+      "ref_commit": "ca7f421fe13350bf1e68d287e924818740678212",
       "rule": null,
-      "step_id": "step-72ce04c3b38f",
+      "step_id": "step-f7b28becd519",
       "undo": {
         "pin": {
-          "commit": "925d0e8f9699a69c69844716b491d0be48a2cd67",
-          "head": "35512750777fab018918b365f34ef0d12dcc1f7d",
+          "commit": "ca7f421fe13350bf1e68d287e924818740678212",
+          "head": "4f8505adfa952fea8f696cf8ad171fa7fe0b5bb7",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-72ce04c3b38f/2",
+          "ref": "refs/holdspeak/checkpoints/step-f7b28becd519/2",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -61,7 +61,7 @@
       }
     },
     {
-      "at": "2026-11-01T11:33:32.300379+00:00",
+      "at": "2026-11-01T16:22:47.820611+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -75,13 +75,13 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-72ce04c3b38f",
+      "step_id": "step-f7b28becd519",
       "undo": {
         "line": "Keep the 14-day rule"
       }
     },
     {
-      "at": "2026-11-01T11:33:32.293045+00:00",
+      "at": "2026-11-01T16:22:47.805762+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -95,7 +95,7 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-d00b8b877ced",
+      "step_id": "step-0df19f1932ea",
       "undo": {
         "pin": {
           "note": "No worktree to pin yet"
@@ -103,7 +103,7 @@
       }
     },
     {
-      "at": "2026-11-01T11:33:32.286791+00:00",
+      "at": "2026-11-01T16:22:47.786302+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -121,27 +121,27 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T11:33:32.164349+00:00",
+      "at": "2026-11-01T16:22:47.409662+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 4,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-72ce04c3b38f",
+      "line": "Handed to Claude Code in hs-program-step-f7b28becd519",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-72ce04c3b38f/1",
-      "ref_commit": "64c3d6bd79c6078fc38663950e3743af427fef40",
+      "ref": "refs/holdspeak/checkpoints/step-f7b28becd519/1",
+      "ref_commit": "851a022d95abd8a40ee1c9079c586bf69ee5706e",
       "rule": null,
-      "step_id": "step-72ce04c3b38f",
+      "step_id": "step-f7b28becd519",
       "undo": {
         "pin": {
-          "commit": "64c3d6bd79c6078fc38663950e3743af427fef40",
-          "head": "35512750777fab018918b365f34ef0d12dcc1f7d",
+          "commit": "851a022d95abd8a40ee1c9079c586bf69ee5706e",
+          "head": "4f8505adfa952fea8f696cf8ad171fa7fe0b5bb7",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-72ce04c3b38f/1",
+          "ref": "refs/holdspeak/checkpoints/step-f7b28becd519/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -150,7 +150,7 @@
       }
     },
     {
-      "at": "2026-11-01T11:33:32.075325+00:00",
+      "at": "2026-11-01T16:22:47.037283+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -168,7 +168,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T11:33:32.039469+00:00",
+      "at": "2026-11-01T16:22:46.946850+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -186,7 +186,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T11:33:32.037295+00:00",
+      "at": "2026-11-01T16:22:46.944326+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -207,7 +207,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-01T11:33:32.037006+00:00",
+  "created_at": "2026-11-01T16:22:46.943975+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -224,13 +224,17 @@
   },
   "delivery": null,
   "done": 0,
+  "family": {
+    "children": [],
+    "parent": null
+  },
   "for_person": null,
   "for_person_id": null,
   "goal": "Calls on the home box.",
-  "id": "program-c823c2506756",
+  "id": "program-d24ffe0fcbf3",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T11:33:32.528982+00:00",
+    "at": "2026-11-01T16:22:48.215040+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -244,7 +248,7 @@
     "ref": null,
     "ref_commit": null,
     "rule": null,
-    "step_id": "step-72ce04c3b38f",
+    "step_id": "step-f7b28becd519",
     "undo": {
       "line": "Use the new index"
     }
@@ -253,8 +257,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-c823c2506756",
-  "note_window": "pullout:note:program-program-c823c2506756",
+  "note_id": "program-program-d24ffe0fcbf3",
+  "note_window": "pullout:note:program-program-d24ffe0fcbf3",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -269,7 +273,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-jttycbdp/rig-adjust/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-ciu6ha3a/rig-adjust/app"
   },
   "requirements": [],
   "review_depth": null,
@@ -293,13 +297,13 @@
       "agent": "Claude Code",
       "amendments": [
         {
-          "at": "2026-11-01T11:33:32.300379+00:00",
+          "at": "2026-11-01T16:22:47.820611+00:00",
           "by": "owner",
           "line": "Keep the 14-day rule",
-          "sent_at": "2026-11-01T11:33:32.326406+00:00"
+          "sent_at": "2026-11-01T16:22:47.871628+00:00"
         },
         {
-          "at": "2026-11-01T11:33:32.528982+00:00",
+          "at": "2026-11-01T16:22:48.215040+00:00",
           "by": "owner",
           "line": "Use the new index",
           "sent_at": null
@@ -361,9 +365,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-72ce04c3b38f",
+      "id": "step-f7b28becd519",
       "last_checkpoint": {
-        "at": "2026-11-01T11:33:32.528982+00:00",
+        "at": "2026-11-01T16:22:48.215040+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -377,7 +381,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-72ce04c3b38f",
+        "step_id": "step-f7b28becd519",
         "undo": {
           "line": "Use the new index"
         }
@@ -412,7 +416,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-11-01T11:33:32.163967+00:00",
+      "started_at": "2026-11-01T16:22:47.409170+00:00",
       "state": "working",
       "state_word": "Working",
       "station": 1,
@@ -426,19 +430,19 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T11:33:32.164349+00:00",
+          "at": "2026-11-01T16:22:47.409662+00:00",
           "line": "Handed to Claude Code."
         },
         {
-          "at": "2026-11-01T11:33:32.326548+00:00",
+          "at": "2026-11-01T16:22:47.871857+00:00",
           "line": "Typed 1 amendment at the turn boundary."
         }
       ],
       "taken": false,
       "title": "The call runner",
-      "updated_at": "2026-11-01T11:33:32.528999+00:00",
+      "updated_at": "2026-11-01T16:22:48.215057+00:00",
       "wait": null,
-      "worktree": "hs-program-step-72ce04c3b38f"
+      "worktree": "hs-program-step-f7b28becd519"
     },
     {
       "after": [
@@ -508,9 +512,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-d00b8b877ced",
+      "id": "step-0df19f1932ea",
       "last_checkpoint": {
-        "at": "2026-11-01T11:33:32.293045+00:00",
+        "at": "2026-11-01T16:22:47.805762+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -524,7 +528,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-d00b8b877ced",
+        "step_id": "step-0df19f1932ea",
         "undo": {
           "pin": {
             "note": "No worktree to pin yet"
@@ -575,13 +579,13 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T11:33:32.293045+00:00",
+          "at": "2026-11-01T16:22:47.805762+00:00",
           "line": "Moved step 5 to 2."
         }
       ],
       "taken": false,
       "title": "The phone route",
-      "updated_at": "2026-11-01T11:33:32.292917+00:00",
+      "updated_at": "2026-11-01T16:22:47.805622+00:00",
       "wait": null,
       "worktree": null
     },
@@ -653,7 +657,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-a99387e45914",
+      "id": "step-f56647b81681",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -700,7 +704,7 @@
       "story": [],
       "taken": false,
       "title": "The calls window",
-      "updated_at": "2026-11-01T11:33:32.292688+00:00",
+      "updated_at": "2026-11-01T16:22:47.805042+00:00",
       "wait": null,
       "worktree": null
     },
@@ -772,7 +776,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-15ba47216b1e",
+      "id": "step-9c5290fa4e4a",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -819,7 +823,7 @@
       "story": [],
       "taken": false,
       "title": "The loop watch",
-      "updated_at": "2026-11-01T11:33:32.292780+00:00",
+      "updated_at": "2026-11-01T16:22:47.805353+00:00",
       "wait": null,
       "worktree": null
     },
@@ -892,7 +896,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-222d75b640c5",
+      "id": "step-95239f9273d5",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -939,7 +943,7 @@
       "story": [],
       "taken": false,
       "title": "The ring timer",
-      "updated_at": "2026-11-01T11:33:32.292850+00:00",
+      "updated_at": "2026-11-01T16:22:47.805526+00:00",
       "wait": null,
       "worktree": null
     }
@@ -974,7 +978,7 @@
       "title": "The ring timer"
     }
   ],
-  "updated_at": "2026-11-01T11:33:32.582498+00:00",
+  "updated_at": "2026-11-01T16:22:48.247832+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

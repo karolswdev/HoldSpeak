@@ -274,13 +274,13 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | PG9 | The Programs window and the Program window | Shipped #1602 (2026-10-28) | No race shot (no race fixture). |
 | PG10 | The seams on the faces | Shipped #1602 (2026-10-28) | Person line, Room fold, Note verb pinned in app tests only. |
 | PG11 | The documents | Shipped #1602 (2026-10-28) |  |
-| PG12 | Tick on the coder frame | Open |  |
+| PG12 | Tick on the coder frame | Shipped #1618 (2026-10-30) | A coder frame ticks its Program at once. |
 | PG13 | The Program's level drives the desk's answers | Shipped (2026-10-29) | PG13b: the launch flags and a helper follow the level too; the words say YOLO. Per-step levels are left. |
-| PG14 | Automations run a program | Open |  |
-| PG15 | Start a program on a call | Open |  |
-| PG16 | Decisions from a Program | Open |  |
-| PG17 | The first Program is the engine's own history | Open | On his desk. |
-| PG18 | Programs on Today | Open |  |
+| PG14 | Automations run a program | Shipped #1626 (2026-10-30) | Do kind `run_program`; the result row reads the Program's state and opens it (`automation_runs`). |
+| PG15 | Start a program on a call | Shipped #1663 (2026-10-31) | `program.start` behind his spoken yes; `program.get` in a sentence. |
+| PG16 | Decisions from a Program | Shipped #1644 (2026-10-30) | His Skip, a rule's Skip above NOTE and a merge by rule propose a decision record (design §9b). A core-question press is not a record yet. |
+| PG17 | The first Program is the engine's own history | Shipped #1659 (2026-10-31) | On his desk. |
+| PG18 | Programs on Today | Shipped #1618 (2026-10-30) | "Programs: 1 running, 1 waits on you" (design §9 Seams); IMP3 #1713 added Since you were last here. |
 
 **PG-REQ** (open, 13 slices REQ1–REQ13, lanes HUB/FACES/DOCS, one PR from `lane/programs-requirements-build-20261031`): requirements as a noun, browse and adjust; design `programs/PROGRAMS-REQUIREMENTS-2026-10-31.md` (#1664), canvas `programs/canvases/programs-requirements-2026-10-31.html`, recipe `programs/RECIPE.md` "PG-REQ".
 
@@ -364,10 +364,10 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Shipped #1706 (2026-11-01) | `brief_words.step_report`; `seen` on engine checkpoints; `facts.files`. |
 | IMP2 | The to-do row (Done, Can't do it); the ending word | Shipped #1710 (2026-11-01) | A to-do is a required Your word with walk lines; a step whose brief asks him by hand is not detected (no prose reading). |
 | IMP3 | Wait sentences; Since you were last here on Today | Shipped #1713 (2026-11-01) | `brief_words.WAIT_SENTENCES`, `step_wait`, `services/last_here.py`. Notice-lost is wired for Telegram only. |
-| IMP4 | Never wider than the parent (closes the open ruling) | Shipped (this PR) | `program_service.parent_level`/`wider`: an agent's create is capped and says so; its update or text to a wider control is refused ("Refused: a program runs no wider than what made it", ledger line); step launches, handoffs, race entrants and helpers run at the Program's or parent's level (fenced). |
+| IMP4 | Never wider than the parent (closes the open ruling) | Shipped #1709 (2026-11-01) | `program_service.parent_level`/`wider`: an agent's create is capped and says so; its update or text to a wider control is refused ("Refused: a program runs no wider than what made it", ledger line); step launches, handoffs, race entrants and helpers run at the Program's or parent's level (fenced). |
 | IMP5 | The `because` on each routed request; four honest refusals of a late answer | Shipped (#1711, DIR8a) | Every package body and Telegram send row carries `because` (`briefing_service.because_of`; the ladder's rule on its sends); a permission kind or a `gate:` ref is refused (`authority_stays`) and fenced; not pending / not offered / not usable / not kept as codes with his words on the page and Telegram. DIR8a (2026-11-01): the call too: a call the reach rules placed carries their `because` (rule, level, the reach kind) on the item it is about, an item he asked for carries `asked_on_call`, and each call ledger line keeps it (`undo.because`); a late answer on the call says the page's and Telegram's words ("Step 2 of …: Answered at 12:10 from the briefing page", "Could not keep that for later; it still waits") and the line keeps the refusal (`undo.refusal`). |
-| IMP6 | Take it over, hand it back, on a step's lane | Shipped (PG-IMPORT IMP6 PR) | `take_over`/`hand_back`, `facts.taken`; no MCP tool (owner only). The gate's own expiry of a held call is not stopped. |
-| IMP7 | The forest | Later | With handoffs and J5. |
+| IMP6 | Take it over, hand it back, on a step's lane | Shipped #1718 (2026-11-01) | `take_over`/`hand_back`, `facts.taken`; no MCP tool (owner only). The gate's own expiry of a held call is not stopped. |
+| IMP7 | The forest | Shipped (PG-IMPORT IMP7 PR) | `ProgramService.family` / `parent_id` (origin `program:<id>`, `program_step:<id>`, or the step whose agent made it); the window's Came from / It made rows; the list folds a family under its parent. Handoffs inside one step stay in the step (not a Program). |
 
 ## Phone (`phone/RECIPE.md`): 0 of 16
 

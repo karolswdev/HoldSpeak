@@ -340,6 +340,28 @@ def record_lane(root: Path) -> dict[str, Any]:
     return {"program.lane.json": lane, "program.lane.taken.json": taken, "program.lane.back.json": back}
 
 
+def record_family(root: Path) -> dict[str, Any]:
+    """PG-IMPORT IMP7: an audit (running) and the two Programs it made (its
+    fix program, Done; a follow-up, Drafting), read through the real routes:
+    the parent's GET, a child's GET and the list."""
+    rig = Rig(root / "family")
+    client = _client(rig)
+    audit = _create(rig, "Audit the atlas", template="fast-cycle", control="yolo")
+    rig.service.plan(OWNER, audit, steps=[{"title": "Read every anchor", "brief": "Read them."}])
+    rig.service.start(OWNER, audit)
+    rig.tick()
+    fix = _create(rig, "Fix: Audit the atlas", template="fast-cycle", control="yolo", origin_ref=f"program:{audit}")
+    rig.service.plan(OWNER, fix, steps=[{"title": "Cite the anchors", "brief": "Cite them."}])
+    rig.service.start(OWNER, fix)
+    rig.tick()
+    rig.agent.finish(rig.step(fix, 1)["launch_id"], {"docs/atlas.md": "x\n"})
+    rig.tick(4)
+    _create(rig, "Atlas follow-up", template="fast-cycle", control="normal", origin_ref=f"program:{audit}")
+    return {"family.row.json": {"program": _get(client, f"/api/programs/{audit}"),
+                                "child": _get(client, f"/api/programs/{fix}"),
+                                "list": _get(client, "/api/programs")}}
+
+
 def record_adjust(root: Path) -> Any:
     """PG-REQ §8, in a rig of its own: a step inserted before a Planned one,
     a Planned step moved, a started step amended (one line typed at its turn
@@ -392,6 +414,13 @@ def record_text(root: Path) -> dict[str, Any]:
     with rig.db._connection() as conn:
         conn.execute("INSERT INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
     client = _client(rig)
+    # The Program has a night line (23:30–07:00): the engine hands its steps
+    # only inside it, so the recording reads the engine's clock at 23:45 (a
+    # run after 07:00 left every step "sleeps until 23:30" and recorded nothing).
+    from datetime import datetime as _dt, timezone as _tz
+
+    night_now = _dt.now().replace(hour=23, minute=45, second=0, microsecond=0).astimezone().astimezone(_tz.utc)
+    rig.runner._now = lambda: night_now
     pid = _create(rig, "The hub stops stalling", goal="Every route under 100 ms while a meeting records.",
                   template="build-and-review", control="normal", reviewer_profile="codex-default",
                   project_id="proj-holdspeak")
@@ -612,6 +641,7 @@ def record(root: Path) -> dict[str, Any]:
     fixtures.update(record_text(root))
     fixtures.update(record_todo(root))
     fixtures.update(record_lane(root))
+    fixtures.update(record_family(root))
     return fixtures
 
 
@@ -631,6 +661,10 @@ def _check(fixtures: dict[str, Any]) -> None:
     assert fixtures["program.done.json"]["finished_words"] == "finished"
     assert fixtures["program.lane.taken.json"]["steps"][0]["taken"] is True
     assert fixtures["program.lane.back.json"]["steps"][0]["taken"] is False
+    family = fixtures["family.row.json"]
+    assert len(family["program"]["family"]["children"]) == 2, family["program"]["family"]
+    assert family["child"]["family"]["parent"]["id"] == family["program"]["id"]
+    assert any(row["ending"] == "finished" for row in family["program"]["family"]["children"])
     todo = fixtures["program.todo.json"]
     assert "todo" in [row["kind"] for row in todo["your_turn_items"]], todo["your_turn_items"]
     assert any(step["ending"] == "interrupted" for step in todo["steps"]), [s["ending"] for s in todo["steps"]]

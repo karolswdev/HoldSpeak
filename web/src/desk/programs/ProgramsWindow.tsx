@@ -71,6 +71,8 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
         {/* PG-IMPORT IMP1: a Done program's second mark, achromatic (never
             the Your turn lamp). */}
         {finished ? <span className="pg-finished" data-finished={row.finished} data-testid="programs-row-finished">{finished}</span> : null}
+        {/* PG-IMPORT IMP7: the family's one worst state, on the parent's line. */}
+        {row.kin ? <span className="pg-row-kin" data-testid="programs-row-kin">{`· its programs: ${row.kin.worst_word}`}</span> : null}
       </span>
       <span className="pg-row-track">{stations.length ? <StationTrack stations={stations} label={`${row.done} of ${row.total} done`} /> : null}</span>
       <span className="pg-row-met" data-testid="programs-row-met" data-all={met?.all ? "" : undefined} title={met?.title}>
@@ -78,6 +80,27 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
         {met?.text ?? ""}
       </span>
     </li>
+  );
+}
+
+/** PG-IMPORT IMP7: a Program and, folded under it with the desk-wide
+ *  Show/Hide word, the Programs it made. */
+function FamilyGroup({ row, children }: { row: ProgramSummary; children: ProgramSummary[] }) {
+  return (
+    <>
+      <ProgramRow row={row} />
+      {children.length ? (
+        <li className="pg-row-family" data-testid="programs-family-fold" data-parent={row.id}>
+          <FoldGadget title={children.length === 1 ? "1 program it made" : `${children.length} programs it made`}>
+            <ul className="kit-listrows">
+              {children.map((child) => (
+                <ProgramRow key={child.id} row={child} />
+              ))}
+            </ul>
+          </FoldGadget>
+        </li>
+      ) : null}
+    </>
   );
 }
 
@@ -166,6 +189,9 @@ export function ProgramsCore(_props: CoreProps) {
     && (projectId == null || (projectId === "" ? !(row.project?.id ?? row.project_id) : (row.project?.id ?? row.project_id) === projectId))
     && (personId == null || personsOf(row).some((person) => person.id === personId)));
   const filtered = Boolean(query.trim()) || projectId != null || personId != null;
+  // PG-IMPORT IMP7: a family folds under its first Program (its parent).
+  const shownIds = new Set(shown.filter((row) => !row.parked_as).map((row) => row.id));
+  const childrenOf = (id: string) => shown.filter((row) => row.parent_id === id);
   const bands = group === "project"
     ? bandedByProject(shown).map((band) => ({ key: band.key || "none", word: band.word, count: band.rows.length, rows: band.rows }))
     : banded(shown).map((band) => ({ key: band.state, word: band.word, count: 0, rows: band.rows }));
@@ -208,7 +234,9 @@ export function ProgramsCore(_props: CoreProps) {
           <section key={band.key} className="kit-listday pg-band" aria-label={band.word} data-band={band.key} data-testid="programs-band">
             <h3 className="kit-listday-label">{band.word}{band.count ? <span className="pg-band-count">{` · ${band.count}`}</span> : null}</h3>
             <ul className="kit-listrows">
-              {band.rows.filter((row) => !row.parked_as).map((row) => <ProgramRow key={row.id} row={row} />)}
+              {band.rows.filter((row) => !row.parked_as && !(row.parent_id && shownIds.has(row.parent_id))).map((row) => (
+                <FamilyGroup key={row.id} row={row} children={childrenOf(row.id)} />
+              ))}
               {foldsOf(band.rows).map((fold) => (
                 <li key={fold.reason} className="pg-row-fold" data-reason={fold.reason} data-testid="programs-parked-fold">
                   <FoldGadget title={fold.words}>

@@ -1032,9 +1032,22 @@ class ProgramService:
         (every word in the row's ``search_words``), ``project_id`` and
         ``person_id`` narrow the rows; ``of`` is the count before them."""
         rows = []
-        for program in self.store.list_programs():
+        programs = self.store.list_programs()
+        for program in programs:
             steps = self.store.list_steps(program["id"])
             rows.append(self._summary(program, steps))
+        # PG-IMPORT IMP7: each row names the Program it came from; a parent
+        # carries its family's count and one worst state.
+        by_id = {row["id"]: row for row in rows}
+        for program, row in zip(programs, rows):
+            parent = self.parent_id(program)
+            if parent and parent in by_id:
+                row["parent_id"] = parent
+        for row in rows:
+            kids = [other for other in rows if other.get("parent_id") == row["id"]]
+            if kids:
+                worst = min((other["state"] for other in kids), key=lambda s: PROGRAM_BAND.get(s, 9))
+                row["kin"] = {"children": len(kids), "worst": worst, "worst_word": PROGRAM_WORDS.get(worst, worst)}
         everything = len(rows)
         words = [word for word in re.findall(r"[#\w]+", str(q or "").lower()) if word]
         if words:
@@ -1065,7 +1078,50 @@ class ProgramService:
         held = on_desk(program["id"])
         if held:
             wire["held_shape"] = held
+        # PG-IMPORT IMP7: the Program's family in one object.
+        wire["family"] = self.family(program)
         return wire
+
+    # ── PG-IMPORT IMP7: the forest ───────────────────────────────────
+
+    def parent_id(self, program: Mapping[str, Any]) -> Optional[str]:
+        """The Program this one came from: ``origin_ref`` ``program:<id>``
+        (an audit's fix program) or ``program_step:<id>``, else the Program
+        whose step's agent made it (``created_by`` ``launch:<id>``)."""
+        kind, _, ident = str(program.get("origin_ref") or "").partition(":")
+        if kind == "program" and ident and ident != program.get("id"):
+            return ident.split(":", 1)[0]
+        step = None
+        if kind == "program_step" and ident:
+            step = self.store.get_step(ident.split(":", 1)[0])
+        created = str(program.get("created_by") or "")
+        if step is None and created.startswith("launch:"):
+            with self.db._connection() as conn:
+                row = conn.execute("SELECT program_id FROM program_steps WHERE launch_id = ? LIMIT 1",
+                                   (created.split(":", 1)[1],)).fetchone()
+            return str(row["program_id"]) if row and row["program_id"] != program.get("id") else None
+        parent = (step or {}).get("program_id")
+        return str(parent) if parent and parent != program.get("id") else None
+
+    def _family_row(self, program: Mapping[str, Any], *, ending: bool) -> dict[str, Any]:
+        summary = self._summary(program, self.store.list_steps(program["id"]))
+        row = {"id": program["id"], "name": program["title"], "state": summary["state"],
+               "state_word": summary["state_word"], "line": summary.get("line") or ""}
+        if ending:
+            row["ending"] = {"done": "finished", "failed": "failed"}.get(summary["state"], "none")
+        return row
+
+    def family(self, program: Mapping[str, Any], programs: Optional[list[dict[str, Any]]] = None) -> dict[str, Any]:
+        """``{parent: {id, name, state, state_word, line} | None, children:
+        [{id, name, state, state_word, ending, line}]}``: the Program it came
+        from and the Programs it made (BroCrew's forest, in one object)."""
+        parent_id = self.parent_id(program)
+        parent = self.store.get_program(parent_id) if parent_id else None
+        everything = programs if programs is not None else self.store.list_programs()
+        children = [other for other in everything if other["id"] != program["id"] and self.parent_id(other) == program["id"]]
+        children.sort(key=lambda other: str(other.get("created_at") or ""))
+        return {"parent": self._family_row(parent, ending=False) if parent else None,
+                "children": [self._family_row(child, ending=True) for child in children]}
 
     def find(self, principal: Any, *, program_id: Any = None, name: Any = None,
              startable: bool = False) -> dict[str, Any]:
