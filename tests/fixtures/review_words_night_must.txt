@@ -1,0 +1,12 @@
+Review of step 3, round 1, commit 07ebce8, glance depth.
+
+The worktree holds only README.md, docs/index.md and the new docs/faq.md. Neither pre-existing file mentions a night window, a start or end time, a step cap, or a timezone. The diff touches only docs/faq.md, and that file contains exactly one question and one answer.
+
+Findings:
+
+- MUST · docs/faq.md:5 · The second sentence states that each program sets a window "with a start time, an end time and a maximum number of steps" and that steps are picked up only inside it. No file in this repository documents any of that, so the brief's requirement that the answer rest on the repository's documented behavior or configuration is not met for that sentence. Either cite a repository source or cut the sentence down to what the repository supports. The third sentence, which says the repository records no clock times or timezone, is accurate and should stay.
+- SHOULD · docs/index.md:1 · The docs index does not link the new FAQ page. Out of this step's owned files, so a note for the owner only, not a change for this step.
+
+REQ R1: MET · Only docs/faq.md changes, with one question and one answer, and no timing or timezone values are asserted.
+
+MUST: 1 remains (unsourced claim at docs/faq.md:5).
