@@ -55,7 +55,7 @@ from .program_service import (
 )
 from . import program_night, program_split
 from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
-from .program_verifier import log_tail, verify_log, verify_requirement_log
+from .program_verifier import log_tail, verify_log, verify_measure_log, verify_requirement_log
 
 log = get_logger("program_runner")
 
@@ -417,7 +417,7 @@ class ProgramRunner:
         if not steps_finished(fresh, self.service.store.list_steps(fresh["id"])):
             return
         runs = [row for row in program_own(self.service.requirements(fresh["id"]))
-                if row.get("kind") in ("check", "shot") and row.get("state") == "not_yet"]
+                if row.get("kind") in ("check", "shot", "measure") and row.get("state") == "not_yet"]
         key = f"{fresh['id']}-end"
         if not runs or (key in _RUNNING_CHECKS and _RUNNING_CHECKS[key].is_alive()):
             return
@@ -455,7 +455,7 @@ class ProgramRunner:
                     return
                 tree = self.end_worktree(program)
                 for row in program_own(self.service.requirements(program_id)):
-                    if row.get("kind") not in ("check", "shot") or row.get("state") != "not_yet":
+                    if row.get("kind") not in ("check", "shot", "measure") or row.get("state") != "not_yet":
                         continue
                     if not tree:
                         self.service.judge(program, None, row, "unmet", {
@@ -463,15 +463,15 @@ class ProgramRunner:
                             "commit": None})
                         continue
                     result = self.run_requirement(program, {"id": key}, row, worktree=tree, key=key)
-                    verdict = verify_requirement_log(result.get("log"), expect=(row.get("spec") or {}).get("expect"))
+                    verdict = _verdict_of(row, result.get("log"))
                     met = bool(verdict["met"]) and (row.get("kind") != "shot" or bool(result.get("image")))
                     reasons = verdict["reasons"] or ([] if met else ["the shot wrote no image"])
                     self.service.judge(program, None, row, "met" if met else "unmet", {
                         "kind": "shot" if row.get("kind") == "shot" and result.get("image") else "log",
                         "ref": result.get("image") if row.get("kind") == "shot" and result.get("image") else result.get("log"),
-                        "log": result.get("log"), "line": verdict.get("line") if met else "; ".join(reasons[:2]),
+                        "log": result.get("log"), "line": _verdict_line(row, verdict, met, reasons),
                         "commit": verdict.get("commit") or result.get("commit"), "command": result.get("command"),
-                        "end_check": True})
+                        "end_check": True, **({"value": verdict.get("value")} if row.get("kind") == "measure" else {})})
         finally:
             _RUNNING_CHECKS.pop(key, None)
         if self._async:
@@ -1240,7 +1240,7 @@ class ProgramRunner:
         tree = worktree or str(step.get("worktree") or "")
         spec = row.get("spec") or {}
         config = repository_config(program.get("repo_root"))
-        command = str(spec.get("command") or "") if row.get("kind") == "check" else shot_command(config, spec)
+        command = str(spec.get("command") or "") if row.get("kind") in ("check", "measure") else shot_command(config, spec)
         path, rc = self.run_logged(tree, key or str(step["id"]), command, suffix=f"-R{row['ordinal']}")
         out: dict[str, Any] = {"log": path, "exit": rc, "commit": self._git(tree, "rev-parse", "HEAD") or None,
                                "command": command}
@@ -1300,9 +1300,11 @@ class ProgramRunner:
         return sections
 
     def _requirement_runs(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[dict[str, Any]]:
-        """The step's check and shot requirements HoldSpeak runs at CHECK."""
+        """The step's check, shot and measure requirements HoldSpeak runs at CHECK."""
+        from .program_requirements import RUN_KINDS
+
         return [row for row in self.service.step_requirements(program, step)
-                if row.get("kind") in ("check", "shot") and row.get("state") != "waived"]
+                if row.get("kind") in RUN_KINDS and row.get("state") != "waived"]
 
     def _judge_runs(self, program: dict[str, Any], step: dict[str, Any], check: Mapping[str, Any]) -> list[dict[str, Any]]:
         """PG-REQ §5: each check and shot requirement's log through the
@@ -1317,7 +1319,7 @@ class ProgramRunner:
             result = results.get(row["id"]) or {}
             if result.get("commit") != head:
                 continue
-            verdict = verify_requirement_log(result.get("log"), expect=(row.get("spec") or {}).get("expect"))
+            verdict = _verdict_of(row, result.get("log"))
             met = bool(verdict["met"])
             reasons = list(verdict["reasons"])
             if row.get("kind") == "shot" and met and not result.get("image"):
@@ -1325,8 +1327,10 @@ class ProgramRunner:
             state = "met" if met else "unmet"
             evidence = {"kind": "shot" if row.get("kind") == "shot" else "log",
                         "ref": result.get("image") if row.get("kind") == "shot" and result.get("image") else result.get("log"),
-                        "log": result.get("log"), "line": verdict.get("line") if met else "; ".join(reasons[:2]),
+                        "log": result.get("log"), "line": _verdict_line(row, verdict, met, reasons),
                         "commit": verdict.get("commit") or head, "command": result.get("command")}
+            if row.get("kind") == "measure":
+                evidence["value"] = verdict.get("value")
             if row.get("kind") == "shot":
                 spec = row.get("spec") or {}
                 evidence.update({"case": spec.get("case"), "width": spec.get("width")})
@@ -1990,6 +1994,23 @@ def _within(cwd: Any, worktree: Any) -> bool:
     except OSError:
         return False
     return here == root or root in here.parents
+
+
+def _verdict_of(row: Mapping[str, Any], log_path: Optional[str]) -> dict[str, Any]:
+    """A run requirement's log through its verifier form: a Measure by its
+    bound (LANG11), a check or a shot by the requirement form."""
+    spec = row.get("spec") or {}
+    if row.get("kind") == "measure":
+        return verify_measure_log(log_path, spec)
+    return verify_requirement_log(log_path, expect=spec.get("expect"))
+
+
+def _verdict_line(row: Mapping[str, Any], verdict: Mapping[str, Any], met: bool, reasons: list[str]) -> str:
+    """The evidence line: a Measure's result in his words ("Measured 1.4 s,
+    under 2 s"); a check's last result line, or its reasons when red."""
+    if row.get("kind") == "measure":
+        return str(verdict.get("line") or "")
+    return str(verdict.get("line") or "") if met else "; ".join(reasons[:2])
 
 
 #: The engine's own check logs in a worktree are never the agent's change.

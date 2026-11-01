@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Mapping, Optional
 
 HEADER = "program-check:"
 
@@ -241,6 +241,93 @@ def verify_requirement_log(path: Optional[str], expect: Optional[str] = None) ->
     return verify_requirement_text(text, expect=expect)
 
 
+#: PG-LANG §6.3 (LANG11): the units a Measure converts between, to its bound's.
+_UNIT_SCALE = {
+    "ms": ("time", 0.001), "s": ("time", 1.0), "sec": ("time", 1.0), "secs": ("time", 1.0), "second": ("time", 1.0),
+    "seconds": ("time", 1.0), "min": ("time", 60.0), "mins": ("time", 60.0), "minute": ("time", 60.0),
+    "minutes": ("time", 60.0), "h": ("time", 3600.0), "kb": ("size", 1e3), "mb": ("size", 1e6), "gb": ("size", 1e9),
+    "b": ("size", 1.0), "bytes": ("size", 1.0),
+}
+#: The bound's operator in his words (the result line).
+OP_WORDS = {"<": "under", "<=": "at most", ">": "over", ">=": "at least", "=": "equal to"}
+_OPS = {"<": lambda a, b: a < b, "<=": lambda a, b: a <= b, ">": lambda a, b: a > b, ">=": lambda a, b: a >= b,
+        "=": lambda a, b: abs(a - b) < 1e-9}
+
+
+def _number_words(value: float) -> str:
+    return str(int(value)) if float(value).is_integer() else f"{value:.3g}" if abs(value) < 1000 else f"{value:.0f}"
+
+
+def _in_unit(value: float, unit: str, want: str) -> Optional[float]:
+    """``value`` in ``unit`` as ``want`` (``None`` when they do not convert)."""
+    unit, want = unit.lower(), want.lower()
+    if not want or not unit or unit == want:
+        return value
+    have, need = _UNIT_SCALE.get(unit), _UNIT_SCALE.get(want)
+    if have is None or need is None or have[0] != need[0]:
+        return None
+    return value * have[1] / need[1]
+
+
+def verify_measure_text(text: str, spec: Mapping[str, Any]) -> dict[str, Any]:
+    """PG-LANG §6.3 (LANG11): a Measure's log. The requirement form holds
+    (:func:`verify_requirement_text`: the commit, a clean tree, the engine's
+    ``exit 0``, no red line, ``expect`` when named), and the LAST line that
+    names the metric and then a number gives the value, in the bound's unit
+    when it converts. Met when the value meets the bound. ``line`` is the
+    result in his words: "Measured 1.4 s, under 2 s"."""
+    metric = str(spec.get("metric") or "").strip()
+    op = str(spec.get("op") or "")
+    unit = str(spec.get("unit") or "")
+    try:
+        bound = float(spec.get("bound"))
+    except (TypeError, ValueError):
+        bound = None
+    base = verify_requirement_text(text, expect=spec.get("expect") or None)
+    reasons = list(base["reasons"])
+    bound_words = f"{OP_WORDS.get(op, op)} {_number_words(bound) if bound is not None else '?'}" + (f" {unit}" if unit else "")
+    if not metric or op not in _OPS or bound is None:
+        return {**base, "met": False, "reasons": ["the measure has no bound to compare with"], "value": None,
+                "line": "Not measured: the measure has no bound"}
+    pattern = re.compile(rf"(?<![\w-]){re.escape(metric)}(?![\w-])\D*?(-?\d+(?:\.\d+)?)\s*([A-Za-z%]+)?", re.I)
+    found: Optional[tuple[float, str]] = None
+    for raw in text.splitlines():
+        if raw.startswith(HEADER):
+            continue
+        for match in pattern.finditer(raw):
+            found = (float(match.group(1)), match.group(2) or "")
+    if found is None:
+        reasons.append(f"the command printed no {metric} number")
+        line = f"Not measured: {reasons[0]}"  # a command that did not run says so first
+        return {**base, "met": False, "reasons": reasons[:6], "value": None, "line": line}
+    value = _in_unit(found[0], found[1] if found[1].lower() in _UNIT_SCALE else "", unit)
+    if value is None:
+        reasons.append(f"the command printed {found[1]}, which is not {unit}")
+        return {**base, "met": False, "reasons": reasons[:6], "value": None, "line": f"Not measured: {reasons[0]}"}
+    measured = f"Measured {_number_words(value)}" + (f" {unit}" if unit else "")
+    within = _OPS[op](value, bound)
+    if not within:
+        reasons.append(f"{metric} is {_number_words(value)}{(' ' + unit) if unit else ''}, not {bound_words}")
+    if base["reasons"]:
+        line = f"Not measured: {base['reasons'][0]}"
+    else:
+        line = f"{measured}, {bound_words}" if within else f"{measured}, not {bound_words}"
+    return {**base, "met": not reasons, "reasons": reasons[:6], "value": value, "line": line}
+
+
+def verify_measure_log(path: Optional[str], spec: Mapping[str, Any]) -> dict[str, Any]:
+    """The Measure form of the log at ``path``. No path or no file: not Met,
+    the reason in words ("Not measured: the command wrote no log")."""
+    empty = {"met": False, "commit": None, "clean": None, "exit": None, "value": None}
+    if not path:
+        return {**empty, "reasons": ["the command wrote no log"], "line": "Not measured: the command did not run"}
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return {**empty, "reasons": ["the log is not there"], "line": "Not measured: the log is not there"}
+    return verify_measure_text(text, spec)
+
+
 def log_tail(path: Optional[str], lines: int = 40) -> str:
     """The last ``lines`` lines of a check log (the builder's round-two prompt)."""
     if not path:
@@ -253,6 +340,6 @@ def log_tail(path: Optional[str], lines: int = 40) -> str:
 
 
 __all__ = [
-    "HEADER", "QUICK_CHECK_REQUIRED", "SECTION_ORDER", "log_tail", "verify_log", "verify_requirement_log",
-    "verify_requirement_text", "verify_text",
+    "HEADER", "OP_WORDS", "QUICK_CHECK_REQUIRED", "SECTION_ORDER", "log_tail", "verify_log", "verify_measure_log",
+    "verify_measure_text", "verify_requirement_log", "verify_requirement_text", "verify_text",
 ]

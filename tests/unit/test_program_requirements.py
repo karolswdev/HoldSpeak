@@ -532,27 +532,79 @@ def test_counts_draw_no_zero() -> None:
     assert counts(rows, 1) == {"met": 2, "total": 3, "unmet": 1, "waived": 1, "his": 1}
 
 
-# ── PG-LANG fields: Measure (until LANG11) and a walk on Your word ───
+# ── PG-LANG LANG11: the Measure kind, and a walk on Your word ────────
 
-def test_a_measure_stays_not_measured_yet_and_does_not_hold_the_merge(tmp_path) -> None:
+def _measure(rig: Rig, pid: str, sid: str, command: str, bound: dict) -> str:
+    return rig.service.require(OWNER, pid, text="The People routes answer fast", kind="measure", step_id=sid,
+                               spec={"command": command, **bound})["requirement_id"]
+
+
+def test_a_measure_under_its_bound_is_met_with_its_value_in_his_words(tmp_path) -> None:
     rig = Rig(tmp_path)
     pid = _program(rig, template="", control="yolo")
     rig.service.plan(OWNER, pid, steps=[{"title": "People routes"}])
     sid = rig.step(pid, 1)["id"]
-    rid = rig.service.require(OWNER, pid, text="The People routes answer under 100 ms", kind="measure", step_id=sid,
-                              spec={"command": "sh bench.sh", "metric": "p95", "op": "<", "bound": 100,
-                                    "unit": "ms"})["requirement_id"]
+    rid = _measure(rig, pid, sid, "echo 'warm 900 ms'; echo 'p95 84 ms'",
+                   {"metric": "p95", "op": "<", "bound": 100, "unit": "ms"})
     row = _req(rig, pid, rid)
-    assert (row["kind"], row["kind_word"], row["state"], row["state_word"]) == (
-        "measure", "Measure", "not_yet", "Not measured yet")
-    assert row["spec"] == {"command": "sh bench.sh", "metric": "p95", "op": "<", "bound": 100, "unit": "ms"}
+    assert (row["state"], row["state_word"]) == ("not_yet", "Not measured yet")
     rig.service.start(OWNER, pid)
     rig.agent.finish(rig.step(pid, 1)["launch_id"], {"a.py": "1\n"})
     rig.tick(3)
-    assert rig.step(pid, 1)["state"] in ("merged", "done"), rig.step(pid, 1)["state"]  # not held, never Unmet
     row = _req(rig, pid, rid)
-    assert (row["state"], row["state_word"]) == ("not_yet", "Not measured yet")
-    assert not any(item.get("requirement_id") == rid for item in rig.program(pid)["your_turn_items"])
+    assert row["state"] == "met", row
+    assert row["evidence"]["line"] == "Measured 84 ms, under 100 ms" and row["evidence"]["value"] == 84
+    assert rig.step(pid, 1)["state"] in ("merged", "done")
+    lines = [c["line"] for c in rig.program(pid)["checkpoints"]]
+    assert "R1 · Met · Measured 84 ms, under 100 ms" in lines
+
+
+def test_a_measure_over_its_bound_is_a_red_round_for_the_builder(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid = _program(rig, template="", control="normal")
+    rig.service.plan(OWNER, pid, steps=[{"title": "People routes"}])
+    sid = rig.step(pid, 1)["id"]
+    rid = _measure(rig, pid, sid, "echo 'total 2.4 s'", {"metric": "total", "op": "<", "bound": 2, "unit": "s"})
+    rig.service.start(OWNER, pid)
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"a.py": "1\n"})
+    rig.tick()
+    row = _req(rig, pid, rid)
+    assert row["state"] == "unmet" and row["evidence"]["line"] == "Measured 2.4 s, not under 2 s"
+    step = rig.step(pid, 1)
+    assert step["state"] == "check_failed" and step["rounds"] == 1, step
+    launch, text = rig.prompts[-1]
+    assert launch == step["launch_id"] and "R1" in text
+
+
+def test_a_measure_that_cannot_run_is_unmet_with_the_reason_in_words(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid = _program(rig, template="", control="normal")
+    rig.service.plan(OWNER, pid, steps=[{"title": "People routes"}])
+    sid = rig.step(pid, 1)["id"]
+    rid = _measure(rig, pid, sid, "sh no-such-bench.sh", {"metric": "files", "op": "<=", "bound": 3})
+    other = _measure(rig, pid, sid, "echo nothing to see", {"metric": "errors", "op": "=", "bound": 0})
+    rig.service.start(OWNER, pid)
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"a.py": "1\n"})
+    rig.tick()
+    row = _req(rig, pid, rid)
+    assert row["state"] == "unmet" and row["evidence"]["line"].startswith("Not measured: the command ended with exit ")
+    row = _req(rig, pid, other)
+    assert row["state"] == "unmet" and row["evidence"]["line"] == "Not measured: the command printed no errors number"
+
+
+def test_a_walk_is_his_word_only_and_his_row_shows_its_lines(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    pid = _program(rig, template="", control="yolo")
+    rig.service.plan(OWNER, pid, steps=[{"title": "Board"}])
+    sid = rig.step(pid, 1)["id"]
+    rid = rig.service.require(OWNER, pid, text="I used the board", kind="word", step_id=sid,
+                              spec={"walk": ["Open Programs at 393", "Press Plan it"]})["requirement_id"]
+    rig.service.start(OWNER, pid)
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"a.py": "1\n"})
+    rig.tick(3)
+    item = next(item for item in rig.program(pid)["your_turn_items"] if item.get("requirement_id") == rid)
+    assert item["kind"] == "requirement_word" and item["walk"] == ["Open Programs at 393", "Press Plan it"]
+    assert _req(rig, pid, rid)["state"] == "not_yet"  # never run, never judged by the engine
 
 
 def test_a_measure_needs_a_command_and_a_bound(tmp_path) -> None:
