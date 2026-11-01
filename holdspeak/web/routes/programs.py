@@ -50,6 +50,7 @@ DELETE /api/programs/{id}/shape/held               LANG5: Not this on the rows a
 POST   /api/programs/{id}/plan/draft               LANG6 {goal?, template?, budget?; Split: text, split}: one engine
                                                    call; the text_apply answer, each row source "plan" and an added
                                                    step's size, + {say, counts, sizes, budget, engine, latency_ms}
+POST   /api/programs/{id}/plan/programs            JRN1 {programs, which: all | place}: Apply all / Apply this one of a draft that proposes several Programs
 POST   /api/programs/{id}/rounds                   LANG9 {names?}: the interview rounds, each open (the five defaults)
 POST   /api/programs/{id}/rounds/{name}/next       LANG9: one engine call; {round, state, done, question?, engine}
 POST   /api/programs/{id}/rounds/{name}/answer     LANG9 {question_id?, answer | option | skip | not_this, apply?}:
@@ -346,6 +347,12 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         return await _call(lambda: _service().plan_draft(
             principal, program_id, goal=body.get("goal"), template=body.get("template"), budget=body.get("budget"),
             text=body.get("text"), split=body.get("split")))
+
+    @router.post("/api/programs/{program_id}/plan/programs")
+    async def api_programs_plan_programs(program_id: str, request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().apply_programs(principal, program_id, body.get("programs"),
+                                                             body.get("which", "all")))
 
     @router.post("/api/programs/{program_id}/rounds")
     async def api_programs_rounds_open(program_id: str, request: Request) -> Any:

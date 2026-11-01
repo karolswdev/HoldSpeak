@@ -1,0 +1,1821 @@
+{
+  "applied": {
+    "made": [
+      {
+        "id": "program-b81c472e0228",
+        "title": "Calls window lists the last ten"
+      },
+      {
+        "id": "program-9c10d24dd6e0",
+        "title": "Programs window exports to a Note"
+      }
+    ],
+    "program": {
+      "allowed_profiles": [],
+      "asks": 0,
+      "budget_tokens": 65536,
+      "can_prove": {
+        "check": true,
+        "review": true,
+        "shot": true,
+        "shot_reason": null,
+        "word": true
+      },
+      "check_command": "scripts/quick_check.sh",
+      "checkpoints": [
+        {
+          "at": "2026-11-01T17:43:17.330491+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 7,
+          "kind": null,
+          "line": "Changed by the text: 5 changes (lines 12, 13, 15, 22, 29)",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        {
+          "at": "2026-11-01T17:43:17.327158+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 6,
+          "kind": "requirement",
+          "line": "Added R2 on the program · The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {
+            "requirement_id": "req-1212b750bfce"
+          }
+        },
+        {
+          "at": "2026-11-01T17:43:17.317387+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 5,
+          "kind": "requirement",
+          "line": "Added R1 on the program · `scripts/quick_check.sh` is green",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {
+            "requirement_id": "req-e839e66eff78"
+          }
+        },
+        {
+          "at": "2026-11-01T17:43:17.311566+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 4,
+          "kind": null,
+          "line": "Added 3 steps",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        {
+          "at": "2026-11-01T17:43:17.306707+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 3,
+          "kind": null,
+          "line": "Changed title, goal",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        {
+          "at": "2026-11-01T17:43:17.103773+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 2,
+          "kind": null,
+          "line": "Changed budget",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        },
+        {
+          "at": "2026-11-01T17:43:17.096279+00:00",
+          "by": "owner",
+          "choice": null,
+          "decision_record_id": null,
+          "id": 1,
+          "kind": null,
+          "line": "Made the program from the Fast cycle template",
+          "operation_id": null,
+          "overturnable": false,
+          "overturned_at": null,
+          "pin_note": null,
+          "ref": null,
+          "ref_commit": null,
+          "rule": null,
+          "step_id": "",
+          "undo": {}
+        }
+      ],
+      "closed_at": null,
+      "control": "normal",
+      "control_word": "Normal",
+      "created_at": "2026-11-01T17:43:17.095905+00:00",
+      "decided_for_you": [],
+      "default": {
+        "agent": "Claude Code",
+        "engine": null,
+        "profile": "claude-default",
+        "runs_on": [
+          {
+            "agent": "Claude Code",
+            "engine": null,
+            "label": "Claude Code",
+            "profile": "claude-default"
+          }
+        ]
+      },
+      "delivery": null,
+      "done": 0,
+      "family": {
+        "children": [
+          {
+            "ending": "none",
+            "id": "program-b81c472e0228",
+            "line": "Drafting, 2 steps",
+            "name": "Calls window lists the last ten",
+            "state": "drafting",
+            "state_word": "Drafting"
+          }
+        ],
+        "parent": null
+      },
+      "for_person": null,
+      "for_person_id": null,
+      "goal": "After a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.",
+      "id": "program-354982429ca6",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-11-01T17:43:17.330491+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 7,
+        "kind": null,
+        "line": "Changed by the text: 5 changes (lines 12, 13, 15, 22, 29)",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      "line": "Drafting, 3 steps",
+      "may_call": false,
+      "may_handoff": false,
+      "night": null,
+      "note_id": "program-program-354982429ca6",
+      "note_window": "pullout:note:program-program-354982429ca6",
+      "origin_ref": null,
+      "persons": [],
+      "place": {
+        "origin": null,
+        "person": null,
+        "project": {
+          "id": "proj-holdspeak",
+          "name": "HoldSpeak"
+        }
+      },
+      "planner": null,
+      "prefer_idle": false,
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      },
+      "project_id": "proj-holdspeak",
+      "repository": {
+        "base_branch": "main",
+        "label": "app",
+        "root": "/tmp/rig/split_programs/app"
+      },
+      "requirements": [
+        {
+          "by": "owner",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-11-01T17:43:17.316105+00:00",
+          "evidence": {},
+          "id": "req-e839e66eff78",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "check",
+          "kind_word": "Check",
+          "label": "R1",
+          "ordinal": 1,
+          "parent_id": null,
+          "program_id": "program-354982429ca6",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "program",
+          "spec": {
+            "command": "scripts/quick_check.sh"
+          },
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": null,
+          "text": "`scripts/quick_check.sh` is green",
+          "waived_reason": null
+        },
+        {
+          "by": "owner",
+          "choices": [
+            "met",
+            "unmet",
+            "waive"
+          ],
+          "created_at": "2026-11-01T17:43:17.327054+00:00",
+          "evidence": {},
+          "id": "req-1212b750bfce",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "word",
+          "kind_word": "Your word",
+          "label": "R2",
+          "ordinal": 2,
+          "parent_id": null,
+          "program_id": "program-354982429ca6",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "program",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": null,
+          "text": "The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.",
+          "waived_reason": null
+        }
+      ],
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 2,
+        "unmet": 0,
+        "waived": 0
+      },
+      "review_depth": null,
+      "reviewer": {
+        "agent": null,
+        "engine": null,
+        "profile": null
+      },
+      "revision": 6,
+      "rounds": [],
+      "rounds_before_start": false,
+      "search_words": "meeting recap in the note after a meeting the meeting's note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep. holdspeak fast-cycle build the recap from the transcript append the recap to the meeting note tests for the recap fast cycle",
+      "skipped": 0,
+      "spend_limit_usd": null,
+      "state": "drafting",
+      "state_word": "Drafting",
+      "status_line": "Drafting · 0 of 3 done · check: quick_check.sh · control Normal",
+      "steps": [
+        {
+          "after": [],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "Add a build_recap function that takes the finalized transcript and the meeting's structured decisions and actions, and returns a short recap: decisions one line each, actions with their owners one line each, open questions one line each.\nOpen questions are transcript lines ending in a question mark with no answering line before the next speaker change.\nIf a group is empty, omit it.",
+          "budget_tokens": null,
+          "check": {
+            "command": "scripts/quick_check.sh",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call",
+            "prefer_idle",
+            "budget"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "ending": "none",
+          "engine": null,
+          "estimate": {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "share": 32768,
+            "tokens": 6609,
+            "words": "6k of 32k"
+          },
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "none",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-74684c5a0762",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 1,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/meeting_aftercare.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "report_text": null,
+          "requirements": [],
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "story": [],
+          "taken": false,
+          "title": "Build the recap from the transcript",
+          "updated_at": "2026-11-01T17:43:17.311140+00:00",
+          "wait": null,
+          "worktree": null
+        },
+        {
+          "after": [
+            1
+          ],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "In the Note write path for a meeting, after the transcript is attached, call build_recap and append the result as the final section of the Note.\nNothing follows the recap in the Note.",
+          "budget_tokens": null,
+          "check": {
+            "command": "scripts/quick_check.sh",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call",
+            "prefer_idle",
+            "budget"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "ending": "none",
+          "engine": null,
+          "estimate": {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "share": 32768,
+            "tokens": 2841,
+            "words": "3k of 32k"
+          },
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "none",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-a2565942df36",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 2,
+          "origin_ref": null,
+          "owns": [
+            "holdspeak/meeting_exports.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "report_text": null,
+          "requirements": [],
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "story": [],
+          "taken": false,
+          "title": "Append the recap to the meeting Note",
+          "updated_at": "2026-11-01T17:43:17.311140+00:00",
+          "wait": null,
+          "worktree": null
+        },
+        {
+          "after": [
+            1,
+            2
+          ],
+          "agent": "Claude Code",
+          "amendments": [],
+          "branch": null,
+          "brief": "Unit tests: build_recap extracts decisions, actions with owners, and open questions from a sample transcript.\nThe Note write path appends the recap as the last section.\nAn empty group is omitted from the recap.",
+          "budget_tokens": null,
+          "check": {
+            "command": "scripts/quick_check.sh",
+            "commit": null,
+            "log": null,
+            "minutes": null,
+            "reasons": [],
+            "running": false,
+            "sections": [],
+            "verdict": null
+          },
+          "contenders": [],
+          "editable": [
+            "title",
+            "brief",
+            "owns",
+            "after",
+            "effort",
+            "agent",
+            "runs_on_then",
+            "race",
+            "gate_check",
+            "gate_review",
+            "review_depth",
+            "gate_merge",
+            "requirements",
+            "position",
+            "for_person",
+            "may_call",
+            "prefer_idle",
+            "budget"
+          ],
+          "effort": "low",
+          "elapsed": "",
+          "elapsed_seconds": null,
+          "ended_at": null,
+          "ending": "none",
+          "engine": null,
+          "estimate": {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "share": 32768,
+            "tokens": 2300,
+            "words": "2k of 32k"
+          },
+          "findings": [],
+          "for_person": null,
+          "for_person_id": null,
+          "frozen": {},
+          "gate": {
+            "check": true,
+            "merge": "level",
+            "review": "none",
+            "review_depth": "delta"
+          },
+          "handoffs": [],
+          "held_reason": null,
+          "history": null,
+          "id": "step-fbeca091ddca",
+          "last_checkpoint": null,
+          "launch_id": null,
+          "limit": null,
+          "may_call": false,
+          "ordinal": 3,
+          "origin_ref": null,
+          "owns": [
+            "tests/unit/test_meeting_exports.py"
+          ],
+          "parked_by": null,
+          "parked_reason": null,
+          "pr": null,
+          "prefer_idle": false,
+          "profile": "claude-default",
+          "race": 0,
+          "race_of": null,
+          "report": null,
+          "report_text": null,
+          "requirements": [],
+          "review": {
+            "reviewer": null,
+            "round": null,
+            "verdict": null
+          },
+          "rounds": 0,
+          "runs_on": [
+            {
+              "agent": "Claude Code",
+              "engine": null,
+              "label": "Claude Code",
+              "profile": "claude-default"
+            }
+          ],
+          "started_at": null,
+          "state": "planned",
+          "state_word": "Planned",
+          "station": -1,
+          "stations": [
+            "brief",
+            "work",
+            "check",
+            "review",
+            "pr",
+            "merge"
+          ],
+          "story": [],
+          "taken": false,
+          "title": "Tests for the recap",
+          "updated_at": "2026-11-01T17:43:17.311140+00:00",
+          "wait": null,
+          "worktree": null
+        }
+      ],
+      "template": "fast-cycle",
+      "title": "Meeting recap in the Note",
+      "total": 3,
+      "track": [
+        {
+          "mark": "planned",
+          "ordinal": 1,
+          "title": "Build the recap from the transcript"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 2,
+          "title": "Append the recap to the meeting Note"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 3,
+          "title": "Tests for the recap"
+        }
+      ],
+      "updated_at": "2026-11-01T17:43:17.330552+00:00",
+      "usage_warning_share": null,
+      "within": [],
+      "your_turn": 0,
+      "your_turn_items": []
+    }
+  },
+  "draft": {
+    "allowed_text": "# program text 1\nprogram Before the standup review\n  goal\n  > Three things before the standup review. First, after a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n  >\n  > Second, the Calls window should list the last ten calls with their length and who was on them, newest first.\n  >\n  > Third, the Programs window should export the list to a new Note, one line per program with its state.\n  in app · main · project HoldSpeak\n  template fast cycle\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n\nat the end\n  R+ check: `scripts/quick_check.sh` is green\n  R+ word: The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.\n\nstep + Build the recap from the transcript\n  owns holdspeak/meeting_aftercare.py\n  brief\n  > Add a build_recap function that takes the finalized transcript and the meeting's structured decisions and actions, and returns a short recap: decisions one line each, actions with their owners one line each, open questions one line each.\n  > Open questions are transcript lines ending in a question mark with no answering line before the next speaker change.\n  > If a group is empty, omit it.\n\nstep + Append the recap to the meeting Note\n  owns holdspeak/meeting_exports.py\n  after 1\n  brief\n  > In the Note write path for a meeting, after the transcript is attached, call build_recap and append the result as the final section of the Note.\n  > Nothing follows the recap in the Note.\n\nstep + Tests for the recap\n  owns tests/unit/test_meeting_exports.py\n  after 1, 2\n  brief\n  > Unit tests: build_recap extracts decisions, actions with owners, and open questions from a sample transcript.\n  > The Note write path appends the recap as the last section.\n  > An empty group is omitted from the recap.\n",
+    "applied": false,
+    "attempts": 1,
+    "base": "# program text 1\nprogram Before the standup review                 # Drafting\n  goal\n  > Three things before the standup review. First, after a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n  >\n  > Second, the Calls window should list the last ten calls with their length and who was on them, newest first.\n  >\n  > Third, the Programs window should export the list to a new Note, one line per program with its state.\n  in app · main · project HoldSpeak\n  template fast cycle\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n",
+    "budget": 65536,
+    "capability": "agent.plan",
+    "changes": [
+      {
+        "after": "R+ check: `scripts/quick_check.sh` is green",
+        "before": "",
+        "code": null,
+        "field": "requirement",
+        "id": "R+16",
+        "line": 16,
+        "lowers_bar": false,
+        "op": "add",
+        "reason": null,
+        "say": "A new requirement on at the end: `scripts/quick_check.sh` is green",
+        "size": null,
+        "source": "plan",
+        "verdict": "allowed",
+        "where": "at the end"
+      },
+      {
+        "after": "R+ word: The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.",
+        "before": "",
+        "code": null,
+        "field": "requirement",
+        "id": "R+17",
+        "line": 17,
+        "lowers_bar": false,
+        "op": "add",
+        "reason": null,
+        "say": "A new requirement on at the end: The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.",
+        "size": null,
+        "source": "plan",
+        "verdict": "allowed",
+        "where": "at the end"
+      },
+      {
+        "after": "Build the recap from the transcript · low",
+        "before": "",
+        "code": null,
+        "field": "step",
+        "id": "step-1.add",
+        "line": 19,
+        "lowers_bar": false,
+        "op": "add",
+        "reason": null,
+        "say": "A new step 1, Build the recap from the transcript.",
+        "size": {
+          "budget": 65536,
+          "code": null,
+          "engine": "Claude Code",
+          "fits": true,
+          "number": null,
+          "owns": [
+            "holdspeak/meeting_aftercare.py"
+          ],
+          "place": 1,
+          "share": 32768,
+          "title": "Build the recap from the transcript",
+          "tokens": 6705,
+          "words": "7k of 32k"
+        },
+        "source": "plan",
+        "verdict": "allowed",
+        "where": "step 1"
+      },
+      {
+        "after": "Append the recap to the meeting Note · after 1 · low",
+        "before": "",
+        "code": null,
+        "field": "step",
+        "id": "step-2.add",
+        "line": 26,
+        "lowers_bar": false,
+        "op": "add",
+        "reason": null,
+        "say": "A new step 2, Append the recap to the meeting Note.",
+        "size": {
+          "budget": 65536,
+          "code": null,
+          "engine": "Claude Code",
+          "fits": true,
+          "number": null,
+          "owns": [
+            "holdspeak/meeting_exports.py"
+          ],
+          "place": 2,
+          "share": 32768,
+          "title": "Append the recap to the meeting Note",
+          "tokens": 2887,
+          "words": "3k of 32k"
+        },
+        "source": "plan",
+        "verdict": "allowed",
+        "where": "step 2"
+      },
+      {
+        "after": "Tests for the recap · after 1, 2 · low",
+        "before": "",
+        "code": null,
+        "field": "step",
+        "id": "step-3.add",
+        "line": 33,
+        "lowers_bar": false,
+        "op": "add",
+        "reason": null,
+        "say": "A new step 3, Tests for the recap.",
+        "size": {
+          "budget": 65536,
+          "code": null,
+          "engine": "Claude Code",
+          "fits": true,
+          "number": null,
+          "owns": [
+            "tests/unit/test_meeting_exports.py"
+          ],
+          "place": 3,
+          "share": 32768,
+          "title": "Tests for the recap",
+          "tokens": 2352,
+          "words": "2k of 32k"
+        },
+        "source": "plan",
+        "verdict": "allowed",
+        "where": "step 3"
+      }
+    ],
+    "counts": {
+      "requirements": 2,
+      "steps": 3,
+      "too_big": 0
+    },
+    "engine": "qwen3.8-27b",
+    "grounded_on": {
+      "budget": 65536,
+      "capability": "agent.plan",
+      "folders": 6,
+      "goal_chars": 423,
+      "headings": 0,
+      "likely_files": 9,
+      "note": false,
+      "open_actions": 0,
+      "profile": "home-engine",
+      "recent": 2,
+      "template": "fast-cycle"
+    },
+    "latency_ms": 11,
+    "lowers": [],
+    "patch": "--- current\n+++ proposed\n@@ -1,5 +1,5 @@\n # program text 1\n-program Before the standup review                 # Drafting\n+program Before the standup review\n   goal\n   > Three things before the standup review. First, after a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n   >\n@@ -11,3 +11,29 @@\n   control normal\n   check scripts/quick_check.sh\n   budget 64k\n+\n+at the end\n+  R+ check: `scripts/quick_check.sh` is green\n+  R+ word: The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.\n+\n+step + Build the recap from the transcript\n+  owns holdspeak/meeting_aftercare.py\n+  brief\n+  > Add a build_recap function that takes the finalized transcript and the meeting's structured decisions and actions, and returns a short recap: decisions one line each, actions with their owners one line each, open questions one line each.\n+  > Open questions are transcript lines ending in a question mark with no answering line before the next speaker change.\n+  > If a group is empty, omit it.\n+\n+step + Append the recap to the meeting Note\n+  owns holdspeak/meeting_exports.py\n+  after 1\n+  brief\n+  > In the Note write path for a meeting, after the transcript is attached, call build_recap and append the result as the final section of the Note.\n+  > Nothing follows the recap in the Note.\n+\n+step + Tests for the recap\n+  owns tests/unit/test_meeting_exports.py\n+  after 1, 2\n+  brief\n+  > Unit tests: build_recap extracts decisions, actions with owners, and open questions from a sample transcript.\n+  > The Note write path appends the recap as the last section.\n+  > An empty group is omitted from the recap.\n",
+    "program_id": "program-354982429ca6",
+    "programs": [
+      {
+        "goal": "After a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.",
+        "hands": "",
+        "sizes": [
+          {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "number": null,
+            "owns": [
+              "holdspeak/meeting_aftercare.py"
+            ],
+            "place": 1,
+            "share": 32768,
+            "title": "Build the recap from the transcript",
+            "tokens": 6705,
+            "words": "7k of 32k"
+          },
+          {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "number": null,
+            "owns": [
+              "holdspeak/meeting_exports.py"
+            ],
+            "place": 2,
+            "share": 32768,
+            "title": "Append the recap to the meeting Note",
+            "tokens": 2887,
+            "words": "3k of 32k"
+          },
+          {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "number": null,
+            "owns": [
+              "tests/unit/test_meeting_exports.py"
+            ],
+            "place": 3,
+            "share": 32768,
+            "title": "Tests for the recap",
+            "tokens": 2352,
+            "words": "2k of 32k"
+          }
+        ],
+        "steps": [
+          "Build the recap from the transcript",
+          "Append the recap to the meeting Note",
+          "Tests for the recap"
+        ],
+        "text": "# program text 1\nprogram Meeting recap in the Note\n  goal\n  > After a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n  in app · main · project HoldSpeak\n  template fast cycle\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n\nat the end\n  R+ check: `scripts/quick_check.sh` is green\n  R+ word: The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.\n\nstep + Build the recap from the transcript\n  owns holdspeak/meeting_aftercare.py\n  brief\n  > Add a build_recap function that takes the finalized transcript and the meeting's structured decisions and actions, and returns a short recap: decisions one line each, actions with their owners one line each, open questions one line each.\n  > Open questions are transcript lines ending in a question mark with no answering line before the next speaker change.\n  > If a group is empty, omit it.\n\nstep + Append the recap to the meeting Note\n  owns holdspeak/meeting_exports.py\n  after 1\n  brief\n  > In the Note write path for a meeting, after the transcript is attached, call build_recap and append the result as the final section of the Note.\n  > Nothing follows the recap in the Note.\n\nstep + Tests for the recap\n  owns tests/unit/test_meeting_exports.py\n  after 1, 2\n  brief\n  > Unit tests: build_recap extracts decisions, actions with owners, and open questions from a sample transcript.\n  > The Note write path appends the recap as the last section.\n  > An empty group is omitted from the recap.\n",
+        "title": "Meeting recap in the Note"
+      },
+      {
+        "goal": "The Calls window should list the last ten calls with their length and who was on them, newest first.",
+        "hands": "",
+        "sizes": [
+          {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "number": null,
+            "owns": [
+              "web/src/desk/calls/CallsWindow.tsx",
+              "web/src/desk/calls/__fixtures__/calls.list.ts"
+            ],
+            "place": 1,
+            "share": 32768,
+            "title": "Show the last ten calls in the Calls window",
+            "tokens": 5958,
+            "words": "6k of 32k"
+          },
+          {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "number": null,
+            "owns": [
+              "tests/integration/test_line_call.py"
+            ],
+            "place": 2,
+            "share": 32768,
+            "title": "Tests for the calls list",
+            "tokens": 1635,
+            "words": "2k of 32k"
+          }
+        ],
+        "steps": [
+          "Show the last ten calls in the Calls window",
+          "Tests for the calls list"
+        ],
+        "text": "# program text 1\nprogram Calls window lists the last ten\n  goal\n  > The Calls window should list the last ten calls with their length and who was on them, newest first.\n  in app · main · project HoldSpeak\n  template fast cycle\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n\nat the end\n  R+ check: `scripts/quick_check.sh` is green\n  R+ shot: The Calls window at 393 shows ten rows with no clipped text.\n\nstep + Show the last ten calls in the Calls window\n  owns web/src/desk/calls/CallsWindow.tsx, web/src/desk/calls/__fixtures__/calls.list.ts\n  brief\n  > The Calls window lists the last ten calls, newest first, each row showing the call length and the participants.\n  > If there are fewer than ten calls, list all of them.\n  > The fixture carries at least ten sample calls with varied lengths and participant sets.\n\nstep + Tests for the calls list\n  owns tests/integration/test_line_call.py\n  after 1\n  brief\n  > Integration test: the Calls window renders ten rows, newest first, each with length and participant names.\n  > With fewer than ten calls in the fixture, all are shown and no empty rows appear.\n",
+        "title": "Calls window lists the last ten"
+      },
+      {
+        "goal": "The Programs window should export the list to a new Note, one line per program with its state.",
+        "hands": "",
+        "sizes": [
+          {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "number": null,
+            "owns": [
+              "web/src/desk/programs/ProgramsWindow.tsx"
+            ],
+            "place": 1,
+            "share": 32768,
+            "title": "Export button in the Programs window",
+            "tokens": 4944,
+            "words": "5k of 32k"
+          },
+          {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "number": null,
+            "owns": [
+              "holdspeak/kernel/program_ops.py"
+            ],
+            "place": 2,
+            "share": 32768,
+            "title": "Create the Note from the program list",
+            "tokens": 1657,
+            "words": "2k of 32k"
+          },
+          {
+            "budget": 65536,
+            "code": null,
+            "engine": "Claude Code",
+            "fits": true,
+            "number": null,
+            "owns": [
+              "tests/unit/test_program_window_words.py"
+            ],
+            "place": 3,
+            "share": 32768,
+            "title": "Tests for the export",
+            "tokens": 1937,
+            "words": "2k of 32k"
+          }
+        ],
+        "steps": [
+          "Export button in the Programs window",
+          "Create the Note from the program list",
+          "Tests for the export"
+        ],
+        "text": "# program text 1\nprogram Programs window exports to a Note\n  goal\n  > The Programs window should export the list to a new Note, one line per program with its state.\n  in app · main · project HoldSpeak\n  template fast cycle\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n\nat the end\n  R+ check: `scripts/quick_check.sh` is green\n  R+ word: The exported Note reads as a clean list: one program per line, state visible at a glance.\n\nstep + Export button in the Programs window\n  owns web/src/desk/programs/ProgramsWindow.tsx\n  brief\n  > Add an Export to Note action in the Programs window toolbar.\n  > On click it calls the backend to create a new Note from the current program list.\n  > The button is disabled when there are no programs.\n\nstep + Create the Note from the program list\n  owns holdspeak/kernel/program_ops.py\n  after 1\n  brief\n  > Add an export_to_note function that reads the current program list and creates a new Note whose body is one line per program: the program title followed by its state.\n  > The Note is titled with the project name and the export date.\n\nstep + Tests for the export\n  owns tests/unit/test_program_window_words.py\n  after 1, 2\n  brief\n  > Unit tests: export_to_note produces one line per program with its state.\n  > The Note title carries the project name and date.\n  > An empty program list produces a Note with no body lines.\n",
+        "title": "Programs window exports to a Note"
+      }
+    ],
+    "proposed_text": "# program text 1\nprogram Before the standup review\n  goal\n  > Three things before the standup review. First, after a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n  >\n  > Second, the Calls window should list the last ten calls with their length and who was on them, newest first.\n  >\n  > Third, the Programs window should export the list to a new Note, one line per program with its state.\n  in app · main · project HoldSpeak\n  template fast cycle\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n\nat the end\n  R+ check: `scripts/quick_check.sh` is green\n  R+ word: The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.\n\nstep + Build the recap from the transcript\n  owns holdspeak/meeting_aftercare.py\n  brief\n  > Add a build_recap function that takes the finalized transcript and the meeting's structured decisions and actions, and returns a short recap: decisions one line each, actions with their owners one line each, open questions one line each.\n  > Open questions are transcript lines ending in a question mark with no answering line before the next speaker change.\n  > If a group is empty, omit it.\n\nstep + Append the recap to the meeting Note\n  owns holdspeak/meeting_exports.py\n  after 1\n  brief\n  > In the Note write path for a meeting, after the transcript is attached, call build_recap and append the result as the final section of the Note.\n  > Nothing follows the recap in the Note.\n\nstep + Tests for the recap\n  owns tests/unit/test_meeting_exports.py\n  after 1, 2\n  brief\n  > Unit tests: build_recap extracts decisions, actions with owners, and open questions from a sample transcript.\n  > The Note write path appends the recap as the last section.\n  > An empty group is omitted from the recap.\n",
+    "refused": 0,
+    "revision": 1,
+    "say": "Three programs: meeting recap appended to the Note, calls window shows the last ten, programs window exports to a Note.",
+    "seconds": 0.0,
+    "share": 32768,
+    "sizes": [
+      {
+        "budget": 65536,
+        "code": null,
+        "engine": "Claude Code",
+        "fits": true,
+        "number": null,
+        "owns": [
+          "holdspeak/meeting_aftercare.py"
+        ],
+        "place": 1,
+        "share": 32768,
+        "title": "Build the recap from the transcript",
+        "tokens": 6705,
+        "words": "7k of 32k"
+      },
+      {
+        "budget": 65536,
+        "code": null,
+        "engine": "Claude Code",
+        "fits": true,
+        "number": null,
+        "owns": [
+          "holdspeak/meeting_exports.py"
+        ],
+        "place": 2,
+        "share": 32768,
+        "title": "Append the recap to the meeting Note",
+        "tokens": 2887,
+        "words": "3k of 32k"
+      },
+      {
+        "budget": 65536,
+        "code": null,
+        "engine": "Claude Code",
+        "fits": true,
+        "number": null,
+        "owns": [
+          "tests/unit/test_meeting_exports.py"
+        ],
+        "place": 3,
+        "share": 32768,
+        "title": "Tests for the recap",
+        "tokens": 2352,
+        "words": "2k of 32k"
+      }
+    ],
+    "source": "plan",
+    "split": [],
+    "text": "# program text 1\nprogram Before the standup review                 # Drafting\n  goal\n  > Three things before the standup review. First, after a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n  >\n  > Second, the Calls window should list the last ten calls with their length and who was on them, newest first.\n  >\n  > Third, the Programs window should export the list to a new Note, one line per program with its state.\n  in app · main · project HoldSpeak\n  template fast cycle\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n",
+    "version": 1,
+    "words": "3 steps · 2 requirements"
+  },
+  "program": {
+    "allowed_profiles": [],
+    "asks": 0,
+    "budget_tokens": 65536,
+    "can_prove": {
+      "check": true,
+      "review": true,
+      "shot": true,
+      "shot_reason": null,
+      "word": true
+    },
+    "check_command": "scripts/quick_check.sh",
+    "checkpoints": [
+      {
+        "at": "2026-11-01T17:43:17.103773+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 2,
+        "kind": null,
+        "line": "Changed budget",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      {
+        "at": "2026-11-01T17:43:17.096279+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 1,
+        "kind": null,
+        "line": "Made the program from the Fast cycle template",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      }
+    ],
+    "closed_at": null,
+    "control": "normal",
+    "control_word": "Normal",
+    "created_at": "2026-11-01T17:43:17.095905+00:00",
+    "decided_for_you": [],
+    "default": {
+      "agent": "Claude Code",
+      "engine": null,
+      "profile": "claude-default",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ]
+    },
+    "delivery": null,
+    "done": 0,
+    "family": {
+      "children": [],
+      "parent": null
+    },
+    "for_person": null,
+    "for_person_id": null,
+    "goal": "Three things before the standup review. First, after a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n\nSecond, the Calls window should list the last ten calls with their length and who was on them, newest first.\n\nThird, the Programs window should export the list to a new Note, one line per program with its state.",
+    "id": "program-354982429ca6",
+    "in_state_seconds": 0,
+    "last_checkpoint": {
+      "at": "2026-11-01T17:43:17.103773+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Changed budget",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    "line": "Drafting, no steps yet",
+    "may_call": false,
+    "may_handoff": false,
+    "night": null,
+    "note_id": "program-program-354982429ca6",
+    "note_window": "pullout:note:program-program-354982429ca6",
+    "origin_ref": null,
+    "persons": [],
+    "place": {
+      "origin": null,
+      "person": null,
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      }
+    },
+    "planner": null,
+    "prefer_idle": false,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    },
+    "project_id": "proj-holdspeak",
+    "repository": {
+      "base_branch": "main",
+      "label": "app",
+      "root": "/tmp/rig/split_programs/app"
+    },
+    "requirements": [],
+    "review_depth": null,
+    "reviewer": {
+      "agent": null,
+      "engine": null,
+      "profile": null
+    },
+    "revision": 1,
+    "rounds": [],
+    "rounds_before_start": false,
+    "search_words": "before the standup review three things before the standup review. first, after a meeting the meeting's note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep. second, the calls window should list the last ten calls with their length and who was on them, newest first. third, the programs window should export the list to a new note, one line per program with its state. holdspeak fast-cycle fast cycle",
+    "skipped": 0,
+    "spend_limit_usd": null,
+    "state": "drafting",
+    "state_word": "Drafting",
+    "status_line": "Drafting · 0 of 0 done · check: quick_check.sh · control Normal",
+    "steps": [],
+    "template": "fast-cycle",
+    "title": "Before the standup review",
+    "total": 0,
+    "track": [],
+    "updated_at": "2026-11-01T17:43:17.103703+00:00",
+    "usage_warning_share": null,
+    "within": [],
+    "your_turn": 0,
+    "your_turn_items": []
+  },
+  "second": {
+    "allowed_profiles": [],
+    "asks": 0,
+    "budget_tokens": 65536,
+    "can_prove": {
+      "check": true,
+      "review": true,
+      "shot": true,
+      "shot_reason": null,
+      "word": true
+    },
+    "check_command": "scripts/quick_check.sh",
+    "checkpoints": [
+      {
+        "at": "2026-11-01T17:43:17.360648+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 13,
+        "kind": null,
+        "line": "Changed by the text: 4 changes (lines 13, 14, 16, 23)",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      {
+        "at": "2026-11-01T17:43:17.353726+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 12,
+        "kind": "requirement",
+        "line": "Added R2 on the program · The Calls window at 393 shows ten rows with no clipped text.",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {
+          "requirement_id": "req-0cf8bfb4934a"
+        }
+      },
+      {
+        "at": "2026-11-01T17:43:17.348006+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 11,
+        "kind": "requirement",
+        "line": "Added R1 on the program · `scripts/quick_check.sh` is green",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {
+          "requirement_id": "req-21ce7eb73b42"
+        }
+      },
+      {
+        "at": "2026-11-01T17:43:17.344811+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 10,
+        "kind": null,
+        "line": "Added 2 steps",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      {
+        "at": "2026-11-01T17:43:17.338204+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 9,
+        "kind": null,
+        "line": "Changed budget",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      {
+        "at": "2026-11-01T17:43:17.333522+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 8,
+        "kind": null,
+        "line": "Made the program from the Fast cycle template",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      }
+    ],
+    "closed_at": null,
+    "control": "normal",
+    "control_word": "Normal",
+    "created_at": "2026-11-01T17:43:17.333416+00:00",
+    "decided_for_you": [],
+    "default": {
+      "agent": "Claude Code",
+      "engine": null,
+      "profile": "claude-default",
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ]
+    },
+    "delivery": null,
+    "done": 0,
+    "family": {
+      "children": [
+        {
+          "ending": "none",
+          "id": "program-9c10d24dd6e0",
+          "line": "Drafting, 3 steps",
+          "name": "Programs window exports to a Note",
+          "state": "drafting",
+          "state_word": "Drafting"
+        }
+      ],
+      "parent": {
+        "id": "program-354982429ca6",
+        "line": "Drafting, 3 steps",
+        "name": "Meeting recap in the Note",
+        "state": "drafting",
+        "state_word": "Drafting"
+      }
+    },
+    "for_person": null,
+    "for_person_id": null,
+    "goal": "The Calls window should list the last ten calls with their length and who was on them, newest first.",
+    "id": "program-b81c472e0228",
+    "in_state_seconds": 0,
+    "last_checkpoint": {
+      "at": "2026-11-01T17:43:17.360648+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 13,
+      "kind": null,
+      "line": "Changed by the text: 4 changes (lines 13, 14, 16, 23)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    "line": "Drafting, 2 steps",
+    "may_call": false,
+    "may_handoff": false,
+    "night": null,
+    "note_id": "program-program-b81c472e0228",
+    "note_window": "pullout:note:program-program-b81c472e0228",
+    "origin_ref": "program:program-354982429ca6",
+    "persons": [],
+    "place": {
+      "origin": {
+        "id": "program-354982429ca6",
+        "kind": "program",
+        "ref": "program:program-354982429ca6",
+        "title": "Meeting recap in the Note"
+      },
+      "person": null,
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      }
+    },
+    "planner": null,
+    "prefer_idle": false,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    },
+    "project_id": "proj-holdspeak",
+    "repository": {
+      "base_branch": "main",
+      "label": "app",
+      "root": "/tmp/rig/split_programs/app"
+    },
+    "requirements": [
+      {
+        "by": "owner",
+        "choices": [
+          "waive"
+        ],
+        "created_at": "2026-11-01T17:43:17.347908+00:00",
+        "evidence": {},
+        "id": "req-21ce7eb73b42",
+        "judged_at": null,
+        "judged_commit": null,
+        "kind": "check",
+        "kind_word": "Check",
+        "label": "R1",
+        "ordinal": 1,
+        "parent_id": null,
+        "program_id": "program-b81c472e0228",
+        "required": true,
+        "rounds": 0,
+        "running": false,
+        "scope": "program",
+        "spec": {
+          "command": "scripts/quick_check.sh"
+        },
+        "stale": false,
+        "state": "not_yet",
+        "state_word": "Not yet",
+        "step_id": null,
+        "text": "`scripts/quick_check.sh` is green",
+        "waived_reason": null
+      },
+      {
+        "by": "owner",
+        "choices": [
+          "waive"
+        ],
+        "created_at": "2026-11-01T17:43:17.352366+00:00",
+        "evidence": {},
+        "id": "req-0cf8bfb4934a",
+        "judged_at": null,
+        "judged_commit": null,
+        "kind": "shot",
+        "kind_word": "Shot",
+        "label": "R2",
+        "ordinal": 2,
+        "parent_id": null,
+        "program_id": "program-b81c472e0228",
+        "required": true,
+        "rounds": 0,
+        "running": false,
+        "scope": "program",
+        "spec": {
+          "case": "calls",
+          "width": 393
+        },
+        "stale": false,
+        "state": "not_yet",
+        "state_word": "Not yet",
+        "step_id": null,
+        "text": "The Calls window at 393 shows ten rows with no clipped text.",
+        "waived_reason": null
+      }
+    ],
+    "requirements_met": {
+      "his": 0,
+      "met": 0,
+      "total": 2,
+      "unmet": 0,
+      "waived": 0
+    },
+    "review_depth": null,
+    "reviewer": {
+      "agent": null,
+      "engine": null,
+      "profile": null
+    },
+    "revision": 5,
+    "rounds": [],
+    "rounds_before_start": false,
+    "search_words": "calls window lists the last ten the calls window should list the last ten calls with their length and who was on them, newest first. holdspeak fast-cycle show the last ten calls in the calls window tests for the calls list fast cycle",
+    "skipped": 0,
+    "spend_limit_usd": null,
+    "state": "drafting",
+    "state_word": "Drafting",
+    "status_line": "Drafting · 0 of 2 done · check: quick_check.sh · control Normal",
+    "steps": [
+      {
+        "after": [],
+        "agent": "Claude Code",
+        "amendments": [],
+        "branch": null,
+        "brief": "The Calls window lists the last ten calls, newest first, each row showing the call length and the participants.\nIf there are fewer than ten calls, list all of them.\nThe fixture carries at least ten sample calls with varied lengths and participant sets.",
+        "budget_tokens": null,
+        "check": {
+          "command": "scripts/quick_check.sh",
+          "commit": null,
+          "log": null,
+          "minutes": null,
+          "reasons": [],
+          "running": false,
+          "sections": [],
+          "verdict": null
+        },
+        "contenders": [],
+        "editable": [
+          "title",
+          "brief",
+          "owns",
+          "after",
+          "effort",
+          "agent",
+          "runs_on_then",
+          "race",
+          "gate_check",
+          "gate_review",
+          "review_depth",
+          "gate_merge",
+          "requirements",
+          "position",
+          "for_person",
+          "may_call",
+          "prefer_idle",
+          "budget"
+        ],
+        "effort": "medium",
+        "elapsed": "",
+        "elapsed_seconds": null,
+        "ended_at": null,
+        "ending": "none",
+        "engine": null,
+        "estimate": {
+          "budget": 65536,
+          "code": null,
+          "engine": "Claude Code",
+          "fits": true,
+          "share": 32768,
+          "tokens": 5895,
+          "words": "6k of 32k"
+        },
+        "findings": [],
+        "for_person": null,
+        "for_person_id": null,
+        "frozen": {},
+        "gate": {
+          "check": true,
+          "merge": "level",
+          "review": "none",
+          "review_depth": "delta"
+        },
+        "handoffs": [],
+        "held_reason": null,
+        "history": null,
+        "id": "step-fa9a6812b18f",
+        "last_checkpoint": null,
+        "launch_id": null,
+        "limit": null,
+        "may_call": false,
+        "ordinal": 1,
+        "origin_ref": null,
+        "owns": [
+          "web/src/desk/calls/CallsWindow.tsx",
+          "web/src/desk/calls/__fixtures__/calls.list.ts"
+        ],
+        "parked_by": null,
+        "parked_reason": null,
+        "pr": null,
+        "prefer_idle": false,
+        "profile": "claude-default",
+        "race": 0,
+        "race_of": null,
+        "report": null,
+        "report_text": null,
+        "requirements": [],
+        "review": {
+          "reviewer": null,
+          "round": null,
+          "verdict": null
+        },
+        "rounds": 0,
+        "runs_on": [
+          {
+            "agent": "Claude Code",
+            "engine": null,
+            "label": "Claude Code",
+            "profile": "claude-default"
+          }
+        ],
+        "started_at": null,
+        "state": "planned",
+        "state_word": "Planned",
+        "station": -1,
+        "stations": [
+          "brief",
+          "work",
+          "check",
+          "review",
+          "pr",
+          "merge"
+        ],
+        "story": [],
+        "taken": false,
+        "title": "Show the last ten calls in the Calls window",
+        "updated_at": "2026-11-01T17:43:17.344579+00:00",
+        "wait": null,
+        "worktree": null
+      },
+      {
+        "after": [
+          1
+        ],
+        "agent": "Claude Code",
+        "amendments": [],
+        "branch": null,
+        "brief": "Integration test: the Calls window renders ten rows, newest first, each with length and participant names.\nWith fewer than ten calls in the fixture, all are shown and no empty rows appear.",
+        "budget_tokens": null,
+        "check": {
+          "command": "scripts/quick_check.sh",
+          "commit": null,
+          "log": null,
+          "minutes": null,
+          "reasons": [],
+          "running": false,
+          "sections": [],
+          "verdict": null
+        },
+        "contenders": [],
+        "editable": [
+          "title",
+          "brief",
+          "owns",
+          "after",
+          "effort",
+          "agent",
+          "runs_on_then",
+          "race",
+          "gate_check",
+          "gate_review",
+          "review_depth",
+          "gate_merge",
+          "requirements",
+          "position",
+          "for_person",
+          "may_call",
+          "prefer_idle",
+          "budget"
+        ],
+        "effort": "low",
+        "elapsed": "",
+        "elapsed_seconds": null,
+        "ended_at": null,
+        "ending": "none",
+        "engine": null,
+        "estimate": {
+          "budget": 65536,
+          "code": null,
+          "engine": "Claude Code",
+          "fits": true,
+          "share": 32768,
+          "tokens": 1588,
+          "words": "2k of 32k"
+        },
+        "findings": [],
+        "for_person": null,
+        "for_person_id": null,
+        "frozen": {},
+        "gate": {
+          "check": true,
+          "merge": "level",
+          "review": "none",
+          "review_depth": "delta"
+        },
+        "handoffs": [],
+        "held_reason": null,
+        "history": null,
+        "id": "step-61d6b49af9d7",
+        "last_checkpoint": null,
+        "launch_id": null,
+        "limit": null,
+        "may_call": false,
+        "ordinal": 2,
+        "origin_ref": null,
+        "owns": [
+          "tests/integration/test_line_call.py"
+        ],
+        "parked_by": null,
+        "parked_reason": null,
+        "pr": null,
+        "prefer_idle": false,
+        "profile": "claude-default",
+        "race": 0,
+        "race_of": null,
+        "report": null,
+        "report_text": null,
+        "requirements": [],
+        "review": {
+          "reviewer": null,
+          "round": null,
+          "verdict": null
+        },
+        "rounds": 0,
+        "runs_on": [
+          {
+            "agent": "Claude Code",
+            "engine": null,
+            "label": "Claude Code",
+            "profile": "claude-default"
+          }
+        ],
+        "started_at": null,
+        "state": "planned",
+        "state_word": "Planned",
+        "station": -1,
+        "stations": [
+          "brief",
+          "work",
+          "check",
+          "review",
+          "pr",
+          "merge"
+        ],
+        "story": [],
+        "taken": false,
+        "title": "Tests for the calls list",
+        "updated_at": "2026-11-01T17:43:17.344579+00:00",
+        "wait": null,
+        "worktree": null
+      }
+    ],
+    "template": "fast-cycle",
+    "title": "Calls window lists the last ten",
+    "total": 2,
+    "track": [
+      {
+        "mark": "planned",
+        "ordinal": 1,
+        "title": "Show the last ten calls in the Calls window"
+      },
+      {
+        "mark": "planned",
+        "ordinal": 2,
+        "title": "Tests for the calls list"
+      }
+    ],
+    "updated_at": "2026-11-01T17:43:17.360722+00:00",
+    "usage_warning_share": null,
+    "within": [],
+    "your_turn": 0,
+    "your_turn_items": []
+  },
+  "start_refused": {
+    "body": {
+      "code": "waits_on_program",
+      "detail": "It starts after Meeting recap in the Note is done.",
+      "error": "waits_on_program",
+      "program_id": "program-354982429ca6"
+    },
+    "status": 409
+  }
+}
