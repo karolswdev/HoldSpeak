@@ -2,10 +2,10 @@
   "items": [],
   "proposed": [
     {
-      "at": "2026-11-01T11:52:13.516460+00:00",
-      "id": "record-a9dd2b81495448569fcbeac1b712b2dc",
+      "at": "2026-11-01T12:16:49.094206+00:00",
+      "id": "record-d8904037988d402887585fa1ded1e38a",
       "program": {
-        "id": "program-d36844ffa04c",
+        "id": "program-6f6b7141103f",
         "title": "The words wave"
       },
       "prs": [
@@ -14,15 +14,15 @@
           "url": "https://github.com/acme/app/pull/101"
         }
       ],
-      "source_ref": "decision_record:record-a9dd2b81495448569fcbeac1b712b2dc",
+      "source_ref": "decision_record:record-d8904037988d402887585fa1ded1e38a",
       "status": "proposed",
       "text": "Skip: sentence case the title"
     },
     {
-      "at": "2026-11-01T11:52:13.298785+00:00",
-      "id": "record-6b7c644a47d54c2d94fedc567525cf8b",
+      "at": "2026-11-01T12:16:48.881824+00:00",
+      "id": "record-5f1e24877a5246a88f7c8cfd2a2277cb",
       "program": {
-        "id": "program-d36844ffa04c",
+        "id": "program-6f6b7141103f",
         "title": "The words wave"
       },
       "prs": [
@@ -31,7 +31,7 @@
           "url": "https://github.com/acme/app/pull/101"
         }
       ],
-      "source_ref": "decision_record:record-6b7c644a47d54c2d94fedc567525cf8b",
+      "source_ref": "decision_record:record-5f1e24877a5246a88f7c8cfd2a2277cb",
       "status": "proposed",
       "text": "Skip: the old name stays in a comment"
     }
