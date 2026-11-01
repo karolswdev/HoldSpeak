@@ -1457,7 +1457,10 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         if case_id == "program-held":
             win = page.locator(f'[id="{wid}"]')
             win.locator("[data-testid=programs-tray]").wait_for(timeout=T)
+            # Brief on the words row opens the held step under its row.
+            win.get_by_test_id("programs-turn-brief").click()
             win.locator("[data-testid=programs-step-fold]").wait_for(timeout=T)
+            page.mouse.move(2, 2)
         if case_id == "program-text":
             # PG-LANG LANG2: Text (in More ▾ at the phone width), a planned
             # step's title changed, Preview: the well over the text.

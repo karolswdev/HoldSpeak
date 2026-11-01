@@ -99,3 +99,24 @@ it; he judges it live on his desk.
 Divergences from the canvas: Open lane stays on the step row (not in the
 open step's verbs); the answered rounds show as one Token under the goal
 only when a round has an answer.
+
+## Follow-up (2026-11-01, live shots on his hub)
+
+- Drafting in the same grammar (canvas sections "Drafting at 1440 / 393"):
+  the line of planned stations with their size; the headline is the goal,
+  edited in place (`EditInPlace`), and the tray: Start with what Start
+  checks (`startWords`, #1686's `start_precheck`), Plan it, Ask me first;
+  each step is a row that opens in place to its fields (`PlannedBrief`),
+  its gate (`GateLine`: the check, the review, who merges; `changeStep`
+  `gate_*`) and what it must prove. `DraftStepRow` and the Drafting
+  Requirements board are parked (still in the code, not drawn).
+- Step rows say the hub's story (`rowWords`), a held step's row its
+  "what happened"; `changed_line` maps the engine's own words ("You skipped
+  the step.", "HoldSpeak could not give the step to an agent.") and drops a
+  wire code. Contenders carry `story` too.
+- No empty section: a step with nothing to prove shows Add a requirement
+  alone.
+- Every step stays in view: while something waits on him no step opens by
+  itself (the headline carries it).
+- Copy page link left the tray: the words row under it says Brief ·
+  Program text · Copy page link.

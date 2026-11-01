@@ -1,6 +1,6 @@
 {
   "applied": {
-    "allowed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh\n  reviewer Codex at standard\n  budget 64k\n  night 23:30–07:00 · at most 8 steps\n  within holdspeak/, docs/\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nat the end\n  R5 word: I used the desk for a morning with no stall\n    walk Open People at 393\n    walk Start a meeting\n    walk Open People again\n\nround Architecture · asking\n  ? Does the cache live in the hub or the client?\n  = In the hub; the client stays as it is.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  + Also the avatar route.\n  R3 check: `echo 12 passed` is green\n  R4 measure: The People routes answer fast\n    run sh scripts/bench_people.sh\n    bound p95 < 100 ms\n\nstep + The loop watch\n  after 2\n  agent Codex · effort low\n  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out\n  after 1, 2\n  budget 32k\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
+    "allowed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh\n  reviewer Codex at standard\n  budget 64k\n  night 23:30–07:00 · at most 8 steps\n  within holdspeak/, docs/\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nat the end\n  R5 word: I used the desk for a morning with no stall\n    walk Open People at 393\n    walk Start a meeting\n    walk Open People again\n\nround Architecture · asking\n  ? Does the cache live in the hub or the client?\n  = In the hub; the client stays as it is.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  + Also the avatar route.\n  R3 check: `echo 12 passed` is green\n  R4 measure: The People routes answer fast\n    run sh scripts/bench_people.sh\n    bound p95 < 100 ms\n\nstep + The loop watch\n  after 2\n  agent Codex · effort low\n  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out\n  after 1, 2\n  budget 32k\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
     "applied": true,
     "changes": [
       {
@@ -91,7 +91,7 @@
     "lowers": [
       "program.control"
     ],
-    "patch": "--- current\n+++ proposed\n@@ -1,10 +1,10 @@\n # program text 1\n-program The hub stops stalling                    # Running · 0 of 3 done\n+program The hub stops stalling\n   goal\n   > Every route under 100 ms while a meeting records.\n   in app · main · project HoldSpeak\n   template build and review\n-  control normal\n+  control yolo\n   check sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh\n   reviewer Codex at standard\n   budget 64k\n@@ -12,34 +12,43 @@\n   within holdspeak/, docs/\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n \n at the end\n-  R5 word: I used the desk for a morning with no stall  # Not yet\n+  R5 word: I used the desk for a morning with no stall\n     walk Open People at 393\n     walk Start a meeting\n     walk Open People again\n \n round Architecture · asking\n   ? Does the cache live in the hub or the client?\n+  = In the hub; the client stays as it is.\n \n-step 1 Indexes                                    # In review · Claude Code · under a minute\n+step 1 Indexes\n   owns holdspeak/db/schema.py\n   brief\n   > Add the three indexes.\n \n-step 2 People routes                              # Working · Claude Code · under a minute\n+step 2 People routes\n   owns holdspeak/web/routes/people.py\n   brief\n   > 31 handlers through run_in_threadpool.\n-  R3 check: `echo 12 passed` is green             # Not yet\n-  R4 measure: The People routes answer fast       # Not measured yet\n+  + Also the avatar route.\n+  R3 check: `echo 12 passed` is green\n+  R4 measure: The People routes answer fast\n     run sh scripts/bench_people.sh\n     bound p95 < 100 ms\n \n-step 3 The fan-out                                # Planned\n+step + The loop watch\n+  after 2\n+  agent Codex · effort low\n+  brief\n+  > Log each handler over 100 ms.\n+\n+step 3 The fan-out\n   after 1, 2\n   budget 32k\n+  merge owner\n   brief\n   > One frame per change, not one per row.\n",
+    "patch": "--- current\n+++ proposed\n@@ -1,10 +1,10 @@\n # program text 1\n-program The hub stops stalling                    # Running · 0 of 3 done\n+program The hub stops stalling\n   goal\n   > Every route under 100 ms while a meeting records.\n   in app · main · project HoldSpeak\n   template build and review\n-  control normal\n+  control yolo\n   check sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh\n   reviewer Codex at standard\n   budget 64k\n@@ -12,34 +12,43 @@\n   within holdspeak/, docs/\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n \n at the end\n-  R5 word: I used the desk for a morning with no stall  # Not yet\n+  R5 word: I used the desk for a morning with no stall\n     walk Open People at 393\n     walk Start a meeting\n     walk Open People again\n \n round Architecture · asking\n   ? Does the cache live in the hub or the client?\n+  = In the hub; the client stays as it is.\n \n-step 1 Indexes                                    # In review · Claude Code · under a minute\n+step 1 Indexes\n   owns holdspeak/db/schema.py\n   brief\n   > Add the three indexes.\n \n-step 2 People routes                              # Working · Claude Code · under a minute\n+step 2 People routes\n   owns holdspeak/web/routes/people.py\n   brief\n   > 31 handlers through run_in_threadpool.\n-  R3 check: `echo 12 passed` is green             # Not yet\n-  R4 measure: The People routes answer fast       # Not measured yet\n+  + Also the avatar route.\n+  R3 check: `echo 12 passed` is green\n+  R4 measure: The People routes answer fast\n     run sh scripts/bench_people.sh\n     bound p95 < 100 ms\n \n-step 3 The fan-out                                # Planned\n+step + The loop watch\n+  after 2\n+  agent Codex · effort low\n+  brief\n+  > Log each handler over 100 ms.\n+\n+step 3 The fan-out\n   after 1, 2\n   budget 32k\n+  merge owner\n   brief\n   > One frame per change, not one per row.\n",
     "program": {
       "allowed_profiles": [],
       "asks": 0,
@@ -103,10 +103,10 @@
         "shot_reason": "No shot command in this repository",
         "word": true
       },
-      "check_command": "sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
+      "check_command": "sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
       "checkpoints": [
         {
-          "at": "2026-11-01T03:49:33.581139+00:00",
+          "at": "2026-11-01T04:40:24.736274+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -124,7 +124,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T03:49:33.548224+00:00",
+          "at": "2026-11-01T04:40:24.716548+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -138,13 +138,13 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-c9cc069695b7",
+          "step_id": "step-1cdd3852b28a",
           "undo": {
             "line": "Also the avatar route."
           }
         },
         {
-          "at": "2026-11-01T03:49:33.541953+00:00",
+          "at": "2026-11-01T04:40:24.711980+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -158,7 +158,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-d9bab4a5a7b7",
+          "step_id": "step-40fd20782933",
           "undo": {
             "pin": {
               "note": "No worktree to pin yet"
@@ -166,7 +166,7 @@
           }
         },
         {
-          "at": "2026-11-01T03:49:33.537150+00:00",
+          "at": "2026-11-01T04:40:24.707808+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -180,7 +180,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-4e162c25b0f4",
+          "step_id": "step-427ce9f414b8",
           "undo": {
             "pin": {
               "note": "No worktree to pin yet"
@@ -188,7 +188,7 @@
           }
         },
         {
-          "at": "2026-11-01T03:49:33.530512+00:00",
+          "at": "2026-11-01T04:40:24.703364+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -206,7 +206,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T03:49:33.523736+00:00",
+          "at": "2026-11-01T04:40:24.696230+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -224,7 +224,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T03:49:33.339054+00:00",
+          "at": "2026-11-01T04:40:24.554854+00:00",
           "by": "engine",
           "choice": null,
           "decision_record_id": null,
@@ -235,152 +235,152 @@
           "overturnable": false,
           "overturned_at": null,
           "pin_note": null,
-          "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/5",
-          "ref_commit": "0782d0352f999fde017d1138927acb76a4ec033e",
+          "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/5",
+          "ref_commit": "5dacd400de962548af8fe92675d9c75d9419e3df",
           "rule": null,
-          "step_id": "step-d549dff789fd",
+          "step_id": "step-e3124f4ba1be",
           "undo": {
             "pin": {
-              "commit": "0782d0352f999fde017d1138927acb76a4ec033e",
-              "head": "573c949de4fdf05ee1d079cd3b78c3e949b6c947",
+              "commit": "5dacd400de962548af8fe92675d9c75d9419e3df",
+              "head": "1f728b891195e60c3e27316f6ef4c57c8ec3afb0",
               "n": 5,
-              "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/5",
-              "tree": "31862e7300d503d323e5577ee7cfbd7b3118df80"
+              "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/5",
+              "tree": "67e0c02a77033258e7169ff86e7a98b7292bb35b"
             }
           }
         },
         {
-          "at": "2026-11-01T03:49:33.053083+00:00",
+          "at": "2026-11-01T04:40:24.395630+00:00",
           "by": "engine",
           "choice": null,
           "decision_record_id": null,
           "id": 13,
           "kind": null,
-          "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-brsls5c4/rig-text/hs-program-step-d549dff789fd/.tmp/program-check/step-d549dff789fd/20261101T034932Z.log",
+          "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-7xt5r0_8/rig-text/hs-program-step-e3124f4ba1be/.tmp/program-check/step-e3124f4ba1be/20261101T044024Z.log",
           "operation_id": null,
           "overturnable": false,
           "overturned_at": null,
           "pin_note": null,
-          "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/4",
-          "ref_commit": "b6c3e93b7df762fd8710231595cc5faa0ff04973",
+          "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/4",
+          "ref_commit": "c64deee29f6d2ea2614b9211c649093582d5325d",
           "rule": null,
-          "step_id": "step-d549dff789fd",
+          "step_id": "step-e3124f4ba1be",
           "undo": {
             "pin": {
-              "commit": "b6c3e93b7df762fd8710231595cc5faa0ff04973",
-              "head": "573c949de4fdf05ee1d079cd3b78c3e949b6c947",
+              "commit": "c64deee29f6d2ea2614b9211c649093582d5325d",
+              "head": "1f728b891195e60c3e27316f6ef4c57c8ec3afb0",
               "n": 4,
-              "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/4",
-              "tree": "31862e7300d503d323e5577ee7cfbd7b3118df80"
+              "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/4",
+              "tree": "67e0c02a77033258e7169ff86e7a98b7292bb35b"
             }
           }
         },
         {
-          "at": "2026-11-01T03:49:32.779487+00:00",
+          "at": "2026-11-01T04:40:24.238323+00:00",
           "by": "engine",
           "choice": null,
           "decision_record_id": null,
           "id": 12,
           "kind": null,
-          "line": "Running the check: sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
+          "line": "Running the check: sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
           "operation_id": null,
           "overturnable": false,
           "overturned_at": null,
           "pin_note": null,
-          "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/3",
-          "ref_commit": "10272395238ce2da636e14e206db1843315ae4a7",
+          "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/3",
+          "ref_commit": "dcc6390f1f45e1891497a8a8da00137dfcd00955",
           "rule": null,
-          "step_id": "step-d549dff789fd",
+          "step_id": "step-e3124f4ba1be",
           "undo": {
             "pin": {
-              "commit": "10272395238ce2da636e14e206db1843315ae4a7",
-              "head": "573c949de4fdf05ee1d079cd3b78c3e949b6c947",
+              "commit": "dcc6390f1f45e1891497a8a8da00137dfcd00955",
+              "head": "1f728b891195e60c3e27316f6ef4c57c8ec3afb0",
               "n": 3,
-              "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/3",
+              "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/3",
               "tree": "b394cafba8a0c45631aae79dac74bb99aec4fbf2"
             }
           }
         },
         {
-          "at": "2026-11-01T03:49:32.611553+00:00",
+          "at": "2026-11-01T04:40:24.077571+00:00",
           "by": "engine",
           "choice": null,
           "decision_record_id": null,
           "id": 11,
           "kind": null,
-          "line": "New commit 573c949d; the check runs",
+          "line": "New commit 1f728b89; the check runs",
           "operation_id": null,
           "overturnable": false,
           "overturned_at": null,
           "pin_note": null,
-          "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/2",
-          "ref_commit": "f7e7cf2a14d42ae2598b8cbb3f2f82816e8e5314",
+          "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/2",
+          "ref_commit": "1dbe84bf840bc907506b1fc61fc03aa26d03197f",
           "rule": null,
-          "step_id": "step-d549dff789fd",
+          "step_id": "step-e3124f4ba1be",
           "undo": {
             "pin": {
-              "commit": "f7e7cf2a14d42ae2598b8cbb3f2f82816e8e5314",
-              "head": "573c949de4fdf05ee1d079cd3b78c3e949b6c947",
+              "commit": "1dbe84bf840bc907506b1fc61fc03aa26d03197f",
+              "head": "1f728b891195e60c3e27316f6ef4c57c8ec3afb0",
               "n": 2,
-              "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/2",
+              "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/2",
               "tree": "b394cafba8a0c45631aae79dac74bb99aec4fbf2"
             }
           }
         },
         {
-          "at": "2026-11-01T03:49:32.272138+00:00",
+          "at": "2026-11-01T04:40:23.846487+00:00",
           "by": "engine",
           "choice": null,
           "decision_record_id": null,
           "id": 10,
           "kind": null,
-          "line": "Handed to Claude Code in hs-program-step-c9cc069695b7",
+          "line": "Handed to Claude Code in hs-program-step-1cdd3852b28a",
           "operation_id": null,
           "overturnable": false,
           "overturned_at": null,
           "pin_note": null,
-          "ref": "refs/holdspeak/checkpoints/step-c9cc069695b7/1",
-          "ref_commit": "ffcec5c957044985bd74f3d4c0be7db2f412b79d",
+          "ref": "refs/holdspeak/checkpoints/step-1cdd3852b28a/1",
+          "ref_commit": "821e317383b598f0b868db3287510d2120569783",
           "rule": null,
-          "step_id": "step-c9cc069695b7",
+          "step_id": "step-1cdd3852b28a",
           "undo": {
             "pin": {
-              "commit": "ffcec5c957044985bd74f3d4c0be7db2f412b79d",
-              "head": "1ec7bb431756dabe96dd1f6d147b3d1cf4f00225",
+              "commit": "821e317383b598f0b868db3287510d2120569783",
+              "head": "1520623c970f037ad6bf55759cfe6a39d45989cc",
               "n": 1,
-              "ref": "refs/holdspeak/checkpoints/step-c9cc069695b7/1",
+              "ref": "refs/holdspeak/checkpoints/step-1cdd3852b28a/1",
               "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
             }
           }
         },
         {
-          "at": "2026-11-01T03:49:32.033927+00:00",
+          "at": "2026-11-01T04:40:23.677152+00:00",
           "by": "engine",
           "choice": null,
           "decision_record_id": null,
           "id": 9,
           "kind": null,
-          "line": "Handed to Claude Code in hs-program-step-d549dff789fd",
+          "line": "Handed to Claude Code in hs-program-step-e3124f4ba1be",
           "operation_id": null,
           "overturnable": false,
           "overturned_at": null,
           "pin_note": null,
-          "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/1",
-          "ref_commit": "f3f75452c247d0b3e64f2af11de4f9d44b9ef2a4",
+          "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/1",
+          "ref_commit": "04302668643ef04237d0394cc7003005c3ec24bb",
           "rule": null,
-          "step_id": "step-d549dff789fd",
+          "step_id": "step-e3124f4ba1be",
           "undo": {
             "pin": {
-              "commit": "f3f75452c247d0b3e64f2af11de4f9d44b9ef2a4",
-              "head": "1ec7bb431756dabe96dd1f6d147b3d1cf4f00225",
+              "commit": "04302668643ef04237d0394cc7003005c3ec24bb",
+              "head": "1520623c970f037ad6bf55759cfe6a39d45989cc",
               "n": 1,
-              "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/1",
+              "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/1",
               "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
             }
           }
         },
         {
-          "at": "2026-11-01T03:49:31.894842+00:00",
+          "at": "2026-11-01T04:40:23.600451+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -398,7 +398,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T03:49:31.853131+00:00",
+          "at": "2026-11-01T04:40:23.568282+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -412,7 +412,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-4e162c25b0f4",
+          "step_id": "step-427ce9f414b8",
           "undo": {
             "pin": {
               "note": "No worktree to pin yet"
@@ -420,7 +420,7 @@
           }
         },
         {
-          "at": "2026-11-01T03:49:31.845917+00:00",
+          "at": "2026-11-01T04:40:23.564627+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -436,11 +436,11 @@
           "rule": null,
           "step_id": "",
           "undo": {
-            "requirement_id": "req-f8338d252025"
+            "requirement_id": "req-91a70a1eddd5"
           }
         },
         {
-          "at": "2026-11-01T03:49:31.840695+00:00",
+          "at": "2026-11-01T04:40:23.561863+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -454,13 +454,13 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-c9cc069695b7",
+          "step_id": "step-1cdd3852b28a",
           "undo": {
-            "requirement_id": "req-46b6fb028ed7"
+            "requirement_id": "req-6255fea60df7"
           }
         },
         {
-          "at": "2026-11-01T03:49:31.834801+00:00",
+          "at": "2026-11-01T04:40:23.558655+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -474,13 +474,13 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-c9cc069695b7",
+          "step_id": "step-1cdd3852b28a",
           "undo": {
-            "requirement_id": "req-b77b920b22e3"
+            "requirement_id": "req-57804fe0e954"
           }
         },
         {
-          "at": "2026-11-01T03:49:31.829520+00:00",
+          "at": "2026-11-01T04:40:23.555459+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -498,7 +498,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T03:49:31.824738+00:00",
+          "at": "2026-11-01T04:40:23.553907+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -516,7 +516,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T03:49:31.820061+00:00",
+          "at": "2026-11-01T04:40:23.551345+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -537,7 +537,7 @@
       "closed_at": null,
       "control": "yolo",
       "control_word": "YOLO",
-      "created_at": "2026-11-01T03:49:31.819661+00:00",
+      "created_at": "2026-11-01T04:40:23.550961+00:00",
       "decided_for_you": [],
       "default": {
         "agent": "Claude Code",
@@ -557,10 +557,10 @@
       "for_person": null,
       "for_person_id": null,
       "goal": "Every route under 100 ms while a meeting records.",
-      "id": "program-095e674895cd",
+      "id": "program-5c6847b199f3",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T03:49:33.581139+00:00",
+        "at": "2026-11-01T04:40:24.736274+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -585,8 +585,8 @@
         "max_steps": 8,
         "start": "23:30"
       },
-      "note_id": "program-program-095e674895cd",
-      "note_window": "pullout:note:program-program-095e674895cd",
+      "note_id": "program-program-5c6847b199f3",
+      "note_window": "pullout:note:program-program-5c6847b199f3",
       "origin_ref": null,
       "persons": [],
       "place": {
@@ -607,7 +607,7 @@
       "repository": {
         "base_branch": "main",
         "label": "app",
-        "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-brsls5c4/rig-text/app"
+        "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-7xt5r0_8/rig-text/app"
       },
       "requirements": [
         {
@@ -615,9 +615,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T03:49:31.820289+00:00",
+          "created_at": "2026-11-01T04:40:23.551528+00:00",
           "evidence": {},
-          "id": "req-1416e74569e4",
+          "id": "req-d3306d3fe1a2",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
@@ -625,7 +625,7 @@
           "label": "R1",
           "ordinal": 1,
           "parent_id": null,
-          "program_id": "program-095e674895cd",
+          "program_id": "program-5c6847b199f3",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -639,22 +639,22 @@
             {
               "ordinal": 1,
               "state": "not_yet",
-              "step_id": "step-d549dff789fd"
+              "step_id": "step-e3124f4ba1be"
             },
             {
               "ordinal": 2,
               "state": "not_yet",
-              "step_id": "step-c9cc069695b7"
+              "step_id": "step-1cdd3852b28a"
             },
             {
               "ordinal": 3,
               "state": "not_yet",
-              "step_id": "step-d9bab4a5a7b7"
+              "step_id": "step-40fd20782933"
             },
             {
               "ordinal": 4,
               "state": "not_yet",
-              "step_id": "step-4e162c25b0f4"
+              "step_id": "step-427ce9f414b8"
             }
           ],
           "text": "The change does only what its brief says.",
@@ -665,9 +665,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T03:49:31.820686+00:00",
+          "created_at": "2026-11-01T04:40:23.551843+00:00",
           "evidence": {},
-          "id": "req-027f62a3ed75",
+          "id": "req-8558a93f0cb2",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
@@ -675,7 +675,7 @@
           "label": "R2",
           "ordinal": 2,
           "parent_id": null,
-          "program_id": "program-095e674895cd",
+          "program_id": "program-5c6847b199f3",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -689,22 +689,22 @@
             {
               "ordinal": 1,
               "state": "not_yet",
-              "step_id": "step-d549dff789fd"
+              "step_id": "step-e3124f4ba1be"
             },
             {
               "ordinal": 2,
               "state": "not_yet",
-              "step_id": "step-c9cc069695b7"
+              "step_id": "step-1cdd3852b28a"
             },
             {
               "ordinal": 3,
               "state": "not_yet",
-              "step_id": "step-d9bab4a5a7b7"
+              "step_id": "step-40fd20782933"
             },
             {
               "ordinal": 4,
               "state": "not_yet",
-              "step_id": "step-4e162c25b0f4"
+              "step_id": "step-427ce9f414b8"
             }
           ],
           "text": "Each new behaviour has a test.",
@@ -717,9 +717,9 @@
             "unmet",
             "waive"
           ],
-          "created_at": "2026-11-01T03:49:31.845452+00:00",
+          "created_at": "2026-11-01T04:40:23.564552+00:00",
           "evidence": {},
-          "id": "req-f8338d252025",
+          "id": "req-91a70a1eddd5",
           "judged_at": null,
           "judged_commit": null,
           "kind": "word",
@@ -727,7 +727,7 @@
           "label": "R5",
           "ordinal": 5,
           "parent_id": null,
-          "program_id": "program-095e674895cd",
+          "program_id": "program-5c6847b199f3",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -772,7 +772,7 @@
             {
               "answer": "In the hub; the client stays as it is.",
               "answered_by": "owner",
-              "at": "2026-11-01T03:49:33.580939+00:00",
+              "at": "2026-11-01T04:40:24.736075+00:00",
               "became": [],
               "choices": [],
               "id": "q-1",
@@ -801,9 +801,9 @@
           "brief": "Add the three indexes.",
           "budget_tokens": null,
           "check": {
-            "command": "sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
-            "commit": "573c949de4fdf05ee1d079cd3b78c3e949b6c947",
-            "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-brsls5c4/rig-text/hs-program-step-d549dff789fd/.tmp/program-check/step-d549dff789fd/20261101T034932Z.log",
+            "command": "sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
+            "commit": "1f728b891195e60c3e27316f6ef4c57c8ec3afb0",
+            "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-7xt5r0_8/rig-text/hs-program-step-e3124f4ba1be/.tmp/program-check/step-e3124f4ba1be/20261101T044024Z.log",
             "minutes": 0.0,
             "reasons": [],
             "running": false,
@@ -877,9 +877,9 @@
           "handoffs": [],
           "held_reason": null,
           "history": null,
-          "id": "step-d549dff789fd",
+          "id": "step-e3124f4ba1be",
           "last_checkpoint": {
-            "at": "2026-11-01T03:49:33.339054+00:00",
+            "at": "2026-11-01T04:40:24.554854+00:00",
             "by": "engine",
             "choice": null,
             "decision_record_id": null,
@@ -890,17 +890,17 @@
             "overturnable": false,
             "overturned_at": null,
             "pin_note": null,
-            "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/5",
-            "ref_commit": "0782d0352f999fde017d1138927acb76a4ec033e",
+            "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/5",
+            "ref_commit": "5dacd400de962548af8fe92675d9c75d9419e3df",
             "rule": null,
-            "step_id": "step-d549dff789fd",
+            "step_id": "step-e3124f4ba1be",
             "undo": {
               "pin": {
-                "commit": "0782d0352f999fde017d1138927acb76a4ec033e",
-                "head": "573c949de4fdf05ee1d079cd3b78c3e949b6c947",
+                "commit": "5dacd400de962548af8fe92675d9c75d9419e3df",
+                "head": "1f728b891195e60c3e27316f6ef4c57c8ec3afb0",
                 "n": 5,
-                "ref": "refs/holdspeak/checkpoints/step-d549dff789fd/5",
-                "tree": "31862e7300d503d323e5577ee7cfbd7b3118df80"
+                "ref": "refs/holdspeak/checkpoints/step-e3124f4ba1be/5",
+                "tree": "67e0c02a77033258e7169ff86e7a98b7292bb35b"
               }
             }
           },
@@ -926,17 +926,17 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:31.828055+00:00",
+              "created_at": "2026-11-01T04:40:23.555063+00:00",
               "evidence": {},
-              "id": "req-4109cc6a8f43",
+              "id": "req-54f6006baf27",
               "judged_at": null,
               "judged_commit": null,
               "kind": "review",
               "kind_word": "Review",
               "label": "R1",
               "ordinal": 1,
-              "parent_id": "req-1416e74569e4",
-              "program_id": "program-095e674895cd",
+              "parent_id": "req-d3306d3fe1a2",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": true,
@@ -945,7 +945,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Checking",
-              "step_id": "step-d549dff789fd",
+              "step_id": "step-e3124f4ba1be",
               "text": "The change does only what its brief says.",
               "waived_reason": null
             },
@@ -954,17 +954,17 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:31.828684+00:00",
+              "created_at": "2026-11-01T04:40:23.555284+00:00",
               "evidence": {},
-              "id": "req-9d952bce703e",
+              "id": "req-24e5b8464539",
               "judged_at": null,
               "judged_commit": null,
               "kind": "review",
               "kind_word": "Review",
               "label": "R2",
               "ordinal": 2,
-              "parent_id": "req-027f62a3ed75",
-              "program_id": "program-095e674895cd",
+              "parent_id": "req-8558a93f0cb2",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": true,
@@ -973,7 +973,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Checking",
-              "step_id": "step-d549dff789fd",
+              "step_id": "step-e3124f4ba1be",
               "text": "Each new behaviour has a test.",
               "waived_reason": null
             }
@@ -999,7 +999,7 @@
               "profile": "claude-default"
             }
           ],
-          "started_at": "2026-11-01T03:49:32.033439+00:00",
+          "started_at": "2026-11-01T04:40:23.676807+00:00",
           "state": "review",
           "state_word": "In review",
           "station": 3,
@@ -1013,28 +1013,28 @@
           ],
           "story": [
             {
-              "at": "2026-11-01T03:49:32.611553+00:00",
+              "at": "2026-11-01T04:40:24.077571+00:00",
               "line": "The agent made a new commit."
             },
             {
-              "at": "2026-11-01T03:49:33.053083+00:00",
+              "at": "2026-11-01T04:40:24.395630+00:00",
               "line": "The check ran green in under a minute."
             },
             {
-              "at": "2026-11-01T03:49:33.339054+00:00",
+              "at": "2026-11-01T04:40:24.554854+00:00",
               "line": "Codex reviews at depth standard."
             }
           ],
           "title": "Indexes",
-          "updated_at": "2026-11-01T03:49:33.338811+00:00",
-          "worktree": "hs-program-step-d549dff789fd"
+          "updated_at": "2026-11-01T04:40:24.554632+00:00",
+          "worktree": "hs-program-step-e3124f4ba1be"
         },
         {
           "after": [],
           "agent": "Claude Code",
           "amendments": [
             {
-              "at": "2026-11-01T03:49:33.548224+00:00",
+              "at": "2026-11-01T04:40:24.716548+00:00",
               "by": "owner",
               "line": "Also the avatar route.",
               "sent_at": null
@@ -1044,7 +1044,7 @@
           "brief": "31 handlers through run_in_threadpool.",
           "budget_tokens": null,
           "check": {
-            "command": "sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
+            "command": "sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
             "commit": null,
             "log": null,
             "minutes": null,
@@ -1066,7 +1066,7 @@
           ],
           "effort": "low",
           "elapsed": "under a minute",
-          "elapsed_seconds": 1,
+          "elapsed_seconds": 0,
           "ended_at": null,
           "engine": null,
           "estimate": null,
@@ -1095,9 +1095,9 @@
           "handoffs": [],
           "held_reason": null,
           "history": null,
-          "id": "step-c9cc069695b7",
+          "id": "step-1cdd3852b28a",
           "last_checkpoint": {
-            "at": "2026-11-01T03:49:33.548224+00:00",
+            "at": "2026-11-01T04:40:24.716548+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -1111,7 +1111,7 @@
             "ref": null,
             "ref_commit": null,
             "rule": null,
-            "step_id": "step-c9cc069695b7",
+            "step_id": "step-1cdd3852b28a",
             "undo": {
               "line": "Also the avatar route."
             }
@@ -1138,17 +1138,17 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:31.828055+00:00",
+              "created_at": "2026-11-01T04:40:23.555063+00:00",
               "evidence": {},
-              "id": "req-2876bb7edf9b",
+              "id": "req-f680c2162520",
               "judged_at": null,
               "judged_commit": null,
               "kind": "review",
               "kind_word": "Review",
               "label": "R1",
               "ordinal": 1,
-              "parent_id": "req-1416e74569e4",
-              "program_id": "program-095e674895cd",
+              "parent_id": "req-d3306d3fe1a2",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": false,
@@ -1157,7 +1157,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Not yet",
-              "step_id": "step-c9cc069695b7",
+              "step_id": "step-1cdd3852b28a",
               "text": "The change does only what its brief says.",
               "waived_reason": null
             },
@@ -1166,17 +1166,17 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:31.828684+00:00",
+              "created_at": "2026-11-01T04:40:23.555284+00:00",
               "evidence": {},
-              "id": "req-5f9ec3e45785",
+              "id": "req-6c52f0b22541",
               "judged_at": null,
               "judged_commit": null,
               "kind": "review",
               "kind_word": "Review",
               "label": "R2",
               "ordinal": 2,
-              "parent_id": "req-027f62a3ed75",
-              "program_id": "program-095e674895cd",
+              "parent_id": "req-8558a93f0cb2",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": false,
@@ -1185,7 +1185,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Not yet",
-              "step_id": "step-c9cc069695b7",
+              "step_id": "step-1cdd3852b28a",
               "text": "Each new behaviour has a test.",
               "waived_reason": null
             },
@@ -1194,9 +1194,9 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:31.834670+00:00",
+              "created_at": "2026-11-01T04:40:23.558575+00:00",
               "evidence": {},
-              "id": "req-b77b920b22e3",
+              "id": "req-57804fe0e954",
               "judged_at": null,
               "judged_commit": null,
               "kind": "check",
@@ -1204,7 +1204,7 @@
               "label": "R3",
               "ordinal": 3,
               "parent_id": null,
-              "program_id": "program-095e674895cd",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": false,
@@ -1215,7 +1215,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Not yet",
-              "step_id": "step-c9cc069695b7",
+              "step_id": "step-1cdd3852b28a",
               "text": "`echo 12 passed` is green",
               "waived_reason": null
             },
@@ -1224,9 +1224,9 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:31.840559+00:00",
+              "created_at": "2026-11-01T04:40:23.561776+00:00",
               "evidence": {},
-              "id": "req-46b6fb028ed7",
+              "id": "req-6255fea60df7",
               "judged_at": null,
               "judged_commit": null,
               "kind": "measure",
@@ -1234,7 +1234,7 @@
               "label": "R4",
               "ordinal": 4,
               "parent_id": null,
-              "program_id": "program-095e674895cd",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": false,
@@ -1249,7 +1249,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Not measured yet",
-              "step_id": "step-c9cc069695b7",
+              "step_id": "step-1cdd3852b28a",
               "text": "The People routes answer fast",
               "waived_reason": null
             }
@@ -1275,7 +1275,7 @@
               "profile": "claude-default"
             }
           ],
-          "started_at": "2026-11-01T03:49:32.271792+00:00",
+          "started_at": "2026-11-01T04:40:23.846086+00:00",
           "state": "working",
           "state_word": "Working",
           "station": 1,
@@ -1287,10 +1287,15 @@
             "pr",
             "merge"
           ],
-          "story": [],
+          "story": [
+            {
+              "at": "2026-11-01T04:40:23.846487+00:00",
+              "line": "Handed to Claude Code."
+            }
+          ],
           "title": "People routes",
-          "updated_at": "2026-11-01T03:49:33.548228+00:00",
-          "worktree": "hs-program-step-c9cc069695b7"
+          "updated_at": "2026-11-01T04:40:24.716550+00:00",
+          "worktree": "hs-program-step-1cdd3852b28a"
         },
         {
           "after": [
@@ -1302,7 +1307,7 @@
           "brief": "Log each handler over 100 ms.",
           "budget_tokens": null,
           "check": {
-            "command": "sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
+            "command": "sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
             "commit": null,
             "log": null,
             "minutes": null,
@@ -1359,9 +1364,9 @@
           "handoffs": [],
           "held_reason": null,
           "history": null,
-          "id": "step-d9bab4a5a7b7",
+          "id": "step-40fd20782933",
           "last_checkpoint": {
-            "at": "2026-11-01T03:49:33.541953+00:00",
+            "at": "2026-11-01T04:40:24.711980+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -1375,7 +1380,7 @@
             "ref": null,
             "ref_commit": null,
             "rule": null,
-            "step_id": "step-d9bab4a5a7b7",
+            "step_id": "step-40fd20782933",
             "undo": {
               "pin": {
                 "note": "No worktree to pin yet"
@@ -1402,17 +1407,17 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:33.530076+00:00",
+              "created_at": "2026-11-01T04:40:24.702941+00:00",
               "evidence": {},
-              "id": "req-fed64822c6d0",
+              "id": "req-11ad77e6ca56",
               "judged_at": null,
               "judged_commit": null,
               "kind": "review",
               "kind_word": "Review",
               "label": "R1",
               "ordinal": 1,
-              "parent_id": "req-1416e74569e4",
-              "program_id": "program-095e674895cd",
+              "parent_id": "req-d3306d3fe1a2",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": false,
@@ -1421,7 +1426,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Not yet",
-              "step_id": "step-d9bab4a5a7b7",
+              "step_id": "step-40fd20782933",
               "text": "The change does only what its brief says.",
               "waived_reason": null
             },
@@ -1430,17 +1435,17 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:33.530372+00:00",
+              "created_at": "2026-11-01T04:40:24.703230+00:00",
               "evidence": {},
-              "id": "req-a5afd308483e",
+              "id": "req-ccbdc6a1a618",
               "judged_at": null,
               "judged_commit": null,
               "kind": "review",
               "kind_word": "Review",
               "label": "R2",
               "ordinal": 2,
-              "parent_id": "req-027f62a3ed75",
-              "program_id": "program-095e674895cd",
+              "parent_id": "req-8558a93f0cb2",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": false,
@@ -1449,7 +1454,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Not yet",
-              "step_id": "step-d9bab4a5a7b7",
+              "step_id": "step-40fd20782933",
               "text": "Each new behaviour has a test.",
               "waived_reason": null
             }
@@ -1495,12 +1500,12 @@
           ],
           "story": [
             {
-              "at": "2026-11-01T03:49:33.541953+00:00",
+              "at": "2026-11-01T04:40:24.711980+00:00",
               "line": "Moved step 4 to 3."
             }
           ],
           "title": "The loop watch",
-          "updated_at": "2026-11-01T03:49:33.541706+00:00",
+          "updated_at": "2026-11-01T04:40:24.711852+00:00",
           "worktree": null
         },
         {
@@ -1514,7 +1519,7 @@
           "brief": "One frame per change, not one per row.",
           "budget_tokens": 32768,
           "check": {
-            "command": "sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh",
+            "command": "sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh",
             "commit": null,
             "log": null,
             "minutes": null,
@@ -1571,9 +1576,9 @@
           "handoffs": [],
           "held_reason": null,
           "history": null,
-          "id": "step-4e162c25b0f4",
+          "id": "step-427ce9f414b8",
           "last_checkpoint": {
-            "at": "2026-11-01T03:49:33.537150+00:00",
+            "at": "2026-11-01T04:40:24.707808+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -1587,7 +1592,7 @@
             "ref": null,
             "ref_commit": null,
             "rule": null,
-            "step_id": "step-4e162c25b0f4",
+            "step_id": "step-427ce9f414b8",
             "undo": {
               "pin": {
                 "note": "No worktree to pin yet"
@@ -1614,17 +1619,17 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:31.828055+00:00",
+              "created_at": "2026-11-01T04:40:23.555063+00:00",
               "evidence": {},
-              "id": "req-191b1332e2da",
+              "id": "req-7ea6a8ec5de3",
               "judged_at": null,
               "judged_commit": null,
               "kind": "review",
               "kind_word": "Review",
               "label": "R1",
               "ordinal": 1,
-              "parent_id": "req-1416e74569e4",
-              "program_id": "program-095e674895cd",
+              "parent_id": "req-d3306d3fe1a2",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": false,
@@ -1633,7 +1638,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Not yet",
-              "step_id": "step-4e162c25b0f4",
+              "step_id": "step-427ce9f414b8",
               "text": "The change does only what its brief says.",
               "waived_reason": null
             },
@@ -1642,17 +1647,17 @@
               "choices": [
                 "waive"
               ],
-              "created_at": "2026-11-01T03:49:31.828684+00:00",
+              "created_at": "2026-11-01T04:40:23.555284+00:00",
               "evidence": {},
-              "id": "req-fb6ca426c780",
+              "id": "req-2c6c0d88cb7b",
               "judged_at": null,
               "judged_commit": null,
               "kind": "review",
               "kind_word": "Review",
               "label": "R2",
               "ordinal": 2,
-              "parent_id": "req-027f62a3ed75",
-              "program_id": "program-095e674895cd",
+              "parent_id": "req-8558a93f0cb2",
+              "program_id": "program-5c6847b199f3",
               "required": true,
               "rounds": 0,
               "running": false,
@@ -1661,7 +1666,7 @@
               "stale": false,
               "state": "not_yet",
               "state_word": "Not yet",
-              "step_id": "step-4e162c25b0f4",
+              "step_id": "step-427ce9f414b8",
               "text": "Each new behaviour has a test.",
               "waived_reason": null
             }
@@ -1701,23 +1706,23 @@
           ],
           "story": [
             {
-              "at": "2026-11-01T03:49:31.853131+00:00",
+              "at": "2026-11-01T04:40:23.568282+00:00",
               "line": "Changed step 3: budget."
             },
             {
-              "at": "2026-11-01T03:49:33.537150+00:00",
+              "at": "2026-11-01T04:40:24.707808+00:00",
               "line": "Changed step 3: merge."
             }
           ],
           "title": "The fan-out",
-          "updated_at": "2026-11-01T03:49:33.541633+00:00",
+          "updated_at": "2026-11-01T04:40:24.711742+00:00",
           "worktree": null
         }
       ],
       "template": "build-and-review",
       "title": "The hub stops stalling",
       "total": 4,
-      "updated_at": "2026-11-01T03:49:33.581221+00:00",
+      "updated_at": "2026-11-01T04:40:24.736331+00:00",
       "usage_warning_share": null,
       "within": [
         "holdspeak/",
@@ -1726,14 +1731,14 @@
       "your_turn": 0,
       "your_turn_items": []
     },
-    "program_id": "program-095e674895cd",
+    "program_id": "program-5c6847b199f3",
     "refused": 0,
     "revision": 13,
-    "text": "# program text 1\nprogram The hub stops stalling                    # Running · 0 of 4 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh\n  reviewer Codex at standard\n  budget 64k\n  night 23:30–07:00 · at most 8 steps\n  within holdspeak/, docs/\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nat the end\n  R5 word: I used the desk for a morning with no stall  # Not yet\n    walk Open People at 393\n    walk Start a meeting\n    walk Open People again\n\nround Architecture · asking\n  ? Does the cache live in the hub or the client?\n  = In the hub; the client stays as it is.\n\nstep 1 Indexes                                    # In review · Claude Code · under a minute\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Working · Claude Code · under a minute\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  + Also the avatar route.                        # waits for a turn end\n  R3 check: `echo 12 passed` is green             # Not yet\n  R4 measure: The People routes answer fast       # Not measured yet\n    run sh scripts/bench_people.sh\n    bound p95 < 100 ms\n\nstep 3 The loop watch                             # Planned\n  after 2\n  agent Codex · effort low\n  brief\n  > Log each handler over 100 ms.\n\nstep 4 The fan-out                                # Planned\n  after 1, 2\n  budget 32k\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
+    "text": "# program text 1\nprogram The hub stops stalling                    # Running · 0 of 4 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh\n  reviewer Codex at standard\n  budget 64k\n  night 23:30–07:00 · at most 8 steps\n  within holdspeak/, docs/\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nat the end\n  R5 word: I used the desk for a morning with no stall  # Not yet\n    walk Open People at 393\n    walk Start a meeting\n    walk Open People again\n\nround Architecture · asking\n  ? Does the cache live in the hub or the client?\n  = In the hub; the client stays as it is.\n\nstep 1 Indexes                                    # In review · Claude Code · under a minute\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Working · Claude Code · under a minute\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  + Also the avatar route.                        # waits for a turn end\n  R3 check: `echo 12 passed` is green             # Not yet\n  R4 measure: The People routes answer fast       # Not measured yet\n    run sh scripts/bench_people.sh\n    bound p95 < 100 ms\n\nstep 3 The loop watch                             # Planned\n  after 2\n  agent Codex · effort low\n  brief\n  > Log each handler over 100 ms.\n\nstep 4 The fan-out                                # Planned\n  after 1, 2\n  budget 32k\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
     "version": 1
   },
   "dry_run": {
-    "allowed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh\n  reviewer Codex at standard\n  budget 64k\n  night 23:30–07:00 · at most 8 steps\n  within holdspeak/, docs/\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nat the end\n  R5 word: I used the desk for a morning with no stall\n    walk Open People at 393\n    walk Start a meeting\n    walk Open People again\n\nround Architecture · asking\n  ? Does the cache live in the hub or the client?\n  = In the hub; the client stays as it is.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  + Also the avatar route.\n  R3 check: `echo 12 passed` is green\n  R4 measure: The People routes answer fast\n    run sh scripts/bench_people.sh\n    bound p95 < 100 ms\n\nstep + The loop watch\n  after 2\n  agent Codex · effort low\n  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out\n  after 1, 2\n  budget 32k\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
+    "allowed_text": "# program text 1\nprogram The hub stops stalling\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control yolo\n  check sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh\n  reviewer Codex at standard\n  budget 64k\n  night 23:30–07:00 · at most 8 steps\n  within holdspeak/, docs/\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nat the end\n  R5 word: I used the desk for a morning with no stall\n    walk Open People at 393\n    walk Start a meeting\n    walk Open People again\n\nround Architecture · asking\n  ? Does the cache live in the hub or the client?\n  = In the hub; the client stays as it is.\n\nstep 1 Indexes\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  + Also the avatar route.\n  R3 check: `echo 12 passed` is green\n  R4 measure: The People routes answer fast\n    run sh scripts/bench_people.sh\n    bound p95 < 100 ms\n\nstep + The loop watch\n  after 2\n  agent Codex · effort low\n  brief\n  > Log each handler over 100 ms.\n\nstep 3 The fan-out\n  after 1, 2\n  budget 32k\n  merge owner\n  brief\n  > One frame per change, not one per row.\n",
     "applied": false,
     "changes": [
       {
@@ -1838,11 +1843,11 @@
     "lowers": [
       "program.control"
     ],
-    "patch": "--- current\n+++ proposed\n@@ -4,7 +4,7 @@\n   > Every route under 100 ms while a meeting records.\n   in app · main · project HoldSpeak\n   template build and review\n-  control normal\n+  control yolo\n   check sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh\n   reviewer Codex at standard\n   budget 64k\n@@ -23,6 +23,7 @@\n \n round Architecture · asking\n   ? Does the cache live in the hub or the client?\n+  = In the hub; the client stays as it is.\n \n step 1 Indexes                                    # In review · Claude Code · under a minute\n   owns holdspeak/db/schema.py\n@@ -32,14 +33,22 @@\n step 2 People routes                              # Working · Claude Code · under a minute\n   owns holdspeak/web/routes/people.py\n   brief\n-  > 31 handlers through run_in_threadpool.\n+  > 31 handlers through run_in_threadpool, and the avatar route.\n+  + Also the avatar route.\n   R3 check: `echo 12 passed` is green             # Not yet\n   R4 measure: The People routes answer fast       # Not measured yet\n     run sh scripts/bench_people.sh\n     bound p95 < 100 ms\n+\n+step + The loop watch\n+  after 2\n+  agent Codex · effort low\n+  brief\n+  > Log each handler over 100 ms.\n \n step 3 The fan-out                                # Planned\n   after 1, 2\n   budget 32k\n   brief\n   > One frame per change, not one per row.\n+  merge owner\n",
-    "program_id": "program-095e674895cd",
+    "patch": "--- current\n+++ proposed\n@@ -4,7 +4,7 @@\n   > Every route under 100 ms while a meeting records.\n   in app · main · project HoldSpeak\n   template build and review\n-  control normal\n+  control yolo\n   check sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh\n   reviewer Codex at standard\n   budget 64k\n@@ -23,6 +23,7 @@\n \n round Architecture · asking\n   ? Does the cache live in the hub or the client?\n+  = In the hub; the client stays as it is.\n \n step 1 Indexes                                    # In review · Claude Code · under a minute\n   owns holdspeak/db/schema.py\n@@ -32,14 +33,22 @@\n step 2 People routes                              # Working · Claude Code · under a minute\n   owns holdspeak/web/routes/people.py\n   brief\n-  > 31 handlers through run_in_threadpool.\n+  > 31 handlers through run_in_threadpool, and the avatar route.\n+  + Also the avatar route.\n   R3 check: `echo 12 passed` is green             # Not yet\n   R4 measure: The People routes answer fast       # Not measured yet\n     run sh scripts/bench_people.sh\n     bound p95 < 100 ms\n+\n+step + The loop watch\n+  after 2\n+  agent Codex · effort low\n+  brief\n+  > Log each handler over 100 ms.\n \n step 3 The fan-out                                # Planned\n   after 1, 2\n   budget 32k\n   brief\n   > One frame per change, not one per row.\n+  merge owner\n",
+    "program_id": "program-5c6847b199f3",
     "refused": 1,
     "revision": 7,
-    "text": "# program text 1\nprogram The hub stops stalling                    # Running · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check sh /Users/karol/dev/tools/wt-pg-window-build/tests/fixtures/fake_program_check.sh\n  reviewer Codex at standard\n  budget 64k\n  night 23:30–07:00 · at most 8 steps\n  within holdspeak/, docs/\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nat the end\n  R5 word: I used the desk for a morning with no stall  # Not yet\n    walk Open People at 393\n    walk Start a meeting\n    walk Open People again\n\nround Architecture · asking\n  ? Does the cache live in the hub or the client?\n\nstep 1 Indexes                                    # In review · Claude Code · under a minute\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Working · Claude Code · under a minute\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `echo 12 passed` is green             # Not yet\n  R4 measure: The People routes answer fast       # Not measured yet\n    run sh scripts/bench_people.sh\n    bound p95 < 100 ms\n\nstep 3 The fan-out                                # Planned\n  after 1, 2\n  budget 32k\n  brief\n  > One frame per change, not one per row.\n",
+    "text": "# program text 1\nprogram The hub stops stalling                    # Running · 0 of 3 done\n  goal\n  > Every route under 100 ms while a meeting records.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check sh /Users/karol/dev/tools/wt-pg-window-draft/tests/fixtures/fake_program_check.sh\n  reviewer Codex at standard\n  budget 64k\n  night 23:30–07:00 · at most 8 steps\n  within holdspeak/, docs/\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nat the end\n  R5 word: I used the desk for a morning with no stall  # Not yet\n    walk Open People at 393\n    walk Start a meeting\n    walk Open People again\n\nround Architecture · asking\n  ? Does the cache live in the hub or the client?\n\nstep 1 Indexes                                    # In review · Claude Code · under a minute\n  owns holdspeak/db/schema.py\n  brief\n  > Add the three indexes.\n\nstep 2 People routes                              # Working · Claude Code · under a minute\n  owns holdspeak/web/routes/people.py\n  brief\n  > 31 handlers through run_in_threadpool.\n  R3 check: `echo 12 passed` is green             # Not yet\n  R4 measure: The People routes answer fast       # Not measured yet\n    run sh scripts/bench_people.sh\n    bound p95 < 100 ms\n\nstep 3 The fan-out                                # Planned\n  after 1, 2\n  budget 32k\n  brief\n  > One frame per change, not one per row.\n",
     "version": 1
   }
 }

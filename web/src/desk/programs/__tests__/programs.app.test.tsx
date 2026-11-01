@@ -396,15 +396,43 @@ describe("the Program window (direction C, the ledger)", () => {
     expect(screen.getByTestId("program-park")).toBeTruthy();
   });
 
-  it("Drafting: the steps are fields with mics, the goal is a pad, Start is the primary", async () => {
+  it("Drafting (PG-WINDOW A): one row per step that opens in place to its fields with mics; the goal is the headline; Start says what it checks", async () => {
     hub({ [`GET /api/programs/${drafting.id}`]: drafting });
     render(<ProgramBody programId={drafting.id} />);
-    const rows = await screen.findAllByTestId("programs-draft-step");
-    expect(rows).toHaveLength(drafting.steps.length);
-    expect((within(rows[0]).getByRole("textbox", { name: "Step 1 title" }) as HTMLInputElement).value).toBe(drafting.steps[0].title);
-    expect(within(rows[0]).getByRole("button", { name: /Speak Step 1 title/ })).toBeTruthy();
-    expect((screen.getByRole("textbox", { name: "Goal" }) as HTMLTextAreaElement).value).toBe(drafting.goal);
-    expect(screen.getByTestId("program-start").className).toMatch(/primary/);
+    await screen.findByTestId("programs-board");
+    // No spreadsheet: one row per step, none open, every step in view.
+    expect(screen.queryByTestId("programs-draft-step")).toBeNull();
+    expect(screen.getAllByTestId("programs-step")).toHaveLength(drafting.steps.length);
+    expect(screen.queryByTestId("programs-step-fold")).toBeNull();
+    // The line: one planned station per step.
+    expect(within(screen.getByTestId("programs-line")).getAllByRole("listitem").filter((node) => node.getAttribute("data-station") !== "end"))
+      .toHaveLength(drafting.steps.length);
+    // The headline: the goal in his words, edited in place; Start, with what it checks, in the tray.
+    expect(within(screen.getByTestId("programs-draft-goal")).getByText(drafting.goal.split("\n")[0], { exact: false })).toBeTruthy();
+    const tray = screen.getByTestId("programs-tray");
+    expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
+    expect(within(tray).getByTestId("programs-start-words").textContent).toMatch(/^Start will check the repository/);
+    expect(within(screen.getByTestId("program-toolbar")).queryByTestId("program-start")).toBeNull();
+    // A press opens the step in place: its title with its mic, its gate as plain words with the pickers.
+    const fold = openStep(1);
+    expect((within(fold).getByRole("textbox", { name: "Step 1 title" }) as HTMLInputElement).value).toBe(drafting.steps[0].title);
+    expect(within(fold).getByRole("button", { name: /Speak Step 1 title/ })).toBeTruthy();
+    expect(within(fold).getByRole("group", { name: "Step 1 gate" })).toBeTruthy();
+    // What it must prove: its lines, and Add a requirement at the step.
+    const prove = within(fold).getByTestId("programs-step-requirements");
+    expect(within(prove).getAllByTestId("programs-req")).toHaveLength(drafting.steps[0].requirements!.length);
+    expect(within(prove).getByTestId("programs-step-add-requirement").textContent).toBe("Add a requirement");
+  });
+
+  it("no empty section: a step with nothing to prove shows Add a requirement alone", async () => {
+    const bare = clone(drafting);
+    bare.steps = bare.steps.map((step) => ({ ...step, requirements: [] }));
+    hub({ [`GET /api/programs/${bare.id}`]: bare });
+    render(<ProgramBody programId={bare.id} />);
+    await screen.findByTestId("programs-board");
+    const prove = within(openStep(1)).getByTestId("programs-step-requirements");
+    expect(prove.querySelector(".pg-sf-cap")).toBeNull();
+    expect(prove.textContent).toBe("Add a requirement");
   });
 });
 
@@ -441,13 +469,26 @@ describe("PG-WINDOW: the Program window as one object (canvas program-window-202
     expect(rest[0].textContent).toContain(held.your_turn_items[1].brief!.question);
   });
 
-  it("the open step is the held one: what the agent did as plain lines; the composer is at the foot", async () => {
+  it("no step opens by itself while one waits on him (every step in view); Brief opens the held one; rows say the story, never a raw note", async () => {
     hub({ [`GET /api/programs/${held.id}`]: held });
     render(<ProgramBody programId={held.id} />);
     await screen.findByTestId("programs-board");
     const first = held.your_turn_items[0];
     const step = held.steps.find((row) => row.id === first.step_id)!;
+    expect(screen.queryByTestId("programs-step-fold")).toBeNull();
+    expect(screen.getAllByTestId("programs-step")).toHaveLength(held.steps.filter((row) => !row.race_of).length);
+    // The fence of the briefing page holds for every row.
+    for (const row of screen.getAllByTestId("programs-step")) expect(row.textContent).not.toMatch(/fatal:|error:|\/\w|\bgit \w|\b[0-9a-f]{7,}\b/);
+    // The held row says what happened in the hub's words.
+    expect(stepRow(step.ordinal).textContent).toContain(first.brief!.happened);
+    // Copy page link is not a choice: it is on the words row under the tray.
+    const headline = within(screen.getByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+    expect(within(within(headline).getByTestId("programs-tray")).queryByTestId("programs-turn-copy-link")).toBeNull();
+    const row = within(headline).getByTestId("programs-turn-words");
+    expect(within(row).getAllByRole("button").map((button) => button.textContent)).toEqual(["Brief", "Program text", "Copy page link"]);
+    fireEvent.click(within(row).getByTestId("programs-turn-brief"));
     const fold = screen.getByTestId("programs-step-fold");
+    expect(fold.getAttribute("data-part")).toBe("brief");
     expect(fold.getAttribute("data-step")).toBe(step.id);
     const story = within(fold).getByTestId("programs-step-story");
     expect([...story.querySelectorAll(".pg-sf-story-words")].map((node) => node.textContent)).toEqual(step.story!.map((row) => row.line));
@@ -469,9 +510,10 @@ describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
     expect(within(lead).getByTestId("programs-step-word").textContent).toBe("Race of 2");
     // The step's own agent lost: its line and its time.
     expect(lead.textContent).toContain("Claude Code");
-    expect(lead.textContent).toContain("“Lost the race to Codex”");
+    // PG-WINDOW: the row's line is the step's story, in the hub's words.
+    expect(lead.textContent).toContain("Lost the race to Codex.");
     expect(lead.querySelector(".pg-step-when")?.textContent).toBe("34 min");
-    expect(lead.querySelector(".pg-step-meta")?.textContent).toBe("Claude Code · 34 min · “Lost the race to Codex”");
+    expect(lead.querySelector(".pg-step-meta")?.textContent).toBe("Claude Code · 34 min · Lost the race to Codex.");
     // The contender row comes right after the step, indented, and names its agent.
     const [contender] = screen.getAllByTestId("programs-contender");
     expect(lead.nextElementSibling).toBe(contender);
@@ -898,8 +940,8 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     expect(within(inDone("R7")).getByTestId("programs-req-proof").textContent).toBe("after the last step");
     expect(within(inDone("R7")).getByTestId("programs-req-state").textContent).toBe("Not yet");
     const word = (label: string) => within(reqRow(label)).getByTestId("programs-req-state").textContent;
-    // His step (3) is open first: his word, Met / Unmet.
-    let fold = screen.getByTestId("programs-step-fold");
+    // His step (3): his word, Met / Unmet.
+    let fold = openStep(3);
     expect(within(fold).getAllByTestId("programs-req").map((row) => row.getAttribute("data-label"))).toEqual(["R1", "R4"]);
     expect(word("R4")).toBe("Waits for you");
     expect(reqRow("R4").getAttribute("data-tone")).toBe("ask");
@@ -1055,8 +1097,9 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     const words = (kind: string) => [...within(within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === kind)!)
       .getAllByRole("button")].map((button) => button.textContent);
     // PG-DIRECTION DIR3: each also makes its briefing page (Copy page link).
-    expect(words("step_change")).toEqual(["Apply", "Skip", "Copy page link"]);
-    expect(words("step_amend")).toEqual(["Send", "Skip", "Copy page link"]);
+    // PG-WINDOW: the headline's Copy page link is on its words row, not in the tray.
+    expect(words("step_change").filter((word) => !["Brief", "Program text"].includes(word ?? ""))).toEqual(["Apply", "Skip", "Copy page link"]);
+    expect(words("step_amend").filter((word) => !["Brief", "Program text"].includes(word ?? ""))).toEqual(["Send", "Skip", "Copy page link"]);
     const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "requirement_proposed")!;
     expect(row.textContent).toContain("The line answers in two rings");
     fireEvent.click(within(row).getByTestId("programs-turn-add"));
@@ -1557,8 +1600,8 @@ describe("LANG4: shaping by a typed sentence (PROGRAM-LANGUAGE §4, §9.2, §14)
       allow_lower: ["program.control"] });
     // The rows landed: the Program is in Drafting, so the board is its
     // draft rows; the loop watch is step 3, before the fan-out.
-    await waitFor(() => expect((screen.getByRole("textbox", { name: "Step 3 title" }) as HTMLInputElement).value).toBe("Loop watch"));
-    expect((screen.getByRole("textbox", { name: "Step 4 title" }) as HTMLInputElement).value).toBe("The fan-out");
+    await waitFor(() => expect(within(stepRow(3)).getByTestId("programs-step-select").textContent).toContain("Loop watch"));
+    expect(within(stepRow(4)).getByTestId("programs-step-select").textContent).toContain("The fan-out");
     expect(within(status()).getByTestId("programs-status-control").textContent).toBe("control YOLO");
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
     // The bar is empty again, ready for the next sentence.
@@ -1754,7 +1797,7 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
     await waitFor(() => expect(posts(id, "text")).toHaveLength(1));
     expect(posts(id, "text")[0]).toEqual({ text: voice.shapes[2].allowed_text, base: voice.shapes[2].base, dry_run: false,
       allow_lower: [] });
-    await waitFor(() => expect((screen.getByRole("textbox", { name: "Step 3 title" }) as HTMLInputElement).value).toBe("Loop watch"));
+    await waitFor(() => expect(within(stepRow(3)).getByTestId("programs-step-select").textContent).toContain("Loop watch"));
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
   });
 
@@ -1819,7 +1862,7 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
     // Drafting with no steps: Plan it is the primary verb; Start waits for steps.
     const planIt = screen.getByTestId("program-plan-it");
     expect(planIt.className).toMatch(/primary/);
-    expect(screen.getByTestId("program-start")).toBeDisabled();
+    expect(screen.queryByTestId("program-start")).toBeNull();
     fireEvent.click(planIt);
     const well = await screen.findByTestId("programs-change-well");
     // The goal is the Program's: the hub reads it (and the budget) itself.
@@ -1842,11 +1885,11 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
     await waitFor(() => expect(posts(id, "text")).toHaveLength(1));
     expect(posts(id, "text")[0]).toEqual({ text: j1.draft.allowed_text, base: j1.draft.base, dry_run: false, allow_lower: [] });
     // The rows land: four drafted steps, each with its size lamp, born one after the other.
-    await waitFor(() => expect(screen.getAllByTestId("programs-draft-step")).toHaveLength(4));
-    const drafted = screen.getAllByTestId("programs-draft-step");
+    await waitFor(() => expect(screen.getAllByTestId("programs-step")).toHaveLength(4));
+    const drafted = screen.getAllByTestId("programs-step");
     expect(drafted.map((row) => within(row).getByTestId("programs-draft-size").textContent)).toEqual(
       ["7k of 32k", "4k of 32k", "5k of 32k", "3k of 32k"]);
-    expect((screen.getByRole("textbox", { name: "Step 1 title" }) as HTMLInputElement).value).toBe(j1.applied.program!.steps[0].title);
+    expect(within(stepRow(1)).getByTestId("programs-step-select").textContent).toContain(j1.applied.program!.steps[0].title);
     expect(drafted.every((row) => row.getAttribute("data-landed") === "born")).toBe(true);
     expect(drafted[2].style.getPropertyValue("--i")).toBe("2");
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
@@ -1873,27 +1916,31 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
     await waitFor(() => expect(reading.textContent).toBe("Planning · Home Engine"));
     expect(reading.querySelector(".kit-dot")).toHaveAttribute("data-live");
     expect(within(status()).getByTestId("programs-status-planning").textContent).toBe("Planning · Home Engine");
-    expect(screen.getByRole("textbox", { name: "Goal" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Edit Goal" })).not.toBeDisabled();
     await act(async () => answer(clone(j1.draft)));
     await screen.findByTestId("programs-change-well");
     expect(screen.queryByTestId("program-plan-reading")).toBeNull();
     expect(within(status()).queryByTestId("programs-status-planning")).toBeNull();
   });
 
-  it("Return in the Goal pad plans the goal he typed; Shift+Return is a new line", async () => {
+  it("the goal is the headline, edited in place; Plan it plans the goal he wrote", async () => {
     const id = j1.program.id;
     hub({
       [`GET /api/programs/${id}`]: j1.program,
       [`GET /api/programs/${id}/shape`]: planFixture.engine,
+      [`PATCH /api/programs/${id}`]: j1.program,
       [`POST /api/programs/${id}/plan/draft`]: j1.draft,
     });
     render(<ProgramBody programId={id} />);
     await screen.findByTestId("programs-board");
+    // Words until he presses them: no textarea on the face.
+    expect(screen.queryByRole("textbox", { name: "Goal" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Goal" }));
     const pad = screen.getByRole("textbox", { name: "Goal" });
     fireEvent.change(pad, { target: { value: "Recap each meeting in its Note." } });
-    fireEvent.keyDown(pad, { key: "Enter", shiftKey: true });
-    expect(posts(id, "plan/draft")).toHaveLength(0);
-    fireEvent.keyDown(pad, { key: "Enter" });
+    fireEvent.blur(pad);
+    await waitFor(() => expect(calls.some((call) => call.startsWith(`PATCH /api/programs/${id} `))).toBe(true));
+    fireEvent.click(screen.getByTestId("program-plan-it"));
     await screen.findByTestId("programs-change-well");
     expect(posts(id, "plan/draft")).toEqual([{ goal: "Recap each meeting in its Note." }]);
   });
@@ -2050,7 +2097,7 @@ describe("LANG10: the interview rounds, one question in place (PROGRAM-LANGUAGE 
     await waitFor(() => expect(posts("text")).toHaveLength(1));
     expect(posts("text")[0]).toEqual({ text: answered.proposed_text, base: answered.base, dry_run: false, allow_lower: [] });
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
-    const drafted = screen.getAllByTestId("programs-draft-step");
+    const drafted = screen.getAllByTestId("programs-step");
     expect(drafted[2]).toHaveAttribute("data-landed", "changed");
   });
 
