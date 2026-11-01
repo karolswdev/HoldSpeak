@@ -12,7 +12,7 @@
   "check_command": null,
   "checkpoints": [
     {
-      "at": "2026-11-01T11:47:23.311950+00:00",
+      "at": "2026-11-01T18:00:57.503066+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T11:47:23.311823+00:00",
+      "at": "2026-11-01T18:00:57.502939+00:00",
       "by": "engine",
       "choice": "close",
       "decision_record_id": null,
@@ -48,7 +48,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T11:47:23.311594+00:00",
+      "at": "2026-11-01T18:00:57.502679+00:00",
       "by": "engine",
       "choice": "message",
       "decision_record_id": null,
@@ -66,7 +66,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T11:47:23.183528+00:00",
+      "at": "2026-11-01T18:00:57.327799+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -77,17 +77,17 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-3297dd4c2d99/2",
-      "ref_commit": "17cc6408c8a1b15f5f735b7f989f058069332f08",
+      "ref": "refs/holdspeak/checkpoints/step-86cef8489e06/2",
+      "ref_commit": "8ed6a21b1ebe4a6eb0ee163b6a4cc8bb38946856",
       "rule": null,
-      "step_id": "step-3297dd4c2d99",
+      "step_id": "step-86cef8489e06",
       "undo": {
         "detail": "I read the Programs window.\n- MUST: the notes toolbar wraps at 520. · .tmp/evidence-shots/programs-notes.png\nMUST: The Programs list cuts the title at 393 · web/src/desk/programs/ProgramList.tsx:88",
         "pin": {
-          "commit": "17cc6408c8a1b15f5f735b7f989f058069332f08",
-          "head": "53a7bb152e9b3e9eb077860e4165ba4206a0bca3",
+          "commit": "8ed6a21b1ebe4a6eb0ee163b6a4cc8bb38946856",
+          "head": "0fc010d2c437d769de3b4b586d8367efc78810b8",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-3297dd4c2d99/2",
+          "ref": "refs/holdspeak/checkpoints/step-86cef8489e06/2",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -96,7 +96,7 @@
       }
     },
     {
-      "at": "2026-11-01T11:47:23.022462+00:00",
+      "at": "2026-11-01T18:00:57.096043+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -107,17 +107,17 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-99912dc5e315/3",
-      "ref_commit": "c3e22c0bc02e45fcc2f51e0109508baf9f740658",
+      "ref": "refs/holdspeak/checkpoints/step-aef93472c0d1/3",
+      "ref_commit": "38fa174fd5fc87b60b18720a28120dbed83a1ac6",
       "rule": null,
-      "step_id": "step-99912dc5e315",
+      "step_id": "step-aef93472c0d1",
       "undo": {
         "detail": "I read the Notes window at 1440 and 393.\nMUST: The Notes toolbar wraps at 520 · .tmp/evidence-shots/notes-520.png\nSHOULD: The Notes title is grey on grey · web/src/desk/notes/NotesWindow.tsx:41\nNOTE: Notes is fine at 393",
         "pin": {
-          "commit": "c3e22c0bc02e45fcc2f51e0109508baf9f740658",
-          "head": "53a7bb152e9b3e9eb077860e4165ba4206a0bca3",
+          "commit": "38fa174fd5fc87b60b18720a28120dbed83a1ac6",
+          "head": "0fc010d2c437d769de3b4b586d8367efc78810b8",
           "n": 3,
-          "ref": "refs/holdspeak/checkpoints/step-99912dc5e315/3",
+          "ref": "refs/holdspeak/checkpoints/step-aef93472c0d1/3",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -126,7 +126,7 @@
       }
     },
     {
-      "at": "2026-11-01T11:47:22.898937+00:00",
+      "at": "2026-11-01T18:00:56.901029+00:00",
       "by": "agent",
       "choice": null,
       "decision_record_id": null,
@@ -137,42 +137,42 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-99912dc5e315/2",
-      "ref_commit": "ff3dc6c1294570edd8249e9c1c46e7e367dba29a",
+      "ref": "refs/holdspeak/checkpoints/step-aef93472c0d1/2",
+      "ref_commit": "8b615930a817b247a522bee0595bfa26f2a1b9eb",
       "rule": null,
-      "step_id": "step-99912dc5e315",
+      "step_id": "step-aef93472c0d1",
       "undo": {
         "pin": {
-          "commit": "ff3dc6c1294570edd8249e9c1c46e7e367dba29a",
-          "head": "53a7bb152e9b3e9eb077860e4165ba4206a0bca3",
+          "commit": "8b615930a817b247a522bee0595bfa26f2a1b9eb",
+          "head": "0fc010d2c437d769de3b4b586d8367efc78810b8",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-99912dc5e315/2",
+          "ref": "refs/holdspeak/checkpoints/step-aef93472c0d1/2",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         }
       }
     },
     {
-      "at": "2026-11-01T11:47:22.745752+00:00",
+      "at": "2026-11-01T18:00:56.681193+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 5,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-3297dd4c2d99",
+      "line": "Handed to Claude Code in hs-program-step-86cef8489e06",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-3297dd4c2d99/1",
-      "ref_commit": "53379cfa8e152c640328d81ecb6954e0e3a3fb2a",
+      "ref": "refs/holdspeak/checkpoints/step-86cef8489e06/1",
+      "ref_commit": "590094593cdceeedbefdaa4785ff1662105d86f3",
       "rule": null,
-      "step_id": "step-3297dd4c2d99",
+      "step_id": "step-86cef8489e06",
       "undo": {
         "pin": {
-          "commit": "53379cfa8e152c640328d81ecb6954e0e3a3fb2a",
-          "head": "53a7bb152e9b3e9eb077860e4165ba4206a0bca3",
+          "commit": "590094593cdceeedbefdaa4785ff1662105d86f3",
+          "head": "0fc010d2c437d769de3b4b586d8367efc78810b8",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-3297dd4c2d99/1",
+          "ref": "refs/holdspeak/checkpoints/step-86cef8489e06/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -181,27 +181,27 @@
       }
     },
     {
-      "at": "2026-11-01T11:47:22.569864+00:00",
+      "at": "2026-11-01T18:00:56.468729+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 4,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-99912dc5e315",
+      "line": "Handed to Claude Code in hs-program-step-aef93472c0d1",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-99912dc5e315/1",
-      "ref_commit": "b956e08c481a70033c6c158aa52529c2267048a0",
+      "ref": "refs/holdspeak/checkpoints/step-aef93472c0d1/1",
+      "ref_commit": "7b9e63d4bb03baeea0c60c7874493791afb1e040",
       "rule": null,
-      "step_id": "step-99912dc5e315",
+      "step_id": "step-aef93472c0d1",
       "undo": {
         "pin": {
-          "commit": "b956e08c481a70033c6c158aa52529c2267048a0",
-          "head": "53a7bb152e9b3e9eb077860e4165ba4206a0bca3",
+          "commit": "7b9e63d4bb03baeea0c60c7874493791afb1e040",
+          "head": "0fc010d2c437d769de3b4b586d8367efc78810b8",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-99912dc5e315/1",
+          "ref": "refs/holdspeak/checkpoints/step-aef93472c0d1/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -210,7 +210,7 @@
       }
     },
     {
-      "at": "2026-11-01T11:47:22.494668+00:00",
+      "at": "2026-11-01T18:00:56.344155+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -228,7 +228,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T11:47:22.475254+00:00",
+      "at": "2026-11-01T18:00:56.314655+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -246,7 +246,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T11:47:22.470653+00:00",
+      "at": "2026-11-01T18:00:56.308992+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -264,13 +264,13 @@
       "undo": {}
     }
   ],
-  "closed_at": "2026-11-01T11:47:23.311681+00:00",
+  "closed_at": "2026-11-01T18:00:57.502788+00:00",
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-11-01T11:47:22.470321+00:00",
+  "created_at": "2026-11-01T18:00:56.308588+00:00",
   "decided_for_you": [
     {
-      "at": "2026-11-01T11:47:23.311823+00:00",
+      "at": "2026-11-01T18:00:57.502939+00:00",
       "choice": "close",
       "decision_record_id": null,
       "id": 10,
@@ -283,7 +283,7 @@
       "step_id": null
     },
     {
-      "at": "2026-11-01T11:47:23.311594+00:00",
+      "at": "2026-11-01T18:00:57.502679+00:00",
       "choice": "message",
       "decision_record_id": null,
       "id": 9,
@@ -312,6 +312,10 @@
   "delivery": null,
   "done": 2,
   "done_in": "under a minute",
+  "family": {
+    "children": [],
+    "parent": null
+  },
   "findings_board": {
     "head": "4 findings · 2 MUST",
     "must": 2,
@@ -329,7 +333,7 @@
           1,
           2
         ],
-        "task_id": "ai_0c498b73c48a4d2b9c85ec7b2a532bbd",
+        "task_id": "ai_6bec8f2b09434046a23cd1bc12d244a6",
         "text": "The Notes toolbar wraps at 520",
         "words": "Must fix"
       },
@@ -343,7 +347,7 @@
         "steps": [
           2
         ],
-        "task_id": "ai_0b1426020eab4e0aa39e228c8eb15974",
+        "task_id": "ai_17673a95bc004ef391856096089f6e52",
         "text": "The Programs list cuts the title at 393",
         "words": "Must fix"
       },
@@ -357,7 +361,7 @@
         "steps": [
           1
         ],
-        "task_id": "ai_c0a82af306574d3e880e47cbfe0244b2",
+        "task_id": "ai_068ca125dfd947b3b433e404c83a6032",
         "text": "The Notes title is grey on grey",
         "words": "Should fix"
       },
@@ -369,7 +373,7 @@
         "steps": [
           1
         ],
-        "task_id": "ai_5d35337b4cf84758a2cff8ae1ca9dd04",
+        "task_id": "ai_f6614184340d4cb9a9ceee750d10fba4",
         "text": "Notes is fine at 393",
         "words": "Noted"
       }
@@ -383,10 +387,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "Find what is wrong on the desk.",
-  "id": "program-8424cec78852",
+  "id": "program-1841e7ff4c78",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T11:47:23.311950+00:00",
+    "at": "2026-11-01T18:00:57.503066+00:00",
     "by": "engine",
     "choice": null,
     "decision_record_id": null,
@@ -407,8 +411,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-8424cec78852",
-  "note_window": "pullout:note:program-program-8424cec78852",
+  "note_id": "program-program-1841e7ff4c78",
+  "note_window": "pullout:note:program-program-1841e7ff4c78",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -466,7 +470,7 @@
       "effort": "medium",
       "elapsed": "under a minute",
       "elapsed_seconds": 0,
-      "ended_at": "2026-11-01T11:47:23.006179+00:00",
+      "ended_at": "2026-11-01T18:00:57.079789+00:00",
       "ending": "finished",
       "engine": null,
       "estimate": null,
@@ -502,9 +506,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-99912dc5e315",
+      "id": "step-aef93472c0d1",
       "last_checkpoint": {
-        "at": "2026-11-01T11:47:23.022462+00:00",
+        "at": "2026-11-01T18:00:57.096043+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -515,17 +519,17 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-99912dc5e315/3",
-        "ref_commit": "c3e22c0bc02e45fcc2f51e0109508baf9f740658",
+        "ref": "refs/holdspeak/checkpoints/step-aef93472c0d1/3",
+        "ref_commit": "38fa174fd5fc87b60b18720a28120dbed83a1ac6",
         "rule": null,
-        "step_id": "step-99912dc5e315",
+        "step_id": "step-aef93472c0d1",
         "undo": {
           "detail": "I read the Notes window at 1440 and 393.\nMUST: The Notes toolbar wraps at 520 · .tmp/evidence-shots/notes-520.png\nSHOULD: The Notes title is grey on grey · web/src/desk/notes/NotesWindow.tsx:41\nNOTE: Notes is fine at 393",
           "pin": {
-            "commit": "c3e22c0bc02e45fcc2f51e0109508baf9f740658",
-            "head": "53a7bb152e9b3e9eb077860e4165ba4206a0bca3",
+            "commit": "38fa174fd5fc87b60b18720a28120dbed83a1ac6",
+            "head": "0fc010d2c437d769de3b4b586d8367efc78810b8",
             "n": 3,
-            "ref": "refs/holdspeak/checkpoints/step-99912dc5e315/3",
+            "ref": "refs/holdspeak/checkpoints/step-aef93472c0d1/3",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -561,7 +565,7 @@
             "line": "NOTE: Notes is fine at 393."
           },
           {
-            "at": "2026-11-01T11:47:22.898937+00:00",
+            "at": "2026-11-01T18:00:56.901029+00:00",
             "checkpoint": 6,
             "line": "Reported its findings."
           }
@@ -575,7 +579,7 @@
         ],
         "observed": [
           {
-            "at": "2026-11-01T11:47:23.022462+00:00",
+            "at": "2026-11-01T18:00:57.096043+00:00",
             "checkpoint": 7,
             "line": "Merged"
           }
@@ -603,7 +607,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-11-01T11:47:22.569397+00:00",
+      "started_at": "2026-11-01T18:00:56.468260+00:00",
       "state": "done",
       "state_word": "Done",
       "station": 5,
@@ -617,23 +621,23 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T11:47:22.569864+00:00",
+          "at": "2026-11-01T18:00:56.468729+00:00",
           "line": "Handed to Claude Code."
         },
         {
-          "at": "2026-11-01T11:47:22.898937+00:00",
+          "at": "2026-11-01T18:00:56.901029+00:00",
           "line": "Reported its findings."
         },
         {
-          "at": "2026-11-01T11:47:23.022462+00:00",
+          "at": "2026-11-01T18:00:57.096043+00:00",
           "line": "Audited · 3 findings · 1 MUST."
         }
       ],
       "taken": false,
       "title": "Notes window",
-      "updated_at": "2026-11-01T11:47:23.022109+00:00",
+      "updated_at": "2026-11-01T18:00:57.095685+00:00",
       "wait": null,
-      "worktree": "hs-program-step-99912dc5e315"
+      "worktree": "hs-program-step-aef93472c0d1"
     },
     {
       "after": [],
@@ -659,7 +663,7 @@
       "effort": "medium",
       "elapsed": "under a minute",
       "elapsed_seconds": 0,
-      "ended_at": "2026-11-01T11:47:23.168957+00:00",
+      "ended_at": "2026-11-01T18:00:57.305677+00:00",
       "ending": "finished",
       "engine": null,
       "estimate": null,
@@ -695,9 +699,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-3297dd4c2d99",
+      "id": "step-86cef8489e06",
       "last_checkpoint": {
-        "at": "2026-11-01T11:47:23.183528+00:00",
+        "at": "2026-11-01T18:00:57.327799+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -708,17 +712,17 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-3297dd4c2d99/2",
-        "ref_commit": "17cc6408c8a1b15f5f735b7f989f058069332f08",
+        "ref": "refs/holdspeak/checkpoints/step-86cef8489e06/2",
+        "ref_commit": "8ed6a21b1ebe4a6eb0ee163b6a4cc8bb38946856",
         "rule": null,
-        "step_id": "step-3297dd4c2d99",
+        "step_id": "step-86cef8489e06",
         "undo": {
           "detail": "I read the Programs window.\n- MUST: the notes toolbar wraps at 520. · .tmp/evidence-shots/programs-notes.png\nMUST: The Programs list cuts the title at 393 · web/src/desk/programs/ProgramList.tsx:88",
           "pin": {
-            "commit": "17cc6408c8a1b15f5f735b7f989f058069332f08",
-            "head": "53a7bb152e9b3e9eb077860e4165ba4206a0bca3",
+            "commit": "8ed6a21b1ebe4a6eb0ee163b6a4cc8bb38946856",
+            "head": "0fc010d2c437d769de3b4b586d8367efc78810b8",
             "n": 2,
-            "ref": "refs/holdspeak/checkpoints/step-3297dd4c2d99/2",
+            "ref": "refs/holdspeak/checkpoints/step-86cef8489e06/2",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -760,7 +764,7 @@
         ],
         "observed": [
           {
-            "at": "2026-11-01T11:47:23.183528+00:00",
+            "at": "2026-11-01T18:00:57.327799+00:00",
             "checkpoint": 8,
             "line": "Merged"
           }
@@ -788,7 +792,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-11-01T11:47:22.745296+00:00",
+      "started_at": "2026-11-01T18:00:56.680555+00:00",
       "state": "done",
       "state_word": "Done",
       "station": 5,
@@ -802,19 +806,19 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T11:47:22.745752+00:00",
+          "at": "2026-11-01T18:00:56.681193+00:00",
           "line": "Handed to Claude Code."
         },
         {
-          "at": "2026-11-01T11:47:23.183528+00:00",
+          "at": "2026-11-01T18:00:57.327799+00:00",
           "line": "Audited · 2 findings · 2 MUST."
         }
       ],
       "taken": false,
       "title": "Programs window",
-      "updated_at": "2026-11-01T11:47:23.183227+00:00",
+      "updated_at": "2026-11-01T18:00:57.327441+00:00",
       "wait": null,
-      "worktree": "hs-program-step-3297dd4c2d99"
+      "worktree": "hs-program-step-86cef8489e06"
     }
   ],
   "template": "audit",
@@ -832,7 +836,7 @@
       "title": "Programs window"
     }
   ],
-  "updated_at": "2026-11-01T11:47:23.311889+00:00",
+  "updated_at": "2026-11-01T18:00:57.503009+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 1,
@@ -856,16 +860,16 @@
       ],
       "count": 2,
       "for_person_id": null,
-      "id": "program-8424cec78852:fix_program",
+      "id": "program-1841e7ff4c78:fix_program",
       "kind": "fix_program",
       "launch_id": null,
       "ordinal": 2,
       "pr": null,
-      "program_id": "program-8424cec78852",
+      "program_id": "program-1841e7ff4c78",
       "program_title": "Desk audit",
       "project_id": null,
-      "since": "2026-11-01T11:47:23.168957+00:00",
-      "step_id": "step-3297dd4c2d99",
+      "since": "2026-11-01T18:00:57.305677+00:00",
+      "step_id": "step-86cef8489e06",
       "step_title": "Programs window",
       "title": "A fix program from 2 MUST findings"
     }
