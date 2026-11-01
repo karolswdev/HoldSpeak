@@ -21,7 +21,7 @@ from typing import Any
 import pytest
 
 from holdspeak.db import Database
-from holdspeak.db.gate import APPROVED, HELD
+from holdspeak.db.gate import APPROVED, DENIED, HELD
 from holdspeak.services.agent_responder import ANSWERED, ESCALATED, AgentResponder, AnswerStore
 from holdspeak.services.control_level import level_for_launch, mode_for_launch, step_of_launch
 from holdspeak.services.program_service import ProgramService
@@ -179,15 +179,57 @@ def test_program_yolo_on_a_normal_desk_allows_what_yolo_allows(launched, tmp_pat
     assert call.proposal.state == APPROVED and call.proposal.decided_by == "control-mode"
     assert call.proposal.policy_snapshot["mode"] == "yolo"
     assert call.proposal.policy_snapshot["reason_code"] == "yolo_inside_own_worktree"
-    # Outside its worktree it still waits for him.
-    assert _call(launched, "cat /etc/passwd").proposal.state == HELD
-    [line] = _decided(service, pid)
+    # Outside its worktree it is refused by rule (never held for him).
+    outside = _call(launched, "cat /etc/passwd").proposal
+    assert outside.state == DENIED and outside.decided_by == "control-mode"
+    assert outside.policy_snapshot["reason_code"] == "yolo_program_outside"
+    refused, line = _decided(service, pid)
+    assert refused["line"] == "Refused by rule (YOLO): cat"
     assert line["kind"] == "gate_approval" and line["line"] == "Allowed: Bash"
     assert line["rule"] == "YOLO: the gate allows a read, a build or a test by its own rules"
     # A second allowed call of the same tool under the same rule: one line.
     assert _call(launched, "pytest -q").proposal.state == APPROVED
-    assert len(_decided(service, pid)) == 1
+    assert len(_decided(service, pid)) == 2
     assert "Allowed: Bash" in launched.db.notes.get(f"program-{pid}").body_markdown
+
+
+def test_program_yolo_allows_an_unparsed_call_in_its_worktree_by_rule(launched, tmp_path, monkeypatch) -> None:
+    """program-ed167ae4478b step 2 (2026-10-31): ``env | grep …`` read
+    ``unparsed`` and waited until it expired. At YOLO a step's unparsed call
+    in its own worktree goes on by rule; a destructive word is refused."""
+    _mode(tmp_path, monkeypatch, "neutral")
+    service, pid = _bind(launched.db, launched.worktree, launched.launch_id, "yolo")
+    call = _call(launched, "env | grep -i holdspeak | sed 's/x/y/'; ls -la")
+    assert call.decision.deny is None
+    assert call.proposal.state == APPROVED and call.proposal.decided_by == "control-mode"
+    assert call.proposal.policy_snapshot["reason_code"] == "yolo_program_unparsed_inside"
+    for command, word in (("sudo $(echo ls)", "sudo"), ("echo $(rm -rf ../x)", "rm -r/-f")):
+        refused = _call(launched, command)
+        assert refused.decision.deny is not None
+        assert refused.proposal.state == DENIED and refused.proposal.decided_by == "control-mode"
+        assert refused.proposal.policy_snapshot["reason_code"] == "yolo_program_destructive"
+        assert word in str(refused.proposal.reason)
+    lines = {row["line"]: row["rule"] for row in _decided(service, pid)}
+    assert lines == {
+        "Allowed by rule (YOLO): env": "YOLO: a call in the step's own worktree goes on by rule",
+        "Refused by rule (YOLO): sudo": "YOLO: a call outside the step's worktree, or a destructive one, is refused by rule",
+        "Refused by rule (YOLO): rm -r/-f": "YOLO: a call outside the step's worktree, or a destructive one, is refused by rule",
+    }
+    assert service.get(OWNER, pid)["your_turn_items"] == []
+
+
+@pytest.mark.parametrize("control", ["normal", "secure"])
+def test_program_normal_and_secure_still_hold_an_unparsed_call(launched, tmp_path, monkeypatch, control) -> None:
+    _mode(tmp_path, monkeypatch, "yolo")
+    _bind(launched.db, launched.worktree, launched.launch_id, control)
+    assert _call(launched, "env | grep -i holdspeak").proposal.state == HELD
+
+
+def test_a_plain_launch_at_desk_yolo_still_holds_an_unparsed_call(launched, tmp_path, monkeypatch) -> None:
+    _mode(tmp_path, monkeypatch, "yolo")
+    call = _call(launched, "env | grep -i holdspeak")
+    assert call.proposal.state == HELD
+    assert call.proposal.policy_snapshot["reason_code"] == "yolo_unparsed_command"
 
 
 def test_a_plain_launch_keeps_the_desks_gate(launched, tmp_path, monkeypatch) -> None:

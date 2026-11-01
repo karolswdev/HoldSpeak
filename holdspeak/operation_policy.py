@@ -436,6 +436,20 @@ def _resolve_tool_gate(
             else "yolo_outside_own_worktree"
         )
         basis = "control_posture" if allowed else "per_action_required"
+        if not allowed and tool_call.get("program_step"):
+            # Programs, execution perfection (2026-10-31): a YOLO Program
+            # never holds a call for him. An unparsed call in the step's own
+            # worktree goes on by rule; a destructive word or a call aimed
+            # outside the worktree is refused by rule.
+            if scope == "unparsed" and tool_call.get("cwd_inside") and not tool_call.get("destructive"):
+                allowed, reason, basis = True, "yolo_program_unparsed_inside", "control_posture"
+            else:
+                reason = "yolo_program_destructive" if tool_call.get("destructive") else "yolo_program_outside"
+                return PolicyDecision(
+                    mode=mode, source=source, precedence=precedence, outcome="refused", reason_code=reason,
+                    consequence=operation.consequence, authority_basis="control_posture", next_state="refused",
+                    eligible=False, requires_review=False, requires_authorization=False, requires_grant=False,
+                )
     return PolicyDecision(
         mode=mode,
         source=source,
