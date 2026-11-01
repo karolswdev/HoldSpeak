@@ -285,3 +285,8 @@
   .briefing .briefing-sheet { min-height: auto; margin: var(--space-6) 0; }
   .briefing .briefing-read { flex: none; }
 }
+
+/* DIR9, the page half: several held items, each its own brief and tray,
+   one after the other; a decided item is its one settled line. */
+.briefing .briefing-digest-head { padding-bottom: 0; }
+.briefing .briefing-item + .briefing-item { border-top: 1px solid var(--wb-rule-soft); margin-top: var(--space-4); }

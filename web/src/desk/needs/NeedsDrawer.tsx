@@ -189,6 +189,8 @@ const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   go_on: "Go on", park: "Park", pick: "Pick", add: "Add", apply: "Apply", send: "Send",
   // 2026-10-31: the step's agent's commit.
   allow: "Allow the commit", not_now: "Not now",
+  // PG-LANG JRN9 to JRN11: an audit's findings, its fix program, a lesson.
+  file: "File", make: "Make", keep_program: "Keep for this program", keep_repo: "Keep for HoldSpeak",
 };
 
 function NeedVerbsView({ face, primary, onWell, well }: {
@@ -259,7 +261,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
               <Button key={choice} dense variant={index === 0 ? lead : "ghost"} loading={busy} disabled={busy}
                 aria-label={named(word)} data-testid="needs-row-verb" data-verb={`program-${choice.replace("_", "-")}`}
                 onClick={(event) => void act(index === 0 && choice !== "prepare" ? "Done" : word, () => apiFetch(v.decide, {
-                  method: "POST", json: { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}) },
+                  method: "POST", json: { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}),
+                    ...(v.lessonId != null ? { lesson_id: v.lessonId } : {}) },
                 }), face.id, (event.currentTarget as Element).closest("li"))}>{word}</Button>
             );
           })}

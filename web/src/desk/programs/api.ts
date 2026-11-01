@@ -56,7 +56,8 @@ export async function createProgram(body: CreateBody): Promise<Program> {
 }
 
 function unwrap(answer: Program | { program?: Program }): Program | null {
-  if (answer && typeof answer === "object" && "steps" in answer) return answer as Program;
+  // A decide answer may carry its own `steps` count (the fix program: `steps: 2`).
+  if (answer && typeof answer === "object" && Array.isArray((answer as Program).steps)) return answer as Program;
   return (answer as { program?: Program })?.program ?? null;
 }
 

@@ -14,10 +14,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from holdspeak.services.needs_you_membership import program_items
+from holdspeak.services.needs_you_membership import compose, program_items
 from holdspeak.services.program_lessons import key_of, red_cause
 from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig, git
-from tests.integration.test_desk_programs import _fixture
+from tests.integration.test_desk_programs import _client, _fixture
 
 RED = "E   ModuleNotFoundError: No module named 'pytest_xdist'"
 
@@ -52,7 +52,7 @@ def _go_red(rig: Rig, pid: str, ordinal: int) -> None:
     rig.tick(2)
 
 
-def test_two_reds_with_one_cause_raise_one_lesson_and_keep_for_this_program(tmp_path) -> None:
+def test_two_reds_with_one_cause_raise_one_lesson_and_keep_for_this_program(tmp_path, monkeypatch) -> None:
     rig = Rig(tmp_path)
     pid = _program(rig, _red_check(tmp_path))
     _go_red(rig, pid, 1)
@@ -67,8 +67,20 @@ def test_two_reds_with_one_cause_raise_one_lesson_and_keep_for_this_program(tmp_
     _fixture("lesson.row.json", row, tmp_path)
     rig.tick(3)
     assert len(_lessons(rig, pid)) == 1  # the rule runs again; one lesson, never kept by rule at YOLO
-    answer = rig.service.decide(OWNER, pid, row["step_id"], kind="lesson", choice="keep_program",
-                                proposal_id=row["lesson_id"])
+    # The face's answers: the wire with the row, and his press through the route (`lesson_id`).
+    client = _client(rig, monkeypatch)
+    wire = client.get(f"/api/programs/{pid}").json()
+    _fixture("program.lesson.json", wire, tmp_path)
+    # The route's own answer (`compose`, what GET /api/desk/needs-you serves).
+    monkeypatch.setattr("holdspeak.services.program_service.default_program_service", lambda db=None: rig.service)
+    answer_needs = compose(rig.db, OWNER, {"items": []})
+    assert [row for row in answer_needs["items"] if row.get("source") == "program"]
+    _fixture("needs_you.lesson.json", answer_needs, tmp_path)
+    pressed = client.post(f"/api/programs/{pid}/steps/{row['step_id']}/decide",
+                          json={"kind": "lesson", "choice": "keep_program", "lesson_id": row["lesson_id"]})
+    assert pressed.status_code == 200, pressed.text
+    answer = pressed.json()
+    _fixture("program.lesson.kept.json", answer, tmp_path)
     reqs = [req for req in rig.service.requirements(pid) if req["text"] == row["requirement"]]
     [parent] = [req for req in reqs if not req.get("step_id")]
     assert parent["each_step"] and parent["kind"] == "review" and len(reqs) == 4  # the parent and each step's copy

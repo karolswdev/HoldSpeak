@@ -765,6 +765,7 @@ The page reads like a note: the kind of item, the program and its goal, the prog
 - **Revoke.** Press **Revoke** on the row to end the page. The item stays where it is. An expired page, a revoked page and a wrong link all show "This page has expired." with no data.
 - **Where it opens.** The link uses the hub's tailnet address when the hub is on your tailnet (Tailscale Serve). Without it, the link uses the address that your desk is open on.
 - **A waive stays on the desk.** A waive needs your typed reason, so the page does not offer it.
+- **One page for several items.** The morning message after a night program links one page for all the items that wait on you (up to 12, in order). Each item is its own note with its own choices. Decide them one at a time: an item you decide shows its one line, and the others stay as they were. The top of the page says how many still wait ("2 wait on you."). The page is open for 12 hours.
 
 These items can have a page: a core question, a held commit (Telegram and the page; the desk row has no **Copy page link** yet), a merge, a finding, a parked step, an agent at its limit, a race winner, an added step, your word, a requirement left after its rounds, a proposed requirement, a proposed step change and a proposed amendment. An agent's question, a review request and Close stay on the desk.
 

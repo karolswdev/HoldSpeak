@@ -6,9 +6,11 @@
  * - FindingsBoard: every finding once, as rows ("Must fix: …", "Should
  *   fix: …", "Noted: …"), its evidence as plain words, the steps that found
  *   it, and the Door task a filed finding became (Open task). The hub's
- *   head says the count; a board with no rows says only the head. */
+ *   head says the count; a board with no rows says only the head. After
+ *   his Make the fix program is a link (Open the fix program). */
 import { Button } from "../../components/signal/Signal";
 import { openRef } from "../openObject";
+import { openProgram } from "./open";
 import type { FindingRow, Program } from "./types";
 
 export function isAudit(program: Pick<Program, "template">): boolean {
@@ -52,6 +54,13 @@ export function FindingsBoard({ program }: { program: Program }) {
   return (
     <section className="pg-findings" aria-label="Findings" data-testid="programs-findings">
       <h3 className="pg-board-caption">Findings<span className="pg-fold-sub">{` · ${board.head}`}</span></h3>
+      {program.fix_program_id ? (
+        <p className="pg-findings-fix">
+          <Button dense variant="secondary" onClick={() => openProgram(program.fix_program_id!)} data-testid="programs-findings-fix">
+            Open the fix program
+          </Button>
+        </p>
+      ) : null}
       {board.rows.length ? (
         <ul className="kit-listrows">
           {board.rows.map((row) => <FindingLine key={row.key} row={row} />)}
