@@ -227,8 +227,12 @@ TOOLS: list[dict[str, Any]] = [
                                             "program_id, or by name (words of its title or its template, "
                                             "\"overnight\"). It never makes a Program.",
      "inputSchema": _schema(_BY_NAME, [])},
-    {"name": "program.park", "description": "Park a Program. The worktrees stay; Resume brings it back.",
-     "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
+    {"name": "program.park", "description": "Park a Program. The worktrees stay; Resume brings it back. reason "
+                                           "(optional): proof (a run that proved the engine) or done-with-it; the "
+                                           "list folds such a row (parked_as).",
+     "inputSchema": _schema({"program_id": _ID, "reason": {"type": ["string", "null"],
+                                                         "enum": ["proof", "done-with-it", "done_with_it", None]}},
+                            ["program_id"])},
     {"name": "program.resume", "description": "Resume a parked Program.",
      "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
     {"name": "program.get",
@@ -489,7 +493,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name in ("program.start", "program.get"):
         return _by_name(service, name, args, principal)
     if name == "program.park":
-        return service.park(principal, str(args["program_id"]))
+        return service.park(principal, str(args["program_id"]), reason=args.get("reason"))
     if name == "program.resume":
         return service.resume(principal, str(args["program_id"]))
     if name == "program.list":

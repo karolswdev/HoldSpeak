@@ -75,6 +75,11 @@ STEP_TRANSITIONS: dict[str, frozenset[str]] = {
     "failed": frozenset({"ready", "parked"}),
 }
 
+#: Why a Program was parked, when he says (``program.park reason``); the list
+#: folds such a row (``parked_as``).
+PARK_REASONS = {"proof": "a proof run", "done_with_it": "done with it"}
+PARK_KIND = "program_park"
+
 #: A step in one of these holds an agent (the board's live rows).
 ACTIVE_STATES = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings"})
 #: Finished: its dependents may run.
@@ -1048,6 +1053,10 @@ class ProgramService:
             "last_checkpoint": last,
             "in_state_seconds": _seconds_between(program["updated_at"]),
         }
+        if state == "parked":
+            # The park's reason (``program.park reason``): the list folds the row.
+            parked = next((row for row in checkpoints if row.get("kind") == PARK_KIND), None)
+            summary["parked_as"] = (parked or {}).get("choice") or None
         # PG-REQ §7, §11: the count of his required requirements, the Project
         # and the person by name, and the words Find a program matches.
         his = len([item for item in turn if item["kind"] in ("requirement_word", "requirement_left")])
@@ -1995,14 +2004,24 @@ class ProgramService:
         self._tick_now(program["id"])
         return self.get(principal, program["id"])
 
-    def park(self, principal: Any, program_id: str) -> dict[str, Any]:
+    def park(self, principal: Any, program_id: str, *, reason: Any = None) -> dict[str, Any]:
+        """Park a Program (the worktrees stay; Resume brings it back).
+        ``reason`` (optional): ``proof`` (a run that proved the engine) or
+        ``done_with_it`` (he is done with it); the list folds such a row
+        (``parked_as`` on the wire; the face draws the fold)."""
         program = self._program(program_id)
         self._require_writer(principal, program, "park")
+        why = str(reason or "").strip().lower().replace("-", "_") or None
+        if why is not None and why not in PARK_REASONS:
+            raise ProgramRefused("park_reason_invalid", "A park reason is proof or done-with-it.", status=400)
         with _LOCK:
             program["state"] = "parked"
             self._touch(program)
-            self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent",
-                             "Parked the program; the worktrees stay")
+            self.store.add_checkpoint(step_id="", program_id=program["id"], at=self._clock(),
+                                      by="owner" if _is_owner(principal) else "agent",
+                                      line="Parked the program; the worktrees stay" + (
+                                          f" ({PARK_REASONS[why]})" if why else ""),
+                                      kind=PARK_KIND, choice=why)
             self.changed(program["id"], verb="park")
         self._revoke_pages(program["id"])
         return self.get(principal, program["id"])
