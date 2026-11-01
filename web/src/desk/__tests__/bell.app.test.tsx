@@ -117,6 +117,12 @@ afterAll(() => {
 });
 
 describe("Bell: a new artifact reads as new in the owner's zone", () => {
+  // A fixed noon, never the wall clock: on a day the clocks go back
+  // (2026-11-01) a bare local stamp in the repeated hour is ambiguous and
+  // read an hour early ("1h ago"), red on main for that hour.
+  beforeEach(() => { vi.setSystemTime(new Date("2026-10-28T18:00:00Z")); });
+  afterEach(() => { vi.useRealTimers(); });
+
   it("runs in America/Denver", () => {
     expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe("America/Denver");
   });
