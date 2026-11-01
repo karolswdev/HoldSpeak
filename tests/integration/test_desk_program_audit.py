@@ -16,7 +16,7 @@ from typing import Any
 from holdspeak.mcp import palettes
 from holdspeak.mcp.families import program as program_family
 from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
-from holdspeak.services.needs_you_membership import program_items
+from holdspeak.services.needs_you_membership import compose, program_items
 from holdspeak.services.program_audit import RULES, parse
 from tests.integration.program_rig import OWNER, Rig, git
 from tests.integration.test_desk_programs import _client, _fixture
@@ -188,7 +188,20 @@ def test_audit_levels_file_by_rule_or_ask(tmp_path, monkeypatch) -> None:
     asks = {item["kind"]: item for item in items}
     assert asks["audit_file"]["title"] == "3 findings to file as Door tasks"
     assert asks["audit_file"]["choices"] == ["file", "skip"] and "fix_program" in asks
-    answer = rig.service.decide(OWNER, pid, asks["audit_file"]["step_id"], kind="audit_file", choice="file")
+    # The face's answers: the wire, the rows in Needs you, and his File through the route.
+    client = _client(rig, monkeypatch)
+    _fixture("audit.secure.json", _ok(client.get(f"/api/programs/{pid}")), tmp_path)
+    needs = [item for item in program_items(rig.service.needs_you_items())
+             if item["program"]["kind"] in ("audit_file", "fix_program")]
+    assert [item["why"] for item in needs] == ["TO DECIDE", "TO DECIDE"]
+    # The route's own answer (`compose`, what GET /api/desk/needs-you serves).
+    monkeypatch.setattr("holdspeak.services.program_service.default_program_service", lambda db=None: rig.service)
+    answer_needs = compose(rig.db, OWNER, {"items": []})
+    assert [row for row in answer_needs["items"] if row.get("source") == "program"]
+    _fixture("needs_you.audit.json", answer_needs, tmp_path)
+    answer = _ok(client.post(f"/api/programs/{pid}/steps/{asks['audit_file']['step_id']}/decide",
+                             json={"kind": "audit_file", "choice": "file"}))
+    _fixture("audit.filed.json", answer, tmp_path)
     assert answer["filed"] == 3 and len(_tasks(rig)) == 3
     assert "Filed 3 findings as Door tasks" in _lines(rig, pid)
     assert [item["kind"] for item in rig.program(pid)["your_turn_items"] if item["kind"] != "close"] == ["fix_program"]

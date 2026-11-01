@@ -1304,16 +1304,13 @@ span.pg-req-thumb { height: 150px; }
 
 /* ── PG-WINDOW: the body's scroll hint wraps its flow; Drafting at the
    phone width puts the choice before a long goal (the kind line, the
-   goal's first sentence, the tray, then the goal in full). ── */
+   tray, then the goal, drawn once: the owner, 2026-11-01). ── */
 .pg-body > .pg-body-scroll { display: flex; flex-direction: column; min-width: 0; }
-.pg-draft-goal-first { display: none; }
 @container surface (max-width: 520px) {
   .pg-draft-top .pg-brief { display: flex; flex-direction: column; }
   .pg-draft-top .pg-brief-kind { order: 1; }
-  .pg-draft-goal-first { display: block; order: 2; margin: 0 0 4px; font: 500 15px / 1.45 var(--font-sans); color: var(--wb-ink); }
   .pg-draft-top .pg-tray { order: 3; }
   .pg-draft-top .pg-draft-goal { order: 4; margin-top: 6px; }
-  .pg-draft-top .pg-draft-goal .surface-edit-in-place { font-weight: 400; color: var(--wb-muted); }
   .pg-draft-top .pg-plan-line { order: 5; }
 }
 
@@ -1429,3 +1426,4 @@ span.pg-req-thumb { height: 150px; }
 .pg-race-logs { margin: 4px 0 8px; padding: 0; list-style: none; }
 .pg-race-log { display: flex; align-items: center; gap: 10px; min-height: 32px; font: 400 13px / 1.35 var(--font-sans); }
 .pg-race-agent { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-findings-fix { margin: 0; padding: 2px 12px 6px; }
