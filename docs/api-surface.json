@@ -5519,6 +5519,16 @@
       ]
     },
     {
+      "path": "/api/programs/tonight",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/programs/{program_id}",
       "methods": [
         "GET"

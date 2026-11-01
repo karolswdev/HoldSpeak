@@ -592,6 +592,9 @@ def _seed_program(page: Any, tmp: Path) -> str:
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     subprocess.run(["git", "-C", str(repo), "-c", "user.name=Sweep", "-c", "user.email=sweep@example.com",
                     "commit", "-q", "--allow-empty", "-m", "start"], check=True)
+    # Start's precheck: the push needs a remote (a bare one here).
+    subprocess.run(["git", "init", "-q", "--bare", str(tmp / "program-repo-origin.git")], check=True)
+    subprocess.run(["git", "-C", str(repo), "remote", "add", "origin", str(tmp / "program-repo-origin.git")], check=True)
     made = _api(page, "POST", "/api/programs", {
         "title": "The hub stops stalling", "goal": "The hub answers every read within a second.",
         "repository": str(repo), "template": "fast-cycle", "check_command": "true",
@@ -624,6 +627,9 @@ def _seed_briefing(page: Any, tmp: Path) -> tuple[str, str]:
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     subprocess.run(["git", "-C", str(repo), "-c", "user.name=Sweep", "-c", "user.email=sweep@example.com",
                     "commit", "-q", "--allow-empty", "-m", "start"], check=True)
+    # Start's precheck: the push needs a remote (a bare one here).
+    subprocess.run(["git", "init", "-q", "--bare", str(tmp / "briefing-repo-origin.git")], check=True)
+    subprocess.run(["git", "-C", str(repo), "remote", "add", "origin", str(tmp / "briefing-repo-origin.git")], check=True)
     made = _api(page, "POST", "/api/programs", {
         "title": "Overnight on the home box", "goal": "The hub stops stalling overnight.",
         "repository": str(repo), "template": "fast-cycle", "check_command": "true", "control": "yolo",

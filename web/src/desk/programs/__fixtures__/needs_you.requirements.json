@@ -1,23 +1,23 @@
 {
   "items": [
     {
-      "ageToken": "2026-11-01T02:57:45.249205+00:00",
+      "ageToken": "2026-11-01T03:49:26.686888+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The dock lamp",
-      "id": "program:program-bfb7288568ce:req-7b101eb0a09e:word",
+      "id": "program:program-126e03ad4cf0:req-ce4684d3bd93:word",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-bfb7288568ce",
+      "openRef": "program:program-126e03ad4cf0",
       "personId": null,
       "program": {
         "choices": [
           "met",
           "unmet"
         ],
-        "decide": "/api/programs/program-bfb7288568ce/requirements/req-7b101eb0a09e/decide",
+        "decide": "/api/programs/program-126e03ad4cf0/requirements/req-ce4684d3bd93/decide",
         "findingId": null,
         "kind": "requirement_word",
         "ordinal": 1,
@@ -25,17 +25,17 @@
           "number": 103,
           "url": "https://github.com/acme/app/pull/103"
         },
-        "programId": "program-bfb7288568ce",
-        "requirementId": "req-7b101eb0a09e",
-        "stepId": "step-3716235109a6"
+        "programId": "program-126e03ad4cf0",
+        "requirementId": "req-ce4684d3bd93",
+        "stepId": "step-362a57c52590"
       },
       "projectId": "proj-holdspeak",
       "projectName": "",
       "rank": 1,
       "rankClass": "no_due_date",
-      "ref": "program:program-bfb7288568ce:req-7b101eb0a09e:word",
+      "ref": "program:program-126e03ad4cf0:req-ce4684d3bd93:word",
       "severity": "warning",
-      "since": "2026-11-01T02:57:45.249205+00:00",
+      "since": "2026-11-01T03:49:26.686888+00:00",
       "source": "program",
       "title": "Step 1 · Dock lamp: R1 · I tried it on my desk",
       "verbHref": null,
@@ -43,23 +43,23 @@
       "why": "TO CONFIRM"
     },
     {
-      "ageToken": "2026-11-01T02:57:43.270449+00:00",
+      "ageToken": "2026-11-01T03:49:24.332461+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The hub stops stalling",
-      "id": "program:program-0eeb444097bd:req-675d529ce9f8:word",
+      "id": "program:program-8ec0c5d912f8:req-858cefdfe008:word",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-0eeb444097bd",
+      "openRef": "program:program-8ec0c5d912f8",
       "personId": "p-alice",
       "program": {
         "choices": [
           "met",
           "unmet"
         ],
-        "decide": "/api/programs/program-0eeb444097bd/requirements/req-675d529ce9f8/decide",
+        "decide": "/api/programs/program-8ec0c5d912f8/requirements/req-858cefdfe008/decide",
         "findingId": null,
         "kind": "requirement_word",
         "ordinal": 3,
@@ -67,17 +67,17 @@
           "number": 102,
           "url": "https://github.com/acme/app/pull/102"
         },
-        "programId": "program-0eeb444097bd",
-        "requirementId": "req-675d529ce9f8",
-        "stepId": "step-6b229a8939a0"
+        "programId": "program-8ec0c5d912f8",
+        "requirementId": "req-858cefdfe008",
+        "stepId": "step-e525056ade46"
       },
       "projectId": "proj-holdspeak",
       "projectName": "",
       "rank": 2,
       "rankClass": "no_due_date",
-      "ref": "program:program-0eeb444097bd:req-675d529ce9f8:word",
+      "ref": "program:program-8ec0c5d912f8:req-858cefdfe008:word",
       "severity": "warning",
-      "since": "2026-11-01T02:57:43.270449+00:00",
+      "since": "2026-11-01T03:49:24.332461+00:00",
       "source": "program",
       "title": "Step 3 · Projections off the loop: R4 · I tried it on my desk",
       "verbHref": null,

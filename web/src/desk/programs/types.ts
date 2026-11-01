@@ -212,7 +212,10 @@ export interface ProgramSummary {
   title: string;
   state: ProgramState;
   state_word: string;
+  /** Merged and done steps only; a skipped step is never done. */
   done: number;
+  /** Steps he skipped (their dependents ran on). */
+  skipped?: number;
   total: number;
   /** Items only he can press (merge, findings, parked, ask review). */
   your_turn: number;

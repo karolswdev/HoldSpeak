@@ -70,8 +70,8 @@ def _no_remote(tmp_path: Path) -> tuple[Rig, str]:
         {"title": "Link the README", "brief": "Link it from the docs.", "after": [1]},
         {"title": "Announce it", "brief": "Say so in the changelog.", "after": [2]},
     ])
-    git(rig.repo, "remote", "remove", "origin")
     rig.service.start(OWNER, pid)
+    git(rig.repo, "remote", "remove", "origin")  # after Start: its precheck refuses a repository with no remote
     rig.agent.finish(rig.step(pid, 1)["launch_id"], {"README.md": "# app\nHello.\n"})
     rig.tick()
     step = rig.step(pid, 1)

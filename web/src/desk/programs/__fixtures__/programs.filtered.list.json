@@ -13,16 +13,16 @@
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T02:57:38.455081+00:00",
+      "created_at": "2026-11-01T03:49:19.190727+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-0eeb444097bd",
-      "in_state_seconds": 1,
+      "id": "program-8ec0c5d912f8",
+      "in_state_seconds": 2,
       "last_checkpoint": {
-        "at": "2026-11-01T02:57:44.183037+00:00",
+        "at": "2026-11-01T03:49:25.377111+00:00",
         "by": "engine",
         "choice": "retry",
         "decision_record_id": null,
@@ -33,17 +33,17 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-d8ee76a80641/5",
-        "ref_commit": "481ed2ce812ced4e5795f09621d0918eda6ccd8a",
+        "ref": "refs/holdspeak/checkpoints/step-4026a8cd5c69/5",
+        "ref_commit": "cd036e5d821f49b858300509b3c14b8dddb1cda4",
         "rule": "a red requirement goes back to the builder (round 2 of 2)",
-        "step_id": "step-d8ee76a80641",
+        "step_id": "step-4026a8cd5c69",
         "undo": {
           "pin": {
-            "commit": "481ed2ce812ced4e5795f09621d0918eda6ccd8a",
-            "head": "25da0aacc90a78716a10af42870aeb49e86083fd",
+            "commit": "cd036e5d821f49b858300509b3c14b8dddb1cda4",
+            "head": "84680f7393e379beb1de1f17e1322ef6a94d6f49",
             "n": 5,
-            "ref": "refs/holdspeak/checkpoints/step-d8ee76a80641/5",
-            "tree": "091c8245c1efb812b920f64e122950fa7af64974"
+            "ref": "refs/holdspeak/checkpoints/step-4026a8cd5c69/5",
+            "tree": "53afa99a8dcb21aa25c5e9ed13609f9a59421676"
           }
         }
       },
@@ -66,11 +66,12 @@
         "waived": 1
       },
       "search_words": "the hub stops stalling the hub stops stalling. holdspeak fast-cycle alice indexes retention projections off the loop people routes projects routes the fan-out #101 #102 fast cycle",
+      "skipped": 0,
       "state": "waiting",
       "state_word": "Your turn",
       "title": "The hub stops stalling",
       "total": 6,
-      "updated_at": "2026-11-01T02:57:43.396856+00:00",
+      "updated_at": "2026-11-01T03:49:24.447356+00:00",
       "your_turn": 1
     }
   ],

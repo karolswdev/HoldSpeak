@@ -724,6 +724,7 @@ export function ProgramBody({ programId }: { programId: string }) {
     { key: "state", lamp: lampOf(programTone(program.state)), live: program.state === "running", text: doneWord, testId: "programs-status-state" },
     program.state === "done" && allMet && program.done_in ? { key: "took", text: `in ${program.done_in}` } : null,
     { key: "done", text: program.done ? `${program.done} of ${program.total} done` : countWords(program.total, "step"), tick: program.done || null, testId: "programs-status-done" },
+    program.skipped ? { key: "skipped", text: `${program.skipped} skipped`, testId: "programs-status-skipped" } : null,
     program.your_turn ? { key: "turn", text: `${program.your_turn} ${program.your_turn === 1 ? "waits" : "wait"} on you`, tick: program.your_turn, testId: "programs-status-turn" } : null,
     met?.total && !(program.state === "done" && allMet) ? {
       key: "met", text: met.met || met.unmet ? `${met.met} of ${met.total} met` : countWords(met.total, "requirement"), tick: met.met || null,

@@ -399,6 +399,7 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
                           "title": f"{label.capitalize()}: {core.get('reason')}"})
             continue
         held = facts.get("held_commit") if isinstance(facts.get("held_commit"), Mapping) else None
+        held = held if level != "yolo" else None  # YOLO never holds a commit for him (the tick releases it)
         if (held or facts.get("commit_ask")) and state not in CLOSED_STATES and state != "parked":
             # A held commit never expires silently: his row while the gate
             # holds it (``hold``) and after the hold ended with the change
@@ -441,7 +442,7 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
               and (level == "secure" or facts.get("park_is_his", True) or not live)):
             items.append({**base, "id": f"{step['id']}:parked", "kind": "parked",
                           "choices": list(DECIDE_CHOICES["parked"]),
-                          "title": f"Parked {label}: {step.get('parked_reason') or 'it stopped'}"})
+                          "title": f"Parked {label}: {_parked_words(step.get('parked_reason'))}"})
         if facts.get("awaiting_pick") and state not in CLOSED_STATES:
             items.append({**base, "id": f"{step['id']}:race", "kind": "race", "choices": list(DECIDE_CHOICES["race"]),
                           "title": f"Pick {agent_label(step.get('profile'))} as the winner of {label}?"})
@@ -991,11 +992,15 @@ class ProgramService:
         checkpoints = checkpoints if checkpoints is not None else self.store.list_checkpoints(program["id"])
         state = self._state(program, steps, requirements=reqs, checkpoints=checkpoints)
         turn = self._turn(program, steps, requirements=reqs, checkpoints=checkpoints)
-        done = sum(1 for step in top if self._ordinal_finished(steps, step["ordinal"]))
+        # A skipped step lets its dependents run (``_ordinal_finished``) but is
+        # never counted done: ``done`` counts merged and done steps only.
+        done = sum(1 for step in top if any(row.get("state") in FINISHED_STATES for row in steps
+                                            if int(row["ordinal"]) == int(step["ordinal"])))
+        skipped = sum(1 for step in top if self._ordinal_finished(steps, step["ordinal"])) - done
         last = checkpoints[0] if checkpoints else None
         summary = {
             "id": program["id"], "title": program["title"], "state": state,
-            "state_word": PROGRAM_WORDS.get(state, state), "done": done, "total": len(top),
+            "state_word": PROGRAM_WORDS.get(state, state), "done": done, "skipped": skipped, "total": len(top),
             "your_turn": len([item for item in turn if item["kind"] != "answer"]),
             "asks": len([item for item in turn if item["kind"] == "answer"]),
             "project_id": program.get("project_id"), "control": program["control"],
@@ -1326,6 +1331,8 @@ class ProgramService:
 
     def _status_line(self, program: Mapping[str, Any], summary: Mapping[str, Any]) -> str:
         parts = [summary["state_word"], f"{summary['done']} of {summary['total']} done"]
+        if summary.get("skipped"):
+            parts.append(f"{summary['skipped']} skipped")
         if summary["your_turn"]:
             parts.append(f"{summary['your_turn']} waits on you")
         if program.get("check_command"):
@@ -1744,6 +1751,7 @@ class ProgramService:
     def plan(
         self, principal: Any, program_id: str, *, steps: list[Mapping[str, Any]],
         size: Optional[str] = None, replace: bool = False, before: Optional[str] = None, waits: bool = True,
+        by: Optional[str] = None,
     ) -> dict[str, Any]:
         """Replace or append steps. A step: ``title``, ``brief``, ``owns``,
         ``after`` (ordinals), ``profile``, ``engine``, ``prefer_idle``,
@@ -1873,7 +1881,7 @@ class ProgramService:
                 program["closed_at"] = max(str(step["ended_at"]) for step in [*kept, *made])
             for step in made:
                 self.store.save_step(step)
-            by = "owner" if _is_owner(principal) else "agent"
+            by = by or ("owner" if _is_owner(principal) else "agent")
             line = f"{'Planned' if replace else 'Added'} {len(made)} step{'s' if len(made) != 1 else ''}"
             if imported:
                 line += f"; imported {len(imported)} merged PR{'s' if len(imported) != 1 else ''}"
@@ -1917,6 +1925,9 @@ class ProgramService:
             raise ProgramRefused("steps_required", "Add a step before you start the program.")
         if program["state"] not in ("drafting", "parked"):
             raise ProgramRefused("program_started", "The program runs already.")
+        refused = start_precheck(program, self._top_steps(steps), git=self.runner()._git)
+        if refused is not None:
+            raise refused
         with _LOCK:
             program["state"] = "running"
             self._touch(program)
@@ -2166,9 +2177,19 @@ class ProgramService:
                 if step["state"] != "parked":
                     raise ProgramRefused("not_parked", "This step is not parked.")
                 if choice == "resume":
-                    step["rounds"] = 0
+                    # Resume is idempotent: a step whose commit is checked green
+                    # (parked at its push or PR) goes on from its check, in the
+                    # same worktree; any other step is handed again into its
+                    # own worktree (``ProgramRunner._hand_step``), never refused
+                    # as a duplicate.
+                    at_pr = bool(step.get("worktree") and step.get("head_commit")
+                                 and step.get("checked_commit") == step.get("head_commit")
+                                 and step.get("check_verdict") in ("green", "none"))
+                    if not at_pr:
+                        step["rounds"] = 0
                     step["parked_by"], step["parked_reason"] = None, None
-                    self.transition(program, step, "ready", by="owner", line="Resumed the step")
+                    self.transition(program, step, "checking" if at_pr else "ready", by="owner",
+                                    line="Resumed the step from its green check" if at_pr else "Resumed the step")
                 else:
                     step["parked_by"], step["parked_reason"] = PARKED_BY_OWNER, "You skipped this step"
                     self._save(step)
@@ -2844,8 +2865,20 @@ class ProgramService:
         step = self.store.get_step(str(row.get("step_id") or "")) if row.get("step_id") else None
         answer: dict[str, Any] = {}
         with _LOCK:
-            if choice == "skip":
+            split = (payload.get("fields") or {}).get("split") if kind == "step_change" else None
+            if split and step is None:
+                raise NotFound("program_step", str(row.get("step_id")))
+            if choice == "skip" and split:
+                # PG-LANG LANG8: Skip on a split runs the step as it is.
+                from .program_split import run_as_it_is
+
+                run_as_it_is(self, program, step, by="owner")
+            elif choice == "skip":
                 self._checkpoint(program, step, "owner", f"Skipped: {payload.get('title') or row['line']}"[:400])
+            elif split:
+                from .program_split import apply_split
+
+                apply_split(self, program, step, list(split.get("parts") or []), by="owner")
             elif kind == "requirement_proposed":
                 from .program_requirements import label
 
@@ -3232,6 +3265,20 @@ class ProgramService:
         write_amendment(step, f"Added by {who} at {_clock_words(at)}", line, git=git)
 
     # ── PG-LANG LANG1: the Program text (get and apply) ──────────────
+
+    def add_to_night(self, principal: Any, *, kind: Any, item_id: Any, line: Any = None,
+                     program_id: Any = None) -> dict[str, Any]:
+        """PG-LANG LANG12 / JRN2, Add to tonight: a Door task (``action``), a
+        note line (``note`` with ``line``) or a step of another Program
+        (``program_step``) becomes a Planned step of the night Program,
+        planned by the cheap planner at the window's start
+        (``program_night``). His add lands at once; an agent's is a step the
+        plan lacked (YOLO adds it and says so; below YOLO it is refused)."""
+        from .program_night import add_to_night
+
+        answer = add_to_night(self, principal, kind=kind, item_id=item_id, line=line, program_id=program_id)
+        self._tick_now(answer["program_id"])
+        return answer
 
     def text_get(self, principal: Any, program_id: str) -> dict[str, Any]:
         """The Program's text, printed from the tables now, with its lamps
@@ -3885,6 +3932,11 @@ class ProgramService:
                 for key, value in dict(undo["fields_before"]).items():
                     step[_STORE_KEY.get(key, key)] = value
                 self._save(step)
+            elif choice == "split" and undo.get("split"):
+                # PG-LANG LANG8: YOLO's split, while every part is Planned or Ready.
+                from .program_split import overturn_split
+
+                overturn_split(self, program, row)
             elif choice == "add" and undo.get("step_id"):
                 added = self.store.get_step(str(undo["step_id"]))
                 if added is not None:
@@ -4058,7 +4110,7 @@ class ProgramService:
     # ── the engine's writes (the runner calls these) ─────────────────
 
     def transition(self, program: Mapping[str, Any], step: dict[str, Any], to: str, *, by: str = "engine",
-                   line: str = "", **fields: Any) -> dict[str, Any]:
+                   line: str = "", detail: str = "", **fields: Any) -> dict[str, Any]:
         """Move one step along the table of §4 (a refused move raises), write
         its checkpoint (and the kernel operation for an engine decision)."""
         current = str(step.get("state") or "")
@@ -4084,7 +4136,7 @@ class ProgramService:
 
             program_decisions.link_pr(self.db, step)
         if line:
-            self._checkpoint(program, step, by, line)
+            self._checkpoint(program, step, by, line, detail=detail)
         return step
 
     def _close_history(self, program: Mapping[str, Any]) -> None:
@@ -4108,12 +4160,15 @@ class ProgramService:
         self.store.save_program(program)
 
     def _checkpoint(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], by: str, line: str,
-                    *, kernel: bool = True, decision_record_id: Optional[str] = None) -> dict[str, Any]:
+                    *, kernel: bool = True, decision_record_id: Optional[str] = None,
+                    detail: str = "") -> dict[str, Any]:
         operation_id = None
         if kernel and by == "engine":
             operation_id = self._kernel_record(program, step, line)
         at = self._clock()
         undo: dict[str, Any] = {"decision_record_id": decision_record_id} if decision_record_id else {}
+        if detail:
+            undo["detail"] = str(detail)  # the raw words behind the line (the evidence fold), never the line
         pin = self.pin(step, line)
         if pin:
             undo["pin"] = pin
@@ -4215,9 +4270,15 @@ class ProgramService:
         summary = self._summary(program, steps)
         lines = [f"# Program: {program['title']}", ""]
         head = [summary["state_word"], f"{summary['done']} of {summary['total']} steps done"]
+        if summary.get("skipped"):
+            head.append(f"{summary['skipped']} skipped")
         if summary["your_turn"]:
             head.append(f"{summary['your_turn']} wait{'s' if summary['your_turn'] == 1 else ''} on you")
         lines += [" · ".join(head), ""]
+        # PG-LANG LANG12: the night's digest on top, while it is fresh.
+        from .program_night import note_section
+
+        lines += note_section(self, program)
         place = self._place(program)
         where = []
         if place["project"]:
@@ -4544,6 +4605,58 @@ def spoken_state(wire: Mapping[str, Any]) -> str:
         sentence = ", and ".join(more)
         parts.append(sentence[0].upper() + sentence[1:] + ".")
     return " ".join(parts)
+
+
+#: Shell words a check may start with that are no file on the PATH.
+_SHELL_WORDS = frozenset({"echo", "true", "false", "test", "[", ":", "cd", "exec", "exit", "printf", "set",
+                          "export", "if", "for", "while", "case", "{", "(", "!", "."})
+
+
+def start_precheck(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
+                   *, git: Callable[..., str]) -> Optional["ProgramRefused"]:
+    """What would stop the program after an agent worked, read before Start
+    (program-ed167ae4478b, 2026-10-31: no remote parked step 1 after the
+    agent's commit): the repository is a git repository; a step that opens
+    a PR has the ``origin`` remote its push targets; the check's program
+    exists. ``git(cwd, *args)`` is the runner's git (its stdout, ``""`` on
+    a failure). ``None`` when the program can start."""
+    import shlex
+    import shutil
+
+    root = str(program.get("repo_root") or "")
+    if not root:
+        return None
+    if not Path(root).is_dir() or not git(root, "rev-parse", "--git-dir"):
+        return ProgramRefused("repository_not_git", "The repository is not a git folder. Name a git repository.")
+    pushes = any(str(step.get("gate_merge") or "level") != "none" for step in steps)
+    if pushes and not git(root, "remote", "get-url", "origin"):
+        return ProgramRefused("repository_no_remote", "The repository has no remote to push to. Add one named "
+                              "origin, or set each step to merge: none to keep its branch local.")
+    command = str(program.get("check_command") or "").strip()
+    try:
+        words = shlex.split(command)
+    except ValueError:
+        return None  # the shell reads it; the check's log says what went wrong
+    words = [word for word in words if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", word)]
+    words = words[1:] if words[:1] == ["env"] else words
+    if not words or words[0] in _SHELL_WORDS:
+        return None
+    first = words[0]
+    found = (Path(first) if Path(first).is_absolute() else Path(root) / first).exists() if "/" in first \
+        else shutil.which(first) is not None
+    if not found:
+        return ProgramRefused("check_not_found", f"The check cannot run: {Path(first).name} is not on this "
+                              "machine or in the repository. Install it, or change the check.")
+    return None
+
+
+def _parked_words(reason: Any) -> str:
+    """His row's words for a parked step: a push or PR failure in words
+    (never git's stderr); any other reason as the engine wrote it."""
+    from .brief_words import pr_failure_words
+
+    words = pr_failure_words(reason)
+    return f"it {words}" if words else str(reason or "it stopped")
 
 
 def _check_name(command: str) -> str:

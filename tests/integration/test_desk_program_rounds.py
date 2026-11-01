@@ -22,7 +22,7 @@ from typing import Any
 from holdspeak.mcp.families import program as program_family
 from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
 from tests.integration.program_plan_seed import CASES, create
-from tests.integration.program_rig import OWNER, Rig
+from tests.integration.program_rig import OWNER, Rig, give_quick_check
 from tests.integration.program_rounds_seed import SEQUENCE, drafted
 from tests.integration.test_desk_programs import _client, _fixture
 from tests.unit.test_program_planner import case, replies
@@ -109,6 +109,7 @@ def test_the_rounds_over_rest_in_the_faces_own_walk(tmp_path, monkeypatch) -> No
                                       json={"question_id": verification["id"], "not_this": True}))
     assert _round(out["not_this"]["program"], "Verification")["became"] == 0
     # Rounds never gate Start; the strip stays while it runs.
+    give_quick_check(rig.repo)  # the recorded plan's check: Start's precheck reads it
     out["started"] = _ok(client.post(f"/api/programs/{pid}/start", json={}))
     assert out["started"]["state"] == "running" and _round(out["started"], "Architecture")["state"] == "done"
     # A done round asks nothing; Ask more opens it again, while it runs.

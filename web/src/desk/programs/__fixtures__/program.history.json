@@ -12,7 +12,7 @@
   "check_command": null,
   "checkpoints": [
     {
-      "at": "2026-11-01T02:58:47.662532+00:00",
+      "at": "2026-11-01T04:00:06.679141+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T02:58:47.654811+00:00",
+      "at": "2026-11-01T04:00:06.670708+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -51,7 +51,7 @@
   "closed_at": "2026-10-28T18:14:50Z",
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-11-01T02:58:47.654390+00:00",
+  "created_at": "2026-11-01T04:00:06.670145+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -78,10 +78,10 @@
     "prs": 3,
     "words": "Merged 3 PRs · 28 Oct"
   },
-  "id": "program-5994b126d69a",
+  "id": "program-0636b915de5d",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T02:58:47.662532+00:00",
+    "at": "2026-11-01T04:00:06.679141+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -101,8 +101,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-5994b126d69a",
-  "note_window": "pullout:note:program-program-5994b126d69a",
+  "note_id": "program-program-0636b915de5d",
+  "note_window": "pullout:note:program-program-0636b915de5d",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -130,6 +130,7 @@
   "rounds": [],
   "rounds_before_start": false,
   "search_words": "the hub stops stalling the hub answers at once. the dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing the hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard #1584 #1585 #1598",
+  "skipped": 0,
   "spend_limit_usd": null,
   "state": "done",
   "state_word": "Done",
@@ -199,7 +200,7 @@
         "pr_number": 1584,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1584"
       },
-      "id": "step-a8aa4c288b5b",
+      "id": "step-b4d7e5553d0d",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -247,7 +248,7 @@
       ],
       "story": [],
       "title": "The dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing",
-      "updated_at": "2026-11-01T02:58:47.661565+00:00",
+      "updated_at": "2026-11-01T04:00:06.678412+00:00",
       "worktree": null
     },
     {
@@ -314,7 +315,7 @@
         "pr_number": 1585,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1585"
       },
-      "id": "step-de7eed87e67b",
+      "id": "step-eb7e74bacb09",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -362,7 +363,7 @@
       ],
       "story": [],
       "title": "The hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop",
-      "updated_at": "2026-11-01T02:58:47.661565+00:00",
+      "updated_at": "2026-11-01T04:00:06.678412+00:00",
       "worktree": null
     },
     {
@@ -429,7 +430,7 @@
         "pr_number": 1598,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1598"
       },
-      "id": "step-91adae09ff77",
+      "id": "step-371bf8c30fbf",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -477,14 +478,14 @@
       ],
       "story": [],
       "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard",
-      "updated_at": "2026-11-01T02:58:47.661565+00:00",
+      "updated_at": "2026-11-01T04:00:06.678412+00:00",
       "worktree": null
     }
   ],
   "template": null,
   "title": "The hub stops stalling",
   "total": 3,
-  "updated_at": "2026-11-01T02:58:47.662677+00:00",
+  "updated_at": "2026-11-01T04:00:06.679223+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

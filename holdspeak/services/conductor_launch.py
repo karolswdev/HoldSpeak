@@ -436,6 +436,8 @@ LAUNCH_RULES.update({
         "program.require", "program.step_update", "program.amend", "program.step_remove",
         # PG-LANG LANG1: read and change a Program as its text.
         "program.text", "program.text_apply", "program.shape", "program.plan_draft", "program.round",
+        # PG-LANG LANG12: a launch adds to tonight only at YOLO (the service's rule).
+        "program.add_to_night",
     )
 })
 # Phone (2026-10-28): a launch reads the owner's replies, and writes one line

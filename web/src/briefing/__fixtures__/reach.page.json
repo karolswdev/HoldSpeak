@@ -15,13 +15,13 @@
         "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
         "changed": [
           {
-            "at": "2026-11-01T02:58:49.040175+00:00",
-            "clock": "22:58",
+            "at": "2026-11-01T04:00:10.653579+00:00",
+            "clock": "00:00",
             "line": "The check ran green in under a minute."
           },
           {
-            "at": "2026-11-01T02:58:48.642842+00:00",
-            "clock": "22:58",
+            "at": "2026-11-01T04:00:10.371150+00:00",
+            "clock": "00:00",
             "line": "The agent made a new commit."
           }
         ],
@@ -80,14 +80,14 @@
           "via": "page",
           "words": "Resume · 02:30. The step starts again. Nothing else waits on you."
         },
-        "place": "Step 1 of 3 · started 22:58 · waited under a minute",
-        "program_id": "program-12476f1eb6c2",
+        "place": "Step 1 of 3 · started 00:00 · waited under a minute",
+        "program_id": "program-698647bd0f29",
         "program_title": "README touch",
         "question": "Start the step again, or stop it?",
-        "ref": "program:program-12476f1eb6c2:step-3bd5f313704f:parked",
-        "since": "2026-11-01T02:58:49.263527+00:00",
+        "ref": "program:program-698647bd0f29:step-4b516e723b21:parked",
+        "since": "2026-11-01T04:00:10.827719+00:00",
         "state": "decided",
-        "step_id": "step-3bd5f313704f",
+        "step_id": "step-4b516e723b21",
         "step_ordinal": 1,
         "step_title": "Add one line to the README",
         "track": [
@@ -132,12 +132,12 @@
       }
     ],
     "package": {
-      "desk": "/?open=program:program-12476f1eb6c2",
+      "desk": "/?open=program:program-698647bd0f29",
       "expires_at": "2026-11-01T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
       "head": "README touch · step 1",
       "hub": "the rig hub",
-      "id": "pkg-9315271af172",
+      "id": "pkg-2df79acba7d1",
       "kind": "item"
     }
   },
@@ -173,13 +173,13 @@
       "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
       "changed": [
         {
-          "at": "2026-11-01T02:58:49.040175+00:00",
-          "clock": "22:58",
+          "at": "2026-11-01T04:00:10.653579+00:00",
+          "clock": "00:00",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-01T02:58:48.642842+00:00",
-          "clock": "22:58",
+          "at": "2026-11-01T04:00:10.371150+00:00",
+          "clock": "00:00",
           "line": "The agent made a new commit."
         }
       ],
@@ -238,14 +238,14 @@
         "via": "page",
         "words": "Resume · 02:30. The step starts again. Nothing else waits on you."
       },
-      "place": "Step 1 of 3 · started 22:58 · waited under a minute",
-      "program_id": "program-12476f1eb6c2",
+      "place": "Step 1 of 3 · started 00:00 · waited under a minute",
+      "program_id": "program-698647bd0f29",
       "program_title": "README touch",
       "question": "Start the step again, or stop it?",
-      "ref": "program:program-12476f1eb6c2:step-3bd5f313704f:parked",
-      "since": "2026-11-01T02:58:49.263527+00:00",
+      "ref": "program:program-698647bd0f29:step-4b516e723b21:parked",
+      "since": "2026-11-01T04:00:10.827719+00:00",
       "state": "decided",
-      "step_id": "step-3bd5f313704f",
+      "step_id": "step-4b516e723b21",
       "step_ordinal": 1,
       "step_title": "Add one line to the README",
       "track": [
@@ -292,13 +292,13 @@
       "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
       "changed": [
         {
-          "at": "2026-11-01T02:58:49.040175+00:00",
-          "clock": "22:58",
+          "at": "2026-11-01T04:00:10.653579+00:00",
+          "clock": "00:00",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-01T02:58:48.642842+00:00",
-          "clock": "22:58",
+          "at": "2026-11-01T04:00:10.371150+00:00",
+          "clock": "00:00",
           "line": "The agent made a new commit."
         }
       ],
@@ -358,14 +358,14 @@
         "via": "page",
         "words": "Later · back at 13:00."
       },
-      "place": "Step 1 of 3 · started 22:58 · waited under a minute",
-      "program_id": "program-12476f1eb6c2",
+      "place": "Step 1 of 3 · started 00:00 · waited under a minute",
+      "program_id": "program-698647bd0f29",
       "program_title": "README touch",
       "question": "Start the step again, or stop it?",
-      "ref": "program:program-12476f1eb6c2:step-3bd5f313704f:parked",
-      "since": "2026-11-01T02:58:49.263527+00:00",
+      "ref": "program:program-698647bd0f29:step-4b516e723b21:parked",
+      "since": "2026-11-01T04:00:10.827719+00:00",
       "state": "later",
-      "step_id": "step-3bd5f313704f",
+      "step_id": "step-4b516e723b21",
       "step_ordinal": 1,
       "step_title": "Add one line to the README",
       "track": [
@@ -390,16 +390,16 @@
   "log": {
     "kind": "code",
     "pane": "log",
-    "text": "program-check: commit c6f244ac723857370cde76c2bb604472ec0aa9be\nprogram-check: tree clean\nprogram-check: command sh /repo/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
+    "text": "program-check: commit f0aa470ec2fae17d813c2c61efea36d273178957\nprogram-check: tree clean\nprogram-check: command sh /repo/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
   },
   "made": {
     "expires_at": "2026-11-01T06:30:00+00:00",
     "expires_clock": "01:30",
-    "id": "pkg-9315271af172",
+    "id": "pkg-2df79acba7d1",
     "link": null,
     "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
     "refs": [
-      "program:program-12476f1eb6c2:step-3bd5f313704f:parked"
+      "program:program-698647bd0f29:step-4b516e723b21:parked"
     ],
     "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
   },
@@ -419,13 +419,13 @@
         "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
         "changed": [
           {
-            "at": "2026-11-01T02:58:49.040175+00:00",
-            "clock": "22:58",
+            "at": "2026-11-01T04:00:10.653579+00:00",
+            "clock": "00:00",
             "line": "The check ran green in under a minute."
           },
           {
-            "at": "2026-11-01T02:58:48.642842+00:00",
-            "clock": "22:58",
+            "at": "2026-11-01T04:00:10.371150+00:00",
+            "clock": "00:00",
             "line": "The agent made a new commit."
           }
         ],
@@ -477,14 +477,14 @@
           "Step 1, “Add one line to the README”: Append one line under the title.",
           "The step could not push its branch: this repository has no remote."
         ],
-        "place": "Step 1 of 3 · started 22:58 · waited under a minute",
-        "program_id": "program-12476f1eb6c2",
+        "place": "Step 1 of 3 · started 00:00 · waited under a minute",
+        "program_id": "program-698647bd0f29",
         "program_title": "README touch",
         "question": "Start the step again, or stop it?",
-        "ref": "program:program-12476f1eb6c2:step-3bd5f313704f:parked",
-        "since": "2026-11-01T02:58:49.263527+00:00",
+        "ref": "program:program-698647bd0f29:step-4b516e723b21:parked",
+        "since": "2026-11-01T04:00:10.827719+00:00",
         "state": "open",
-        "step_id": "step-3bd5f313704f",
+        "step_id": "step-4b516e723b21",
         "step_ordinal": 1,
         "step_title": "Add one line to the README",
         "track": [
@@ -529,12 +529,12 @@
       }
     ],
     "package": {
-      "desk": "/?open=program:program-12476f1eb6c2",
+      "desk": "/?open=program:program-698647bd0f29",
       "expires_at": "2026-11-01T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
       "head": "README touch · step 1",
       "hub": "the rig hub",
-      "id": "pkg-9315271af172",
+      "id": "pkg-2df79acba7d1",
       "kind": "item"
     }
   },

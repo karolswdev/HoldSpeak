@@ -41,6 +41,8 @@ live in the service, so every transport keeps them:
   the check and the person (``reviewer_profile: "none"`` takes the reviewer
   off); ``program.step_remove`` removes a Planned step (the text's removed
   block); ``program.require`` takes ``measure`` and a word's ``walk``.
+- PG-LANG LANG12 (2026-10-31): ``program.add_to_night`` puts a Door task, a
+  note line or a step in tonight's dreaming program (``program_night``).
 """
 from __future__ import annotations
 
@@ -366,7 +368,8 @@ TOOLS: list[dict[str, Any]] = [
                     "parked step (resume, skip), a person review (prepare: a send is prepared, he presses Send), "
                     "an agent at its usage limit (limited: continue, wait), a requirement (requirement with "
                     "requirement_id: met, unmet, waive with reason, send_back), what an agent proposed "
-                    "(proposal_id: requirement_proposed add or skip, step_change apply or skip, step_amend send or skip). "
+                    "(proposal_id: requirement_proposed add or skip, step_change apply or skip, step_amend send or skip; "
+                    "a split of a step too big for its budget is a step_change: apply splits it, skip runs it as it is). "
                     "Owner only.",
      "inputSchema": _schema({
          "program_id": _ID, "step_id": {"type": ["string", "null"], "maxLength": 128},
@@ -397,6 +400,19 @@ TOOLS: list[dict[str, Any]] = [
                     "step is added and listed under Decided for you; at Secure and Normal the owner decides.",
      "inputSchema": _schema({"program_id": _ID, "checkpoint_id": {"type": ["string", "integer"]}},
                             ["program_id", "checkpoint_id"])},
+    {"name": "program.add_to_night",
+     "description": "Add one item to tonight's dreaming program (the one Program with a night line, or program_id): "
+                    "a Door task (kind action), a note line (kind note, with line) or a step of another Program "
+                    "(kind program_step). It becomes a Planned step; at the night's start the planner cuts it into "
+                    "one tiny step inside the program's bounds. The same item twice is one step. The owner's add "
+                    "lands at once; an orchestrating agent's lands at YOLO only (Decided for you, Overturn).",
+     "inputSchema": _schema({
+         "kind": {"type": "string", "enum": ["action", "note", "program_step"]},
+         "item_id": _ID,
+         "line": {"type": ["string", "null"], "maxLength": 1000, "description": "kind note: the note line."},
+         "program_id": {"type": ["string", "null"], "maxLength": 128,
+                        "description": "The night Program; empty: the one Program with a night line."},
+     }, ["kind", "item_id"])},
     {"name": "program.overturn",
      "description": "Undo one of the engine's decisions (Decided for you) while it can still be undone: a Later task, "
                     "a Skip, a parked step, an added step. Never a merge. Owner only.",
@@ -482,6 +498,9 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name == "program.step_done":
         return service.step_done(principal, args.get("program_id"), str(args["step_id"]), str(args.get("report") or ""),
                                  follow_ups=list(args.get("follow_ups") or []))
+    if name == "program.add_to_night":
+        return service.add_to_night(principal, kind=args.get("kind"), item_id=args.get("item_id"),
+                                    line=args.get("line"), program_id=args.get("program_id"))
     if name == "program.overturn":
         return service.overturn(principal, str(args["program_id"]), args["decision_id"])
     if name == "program.start_from":

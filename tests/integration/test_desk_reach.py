@@ -189,8 +189,8 @@ def test_the_page_reads_a_parked_push_in_his_terms_and_settles(tmp_path, monkeyp
         {"title": "Link the README", "brief": "Link it from the docs.", "after": [1]},
         {"title": "Announce it", "brief": "Say so in the changelog.", "after": [2]},
     ])
-    git(rig.repo, "remote", "remove", "origin")
     rig.service.start(OWNER, pid)
+    git(rig.repo, "remote", "remove", "origin")  # after Start: its precheck refuses a repository with no remote
     rig.agent.finish(rig.step(pid, 1)["launch_id"], {"README.md": "# app\nHello from the briefing page.\n"})
     rig.tick()
     assert rig.step(pid, 1)["state"] == "parked"
