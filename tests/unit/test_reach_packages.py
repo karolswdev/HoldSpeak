@@ -178,7 +178,7 @@ def test_only_the_owner_makes_or_revokes_and_a_bad_ref_is_refused(tmp_path) -> N
     with pytest.raises(BriefingRefused) as agent:
         briefing.make(AGENT, [_ref(pid, item)])
     assert agent.value.code == "owner_only"
-    for refs, code in (([f"program:{pid}:nothing"], "not_waiting"), (["decision:1"], "ref_unknown"),
+    for refs, code in (([f"program:{pid}:nothing"], "not_waiting"), (["decision:1"], "not_waiting"),  # DIR10: a decision is a source; this one does not exist
                        ([_ref(pid, item), _ref(pid, item)], "refs_invalid")):
         with pytest.raises(BriefingRefused) as refused:
             briefing.make(OWNER, refs)

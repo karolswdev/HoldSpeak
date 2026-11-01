@@ -1,0 +1,197 @@
+{
+  "items": [
+    {
+      "blocked": [],
+      "blocked_words": "Nothing else waits on this.",
+      "changed": [
+        {
+          "at": "2026-11-01T06:58:33.759453+00:00",
+          "clock": "01:58",
+          "line": "The check ran green in under a minute."
+        },
+        {
+          "at": "2026-11-01T06:58:33.495790+00:00",
+          "clock": "01:58",
+          "line": "The agent made a new commit."
+        },
+        {
+          "at": "2026-11-01T06:58:33.323873+00:00",
+          "clock": "01:58",
+          "line": "Handed to Claude Code."
+        }
+      ],
+      "choices": [
+        {
+          "consequence": "The step goes on with this change.",
+          "id": "go_on",
+          "label": "Go on",
+          "primary": true
+        },
+        {
+          "consequence": "Stop this step. The program has no other step to run.",
+          "id": "park",
+          "label": "Park",
+          "primary": false
+        }
+      ],
+      "doing": "Step 1: Store the stall reason in its own column.",
+      "evidence": [
+        {
+          "label": "Check log",
+          "pane": "log",
+          "token": "green"
+        },
+        {
+          "label": "Brief",
+          "pane": "brief",
+          "token": ""
+        },
+        {
+          "label": "Program text",
+          "pane": "text",
+          "token": "read only"
+        }
+      ],
+      "goal": "Goal: Stop the stalls.",
+      "happened": "The step's change touches files no step owns (schema.py).",
+      "head": "Overnight on the home box · step 1",
+      "kind": "core",
+      "kind_words": "Core question",
+      "level": "YOLO",
+      "note": [
+        "Goal: Stop the stalls.",
+        "Step 1: Store the stall reason in its own column.",
+        "The step's change touches files no step owns (schema.py)."
+      ],
+      "place": "Step 1 of 1 · started 01:58 · waited 10 h 01",
+      "program_id": "program-c41578182ae5",
+      "program_title": "Overnight on the home box",
+      "question": "Let the step go on with this, or park it?",
+      "ref": "program:program-c41578182ae5:step-8e3167f65634:core",
+      "since": "2026-11-01T06:58:33.903794+00:00",
+      "state": "open",
+      "step_id": "step-8e3167f65634",
+      "step_ordinal": 1,
+      "step_title": "Store the stall reason",
+      "track": [
+        {
+          "mark": "here",
+          "ordinal": 1,
+          "title": "Store the stall reason"
+        }
+      ]
+    },
+    {
+      "blocked": [],
+      "blocked_words": "",
+      "changed": [],
+      "choices": [
+        {
+          "consequence": "The decision is accepted. It leaves your review list.",
+          "id": "confirm",
+          "label": "Confirm",
+          "primary": true
+        }
+      ],
+      "doing": "Read receipts older than 14 days are pruned.",
+      "evidence": [],
+      "goal": "The decision: Keep the event log for 14 days.",
+      "happened": "",
+      "head": "A decision to review",
+      "kind": "decision",
+      "kind_words": "Decision to review",
+      "level": "",
+      "note": [
+        "The decision: Keep the event log for 14 days.",
+        "Read receipts older than 14 days are pruned."
+      ],
+      "place": "",
+      "program_id": null,
+      "program_title": "",
+      "question": "Confirm this decision?",
+      "ref": "decision:dec-1",
+      "since": "2026-11-01T06:58:34Z",
+      "source": "decision",
+      "state": "open",
+      "step_id": "",
+      "step_ordinal": null,
+      "step_title": "",
+      "track": []
+    },
+    {
+      "blocked": [],
+      "blocked_words": "",
+      "changed": [],
+      "choices": [
+        {
+          "consequence": "Your phone rings now.",
+          "id": "call_now",
+          "label": "Call now",
+          "primary": true
+        },
+        {
+          "consequence": "No call. It stays on your desk.",
+          "id": "let_wait",
+          "label": "Let it wait",
+          "primary": false
+        }
+      ],
+      "doing": "",
+      "evidence": [],
+      "goal": "An agent asks to call you about the schema step needs your word.",
+      "happened": "",
+      "head": "An agent asks to call you",
+      "kind": "held_call",
+      "kind_words": "Call request",
+      "level": "",
+      "note": [
+        "An agent asks to call you about the schema step needs your word."
+      ],
+      "place": "",
+      "program_id": null,
+      "program_title": "",
+      "question": "Call you about the schema step needs your word?",
+      "ref": "phone-call:pcall-held-1",
+      "since": "2026-11-01T12:00:00+00:00",
+      "source": "phone-call",
+      "state": "open",
+      "step_id": "",
+      "step_ordinal": null,
+      "step_title": "",
+      "track": []
+    }
+  ],
+  "later": [
+    {
+      "at": "13:00",
+      "id": "in_1h",
+      "label": "In 1 hour"
+    },
+    {
+      "at": "13:00",
+      "id": "at_13",
+      "label": "At 13:00"
+    },
+    {
+      "at": "19:00",
+      "id": "tonight",
+      "label": "Tonight"
+    },
+    {
+      "at": "07:00",
+      "id": "tomorrow",
+      "label": "Tomorrow at 07:00"
+    }
+  ],
+  "package": {
+    "desk": "/?open=program:program-c41578182ae5",
+    "expires_at": "2026-11-02T05:00:00+00:00",
+    "expires_words": "Expires in 12 h",
+    "head": "3 wait on you",
+    "hub": "the rig hub",
+    "id": "pkg-700b0e32e433",
+    "kind": "digest",
+    "open": 3,
+    "open_words": "3 wait on you."
+  }
+}
