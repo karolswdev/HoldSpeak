@@ -296,6 +296,9 @@ class GateService:
             # branch or a folder past the head is omitted, never stored).
             "target": visible_target(target, stored_head) if scope != INSIDE else "",
             "cwd_inside": cwd_inside, "destructive": raw.get("destructive", "") if scope == UNPARSED else "",
+            # JRN8: the call's only writes are in the agent's own scratch (an
+            # audit step may make them); only for the caller's own worktree.
+            "scratch_only": raw.get("scratch_only", "") if worktree and raw.get("root") and os.path.realpath(raw["root"]) == worktree else "",
         }
 
     def _launch_records(self) -> tuple[Any, list[dict[str, Any]]]:

@@ -419,7 +419,8 @@ def _resolve_tool_gate(
         # PG-LANG JRN8 (journey J7): an audit step reads and changes nothing.
         # A read or a test in its own copy passes; every write is refused by
         # rule at Normal and YOLO (Secure holds every call, as always).
-        reads = scope == "inside" and (bool(read_rule) or operation.resource_scope == "Read")
+        reads = (scope == "inside" and (bool(read_rule) or operation.resource_scope == "Read")) or bool(
+            tool_call.get("scratch_only"))  # a write in the agent's own scratch changes nothing here
         if not reads:
             return PolicyDecision(
                 mode=mode, source=source, precedence=precedence, outcome="refused", reason_code="audit_reads_only",

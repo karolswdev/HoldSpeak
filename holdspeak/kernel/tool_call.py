@@ -20,7 +20,7 @@ _ALLOWED = frozenset({
     # names no argument text: launch id, scope, rule, read rule.
     "classification",
 })
-_VERDICT_KEYS = ("launch_id", "scope", "rule", "read_rule", "target", "cwd_inside", "destructive")
+_VERDICT_KEYS = ("launch_id", "scope", "rule", "read_rule", "target", "cwd_inside", "destructive", "scratch_only")
 
 
 @dataclass(frozen=True)
@@ -112,7 +112,7 @@ class ToolCallCodec:
         verdict = {
             key: str(raw.get(key) or "")[:200] for key in _VERDICT_KEYS
         } if isinstance(raw, Mapping) else {}
-        for key in ("cwd_inside", "destructive"):
+        for key in ("cwd_inside", "destructive", "scratch_only"):
             if not verdict.get(key):
                 verdict.pop(key, None)  # the receipt keeps its old shape for a plain call
         if verdict.get("launch_id") and self._db is not None:
