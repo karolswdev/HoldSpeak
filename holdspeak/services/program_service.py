@@ -358,6 +358,47 @@ def triage_effort(brief: str, owns: Iterable[str]) -> str:
 NIGHT_ENDED = "Night ended"
 
 
+def race_group(steps: Iterable[Mapping[str, Any]], step: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """A race step and its contenders (``[]`` for a step that is no race)."""
+    parent = step.get("race_of") or (step.get("id") if int(step.get("race") or 0) >= 2 else None)
+    if not parent:
+        return []
+    return [row for row in steps if row.get("id") == parent or row.get("race_of") == parent]
+
+
+def race_all_red(group: list[Mapping[str, Any]]) -> bool:
+    """PG-JOURNEYS J5: every contender of a race failed its rounds (parked by
+    the engine as failed, not by the race)."""
+    return len(group) >= 2 and all(
+        _engine_parked(row) and (row.get("facts") or {}).get("ending") == "failed" for row in group)
+
+
+def _race_red_as_one(items: list[dict[str, Any]], steps: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """J5: when both contenders are red after their rounds, the race fails as
+    one step: one Parked row on the race step with both logs."""
+    out: list[dict[str, Any]] = []
+    done: set[str] = set()
+    by_id = {str(row.get("id")): row for row in steps}
+    for item in items:
+        step = by_id.get(str(item.get("step_id") or ""))
+        group = race_group(steps, step) if step is not None and item.get("kind") == "parked" else []
+        if not group or not race_all_red(group):
+            out.append(item)
+            continue
+        parent = next(row for row in group if not row.get("race_of"))
+        if parent["id"] in done:
+            continue
+        done.add(parent["id"])
+        logs = [{"agent": agent_label(row.get("profile")), "log": row.get("check_log"), "step_id": row["id"]}
+                for row in group]
+        out.append({**item, "id": f"{parent['id']}:parked", "step_id": parent["id"], "race": True, "logs": logs,
+                    "title": (f"Parked step {parent['ordinal']} “{parent['title']}”: both contenders are "
+                              "red after their rounds" if len(group) == 2 else
+                              f"Parked step {parent['ordinal']} “{parent['title']}”: every contender is "
+                              "red after its rounds")})
+    return out
+
+
 def _engine_parked(step: Mapping[str, Any]) -> bool:
     return (step.get("state") == "parked" and step.get("parked_by") == PARKED_BY_ENGINE
             and not str(step.get("parked_reason") or "").startswith(NIGHT_ENDED))
@@ -530,6 +571,7 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
             items.append({**base, "id": f"{step['id']}:ask_review", "kind": "ask_review",
                           "choices": list(DECIDE_CHOICES["ask_review"]),
                           "title": f"Ask {name} to review PR #{number}" if number else f"Ask {name} to review"})
+    items = _race_red_as_one(items, steps)
     items.extend(requirement_items(program, steps, requirements, proposals))
     if (level == "secure" and steps and not live and not items and not program.get("closed_at")
             and program.get("state") not in ("drafting", "parked") and not end_pending(program, steps, requirements)):
@@ -1566,7 +1608,7 @@ class ProgramService:
         for row in self.store.list_rounds(program["id"]):
             # LANG9: a question's why, its offered answers, skipped, and what
             # the answer became; the round's count of changes, its waiting question.
-            questions = [{**{key: item.get(key) for key in ("id", "text", "answer", "answered_by", "at", "why")},
+            questions = [{**{key: item.get(key) for key in ("id", "text", "answer", "answered_by", "at", "why", "rule")},
                           "choices": list(item.get("choices") or []), "skipped": bool(item.get("skipped")),
                           "became": list(item.get("became") or [])} for item in row["questions"]]
             waits = next((item["id"] for item in questions if not item.get("answer") and not item["skipped"]), None)
@@ -2589,10 +2631,12 @@ class ProgramService:
                     step["parked_by"], step["parked_reason"] = None, None
                     self.transition(program, step, "checking" if at_pr else "ready", by="owner",
                                     line="Resumed the step from its green check" if at_pr else "Resumed the step")
+                    self._race_follow(program, step, "resume")
                 else:
                     step["parked_by"], step["parked_reason"] = PARKED_BY_OWNER, "You skipped this step"
                     self._save(step)
                     self._checkpoint(program, step, "owner", "Skipped the step")
+                    self._race_follow(program, step, "skip")
             elif kind == "ask_review":
                 answer = self._prepare_review_ask(principal, program, step)
             elif kind == "core":
@@ -2980,6 +3024,42 @@ class ProgramService:
                 continue
             self._new_requirement(program, None, data, each_step=bool(item.get("each_step", True)),
                                   required=bool(item.get("required", True)), by="template")
+
+    def _plant_review_requirements(self, program: Mapping[str, Any]) -> None:
+        """PG-REQ §10 (J5): the review turned on for a step, so the template's
+        Review requirements plant now (once; the same text is not planted twice)."""
+        from ..program_templates import get_template, requirements_for
+
+        shape = get_template(program.get("template")) if program.get("template") else None
+        if not shape:
+            return
+        have = {str(row.get("text") or "") for row in self.requirements(program["id"])}
+        for item in requirements_for(dict(shape), review=True):
+            if item.get("kind") != "review" or str(item.get("text") or "") in have:
+                continue
+            try:
+                data = self._requirement_input(program, item.get("text"), item.get("kind"), item.get("spec"))
+            except ProgramRefused:
+                continue
+            self._new_requirement(program, None, data, each_step=bool(item.get("each_step", True)),
+                                  required=bool(item.get("required", True)), by="template")
+
+    def _race_follow(self, program: Mapping[str, Any], step: dict[str, Any], choice: str) -> None:
+        """J5: Resume or Skip on a race that failed as one step moves every
+        contender the same way."""
+        steps = self.store.list_steps(program["id"])
+        group = race_group(steps, step)
+        if not group or step.get("race_of"):
+            return
+        for other in group:
+            if other["id"] == step["id"] or not _engine_parked(other):
+                continue
+            if choice == "resume":
+                other["rounds"], other["parked_by"], other["parked_reason"] = 0, None, None
+                self.transition(program, other, "ready", by="owner", line="Resumed the contender")
+            else:
+                other["parked_by"], other["parked_reason"] = PARKED_BY_OWNER, "You skipped this step"
+                self._save(other)
 
     def _plant_step_requirements(self, program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]]) -> None:
         """From the desk (§10): one Review per step from its origin, where
@@ -3535,8 +3615,11 @@ class ProgramService:
                                      reason=FROZEN_BAR)
             if value == "person" and not (step.get("for_person_id") or program.get("for_person_id")):
                 raise ProgramRefused("person_required", "A person review names the person (for_person_id).", status=400)
+            turned_on = value == "agent" and str(step.get("gate_review") or "none") == "none"
             step["gate_review"] = value
             changed.append("review")
+            if turned_on:
+                self._plant_review_requirements(program)
         if "review_depth" in fields:
             depth = str(fields["review_depth"] or "").lower()
             if depth not in REVIEW_DEPTHS:

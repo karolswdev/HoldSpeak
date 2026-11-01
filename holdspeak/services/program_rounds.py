@@ -256,6 +256,15 @@ def ask(service: Any, principal: Any, program_id: str, name: Any, *,
     if len(row.get("questions") or []) >= QUESTIONS_MAX:
         return _close(service, principal, pid, row, by="engine",
                       line=f"Round {row['name']} done: {QUESTIONS_MAX} questions asked")
+    ruled = race_review_question(service, program, row)
+    if ruled is not None:
+        # J5: a race with no review cannot have a "first green and reviewed"
+        # winner; the round asks by rule, before any engine call.
+        with _LOCK:
+            row = {**row, "state": "asking", "questions": [*(row.get("questions") or []), ruled]}
+            _save(service, pid, row)
+            _changed(service, pid)
+        return _asked(service, principal, pid, row, ruled, engine=None, seconds=0.0)
     wire = service.get(principal, pid)
     text = shaper.stripped_text(print_program(wire))
     ground = shaper.grounding(service, wire)
@@ -303,6 +312,42 @@ def ask(service: Any, principal: Any, program_id: str, name: Any, *,
         _save(service, pid, row)
         _changed(service, pid)
     return _asked(service, principal, pid, row, question, engine=engine, seconds=seconds)
+
+
+#: J5: the Verification round's rule question on a race with no review.
+RACE_REVIEW = "race_review"
+RACE_REVIEW_CHOICES = ("Each reviews the other", "No review")
+
+
+def race_review_question(service: Any, program: Mapping[str, Any], row: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+    """The rule question, once per round, when a race step is not reviewed."""
+    if _fold(row.get("name")) != _fold("Verification"):
+        return None
+    if any(item.get("rule") == RACE_REVIEW for item in row.get("questions") or []):
+        return None
+    races = [step for step in service.store.list_steps(program["id"]) if int(step.get("race") or 0) >= 2
+             and not step.get("race_of") and str(step.get("gate_review") or "none") == "none"
+             and step.get("state") in ("planned", "ready")]
+    if not races:
+        return None
+    return {"id": f"q-{uuid.uuid4().hex[:10]}", "text": "Review each contender?",
+            "why": "The race winner is the first green and reviewed branch, and no step of the race has a review.",
+            "choices": list(RACE_REVIEW_CHOICES), "answer": None, "answered_by": None, "at": None, "skipped": False,
+            "became": [], "asked_at": service._clock(), "engine": None, "rule": RACE_REVIEW}
+
+
+def _race_review_answer(service: Any, principal: Any, pid: str, words: str) -> list[str]:
+    """His answer to the rule question, applied by rule (no engine call):
+    Each reviews the other turns the review on for every race step (the
+    other harness reviews each contender, ``DEFAULT_REVIEWER``)."""
+    if not words.lower().startswith("each"):
+        return []
+    became = []
+    for step in service.store.list_steps(pid):
+        if int(step.get("race") or 0) >= 2 and not step.get("race_of") and step.get("state") in ("planned", "ready"):
+            service.change_step(principal, pid, step["id"], gate_review="agent")
+            became.append(f"step {step['ordinal']} review")
+    return became
 
 
 def _asked(service: Any, principal: Any, pid: str, row: Mapping[str, Any], question: Mapping[str, Any], *,
@@ -378,6 +423,18 @@ def answer(service: Any, principal: Any, program_id: str, name: Any, said: Any =
         target.update(answer=words, answered_by=_who(principal), at=service._clock(), skipped=False, became=[])
         _save(service, pid, {**row, "questions": questions})
         _changed(service, pid)
+    if target.get("rule") == RACE_REVIEW:
+        became = _race_review_answer(service, principal, pid, words)
+        with _LOCK:
+            row = _round(service, pid, name)
+            questions = [dict(item) for item in row.get("questions") or []]
+            for item in questions:
+                if item.get("id") == target["id"]:
+                    item["became"] = became
+            _save(service, pid, {**row, "questions": questions})
+            _changed(service, pid)
+        return {"source": f"round:{row['name']}", "round": row["name"], "changes": [], "applied_rows": [],
+                "round_question": {**target, "became": became}, "program": service.get(principal, pid)}
     out = shape_program(service, principal, pid,
                         sentence_of(row["name"], str(target["text"]), words, str(target.get("why") or "")),
                         apply=apply and _is_owner(principal), invoke_fn=invoke_fn, rounds=False)

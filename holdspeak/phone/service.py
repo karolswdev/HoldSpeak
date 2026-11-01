@@ -84,6 +84,10 @@ def _settings() -> Any:
     return Config.load().calls
 
 
+#: JRN6: only the newest messages carry their item's verbs (an old one asks nothing now).
+ACTIONS_LAST = 20
+
+
 def message_wire(row: Mapping[str, Any]) -> dict[str, Any]:
     keys = ("id", "seq", "direction", "text", "reply_to", "created_at", "delivered_at", "read_at", "origin_ref",
             "program_step_id")
@@ -452,8 +456,42 @@ class PhoneService:
                                  program_step_id=program_step_id, queue=queue)
 
     def messages(self, *, after_seq: int = 0) -> dict[str, Any]:
-        return {"messages": [message_wire(row) for row in self.store.list_messages(after_seq=after_seq)],
-                "last_seq": self.events.last_seq()}
+        from .actions import _briefing, actions_for, step_of
+
+        out = []
+        rows = self.store.list_messages(after_seq=after_seq)
+        asking = [row for row in rows[-ACTIONS_LAST:] if step_of(row)]
+        briefing = _briefing(self.db) if asking else None
+        items: Optional[list[dict[str, Any]]] = None
+        if briefing is not None:
+            try:
+                items = briefing.programs().needs_you_items()  # read once for every message
+            except Exception as exc:
+                log.debug(f"phone: the held items were not read: {exc}")
+                items = []
+        for row in rows:
+            wire = message_wire(row)
+            # JRN6: a desk message about a Program step carries the verbs of
+            # the item that waits on it now (none once it is answered).
+            acts = actions_for(self.db, row, briefing=briefing, items=items) if row in asking else None
+            if acts:
+                wire["actions"] = acts
+            out.append(wire)
+        return {"messages": out, "last_seq": self.events.last_seq()}
+
+    def decide(self, message_id: str, choice: Any, *, device: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
+        """JRN6: his press on a message's verb (his paired phone, or the
+        owner): the item's own verb as his press, ``via="phone"``."""
+        from . import actions
+
+        row = self.store.get_message(message_id)
+        if row is None:
+            raise PhoneRefused("message_unknown", "There is no such message.", 404)
+        answer = actions.decide(self.db, row, choice)
+        self.events.append("message.decided", {"msg_id": message_id, "at": self._stamp(),
+                                               "by": "phone" if device else "desk", "choice": str(choice)})
+        self._frame("message", message_id, "decided")
+        return {"message_id": message_id, "decided": True, "choice": answer["choice"], "ref": answer["ref"]}
 
     def get_replies(self, wait_s: Any = 0) -> dict[str, Any]:
         """His new replies, each once; waits up to ``wait_s`` for one."""

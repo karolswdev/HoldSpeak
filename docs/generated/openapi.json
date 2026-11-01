@@ -22612,6 +22612,46 @@
         "summary": "Api Phone Message Send"
       }
     },
+    "/api/phone/messages/{message_id}/decide": {
+      "post": {
+        "description": "JRN6: a press on a message's verb: his paired phone, or the owner.",
+        "operationId": "api_phone_message_decide_api_phone_messages__message_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Phone Message Decide Api Phone Messages  Message Id  Decide Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Phone Message Decide"
+      }
+    },
     "/api/phone/messages/{message_id}/read": {
       "post": {
         "operationId": "api_phone_message_read_api_phone_messages__message_id__read_post",
