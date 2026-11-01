@@ -341,6 +341,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "program.text_apply": WORK,  # PG-LANG LANG1: a batch of the verbs above, each with its own rule
     "program.plan_draft": WORK,  # PG-LANG LANG6: a goal becomes a drafted text (rows only; Apply writes)
     "program.round": WORK,  # PG-LANG LANG9: the interview rounds (an agent's answer is a proposal)
+    "program.add_to_night": WORK,  # PG-LANG LANG12: his at once; an agent's lands at YOLO only
     "program.shape": WORK,  # PG-LANG LANG3: a sentence becomes change rows; YOLO's apply is the level's
     "program.decide": AUTHORITY,  # a merge and a finding's fate are the owner's press
     "program.overturn": AUTHORITY,  # undoing the engine's decision is the owner's press

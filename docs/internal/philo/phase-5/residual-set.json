@@ -2518,6 +2518,12 @@
       "entry_point": "program.round",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.add_to_night",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
     }
   ]
 }

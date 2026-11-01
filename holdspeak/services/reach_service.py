@@ -42,6 +42,9 @@ from .errors import ServiceError
 log = get_logger("services.reach")
 
 POLICY = "reach"
+#: PG-LANG LANG12: the night digest lines (one per night per Program), kept the last 30.
+NIGHT_POLICY = "reach_night_lines"
+NIGHT_KEPT = 30
 #: Settings ▸ Reach ▸ When to reach you ▸ Telegram.
 TELEGRAM_MODES = ("at_once", "after_10", "digest", "off")
 TELEGRAM_MODE_WORDS = {"at_once": "At once", "after_10": "After 10 min", "digest": "Only the digest", "off": "Off"}
@@ -422,7 +425,62 @@ class ReachService:
                     log.info(f"reach: {ref} not sent to Telegram: {exc.code}")
         done["settled"] = telegram.settle_gone(set(items))
         done["digest"] = self._maybe_digest(telegram, now, quiet, items)
+        done["night"] = self._send_night_lines(telegram, now, quiet)
         return done
+
+    # ── PG-LANG LANG12: the night's digest line ──────────────────────
+
+    def _night_rows(self) -> list[dict[str, Any]]:
+        try:
+            policy = self.db.cadence.get_policy(NIGHT_POLICY)
+            rows = (getattr(policy, "config", None) or {}).get("lines") if policy else None
+        except Exception:
+            rows = None
+        return [dict(row) for row in rows or [] if isinstance(row, dict)]
+
+    def _save_night_rows(self, rows: list[dict[str, Any]]) -> None:
+        from ..cadence.models import CadencePolicy
+
+        self.db.cadence.upsert_policy(CadencePolicy(name=NIGHT_POLICY, config={"lines": rows[-NIGHT_KEPT:]}))
+
+    def night_line(self, ref: str, text: str) -> dict[str, Any]:
+        """One line set at a night's end ("Since last night: …"), once per
+        ``ref``. It goes on the ladder's Telegram rung as the digest does:
+        not when Telegram is Off, held to the end of quiet hours."""
+        with _LOCK:
+            rows = self._night_rows()
+            if any(row.get("ref") == ref for row in rows):
+                return {"ref": ref, "queued": False, "again": True}
+            rows.append({"ref": str(ref), "text": str(text or "")[:1000], "at": _utc(self.now()), "sent_at": None})
+            self._save_night_rows(rows)
+        sent: list[str] = []
+        try:
+            telegram = self.telegram()
+            if telegram.live():
+                sent = self._send_night_lines(telegram, self.now(), self.quiet())
+        except Exception as exc:
+            log.info(f"reach: the night line waits: {exc}")
+        return {"ref": ref, "queued": ref not in sent, "sent": ref in sent}
+
+    def _send_night_lines(self, telegram: Any, now: datetime, quiet: tuple[int, int]) -> list[str]:
+        if self.settings()["telegram"] == "off" or in_quiet(now, quiet):
+            return []
+        with _LOCK:
+            rows = self._night_rows()
+            sent: list[str] = []
+            for row in rows:
+                if row.get("sent_at"):
+                    continue
+                try:
+                    telegram.line(str(row.get("text") or ""))
+                except ServiceError as exc:
+                    log.info(f"reach: the night line was not sent: {exc.code}")
+                    continue
+                row["sent_at"] = _utc(now)
+                sent.append(str(row.get("ref")))
+            if sent:
+                self._save_night_rows(rows)
+        return sent
 
     def _open_items(self) -> dict[str, dict[str, Any]]:
         from .briefing_service import BRIEFABLE

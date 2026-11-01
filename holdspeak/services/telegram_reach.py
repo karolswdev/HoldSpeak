@@ -543,6 +543,16 @@ class TelegramReach:
         result = self._api("sendMessage", {"chat_id": chat["id"], "text": text})
         return {"ok": bool(result.get("ok")), "text": text, "items": len(rows)}
 
+    def line(self, text: str) -> dict[str, Any]:
+        """One plain message to the owner chat, no buttons (PG-LANG LANG12:
+        the night's digest line)."""
+        chat = paired_chat()
+        if chat is None:
+            raise TelegramRefused("telegram_not_paired", "Pair Telegram first.")
+        body = fence(str(text or ""))
+        result = self._api("sendMessage", {"chat_id": chat["id"], "text": body})
+        return {"ok": bool(result.get("ok")), "text": body}
+
     def settle(self, package: Mapping[str, Any], words: str) -> None:
         """The package's Telegram messages edit themselves to the outcome."""
         chat = paired_chat()

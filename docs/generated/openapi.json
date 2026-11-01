@@ -23206,6 +23206,24 @@
         "summary": "Api Programs Templates"
       }
     },
+    "/api/programs/tonight": {
+      "post": {
+        "operationId": "api_programs_add_to_night_api_programs_tonight_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Add To Night Api Programs Tonight Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Programs Add To Night"
+      }
+    },
     "/api/programs/{program_id}": {
       "get": {
         "operationId": "api_programs_get_api_programs__program_id__get",

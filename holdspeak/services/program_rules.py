@@ -36,6 +36,8 @@ KINDS = (
     # 2026-10-31 (a held commit stranded a step): the step's agent's own
     # commit on its own branch, held by the gate or not made.
     "held_commit",
+    # PG-LANG LANG8 (§5.4): a step whose estimate is over its budget's working share.
+    "step_too_big",
 )
 
 #: PG19: the minutes Normal waits on his press before a Program that may
@@ -279,6 +281,14 @@ def decide(level: Any, kind: str, facts: Optional[Mapping[str, Any]] = None) -> 
             return Decision("send", "YOLO: the engine sends an orchestrator's amendment at the turn boundary and says so")
         return CoreQuestion(f"{level_word(level)}: he sends an amendment to a running step",
                             f"{level_word(level)}: the brief is his")
+    if kind == "step_too_big":
+        # PG-LANG §5.4: YOLO has the planner split it (Overturn while the
+        # parts are Planned); Secure and Normal get the split as a proposal.
+        if level == "yolo":
+            return Decision("split", "YOLO: the planner splits a step too big for its budget and says so",
+                            overturnable=True)
+        return CoreQuestion(f"{level_word(level)}: he splits a step too big for its budget, or runs it as it is",
+                            f"{level_word(level)}: the plan is his")
     if kind == "program_done":
         if level == "secure":
             return CoreQuestion("Secure: he closes the program", "Secure: Done is his")

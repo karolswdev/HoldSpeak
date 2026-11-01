@@ -33,6 +33,7 @@ PATCH  /api/programs/{id}/steps/{sid}              PG-REQ: change a step (the §
                                                    step_frozen names the field and the reason
 POST   /api/programs/{id}/steps/{sid}/amend        {line}: a line added to a started step's brief
 POST   /api/programs/{id}/steps/{sid}/remove       PG-LANG: remove a Planned or Ready step (409 step_stays)
+POST   /api/programs/tonight                       PG-LANG LANG12: add a Door task, a note line or a step to tonight
 POST   /api/programs/{id}/requirements             {text, kind?, step_id?, each_step?, required?, spec?}
 PATCH  /api/programs/{id}/requirements/{rid}       {text?, kind?, required?, spec?}
 POST   /api/programs/{id}/requirements/{rid}/decide {choice: met|unmet|waive|send_back, line?} (owner)
@@ -145,6 +146,12 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         args = {key: body.get(key) for key in _CREATE_FIELDS if key in body}
         args.setdefault("title", "")
         return await _call(lambda: _service().create(principal, **args), status=201)
+
+    @router.post("/api/programs/tonight")
+    async def api_programs_add_to_night(request: Request) -> Any:
+        principal, body = _principal(request), await _body(request)
+        return await _call(lambda: _service().add_to_night(principal, kind=body.get("kind"), item_id=body.get("item_id"),
+                                                           line=body.get("line"), program_id=body.get("program_id")))
 
     @router.get("/api/programs/{program_id}")
     async def api_programs_get(program_id: str, request: Request) -> Any:
