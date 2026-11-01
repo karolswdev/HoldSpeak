@@ -65,6 +65,19 @@ class People:
         return {"display_name": "Alice", "owner_aliases": ["alice-gh"]}
 
 
+def _launch_principal(launch_id: str) -> Any:
+    """The step's own agent (its launch credential), as the MCP door sees it."""
+    import holdspeak.principals as principals
+    from holdspeak.mcp import palettes
+    from holdspeak.principals import AgentCredentialStore
+
+    store = AgentCredentialStore()
+    credential = store.issue(f"agent:launch:{launch_id}", palette=palettes.resolve_palette("CONDUCTOR"),
+                             palette_name="CONDUCTOR", launch_id=launch_id)
+    principals.agent_credentials = store
+    return credential.principal
+
+
 def _client(rig: Rig) -> TestClient:
     program_module.default_program_service = lambda db=None: rig.service  # the hub's one instance
     app = FastAPI()
@@ -498,7 +511,14 @@ def record(root: Path) -> dict[str, Any]:
     done = _create(rig, "Wave 6 of the atlas", template="fast-cycle", control="normal", project_id="proj-holdspeak")
     rig.service.plan(OWNER, done, steps=[{"title": "Atlas anchors", "brief": "Cite each anchor once."}])
     rig.service.start(OWNER, done)
-    rig.agent.finish(rig.step(done, 1)["launch_id"], {"docs/atlas.md": "x\n"})
+    # PG-IMPORT IMP1: the agent's own words (a line and its report), so the
+    # step report has its "The agent says:" register.
+    atlas = rig.step(done, 1)
+    agent = _launch_principal(atlas["launch_id"])
+    rig.service.checkpoint(agent, done, atlas["id"], "Twelve anchors cited, two left")
+    rig.service.step_done(agent, done, atlas["id"], "## Summary\n- Cited every anchor in the atlas once.\n"
+                                                   "- Ran the docs build; it is green.\n")
+    rig.agent.finish(atlas["launch_id"], {"docs/atlas.md": "x\n", "docs/anchors.md": "y\n"})
     rig.tick(3)
 
     # ── Parked by him, with a step the engine parked after its rounds ──
@@ -557,6 +577,9 @@ def _check(fixtures: dict[str, Any]) -> None:
     assert fixtures["program.your_turn.json"]["state"] == "waiting"
     assert {item["kind"] for item in fixtures["program.your_turn.json"]["your_turn_items"]} >= {"merge", "finding", "core"}
     assert fixtures["program.done.json"]["state"] == "done"
+    report = fixtures["program.done.json"]["steps"][0]["report"]
+    assert report["observed"] and report["claimed"] and report["files"], report
+    assert fixtures["program.done.json"]["finished_words"] == "finished"
     assert fixtures["program.parked.json"]["state"] == "parked"
     assert fixtures["program.drafting.json"]["state"] == "drafting"
     assert fixtures["needs_you.program.json"]["items"]

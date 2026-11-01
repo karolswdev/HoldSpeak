@@ -165,6 +165,21 @@ The program is **Drafting**, **Running**, **Your turn**, **Done**, **Parked** or
 
 A step moves on a receipt, not on a claim. "Done" from the agent is not enough: HoldSpeak waits for a new commit on the step's branch. "Green" is a green check log. "Merged" is the merge that GitHub reports.
 
+### The step report
+
+When a step is Merged, Done, Parked or skipped, open its row to read its report. The report has four parts, in this order:
+
+| Part | What it shows |
+|---|---|
+| **Checked:** | What HoldSpeak saw itself: the commit, the check result, the pull request, the merge, and each requirement that HoldSpeak judged, with its value. |
+| **The agent says:** | What the agent said: the first lines of its report and its own lines on the step. HoldSpeak did not check these. |
+| **Not checked:** | What nobody checked: a Your word requirement that nobody judged, a review that did not run, a gate check that was off. |
+| **Files:** | The files that the step's commits changed (at most 12, then "and 4 more"). |
+
+HoldSpeak writes a "Checked" line only for a fact that it saw. Each line points to the ledger line that saw it. A part with nothing in it does not show. On the briefing page, **Report** opens the same report, read only.
+
+A Done program says **finished** in the Programs list and under its line. A Done program that still has a decision for you (a delivery to merge or retry, a finding or a proposed step that nobody decided) says **finished · needs a decision**. These words are grey: the program is not stopped, so it does not light the Your turn lamp.
+
 ![The Program window at 1440: the Gate fold of a step whose check failed, and one agent that asks you](assets/programs/program-running-gate-1440.png)
 
 *A running program at YOLO. Step 3's check failed in the Pytest section; the Gate fold shows the command, the verdict and each section. Step 5 waits for its idle engine.*

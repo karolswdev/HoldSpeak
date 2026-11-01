@@ -210,13 +210,16 @@ def test_the_page_reads_a_parked_push_in_his_terms_and_settles(tmp_path, monkeyp
                              "The step could not push its branch: this repository has no remote."]
     assert shown["question"] == "Start the step again, or stop it?"
     assert shown["blocked_words"] == "2 steps wait on this: 2 Link the README, 3 Announce it."
-    assert [pane["label"] for pane in shown["evidence"]] == ["The error", "Check log", "Brief", "Program text"]
+    assert [pane["label"] for pane in shown["evidence"]] == ["The error", "Check log", "Brief", "Report", "Program text"]
     assert "error" not in shown and opened["package"]["desk"] == f"/?open=program:{pid}"
     error = client.get(f"/api/b/{token}/evidence/{ref}/error").json()
     assert error["text"].startswith("git push failed: fatal:")
     brief = client.get(f"/api/b/{token}/evidence/{ref}/brief").json()
     text = client.get(f"/api/b/{token}/evidence/{ref}/text").json()
     log = client.get(f"/api/b/{token}/evidence/{ref}/log").json()
+    # PG-IMPORT IMP1: the step's report, read only, register by register.
+    report = client.get(f"/api/b/{token}/evidence/{ref}/report").json()
+    assert report["kind"] == "rows" and report["rows"][0]["label"] == "Checked:", report
     later = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "later", "later": "at_13"}).json()
     assert later["item"]["state"] == "later"
     decided = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "resume"})
@@ -232,7 +235,7 @@ def test_the_page_reads_a_parked_push_in_his_terms_and_settles(tmp_path, monkeyp
     assert expired.status_code == 404
     _fixture(PAGE_FIXTURES / "reach.page.json", {
         "made": made.json(), "open": opened, "later": later, "decided": decided.json(), "again": again.json(),
-        "after": after, "expired": expired.json(), "brief": brief, "text": text, "log": log, "error": error,
+        "after": after, "expired": expired.json(), "brief": brief, "text": text, "log": log, "error": error, "report": report,
     }, tmp_path, token)
 
 
