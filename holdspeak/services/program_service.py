@@ -567,8 +567,13 @@ def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, A
     items: list[dict[str, Any]] = []
 
     def word(base: dict[str, Any], row: Mapping[str, Any], where: str) -> dict[str, Any]:
-        return {**base, "id": f"{row['id']}:word", "kind": "requirement_word", "requirement_id": row["id"],
+        item = {**base, "id": f"{row['id']}:word", "kind": "requirement_word", "requirement_id": row["id"],
                 "choices": ["met", "unmet"], "title": f"{where}: {label(row['ordinal'])} · {row['text']}"}
+        walk = (row.get("spec") or {}).get("walk")
+        if walk:
+            # PG-LANG §6.3: a walk is the steps he does; HoldSpeak never runs it.
+            item["walk"] = [str(line) for line in walk]
+        return item
 
     def left(base: dict[str, Any], row: Mapping[str, Any], where: str, choices: list[str],
              finding_id: Optional[str] = None) -> dict[str, Any]:
@@ -1080,12 +1085,12 @@ class ProgramService:
                      else "met" if all(other.get("state") in ("met", "waived") for other in copies) else "not_yet")
         step_state = str((step or {}).get("state") or "")
         running = state == "not_yet" and (
-            (kind in ("check", "shot") and step_state == "checking") or (kind == "review" and step_state == "review"))
+            (kind in ("check", "shot", "measure") and step_state == "checking") or (kind == "review" and step_state == "review"))
         head = (step or {}).get("head_commit")
         stale = bool(step and kind in COMMIT_BOUND and row.get("judged_commit") and head and row["judged_commit"] != head)
         word = CHECKING_WORD if running else (WAITS_WORD if row["id"] in his and state == "not_yet" else STATE_WORDS.get(state, state))
-        if kind in NOT_JUDGED_YET and state == "not_yet":
-            word = NOT_MEASURED_WORD  # PG-LANG §6.3: the verifier is LANG11
+        if (kind in NOT_JUDGED_YET or kind == "measure") and state == "not_yet" and not running:
+            word = NOT_MEASURED_WORD  # PG-LANG §6.3: until HoldSpeak measured it
         frozen = bool(program.get("closed_at")) or step_state in FROZEN_STEP_STATES
         if frozen or state == "waived":
             choices: list[str] = []

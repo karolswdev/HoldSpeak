@@ -805,10 +805,15 @@ def test_measure_and_walk_lines_apply_as_requirements(tmp_path) -> None:
                                                            "  R+ measure: It is fast.\n")))["changes"]
     assert [(row["code"], row["reason"]) for row in rows] == [
         ("requirement_unprovable", "A measure needs a command and a bound.")]
-    # Making a check a measure lowers the bar (a measure does not gate yet).
+    # LANG11: a measure gates like a check, so making a check a measure does
+    # not lower the bar; making it a review still does.
     rows = diff_program_text(
         "program P\n\nat the end\n  R1 check: `echo ok` is green.\n",
         "program P\n\nat the end\n  R1 measure: `echo ok` is green.\n    bound n < 3\n")
+    assert [(row.id, row.verdict) for row in rows] == [("R1.requirement", "allowed")]
+    rows = diff_program_text(
+        "program P\n\nat the end\n  R1 measure: `echo ok` is green.\n    bound n < 3\n",
+        "program P\n\nat the end\n  R1 review: `echo ok` is green.\n")
     assert [(row.id, row.verdict) for row in rows] == [("R1.requirement", "lowers")]
 
 

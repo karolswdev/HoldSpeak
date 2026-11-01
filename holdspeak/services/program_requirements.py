@@ -13,8 +13,10 @@ the way it is proven:
 - **Your word**: he presses Met or Unmet (PG-LANG §6.3: its ``walk`` lines
   are the steps he will do, ``spec.walk``);
 - **Measure** (PG-LANG §6.3): a command that prints a number and a bound
-  (``spec`` ``{command, metric, op, bound, unit}``). Its verifier is LANG11;
-  until then a Measure stays Not yet ("Not measured yet") and does not gate.
+  (``spec`` ``{command, metric, op, bound, unit}``). LANG11: HoldSpeak runs
+  the command at CHECK and the last line naming the metric gives the value
+  (``program_verifier.verify_measure_log``); "Measured 1.4 s, under 2 s". Until
+  it is measured its word is "Not measured yet".
 
 This module holds the vocabulary (§4), the kind guessed by rule (§4,
 decision 5), the counts (§7) and the wire of one requirement (§11). The
@@ -29,12 +31,20 @@ from typing import Any, Iterable, Mapping, Optional
 
 KINDS = ("check", "review", "shot", "word", "measure")
 KIND_WORDS = {"check": "Check", "review": "Review", "shot": "Shot", "word": "Your word", "measure": "Measure"}
-#: The kinds no verifier judges yet (LANG11): they stay Not yet and do not gate.
-NOT_JUDGED_YET = frozenset({"measure"})
+#: The kinds no verifier judges yet: they stay Not yet and do not gate
+#: (empty since LANG11 built the Measure's verifier).
+NOT_JUDGED_YET: frozenset[str] = frozenset()
+#: A Measure not measured yet reads so (PG-LANG §6.3).
 NOT_MEASURED_WORD = "Not measured yet"
-#: A Measure's bound: ``<metric> <op> <number> [<unit>]`` ("p95 < 100 ms").
+#: The kinds HoldSpeak runs at CHECK (a command in the step's worktree).
+RUN_KINDS = ("check", "shot", "measure")
+#: A Measure's bound: ``<metric> <op> <number> [<unit>]`` ("p95 < 100 ms",
+#: "total under 2 s", "files at most 3", "errors equal to 0").
 BOUND_OPS = ("<=", ">=", "<", ">", "=")
-_BOUND = re.compile(r"^(\S+)\s*(<=|>=|<|>|=)\s*(-?\d+(?:\.\d+)?)\s*(\S+)?$")
+_OP_WORDS = (("at most", "<="), ("at least", ">="), ("equal to", "="), ("under", "<"), ("below", "<"),
+             ("over", ">"), ("above", ">"))
+_BOUND = re.compile(r"^(\S+)\s*(<=|>=|<|>|=|at most|at least|equal to|under|below|over|above)\s*"
+                    r"(-?\d+(?:\.\d+)?)\s*(\S+)?$", re.I)
 STATES = ("not_yet", "met", "unmet", "waived")
 STATE_WORDS = {"not_yet": "Not yet", "met": "Met", "unmet": "Unmet", "waived": "Waived"}
 CHECKING_WORD = "Checking"
@@ -43,7 +53,7 @@ WAITS_WORD = "Waits for you"
 SHOT_WIDTHS = (393, 1440)
 #: The judgements that go back to Not yet when the step's commit moves
 #: (decision 4: his word stays as he pressed it).
-COMMIT_BOUND = frozenset({"check", "shot", "review"})
+COMMIT_BOUND = frozenset({"check", "shot", "review", "measure"})
 #: ``by``: who added it.
 BY = ("owner", "agent", "template")
 
@@ -93,7 +103,8 @@ def parse_bound(words: Any) -> Optional[dict[str, Any]]:
     if not found:
         return None
     number = float(found.group(3))
-    return {"metric": found.group(1), "op": found.group(2), "bound": int(number) if number.is_integer() else number,
+    op = dict(_OP_WORDS).get(found.group(2).lower(), found.group(2))
+    return {"metric": found.group(1), "op": op, "bound": int(number) if number.is_integer() else number,
             "unit": found.group(4) or ""}
 
 
@@ -233,8 +244,8 @@ def judged(requirement: Mapping[str, Any]) -> bool:
 
 
 def gates(requirement: Mapping[str, Any]) -> bool:
-    """Required and not Met or Waived. A kind no verifier judges yet (a
-    Measure, LANG11) does not gate: it stays Not yet, never Unmet."""
+    """Required and not Met or Waived. A kind no verifier judges yet does
+    not gate: it stays Not yet, never Unmet (none since LANG11)."""
     if requirement.get("kind") in NOT_JUDGED_YET and requirement.get("state") == "not_yet":
         return False
     return bool(requirement.get("required")) and not judged(requirement)
@@ -271,12 +282,12 @@ def proof_words(requirement: Mapping[str, Any]) -> str:
     if kind == "word":
         return "the owner says it"
     if kind == "measure":
-        return f"HoldSpeak measures it ({bound_words(spec)}); not measured yet"
+        return f"HoldSpeak runs it on your commit and measures {bound_words(spec)}"
     return "the reviewer judges it"
 
 
 __all__ = [
-    "BOUND_OPS", "BY", "CHECKING_WORD", "COMMIT_BOUND", "NOT_JUDGED_YET", "NOT_MEASURED_WORD", "bound_words",
+    "BOUND_OPS", "BY", "CHECKING_WORD", "COMMIT_BOUND", "NOT_JUDGED_YET", "NOT_MEASURED_WORD", "RUN_KINDS", "bound_words",
     "parse_bound", "FROZEN_STEP_STATES", "KINDS", "KIND_WORDS", "RequirementInvalid",
     "SHOT_WIDTHS", "STATES", "STATE_WORDS", "WAITS_WORD", "clean_spec", "clean_text", "counted", "counts", "gates",
     "guess", "judged", "label", "parse_review", "proof_words", "provable", "repository_config", "scope_of",

@@ -277,7 +277,7 @@ Each requirement has a number, R1, R2 and so on. A number is not used again in t
 | **Review** | At REVIEW. The step's reviewer gets each Review requirement by its number and answers `REQ R3: MET · <one line>` or `REQ R3: UNMET · <what is missing>`. | The reviewer's line, its round and the commit it read. |
 | **Shot** | At CHECK. The repository's shot command renders one window at 393 or at 1440. Met when the case is green and the image is there. | The image, the window, the width and the commit. Press **Open shot**. |
 | **Your word** | At MERGE (a step) or at the end (the program). A Your turn row asks you. | Your press and its time. |
-| **Measure** | A command that prints a number, and a bound (`p95 < 100 ms`). **HoldSpeak does not measure it yet.** It stays **Not measured yet** and does not stop a step or a merge. | None yet. |
+| **Measure** | At CHECK, like a Check: HoldSpeak runs the command on the step's commit. The last output line that names the metric and then a number gives the value. HoldSpeak changes the value to the bound's unit (ms, s, min; kB, MB, GB). Met when the value is in the bound. A bound is `p95 < 100 ms`, `total under 2 s`, `files at most 3` or `errors equal to 0`. | The result in words, for example "Measured 1.4 s, under 2 s", and the log. A command that did not run, or printed no number, is Unmet with the reason, for example "Not measured: the command ended with exit 127". |
 
 **A Check log is green only when:**
 
@@ -308,7 +308,7 @@ A Review requirement needs a reviewer. On a step with no review gate, a Review r
 | **Unmet** | The evidence says that it is not true. The agent gets it in its next round. |
 | **Waits for you** | It is Your word, and it waits for your press. |
 | **Waived** | You waived it, with one line. It does not stop the step. It stays on the list, struck through. |
-| **Not measured yet** | A Measure. HoldSpeak does not judge it yet, and it does not stop the step. |
+| **Not measured yet** | A Measure that HoldSpeak did not measure on the step's current commit. |
 
 A state changes only on evidence. A requirement is never Met because an agent says so.
 
@@ -545,7 +545,7 @@ The text changes what the record lets you change, by the same rules as the board
 | Remove the project | A program stays filed to its project. |
 | Any change to a closed program | The program is closed. |
 
-Some lines are in the record and in the text, but HoldSpeak does not act on them yet: `planner` (shaping, planning and the split use the desk's engine), `delivery dw` and `rounds before start` (the rounds never stop **Start**). `within` bounds only the night's planning (see "Night programs"); a file outside it is not yet a core question. A step's `budget` sizes the planning draft and stops a step that is too big from starting (see "Too big at the start"). A `measure` requirement is "Not measured yet".
+Some lines are in the record and in the text, but HoldSpeak does not act on them yet: `planner` (shaping, planning and the split use the desk's engine), `delivery dw` and `rounds before start` (the rounds never stop **Start**). `within` bounds only the night's planning (see "Night programs"); a file outside it is not yet a core question. A step's `budget` sizes the planning draft and stops a step that is too big from starting (see "Too big at the start"). A `walk` under Your word lists the steps you do; HoldSpeak never runs a walk.
 
 ### Preview, Apply, Not this
 
