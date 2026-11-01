@@ -161,8 +161,16 @@ def delivery_where(program: Mapping[str, Any]) -> str:
     return f"dw {ref[3:]}" if ref.startswith("dw:") else "its record"
 
 
-def doing_words(kind: str, program: Mapping[str, Any], step: Optional[Mapping[str, Any]]) -> str:
-    """What the held thing was doing: the step, or the program's delivery."""
+#: The held items about the whole program (an audit's findings, its fix
+#: program, a lesson): their "doing" line is the program's, never a step's.
+PROGRAM_KINDS = frozenset({"audit_file", "fix_program", "lesson"})
+
+
+def doing_words(kind: str, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], status: str = "") -> str:
+    """What the held thing was doing: the step, the program's delivery, or,
+    for an item about the whole program, the program's status line."""
+    if kind in PROGRAM_KINDS:
+        return sentence(f"The program: {status}") if status else ""
     if kind == "delivery":
         # The live walk (2026-11-01): "The program is done" is the happened
         # line's; said here too it read twice. A delivery with no dw record
@@ -600,7 +608,8 @@ def brief_lines(body: Mapping[str, Any]) -> list[str]:
 
 # ── the Program window (PG-WINDOW, 2026-10-31) ────────────────────────
 
-def item_brief(program: Mapping[str, Any], steps: list[Mapping[str, Any]], item: Mapping[str, Any]) -> dict[str, Any]:
+def item_brief(program: Mapping[str, Any], steps: list[Mapping[str, Any]], item: Mapping[str, Any],
+               status: str = "") -> dict[str, Any]:
     """One held item's brief for the Program window, in the briefing page's
     words and order: the goal, what the step was doing, what happened, the
     question, what waits on this answer, and each choice's consequence."""
@@ -618,7 +627,7 @@ def item_brief(program: Mapping[str, Any], steps: list[Mapping[str, Any]], item:
         if said:
             consequences[str(choice)] = said
     return {
-        "goal": goal_line(program), "doing": doing_words(kind, program, step), "happened": happened_line(kind, item, step),
+        "goal": goal_line(program), "doing": doing_words(kind, program, step, status), "happened": happened_line(kind, item, step),
         "question": question_line(kind, item),
         "blocked": [int(row["ordinal"]) for row in blocked], "blocked_words": blocked_words(blocked) if blocked else "",
         "consequences": consequences,
@@ -822,12 +831,12 @@ def step_report(step: Mapping[str, Any], checkpoints: Iterable[Mapping[str, Any]
 
 
 def window_words(program: Mapping[str, Any], steps: list[Mapping[str, Any]], turn: Iterable[Mapping[str, Any]],
-                 checkpoints: Iterable[Mapping[str, Any]]) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+                 checkpoints: Iterable[Mapping[str, Any]], status: str = "") -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
     """The Program window's words: each held item's brief (by item id) and
     each step's story (by step id). ``checkpoints`` newest first, as the
     store lists them."""
     rows = list(checkpoints)
-    briefs = {str(item.get("id")): item_brief(program, steps, item) for item in turn}
+    briefs = {str(item.get("id")): item_brief(program, steps, item, status) for item in turn}
     stories = {str(row["id"]): step_story(rows, row["id"]) for row in steps}
     return briefs, stories
 

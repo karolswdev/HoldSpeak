@@ -2701,6 +2701,10 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     const row = turnRow("lesson")!;
     expect(screen.getByTestId("programs-brief-question").textContent).toBe("Keep this lesson, and where?");
     expect(row.textContent).toContain(item.brief!.happened);
+    // About the whole program: the doing line is its status line, never "Step N".
+    expect(item.brief!.doing).toMatch(/^The program: Running · /);
+    expect(row.textContent).toContain(item.brief!.doing);
+    expect(row.textContent).not.toMatch(/Step \d/);
     expect(within(screen.getByTestId("programs-tray")).getAllByRole("button").map((button) => button.textContent))
       .toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
     // The briefing page takes it too (the hub's BRIEFABLE): Copy page link under the tray.
