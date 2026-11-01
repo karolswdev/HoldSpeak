@@ -16,7 +16,6 @@ major points only, never the engine on itself).
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
@@ -94,10 +93,9 @@ def read_context(root: Any, *, runner: Any = None) -> tuple[str, str]:
         return "", "Delivery Workbench is not installed"
     argv = [*base, "context", "--compact"]
     try:
-        if runner is not None:
-            proc = runner(argv, cwd=str(root))
-        else:
-            proc = subprocess.run(argv, cwd=str(root), capture_output=True, text=True, timeout=TIMEOUT_SECONDS)
+        if runner is None:
+            from .program_runner import _default_runner as runner  # the engine's one process site
+        proc = runner(argv, cwd=str(root), timeout=TIMEOUT_SECONDS)
     except Exception as exc:
         return "", f"dw context did not run ({type(exc).__name__})"
     if proc.returncode != 0:
@@ -114,7 +112,11 @@ def link(service: Any, program: Mapping[str, Any]) -> Optional[dict[str, Any]]:
     root = program.get("repo_root")
     if not has_rails(root):
         return None
-    text, failed = read_context(root)
+    try:
+        run = service.runner()._run
+    except Exception:
+        run = None
+    text, failed = read_context(root, runner=run)
     line = (f"Read the Delivery Workbench roadmap ({len(text.encode('utf-8'))} bytes for the briefs)" if text
             else f"Did not read the Delivery Workbench roadmap: {failed}")
     service.store.add_checkpoint(step_id="", program_id=program["id"], at=service._clock(), by="engine", line=line,
