@@ -21,8 +21,10 @@ the record; the engine drives the agents. Read first:
 1. `program.create` with `title`, `goal` (the owner's words), `repository`
    (a local git folder) or `project_id`, `base_branch`, and a `template`
    (`fast-cycle`, `build-and-review`, `race`, `from-the-desk`,
-   `overnight`). Leave `control` unset: it takes the desk's Control mode.
-   The Program is in Drafting.
+   `overnight`, `dreaming`, `audit`). Leave `control` unset: it takes the
+   desk's Control mode. You cannot set a control wider than the one you run
+   under: `control_wider` ("Refused: a program runs no wider than what made
+   it"). Ask the owner. The Program is in Drafting.
 2. `program.plan` with `steps` and `size: "auto"`. Each step: `title`,
    `brief`, `owns` (the files or folders it alone may change), `after`
    (step numbers it waits for). The rule sets each step's effort. Give
@@ -103,7 +105,9 @@ and tell him.
 - Commit on your step's branch. Run the gate command the brief names and
   keep its log path. Never report green without the log path.
 - `program.step_done` with your report: files changed, what you left
-  out, the log path. Name a missing step in `follow_ups`; YOLO adds it,
+  out, the log path. Put the most important line first: the step's row
+  shows the first lines of your report under "The agent says:", marked as
+  not checked by HoldSpeak. Name a missing step in `follow_ups`; YOLO adds it,
   the other levels ask the owner. The engine still waits for your commit.
 - **A question that blocks you:** ask it in your session and wait. Do not
   guess. The step shows "Asks you". At Normal and YOLO the desk can type a
@@ -119,6 +123,27 @@ and tell him.
   the commit on your branch. Not now parks the step; the change stays in
   the worktree. Do not commit the `.tmp/program-check` logs.
 
+- **The owner took your lane.** When the step says "You have the lane",
+  the owner types in it. HoldSpeak sends you nothing until he presses
+  Hand it back. Do not ask him to hand it back. A commit on the branch
+  still goes to the check.
+
+## Be an audit step's agent (template `audit`)
+
+- Read and run tests only. Change nothing and commit nothing: the gate
+  refuses every write, and a commit on an audit step is a core question
+  for the owner. An audit step never merges.
+- Report each finding on its own line: `MUST: <what is wrong> ·
+  <evidence>`, `SHOULD: …` or `NOTE: …`. The evidence is a file:line, a
+  route or a screenshot path. MUST is a defect he must fix, SHOULD is worth
+  fixing, NOTE is for the record. Name each window, route or file you
+  read. If you find nothing, say `No findings`. Then `program.step_done`
+  with that report and end your turn.
+- Your findings become Door tasks by the control level. From the MUST
+  findings, `program.propose_fix` (the owner or the agent that made the
+  audit) makes a fix Program in Drafting: one step per MUST, each with a
+  Review requirement that it is fixed. It is never started by that call.
+
 ## Requirements (the owner's bar)
 
 A requirement is one sentence of the owner's, with a number (R3) and a
@@ -126,8 +151,9 @@ kind: **check** (a command HoldSpeak runs on the step's commit),
 **review** (the step's reviewer answers it), **shot** (the desk sweep
 renders a window at 393 or 1440), **word** (the owner presses Met; its
 `walk` lines are the things he will do, in order), **measure** (a command
-and a bound such as `p95 < 100 ms`; it stays "Not measured yet" and does
-not hold a step or a merge, because its verifier is not built).
+and a bound such as `p95 < 100 ms`; HoldSpeak runs it at the check. Under
+the bound it is Met ("Measured 1.4 s, under 2 s"); over the bound the check
+is red and comes back as the next round; "Not measured yet" until it runs).
 `program.get` carries them: `requirements` and `requirements_met` on the
 Program and on each step. In the text a requirement is
 `R3 check: <sentence>`, with `run`, `expect`, `shot`, `bound`, `walk` or
@@ -203,7 +229,9 @@ it, tell him.
   `agent.answer` on a launch that belongs to a step.
 - **Never decide.** `program.decide` (merge, findings, parked steps, core
   questions, a held commit, a race winner, close, an agent at its limit, a
-  requirement, a proposal), `program.overturn`
+  requirement, a to-do (`done`, `cant`), a proposal, a failed delivery, the
+  audit's findings (`audit_file`), a fix program (`fix_program`), a lesson
+  (`lesson`)), `program.overturn`
   and `program.handoff` are the owner's press (AUTHORITY). You refuse them;
   you tell him the row in Needs you. `phone.brief` and `phone.later` (the
   briefing page, Telegram, Later) are his too; never call them for him.
@@ -219,6 +247,11 @@ it, tell him.
   that drops rows, a choice with no rule.
 - **Whose word.** A brief line marked "HoldSpeak on step N" is the engine;
   "the owner on step N" is him. Never present your own words as his.
+- **Park with a reason.** `program.park` takes `reason`: `proof` (a run
+  that proved the engine) or `done-with-it`. The list folds such a row.
+- **From a shell.** `holdspeak program create|start|get|decide` uses the
+  same service, and so does `holdspeak.sdk.programs` from Python. With
+  `HOLDSPEAK_AGENT_CREDENTIAL` set, the agent rules apply to you there too.
 - Never commit outside your branch, never stash, never push `main`. One
   test run at a time through the repository's lock.
 

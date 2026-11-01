@@ -125,7 +125,7 @@ Holds the desk has outside Programs (the Needs you sources,
 | A project review proposal | `proposal` (`holdspeak/services/project_service.py:688`) | `project.decide_proposal` | yes |
 | A prepared send | `send` (`needs_you_membership.py:1989`) | Send · Discard | the page only: the Send preview names the destination (UX-CANON A.9); never a Telegram tap |
 | An agent's question (R5) | `coder` | his answer is typed to the agent | yes: Telegram text or the page's field |
-| A gate hold or a helper Allow | `gate` | Allow · Deny | the page only (authority, owner 2026-09-29) |
+| A gate hold or a helper Allow | `gate` | Allow · Deny | the desk only. Superseded: this row said "the page only"; IMP5 (#1711) keeps a permission on the desk, and the orchestrator confirmed it on 2026-11-01. It never goes to a page, Telegram or a call |
 | A held call (Call you about …?) | `phone` | Call now · Let it wait | yes |
 | A Calls held operation | `/api/calls/{id}/decide` | yes · no | on the call only (it is that call) |
 | Door tasks due now | `door` (R1) | not a decision | in the digest as one line ("3 tasks are due today"), no buttons |
