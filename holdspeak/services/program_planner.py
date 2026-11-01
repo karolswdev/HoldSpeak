@@ -470,7 +470,7 @@ def apply_programs(service: Any, principal: Any, program_id: str, programs: Any,
     """JRN1, Apply all / Apply this one: the first proposed Program is this
     one (its title, goal and steps); each other is a new Program in Drafting
     on the same repository and template, linked to the one before it
-    (``origin_ref = program:<id>``), which it waits on: it starts after that
+    (``origin_ref = after:<id>``), which it waits on: it starts after that
     one is Done. Apply this one (not the first) makes that one, linked to
     this Program."""
     from .program_text import print_program
@@ -513,7 +513,7 @@ def apply_programs(service: Any, principal: Any, program_id: str, programs: Any,
         new = service.create(principal, title=title, goal=goal, repository=program.get("repo_root") or None,
                              project_id=program.get("project_id"), template=program.get("template") or None,
                              control=program.get("control"), check_command=program.get("check_command"),
-                             origin_ref=f"program:{before if str(which) == 'all' else program['id']}")
+                             origin_ref=f"after:{before if str(which) == 'all' else program['id']}")
         if program.get("budget_tokens"):
             # The budget it was planned for stays with each part.
             service.update(principal, new["id"], budget_tokens=program["budget_tokens"])

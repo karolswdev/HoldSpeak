@@ -1558,8 +1558,8 @@ class ProgramService:
                     # PG14: an automation made it; its place line names it.
                     wb = self.db.workbenches.get(ident, include_deleted=True)
                     title = str(getattr(wb, "name", "") or "")
-                elif kind == "program":
-                    # JRN1: the Program it was split from (and waits on).
+                elif kind in ("program", "after"):
+                    # The Program it came from; JRN1's ``after``: the one it waits on.
                     title = str((self.store.get_program(ident) or {}).get("title") or "")
                 else:
                     from .agent_hand_service import item_title
@@ -3943,9 +3943,11 @@ class ProgramService:
 
     def _waits_on(self, program: Mapping[str, Any]) -> Optional["ProgramRefused"]:
         """JRN1: a Program made from a draft's later Program waits on the one
-        before it (``origin_ref = program:<id>``) until that one is Done."""
+        before it (``origin_ref = after:<id>``) until that one is Done. A
+        Program another one made (``program:<id>``: a fix program, an agent's
+        child) never waits on it."""
         kind, _, ident = str(program.get("origin_ref") or "").partition(":")
-        if kind != "program" or not ident:
+        if kind != "after" or not ident:
             return None
         before = self.store.get_program(ident)
         if before is None or before.get("closed_at") or before.get("state") == "done":
