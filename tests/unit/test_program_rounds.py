@@ -22,7 +22,7 @@ import pytest
 from holdspeak.services import program_rounds
 from holdspeak.services.program_service import ProgramRefused
 from holdspeak.services.program_text import print_program
-from tests.integration.program_rig import OWNER, Rig
+from tests.integration.program_rig import OWNER, Rig, give_quick_check
 from tests.integration.program_rounds_seed import drafted
 from tests.unit.test_program_shaper import wire_engine
 
@@ -261,6 +261,7 @@ def test_a_changed_question_line_is_refused_and_an_answer_line_applies(desk) -> 
 def test_an_open_round_with_a_waiting_question_does_not_hold_start(desk) -> None:
     _ask(desk, "Architecture")
     assert _round(desk, "Architecture")["waiting"]
+    give_quick_check(desk.repo)  # the recorded plan's check
     started = desk.service.start(OWNER, desk.pid)
     assert started["state"] == "running"
     # Re-enterable while running: Done, then Ask more.

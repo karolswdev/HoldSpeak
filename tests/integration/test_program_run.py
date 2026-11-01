@@ -589,7 +589,7 @@ def test_yolo_allows_a_held_commit_by_rule_and_commits_a_change_left_uncommitted
     step = rig.step(pid, 1)
     assert step["check"]["verdict"] == "green", step
     decided = [row for row in rig.program(pid)["decided_for_you"] if row["kind"] == "held_commit"]
-    assert [row["line"].split(" (")[0] for row in decided] == ["Committed the agent's change", "Allowed the agent's commit"]
+    assert [row["line"].split(" (")[0] for row in decided] == ["Committed the agent's change", "Allowed the commit by rule"]
 
 
 def test_a_change_of_control_to_yolo_releases_the_held_commit(tmp_path) -> None:

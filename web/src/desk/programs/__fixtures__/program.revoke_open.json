@@ -329,6 +329,7 @@
   "rounds": [],
   "rounds_before_start": false,
   "search_words": "overnight on the home box stop the stalls. fast-cycle store the stall reason fast cycle",
+  "skipped": 0,
   "spend_limit_usd": null,
   "state": "waiting",
   "state_word": "Your turn",

@@ -604,6 +604,7 @@
   "rounds": [],
   "rounds_before_start": false,
   "search_words": "the words wave plain words. holdspeak build-and-review dock words #101 build and review",
+  "skipped": 0,
   "spend_limit_usd": null,
   "state": "running",
   "state_word": "Running",

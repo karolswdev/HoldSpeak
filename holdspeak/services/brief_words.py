@@ -185,17 +185,26 @@ def _and(names: list[str]) -> str:
     return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
+_PR_CAUSE_WORDS = {
+    "no_remote": "could not push its branch: this repository has no remote",
+    "push_access": "could not push its branch: the remote refused access",
+    "push": "could not push its branch to the remote",
+    "pr_create": "could not open its PR on GitHub",
+}
+
+
+def pr_failure_words(reason: Any) -> str:
+    """"could not push its branch: this repository has no remote" for a
+    push or PR failure (the engine's ledger line and his Your turn row read
+    these words, never git's stderr); "" for any other reason."""
+    return _PR_CAUSE_WORDS.get(parked_cause(reason), "")
+
+
 def parked_happened(reason: Any) -> str:
     text = str(reason or "")
     cause = parked_cause(text)
-    if cause == "no_remote":
-        return "The step could not push its branch: this repository has no remote."
-    if cause == "push_access":
-        return "The step could not push its branch: the remote refused access."
-    if cause == "push":
-        return "The step could not push its branch to the remote."
-    if cause == "pr_create":
-        return "The step could not open its PR on GitHub."
+    if cause in _PR_CAUSE_WORDS:
+        return f"The step {_PR_CAUSE_WORDS[cause]}."
     if cause == "check_red":
         sections = list(dict.fromkeys(_RED_SECTION.findall(text)))
         if sections:
@@ -394,7 +403,8 @@ def settle_words(kind: str, choice: str, label: str, clock: str, others: int, vi
 
 # ── what changed ──────────────────────────────────────────────────────
 
-_DROP = re.compile(r"^(?:Running the check|git push failed|gh pr create failed|Parked|Resumed)", re.I)
+_DROP = re.compile(r"^(?:Running the check|git push failed|gh pr create failed|Could not push its branch|"
+                   r"Could not open its PR|Parked|Resumed)", re.I)
 
 
 def changed_line(line: Any) -> str:
