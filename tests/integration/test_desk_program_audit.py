@@ -16,7 +16,7 @@ from typing import Any
 from holdspeak.mcp import palettes
 from holdspeak.mcp.families import program as program_family
 from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
-from holdspeak.services.needs_you_membership import program_items
+from holdspeak.services.needs_you_membership import compose, program_items
 from holdspeak.services.program_audit import RULES, parse
 from tests.integration.program_rig import OWNER, Rig, git
 from tests.integration.test_desk_programs import _client, _fixture
@@ -70,8 +70,10 @@ def test_audit_files_findings_dedupes_and_proposes_a_fix_program(tmp_path, monke
     pid = _audit(rig)
     one = rig.step(pid, 1)
     assert one["gate"]["merge"] == "none" and one["gate"]["check"] is False and one["gate"]["review"] == "none"
+    # The audit's track: BRIEF · WORK · REVIEW · FILE (nothing is checked or merged).
+    assert one["stations"] == ["brief", "work", "review", "file"] and one["station"] == 1
     _report(rig, monkeypatch, pid, 1, REPORT_1)
-    assert rig.step(pid, 1)["state"] == "done"
+    assert rig.step(pid, 1)["state"] == "done" and rig.step(pid, 1)["station"] == 3
     assert "Audited · 3 findings · 1 MUST" in _lines(rig, pid)
     # YOLO files every finding, in his words, with the step as its origin.
     tasks = sorted(item.task for item in _tasks(rig))
@@ -129,6 +131,28 @@ def test_audit_files_findings_dedupes_and_proposes_a_fix_program(tmp_path, monke
     assert again.status_code == 409 and again.json()["code"] == "fix_made"
 
 
+def test_an_audit_in_drafting_reads_its_surfaces(tmp_path, monkeypatch) -> None:
+    """The Drafting face's answer: each step names the surface it reads (its
+    ``owns``), and its track is the audit's; a build keeps the six."""
+    rig = Rig(tmp_path)
+    client = _client(rig, monkeypatch)
+    pid = rig.service.create(OWNER, title="Desk audit", goal="Find what is wrong on the desk.",
+                             repository=str(rig.repo), template="audit", control="secure")["id"]
+    rig.service.plan(OWNER, pid, steps=[
+        {"title": "Notes window", "brief": "Audit the Notes window.", "owns": ["web/src/desk/notes/"]},
+        {"title": "Programs window", "brief": "Audit the Programs window.", "owns": ["web/src/desk/programs/"]}])
+    wire = _ok(client.get(f"/api/programs/{pid}"))
+    wire = wire.get("program", wire)
+    assert wire["state"] == "drafting" and wire["template"] == "audit" and wire["findings_board"] is None
+    assert [step["owns"] for step in wire["steps"]] == [["web/src/desk/notes/"], ["web/src/desk/programs/"]]
+    assert all(step["stations"] == ["brief", "work", "review", "file"] and step["station"] == -1
+               for step in wire["steps"])
+    _fixture("audit.drafting.json", wire, tmp_path)
+    build = rig.service.create(OWNER, title="A build", goal="Build it.", repository=str(rig.repo))["id"]
+    rig.service.plan(OWNER, build, steps=[{"title": "One", "brief": "Do one."}])
+    assert rig.step(build, 1)["stations"] == ["brief", "work", "check", "review", "pr", "merge"]
+
+
 def test_propose_fix_over_mcp_and_its_refusals(tmp_path, monkeypatch) -> None:
     rig = Rig(tmp_path)
     monkeypatch.setattr("holdspeak.services.program_service.default_program_service", lambda db=None: rig.service)
@@ -164,7 +188,20 @@ def test_audit_levels_file_by_rule_or_ask(tmp_path, monkeypatch) -> None:
     asks = {item["kind"]: item for item in items}
     assert asks["audit_file"]["title"] == "3 findings to file as Door tasks"
     assert asks["audit_file"]["choices"] == ["file", "skip"] and "fix_program" in asks
-    answer = rig.service.decide(OWNER, pid, asks["audit_file"]["step_id"], kind="audit_file", choice="file")
+    # The face's answers: the wire, the rows in Needs you, and his File through the route.
+    client = _client(rig, monkeypatch)
+    _fixture("audit.secure.json", _ok(client.get(f"/api/programs/{pid}")), tmp_path)
+    needs = [item for item in program_items(rig.service.needs_you_items())
+             if item["program"]["kind"] in ("audit_file", "fix_program")]
+    assert [item["why"] for item in needs] == ["TO DECIDE", "TO DECIDE"]
+    # The route's own answer (`compose`, what GET /api/desk/needs-you serves).
+    monkeypatch.setattr("holdspeak.services.program_service.default_program_service", lambda db=None: rig.service)
+    answer_needs = compose(rig.db, OWNER, {"items": []})
+    assert [row for row in answer_needs["items"] if row.get("source") == "program"]
+    _fixture("needs_you.audit.json", answer_needs, tmp_path)
+    answer = _ok(client.post(f"/api/programs/{pid}/steps/{asks['audit_file']['step_id']}/decide",
+                             json={"kind": "audit_file", "choice": "file"}))
+    _fixture("audit.filed.json", answer, tmp_path)
     assert answer["filed"] == 3 and len(_tasks(rig)) == 3
     assert "Filed 3 findings as Door tasks" in _lines(rig, pid)
     assert [item["kind"] for item in rig.program(pid)["your_turn_items"] if item["kind"] != "close"] == ["fix_program"]

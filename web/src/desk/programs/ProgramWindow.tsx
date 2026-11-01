@@ -59,6 +59,7 @@ import type {
   Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
+import { AuditLine, FindingsBoard } from "./Findings";
 
 /** The verbs of one your-turn item, in the canvas order. */
 const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[]> = {
@@ -84,7 +85,16 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   step_amend: [{ choice: "send", word: "Send", primary: true }, { choice: "skip", word: "Skip" }],
   // LANG13: the hub's choices decide which (merge, skip at Secure; retry, skip after a failure).
   delivery: [{ choice: "merge", word: "Merge", primary: true }, { choice: "retry", word: "Retry", primary: true }, { choice: "skip", word: "Skip" }],
+  // PG-LANG JRN9 / JRN10: an audit's findings at Secure; its fix program.
+  audit_file: [{ choice: "file", word: "File", primary: true }, { choice: "skip", word: "Skip" }],
+  fix_program: [{ choice: "make", word: "Make", primary: true }, { choice: "skip", word: "Skip" }],
+  // PG-LANG JRN11: a lesson.
+  lesson: [{ choice: "keep_program", word: "Keep for this program", primary: true },
+    { choice: "keep_repo", word: "Keep for HoldSpeak" }, { choice: "skip", word: "Skip" }],
 };
+
+/** The rows about the whole program, not one step (their place is "The program"). */
+const PROGRAM_KINDS = new Set(["audit_file", "fix_program", "lesson"]);
 
 /** The verbs an item offers: its kind's, kept to the choices the hub sent. */
 function verbsFor(item: YourTurnItem): { choice: string; word: string; primary?: boolean }[] {
@@ -145,7 +155,7 @@ function itemWords(item: YourTurnItem, step: ProgramStep | undefined): ReactNode
 
 /** The kind line's words when the hub sent no fact (`Waits on you`). */
 function placeWords(item: YourTurnItem): string {
-  return item.ordinal ? `Step ${item.ordinal}, ${item.step_title}` : "The program";
+  return item.ordinal && !PROGRAM_KINDS.has(item.kind) ? `Step ${item.ordinal}, ${item.step_title}` : "The program";
 }
 
 /** PG-WINDOW W2: what waits on him, as the window's headline. The first
@@ -200,6 +210,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
     const body: DecideBody = { kind: item.kind as DecideBody["kind"], choice };
     if (item.finding_id) body.finding_id = item.finding_id;
     if (item.kind === "add_step" && item.proposal != null) body.finding_id = String(item.proposal);
+    if (item.kind === "lesson" && item.lesson_id != null) body.lesson_id = item.lesson_id;
     try {
       if (item.kind === "close") onDecided(await closeProgram(program.id));
       else if (REQUIREMENT_KINDS.has(item.kind) && item.requirement_id) {
@@ -461,7 +472,7 @@ function DecidedFold({ program, open, onToggle, onOverturned }: {
                 {row.rule ? <span className="pg-decided-rule"> · {row.rule}</span> : null}
               </span>
               <span className="pg-decided-verb">
-                {row.decision_record_id && !overturned ? <ProposedWord /> : null}
+                {row.decision_record_id && !overturned ? <ProposedWord recordId={row.decision_record_id} /> : null}
                 {overturned ? <DotWord data-testid="programs-decided-overturned">Overturned</DotWord>
                   : row.overturnable ? (
                     <Button dense variant="secondary" loading={busy === String(row.id)} disabled={Boolean(busy)} onClick={() => void press(row)}
@@ -629,13 +640,6 @@ function heldWords(program: Program, step: ProgramStep): string | undefined {
   return program.your_turn_items.find((item) => item.step_id === step.id && item.brief?.happened)?.brief?.happened;
 }
 
-/** The goal's first sentence (the phone's line before the tray). */
-function firstSentence(goal: string): string {
-  const text = goal.trim().replace(/\s+/g, " ");
-  const found = /^(.+?[.?!])(\s|$)/.exec(text);
-  return found ? found[1] : text;
-}
-
 /** What Start checks before any agent works (#1686, start_precheck): the
  *  repository, its remote when a step opens a PR, the check's program. */
 export function startWords(program: Program): string {
@@ -669,9 +673,6 @@ function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy
           <DotWord tone="idle">Drafting</DotWord>
           <span className="pg-brief-place">{`· ${countWords(steps.length, "step") ?? "No steps yet"}`}</span>
         </p>
-        {firstSentence(goal) !== goal.trim() ? (
-          <p className="pg-draft-goal-first" data-testid="programs-draft-goal-first">{firstSentence(goal)}</p>
-        ) : null}
         <div className="pg-draft-goal" data-testid="programs-draft-goal">
           <EditInPlace label="Goal" multiline value={goal} placeholder="Say what the program is for" onCommit={onGoal} />
         </div>
@@ -963,6 +964,7 @@ export function ProgramBody({ programId }: { programId: string }) {
         {/* PG-WINDOW: the body says it goes on (the kit's ScrollHint fade). */}
         <ScrollHint axis="y" scrollRef={bodyRef} className="pg-body-scroll">
         {view === "board" ? <ProgramLine program={program} goal={!drafting} /> : null}
+        {view === "board" && drafting ? <AuditLine program={program} /> : null}
         {view === "board" ? <DeliveredLine program={program} /> : null}
         {drafting && view === "board" ? (
           <DraftHead program={program} goal={goal ?? program.goal} busy={busy} planner={planner}
@@ -1014,6 +1016,7 @@ export function ProgramBody({ programId }: { programId: string }) {
           <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
             emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
         )}
+        {view === "board" ? <FindingsBoard program={program} /> : null}
         {/* PG-IMPORT IMP7: the Program it came from and the Programs it made. */}
         {view === "board" ? <ProgramFamilyRows family={program.family} /> : null}
         {view === "board" && drafting ? (

@@ -520,3 +520,53 @@ describe("Needs you with a recorded unknown Send (Send S3)", () => {
     }
   });
 });
+
+// ── PG-LANG JRN9 to JRN11: an audit's rows and a lesson in Needs you ──────
+// Recorded through the real engine (tests/integration/test_desk_program_audit.py,
+// test_desk_program_lessons.py): the hub's needs-you answer (compute_needs_you).
+import needsAudit from "../programs/__fixtures__/needs_you.audit.json";
+import needsLesson from "../programs/__fixtures__/needs_you.lesson.json";
+
+describe("Needs you: File, Make and a lesson are TO DECIDE rows that press the step's decide route", () => {
+  let posts: Array<{ url: string; json: any }>;
+  const serve = (answer: any) => {
+    posts = [];
+    const first = answer.items.find((row: any) => row.source === "program");
+    vi.setSystemTime(new Date(String(first.since ?? first.ageToken)));
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      const path = String(url);
+      if (init?.method === "POST") { posts.push({ url: path, json: init.json }); return {}; }
+      if (path.startsWith("/api/desk/needs-you")) return answer;
+      if (path === "/api/door") return hubWire("door.empty").wire;
+      if (path.startsWith("/api/gate/proposals")) return { proposals: [] };
+      throw new Error(`no recorded answer for ${path}`);
+    });
+  };
+  const rowOf = async (title: string) => (await screen.findByText(title)).closest("li.needs-row") as HTMLElement;
+  const verbs = (li: HTMLElement) => [...li.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((b) => b.textContent);
+
+  it("File · Skip and Make · Skip, each sent to the step's decide route with its kind", async () => {
+    serve(structuredClone(needsAudit));
+    render(<NeedsDrawer />);
+    const file = await rowOf("3 findings to file as Door tasks");
+    expect((needsAudit.items as any[]).filter((row) => row.source === "program" && row.program.kind !== "close").map((row) => row.why))
+      .toEqual(["TO DECIDE", "TO DECIDE"]);
+    expect(verbs(file)).toEqual(["File", "Skip"]);
+    const make = await rowOf("A fix program from 1 MUST finding");
+    expect(verbs(make)).toEqual(["Make", "Skip"]);
+    const item = needsAudit.items.find((row: any) => row.program?.kind === "fix_program") as any;
+    fireEvent.click(make.querySelector("[data-verb='program-make']")!);
+    await waitFor(() => expect(posts).toContainEqual({ url: item.program.decide, json: { kind: "fix_program", choice: "make" } }));
+  });
+
+  it("a lesson: Keep for this program · Keep for HoldSpeak · Skip; the press names its lesson", async () => {
+    serve(structuredClone(needsLesson));
+    const item = needsLesson.items.find((row: any) => row.program?.kind === "lesson") as any;
+    render(<NeedsDrawer />);
+    const li = await rowOf(item.title);
+    expect(verbs(li)).toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
+    fireEvent.click(li.querySelector("[data-verb='program-keep-repo']")!);
+    await waitFor(() => expect(posts).toContainEqual({
+      url: item.program.decide, json: { kind: "lesson", choice: "keep_repo", lesson_id: item.program.lessonId } }));
+  });
+});

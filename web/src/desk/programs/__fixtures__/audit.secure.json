@@ -1,0 +1,607 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "budget_tokens": null,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": null,
+  "checkpoints": [
+    {
+      "at": "2026-11-01T17:43:43.663936+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 7,
+      "kind": null,
+      "line": "The program waits on you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T17:43:43.527405+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 6,
+      "kind": null,
+      "line": "Audited · 3 findings · 1 MUST",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-9e02062df568/3",
+      "ref_commit": "952f1674c77ad1c83b84eaa59fb2094a7459fb26",
+      "rule": null,
+      "step_id": "step-9e02062df568",
+      "undo": {
+        "detail": "I read the Notes window at 1440 and 393.\nMUST: The Notes toolbar wraps at 520 · .tmp/evidence-shots/notes-520.png\nSHOULD: The Notes title is grey on grey · web/src/desk/notes/NotesWindow.tsx:41\nNOTE: Notes is fine at 393",
+        "pin": {
+          "commit": "952f1674c77ad1c83b84eaa59fb2094a7459fb26",
+          "head": "c7fe296c61bdd56516acf0d633bcf9185c66d31c",
+          "n": 3,
+          "ref": "refs/holdspeak/checkpoints/step-9e02062df568/3",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        },
+        "seen": {
+          "state": "done"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T17:43:43.342817+00:00",
+      "by": "agent",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "Reported its findings",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-9e02062df568/2",
+      "ref_commit": "3f56a5519765da9b3d7f8d189fa7ca5bd3da05ee",
+      "rule": null,
+      "step_id": "step-9e02062df568",
+      "undo": {
+        "pin": {
+          "commit": "3f56a5519765da9b3d7f8d189fa7ca5bd3da05ee",
+          "head": "c7fe296c61bdd56516acf0d633bcf9185c66d31c",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-9e02062df568/2",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T17:43:43.187393+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-9e02062df568",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-9e02062df568/1",
+      "ref_commit": "5ab845b8561fd0f425183f6546e58c88058cc76d",
+      "rule": null,
+      "step_id": "step-9e02062df568",
+      "undo": {
+        "pin": {
+          "commit": "5ab845b8561fd0f425183f6546e58c88058cc76d",
+          "head": "c7fe296c61bdd56516acf0d633bcf9185c66d31c",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-9e02062df568/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        },
+        "seen": {
+          "state": "briefed"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T17:43:43.090538+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T17:43:43.070971+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T17:43:43.066836+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Audit template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "secure",
+  "control_word": "Secure",
+  "created_at": "2026-11-01T17:43:43.066401+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "delivery": null,
+  "done": 1,
+  "family": {
+    "children": [],
+    "parent": null
+  },
+  "findings_board": {
+    "head": "3 findings · 1 MUST",
+    "must": 1,
+    "note": 1,
+    "rows": [
+      {
+        "evidence": [
+          ".tmp/evidence-shots/notes-520.png"
+        ],
+        "filed": false,
+        "key": "ef295da407d0c86f",
+        "level": "MUST",
+        "steps": [
+          1
+        ],
+        "task_id": null,
+        "text": "The Notes toolbar wraps at 520",
+        "words": "Must fix"
+      },
+      {
+        "evidence": [
+          "web/src/desk/notes/NotesWindow.tsx:41"
+        ],
+        "filed": false,
+        "key": "19752add7734943b",
+        "level": "SHOULD",
+        "steps": [
+          1
+        ],
+        "task_id": null,
+        "text": "The Notes title is grey on grey",
+        "words": "Should fix"
+      },
+      {
+        "evidence": [],
+        "filed": false,
+        "key": "965e4f152c38cd5a",
+        "level": "NOTE",
+        "steps": [
+          1
+        ],
+        "task_id": null,
+        "text": "Notes is fine at 393",
+        "words": "Noted"
+      }
+    ],
+    "should": 1,
+    "total": 3
+  },
+  "fix_program_id": null,
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Find what is wrong on the desk.",
+  "id": "program-58f4c551fc7c",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-11-01T17:43:43.663936+00:00",
+    "by": "engine",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 7,
+    "kind": null,
+    "line": "The program waits on you",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "line": "The program waits on you since 12:43",
+  "may_call": false,
+  "may_handoff": false,
+  "night": null,
+  "note_id": "program-program-58f4c551fc7c",
+  "note_window": "pullout:note:program-program-58f4c551fc7c",
+  "origin_ref": null,
+  "persons": [],
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "planner": null,
+  "prefer_idle": false,
+  "project": null,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/secure/app"
+  },
+  "requirements": [],
+  "review_depth": null,
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 3,
+  "rounds": [],
+  "rounds_before_start": false,
+  "search_words": "desk audit find what is wrong on the desk. audit notes window audit",
+  "skipped": 0,
+  "spend_limit_usd": null,
+  "state": "waiting",
+  "state_word": "Your turn",
+  "status_line": "Your turn · 1 of 1 done · 3 waits on you · control Secure",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/desk-audit/1-notes-window",
+      "brief": "Audit the Notes window.",
+      "budget_tokens": null,
+      "check": {
+        "command": null,
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "editable": [
+        "title"
+      ],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 0,
+      "ended_at": "2026-11-01T17:43:43.506198+00:00",
+      "ending": "finished",
+      "engine": null,
+      "estimate": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "It is merged",
+        "agent": "It is merged",
+        "amend": "It is merged",
+        "brief": "It is merged",
+        "budget": "It is merged",
+        "effort": "It is merged",
+        "for_person": "It is merged",
+        "gate_check": "It is merged",
+        "gate_merge": "It is merged",
+        "gate_review": "It is merged",
+        "may_call": "It is merged",
+        "owns": "It is merged",
+        "position": "It is merged",
+        "prefer_idle": "It is merged",
+        "race": "It is merged",
+        "requirements": "It is merged",
+        "review_depth": "It is merged",
+        "runs_on_then": "It is merged"
+      },
+      "gate": {
+        "check": false,
+        "merge": "none",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-9e02062df568",
+      "last_checkpoint": {
+        "at": "2026-11-01T17:43:43.527405+00:00",
+        "by": "engine",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 6,
+        "kind": null,
+        "line": "Audited · 3 findings · 1 MUST",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-9e02062df568/3",
+        "ref_commit": "952f1674c77ad1c83b84eaa59fb2094a7459fb26",
+        "rule": null,
+        "step_id": "step-9e02062df568",
+        "undo": {
+          "detail": "I read the Notes window at 1440 and 393.\nMUST: The Notes toolbar wraps at 520 · .tmp/evidence-shots/notes-520.png\nSHOULD: The Notes title is grey on grey · web/src/desk/notes/NotesWindow.tsx:41\nNOTE: Notes is fine at 393",
+          "pin": {
+            "commit": "952f1674c77ad1c83b84eaa59fb2094a7459fb26",
+            "head": "c7fe296c61bdd56516acf0d633bcf9185c66d31c",
+            "n": 3,
+            "ref": "refs/holdspeak/checkpoints/step-9e02062df568/3",
+            "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+          },
+          "seen": {
+            "state": "done"
+          }
+        }
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": {
+        "claimed": [
+          {
+            "line": "I read the Notes window at 1440 and 393."
+          },
+          {
+            "line": "MUST: The Notes toolbar wraps at 520."
+          },
+          {
+            "line": "SHOULD: The Notes title is grey on grey ·:41."
+          },
+          {
+            "line": "NOTE: Notes is fine at 393."
+          },
+          {
+            "at": "2026-11-01T17:43:43.342817+00:00",
+            "checkpoint": 5,
+            "line": "Reported its findings."
+          }
+        ],
+        "files": [],
+        "files_more": 0,
+        "not_checked": [
+          {
+            "line": "The gate check was off"
+          }
+        ],
+        "observed": [
+          {
+            "at": "2026-11-01T17:43:43.527405+00:00",
+            "checkpoint": 6,
+            "line": "Merged"
+          }
+        ],
+        "words": {
+          "claimed": "The agent says:",
+          "files": "Files:",
+          "not_checked": "Not checked:",
+          "observed": "Checked:"
+        }
+      },
+      "report_text": "I read the Notes window at 1440 and 393.\nMUST: The Notes toolbar wraps at 520 · .tmp/evidence-shots/notes-520.png\nSHOULD: The Notes title is grey on grey · web/src/desk/notes/NotesWindow.tsx:41\nNOTE: Notes is fine at 393",
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-11-01T17:43:43.186960+00:00",
+      "state": "done",
+      "state_word": "Done",
+      "station": 3,
+      "stations": [
+        "brief",
+        "work",
+        "review",
+        "file"
+      ],
+      "story": [
+        {
+          "at": "2026-11-01T17:43:43.187393+00:00",
+          "line": "Handed to Claude Code."
+        },
+        {
+          "at": "2026-11-01T17:43:43.342817+00:00",
+          "line": "Reported its findings."
+        },
+        {
+          "at": "2026-11-01T17:43:43.527405+00:00",
+          "line": "Audited · 3 findings · 1 MUST."
+        }
+      ],
+      "taken": false,
+      "title": "Notes window",
+      "updated_at": "2026-11-01T17:43:43.526926+00:00",
+      "wait": null,
+      "worktree": "hs-program-step-9e02062df568"
+    }
+  ],
+  "template": "audit",
+  "title": "Desk audit",
+  "total": 1,
+  "track": [
+    {
+      "mark": "done",
+      "ordinal": 1,
+      "title": "Notes window"
+    }
+  ],
+  "updated_at": "2026-11-01T17:43:43.663822+00:00",
+  "usage_warning_share": null,
+  "within": [],
+  "your_turn": 3,
+  "your_turn_items": [
+    {
+      "brief": {
+        "blocked": [],
+        "blocked_words": "",
+        "consequences": {},
+        "doing": "The program's own requirements, after its last step.",
+        "goal": "Goal: Find what is wrong on the desk.",
+        "happened": "Close “Desk audit”: every step is finished.",
+        "question": "Close the program?"
+      },
+      "choices": [
+        "close"
+      ],
+      "for_person_id": null,
+      "id": "program-58f4c551fc7c:close",
+      "kind": "close",
+      "launch_id": null,
+      "ordinal": 0,
+      "pr": null,
+      "program_id": "program-58f4c551fc7c",
+      "program_title": "Desk audit",
+      "project_id": null,
+      "since": "2026-11-01T17:43:43.663822+00:00",
+      "step_id": "",
+      "step_title": "",
+      "title": "Close “Desk audit”: every step is finished"
+    },
+    {
+      "brief": {
+        "blocked": [],
+        "blocked_words": "",
+        "consequences": {
+          "file": "Each finding becomes a Door task.",
+          "skip": "The findings stay in the program. No task is made."
+        },
+        "doing": "Step 1: Audit the Notes window.",
+        "goal": "Goal: Find what is wrong on the desk.",
+        "happened": "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you.",
+        "question": "File the findings as Door tasks?"
+      },
+      "choices": [
+        "file",
+        "skip"
+      ],
+      "count": 3,
+      "for_person_id": null,
+      "id": "program-58f4c551fc7c:audit_file",
+      "kind": "audit_file",
+      "launch_id": null,
+      "ordinal": 1,
+      "pr": null,
+      "program_id": "program-58f4c551fc7c",
+      "program_title": "Desk audit",
+      "project_id": null,
+      "since": "2026-11-01T17:43:43.506198+00:00",
+      "step_id": "step-9e02062df568",
+      "step_title": "Notes window",
+      "title": "3 findings to file as Door tasks"
+    },
+    {
+      "brief": {
+        "blocked": [],
+        "blocked_words": "",
+        "consequences": {
+          "make": "HoldSpeak makes a program with one step for each MUST finding. It waits for your Start.",
+          "skip": "No fix program is made."
+        },
+        "doing": "Step 1: Audit the Notes window.",
+        "goal": "Goal: Find what is wrong on the desk.",
+        "happened": "The audit is done. It found 1 MUST finding.",
+        "question": "Make a fix program from the MUST findings?"
+      },
+      "choices": [
+        "make",
+        "skip"
+      ],
+      "count": 1,
+      "for_person_id": null,
+      "id": "program-58f4c551fc7c:fix_program",
+      "kind": "fix_program",
+      "launch_id": null,
+      "ordinal": 1,
+      "pr": null,
+      "program_id": "program-58f4c551fc7c",
+      "program_title": "Desk audit",
+      "project_id": null,
+      "since": "2026-11-01T17:43:43.506198+00:00",
+      "step_id": "step-9e02062df568",
+      "step_title": "Notes window",
+      "title": "A fix program from 1 MUST finding"
+    }
+  ]
+}
