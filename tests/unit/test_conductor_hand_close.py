@@ -547,7 +547,7 @@ class FakeGhIssues:
             "number": 418, "title": "Reconciliation job slow on month-end data",
             "url": "https://github.com/acme/railsproj/issues/418", "state": "OPEN",
             "labels": [{"name": "ledger"}, {"name": "performance"}],
-            "createdAt": (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(),
+            "createdAt": (datetime.now(timezone.utc) - timedelta(days=2, hours=2)).isoformat(),
             "updatedAt": datetime.now(timezone.utc).isoformat(),
         }]
 
