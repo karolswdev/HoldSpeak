@@ -214,6 +214,30 @@ class FakeGate:
     def held(self, launch_id: str) -> list[dict[str, Any]]:
         return list(self.holds.get(launch_id, []))
 
+    def propose(self, launch_id: str, command: str, *, worktree: Path, mode: str = "yolo") -> str:
+        """One Bash call of a step's agent through the REAL hook verdict
+        (``classify_tool_call``) and the REAL tool-gate policy
+        (``resolve_policy``) as the hub runs them for a Program step: it is
+        held here only when the policy answers ``authorization_required``.
+        Returns the policy's outcome."""
+        from holdspeak.operation_policy import describe_operation, resolve_policy
+        from holdspeak.tool_gate_rules import UNPARSED, classify_tool_call
+
+        verdict = classify_tool_call("Bash", {"command": command}, cwd=str(worktree), root=str(worktree)).to_dict()
+        tool_call = {"launch_id": launch_id, "scope": verdict["scope"], "rule": verdict["rule"],
+                     "read_rule": verdict["read_rule"], "destructive": verdict.get("destructive", ""),
+                     "cwd_inside": "1" if verdict["scope"] == UNPARSED else "", "program_step": "1"}
+        operation = describe_operation(
+            operation_id=f"op-{len(self.decisions)}", family="tool_gate", effect_class="agent/tool_call_hold",
+            actor="agent", destination=str(worktree), data_classes=("tool_arguments_redacted",),
+            resource_scope="Bash", fixed_destination=True, consequence="execute_on_approval")
+        outcome = resolve_policy(operation, mode=mode, source="config", tool_call=tool_call).outcome
+        if outcome == "authorization_required":
+            self.holds.setdefault(launch_id, []).append({
+                "proposal_id": f"gate-call-{len(self.holds)}", "tool": "Bash", "scope": verdict["scope"],
+                "commit": False, "cwd": str(worktree), "head": command})
+        return outcome
+
     def decide(self, proposal_id: str, *, approve: bool, reason: str, principal: Any = None) -> None:
         self.decisions.append((proposal_id, approve, reason))
         for rows in self.holds.values():
@@ -221,6 +245,31 @@ class FakeGate:
 
     def expire(self, launch_id: str) -> None:
         self.holds.pop(launch_id, None)
+
+
+def local_noon() -> Any:
+    """Today 12:00 on the hub's wall clock: outside every default quiet
+    hours, so a reach or a recorded answer never depends on the hour the
+    test runs (a night run wrote "held for the morning")."""
+    from datetime import datetime
+
+    # Naive first, then the zone: on a DST change day (2026-11-01) the offset
+    # at 12:00 is not the offset of the hour the test runs.
+    return datetime.now().replace(hour=12, minute=0, second=0, microsecond=0).astimezone()
+
+
+def frozen_quiet_phone(db: Any) -> Any:
+    """The hub's Phone service over ``db`` whose quiet hours are read at
+    :func:`local_noon` (an explicit instant still reads as given)."""
+    from holdspeak.phone.service import default_phone_service
+
+    phone = default_phone_service(db)
+    if not getattr(phone, "_quiet_frozen", False):
+        read = phone._quiet
+        noon = local_noon()
+        phone._quiet = lambda at=None: read(at if at is not None else noon)
+        phone._quiet_frozen = True
+    return phone
 
 
 class Rig:
@@ -240,6 +289,7 @@ class Rig:
             self.db, broadcast=self._frame, people=people, engines=engines,
             kernel=None if kernel else (lambda **_kw: None),
             runner=lambda: self.runner, **({"clock": clock} if clock is not None else {}),
+            phone=lambda: frozen_quiet_phone(self.db),
         )
         self.frames: list[tuple[str, dict[str, Any]]] = []
         self.review = AgentReviewLoop(

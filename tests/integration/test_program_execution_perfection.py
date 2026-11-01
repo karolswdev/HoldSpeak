@@ -57,6 +57,11 @@ def test_execution_perfection_yolo_three_steps_reach_done_with_no_press(tmp_path
         rig.tick()
         step = rig.step(pid, ordinal)
         assert step["state"] in ("briefed", "working"), step
+        # The agent's first call is an unparsed pipe (step 2 of his program:
+        # ``env | grep …`` waited and expired): at YOLO it goes on by rule.
+        assert rig.gate.propose(step["launch_id"], "env | grep -i holdspeak | sed 's/x/y/'; ls -la",
+                                worktree=_worktree(rig, step)) == "allowed"
+        assert rig.gate.held(step["launch_id"]) == []
         # The gate holds the agent's commit as his desk saw it (unparsed: a
         # command substitution in the message), in the step's own worktree.
         rig.gate.hold_commit(step["launch_id"], f"gate-{ordinal}", scope="unparsed",
@@ -221,3 +226,32 @@ def test_a_skipped_step_is_never_counted_done(tmp_path) -> None:
     assert program["done"] == 0 and program["skipped"] == 1
     assert " · 0 of 2 done · 1 skipped" in program["status_line"]
     assert rig.step(pid, 2)["state"] in ("briefed", "working")  # its dependent runs on
+
+
+def test_a_parked_program_asks_nothing_and_its_pages_revoke_resume_raises_them_again(tmp_path) -> None:
+    """program-ed167ae4478b after Park still said "1 waits on you"."""
+    from holdspeak.db.briefing import BriefingStore
+    from holdspeak.services.briefing_service import BriefingService
+
+    rig = Rig(tmp_path)
+    pid = _program(rig, control="normal", check=f"FAKE_CHECK_RED=1 sh {FAKE_CHECK}")
+    rig.service.plan(OWNER, pid, steps=[{"title": "Break it", "brief": "x"}])
+    rig.service.start(OWNER, pid)
+    step = rig.step(pid, 1)
+    rig.agent.finish(step["launch_id"], {"a.txt": "1\n"})
+    rig.tick()
+    rig.agent.start_turn(step["launch_id"])
+    rig.tick()
+    rig.agent.finish(step["launch_id"], {"a.txt": "2\n"})
+    rig.tick()
+    [item] = rig.program(pid)["your_turn_items"]
+    assert item["kind"] == "parked"
+    made = BriefingService(rig.db, programs=lambda: rig.service).make(OWNER, [f"program:{pid}:{item['id']}"])
+    rig.service.park(OWNER, pid)
+    program = rig.program(pid)
+    assert program["your_turn_items"] == [] and program["your_turn"] == 0
+    assert program["status_line"].startswith("Parked · ") and "waits on you" not in program["status_line"]
+    assert program_items(rig.service.needs_you_items()) == []
+    assert BriefingStore(rig.db).get(made["id"])["revoked_at"]
+    rig.service.resume(OWNER, pid)
+    assert [row["kind"] for row in rig.program(pid)["your_turn_items"]] == ["parked"]

@@ -13,16 +13,16 @@
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-01T04:40:17.030101+00:00",
+      "created_at": "2026-11-01T05:11:12.637571+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-f0084e8ce030",
+      "id": "program-f0dc99a8caff",
       "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-01T04:40:20.270681+00:00",
+        "at": "2026-11-01T05:11:16.122229+00:00",
         "by": "engine",
         "choice": "retry",
         "decision_record_id": null,
@@ -33,17 +33,17 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-41c24a599240/5",
-        "ref_commit": "dc4773b08d83c2f3bce619eb9392a01ca61bb582",
+        "ref": "refs/holdspeak/checkpoints/step-15b55e0d2a97/5",
+        "ref_commit": "00236b03908d61cefce9995064c2829ab8151893",
         "rule": "a red requirement goes back to the builder (round 2 of 2)",
-        "step_id": "step-41c24a599240",
+        "step_id": "step-15b55e0d2a97",
         "undo": {
           "pin": {
-            "commit": "dc4773b08d83c2f3bce619eb9392a01ca61bb582",
-            "head": "2f179443f2597ebfc9b1f3d1f9a96d67c13cac06",
+            "commit": "00236b03908d61cefce9995064c2829ab8151893",
+            "head": "057c63aeb73338198319cb55a0f2179e8f8f60ce",
             "n": 5,
-            "ref": "refs/holdspeak/checkpoints/step-41c24a599240/5",
-            "tree": "512813161fbdcfeae1d319abd11f0de9594d146f"
+            "ref": "refs/holdspeak/checkpoints/step-15b55e0d2a97/5",
+            "tree": "5e5b50b267009bf65bdc97a9d3a36ff9dbae7f6f"
           }
         }
       },
@@ -71,7 +71,7 @@
       "state_word": "Your turn",
       "title": "The hub stops stalling",
       "total": 6,
-      "updated_at": "2026-11-01T04:40:19.799101+00:00",
+      "updated_at": "2026-11-01T05:11:15.613282+00:00",
       "your_turn": 1
     }
   ],

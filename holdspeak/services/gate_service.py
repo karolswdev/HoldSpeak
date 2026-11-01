@@ -125,6 +125,8 @@ class GateService:
             raise ServiceError("proposal_not_admitted", "proposal was not admitted", context={"handle": handle, "status": 409})
         if proposal.state == HELD and (proposal.policy_snapshot or {}).get("outcome") == "allowed":
             proposal = self._decide_by_mode(proposal)
+        elif proposal.state == HELD and (proposal.policy_snapshot or {}).get("outcome") == "refused":
+            proposal = self._decide_by_mode(proposal, approve=False)
         if proposal.state == HELD and tool.startswith(MCP_TOOL_PREFIX):
             proposal = self._decide_mcp(principal, proposal, tool)
         args_full = payload.get("args_full")
@@ -183,37 +185,51 @@ class GateService:
 
     # ── Conductor K5: the Control-mode decision ──────────────────────
 
-    def _decide_by_mode(self, proposal: Any) -> Any:
-        """Approve a held call the Control mode allows, as the
-        ``control-mode`` principal; the reason names the mode and the rule
-        (the gate audit row and the kernel journal keep it)."""
+    def _decide_by_mode(self, proposal: Any, *, approve: bool = True) -> Any:
+        """Approve a held call the Control mode allows (or deny one it
+        refuses: a Program step's call at YOLO aimed outside its worktree or
+        naming a destructive word), as the ``control-mode`` principal; the
+        reason names the mode and the rule (the gate audit row and the
+        kernel journal keep it). Never a hold for him."""
+        from ..db.gate import command_view
         from ..operation_policy import MODE_LABELS
 
         policy = proposal.policy_snapshot or {}
         verdict = (proposal.operation or {}).get("tool_call") or {}
         mode = str(policy.get("mode") or "")
         reason = (
-            f"{MODE_LABELS.get(mode, mode)}: {policy.get('reason_code') or 'allowed'}; "
+            f"{MODE_LABELS.get(mode, mode)}: {policy.get('reason_code') or ('allowed' if approve else 'refused')}; "
             f"rule {verdict.get('rule') or 'none'}"
             + (f" ({verdict['read_rule']})" if verdict.get("read_rule") else "")
+            + (f"; it names {verdict['destructive']}" if verdict.get("destructive") else "")
         )[:200]
+        if not approve:
+            reason = (reason + ". Do not try it again in a different form.")[:200]
         try:
             self.decide(
                 Principal(PrincipalKind.OWNER, CONTROL_MODE_IDENTITY),
-                proposal.id, {"decision": APPROVED, "reason": reason},
+                proposal.id, {"decision": APPROVED if approve else DENIED, "reason": reason},
             )
         except ConflictError:
             pass  # decided in the meantime: the standing state answers
         decided = self._db.gate.get(proposal.id) or proposal
-        if decided.state == APPROVED and verdict.get("launch_id"):
+        if verdict.get("launch_id") and decided.state == (APPROVED if approve else DENIED) and (
+                decided.decided_by in (None, "", CONTROL_MODE_IDENTITY)):
             # Programs PG13: a step's allowed call is a Decided-for-you line
             # (one per tool and rule on the step).
             from .control_level import record_decision
 
-            record_decision(
-                str(verdict["launch_id"]), "gate_approval", f"Allowed: {proposal.tool}"[:200],
-                facts={"gate_allows": True}, db=self._db, dedupe=True,
-            )
+            by_rule = str(policy.get("reason_code") or "").startswith("yolo_program_")
+            words = str(command_view(proposal.args_head, (proposal.operation or {}).get("args_len"))["command"] or "")
+            verb = (words.split() or [proposal.tool])[0][:60]
+            if decided.state == APPROVED:
+                line = f"Allowed by rule (YOLO): {verb}" if by_rule else f"Allowed: {proposal.tool}"
+                facts = {"gate_allows": True, "unparsed_inside": by_rule}
+            else:
+                line = f"Refused by rule (YOLO): {verdict.get('destructive') or verb}"
+                facts = {"gate_refuses": True}
+            record_decision(str(verdict["launch_id"]), "gate_approval", line[:200], facts=facts, db=self._db,
+                            dedupe=True)
         return decided
 
     def _checked_verdict(self, principal: Principal, payload: Mapping[str, Any]) -> dict[str, str]:
@@ -247,6 +263,14 @@ class GateService:
             return {"launch_id": "", "scope": scope, "rule": rule, "read_rule": raw["read_rule"],
                     "target": visible_target(target, stored_head)}
         launch_id, worktree, branch = found
+        cwd_inside = ""
+        if scope == UNPARSED and worktree:
+            # Programs (2026-10-31): YOLO lets a step's unparsed call run in
+            # its own worktree; the hub, not the hook, says the folder is in it.
+            cwd = os.path.realpath(str(payload.get("cwd") or "/"))
+            root = os.path.realpath(raw["root"]) if raw["root"] else ""
+            if root == worktree and (cwd == worktree or cwd.startswith(worktree.rstrip(os.sep) + os.sep)):
+                cwd_inside = "1"
         if scope == INSIDE:
             cwd = os.path.realpath(str(payload.get("cwd") or "/"))
             root = os.path.realpath(raw["root"]) if raw["root"] else ""
@@ -262,6 +286,7 @@ class GateService:
             # Astra r2 on #998: the filter runs AFTER every hub override (a
             # branch or a folder past the head is omitted, never stored).
             "target": visible_target(target, stored_head) if scope != INSIDE else "",
+            "cwd_inside": cwd_inside, "destructive": raw.get("destructive", "") if scope == UNPARSED else "",
         }
 
     def _launch_records(self) -> tuple[Any, list[dict[str, Any]]]:

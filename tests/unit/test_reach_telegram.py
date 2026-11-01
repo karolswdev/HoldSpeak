@@ -429,7 +429,11 @@ def test_off_means_no_poll_and_no_send(tmp_path, monkeypatch) -> None:
 
 
 def test_the_ladder_sends_once_at_once_and_waits_in_quiet_hours(tmp_path) -> None:
+    from tests.integration.program_rig import local_noon
+
+    noon = local_noon()  # never the digest's hour, whatever hour the test runs
     desk = Desk(tmp_path, control="normal")
+    desk.reach._clock = lambda: noon.isoformat()
     desk.pair()
     pid, item = desk.core()
     desk.reach.quiet = lambda: (0, 0)  # no quiet hours
@@ -440,10 +444,10 @@ def test_the_ladder_sends_once_at_once_and_waits_in_quiet_hours(tmp_path) -> Non
     # In quiet hours nothing is sent.
     desk.telegram.unpair(OWNER)
     desk2 = Desk(tmp_path / "two", control="normal")
+    desk2.reach._clock = lambda: noon.isoformat()
     desk2.pair()
     desk2.core()
-    hour = __import__("datetime").datetime.now().astimezone().hour
-    desk2.reach.quiet = lambda: (hour, (hour + 2) % 24)
+    desk2.reach.quiet = lambda: (noon.hour, (noon.hour + 2) % 24)
     desk2.bot.calls.clear()
     assert desk2.reach.tick()["sent"] == [] and desk2.bot.of("sendMessage") == []
 
