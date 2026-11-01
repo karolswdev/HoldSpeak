@@ -1,0 +1,8 @@
+{
+  "body": {
+    "code": "action_unknown",
+    "detail": "There is no such action.",
+    "error": "action_unknown"
+  },
+  "status": 404
+}

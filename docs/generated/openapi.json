@@ -23188,6 +23188,24 @@
         "summary": "Api Programs Create"
       }
     },
+    "/api/programs/from-action": {
+      "post": {
+        "operationId": "api_programs_from_action_api_programs_from_action_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs From Action Api Programs From Action Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Programs From Action"
+      }
+    },
     "/api/programs/templates": {
       "get": {
         "operationId": "api_programs_templates_api_programs_templates_get",
