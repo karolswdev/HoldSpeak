@@ -20,8 +20,11 @@ a failure "Could not deliver to dw app/1: <words>" (git's or dw's own words
 stay in the checkpoint's ``undo.detail``, never in the line), and his Your
 turn row ``delivery`` (Retry or Skip; Merge or Skip at Secure). What dw never
 sees (§8.4): steps beyond their PR numbers, briefs, checkpoints, findings,
-transcripts, worktree paths. The link point (reading ``dw context`` at
-create) and a milestone's ``dw phase close`` are not built yet.
+transcripts, worktree paths. JRN5 (2026-11-01, ``program_dw``): the link
+point reads ``dw context`` at create; a delivery to a whole phase (no story
+in the ref) also runs ``dw phase close`` in the same commit, and its line
+says "· phase closed" (dw's refusal keeps the phase open: "· the phase stays
+open", ``undo.phase``).
 """
 from __future__ import annotations
 
@@ -132,20 +135,31 @@ def deliver(runner: Any, program: Mapping[str, Any]) -> Optional[dict[str, Any]]
     where = target(program)
     if where is None or not program.get("closed_at"):
         return None
+    phase: dict[str, Any] = {}
     try:
-        number, branch = _write(runner, program, where)
+        number, branch = _write(runner, program, where, phase)
     except DeliveryFailed as exc:
         return _line(service, program, FAILED, f"Could not deliver to {where['words']}: {exc.words}",
                      detail=exc.detail, words=exc.words)
     from .program_rules import level_of
 
     if level_of(program.get("control")) == "secure":
-        return _line(service, program, PR_OPEN, f"The delivery PR #{number} to {where['words']} waits for your merge",
-                     pr_number=number, branch=branch)
-    return merge(runner, program, number, branch)
+        return _line(service, program, PR_OPEN, f"The delivery PR #{number} to {where['words']} waits for your merge"
+                     + _phase_words(phase, merged=False), pr_number=number, branch=branch, phase=phase)
+    return merge(runner, program, number, branch, phase=phase)
 
 
-def merge(runner: Any, program: Mapping[str, Any], number: Any, branch: str = "", *, by: str = "engine") -> dict[str, Any]:
+def _phase_words(phase: Mapping[str, Any], *, merged: bool = True) -> str:
+    """JRN5: what the delivery did to the phase, on its line."""
+    if not phase:
+        return ""
+    if not phase.get("closed"):
+        return " · the phase stays open"
+    return " · phase closed" if merged else " · it closes the phase"
+
+
+def merge(runner: Any, program: Mapping[str, Any], number: Any, branch: str = "", *, by: str = "engine",
+          phase: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
     """``gh pr merge --squash`` of the delivery PR; its ledger line."""
     service = runner.service
     where = target(program) or {"words": "the delivery"}
@@ -155,13 +169,21 @@ def merge(runner: Any, program: Mapping[str, Any], number: Any, branch: str = ""
         raw = " ".join(f"{proc.stderr or ''} {proc.stdout or ''}".split())
         return _line(service, program, FAILED, f"Could not deliver to {where['words']}: {_words_of('merge', raw)}",
                      detail=raw[:2000], words=_words_of("merge", raw), pr_number=number, branch=branch, by=by)
-    return _line(service, program, DELIVERED, f"Delivered to {where['words']} (PR #{number})", pr_number=number,
-                 branch=branch, by=by)
+    if phase is None:
+        # His Merge at Secure: the phase close the PR carries (its PR_OPEN line).
+        opened = next((row for row in service.store.list_checkpoints(program["id"])
+                       if row.get("kind") == KIND and row.get("choice") == PR_OPEN), None)
+        phase = ((opened or {}).get("undo") or {}).get("phase") or {}
+    return _line(service, program, DELIVERED, f"Delivered to {where['words']} (PR #{number})" + _phase_words(phase),
+                 pr_number=number, branch=branch, by=by, phase=phase)
 
 
 def _line(service: Any, program: Mapping[str, Any], choice: str, line: str, *, detail: str = "", words: str = "",
-          pr_number: Any = None, branch: str = "", by: str = "engine") -> dict[str, Any]:
+          pr_number: Any = None, branch: str = "", by: str = "engine",
+          phase: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
     undo: dict[str, Any] = {}
+    if phase:
+        undo["phase"] = dict(phase)  # JRN5: the phase close the delivery carried
     if detail:
         undo["detail"] = str(detail)[:2000]
     if words:
@@ -188,7 +210,8 @@ def _run_or_fail(runner: Any, argv: list[str], cwd: str, stage: str) -> str:
     return str(proc.stdout or "")
 
 
-def _write(runner: Any, program: Mapping[str, Any], where: Mapping[str, str]) -> tuple[int, str]:
+def _write(runner: Any, program: Mapping[str, Any], where: Mapping[str, str],
+           phase_out: Optional[dict[str, Any]] = None) -> tuple[int, str]:
     from ..missioncontrol_bridge import dw_argv_base
     from .agent_hand_service import branch_slug
 
@@ -218,6 +241,14 @@ def _write(runner: Any, program: Mapping[str, Any], where: Mapping[str, str]) ->
     _run_or_fail(runner, [*dw, "story", "evidence", project, phase, story, "--from-file", str(evidence_file), "--force"],
                  tree, "evidence")
     _run_or_fail(runner, [*dw, "story", "status", project, phase, story, "done"], tree, "status")
+    if not where.get("story") and phase_out is not None:
+        # JRN5: a delivery to a whole phase closes it (a major point); dw's
+        # refusal (a story still open) keeps it open and says so.
+        closed = runner._run([*dw, "phase", "close", project, phase, "--summary",
+                              f"{program['title']} is done (HoldSpeak program)."[:200]], cwd=tree)
+        raw = " ".join(f"{closed.stderr or ''} {closed.stdout or ''}".split())
+        phase_out.update({"project": project, "phase": phase, "closed": closed.returncode == 0,
+                          **({} if closed.returncode == 0 else {"words": raw[:300]})})
     _run_or_fail(runner, ["git", "-C", tree, "add", "-A", "--", "pm/roadmap"], tree, "commit")
     title = f"Delivery: {program['title']} done"[:200]
     _run_or_fail(runner, ["git", "-C", tree, "commit", "-q", "-m", title], tree, "commit")
