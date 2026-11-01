@@ -445,3 +445,20 @@ def test_the_programs_wire_says_yolo(tmp_path) -> None:
     program = service.get(OWNER, pid)
     assert program["control_word"] == "YOLO"
     assert program["status_line"].endswith("control YOLO")
+
+
+def test_a_refused_call_keeps_its_whole_command_and_cwd_on_the_ledger(launched, tmp_path, monkeypatch) -> None:
+    """The live proof (2026-11-01): the refusal line kept only the 120-char
+    head, so its cause could not be read. The checkpoint's detail now holds
+    the whole redacted command and the folder the gate saw."""
+    _mode(tmp_path, monkeypatch, "neutral")
+    service, pid = _bind(launched.db, launched.worktree, launched.launch_id, "yolo")
+    command = ('git add README.md && git commit -q -m "Add the line\n\nCo-Authored-By: Claude <noreply@anthropic.com>" '
+               '&& git log --oneline -1 && echo done > /etc/holdspeak-outside-log')
+    assert len(command) > 120
+    refused = _call(launched, command).proposal
+    assert refused.state == DENIED
+    row = next(row for row in service.store.list_checkpoints(pid) if row["line"].startswith("Refused by rule"))
+    detail = row["undo"]["detail"]
+    assert f"cwd {launched.worktree}" in detail and "rule redirect_outside_worktree · scope outside" in detail
+    assert "/etc/holdspeak-outside-log" in detail  # past the 120-char head

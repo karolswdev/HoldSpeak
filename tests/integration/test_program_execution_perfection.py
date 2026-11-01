@@ -331,3 +331,54 @@ def test_a_red_checks_prompt_is_never_read_as_a_turn_with_no_commit(tmp_path) ->
     rig.tick()
     lines = [row["line"] for row in rig.program(pid)["checkpoints"]]
     assert not any("turn ended with no commit" in line for line in lines), lines
+
+
+# ── the live proof's refused commits (run 3, #116 and #130) ──────────
+
+#: The real Claude Code's commands, from its session transcript (the
+#: worktree and its session scratch folder stand in as {wt} and {scratch}).
+#: Each was refused "outside the worktree": the commit was fine; the same
+#: call wrote a check log in Claude Code's own session scratchpad.
+PROOF_COMMANDS = (
+    'git add docs/index.md && git commit -q -m "docs: link the README from docs/index.md\n\n'
+    'Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git log --oneline -1 && mkdir -p {scratch}/s1/scratchpad '
+    "&& sh -c 'test -f README.md' > {scratch}/s1/scratchpad/check.log 2>&1; echo \"exit=$?\" >> "
+    "{scratch}/s1/scratchpad/check.log; cat {scratch}/s1/scratchpad/check.log",
+    'git add CHANGELOG.md && git commit -q -m "Add CHANGELOG line for the Programs proof\n\n'
+    'Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git log --oneline -1 && git status --short && '
+    'mkdir -p "{scratch}/s2/scratchpad" && sh -c \'test -f README.md\' > "{scratch}/s2/scratchpad/check-readme.log" 2>&1; '
+    'echo "exit=$?" | tee -a "{scratch}/s2/scratchpad/check-readme.log"',
+    'cd {wt} && git add docs/index.md && git commit -q -m "docs: x" && git log --oneline -1',
+    "git commit -q -m \"$(cat <<'EOF'\nAdd a line\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\"",
+    'git -C {wt} commit -q -m "x"',
+)
+
+
+@pytest.mark.parametrize("command", PROOF_COMMANDS)
+def test_execution_perfection_the_agents_own_commit_shapes_are_inside_its_worktree(tmp_path, command) -> None:
+    from holdspeak.tool_gate_rules import OUTSIDE, agent_scratch_roots, classify_bash
+    from holdspeak.operation_policy import describe_operation, resolve_policy
+
+    rig = Rig(tmp_path)
+    pid = _program(rig)
+    rig.service.plan(OWNER, pid, steps=[{"title": "One", "brief": "x"}])
+    rig.service.start(OWNER, pid)
+    worktree = str(_worktree(rig, rig.step(pid, 1)))
+    scratch = agent_scratch_roots(worktree)[0]
+    verdict = classify_bash(command.format(wt=worktree, scratch=scratch), cwd=worktree, root=worktree)
+    assert verdict.scope != OUTSIDE, verdict
+    tool_call = {"launch_id": "L1", "scope": verdict.scope, "rule": verdict.rule, "read_rule": verdict.read_rule,
+                 "program_step": "1", "cwd_inside": "1" if verdict.scope == "unparsed" else "",
+                 "destructive": verdict.destructive}
+    operation = describe_operation(operation_id="op", family="tool_gate", effect_class="agent/tool_call_hold",
+                                   actor="agent", destination=worktree, data_classes=("tool_arguments_redacted",),
+                                   resource_scope="Bash", fixed_destination=True, consequence="execute_on_approval")
+    assert resolve_policy(operation, mode="yolo", source="config", tool_call=tool_call).outcome == "allowed"
+
+
+def test_another_folder_in_tmp_is_still_outside(tmp_path) -> None:
+    from holdspeak.tool_gate_rules import OUTSIDE, classify_bash
+
+    rig = Rig(tmp_path)
+    worktree = str(rig.repo)
+    assert classify_bash("echo x > /tmp/someone-else/log", cwd=worktree, root=worktree).scope == OUTSIDE
