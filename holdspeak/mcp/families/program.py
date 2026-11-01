@@ -369,12 +369,13 @@ TOOLS: list[dict[str, Any]] = [
                     "an agent at its usage limit (limited: continue, wait), a requirement (requirement with "
                     "requirement_id: met, unmet, waive with reason, send_back), what an agent proposed "
                     "(proposal_id: requirement_proposed add or skip, step_change apply or skip, step_amend send or skip; "
-                    "a split of a step too big for its budget is a step_change: apply splits it, skip runs it as it is). "
-                    "Owner only.",
+                    "a split of a step too big for its budget is a step_change: apply splits it, skip runs it as it is), "
+                    "the delivery at Done (delivery, no step_id: retry, merge at Secure, skip). Owner only.",
      "inputSchema": _schema({
          "program_id": _ID, "step_id": {"type": ["string", "null"], "maxLength": 128},
          "kind": {"type": "string", "enum": ["merge", "finding", "parked", "ask_review", "core", "race", "add_step", "close",
-                                             "limited", "requirement", "requirement_proposed", "step_change", "step_amend"]},
+                                             "limited", "requirement", "requirement_proposed", "step_change", "step_amend",
+                                             "delivery"]},
          "choice": {"type": "string"}, "finding_id": {"type": ["string", "null"]},
          "reason": {"type": ["string", "null"], "maxLength": 400},
          "requirement_id": {"type": ["string", "null"]},

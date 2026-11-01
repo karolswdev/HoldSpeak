@@ -545,7 +545,7 @@ The text changes what the record lets you change, by the same rules as the board
 | Remove the project | A program stays filed to its project. |
 | Any change to a closed program | The program is closed. |
 
-Some lines are in the record and in the text, but HoldSpeak does not act on them yet: `planner` (shaping, planning and the split use the desk's engine), `delivery dw` and `rounds before start` (the rounds never stop **Start**). `within` bounds only the night's planning (see "Night programs"); a file outside it is not yet a core question. A step's `budget` sizes the planning draft and stops a step that is too big from starting (see "Too big at the start"). A `walk` under Your word lists the steps you do; HoldSpeak never runs a walk.
+Some lines are in the record and in the text, but HoldSpeak does not act on them yet: `planner` (shaping, planning and the split use the desk's engine) and `rounds before start` (the rounds never stop **Start**). `delivery dw` acts at Done (see "Delivery at Done"). `within` bounds only the night's planning (see "Night programs"); a file outside it is not yet a core question. A step's `budget` sizes the planning draft and stops a step that is too big from starting (see "Too big at the start"). A `walk` under Your word lists the steps you do; HoldSpeak never runs a walk.
 
 ### Preview, Apply, Not this
 
@@ -661,6 +661,19 @@ The verbs:
 - **Ask more**: on a done or skipped round, open it again. This also works while the program runs.
 
 The rounds help you plan; they never stop **Start**. The `?` lines are the engine's, and you cannot change them in the text. In the text, an answered `=` line has a lamp that tells what the answer became, for example `# → step 3 brief`.
+
+## Delivery at Done
+
+A program with the line `delivery dw <project>/<phase>` or `delivery dw <project>/<phase>/<story>` writes one delivery when it closes. Only a repository with Delivery Workbench (`.githooks/dw`) takes the line.
+
+1. HoldSpeak makes a scratch worktree at the head of the base branch, beside your repository, on the branch `program/<title>/delivery`. It does not change your working tree.
+2. When the line names no story, `dw story create` makes one with the program's title.
+3. `dw story evidence` writes the program's Done: the PR numbers, the requirements and their lines, the Decided for you counts and the handover note. `dw story status … done` marks the story done.
+4. HoldSpeak commits, pushes and opens one PR, "Delivery: <title> done". At Normal and YOLO, HoldSpeak merges it. At Secure, a Your turn row asks you: **Merge** or **Skip**.
+
+The log says "Delivered to dw app/1 (PR #12)". When a part fails, the log says it in words, for example "Could not deliver to dw app/1/07: Delivery Workbench did not take the evidence", and a Your turn row asks you: **Retry** or **Skip**. **Skip** leaves the program Done, with no delivery. Delivery Workbench never gets the steps, the briefs, the checkpoints, the findings or the worktree paths.
+
+Not there yet: the link when you make the program (the story's acceptance lines as proposed requirements), and `dw phase close` for a whole phase.
 
 ## A held commit
 
