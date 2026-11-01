@@ -416,6 +416,12 @@
 .desk-next .today-fold-head[aria-expanded] { width: 100%; }
 .desk-next .today-fold-head[aria-expanded]::after {
   content: "Show";
+  /* The library Button's ::after is its hit face (absolute, inset 0, global.css):
+     as the fold word it must flow at the right, or it sits over the label
+     (the live walk, 2026-11-01: "Show" drawn over "Since Friday"). */
+  position: static;
+  inset: auto;
+  flex: none;
   margin-left: auto;
   font: 500 13px / 1.4 var(--font-sans);
   color: var(--wb-sel);

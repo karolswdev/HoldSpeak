@@ -63,6 +63,10 @@
 }
 .desk-next .surface-disclosure:not([data-variant="raw"]) .surface-disclosure-trigger::after {
   content: "Show";
+  /* The trigger is the library Button, whose ::after is its absolute hit
+     face: the fold word flows at the right instead (as Today's folds). */
+  position: static;
+  inset: auto;
   flex: none;
   margin-left: auto;
   padding-left: 12px;
