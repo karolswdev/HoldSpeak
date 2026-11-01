@@ -14,9 +14,8 @@ import { Token } from "../surface/Token";
 import { openRef } from "../openObject";
 import { spriteUrl } from "../sprites";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { afterWords, agentKey, mergedWords, runsOnWords, stationsOf, stepChip, stepMetWords, stepTone, stepWord } from "./model";
+import { afterWords, agentKey, mergedWords, runsOnWords, stepBreathes, stepChip, stepMetWords, stepTone, stepWord } from "./model";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
-import { StationTrack } from "./StationTrack";
 import { stateWords } from "../surface/words";
 import type { PlanSize, PlanStep, ProgramStep } from "./types";
 
@@ -100,8 +99,9 @@ export function StepRow({
         </span>
       </Button>
       <span className="pg-step-track">
-        <StationTrack stations={stationsOf(step)} />
-        <DotWord tone={stepTone(step.state)} className="pg-step-word" data-testid="programs-step-word"
+        {/* PG-WINDOW: the six grey dots meant nothing to him; the state is
+         * its lamp and word, the stations live in the step's Gate. */}
+        <DotWord live={stepBreathes(step.state)} tone={stepTone(step.state)} className="pg-step-word" data-testid="programs-step-word"
           title={step.state === "limited" ? stateWords(step.state_word) : undefined}>{word}</DotWord>
       </span>
       {contender ? <span className="pg-step-met" /> : <MetCell step={step} his={his} />}

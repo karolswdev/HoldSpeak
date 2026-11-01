@@ -292,6 +292,9 @@ QUESTIONS = {
     "requirement_proposed": "Add this requirement to the program?",
     "step_change": "Apply this change to the step?",
     "step_amend": "Send this line to the agent?",
+    "answer": "Answer the agent in its lane?",
+    "close": "Close the program?",
+    "ask_review": "Send it for review?",
 }
 
 
@@ -494,6 +497,62 @@ def brief_lines(body: Mapping[str, Any]) -> list[str]:
     return [line for line in lines if line]
 
 
+# ── the Program window (PG-WINDOW, 2026-10-31) ────────────────────────
+
+def item_brief(program: Mapping[str, Any], steps: list[Mapping[str, Any]], item: Mapping[str, Any]) -> dict[str, Any]:
+    """One held item's brief for the Program window, in the briefing page's
+    words and order: the goal, what the step was doing, what happened, the
+    question, what waits on this answer, and each choice's consequence."""
+    top = [row for row in steps if not row.get("race_of")]
+    step = next((row for row in steps if row.get("id") == item.get("step_id")), None)
+    kind = str(item.get("kind") or "")
+    blocked = blocked_steps(top, step)
+    freed = freed_steps(top, step)
+    others_open = any(row.get("state") not in ("merged", "done", "parked") for row in top
+                      if step is None or row.get("id") != step.get("id"))
+    rest = rest_words(blocked, others_open)
+    consequences = {}
+    for choice in item.get("choices") or []:
+        said = consequence(kind, str(choice), item, step, rest, len(freed))
+        if said:
+            consequences[str(choice)] = said
+    return {
+        "goal": goal_line(program), "doing": doing_line(step), "happened": happened_line(kind, item, step),
+        "question": question_line(kind, item),
+        "blocked": [int(row["ordinal"]) for row in blocked], "blocked_words": blocked_words(blocked) if blocked else "",
+        "consequences": consequences,
+    }
+
+
+def step_story(checkpoints: Iterable[Mapping[str, Any]], step_id: Any, limit: int = 3) -> list[dict[str, Any]]:
+    """What the agent did on one step: at most ``limit`` plain lines from its
+    ledger (newest kept), in the order they happened."""
+    out: list[dict[str, Any]] = []
+    seen: list[str] = []
+    for row in checkpoints:
+        if row.get("step_id") != step_id or row.get("kind"):
+            continue
+        line = changed_line(row.get("line"))
+        if not line or line in seen:
+            continue
+        seen.append(line)
+        out.append({"at": row.get("at"), "line": line})
+        if len(out) >= limit:
+            break
+    return sorted(out, key=lambda row: str(row.get("at") or ""))
+
+
+def window_words(program: Mapping[str, Any], steps: list[Mapping[str, Any]], turn: Iterable[Mapping[str, Any]],
+                 checkpoints: Iterable[Mapping[str, Any]]) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    """The Program window's words: each held item's brief (by item id) and
+    each step's story (by step id). ``checkpoints`` newest first, as the
+    store lists them."""
+    rows = list(checkpoints)
+    briefs = {str(item.get("id")): item_brief(program, steps, item) for item in turn}
+    stories = {str(row["id"]): step_story(rows, row["id"]) for row in steps}
+    return briefs, stories
+
+
 __all__ = ["brief_lines", "blocked_steps", "blocked_words", "changed_line", "changed_lines", "clean", "consequence", "doing_line",
-           "fence_hits", "first_sentence", "goal_line", "happened_line", "parked_cause", "question_line",
+           "fence_hits", "first_sentence", "goal_line", "happened_line", "item_brief", "step_story", "window_words", "parked_cause", "question_line",
            "rest_words", "scrub", "sentence", "settle_words", "waits_words"]

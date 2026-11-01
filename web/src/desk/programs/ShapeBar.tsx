@@ -149,7 +149,7 @@ export function ShapeBar({ program, pending, onAnswer, onOpenText }: {
     <div className="pg-shape" data-testid="program-shape-bar" data-busy={busy ? "" : undefined}
       data-settle={settle ? "" : undefined}>
       <div className="pg-shape-row">
-        <StringGadget label="Change the program" placeholder="Change the program" value={sentence}
+        <StringGadget label="Change the program" placeholder="Tell the program what to change" value={sentence}
           onChange={(next) => { setSentence(next); setNothing(false); }} onKeyDown={onKeyDown}
           onDictation={dictated}
           micLabel={question?.spoken ? "Speak your answer" : "Speak a change to the program"} />

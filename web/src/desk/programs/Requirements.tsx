@@ -450,7 +450,43 @@ export function boardToken(program: Program): string {
   return parts.join(" · ");
 }
 
-/** The Requirements board (direction A, the checklist). */
+/** PG-WINDOW W3: Done when, the last row of the board. The program's own
+ *  requirements (judged after the last step) and the every-step ones, as
+ *  lines with their lamps, and Add a requirement (Where: The program). It
+ *  replaces the Requirements board above the steps on a started program. */
+export function DoneWhen({ program, onApplied }: { program: Program; onApplied(next: Program | null): void }) {
+  const [adding, setAdding] = useState(false);
+  const every = (program.requirements ?? []).filter((row) => row.scope === "every_step");
+  const own = (program.requirements ?? []).filter((row) => row.scope === "program");
+  const finished = program.state === "done" || Boolean(program.closed_at);
+  if (!own.length && !every.length && finished) return null;
+  const rows = [...every, ...own];
+  const met = rows.length && rows.every((row) => row.state === "met" || row.state === "waived");
+  return (
+    <li className="pg-done-when" aria-label="Done when" data-testid="programs-done-when" data-met={met ? "" : undefined}>
+      <div className="pg-done-when-head">
+        <span className="pg-done-when-mark" aria-hidden="true" />
+        <b>Done when</b>
+        {own.length ? <span className="pg-fold-sub">judged after the last step</span> : null}
+        {finished ? null : (
+          <Button dense variant="ghost" aria-expanded={adding} onClick={() => setAdding((now) => !now)} data-testid="programs-done-add-requirement">
+            {adding ? "Not now" : "Add a requirement"}
+          </Button>
+        )}
+      </div>
+      {rows.length || adding ? (
+        <ul className="pg-reqs" data-testid="programs-requirements">
+          {rows.map((row) => <RequirementRow key={row.id} program={program} row={row} onApplied={onApplied} />)}
+          {adding ? <AddRequirementRow program={program} onApplied={onApplied} defaultScope="program" /> : null}
+        </ul>
+      ) : null}
+    </li>
+  );
+}
+
+/** The Requirements board (direction A, the checklist). Since PG-WINDOW it
+ *  draws only in Drafting; a started program shows requirements in its
+ *  steps and in Done when. */
 export function RequirementsBoard({ program, onApplied }: { program: Program; onApplied(next: Program | null): void }) {
   const own = (program.requirements ?? []).filter((row) => row.scope === "program");
   const every = (program.requirements ?? []).filter((row) => row.scope === "every_step");
