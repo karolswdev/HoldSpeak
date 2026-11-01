@@ -1161,8 +1161,11 @@ span.pg-req-thumb { height: 150px; }
   padding-right: 8px;
   background: linear-gradient(var(--wb-rule), var(--wb-rule)) no-repeat 18px 5px / calc(100% - 20px) 1.5px;
 }
-.pg-line .pg-station:last-child { background: none; }
 .pg-line .pg-station[data-mark="done"] { background-image: linear-gradient(var(--wb-muted), var(--wb-muted)); }
+/* The last station has no link after it (a Done last station drew the
+   link's colour over its whole box: a dark band on every Done program). */
+.pg-line .pg-station:last-child,
+.pg-line .pg-station[data-mark="done"]:last-child { background: none; }
 .pg-line .pg-station-dot { width: 12px; height: 12px; }
 .pg-line .pg-station[data-mark="running"] .pg-station-dot,
 .pg-line .pg-station[data-mark="here"] .pg-station-dot,
