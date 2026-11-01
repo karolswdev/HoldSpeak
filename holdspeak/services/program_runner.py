@@ -973,7 +973,7 @@ class ProgramRunner:
         if state in _STOPPED:
             self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE,
                                     parked_reason="The agent stopped before the step was done",
-                                    line=f"The agent stopped ({state})")
+                                    line=f"The agent stopped ({state})", ending="interrupted")
             return
         if state in ("working", "resuming", "no_signal"):
             if step["state"] != "working":
@@ -1430,7 +1430,7 @@ class ProgramRunner:
         facts["requirements_left"] = [row["id"] for row in rows]
         facts["park_is_his"] = True
         self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, parked_reason=reason, facts=facts,
-                                line=f"Parked: {reason}" if outcome.to_owner else "")
+                                line=f"Parked: {reason}" if outcome.to_owner else "", ending="failed")
         if not outcome.to_owner:
             self.service.engine_decision(program, step, "requirement_left", outcome,
                                          f"Parked step {step['ordinal']} and carried on: {reason}")
@@ -1507,7 +1507,7 @@ class ProgramRunner:
         facts = dict(step.get("facts") or {})
         facts["park_is_his"] = bool(outcome.to_owner)
         self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, parked_reason=reason,
-                                facts=facts, line="" if not outcome.to_owner else f"Parked: {reason}")
+                                facts=facts, line="" if not outcome.to_owner else f"Parked: {reason}", ending="failed")
         if not outcome.to_owner:
             self.service.engine_decision(program, step, "step_failed", outcome,
                                          f"Parked step {step['ordinal']} and carried on: {reason}")
@@ -1930,7 +1930,8 @@ class ProgramRunner:
         reason = f"{what} failed: {raw[:200] or proc.returncode}"
         words = pr_failure_words(reason) or f"could not finish {what}"
         self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, parked_reason=reason,
-                                line=f"{words[:1].upper()}{words[1:]}; parked", detail=raw[:2000] or str(proc.returncode))
+                                line=f"{words[:1].upper()}{words[1:]}; parked", detail=raw[:2000] or str(proc.returncode),
+                                ending="failed")
 
     # ── 5. the PR to its merge ───────────────────────────────────────
 
@@ -1996,7 +1997,7 @@ class ProgramRunner:
         if follow.get("pr_state") == "pr_closed_unmerged":
             self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE,
                                     parked_reason="The PR was closed without a merge",
-                                    line="The PR was closed without a merge")
+                                    line="The PR was closed without a merge", ending="interrupted")
             return
         if not pr or facts.get("merge_requested_at"):
             return

@@ -12,7 +12,7 @@
   "check_command": null,
   "checkpoints": [
     {
-      "at": "2026-11-01T07:31:38.269404+00:00",
+      "at": "2026-11-01T07:50:03.685386+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T07:31:38.229550+00:00",
+      "at": "2026-11-01T07:50:03.346320+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -51,7 +51,7 @@
   "closed_at": "2026-10-28T18:14:50Z",
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-11-01T07:31:38.228783+00:00",
+  "created_at": "2026-11-01T07:50:03.343354+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -80,10 +80,10 @@
     "prs": 3,
     "words": "Merged 3 PRs · 28 Oct"
   },
-  "id": "program-f187b9097f9e",
+  "id": "program-508a5523cd97",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T07:31:38.269404+00:00",
+    "at": "2026-11-01T07:50:03.685386+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -104,8 +104,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-f187b9097f9e",
-  "note_window": "pullout:note:program-program-f187b9097f9e",
+  "note_id": "program-program-508a5523cd97",
+  "note_window": "pullout:note:program-program-508a5523cd97",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -164,6 +164,7 @@
       "elapsed": "",
       "elapsed_seconds": null,
       "ended_at": "2026-10-28T15:36:11Z",
+      "ending": "none",
       "engine": null,
       "estimate": null,
       "findings": [],
@@ -203,7 +204,7 @@
         "pr_number": 1584,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1584"
       },
-      "id": "step-8319d8d35a3f",
+      "id": "step-3ef250151768",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -268,7 +269,7 @@
       ],
       "story": [],
       "title": "The dock and the chair never force a needs-you rebuild; a windows-only desk frame reads nothing",
-      "updated_at": "2026-11-01T07:31:38.268351+00:00",
+      "updated_at": "2026-11-01T07:50:03.676852+00:00",
       "worktree": null
     },
     {
@@ -296,6 +297,7 @@
       "elapsed": "",
       "elapsed_seconds": null,
       "ended_at": "2026-10-28T16:05:42Z",
+      "ending": "none",
       "engine": null,
       "estimate": null,
       "findings": [],
@@ -335,7 +337,7 @@
         "pr_number": 1585,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1585"
       },
-      "id": "step-4bbf851559d7",
+      "id": "step-a0b0b374212a",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -400,7 +402,7 @@
       ],
       "story": [],
       "title": "The hub stops stalling: indexes for the three pipeline_events scans, read receipts pruned after 14 days, the slow reads off the event loop",
-      "updated_at": "2026-11-01T07:31:38.268351+00:00",
+      "updated_at": "2026-11-01T07:50:03.676852+00:00",
       "worktree": null
     },
     {
@@ -428,6 +430,7 @@
       "elapsed": "",
       "elapsed_seconds": null,
       "ended_at": "2026-10-28T18:14:50Z",
+      "ending": "none",
       "engine": null,
       "estimate": null,
       "findings": [],
@@ -467,7 +470,7 @@
         "pr_number": 1598,
         "pr_url": "https://github.com/karolswdev/HoldSpeak/pull/1598"
       },
-      "id": "step-1713fe2b07b5",
+      "id": "step-2401fd8471ef",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -532,7 +535,7 @@
       ],
       "story": [],
       "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard",
-      "updated_at": "2026-11-01T07:31:38.268351+00:00",
+      "updated_at": "2026-11-01T07:50:03.676852+00:00",
       "worktree": null
     }
   ],
@@ -556,7 +559,7 @@
       "title": "Off the loop, the last step: the guard's allowlist is empty and stays empty; the quick check runs the guard"
     }
   ],
-  "updated_at": "2026-11-01T07:31:38.269554+00:00",
+  "updated_at": "2026-11-01T07:50:03.685649+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

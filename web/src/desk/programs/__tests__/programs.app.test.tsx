@@ -62,6 +62,9 @@ import deliveryFailedFixture from "../__fixtures__/program.delivery_failed.json"
 import deliveryMergeFixture from "../__fixtures__/program.delivery_merge.json";
 import deliveryMergedFixture from "../__fixtures__/program.delivery_merged.json";
 import textApplyFixture from "../__fixtures__/program.text_apply.json";
+// PG-IMPORT IMP2: the to-do row and his Done, the ending word (scripts/record_program_fixtures.py).
+import todoFixture from "../__fixtures__/program.todo.json";
+import todoDoneFixture from "../__fixtures__/program.todo.done.json";
 // PG-LANG LANG3/4: a sentence shaped by the REAL qwen3.8-27b replies
 // (tests/fixtures/program_shape_reply.json) replayed through the hub's runner,
 // recorded through the real routes (tests/integration/test_desk_program_shape.py).
@@ -2260,5 +2263,39 @@ describe("PG-IMPORT IMP1: the step report and the second mark (recorded: scripts
     expect(summary.finished_words).toBe("finished");
     expect(within(row).getByTestId("programs-row-finished").textContent).toBe("finished");
     expect(within(row).getByTestId("programs-row-state").textContent).toContain(summary.state_word);
+  });
+});
+
+describe("PG-IMPORT IMP2: the to-do row and the ending word (recorded: scripts/record_program_fixtures.py)", () => {
+  it("a walk is a to-do: who asks, the walk, Done and Can't do it, an optional note that reaches the hub", async () => {
+    const todo = todoFixture as unknown as Program;
+    const item = todo.your_turn_items.find((row) => row.kind === "todo")!;
+    hub({
+      [`GET /api/programs/${todo.id}`]: todo,
+      [`POST /api/programs/${todo.id}/requirements/${item.requirement_id}/decide`]: todoDoneFixture,
+    });
+    render(<ProgramBody programId={todo.id} />);
+    await screen.findByTestId("programs-your-turn");
+    const row = screen.getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-item") === item.id)!;
+    expect(row.getAttribute("data-kind")).toBe("todo");
+    expect(row.textContent).toContain(item.brief!.happened);
+    expect(item.head).toBe("Claude Code asks you to do this · step 1");
+    expect(within(row).getAllByRole("button").map((button) => button.textContent)).toEqual(
+      expect.arrayContaining(["Done", "Can't do it"]));
+    fireEvent.change(within(row).getByRole("textbox", { name: "Add a note (optional)" }), { target: { value: "Looks right on my phone" } });
+    fireEvent.click(within(row).getByTestId("programs-turn-done"));
+    await waitFor(() => expect(calls).toContain(
+      `POST /api/programs/${todo.id}/requirements/${item.requirement_id}/decide {"choice":"done","line":"Looks right on my phone"}`));
+    // The hub's answer: the to-do is gone; the requirement is Met by his word.
+    await waitFor(() => expect(screen.queryAllByTestId("programs-turn-item").some((node) => node.getAttribute("data-kind") === "todo")).toBe(false));
+  });
+
+  it("a cut-off lane says so beside its state", async () => {
+    const todo = todoFixture as unknown as Program;
+    hub({ [`GET /api/programs/${todo.id}`]: todo });
+    render(<ProgramBody programId={todo.id} />);
+    await screen.findByTestId("programs-board");
+    const cut = todo.steps.find((step) => step.ending === "interrupted")!;
+    expect(stepRow(cut.ordinal).textContent).toContain("Parked · interrupted");
   });
 });

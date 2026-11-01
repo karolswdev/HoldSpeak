@@ -85,6 +85,9 @@ PARK_KIND = "program_park"
 ACTIVE_STATES = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings"})
 #: Finished: its dependents may run.
 FINISHED_STATES = frozenset({"merged", "done"})
+#: PG-IMPORT IMP2: how a step's lane ended, apart from its state ("none" is
+#: no word: it runs, or nothing ended it).
+ENDINGS = ("finished", "failed", "interrupted")
 #: PG-IMPORT IMP1: the achromatic mark of a Done Program.
 FINISHED_WORDS = {"finished": "finished", "needs_decision": "finished · needs a decision"}
 #: Nothing more happens to it unless he says so.
@@ -161,7 +164,8 @@ DECIDE_CHOICES = {
     # PG-REQ: a requirement (his word, one left after the rounds), and what
     # an agent proposes: a requirement, a change to a planned step, an
     # amendment to a running step's brief.
-    "requirement": ("met", "unmet", "waive", "send_back"),
+    # PG-IMPORT IMP2: ``done`` and ``cant`` answer a to-do (a Your word walk).
+    "requirement": ("met", "unmet", "waive", "send_back", "done", "cant"),
     "requirement_proposed": ("add", "skip"),
     "step_change": ("apply", "skip"),
     "step_amend": ("send", "skip"),
@@ -599,6 +603,18 @@ def end_pending(program: Mapping[str, Any], steps: list[Mapping[str, Any]],
     return any(gates(row) for row in program_own(requirements))
 
 
+#: PG-IMPORT IMP2: the to-do's presses (BroCrew: Done, Can't do it).
+TODO_CHOICES = ("done", "cant")
+#: A to-do shows from the step's start to its merge.
+TODO_STATES = frozenset({"briefed", "working", "waiting", "limited", "checking", "check_failed", "review",
+                         "findings", "pr_open", "merge_ask"})
+
+
+def todo_head(agent: str, ordinal: Any) -> str:
+    """"Claude Code asks you to do this · step 3"."""
+    return f"{agent} asks you to do this" + (f" · step {int(ordinal)}" if ordinal else "")
+
+
 def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
                       requirements: Optional[Iterable[Mapping[str, Any]]],
                       proposals: Optional[Iterable[Mapping[str, Any]]]) -> list[dict[str, Any]]:
@@ -621,6 +637,13 @@ def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, A
             item["walk"] = [str(line) for line in walk]
         return item
 
+    def todo(base: dict[str, Any], row: Mapping[str, Any], step: Mapping[str, Any]) -> dict[str, Any]:
+        who = agent_label(step.get("profile") or program.get("default_profile"))
+        return {**base, "id": f"{row['id']}:todo", "kind": "todo", "requirement_id": row["id"],
+                "choices": list(TODO_CHOICES), "agent": who, "head": todo_head(who, step.get("ordinal")),
+                "walk": [str(line) for line in (row.get("spec") or {}).get("walk") or []],
+                "title": f"{todo_head(who, step.get('ordinal'))}: {label(row['ordinal'])} · {row['text']}"}
+
     def left(base: dict[str, Any], row: Mapping[str, Any], where: str, choices: list[str],
              finding_id: Optional[str] = None) -> dict[str, Any]:
         rounds = int(row.get("rounds") or 0)
@@ -639,10 +662,15 @@ def requirement_items(program: Mapping[str, Any], steps: Iterable[Mapping[str, A
         base = _turn_base(program, step)
         where = f"Step {step['ordinal']} · {step['title']}"
         own = [row for row in reqs if row.get("step_id") == step["id"]]
-        if state in ("pr_open", "merge_ask"):
-            for row in own:
-                if row.get("kind") == "word" and row.get("required") and row.get("state") == "not_yet":
-                    items.append(word(base, row, where))
+        for row in own:
+            if row.get("kind") != "word" or not row.get("required") or row.get("state") != "not_yet":
+                continue
+            if (row.get("spec") or {}).get("walk") and state in TODO_STATES:
+                # PG-IMPORT IMP2 (BroCrew's to-do): a walk is a thing the agent
+                # asks him to do by hand, from the step's start to its merge.
+                items.append(todo(base, row, step))
+            elif state in ("pr_open", "merge_ask"):
+                items.append(word(base, row, where))
         seen: set[str] = set()
         for rid in facts.get("requirements_left") or []:
             row = by_id.get(rid)
@@ -1104,7 +1132,7 @@ class ProgramService:
             summary["parked_as"] = (parked or {}).get("choice") or None
         # PG-REQ §7, §11: the count of his required requirements, the Project
         # and the person by name, and the words Find a program matches.
-        his = len([item for item in turn if item["kind"] in ("requirement_word", "requirement_left")])
+        his = len([item for item in turn if item["kind"] in ("requirement_word", "requirement_left", "todo")])
         met = requirement_counts(reqs, his)
         if met:
             summary["requirements_met"] = met
@@ -1275,6 +1303,8 @@ class ProgramService:
             "report": step_report(step, checkpoints, requirements if requirements is not None
                                   else self.requirements(program["id"])),
             "report_text": step.get("report"), "last_checkpoint": last,
+            # PG-IMPORT IMP2: finished | failed | interrupted | none.
+            "ending": facts.get("ending") if facts.get("ending") in ENDINGS else "none",
             "started_at": step.get("started_at"), "ended_at": step.get("ended_at"),
             "updated_at": step.get("updated_at"),
             "elapsed_seconds": _seconds_between(step.get("started_at"), step.get("ended_at")),
@@ -2934,6 +2964,15 @@ class ProgramService:
                                  reason=FROZEN_MERGED)
         words = " ".join(str(line or "").split())[:400]
         commit = (step or {}).get("head_commit")
+        if choice in ("done", "cant"):
+            if row.get("kind") != "word":
+                raise ProgramRefused("not_a_todo", f"{label(row['ordinal'])} is not a thing you do by hand.")
+            with _LOCK:
+                self._answer_todo(program, step, row, choice == "done", words, commit)
+                self._touch(program)
+                self.changed(program["id"], (step or {}).get("id"), verb="judge", requirement_id=row["id"])
+            self._tick_now(program["id"])
+            return {"requirement_id": row["id"], "program": self.get(principal, program["id"])}
         with _LOCK:
             if choice in ("met", "unmet"):
                 if row.get("kind") != "word":
@@ -2958,6 +2997,42 @@ class ProgramService:
                          requirement_id=row["id"])
         self._tick_now(program["id"])
         return {"requirement_id": row["id"], "program": self.get(principal, program["id"])}
+
+    def _answer_todo(self, program: dict[str, Any], step: Optional[dict[str, Any]], row: dict[str, Any], done: bool,
+                     note: str, commit: Any) -> None:
+        """PG-IMPORT IMP2: his answer to a to-do. Done writes the requirement
+        Met (his word, his note the evidence); Can't do it writes it Unmet with
+        his note and puts it on the step's left list (Send back or Waive is
+        his next choice). The agent is told in the step's next prompt."""
+        from .program_requirements import label
+
+        said = f"You · {_clock_words(self._clock())}" + (f" · {note}" if note else "")
+        self.judge(program, step, row, "met" if done else "unmet", {"kind": "press", "line": said, "commit": commit},
+                   by="owner")
+        if step is None:
+            return
+        step = self.store.get_step(step["id"]) or step
+        if not done:
+            facts = step.setdefault("facts", {})
+            left = [rid for rid in facts.get("requirements_left") or [] if rid != row["id"]]
+            facts["requirements_left"] = [*left, row["id"]]
+            self._save(step)
+        text = (f"The owner did {label(row['ordinal'])} by hand: {row['text']}. Done." if done
+                else f"The owner cannot do {label(row['ordinal'])} by hand: {row['text']}.") + (f" The owner: {note}" if note else "")
+        self._tell_agent(program, step, text)
+
+    def _tell_agent(self, program: Mapping[str, Any], step: dict[str, Any], text: str) -> None:
+        """One line for the step's agent at its next prompt: a running step
+        gets it at its next turn boundary (the amendment queue); a step at its
+        PR gets it typed now. No agent: the ledger keeps it."""
+        if step.get("state") in _STARTED:
+            self._apply_amend(program, step, text, by="owner")
+            return
+        if step.get("launch_id") and step.get("state") in ("pr_open", "merge_ask"):
+            try:
+                self.runner().prompt_builder(step, f"HoldSpeak on step {step['ordinal']}: {text}")
+            except Exception as exc:
+                log.info(f"to-do answer not typed: {exc}")
 
     def _waive(self, program: Mapping[str, Any], row: dict[str, Any], line: str) -> None:
         from .program_requirements import label
@@ -4328,7 +4403,7 @@ class ProgramService:
     # ── the engine's writes (the runner calls these) ─────────────────
 
     def transition(self, program: Mapping[str, Any], step: dict[str, Any], to: str, *, by: str = "engine",
-                   line: str = "", detail: str = "", **fields: Any) -> dict[str, Any]:
+                   line: str = "", detail: str = "", ending: Optional[str] = None, **fields: Any) -> dict[str, Any]:
         """Move one step along the table of §4 (a refused move raises), write
         its checkpoint (and the kernel operation for an engine decision)."""
         current = str(step.get("state") or "")
@@ -4340,6 +4415,17 @@ class ProgramService:
         step["state"] = to
         if to in REPORT_STATES and to != current:
             self._report_files(program, step)
+        # PG-IMPORT IMP2 (BroCrew's ending word): how the lane ended, apart
+        # from the state. A green finish is finished; the engine names a
+        # failed or cut-off end at the move; a step that runs again has none.
+        ending = "finished" if to in FINISHED_STATES else ("failed" if to == "failed" else ending)
+        if ending or (to != current and to not in REPORT_STATES):
+            facts = dict(step.get("facts") or {})
+            if ending in ENDINGS:
+                facts["ending"] = ending
+            else:
+                facts.pop("ending", None)
+            step["facts"] = facts
         if to != "ready":
             step["held_reason"] = None if to != current else step.get("held_reason")
         if to == "briefed" and not step.get("started_at"):
@@ -4482,7 +4568,7 @@ class ProgramService:
         frame: dict[str, Any] = {"program_id": program_id, "step_id": step_id, "state": state, "your_turn": len(turn)}
         if requirement_id:
             frame["requirement_id"] = requirement_id
-        met = requirement_counts(reqs, len([item for item in turn if item["kind"] in ("requirement_word", "requirement_left")]))
+        met = requirement_counts(reqs, len([item for item in turn if item["kind"] in ("requirement_word", "requirement_left", "todo")]))
         if met:
             frame["requirements_met"] = met
         if text:

@@ -310,7 +310,7 @@ PROGRAM_WHY = {
     # PG19: the step's agent is at its usage limit: continue in the next, or wait.
     "limited": "TO DECIDE",
     # PG-REQ: his word on a requirement, and one still unmet after the rounds.
-    "requirement_word": "TO CONFIRM", "requirement_left": "TO DECIDE",
+    "requirement_word": "TO CONFIRM", "requirement_left": "TO DECIDE", "todo": "TO DO",
     # 2026-10-31: the step's agent's commit (the hold ended, the change waits).
     "commit": "TO ALLOW",
 }

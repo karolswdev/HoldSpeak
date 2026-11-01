@@ -113,6 +113,10 @@ export function stepWord(step: ProgramStep): string {
   if (step.contenders?.length) return `Race of ${Math.max(step.race || 0, step.contenders.length + 1)}`;
   if ((step.state === "merged" || step.state === "merge_ask") && step.pr?.number) return `${base} #${step.pr.number}`;
   if (step.state === "check_failed") return `${base} · log`;
+  // PG-IMPORT IMP2: how the lane ended, beside the state ("Parked · interrupted").
+  if ((step.state === "parked" || step.state === "failed") && (step.ending === "failed" || step.ending === "interrupted")) {
+    return `${base} · ${step.ending}`;
+  }
   // PG19: the row keeps "Limited until 14:00"; the rest ("continuing in
   // Codex") is the Your turn row's and the word's hover.
   if (step.state === "limited") return base.split(" · ")[0];
