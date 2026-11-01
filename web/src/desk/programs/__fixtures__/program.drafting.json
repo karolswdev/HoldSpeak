@@ -12,7 +12,7 @@
   "check_command": "sh /Users/karol/dev/tools/wt-pg-imp6/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-01T13:34:13.892877+00:00",
+      "at": "2026-11-01T13:52:42.665727+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T13:34:13.890022+00:00",
+      "at": "2026-11-01T13:52:42.660786+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -51,7 +51,7 @@
   "closed_at": null,
   "control": "yolo",
   "control_word": "YOLO",
-  "created_at": "2026-11-01T13:34:13.889931+00:00",
+  "created_at": "2026-11-01T13:52:42.660669+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "pi",
@@ -80,10 +80,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "Calls on the home box.",
-  "id": "program-8a0024245023",
+  "id": "program-88e7fb30106e",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T13:34:13.892877+00:00",
+    "at": "2026-11-01T13:52:42.665727+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -104,8 +104,8 @@
   "may_call": true,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-8a0024245023",
-  "note_window": "pullout:note:program-program-8a0024245023",
+  "note_id": "program-program-88e7fb30106e",
+  "note_window": "pullout:note:program-program-88e7fb30106e",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -126,7 +126,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-mlts25_2/rig/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-10mdkbfb/rig/app"
   },
   "requirements": [
     {
@@ -134,9 +134,9 @@
       "choices": [
         "waive"
       ],
-      "created_at": "2026-11-01T13:34:13.890127+00:00",
+      "created_at": "2026-11-01T13:52:42.661044+00:00",
       "evidence": {},
-      "id": "req-5b6934a8b399",
+      "id": "req-8eb5da8aaf2e",
       "judged_at": null,
       "judged_commit": null,
       "kind": "review",
@@ -144,7 +144,7 @@
       "label": "R1",
       "ordinal": 1,
       "parent_id": null,
-      "program_id": "program-8a0024245023",
+      "program_id": "program-88e7fb30106e",
       "required": true,
       "rounds": 0,
       "running": false,
@@ -158,12 +158,12 @@
         {
           "ordinal": 1,
           "state": "not_yet",
-          "step_id": "step-e32f1af5fd20"
+          "step_id": "step-16a2670fa86f"
         },
         {
           "ordinal": 2,
           "state": "not_yet",
-          "step_id": "step-1c321614f6bc"
+          "step_id": "step-eac82a087492"
         }
       ],
       "text": "The change does only what its brief says.",
@@ -174,9 +174,9 @@
       "choices": [
         "waive"
       ],
-      "created_at": "2026-11-01T13:34:13.890263+00:00",
+      "created_at": "2026-11-01T13:52:42.661271+00:00",
       "evidence": {},
-      "id": "req-0e7851e60033",
+      "id": "req-282e1f6f8783",
       "judged_at": null,
       "judged_commit": null,
       "kind": "review",
@@ -184,7 +184,7 @@
       "label": "R2",
       "ordinal": 2,
       "parent_id": null,
-      "program_id": "program-8a0024245023",
+      "program_id": "program-88e7fb30106e",
       "required": true,
       "rounds": 0,
       "running": false,
@@ -198,12 +198,12 @@
         {
           "ordinal": 1,
           "state": "not_yet",
-          "step_id": "step-e32f1af5fd20"
+          "step_id": "step-16a2670fa86f"
         },
         {
           "ordinal": 2,
           "state": "not_yet",
-          "step_id": "step-1c321614f6bc"
+          "step_id": "step-eac82a087492"
         }
       ],
       "text": "Each new behaviour has a test.",
@@ -304,7 +304,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-e32f1af5fd20",
+      "id": "step-16a2670fa86f",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -327,17 +327,17 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T13:34:13.892558+00:00",
+          "created_at": "2026-11-01T13:52:42.665124+00:00",
           "evidence": {},
-          "id": "req-c703cf2bf21f",
+          "id": "req-fb38feaed0da",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
           "kind_word": "Review",
           "label": "R1",
           "ordinal": 1,
-          "parent_id": "req-5b6934a8b399",
-          "program_id": "program-8a0024245023",
+          "parent_id": "req-8eb5da8aaf2e",
+          "program_id": "program-88e7fb30106e",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -346,7 +346,7 @@
           "stale": false,
           "state": "not_yet",
           "state_word": "Not yet",
-          "step_id": "step-e32f1af5fd20",
+          "step_id": "step-16a2670fa86f",
           "text": "The change does only what its brief says.",
           "waived_reason": null
         },
@@ -355,17 +355,17 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T13:34:13.892739+00:00",
+          "created_at": "2026-11-01T13:52:42.665463+00:00",
           "evidence": {},
-          "id": "req-d34545d18940",
+          "id": "req-968d3d5a8d82",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
           "kind_word": "Review",
           "label": "R2",
           "ordinal": 2,
-          "parent_id": "req-0e7851e60033",
-          "program_id": "program-8a0024245023",
+          "parent_id": "req-282e1f6f8783",
+          "program_id": "program-88e7fb30106e",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -374,7 +374,7 @@
           "stale": false,
           "state": "not_yet",
           "state_word": "Not yet",
-          "step_id": "step-e32f1af5fd20",
+          "step_id": "step-16a2670fa86f",
           "text": "Each new behaviour has a test.",
           "waived_reason": null
         }
@@ -415,7 +415,7 @@
       "story": [],
       "taken": false,
       "title": "The call runner",
-      "updated_at": "2026-11-01T13:34:13.892329+00:00",
+      "updated_at": "2026-11-01T13:52:42.664597+00:00",
       "wait": null,
       "worktree": null
     },
@@ -492,7 +492,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-1c321614f6bc",
+      "id": "step-eac82a087492",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -515,17 +515,17 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T13:34:13.892558+00:00",
+          "created_at": "2026-11-01T13:52:42.665124+00:00",
           "evidence": {},
-          "id": "req-4342a8ac8d09",
+          "id": "req-dc921410fd8e",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
           "kind_word": "Review",
           "label": "R1",
           "ordinal": 1,
-          "parent_id": "req-5b6934a8b399",
-          "program_id": "program-8a0024245023",
+          "parent_id": "req-8eb5da8aaf2e",
+          "program_id": "program-88e7fb30106e",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -534,7 +534,7 @@
           "stale": false,
           "state": "not_yet",
           "state_word": "Not yet",
-          "step_id": "step-1c321614f6bc",
+          "step_id": "step-eac82a087492",
           "text": "The change does only what its brief says.",
           "waived_reason": null
         },
@@ -543,17 +543,17 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T13:34:13.892739+00:00",
+          "created_at": "2026-11-01T13:52:42.665463+00:00",
           "evidence": {},
-          "id": "req-352c57883c25",
+          "id": "req-646bdbe61593",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
           "kind_word": "Review",
           "label": "R2",
           "ordinal": 2,
-          "parent_id": "req-0e7851e60033",
-          "program_id": "program-8a0024245023",
+          "parent_id": "req-282e1f6f8783",
+          "program_id": "program-88e7fb30106e",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -562,7 +562,7 @@
           "stale": false,
           "state": "not_yet",
           "state_word": "Not yet",
-          "step_id": "step-1c321614f6bc",
+          "step_id": "step-eac82a087492",
           "text": "Each new behaviour has a test.",
           "waived_reason": null
         }
@@ -603,7 +603,7 @@
       "story": [],
       "taken": false,
       "title": "The calls window",
-      "updated_at": "2026-11-01T13:34:13.892329+00:00",
+      "updated_at": "2026-11-01T13:52:42.664597+00:00",
       "wait": null,
       "worktree": null
     }
@@ -623,7 +623,7 @@
       "title": "The calls window"
     }
   ],
-  "updated_at": "2026-11-01T13:34:13.892929+00:00",
+  "updated_at": "2026-11-01T13:52:42.665789+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

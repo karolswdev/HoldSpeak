@@ -13,7 +13,7 @@
     "check_command": "sh /Users/karol/dev/tools/wt-pg-imp6/tests/fixtures/fake_program_check.sh",
     "checkpoints": [
       {
-        "at": "2026-11-01T13:34:28.699252+00:00",
+        "at": "2026-11-01T13:53:17.315077+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -27,13 +27,13 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-3d9a397f23fa",
+        "step_id": "step-da4e90ccf2d3",
         "undo": {
-          "requirement_id": "req-1d72d9301d83"
+          "requirement_id": "req-2ed653bca9cc"
         }
       },
       {
-        "at": "2026-11-01T13:34:28.688852+00:00",
+        "at": "2026-11-01T13:53:17.301671+00:00",
         "by": "agent",
         "choice": null,
         "decision_record_id": null,
@@ -47,14 +47,14 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-3d9a397f23fa",
+        "step_id": "step-da4e90ccf2d3",
         "undo": {
           "line": "Keep the port at 5060",
           "title": "The orchestrator adds to step 1: Keep the port at 5060"
         }
       },
       {
-        "at": "2026-11-01T13:34:28.683907+00:00",
+        "at": "2026-11-01T13:53:17.295553+00:00",
         "by": "agent",
         "choice": null,
         "decision_record_id": null,
@@ -68,7 +68,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-7aaf3541605b",
+        "step_id": "step-8f29836967ff",
         "undo": {
           "fields": {
             "title": "The Line window"
@@ -77,7 +77,7 @@
         }
       },
       {
-        "at": "2026-11-01T13:34:28.680117+00:00",
+        "at": "2026-11-01T13:53:17.290946+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
@@ -95,7 +95,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T13:34:28.679672+00:00",
+        "at": "2026-11-01T13:53:17.290430+00:00",
         "by": "agent",
         "choice": "add",
         "decision_record_id": null,
@@ -109,39 +109,39 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-3d9a397f23fa",
+        "step_id": "step-da4e90ccf2d3",
         "undo": {
           "each_step": false,
           "kind": "review",
           "required": true,
           "spec": {},
-          "step_id": "step-3d9a397f23fa",
+          "step_id": "step-da4e90ccf2d3",
           "text": "The line answers in two rings",
           "title": "An agent proposes a requirement on step 1: The line answers in two rings"
         }
       },
       {
-        "at": "2026-11-01T13:34:28.573816+00:00",
+        "at": "2026-11-01T13:53:17.073037+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 5,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-7aaf3541605b",
+        "line": "Handed to Claude Code in hs-program-step-8f29836967ff",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-7aaf3541605b/1",
-        "ref_commit": "b3d4fc931c04340d3906ab9d4d1fd8598ca06a15",
+        "ref": "refs/holdspeak/checkpoints/step-8f29836967ff/1",
+        "ref_commit": "59d4ea67568cd52625bffbde6baf765c6f63858d",
         "rule": null,
-        "step_id": "step-7aaf3541605b",
+        "step_id": "step-8f29836967ff",
         "undo": {
           "pin": {
-            "commit": "b3d4fc931c04340d3906ab9d4d1fd8598ca06a15",
-            "head": "800ecb491d362e2767a6a0efb62340a8191ad706",
+            "commit": "59d4ea67568cd52625bffbde6baf765c6f63858d",
+            "head": "c434c74dc6b678b7a40d5b014fe0a2ef474fee2a",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-7aaf3541605b/1",
+            "ref": "refs/holdspeak/checkpoints/step-8f29836967ff/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -150,27 +150,27 @@
         }
       },
       {
-        "at": "2026-11-01T13:34:28.412393+00:00",
+        "at": "2026-11-01T13:53:16.504137+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 4,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-3d9a397f23fa",
+        "line": "Handed to Claude Code in hs-program-step-da4e90ccf2d3",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-3d9a397f23fa/1",
-        "ref_commit": "db34beaf487c4441c783e347bee6ef26f2965f7c",
+        "ref": "refs/holdspeak/checkpoints/step-da4e90ccf2d3/1",
+        "ref_commit": "01109686024ca9d90a383a96b32f7adff4ba6e9a",
         "rule": null,
-        "step_id": "step-3d9a397f23fa",
+        "step_id": "step-da4e90ccf2d3",
         "undo": {
           "pin": {
-            "commit": "db34beaf487c4441c783e347bee6ef26f2965f7c",
-            "head": "800ecb491d362e2767a6a0efb62340a8191ad706",
+            "commit": "01109686024ca9d90a383a96b32f7adff4ba6e9a",
+            "head": "c434c74dc6b678b7a40d5b014fe0a2ef474fee2a",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-3d9a397f23fa/1",
+            "ref": "refs/holdspeak/checkpoints/step-da4e90ccf2d3/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -179,7 +179,7 @@
         }
       },
       {
-        "at": "2026-11-01T13:34:28.328344+00:00",
+        "at": "2026-11-01T13:53:16.312970+00:00",
         "by": "agent",
         "choice": null,
         "decision_record_id": null,
@@ -197,7 +197,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T13:34:28.298425+00:00",
+        "at": "2026-11-01T13:53:16.155337+00:00",
         "by": "agent",
         "choice": null,
         "decision_record_id": null,
@@ -215,7 +215,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-01T13:34:28.296061+00:00",
+        "at": "2026-11-01T13:53:16.152941+00:00",
         "by": "agent",
         "choice": null,
         "decision_record_id": null,
@@ -236,7 +236,7 @@
     "closed_at": null,
     "control": "normal",
     "control_word": "Normal",
-    "created_at": "2026-11-01T13:34:28.295736+00:00",
+    "created_at": "2026-11-01T13:53:16.152610+00:00",
     "decided_for_you": [],
     "default": {
       "agent": "Claude Code",
@@ -260,10 +260,10 @@
     "for_person": null,
     "for_person_id": null,
     "goal": "",
-    "id": "program-d5f00fe677d8",
+    "id": "program-ac137f8a8330",
     "in_state_seconds": 0,
     "last_checkpoint": {
-      "at": "2026-11-01T13:34:28.699252+00:00",
+      "at": "2026-11-01T13:53:17.315077+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -277,17 +277,17 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-3d9a397f23fa",
+      "step_id": "step-da4e90ccf2d3",
       "undo": {
-        "requirement_id": "req-1d72d9301d83"
+        "requirement_id": "req-2ed653bca9cc"
       }
     },
-    "line": "Step 1 of 2 waits on you since 08:34",
+    "line": "Step 1 of 2 waits on you since 08:53",
     "may_call": false,
     "may_handoff": false,
     "night": null,
-    "note_id": "program-program-d5f00fe677d8",
-    "note_window": "pullout:note:program-program-d5f00fe677d8",
+    "note_id": "program-program-ac137f8a8330",
+    "note_window": "pullout:note:program-program-ac137f8a8330",
     "origin_ref": null,
     "persons": [],
     "place": {
@@ -302,7 +302,7 @@
     "repository": {
       "base_branch": "main",
       "label": "app",
-      "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-mlts25_2/rig-proposals/app"
+      "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-10mdkbfb/rig-proposals/app"
     },
     "requirements": [],
     "requirements_met": {
@@ -388,9 +388,9 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-3d9a397f23fa",
+        "id": "step-da4e90ccf2d3",
         "last_checkpoint": {
-          "at": "2026-11-01T13:34:28.699252+00:00",
+          "at": "2026-11-01T13:53:17.315077+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -404,9 +404,9 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-3d9a397f23fa",
+          "step_id": "step-da4e90ccf2d3",
           "undo": {
-            "requirement_id": "req-1d72d9301d83"
+            "requirement_id": "req-2ed653bca9cc"
           }
         },
         "launch_id": "L1",
@@ -430,9 +430,9 @@
             "choices": [
               "waive"
             ],
-            "created_at": "2026-11-01T13:34:28.699070+00:00",
+            "created_at": "2026-11-01T13:53:17.314600+00:00",
             "evidence": {},
-            "id": "req-1d72d9301d83",
+            "id": "req-2ed653bca9cc",
             "judged_at": null,
             "judged_commit": null,
             "kind": "review",
@@ -440,7 +440,7 @@
             "label": "R1",
             "ordinal": 1,
             "parent_id": null,
-            "program_id": "program-d5f00fe677d8",
+            "program_id": "program-ac137f8a8330",
             "required": true,
             "rounds": 0,
             "running": false,
@@ -449,7 +449,7 @@
             "stale": false,
             "state": "not_yet",
             "state_word": "Not yet",
-            "step_id": "step-3d9a397f23fa",
+            "step_id": "step-da4e90ccf2d3",
             "text": "The line answers in two rings",
             "waived_reason": null
           }
@@ -475,7 +475,7 @@
             "profile": "claude-default"
           }
         ],
-        "started_at": "2026-11-01T13:34:28.411836+00:00",
+        "started_at": "2026-11-01T13:53:16.503574+00:00",
         "state": "working",
         "state_word": "Working",
         "station": 1,
@@ -489,15 +489,15 @@
         ],
         "story": [
           {
-            "at": "2026-11-01T13:34:28.412393+00:00",
+            "at": "2026-11-01T13:53:16.504137+00:00",
             "line": "Handed to Claude Code."
           }
         ],
         "taken": false,
         "title": "The SIP runner",
-        "updated_at": "2026-11-01T13:34:28.685985+00:00",
+        "updated_at": "2026-11-01T13:53:17.297883+00:00",
         "wait": null,
-        "worktree": "hs-program-step-3d9a397f23fa"
+        "worktree": "hs-program-step-da4e90ccf2d3"
       },
       {
         "after": [],
@@ -559,9 +559,9 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-7aaf3541605b",
+        "id": "step-8f29836967ff",
         "last_checkpoint": {
-          "at": "2026-11-01T13:34:28.683907+00:00",
+          "at": "2026-11-01T13:53:17.295553+00:00",
           "by": "agent",
           "choice": null,
           "decision_record_id": null,
@@ -575,7 +575,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-7aaf3541605b",
+          "step_id": "step-8f29836967ff",
           "undo": {
             "fields": {
               "title": "The Line window"
@@ -613,7 +613,7 @@
             "profile": "claude-default"
           }
         ],
-        "started_at": "2026-11-01T13:34:28.573474+00:00",
+        "started_at": "2026-11-01T13:53:17.072258+00:00",
         "state": "working",
         "state_word": "Working",
         "station": 1,
@@ -627,15 +627,15 @@
         ],
         "story": [
           {
-            "at": "2026-11-01T13:34:28.573816+00:00",
+            "at": "2026-11-01T13:53:17.073037+00:00",
             "line": "Handed to Claude Code."
           }
         ],
         "taken": false,
         "title": "The line window",
-        "updated_at": "2026-11-01T13:34:28.686151+00:00",
+        "updated_at": "2026-11-01T13:53:17.298070+00:00",
         "wait": null,
-        "worktree": "hs-program-step-7aaf3541605b"
+        "worktree": "hs-program-step-8f29836967ff"
       }
     ],
     "template": null,
@@ -653,7 +653,7 @@
         "title": "The line window"
       }
     ],
-    "updated_at": "2026-11-01T13:34:28.699386+00:00",
+    "updated_at": "2026-11-01T13:53:17.315249+00:00",
     "usage_warning_share": null,
     "within": [],
     "your_turn": 2,
@@ -681,12 +681,12 @@
         "launch_id": "L1",
         "ordinal": 1,
         "pr": null,
-        "program_id": "program-d5f00fe677d8",
+        "program_id": "program-ac137f8a8330",
         "program_title": "The phone line",
         "project_id": null,
         "proposal_id": 9,
-        "since": "2026-11-01T13:34:28.685985+00:00",
-        "step_id": "step-3d9a397f23fa",
+        "since": "2026-11-01T13:53:17.297883+00:00",
+        "step_id": "step-da4e90ccf2d3",
         "step_title": "The SIP runner",
         "title": "The orchestrator adds to step 1: Keep the port at 5060"
       },
@@ -713,16 +713,16 @@
         "launch_id": "L2",
         "ordinal": 2,
         "pr": null,
-        "program_id": "program-d5f00fe677d8",
+        "program_id": "program-ac137f8a8330",
         "program_title": "The phone line",
         "project_id": null,
         "proposal_id": 8,
-        "since": "2026-11-01T13:34:28.686151+00:00",
-        "step_id": "step-7aaf3541605b",
+        "since": "2026-11-01T13:53:17.298070+00:00",
+        "step_id": "step-8f29836967ff",
         "step_title": "The line window",
         "title": "The orchestrator changes step 2: title"
       }
     ]
   },
-  "requirement_id": "req-1d72d9301d83"
+  "requirement_id": "req-2ed653bca9cc"
 }
