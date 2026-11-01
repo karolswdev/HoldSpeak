@@ -251,6 +251,17 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         principal = _principal(request)
         return await _call(lambda: _service().remove_step(principal, program_id, step_id))
 
+    # PG-IMPORT IMP6: Take it over / Hand it back on a step's lane (owner).
+    @router.post("/api/programs/{program_id}/steps/{step_id}/take")
+    async def api_programs_step_take(program_id: str, step_id: str, request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().take_over(principal, program_id, step_id))
+
+    @router.post("/api/programs/{program_id}/steps/{step_id}/hand-back")
+    async def api_programs_step_hand_back(program_id: str, step_id: str, request: Request) -> Any:
+        principal = _principal(request)
+        return await _call(lambda: _service().hand_back(principal, program_id, step_id))
+
     @router.post("/api/programs/{program_id}/steps/{step_id}/amend")
     async def api_programs_step_amend(program_id: str, step_id: str, request: Request) -> Any:
         principal, body = _principal(request), await _body(request)

@@ -1362,6 +1362,8 @@ class ProgramService:
             "report": step_report(step, checkpoints, requirements if requirements is not None
                                   else self.requirements(program["id"])),
             "report_text": step.get("report"), "last_checkpoint": last,
+            # PG-IMPORT IMP6: he has the lane (Take it over).
+            "taken": isinstance(facts.get("taken"), Mapping),
             # PG-IMPORT IMP3: what it waits on ({cause, line}), or None.
             "wait": step_wait(program, step, list((steps_by_id or {}).values())
                               or self.store.list_steps(program["id"])),
@@ -4586,6 +4588,39 @@ class ProgramService:
         if line:
             self._checkpoint(program, step, by, line, detail=detail)
         return step
+
+    def take_over(self, principal: Any, program_id: str, step_id: str) -> dict[str, Any]:
+        """PG-IMPORT IMP6 (BroCrew: "It says 'take it over', because it IS that
+        act"): he has the step's lane. The engine types nothing into it and
+        decides nothing for it until Hand it back; a commit on the branch still
+        goes to the check. Reversible, so no confirmation."""
+        self._require_owner(principal, "take a lane over")
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        if not step.get("launch_id") or step.get("state") in CLOSED_STATES or step.get("state") in ("planned", "ready"):
+            raise ProgramRefused("no_lane", f"Step {step['ordinal']} has no running lane to take over.")
+        if not isinstance((step.get("facts") or {}).get("taken"), Mapping):
+            with _LOCK:
+                step["facts"] = {**(step.get("facts") or {}), "taken": {"by": "owner", "at": self._clock()}}
+                self._save(step)
+                self._checkpoint(program, step, "owner", "You took the lane over", kernel=False)
+                self.changed(program["id"], step["id"], verb="take_over")
+        return self.get(principal, program["id"])
+
+    def hand_back(self, principal: Any, program_id: str, step_id: str) -> dict[str, Any]:
+        """PG-IMPORT IMP6: the inverse of Take it over; the tick goes on from
+        the branch head. No confirmation: taking it again undoes it."""
+        self._require_owner(principal, "hand a lane back")
+        program = self._program(program_id)
+        step = self._step(program, step_id)
+        if isinstance((step.get("facts") or {}).get("taken"), Mapping):
+            with _LOCK:
+                step["facts"] = {key: value for key, value in (step.get("facts") or {}).items() if key != "taken"}
+                self._save(step)
+                self._checkpoint(program, step, "owner", "You handed the lane back", kernel=False)
+                self.changed(program["id"], step["id"], verb="hand_back")
+            self._tick_now(program["id"])
+        return self.get(principal, program["id"])
 
     def notice_lost(self, program_id: str, step_id: str, via: str) -> None:
         """PG-IMPORT IMP3: a message to him about this step did not arrive

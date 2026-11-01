@@ -179,6 +179,8 @@ When a step waits on something that does not come by itself, its row and the Pro
 | Step 2 with Claude Code picks up again after the hub restart. | The hub restarted and the agent resumes. |
 | Step 3 with Claude Code waits on you, and the message to you did not arrive. | A Telegram message about the step was not delivered. |
 
+**Take it over, hand it back.** A running step's row has **Take it over**. It opens the agent's lane and tells HoldSpeak that you have it: the row says "You have the lane", and HoldSpeak types nothing into the lane (no nudge, no amendment, no message after a red check), never parks the step for a turn with no commit, and does not decide or end a held commit. A commit on the step's branch, yours or the agent's, still goes to the check. **Hand it back** gives the lane back; HoldSpeak goes on from the branch head and types what waited. Neither press asks first: each undoes the other.
+
 **Since you were last here.** When you come back to the desk after 30 minutes or more away, Today starts with a few lines about the Programs, one for each Program, for example "README touch: 2 steps merged, 1 decided for you". A press opens that Program. A night program's line is its "Since last night" line. When part of the record could not be read, or only the newest 40 rows were read, a line under them says so. When nothing happened, Today shows nothing here.
 
 A step moves on a receipt, not on a claim. "Done" from the agent is not enough: HoldSpeak waits for a new commit on the step's branch. "Green" is a green check log. "Merged" is the merge that GitHub reports.

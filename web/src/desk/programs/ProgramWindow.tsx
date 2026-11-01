@@ -998,6 +998,7 @@ export function ProgramBody({ programId }: { programId: string }) {
             <ul className="kit-listrows">
               {steps.map((step) => (
                 <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} landed={landed[step.id]}
+                  programId={program.id} onApplied={apply}
                   onSelect={() => { setAskPart(null); setSelected(chosen?.id === step.id ? "" : step.id); }}
                   his={program.your_turn_items.some((item) => item.kind === "requirement_word" && item.step_id === step.id)}
                   words={heldWords(program, step)}
@@ -1040,12 +1041,14 @@ export function ProgramBody({ programId }: { programId: string }) {
 
 /** A step with its race's contenders indented under it, and, when it is
  *  the open step, what it must prove and what the agent did under them. */
-function StepGroup({ step, selected, onSelect, his, landed, open, words }: {
+function StepGroup({ step, selected, onSelect, his, landed, open, words, programId, onApplied }: {
   step: ProgramStep; selected: boolean; onSelect(): void; his?: boolean; landed?: "born" | "changed"; open?: ReactNode; words?: string;
+  programId?: string; onApplied?(next: Program | null): void;
 }) {
   return (
     <>
-      <StepRow step={step} selected={selected} onSelect={onSelect} his={his} landed={landed} words={words} />
+      <StepRow step={step} selected={selected} onSelect={onSelect} his={his} landed={landed} words={words}
+        programId={programId} onApplied={onApplied} />
       {(step.contenders ?? []).map((contender) => (
         <StepRow key={contender.id} step={contender} contender onSelect={onSelect} />
       ))}
