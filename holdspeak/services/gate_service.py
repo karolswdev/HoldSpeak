@@ -2,6 +2,7 @@
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
+import json
 import os
 from typing import Any, Callable, Mapping, Optional
 
@@ -273,12 +274,24 @@ class GateService:
                     "target": visible_target(target, stored_head)}
         launch_id, worktree, branch = found
         cwd_inside = ""
+        call = _call_of(payload)
+        destructive = raw.get("destructive", "")
         if scope == UNPARSED and worktree:
             # Programs (2026-10-31): YOLO lets a step's unparsed call run in
-            # its own worktree; the hub, not the hook, says the folder is in it.
+            # its own worktree; the hub, not the hook, says it is in it. Since
+            # the ruling of 2026-11-01 (Astra post-merge) the folder is not
+            # enough: every path the call names must resolve in the worktree
+            # (or the agent's own session scratch), read here from the call.
+            from ..tool_gate_rules import destructive_word, unparsed_paths_inside
+
             cwd = os.path.realpath(str(payload.get("cwd") or "/"))
             root = os.path.realpath(raw["root"]) if raw["root"] else ""
-            if root == worktree and (cwd == worktree or cwd.startswith(worktree.rstrip(os.sep) + os.sep)):
+            command = str((call or {}).get("command") or "") if call is not None else ""
+            if call is not None and str(payload.get("tool") or "") == "Bash":
+                destructive = destructive or destructive_word(command)
+            if (root == worktree and (cwd == worktree or cwd.startswith(worktree.rstrip(os.sep) + os.sep))
+                    and call is not None and str(payload.get("tool") or "") == "Bash"
+                    and unparsed_paths_inside(command, cwd=cwd, root=worktree)):
                 cwd_inside = "1"
         if scope == INSIDE:
             cwd = os.path.realpath(str(payload.get("cwd") or "/"))
@@ -295,10 +308,12 @@ class GateService:
             # Astra r2 on #998: the filter runs AFTER every hub override (a
             # branch or a folder past the head is omitted, never stored).
             "target": visible_target(target, stored_head) if scope != INSIDE else "",
-            "cwd_inside": cwd_inside, "destructive": raw.get("destructive", "") if scope == UNPARSED else "",
-            # JRN8: the call's only writes are in the agent's own scratch (an
-            # audit step may make them); only for the caller's own worktree.
-            "scratch_only": raw.get("scratch_only", "") if worktree and raw.get("root") and os.path.realpath(raw["root"]) == worktree else "",
+            "cwd_inside": cwd_inside, "destructive": destructive if scope == UNPARSED else "",
+            # JRN8: the call's only writes are in the agent's own session
+            # scratch (an audit step may make them). The hub reads it from the
+            # call against the caller's own worktree, never from the agent's
+            # body (ruling 2026-11-01).
+            "scratch_only": _scratch_only(payload, call, worktree),
         }
 
     def _launch_records(self) -> tuple[Any, list[dict[str, Any]]]:
@@ -520,3 +535,36 @@ def _default_launches(db: Database) -> Any:
     from ..delivery.factory_launch import default_launch_service
 
     return default_launch_service(db)
+
+
+def _call_of(payload: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+    """The call's tool input as the hub has it: the redacted canonical JSON
+    (the whole text when it was cut, else the head). None when the hub does
+    not have the whole call."""
+    from ..db.gate import ARGS_HEAD_CHARS
+
+    full = payload.get("args_full")
+    head = str(payload.get("args_head") or "")
+    text = full if isinstance(full, str) and full else (head if len(head) < ARGS_HEAD_CHARS else "")
+    if not text:
+        return None
+    try:
+        parsed = json.loads(text)
+    except ValueError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _scratch_only(payload: Mapping[str, Any], call: Optional[Mapping[str, Any]], worktree: str) -> str:
+    """``"1"`` when the hub's own reading of the call says its only writes
+    are in the agent's session scratch (JRN8), else ``""``."""
+    if call is None or not worktree:
+        return ""
+    from ..tool_gate_rules import classify_tool_call
+
+    try:
+        verdict = classify_tool_call(str(payload.get("tool") or ""), call,
+                                     cwd=os.path.realpath(str(payload.get("cwd") or worktree)), root=worktree)
+    except Exception:
+        return ""
+    return "1" if verdict.scratch_only else ""
