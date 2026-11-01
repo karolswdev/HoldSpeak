@@ -814,10 +814,21 @@ class ProgramRunner:
         from .agent_hand_service import AgentHandRefused
 
         try:
-            answer = self.hand().hand(
-                self.principal, "program_step", step["id"], profile=profile,
-                project_id=program.get("project_id"), engine=engine,
-            )
+            try:
+                answer = self.hand().hand(
+                    self.principal, "program_step", step["id"], profile=profile,
+                    project_id=program.get("project_id"), engine=engine,
+                )
+            except AgentHandRefused as exc:
+                if exc.reason != "worktree_duplicate" or not self._stop_earlier_launch(step):
+                    raise
+                # The step's own worktree from an earlier hand (his Resume of
+                # a parked step): its earlier agent is stopped, and the hand
+                # continues the step in that worktree, on its branch.
+                answer = self.hand().hand(
+                    self.principal, "program_step", step["id"], profile=profile,
+                    project_id=program.get("project_id"), engine=engine,
+                )
         except AgentHandRefused as exc:
             if exc.reason == "launch_cap_reached":
                 self._hold(step, "waiting for a free agent")
@@ -849,6 +860,23 @@ class ProgramRunner:
             branch=worktree.get("branch"), head_commit=base or None, facts=facts,
             line=f"Handed to {who} in {worktree.get('name')}",
         )
+        return True
+
+    def _stop_earlier_launch(self, step: Mapping[str, Any]) -> bool:
+        """Mark the step's earlier launch stopped, so the hand's Hand again
+        reuses its worktree. False when the step has no earlier launch."""
+        launch_id = str(step.get("launch_id") or "")
+        if not launch_id:
+            return False
+        try:
+            ledger = self.ledger()
+            if not ledger.get(launch_id):
+                return False
+            ledger.update(launch_id, state="handed_off",
+                          stopped={"by": "engine", "at": utc_iso(self._now()), "reason": "resumed"})
+        except Exception as exc:
+            log.info(f"earlier launch not stopped: {exc}")
+            return False
         return True
 
     def _worktree_path(self, program: Mapping[str, Any], name: str) -> str:
@@ -991,17 +1019,26 @@ class ProgramRunner:
                 self.service.save_step(step)
             return False
         outcome = decide(program.get("control"), "held_commit", {})
-        if not outcome.to_owner and hold.get("scope") == "inside":
+        if not outcome.to_owner:
+            # YOLO never holds a commit for him (program-ed167ae4478b, 2026-10-31:
+            # a commit message built with ``$(printf ...)`` reads ``unparsed``
+            # and was held as his row). A commit in the step's own worktree goes
+            # on by rule; one aimed outside it is refused by rule. Never a row.
+            inside = hold.get("scope") == "inside" or (
+                hold.get("scope") == "unparsed" and _within(hold.get("cwd"), step.get("worktree")))
+            line = "Allowed the commit by rule (YOLO)" if inside else \
+                "Refused a commit outside the step's worktree by rule (YOLO)"
+            reason = outcome.rule if inside else "YOLO: a commit outside the step's own worktree is refused"
             try:
-                self.gate().decide(hold["proposal_id"], approve=True, reason=outcome.rule[:200])
+                self.gate().decide(hold["proposal_id"], approve=inside, reason=reason[:200])
             except Exception as exc:
-                log.info(f"held commit not allowed: {exc}")
+                log.info(f"held commit not decided: {exc}")
                 return False
             facts.pop("held_commit", None)
             step["facts"] = facts
             self.service.save_step(step)
-            self.service.engine_decision(program, step, "held_commit", outcome, "Allowed the agent's commit")
-            return True
+            self.service.engine_decision(program, step, "held_commit", outcome, line)
+            return inside
         if not known or known.get("proposal_id") != hold["proposal_id"]:
             facts["held_commit"] = {"proposal_id": hold["proposal_id"], "head": str(hold.get("head") or "")[:200],
                                     "at": self.service._clock()}
@@ -1810,10 +1847,16 @@ class ProgramRunner:
                                 line=f"Opened PR #{number}" if number else "Opened the PR")
 
     def _pr_failed(self, program: dict[str, Any], step: dict[str, Any], what: str, proc: Any) -> None:
-        detail = " ".join(str(proc.stdout or proc.stderr or "").split())[:200]
-        self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE,
-                                parked_reason=f"{what} failed: {detail or proc.returncode}",
-                                line=f"{what} failed; parked")
+        """Park the step at its PR. The ledger line and his row say the cause
+        in words (``brief_words.pr_failure_words``); git's own words stay in
+        the parked reason and the checkpoint's ``detail`` for the evidence."""
+        from .brief_words import pr_failure_words
+
+        raw = " ".join(f"{proc.stderr or ''} {proc.stdout or ''}".split())
+        reason = f"{what} failed: {raw[:200] or proc.returncode}"
+        words = pr_failure_words(reason) or f"could not finish {what}"
+        self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, parked_reason=reason,
+                                line=f"{words[:1].upper()}{words[1:]}; parked", detail=raw[:2000] or str(proc.returncode))
 
     # ── 5. the PR to its merge ───────────────────────────────────────
 
@@ -1917,6 +1960,17 @@ class ProgramRunner:
 _DEFAULT: Optional[ProgramRunner] = None
 
 
+def _within(cwd: Any, worktree: Any) -> bool:
+    """``cwd`` is the step's worktree or a folder in it."""
+    if not cwd or not worktree:
+        return False
+    try:
+        here, root = Path(str(cwd)).resolve(), Path(str(worktree)).resolve()
+    except OSError:
+        return False
+    return here == root or root in here.parents
+
+
 #: The engine's own check logs in a worktree are never the agent's change.
 _NOT_CHECK_LOGS = ":(exclude).tmp/program-check"
 _COMMIT = re.compile(r"(^|[\s;&|(])git(\s+-C\s+\S+)?\s+commit\b")
@@ -1945,7 +1999,7 @@ class HubGate:
                 continue
             head = str(command_view(proposal.args_head, (proposal.operation or {}).get("args_len"))["command"] or "")
             rows.append({"proposal_id": proposal.id, "tool": proposal.tool, "head": head,
-                         "scope": str(verdict.get("scope") or ""),
+                         "scope": str(verdict.get("scope") or ""), "cwd": str(proposal.cwd or ""),
                          "commit": proposal.tool == "Bash" and bool(_COMMIT.search(head))})
         return rows
 

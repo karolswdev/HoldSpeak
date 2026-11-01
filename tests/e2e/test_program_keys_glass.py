@@ -45,6 +45,9 @@ def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     subprocess.run(["git", "-C", str(repo), "-c", "user.name=Glass", "-c", "user.email=glass@example.com",
                     "commit", "-q", "--allow-empty", "-m", "start"], check=True)
+    # Start's precheck: the push needs a remote (a bare one here).
+    subprocess.run(["git", "init", "-q", "--bare", str(tmp_path / "program-repo-origin.git")], check=True)
+    subprocess.run(["git", "-C", str(repo), "remote", "add", "origin", str(tmp_path / "program-repo-origin.git")], check=True)
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)

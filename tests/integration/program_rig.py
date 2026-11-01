@@ -30,7 +30,7 @@ from typing import Any, Optional
 
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.agent_hand_service import program_step_spec
+from holdspeak.services.agent_hand_service import _STOPPED_LAUNCH_STATES, AgentHandRefused, program_step_spec
 from holdspeak.services.agent_review import AgentReviewLoop
 from holdspeak.services.program_runner import ProgramRunner, _default_runner
 from holdspeak.services.program_service import ProgramService
@@ -60,6 +60,19 @@ def make_repo(root: Path) -> Path:
     git(repo, "remote", "add", "origin", str(origin))
     git(repo, "push", "-u", "origin", "main")
     return repo
+
+
+def give_quick_check(repo: Path) -> None:
+    """The repository's ``scripts/quick_check.sh`` (a recorded plan names it;
+    Start's precheck refuses a check that is not there)."""
+    script = repo / "scripts" / "quick_check.sh"
+    if script.exists():
+        return
+    script.parent.mkdir(parents=True, exist_ok=True)
+    script.write_text(f"#!/bin/sh\nexec sh {FAKE_CHECK}\n", encoding="utf-8")
+    git(repo, "add", "scripts/quick_check.sh")
+    git(repo, "commit", "-m", "quick check")
+    git(repo, "push", "origin", "main")
 
 
 class FakeHand:
@@ -94,10 +107,16 @@ class FakeHand:
             git(self.repo, "worktree", "add", "-b", branch, str(path), start)
             git(path, "config", "user.email", "agent@example.test")
             git(path, "config", "user.name", "Agent")
-        else:
-            # PG19: a handoff continues in the same worktree, on its branch
-            # (the real hand's Hand again path).
-            assert kwargs.get("handoff_brief"), "a second hand of a step is a handoff"
+        elif not kwargs.get("handoff_brief") and not helper_of:
+            # The real hand (``AgentHandService``): the item's worktree exists;
+            # its earlier agent stopped → Hand again in the same worktree, on
+            # its branch; still running → ``worktree_duplicate``.
+            earlier = next((row for row in reversed(self.ledger.list())
+                            if (row.get("origin_ref") or {}).get("id") == item_id), None)
+            if earlier is None or earlier.get("state") not in _STOPPED_LAUNCH_STATES:
+                raise AgentHandRefused("worktree_duplicate", f"worktree {name!r} already exists")
+        # else PG19: a handoff continues in the same worktree, on its branch
+        # (the real hand's Hand again path).
         self.ledger.record({
             "launch_id": launch_id, "state": "registered", "profile_id": kwargs.get("profile") or "claude-default",
             "origin_ref": {"kind": kind, "id": item_id}, "branch": branch, "worktree_path": str(path),
@@ -187,10 +206,10 @@ class FakeGate:
         self.holds: dict[str, list[dict[str, Any]]] = {}
         self.decisions: list[tuple[str, bool, str]] = []
 
-    def hold_commit(self, launch_id: str, proposal_id: str = "gate-1") -> None:
+    def hold_commit(self, launch_id: str, proposal_id: str = "gate-1", *, scope: str = "inside",
+                    cwd: str = "", head: str = 'git add README.md && git commit -m "Add one line to the README"') -> None:
         self.holds.setdefault(launch_id, []).append({
-            "proposal_id": proposal_id, "tool": "Bash", "scope": "inside", "commit": True,
-            "head": 'git add README.md && git commit -m "Add one line to the README"'})
+            "proposal_id": proposal_id, "tool": "Bash", "scope": scope, "commit": True, "cwd": cwd, "head": head})
 
     def held(self, launch_id: str) -> list[dict[str, Any]]:
         return list(self.holds.get(launch_id, []))
