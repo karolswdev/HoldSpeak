@@ -415,6 +415,22 @@ def _resolve_tool_gate(
     launch = str(tool_call.get("launch_id") or "")
     scope = str(tool_call.get("scope") or "unparsed")
     read_rule = str(tool_call.get("read_rule") or "")
+    if tool_call.get("audit_step") and mode != "safe":
+        # PG-LANG JRN8 (journey J7): an audit step reads and changes nothing.
+        # A read or a test in its own copy passes; every write is refused by
+        # rule at Normal and YOLO (Secure holds every call, as always).
+        reads = scope == "inside" and (bool(read_rule) or operation.resource_scope == "Read")
+        if not reads:
+            return PolicyDecision(
+                mode=mode, source=source, precedence=precedence, outcome="refused", reason_code="audit_reads_only",
+                consequence=operation.consequence, authority_basis="control_posture", next_state="refused",
+                eligible=False, requires_review=False, requires_authorization=False, requires_grant=False,
+            )
+        return PolicyDecision(
+            mode=mode, source=source, precedence=precedence, outcome="allowed", reason_code="audit_read_allowed",
+            consequence=operation.consequence, authority_basis="control_posture", next_state="execute_now",
+            eligible=True, requires_review=False, requires_authorization=False, requires_grant=False,
+        )
     if grant_matches(grant, operation, mode=mode):
         allowed, reason, basis = True, "scoped_grant_active", "scoped_grant"
     elif not launch:

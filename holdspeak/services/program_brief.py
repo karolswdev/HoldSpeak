@@ -40,6 +40,10 @@ def theirs(steps: list[Mapping[str, Any]], step: Mapping[str, Any]) -> list[dict
 
 
 def acceptance(program: Mapping[str, Any], step: Mapping[str, Any]) -> list[str]:
+    if program.get("template") == "audit":
+        from .program_audit import RULES
+
+        return list(RULES)  # PG-LANG JRN8: an audit reads and reports; it never commits
     check = program.get("check_command")
     lines = [
         f"Work only in this worktree, on its branch. Do not push {program.get('base_branch') or 'main'} or main. "

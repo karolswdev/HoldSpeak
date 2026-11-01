@@ -118,8 +118,11 @@ class ToolCallCodec:
         if verdict.get("launch_id") and self._db is not None:
             from ..services.control_level import step_of_launch
 
-            if step_of_launch(verdict["launch_id"], db=self._db) is not None:
+            found = step_of_launch(verdict["launch_id"], db=self._db)
+            if found is not None:
                 verdict["program_step"] = "1"
+                if str(found[0].get("template") or "") == "audit":
+                    verdict["audit_step"] = "1"  # PG-LANG JRN8: an audit step reads only
         operation = descriptor.to_dict()
         operation["kernel_operation_id"] = operation_id
         try:

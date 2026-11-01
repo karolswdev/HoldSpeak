@@ -963,6 +963,11 @@ class ProgramRunner:
         if (step.get("facts") or {}).get("awaiting_pick"):
             return
         if state in ("briefed", "working", "waiting", "limited", "check_failed"):
+            from . import program_audit
+
+            if program_audit.is_audit(program):
+                program_audit.follow(self, program, step)  # PG-LANG JRN8: an audit reports, never builds
+                return
             self._follow(program, step)
         elif state == "checking":
             self._check(program, step)

@@ -279,6 +279,13 @@ def happened_line(kind: str, item: Mapping[str, Any], step: Optional[Mapping[str
     if kind == "limited":
         until = f" until {item['until_words']}" if item.get("until_words") else ""
         return sentence(f"{item.get('agent') or 'The agent'} is at its usage limit{until}")
+    if kind == "audit_file":
+        count = int(item.get("count") or 0)
+        return sentence(f"The audit found {count} thing{'s' if count != 1 else ''} to fix or note. "
+                        "At Secure, HoldSpeak files none without you")
+    if kind == "fix_program":
+        count = int(item.get("count") or 0)
+        return sentence(f"The audit is done. It found {count} MUST finding{'s' if count != 1 else ''}")
     if kind == "race":
         from .program_service import agent_label
 
@@ -329,6 +336,8 @@ QUESTIONS = {
     "answer": "Answer the agent in its lane?",
     "close": "Close the program?",
     "ask_review": "Send it for review?",
+    "audit_file": "File the findings as Door tasks?",
+    "fix_program": "Make a fix program from the MUST findings?",
 }
 
 
@@ -392,6 +401,12 @@ def consequence(kind: str, choice: str, item: Mapping[str, Any], step: Optional[
                 else sentence(f"The step waits{until}"))
     if kind == "race":
         return "This agent's work wins. The step goes on."
+    if kind == "audit_file":
+        return ("Each finding becomes a Door task." if choice == "file"
+                else "The findings stay in the program. No task is made.")
+    if kind == "fix_program":
+        return ("HoldSpeak makes a program with one step for each MUST finding. It waits for your Start."
+                if choice == "make" else "No fix program is made.")
     if kind == "add_step":
         return "The step is added to the plan." if choice == "add" else "No step is added. The plan stays as it is."
     if kind == "todo":
@@ -434,6 +449,8 @@ _SETTLED = {
     ("step_amend", "send"): "The agent gets the line.", ("step_amend", "skip"): "Nothing is sent.",
     ("delivery", "merge"): "The program is delivered.", ("delivery", "retry"): "The delivery runs again.",
     ("delivery", "skip"): "The program stays Done, not delivered.",
+    ("audit_file", "file"): "The findings are Door tasks.", ("audit_file", "skip"): "No task is made.",
+    ("fix_program", "make"): "The fix program waits for your Start.", ("fix_program", "skip"): "No fix program.",
 }
 
 _COUNT = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine"}

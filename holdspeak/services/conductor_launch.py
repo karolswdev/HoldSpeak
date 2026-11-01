@@ -431,6 +431,8 @@ LAUNCH_RULES.update({
     name: (CREATE, "", "") for name in (
         "program.create", "program.plan", "program.update", "program.start", "program.park", "program.resume",
         "program.checkpoint", "program.step_done", "program.start_from",
+        # PG-LANG JRN10: a fix Program in Drafting from an audit it made.
+        "program.propose_fix",
         # PG-REQ: a launch proposes a requirement (its own step, or a Program
         # it made), and changes or amends only the Programs it made.
         "program.require", "program.step_update", "program.amend", "program.step_remove",
