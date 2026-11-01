@@ -179,6 +179,15 @@ Each line names the ruling, its canvas or design note, and the PR.
   design `betterment/programs/PROGRAM-WINDOW-2026-10-31.md`; #1685 and the
   build PR.
 
+- **The fold (owner 2026-11-01: "that left chevron something: fuck off.
+  Invent something a lot clearer").** A section that opens in place draws no
+  triangle and no chevron: its title and count on the left, the verb **Show**
+  or **Hide** at the right, the open body under a hairline rule. The kit's
+  `FoldGadget` and `Disclosure` and Today's folds draw it, so every fold on
+  the desk changed at once. A Button that opens a menu (More ▾) keeps its
+  caret. Canvas `betterment/canvases/fold-2026-11-01.html` (direction B),
+  #1694 and the build PR; fence `surface/__tests__/fold.grammar.test.tsx`.
+
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
 The owner rejected the first implementation as “toilet bowls” and too basic.

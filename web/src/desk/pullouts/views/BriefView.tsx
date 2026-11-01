@@ -252,7 +252,6 @@ export function SinceYesterday({ brief, failed, now, defaultOpen = false, openRe
     <section className="today-fold" data-testid="today-since" aria-label={label}>
       <Button variant="chrome" className="today-fold-head" aria-expanded={open} data-testid="today-since-toggle"
         onClick={() => setOpen((value) => !value)}>
-        <span className="today-fold-mark" aria-hidden="true">{open ? "▾" : "▸"}</span>
         <span className="today-fold-label">{label}</span>
         <span className="today-fold-counts" data-testid="today-since-counts">{counts || "No changes"}</span>
       </Button>

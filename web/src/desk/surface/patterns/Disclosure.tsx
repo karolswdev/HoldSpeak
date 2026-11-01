@@ -107,9 +107,6 @@ export function Disclosure({
         aria-label={ariaLabel}
         onClick={() => setOpen(!isOpen)}
       >
-        <span className="surface-disclosure-caret" aria-hidden="true">
-          {"▸"}
-        </span>
         <span className="surface-disclosure-label">{label}</span>
         {token != null ? (
           <span className="surface-disclosure-token">{token}</span>

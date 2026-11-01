@@ -1284,3 +1284,18 @@ span.pg-req-thumb { height: 150px; }
   .pg-draft-goal .surface-edit-in-place { font-size: 15px; }
   .desk-next .pg-brief-ev .btn { min-height: 44px; }
 }
+
+/* ── PG-WINDOW: the body's scroll hint wraps its flow; Drafting at the
+   phone width puts the choice before a long goal (the kind line, the
+   goal's first sentence, the tray, then the goal in full). ── */
+.pg-body > .pg-body-scroll { display: flex; flex-direction: column; min-width: 0; }
+.pg-draft-goal-first { display: none; }
+@container surface (max-width: 520px) {
+  .pg-draft-top .pg-brief { display: flex; flex-direction: column; }
+  .pg-draft-top .pg-brief-kind { order: 1; }
+  .pg-draft-goal-first { display: block; order: 2; margin: 0 0 4px; font: 500 15px / 1.45 var(--font-sans); color: var(--wb-ink); }
+  .pg-draft-top .pg-tray { order: 3; }
+  .pg-draft-top .pg-draft-goal { order: 4; margin-top: 6px; }
+  .pg-draft-top .pg-draft-goal .surface-edit-in-place { font-weight: 400; color: var(--wb-muted); }
+  .pg-draft-top .pg-plan-line { order: 5; }
+}
