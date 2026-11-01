@@ -397,6 +397,9 @@ def test_the_rules_per_level_through_the_service(hub, monkeypatch) -> None:
     assert phone.reach("program_done", level="normal", text="Done.", origin_ref="p:2")["channel"] == "message"
     core = phone.reach("core_question", level="yolo", text="Drop the old table?", origin_ref="p:3", may_call=True)
     assert core["channel"] == "call"
+    # DIR8a: the call keeps the reach rule's because for the call to read and record.
+    assert phone._because[core["call_id"]] == {"rule": core["rule"], "kind": "core", "words": "a question",
+                                               "level": "yolo", "reach": "core_question"}
     phone.end(core["call_id"])
     again = phone.reach("core_question", level="yolo", text="Drop the old table?", origin_ref="p:3", may_call=True)
     assert again["held"] and "minutes ago" in again["why"]  # never twice in 5 minutes

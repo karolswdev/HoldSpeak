@@ -190,7 +190,10 @@ def test_a_core_question_is_read_chosen_read_back_and_decided_on_his_yes(tmp_pat
     assert decided.startswith("Go on: ") and decided.endswith(" · decided on a call"), decided
     assert asked.startswith("Asked on a call 12:10 · Go on, decided · transcript: Call · "), asked
     ledger = [row for row in rig.service.store.list_checkpoints(pid) if row["line"] == asked]
-    assert ledger[0]["undo"] == {"note_ref": "note:call-1"}
+    assert ledger[0]["undo"]["note_ref"] == "note:call-1"
+    # DIR8a: the line keeps why the item was on the call (he asked what waits).
+    assert ledger[0]["undo"]["because"] == {"rule": "asked_on_call", "kind": "core",
+                                            "words": "a question", "via": "call"}
     assert record.results[-1]["effect"] == "decided" and "(passphrase)" in [line.text for line in record.transcript]
 
 
@@ -305,8 +308,10 @@ def test_an_item_answered_on_another_channel_first_is_answered_already(tmp_path)
 
     said, _ = _call(rig, ["What waits on me?", "Not yet.", "Yes."], on_say=on_say)
     assert said[5] == "Decided.", said
-    assert said[6].startswith("Step 2 of The hub stops stalling is answered already: Merge"), said
-    assert said[6].endswith("decided from the briefing page."), said
+    # IMP5 on the call: the same words as the page and Telegram.
+    import re
+
+    assert re.fullmatch(r"Step 2 of The hub stops stalling: Answered at \d\d:\d\d from the briefing page\.", said[6]), said
     assert said[7] == "That is all. One decided."
 
 
@@ -434,3 +439,55 @@ def test_the_call_asks_a_held_decide_once_and_wait_is_later_never_no(answer: str
     assert phone.said[2] == turns.hold_question("d1", "program.decide"), phone.said
     assert turns.decisions == [decision]
     assert [row["kind"] for row in record.results] == (["program_decision"] if decision == "approve" else [])
+
+
+# ── DIR8a: the call's because and the late answers (IMP5) ─────────────
+
+def test_a_call_the_reach_rules_placed_keeps_their_because_on_the_item_and_its_line(tmp_path) -> None:
+    rig, pid = _core(tmp_path)
+    step = rig.step(pid, 1)
+    because = {"rule": "YOLO: a core question calls at once", "kind": "core", "words": "a question",
+               "level": "yolo", "reach": "core_question"}
+    phone = ScriptPhone(["Blue heron.", "Park.", "Yes."])
+    record = CallRecord(phone_call_id="c1", direction="out", remote="+12125550142", about=step["id"],
+                        because=because)
+
+    async def save(rec: CallRecord) -> None:
+        rec.note_ref = "note:call-1"
+
+    reach = ReachService(rig.db, programs=lambda: rig.service, clock=CLOCK)
+    held = DeskHeld(rig.db, programs=lambda: rig.service, reach=lambda: reach, now=lambda: NOW)
+    runner = CallRunner(phone, record, turns=NoTurns(), passphrase="blue heron", allowed_numbers=[],
+                        greeting="Hello.", emit=lambda *_: None, save_note=save, held=held)
+    asyncio.run(asyncio.wait_for(runner.run(), 20))
+    asked = [row for row in rig.service.store.list_checkpoints(pid) if row["line"].startswith("Asked on a call")]
+    assert asked[0]["undo"]["because"] == {**because, "via": "call"}
+
+
+def test_a_later_the_call_cannot_keep_says_the_same_words_as_telegram(tmp_path, monkeypatch) -> None:
+    rig, pid = _core(tmp_path, control="normal")
+
+    def broken(self, body, words):  # noqa: ANN001
+        raise RuntimeError("the later store is gone")
+
+    monkeypatch.setattr(DeskHeld, "later", broken)
+    said, _ = _call(rig, ["What waits on me?", "Later, at one."])
+    assert said[3] == "Could not keep that for later; it still waits.", said
+    assert "core" in _kinds(rig)  # it still waits
+    asked = [row for row in rig.service.store.list_checkpoints(pid) if row["line"].startswith("Asked on a call")]
+    assert asked[0]["undo"]["refusal"] == "not_kept"
+
+
+def test_a_choice_answered_elsewhere_between_the_read_back_and_the_yes_is_not_pending(tmp_path) -> None:
+    rig, pid = _core(tmp_path)
+    item = next(row for row in rig.service.needs_you_items() if row["kind"] == "core")
+
+    def on_say(text: str) -> None:
+        if text.startswith("You said Go on"):  # he presses Park on the desk while the call reads back
+            rig.service.decide(OWNER, pid, item["step_id"], kind="core", choice="park")
+
+    said, _ = _call(rig, ["What waits on me?", "Go on.", "Yes."], on_say=on_say)
+    assert said[4] == "Answered at 12:10 from the desk", said
+    asked = [row for row in rig.service.store.list_checkpoints(pid) if row["line"].startswith("Asked on a call")]
+    assert asked[0]["line"].startswith("Asked on a call 12:10 · answered already")
+    assert asked[0]["undo"]["refusal"] == "not_pending"

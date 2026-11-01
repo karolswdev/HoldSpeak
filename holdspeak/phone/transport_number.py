@@ -14,7 +14,7 @@ with no paired app waits, and shows as a Needs you row.
 from __future__ import annotations
 
 import threading
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
 
@@ -89,7 +89,8 @@ class NumberTransport:
         return False
 
     def place(self, *, reason: str, context: str, on_end: Callable[[dict[str, Any]], None],
-              on_failed: Callable[[str, str], None], about: str = "") -> Optional[str]:
+              on_failed: Callable[[str, str], None], about: str = "",
+              because: Optional[Mapping[str, Any]] = None) -> Optional[str]:
         """Place the call (from a worker thread). The Calls record id, or None
         when it did not connect (``on_failed(reason_word, detail)``).
         ``about``: the Program step the call is about (DIR8: its held items
@@ -115,7 +116,7 @@ class NumberTransport:
 
         try:
             summary = calls._on_loop(calls.place(greeting=greeting, context=context, reason=reason, on_end=ended,
-                                                 about=about),
+                                                 about=about, because=because),
                                      timeout=120.0)
         except ServiceError as exc:
             on_failed(str(exc.context.get("reason") or exc.code), exc.detail)
