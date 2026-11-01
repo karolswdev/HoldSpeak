@@ -846,7 +846,12 @@ describe("PG16: decisions from a Program (the recorded Skip)", () => {
     const checks = await screen.findByTestId("programs-checkpoints");
     const rows = within(checks).getAllByRole("listitem");
     const skip = rows.find((row) => row.textContent?.startsWith("You") && row.textContent.includes("Skip: sentence case the title"))!;
-    expect(within(skip).getByTestId("programs-proposed-decision").textContent).toBe("Proposed as a decision");
+    const proposed = within(skip).getByTestId("programs-proposed-decision");
+    expect(proposed.textContent).toBe("Proposed as a decision");
+    // One press opens the record in the Decisions window.
+    const record = skipped.checkpoints.find((row) => row.by === "owner" && row.line.includes("Skip: sentence case the title"))!.decision_record_id;
+    fireEvent.click(proposed);
+    expect(mocks.openDecisionRecord).toHaveBeenCalledWith(record);
     const plain = rows.find((row) => row.textContent?.includes("Opened PR #"))!;
     expect(within(plain).queryByTestId("programs-proposed-decision")).toBeNull();
     // The engine's NOTE Skip was overturned: no word on its Decided for you row.

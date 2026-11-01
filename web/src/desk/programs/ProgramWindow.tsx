@@ -461,7 +461,7 @@ function DecidedFold({ program, open, onToggle, onOverturned }: {
                 {row.rule ? <span className="pg-decided-rule"> · {row.rule}</span> : null}
               </span>
               <span className="pg-decided-verb">
-                {row.decision_record_id && !overturned ? <ProposedWord /> : null}
+                {row.decision_record_id && !overturned ? <ProposedWord recordId={row.decision_record_id} /> : null}
                 {overturned ? <DotWord data-testid="programs-decided-overturned">Overturned</DotWord>
                   : row.overturnable ? (
                     <Button dense variant="secondary" loading={busy === String(row.id)} disabled={Boolean(busy)} onClick={() => void press(row)}
