@@ -1637,6 +1637,8 @@ class ProgramRunner:
         self.pass_gate(program, step)
 
     def _review_requirements(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[dict[str, Any]]:
+        if step.get("gate_review") == "person":
+            return []  # JRN14: a person's gate: her Review requirements are his word at MERGE, no agent reads them
         return [row for row in self.service.step_requirements(program, step)
                 if row.get("kind") == "review" and row.get("state") != "waived"]
 
@@ -2056,6 +2058,8 @@ class ProgramRunner:
             return
         if step.get("gate_review") == "person" and not facts.get("person_approved"):
             logins = self.service.person_logins(step.get("for_person_id") or program.get("for_person_id"))
+            if self._person_changes(program, step, facts, pr, logins):
+                return
             approved = {str(login).casefold() for login in pr.get("approved_by") or []}
             if logins and approved & logins:
                 facts["person_approved"] = True
@@ -2080,6 +2084,39 @@ class ProgramRunner:
         if ci not in ("passing", "none"):
             return
         self._decide_merge(program, step, facts, f"PR #{step.get('pr_number')}")
+
+    def _person_changes(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any],
+                        pr: Mapping[str, Any], logins: set[str]) -> bool:
+        """JRN14: the person asked for changes on GitHub. Their words go to the
+        builder as one round of REQUIRED findings on the same branch and PR,
+        once per review (``person_changes_at``); the step goes back to work.
+        True when a round was sent."""
+        theirs = [row for row in pr.get("changes_requested") or []
+                  if isinstance(row, Mapping) and str(row.get("login") or "").casefold() in logins]
+        if not logins or not theirs:
+            return False
+        latest = max(str(row.get("at") or "") for row in theirs) or "seen"
+        if facts.get("person_changes_at") == latest:
+            return False
+        person = step.get("for_person_id") or program.get("for_person_id")
+        name = self.service.person_name(person) or "The reviewer"
+        round_ = int(step.get("rounds") or 0) + 1
+        words = [str(row.get("body") or "").strip() for row in theirs if str(row.get("body") or "").strip()]
+        findings = [{"id": f"p{round_}c{index}", "level": "REQUIRED", "text": text, "decision": "fix_now",
+                     "to_owner": False, "by": name} for index, text in enumerate(words or ["Changes requested, with no comment"], start=1)]
+        facts["person_changes_at"] = latest
+        number = step.get("pr_number") or pr.get("number")
+        ask = (f"HoldSpeak on step {step['ordinal']}: {name} asked for changes on PR #{number} on GitHub:\n"
+               + "\n".join(f"- {row['text']}" for row in findings)
+               + "\nFix them, commit on this branch, and end your turn.")
+        try:
+            self.prompt_builder(step, ask)
+        except Exception as exc:
+            log.info(f"the person's changes were not typed: {exc}")
+        step["rounds"] = round_
+        self.service.transition(program, step, "working", findings=findings, facts=facts, rounds=round_,
+                                line=f"{name} asked for changes on GitHub; round {round_} goes back to the agent")
+        return True
 
     def _decide_merge(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any], what: str) -> None:
         """The merge rule on a green, reviewed and met step: the engine merges

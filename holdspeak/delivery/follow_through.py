@@ -674,6 +674,8 @@ class FollowThroughObserver:
                 "ci": row.get("ci"), "checks": list(row.get("checks") or []),
                 # Programs (§9b): who approved it, for a person review gate.
                 **({"approved_by": list(row["approved_by"])} if row.get("approved_by") else {}),
+                # JRN14: a person's "changes requested" (their words), for a round.
+                **({"changes_requested": list(row["changes_requested"])} if row.get("changes_requested") else {}),
             }
         if pr_state == "pr_closed_unmerged":
             # The PR was closed without a merge: nothing closes, nothing is
