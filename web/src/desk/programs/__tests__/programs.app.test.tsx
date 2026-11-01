@@ -190,6 +190,13 @@ afterEach(() => cleanup());
 const status = () => screen.getByTestId(/program(s)?-status$/);
 const stepRow = (ordinal: number) => screen.getAllByTestId("programs-step")
   .find((row) => within(row).getByTestId("programs-step-select").textContent?.startsWith(String(ordinal)))!;
+/** PG-WINDOW W3: open a step under its row (a press on the open one closes it). */
+const openStep = (ordinal: number) => {
+  const row = stepRow(ordinal);
+  if (!row.hasAttribute("data-selected")) fireEvent.click(within(row).getByTestId("programs-step-select"));
+  return screen.getByTestId("programs-step-fold");
+};
+const doneWhen = () => screen.getByTestId("programs-done-when");
 
 describe("the manifest", () => {
   it("Programs is an application beside Agents, on ⌃7, wearing the program sprite", () => {
@@ -401,6 +408,58 @@ describe("the Program window (direction C, the ledger)", () => {
   });
 });
 
+describe("PG-WINDOW: the Program window as one object (canvas program-window-2026-10-31, direction A)", () => {
+  const held = yourTurnFixture as unknown as Program;
+  it("the line lights the held step; the held item is the headline in his terms with the tray; the rest are one line each", async () => {
+    hub({ [`GET /api/programs/${held.id}`]: held });
+    render(<ProgramBody programId={held.id} />);
+    await screen.findByTestId("programs-board");
+    const first = held.your_turn_items[0];
+    // The line: one station per step, the held one current and breathing.
+    const line = screen.getByTestId("programs-line");
+    const stations = [...line.querySelectorAll("[data-station]")].filter((node) => node.getAttribute("data-station") !== "end");
+    expect(stations.map((node) => node.getAttribute("data-station"))).toEqual(held.steps.filter((step) => !step.race_of).map((step) => step.id));
+    const here = line.querySelector("[aria-current=step]")!;
+    expect(here.getAttribute("data-station")).toBe(first.step_id);
+    expect(here.querySelector("[data-live]")).not.toBeNull();
+    expect(line.textContent).toContain(`Goal: ${held.goal}`);
+    // The headline: the kind line, the question, the step, what happened; no tinted box.
+    const well = screen.getByTestId("programs-your-turn");
+    const [headline, ...rest] = within(well).getAllByTestId("programs-turn-item");
+    expect(headline.tagName).toBe("ARTICLE");
+    expect(within(headline).getByTestId("programs-brief-question").textContent).toBe(first.brief!.question);
+    expect(headline.textContent).toContain(first.brief!.doing);
+    expect(within(headline).getByTestId("programs-brief-happened").textContent).toBe(first.brief!.happened);
+    // The tray: each choice a library Button with its consequence under it.
+    const tray = within(headline).getByTestId("programs-tray");
+    expect([...tray.querySelectorAll("[data-choice]")].map((node) => node.getAttribute("data-choice"))).toEqual(["merge", "not_yet"]);
+    expect(within(tray).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
+      .toEqual(["merge", "not_yet"].map((choice) => first.brief!.consequences[choice]));
+    expect(within(tray).getByTestId("programs-turn-merge").className).toMatch(/primary/);
+    // The others: one line each, with the hub's question.
+    expect(rest).toHaveLength(held.your_turn_items.length - 1);
+    expect(rest[0].textContent).toContain(held.your_turn_items[1].brief!.question);
+  });
+
+  it("the open step is the held one: what the agent did as plain lines; the composer is at the foot", async () => {
+    hub({ [`GET /api/programs/${held.id}`]: held });
+    render(<ProgramBody programId={held.id} />);
+    await screen.findByTestId("programs-board");
+    const first = held.your_turn_items[0];
+    const step = held.steps.find((row) => row.id === first.step_id)!;
+    const fold = screen.getByTestId("programs-step-fold");
+    expect(fold.getAttribute("data-step")).toBe(step.id);
+    const story = within(fold).getByTestId("programs-step-story");
+    expect([...story.querySelectorAll(".pg-sf-story-words")].map((node) => node.textContent)).toEqual(step.story!.map((row) => row.line));
+    // No line of the story holds a path, a command or a hash.
+    for (const row of step.story!) expect(row.line).not.toMatch(/fatal:|error:|\/|\b[0-9a-f]{7,}\b/);
+    // The composer: after the body, before the status bar.
+    const bar = screen.getByTestId("program-shape-bar");
+    expect(bar.previousElementSibling?.className).toContain("pg-body");
+    expect((within(bar).getByRole("textbox", { name: "Change the program" }) as HTMLInputElement).placeholder).toBe("Tell the program what to change");
+  });
+});
+
 describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
   it("the contender is indented under the step, the loser says Lost the race to Codex · 34 min, Open lane on each", async () => {
     hub({ [`GET /api/programs/${raced.id}`]: raced });
@@ -442,7 +501,9 @@ describe("PG19: when an agent runs out (canvas handoff-2026-10-28)", () => {
     render(<ProgramBody programId={limited.id} />);
     const well = await screen.findByTestId("programs-your-turn");
     const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "limited")!;
-    expect(row.textContent).toContain(`Claude Code is at its limit until ${item.until_words}: continue in Codex now, or wait?`);
+    // PG-WINDOW: the hub's brief in his terms (what happened, the question).
+    expect(row.textContent).toContain(`Claude Code is at its usage limit until ${item.until_words}.`);
+    expect(row.textContent).toContain("Continue in Codex now, or wait for the reset?");
     expect(within(row).getByTestId("programs-turn-continue").textContent).toBe("Continue in Codex");
     expect(within(row).getByTestId("programs-turn-continue").className).toMatch(/primary/);
     expect(within(row).getByTestId("programs-turn-wait").textContent).toBe("Wait");
@@ -453,7 +514,8 @@ describe("PG19: when an agent runs out (canvas handoff-2026-10-28)", () => {
     // The toolbar names the order.
     expect(screen.getByTestId("program-runs-on").textContent).toContain("Agent: Claude Code, then Codex");
     fireEvent.click(within(row).getByTestId("programs-turn-continue"));
-    await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
+    // The recording also holds step 1's commit (#1677); only the limited item leaves.
+    await waitFor(() => expect(screen.queryAllByTestId("programs-turn-item").some((node) => node.getAttribute("data-kind") === "limited")).toBe(false));
     expect(calls).toContain(`POST /api/programs/${limited.id}/steps/${item.step_id}/decide ${JSON.stringify({ kind: "limited", choice: "continue" })}`);
   });
 
@@ -817,43 +879,53 @@ describe("REQ9: the Programs list (Find, Project ▾, Person ▾, Group, Met)", 
 });
 
 describe("REQ10: the Requirements board (direction A, the checklist)", () => {
-  it("draws every requirement from the recording: grouped, its state, its kind, where, its proof; open while one is Unmet", async () => {
+  it("PG-WINDOW: each step carries its own as lines with a lamp; Done when holds the program's own and the every-step ones", async () => {
     hub({ [`GET /api/programs/${reqProgram.id}`]: reqProgram });
     render(<ProgramBody programId={reqProgram.id} />);
-    const board = await screen.findByTestId("programs-requirements");
-    expect(board.closest("details")!.open).toBe(true);
+    await screen.findByTestId("programs-board");
     const met = reqProgram.requirements_met!;
-    expect(board.closest("details")!.querySelector("summary")!.textContent).toContain(`${met.met} of ${met.total} met · ${met.his} waits on you`);
-    expect([...board.querySelectorAll("[data-band]")].map((band) => band.getAttribute("data-band"))).toEqual(["program", "every", "own"]);
-    const word = (label: string) => within(reqRow(label)).getByTestId("programs-req-state").textContent;
-    // Each state, and its tone.
-    expect(word("R2")).toBe("Met");
-    expect(reqRow("R2").getAttribute("data-tone")).toBe("ok");
-    expect(word("R3")).toBe("Unmet");
-    expect(reqRow("R3").getAttribute("data-tone")).toBe("fail");
-    expect(word("R4")).toBe("Waits for you");
-    expect(reqRow("R4").getAttribute("data-tone")).toBe("ask");
-    expect(word("R6")).toBe("Waived");
-    expect(reqRow("R6").getAttribute("data-state")).toBe("waived");
-    expect(word("R7")).toBe("Not yet");
-    // The kinds as Tokens.
-    expect(["R1", "R2", "R3", "R4"].map((label) => reqRow(label).querySelector(".pg-kind")!.textContent)).toEqual(["Check", "Shot", "Review", "Your word"]);
+    // No board above the steps: Done when is the last row.
+    expect(screen.queryByTestId("programs-requirements-board")).toBeNull();
+    const done = doneWhen();
+    expect(within(done).getAllByTestId("programs-req").map((row) => row.getAttribute("data-label"))).toEqual(["R1", "R7", "R8"]);
+    expect(done.textContent).toContain("judged after the last step");
+    const inDone = (label: string) => within(done).getAllByTestId("programs-req").find((row) => row.getAttribute("data-label") === label)!;
     // Every step: six dots and "4 of 6 steps"; the Program's own: after the last step.
     const every = allRequirements(reqProgram).find((row) => row.scope === "every_step")!;
-    expect(reqRow("R1").querySelectorAll(".pg-req-dot")).toHaveLength(6);
+    expect(inDone("R1").querySelectorAll(".pg-req-dot")).toHaveLength(6);
     const metCopies = every.steps!.filter((copy) => copy.state === "met" || copy.state === "waived").length;
-    expect(within(reqRow("R1")).getByTestId("programs-req-where").textContent).toBe(`${metCopies} of 6 steps`);
-    expect(within(reqRow("R7")).getByTestId("programs-req-proof").textContent).toBe("after the last step");
-    // The proof one press away: the reviewer's line; Open log; Open shot.
-    const r3 = allRequirements(reqProgram).find((row) => row.label === "R3")!;
-    expect(within(reqRow("R3")).getByTestId("programs-req-proof").textContent).toBe(`“${r3.evidence.line}” · round 1`);
-    expect(within(reqRow("R5")).getByTestId("programs-req-open-log")).toBeTruthy();
-    expect(within(reqRow("R2")).getByTestId("programs-req-open-shot")).toBeTruthy();
-    // The verbs his state allows: Met / Unmet on his word; Send back / Waive when Unmet; none on a Met row.
+    expect(within(inDone("R1")).getByTestId("programs-req-where").textContent).toBe(`${metCopies} of 6 steps`);
+    expect(within(inDone("R7")).getByTestId("programs-req-proof").textContent).toBe("after the last step");
+    expect(within(inDone("R7")).getByTestId("programs-req-state").textContent).toBe("Not yet");
+    const word = (label: string) => within(reqRow(label)).getByTestId("programs-req-state").textContent;
+    // His step (3) is open first: his word, Met / Unmet.
+    let fold = screen.getByTestId("programs-step-fold");
+    expect(within(fold).getAllByTestId("programs-req").map((row) => row.getAttribute("data-label"))).toEqual(["R1", "R4"]);
+    expect(word("R4")).toBe("Waits for you");
+    expect(reqRow("R4").getAttribute("data-tone")).toBe("ask");
     expect(within(reqRow("R4")).getAllByRole("button").map((b) => b.textContent).filter((t) => t === "Met" || t === "Unmet")).toEqual(["Met", "Unmet"]);
+    // Step 1: a Met shot, Open shot one press away; no Waive on a Met row.
+    fold = openStep(1);
+    expect(word("R2")).toBe("Met");
+    expect(reqRow("R2").getAttribute("data-tone")).toBe("ok");
+    expect(reqRow("R2").querySelector(".pg-kind")!.textContent).toBe("Shot");
+    expect(within(reqRow("R2")).getByTestId("programs-req-open-shot")).toBeTruthy();
+    expect(within(reqRow("R2")).queryByTestId("programs-req-waive")).toBeNull();
+    // Step 2: an Unmet review, the reviewer's line, Send back / Waive.
+    openStep(2);
+    const r3 = allRequirements(reqProgram).find((row) => row.label === "R3")!;
+    expect(word("R3")).toBe("Unmet");
+    expect(reqRow("R3").getAttribute("data-tone")).toBe("fail");
+    expect(reqRow("R3").querySelector(".pg-kind")!.textContent).toBe("Review");
+    expect(within(reqRow("R3")).getByTestId("programs-req-proof").textContent).toBe(`“${r3.evidence.line}” · round 1`);
     expect(within(reqRow("R3")).getByTestId("programs-req-send-back").textContent).toBe("Send back");
     expect(within(reqRow("R3")).getByTestId("programs-req-waive").textContent).toBe("Waive");
-    expect(within(reqRow("R2")).queryByTestId("programs-req-waive")).toBeNull();
+    // Step 4: Open log; step 5: Waived.
+    openStep(4);
+    expect(within(reqRow("R5")).getByTestId("programs-req-open-log")).toBeTruthy();
+    openStep(5);
+    expect(word("R6")).toBe("Waived");
+    expect(reqRow("R6").getAttribute("data-state")).toBe("waived");
     // The status bar counts what is met.
     expect(screen.getByTestId("programs-status-met").textContent).toBe(`${met.met} of ${met.total} met`);
   });
@@ -865,8 +937,9 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [decidePath(reqProgram, "R3")]: sendBackFixture,
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-requirements");
+    await screen.findByTestId("programs-board");
     expect(within(stepRow(2)).getByTestId("programs-step-word").textContent).toBe("Findings");
+    openStep(2);
     fireEvent.click(within(reqRow("R3")).getByTestId("programs-req-send-back"));
     await waitFor(() => expect(within(stepRow(2)).getByTestId("programs-step-word").textContent).toBe("Working"));
     expect(calls).toContain(`${decidePath(reqProgram, "R3")} ${JSON.stringify({ choice: "send_back" })}`);
@@ -880,7 +953,8 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [decidePath(reqProgram, "R5")]: waivedFixture,
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-requirements");
+    await screen.findByTestId("programs-board");
+    openStep(4);
     fireEvent.click(within(reqRow("R5")).getByTestId("programs-req-waive"));
     const ask = within(reqRow("R5")).getByTestId("programs-req-ask");
     expect((within(ask).getByTestId("programs-req-ask-send") as HTMLButtonElement).disabled).toBe(true);
@@ -900,7 +974,8 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [decidePath(reqProgram, "R5")]: () => { throw new ApiError(refused.status, "Bad Request", refused.body); },
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-requirements");
+    await screen.findByTestId("programs-board");
+    openStep(4);
     fireEvent.click(within(reqRow("R5")).getByTestId("programs-req-waive"));
     fireEvent.change(within(reqRow("R5")).getByRole("textbox", { name: "Why you waive it" }), { target: { value: "x" } });
     fireEvent.click(within(reqRow("R5")).getByTestId("programs-req-ask-send"));
@@ -915,7 +990,8 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [`GET ${r5.evidence.url}`]: evidenceFixture.log.text,
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-requirements");
+    await screen.findByTestId("programs-board");
+    openStep(4);
     fireEvent.click(within(reqRow("R5")).getByTestId("programs-req-open-log"));
     const log = await within(reqRow("R5")).findByTestId("programs-req-log");
     expect(log.textContent).toContain("program-check: exit 1");
@@ -933,13 +1009,18 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     const well = await screen.findByTestId("programs-your-turn");
     const row = within(well).getByTestId("programs-turn-item");
     expect(row.getAttribute("data-kind")).toBe("requirement_word");
-    expect(row.querySelector("b")!.textContent).toBe(`Step ${item.ordinal} · ${item.step_title}:`);
-    expect(row.textContent).toContain("Your word · holds the merge");
+    // PG-WINDOW: the headline: the kind line, the hub's question and what happened.
+    expect(row.textContent).toContain(`Your word · holds the merge· Step ${item.ordinal}, ${item.step_title}`);
+    expect(within(row).getByTestId("programs-brief-question").textContent).toBe(item.brief!.question);
+    expect(within(row).getByTestId("programs-brief-happened").textContent).toBe(item.brief!.happened);
+    // Each choice says what it does.
+    expect(within(row).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
+      .toEqual(["met", "unmet"].map((choice) => item.brief!.consequences[choice]));
     expect(within(row).getByTestId("programs-turn-met").className).toMatch(/primary/);
     fireEvent.click(within(row).getByTestId("programs-turn-met"));
     await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
     expect(calls).toContain(`POST /api/programs/${word.id}/requirements/${item.requirement_id}/decide ${JSON.stringify({ choice: "met" })}`);
-    const r1 = within(screen.getByTestId("programs-requirements")).getAllByTestId("programs-req").find((node) => node.getAttribute("data-label") === "R1")!;
+    const r1 = within(screen.getByTestId("programs-step-fold")).getAllByTestId("programs-req").find((node) => node.getAttribute("data-label") === "R1")!;
     expect(within(r1).getByTestId("programs-req-state").textContent).toBe("Met");
   });
 
@@ -979,7 +1060,8 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "requirement_proposed")!;
     expect(row.textContent).toContain("The line answers in two rings");
     fireEvent.click(within(row).getByTestId("programs-turn-add"));
-    await waitFor(() => expect(within(screen.getByTestId("programs-requirements")).getAllByTestId("programs-req").map((node) => node.textContent))
+    // PG-WINDOW: the new requirement is a line in its step.
+    await waitFor(() => expect(within(openStep(1)).getAllByTestId("programs-req").map((node) => node.textContent))
       .toEqual([expect.stringContaining("The line answers in two rings")]));
     expect(calls).toContain(`POST /api/programs/${proposals.id}/proposals/${item.proposal_id}/decide ${JSON.stringify({ choice: "add" })}`);
     expect(within(screen.getByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")).toHaveLength(2);
@@ -993,7 +1075,11 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [`POST /api/programs/${reqProgram.id}/requirements`]: added,
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    const add = within(await screen.findByTestId("programs-requirements")).getByTestId("programs-req-add");
+    // PG-WINDOW: Add a requirement is a verb on Done when (Where: The program) and on each step.
+    await screen.findByTestId("programs-board");
+    fireEvent.click(within(doneWhen()).getByTestId("programs-done-add-requirement"));
+    const add = within(doneWhen()).getByTestId("programs-req-add");
+    expect((within(add).getByRole("combobox", { name: "Where" }) as HTMLSelectElement).value).toBe("program");
     const sentence = within(add).getByRole("textbox", { name: "Add a requirement" });
     expect(within(add).getByRole("button", { name: /Speak Add a requirement/ })).toBeTruthy();
     const kind = within(add).getByRole("combobox", { name: "Kind" }) as HTMLSelectElement;
@@ -1006,6 +1092,8 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     expect((within(add).getByRole("combobox", { name: "Width" }) as HTMLSelectElement).value).toBe("393");
     fireEvent.change(within(add).getByRole("combobox", { name: "Where" }), { target: { value: step5.id } });
     fireEvent.click(within(add).getByTestId("programs-req-add-verb"));
+    await waitFor(() => expect(calls.some((call) => call.startsWith(`POST /api/programs/${reqProgram.id}/requirements `))).toBe(true));
+    openStep(5);
     await waitFor(() => expect(screen.getAllByTestId("programs-req").some((row) => row.getAttribute("data-req") === added.requirement_id)).toBe(true));
     expect(calls).toContain(`POST /api/programs/${reqProgram.id}/requirements ${JSON.stringify({
       text: "The Programs window at 393 has no clipped text", kind: "shot", required: true, step_id: step5.id, spec: { case: "programs", width: 393 },
@@ -1013,13 +1101,18 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     const row = screen.getAllByTestId("programs-req").find((node) => node.getAttribute("data-req") === added.requirement_id)!;
     expect(within(row).getByTestId("programs-req-where").textContent).toBe("Step 5");
     expect(row.querySelector(".pg-kind")!.textContent).toBe("Shot");
-    expect((within(within(screen.getByTestId("programs-requirements")).getByTestId("programs-req-add")).getByRole("textbox", { name: "Add a requirement" }) as HTMLInputElement).value).toBe("");
+    expect((within(within(doneWhen()).getByTestId("programs-req-add")).getByRole("textbox", { name: "Add a requirement" }) as HTMLInputElement).value).toBe("");
   });
 
   it("a Shot in a repository with no shot command withholds Add and says why", async () => {
     hub({ [`GET /api/programs/${adjust.id}`]: adjust });
     render(<ProgramBody programId={adjust.id} />);
-    const add = within(await screen.findByTestId("programs-requirements")).getByTestId("programs-req-add");
+    await screen.findByTestId("programs-board");
+    // The step's own Add a requirement: its Where is the step.
+    const fold = openStep(1);
+    fireEvent.click(within(fold).getByTestId("programs-step-add-requirement"));
+    const add = within(fold).getByTestId("programs-req-add");
+    expect((within(add).getByRole("combobox", { name: "Where" }) as HTMLSelectElement).value).toBe(adjust.steps[0].id);
     fireEvent.change(within(add).getByRole("textbox", { name: "Add a requirement" }), { target: { value: "The Calls window at 393 has no clipped text" } });
     expect((within(add).getByTestId("programs-req-add-verb") as HTMLButtonElement).disabled).toBe(true);
     expect(within(add).getByTestId("programs-req-add-why").textContent).toBe(adjust.can_prove!.shot_reason);
@@ -1050,25 +1143,33 @@ describe("REQ11: the step fold, the ledger per step, the Met column, adjust in p
     expect(cell(6).textContent).toBe("1 to meet");
   });
 
-  it("the step fold: FilterTokens with only what has something behind it; the first token is the one his eye needs", async () => {
+  it("the open step: what it must prove first, then the parts with only what has something behind it; Gate opens on a red check", async () => {
     hub({ [`GET /api/programs/${reqProgram.id}`]: reqProgram });
     render(<ProgramBody programId={reqProgram.id} />);
     await screen.findByTestId("programs-board");
-    fireEvent.click(within(stepRow(4)).getByTestId("programs-step-select"));
-    const fold = await screen.findByTestId("programs-step-fold");
-    // A red check: Gate first.
+    const fold = openStep(4);
+    // The open step sits under its row (no fold head).
+    expect(fold.closest("li")!.previousElementSibling).toBe(stepRow(4));
+    // Its requirements are lines, always shown, first.
+    expect(within(within(fold).getByTestId("programs-step-requirements")).getAllByTestId("programs-req").map((row) => row.getAttribute("data-label")))
+      .toEqual(["R1", "R5"]);
+    // A red check: Gate open.
     expect(fold.getAttribute("data-part")).toBe("gate");
     expect(within(fold).getByTestId("programs-gate")).toBeTruthy();
     const tokens = within(within(fold).getByRole("group", { name: "Step 4" })).getAllByRole("button").map((button) => button.textContent);
-    expect(tokens).toContain("Requirements");
+    expect(tokens).not.toContain("Requirements");
     expect(tokens).not.toContain("Handoffs");
-    fireEvent.click(within(fold).getByRole("button", { name: "Requirements" }));
-    expect(within(fold).getAllByTestId("programs-req").map((row) => row.getAttribute("data-label"))).toEqual(["R1", "R5"]);
     fireEvent.click(within(fold).getByRole("button", { name: "Ledger" }));
     expect(within(fold).getByTestId("programs-step-ledger").textContent).toContain("R5");
-    // An Unmet review: Requirements first.
-    fireEvent.click(within(stepRow(2)).getByTestId("programs-step-select"));
-    await waitFor(() => expect(screen.getByTestId("programs-step-fold").getAttribute("data-part")).toBe("requirements"));
+    // A press on the open token closes it; a press on the open row closes the step.
+    fireEvent.click(within(fold).getByRole("button", { name: "Ledger" }));
+    expect(within(fold).queryByTestId("programs-step-ledger")).toBeNull();
+    fireEvent.click(within(stepRow(4)).getByTestId("programs-step-select"));
+    expect(screen.queryByTestId("programs-step-fold")).toBeNull();
+    // Findings open Findings; the Unmet review is a line that says so.
+    openStep(2);
+    expect(screen.getByTestId("programs-step-fold").getAttribute("data-part")).toBe("findings");
+    expect(within(reqRow("R3")).getByTestId("programs-req-state").textContent).toBe("Unmet");
   });
 
   it("the ledger, folded per step: the Program's own lines first, then one fold per step with its count and its last time", async () => {
@@ -1090,8 +1191,8 @@ describe("REQ11: the step fold, the ledger per step, the Met column, adjust in p
     });
     render(<ProgramBody programId={adjust.id} />);
     await screen.findByTestId("programs-board");
-    fireEvent.click(within(stepRow(1)).getByTestId("programs-step-select"));
-    const fold = await screen.findByTestId("programs-step-fold");
+    const fold = openStep(1);
+    fireEvent.click(within(fold).getByRole("button", { name: "Brief" }));
     expect(within(fold).getByTestId("programs-step-brieftext").textContent).toContain(runner.brief);
     const amendments = within(fold).getAllByTestId("programs-step-amendment");
     expect(amendments.map((node) => node.textContent)).toEqual([
@@ -1175,7 +1276,8 @@ describe("REQ12: the shot (pullout:program-shot) and the evidence thumbnail", ()
     Object.assign(URL, { createObjectURL: made, revokeObjectURL: vi.fn() });
     hub({ [`GET /api/programs/${reqProgram.id}`]: reqProgram });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-requirements");
+    await screen.findByTestId("programs-board");
+    openStep(1);
     fireEvent.click(within(reqRow("R2")).getByTestId("programs-req-select"));
     const thumb = await within(reqRow("R2")).findByTestId("programs-req-thumb");
     expect(thumb.getAttribute("src")).toBe("blob:shot-r2");
@@ -1333,7 +1435,7 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
     const lowering = dry.changes.filter((row) => row.verdict === "lowers").length;
     expect(within(well).getByText(`${dry.changes.length} changes · ${blocked(dry.changes)} refused · ${lowering} lowers the bar`)).toBeInTheDocument();
     // The refused line is marked in the text, its reason as the title.
-    expect(screen.getAllByTestId("kit-textpane-line")[refusedRow.line - 1]).toHaveAttribute("data-mark", "!");
+    expect(screen.getAllByTestId("kit-textpane-line")[refusedRow.line! - 1]).toHaveAttribute("data-mark", "!");
     const apply = within(well).getByTestId("programs-well-apply");
     expect(apply.textContent).toBe(applyWords(dry.changes));
     expect(apply).toBeDisabled();

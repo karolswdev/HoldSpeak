@@ -165,6 +165,20 @@ Each line names the ruling, its canvas or design note, and the PR.
   to reach you, quiet hours, Digest and Later, egress said once. Needs you
   rows gain Later ▾ and Send ▾. `docs/reach.md`; #1678.
 
+- **The Program window as one object (PG-WINDOW, direction A "the line
+  and the note").** The program's station track at the top (one station per
+  step and Done when; the held step and a running step breathe); what waits
+  on him is the headline with no box: the brief in his terms
+  (`brief_words.item_brief` on each `your_turn_items` row), the question in
+  the display step, and the tray of library Buttons with each consequence
+  under it as the one raised thing; the open step under its row with What it
+  must prove (requirement lines, Add a requirement at the step), What the
+  agent did (`story`, at most three plain lines) and its parts; Done when as
+  the last row; the shape bar as the composer at the foot. The step rows lost
+  the six grey dots. Canvas `betterment/programs/canvases/program-window-2026-10-31.html`,
+  design `betterment/programs/PROGRAM-WINDOW-2026-10-31.md`; #1685 and the
+  build PR.
+
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
 The owner rejected the first implementation as “toilet bowls” and too basic.

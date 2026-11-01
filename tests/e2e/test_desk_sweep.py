@@ -286,6 +286,10 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # Architecture done with its one change, Product asking one question
         # (the REAL recorded question), Stack skipped, the rest open.
         ("program-rounds", "pullout:program:{program_rounds}", None),
+        # PG-WINDOW (direction A): a Program whose step waits on his core
+        # question: the line with the step lit, the brief as the headline,
+        # the tray, and the open step under its row.
+        ("program-held", "pullout:program:{program_held}", None),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -499,14 +503,15 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             program_id = _seed_program(page, tmp)
             program_draft = _seed_draft_program(page, tmp)
             program_rounds = _seed_rounds_program(page, tmp)
-            briefing = _seed_briefing(page, tmp)
+            briefing, program_held = _seed_briefing(page, tmp)
             ctx.close()
             _seed_finished_receipts()
             automation = _seed_automation(note_id)
             automation_program = _seed_program_automation(program_id)
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
                    "automation": automation, "program": program_id, "automation_program": automation_program,
-                   "program_draft": program_draft, "program_rounds": program_rounds, "briefing": briefing}
+                   "program_draft": program_draft, "program_rounds": program_rounds, "briefing": briefing,
+                   "program_held": program_held}
         finally:
             server.stop()
 
@@ -611,10 +616,10 @@ def _seed_program(page: Any, tmp: Path) -> str:
     return program_id
 
 
-def _seed_briefing(page: Any, tmp: Path) -> str:
+def _seed_briefing(page: Any, tmp: Path) -> tuple[str, str]:
     """PG-DIRECTION DIR2: a second Program whose step 1 waits on a core
     question (the runner is off, so the question is written on the step as
-    the engine writes it), and its briefing page. Returns the page token."""
+    the engine writes it), and its briefing page. Returns the page token and the program id."""
     from holdspeak.services.program_service import default_program_service
 
     repo = tmp / "briefing-repo"
@@ -642,7 +647,7 @@ def _seed_briefing(page: Any, tmp: Path) -> str:
     service.store.save_step(step)
     item = next(row for row in service.needs_you_items() if row["program_id"] == program_id and row["kind"] == "core")
     page_made = _api(page, "POST", "/api/reach/packages", {"refs": [f"program:{program_id}:{item['id']}"]}, token=TOKEN)
-    return str(page_made["token"])
+    return str(page_made["token"]), program_id
 
 
 def _seed_automation(note_id: str) -> str:
@@ -1449,6 +1454,10 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         if case_id == "program":
             # Programs (2026-10-28): the seeded Program's board, read.
             page.locator(f'[id="{wid}"] [data-testid=programs-board]').wait_for(timeout=T)
+        if case_id == "program-held":
+            win = page.locator(f'[id="{wid}"]')
+            win.locator("[data-testid=programs-tray]").wait_for(timeout=T)
+            win.locator("[data-testid=programs-step-fold]").wait_for(timeout=T)
         if case_id == "program-text":
             # PG-LANG LANG2: Text (in More ▾ at the phone width), a planned
             # step's title changed, Preview: the well over the text.

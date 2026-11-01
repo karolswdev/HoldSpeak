@@ -1248,11 +1248,17 @@ class ProgramService:
         reqs = self.requirements(program["id"])
         summary = self._summary(program, steps, requirements=reqs, checkpoints=checkpoints)
         turn = self._turn(program, steps, requirements=reqs, checkpoints=checkpoints)
+        # PG-WINDOW: the held items' briefs and the steps' stories, in his terms.
+        from .brief_words import window_words
+
+        briefs, stories = window_words(program, steps, turn, checkpoints)
+        turn = [{**item, "brief": briefs.get(str(item.get("id")))} for item in turn]
         his = {str(item.get("requirement_id")) for item in turn if item.get("requirement_id")}
         by_id = {step["id"]: step for step in steps}
         top = []
         for step in self._top_steps(steps):
             row = self.step_wire(program, step, checkpoints, requirements=reqs, his=his, steps_by_id=by_id)
+            row["story"] = stories.get(str(step["id"]), [])
             row["contenders"] = [self.step_wire(program, other, checkpoints, requirements=reqs, his=his, steps_by_id=by_id)
                                  for other in steps if other.get("race_of") == step["id"]]
             top.append(row)
@@ -4662,9 +4668,12 @@ def _check_name(command: str) -> str:
     except ValueError:
         words = command.split()
     words = [word for word in words if "=" not in word.split("/")[0] or word.startswith("-")]
-    words = [word for word in words if word not in ("sh", "bash", "uv", "run", "python", "env")
+    # PG-WINDOW W5: never a flag (``sh -c '…'`` said "check: -c" on his desk).
+    words = [word for word in words if word not in ("sh", "bash", "zsh", "uv", "run", "python", "python3", "env")
              and not word.startswith("-")]
-    # ``sh -c 'echo QUICK CHECK GREEN'``: the script's own first word (never ``-c``).
+    script = next((word for word in words if word.endswith(".sh")), None)
+    if script:
+        return Path(script).name
     first = words[0].split()[0] if words and words[0].split() else ""
     return Path(first).name if first else command
 

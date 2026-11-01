@@ -125,27 +125,72 @@
   .pg-window[data-testid="programs-window"] .kit-toolbar-trailing { display: none; }
 }
 
-/* ── the Your turn well: the ember rule, the soft plate (AskWell family) ── */
+/* ── PG-WINDOW W2: what waits on him is the window's headline (canvas
+   program-window-2026-10-31, direction A). No box and no tint: the kind
+   line with its breathing lamp, the question in the display step, the
+   brief's lines, then the tray, the one raised thing (the depth scale's
+   card step). The tinted Your turn well (the ember rule) is parked. ── */
 .pg-turn {
-  margin: 10px 12px 4px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--lamp-ask) 8%, var(--wb-paper));
-  box-shadow: inset 3px 0 0 var(--lamp-ask), inset 0 0 0 1px color-mix(in srgb, var(--lamp-ask) 30%, var(--wb-rule-soft));
-}
-.pg-turn-head {
   margin: 0;
-  padding: 6px 12px 4px 14px;
-  color: var(--wb-ember-ink);
-  font: 600 12px / 1.3 var(--font-sans);
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
 }
-.pg-turn-items { margin: 0; padding: 0; list-style: none; }
+.pg-brief { padding: 12px 16px 2px; min-width: 0; }
+.pg-brief-kind {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin: 0 0 6px;
+  color: var(--wb-ember-ink);
+  font: 600 12px / 1.4 var(--font-sans);
+}
+.pg-brief-kind .kit-dotword { color: var(--wb-ember-ink); font-weight: 600; --dot-tone: var(--lamp-ask); }
+.pg-brief-question {
+  margin: 2px 0 8px;
+  color: var(--wb-ink);
+  font: 600 22px / 1.25 var(--font-display);
+  letter-spacing: -0.01em;
+}
+.pg-brief-say {
+  max-width: 78ch;
+  margin: 0 0 4px;
+  font: 400 14px / 1.45 var(--font-sans);
+}
+.pg-brief-happened { font-weight: 500; }
+.pg-brief-blocked {
+  margin: 6px 0 0;
+  color: var(--wb-warn-ink);
+  font: 500 13px / 1.45 var(--font-sans);
+}
+.pg-brief .pg-turn-page { margin: 6px 0 0; }
+.pg-brief .pg-turn-ask { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; }
+.pg-tray {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 12px 0 6px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--wb-paper);
+  box-shadow: var(--depth-card);
+}
+.pg-choice { display: flex; flex: 1 1 0; flex-direction: column; gap: 4px; min-width: 0; }
+.desk-next .pg-choice > .btn { justify-content: center; min-height: 36px; font-size: 14px; }
+.pg-choice-cons { color: var(--wb-muted); font: 400 12px / 1.4 var(--font-sans); }
+.pg-tray-end { display: inline-flex; flex: none; flex-direction: column; align-items: flex-end; gap: 6px; }
+.pg-tray-end:empty { display: none; }
+.pg-turn-verbs .pg-tray-end { flex-direction: row; align-items: center; }
+.pg-turn-items { margin: 2px 16px 0; padding: 0; list-style: none; }
+.pg-turn-words .kit-dot { margin-right: 8px; vertical-align: 1px; --dot-tone: var(--lamp-ask); }
+
 .pg-turn-item {
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 32px;
-  padding: 4px 8px 4px 14px;
-  border-top: 1px solid color-mix(in srgb, var(--lamp-ask) 22%, var(--wb-rule-soft));
+  padding: 4px 0;
+  border-top: 1px solid var(--wb-rule-soft);
 }
 .pg-turn-words {
   flex: 1 1 auto;
@@ -180,7 +225,8 @@
   font: 600 12px / 1.3 var(--font-sans);
 }
 .pg-step {
-  --pg-cols: minmax(160px, 1.2fr) 246px 70px 150px 64px minmax(0, 1fr) 88px;
+  /* PG-WINDOW: the six dots left the row; the title takes their room. */
+  --pg-cols: minmax(220px, 1.6fr) 150px 70px 150px 64px minmax(0, 1fr) 88px;
 }
 .desk-next .kit-listrow.pg-step {
   display: grid;
@@ -1096,4 +1142,122 @@ span.pg-req-thumb { height: 150px; }
   .pg-round-strip { padding: 4px 8px; }
   .pg-round-verbs { margin-left: 0; width: 100%; }
   .pg-round-verbs .btn { min-height: 44px; }
+}
+
+/* ── PG-WINDOW W2: the line (the program's steps as one station track) ──
+   One station per step and the end; the number is the word, the title its
+   sub, the state its note. The joining rule is a background (no z-index).
+   At the phone width the line is numbers only. */
+.pg-line { flex: none; padding: 12px 16px 6px; min-width: 0; }
+.pg-line .pg-track[data-form="words"] { flex-wrap: nowrap; align-items: flex-start; }
+.pg-line .pg-track[data-form="words"] .pg-station + .pg-station::before { content: none; }
+.pg-line .pg-station {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  row-gap: 3px;
+  min-width: 0;
+  padding-right: 8px;
+  background: linear-gradient(var(--wb-rule), var(--wb-rule)) no-repeat 18px 5px / calc(100% - 20px) 1.5px;
+}
+.pg-line .pg-station:last-child { background: none; }
+.pg-line .pg-station[data-mark="done"] { background-image: linear-gradient(var(--wb-muted), var(--wb-muted)); }
+.pg-line .pg-station-dot { width: 12px; height: 12px; }
+.pg-line .pg-station[data-mark="running"] .pg-station-dot,
+.pg-line .pg-station[data-mark="here"] .pg-station-dot,
+.pg-line .pg-station[data-mark="red"] .pg-station-dot { border-color: transparent; background: var(--dot-tone); }
+.pg-line .pg-station[data-mark="here"] .pg-station-dot { width: 14px; height: 14px; margin-top: -1px; }
+.pg-line .pg-station[data-mark="blocked"] .pg-station-dot {
+  border-color: var(--lamp-warn);
+  background: color-mix(in srgb, var(--lamp-warn) 35%, var(--wb-paper));
+}
+.pg-line .pg-station[data-mark="end"] .pg-station-dot { border-radius: 3px; }
+.pg-line .pg-station[data-mark="end"][data-tone="ok"] .pg-station-dot { border-color: transparent; background: var(--lamp-ok); }
+.pg-line .pg-station-word,
+.pg-line .pg-station-note {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-line .pg-station-word { color: var(--wb-ink); font: 600 12px / 1.3 var(--font-sans); }
+.pg-line .pg-station-sub { color: inherit; font-weight: 500; }
+.pg-station-note { color: var(--wb-muted); font: 400 12px / 1.3 var(--font-sans); }
+.pg-line .pg-station[data-mark="done"] .pg-station-note { color: var(--kind-pr); }
+.pg-line .pg-station[data-mark="here"] .pg-station-word,
+.pg-line .pg-station[data-mark="here"] .pg-station-note { color: var(--wb-ember-ink); }
+.pg-line .pg-station[data-mark="running"] .pg-station-word { color: var(--wb-info-ink); }
+.pg-line .pg-station[data-mark="blocked"] .pg-station-note { color: var(--wb-warn-ink); }
+.pg-line .pg-station[data-mark="red"] .pg-station-note { color: var(--wb-danger-ink); }
+.pg-line-goal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 10px 0 0;
+  color: var(--wb-muted);
+  font: 400 13px / 1.4 var(--font-sans);
+}
+.pg-line-goal-words { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── PG-WINDOW W3: the open step (what it must prove, what the agent did,
+   its parts and verbs) under its row, and Done when as the last row. ── */
+.pg-step-open {
+  list-style: none;
+  padding: 2px 16px 12px 44px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: color-mix(in srgb, var(--wb-sel) 7%, var(--wb-paper));
+}
+.pg-step-open .pg-sf { display: flex; flex-direction: column; min-width: 0; }
+.pg-sf-cap { margin: 8px 0 2px; color: var(--wb-muted); font: 600 12px / 1.3 var(--font-sans); }
+.pg-sf-prove .pg-reqs .pg-req:last-child { border-bottom: 0; }
+.pg-sf-prove-verbs { display: flex; gap: 6px; margin-top: 2px; }
+.pg-sf-story-lines { margin: 0; padding: 0; list-style: none; }
+.pg-sf-story-line {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+  font: 400 13px / 1.5 var(--font-sans);
+}
+.pg-sf-story-at { color: var(--wb-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.pg-step-open .pg-sf-head { margin-top: 8px; }
+.pg-done-when { list-style: none; padding: 6px 16px 8px 12px; border-bottom: 1px solid var(--wb-rule-soft); }
+.pg-done-when-head { display: flex; align-items: center; gap: 8px; min-height: 32px; font: 400 13px / 1.3 var(--font-sans); }
+.pg-done-when-head b { font-weight: 600; }
+.pg-done-when-mark { flex: none; width: 10px; height: 10px; margin: 0 8px 0 9px; border-radius: 3px; box-shadow: inset 0 0 0 1.5px var(--wb-rule); }
+.pg-done-when[data-met] .pg-done-when-mark { background: var(--lamp-ok); box-shadow: none; }
+.desk-next .pg-done-when-head .btn { margin-left: auto; }
+.pg-done-when .pg-reqs { padding-left: 32px; }
+
+/* ── PG-WINDOW W4: the composer at the foot (the shape bar), like a
+   conversation; its status line sits over the field. ── */
+.pg-window > .pg-shape {
+  flex-direction: column-reverse;
+  padding: 8px 12px;
+  border-top: 1px solid var(--wb-rule-soft);
+  border-bottom: 0;
+  background: var(--wb-steel-2);
+}
+
+@container surface (max-width: 520px) {
+  .pg-brief { padding: 10px 12px 2px; }
+  .pg-brief-question { font-size: 19px; }
+  .pg-tray { flex-direction: column; align-items: stretch; gap: 10px; }
+  .desk-next .pg-choice > .btn { min-height: 44px; }
+  .pg-tray-end { flex-direction: row; align-items: center; }
+  .desk-next .pg-tray .btn { min-height: 44px; min-width: 44px; }
+  .pg-turn-items { margin: 2px 12px 0; }
+  .pg-line { padding: 10px 12px 4px; }
+  .pg-line .pg-station-sub,
+  .pg-line .pg-station-note { display: none; }
+  .pg-line-goal-words { white-space: normal; }
+  .pg-step-open { padding: 2px 12px 12px; }
+  .pg-sf-story-line { grid-template-columns: 40px minmax(0, 1fr); }
+  .pg-done-when { padding: 6px 12px 8px 0; }
+  .pg-done-when-head .pg-fold-sub { display: none; }
+  .pg-done-when .pg-reqs { padding-left: 0; }
+  .desk-next .pg-done-when-head .btn,
+  .desk-next .pg-sf-prove-verbs .btn { min-height: 44px; }
+  .pg-window > .pg-shape { padding: 6px 8px; }
 }

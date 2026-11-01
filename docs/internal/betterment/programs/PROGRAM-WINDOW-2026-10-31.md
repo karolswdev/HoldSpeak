@@ -73,3 +73,29 @@ it; he judges it live on his desk.
   the goal only when the wire says they were asked).
 - B's rail for long programs; it can come back as the 1440 form of the line
   if a twelve-step program reads badly in A.
+
+## Built (the build PR)
+
+- W1: `brief_words.item_brief`, `step_story`, `window_words`; `ProgramService._wire`
+  adds `brief` to each `your_turn_items` row and `story` to each step. Three
+  QUESTIONS gained a line (answer, close, ask_review). The fixtures were
+  re-recorded (`scripts/record_program_fixtures.py` and the fenced
+  integration tests with `HOLDSPEAK_WIRE_WRITE=1`). Hub test:
+  `tests/unit/test_program_window_words.py`.
+- W2: `ProgramLine.tsx` (the surface `StationTrack` gained an optional
+  `note`, a second quiet line in the word form); `YourTurnWell` is the
+  headline and the tray. The tinted well's style is gone from `programs.css`.
+- W3: `StepFold` renders without a fold head under its row (`StepProve`,
+  `StepStory`, the parts strip with none open unless Gate or Findings needs
+  him; a press on the open token or the open row closes it). `DoneWhen` in
+  `Requirements.tsx`; `RequirementsBoard` draws only in Drafting. The step
+  row's six dots are gone; its state lamp breathes while live.
+- W4: the shape bar is after the body, over the status bar; placeholder
+  "Tell the program what to change" (the accessible name stays "Change the
+  program").
+- W5: `_check_name` skips flags and shells (`sh -c '…'` is "test", never
+  "-c"); the window's `checkName` does the same on old status lines.
+
+Divergences from the canvas: Open lane stays on the step row (not in the
+open step's verbs); the answered rounds show as one Token under the goal
+only when a round has an answer.

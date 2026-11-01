@@ -2,6 +2,15 @@
  * programs-requirements-2026-10-31 "The step fold, the ledger per step,
  * and adjust"). The step fold replaces the Gate fold.
  *
+ * PG-WINDOW W3 (PROGRAM-WINDOW-2026-10-31, direction A): the open step
+ * unfolds under its row on the board, with no fold head. First what it must
+ * prove (its requirement lines, each with its lamp, and Add a requirement
+ * with this step as its Where), then what the agent did (the hub's story:
+ * at most three plain lines), then the parts strip (Brief · Gate · Findings
+ * · Handoffs · Ledger; none open unless his eye needs one: a red check opens
+ * Gate, findings open Findings) and the step's verbs. A press on the open
+ * token closes it.
+ *
  * Head: "Step 3 · Projections off the loop" · a FilterTokens strip (Brief ·
  * Requirements · Gate · Findings · Handoffs · Ledger; a token with nothing
  * behind it is not drawn) · at the right, for a Planned step Move up · Move
@@ -18,22 +27,21 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { WorkMenu } from "../components/DeskMenu";
-import { CheckGadget, CycleGadget, DotWord, FilterTokens, FoldGadget, PadGadget, StringGadget } from "../surface";
+import { CheckGadget, CycleGadget, DotWord, FilterTokens, PadGadget, StringGadget } from "../surface";
 import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { amendStep, changeStep, handoff, insertStep } from "./api";
 import { GateFacts } from "./GateFold";
 import { HandoffLine, StepLedger, clock } from "./Ledger";
-import { afterWords, stepWord } from "./model";
 import { AddRequirementRow, RequirementRow } from "./Requirements";
 import { runsOnLabel } from "./StepRow";
 import type { Program, ProgramStep } from "./types";
 
 type Failure = { words: string; title: string } | null;
-type Part = "brief" | "requirements" | "gate" | "findings" | "handoffs" | "ledger";
+type Part = "brief" | "gate" | "findings" | "handoffs" | "ledger";
 
 const PART_WORDS: Record<Part, string> = {
-  brief: "Brief", requirements: "Requirements", gate: "Gate", findings: "Findings", handoffs: "Handoffs", ledger: "Ledger",
+  brief: "Brief", gate: "Gate", findings: "Findings", handoffs: "Handoffs", ledger: "Ledger",
 };
 
 export function isPlanned(step: ProgramStep): boolean {
@@ -74,7 +82,6 @@ export async function moveStep(program: Program, step: ProgramStep, dir: -1 | 1)
 
 function partsOf(program: Program, step: ProgramStep): Part[] {
   const parts: Part[] = ["brief"];
-  if (step.requirements?.length || step.editable?.includes("requirements")) parts.push("requirements");
   if (step.history || step.check.verdict || step.check.running || step.station >= 2) parts.push("gate");
   if (step.findings.length) parts.push("findings");
   if (step.handoffs?.length) parts.push("handoffs");
@@ -82,11 +89,13 @@ function partsOf(program: Program, step: ProgramStep): Part[] {
   return parts;
 }
 
-function firstPart(step: ProgramStep, parts: readonly Part[]): Part {
+/** The part his eye needs, or none: a red check opens Gate, findings open
+ *  Findings, a Planned step opens its Brief (its fields); else nothing. */
+function firstPart(step: ProgramStep, parts: readonly Part[]): Part | "" {
   if ((step.history || step.state === "check_failed") && parts.includes("gate")) return "gate";
-  if ((step.requirements ?? []).some((row) => row.state === "unmet") && parts.includes("requirements")) return "requirements";
   if (step.state === "findings" && parts.includes("findings")) return "findings";
-  return "brief";
+  if (isPlanned(step) && step.editable?.includes("brief")) return "brief";
+  return "";
 }
 
 const EFFORTS = [{ value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }];
@@ -279,11 +288,56 @@ function InsertRow({ program, step, onApplied, onDone }: {
 
 const FINDING_TONE: Record<string, "fail" | "ask" | "idle"> = { required: "fail", should: "ask" };
 
-export function StepFold({ program, step, onApplied, open, onToggle }: {
-  program: Program; step: ProgramStep; onApplied(next: Program | null): void; open: boolean; onToggle(open: boolean): void;
+/** What the agent did (the hub's story, PG-WINDOW W1). */
+function StepStory({ step }: { step: ProgramStep }) {
+  const story = step.story ?? [];
+  if (!story.length) return null;
+  return (
+    <section className="pg-sf-story" aria-label="What the agent did" data-testid="programs-step-story">
+      <h4 className="pg-sf-cap">What the agent did</h4>
+      <ul className="pg-sf-story-lines">
+        {story.map((row, index) => (
+          <li key={`${row.at}-${index}`} className="pg-sf-story-line">
+            <span className="pg-sf-story-at">{row.at ? clock(row.at) : ""}</span>
+            <span className="pg-sf-story-words">{row.line}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** What it must prove: the step's requirement lines and Add a requirement. */
+function StepProve({ program, step, onApplied }: { program: Program; step: ProgramStep; onApplied(next: Program | null): void }) {
+  const [adding, setAdding] = useState(false);
+  const rows = step.requirements ?? [];
+  const canAdd = Boolean(step.editable?.includes("requirements")) && !program.closed_at;
+  if (!rows.length && !canAdd) return null;
+  return (
+    <section className="pg-sf-prove" aria-label="What it must prove" data-testid="programs-step-requirements">
+      <h4 className="pg-sf-cap">What it must prove</h4>
+      {rows.length || adding ? (
+        <ul className="pg-reqs">
+          {rows.map((row) => <RequirementRow key={row.id} program={program} row={row} onApplied={onApplied} />)}
+          {adding ? <AddRequirementRow program={program} onApplied={onApplied} defaultScope={step.id} /> : null}
+        </ul>
+      ) : null}
+      {canAdd ? (
+        <span className="pg-sf-prove-verbs">
+          <Button dense variant="ghost" aria-expanded={adding} onClick={() => setAdding((now) => !now)} data-testid="programs-step-add-requirement">
+            {adding ? "Not now" : "Add a requirement"}
+          </Button>
+        </span>
+      ) : null}
+    </section>
+  );
+}
+
+export function StepFold({ program, step, onApplied }: {
+  program: Program; step: ProgramStep; onApplied(next: Program | null): void;
 }) {
   const parts = partsOf(program, step);
-  const [part, setPart] = useState<Part>(() => firstPart(step, parts));
+  const [part, setPart] = useState<Part | "">(() => firstPart(step, parts));
   const [inserting, setInserting] = useState(false);
   const [busy, setBusy] = useState("");
   const [failed, setFailed] = useState<Failure>(null);
@@ -295,7 +349,7 @@ export function StepFold({ program, step, onApplied, open, onToggle }: {
     setInserting(false);
     setFailed(null);
   }, [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const shown: Part = parts.includes(part) ? part : "brief";
+  const shown: Part | "" = part && parts.includes(part) ? part : "";
   const planned = isPlanned(step) && Boolean(step.editable?.includes("position"));
   const finished = ["merged", "done", "parked", "failed"].includes(step.state);
   const started = !isPlanned(step) && !finished;
@@ -324,23 +378,11 @@ export function StepFold({ program, step, onApplied, open, onToggle }: {
       setBusy("");
     }
   };
-  const met = step.requirements_met;
-  const sub = planned
-    ? [stepWord(step).toLowerCase(), afterWords(step.after)].filter(Boolean).join(" · ")
-    : met?.total ? `${met.met} of ${met.total} met` : stepWord(step);
-
-  let body;
+  let body = null;
   if (shown === "brief") {
     body = planned || (isPlanned(step) && step.editable?.includes("brief"))
       ? <PlannedBrief program={program} step={step} onApplied={onApplied} onFailed={setFailed} />
       : <StartedBrief program={program} step={step} onApplied={onApplied} onFailed={setFailed} amendRef={amendRef} />;
-  } else if (shown === "requirements") {
-    body = (
-      <ul className="pg-reqs" data-testid="programs-step-requirements">
-        {(step.requirements ?? []).map((row) => <RequirementRow key={row.id} program={program} row={row} onApplied={onApplied} />)}
-        {step.editable?.includes("requirements") ? <AddRequirementRow program={program} onApplied={onApplied} defaultScope={step.id} /> : null}
-      </ul>
-    );
   } else if (shown === "gate") {
     body = <GateFacts step={step} />;
   } else if (shown === "findings") {
@@ -359,7 +401,7 @@ export function StepFold({ program, step, onApplied, open, onToggle }: {
     );
   } else if (shown === "handoffs") {
     body = <ul className="pg-ledger">{(step.handoffs ?? []).map((entry, index) => <HandoffLine key={`${entry.at}-${index}`} id={`${step.id}-${index}`} step={step} entry={entry} />)}</ul>;
-  } else {
+  } else if (shown === "ledger") {
     body = <StepLedger program={program} step={step} onStarted={onApplied} />;
   }
 
@@ -387,18 +429,18 @@ export function StepFold({ program, step, onApplied, open, onToggle }: {
   ) : null;
 
   return (
-    <FoldGadget className="pg-gate pg-stepfold" open={open} onToggle={onToggle}
-      title={<>{`Step ${step.ordinal} · ${step.title}`}<span className="pg-fold-sub">{` · ${sub}`}</span></>}>
-      <div className="pg-sf" data-testid="programs-step-fold" data-step={step.id} data-part={shown}>
-        <div className="pg-sf-head">
-          <FilterTokens label={`Step ${step.ordinal}`} value={shown} onChange={(next) => setPart(next as Part)}
-            options={parts.map((value) => ({ value, label: PART_WORDS[value] }))} />
-          <span className="pg-sf-verbs">{verbs}</span>
-        </div>
-        {inserting ? <InsertRow program={program} step={step} onApplied={onApplied} onDone={() => setInserting(false)} /> : null}
-        {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="programs-step-failure">{failed.words}</p> : null}
-        <div className="pg-sf-body">{body}</div>
+    <div className="pg-sf" data-testid="programs-step-fold" data-step={step.id} data-part={shown || undefined}>
+      <StepProve program={program} step={step} onApplied={onApplied} />
+      <StepStory step={step} />
+      <div className="pg-sf-head">
+        <FilterTokens label={`Step ${step.ordinal}`} value={shown} emptyLabel="Parts"
+          onChange={(next) => setPart((now) => (now === next ? "" : next as Part))}
+          options={parts.map((value) => ({ value, label: PART_WORDS[value] }))} />
+        <span className="pg-sf-verbs">{verbs}</span>
       </div>
+      {inserting ? <InsertRow program={program} step={step} onApplied={onApplied} onDone={() => setInserting(false)} /> : null}
+      {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="programs-step-failure">{failed.words}</p> : null}
+      {body ? <div className="pg-sf-body">{body}</div> : null}
       {handing ? (
         <WorkMenu label="Hand off" x={handing.left} y={handing.bottom} opener={handOpener.current} autoFocus
           returnFocus={() => handOpener.current?.focus()} onClose={() => setHanding(null)}
@@ -406,6 +448,6 @@ export function StepFold({ program, step, onApplied, open, onToggle }: {
             type: "item" as const, id: row.profile, label: `Hand to ${row.word}`, onSelect: () => void handTo(row.profile),
           }))} />
       ) : null}
-    </FoldGadget>
+    </div>
   );
 }
