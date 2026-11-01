@@ -815,6 +815,9 @@ _PHONE_DEVICE_ROUTES: tuple[tuple[str, Any], ...] = tuple(
         ("POST", r"/api/phone/messages"),
         ("GET", r"/api/phone/messages"),
         ("POST", r"/api/phone/messages/[^/]+/read"),
+        # JRN6: a press on a message's verb (the handler admits the owner or
+        # a paired device; the press runs the item's own verb as his press).
+        ("POST", r"/api/phone/messages/[^/]+/decide"),
         ("POST", r"/api/phone/calls"),
         ("GET", r"/api/phone/calls/[^/]+"),
         ("POST", r"/api/phone/calls/[^/]+/(accept|decline|end)"),
