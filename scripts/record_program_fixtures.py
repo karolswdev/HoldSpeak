@@ -341,15 +341,18 @@ def record_lane(root: Path) -> dict[str, Any]:
 
 
 def record_family(root: Path) -> dict[str, Any]:
-    """PG-IMPORT IMP7: an audit (running) and the two Programs it made (its
+    """PG-IMPORT IMP7: an audit (Done) and the two Programs it made (its
     fix program, Done; a follow-up, Drafting), read through the real routes:
-    the parent's GET, a child's GET and the list."""
+    the parent's GET, a child's GET and the list. The audit ends first: a
+    Program made from another starts after that one is Done (JRN1, #1726)."""
     rig = Rig(root / "family")
     client = _client(rig)
     audit = _create(rig, "Audit the atlas", template="fast-cycle", control="yolo")
     rig.service.plan(OWNER, audit, steps=[{"title": "Read every anchor", "brief": "Read them."}])
     rig.service.start(OWNER, audit)
     rig.tick()
+    rig.agent.finish(rig.step(audit, 1)["launch_id"], {"docs/anchors.md": "x\n"})
+    rig.tick(4)
     fix = _create(rig, "Fix: Audit the atlas", template="fast-cycle", control="yolo", origin_ref=f"program:{audit}")
     rig.service.plan(OWNER, fix, steps=[{"title": "Cite the anchors", "brief": "Cite them."}])
     rig.service.start(OWNER, fix)
