@@ -566,7 +566,9 @@ describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/t
     expect(calls).toContain(`POST /api/programs/${waiting.id}/steps/program/decide ${JSON.stringify({ kind: "delivery", choice: "merge" })}`);
     const pr = merged.checkpoints.find((row) => row.kind === "delivery" && row.choice === "delivered")!;
     expect(screen.getByTestId("programs-delivered").textContent).toBe(pr.line);
-    expect(pr.line).toMatch(/^Delivered to dw app\/1 \(PR #\d+\)$/);
+    // #1722: the line says the phase as it is ("· phase closed"); the mark reads undo.phase.closed.
+    expect(pr.line).toMatch(/^Delivered to dw app\/1 \(PR #\d+\) · phase closed$/);
+    expect((pr as unknown as { undo?: { phase?: { closed?: boolean } } }).undo?.phase?.closed).toBe(true);
   });
 });
 
