@@ -1,0 +1,135 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "budget_tokens": null,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": null,
+  "checkpoints": [
+    {
+      "at": "2026-11-01T10:34:10.955106+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "yolo",
+  "control_word": "YOLO",
+  "created_at": "2026-11-01T10:34:10.954725+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "delivery": null,
+  "done": 0,
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Move the People routes off the event loop and prove no handler holds it over 100 ms",
+  "id": "program-d7f101b0e92b",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-11-01T10:34:10.955106+00:00",
+    "by": "owner",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 1,
+    "kind": null,
+    "line": "Made the program from the Fast cycle template",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "line": "Drafting, no steps yet",
+  "may_call": false,
+  "may_handoff": false,
+  "night": null,
+  "note_id": "program-program-d7f101b0e92b",
+  "note_window": "pullout:note:program-program-d7f101b0e92b",
+  "origin_ref": "action:ai_runme",
+  "persons": [],
+  "place": {
+    "origin": {
+      "id": "ai_runme",
+      "kind": "action",
+      "ref": "action:ai_runme",
+      "title": "Move the People routes off the event loop and prove no handler holds it over 100 ms"
+    },
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "planner": null,
+  "prefer_idle": false,
+  "project": {
+    "id": "proj-holdspeak",
+    "name": "HoldSpeak"
+  },
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "requirements": [],
+  "review_depth": null,
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 0,
+  "rounds": [],
+  "rounds_before_start": false,
+  "search_words": "move the people routes off the event loop and prove no handler holds it over… move the people routes off the event loop and prove no handler holds it over 100 ms holdspeak fast-cycle fast cycle",
+  "skipped": 0,
+  "spend_limit_usd": null,
+  "state": "drafting",
+  "state_word": "Drafting",
+  "status_line": "Drafting · 0 of 0 done · control YOLO",
+  "steps": [],
+  "template": "fast-cycle",
+  "title": "Move the People routes off the event loop and prove no handler holds it over…",
+  "total": 0,
+  "track": [],
+  "updated_at": "2026-11-01T10:34:10.954725+00:00",
+  "usage_warning_share": null,
+  "within": [],
+  "your_turn": 0,
+  "your_turn_items": []
+}

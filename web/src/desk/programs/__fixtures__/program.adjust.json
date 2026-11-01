@@ -9,10 +9,10 @@
     "shot_reason": "No shot command in this repository",
     "word": true
   },
-  "check_command": "sh /Users/karol/dev/tools/wt-pg-import-1793514413/tests/fixtures/fake_program_check.sh",
+  "check_command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-01T09:55:59.659278+00:00",
+      "at": "2026-11-01T10:32:01.490012+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -26,13 +26,13 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-a8f5cf5c98fd",
+      "step_id": "step-db359dbd41a7",
       "undo": {
         "line": "Use the new index"
       }
     },
     {
-      "at": "2026-11-01T09:55:59.465539+00:00",
+      "at": "2026-11-01T10:32:01.290319+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -43,16 +43,16 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-a8f5cf5c98fd/2",
-      "ref_commit": "3824b61efd9591842a0eb8393356527df8e000f8",
+      "ref": "refs/holdspeak/checkpoints/step-db359dbd41a7/2",
+      "ref_commit": "cad514e850f070921c802b2fa2b550a00f97440e",
       "rule": null,
-      "step_id": "step-a8f5cf5c98fd",
+      "step_id": "step-db359dbd41a7",
       "undo": {
         "pin": {
-          "commit": "3824b61efd9591842a0eb8393356527df8e000f8",
-          "head": "34211b51dc3480a783298fc5a2f80f8c702ff26d",
+          "commit": "cad514e850f070921c802b2fa2b550a00f97440e",
+          "head": "f18df84c5863ff400b0c2ae99a9a747f63a7abad",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-a8f5cf5c98fd/2",
+          "ref": "refs/holdspeak/checkpoints/step-db359dbd41a7/2",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -61,7 +61,7 @@
       }
     },
     {
-      "at": "2026-11-01T09:55:59.428875+00:00",
+      "at": "2026-11-01T10:32:01.231308+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -75,13 +75,13 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-a8f5cf5c98fd",
+      "step_id": "step-db359dbd41a7",
       "undo": {
         "line": "Keep the 14-day rule"
       }
     },
     {
-      "at": "2026-11-01T09:55:59.417572+00:00",
+      "at": "2026-11-01T10:32:01.205166+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -95,7 +95,7 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-34ed61f295a7",
+      "step_id": "step-1e345e87a2aa",
       "undo": {
         "pin": {
           "note": "No worktree to pin yet"
@@ -103,7 +103,7 @@
       }
     },
     {
-      "at": "2026-11-01T09:55:59.407476+00:00",
+      "at": "2026-11-01T10:32:01.184777+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -121,27 +121,27 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T09:55:59.206360+00:00",
+      "at": "2026-11-01T10:32:00.791291+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 4,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-a8f5cf5c98fd",
+      "line": "Handed to Claude Code in hs-program-step-db359dbd41a7",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-a8f5cf5c98fd/1",
-      "ref_commit": "c8e630650a218fbcc6f30dc9697c9f3d832d9d18",
+      "ref": "refs/holdspeak/checkpoints/step-db359dbd41a7/1",
+      "ref_commit": "62b63a0bbed4928a5ad5c0e8bac9270c84e8f483",
       "rule": null,
-      "step_id": "step-a8f5cf5c98fd",
+      "step_id": "step-db359dbd41a7",
       "undo": {
         "pin": {
-          "commit": "c8e630650a218fbcc6f30dc9697c9f3d832d9d18",
-          "head": "34211b51dc3480a783298fc5a2f80f8c702ff26d",
+          "commit": "62b63a0bbed4928a5ad5c0e8bac9270c84e8f483",
+          "head": "f18df84c5863ff400b0c2ae99a9a747f63a7abad",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-a8f5cf5c98fd/1",
+          "ref": "refs/holdspeak/checkpoints/step-db359dbd41a7/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -150,7 +150,7 @@
       }
     },
     {
-      "at": "2026-11-01T09:55:59.039743+00:00",
+      "at": "2026-11-01T10:32:00.465142+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -168,7 +168,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T09:55:58.960642+00:00",
+      "at": "2026-11-01T10:32:00.366199+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -186,7 +186,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T09:55:58.956928+00:00",
+      "at": "2026-11-01T10:32:00.359517+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -207,7 +207,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-01T09:55:58.956562+00:00",
+  "created_at": "2026-11-01T10:32:00.358935+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -227,10 +227,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "Calls on the home box.",
-  "id": "program-bff819e00c88",
+  "id": "program-7692e32d4d07",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T09:55:59.659278+00:00",
+    "at": "2026-11-01T10:32:01.490012+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -244,7 +244,7 @@
     "ref": null,
     "ref_commit": null,
     "rule": null,
-    "step_id": "step-a8f5cf5c98fd",
+    "step_id": "step-db359dbd41a7",
     "undo": {
       "line": "Use the new index"
     }
@@ -253,8 +253,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-bff819e00c88",
-  "note_window": "pullout:note:program-program-bff819e00c88",
+  "note_id": "program-program-7692e32d4d07",
+  "note_window": "pullout:note:program-program-7692e32d4d07",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -269,7 +269,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-r2jgmk55/rig-adjust/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-e7o0sf5y/rig-adjust/app"
   },
   "requirements": [],
   "review_depth": null,
@@ -293,13 +293,13 @@
       "agent": "Claude Code",
       "amendments": [
         {
-          "at": "2026-11-01T09:55:59.428875+00:00",
+          "at": "2026-11-01T10:32:01.231308+00:00",
           "by": "owner",
           "line": "Keep the 14-day rule",
-          "sent_at": "2026-11-01T09:55:59.465354+00:00"
+          "sent_at": "2026-11-01T10:32:01.290166+00:00"
         },
         {
-          "at": "2026-11-01T09:55:59.659278+00:00",
+          "at": "2026-11-01T10:32:01.490012+00:00",
           "by": "owner",
           "line": "Use the new index",
           "sent_at": null
@@ -309,7 +309,7 @@
       "brief": "Run a call turn on qwen.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-pg-import-1793514413/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -361,9 +361,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-a8f5cf5c98fd",
+      "id": "step-db359dbd41a7",
       "last_checkpoint": {
-        "at": "2026-11-01T09:55:59.659278+00:00",
+        "at": "2026-11-01T10:32:01.490012+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -377,7 +377,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-a8f5cf5c98fd",
+        "step_id": "step-db359dbd41a7",
         "undo": {
           "line": "Use the new index"
         }
@@ -412,7 +412,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-11-01T09:55:59.205997+00:00",
+      "started_at": "2026-11-01T10:32:00.790287+00:00",
       "state": "working",
       "state_word": "Working",
       "station": 1,
@@ -426,18 +426,18 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T09:55:59.206360+00:00",
+          "at": "2026-11-01T10:32:00.791291+00:00",
           "line": "Handed to Claude Code."
         },
         {
-          "at": "2026-11-01T09:55:59.465539+00:00",
+          "at": "2026-11-01T10:32:01.290319+00:00",
           "line": "Typed 1 amendment at the turn boundary."
         }
       ],
       "title": "The call runner",
-      "updated_at": "2026-11-01T09:55:59.659290+00:00",
+      "updated_at": "2026-11-01T10:32:01.490027+00:00",
       "wait": null,
-      "worktree": "hs-program-step-a8f5cf5c98fd"
+      "worktree": "hs-program-step-db359dbd41a7"
     },
     {
       "after": [
@@ -449,7 +449,7 @@
       "brief": "Mount the phone route.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-pg-import-1793514413/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -507,9 +507,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-34ed61f295a7",
+      "id": "step-1e345e87a2aa",
       "last_checkpoint": {
-        "at": "2026-11-01T09:55:59.417572+00:00",
+        "at": "2026-11-01T10:32:01.205166+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -523,7 +523,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-34ed61f295a7",
+        "step_id": "step-1e345e87a2aa",
         "undo": {
           "pin": {
             "note": "No worktree to pin yet"
@@ -574,12 +574,12 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T09:55:59.417572+00:00",
+          "at": "2026-11-01T10:32:01.205166+00:00",
           "line": "Moved step 5 to 2."
         }
       ],
       "title": "The phone route",
-      "updated_at": "2026-11-01T09:55:59.417201+00:00",
+      "updated_at": "2026-11-01T10:32:01.204318+00:00",
       "wait": null,
       "worktree": null
     },
@@ -593,7 +593,7 @@
       "brief": "Draw the call.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-pg-import-1793514413/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -651,7 +651,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-e3c3270213ec",
+      "id": "step-2eeb8484bf56",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -697,7 +697,7 @@
       ],
       "story": [],
       "title": "The calls window",
-      "updated_at": "2026-11-01T09:55:59.415754+00:00",
+      "updated_at": "2026-11-01T10:32:01.203604+00:00",
       "wait": null,
       "worktree": null
     },
@@ -711,7 +711,7 @@
       "brief": "Log a held loop.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-pg-import-1793514413/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -769,7 +769,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-6d15ae725468",
+      "id": "step-abc81480c2ed",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -815,7 +815,7 @@
       ],
       "story": [],
       "title": "The loop watch",
-      "updated_at": "2026-11-01T09:55:59.415869+00:00",
+      "updated_at": "2026-11-01T10:32:01.203872+00:00",
       "wait": null,
       "worktree": null
     },
@@ -830,7 +830,7 @@
       "brief": "Ring after 10 minutes.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-pg-import-1793514413/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-jrn/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -888,7 +888,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-ff5526c31faa",
+      "id": "step-1997f3a731cc",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -934,7 +934,7 @@
       ],
       "story": [],
       "title": "The ring timer",
-      "updated_at": "2026-11-01T09:55:59.416793+00:00",
+      "updated_at": "2026-11-01T10:32:01.204025+00:00",
       "wait": null,
       "worktree": null
     }
@@ -969,7 +969,7 @@
       "title": "The ring timer"
     }
   ],
-  "updated_at": "2026-11-01T09:55:59.683281+00:00",
+  "updated_at": "2026-11-01T10:32:01.514164+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

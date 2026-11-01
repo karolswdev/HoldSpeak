@@ -2151,6 +2151,40 @@ class ProgramService:
             self.changed(program["id"], verb="plan")
         return self.get(principal, program["id"])
 
+    def from_action(self, principal: Any, action_id: Any, *, project_id: Any = None) -> dict[str, Any]:
+        """JRN13, Run as a program on a project's action row: a Drafting
+        Program made from one action. Its goal is the action's words, its
+        origin ``action:<id>`` (its merge closes the action, as From the
+        desk's steps do), its Project the action's (so the Project's
+        repository), and its person the action's owner when exactly one
+        person has that name (never a guess)."""
+        ident = str(action_id or "").strip()
+        if not ident:
+            raise ProgramRefused("action_required", "Name the action (action_id).", status=400)
+        item = self.db.meetings.get_action_item(ident)
+        if item is None:
+            raise ProgramRefused("action_unknown", "There is no such action.", status=404)
+        project = str(project_id or "").strip()
+        if not project and getattr(item, "meeting_id", None):
+            with self.db._connection() as conn:
+                row = conn.execute("SELECT project_id FROM meeting_projects WHERE meeting_id=? LIMIT 1",
+                                   (item.meeting_id,)).fetchone()
+            project = str(row["project_id"]) if row else ""
+        person = None
+        owner = str(getattr(item, "owner", "") or "").strip()
+        if owner:
+            try:
+                found = self._people_service().resolve_owner_candidates(owner)
+                if found.get("link") == "linked" and found.get("relationship"):
+                    person = str(found["relationship"].get("id") or "") or None
+            except Exception:
+                person = None
+        words = " ".join(str(item.task or "").split())
+        title = words if len(words) <= 80 else words[:79].rsplit(" ", 1)[0] + "…"
+        return self.create(principal, title=title or "New program", goal=str(item.task or ""),
+                           project_id=project or None, template="fast-cycle", origin_ref=f"action:{ident}",
+                           for_person_id=person)
+
     def plan_from_project(self, principal: Any, program_id: str) -> dict[str, Any]:
         """From the desk (§10, §9b): one step per open action of the Project,
         each with ``origin_ref = action:<id>`` (its merge closes the action)."""
