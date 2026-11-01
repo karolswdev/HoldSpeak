@@ -4,7 +4,14 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-11-01. Programs PG16 follow-up: "Proposed as a decision" on a Program window's checkpoint row and Decided for you row is a library Button (ghost, the same dot and words) that opens the record in the Decisions window (`openDecisionRecord`); no new words. Vitest `programs.app.test.tsx` (the PG16 Skip case presses it). Ruled: Today keeps the one combined Programs line; PG16 keeps its two record sources.
+**Last updated:** 2026-11-01. The audit's faces in the Program window (J7, JRN8 to JRN10). Drafting: "Reviewer only: nothing is written" under the track; a planned step's row names the surface it reads ("Reads web/src/desk/notes/", its `owns`), and the step's fold says Reads in place of Owns. The track of an audit step is BRIEF · WORK · REVIEW · FILE (the hub's `AUDIT_STATIONS` on the step wire; a build keeps the six). The Findings board: rows in the window, never a second window ("Must fix: …", "Should fix: …", "Noted: …"), the steps that found each, its evidence as plain words, and Open Door task on a filed row (`programs/Findings.tsx`). Fixture `audit.drafting.json` recorded in `tests/integration/test_desk_program_audit.py`; `audit.board.json` and `audit.fix.json` re-recorded; vitest `programs.app.test.tsx` (2 new). Open: the Your turn rows (audit_file, fix_program, lesson).
+
+
+
+
+
+
+**Before it:** 2026-11-01. Programs PG16 follow-up: "Proposed as a decision" on a Program window's checkpoint row and Decided for you row is a library Button (ghost, the same dot and words) that opens the record in the Decisions window (`openDecisionRecord`); no new words. Vitest `programs.app.test.tsx` (the PG16 Skip case presses it). Ruled: Today keeps the one combined Programs line; PG16 keeps its two record sources.
 
 **Before it:** 2026-11-01. Today's Prepared block (the automation's result card), by the owner's rules: no egress chips (an engine that is an address, "192.168.1.43:8080" or a host:port, is left out of "Prepared 18:27 · …"; a name such as Claude Code stays), no tinted callout box and no coloured left bar (plain rows under one hairline, as Today's other sections), no raw ids (a line with an 8+ hex id is not shown). A result with nothing for him says it in one chief-of-staff line: "The automation prepared nothing: the meeting record has no time or title" (the engine's "Time unavailable — Meeting c4e978fc"), else "The automation prepared nothing for today"; the one verb stays the library Button Open the automation. Recorded: `web/src/desk/__tests__/fixtures/daily-week/today-prepared-nothing.json` (`tests/integration/test_desk_morning_prep.py`, the real hub with the fake Claude Code answering that text); vitest `today.app.test.tsx` (2 new). The desk sweep at 1440 and 393 in the quick check.
 

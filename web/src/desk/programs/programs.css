@@ -1379,6 +1379,19 @@ span.pg-req-thumb { height: 150px; }
 .pg-todo-walk { margin: 0; padding-left: 20px; font: 400 13px / 1.5 var(--font-sans); }
 .pg-todo-note { display: block; max-width: 520px; min-width: 0; }
 
+/* ── PG-LANG JRN8 to JRN10: the audit (Findings.tsx) ── */
+.pg-audit-line { margin: 0; padding: 2px 12px 6px; color: var(--wb-muted); font: 400 12px / 1.35 var(--font-sans); }
+.pg-findings { flex: none; }
+.desk-next .kit-listrow.pg-finding {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center;
+  padding: 6px 12px; min-height: 32px;
+}
+.pg-finding-text { font: 400 13px / 1.35 var(--font-sans); overflow-wrap: anywhere; }
+.pg-finding-text b { font-weight: 600; }
+.pg-finding[data-level="MUST"] .pg-finding-text b { color: var(--wb-danger-ink); }
+.pg-finding-meta { grid-column: 1; color: var(--wb-muted); font: 400 12px / 1.35 var(--font-sans); overflow-wrap: anywhere; }
+.pg-finding-verbs { grid-column: 2; grid-row: 1 / span 2; }
+.pg-sf-reads { color: var(--wb-muted); font: 400 12px / 1.35 var(--font-sans); margin-right: 4px; }
 /* PG-IMPORT IMP7: the family, plain rows under the board (direction A):
    name · state word · the hub's line; a press opens that Program. */
 .pg-family { flex: none; border-top: 1px solid var(--wb-rule-soft); }

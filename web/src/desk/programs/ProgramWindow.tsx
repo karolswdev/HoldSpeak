@@ -59,6 +59,7 @@ import type {
   Control, DecidedRow, DecideBody, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
+import { AuditLine, FindingsBoard } from "./Findings";
 
 /** The verbs of one your-turn item, in the canvas order. */
 const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[]> = {
@@ -963,6 +964,7 @@ export function ProgramBody({ programId }: { programId: string }) {
         {/* PG-WINDOW: the body says it goes on (the kit's ScrollHint fade). */}
         <ScrollHint axis="y" scrollRef={bodyRef} className="pg-body-scroll">
         {view === "board" ? <ProgramLine program={program} goal={!drafting} /> : null}
+        {view === "board" && drafting ? <AuditLine program={program} /> : null}
         {view === "board" ? <DeliveredLine program={program} /> : null}
         {drafting && view === "board" ? (
           <DraftHead program={program} goal={goal ?? program.goal} busy={busy} planner={planner}
@@ -1014,6 +1016,7 @@ export function ProgramBody({ programId }: { programId: string }) {
           <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
             emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
         )}
+        {view === "board" ? <FindingsBoard program={program} /> : null}
         {/* PG-IMPORT IMP7: the Program it came from and the Programs it made. */}
         {view === "board" ? <ProgramFamilyRows family={program.family} /> : null}
         {view === "board" && drafting ? (

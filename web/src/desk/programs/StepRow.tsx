@@ -14,7 +14,7 @@ import { Token } from "../surface/Token";
 import { openRef } from "../openObject";
 import { spriteUrl } from "../sprites";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { afterWords, agentKey, mergedWords, runsOnWords, stepBreathes, stepChip, stepMetWords, stepTone, stepWord } from "./model";
+import { afterWords, agentKey, isAuditStep, mergedWords, readsWords, runsOnWords, stepBreathes, stepChip, stepMetWords, stepTone, stepWord } from "./model";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { stateWords } from "../surface/words";
 import { handLaneBack, takeLane } from "./api";
@@ -34,6 +34,8 @@ export function rowWords(step: ProgramStep): string {
   if (step.wait?.line) return step.wait.line;
   const story = step.story ?? [];
   if (story.length) return story[story.length - 1].line;
+  // PG-LANG JRN8: an audit step names the surface it reads, not what it owns.
+  if (isAuditStep(step) && readsWords(step) && (step.state === "planned" || step.state === "ready")) return readsWords(step);
   if (step.estimate?.words && (step.state === "planned" || step.state === "ready")) return step.estimate.words;
   return "";
 }
@@ -102,7 +104,7 @@ export function StepRow({
   const when = history ? mergedWords(history.merged_at) : step.elapsed;
   const after = afterWords(step.after);
   const line = history ? `PR #${history.pr_number}` : (words || rowWords(step));
-  const sized = !history && !words && !(step.story ?? []).length && Boolean(step.estimate?.words);
+  const sized = !history && !words && !(step.story ?? []).length && Boolean(step.estimate?.words) && line === step.estimate?.words;
   return (
     <li
       className="kit-listrow pg-step"
