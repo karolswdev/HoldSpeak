@@ -434,6 +434,10 @@ export interface YourTurnItem {
   /** PG-WINDOW W1: the brief in his terms (brief_words.item_brief), the
    *  same lines the briefing page reads. */
   brief?: ItemBrief | null;
+  /** J5: a race step parked because every contender is red: one row, each
+   *  contender's check log. */
+  race?: boolean;
+  logs?: { agent: string; log: string; step_id: string }[];
   /** audit_file / fix_program: the findings it is about. */
   count?: number;
   /** lesson (JRN11): its ledger row (sent as `lesson_id`), the cause, the steps. */

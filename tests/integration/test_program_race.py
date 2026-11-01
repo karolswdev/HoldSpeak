@@ -16,6 +16,7 @@ from pathlib import Path
 
 from holdspeak.services import program_rounds
 from tests.integration.program_rig import OWNER, Rig
+from tests.integration.test_desk_programs import _client, _fixture
 
 RED_CHECK = "sh -c 'echo FAILED: tests/test_x.py::test_it; exit 1'"
 
@@ -32,18 +33,27 @@ def _race(rig: Rig, *, control: str = "normal", check: str | None = None) -> str
     return pid
 
 
-def test_the_verification_round_asks_by_rule_and_each_reviews_the_other_turns_the_review_on(tmp_path) -> None:
+def test_the_verification_round_asks_by_rule_and_each_reviews_the_other_turns_the_review_on(tmp_path, monkeypatch) -> None:
     rig = Rig(tmp_path)
     pid = _race(rig)
     asked = program_rounds.ask(rig.service, OWNER, pid, "Verification", invoke_fn=_no_engine)
     question = asked["question"]
+    _fixture("program.race_round.json", rig.program(pid), tmp_path)
     assert question["text"] == "Review each contender?" and question["rule"] == "race_review"
     assert question["choices"] == ["Each reviews the other", "No review"] and asked["engine"] is None
     wire_round = next(r for r in rig.program(pid)["rounds"] if r["name"] == "Verification")
     assert wire_round["questions"][0]["rule"] == "race_review"
-    answered = program_rounds.answer(rig.service, OWNER, pid, "Verification", choice="Each reviews the other",
-                                     invoke_fn=_no_engine)
+    # His press through the route (the face's answer); the rule needs no engine.
+    monkeypatch.setattr(program_rounds.shaper, "invoke", lambda *a, **k: _no_engine(None))
+    pressed = _client(rig, monkeypatch).post(f"/api/programs/{pid}/rounds/Verification/answer",
+                                             json={"question_id": question["id"], "option": "Each reviews the other"})
+    assert pressed.status_code == 200, pressed.text
+    answered = _fixture("program.race_round.answered.json", pressed.json(), tmp_path)
     assert answered["round_question"]["became"] == ["step 1 review"]
+    # The face asks the round's next question at once: the rig has no engine, so the hub refuses.
+    nxt = _client(rig, monkeypatch).post(f"/api/programs/{pid}/rounds/Verification/next")
+    assert nxt.status_code == 409 and nxt.json()["code"] == "no_engine", nxt.text
+    _fixture("program.race_round.next.json", nxt.json(), tmp_path)
     step = rig.step(pid, 1)
     assert step["gate"]["review"] == "agent"
     assert "The change does only what its brief says." in [r["text"] for r in rig.service.requirements(pid)]
@@ -81,6 +91,7 @@ def test_the_winner_row_says_who_and_how_long(tmp_path) -> None:
     assert row["rule"] == "Normal: the first green, reviewed contender wins" and not row["overturnable"]
     winner = rig.service.store.get_step(contender["id"])
     assert winner["facts"]["race_won"]["by"] == "Codex"
+    _fixture("program.race_won.json", rig.program(pid), tmp_path)
 
 
 def _red_rounds(rig: Rig, pid: str) -> None:
@@ -95,7 +106,7 @@ def _red_rounds(rig: Rig, pid: str) -> None:
         rig.tick(2)
 
 
-def test_both_contenders_red_fail_as_one_step_with_both_logs(tmp_path) -> None:
+def test_both_contenders_red_fail_as_one_step_with_both_logs(tmp_path, monkeypatch) -> None:
     rig = Rig(tmp_path)
     pid = _race(rig, check=RED_CHECK)
     rig.service.start(OWNER, pid)
@@ -109,5 +120,10 @@ def test_both_contenders_red_fail_as_one_step_with_both_logs(tmp_path) -> None:
     assert [log["agent"] for log in row["logs"]] == ["Claude Code", "Codex"] and all(log["log"] for log in row["logs"])
     lines = [c for c in rig.program(pid)["checkpoints"] if c["line"] == "Both contenders are red after their rounds"]
     assert len(lines) == 1 and "Claude Code: " in lines[0]["undo"]["detail"] and "Codex: " in lines[0]["undo"]["detail"]
-    rig.service.decide(OWNER, pid, lead["id"], kind="parked", choice="resume")
+    # The face's answers: the wire with the one Parked row, and Resume through the route.
+    client = _client(rig, monkeypatch)
+    _fixture("program.race_parked.json", client.get(f"/api/programs/{pid}").json(), tmp_path)
+    resumed = client.post(f"/api/programs/{pid}/steps/{lead['id']}/decide", json={"kind": "parked", "choice": "resume"})
+    assert resumed.status_code == 200, resumed.text
+    _fixture("program.race_resumed.json", resumed.json(), tmp_path)
     assert {rig.step(pid, 1)["state"], rig.step(pid, 1)["contenders"][0]["state"]} <= {"ready", "briefed", "working"}
