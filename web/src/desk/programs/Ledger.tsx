@@ -13,6 +13,7 @@ import { Button } from "../../components/signal/Signal";
 import { spriteUrl } from "../sprites";
 import { DotWord, FoldGadget, SurfaceWell, countWords } from "../surface";
 import { plainFail } from "../surface/plainFailure";
+import { openDecisionRecord } from "../openObject";
 import { startFrom } from "./api";
 import { agentKey } from "./model";
 import type { Program, ProgramCheckpoint, ProgramStep, StepHandoff } from "./types";
@@ -99,8 +100,14 @@ export function HandoffLine({ id, step, entry }: { id: string | number; step: Pr
 
 /** PG16: a Skip or a merge by rule became a proposed decision record (he
  *  accepts it in the Decisions window). A row word, never a chip of zero. */
-export function ProposedWord() {
-  return <DotWord tone="ask" className="pg-proposed" data-testid="programs-proposed-decision">Proposed as a decision</DotWord>;
+export function ProposedWord({ recordId }: { recordId: string }) {
+  // One press opens the record in the Decisions window (where he accepts it).
+  return (
+    <Button dense variant="ghost" className="pg-proposed" onClick={() => openDecisionRecord(recordId)}
+      data-testid="programs-proposed-decision">
+      <DotWord tone="ask">Proposed as a decision</DotWord>
+    </Button>
+  );
 }
 
 /** PG20: the commit a checkpoint pinned (the short hash git users read; the
@@ -153,7 +160,7 @@ export function LedgerRows({ program, rows, busy, onStart, "data-testid": testId
             </span>
             <span className="pg-ledger-line" data-proposed={row.decision_record_id && !row.overturned_at ? "" : undefined}>
               <span className="pg-ledger-text">{row.line}</span>
-              {row.decision_record_id && !row.overturned_at ? <ProposedWord /> : null}
+              {row.decision_record_id && !row.overturned_at ? <ProposedWord recordId={row.decision_record_id} /> : null}
             </span>
             <PinCell row={row} busy={busy} onStart={onStart} />
             <span className="pg-ledger-at">{clock(row.at)}</span>

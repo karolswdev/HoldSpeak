@@ -59,6 +59,7 @@ import type {
   Control, DecidedRow, DecideBody, PlanAnswer, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
+import { AuditLine, FindingsBoard } from "./Findings";
 
 /** The verbs of one your-turn item, in the canvas order. */
 const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[]> = {
@@ -461,7 +462,7 @@ function DecidedFold({ program, open, onToggle, onOverturned }: {
                 {row.rule ? <span className="pg-decided-rule"> · {row.rule}</span> : null}
               </span>
               <span className="pg-decided-verb">
-                {row.decision_record_id && !overturned ? <ProposedWord /> : null}
+                {row.decision_record_id && !overturned ? <ProposedWord recordId={row.decision_record_id} /> : null}
                 {overturned ? <DotWord data-testid="programs-decided-overturned">Overturned</DotWord>
                   : row.overturnable ? (
                     <Button dense variant="secondary" loading={busy === String(row.id)} disabled={Boolean(busy)} onClick={() => void press(row)}
@@ -968,6 +969,7 @@ export function ProgramBody({ programId }: { programId: string }) {
         {/* PG-WINDOW: the body says it goes on (the kit's ScrollHint fade). */}
         <ScrollHint axis="y" scrollRef={bodyRef} className="pg-body-scroll">
         {view === "board" ? <ProgramLine program={program} goal={!drafting} /> : null}
+        {view === "board" && drafting ? <AuditLine program={program} /> : null}
         {view === "board" ? <DeliveredLine program={program} /> : null}
         {drafting && view === "board" ? (
           <DraftHead program={program} goal={goal ?? program.goal} busy={busy} planner={planner}
@@ -1022,6 +1024,7 @@ export function ProgramBody({ programId }: { programId: string }) {
           <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
             emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
         )}
+        {view === "board" ? <FindingsBoard program={program} /> : null}
         {/* PG-IMPORT IMP7: the Program it came from and the Programs it made. */}
         {view === "board" ? <ProgramFamilyRows family={program.family} /> : null}
         {view === "board" && drafting ? (
