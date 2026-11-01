@@ -440,7 +440,8 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
                                    f"continue in {nxt.get('label') or agent_label(nxt.get('profile'))} now, or wait?"})
         elif state == "merge_ask":
             number = step.get("pr_number")
-            pr = f"PR #{number}" if number else "the PR"
+            pr = f"PR #{number}" if number else (
+                f"into {program.get('base_branch') or 'main'}" if facts.get("local_merge") else "the PR")
             items.append({**base, "id": f"{step['id']}:merge", "kind": "merge",
                           "choices": list(DECIDE_CHOICES["merge"]),
                           "title": f"Merge {label}? ({pr}, check green"
