@@ -23639,6 +23639,45 @@
         "summary": "Api Programs Proposal Decide"
       }
     },
+    "/api/programs/{program_id}/propose_fix": {
+      "post": {
+        "operationId": "api_programs_propose_fix_api_programs__program_id__propose_fix_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Programs Propose Fix Api Programs  Program Id  Propose Fix Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Programs Propose Fix"
+      }
+    },
     "/api/programs/{program_id}/requirements": {
       "post": {
         "operationId": "api_programs_require_api_programs__program_id__requirements_post",

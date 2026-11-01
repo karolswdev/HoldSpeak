@@ -997,6 +997,12 @@
     },
     {
       "transport": "mcp",
+      "entry_point": "program.propose_fix",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
       "entry_point": "program.plan",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
