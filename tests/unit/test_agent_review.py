@@ -347,3 +347,11 @@ def test_an_empty_read_that_stays_empty_is_unclear_after_the_wait():
     for _ in range(EMPTY_READS_WAIT + 1):
         loop.tick()
     assert ledger.get("B1")["review"]["result"]["reason"] == "review_result_unclear"
+
+
+def test_a_should_none_required_after_its_place_is_no_finding():
+    """The fourth real night: "SHOULD · docs/index.md:5 · None required. The
+    heading style … match the brief." became a Later Door task."""
+    words = ("- SHOULD · docs/index.md:5 · None required. The heading style and single sentence match the brief.\n"
+             "- SHOULD · docs/faq.md:5 · The phrase is not supported by the docs.\nMUST: none")
+    assert parse_findings(words) == [{"level": "SHOULD", "text": "· docs/faq.md:5 · The phrase is not supported by the docs."}]

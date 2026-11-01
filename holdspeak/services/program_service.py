@@ -4886,7 +4886,7 @@ class ProgramService:
         item_id = origin.split(":", 1)[1]
         evidence = {key: value for key, value in (
             ("pr_url", step.get("pr_url")), ("pr_number", step.get("pr_number")),
-            ("merged_sha", step.get("head_commit")), ("merged_at", self._clock()),
+            ("merged_sha", facts.get("merged_commit") or step.get("head_commit")), ("merged_at", self._clock()),
             ("launch_id", step.get("launch_id"))) if value}
         try:
             from ..principals import Principal, PrincipalKind
@@ -4900,7 +4900,8 @@ class ProgramService:
         facts["origin_closed"] = item_id
         step["facts"] = facts
         self.store.save_step(step)
-        what = f"PR #{step['pr_number']}" if step.get("pr_number") else f"the merge {str(step.get('head_commit') or '')[:8]}".rstrip()
+        merged = str(facts.get("merged_commit") or step.get("head_commit") or "")
+        what = f"PR #{step['pr_number']}" if step.get("pr_number") else f"the merge {merged[:8]}".rstrip()
         self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="engine",
                                   line=f"Closed its Door task with {what} as evidence"[:400])
 

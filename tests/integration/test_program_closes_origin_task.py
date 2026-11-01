@@ -31,6 +31,9 @@ def test_a_merged_step_closes_its_door_task_once_with_the_merge(tmp_path) -> Non
     lines = [row["line"] for row in rig.service.store.list_checkpoints(pid)]
     closed = [line for line in lines if line.startswith("Closed its Door task with the merge ")]
     assert len(closed) == 1, lines
+    # The evidence is the commit on main (the merge), not the builder's commit.
+    merged = rig.service.store.list_steps(pid)[0]["facts"]["merged_commit"]
+    assert closed[0] == f"Closed its Door task with the merge {merged[:8]} as evidence"
     rig.tick(2)  # merged → done does not close it again
     assert len([line for line in (row["line"] for row in rig.service.store.list_checkpoints(pid))
                 if line.startswith("Closed its Door task")]) == 1
