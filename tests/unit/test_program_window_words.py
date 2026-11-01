@@ -84,3 +84,16 @@ def test_the_list_row_reads_like_a_line_from_a_chief_of_staff(tmp_path) -> None:
     assert words.fence_hits(row["line"]) == []
     assert words.list_line("drafting", [], []) == "Drafting, no steps yet"
     assert words.list_line("done", [], [], history={"words": "Merged 14 PRs · 28 Oct"}) == "Done, merged 14 PRs, 28 Oct"
+
+
+def test_done_is_a_fact_parking_does_not_erase_and_a_skip_is_finished() -> None:
+    """Owner catch 2026-11-01 ("Proof 3", "Briefing page check"): a Program
+    that ran to Done and was then parked keeps its Done line with "· parked";
+    merges without a PR are counted as merges; a skipped step is finished."""
+    merged = [{"ordinal": n, "title": f"S{n}", "state": "merged"} for n in (1, 2, 3)]
+    assert words.list_line("parked", merged, [], ended="2026-11-01T06:45:00+00:00") == "Done, 3 merges, 1 Nov · parked"
+    skipped = [{"ordinal": 1, "title": "S1", "state": "parked", "parked_by": "owner", "parked_reason": "You skipped this step"}]
+    assert words.list_line("done", skipped, [], ended="2026-10-31T21:13:00+00:00") == "Done, 1 skipped, 31 Oct"
+    assert [dot["mark"] for dot in words.list_track(skipped, [])] == ["skipped"]
+    stopped = [{"ordinal": 1, "title": "S1", "state": "parked", "parked_by": "engine", "parked_reason": "git push failed"}]
+    assert words.list_line("parked", stopped, []) == "Parked at step 1 of 1"

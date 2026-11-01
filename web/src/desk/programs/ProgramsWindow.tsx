@@ -21,7 +21,7 @@ import type { CoreProps } from "../../pages/cores/core-types";
 import { WorkMenu } from "../components/DeskMenu";
 import { spriteUrl } from "../sprites";
 import { openProgram } from "./open";
-import { DotWord, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
+import { DotWord, FoldGadget, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 import { useWindowInterior } from "../surface/interior";
 import { plainFail } from "../surface/plainFailure";
@@ -34,7 +34,7 @@ import "./programs.css";
 export { openProgram };
 
 const MARK_STATION: Record<ListMark["mark"], { state: TrackStation["state"]; tone: string; live?: boolean }> = {
-  done: { state: "passed", tone: "ok" }, here: { state: "current", tone: "ask", live: true },
+  done: { state: "passed", tone: "ok" }, skipped: { state: "passed", tone: "idle" }, here: { state: "current", tone: "ask", live: true },
   running: { state: "ahead", tone: "info", live: true }, red: { state: "ahead", tone: "fail" },
   parked: { state: "ahead", tone: "idle" }, planned: { state: "ahead", tone: "idle" },
 };
@@ -51,12 +51,15 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
   const line = row.line || fallback;
   const met = metWords(row.requirements_met);
   const tone = programTone(row.state);
+  // Done is a fact parking does not erase: every step finished keeps its green.
+  const allFinished = Boolean(row.total) && row.done + (row.skipped ?? 0) >= row.total;
   const stations: TrackStation[] = (row.track ?? []).map((dot) => ({
     key: String(dot.ordinal), word: `${dot.ordinal} ${dot.title}`, mark: dot.mark, ...MARK_STATION[dot.mark],
   }));
   const finished = row.state === "done" ? row.finished_words : undefined;
   return (
-    <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}>
+    <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}
+      data-all-done={allFinished ? "" : undefined}>
       <Button variant="chrome" className="pg-row-main" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`}
         data-testid="programs-row-open">
         <img className="kit-listrow-glyph" src={spriteUrl("program", row.id, "rest", null, 20)} alt="" width={20} height={20} />
@@ -76,6 +79,23 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
       </span>
     </li>
   );
+}
+
+/** #1707: rows he parked with a reason fold under one line each
+ *  ("3 parked proofs"), the fold grammar of #1695; the rest stay rows. */
+const PARKED_WORDS: Record<string, [string, string]> = {
+  proof: ["parked proof", "parked proofs"],
+  done_with_it: ["parked, you are done with it", "parked, you are done with them"],
+};
+
+function foldsOf(rows: readonly ProgramSummary[]): { reason: string; words: string; rows: ProgramSummary[] }[] {
+  const out = new Map<string, ProgramSummary[]>();
+  for (const row of rows) if (row.parked_as) out.set(row.parked_as, [...(out.get(row.parked_as) ?? []), row]);
+  return [...out].map(([reason, folded]) => {
+    const [one, many] = PARKED_WORDS[reason] ?? ["parked", "parked"];
+    const n = folded.length;
+    return { reason, words: `${n} ${n === 1 ? one : many}`, rows: folded };
+  });
 }
 
 const CARET = (
@@ -187,7 +207,16 @@ export function ProgramsCore(_props: CoreProps) {
         {bands.map((band) => (
           <section key={band.key} className="kit-listday pg-band" aria-label={band.word} data-band={band.key} data-testid="programs-band">
             <h3 className="kit-listday-label">{band.word}{band.count ? <span className="pg-band-count">{` · ${band.count}`}</span> : null}</h3>
-            <ul className="kit-listrows">{band.rows.map((row) => <ProgramRow key={row.id} row={row} />)}</ul>
+            <ul className="kit-listrows">
+              {band.rows.filter((row) => !row.parked_as).map((row) => <ProgramRow key={row.id} row={row} />)}
+              {foldsOf(band.rows).map((fold) => (
+                <li key={fold.reason} className="pg-row-fold" data-reason={fold.reason} data-testid="programs-parked-fold">
+                  <FoldGadget title={fold.words}>
+                    <ul className="kit-listrows">{fold.rows.map((row) => <ProgramRow key={row.id} row={row} />)}</ul>
+                  </FoldGadget>
+                </li>
+              ))}
+            </ul>
           </section>
         ))}
       </ListView>

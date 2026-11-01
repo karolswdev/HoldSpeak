@@ -208,9 +208,11 @@ export interface StepAmendment {
 }
 
 /** PG-WINDOW List: one dot of a row's mini track. */
-export interface ListMark { ordinal: number; title: string; mark: "done" | "here" | "running" | "red" | "parked" | "planned" }
+export interface ListMark { ordinal: number; title: string; mark: "done" | "skipped" | "here" | "running" | "red" | "parked" | "planned" }
 
 export interface ProgramSummary {
+  /** #1707: why he parked it (`proof`, `done_with_it`); the list folds such rows. */
+  parked_as?: string | null;
   /** PG-WINDOW List: the row's line in his terms (brief_words.list_line). */
   line?: string;
   track?: ListMark[];
@@ -338,6 +340,9 @@ export interface ProgramStep {
   for_person: string | null;
   /** PG-IMPORT IMP1: the report in registers (Done, Merged, Parked, Failed). */
   report: StepReport | null;
+  /** PG-IMPORT IMP3: what it waits on (`target_ended`, `lane_missing`,
+   *  `hold_expired`, `recovery`, `notice_lost`) and the hub's sentence. */
+  wait?: { cause: string; line: string; at?: string | null } | null;
   /** PG-IMPORT IMP2: how the step's lane ended, apart from its state. */
   ending?: "finished" | "failed" | "interrupted" | "none";
   /** The agent's own report text, as it sent it. */
@@ -487,6 +492,8 @@ export interface Program extends ProgramSummary {
   can_prove?: CanProve;
   /** PG-LANG LANG9: the interview rounds (§6.2). */
   rounds?: ProgramRound[];
+  /** LANG12 / #1697: a night program's window (`23:30–07:00 · at most 8 steps`). */
+  night?: ProgramNight | null;
   revision: number;
   status_line: string;
 }
@@ -704,4 +711,12 @@ export interface ShapeAnswer extends TextApplyAnswer {
   applied_rows: TextChange[];
   decision: { id: number | string; rule: string; kind: string; choice: string; at: string } | null;
   held?: string;
+}
+
+/** A night program's window, as the hub stores it (LANG12). */
+export interface ProgramNight {
+  start: string;
+  end: string;
+  line: string;
+  max_steps?: number | null;
 }

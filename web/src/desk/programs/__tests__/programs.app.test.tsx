@@ -58,6 +58,7 @@ import reachRevokedFixture from "../__fixtures__/reach.revoked.json";
 // changed text (a refused brief, control up the ladder, a new step, a merge
 // on his press, a + line), recorded through the real routes.
 import textFixture from "../__fixtures__/program.text.json";
+import dreamingFixture from "../__fixtures__/program.dreaming.json";
 import deliveryFailedFixture from "../__fixtures__/program.delivery_failed.json";
 import deliveryMergeFixture from "../__fixtures__/program.delivery_merge.json";
 import deliveryMergedFixture from "../__fixtures__/program.delivery_merged.json";
@@ -231,6 +232,13 @@ describe("the Programs window", () => {
     expect(doneRow.textContent).toMatch(/Done, 1 PR, \d+ \w{3}/);
     // No column heads.
     expect(document.querySelector(".pg-list-head")).toBeNull();
+    // A finished program's row keeps its green (Done is a fact).
+    expect(doneRow.hasAttribute("data-all-done")).toBe(true);
+    // #1707: the programs he parked as proofs fold under one line (Show · Hide); the rest stay rows.
+    const proofs = list.programs.filter((row) => row.parked_as === "proof");
+    const fold = screen.getByTestId("programs-parked-fold");
+    expect(fold.querySelector("summary")!.textContent).toContain(`${proofs.length} parked proofs`);
+    expect(within(fold).getAllByTestId("programs-row").map((row) => row.getAttribute("data-program")).sort()).toEqual(proofs.map((row) => row.id).sort());
     expect(status().textContent).toContain("Your turn");
     expect(status().textContent).toContain("2 wait on you");
     expect(status().textContent).not.toMatch(/\b0 /);
@@ -554,6 +562,26 @@ describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/t
     const pr = merged.checkpoints.find((row) => row.kind === "delivery" && row.choice === "delivered")!;
     expect(screen.getByTestId("programs-delivered").textContent).toBe(pr.line);
     expect(pr.line).toMatch(/^Delivered to dw app\/1 \(PR #\d+\)$/);
+  });
+});
+
+describe("#1697: the Dreaming template (recorded through the real route, test_desk_program_night.py)", () => {
+  it("is in Templates with its meaning; a night program in Drafting sleeps until its window and Start says what the night does", async () => {
+    const dream = dreamingFixture as unknown as Program;
+    hub({ "GET /api/programs": list });
+    render(<ProgramsCore />);
+    fireEvent.click(await screen.findByTestId("programs-templates"));
+    expect(menuWords()).toContain("Dreaming · Runs at night on the idle home engine; fills itself from tasks marked Tonight");
+    cleanup();
+    hub({ [`GET /api/programs/${dream.id}`]: dream });
+    render(<ProgramBody programId={dream.id} />);
+    const line = await screen.findByTestId("programs-line");
+    expect(line.querySelector("[data-station=night]")!.textContent).toContain(`Sleeps until ${dream.night!.start}`);
+    // No steps yet: the night fills itself, so Start is there with what it will do.
+    const tray = screen.getByTestId("programs-tray");
+    expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
+    expect(within(tray).getByTestId("programs-start-words").textContent)
+      .toBe(`Start will check the repository. Then it sleeps until ${dream.night!.start}; from ${dream.night!.start} to ${dream.night!.end} it takes at most ${dream.night!.max_steps} small steps from the tasks marked Tonight.`);
   });
 });
 
@@ -948,7 +976,8 @@ describe("REQ9: the Programs list (Find, Project ▾, Person ▾, Group, Met)", 
     await screen.findAllByRole("menuitem");
     fireEvent.click(menuItem("Project"));
     const bands = screen.getAllByTestId("programs-band");
-    expect(bands.map((band) => within(band).getByRole("heading").textContent)).toEqual([`HoldSpeak · ${shown.length}`, "No project · 1"]);
+    expect(bands.map((band) => within(band).getByRole("heading").textContent)).toEqual([`HoldSpeak · ${shown.length}`,
+      `No project · ${list.programs.filter((row) => !(row.project?.id ?? row.project_id)).length}`]);
     // Inside a band: the worst state first (Your turn before Drafting before Done).
     const states = within(bands[0]).getAllByTestId("programs-row").map((row) => row.getAttribute("data-state"));
     expect(states).toEqual([...states].sort((a, b) => ["waiting", "running", "drafting", "done", "parked"].indexOf(a!) - ["waiting", "running", "drafting", "done", "parked"].indexOf(b!)));
@@ -2297,5 +2326,17 @@ describe("PG-IMPORT IMP2: the to-do row and the ending word (recorded: scripts/r
     await screen.findByTestId("programs-board");
     const cut = todo.steps.find((step) => step.ending === "interrupted")!;
     expect(stepRow(cut.ordinal).textContent).toContain("Parked · interrupted");
+  });
+});
+
+describe("PG-IMPORT IMP3: what a step waits on (recorded: scripts/record_program_fixtures.py)", () => {
+  it("a step after one that ended says so on its row, in the hub's words", async () => {
+    const todo = todoFixture as unknown as Program;
+    hub({ [`GET /api/programs/${todo.id}`]: todo });
+    render(<ProgramBody programId={todo.id} />);
+    await screen.findByTestId("programs-board");
+    const waiting = todo.steps.find((step) => step.wait?.cause === "target_ended")!;
+    expect(waiting.wait!.line).toBe(`Step ${waiting.ordinal} with Claude Code is waiting on something that has ended.`);
+    expect(stepRow(waiting.ordinal).textContent).toContain(waiting.wait!.line);
   });
 });

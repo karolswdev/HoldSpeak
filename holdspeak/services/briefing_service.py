@@ -220,14 +220,16 @@ def later_until(choice: str, now: datetime) -> datetime:
     local = now.astimezone()
     if choice == "in_1h":
         return local + timedelta(hours=1)
+    # The wall time on its own date, with that date's offset (wall_clock;
+    # the DST day turned "At 13:00" into 12:00).
+    from .wall_clock import at_local, next_local
+
     if choice == "at_13":
-        at = local.replace(hour=13, minute=0, second=0, microsecond=0)
-        return at if at > local else at + timedelta(days=1)
+        return next_local(local, 13)
     if choice == "tonight":
-        at = local.replace(hour=19, minute=0, second=0, microsecond=0)
-        return at if at > local else at + timedelta(days=1)
+        return next_local(local, 19)
     if choice == "tomorrow":
-        return (local + timedelta(days=1)).replace(hour=7, minute=0, second=0, microsecond=0)
+        return at_local(local, 7, days=1)
     raise BriefingRefused("later_invalid", "Choose In 1 hour, At 13:00, Tonight or Tomorrow.", status=400)
 
 

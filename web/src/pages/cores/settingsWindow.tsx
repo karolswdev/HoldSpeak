@@ -9,6 +9,7 @@
  * content width of 520 px or less the rail is the first view and a pane opens
  * with a Back verb. `PrefStatus` composes the kit `StatusBar`: the one status
  * bar in the product. */
+import { latestPast } from "../../desk/surface/format";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { StatusBar, type StatusBarItem } from "../../desk/surface/kit";
@@ -251,7 +252,9 @@ export function stampDate(stamp: string | null | undefined): Date | undefined {
   if (!match) return undefined;
   const at = new Date();
   at.setHours(Number(match[1]), Number(match[2]), Number(match[3] ?? 0), 0);
-  return at;
+  // In the hour the clocks repeat, the later instant when it is not in the
+  // future: a save made just now says "just now" (DST day, 2026-11-01).
+  return latestPast(at);
 }
 
 /** `16:22:54` or `16:22` (the writers' stamps) said as the owner's clock. */

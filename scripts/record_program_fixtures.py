@@ -306,7 +306,9 @@ def record_todo(root: Path) -> dict[str, Any]:
     client = _client(rig)
     pid = _create(rig, "Atlas at 393", template="fast-cycle", control="normal")
     rig.service.plan(OWNER, pid, steps=[{"title": "Atlas anchors", "brief": "Cite each anchor once."},
-                                        {"title": "Atlas index", "brief": "Index the anchors."}])
+                                        {"title": "Atlas index", "brief": "Index the anchors."},
+                                        # PG-IMPORT IMP3: waits on step 2, which the cut-off ends.
+                                        {"title": "Atlas links", "brief": "Link the index.", "after": [2]}])
     step = rig.step(pid, 1)
     rig.service.require(OWNER, pid, text="The atlas reads well at 393", kind="word", step_id=step["id"],
                         spec={"walk": ["Open the atlas at 393", "Read the first section"]})
@@ -558,6 +560,12 @@ def record(root: Path) -> dict[str, Any]:
     rig.tick()
     rig.service.park(OWNER, parked)
 
+    # ── Two proof runs he parked as proofs (#1707's reason; the list folds them) ──
+    for title in ("Proof · README docs changelog", "Proof 2 · README docs changelog"):
+        proof = _create(rig, title, template="fast-cycle", control="yolo")
+        rig.service.plan(OWNER, proof, steps=[{"title": "Add a line to the README", "brief": "x"}])
+        rig.service.park(OWNER, proof, reason="proof")
+
     # ── Drafting ──
     drafting = _create(rig, "Calls on the home box", template="overnight", project_id="proj-holdspeak")
     rig.service.plan(OWNER, drafting, steps=[{"title": "The call runner", "brief": "Run a call turn on qwen."},
@@ -607,6 +615,7 @@ def _check(fixtures: dict[str, Any]) -> None:
     todo = fixtures["program.todo.json"]
     assert "todo" in [row["kind"] for row in todo["your_turn_items"]], todo["your_turn_items"]
     assert any(step["ending"] == "interrupted" for step in todo["steps"]), [s["ending"] for s in todo["steps"]]
+    assert any((step.get("wait") or {}).get("cause") == "target_ended" for step in todo["steps"]), todo["steps"]
     assert fixtures["program.parked.json"]["state"] == "parked"
     assert fixtures["program.drafting.json"]["state"] == "drafting"
     assert fixtures["needs_you.program.json"]["items"]

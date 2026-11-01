@@ -99,14 +99,21 @@ def in_quiet(moment: datetime, quiet: tuple[int, int]) -> bool:
 
 def quiet_end_after(moment: datetime, quiet: tuple[int, int]) -> datetime:
     """The next end of quiet hours after ``moment`` (local)."""
-    local = moment.astimezone()
-    at = local.replace(hour=int(quiet[1]) % 24, minute=0, second=0, microsecond=0)
-    return at if at > local else at + timedelta(days=1)
+    from .wall_clock import next_local
+
+    return next_local(moment, int(quiet[1]) % 24)
 
 
 def _at_hour(local: datetime, hour: int, minute: int = 0) -> datetime:
-    at = local.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    return at if at > local else at + timedelta(days=1)
+    from .wall_clock import next_local
+
+    return next_local(local, hour, minute)
+
+
+def _tomorrow_at(local: datetime, hour: int) -> datetime:
+    from .wall_clock import at_local
+
+    return at_local(local, hour, days=1)
 
 
 def parse_later(text: Any, now: datetime, *, quiet: tuple[int, int] = (22, 8),
@@ -128,7 +135,7 @@ def parse_later(text: Any, now: datetime, *, quiet: tuple[int, int] = (22, 8),
         if means == "end_of_quiet":
             return quiet_end_after(local, quiet)
         if means == "tomorrow":
-            return (local + timedelta(days=1)).replace(hour=int(quiet[1]) % 24, minute=0, second=0, microsecond=0)
+            return _tomorrow_at(local, int(quiet[1]) % 24)
         until = local + timedelta(hours=2)
         return quiet_end_after(local, quiet) if in_quiet(until, quiet) else until
     if words in ("in_2h",):
@@ -136,7 +143,7 @@ def parse_later(text: Any, now: datetime, *, quiet: tuple[int, int] = (22, 8),
     if words == "tonight":
         return _at_hour(local, 19)
     if words in ("tomorrow", "tomorrow morning"):
-        return (local + timedelta(days=1)).replace(hour=int(quiet[1]) % 24, minute=0, second=0, microsecond=0)
+        return _tomorrow_at(local, int(quiet[1]) % 24)
     if words == "end_of_quiet":
         return quiet_end_after(local, quiet)
     # "in 2 hours", "in two hours", "2h", "30m", "in 30 minutes", "in an hour", "in half an hour"
@@ -430,6 +437,12 @@ class ReachService:
                         "returned": bool(back) or None}))
                 except ServiceError as exc:
                     log.info(f"reach: {ref} not sent to Telegram: {exc.code}")
+                    # PG-IMPORT IMP3: the step says the message did not arrive.
+                    try:
+                        self.programs().notice_lost(str(item.get("program_id") or ""), str(item.get("step_id") or ""),
+                                                    "Telegram")
+                    except Exception as lost:
+                        log.debug(f"reach: notice_lost not written: {lost}")
         done["settled"] = telegram.settle_gone(set(items))
         # JRN4: the night's line is the morning's one message at the digest
         # hour; when it goes, the plain digest of that day does not.
@@ -483,7 +496,9 @@ class ReachService:
         if at is None:
             return True
         local = at.astimezone()
-        due = local.replace(hour=self.digest_hour() % 24, minute=0, second=0, microsecond=0)
+        from .wall_clock import at_local
+
+        due = at_local(local, self.digest_hour() % 24)
         return now.astimezone() >= max(due, local)
 
     def _night_text(self, telegram: Any, row: Mapping[str, Any]) -> str:

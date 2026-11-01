@@ -362,8 +362,8 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 |---|---|---|---|
 | IMP0 | The design note | Shipped #1699 (2026-11-01) |  |
 | IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Shipped #1706 (2026-11-01) | `brief_words.step_report`; `seen` on engine checkpoints; `facts.files`. |
-| IMP2 | The to-do row (Done, Can't do it); the ending word | Shipped (PG-IMPORT IMP2 PR) | A to-do is a required Your word with walk lines; a step whose brief asks him by hand is not detected (no prose reading). |
-| IMP3 | Wait sentences; Since you were last here on Today | Open |  |
+| IMP2 | The to-do row (Done, Can't do it); the ending word | Shipped #1710 (2026-11-01) | A to-do is a required Your word with walk lines; a step whose brief asks him by hand is not detected (no prose reading). |
+| IMP3 | Wait sentences; Since you were last here on Today | Shipped (PG-IMPORT IMP3 PR) | `brief_words.WAIT_SENTENCES`, `step_wait`, `services/last_here.py`. Notice-lost is wired for Telegram only. |
 | IMP4 | Never wider than the parent (closes the open ruling) | Shipped (this PR) | `program_service.parent_level`/`wider`: an agent's create is capped and says so; its update or text to a wider control is refused ("Refused: a program runs no wider than what made it", ledger line); step launches, handoffs, race entrants and helpers run at the Program's or parent's level (fenced). |
 | IMP5 | The `because` on each routed request; four honest refusals of a late answer | Shipped in part (this PR) | Every package body and Telegram send row carries `because` (`briefing_service.because_of`; the ladder's rule on its sends); a permission kind or a `gate:` ref is refused (`authority_stays`) and fenced; not pending / not offered / not usable / not kept as codes with his words on the page and Telegram. Open: a `because` for the call's reads (DIR8 composes without a package), the call's last line. |
 | IMP6 | Take it over, hand it back, on a step's lane | Open |  |

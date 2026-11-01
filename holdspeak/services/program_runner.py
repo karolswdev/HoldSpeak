@@ -197,7 +197,8 @@ class ProgramRunner:
             return dict(flight_of_launch(self.db, launch_id, ledger=self.ledger()) or {})
         except Exception as exc:
             log.debug(f"flight not read: {exc}")
-            return {}
+            # A read that failed is not a lane the hub cannot find (IMP3).
+            return {"state": "", "unread": True}
 
     def gate(self) -> Any:
         """The gate's held calls of a launch, and a decision on one
@@ -586,6 +587,21 @@ class ProgramRunner:
         return is_core({"spend_usd": 1.0, "spend_limit_usd": program.get("spend_limit_usd")}) if program.get(
             "spend_limit_usd") is None else ""
 
+    def _wait(self, step: dict[str, Any], cause: Optional[str]) -> None:
+        """PG-IMPORT IMP3 (BroCrew's wait incidents): the engine writes the
+        cause key (``brief_words.WAIT_SENTENCES``), never only a sentence;
+        ``None`` clears it. A move of the step's state clears it too."""
+        facts = dict(step.get("facts") or {})
+        now = (facts.get("wait") or {}).get("cause")
+        if now == cause:
+            return
+        if cause:
+            facts["wait"] = {"cause": cause, "at": self.service._clock()}
+        else:
+            facts.pop("wait", None)
+        step["facts"] = facts
+        self.service.save_step(step)
+
     def _hold(self, step: dict[str, Any], reason: str) -> None:
         if step.get("held_reason") != reason:
             step["held_reason"] = reason
@@ -965,6 +981,13 @@ class ProgramRunner:
     def _follow(self, program: dict[str, Any], step: dict[str, Any]) -> None:
         flight = self.flight(str(step.get("launch_id") or ""))
         state = str(flight.get("state") or "")
+        # PG-IMPORT IMP3: what the step waits on, as a closed cause.
+        if step.get("launch_id") and not flight:
+            self._wait(step, "lane_missing")
+        elif state == "resuming":
+            self._wait(step, "recovery")
+        elif (step.get("facts") or {}).get("wait", {}).get("cause") in ("lane_missing", "recovery"):
+            self._wait(step, None)
         facts = dict(step.get("facts") or {})
         if self._commit_landed(program, step, facts):
             return
@@ -1080,7 +1103,10 @@ class ProgramRunner:
         known = facts.get("held_commit")
         if hold is None:
             if known:
+                # The hold ended and no answer came here (his own answer clears
+                # ``held_commit`` before the gate does): IMP3's hold_expired.
                 facts.pop("held_commit", None)
+                facts["wait"] = {"cause": "hold_expired", "at": self.service._clock()}
                 step["facts"] = facts
                 self.service.save_step(step)
             return False

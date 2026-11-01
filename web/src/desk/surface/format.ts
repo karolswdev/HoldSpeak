@@ -15,6 +15,21 @@
  *    the day before in a zone west of UTC);
  *  - a number: epoch seconds (below 1e12) or epoch milliseconds.
  * Junk reads as null. */
+/** A local wall time with no zone (`2026-11-01T01:30:00`). */
+const BARE_LOCAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/;
+
+/** A bare local stamp inside the hour the clocks repeat (2026-11-01 01:30
+ *  in America/Denver happens twice) parses to the first of the two
+ *  instants. A stamp tells of the past: take the later instant when it is
+ *  not in the future, so a stamp written just now reads "just now", not
+ *  "1h ago". Outside a repeated hour this changes nothing. */
+export function latestPast(first: Date): Date {
+  const later = new Date(first.getTime() + 3_600_000);
+  const same = later.getHours() === first.getHours() && later.getMinutes() === first.getMinutes()
+    && later.getDate() === first.getDate();
+  return same && later.getTime() <= Date.now() + 60_000 ? later : first;
+}
+
 export function wireDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === "") return null;
   let date: Date;
@@ -32,6 +47,7 @@ export function wireDate(value: unknown): Date | null {
         ? `${text.replace(" ", "T")}Z`
         : text,
     );
+    if (BARE_LOCAL.test(text) && !Number.isNaN(date.getTime())) date = latestPast(date);
   }
   return Number.isNaN(date.getTime()) ? null : date;
 }
