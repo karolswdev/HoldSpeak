@@ -656,6 +656,8 @@ WAIT_SENTENCES = {
     "hold_expired": "is waiting: the hold on its commit ended with no answer",
     "recovery": "picks up again after the hub restart",
     "notice_lost": "waits on you, and the message to you did not arrive",
+    # The owner's ruling of 2026-11-01: park stops the steps.
+    "program_parked": "is parked with the program",
 }
 
 

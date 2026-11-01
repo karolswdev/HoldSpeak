@@ -2711,3 +2711,27 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     await waitFor(() => expect(turnRow("lesson")).toBeUndefined());
   });
 });
+
+// The owner's ruling of 2026-11-01: park stops the steps (recorded:
+// tests/integration/test_program_park_steps.py).
+import parkedStepsFixture from "../__fixtures__/program.parked_steps.json";
+
+describe("park stops the steps (the live walk's finding)", () => {
+  it("each open step of a parked Program reads one wait sentence; no breathing dot, no Take it over", async () => {
+    const parked = parkedStepsFixture as unknown as Program;
+    hub({ [`GET /api/programs/${parked.id}`]: parked });
+    render(<ProgramBody programId={parked.id} />);
+    await screen.findByTestId("programs-board");
+    expect(parked.state).toBe("parked");
+    for (const ordinal of [2, 3]) {
+      const row = stepRow(ordinal);
+      expect(row.getAttribute("data-state")).toBe("parked");
+      expect(within(row).getByTestId("programs-step-words").textContent)
+        .toBe(`Step ${ordinal} with Claude Code is parked with the program.`);
+      expect(row.querySelector("[data-live]")).toBeNull();
+      expect(within(row).queryByTestId("programs-step-take")).toBeNull();
+      expect(within(row).queryByTestId("programs-step-open")).toBeNull();
+    }
+    expect(screen.queryByTestId("programs-your-turn")).toBeNull();
+  });
+});
