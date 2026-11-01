@@ -1558,8 +1558,8 @@ class ProgramService:
                     # PG14: an automation made it; its place line names it.
                     wb = self.db.workbenches.get(ident, include_deleted=True)
                     title = str(getattr(wb, "name", "") or "")
-                elif kind == "program":
-                    # JRN1: the Program it was split from (and waits on).
+                elif kind in ("program", "after"):
+                    # The Program it came from; JRN1's ``after``: the one it waits on.
                     title = str((self.store.get_program(ident) or {}).get("title") or "")
                 else:
                     from .agent_hand_service import item_title
@@ -1933,15 +1933,19 @@ class ProgramService:
                 raise ProgramRefused("spend_limit_invalid", "The spend limit is zero or more dollars.", status=400)
         root, project_id = self._repository(repository, project_id or None)
         profile = self._profile(default_profile, "default_profile") or defaults.get("default_profile") or "claude-default"
+        # A template's engine is for its pi; a profile he chose instead (Claude
+        # Code) runs on its own model and takes no engine.
         engine = self._engine_id(default_engine, profile, "default_engine") if default_engine else (
             self._engine_id(defaults.get("default_engine"), profile, "default_engine", optional_missing=True)
-            if defaults.get("default_engine") else None)
+            if defaults.get("default_engine") and profile == "pi-default" else None)
         listed = self._runs_on(runs_on, "runs_on")
         if listed:
             profile, engine = listed[0]["profile"], listed[0]["engine"]
         allowed = self._allowed_profiles(allowed_profiles)
         reviewer = self._profile(reviewer_profile, "reviewer_profile") or defaults.get("reviewer_profile")
-        reviewer_engine_id = self._engine_id(reviewer_engine, reviewer, "reviewer_engine") if reviewer_engine else None
+        reviewer_engine_id = self._engine_id(reviewer_engine, reviewer, "reviewer_engine") if reviewer_engine else (
+            self._engine_id(defaults.get("reviewer_engine"), reviewer, "reviewer_engine", optional_missing=True)
+            if defaults.get("reviewer_engine") and reviewer == "pi-default" else None)
         command, _sections = self._check_command(root, check_command)
         if origin_ref:
             kind, _, ident = str(origin_ref).partition(":")
@@ -3943,9 +3947,11 @@ class ProgramService:
 
     def _waits_on(self, program: Mapping[str, Any]) -> Optional["ProgramRefused"]:
         """JRN1: a Program made from a draft's later Program waits on the one
-        before it (``origin_ref = program:<id>``) until that one is Done."""
+        before it (``origin_ref = after:<id>``) until that one is Done. A
+        Program another one made (``program:<id>``: a fix program, an agent's
+        child) never waits on it."""
         kind, _, ident = str(program.get("origin_ref") or "").partition(":")
-        if kind != "program" or not ident:
+        if kind != "after" or not ident:
             return None
         before = self.store.get_program(ident)
         if before is None or before.get("closed_at") or before.get("state") == "done":

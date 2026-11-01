@@ -33,7 +33,7 @@ _ALIASES = {
 _FINDING = re.compile(r"^\s*(?:[-*]\s*)?(MUST|SHOULD)\b\s*[:\-]?\s*(.*?)\s*$", re.I)
 _REQ_UNMET = re.compile(r"^\s*(?:[-*]\s*)?REQ\s+R(\d+)\s*[:\-]\s*UNMET\b\s*(?:[·:\-—]\s*)?(.*?)\s*$", re.I)
 _CLEAR_FINDING = re.compile(
-    r"^\s*(?:[-*]\s*)?MUST\s*[:\-]?\s*(?:none|no|zero)(?:\s+findings?)?\s*$",
+    r"^\s*(?:[-*]\s*)?MUST\s*[:\-]?\s*(?:none|no|zero)(?:\s+findings?)?\s*[.!]?\s*$",
     re.I,
 )
 _CLEAR_VERDICT = re.compile(
@@ -75,6 +75,11 @@ def initial_review(value: Any) -> Optional[dict[str, Any]]:
     }
 
 
+#: Empty reads of a finished reviewer's words before its result is unclear
+#: (one per review tick, about 30 s each).
+EMPTY_READS_WAIT = 4
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -101,7 +106,13 @@ def parse_findings(words: Any) -> list[dict[str, str]]:
         if not match or not match.group(2):
             continue
         detail = match.group(2).strip()
-        if re.fullmatch(r"(?:no|none|zero)(?:\s+findings?)?", detail, re.I):
+        # "MUST: none." (a closing mark) is none; "MUST: 1 remains (…)" is the
+        # reviewer's count of the findings above, never a finding (the first
+        # real night, 2026-11-01: both went back to the builder as findings).
+        plain = detail.strip(" .!;,").strip()
+        if re.fullmatch(r"(?:no|none|zero|nothing)(?:\s+(?:findings?|left|remain(?:s|ing)?))?", plain, re.I):
+            continue
+        if re.match(r"^\d+\s+(?:remains?|left|open|found|findings?)\b", plain, re.I):
             continue
         found.append({"level": match.group(1).upper(), "text": detail})
     if not found and re.search(r"\b(?:no|none|zero)\s+(?:MUST\s+)?findings?\b", text, re.I):
@@ -350,6 +361,13 @@ class AgentReviewLoop:
     def _finish_reviewer(self, builder: Mapping[str, Any], pair: dict[str, Any]) -> Optional[dict[str, Any]]:
         reviewer_id = str(pair.get("reviewer_launch_id") or "")
         words = self._result(reviewer_id)
+        if not str(words or "").strip() and int(pair.get("empty_reads") or 0) < EMPTY_READS_WAIT:
+            # The turn ended before its Stop words landed (the first real
+            # night: an empty read became "Reviewer result is unclear" for
+            # him). Read again on the next ticks before calling it unclear.
+            pair["empty_reads"] = int(pair.get("empty_reads") or 0) + 1
+            return None
+        pair.pop("empty_reads", None)
         findings, explicit_clear = _review_result(words)
         must = [item for item in findings if item.get("level") == "MUST"]
         round_ = int(pair.get("round") or 0)

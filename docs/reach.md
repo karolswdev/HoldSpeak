@@ -24,8 +24,6 @@ HoldSpeak uses one bot (the same bot as Cadence) and one chat: yours.
 
 While a chat is paired, no other chat can pair. **Unpair** removes the chat. **Pair Telegram** is off until the token is stored.
 
-Note: no real bot was paired when these docs were written. The pairing is tested against the documented shapes of the Telegram Bot API only.
-
 ## When to reach you
 
 The ladder shows each rung in the order HoldSpeak tries them, with its wait: **Desk** (at once, always), **Phone** (the Phone app's push: **At once** or **Off**), **Telegram** (the choices below) and **Call** (by your **Reach you** rules, when Calls is set). An answer on any rung stops the ladder.
@@ -49,7 +47,15 @@ Reach and the Phone use one set of quiet hours. During quiet hours, Telegram sen
 
 **Digest** sets the time of the daily digest: **End of quiet hours** (the default), or 06:00, 07:00, 08:00, 09:00, 10:00, 12:00 or 18:00. HoldSpeak sends one digest a day at that time, only when something waits on you, and not when Telegram is **Off**. **Send the digest now** sends it at once (Telegram must be paired).
 
-The digest is a plain list today: "3 wait on you", one line for each item ("Finding · <program> · step 2"), and "Open your desk to see each one." It has no buttons.
+The digest is a plain list: "3 wait on you", one line for each item ("Finding · <program> · step 2"), and "Open your desk to see each one." It has no buttons.
+
+**One morning message.** In the morning you get one message, not three:
+
+- After a night program, the message is the night's "Since last night" line, with how many of the night's items wait on you and their page link.
+- Else it is the digest, when something waits on you.
+- When a Cadence loop is due, the same message ends with the Cadence brief's line, for example "Cadence: Create issue: watchdog. 3 open loops." When nothing waits, that line goes alone.
+
+While Telegram is not **Off**, Cadence sends no morning brief of its own. Send `/brief` to the bot for the whole brief with its buttons.
 
 **Later means** sets what a plain "later" means:
 
@@ -77,9 +83,12 @@ A page can also hold these items. Each choice runs the same action as the button
 | A call that an agent asks to make | `phone-call:<id>` | **Call now**: your phone rings now. **Let it wait**: no call, and it stays on your desk. |
 | A meeting's proposed action | `meeting-proposal:<id>` | The page shows the preview first: where it goes and the lines it sends or writes. **Do it**: HoldSpeak does it now. **Not this**: nothing is done or sent. |
 | A project review's proposal | `project-proposal:<id>` | The page shows what **Accept** adds or records. **Accept** or **Dismiss**. |
+| An audit's findings, its fix program, a lesson | `program:<id>:<item id>` (the id of its Your turn row) | The same choices as on the desk: **File** or **Skip**; **Make** or **Skip**; **Keep for this program**, **Keep for HoldSpeak** or **Skip**. The page names the program as the place, not a step. |
 | A program step's agent asks a question | `program:<id>:<step>:answer` | One text field, the only input on the page: your answer. HoldSpeak types it to the agent. On Telegram, reply to the message with your answer. |
+| A document that is ready to send | `send:<id>` | The page shows the preview first: the destination and the lines that go. **Send**: HoldSpeak sends it now. **Discard**: nothing is sent. This item goes on the page only: a Telegram message for it has no Send button. |
+| A desk agent asks a question outside a program | `coder:<agent>:<session>` | One text field: your answer. HoldSpeak types it to the agent. |
 
-When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. A page with several items also shows plain lines with no buttons: the Door tasks due today, and the lines the desk adds (a blocker, for example "The meeting recorder has no microphone."). Not yet on a page: a desk agent's question outside a program, a prepared send and a held tool call.
+When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. A page with several items also shows plain lines with no buttons: the Door tasks due today, and the lines the desk adds (a blocker, for example "The meeting recorder has no microphone."). A held tool call never goes on a page: it stays on your desk.
 
 ## What may travel, and a late answer
 

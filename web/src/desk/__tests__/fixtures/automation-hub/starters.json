@@ -92,7 +92,7 @@
     {
      "id": "overnight-program",
      "name": "Overnight on the home box",
-     "description": "Each weekday at 23:30, starts a program: pi builds on the home engine when it is idle, Claude Code reviews, YOLO merges a green step.",
+     "description": "Each weekday at 23:30, starts a program: pi builds and reviews on the home engine when it is idle, YOLO merges a green step.",
      "instruction": "Work through the open briefs of this project, one step for each.",
      "sources": [],
      "when": {

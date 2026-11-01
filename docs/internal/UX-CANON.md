@@ -176,8 +176,8 @@ Each line names the ruling, its canvas or design note, and the PR.
   agent did (`story`, at most three plain lines) and its parts; Done when as
   the last row; the shape bar as the composer at the foot. The step rows lost
   the six grey dots. Canvas `betterment/programs/canvases/program-window-2026-10-31.html`,
-  design `betterment/programs/PROGRAM-WINDOW-2026-10-31.md`; #1685 and the
-  build PR.
+  design `betterment/programs/PROGRAM-WINDOW-2026-10-31.md`; #1685, built
+  #1688, Drafting and plain rows #1692.
 
 - **The fold (owner 2026-11-01: "that left chevron something: fuck off.
   Invent something a lot clearer").** A section that opens in place draws no
@@ -186,7 +186,52 @@ Each line names the ruling, its canvas or design note, and the PR.
   `FoldGadget` and `Disclosure` and Today's folds draw it, so every fold on
   the desk changed at once. A Button that opens a menu (More ▾) keeps its
   caret. Canvas `betterment/canvases/fold-2026-11-01.html` (direction B),
-  #1694 and the build PR; fence `surface/__tests__/fold.grammar.test.tsx`.
+  #1694, built #1695; fence `surface/__tests__/fold.grammar.test.tsx`.
+
+## Shipped 2026-11-01 (Programs and Reach faces)
+
+Recorded 2026-11-01 by the docs sweep (PG-DOCS-3). User words are in
+`docs/programs.md` and `docs/reach.md`.
+
+- **The Programs list (direction A).** Each row is one line in his terms and
+  a mini track; Done stays Done when parked; a park with a reason folds
+  under **Show** · **Hide**; the Programs a Program made fold under it. #1701,
+  #1712, #1723.
+- **The step report in registers (IMP1).** Checked, The agent says (marked as
+  not checked by HoldSpeak), Not checked, Files; the finished mark. #1706.
+- **The to-do row and the ending word (IMP2).** A Your word walk line is a
+  row with **Done** and **Can't do it**. #1710.
+- **Wait sentences (IMP3).** A waiting step and a list row say what they wait
+  on in one sentence; Today starts with Since you were last here, one line a
+  Program, a press opens it, nothing when nothing happened. #1713.
+- **Take it over, hand it back (IMP6).** One Button each on a running step's
+  row; "You have the lane"; neither asks first. #1718.
+- **The family (IMP7).** Came from and It made under the board, plain rows.
+  #1723.
+- **The audit's faces.** "Reviewer only: nothing is written", "Reads …" on a
+  step row, stations BRIEF · WORK · REVIEW · FILE, the Findings board with
+  **Open Door task**; File, Make and the lesson rows in Your turn and Needs
+  you. #1734, #1736.
+- **The race in the Program window.** The contenders and the winner row
+  ("Codex won the race · 34 min"); no Overturn on a winner. #1740.
+- **A ledger row opens its record.** "Proposed as a decision" is a press
+  that opens the decision. #1733.
+- **The brief as a note (owner 2026-10-31: "didn't even make sense").** The
+  brief is a chief-of-staff note in his terms; after his press it settles to
+  one line; never a raw error or path as the question; no callout box, no
+  left chevron. #1684.
+- **One briefing page for several items (DIR9, DIR10).** Each item decided in
+  place, its one line after the press, "1 waits on you." at the top; a send
+  shows its preview (destination and lines) and goes from the page only; an
+  agent's question is one text field with no microphone, because the page's
+  thin kit is outside the desk and the phone keyboard has its own (named in
+  `scripts/ux_canon_scan.py` `MIC_ALLOWLIST`); Door and blocker lines
+  are plain text with no Buttons. A permission never goes to a page. #1703,
+  #1708, #1735, #1739.
+- **Settings ▸ Reach, the ladder (DIR7).** The rungs in order with their
+  waits: Desk, Phone, Telegram, Call. #1704.
+- **Today's Prepared block.** Plain rows, no address chip, no raw id, a
+  chief-of-staff line. #1732.
 
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
