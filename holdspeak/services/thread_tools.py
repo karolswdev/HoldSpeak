@@ -366,6 +366,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "program.start": ("effect_proposal", False),
     "program.park": ("effect_proposal", False),
     "program.resume": ("effect_proposal", False),
+    "program.propose_fix": ("effect_proposal", False),
     "program.checkpoint": ("effect_proposal", False),
     "program.step_done": ("effect_proposal", False),
     "program.start_from": ("effect_proposal", False),

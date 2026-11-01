@@ -340,6 +340,9 @@ export interface ProgramStep {
   for_person: string | null;
   /** PG-IMPORT IMP1: the report in registers (Done, Merged, Parked, Failed). */
   report: StepReport | null;
+  /** PG-IMPORT IMP3: what it waits on (`target_ended`, `lane_missing`,
+   *  `hold_expired`, `recovery`, `notice_lost`) and the hub's sentence. */
+  wait?: { cause: string; line: string; at?: string | null } | null;
   /** PG-IMPORT IMP2: how the step's lane ended, apart from its state. */
   ending?: "finished" | "failed" | "interrupted" | "none";
   /** The agent's own report text, as it sent it. */

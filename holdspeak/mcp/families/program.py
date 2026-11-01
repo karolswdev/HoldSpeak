@@ -233,6 +233,11 @@ TOOLS: list[dict[str, Any]] = [
      "inputSchema": _schema({"program_id": _ID, "reason": {"type": ["string", "null"],
                                                          "enum": ["proof", "done-with-it", "done_with_it", None]}},
                             ["program_id"])},
+    {"name": "program.propose_fix", "description": "From an audit Program (template audit), make a fix "
+                                                 "Program in Drafting: one step per MUST finding, each with a "
+                                                 "Review requirement that it is fixed, linked to the audit. It "
+                                                 "is never started here.",
+     "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
     {"name": "program.resume", "description": "Resume a parked Program.",
      "inputSchema": _schema({"program_id": _ID}, ["program_id"])},
     {"name": "program.get",
@@ -496,6 +501,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return service.park(principal, str(args["program_id"]), reason=args.get("reason"))
     if name == "program.resume":
         return service.resume(principal, str(args["program_id"]))
+    if name == "program.propose_fix":
+        return service.propose_fix(principal, str(args["program_id"]))
     if name == "program.list":
         return service.list(principal, q=args.get("q"), project_id=args.get("project_id"), person_id=args.get("person_id"))
     if name == "program.checkpoint":

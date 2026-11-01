@@ -26,6 +26,8 @@ import type { PlanSize, PlanStep, ProgramStep } from "./types";
 const LANE_LIVE = new Set(["briefed", "working", "waiting", "limited", "checking", "check_failed", "review", "findings"]);
 
 export function rowWords(step: ProgramStep): string {
+  // PG-IMPORT IMP3: what the step waits on, in the hub's words, comes first.
+  if (step.wait?.line) return step.wait.line;
   const story = step.story ?? [];
   if (story.length) return story[story.length - 1].line;
   if (step.estimate?.words && (step.state === "planned" || step.state === "ready")) return step.estimate.words;

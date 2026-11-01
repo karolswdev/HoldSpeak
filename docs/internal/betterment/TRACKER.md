@@ -331,9 +331,9 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | JRN5 | A spoken answer becomes a prepared answer | Open | After LANG5; the default, no ruling. |
 | JRN6 | The item's verbs on a phone message | Open | After LANG5. |
 | JRN7 | `program.decide` behind a spoken yes | Shipped #1679 (2026-10-31) | Built as PG-DIRECTION DIR8. |
-| JRN8 | The Audit template | Open |  |
-| JRN9 | Findings filed as Door tasks; the Findings board | Open |  |
-| JRN10 | A proposed fix program from findings | Open |  |
+| JRN8 | The Audit template | Hub shipped (2026-11-01) | `program_templates.AUDIT`, `services/program_audit.py`: no check, no reviewer, `merge none`; the brief says read only and the report shape; the gate refuses an audit step's writes by rule (`audit_reads_only`, Normal and YOLO; Secure holds as always); a commit is a core question; the report is `program.step_done` or the turn's last words (asked once, then parked). Open: the stations BRIEF · WORK · REVIEW · FILE (faces); writes to the agent's own scratch (shots) are refused too. |
+| JRN9 | Findings filed as Door tasks; the Findings board | Hub shipped (2026-11-01) | MUST/SHOULD/NOTE lines become Door tasks ("Must fix: …", "Should fix: …", "Noted: …", `source_ref program_step:<id>:finding:<key>`), one task for one finding across steps; YOLO files all, Normal MUST and SHOULD, Secure asks (`audit_file`: File · Skip). The wire's `findings_board`. Open: the board face (window lane). |
+| JRN10 | A proposed fix program from findings | Hub shipped (2026-11-01) | `fix_program` row (Make · Skip) when every step reported and a MUST exists; `program.propose_fix` / `POST /api/programs/{id}/propose_fix`: a Drafting Program, one step per MUST with the Review requirement "<finding> is fixed", `origin_ref program:<audit>`; never started by rule. Open: the face. |
 | JRN11 | The lesson rule and the Lesson row | Open |  |
 | JRN12 | Keep a lesson for the repository | Open |  |
 | JRN13 | Run as a program on a project action row | Open | With LANG6. |
@@ -362,8 +362,8 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 |---|---|---|---|
 | IMP0 | The design note | Shipped #1699 (2026-11-01) |  |
 | IMP1 | The step report: Checked, The agent says, Not checked, Files; finished · needs a decision | Shipped #1706 (2026-11-01) | `brief_words.step_report`; `seen` on engine checkpoints; `facts.files`. |
-| IMP2 | The to-do row (Done, Can't do it); the ending word | Shipped (PG-IMPORT IMP2 PR) | A to-do is a required Your word with walk lines; a step whose brief asks him by hand is not detected (no prose reading). |
-| IMP3 | Wait sentences; Since you were last here on Today | Open |  |
+| IMP2 | The to-do row (Done, Can't do it); the ending word | Shipped #1710 (2026-11-01) | A to-do is a required Your word with walk lines; a step whose brief asks him by hand is not detected (no prose reading). |
+| IMP3 | Wait sentences; Since you were last here on Today | Shipped (PG-IMPORT IMP3 PR) | `brief_words.WAIT_SENTENCES`, `step_wait`, `services/last_here.py`. Notice-lost is wired for Telegram only. |
 | IMP4 | Never wider than the parent (closes the open ruling) | Shipped (this PR) | `program_service.parent_level`/`wider`: an agent's create is capped and says so; its update or text to a wider control is refused ("Refused: a program runs no wider than what made it", ledger line); step launches, handoffs, race entrants and helpers run at the Program's or parent's level (fenced). |
 | IMP5 | The `because` on each routed request; four honest refusals of a late answer | Shipped in part (this PR) | Every package body and Telegram send row carries `because` (`briefing_service.because_of`; the ladder's rule on its sends); a permission kind or a `gate:` ref is refused (`authority_stays`) and fenced; not pending / not offered / not usable / not kept as codes with his words on the page and Telegram. Open: a `because` for the call's reads (DIR8 composes without a package), the call's last line. |
 | IMP6 | Take it over, hand it back, on a step's lane | Open |  |

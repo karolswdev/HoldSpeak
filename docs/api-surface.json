@@ -5623,6 +5623,14 @@
       "consumers": []
     },
     {
+      "path": "/api/programs/{program_id}/propose_fix",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.programs",
+      "consumers": []
+    },
+    {
       "path": "/api/programs/{program_id}/requirements",
       "methods": [
         "POST"
