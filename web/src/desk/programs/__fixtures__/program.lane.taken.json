@@ -12,7 +12,7 @@
   "check_command": "sh /Users/karol/dev/tools/wt-pg-imp6/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-01T10:18:03.083381+00:00",
+      "at": "2026-11-01T11:05:09.383347+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -23,42 +23,42 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-46e02de66d36/2",
-      "ref_commit": "63545e84a02f5b7ba1a9286e5dfad3702ff7bdf8",
+      "ref": "refs/holdspeak/checkpoints/step-1a433dda13ce/2",
+      "ref_commit": "8495e8e32794422937db19b049d4b9469a9a771e",
       "rule": null,
-      "step_id": "step-46e02de66d36",
+      "step_id": "step-1a433dda13ce",
       "undo": {
         "pin": {
-          "commit": "63545e84a02f5b7ba1a9286e5dfad3702ff7bdf8",
-          "head": "b3bc2169b4f620fdde88b4258edf91c2164a0455",
+          "commit": "8495e8e32794422937db19b049d4b9469a9a771e",
+          "head": "6adc2ec94e8f8037c4ad3190f2b2561e55992747",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-46e02de66d36/2",
+          "ref": "refs/holdspeak/checkpoints/step-1a433dda13ce/2",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         }
       }
     },
     {
-      "at": "2026-11-01T10:18:02.955469+00:00",
+      "at": "2026-11-01T11:05:08.991289+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 4,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-46e02de66d36",
+      "line": "Handed to Claude Code in hs-program-step-1a433dda13ce",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-46e02de66d36/1",
-      "ref_commit": "8f81365eccb41bc70b1194770cb930f418698988",
+      "ref": "refs/holdspeak/checkpoints/step-1a433dda13ce/1",
+      "ref_commit": "37b8bb60247cc87f1b78e8cc8785aa73d5592197",
       "rule": null,
-      "step_id": "step-46e02de66d36",
+      "step_id": "step-1a433dda13ce",
       "undo": {
         "pin": {
-          "commit": "8f81365eccb41bc70b1194770cb930f418698988",
-          "head": "b3bc2169b4f620fdde88b4258edf91c2164a0455",
+          "commit": "37b8bb60247cc87f1b78e8cc8785aa73d5592197",
+          "head": "6adc2ec94e8f8037c4ad3190f2b2561e55992747",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-46e02de66d36/1",
+          "ref": "refs/holdspeak/checkpoints/step-1a433dda13ce/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -67,7 +67,7 @@
       }
     },
     {
-      "at": "2026-11-01T10:18:02.872449+00:00",
+      "at": "2026-11-01T11:05:08.777738+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -85,7 +85,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T10:18:02.839725+00:00",
+      "at": "2026-11-01T11:05:08.686461+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -103,7 +103,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T10:18:02.837658+00:00",
+      "at": "2026-11-01T11:05:08.682174+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -124,7 +124,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-01T10:18:02.837299+00:00",
+  "created_at": "2026-11-01T11:05:08.681789+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -144,10 +144,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "Atlas lane.",
-  "id": "program-d76a801d7b3d",
+  "id": "program-6fe16414d270",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T10:18:03.083381+00:00",
+    "at": "2026-11-01T11:05:09.383347+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -158,16 +158,16 @@
     "overturnable": false,
     "overturned_at": null,
     "pin_note": null,
-    "ref": "refs/holdspeak/checkpoints/step-46e02de66d36/2",
-    "ref_commit": "63545e84a02f5b7ba1a9286e5dfad3702ff7bdf8",
+    "ref": "refs/holdspeak/checkpoints/step-1a433dda13ce/2",
+    "ref_commit": "8495e8e32794422937db19b049d4b9469a9a771e",
     "rule": null,
-    "step_id": "step-46e02de66d36",
+    "step_id": "step-1a433dda13ce",
     "undo": {
       "pin": {
-        "commit": "63545e84a02f5b7ba1a9286e5dfad3702ff7bdf8",
-        "head": "b3bc2169b4f620fdde88b4258edf91c2164a0455",
+        "commit": "8495e8e32794422937db19b049d4b9469a9a771e",
+        "head": "6adc2ec94e8f8037c4ad3190f2b2561e55992747",
         "n": 2,
-        "ref": "refs/holdspeak/checkpoints/step-46e02de66d36/2",
+        "ref": "refs/holdspeak/checkpoints/step-1a433dda13ce/2",
         "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
       }
     }
@@ -176,8 +176,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-d76a801d7b3d",
-  "note_window": "pullout:note:program-program-d76a801d7b3d",
+  "note_id": "program-program-6fe16414d270",
+  "note_window": "pullout:note:program-program-6fe16414d270",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -192,7 +192,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-w17g4lcc/lane/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-92wx_ash/lane/app"
   },
   "requirements": [],
   "review_depth": null,
@@ -271,9 +271,9 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-46e02de66d36",
+      "id": "step-1a433dda13ce",
       "last_checkpoint": {
-        "at": "2026-11-01T10:18:03.083381+00:00",
+        "at": "2026-11-01T11:05:09.383347+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -284,16 +284,16 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-46e02de66d36/2",
-        "ref_commit": "63545e84a02f5b7ba1a9286e5dfad3702ff7bdf8",
+        "ref": "refs/holdspeak/checkpoints/step-1a433dda13ce/2",
+        "ref_commit": "8495e8e32794422937db19b049d4b9469a9a771e",
         "rule": null,
-        "step_id": "step-46e02de66d36",
+        "step_id": "step-1a433dda13ce",
         "undo": {
           "pin": {
-            "commit": "63545e84a02f5b7ba1a9286e5dfad3702ff7bdf8",
-            "head": "b3bc2169b4f620fdde88b4258edf91c2164a0455",
+            "commit": "8495e8e32794422937db19b049d4b9469a9a771e",
+            "head": "6adc2ec94e8f8037c4ad3190f2b2561e55992747",
             "n": 2,
-            "ref": "refs/holdspeak/checkpoints/step-46e02de66d36/2",
+            "ref": "refs/holdspeak/checkpoints/step-1a433dda13ce/2",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           }
         }
@@ -328,7 +328,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-11-01T10:18:02.954953+00:00",
+      "started_at": "2026-11-01T11:05:08.990653+00:00",
       "state": "working",
       "state_word": "Working",
       "station": 1,
@@ -342,19 +342,19 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T10:18:02.955469+00:00",
+          "at": "2026-11-01T11:05:08.991289+00:00",
           "line": "Handed to Claude Code."
         },
         {
-          "at": "2026-11-01T10:18:03.083381+00:00",
+          "at": "2026-11-01T11:05:09.383347+00:00",
           "line": "You took the lane over."
         }
       ],
       "taken": true,
       "title": "Atlas anchors",
-      "updated_at": "2026-11-01T10:18:03.083112+00:00",
+      "updated_at": "2026-11-01T11:05:09.382912+00:00",
       "wait": null,
-      "worktree": "hs-program-step-46e02de66d36"
+      "worktree": "hs-program-step-1a433dda13ce"
     }
   ],
   "template": "fast-cycle",
@@ -367,7 +367,7 @@
       "title": "Atlas anchors"
     }
   ],
-  "updated_at": "2026-11-01T10:18:02.872099+00:00",
+  "updated_at": "2026-11-01T11:05:08.777417+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

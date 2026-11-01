@@ -2,7 +2,7 @@
   "programs": [
     {
       "done": 1,
-      "id": "program-35284e4c3101",
+      "id": "program-1b3984a2675c",
       "line": "The hub stops stalling · 1 of 7",
       "state": "waiting",
       "state_word": "Your turn",
@@ -10,10 +10,10 @@
       "to_ask": [],
       "to_show": [
         {
-          "merged_at": "2026-11-01T10:31:29.876953+00:00",
+          "merged_at": "2026-11-01T11:04:10.748175+00:00",
           "pr_number": 101,
           "pr_url": "https://github.com/acme/app/pull/101",
-          "step_id": "step-172558c2cdec",
+          "step_id": "step-54bfccc7b107",
           "title": "Indexes"
         }
       ],
