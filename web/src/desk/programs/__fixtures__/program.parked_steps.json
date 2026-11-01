@@ -1,0 +1,978 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "budget_tokens": null,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "sh /Users/karol/dev/tools/wt-park/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-11-01T21:12:32.184907+00:00",
+      "by": "owner",
+      "choice": "proof",
+      "decision_record_id": null,
+      "id": 12,
+      "kind": "program_park",
+      "line": "Parked the program; the worktrees stay (a proof run)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T21:12:32.083397+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 11,
+      "kind": null,
+      "line": "Merged #101",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-37b420416abb/7",
+      "ref_commit": "8bfd82a779a7799e970b42013c4da072f83068e7",
+      "rule": null,
+      "step_id": "step-37b420416abb",
+      "undo": {
+        "pin": {
+          "commit": "8bfd82a779a7799e970b42013c4da072f83068e7",
+          "head": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "n": 7,
+          "ref": "refs/holdspeak/checkpoints/step-37b420416abb/7",
+          "tree": "3a6fe84b05192dd2664c5817d455844267462cd6"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "commit": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "pr": 101,
+          "state": "merged"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T21:12:31.965058+00:00",
+      "by": "engine",
+      "choice": "merge",
+      "decision_record_id": "record-285017d7e19a49809bc8dc3d3168cfd4",
+      "id": 10,
+      "kind": "merge",
+      "line": "Merged PR #101 of step 1 (check green)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-37b420416abb/6",
+      "ref_commit": "fff1d3db74fb8827547fd9b81bca04c621c0e776",
+      "rule": "YOLO merges on a green check and a passed review",
+      "step_id": "step-37b420416abb",
+      "undo": {
+        "decision_record_id": "record-285017d7e19a49809bc8dc3d3168cfd4",
+        "pin": {
+          "commit": "fff1d3db74fb8827547fd9b81bca04c621c0e776",
+          "head": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "n": 6,
+          "ref": "refs/holdspeak/checkpoints/step-37b420416abb/6",
+          "tree": "3a6fe84b05192dd2664c5817d455844267462cd6"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "commit": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "pr": 101,
+          "state": "pr_open"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T21:12:31.847375+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 9,
+      "kind": null,
+      "line": "Opened PR #101",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-37b420416abb/5",
+      "ref_commit": "2dc43013d9412efdb7249ddcf3b618eef701453f",
+      "rule": null,
+      "step_id": "step-37b420416abb",
+      "undo": {
+        "pin": {
+          "commit": "2dc43013d9412efdb7249ddcf3b618eef701453f",
+          "head": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "n": 5,
+          "ref": "refs/holdspeak/checkpoints/step-37b420416abb/5",
+          "tree": "3a6fe84b05192dd2664c5817d455844267462cd6"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "commit": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "pr": 101,
+          "state": "pr_open"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T21:12:31.633011+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 8,
+      "kind": null,
+      "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-37b420416abb/.tmp/program-check/step-37b420416abb/20261101T211231Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-37b420416abb/4",
+      "ref_commit": "64230c555958b8a99d0f719669e879290d7823a0",
+      "rule": null,
+      "step_id": "step-37b420416abb",
+      "undo": {
+        "pin": {
+          "commit": "64230c555958b8a99d0f719669e879290d7823a0",
+          "head": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "n": 4,
+          "ref": "refs/holdspeak/checkpoints/step-37b420416abb/4",
+          "tree": "3a6fe84b05192dd2664c5817d455844267462cd6"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "commit": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T21:12:31.491341+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 7,
+      "kind": null,
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-park/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-37b420416abb/3",
+      "ref_commit": "89e6d4f1a935027d19c20a402ead4b8ee13cf408",
+      "rule": null,
+      "step_id": "step-37b420416abb",
+      "undo": {
+        "pin": {
+          "commit": "89e6d4f1a935027d19c20a402ead4b8ee13cf408",
+          "head": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "n": 3,
+          "ref": "refs/holdspeak/checkpoints/step-37b420416abb/3",
+          "tree": "6fe88e7bb74ad4ae24103268ce0c33874bfe5f56"
+        },
+        "seen": {
+          "commit": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T21:12:31.389735+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 6,
+      "kind": null,
+      "line": "New commit 687e391a; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-37b420416abb/2",
+      "ref_commit": "de18c0b7d185db70daa5fb6658b0cf7c63f3ed4b",
+      "rule": null,
+      "step_id": "step-37b420416abb",
+      "undo": {
+        "pin": {
+          "commit": "de18c0b7d185db70daa5fb6658b0cf7c63f3ed4b",
+          "head": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-37b420416abb/2",
+          "tree": "6fe88e7bb74ad4ae24103268ce0c33874bfe5f56"
+        },
+        "seen": {
+          "commit": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T21:12:31.191792+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-cb344c4dc27f",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-cb344c4dc27f/1",
+      "ref_commit": "e1e87936c67365c4e3bef5cf695ec5b5470f246c",
+      "rule": null,
+      "step_id": "step-cb344c4dc27f",
+      "undo": {
+        "pin": {
+          "commit": "e1e87936c67365c4e3bef5cf695ec5b5470f246c",
+          "head": "0fd92551b155ca81edfe0bd299be74ed06121ac7",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-cb344c4dc27f/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        },
+        "seen": {
+          "state": "briefed"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T21:12:31.013362+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-37b420416abb",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-37b420416abb/1",
+      "ref_commit": "01b6f1935f31c6c05615c84c312d0d085b815432",
+      "rule": null,
+      "step_id": "step-37b420416abb",
+      "undo": {
+        "pin": {
+          "commit": "01b6f1935f31c6c05615c84c312d0d085b815432",
+          "head": "0fd92551b155ca81edfe0bd299be74ed06121ac7",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-37b420416abb/1",
+          "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+        },
+        "seen": {
+          "state": "briefed"
+        }
+      }
+    },
+    {
+      "at": "2026-11-01T21:12:30.913336+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T21:12:30.874160+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 3 steps",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-01T21:12:30.867176+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "yolo",
+  "control_word": "YOLO",
+  "created_at": "2026-11-01T21:12:30.866836+00:00",
+  "decided_for_you": [
+    {
+      "at": "2026-11-01T21:12:31.965058+00:00",
+      "choice": "merge",
+      "decision_record_id": "record-285017d7e19a49809bc8dc3d3168cfd4",
+      "id": 10,
+      "kind": "merge",
+      "line": "Merged PR #101 of step 1 (check green)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "YOLO merges on a green check and a passed review",
+      "step_id": "step-37b420416abb"
+    }
+  ],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "delivery": null,
+  "done": 1,
+  "family": {
+    "children": [],
+    "parent": null
+  },
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Three parts.",
+  "id": "program-41cdc683dcd7",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-11-01T21:12:32.184907+00:00",
+    "by": "owner",
+    "choice": "proof",
+    "decision_record_id": null,
+    "id": 12,
+    "kind": "program_park",
+    "line": "Parked the program; the worktrees stay (a proof run)",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+  },
+  "line": "Parked at step 2 of 3",
+  "may_call": false,
+  "may_handoff": false,
+  "night": null,
+  "note_id": "program-program-41cdc683dcd7",
+  "note_window": "pullout:note:program-program-41cdc683dcd7",
+  "origin_ref": null,
+  "parked_as": "proof",
+  "persons": [],
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "planner": null,
+  "prefer_idle": false,
+  "project": null,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "requirements": [],
+  "review_depth": null,
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 3,
+  "rounds": [],
+  "rounds_before_start": false,
+  "search_words": "proof run three parts. fast-cycle part 1 part 2 part 3 #101 fast cycle",
+  "skipped": 0,
+  "spend_limit_usd": null,
+  "state": "parked",
+  "state_word": "Parked",
+  "status_line": "Parked · 1 of 3 done · check: fake_program_check.sh · control YOLO",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/proof-run/1-part-1",
+      "brief": "Write part 1.",
+      "budget_tokens": null,
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-park/tests/fixtures/fake_program_check.sh",
+        "commit": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+        "log": "/tmp/rig/hs-program-step-37b420416abb/.tmp/program-check/step-37b420416abb/20261101T211231Z.log",
+        "minutes": 0.0,
+        "reasons": [],
+        "running": false,
+        "sections": [
+          {
+            "name": "build",
+            "state": "green"
+          },
+          {
+            "name": "vitest",
+            "state": "green"
+          },
+          {
+            "name": "pytest",
+            "state": "green"
+          },
+          {
+            "name": "sweep",
+            "state": "green"
+          },
+          {
+            "name": "canon",
+            "state": "green"
+          },
+          {
+            "name": "repo",
+            "state": "green"
+          }
+        ],
+        "verdict": "green"
+      },
+      "contenders": [],
+      "editable": [
+        "title"
+      ],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 1,
+      "ended_at": "2026-11-01T21:12:32.066674+00:00",
+      "ending": "finished",
+      "engine": null,
+      "estimate": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "It is merged",
+        "agent": "It is merged",
+        "amend": "It is merged",
+        "brief": "It is merged",
+        "budget": "It is merged",
+        "effort": "It is merged",
+        "for_person": "It is merged",
+        "gate_check": "It is merged",
+        "gate_merge": "It is merged",
+        "gate_review": "It is merged",
+        "may_call": "It is merged",
+        "owns": "It is merged",
+        "position": "It is merged",
+        "prefer_idle": "It is merged",
+        "race": "It is merged",
+        "requirements": "It is merged",
+        "review_depth": "It is merged",
+        "runs_on_then": "It is merged"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-37b420416abb",
+      "last_checkpoint": {
+        "at": "2026-11-01T21:12:32.083397+00:00",
+        "by": "engine",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 11,
+        "kind": null,
+        "line": "Merged #101",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-37b420416abb/7",
+        "ref_commit": "8bfd82a779a7799e970b42013c4da072f83068e7",
+        "rule": null,
+        "step_id": "step-37b420416abb",
+        "undo": {
+          "pin": {
+            "commit": "8bfd82a779a7799e970b42013c4da072f83068e7",
+            "head": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+            "n": 7,
+            "ref": "refs/holdspeak/checkpoints/step-37b420416abb/7",
+            "tree": "3a6fe84b05192dd2664c5817d455844267462cd6"
+          },
+          "seen": {
+            "check": "green",
+            "checked": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+            "commit": "687e391ac1d69e6d0e59d3015c55232c23ed113e",
+            "pr": 101,
+            "state": "merged"
+          }
+        }
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": {
+        "number": 101,
+        "url": "https://github.com/acme/app/pull/101"
+      },
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": {
+        "claimed": [],
+        "files": [
+          "part1.txt"
+        ],
+        "files_more": 0,
+        "not_checked": [],
+        "observed": [
+          {
+            "at": "2026-11-01T21:12:31.389735+00:00",
+            "checkpoint": 6,
+            "line": "Commit 687e391a"
+          },
+          {
+            "at": "2026-11-01T21:12:31.633011+00:00",
+            "checkpoint": 8,
+            "line": "Check green on 687e391a"
+          },
+          {
+            "at": "2026-11-01T21:12:31.847375+00:00",
+            "checkpoint": 9,
+            "line": "PR #101 opened"
+          },
+          {
+            "at": "2026-11-01T21:12:32.083397+00:00",
+            "checkpoint": 11,
+            "line": "PR #101 merged"
+          }
+        ],
+        "words": {
+          "claimed": "The agent says:",
+          "files": "Files:",
+          "not_checked": "Not checked:",
+          "observed": "Checked:"
+        }
+      },
+      "report_text": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-11-01T21:12:31.012950+00:00",
+      "state": "done",
+      "state_word": "Done",
+      "station": 5,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "story": [
+        {
+          "at": "2026-11-01T21:12:31.633011+00:00",
+          "line": "The check ran green in under a minute."
+        },
+        {
+          "at": "2026-11-01T21:12:31.847375+00:00",
+          "line": "Opened PR #101."
+        },
+        {
+          "at": "2026-11-01T21:12:32.083397+00:00",
+          "line": "Merged #101."
+        }
+      ],
+      "taken": false,
+      "title": "Part 1",
+      "updated_at": "2026-11-01T21:12:32.177576+00:00",
+      "wait": null,
+      "worktree": "hs-program-step-37b420416abb"
+    },
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/proof-run/2-part-2",
+      "brief": "Write part 2.",
+      "budget_tokens": null,
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-park/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "editable": [
+        "title",
+        "requirements"
+      ],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 1,
+      "ended_at": null,
+      "ending": "none",
+      "engine": null,
+      "estimate": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "amend": "The agent has read it",
+        "brief": "The agent has read it",
+        "budget": "The worktree and the agent are set",
+        "effort": "The worktree and the agent are set",
+        "for_person": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "gate_merge": "The worktree and the agent are set",
+        "gate_review": "The bar does not come down while it runs",
+        "may_call": "The worktree and the agent are set",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "prefer_idle": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set",
+        "review_depth": "The agent has read it",
+        "runs_on_then": "The worktree and the agent are set"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-cb344c4dc27f",
+      "last_checkpoint": {
+        "at": "2026-11-01T21:12:31.191792+00:00",
+        "by": "engine",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 5,
+        "kind": null,
+        "line": "Handed to Claude Code in hs-program-step-cb344c4dc27f",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-cb344c4dc27f/1",
+        "ref_commit": "e1e87936c67365c4e3bef5cf695ec5b5470f246c",
+        "rule": null,
+        "step_id": "step-cb344c4dc27f",
+        "undo": {
+          "pin": {
+            "commit": "e1e87936c67365c4e3bef5cf695ec5b5470f246c",
+            "head": "0fd92551b155ca81edfe0bd299be74ed06121ac7",
+            "n": 1,
+            "ref": "refs/holdspeak/checkpoints/step-cb344c4dc27f/1",
+            "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+          },
+          "seen": {
+            "state": "briefed"
+          }
+        }
+      },
+      "launch_id": "L2",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 2,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": "program",
+      "parked_reason": "Parked with the program",
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": {
+        "claimed": [],
+        "files": [],
+        "files_more": 0,
+        "not_checked": [
+          {
+            "line": "The check did not run"
+          }
+        ],
+        "observed": [],
+        "words": {
+          "claimed": "The agent says:",
+          "files": "Files:",
+          "not_checked": "Not checked:",
+          "observed": "Checked:"
+        }
+      },
+      "report_text": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-11-01T21:12:31.191349+00:00",
+      "state": "parked",
+      "state_word": "Parked",
+      "station": -1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "story": [
+        {
+          "at": "2026-11-01T21:12:31.191792+00:00",
+          "line": "Handed to Claude Code."
+        }
+      ],
+      "taken": false,
+      "title": "Part 2",
+      "updated_at": "2026-11-01T21:12:32.184752+00:00",
+      "wait": {
+        "cause": "program_parked",
+        "line": "Step 2 with Claude Code is parked with the program."
+      },
+      "worktree": "hs-program-step-cb344c4dc27f"
+    },
+    {
+      "after": [
+        2
+      ],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": null,
+      "brief": "Write part 3.",
+      "budget_tokens": null,
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-park/tests/fixtures/fake_program_check.sh",
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "editable": [
+        "title",
+        "requirements"
+      ],
+      "effort": "medium",
+      "elapsed": "",
+      "elapsed_seconds": null,
+      "ended_at": null,
+      "ending": "none",
+      "engine": null,
+      "estimate": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "The agent has read it",
+        "agent": "The worktree and the agent are set",
+        "amend": "The agent has read it",
+        "brief": "The agent has read it",
+        "budget": "The worktree and the agent are set",
+        "effort": "The worktree and the agent are set",
+        "for_person": "The worktree and the agent are set",
+        "gate_check": "The bar does not come down while it runs",
+        "gate_merge": "The worktree and the agent are set",
+        "gate_review": "The bar does not come down while it runs",
+        "may_call": "The worktree and the agent are set",
+        "owns": "The agent has read it",
+        "position": "The worktree and the agent are set",
+        "prefer_idle": "The worktree and the agent are set",
+        "race": "The worktree and the agent are set",
+        "review_depth": "The agent has read it",
+        "runs_on_then": "The worktree and the agent are set"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-8c27bcc041b7",
+      "last_checkpoint": null,
+      "launch_id": null,
+      "limit": null,
+      "may_call": false,
+      "ordinal": 3,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": "program",
+      "parked_reason": "Parked with the program",
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": {
+        "claimed": [],
+        "files": [],
+        "files_more": 0,
+        "not_checked": [
+          {
+            "line": "The check did not run"
+          }
+        ],
+        "observed": [],
+        "words": {
+          "claimed": "The agent says:",
+          "files": "Files:",
+          "not_checked": "Not checked:",
+          "observed": "Checked:"
+        }
+      },
+      "report_text": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": null,
+      "state": "parked",
+      "state_word": "Parked",
+      "station": -1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "story": [],
+      "taken": false,
+      "title": "Part 3",
+      "updated_at": "2026-11-01T21:12:32.184835+00:00",
+      "wait": {
+        "cause": "program_parked",
+        "line": "Step 3 with Claude Code is parked with the program."
+      },
+      "worktree": null
+    }
+  ],
+  "template": "fast-cycle",
+  "title": "Proof run",
+  "total": 3,
+  "track": [
+    {
+      "mark": "done",
+      "ordinal": 1,
+      "title": "Part 1"
+    },
+    {
+      "mark": "parked",
+      "ordinal": 2,
+      "title": "Part 2"
+    },
+    {
+      "mark": "parked",
+      "ordinal": 3,
+      "title": "Part 3"
+    }
+  ],
+  "updated_at": "2026-11-01T21:12:32.184571+00:00",
+  "usage_warning_share": null,
+  "within": [],
+  "your_turn": 0,
+  "your_turn_items": []
+}
