@@ -36,6 +36,7 @@ def test_file_and_make_are_held_items_the_page_decides(tmp_path, monkeypatch) ->
     [second] = client.get(f"/api/b/{token_two}").json()["items"]
     assert first["question"] == "File the findings as Door tasks?" and first["kind_words"] == "Audit findings"
     assert first["head"] == "Desk audit" and first["place"].startswith("The program")
+    assert first["doing"].startswith("The program: ") and "Step" not in first["doing"]
     assert [(row["id"], row["label"]) for row in first["choices"]] == [("file", "File"), ("skip", "Skip")]
     assert second["question"] == "Make a fix program from the MUST findings?"
     assert [(row["id"], row["label"]) for row in second["choices"]] == [("make", "Make"), ("skip", "Skip")]
@@ -71,6 +72,7 @@ def test_a_lesson_is_a_held_item_the_page_decides(tmp_path, monkeypatch) -> None
     shown = opened["items"][0]
     assert shown["question"] == "Keep this lesson, and where?" and shown["kind_words"] == "Lesson"
     assert shown["head"] == "The words wave"
+    assert shown["doing"].startswith("The program: Running · ") and "Step" not in shown["doing"]
     assert [choice["label"] for choice in shown["choices"]] == ["Keep for this program", "Keep for HoldSpeak", "Skip"]
     kept = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "keep_program"})
     assert kept.status_code == 200, kept.text

@@ -420,7 +420,11 @@ class BriefingService:
             ordinal = None
         head = f"{program['title']} · step {ordinal}" if ordinal else str(program["title"])
         goal = words.goal_line(program)
-        doing = words.doing_words(kind, program, step)
+        status = ""
+        if kind in PROGRAM_LEVEL:  # the program's own status line, as the window's status bar says it
+            service = self.programs()
+            status = service._status_line(program, service._summary(program, service.store.list_steps(program["id"])))
+        doing = words.doing_words(kind, program, step, status)
         happened = words.happened_line(kind, item, step)
         if kind == "answer" and step is not None:
             # The agent's own last words on the step (its checkpoint line).

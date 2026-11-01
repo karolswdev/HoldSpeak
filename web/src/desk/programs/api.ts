@@ -227,7 +227,7 @@ export const TEMPLATES = [
   { id: "fast-cycle", name: "Fast cycle", line: "A step for each brief you paste. Your check, your merge.", agent: "claude" },
   { id: "build-and-review", name: "Build and review", line: "A step for each brief; Codex reviews each one.", agent: "codex" },
   { id: "race", name: "Race", line: "One brief, two agents; the first green one wins.", agent: "claude" },
-  { id: "overnight", name: "Overnight on the home box", line: "qwen builds when the engine is idle; Claude Code reviews; it merges on green.", agent: "pi" },
+  { id: "overnight", name: "Overnight on the home box", line: "qwen builds and reviews when the engine is idle; it merges on green.", agent: "pi" },
   { id: "from-the-desk", name: "From the desk", line: "A step for each open action of a project.", agent: "" },
   // #1697: the night program (23:30–07:00, YOLO, pi on the home engine, 64k a step).
   { id: "dreaming", name: "Dreaming", line: "Runs at night on the idle home engine; fills itself from tasks marked Tonight", agent: "pi" },

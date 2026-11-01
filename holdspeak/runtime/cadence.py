@@ -101,6 +101,14 @@ class CadenceMixin:
         if tg is None or not tg.is_active or not tg.allowed_chat_ids:
             return
         try:
+            from ..db import get_database as _db
+            from ..services.reach_service import carries_cadence
+
+            if carries_cadence(_db()):
+                return  # DIR7: Reach's one morning message carries the brief's line
+        except Exception as exc:
+            log.debug("cadence: reach not read: %s", exc)
+        try:
 
             from ..cadence.brief import should_send_daily_brief
             from ..cadence.models import CadencePolicy

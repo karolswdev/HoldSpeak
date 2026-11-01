@@ -7,7 +7,7 @@
       "keep_repo": "A small step adds it to the repository's program file. Every new program reads it.",
       "skip": "Nothing changes. This program does not propose it again."
     },
-    "doing": "Step 2, “Step 2”: Do part 2.",
+    "doing": "The program: Running · 0 of 3 done · 1 waits on you · check: check.sh · control YOLO.",
     "goal": "Goal: Plain words.",
     "happened": "The check was red for the same cause on 2 steps: FAILED.",
     "question": "Keep this lesson, and where?"
@@ -18,19 +18,19 @@
     "skip"
   ],
   "for_person_id": null,
-  "id": "program-d896fdfcf052:lesson:13",
+  "id": "program-e1f1b5098a74:lesson:13",
   "kind": "lesson",
   "launch_id": null,
   "lesson_id": 13,
   "ordinal": 2,
   "pr": null,
-  "program_id": "program-d896fdfcf052",
+  "program_id": "program-e1f1b5098a74",
   "program_title": "The words wave",
   "project_id": null,
   "requirement": "The check is not red with “FAILED”",
-  "since": "2026-11-01T17:43:49.265786+00:00",
+  "since": "2026-11-01T20:23:46.372209+00:00",
   "source": "red",
-  "step_id": "step-7d9b1c38815a",
+  "step_id": "step-61f0f33fb233",
   "step_title": "",
   "steps": [
     1,
