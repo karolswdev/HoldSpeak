@@ -500,3 +500,23 @@ def test_every_send_is_egress_and_the_token_is_never_in_the_record(tmp_path, mon
     with desk.rig.db._connection() as conn:
         dump = "\n".join(conn.iterdump())
     assert TOKEN not in dump
+
+
+def test_a_reply_in_words_answers_the_agents_question(tmp_path) -> None:
+    """DIR10: an agent's question goes to Telegram; his reply is the answer."""
+    desk = Desk(tmp_path, control="normal")
+    desk.pair()
+    rig = desk.rig
+    pid = rig.service.create(OWNER, title="Ask first", goal="Name it.", repository=str(rig.repo),
+                             check_command=f"sh {FAKE_CHECK}", template="fast-cycle", control="normal")["id"]
+    rig.service.plan(OWNER, pid, steps=[{"title": "Name the column", "brief": "Ask which name."}])
+    rig.service.start(OWNER, pid)
+    step = rig.step(pid, 1)
+    rig.states[step["launch_id"]] = {"state": "waiting", "turn_id": None}
+    rig.tick()
+    item = next(row for row in rig.program(pid)["your_turn_items"] if row["kind"] == "answer")
+    desk.telegram.brief(item_ref(pid, item))
+    desk.bot.calls.clear()
+    out = desk.telegram.handle_update(update("reply", text="Use stall_reason."))
+    assert out["action"] == "answered" and desk.bot.of("sendMessage")[-1]["text"] == "Typed to the agent."
+    assert rig.prompts[-1] == (step["launch_id"], "Use stall_reason.")
