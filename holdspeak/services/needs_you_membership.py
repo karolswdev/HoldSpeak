@@ -315,6 +315,8 @@ PROGRAM_WHY = {
     "commit": "TO ALLOW",
     # PG-LANG JRN9, JRN10: an audit's findings to file, its fix program.
     "audit_file": "TO DECIDE", "fix_program": "TO DECIDE",
+    # JRN11: a lesson the engine saw.
+    "lesson": "TO DECIDE",
 }
 
 
@@ -355,6 +357,7 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
                 "programId": str(item["program_id"]), "stepId": str(item["step_id"]),
                 "ordinal": item.get("ordinal"), "kind": kind, "choices": list(item.get("choices") or []),
                 "findingId": item.get("finding_id"), "pr": item.get("pr"),
+                **({"lessonId": item["lesson_id"]} if item.get("lesson_id") is not None else {}),
                 "requirementId": requirement or None,
                 "decide": (f"/api/programs/{item['program_id']}/close" if kind == "close"
                            else f"/api/programs/{item['program_id']}/requirements/{requirement}/decide" if requirement

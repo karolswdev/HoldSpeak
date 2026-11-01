@@ -1503,6 +1503,9 @@ class ProgramRunner:
             self._after_check(program, step)
             return
         why = "; ".join(result["reasons"][:3])
+        from . import program_lessons
+
+        program_lessons.note_red(facts, list(result["reasons"]))  # JRN11: the red's cause, for the lesson rule
         done_rounds = int(step.get("rounds") or 0) + 1
         step["rounds"] = done_rounds
         outcome = decide(program.get("control"), "check_failed",
@@ -1792,6 +1795,9 @@ class ProgramRunner:
             else:
                 self.service.apply_finding_rule(program, step, finding, outcome)
         his = [finding for finding in findings if finding.get("to_owner") and not finding.get("decision")]
+        from . import program_lessons
+
+        program_lessons.note_findings(facts, findings)  # JRN11: the review's findings, for the lesson rule
         step["findings"] = findings
         step["review_verdict"] = "pass" if status == "done" else "fail"
         facts["reviewed_commit"] = str(pair.get("last_builder_commit") or "") or None
