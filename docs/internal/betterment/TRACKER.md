@@ -316,7 +316,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | LANG10 | The round strip and the question row | Shipped #1680 (2026-10-31) | `Rounds.tsx`. |
 | LANG11 | The Measure kind; walk lines on Your word | Done | Kind and walk lines #1671; the verifier (`verify_measure_log`, "Measured 1.4 s, under 2 s"), word bounds, unit change, the walk on his row: this PR. |
 | LANG12 | Dreaming: template, night, within, backlog, digest | Partly #1687 (2026-10-31) | `holdspeak/services/program_night.py`: the window ("sleeps until 23:30"), `at most`, the night planner per item inside `within`, "Since last night" in the note and through Reach. Open: the Dreaming template, the backlog read by rule, the stop after two red steps, a Working step parked at the end, `within` as a core question on the diff. |
-| LANG13 | Delivery Workbench: link and the Done PR | Open | `delivery dw` stored #1671. |
+| LANG13 | Delivery Workbench: link and the Done PR | Done in part | `delivery dw` stored #1671; the Done writer (one PR, story create/evidence/status, the merge rule, his Retry/Merge/Skip row): this PR. Open: the link (read `dw context` at create, acceptance lines as proposed requirements), the milestone's `dw phase close`, off for HoldSpeak's own repository. |
 | LANG14 | The SDK: Python client and `holdspeak program` CLI | Open |  |
 | LANG15 | The documents | Shipped (PG-DOCS-2 PR) | `docs/programs.md`, the skill, RECIPE, UX-CANON, STATUS. |
 
