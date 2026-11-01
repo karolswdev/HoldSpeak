@@ -1,6 +1,11 @@
 {
   "items": [
     {
+      "because": {
+        "kind": "project_proposal",
+        "rule": "kind",
+        "words": "a choice among offered presses"
+      },
       "blocked": [],
       "blocked_words": "",
       "changed": [],
@@ -42,7 +47,7 @@
       "program_title": "",
       "question": "Accept: The cut-over date moved to Friday?",
       "ref": "project-proposal:pprop_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      "since": "2026-11-01 07:55:52",
+      "since": "2026-11-01 08:47:06",
       "source": "project-proposal",
       "state": "open",
       "step_id": "",
@@ -79,7 +84,7 @@
     "expires_words": "Expires in 24 h",
     "head": "The billing move · the project review",
     "hub": "the rig hub",
-    "id": "pkg-240b6e1d6747",
+    "id": "pkg-5d284d1cdfa4",
     "kind": "item"
   }
 }

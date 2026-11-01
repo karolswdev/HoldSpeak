@@ -81,6 +81,19 @@ A page can also hold these items. Each choice runs the same action as the button
 
 When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. A page with several items also shows plain lines with no buttons: the Door tasks due today, and the lines the desk adds (a blocker, for example "The meeting recorder has no microphone."). Not yet on a page: a desk agent's question outside a program, a prepared send and a held tool call.
 
+## What may travel, and a late answer
+
+Only knowledge travels: a question, a choice among the presses HoldSpeak offers, or a to-do. A permission (a held tool call, an approval) never goes to a page, Telegram or a call; it stays on your desk. Each page and each Telegram message records why it went (its `because`: the kind of item and, when the ladder sent it, the rule).
+
+A late or wrong answer gets one plain answer back, and nothing else happens:
+
+| What happened | What you see |
+|---|---|
+| The item was answered already | "Answered at 21:46 from the desk" (or "from Telegram", "on the call", "from the briefing page"). |
+| The choice was not one of the item's choices | "That choice was not on offer". |
+| The answer named no choice | "Choose one". The item still waits. |
+| A Later could not be kept | "Could not keep that for later; it still waits". |
+
 ## The ladder
 
 The ladder has a fixed order today: the desk, the Phone app, Telegram, a call. You cannot change it.

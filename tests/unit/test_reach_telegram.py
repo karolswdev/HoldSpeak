@@ -12,6 +12,8 @@ when unpaired or off. Every keystore read is the rig's key file in HOME.
 """
 from __future__ import annotations
 
+import re
+
 import copy
 import json
 import logging
@@ -292,7 +294,8 @@ def test_a_tap_decides_once_from_telegram_and_the_message_settles(tmp_path, capl
     assert desk.briefing.store.get(made["id"])["answers"][item_ref(pid, item)]["via"] == "telegram"
     again = desk.tap(message, f"r1|{made['id']}|park")
     assert again["action"] == "refused" and again["code"] == "answered_already"
-    assert again["words"].startswith("Answered already: Go on · "), again["words"]
+    # IMP5: not pending, in his words: when and where it was answered.
+    assert re.fullmatch(r"Answered at \d\d:\d\d from Telegram", again["words"]), again["words"]
     assert TOKEN not in caplog.text and all(token == TOKEN for token in desk.bot.tokens)
 
 
@@ -520,3 +523,15 @@ def test_a_reply_in_words_answers_the_agents_question(tmp_path) -> None:
     out = desk.telegram.handle_update(update("reply", text="Use stall_reason."))
     assert out["action"] == "answered" and desk.bot.of("sendMessage")[-1]["text"] == "Typed to the agent."
     assert rig.prompts[-1] == (step["launch_id"], "Use stall_reason.")
+
+
+def test_a_telegram_send_records_why_it_travelled(tmp_path) -> None:
+    """IMP5: the ladder's send names its rule and the item's kind."""
+    desk = Desk(tmp_path, control="normal")
+    desk.pair()
+    pid, item = desk.core()
+    desk.reach.quiet = lambda: (0, 0)
+    desk.reach.tick()
+    [package] = [row for row in desk.briefing.store.sent_since("2000-01-01T00:00:00+00:00")]
+    why = package["sent"][0]["because"]
+    assert why["rule"] == "at_once" and why["kind"] == "core" and why["words"] == "a question"

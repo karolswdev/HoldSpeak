@@ -40,6 +40,38 @@ from .errors import ServiceError
 
 log = get_logger("services.briefing")
 
+#: IMP5 (BROCREW-IMPORT "Knowledge escalates, authority never does"): the
+#: kinds that never travel: a permission is always his, on his desk.
+AUTHORITY_KINDS = frozenset({"gate", "gate_approval", "permission", "helper_allow"})
+AUTHORITY_REF_PREFIXES = ("gate:",)
+#: Why a held item may travel to a page, Telegram or a call (its ``because``).
+QUESTION_KINDS = frozenset({"core", "answer", "requirement_word", "requirement_left", "limited"})
+#: IMP5: the channel words of a late answer ("Answered at 21:46 from the desk").
+VIA_FROM = {"desk": "from the desk", "page": "from the briefing page", "telegram": "from Telegram",
+            "call": "on the call", "phone": "from your phone"}
+NOT_OFFERED = "That choice was not on offer"
+NOT_USABLE = "Choose one"
+NOT_KEPT = "Could not keep that for later; it still waits"
+
+
+def because_of(kind: Any, *, rule: str = "kind", **more: Any) -> dict[str, Any]:
+    """IMP5: why a held item travels: a question, a choice among offered
+    presses, or a to-do; never a permission (those never become packages)."""
+    kind = str(kind or "")
+    words = ("a question" if kind in QUESTION_KINDS else "a to-do" if kind in ("door", "line")
+             else "a choice among offered presses")
+    return {"rule": rule, "kind": kind, "words": words, **{key: value for key, value in more.items() if value is not None}}
+
+
+def not_pending(at: Any, via: Any) -> "BriefingRefused":
+    """IMP5: "Answered at 21:46 from the desk": when and where."""
+    clock = clock_words(at) if at else ""
+    words = f"Answered at {clock} {VIA_FROM.get(str(via or 'desk'), 'from the desk')}" if clock else \
+        f"Answered already {VIA_FROM.get(str(via or 'desk'), 'from the desk')}"
+    return BriefingRefused("answered_already", words, refusal="not_pending", words=words,
+                           outcome={"words": words, "at": at, "via": via})
+
+
 #: DIR9: one page carries up to this many held items, in order, each decided alone.
 DIGEST_MAX = 12
 #: §3: a digest's page lives 12 hours.
@@ -458,18 +490,45 @@ class BriefingService:
         """The package body of one held item now (a Program's, or another
         source's, DIR10). Refused by name when nothing waits there or the
         item is answered on the desk only."""
+        if str(ref).startswith(AUTHORITY_REF_PREFIXES):
+            raise BriefingRefused("authority_stays", "A permission stays on your desk.", status=409)
         source = self._source(ref)
         if source is not None:
             item = source.held(ref)
             if item is None:
                 raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
-            return source.body(ref, item)
-        program, step, item = self._held(ref)
-        if item is None:
-            raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
-        if str(item.get("kind") or "") not in BRIEFABLE:
-            raise BriefingRefused("not_briefable", "This item is answered on your desk.", status=409)
-        return self._compose(ref, program, step, item)
+            body = source.body(ref, item)
+        else:
+            program, step, item = self._held(ref)
+            if item is None:
+                raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
+            if str(item.get("kind") or "") in AUTHORITY_KINDS:
+                raise BriefingRefused("authority_stays", "A permission stays on your desk.", status=409)
+            if str(item.get("kind") or "") not in BRIEFABLE:
+                raise BriefingRefused("not_briefable", "This item is answered on your desk.", status=409)
+            body = self._compose(ref, program, step, item)
+        if str(body.get("kind") or "") in AUTHORITY_KINDS:
+            raise BriefingRefused("authority_stays", "A permission stays on your desk.", status=409)
+        body["because"] = because_of(body.get("kind"))
+        return body
+
+    def _decided_where(self, ref: str, package: Optional[Mapping[str, Any]] = None) -> tuple[Any, Any]:
+        """IMP5: when and where an item was answered: this package's answer,
+        else the Program's own last owner line on the step (its channel)."""
+        answers = (package or {}).get("answers") or {}
+        answer = answers.get(ref) if isinstance(answers, dict) else None
+        if isinstance(answer, dict) and answer.get("choice") and answer.get("choice") != "later":
+            return answer.get("at"), answer.get("via")
+        if not str(ref).startswith(PROGRAM_REF):
+            return None, "desk"
+        try:
+            program_id, item_id = parse_program_ref(ref)
+            step_id = item_id.split(":", 1)[0]
+            row = next((row for row in self.programs().store.list_checkpoints(program_id)
+                        if row.get("step_id") == step_id and row.get("by") == "owner"), None)
+        except Exception:
+            row = None
+        return ((row or {}).get("at"), (row or {}).get("via") or "desk") if row else (None, "desk")
 
     @staticmethod
     def bodies(package: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -618,16 +677,20 @@ class BriefingService:
         if source is not None:
             item = source.held(str(ref))
             if item is None:
-                raise BriefingRefused("answered_already", "Answered already.")
+                raise not_pending(*self._decided_where(str(ref)))
+            if not str(choice or "").strip():
+                raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
             if str(choice) not in {row["id"] for row in source.body(str(ref), item)["choices"]}:
-                raise BriefingRefused("choice_invalid", "This choice waits for you on the desk.", status=400)
+                raise BriefingRefused("not_offered", NOT_OFFERED, status=400, refusal="not_offered", words=NOT_OFFERED)
             return self._decide_source(source, str(ref), item, str(choice), via)
         program, step, item = self._held(str(ref))
         if item is None:
-            raise BriefingRefused("answered_already", "Answered already.")
+            raise not_pending(*self._decided_where(str(ref)))
         body = self._compose(str(ref), program, step, item)
+        if not str(choice or "").strip():
+            raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
         if str(choice) not in {row["id"] for row in body["choices"]}:
-            raise BriefingRefused("choice_invalid", "This choice waits for you on the desk.", status=400)
+            raise BriefingRefused("not_offered", NOT_OFFERED, status=400, refusal="not_offered", words=NOT_OFFERED)
         return self.programs().decide(principal, str(program["id"]), str(item.get("step_id") or ""), via=via,
                                       choice=str(choice), **_decide_args(item))
 
@@ -785,22 +848,27 @@ class BriefingService:
             raise BriefingRefused("ref_unknown", "This page does not hold that item.", status=404)
         state = self._item_state(package, body)
         if state["state"] in ("decided", "gone"):
-            raise BriefingRefused("answered_already", f"Answered already: {state['outcome']['words']}",
-                                  outcome=state.get("outcome"))
+            raise not_pending(*self._decided_where(ref, package))
+        if not choice.strip():
+            raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
         answers = dict(package.get("answers") or {})
         now = self._now()
         if choice == "later":
             try:
                 deferred = self.reach().later(PAGE_OWNER, ref, later, via=via, package_id=package["id"])
             except ServiceError as exc:
-                raise BriefingRefused(exc.code, exc.detail, status=int((exc.context or {}).get("status", 409))) from exc
+                if exc.code == "later_invalid":
+                    raise BriefingRefused(exc.code, exc.detail, status=400) from exc
+                raise BriefingRefused("not_kept", NOT_KEPT, status=409, refusal="not_kept", words=NOT_KEPT) from exc
+            except Exception as exc:  # IMP5: a Later that was not kept says so; the item still waits
+                raise BriefingRefused("not_kept", NOT_KEPT, status=409, refusal="not_kept", words=NOT_KEPT) from exc
             answers[ref] = {"choice": "later", "via": via, "at": _utc(now), "later_until": deferred["until"]}
             self.store.answer(package["id"], answers)
             self._changed(package["id"], "later")
         else:
             text_answer = choice == "answer" and isinstance(body.get("text"), Mapping)
             if not text_answer and choice not in {row["id"] for row in body.get("choices") or []}:
-                raise BriefingRefused("choice_invalid", "This choice is not on the page.", status=400)
+                raise BriefingRefused("not_offered", NOT_OFFERED, status=400, refusal="not_offered", words=NOT_OFFERED)
             if text_answer:
                 said = " ".join(str(reason or "").split())
                 if not said:
@@ -810,7 +878,7 @@ class BriefingService:
                                           status=400)
                 _program, step, item = self._held(ref)
                 if item is None:
-                    raise BriefingRefused("answered_already", "Answered already on your desk.")
+                    raise not_pending(*self._decided_where(ref, package))
                 self.programs().answer_agent(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),
                                              said, via=via)
                 answers[ref] = {"choice": "answer", "via": via, "at": _utc(now), "text": said[:200]}
@@ -826,12 +894,12 @@ class BriefingService:
             if source is not None:
                 held = source.held(ref)
                 if held is None:
-                    raise BriefingRefused("answered_already", "Answered already on your desk.")
+                    raise not_pending(*self._decided_where(ref, package))
                 self._decide_source(source, ref, held, choice, via)
             else:
                 _program, _step, item = self._held(ref)
                 if item is None:
-                    raise BriefingRefused("answered_already", "Answered already on your desk.")
+                    raise not_pending(*self._decided_where(ref, package))
                 self.programs().decide(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),
                                        via=via, choice=choice, reason=reason, **_decide_args(item))
             answers[ref] = {"choice": choice, "via": via, "at": _utc(now)}

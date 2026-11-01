@@ -1,17 +1,22 @@
 {
   "items": [
     {
+      "because": {
+        "kind": "answer",
+        "rule": "kind",
+        "words": "a question"
+      },
       "blocked": [],
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-01T07:55:52.145312+00:00",
-          "clock": "02:55",
+          "at": "2026-11-01T08:47:07.520674+00:00",
+          "clock": "03:47",
           "line": "The agent asks a question."
         },
         {
-          "at": "2026-11-01T07:55:51.936704+00:00",
-          "clock": "02:55",
+          "at": "2026-11-01T08:47:07.080306+00:00",
+          "clock": "03:47",
           "line": "Handed to Claude Code."
         }
       ],
@@ -40,14 +45,14 @@
         "Step 2, “Ask first”: Ask which column name to use.",
         "The agent asks: Which name: stall reason or stalled because?"
       ],
-      "place": "Step 2 of 2 · started 02:55 · waited under a minute",
-      "program_id": "program-4705c24f7606",
+      "place": "Step 2 of 2 · started 03:47 · waited under a minute",
+      "program_id": "program-540b1d3e2d98",
       "program_title": "Overnight on the home box",
       "question": "What do you answer the agent?",
-      "ref": "program:program-4705c24f7606:step-107f617f1279:answer",
-      "since": "2026-11-01T07:55:52.145133+00:00",
+      "ref": "program:program-540b1d3e2d98:step-de7ea1f25d3f:answer",
+      "since": "2026-11-01T08:47:07.520484+00:00",
       "state": "open",
-      "step_id": "step-107f617f1279",
+      "step_id": "step-de7ea1f25d3f",
       "step_ordinal": 2,
       "step_title": "Ask first",
       "text": {
@@ -93,12 +98,12 @@
     }
   ],
   "package": {
-    "desk": "/?open=program:program-4705c24f7606",
+    "desk": "/?open=program:program-540b1d3e2d98",
     "expires_at": "2026-11-02T06:30:00+00:00",
     "expires_words": "Expires in 24 h",
     "head": "Overnight on the home box · step 2",
     "hub": "the rig hub",
-    "id": "pkg-544c97372bc8",
+    "id": "pkg-ae63bd4b9c9e",
     "kind": "item"
   }
 }

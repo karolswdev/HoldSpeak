@@ -365,7 +365,7 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | IMP2 | The to-do row (Done, Can't do it); the ending word | Open | After IMP1. |
 | IMP3 | Wait sentences; Since you were last here on Today | Open |  |
 | IMP4 | Never wider than the parent (closes the open ruling) | Shipped (this PR) | `program_service.parent_level`/`wider`: an agent's create is capped and says so; its update or text to a wider control is refused ("Refused: a program runs no wider than what made it", ledger line); step launches, handoffs, race entrants and helpers run at the Program's or parent's level (fenced). |
-| IMP5 | The `because` on each routed request; four honest refusals of a late answer | Open |  |
+| IMP5 | The `because` on each routed request; four honest refusals of a late answer | Shipped in part (this PR) | Every package body and Telegram send row carries `because` (`briefing_service.because_of`; the ladder's rule on its sends); a permission kind or a `gate:` ref is refused (`authority_stays`) and fenced; not pending / not offered / not usable / not kept as codes with his words on the page and Telegram. Open: a `because` for the call's reads (DIR8 composes without a package), the call's last line. |
 | IMP6 | Take it over, hand it back, on a step's lane | Open |  |
 | IMP7 | The forest | Later | With handoffs and J5. |
 
