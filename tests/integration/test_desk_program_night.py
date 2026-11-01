@@ -25,7 +25,7 @@ def _ok(response: Any, status: int = 200) -> Any:
 def test_add_to_tonight_over_rest_and_mcp(tmp_path, monkeypatch) -> None:
     rig = Rig(tmp_path)
     client = _client(rig, monkeypatch)
-    none = client.post("/api/programs/tonight", json={"kind": "action", "item_id": "ai_x"})
+    none = client.post("/api/programs/tonight", json={"kind": "action", "item_id": door_task(rig, "x")})
     assert none.status_code == 409 and none.json()["code"] == "no_night_program"
 
     pid, sids = make_night(rig)

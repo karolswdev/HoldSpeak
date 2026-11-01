@@ -130,7 +130,7 @@ def test_yolo_splits_it_says_so_and_overturn_brings_the_step_back_as_his_proposa
     steps = rig.program(pid)["steps"]
     assert [step["title"] for step in steps] == [part["title"] for part in SPLIT["parts"]] + ["Say it in the docs"]
     (row,) = [row for row in rig.service.decided_for_you(pid) if row["kind"] == "step_too_big"]
-    assert row["line"] == "Split step 1 (too big for Claude Code · 36k of 32k) into 3 parts: steps 1–3"
+    assert row["line"] == "Split step 1 (too big for Claude Code · 36k of 32k) into 3 parts: steps 1 to 3"
     assert row["rule"] == "YOLO: the planner splits a step too big for its budget and says so" and row["overturnable"]
     assert rig.service.needs_you_items() == []
     # The first part was handed at once; Overturn waits until no part started.

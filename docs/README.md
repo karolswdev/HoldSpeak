@@ -52,7 +52,7 @@ The owning guide explains how to inspect the result.
 | Choose operation authority | [Control modes](AUTHORITY.md) |
 | Set up installed coding-agent hooks | [Agent hooks](AGENT_HOOK_INSTALL.md) |
 | Understand held agent tool calls | [Gate](GATE.md) |
-| Connect an MCP client, 318 tools across 52 families | [MCP sidecar](MCP_SIDECAR.md) |
+| Connect an MCP client, 319 tools across 52 families | [MCP sidecar](MCP_SIDECAR.md) |
 | Run a remote Project sweep | [Reach Runner](REACH_RUNNER.md) |
 | Configure sources and outgoing destinations | [Integrations](INTEGRATIONS.md) |
 | Understand execution placement | [Execution destinations](EXECUTION_DESTINATIONS.md) |

@@ -623,13 +623,13 @@ Before HoldSpeak hands a step to its agent, it counts the step's size again by t
 
 | Secure | Normal | YOLO |
 |---|---|---|
-| Your turn: "Split step 3 … into 3 parts: … Skip runs it as it is." **Apply** splits it. **Skip** hands the step as it is. | the same | The engine splits it. Decided for you: "Split step 3 (too big for qwen · 41k of 32k) into 3 parts: steps 3–5" · **Overturn** while no part started. Overturn puts the step back, and the split waits for you. |
+| Your turn: "Split step 3 … into 3 parts: … Skip runs it as it is." **Apply** splits it. **Skip** hands the step as it is. | the same | The engine splits it. Decided for you: "Split step 3 (too big for qwen · 41k of 32k) into 3 parts: steps 3 to 5" · **Overturn** while no part started. Overturn puts the step back, and the split waits for you. |
 
 When there is no planning engine, when its answer cannot be used two times, or when a part of a split is still too big, the step is a core question: **Go on** hands it as it is, **Park** parks it.
 
 ## Night programs
 
-A program with a `night` line runs only at night, for example `night 23:30–07:00 · at most 8 steps`. Outside the window, each Ready step says "Ready · sleeps until 23:30". In the window, the engine hands steps as usual (with `when idle`, only when the engine is idle). With `at most`, it hands that many steps in one night, then says "Ready · the night's 8 steps ran".
+A program with a `night` line runs only at night, for example `night 23:30-07:00 · at most 8 steps`. Outside the window, each Ready step says "Ready · sleeps until 23:30". In the window, the engine hands steps as usual (with `when idle`, only when the engine is idle). With `at most`, it hands that many steps in one night, then says "Ready · the night's 8 steps ran".
 
 **Add to tonight.** Put one item in tonight's program: a Door task, a line of a note, or a step of another program. Agents and scripts use the tool `program.add_to_night` (`kind`: `action`, `note` with `line`, or `program_step`; `item_id`; `program_id` when more than one program has a night line), or `POST /api/programs/tonight`. The item becomes a Planned step of the night program. The same item two times is one step. A Door task's step closes the task when it merges. A night program that was Done opens again. An agent's add lands only at YOLO, with a Decided for you row and **Overturn**.
 

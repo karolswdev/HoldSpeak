@@ -275,7 +275,7 @@ def _ask_and_act(runner: Any, program_id: str, step_id: str, size: Mapping[str, 
                 made = apply_split(service, program, step, parts, by="engine")
                 first, last = made[0]["ordinal"], made[-1]["ordinal"]
                 line = (f"Split step {step['ordinal']} (too big for {_engine_word(size)} · {size_words(size)}) into "
-                        f"{len(made)} parts: steps {first}–{last}")
+                        f"{len(made)} parts: steps {first} to {last}")
                 service.engine_decision(program, None, "step_too_big", outcome, line[:400], undo={"split": {
                     "parts": [row["id"] for row in made], "step": _snapshot(step), "size": dict(size),
                     "proposed": parts}})

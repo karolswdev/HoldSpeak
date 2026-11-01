@@ -712,6 +712,8 @@ def test_the_step_remove_route_and_the_new_program_fields(tmp_path, monkeypatch)
         "standard", 65536, 8, ["holdspeak/"], True, None, None, [])
     refused = client.patch(f"/api/programs/{pid}", json={"delivery": "dw app/phase-1"})
     assert refused.status_code == 409 and refused.json()["code"] == "delivery_no_rails"
+    # LANG12: a night line holds every step outside its window; off, step 1 starts at once.
+    assert client.patch(f"/api/programs/{pid}", json={"night": None}).status_code == 200
     client.post(f"/api/programs/{pid}/start")
     one = rig.step(pid, 1)
     stays = client.post(f"/api/programs/{pid}/steps/{one['id']}/remove")

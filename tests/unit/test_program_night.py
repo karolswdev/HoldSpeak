@@ -238,7 +238,7 @@ def test_a_note_line_and_a_step_of_another_program(tmp_path, monkeypatch) -> Non
 def test_refusals_by_name(tmp_path, monkeypatch) -> None:
     rig, _clock, _reach = desk(tmp_path, monkeypatch, at(2, 14, 0))
     with pytest.raises(ProgramRefused) as none:
-        rig.service.add_to_night(OWNER, kind="action", item_id="ai_x")
+        rig.service.add_to_night(OWNER, kind="action", item_id=door_task(rig, "x"))
     assert none.value.code == "no_night_program"
     pid, _sids = make_night(rig)
     with pytest.raises(ProgramRefused) as unknown:

@@ -478,8 +478,8 @@ def add_to_night(service: Any, principal: Any, *, kind: Any, item_id: Any, line:
     from .program_rules import decide
     from .program_service import _LOCK, CLOSED_STATES, ProgramRefused, _is_owner
 
-    program = night_program(service, program_id)
     item = _item(service, str(kind or "").strip(), str(item_id or "").strip(), line)
+    program = night_program(service, program_id)
     for step in service.store.list_steps(program["id"]):
         if ((step.get("facts") or {}).get("night_item") or {}).get("ref") == item["ref"] \
                 and step.get("state") not in CLOSED_STATES:
