@@ -392,6 +392,7 @@ def _race_red_as_one(items: list[dict[str, Any]], steps: list[Mapping[str, Any]]
         logs = [{"agent": agent_label(row.get("profile")), "log": row.get("check_log"), "step_id": row["id"]}
                 for row in group]
         out.append({**item, "id": f"{parent['id']}:parked", "step_id": parent["id"], "race": True, "logs": logs,
+                    "race_both_red": True,
                     "title": (f"Parked step {parent['ordinal']} “{parent['title']}”: both contenders are "
                               "red after their rounds" if len(group) == 2 else
                               f"Parked step {parent['ordinal']} “{parent['title']}”: every contender is "
@@ -1456,7 +1457,11 @@ class ProgramService:
             "prefer_idle": bool(step.get("prefer_idle") or program.get("prefer_idle")),
             "may_call": bool(step.get("may_call") or program.get("may_call")),
             "held_reason": step.get("held_reason"), "race": int(step.get("race") or 0),
-            "race_of": step.get("race_of"), "gate": {
+            "race_of": step.get("race_of"),
+            # J5: the race failed as one step (every contender red after its rounds).
+            "race_both_red": bool(steps_by_id and not step.get("race_of")
+                                  and race_all_red(race_group(steps_by_id.values(), step))),
+            "gate": {
                 "check": bool(step.get("gate_check")), "review": step.get("gate_review") or "none",
                 "review_depth": step.get("review_depth"), "merge": step.get("gate_merge"),
             },

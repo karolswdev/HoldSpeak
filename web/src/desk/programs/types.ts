@@ -305,6 +305,8 @@ export interface ProgramStep {
   title: string;
   state: StepState;
   state_word: string;
+  /** J5: the race failed as one step (every contender red after its rounds). */
+  race_both_red?: boolean;
   /** Index into `stations` of the lit station; -1 = none yet. */
   station: number;
   stations: StationKey[];
