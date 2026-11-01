@@ -1075,6 +1075,13 @@ class ProgramService:
             ended = max((str(step.get("ended_at") or "") for step in steps), default="") or program["updated_at"]
             began = min(str(program["created_at"]), history["first"]) if history else program["created_at"]
             summary["done_in"] = duration_words(_seconds_between(began, ended))
+        # PG-WINDOW List: the list's line in his terms and its mini track.
+        from .brief_words import list_line, list_track
+
+        summary["track"] = list_track(top, turn)
+        summary["line"] = list_line(state, top, turn, history=history, done_in=summary.get("done_in", ""),
+                                    ended=max((str(step.get("ended_at") or "") for step in steps), default="")
+                                    or program.get("closed_at") or program["updated_at"])
         return summary
 
     def _ordinal_finished(self, steps: Iterable[Mapping[str, Any]], ordinal: int) -> bool:

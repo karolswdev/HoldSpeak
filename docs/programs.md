@@ -63,7 +63,7 @@ Tools and agents use `automation.create` with `do: "run_program"` and the fields
 
 ### From pull requests that merged already
 
-A program can hold work that merged before the program existed. Each merged pull request is one step in the state Merged, with its number and its merge time. No agent runs it. A program of only such steps is Done at once. In the Programs window it says "Merged 14 PRs · 28 Oct", and the fold of each step says "Imported from PR #1584". To make one, run `scripts/program_import_history.py --title "…" --goal "…" --repository <folder> --pr 1584-1598`. The script reads each pull request with `gh` and leaves out a pull request that did not merge. Add `--dry-run` to see the steps first. Tools and agents give `program.plan` a step with `history: {pr_number, merged_at}`.
+A program can hold work that merged before the program existed. Each merged pull request is one step in the state Merged, with its number and its merge time. No agent runs it. A program of only such steps is Done at once. In the Programs window it says "Done, merged 14 PRs, 28 Oct", and the fold of each step says "Imported from PR #1584". To make one, run `scripts/program_import_history.py --title "…" --goal "…" --repository <folder> --pr 1584-1598`. The script reads each pull request with `gh` and leaves out a pull request that did not merge. Add `--dry-run` to see the steps first. Tools and agents give `program.plan` a step with `history: {pr_number, merged_at}`.
 
 ## Templates
 
@@ -403,6 +403,8 @@ HoldSpeak's own file names the desk sweep's shot command. It has no default requ
 ## Find and filter
 
 In the Programs window:
+
+- Each program is one row: its title, a lamp and one line in plain words ("Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude Code, 11 min", "Drafting, 4 steps", "Done, 14 PRs, 28 Oct", "Parked at step 1 of 2"), a small track with one dot for each step, and the Met count. The programs that wait on you are first, then running, drafting, done and parked.
 
 - **Find a program** (with its mic) keeps only the rows that have each word you type. It reads the title, the goal, the project, the persons, the step titles, the pull request numbers (type "#1591") and the template. The window finds locally; each key costs no request.
 - **Project ▾** and **Person ▾** keep only the programs of one project or one person. They list only the projects and persons that have a program. **Any project** and **Anyone** remove the filter.

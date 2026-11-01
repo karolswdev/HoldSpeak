@@ -35,12 +35,10 @@ AGENT = Principal(PrincipalKind.AGENT, "agent-1")
 
 class Clock:
     def __init__(self) -> None:
-        # Today's noon, local (``local_noon``): never more than a day from the
-        # hub's wall clock, which reads the open pages (a fixed 2026-10-31
-        # 06:30 expired on 2026-11-01 06:30 and the page read as gone).
-        from tests.integration.program_rig import local_noon
-
-        self.now = local_noon().astimezone(timezone.utc)
+        # 06:30 UTC on today's date: the hub's page lookup reads the real
+        # clock, so a fixed day turned every page expired once the real time
+        # passed it (2026-11-01 06:30 UTC, red on main). The hour stays fixed.
+        self.now = datetime.now(timezone.utc).replace(hour=6, minute=30, second=0, microsecond=0)
 
     def __call__(self) -> str:
         return self.now.isoformat()

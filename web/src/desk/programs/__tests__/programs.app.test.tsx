@@ -217,9 +217,17 @@ describe("the Programs window", () => {
     expect(bands.map((band) => within(band).getByRole("heading").textContent)).toEqual(["Your turn", "Drafting", "Done", "Parked"]);
     expect(within(bands[0]).getAllByTestId("programs-row").map((row) => row.getAttribute("data-program")))
       .toEqual(list.programs.filter((row) => row.state === "waiting").map((row) => row.id));
-    // A finished Program says how long it took, in ok ink.
+    // PG-WINDOW List: each row reads like a line from a chief of staff (the hub's words), with its mini track.
+    for (const row of list.programs) {
+      const node = screen.getAllByTestId("programs-row").find((candidate) => candidate.getAttribute("data-program") === row.id)!;
+      expect(within(node).getByTestId("programs-row-state").textContent).toBe(row.line);
+      expect(node.querySelectorAll(".pg-station")).toHaveLength(row.track!.length);
+    }
+    expect(list.programs.find((row) => row.state === "waiting")!.line).toMatch(/^Step \d+ of \d+ waits on you since \d\d:\d\d$/);
     const doneRow = within(bands[2]).getByTestId("programs-row");
-    expect(doneRow.textContent).toContain("Done in under a minute");
+    expect(doneRow.textContent).toMatch(/Done, 1 PR, \d+ \w{3}/);
+    // No column heads.
+    expect(document.querySelector(".pg-list-head")).toBeNull();
     expect(status().textContent).toContain("Your turn");
     expect(status().textContent).toContain("2 wait on you");
     expect(status().textContent).not.toMatch(/\b0 /);
@@ -839,9 +847,9 @@ describe("PG17: a Program made from PRs that merged already (recorded through th
     const bands = await screen.findAllByTestId("programs-band");
     expect(bands.map((band) => within(band).getByRole("heading").textContent)).toEqual(["Done"]);
     const row = within(bands[0]).getByTestId("programs-row");
-    expect(row.textContent).toContain("3 of 3 steps");
-    expect(row.textContent).toContain(history.history!.words);
+    expect(within(row).getByTestId("programs-row-state").textContent).toMatch(/^Done, merged 3 PRs, \d+ Oct/);
     expect(history.history!.words).toMatch(/^Merged 3 PRs · \d+ Oct/);
+    expect(row.querySelectorAll(".pg-station")).toHaveLength(3);
     expect(row.textContent).not.toContain("Done in");
   });
 
