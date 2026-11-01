@@ -92,7 +92,11 @@ function FamilyGroup({ row, children }: { row: ProgramSummary; children: Program
       {children.length ? (
         <li className="pg-row-family" data-testid="programs-family-fold" data-parent={row.id}>
           <FoldGadget title={children.length === 1 ? "1 program it made" : `${children.length} programs it made`}>
-            <ul className="kit-listrows">{children.map((child) => <ProgramRow key={child.id} row={child} />)}</ul>
+            <ul className="kit-listrows">
+              {children.map((child) => (
+                <ProgramRow key={child.id} row={child} />
+              ))}
+            </ul>
           </FoldGadget>
         </li>
       ) : null}
