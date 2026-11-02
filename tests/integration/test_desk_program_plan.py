@@ -143,6 +143,12 @@ def test_a_three_goal_paste_proposes_three_programs_and_apply_all_links_them(tmp
     start = client.post(f"/api/programs/{second['id']}/start", json={})
     assert start.status_code == 409 and start.json()["code"] == "waits_on_program"
     assert start.json()["detail"] == f"It starts after {programs[0]['title']} is done."
+    # The list says it while it waits: "Starts after <name>".
+    listed = _ok(client.get("/api/programs"))
+    lines = {row["id"]: row["line"] for row in listed["programs"]}
+    assert lines[second["id"]] == f"Starts after {programs[0]['title']}"
+    assert lines[third["id"]] == f"Starts after {programs[1]['title']}"
+    _fixture("programs.chained.list.json", listed, tmp_path)
     _fixture("program.plan_programs.json", {"program": before, "draft": draft, "applied": applied, "second": second,
                                             "start_refused": {"status": start.status_code, "body": start.json()}},
              tmp_path)

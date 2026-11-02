@@ -44,6 +44,7 @@ def test_file_and_make_are_held_items_the_page_decides(tmp_path, monkeypatch) ->
     assert filed.status_code == 200, filed.text
     assert filed.json()["item"]["state"] == "decided" and len(_tasks(rig)) == 3
     assert filed.json()["item"]["outcome"]["words"].startswith("File · ")
+    assert filed.json()["item"]["outcome"]["words"].endswith("Nothing else on this page waits on you.")
     fixed = client.post(f"/api/b/{token_two}/answer", json={"ref": refs[1], "choice": "make"})
     assert fixed.status_code == 200, fixed.text
     assert rig.program(pid)["fix_program_id"]

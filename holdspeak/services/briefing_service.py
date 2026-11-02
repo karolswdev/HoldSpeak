@@ -757,14 +757,27 @@ class BriefingService:
             raise _gone()
         return package
 
-    def _others_waiting(self, ref: str) -> int:
-        """How many other items wait on him now (Needs you, Later left out)."""
-        try:
-            items = self.programs().needs_you_items()
-        except Exception:
-            return 0
-        return sum(1 for row in items if not row.get("later")
-                   and f"{PROGRAM_REF}{row.get('program_id')}:{row.get('id')}" != ref)
+    def _others_on_page(self, package: Mapping[str, Any], ref: str) -> int:
+        """How many other items on THIS page still wait on him: not decided
+        on the page and still held (an item answered on the desk is gone).
+        The desk-wide count is Needs you's, not the page's."""
+        answers = package.get("answers") or {}
+        count = 0
+        for row in self.bodies(package):
+            other = str(row.get("ref") or "")
+            if not other or other == ref:
+                continue
+            answer = answers.get(other) if isinstance(answers, dict) else None
+            if isinstance(answer, dict) and answer.get("choice") and answer.get("choice") != "later":
+                continue
+            try:
+                source = self._source(other)
+                held = source.held(other) if source is not None else self._held(other)[2]
+            except Exception:
+                held = None
+            if held is not None:
+                count += 1
+        return count
 
     def _item_state(self, package: Mapping[str, Any], body: Mapping[str, Any]) -> dict[str, Any]:
         """The item's state now. A decided item settles to one line (the
@@ -781,7 +794,7 @@ class BriefingService:
             label = labels.get(answer["choice"], str(answer["choice"]))
             via = answer.get("via")
             words = settle_words(str(body.get("kind") or ""), str(answer["choice"]), label,
-                                 clock_words(answer.get("at")), self._others_waiting(ref),
+                                 clock_words(answer.get("at")), self._others_on_page(package, ref),
                                  "" if via == "page" else _VIA_SETTLE.get(str(via), ""))
             return {"state": "decided", "outcome": {
                 "choice": answer["choice"], "label": label, "via": via, "at": answer.get("at"), "words": words}}

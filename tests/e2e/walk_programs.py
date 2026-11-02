@@ -17,6 +17,7 @@ not draw, has page-wide sideways scroll, or draws a raw <button>.
 """
 from __future__ import annotations
 
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any, Callable
@@ -373,12 +374,20 @@ def test_walk_list(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pw_browser: 
                 find.fill("audit")
                 _shot(page, f"list-find-{width}")
                 find.fill("")
-            for menu, pick, shot in (("programs-project", "HoldSpeak", "project"), ("programs-person", "Alice Park", "person")):
+            for menu, sub, pick, shot in (("programs-project", "Project", "HoldSpeak", "project"),
+                                          ("programs-person", "Person", "Alice Park", "person")):
                 opener = win.locator(f"[data-testid={menu}]")
                 if opener.count() and opener.is_visible():
                     opener.click()
-                    page.get_by_role("menuitem", name=pick).first.click()
-                    _shot(page, f"list-{shot}-{width}")
+                else:
+                    # At 393 Project and Person live under More (its submenus).
+                    win.locator("[data-testid=programs-more]").click()
+                    page.get_by_role("menuitem", name=re.compile(rf"^{sub}")).first.click()
+                page.get_by_role("menuitem", name=pick).first.click()
+                page.wait_for_timeout(400)
+                _shot(page, f"list-{shot}-{width}")
+                # The filter is on: only that program's rows (the status names the filter).
+                assert pick.split()[0] in win.locator("[data-testid=programs-status]").inner_text() or shot == "person", shot
             sideways = page.evaluate("() => document.documentElement.scrollWidth - document.documentElement.clientWidth")
             ctx.close()
             assert not errors, (width, errors)
@@ -486,7 +495,8 @@ def test_walk_briefing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pw_brows
             _shot(page, f"briefing-decided-{width}")
             ctx.close()
             assert not errors, (width, errors)
-        # The three-item page as he scrolls it on the phone: each item in view.
+        # The three-item page as he scrolls it on the phone: each item in view,
+        # and at every scroll position at most one tray is pinned at the bottom.
         ctx, page, errors = _page(pw_browser, 393)
         page.goto(base + pages["three"], wait_until="load")
         page.locator("[data-testid=briefing-question]").first.wait_for(timeout=30_000)
@@ -494,6 +504,17 @@ def test_walk_briefing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pw_brows
             page.locator("[data-testid=briefing-question]").nth(index).scroll_into_view_if_needed()
             page.wait_for_timeout(500)
             _shot(page, f"briefing-three-item{index + 1}-393")
+        height = page.evaluate("() => document.documentElement.scrollHeight")
+        for top in range(0, height, 200):
+            page.evaluate("(y) => window.scrollTo(0, y)", top)
+            page.wait_for_timeout(60)
+            pinned = page.evaluate("""() => [...document.querySelectorAll('.briefing-tray')].filter((tray) => {
+                const box = tray.getBoundingClientRect(); const own = tray.parentElement.getBoundingClientRect();
+                return box.bottom >= innerHeight - 1 && box.top < innerHeight && own.bottom > innerHeight + 1;
+            }).length""")
+            assert pinned <= 1, (top, pinned)
+        text = page.evaluate("() => document.body.innerText")
+        assert not re.search(r"\b([2-9]|\d\d) waits on you", text), "the page's status line says N waits"
         ctx.close()
         assert not errors, errors
         # On the three-item page, one press settles that item alone (the File row).
