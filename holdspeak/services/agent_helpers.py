@@ -172,6 +172,23 @@ def _pane(record: Mapping[str, Any]) -> str:
     return pane
 
 
+#: The turn states of a helper that still runs.
+LIVE_HELPER_STATES = frozenset({"starting", "launched", "registered", "working", "waiting"})
+
+
+def helper_live(row: Mapping[str, Any], state_reader: Optional[Callable[[str], str]] = None) -> bool:
+    """True only for a helper that still runs. A helper whose launch is
+    finished in the ledger (complete, stopped, failed) is done, whatever its
+    idle pane reads; its result stays in its pane and the ledger."""
+    from .agent_hand_service import _STOPPED_LAUNCH_STATES
+
+    if str(row.get("state") or "") in _STOPPED_LAUNCH_STATES | {"failed"}:
+        return False
+    launch_id = str(row.get("launch_id") or "")
+    state = state_reader(launch_id) if state_reader and launch_id else row.get("state")
+    return str(state or "") in LIVE_HELPER_STATES
+
+
 def last_words(db: Any, launch_id: str, ledger: Any = None) -> Optional[str]:
     """The helper's last words: its newest Stop (the event log), else what its
     screen showed above its prompt."""
@@ -211,9 +228,7 @@ def start_helper(
     for row in ledger.list():
         if str(row.get("helper_of") or "") != caller:
             continue
-        launch_id = str(row.get("launch_id") or "")
-        state = state_reader(launch_id) if state_reader and launch_id else row.get("state")
-        if str(state or "") in {"starting", "launched", "registered", "working", "waiting"}:
+        if helper_live(row, state_reader):
             raise HelperRefused("helper_exists", "this agent already has its one helper")
     # Programs PG13b: the helper inherits its parent's level (a Program
     # step's launch: the Program's control), not the desk's Control mode.

@@ -508,17 +508,30 @@ class AgentHandService:
             # Betterment AG11: a helper works in its own worktree, on a branch
             # that starts at its parent's branch.
             parent = launcher._ledger.get(helper_of) or {}
-            round_suffix = f"-{max(1, int(helper_round))}" if int(helper_round) > 1 else ""
-            spec = {
-                "mode": "new", "name": f"{spec['name']}{round_suffix}-helper", "branch": f"{spec['branch']}{round_suffix}-helper",
-                **({"start_point": str(start_point or parent.get("branch"))} if start_point or parent.get("branch") else {}),
-            }
+            base = dict(spec)
+            first = max(1, int(helper_round))
+            # A finished helper keeps its worktree (its result stays readable).
+            # ``agent_helpers.start_helper`` refuses only a helper that still
+            # runs, so a taken name here is a finished round: the new helper
+            # takes the next free round name.
+            for round_no in range(first, first + _HELPER_NAME_TRIES):
+                round_suffix = f"-{round_no}" if round_no > 1 else ""
+                spec = {
+                    "mode": "new", "name": f"{base['name']}{round_suffix}-helper", "branch": f"{base['branch']}{round_suffix}-helper",
+                    **({"start_point": str(start_point or parent.get("branch"))} if start_point or parent.get("branch") else {}),
+                }
+                try:
+                    worktree_path = derive_worktree_path(source.primary_path, spec["name"])
+                except LaunchRefused as exc:
+                    raise AgentHandRefused.from_launch(exc) from exc
+                if not worktree_path.exists():
+                    break
+            else:
+                raise AgentHandRefused("helper_exists", "this agent already has its one helper")
         try:
             worktree_path = derive_worktree_path(source.primary_path, spec["name"])
         except LaunchRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
-        if worktree_path.exists() and helper_of:
-            raise AgentHandRefused("helper_exists", "this agent already has its one helper")
         if worktree_path.exists():
             # Handed before: an earlier launch of this item whose brief is
             # still held resumes on that launch; it is never relaunched.
@@ -1040,6 +1053,9 @@ def codex_hooks_installed(path: Optional[Path] = None) -> bool:
 
 
 #: Launch states whose agent no longer runs: its worktree takes Hand again.
+#: How many round names a new helper tries past finished helpers' worktrees.
+_HELPER_NAME_TRIES = 8
+
 _STOPPED_LAUNCH_STATES = frozenset({
     "stopped_by_restart", "stopped_by_owner", "resume_failed", "complete", "ended_undelivered",
     "failed_to_register",
