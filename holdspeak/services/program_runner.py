@@ -82,6 +82,8 @@ _TURN_END = frozenset({"done", "pr_open", "merged"})
 #: Ruling 2026-11-01: the brief of a step handed again only to give its
 #: reviewer a live parent (no build).
 REVIEW_WAIT_BRIEF = "Your work is checked green; wait for the review."
+#: Why a step in review is handed again when its builder ended first.
+REVIEW_BUILDER_ENDED = "The review waited on its builder, and the builder ended with no turn end; the step is handed again for its review"
 #: AG12's words when the review loop could not start the reviewer.
 REVIEWER_NOT_STARTED = "Reviewer could not start"
 #: Programs the tick walks.
@@ -1767,6 +1769,25 @@ class ProgramRunner:
                                  "had ended; it builds nothing and waits for the review")
         return True
 
+    def _builder_ended_before_review(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any]) -> None:
+        """The fix proof of 2026-11-02: the review waited on its builder's
+        turn, and the builder launch ended with no turn end (its brief never
+        submitted, its pane stopped). Nothing would ever start the reviewer,
+        so the engine hands the step again for its review, once per ended
+        builder, and both the step and the ended launch say why."""
+        ended = str(step.get("launch_id") or "")
+        if not ended or facts.get("review_rehanded_for") == ended:
+            return
+        facts["review_rehanded_for"] = ended
+        step["facts"] = facts
+        self.service.save_step(step)
+        try:
+            self.ledger().update(ended, review_rehanded={"at": self._now().isoformat(), "reason": REVIEW_BUILDER_ENDED})
+        except Exception:
+            pass  # the checkpoint below still says why
+        self.service._checkpoint(program, step, "engine", f"{REVIEW_BUILDER_ENDED} ({ended})")
+        self._attach_review(program, step)
+
     def _requirement_acceptance(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[str]:
         """PG-REQ §5: the review requirements, each by its id, and how to answer."""
         rows = self._review_requirements(program, step)
@@ -1807,6 +1828,10 @@ class ProgramRunner:
             facts["req_reask_done"] = True
             step["facts"] = facts
             self.service.save_step(step)
+        if (status == "awaiting_builder_commit" and round_ == 0 and step["state"] == "review"
+                and not self._builder_alive(step)):
+            self._builder_ended_before_review(program, step, facts)
+            return
         facts["review_round"] = round_
         if status == "reviewing" and step["state"] != "review":
             step["facts"] = facts
