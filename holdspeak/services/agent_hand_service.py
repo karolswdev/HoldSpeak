@@ -1048,6 +1048,13 @@ _STOPPED_LAUNCH_STATES = frozenset({
 })
 
 
+#: A launch that failed at these stages never typed its brief: no agent took
+#: the item, so its worktree takes Hand again (the live fix-Program proof,
+#: 2026-11-01: a spawn that timed out on a loaded machine left the step's
+#: worktree "duplicate" for every later hand).
+_NEVER_TOOK_STAGES = frozenset({"spawn", "target"})
+
+
 def _hand_again_of(existing: Optional[Mapping[str, Any]]) -> Optional[tuple[str, str]]:
     """``(launch_id, worktree_id)`` of the item's earlier launch when its
     agent stopped and its worktree is known; else ``None``."""
@@ -1057,7 +1064,10 @@ def _hand_again_of(existing: Optional[Mapping[str, Any]]) -> Optional[tuple[str,
     resume = existing.get("resume") or {}
     if isinstance(resume, Mapping) and resume.get("state") == "resuming":
         return None
-    if state not in _STOPPED_LAUNCH_STATES and not (isinstance(resume, Mapping) and resume.get("outcome") == "failed"):
+    failure = existing.get("failure") if isinstance(existing.get("failure"), Mapping) else {}
+    never_took = state == "failed" and str(failure.get("stage") or "") in _NEVER_TOOK_STAGES
+    if state not in _STOPPED_LAUNCH_STATES and not never_took and not (
+            isinstance(resume, Mapping) and resume.get("outcome") == "failed"):
         return None
     launch_id, worktree_id = str(existing.get("launch_id") or ""), str(existing.get("worktree_id") or "")
     return (launch_id, worktree_id) if launch_id and worktree_id else None
