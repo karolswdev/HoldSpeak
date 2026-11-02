@@ -320,8 +320,9 @@ class AgentReviewLoop:
             # launch state is not the turn state, so use the hub read here;
             # otherwise round two would be blocked by the completed round-one
             # helper forever.
-            launch_id = str(record.get("launch_id") or "")
-            if launch_id and self._state(launch_id) in {"starting", "launched", "registered", "working", "waiting"}:
+            from .agent_helpers import helper_live
+
+            if record.get("launch_id") and helper_live(record, self._state):
                 return record
         return None
 
