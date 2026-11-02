@@ -75,7 +75,10 @@ def send_text_to_pane(
 
     if not message.strip():
         # Only the Enter of a text typed before (``coder_steering.deliver``:
-        # the answer's wait was read again in between).
+        # the answer's wait was read again in between). The usual pause comes
+        # first (ruling 2026-11-02): the only change from a plain send is the
+        # second read of the wait.
+        time.sleep(SUBMIT_PAUSE_SECONDS)
         _run_tmux(["tmux", "send-keys", "-t", target, "-l", "\r"], timeout_s=timeout_s)
         return TmuxDelivery(pane=target, submitted=True)
     if "\n" in message or len(message) > PASTE_ABOVE_CHARS:
