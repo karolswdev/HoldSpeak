@@ -220,3 +220,41 @@ def test_a_redirect_into_tmp_stays_outside(tree) -> None:
     verdict = classify_tool_call("Bash", {"command": "uv run pytest -q > /tmp/out.log"}, cwd=str(tree["wt"]),
                                  root=str(tree["wt"]))
     assert verdict.scope == "outside"
+
+
+# ── Astra round 2 (2026-11-02): the spellings round 1 missed ─────────
+
+@pytest.mark.parametrize("command", [
+    "env git push -fv origin main",
+    'env git push "--force-with-lease" origin main',
+    "env git push origin +HEAD:main",
+    "bash -c 'git push -f origin main'",
+])
+def test_a_force_push_in_any_shell_spelling_is_destructive(command) -> None:
+    assert destructive_word(command) == "git push --force", command
+
+
+@pytest.mark.parametrize("command", [
+    "env git -C../other commit -am x",
+    "env git -C/absolute/outside commit -am x",
+    "bash -c 'cd; printf x > escaped.txt'",
+    "bash -c 'cd ~ && printf x > escaped.txt'",
+    'env touch "$OUT"',
+    "env cp notes.txt $DEST",
+    "echo $(touch ../other/x)",
+    "python -c 'open(\"/etc/x\", \"w\")'",
+    "../other/run.sh",
+])
+def test_round_two_writes_outside_are_not_inside(tree, command) -> None:
+    assert unparsed_paths_inside(command, cwd=str(tree["wt"]), root=str(tree["wt"])) is False, command
+
+
+@pytest.mark.parametrize("command", [
+    "env git commit -m \"$(cat <<'EOF'\nFix src/worker.py\nEOF\n)\"",
+    'bash -c "echo ~"',
+    "echo $PATH",
+    "python -c 'print(1)'",
+    "./run.sh",
+])
+def test_round_two_ordinary_calls_are_inside(tree, command) -> None:
+    assert unparsed_paths_inside(command, cwd=str(tree["wt"]), root=str(tree["wt"])) is True, command
