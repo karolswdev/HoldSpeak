@@ -474,7 +474,7 @@ class CoderQuestionSource(Source):
         if outcome == "wait_not_current":
             raise ServiceError("wait_changed", WAIT_CHANGED, context={"status": 409})
         if outcome != "delivered":
-            raise ServiceError("not_kept", "Your answer did not reach the agent. Nothing was typed. Try again.",
+            raise ServiceError("not_kept", "Your answer did not reach the agent. It was not sent. Try again.",
                                context={"status": 409})
         return {"answered": True, "key": item.get("key")}
 

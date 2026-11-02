@@ -54,7 +54,9 @@ NOT_USABLE = "Choose one"
 NOT_KEPT = "Could not keep that for later; it still waits"
 #: Astra post-merge 2026-11-01: the agent's wait changed after the page was
 #: made (a permission prompt, another question); nothing is typed.
-WAIT_CHANGED = "The agent asks something else now. Nothing was typed; it waits on your desk"
+#: Astra round 3: the text may be typed before the wait is read again; it is
+#: never sent (no Enter), so the words say "not sent", never "nothing typed".
+WAIT_CHANGED = "The agent asks something else now. Your answer was not sent; it waits on your desk"
 
 
 #: DIRECTION §3: the words when a page-only item is answered elsewhere.
