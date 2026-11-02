@@ -110,3 +110,50 @@ def test_a_step_agent_a_handoff_a_race_entrant_and_a_helper_run_no_wider(tmp_pat
     made = rig.service.create(step_agent, title="Its own", repository=str(rig.repo), control="yolo",
                               check_command=f"sh {FAKE_CHECK}")
     assert made["control"] == "secure"
+
+
+def test_a_helper_is_never_wider_than_its_starter(tmp_path, monkeypatch) -> None:
+    """Astra's post-merge check (2026-11-01): on a YOLO desk a Normal step's
+    helper resolved its level through the desk (YOLO), so its own
+    ``program.create(control="yolo")`` made a YOLO Program. A helper's level
+    is its starter's, and never wider than the level it was started at."""
+    from holdspeak.mcp import palettes
+    from holdspeak.services.control_level import level_for_launch, mode_for_launch
+
+    _desk(tmp_path, monkeypatch, "yolo")
+    rig = Rig(tmp_path)
+    pid = rig.service.create(OWNER, title="Careful", repository=str(rig.repo), control="normal",
+                             check_command=f"sh {FAKE_CHECK}")["id"]
+    rig.service.plan(OWNER, pid, steps=[{"title": "One", "brief": "x"}])
+    [step] = rig.service.store.list_steps(pid)
+    step["launch_id"] = "L-step"
+    rig.service.store.save_step(step)
+
+    records = {
+        "L-help": {"launch_id": "L-help", "helper_of": "L-step", "control_mode": "neutral"},
+        "L-help2": {"launch_id": "L-help2", "helper_of": "L-help", "control_mode": "yolo"},
+        "L-tight": {"launch_id": "L-tight", "helper_of": "L-step", "control_mode": "safe"},
+        "L-desk": {"launch_id": "L-desk", "control_mode": "yolo"},
+    }
+
+    class _Ledger:
+        def get(self, launch_id):
+            return records.get(launch_id)
+
+    monkeypatch.setattr("holdspeak.delivery.factory_launch.LaunchLedger", lambda *a, **k: _Ledger())
+    assert level_for_launch("L-help", db=rig.db) == "normal"
+    assert level_for_launch("L-help2", db=rig.db) == "normal"  # a helper's helper: still its root's
+    assert level_for_launch("L-tight", db=rig.db) == "secure"  # started narrower: stays narrower
+    assert mode_for_launch("L-help", db=rig.db) == "neutral"
+    assert level_for_launch("L-desk", db=rig.db) == "yolo"  # not a helper: the desk
+
+    store = AgentCredentialStore()
+    helper = store.issue("agent:launch:L-help2", palette=palettes.resolve_palette("CONDUCTOR"),
+                         palette_name="CONDUCTOR", launch_id="L-help2").principal
+    monkeypatch.setattr("holdspeak.principals.agent_credentials", store)
+    made = rig.service.create(helper, title="Its own", repository=str(rig.repo), control="yolo",
+                              check_command=f"sh {FAKE_CHECK}")
+    assert made["control"] == "normal"
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.update(helper, made["id"], control="yolo")
+    assert refused.value.code == "control_wider"
