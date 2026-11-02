@@ -287,6 +287,16 @@ def _parse_ts(text: Any) -> Optional[datetime]:
     return parsed
 
 
+def _stale_claim(row: Mapping[str, Any], claim: Mapping[str, Any], launch: Optional[Mapping[str, Any]]) -> bool:
+    """A rider claim that must not bind ``launch``: its session ended, or
+    its claim (else its last update) is older than the launch's start."""
+    if str(row.get("lifecycle") or "") == "ended":
+        return True
+    launched = _parse_ts((launch or {}).get("launched_at"))
+    claimed = _parse_ts(claim.get("claimed_at") or row.get("updated_at"))
+    return launched is not None and claimed is not None and claimed < launched
+
+
 def origin_ref_of(request: Mapping[str, Any]) -> Optional[dict[str, str]]:
     """The optional ``origin_ref`` of a launch request, validated.
 
@@ -1984,6 +1994,14 @@ class LaunchService:
                 summary["skipped"] += 1  # already exactly bound: no double-pin
                 continue
             attempt = candidates[-1]  # oldest unbound launch first
+            if _stale_claim(row, claim, self._ledger.by_attempt(attempt.attempt_id)):
+                # The fix proof of 2026-11-02: a hand again in the same
+                # worktree bound the item's earlier, ended session (same
+                # worktree, same story), so the new builder read "ended"
+                # for good. A claim binds only a session that lives and
+                # began after the launch did.
+                summary["skipped"] += 1
+                continue
             if not self._bind_session(
                 attempt.attempt_id,
                 session_key,
