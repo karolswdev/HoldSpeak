@@ -91,3 +91,53 @@ def test_cadences_own_push_stays_quiet_while_reach_carries_it(tmp_path, monkeypa
     desk.reach.save_settings(OWNER, {"telegram": "at_once"})
     monkeypatch.setenv("HOLDSPEAK_TELEGRAM", "off")
     assert carries_cadence(desk.rig.db) is False
+
+
+# ── Astra's post-merge check (2026-11-01): the two duplicate routes ──
+
+def test_a_night_line_sent_at_once_is_the_days_one_message(tmp_path) -> None:
+    """The night's line went at once (after the digest hour): the next tick
+    sends no plain digest of what waits."""
+    desk = _morning(tmp_path)
+    desk.core()
+    desk.bot.calls.clear()
+    sent = desk.reach.night_line("program:p1:night:2026-11-02", "Dreaming · HoldSpeak\nSince last night: 1 step done")
+    assert sent["sent"] is True
+    desk.reach.tick()
+    desk.reach.tick()
+    assert len(_texts(desk)) == 1, _texts(desk)
+
+
+def test_the_night_line_and_the_digest_never_both_carry_the_cadence_line(tmp_path, monkeypatch) -> None:
+    import threading
+    import time
+
+    desk = _morning(tmp_path)
+    desk.core()
+    _loop(desk)
+    desk.bot.calls.clear()
+    real = type(desk.reach).cadence_line
+
+    def slow(self):
+        line = real(self)
+        time.sleep(0.2)  # both paths read "not carried yet" if nothing serializes them
+        return line
+
+    monkeypatch.setattr(type(desk.reach), "cadence_line", slow)
+    start = threading.Barrier(2)
+
+    def night() -> None:
+        start.wait()
+        time.sleep(0.05)  # the digest's tick is already reading the Cadence line
+        desk.reach.night_line("program:p1:night:2026-11-02", "Dreaming · HoldSpeak\nSince last night: 1 step done")
+
+    def digest() -> None:
+        start.wait()
+        desk.reach.tick()
+
+    threads = [threading.Thread(target=night), threading.Thread(target=digest)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(10)
+    assert sum(text.count("Cadence: ") for text in _texts(desk)) == 1, _texts(desk)
