@@ -2627,12 +2627,23 @@ class ProgramService:
         said = " ".join(str(text or "").split())
         if not said:
             raise ProgramRefused("answer_required", "Write your answer.", status=400)
-        if step.get("state") != "waiting" or not step.get("launch_id"):
-            raise ProgramRefused("not_asking", "The step's agent asks nothing now.")
         token = _VIA.set(via_of(via))
         try:
-            self.runner().prompt_builder(step, said)
             with _LOCK:
+                # One answer per question (Astra post-merge 2026-11-01: two
+                # pages each typed the same answer): the agent's waiting turn
+                # is claimed here, read inside the lock.
+                step = self._step(program, step_id)
+                if step.get("state") != "waiting" or not step.get("launch_id"):
+                    raise ProgramRefused("not_asking", "The step's agent asks nothing now.")
+                turn = str(self.runner().flight(str(step["launch_id"])).get("turn_id") or "")
+                facts = dict(step.get("facts") or {})
+                if turn and facts.get("answered_turn") == turn:
+                    raise ProgramRefused("answered_already", "Answered already.")
+                self.runner().prompt_builder(step, said)
+                facts["answered_turn"] = turn
+                step["facts"] = facts
+                self.save_step(step)
                 self._checkpoint(program, step, "owner", f"Answered the agent: {said[:120]}")
                 self.changed(program["id"], step["id"], verb="answer")
         finally:
@@ -2702,6 +2713,9 @@ class ProgramService:
             raise ProgramRefused("choice_invalid", f"{kind!r} takes {', '.join(DECIDE_CHOICES.get(kind, ())) or 'nothing'}.", status=400)
         answer: dict[str, Any] = {}
         with _LOCK:
+            # Read inside the lock: two channels answering at once each see the
+            # other's answer (Astra post-merge 2026-11-01: two "Go on" rows).
+            step = self._step(program, step_id)
             if kind == "merge":
                 if step["state"] not in ("merge_ask", "pr_open"):
                     raise ProgramRefused("not_mergeable", "This step has no PR waiting to merge.")
@@ -2745,7 +2759,7 @@ class ProgramService:
             elif kind == "core":
                 facts = step.setdefault("facts", {})
                 core = dict(facts.get("core") or {})
-                if not core:
+                if not core or core.get("cleared"):
                     raise ProgramRefused("no_core_question", "This step asks nothing of you now.")
                 if choice == "go_on":
                     core["cleared"] = True
