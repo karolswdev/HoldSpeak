@@ -462,3 +462,21 @@ def test_a_refused_call_keeps_its_whole_command_and_cwd_on_the_ledger(launched, 
     detail = row["undo"]["detail"]
     assert f"cwd {launched.worktree}" in detail and "rule redirect_outside_worktree · scope outside" in detail
     assert "/etc/holdspeak-outside-log" in detail  # past the 120-char head
+
+
+def test_an_audit_steps_refused_run_says_the_audits_rule(launched, tmp_path, monkeypatch) -> None:
+    """The live audit proof: an audit step's refused `make test` said "YOLO:
+    a call outside the step's worktree, or a destructive one"; it is the
+    audit's own rule (reads only)."""
+    _mode(tmp_path, monkeypatch, "neutral")
+    service = ProgramService(launched.db, kernel=lambda **_kw: None)
+    pid = service.create(OWNER, title="Audit", repository=str(launched.worktree), control="yolo", template="audit")["id"]
+    service.plan(OWNER, pid, steps=[{"title": "Audit the README", "brief": "Read it."}])
+    [step] = service.store.list_steps(pid)
+    step.update(launch_id=launched.launch_id, state="working")
+    service.store.save_step(step)
+    refused = _call(launched, "make test").proposal
+    assert refused.state == DENIED
+    [row] = [row for row in service.get(OWNER, pid)["decided_for_you"] if row["line"].startswith("Refused by rule")]
+    assert row["line"] == "Refused by rule (audit, reads only): make"
+    assert row["rule"] == "YOLO: an audit step reads only; a write or a run is refused by rule"
