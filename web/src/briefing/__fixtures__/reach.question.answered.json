@@ -1,50 +1,29 @@
 {
   "item": {
-    "because": {
-      "kind": "answer",
-      "rule": "kind",
-      "words": "a question"
-    },
-    "blocked": [],
-    "blocked_words": "",
-    "changed": [],
     "choices": [],
-    "doing": "",
-    "evidence": [],
-    "goal": "Claude Code asks you a question.",
-    "happened": "",
     "head": "Claude Code · Fix the flaky test",
     "kind": "answer",
     "kind_words": "An agent asks",
-    "level": "",
-    "note": [
-      "Claude Code asks you a question."
-    ],
     "outcome": {
-      "at": "2026-11-02T02:49:15.414037+00:00",
+      "at": "2026-11-02T03:30:45.242388+00:00",
       "choice": "answer",
       "label": "Answered",
       "via": "page",
-      "words": "Answered · 21:49. Nothing else on this page waits on you."
+      "words": "Answered · 22:30. Nothing else on this page waits on you."
     },
-    "place": "",
     "program_id": null,
     "program_title": "",
     "question": "Which branch should I base the fix on?",
     "ref": "coder:claude:s-1",
-    "since": "2026-11-01T12:00:00+00:00",
     "source": "coder",
     "state": "decided",
     "step_id": "",
     "step_ordinal": null,
-    "step_title": "",
     "text": {
       "consequence": "HoldSpeak types your answer to Claude Code.",
       "id": "answer",
       "label": "Your answer",
       "max": 2000
-    },
-    "track": [],
-    "wait_id": "w-1|answer"
+    }
   }
 }
