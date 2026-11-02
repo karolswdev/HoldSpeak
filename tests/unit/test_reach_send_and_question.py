@@ -219,3 +219,11 @@ def test_the_real_delivery_receipt_is_read(hub: Hub, monkeypatch: pytest.MonkeyP
     answered = hub.client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer", "reason": "Main."})
     assert answered.status_code == 200, answered.text
     assert responder.typed == [("claude:s-1", "Main.")]
+
+
+def test_the_late_answer_words_never_say_nothing_was_typed() -> None:
+    """Astra round 3: the text can be typed before the wait is read again;
+    it is never sent (no Enter). The words must not say "Nothing was typed"."""
+    from holdspeak.services.briefing_service import WAIT_CHANGED
+
+    assert "not sent" in WAIT_CHANGED and "Nothing was typed" not in WAIT_CHANGED
