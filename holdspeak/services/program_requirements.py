@@ -220,9 +220,14 @@ def shot_image(worktree: str, config: Mapping[str, Any], spec: Mapping[str, Any]
 
 def parse_review(words: Any) -> dict[int, dict[str, str]]:
     """The reviewer's ``REQ R3: MET · …`` / ``REQ R3: UNMET · …`` lines, by
-    ordinal (the last answer for an id wins)."""
+    ordinal (the last answer for an id wins), read from its REVIEW RESULT
+    block only: a REQ line quoted elsewhere (a document, the diff) never
+    counts (Astra post-merge 2026-11-01)."""
+    from .agent_review import result_section
+
     out: dict[int, dict[str, str]] = {}
-    for line in str(words or "").splitlines():
+    section = result_section(words)
+    for line in (section or "").splitlines():
         match = _REQ_LINE.match(line)
         if match:
             out[int(match.group(1))] = {"answer": match.group(2).upper(), "line": match.group(3).strip(),

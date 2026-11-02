@@ -20,9 +20,10 @@
 // `file_path`, where the outside-the-worktree hold applies (PR #1022 r1). Children stay in pi's process group, so a launch Stop that kills the
 // group also kills a hook that waits on a hold (pi spike #1020).
 import { spawn } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 type Hook = { argv: string[]; events: string[]; timeout_seconds: number };
 type HookDocument = {
@@ -95,11 +96,46 @@ function realPath(path: string): string {
   }
 }
 
+// A path the way pi's own tools resolve it (`expandPath` / `resolveToCwd` in
+// pi's core/tools/path-utils.js): its odd spaces made plain, a leading `@`
+// dropped, `~` expanded, a `file://` URL read. Astra's post-merge check
+// (2026-11-01): `@/outside/file` was checked as a folder named `@` in the
+// worktree while pi read the outside file.
+const PI_ODD_SPACES = /[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g;
+function piPath(raw: string): string {
+  let path = String(raw ?? "").replace(PI_ODD_SPACES, " ");
+  if (path.startsWith("@")) path = path.slice(1);
+  if (path === "~") return homedir();
+  if (path.startsWith("~/")) return join(homedir(), path.slice(2));
+  if (/^file:\/\//.test(path)) {
+    try {
+      return fileURLToPath(path);
+    } catch {
+      return path;
+    }
+  }
+  return path;
+}
+
+// The other names pi's read tool tries when a path does not exist (its
+// `resolveReadPath`): each one is checked as well.
+function piVariants(path: string): string[] {
+  const amPm = path.replace(/ (AM|PM)\./gi, "\u202F$1.");
+  const nfd = path.normalize("NFD");
+  const curly = path.replace(/'/g, "\u2019");
+  return [path, amPm, nfd, curly, nfd.replace(/'/g, "\u2019")].filter((p, i, all) => all.indexOf(p) === i);
+}
+
 // The absolute path a read tool names (its `path`; none: the working folder).
 function readTarget(input: Record<string, unknown>, cwd: string): string {
   const raw = typeof input?.path === "string" && input.path.trim() ? (input.path as string) : ".";
-  const expanded = raw === "~" ? homedir() : raw.startsWith("~/") ? join(homedir(), raw.slice(2)) : raw;
-  return resolve(cwd, expanded);
+  return resolve(cwd, piPath(raw));
+}
+
+// Inside when the path and every name pi may read in its place resolve inside.
+function readInside(target: string, cwd: string): boolean {
+  const root = realPath(cwd);
+  return piVariants(target).every((p) => (p === target || existsSync(p) ? inside(realPath(p), root) : true));
 }
 
 function inside(path: string, root: string): boolean {
@@ -114,8 +150,10 @@ function callId(id: string): string {
 // The Claude Code input shape the gate rules read (`file_path` for a write).
 function toolInput(toolName: string, input: Record<string, unknown>): Record<string, unknown> {
   if (toolName === "bash") return { command: input?.command };
-  if (toolName === "edit") return { file_path: input?.path, edits: input?.edits };
-  if (toolName === "write") return { file_path: input?.path, content: input?.content };
+  // The gate reads the path pi will write (a leading `@`, `~`, a file URL).
+  const path = typeof input?.path === "string" ? piPath(input.path as string) : input?.path;
+  if (toolName === "edit") return { file_path: path, edits: input?.edits };
+  if (toolName === "write") return { file_path: path, content: input?.content };
   return input ?? {};
 }
 
@@ -189,7 +227,7 @@ export default function holdspeakPi(pi: any) {
     if (readTools.includes(name)) {
       const cwd = ctx?.cwd ?? process.cwd();
       const target = readTarget(event?.input ?? {}, cwd);
-      if (inside(realPath(target), realPath(cwd))) return undefined; // inside the worktree
+      if (readInside(target, cwd)) return undefined; // inside the worktree
       toolName = "Read";
       input = { file_path: target };
       outsideReads.add(callId(event?.toolCallId));
