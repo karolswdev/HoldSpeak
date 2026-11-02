@@ -239,7 +239,8 @@ def _rig(
     def text_transport(*, pane, text, submit=True):
         if text_fails:
             raise RuntimeError("tmux refused the paste")
-        typed.append((pane, text))
+        if text:  # a lone Enter submits the text typed before it (a bound answer)
+            typed.append((pane, text))
 
     def keys_transport(*, pane, keys):
         keys_sent.append((pane, [value for _kind, value in keys]))

@@ -949,23 +949,20 @@ def deliver(
         from .tmux_transport import send_text_to_pane
 
         send = send_text_to_pane
+    # Astra round 2 (2026-11-02): the wait can change between the read above
+    # and the keystroke. A bound answer is typed without its Enter, the wait
+    # is read again, and only the same wait gets the Enter (one send site).
+    bound = expected_wait_id is not None and submit
+    parts = [(text, False), ("", True)] if bound else [(text, submit)]
     try:
-        if expected_wait_id is not None and submit:
-            # Astra round 2 (2026-11-02): the wait can change between the read
-            # above and the keystroke. The text is typed without its Enter,
-            # the wait is read again, and only the same wait gets the Enter;
-            # another wait gets the line cleared and nothing is submitted.
-            send(pane=pane_id, text=text, submit=False)
-            if current_wait_episode(key) != str(expected_wait_id):
-                _clear_line(pane_id, transport)
+        for index, (chunk, enter) in enumerate(parts):
+            if index and current_wait_episode(key) != str(expected_wait_id):
                 return _audited(
                     {"status": "wait_not_current", "detail": "the agent's wait changed — nothing was submitted",
                      "wait_id": current_wait_episode(key) or None},
                     pane_id=pane_id,
                 )
-            send(pane=pane_id, text="", submit=True)
-        else:
-            send(pane=pane_id, text=text, submit=submit)
+            send(pane=pane_id, text=chunk, submit=enter)
     except Exception as exc:
         return _audited(
             {"status": "transport_error", "detail": str(exc)}, pane_id=pane_id
@@ -974,19 +971,6 @@ def deliver(
         {"status": "delivered", "pane_id": pane_id, "submitted": bool(submit)},
         pane_id=pane_id,
     )
-
-
-def _clear_line(pane_id: str, transport: Any) -> None:
-    """Clear the agent's input line (``C-u``) after an answer that was typed
-    but not submitted. A test transport stands in: nothing to clear there."""
-    if transport is not None:
-        return
-    try:
-        from .tmux_transport import send_keys_to_pane
-
-        send_keys_to_pane(pane=pane_id, keys=[("named", "C-u")])
-    except Exception:  # the answer was not submitted either way
-        pass
 
 
 # --- full key control (HS-89-01) -------------------------------------------
