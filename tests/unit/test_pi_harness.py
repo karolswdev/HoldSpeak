@@ -494,3 +494,27 @@ def test_detect_agents_has_a_pi_row_with_its_hooks_shipped(tmp_path) -> None:
     assert pi["installed"] and pi["hooks"] == "installed" and pi["ready"] and pi["verb"] is None
     assert rows["claude"]["installed"] is False
 
+
+
+def test_the_extension_reads_a_path_as_pi_does_an_at_prefix_is_not_a_folder(tmp_path) -> None:
+    """Astra's post-merge check (2026-11-01): pi's read tool drops a leading
+    ``@`` (``resolveToCwd``), so ``@/outside/file`` read the outside file
+    while the extension checked a folder named ``@`` in the worktree."""
+    outside = tmp_path.parent / f"{tmp_path.name}-outside.txt"
+    outside.write_text("sentinel")
+    try:
+        calls = [
+            ["tool_call", {"toolName": "read", "toolCallId": "r1", "input": {"path": f"@{outside}"}}],
+            ["tool_call", {"toolName": "read", "toolCallId": "r2", "input": {"path": "@a.py"}}],
+            ["tool_call", {"toolName": "write", "toolCallId": "w1", "input": {"path": f"@{outside}", "content": "x"}}],
+            ["tool_call", {"toolName": "edit", "toolCallId": "e1", "input": {"path": "@~/x.md", "edits": []}}],
+        ]
+        _result, gate, _rider = _run_extension(tmp_path, calls)
+        pre = [row for row in gate if row["hook_event_name"] == "PreToolUse"]
+        by_id = {row["tool_use_id"]: row for row in pre}
+        assert by_id["r1"]["tool_name"] == "Read" and by_id["r1"]["tool_input"]["file_path"] == str(outside)
+        assert "r2" not in by_id  # "@a.py" is a.py in the worktree: no gate call
+        assert by_id["w1"]["tool_input"]["file_path"] == str(outside)
+        assert by_id["e1"]["tool_input"]["file_path"] == os.path.join(os.path.expanduser("~"), "x.md")
+    finally:
+        outside.unlink()
