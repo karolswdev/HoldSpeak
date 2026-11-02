@@ -49,34 +49,58 @@ _RESULT_START = re.compile(r"^\s*(?:[#*>`]+\s*)?REVIEW RESULT\s*:?\s*\**\s*$", r
 _RESULT_END = re.compile(r"^\s*(?:[#*`]+\s*)?END REVIEW RESULT\s*\**\s*$", re.I)
 
 
+#: Astra round 2 (2026-11-02): a review that says it did not review is unknown.
+_NOT_REVIEWED = re.compile(r"\b(?:have not|haven't|did not|didn't|could not|couldn't|cannot|can't|was not able to)"
+                           r"\s+(?:yet\s+)?(?:review|complete (?:this|the) review|read the (?:diff|change))", re.I)
+
+
+def _code_or_quote(lines: list[str]) -> list[bool]:
+    """For each line: inside a fence (``` or ~~~), indented code (4 spaces
+    or a tab), or a ``>`` quotation; a fence line itself is True."""
+    out: list[bool] = []
+    fence = ""
+    for line in lines:
+        mark = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
+        if mark:
+            if not fence:
+                fence = mark.group(1)[0]
+            elif mark.group(1)[0] == fence:
+                fence = ""
+            out.append(True)
+            continue
+        out.append(bool(fence) or line.startswith(("    ", "\t")) or line.lstrip().startswith(">"))
+    return out
+
+
 def result_section(words: Any) -> Optional[str]:
     """The reviewer's result: the lines of its LAST ``REVIEW RESULT`` block
-    (to ``END REVIEW RESULT``, or to the end of its words). A marker inside a
-    fenced block (a quoted diff) or on a quoted ``>`` line is not a block;
-    lines in a fence or quoted inside the block never count. None when the
-    words have no block."""
-    lines = str(words or "").splitlines()
-    fence = False
+    (to ``END REVIEW RESULT``, or to the end of its words). The block must
+    end the words: text after its end means it is quoted, not the result
+    (Astra round 2). A marker or a line in a fence (``` or ~~~), in indented
+    code or in a ``>`` quotation never counts. None when there is no block,
+    or when the words say the review was not done."""
+    text = str(words or "")
+    lines = text.splitlines()
+    quoted = _code_or_quote(lines)
     start: Optional[int] = None
     for index, line in enumerate(lines):
-        if line.strip().startswith("```"):
-            fence = not fence
-            continue
-        if not fence and not line.lstrip().startswith(">") and _RESULT_START.match(line):
+        if not quoted[index] and _RESULT_START.match(line):
             start = index
     if start is None:
         return None
     body: list[str] = []
-    fence = False
-    for line in lines[start + 1:]:
-        if line.strip().startswith("```"):
-            fence = not fence
+    closed_at: Optional[int] = None
+    for index in range(start + 1, len(lines)):
+        if quoted[index]:
             continue
-        if fence or line.lstrip().startswith(">"):
-            continue
-        if _RESULT_END.match(line):
+        if _RESULT_END.match(lines[index]):
+            closed_at = index
             break
-        body.append(line)
+        body.append(lines[index])
+    if closed_at is not None and any(line.strip() for line in lines[closed_at + 1:]):
+        return None  # words after the block: it was quoted, not the reviewer's result
+    if _NOT_REVIEWED.search(text):
+        return None
     return "\n".join(body)
 
 
