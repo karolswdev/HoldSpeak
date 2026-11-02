@@ -34,7 +34,7 @@
       "program_title": "",
       "question": "Confirm this decision?",
       "ref": "decision:dec-2",
-      "since": "2026-11-02T01:00:32Z",
+      "since": "2026-11-02T01:40:09Z",
       "source": "decision",
       "state": "open",
       "step_id": "",
@@ -71,7 +71,7 @@
     "expires_words": "Expires in 24 h",
     "head": "A decision to review",
     "hub": "the rig hub",
-    "id": "pkg-37443d88e3e9",
+    "id": "pkg-c45ffdce60f1",
     "kind": "item"
   }
 }

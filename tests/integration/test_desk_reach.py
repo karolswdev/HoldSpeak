@@ -224,7 +224,7 @@ def test_the_page_reads_a_parked_push_in_his_terms_and_settles(tmp_path, monkeyp
     assert later["item"]["state"] == "later"
     decided = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "resume"})
     assert decided.status_code == 200, decided.text
-    assert re.fullmatch(r"Resume · \d\d:\d\d\. The step starts again\. Nothing else waits on you\.",
+    assert re.fullmatch(r"Resume · \d\d:\d\d\. The step starts again\. Nothing else on this page waits on you\.",
                         decided.json()["item"]["outcome"]["words"]), decided.json()["item"]["outcome"]
     again = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "skip"})
     assert again.status_code == 409 and again.json()["code"] == "answered_already"

@@ -106,7 +106,7 @@ def test_a_core_question_reads_many_and_is_decided_once_from_the_page(tmp_path) 
     answered = briefing.answer(made["token"], _ref(pid, item), "go_on")
     assert answered["item"]["state"] == "decided"
     # It settles to one line (rule 3).
-    assert re.fullmatch(r"Go on · \d\d:\d\d\. The step goes on\. Nothing else waits on you\.",
+    assert re.fullmatch(r"Go on · \d\d:\d\d\. The step goes on\. Nothing else on this page waits on you\.",
                         answered["item"]["outcome"]["words"]), answered["item"]["outcome"]
     lines = [row for row in rig.program(pid)["checkpoints"] if row.get("via") == "page"]
     assert lines and lines[0]["line"].endswith("· decided from the briefing page"), lines

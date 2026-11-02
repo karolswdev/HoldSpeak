@@ -116,7 +116,7 @@ def test_after_his_press_the_page_settles_to_one_line(tmp_path) -> None:
     assert {"label": "Files:", "value": "README.md"} in report["rows"]
     done = briefing.answer(made["token"], ref, "resume")["item"]
     assert done["state"] == "decided"
-    assert re.fullmatch(r"Resume · \d\d:\d\d\. The step starts again\. Nothing else waits on you\.",
+    assert re.fullmatch(r"Resume · \d\d:\d\d\. The step starts again\. Nothing else on this page waits on you\.",
                         done["outcome"]["words"]), done["outcome"]["words"]
     assert "error" not in done
 

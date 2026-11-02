@@ -1,0 +1,202 @@
+{
+  "counts": {
+    "drafting": 3
+  },
+  "programs": [
+    {
+      "asks": 0,
+      "control": "normal",
+      "created_at": "2026-11-02T01:31:12.706328+00:00",
+      "done": 0,
+      "for_person": null,
+      "id": "program-799ae1da4fda",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-11-02T01:31:12.722860+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 19,
+        "kind": null,
+        "line": "Changed by the text: 5 changes (lines 13, 14, 16, 23, 30)",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      "line": "Starts after Calls window lists the last ten",
+      "persons": [],
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      },
+      "project_id": "proj-holdspeak",
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 2,
+        "unmet": 0,
+        "waived": 0
+      },
+      "search_words": "programs window exports to a note the programs window should export the list to a new note, one line per program with its state. holdspeak fast-cycle export button in the programs window create the note from the program list tests for the export fast cycle",
+      "skipped": 0,
+      "state": "drafting",
+      "state_word": "Drafting",
+      "title": "Programs window exports to a Note",
+      "total": 3,
+      "track": [
+        {
+          "mark": "planned",
+          "ordinal": 1,
+          "title": "Export button in the Programs window"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 2,
+          "title": "Create the Note from the program list"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 3,
+          "title": "Tests for the export"
+        }
+      ],
+      "updated_at": "2026-11-02T01:31:12.722913+00:00",
+      "your_turn": 0
+    },
+    {
+      "asks": 0,
+      "control": "normal",
+      "created_at": "2026-11-02T01:31:12.688904+00:00",
+      "done": 0,
+      "for_person": null,
+      "id": "program-e8ce0eb30bfe",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-11-02T01:31:12.703581+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 13,
+        "kind": null,
+        "line": "Changed by the text: 4 changes (lines 13, 14, 16, 23)",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      "line": "Starts after Meeting recap in the Note",
+      "persons": [],
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      },
+      "project_id": "proj-holdspeak",
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 2,
+        "unmet": 0,
+        "waived": 0
+      },
+      "search_words": "calls window lists the last ten the calls window should list the last ten calls with their length and who was on them, newest first. holdspeak fast-cycle show the last ten calls in the calls window tests for the calls list fast cycle",
+      "skipped": 0,
+      "state": "drafting",
+      "state_word": "Drafting",
+      "title": "Calls window lists the last ten",
+      "total": 2,
+      "track": [
+        {
+          "mark": "planned",
+          "ordinal": 1,
+          "title": "Show the last ten calls in the Calls window"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 2,
+          "title": "Tests for the calls list"
+        }
+      ],
+      "updated_at": "2026-11-02T01:31:12.703642+00:00",
+      "your_turn": 0
+    },
+    {
+      "asks": 0,
+      "control": "normal",
+      "created_at": "2026-11-02T01:31:12.598890+00:00",
+      "done": 0,
+      "for_person": null,
+      "id": "program-4cdf184f8ce7",
+      "in_state_seconds": 0,
+      "last_checkpoint": {
+        "at": "2026-11-02T01:31:12.685446+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 7,
+        "kind": null,
+        "line": "Changed by the text: 5 changes (lines 12, 13, 15, 22, 29)",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "",
+        "undo": {}
+      },
+      "line": "Drafting, 3 steps",
+      "persons": [],
+      "project": {
+        "id": "proj-holdspeak",
+        "name": "HoldSpeak"
+      },
+      "project_id": "proj-holdspeak",
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 2,
+        "unmet": 0,
+        "waived": 0
+      },
+      "search_words": "meeting recap in the note after a meeting the meeting's note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep. holdspeak fast-cycle build the recap from the transcript append the recap to the meeting note tests for the recap fast cycle",
+      "skipped": 0,
+      "state": "drafting",
+      "state_word": "Drafting",
+      "title": "Meeting recap in the Note",
+      "total": 3,
+      "track": [
+        {
+          "mark": "planned",
+          "ordinal": 1,
+          "title": "Build the recap from the transcript"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 2,
+          "title": "Append the recap to the meeting Note"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 3,
+          "title": "Tests for the recap"
+        }
+      ],
+      "updated_at": "2026-11-02T01:31:12.685528+00:00",
+      "your_turn": 0
+    }
+  ],
+  "worst": "drafting",
+  "worst_word": "Drafting"
+}

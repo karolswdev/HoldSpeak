@@ -2762,3 +2762,22 @@ describe("park stops the steps (the live walk's finding)", () => {
     expect(screen.queryByTestId("programs-your-turn")).toBeNull();
   });
 });
+
+// JRN1 (the walk, 2026-11-01): a chained Program says which one it starts
+// after (recorded: test_desk_program_plan.py, programs.chained.list.json).
+import chainedListFixture from "../__fixtures__/programs.chained.list.json";
+
+describe("a split chain in the list", () => {
+  it("a chained Program's row reads Starts after <name> while it waits", async () => {
+    const chained = chainedListFixture as unknown as ProgramList;
+    hub({ "GET /api/programs": chained });
+    render(<ProgramsCore />);
+    await screen.findByTestId("programs-list");
+    const waiting = chained.programs.filter((row) => (row.line ?? "").startsWith("Starts after "));
+    expect(waiting).toHaveLength(2);
+    for (const row of waiting) {
+      const node = screen.getAllByTestId("programs-row").find((el) => el.getAttribute("data-program") === row.id)!;
+      expect(within(node).getByTestId("programs-row-state").textContent).toContain(row.line!);
+    }
+  });
+});

@@ -121,7 +121,7 @@ describe("the briefing page (the owner's BRIEF RULE, direction A)", () => {
     fireEvent.click(await screen.findByTestId("briefing-choice-resume"));
     const outcome = await screen.findByTestId("briefing-outcome");
     expect(outcome.textContent).toBe(recorded.decided.item.outcome.words);
-    expect(outcome.textContent).toMatch(/^Resume · \d\d:\d\d\. The step starts again\. Nothing else waits on you\.$/);
+    expect(outcome.textContent).toMatch(/^Resume · \d\d:\d\d\. The step starts again\. Nothing else on this page waits on you\.$/);
     for (const gone of ["briefing-choices", "briefing-evidence", "briefing-changed", "briefing-question", "briefing-track"]) {
       expect(screen.queryByTestId(gone)).toBeNull();
     }

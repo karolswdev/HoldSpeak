@@ -10,18 +10,18 @@
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-02T01:00:32.272217+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:40:03.464914+00:00",
+          "clock": "20:40",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-02T01:00:31.503276+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:40:02.631344+00:00",
+          "clock": "20:40",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-02T01:00:30.960620+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:40:02.124002+00:00",
+          "clock": "20:40",
           "line": "Handed to Claude Code."
         }
       ],
@@ -68,14 +68,14 @@
         "Step 1: Store the stall reason in its own column.",
         "The step's change touches files no step owns (schema.py)."
       ],
-      "place": "Step 1 of 1 · started 20:00 · waited 5 h 29",
-      "program_id": "program-3416135e09e7",
+      "place": "Step 1 of 1 · started 20:40 · waited 4 h 49",
+      "program_id": "program-f5bf7bd015ac",
       "program_title": "Overnight on the home box",
       "question": "Let the step go on with this, or park it?",
-      "ref": "program:program-3416135e09e7:step-6d4819dc475c:core",
-      "since": "2026-11-02T01:00:32.678587+00:00",
+      "ref": "program:program-f5bf7bd015ac:step-7c1fb8aa13d6:core",
+      "since": "2026-11-02T01:40:03.952366+00:00",
       "state": "open",
-      "step_id": "step-6d4819dc475c",
+      "step_id": "step-7c1fb8aa13d6",
       "step_ordinal": 1,
       "step_title": "Store the stall reason",
       "track": [
@@ -120,14 +120,14 @@
         "choice": "confirm",
         "label": "Confirm",
         "via": "page",
-        "words": "Confirm · 01:30. One more waits on you."
+        "words": "Confirm · 01:30. One more waits on this page."
       },
       "place": "",
       "program_id": null,
       "program_title": "",
       "question": "Confirm this decision?",
       "ref": "decision:dec-1",
-      "since": "2026-11-02T01:00:33Z",
+      "since": "2026-11-02T01:40:05Z",
       "source": "decision",
       "state": "decided",
       "step_id": "",
@@ -174,7 +174,7 @@
         "choice": "let_wait",
         "label": "Let it wait",
         "via": "page",
-        "words": "Let it wait · 01:30. One more waits on you."
+        "words": "Let it wait · 01:30. One more waits on this page."
       },
       "place": "",
       "program_id": null,
@@ -213,12 +213,12 @@
     }
   ],
   "package": {
-    "desk": "/?open=program:program-3416135e09e7",
+    "desk": "/?open=program:program-f5bf7bd015ac",
     "expires_at": "2026-11-02T18:30:00+00:00",
     "expires_words": "Expires in 12 h",
     "head": "3 wait on you",
     "hub": "the rig hub",
-    "id": "pkg-c75fabfa215a",
+    "id": "pkg-717e1b446f07",
     "kind": "digest",
     "lines": [],
     "open": 1,

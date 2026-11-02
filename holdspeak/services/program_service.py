@@ -1348,6 +1348,12 @@ class ProgramService:
         summary["line"] = list_line(state, top, turn, history=history, done_in=summary.get("done_in", ""),
                                     ended=max((str(step.get("ended_at") or "") for step in steps), default="")
                                     or program.get("closed_at") or program["updated_at"])
+        if state == "drafting" and str(program.get("origin_ref") or "").startswith("after:"):
+            # JRN1 (the walk, 2026-11-01): a chained Program says, while it
+            # waits, which one it starts after.
+            before = self.store.get_program(str(program["origin_ref"]).partition(":")[2])
+            if before is not None and self._waits_on(program) is not None:
+                summary["line"] = f"Starts after {before['title']}"
         if state in ("running", "waiting"):
             # PG-IMPORT IMP3: a step that waits on something the plan cannot
             # give it is the program's line ("Step 4 with Claude Code is

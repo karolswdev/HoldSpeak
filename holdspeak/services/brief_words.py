@@ -481,11 +481,13 @@ _COUNT = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Se
 
 
 def waits_words(others: int) -> str:
-    """"Nothing else waits on you." · "One more waits on you." · "Two more wait on you."."""
+    """What still waits on THIS page (the owner's ruling, 2026-11-01: the
+    desk-wide count belongs to Needs you): "Nothing else on this page waits
+    on you." · "One more waits on this page." · "Two more wait on this page."."""
     if others <= 0:
-        return "Nothing else waits on you."
+        return "Nothing else on this page waits on you."
     count = _COUNT.get(others, str(others))
-    return f"{count} more waits on you." if others == 1 else f"{count} more wait on you."
+    return f"{count} more waits on this page." if others == 1 else f"{count} more wait on this page."
 
 
 def settle_words(kind: str, choice: str, label: str, clock: str, others: int, via_words: str = "") -> str:

@@ -70,6 +70,8 @@ def test_one_page_carries_three_held_items_in_order_and_settles_each(tmp_path, m
     _fixture(PAGE_FIXTURES / "reach.digest.answered.json", page, tmp_path, token)
     assert [item["state"] for item in page["items"]] == ["open", "decided", "decided"]
     assert page["items"][1]["outcome"]["label"] == "Confirm" and page["package"]["open_words"] == "1 waits on you."
+    # The settled line counts this page only (the owner, 2026-11-01): the core question is left.
+    assert page["items"][1]["outcome"]["words"].endswith("One more waits on this page."), page["items"][1]["outcome"]
     again = client.post(f"/api/b/{token}/answer", json={"ref": refs[1], "choice": "confirm"})
     assert again.status_code == 409 and again.json()["code"] == "answered_already"
     # The Program's item is decided through program.decide with via=page.
