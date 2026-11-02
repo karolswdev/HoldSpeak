@@ -838,6 +838,7 @@ When the desk calls you about a step, or when you say "what waits on me", HoldSp
 
 ### What is not there yet
 
+- If the agent changes its question in the last moment, your typed answer stays in its input and is not sent.
 - The Telegram digest is a plain list: one line for each item, with no buttons ("3 wait on you", then "Finding · <program> · step 2", then "Open your desk to see each one.").
 
 ## The handover note

@@ -105,3 +105,25 @@ def test_send_text_to_pane_requires_tmux(monkeypatch: pytest.MonkeyPatch) -> Non
 
     with pytest.raises(TmuxTransportError, match="tmux executable"):
         send_text_to_pane(pane="%42", text="hello")
+
+
+def test_the_split_enter_takes_the_usual_pause_first(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ruling 2026-11-02: a bound answer is its text, a second read of the
+    wait, then the Enter. The Enter takes the same pause a plain send takes,
+    so the only change from before #1775 is the second read."""
+    events: list = []
+    monkeypatch.setattr(tmux_transport.shutil, "which", lambda _name: "/usr/bin/tmux")
+    monkeypatch.setattr(tmux_transport.subprocess, "run",
+                        lambda cmd, **_kwargs: events.append(("run", list(cmd)))
+                        or SimpleNamespace(returncode=0, stdout="", stderr=""))
+    monkeypatch.setattr(tmux_transport.time, "sleep", lambda seconds: events.append(("sleep", seconds)))
+
+    send_text_to_pane(pane="%42", text="1", submit=False)
+    delivery = send_text_to_pane(pane="%42", text="", submit=True)
+
+    assert delivery.submitted is True
+    assert events == [
+        ("run", ["tmux", "send-keys", "-t", "%42", "-l", "1"]),
+        ("sleep", tmux_transport.SUBMIT_PAUSE_SECONDS),
+        ("run", ["tmux", "send-keys", "-t", "%42", "-l", "\r"]),
+    ]
