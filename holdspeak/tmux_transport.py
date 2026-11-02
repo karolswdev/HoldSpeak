@@ -68,11 +68,16 @@ def send_text_to_pane(
     message = plain_text(str(text or ""))
     if not target:
         raise TmuxTransportError("tmux pane target is required")
-    if not message.strip():
+    if not message.strip() and not submit:
         raise TmuxTransportError("tmux reply text is required")
     if shutil.which("tmux") is None:
         raise TmuxTransportError("tmux executable not found")
 
+    if not message.strip():
+        # Only the Enter of a text typed before (``coder_steering.deliver``:
+        # the answer's wait was read again in between).
+        _run_tmux(["tmux", "send-keys", "-t", target, "-l", "\r"], timeout_s=timeout_s)
+        return TmuxDelivery(pane=target, submitted=True)
     if "\n" in message or len(message) > PASTE_ABOVE_CHARS:
         # One bracketed paste (Conductor R1). Typed fast with ``send-keys -l``,
         # a long or multi-line text reaches Claude Code 2.1.x as several

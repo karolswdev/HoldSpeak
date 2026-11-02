@@ -108,7 +108,8 @@ def test_an_answer_with_the_current_wait_sends_without_an_arm(env) -> None:
     res = env.client.post("/api/coders/claude:abc/steer", json={"text": "1", "kind": "answer", "wait_id": "w1"})
     assert res.status_code == 200, res.json()
     assert res.json()["status"] == "delivered"
-    assert env.sent == [{"pane": "%3", "text": "1", "submit": True}]
+    # Typed, the wait read again, then its Enter (Astra round 2, 2026-11-02).
+    assert env.sent == [{"pane": "%3", "text": "1", "submit": False}, {"pane": "%3", "text": "", "submit": True}]
     # No grant was made: the press was the authority for this one wait.
     assert coder_steering.active_grants() == {}
     assert env.db.steering.list()[0].outcome == "delivered"
@@ -182,3 +183,17 @@ def test_the_policy_names_the_press_as_the_authority() -> None:
         assert decode_decision({"decision": encode_decision(decision)})["authority_basis"] == "owner_answer"
     # No pane that proves itself: the press alone never authorizes.
     assert resolve_policy(op(False), mode="neutral", owner_answer=True).to_dict()["outcome"] == "grant_required"
+
+
+
+def test_a_wait_that_changes_between_the_text_and_its_enter_submits_nothing(env) -> None:
+    """Astra round 2 (2026-11-02): the hook flipped the wait after the last
+    read and before the keystroke; the answer was typed into a permission
+    prompt. Now the Enter goes only to the same wait, and the line is cleared."""
+    _register(env.monkeypatch, _asking())
+    reads = iter(["w1|answer", "w2|approve", "w2|approve"])
+    env.monkeypatch.setattr(coder_steering, "current_wait_episode", lambda key: next(reads))
+    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "y", "kind": "answer", "wait_id": "w1"})
+    assert res.status_code == 409 and res.json()["status"] == "wait_not_current"
+    assert not any(row.get("submit") for row in env.sent if "text" in row), env.sent
+    assert {"pane": "%3", "keys": [("named", "C-u")]} in env.sent

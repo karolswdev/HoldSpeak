@@ -195,3 +195,27 @@ def test_a_remote_answer_is_bound_to_the_wait_it_answers(hub: Hub, monkeypatch: 
     raced = hub.client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer", "reason": "y"})
     assert raced.status_code == 409 and WAIT_CHANGED in raced.text
     assert responder.typed == [] and responder.expected[-1] == "w-1|answer"
+
+
+
+def test_the_real_delivery_receipt_is_read(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Astra round 2: the real delivery answers ``{"receipt": {"outcome":
+    "delivered"}}``; the page read only ``status`` and said "Nothing was
+    typed" after it typed."""
+    from holdspeak.services import briefing_sources
+
+    responder = _Responder()
+
+    def receipt_deliver(launch, key, agent, text, *, submit=True, expected_wait_id=None):
+        responder.typed.append((key, text))
+        return {"receipt": {"outcome": "delivered", "state": "succeeded"}}
+
+    responder._deliver = receipt_deliver
+    monkeypatch.setattr(briefing_sources.CoderQuestionSource, "_responder", lambda self: responder)
+    monkeypatch.setattr("holdspeak.agent_context.models.is_blocked", lambda session: True)
+    monkeypatch.setattr("holdspeak.agent_context.models.wait_kind", lambda session: session.wait_kind)
+    ref = "coder:claude:s-1"
+    token, _page_body = _page(hub, ref)
+    answered = hub.client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer", "reason": "Main."})
+    assert answered.status_code == 200, answered.text
+    assert responder.typed == [("claude:s-1", "Main.")]

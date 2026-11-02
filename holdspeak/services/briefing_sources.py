@@ -468,9 +468,12 @@ class CoderQuestionSource(Source):
             raise ServiceError("wait_changed", WAIT_CHANGED, context={"status": 409})
         sent = self._responder()._deliver(item.get("launch") or {}, str(item.get("key") or ""),
                                           str(item.get("agent") or ""), said, expected_wait_id=expected)
-        if str((sent or {}).get("status") or "") == "wait_not_current":
+        # The real delivery answers with its receipt (``receipt.outcome``);
+        # a test double or a refusal with ``status`` (Astra round 2).
+        outcome = str(((sent or {}).get("receipt") or {}).get("outcome") or (sent or {}).get("status") or "")
+        if outcome == "wait_not_current":
             raise ServiceError("wait_changed", WAIT_CHANGED, context={"status": 409})
-        if str((sent or {}).get("status") or "") != "delivered":
+        if outcome != "delivered":
             raise ServiceError("not_kept", "Your answer did not reach the agent. Nothing was typed. Try again.",
                                context={"status": 409})
         return {"answered": True, "key": item.get("key")}
