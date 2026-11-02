@@ -258,3 +258,36 @@ def test_round_two_writes_outside_are_not_inside(tree, command) -> None:
 ])
 def test_round_two_ordinary_calls_are_inside(tree, command) -> None:
     assert unparsed_paths_inside(command, cwd=str(tree["wt"]), root=str(tree["wt"])) is True, command
+
+
+# ── Astra round 3 (2026-11-02) ───────────────────────────────────────
+
+@pytest.mark.parametrize("command", [
+    "bash -lc 'git push -fv origin main'",
+    'env git --no-pager --no-optional-locks -c color.ui=false -c advice.statusHints=false push "--force-with-lease" origin main',
+    "env git push origin $'--for'ce",
+    "env git push origin $REF",
+])
+def test_round_three_force_pushes_are_destructive(command) -> None:
+    assert destructive_word(command) == "git push --force", command
+
+
+def test_a_plain_push_after_git_options_is_not_destructive() -> None:
+    assert destructive_word("env git --no-pager -c color.ui=false push origin HEAD") == ""
+
+
+@pytest.mark.parametrize("command", [
+    "bash -c 'cd --; printf x > escaped.txt'",
+    "bash -c 'cd -P; printf x > escaped.txt'",
+    "bash -lc 'cd; printf x > escaped.txt'",
+    'env -i touch "$OUT"',
+    "sh -c 'cd \"$OUT\"; touch escaped.txt'",
+])
+def test_round_three_writes_outside_are_not_inside(tree, command) -> None:
+    assert unparsed_paths_inside(command, cwd=str(tree["wt"]), root=str(tree["wt"])) is False, command
+
+
+@pytest.mark.parametrize("command", ["env -i ls -la", "bash -c 'cd src && ls'", "uv run python -c 'print(1)'"])
+def test_round_three_ordinary_calls_stay_inside(tree, command) -> None:
+    (tree["wt"] / "src").mkdir(exist_ok=True)
+    assert unparsed_paths_inside(command, cwd=str(tree["wt"]), root=str(tree["wt"])) is True, command

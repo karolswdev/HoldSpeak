@@ -397,6 +397,11 @@ def _git_not_patterns(verb: str, args: list[str]) -> list[str]:
     return rest
 
 
+#: The programs whose ``-c``/``-e`` string is a command line or code.
+_CODE_RUNNERS = frozenset({"sh", "bash", "zsh", "dash", "ksh", "fish", "csh", "tcsh", "python", "python3", "node", "perl", "ruby", "deno",
+                     "bun", "osascript", "pwsh"})
+
+
 def _call_words(command: str, depth: int = 0) -> Optional[list[str]]:
     """Every word of a command, with the string after ``-c``, ``-e`` or
     ``eval`` (``sh -c``, ``bash -c``, ``python -c``) split again. None when it cannot be
@@ -411,15 +416,18 @@ def _call_words(command: str, depth: int = 0) -> Optional[list[str]]:
         return None
     out: list[str] = []
     previous = ""
+    before = ""
     for word in words:
         out.append(word)
-        if previous in ("-c", "-e", "eval") or os.path.basename(previous) in ("eval", "exec"):
+        shell_option = (previous in ("-c", "-e") or re.fullmatch(r"-[A-Za-z]*c", previous or "")) and (
+            os.path.basename(before) in _CODE_RUNNERS)  # ``bash -lc '…'``, ``python -c``; never git's ``-c k=v``
+        if shell_option or os.path.basename(previous) in ("eval", "exec"):
             # ``sh -c '…'``, ``bash -c``, ``python -c``, ``node -e``, ``eval '…'``
             inner = _call_words(word, depth + 1)
             if inner is None:
                 return None
             out.extend([";", *inner, ";"])  # the string is its own command line
-        previous = word
+        before, previous = previous, word
     return out
 
 
@@ -434,13 +442,24 @@ _PRINT_PROGRAMS = frozenset({"echo", "printf", "true", ":"})
 def _force_push(command: str) -> bool:
     """Astra round 2: a force push in any shell spelling (``-fv``, a quoted
     ``"--force-with-lease"``, ``+ref``), read from the split words."""
-    words = _call_words(str(command or "")) or []
+    text = str(command or "")
+    if "$'" in text and re.search(r"\bpush\b", text):
+        return True  # an ANSI-C quoted word the gate cannot read, in a push (Astra round 3)
+    words = _call_words(text) or []
     for index, word in enumerate(words):
-        if word != "push" or not any(os.path.basename(w) == "git" for w in words[max(0, index - 6):index]):
+        if os.path.basename(word) != "git":
             continue
-        for arg in words[index + 1:]:
+        rest = words[index + 1:]
+        at = 0
+        while at < len(rest) and rest[at].startswith("-"):  # git's own options: -c k=v, -C dir, --no-pager …
+            at += 2 if rest[at] in ("-c", "-C", "--git-dir", "--work-tree", "--namespace", "--exec-path") else 1
+        if at >= len(rest) or rest[at] != "push":
+            continue
+        for arg in rest[at + 1:]:
             if set(arg) <= set(";&|<>()"):
                 break
+            if "$" in arg or "`" in arg:
+                return True  # an argument the gate cannot read
             if (arg.startswith("--force") or arg in ("--mirror", "--delete", "--prune")
                     or re.fullmatch(r"-[A-Za-z]*f[A-Za-z]*", arg) or (arg.startswith("+") and len(arg) > 1)
                     or (arg.startswith(":") and len(arg) > 1)):
@@ -500,6 +519,12 @@ def unparsed_paths_inside(command: str, *, cwd: str, root: str) -> bool:
                 program = ""  # a new command (never after a parenthesis: ``open("/etc/x")``)
             previous = word
             continue
+        if not program and previous in ("env", "-u", "--unset") and word.startswith("-") and previous != "-u":
+            previous = word if word not in ("-u", "--unset") else word
+            continue  # ``env -i``, ``env -u NAME``: env's own options (Astra round 3)
+        if not program and previous in ("-u", "--unset"):
+            previous = "env"
+            continue
         if not program and word != "env" and not re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", word):
             program = os.path.basename(word)
             if "/" in word and not ok(word):
@@ -507,8 +532,14 @@ def unparsed_paths_inside(command: str, *, cwd: str, root: str) -> bool:
             if program == "cd":
                 # ``cd`` with no folder (or ``cd -``, ``cd ~``) goes home: not
                 # the worktree (Astra round 2: ``bash -c 'cd; printf x > f'``).
-                nxt = words[index + 1] if index + 1 < len(words) else ""
-                if not nxt or set(nxt) <= set(";&|<>()") or nxt in ("-", "~") or nxt.startswith("~"):
+                # Its options are skipped (``cd -P``, ``cd --``) and a folder
+                # the gate cannot read is not admitted (``cd "$OUT"``; round 3).
+                at = index + 1
+                while at < len(words) and words[at] in ("-P", "-L", "-e", "-@", "--", "-LP", "-PL"):
+                    at += 1
+                nxt = words[at] if at < len(words) else ""
+                if (not nxt or set(nxt) <= set(";&|<>()") or nxt in ("-", "~") or nxt.startswith("~")
+                        or "$" in nxt or "`" in nxt):
                     return False
             previous = word
             continue
