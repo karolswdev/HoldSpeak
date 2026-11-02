@@ -325,9 +325,74 @@ def destructive_word(command: str) -> str:
     return ""
 
 
-_URL = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
 _PATH_OPTIONS = frozenset({"-C", "--git-dir", "--work-tree", "--prefix", "-o", "--output", "-f", "--file"})
 _REDIRECTS = frozenset({">", ">>", "<", "&>", "&>>", "2>", "2>>", ">|", "<>", "1>", "1>>"})
+
+
+#: Coordinator ruling 2026-11-02: a pattern a search or a text tool reads is
+#: text, never a path (``grep -rn "/api/x" src`` was read as a path outside).
+_SEARCH_TOOLS = frozenset({"grep", "egrep", "fgrep", "rg", "ag", "ack"})
+_SCRIPT_TOOLS = frozenset({"sed", "gsed", "awk", "gawk", "mawk", "nawk"})
+#: The options whose value is a pattern or a script (``-e /api/x``).
+_PATTERN_OPTIONS = {
+    "search": ("-e", "--regexp", "-g", "--glob", "--include", "--exclude", "--exclude-dir", "-E", "-F", "-G"),
+    "script": ("-e", "--expression", "-v", "--assign"),
+}
+#: The options whose value is a file (kept as a path).
+_FILE_OPTIONS = ("-f", "--file")
+#: git's options whose value is text: a message, a pattern, a format.
+_GIT_TEXT_OPTIONS = ("-m", "--message", "--grep", "--author", "--committer", "-S", "-G", "--format", "--pretty",
+                     "-e", "--date", "--since", "--until")
+
+
+def _drop_values(args: list[str], options: tuple[str, ...]) -> tuple[list[str], bool]:
+    """``args`` without the values of ``options`` (``-e x``, ``-ex``,
+    ``--regexp=x``); True when one of them was there."""
+    out: list[str] = []
+    found = False
+    skip = False
+    for arg in args:
+        if skip:
+            skip = False
+            continue
+        hit = next((opt for opt in options if arg == opt or arg.startswith(opt + "=")
+                    or (len(opt) == 2 and opt.startswith("-") and arg.startswith(opt) and len(arg) > 2
+                        and not arg.startswith("--"))), None)
+        if hit is None:
+            out.append(arg)
+            continue
+        found = True
+        if arg == hit and hit not in ("-E", "-F", "-G"):  # those three are modes in grep: no value
+            skip = True
+    return out, found
+
+
+def _not_patterns(program: str, args: list[str]) -> list[str]:
+    """The words of a search or a text tool that may name files: its pattern
+    (the first operand, or each ``-e`` value) and its script are text."""
+    kind = "search" if program in _SEARCH_TOOLS else "script" if program in _SCRIPT_TOOLS else ""
+    if not kind:
+        return args
+    rest, given = _drop_values(args, _PATTERN_OPTIONS[kind])
+    if given or any(arg in _FILE_OPTIONS or arg.startswith("--file=") for arg in rest):
+        return rest
+    for index, arg in enumerate(rest):  # no -e and no -f: the first operand is the pattern or the script
+        if arg == "--":
+            return rest[:index] + rest[index + 2:]
+        if not arg.startswith("-") or arg == "-":
+            return rest[:index] + rest[index + 1:]
+    return rest
+
+
+def _git_not_patterns(verb: str, args: list[str]) -> list[str]:
+    """git's words without its text values (``-m``, ``--grep``, ``-S`` …);
+    ``git grep``'s first operand is its pattern."""
+    rest, given = _drop_values(args, _GIT_TEXT_OPTIONS)
+    if verb == "grep" and not given:
+        for index, arg in enumerate(rest):
+            if not arg.startswith("-"):
+                return rest[:index] + rest[index + 1:]
+    return rest
 
 
 def _call_words(command: str, depth: int = 0) -> Optional[list[str]]:
@@ -1006,7 +1071,7 @@ class _Reader:
         if identity == SYSTEM and name == "git":
             self._git(words[1:])
             return
-        self._args(words[1:], cwd=self.cwd)
+        self._args(_not_patterns(os.path.basename(name), words[1:]), cwd=self.cwd)
         read = _read_rule(name, words[1:]) if identity in (BUILTIN, SYSTEM) else ""
         if read:
             self.read_rules.append(read)
@@ -1097,7 +1162,7 @@ class _Reader:
             raise _Outside("git_shared_state")
         if verb == "config" and not _git_config_read(rest):
             raise _Outside("git_shared_state")
-        self._args(rest, cwd=cwd)
+        self._args(_git_not_patterns(verb, rest), cwd=cwd)
         if verb in _GIT_READ and not any(a.startswith("--output") for a in rest):
             self.read_rules.append(f"git-{verb}")
         elif verb == "branch" and all(a in _GIT_BRANCH_READ_FLAGS for a in rest):
