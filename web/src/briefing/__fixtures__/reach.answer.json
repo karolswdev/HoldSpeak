@@ -10,13 +10,13 @@
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-02T02:49:14.866312+00:00",
-          "clock": "21:49",
+          "at": "2026-11-02T03:30:55.228022+00:00",
+          "clock": "22:30",
           "line": "The agent asks a question."
         },
         {
-          "at": "2026-11-02T02:49:14.198661+00:00",
-          "clock": "21:49",
+          "at": "2026-11-02T03:30:54.985551+00:00",
+          "clock": "22:30",
           "line": "Handed to Claude Code."
         }
       ],
@@ -45,14 +45,14 @@
         "Step 2, “Ask first”: Ask which column name to use.",
         "The agent asks: Which name: stall reason or stalled because?"
       ],
-      "place": "Step 2 of 2 · started 21:49 · waited 3 h 40",
-      "program_id": "program-f8b340de14ef",
+      "place": "Step 2 of 2 · started 22:30 · waited 2 h 59",
+      "program_id": "program-5218f6694cd9",
       "program_title": "Overnight on the home box",
       "question": "What do you answer the agent?",
-      "ref": "program:program-f8b340de14ef:step-2b25fd04780a:answer",
-      "since": "2026-11-02T02:49:14.866207+00:00",
+      "ref": "program:program-5218f6694cd9:step-351d8f8e8b66:answer",
+      "since": "2026-11-02T03:30:55.227919+00:00",
       "state": "open",
-      "step_id": "step-2b25fd04780a",
+      "step_id": "step-351d8f8e8b66",
       "step_ordinal": 2,
       "step_title": "Ask first",
       "text": {
@@ -98,12 +98,12 @@
     }
   ],
   "package": {
-    "desk": "/?open=program:program-f8b340de14ef",
+    "desk": "/?open=program:program-5218f6694cd9",
     "expires_at": "2026-11-03T06:30:00+00:00",
     "expires_words": "Expires in 24 h",
     "head": "Overnight on the home box · step 2",
     "hub": "the rig hub",
-    "id": "pkg-076a5bcd326f",
+    "id": "pkg-263aec40b02e",
     "kind": "item"
   }
 }
