@@ -22,7 +22,7 @@ HoldSpeak uses one bot (the same bot as Cadence) and one chat: yours.
 3. Press **Pair Telegram**. The row shows "Send /pair <code> to your bot", the minutes left and **Copy**. The code has six digits and is good for ten minutes. **New code** makes a new one.
 4. Send `/pair <code>` to your bot from your own Telegram chat. The first chat that sends the code is your chat. The row then says **Paired · <name>**.
 
-While a chat is paired, no other chat can pair. **Unpair** removes the chat. **Pair Telegram** is off until the token is stored.
+After 5 wrong codes the code is void: press **New code**. While a chat is paired, no other chat can pair. **Unpair** removes the chat. **Pair Telegram** is off until the token is stored.
 
 ## When to reach you
 
@@ -85,10 +85,14 @@ A page can also hold these items. Each choice runs the same action as the button
 | A project review's proposal | `project-proposal:<id>` | The page shows what **Accept** adds or records. **Accept** or **Dismiss**. |
 | An audit's findings, its fix program, a lesson | `program:<id>:<item id>` (the id of its Your turn row) | The same choices as on the desk: **File** or **Skip**; **Make** or **Skip**; **Keep for this program**, **Keep for HoldSpeak** or **Skip**. The page names the program as the place, not a step. |
 | A program step's agent asks a question | `program:<id>:<step>:answer` | One text field, the only input on the page: your answer. HoldSpeak types it to the agent. On Telegram, reply to the message with your answer. |
-| A document that is ready to send | `send:<id>` | The page shows the preview first: the destination and the lines that go. **Send**: HoldSpeak sends it now. **Discard**: nothing is sent. This item goes on the page only: a Telegram message for it has no Send button. |
+| A document that is ready to send | `send:<id>` | The page shows the preview first: the destination and every line that goes, word for word. When it is too long to show (over 400 lines) or holds something a page never shows, the page has no **Send**: send it from your desk. **Send**: HoldSpeak sends it now. **Discard**: nothing is sent. This item goes on the page only: a Telegram message for it has no Send button. |
 | A desk agent asks a question outside a program | `coder:<agent>:<session>` | One text field: your answer. HoldSpeak types it to the agent. |
 
 When you answered the item on your desk first, the page says "Answered already on your desk." and decides nothing. A page with several items also shows plain lines with no buttons: the Door tasks due today, and the lines the desk adds (a blocker, for example "The meeting recorder has no microphone."). A held tool call never goes on a page: it stays on your desk.
+
+## What a message and a page never show
+
+Every Telegram message and every page line goes through one redaction: a secret (a key, a token, a password) is hidden, a path in a home folder reads `~/…`, and a diff header reads "a change". A raw diff, a key block or the bot token is never sent at all. When an item is decided, its page shows only what it was and how it ended: its evidence is on your desk.
 
 ## What may travel, and a late answer
 

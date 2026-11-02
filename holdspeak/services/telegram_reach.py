@@ -63,6 +63,8 @@ CONNECTOR = "reach-telegram"
 #: The named destination (the egress ledger's words).
 DESTINATION_WORDS = "Telegram · owner chat"
 PAIR_MINUTES = 10
+#: Wrong pairing codes before the code is void (Astra post-merge 2026-11-01).
+PAIR_WRONG_MAX = 5
 SECOND_TAP_SECONDS = 120
 #: §5 said eight; the owner's BRIEF RULE (2026-10-31) adds the goal, the step,
 #: what happened and what the answer blocks, so ten: head, four brief lines,
@@ -290,11 +292,15 @@ def fence(text: str) -> str:
     """§5 "What is never sent": refuse a diff, a key or a token; redact a
     secret the Phone's way. Returns the text to send."""
     from ..redaction import redact_secrets
+    from .reach_redact import reach_line
 
+    # What is never sent at all is refused first; then the one Reach
+    # redaction (a home path, a diff header anywhere in a line, a
+    # password-shaped pair; Astra post-merge 2026-11-01).
     for pattern in _NEVER:
         if pattern.search(text):
             raise TelegramRefused("never_sent", "The message held something that is never sent to Telegram.")
-    return redact_secrets(text)
+    return redact_secrets(reach_line(text))
 
 
 def _line(text: Any) -> str:
@@ -411,6 +417,10 @@ class TelegramReach:
         return f"{base}{path}" if base else None
 
     def _api(self, method: str, params: Mapping[str, Any], *, data_class: str = "reach_package") -> dict[str, Any]:
+        if method in ("sendMessage", "editMessageText") and isinstance(params.get("text"), str):
+            from .reach_redact import reach_line
+
+            params = {**params, "text": reach_line(params["text"])}
         token = bot_token()
         if not token or not telegram_on():
             return {"ok": False, "description": "telegram is off"}
@@ -680,6 +690,13 @@ class TelegramReach:
             ok = bool(pairing and pairing["expires"] > time.monotonic()
                       and hashlib.sha256(code.encode()).hexdigest() == pairing["hash"])
             if not ok:
+                if pairing:
+                    # Astra post-merge 2026-11-01: 5 wrong codes and the code
+                    # is void; a new one is needed.
+                    pairing["wrong"] = int(pairing.get("wrong") or 0) + 1
+                    if pairing["wrong"] >= PAIR_WRONG_MAX:
+                        self._pairing = None
+                        self._changed("telegram", "pairing_void")
                 self._send(chat_id, "Wrong or old code. Make a new one in Settings ▸ Reach.",
                            data_class="reach_refusal")
                 return {"action": "pair", "ok": False}
