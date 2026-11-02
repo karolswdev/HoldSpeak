@@ -713,7 +713,7 @@ A program with a `night` line runs only at night, for example `night 23:30-07:00
 
 The Dreaming template is in **New program ▸ Templates**. In Drafting, a night program's first station says "Sleeps until 23:30", and you can press **Start** with no steps. The morning message links one briefing page for all the items that wait on you (see "Decide from anywhere").
 
-Not yet: the failing tests of the last main run as backlog items, and `within` as a core question for the diff.
+Not yet: the failing tests of the last main run as backlog items, `within` as a core question for the diff, and the Enter guard for answers and re-briefs (only a launch's first brief gets its Enter again when Claude Code dropped it).
 
 
 ## The audit
