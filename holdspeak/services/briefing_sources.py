@@ -71,7 +71,8 @@ class Source:
     def decide(self, ref: str, item: Mapping[str, Any], choice: str, *, via: str) -> dict[str, Any]:  # pragma: no cover
         raise NotImplementedError
 
-    def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str) -> dict[str, Any]:
+    def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str,
+                    expected_wait_id: Optional[str] = None) -> dict[str, Any]:
         """His text answer (a question source only)."""
         raise ValueError("answer")
 
@@ -392,7 +393,12 @@ class CoderQuestionSource(Source):
         question = str(getattr(session, "question", "") or "").strip()
         if not question:
             return None
+        from ..coder_steering import wait_episode
+
         return {"key": key, "agent": str(getattr(session, "agent", "") or ""), "question": question,
+                # Astra post-merge 2026-11-01: the wait he answers; a changed
+                # wait (a permission prompt now) refuses the answer.
+                "wait_id": wait_episode(session),
                 "launch": dict(launch), "since": str(getattr(session, "wait_started_at", "")
                                                      or getattr(session, "updated_at", "") or "")}
 
@@ -409,17 +415,28 @@ class CoderQuestionSource(Source):
 
         body["text"] = {"id": "answer", "label": "Your answer", "max": ANSWER_MAX_CHARS,
                         "consequence": f"HoldSpeak types your answer to {who}."}
+        body["wait_id"] = str(item.get("wait_id") or "")
         return body
 
     def decide(self, ref: str, item: Mapping[str, Any], choice: str, *, via: str) -> dict[str, Any]:
         raise ValueError(choice)  # answered with text only
 
-    def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str) -> dict[str, Any]:
+    def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str,
+                    expected_wait_id: Optional[str] = None) -> dict[str, Any]:
+        """His text to the agent, bound to the wait he answered: when the
+        agent's wait changed (it now asks a permission, or another question),
+        nothing is typed and he gets the late-answer words."""
+        from .briefing_service import WAIT_CHANGED
         from .errors import ServiceError
 
         said = " ".join(str(text or "").split())
+        expected = str(expected_wait_id if expected_wait_id is not None else item.get("wait_id") or "")
+        if not expected or expected != str(item.get("wait_id") or ""):
+            raise ServiceError("wait_changed", WAIT_CHANGED, context={"status": 409})
         sent = self._responder()._deliver(item.get("launch") or {}, str(item.get("key") or ""),
-                                          str(item.get("agent") or ""), said)
+                                          str(item.get("agent") or ""), said, expected_wait_id=expected)
+        if str((sent or {}).get("status") or "") == "wait_not_current":
+            raise ServiceError("wait_changed", WAIT_CHANGED, context={"status": 409})
         if str((sent or {}).get("status") or "") != "delivered":
             raise ServiceError("not_kept", "Your answer did not reach the agent. Nothing was typed. Try again.",
                                context={"status": 409})
