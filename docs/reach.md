@@ -102,6 +102,7 @@ A late or wrong answer gets one plain answer back, and nothing else happens:
 | The choice was not one of the item's choices | "That choice was not on offer". |
 | The answer named no choice | "Choose one". The item still waits. |
 | A Later could not be kept | "Could not keep that for later; it still waits". |
+| The agent asks something else now (another question, or a permission prompt), after the page was made | "The agent asks something else now. Nothing was typed; it waits on your desk". Your answer is typed only to the question the page showed, and HoldSpeak checks it again right before it types. |
 
 ## The ladder
 
