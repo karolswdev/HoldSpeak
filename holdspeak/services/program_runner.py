@@ -59,6 +59,11 @@ from .program_verifier import log_tail, verify_log, verify_measure_log, verify_r
 
 log = get_logger("program_runner")
 
+#: Ruling 2026-11-01: the night templates run pi on the home engine only.
+NIGHT_TEMPLATES = ("overnight", "dreaming")
+HOME_ENGINE_MISSING = ("the home engine is not in your model library. Add it in Engines, "
+                       "or choose Claude Code for this program")
+
 #: The longest a check may run before it is killed (its log says so).
 CHECK_TIMEOUT_SECONDS = 3600
 #: git / gh calls.
@@ -554,6 +559,12 @@ class ProgramRunner:
                 self._hold(step, "waiting for an agent's limit to reset")
                 continue
             profile, engine = entry["profile"], entry.get("engine")
+            if self._home_engine_missing(program, profile, engine):
+                # Ruling 2026-11-01: the night spends no cloud tokens. pi with
+                # no engine would run on the desk's assignment (it can be a
+                # cloud engine): the step waits, by name.
+                self._hold(step, HOME_ENGINE_MISSING)
+                continue
             # PG-LANG LANG12 (planned for tonight first) and LANG8 (too big for its budget).
             if program_night.step_hold(self, program, step) or program_split.dispatch_hold(
                     self, program, step, profile, engine):
@@ -1679,6 +1690,11 @@ class ProgramRunner:
         if not self._builder_alive(step) and not self._rehand_for_review(program, step):
             return
         profile, engine = self._reviewer(program, step)
+        if self._home_engine_missing(program, profile, engine):
+            self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE,
+                                    parked_reason=HOME_ENGINE_MISSING,
+                                    line=f"The review waits: {HOME_ENGINE_MISSING}")
+            return
         pair = initial_review(_reviewer_key(profile)) or {}
         depth = step.get("review_depth") or "delta"
         pair.update({
@@ -1700,6 +1716,11 @@ class ProgramRunner:
                       "req_reask_done": False, "req_answers": {}})
         self.service.transition(program, step, "review", facts=facts, review_verdict=None,
                                 line=f"{agent_label(profile)} reviews at depth {depth}")
+
+    @staticmethod
+    def _home_engine_missing(program: Mapping[str, Any], profile: str, engine: Optional[str]) -> bool:
+        """A night template's pi (builder or reviewer) with no home engine."""
+        return profile == "pi-default" and not engine and str(program.get("template") or "") in NIGHT_TEMPLATES
 
     def _builder_alive(self, step: Mapping[str, Any]) -> bool:
         """The step's builder launch still runs (its kernel operation is the
