@@ -713,10 +713,20 @@ class FirstMessage:
         last_hash: Optional[str] = None
         while not self._stop.is_set() and time.monotonic() - started < ENTER_GUARD_SECONDS:
             peek = self._peek(launch_id)
-            if peek is None or not _brief_sits(claude_composer(list(peek.get("lines") or [])), text):
-                return  # submitted (the composer moved on), or no composer to read
+            if peek is None:
+                return
+            composer = claude_composer(list(peek.get("lines") or []))
+            if composer is None:
+                return  # no Claude Code composer on the pane: nothing to read
+            due = time.monotonic() - started >= ENTER_AGAIN_AFTER_SECONDS
+            sits = _brief_sits(composer, text)
+            if due and not sits:
+                return  # at the mark the composer moved on: the brief was submitted
+            # Before the mark an empty or brief-less composer is no proof of a
+            # submit (the fix proof of 2026-11-02: the pane had not drawn the
+            # typed text yet at the first look); the guard decides at the mark.
             frame = str(peek.get("hash") or "")
-            if time.monotonic() - started >= ENTER_AGAIN_AFTER_SECONDS and frame and frame == last_hash:
+            if due and sits and frame and frame == last_hash:
                 record = self._svc._ledger.get(launch_id) or {}
                 sent = self.send_keys(record, [ENTER_AGAIN_KEY], principal, held)
                 outcome = str((sent.get("receipt") or {}).get("outcome") or "")
