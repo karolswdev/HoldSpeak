@@ -322,6 +322,8 @@ def destructive_word(command: str) -> str:
     for name, pattern in _DESTRUCTIVE_PATTERNS:
         if pattern.search(text):
             return name
+    if _force_push(text):
+        return "git push --force"
     return ""
 
 
@@ -416,9 +418,34 @@ def _call_words(command: str, depth: int = 0) -> Optional[list[str]]:
             inner = _call_words(word, depth + 1)
             if inner is None:
                 return None
-            out.extend(inner)
+            out.extend([";", *inner, ";"])  # the string is its own command line
         previous = word
     return out
+
+
+#: The programs whose operands are files they write (a variable there is a
+#: path the gate cannot read; Astra round 2: ``env touch "$OUT"``).
+_WRITE_PROGRAMS = frozenset({"touch", "cp", "mv", "rm", "tee", "mkdir", "ln", "install", "dd", "truncate", "chmod",
+                             "chown", "rsync", "rmdir", "unlink", "sed", "patch", "tar", "unzip", "curl", "wget"})
+#: The programs whose operands are text they print (redirects still count).
+_PRINT_PROGRAMS = frozenset({"echo", "printf", "true", ":"})
+
+
+def _force_push(command: str) -> bool:
+    """Astra round 2: a force push in any shell spelling (``-fv``, a quoted
+    ``"--force-with-lease"``, ``+ref``), read from the split words."""
+    words = _call_words(str(command or "")) or []
+    for index, word in enumerate(words):
+        if word != "push" or not any(os.path.basename(w) == "git" for w in words[max(0, index - 6):index]):
+            continue
+        for arg in words[index + 1:]:
+            if set(arg) <= set(";&|<>()"):
+                break
+            if (arg.startswith("--force") or arg in ("--mirror", "--delete", "--prune")
+                    or re.fullmatch(r"-[A-Za-z]*f[A-Za-z]*", arg) or (arg.startswith("+") and len(arg) > 1)
+                    or (arg.startswith(":") and len(arg) > 1)):
+                return True
+    return False
 
 
 def unparsed_paths_inside(command: str, *, cwd: str, root: str) -> bool:
@@ -437,6 +464,16 @@ def unparsed_paths_inside(command: str, *, cwd: str, root: str) -> bool:
     words = _call_words(str(command or ""))
     if words is None:
         return False
+    # Astra round 2: an argument-free ``env`` runs the rest as it is; when the
+    # parser reads the rest as inside, so is the call (a commit message's
+    # heredoc is text, not a path).
+    if words[:1] == ["env"] and len(words) > 1 and not words[1].startswith("-") and "=" not in words[1]:
+        rest = str(command).strip()[3:].strip()
+        try:
+            if classify_bash(rest, cwd=real_cwd, root=real_root).scope == INSIDE:
+                return True
+        except Exception:
+            pass
 
     def ok(path: str) -> bool:
         if not path:
@@ -452,14 +489,41 @@ def unparsed_paths_inside(command: str, *, cwd: str, root: str) -> bool:
             return False
         return _inside(real, real_root) or _in_scratch(real, real_root)
 
+    for index, word in enumerate(words[:-1]):
+        if word.endswith("$") and words[index + 1].startswith("("):
+            return False  # ``$(…)``: a command substitution runs what the gate cannot read here
     previous = ""
-    for word in words:
+    program = ""
+    for index, word in enumerate(words):
         if word in _REDIRECTS or set(word) <= set(";&|<>()"):
+            if word not in _REDIRECTS and set(word) <= set(";&|"):
+                program = ""  # a new command (never after a parenthesis: ``open("/etc/x")``)
             previous = word
             continue
+        if not program and word != "env" and not re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", word):
+            program = os.path.basename(word)
+            if "/" in word and not ok(word):
+                return False  # a program run from a path outside
+            if program == "cd":
+                # ``cd`` with no folder (or ``cd -``, ``cd ~``) goes home: not
+                # the worktree (Astra round 2: ``bash -c 'cd; printf x > f'``).
+                nxt = words[index + 1] if index + 1 < len(words) else ""
+                if not nxt or set(nxt) <= set(";&|<>()") or nxt in ("-", "~") or nxt.startswith("~"):
+                    return False
+            previous = word
+            continue
+        if program in _PRINT_PROGRAMS and previous not in _REDIRECTS:
+            if "$(" in word or "`" in word:
+                return False  # a substitution runs a command, even inside an echo
+            previous = word
+            continue  # text it prints, never a path (``echo ~``)
+        if "$" in word and program in _WRITE_PROGRAMS:
+            return False  # a file it writes that the gate cannot read
         candidates = [word]
         if "=" in word:
             candidates.append(word.split("=", 1)[1])
+        if word.startswith("-C") and len(word) > 2:
+            candidates.append(word[2:])  # ``git -C../other``: the attached folder
         for candidate in candidates:
             if not candidate or _URL.match(candidate):
                 continue
