@@ -10,18 +10,18 @@
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-02T01:40:03.464914+00:00",
-          "clock": "20:40",
+          "at": "2026-11-02T01:42:51.383753+00:00",
+          "clock": "20:42",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-02T01:40:02.631344+00:00",
-          "clock": "20:40",
+          "at": "2026-11-02T01:42:50.915764+00:00",
+          "clock": "20:42",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-02T01:40:02.124002+00:00",
-          "clock": "20:40",
+          "at": "2026-11-02T01:42:50.539778+00:00",
+          "clock": "20:42",
           "line": "Handed to Claude Code."
         }
       ],
@@ -68,14 +68,14 @@
         "Step 1: Store the stall reason in its own column.",
         "The step's change touches files no step owns (schema.py)."
       ],
-      "place": "Step 1 of 1 · started 20:40 · waited 4 h 49",
-      "program_id": "program-f5bf7bd015ac",
+      "place": "Step 1 of 1 · started 20:42 · waited 4 h 47",
+      "program_id": "program-84afa1ce6784",
       "program_title": "Overnight on the home box",
       "question": "Let the step go on with this, or park it?",
-      "ref": "program:program-f5bf7bd015ac:step-7c1fb8aa13d6:core",
-      "since": "2026-11-02T01:40:03.952366+00:00",
+      "ref": "program:program-84afa1ce6784:step-9817e47c5335:core",
+      "since": "2026-11-02T01:42:51.653136+00:00",
       "state": "open",
-      "step_id": "step-7c1fb8aa13d6",
+      "step_id": "step-9817e47c5335",
       "step_ordinal": 1,
       "step_title": "Store the stall reason",
       "track": [
@@ -120,7 +120,7 @@
       "program_title": "",
       "question": "Confirm this decision?",
       "ref": "decision:dec-1",
-      "since": "2026-11-02T01:40:05Z",
+      "since": "2026-11-02T01:42:52Z",
       "source": "decision",
       "state": "open",
       "step_id": "",
@@ -199,12 +199,12 @@
     }
   ],
   "package": {
-    "desk": "/?open=program:program-f5bf7bd015ac",
+    "desk": "/?open=program:program-84afa1ce6784",
     "expires_at": "2026-11-02T18:30:00+00:00",
     "expires_words": "Expires in 12 h",
     "head": "3 wait on you",
     "hub": "the rig hub",
-    "id": "pkg-717e1b446f07",
+    "id": "pkg-97505279a378",
     "kind": "digest",
     "lines": [],
     "open": 3,

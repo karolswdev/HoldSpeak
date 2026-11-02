@@ -294,7 +294,7 @@
 /* DIR10: a send's preview (where, then the lines), and an agent's question
    answered with his words. Plain text; the tray stays the one raised thing. */
 .briefing .briefing-preview { padding: 0 var(--space-4) var(--space-3); }
-.briefing .briefing-preview-line { margin: 0; font: 400 14px / 1.5 var(--font-sans); overflow-wrap: anywhere; }
+.briefing .briefing-preview-line { margin: 0; font: 400 14px / 1.5 var(--font-sans); overflow-wrap: anywhere; white-space: pre-wrap; min-height: 1.5em; }
 .briefing .briefing-answer { display: flex; flex-direction: column; gap: var(--space-3); }
 .briefing .briefing-answer-text {
   width: 100%;

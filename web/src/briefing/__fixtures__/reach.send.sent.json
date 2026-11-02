@@ -34,11 +34,11 @@
       "Payments ledger cutover — update r1 (2026-11-02) is ready to send to Team folder."
     ],
     "outcome": {
-      "at": "2026-11-02T01:40:16.072857+00:00",
+      "at": "2026-11-02T01:42:48.741376+00:00",
       "choice": "send",
       "label": "Send",
       "via": "page",
-      "words": "Send · 20:40. Nothing else on this page waits on you."
+      "words": "Send · 20:42. Nothing else waits on you."
     },
     "page_only": true,
     "place": "",
@@ -46,16 +46,19 @@
       "destination": "Team folder",
       "lines": [
         "# Payments ledger cutover · Update · 2026-11-02",
+        "",
         "## Progress",
+        "",
         "The ledger cutover is on track."
       ],
-      "reversible": false
+      "reversible": false,
+      "whole": true
     },
     "program_id": null,
     "program_title": "",
     "question": "Send it to Team folder?",
-    "ref": "send:chs_715b9c9c227f52ca6894c2b8",
-    "since": "2026-11-02T01:40:15+00:00",
+    "ref": "send:chs_6ecee773da6da1c5147b4aca",
+    "since": "2026-11-02T01:42:48+00:00",
     "source": "send",
     "state": "decided",
     "step_id": "",

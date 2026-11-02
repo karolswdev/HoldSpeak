@@ -79,6 +79,10 @@ def not_pending(at: Any, via: Any) -> "BriefingRefused":
                            outcome={"words": words, "at": at, "via": via})
 
 
+#: The keys a decided item keeps on its page: what it was and its outcome.
+DECIDED_KEYS = ("ref", "kind", "kind_words", "source", "program_id", "program_title", "step_id", "step_ordinal",
+                "head", "question", "choices", "text", "page_only")
+
 #: DIR9: one page carries up to this many held items, in order, each decided alone.
 DIGEST_MAX = 12
 #: §3: a digest's page lives 12 hours.
@@ -674,10 +678,14 @@ class BriefingService:
 
     def revoke(self, principal: Any, package_id: str) -> dict[str, Any]:
         self._require_owner(principal)
-        package = self.store.get(str(package_id))
-        if package is None:
-            raise BriefingRefused("package_unknown", "There is no such page.", status=404)
-        self.store.revoke(package["id"], _utc(self._now()))
+        # Astra post-merge 2026-11-01: Revoke shares the answer's lock, so an
+        # answer in flight ends before Revoke returns, and one after it finds
+        # the page gone.
+        with _LOCK:
+            package = self.store.get(str(package_id))
+            if package is None:
+                raise BriefingRefused("package_unknown", "There is no such page.", status=404)
+            self.store.revoke(package["id"], _utc(self._now()))
         self._changed(package["id"], "revoked")
         return {"id": package["id"], "revoked": True}
 
@@ -819,7 +827,12 @@ class BriefingService:
         items = []
         for row in self.bodies(package):
             row.pop("error", None)  # the raw reason opens as its fold only
-            items.append({**row, **self._item_state(package, row)})
+            state = self._item_state(package, row)
+            if state.get("state") in ("decided", "gone"):
+                # A decided item reads as its outcome only: no evidence, no
+                # context (Astra post-merge 2026-11-01).
+                row = {key: row[key] for key in DECIDED_KEYS if key in row}
+            items.append({**row, **state})
         first = items[0] if items else {}
         expires = _parse(package["expires_at"]) or now
         out = {
@@ -839,14 +852,25 @@ class BriefingService:
             out["package"]["open"] = open_now
             out["package"]["open_words"] = ("Nothing on this page waits on you." if not open_now else
                                             "1 waits on you." if open_now == 1 else f"{open_now} wait on you.")
-        return out
+        from .reach_redact import reach_value
+
+        return reach_value(out)
 
     def evidence(self, token: Any, ref: str, pane: str) -> dict[str, Any]:
-        """One evidence pane, read only, loaded when it opens."""
+        """One evidence pane, read only, loaded when it opens; never for an
+        item that is decided (Astra post-merge 2026-11-01). Every line goes
+        through the one Reach redaction."""
+        from .reach_redact import reach_value
+
+        return reach_value(self._evidence(token, ref, pane))
+
+    def _evidence(self, token: Any, ref: str, pane: str) -> dict[str, Any]:
         package = self._package(token)
         body = next((row for row in self.bodies(package) if str(row.get("ref")) == str(ref)), {})
         if not body or pane not in {row["pane"] for row in body.get("evidence") or []}:
             raise BriefingRefused("pane_unknown", "This page has no such pane.", status=404)
+        if self._item_state(package, body).get("state") in ("decided", "gone"):
+            raise BriefingRefused("pane_unknown", "This item is decided. Its evidence is on your desk.", status=404)
         service = self.programs()
         step = service.store.get_step(str(body.get("step_id") or "")) if body.get("step_id") else None
         if pane == "error":
