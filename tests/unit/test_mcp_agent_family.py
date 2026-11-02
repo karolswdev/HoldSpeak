@@ -106,7 +106,8 @@ def test_prompt_with_wait_is_one_request_and_reads_the_helpers_words(monkeypatch
     sent = []
     answer = helpers.prompt(None, "L1", "H1", "Review the diff", wait=True, send=lambda **kw: sent.append(kw),
                             clock=clock, sleep=clock.sleep, ledger=_Ledger(PARENT, HELPER))
-    assert sent == [{"pane": "%7", "text": "Review the diff", "submit": True}]
+    # Typed, the wait read again, then its Enter (Astra round 2, 2026-11-02).
+    assert sent == [{"pane": "%7", "text": "Review the diff", "submit": False}, {"pane": "%7", "text": "", "submit": True}]
     assert answer == {"launch_id": "H1", "status": "sent", "state": "done", "said": "Done. Two findings."}
 
 
@@ -229,4 +230,5 @@ def test_prompt_waits_for_the_helpers_registration_before_typing(monkeypatch) ->
                             clock=clock, sleep=clock.sleep, ledger=_Ledger(PARENT, HELPER))
     assert result["status"] == "sent"
     assert clock.t == 0.25
-    assert sent == [{"pane": "%7", "text": "Review", "submit": True}]
+    # Typed, the wait read again, then its Enter (Astra round 2, 2026-11-02).
+    assert sent == [{"pane": "%7", "text": "Review", "submit": False}, {"pane": "%7", "text": "", "submit": True}]

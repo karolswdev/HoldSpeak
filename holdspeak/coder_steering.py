@@ -949,8 +949,20 @@ def deliver(
         from .tmux_transport import send_text_to_pane
 
         send = send_text_to_pane
+    # Astra round 2 (2026-11-02): the wait can change between the read above
+    # and the keystroke. A bound answer is typed without its Enter, the wait
+    # is read again, and only the same wait gets the Enter (one send site).
+    bound = expected_wait_id is not None and submit
+    parts = [(text, False), ("", True)] if bound else [(text, submit)]
     try:
-        send(pane=pane_id, text=text, submit=submit)
+        for index, (chunk, enter) in enumerate(parts):
+            if index and current_wait_episode(key) != str(expected_wait_id):
+                return _audited(
+                    {"status": "wait_not_current", "detail": "the agent's wait changed — nothing was submitted",
+                     "wait_id": current_wait_episode(key) or None},
+                    pane_id=pane_id,
+                )
+            send(pane=pane_id, text=chunk, submit=enter)
     except Exception as exc:
         return _audited(
             {"status": "transport_error", "detail": str(exc)}, pane_id=pane_id
