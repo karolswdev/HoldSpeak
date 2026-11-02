@@ -18,7 +18,7 @@ import pytest
 
 from holdspeak.services.reach_redact import reach_line
 from tests.unit.test_reach_telegram import OWNER_CHAT, Desk, keystore, update  # noqa: F401  (autouse keystore)
-from tests.integration.program_rig import OWNER
+from tests.integration.program_rig import FAKE_CHECK, OWNER
 
 
 # ── pairing ──────────────────────────────────────────────────────────
@@ -142,3 +142,25 @@ def test_the_digest_and_a_page_line_go_through_it(tmp_path) -> None:
     made = desk.briefing.make(OWNER, [ref], kind="digest", lines=["The db password: hunter2x is in the note."])
     page = desk.briefing.read(made["token"])
     assert all("hunter2x" not in line for line in page["package"]["lines"]), page["package"]["lines"]
+
+
+def test_the_answers_return_is_redacted_and_outcome_only(tmp_path) -> None:
+    """Astra round 2 (2026-11-02): POST /api/b/{token}/answer returned the
+    password, the home path and the diff header the GET hid."""
+    desk = Desk(tmp_path)
+    rig = desk.rig
+    pid = rig.service.create(OWNER, title="diff --git a/private b/private", goal="db password: hunter2x",
+                             repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}", template="fast-cycle",
+                             control="yolo")["id"]
+    rig.service.plan(OWNER, pid, steps=[{"title": "In /Users/review/private/notes", "brief": "Store it.",
+                                        "owns": ["src/a.py"]}])
+    rig.service.start(OWNER, pid)
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"src/a.py": "a\n", "other/b.py": "b\n"})
+    rig.tick()
+    item = next(row for row in rig.service.needs_you_items() if row["kind"] == "core")
+    ref = f"program:{pid}:{item['id']}"
+    made = desk.briefing.make(OWNER, [ref])
+    answered = desk.briefing.answer(made["token"], ref, "go_on")
+    text = str(answered)
+    assert "hunter2x" not in text and "/Users/review" not in text and "diff --git" not in text, text
+    assert answered["item"]["state"] == "decided" and "evidence" not in answered["item"]

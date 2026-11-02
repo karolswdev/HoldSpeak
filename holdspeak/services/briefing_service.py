@@ -977,7 +977,7 @@ class BriefingService:
                 state.pop("error", None)
                 if via != "telegram":
                     self._settle(fresh, f"Answered · {clock_words(now)} · {_VIA_SETTLE.get(via, '')}".rstrip(" ·"))
-                return {"item": state}
+                return {"item": _answered_view(state)}
             source = self._source(ref)
             if source is not None:
                 held = source.held(ref)
@@ -1001,7 +1001,19 @@ class BriefingService:
             if state.get("state") == "decided":
                 words = f"Decided: {state['outcome'].get('label')} · {clock_words(now)} · {_VIA_SETTLE.get(via, '')}".rstrip(" ·")
             self._settle(fresh, words)
-        return {"item": state}
+        return {"item": _answered_view(state)}
+
+
+def _answered_view(state: Mapping[str, Any]) -> dict[str, Any]:
+    """An answer's return as a page reads it (Astra round 2, 2026-11-02): a
+    decided item is its outcome only, and every line goes through the one
+    Reach redaction, as the page's GET does."""
+    from .reach_redact import reach_value
+
+    row = dict(state)
+    if row.get("state") in ("decided", "gone"):
+        row = {key: row[key] for key in (*DECIDED_KEYS, "state", "outcome") if key in row}
+    return reach_value(row)
 
 
 _VIA_SETTLE = {"page": "from the briefing page", "call": "on a call", "phone": "on your phone", "desk": "on your desk",
