@@ -488,6 +488,10 @@ class ReachService:
             telegram = self.telegram()
             if telegram.live():
                 sent = self._send_night_lines(telegram, self.now(), self.quiet())
+                if sent:
+                    # The night's line was the morning's one message: no plain
+                    # digest after it the same day (Astra post-merge 2026-11-01).
+                    self._set_digest_day(self.now().astimezone().strftime("%Y-%m-%d"))
         except Exception as exc:
             log.info(f"reach: the night line waits: {exc}")
         return {"ref": ref, "queued": ref not in sent, "sent": ref in sent}
@@ -588,7 +592,14 @@ class ReachService:
                       items: Mapping[str, Mapping[str, Any]]) -> Optional[dict[str, Any]]:
         """One message a day at his digest time, only when something waits:
         the held items, and the Cadence brief's one line when a loop is due
-        (DIR7). The night's line, when it went, was that message."""
+        (DIR7). The night's line, when it went, was that message. Under the
+        same lock as the night's line, so the two never both carry the
+        Cadence line (Astra post-merge 2026-11-01)."""
+        with _LOCK:
+            return self._digest_once(telegram, now, quiet, items)
+
+    def _digest_once(self, telegram: Any, now: datetime, quiet: tuple[int, int],
+                     items: Mapping[str, Mapping[str, Any]]) -> Optional[dict[str, Any]]:
         if self.settings()["telegram"] == "off" or in_quiet(now, quiet):
             return None
         local = now.astimezone()
