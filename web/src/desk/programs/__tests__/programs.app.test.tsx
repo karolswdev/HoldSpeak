@@ -2598,6 +2598,9 @@ describe("PG-JOURNEYS J5: the race in the Program window (recorded: test_program
     render(<ProgramBody programId={race.id} />);
     await screen.findByTestId("programs-your-turn");
     expect(screen.getAllByTestId("programs-turn-item")).toHaveLength(1);
+    // The hub says the race failed as one step: the row reads Parked first.
+    expect(race.steps[0].race_both_red).toBe(true);
+    expect(within(stepRow(1)).getByTestId("programs-step-word").textContent).toBe("Parked · race of 2");
     const logs = screen.getByTestId("programs-race-logs");
     expect([...logs.querySelectorAll(".pg-race-agent")].map((node) => node.textContent)).toEqual(["Claude Code", "Codex"]);
     fireEvent.click(within(logs).getByRole("button", { name: "Open Codex's log" }));

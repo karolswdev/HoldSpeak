@@ -89,6 +89,7 @@ def test_the_winner_row_says_who_and_how_long(tmp_path) -> None:
     [row] = [r for r in rig.program(pid)["decided_for_you"] if r["kind"] == "race_winner"]
     assert row["line"].startswith("Codex won the race · ") or row["line"] == "Codex won the race", row
     assert row["rule"] == "Normal: the first green, reviewed contender wins" and not row["overturnable"]
+    assert rig.step(pid, 1)["race_both_red"] is False
     winner = rig.service.store.get_step(contender["id"])
     assert winner["facts"]["race_won"]["by"] == "Codex"
     _fixture("program.race_won.json", rig.program(pid), tmp_path)
@@ -114,7 +115,8 @@ def test_both_contenders_red_fail_as_one_step_with_both_logs(tmp_path, monkeypat
     lead, contender = rig.step(pid, 1), rig.step(pid, 1)["contenders"][0]
     assert lead["state"] == "parked" and contender["state"] == "parked", (lead["state"], contender["state"])
     [row] = [item for item in rig.program(pid)["your_turn_items"] if item["kind"] == "parked"]
-    assert row["step_id"] == lead["id"] and row["race"] is True
+    assert row["step_id"] == lead["id"] and row["race"] is True and row["race_both_red"] is True
+    assert lead["race_both_red"] is True  # the step wire says it too (the row's state word reads it)
     assert row["title"] == ("Parked step 1 “Find words inside Mermaid fences”: both contenders are red "
                             "after their rounds")
     assert [log["agent"] for log in row["logs"]] == ["Claude Code", "Codex"] and all(log["log"] for log in row["logs"])

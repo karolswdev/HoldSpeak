@@ -110,7 +110,11 @@ export function banded(programs: readonly ProgramSummary[]): { state: ProgramSta
 export function stepWord(step: ProgramStep): string {
   const base = stateWords(step.state_word || step.state);
   // A race of 2 is the step's own agent and one contender.
-  if (step.contenders?.length) return `Race of ${Math.max(step.race || 0, step.contenders.length + 1)}`;
+  if (step.contenders?.length) {
+    const n = Math.max(step.race || 0, step.contenders.length + 1);
+    // J5: a race that failed as one step says Parked first.
+    return step.race_both_red ? `${base} · race of ${n}` : `Race of ${n}`;
+  }
   if ((step.state === "merged" || step.state === "merge_ask") && step.pr?.number) return `${base} #${step.pr.number}`;
   if (step.state === "check_failed") return `${base} · log`;
   // PG-IMPORT IMP2: how the lane ended, beside the state ("Parked · interrupted").
