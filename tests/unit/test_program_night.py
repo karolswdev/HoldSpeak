@@ -323,7 +323,9 @@ def test_the_night_line_goes_to_telegram_once_and_waits_out_quiet_hours(tmp_path
     assert len(telegram_desk.bot.of("sendMessage")) == 1
 
 
-def test_the_hours_after_the_window_are_bounded(tmp_path, monkeypatch) -> None:
+def test_the_hours_after_the_window_are_not_a_deadline(tmp_path, monkeypatch) -> None:
+    """Astra's post-merge check (2026-11-01): a hub back after DIGEST_HOURS
+    never wrote that night's digest. It writes it, once."""
     rig, clock, reach = desk(tmp_path, monkeypatch, at(2, 14, 0))
     pid, _sids = make_night(rig)
     clock.now = at(2, 23, 31)
@@ -332,4 +334,6 @@ def test_the_hours_after_the_window_are_bounded(tmp_path, monkeypatch) -> None:
     _merge_first(rig, pid)
     clock.now = at(3, 7, 0) + timedelta(hours=program_night.DIGEST_HOURS, minutes=1)
     rig.tick()
-    assert reach.lines == []
+    clock.now += timedelta(minutes=program_night.END_MINUTES + 1)
+    rig.tick(3)
+    assert len(reach.lines) == 1
