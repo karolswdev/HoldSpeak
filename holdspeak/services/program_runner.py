@@ -74,6 +74,9 @@ FRAME_LOCK_WAIT_SECONDS = 30
 _STOPPED = frozenset({"ended", "expired", "stopped_by_restart", "resume_failed", "checked"})
 #: Flight states of a turn that ended.
 _TURN_END = frozenset({"done", "pr_open", "merged"})
+#: Ruling 2026-11-01: the brief of a step handed again only to give its
+#: reviewer a live parent (no build).
+REVIEW_WAIT_BRIEF = "Your work is checked green; wait for the review."
 #: AG12's words when the review loop could not start the reviewer.
 REVIEWER_NOT_STARTED = "Reviewer could not start"
 #: Programs the tick walks.
@@ -1667,6 +1670,8 @@ class ProgramRunner:
         the reviewer in a scratch copy, read-only, at the checked commit."""
         from .agent_review import initial_review
 
+        if not self._builder_alive(step) and not self._rehand_for_review(program, step):
+            return
         profile, engine = self._reviewer(program, step)
         pair = initial_review(_reviewer_key(profile)) or {}
         depth = step.get("review_depth") or "delta"
@@ -1689,6 +1694,51 @@ class ProgramRunner:
                       "req_reask_done": False, "req_answers": {}})
         self.service.transition(program, step, "review", facts=facts, review_verdict=None,
                                 line=f"{agent_label(profile)} reviews at depth {depth}")
+
+    def _builder_alive(self, step: Mapping[str, Any]) -> bool:
+        """The step's builder launch still runs (its kernel operation is the
+        reviewer's live parent). A launch that completed, stopped or was
+        handed off is not."""
+        from .agent_hand_service import _STOPPED_LAUNCH_STATES
+
+        launch_id = str(step.get("launch_id") or "")
+        if not launch_id:
+            return False
+        try:
+            record = self.ledger().get(launch_id) or {}
+        except Exception:
+            return True  # no ledger read: the review loop says so if it cannot start
+        state = str(record.get("state") or "")
+        return bool(record) and state not in _STOPPED_LAUNCH_STATES and state != "handed_off"
+
+    def _rehand_for_review(self, program: dict[str, Any], step: dict[str, Any]) -> bool:
+        """Ruling 2026-11-01: a review is due and the step's builder launch no
+        longer runs (a Resume from a green check long after its turn ended).
+        The engine hands the step again in its same worktree and branch with
+        a brief that builds nothing, so the reviewer has a live parent; the
+        kernel rule and the authority chain stay as they are."""
+        from .agent_hand_service import AgentHandRefused
+
+        current = self.current_agent(program, step)
+        try:
+            answer = self.hand().hand(
+                self.principal, "program_step", step["id"], profile=current["profile"],
+                project_id=program.get("project_id"), engine=current.get("engine"), handoff_brief=REVIEW_WAIT_BRIEF,
+            )
+        except AgentHandRefused as exc:
+            answer = {"status": "refused", "failure": {"stage": exc.reason}}
+        if answer.get("status") != "launched" or not answer.get("launch_id"):
+            failure = (answer.get("failure") or {}).get("stage") or answer.get("status") or "failed"
+            self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE,
+                                    parked_reason=f"The step could not be handed again for its review ({failure})",
+                                    line=f"Could not hand the step again for its review ({failure})", ending="interrupted")
+            return False
+        step["launch_id"] = answer["launch_id"]
+        self.service.save_step(step)
+        self.service._checkpoint(program, step, "engine",
+                                 f"Handed the step again to {agent_label(current['profile'])} for its review: its builder "
+                                 "had ended; it builds nothing and waits for the review")
+        return True
 
     def _requirement_acceptance(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> list[str]:
         """PG-REQ §5: the review requirements, each by its id, and how to answer."""
