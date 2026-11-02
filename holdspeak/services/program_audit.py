@@ -356,7 +356,14 @@ def propose_fix(service: Any, principal: Any, program_id: str) -> dict[str, Any]
                           repository=program.get("repo_root") or None, project_id=program.get("project_id"),
                           base_branch=program.get("base_branch") or None, control=program.get("control"),
                           check_command=program.get("check_command") or None, template="fast-cycle",
-                          origin_ref=f"program:{program_id}", for_person_id=program.get("for_person_id"))
+                          origin_ref=f"program:{program_id}", for_person_id=program.get("for_person_id"),
+                          # The clean J7 proof of 2026-11-02: the fix Program came
+                          # out with no reviewer (a Claude Code builder then falls
+                          # back to Codex). It takes the audit's agent and reviewer.
+                          default_profile=program.get("default_profile") or None,
+                          default_engine=program.get("default_engine") or None,
+                          reviewer_profile=program.get("reviewer_profile") or None,
+                          reviewer_engine=program.get("reviewer_engine") or None)
     steps = []
     for row in rows:
         evidence = f" Evidence: {'; '.join(row['evidence'])}." if row["evidence"] else ""

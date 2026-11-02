@@ -265,3 +265,22 @@ def test_parse_reads_the_three_levels_and_their_evidence() -> None:
     assert [(row["level"], row["text"], row["evidence"]) for row in rows] == [
         ("MUST", "A", "x.py:1"), ("SHOULD", "B", ""), ("NOTE", "C", "")]
     assert rows[0]["key"] == parse("- must: a.")[0]["key"]
+
+
+def test_make_gives_the_fix_program_the_audits_agent_and_reviewer(tmp_path, monkeypatch) -> None:
+    """The clean J7 proof of 2026-11-02 (program-b4ef7b619cde): Make made the
+    fix Program with no reviewer, and a Claude Code builder falls back to a
+    Codex reviewer. The fix Program now takes the audit's agent and reviewer."""
+    rig = Rig(tmp_path)
+    pid = rig.service.create(OWNER, title="Desk audit", goal="Find what is wrong on the desk.",
+                             repository=str(rig.repo), template="audit", control="yolo",
+                             default_profile="claude-default", reviewer_profile="claude-default")["id"]
+    rig.service.plan(OWNER, pid, steps=[{"title": "Notes window", "brief": "Audit the Notes window."}])
+    rig.service.start(OWNER, pid)
+    rig.tick()
+    _report(rig, monkeypatch, pid, 1, REPORT_1)
+    step = rig.step(pid, 1)
+    made = rig.service.decide(OWNER, pid, step["id"], kind="fix_program", choice="make")
+    fix = rig.service.store.get_program(made["fix_program_id"])
+    assert fix["reviewer_profile"] == "claude-default"
+    assert fix["default_profile"] == "claude-default"
