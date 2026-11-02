@@ -1049,9 +1049,11 @@ class AgentResponder:
 
     def _deliver(
         self, launch: Mapping[str, Any], key: str, agent: str, text: str, *, submit: bool = True,
+        expected_wait_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """Type the answer into the launch's own pane: a ``process.input``
-        through the steering path, which checks the pane identity again."""
+        through the steering path, which checks the pane identity again, and
+        with ``expected_wait_id`` the wait it answers right before it types."""
         from .. import coder_steering
         from ..principals import Principal, PrincipalKind
 
@@ -1072,7 +1074,8 @@ class AgentResponder:
                     "target_id": target.get("target_id"),
                     "target_generation": target.get("target_generation"),
                     "operation": {"family": "coder_steering", "verb": "terminal.text"},
-                    "payload": {"text": text, "submit": submit, "session_key": key, "agent": agent},
+                    "payload": {"text": text, "submit": submit, "session_key": key, "agent": agent,
+                                **({"expected_wait_id": expected_wait_id} if expected_wait_id is not None else {})},
                 },
                 principal,
             )

@@ -52,6 +52,9 @@ VIA_FROM = {"desk": "from the desk", "page": "from the briefing page", "telegram
 NOT_OFFERED = "That choice was not on offer"
 NOT_USABLE = "Choose one"
 NOT_KEPT = "Could not keep that for later; it still waits"
+#: Astra post-merge 2026-11-01: the agent's wait changed after the page was
+#: made (a permission prompt, another question); nothing is typed.
+WAIT_CHANGED = "The agent asks something else now. Nothing was typed; it waits on your desk"
 
 
 #: DIRECTION §3: the words when a page-only item is answered elsewhere.
@@ -931,7 +934,8 @@ class BriefingService:
                     if held is None:
                         raise not_pending(*self._decided_where(ref, package))
                     try:
-                        source.answer_text(ref, held, said, via=via)
+                        source.answer_text(ref, held, said, via=via,
+                                           expected_wait_id=str(body.get("wait_id") or "") if "wait_id" in body else None)
                     except ServiceError as exc:
                         raise BriefingRefused(exc.code, exc.detail, status=int((exc.context or {}).get("status", 409)),
                                               refusal="not_kept", words=exc.detail) from exc

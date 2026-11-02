@@ -38,12 +38,13 @@
         "label": "Your answer",
         "max": 2000
       },
-      "track": []
+      "track": [],
+      "wait_id": "w-1|answer"
     }
   ],
   "later": [
     {
-      "at": "21:40",
+      "at": "21:30",
       "id": "in_1h",
       "label": "In 1 hour"
     },
@@ -65,11 +66,11 @@
   ],
   "package": {
     "desk": "/",
-    "expires_at": "2026-11-03T01:40:15.649597+00:00",
+    "expires_at": "2026-11-03T01:30:53.954756+00:00",
     "expires_words": "Expires in 23 h",
     "head": "Claude Code · Fix the flaky test",
     "hub": "Karols-MacBook-Pro",
-    "id": "pkg-02c6b728a922",
+    "id": "pkg-bdbc26780571",
     "kind": "item"
   }
 }

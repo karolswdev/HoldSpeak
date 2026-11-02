@@ -90,7 +90,8 @@ class _Responder:
         self.session = SimpleNamespace(
             agent="claude", session_id="s-1", question="Which branch should I base the fix on?",
             wait_started_at="2026-11-01T12:00:00+00:00", updated_at="2026-11-01T12:00:00+00:00",
-            state="waiting", wait_kind="approve" if approve else "answer")
+            state="waiting", wait_kind="approve" if approve else "answer", wait_id="w-1")
+        self.expected: list = []
 
     def _sessions(self) -> list[Any]:
         return [self.session]
@@ -102,7 +103,15 @@ class _Responder:
     def _launch_for(self, key: str) -> dict[str, Any]:
         return {"launch_id": "L-1", "session_key": key, "title": "Fix the flaky test", "state": "working"}
 
-    def _deliver(self, launch: Any, key: str, agent: str, text: str, *, submit: bool = True) -> dict[str, Any]:
+    def _deliver(self, launch: Any, key: str, agent: str, text: str, *, submit: bool = True,
+                 expected_wait_id: Any = None) -> dict[str, Any]:
+        # The steering chokepoint reads the wait right before it types
+        # (``coder_steering.deliver``): a changed wait types nothing.
+        from holdspeak.coder_steering import wait_episode
+
+        self.expected.append(expected_wait_id)
+        if expected_wait_id is not None and expected_wait_id != wait_episode(self.session):
+            return {"status": "wait_not_current"}
         self.typed.append((key, text))
         return {"status": "delivered"}
 
@@ -139,3 +148,50 @@ def test_a_permission_prompt_and_a_gate_hold_stay_on_the_desk(hub: Hub, monkeypa
     for ref in ("coder:claude:s-1", "gate:prop-1"):
         made = hub.client.post("/api/reach/packages", json={"refs": [ref]})
         assert made.status_code == 409, (ref, made.text)
+
+
+
+def test_a_remote_answer_is_bound_to_the_wait_it_answers(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Astra's post-merge check (2026-11-01): the page's answer was typed
+    with no wait bound, so a pane that turned into a permission prompt (or
+    another question) after the page was made could take it. The answer
+    carries the wait the page showed; a changed wait types nothing."""
+    from holdspeak.services import briefing_sources
+    from holdspeak.services.briefing_service import WAIT_CHANGED
+
+    responder = _Responder()
+    monkeypatch.setattr(briefing_sources.CoderQuestionSource, "_responder", lambda self: responder)
+    monkeypatch.setattr("holdspeak.agent_context.models.is_blocked", lambda session: True)
+    monkeypatch.setattr("holdspeak.agent_context.models.wait_kind", lambda session: session.wait_kind)
+    ref = "coder:claude:s-1"
+    token, _page_body = _page(hub, ref)
+    # Another wait with the same words (the agent asked again): not the
+    # wait the page showed.
+    responder.session.wait_id = "w-2"
+    late = hub.client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer", "reason": "Yes."})
+    assert late.status_code == 409 and WAIT_CHANGED in late.text
+    assert responder.typed == []
+    # Another question: the page's item is gone ("Answered already").
+    responder.session.question = "Shall I also delete the old branch?"
+    gone = hub.client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer", "reason": "Yes."})
+    assert gone.status_code == 409 and responder.typed == []
+    # The wait changes between the check and the typing: the chokepoint refuses.
+    responder.session.wait_id = "w-1"
+    responder.session.question = "Which branch should I base the fix on?"
+    token, _page_body = _page(hub, ref)
+    assert responder.typed == []
+    real_held = briefing_sources.CoderQuestionSource.held
+
+    calls = {"n": 0}
+
+    def held_then_change(self, ref_):
+        found = real_held(self, ref_)
+        calls["n"] += 1
+        if calls["n"] == 2:  # the answer's own read: right after it, the pane changes
+            responder.session.wait_kind = "approve"  # a permission prompt now
+        return found
+
+    monkeypatch.setattr(briefing_sources.CoderQuestionSource, "held", held_then_change)
+    raced = hub.client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer", "reason": "y"})
+    assert raced.status_code == 409 and WAIT_CHANGED in raced.text
+    assert responder.typed == [] and responder.expected[-1] == "w-1|answer"
