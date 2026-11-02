@@ -81,6 +81,24 @@ CODEX_HOOKS_REVIEW = "Hooks need review"
 CODEX_COMPOSER_FOOTER = "? for shortcuts"
 _CODEX_CURSOR = "›"  # the › that marks the selected choice and the composer
 
+#: Claude Code's start: its banner names the version ("Claude Code v2.1.316")
+#: before the composer is drawn. While the pane shows the banner and no
+#: composer, the first message waits, at most this long (the fix proof of
+#: 2026-11-02: a brief typed 1 s after the spawn sat in the composer, its
+#: Enter dropped while Claude Code started).
+CLAUDE_READY_WAIT_SECONDS = 20.0
+CLAUDE_BANNER = "Claude Code v"
+#: A delivered brief that still sits in Claude Code's composer this long
+#: after its send, on a pane that does not change, gets its Enter once more.
+ENTER_AGAIN_AFTER_SECONDS = 10.0
+#: How long the Enter guard looks at all (a busy pane that never settles).
+ENTER_GUARD_SECONDS = 40.0
+#: The carriage return as a named key: Claude Code 2.1.x drops a named
+#: ``Enter`` in its composer but submits on the raw CR byte, which ``C-m`` is.
+ENTER_AGAIN_KEY = "C-m"
+_RULE = "─"
+
+
 #: The states after which nothing is typed again.
 DELIVERED = "sent"
 UNDELIVERED_END = "ended_undelivered"
@@ -250,6 +268,36 @@ def codex_ready(lines: list[str]) -> bool:
     if codex_hooks_review(lines) or parse_codex_trust_prompt(lines) is not None:
         return False
     return any(row.lstrip().startswith(_CODEX_CURSOR) for row in rows[-6:-1])
+
+
+def _is_rule(row: str) -> bool:
+    text = row.strip()
+    return len(text) >= 20 and set(text) == {_RULE}
+
+
+def claude_composer(lines: list[str]) -> Optional[str]:
+    """The text in Claude Code's composer (a rule, a ``❯`` line, a rule:
+    the last such box on the pane), or ``None`` when no composer is drawn."""
+    rows = _live_rows(lines)
+    for index in range(len(rows) - 1, 1, -1):
+        if _is_rule(rows[index]) and _is_rule(rows[index - 2]) and rows[index - 1].lstrip().startswith(_CURSOR):
+            return rows[index - 1].lstrip()[len(_CURSOR):].strip()
+    return None
+
+
+def claude_starting(lines: list[str]) -> bool:
+    """The pane shows Claude Code's start banner and no composer yet."""
+    rows = _live_rows(lines)
+    return any(CLAUDE_BANNER in row for row in rows) and claude_composer(lines) is None
+
+
+def _brief_sits(composer: Optional[str], text: str) -> bool:
+    """The brief is still in the composer: its first words, or the pasted
+    text marker of a long brief."""
+    if not composer:
+        return False
+    head = " ".join(str(text or "").split())[:30]
+    return bool(head) and head in " ".join(composer.split()) or composer.startswith("[Pasted text")
 
 
 # ── the delivery ─────────────────────────────────────────────────────
@@ -571,6 +619,8 @@ class FirstMessage:
                 svc._ledger.update(launch_id, instruction_state="expired")
                 return
             time.sleep(LAUNCH_POLL_SECONDS)
+        if held.get("trust"):
+            self._await_claude_ready(launch_id)
         # One send, ever: claim the delivery under the ledger's lock. A second
         # waiter on the same launch (a recreated service) finds it taken.
         with _claim_lock(getattr(svc._ledger, "_path", "")):
@@ -601,12 +651,73 @@ class FirstMessage:
             )
             if not registered:
                 self._await_registration(attempt_id, session, deadline)
+            if held.get("trust"):
+                self._enter_again(launch_id, str(held.get("text") or ""), principal, held)
         else:
             # The receipt decides: a refused or failed send keeps the brief
             # held, so the owner can resume it on this launch.
             svc._ledger.update(
                 launch_id, commands=commands, instruction_state=outcome or "not_delivered",
             )
+
+    def _peek(self, launch_id: str) -> Optional[dict[str, Any]]:
+        record = self._svc._ledger.get(launch_id) or {}
+        pane = str((record.get("target") or {}).get("pane_id") or "")
+        if not pane:
+            return None
+        peek = coder_steering.peek_pane(pane, lines=60, runner=self._svc._runner)
+        return peek if peek.get("status") == "live" else None
+
+    def _await_claude_ready(self, launch_id: str) -> None:
+        """Claude Code: wait while the pane shows its start banner and no
+        composer (``ready_state``: ``ready`` once the composer shows,
+        ``timeout`` past the wait; then the brief is typed as before)."""
+        deadline = time.monotonic() + CLAUDE_READY_WAIT_SECONDS
+        waited = False
+        while not self._stop.is_set():
+            peek = self._peek(launch_id)
+            if peek is None:
+                return
+            lines = list(peek.get("lines") or [])
+            if claude_composer(lines) is not None:
+                if waited:
+                    self._svc._ledger.update(launch_id, ready_state="ready")
+                return
+            if not claude_starting(lines):
+                return  # not Claude Code's start screen: typed as before
+            if time.monotonic() >= deadline:
+                self._svc._ledger.update(launch_id, ready_state="timeout")
+                return
+            waited = True
+            time.sleep(LAUNCH_POLL_SECONDS)
+
+    def _enter_again(self, launch_id: str, text: str, principal: Any, held: Mapping[str, Any]) -> None:
+        """After a delivered brief: when it still sits in Claude Code's
+        composer ``ENTER_AGAIN_AFTER_SECONDS`` later and the pane did not
+        change between two looks, its Enter is sent once more (a receipted
+        ``process.input``), and the launch says so (``enter_again``)."""
+        started = time.monotonic()
+        last_hash: Optional[str] = None
+        while not self._stop.is_set() and time.monotonic() - started < ENTER_GUARD_SECONDS:
+            peek = self._peek(launch_id)
+            if peek is None or not _brief_sits(claude_composer(list(peek.get("lines") or [])), text):
+                return  # submitted (the composer moved on), or no composer to read
+            frame = str(peek.get("hash") or "")
+            if time.monotonic() - started >= ENTER_AGAIN_AFTER_SECONDS and frame and frame == last_hash:
+                record = self._svc._ledger.get(launch_id) or {}
+                sent = self.send_keys(record, [ENTER_AGAIN_KEY], principal, held)
+                outcome = str((sent.get("receipt") or {}).get("outcome") or "")
+                current = self._svc._ledger.get(launch_id) or {}
+                commands = dict(current.get("commands") or {})
+                commands["enter_again"] = sent.get("command_id")
+                self._svc._ledger.update(
+                    launch_id, commands=commands,
+                    enter_again={"at": _iso_now(), "outcome": outcome or "not_delivered",
+                                 "after_seconds": int(time.monotonic() - started)},
+                )
+                return
+            last_hash = frame
+            time.sleep(LAUNCH_POLL_SECONDS)
 
     def _registered(self, attempt_id: str) -> bool:
         """Bind the rider claims, then: the launch attempt has its session."""
