@@ -49,26 +49,57 @@ _RESULT_START = re.compile(r"^\s*(?:[#*>`]+\s*)?REVIEW RESULT\s*:?\s*\**\s*$", r
 _RESULT_END = re.compile(r"^\s*(?:[#*`]+\s*)?END REVIEW RESULT\s*\**\s*$", re.I)
 
 
-#: Astra round 2 (2026-11-02): a review that says it did not review is unknown.
-_NOT_REVIEWED = re.compile(r"\b(?:have not|haven't|did not|didn't|could not|couldn't|cannot|can't|was not able to)"
-                           r"\s+(?:yet\s+)?(?:review|complete (?:this|the) review|read the (?:diff|change))", re.I)
+#: Astra rounds 2 and 3: a review that says it was not done is unknown.
+_NOT_REVIEWED = re.compile(
+    r"\b(?:this|it|that)\s+(?:is|was)\s+not\s+(?:a|my)\s+review\b"
+    r"|\bnot\s+(?:yet\s+)?(?:been\s+)?reviewed\b"
+    r"|\b(?:did not|didn't|have not|haven't|cannot|can't|could not|couldn't|was not able to|unable to|"
+    r"will not|won't|never)\s+(?:yet\s+)?(?:(?:perform|do|complete|finish|carry out|start)\s+(?:a|the|this|my|any)?\s*review"
+    r"|review)\b",
+    re.I)
+
+
+def _indent_width(line: str) -> int:
+    """The visual indent of a line (a tab to the next multiple of 4)."""
+    width = 0
+    for char in line:
+        if char == " ":
+            width += 1
+        elif char == "\t":
+            width += 4 - width % 4
+        else:
+            break
+    return width
 
 
 def _code_or_quote(lines: list[str]) -> list[bool]:
-    """For each line: inside a fence (``` or ~~~), indented code (4 spaces
-    or a tab), or a ``>`` quotation; a fence line itself is True."""
+    """For each line: in a fence, in indented code (4 visual columns, tabs
+    and spaces mixed), or in a ``>`` quotation with its lazy continuation
+    (the lines after it up to a blank line); a fence line itself is True. A
+    fence closes only on the same character, at least as long, with nothing
+    after it (Astra round 3)."""
     out: list[bool] = []
     fence = ""
+    quoting = False
     for line in lines:
-        mark = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
-        if mark:
-            if not fence:
-                fence = mark.group(1)[0]
-            elif mark.group(1)[0] == fence:
+        if fence:
+            close = re.match(r"^ {0,3}(`{3,}|~{3,})\s*$", line)
+            if close and close.group(1)[0] == fence[0] and len(close.group(1)) >= len(fence):
                 fence = ""
             out.append(True)
             continue
-        out.append(bool(fence) or line.startswith(("    ", "\t")) or line.lstrip().startswith(">"))
+        opening = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
+        if opening:
+            fence = opening.group(1)
+            out.append(True)
+            continue
+        if not line.strip():
+            quoting = False
+            out.append(False)
+            continue
+        if line.lstrip().startswith(">"):
+            quoting = True
+        out.append(quoting or _indent_width(line) >= 4)
     return out
 
 
