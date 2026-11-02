@@ -174,6 +174,26 @@ class PhoneCallSource(Source):
         raise ValueError(choice)
 
 
+#: The longest payload a page shows whole (Astra post-merge 2026-11-01).
+SEND_PREVIEW_MAX_LINES = 400
+SEND_PREVIEW_MAX_CHARS = 40_000
+SEND_FROM_DESK = "It is too long to show here, or it holds something a page never shows. Send it from your desk."
+
+
+def whole_lines(text: Any) -> Optional[list[str]]:
+    """Every line of a payload, word for word, or None when the page cannot
+    show it whole: too long, or the one Reach redaction would change it."""
+    from .reach_redact import reach_line
+
+    value = str(text or "")
+    if len(value) > SEND_PREVIEW_MAX_CHARS:
+        return None
+    lines = value.splitlines()
+    if len(lines) > SEND_PREVIEW_MAX_LINES or any(reach_line(line) != line for line in lines):
+        return None
+    return lines
+
+
 def _preview_lines(text: Any, limit: int = 8) -> list[str]:
     lines = [" ".join(line.split())[:200] for line in str(text or "").splitlines() if line.strip()]
     return lines[:limit]
@@ -338,17 +358,22 @@ class SendSource(Source):
             except Exception:
                 name = None
         destination = " ".join(str(name or "its destination").split())
-        body = self._base(ref, head=f"{title} · to {destination}", question=f"Send it to {destination}?",
-                          note=[_sentence(f"{title} is ready to send to {destination}")],
-                          since=str(item.get("created_at") or ""),
-                          choices=[("send", "Send", f"HoldSpeak sends it to {destination} now."),
-                                   ("discard", "Discard", "Nothing is sent. The prepared send is dropped.")])
         # UX-CANON A.9: egress is disclosed at the act, on the page that sends it.
         payload = item.get("payload")
         if isinstance(payload, (bytes, bytearray, memoryview)):
             payload = bytes(payload).decode("utf-8", "replace")
-        # The frozen bytes the Send dispatches: what it sends, word for word.
-        body["preview"] = {"destination": destination, "lines": _preview_lines(payload or ""), "reversible": False}
+        lines = whole_lines(payload or "")
+        # Astra post-merge 2026-11-01 (ruling the same day): the page shows the
+        # whole frozen payload, word for word, or it offers no Send.
+        shown = lines is not None
+        choices = [("send", "Send", f"HoldSpeak sends it to {destination} now.")] if shown else []
+        choices.append(("discard", "Discard", "Nothing is sent. The prepared send is dropped."))
+        body = self._base(ref, head=f"{title} · to {destination}", question=f"Send it to {destination}?",
+                          note=[_sentence(f"{title} is ready to send to {destination}")]
+                          + ([] if shown else [SEND_FROM_DESK]),
+                          since=str(item.get("created_at") or ""), choices=choices)
+        body["preview"] = {"destination": destination, "lines": lines if shown else [], "whole": shown,
+                           "reversible": False}
         body["page_only"] = True
         return body
 
@@ -357,6 +382,14 @@ class SendSource(Source):
 
         if via == "telegram":
             raise ValueError(choice)  # the page only (DIRECTION §3)
+        if choice == "send":
+            payload = item.get("payload")
+            if isinstance(payload, (bytes, bytearray, memoryview)):
+                payload = bytes(payload).decode("utf-8", "replace")
+            if whole_lines(payload or "") is None:  # the page could not show all of it: Send from the desk
+                from .errors import ServiceError
+
+                raise ServiceError("not_offered", SEND_FROM_DESK, context={"status": 409})
         name = {"send": "channel.send", "discard": "channel.discard"}.get(choice)
         if name is None:
             raise ValueError(choice)

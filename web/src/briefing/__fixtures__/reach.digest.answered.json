@@ -10,18 +10,18 @@
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-02T01:00:32.272217+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:51.383753+00:00",
+          "clock": "20:42",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-02T01:00:31.503276+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:50.915764+00:00",
+          "clock": "20:42",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-02T01:00:30.960620+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:50.539778+00:00",
+          "clock": "20:42",
           "line": "Handed to Claude Code."
         }
       ],
@@ -68,14 +68,14 @@
         "Step 1: Store the stall reason in its own column.",
         "The step's change touches files no step owns (schema.py)."
       ],
-      "place": "Step 1 of 1 · started 20:00 · waited 5 h 29",
-      "program_id": "program-3416135e09e7",
+      "place": "Step 1 of 1 · started 20:42 · waited 4 h 47",
+      "program_id": "program-84afa1ce6784",
       "program_title": "Overnight on the home box",
       "question": "Let the step go on with this, or park it?",
-      "ref": "program:program-3416135e09e7:step-6d4819dc475c:core",
-      "since": "2026-11-02T01:00:32.678587+00:00",
+      "ref": "program:program-84afa1ce6784:step-9817e47c5335:core",
+      "since": "2026-11-02T01:42:51.653136+00:00",
       "state": "open",
-      "step_id": "step-6d4819dc475c",
+      "step_id": "step-9817e47c5335",
       "step_ordinal": 1,
       "step_title": "Store the stall reason",
       "track": [
@@ -87,14 +87,6 @@
       ]
     },
     {
-      "because": {
-        "kind": "decision",
-        "rule": "kind",
-        "words": "a choice among offered presses"
-      },
-      "blocked": [],
-      "blocked_words": "",
-      "changed": [],
       "choices": [
         {
           "consequence": "The decision is accepted. It leaves your review list.",
@@ -103,18 +95,9 @@
           "primary": true
         }
       ],
-      "doing": "Read receipts older than 14 days are pruned.",
-      "evidence": [],
-      "goal": "The decision: Keep the event log for 14 days.",
-      "happened": "",
       "head": "A decision to review",
       "kind": "decision",
       "kind_words": "Decision to review",
-      "level": "",
-      "note": [
-        "The decision: Keep the event log for 14 days.",
-        "Read receipts older than 14 days are pruned."
-      ],
       "outcome": {
         "at": "2026-11-02T06:30:00+00:00",
         "choice": "confirm",
@@ -122,28 +105,16 @@
         "via": "page",
         "words": "Confirm · 01:30. One more waits on you."
       },
-      "place": "",
       "program_id": null,
       "program_title": "",
       "question": "Confirm this decision?",
       "ref": "decision:dec-1",
-      "since": "2026-11-02T01:00:33Z",
       "source": "decision",
       "state": "decided",
       "step_id": "",
-      "step_ordinal": null,
-      "step_title": "",
-      "track": []
+      "step_ordinal": null
     },
     {
-      "because": {
-        "kind": "held_call",
-        "rule": "kind",
-        "words": "a choice among offered presses"
-      },
-      "blocked": [],
-      "blocked_words": "",
-      "changed": [],
       "choices": [
         {
           "consequence": "Your phone rings now.",
@@ -158,17 +129,9 @@
           "primary": false
         }
       ],
-      "doing": "",
-      "evidence": [],
-      "goal": "An agent asks to call you about the schema step needs your word.",
-      "happened": "",
       "head": "An agent asks to call you",
       "kind": "held_call",
       "kind_words": "Call request",
-      "level": "",
-      "note": [
-        "An agent asks to call you about the schema step needs your word."
-      ],
       "outcome": {
         "at": "2026-11-02T06:30:00+00:00",
         "choice": "let_wait",
@@ -176,18 +139,14 @@
         "via": "page",
         "words": "Let it wait · 01:30. One more waits on you."
       },
-      "place": "",
       "program_id": null,
       "program_title": "",
       "question": "Call you about the schema step needs your word?",
       "ref": "phone-call:pcall-held-1",
-      "since": "2026-11-01T12:00:00+00:00",
       "source": "phone-call",
       "state": "decided",
       "step_id": "",
-      "step_ordinal": null,
-      "step_title": "",
-      "track": []
+      "step_ordinal": null
     }
   ],
   "later": [
@@ -213,12 +172,12 @@
     }
   ],
   "package": {
-    "desk": "/?open=program:program-3416135e09e7",
+    "desk": "/?open=program:program-84afa1ce6784",
     "expires_at": "2026-11-02T18:30:00+00:00",
     "expires_words": "Expires in 12 h",
     "head": "3 wait on you",
     "hub": "the rig hub",
-    "id": "pkg-c75fabfa215a",
+    "id": "pkg-97505279a378",
     "kind": "digest",
     "lines": [],
     "open": 1,

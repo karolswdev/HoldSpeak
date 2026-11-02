@@ -2,39 +2,6 @@
   "after": {
     "items": [
       {
-        "because": {
-          "kind": "parked",
-          "rule": "kind",
-          "words": "a choice among offered presses"
-        },
-        "blocked": [
-          {
-            "ordinal": 2,
-            "title": "Link the README"
-          },
-          {
-            "ordinal": 3,
-            "title": "Announce it"
-          }
-        ],
-        "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
-        "changed": [
-          {
-            "at": "2026-11-02T01:00:37.200450+00:00",
-            "clock": "20:00",
-            "line": "The check ran green in under a minute."
-          },
-          {
-            "at": "2026-11-02T01:00:36.423206+00:00",
-            "clock": "20:00",
-            "line": "The agent made a new commit."
-          },
-          {
-            "at": "2026-11-02T01:00:35.770281+00:00",
-            "clock": "20:00",
-            "line": "Handed to Claude Code."
-          }
-        ],
         "choices": [
           {
             "consequence": "Try the step again. It will fail the same way until the repository has a remote.",
@@ -49,45 +16,9 @@
             "primary": false
           }
         ],
-        "doing": "Step 1, “Add one line to the README”: Append one line under the title.",
-        "evidence": [
-          {
-            "label": "The error",
-            "pane": "error",
-            "token": ""
-          },
-          {
-            "label": "Check log",
-            "pane": "log",
-            "token": "green"
-          },
-          {
-            "label": "Brief",
-            "pane": "brief",
-            "token": ""
-          },
-          {
-            "label": "Report",
-            "pane": "report",
-            "token": ""
-          },
-          {
-            "label": "Program text",
-            "pane": "text",
-            "token": "read only"
-          }
-        ],
-        "goal": "Goal: Show the repo has a friendly README.",
-        "happened": "The step could not push its branch: this repository has no remote.",
         "head": "README touch · step 1",
         "kind": "parked",
         "kind_words": "Parked step",
-        "level": "Secure",
-        "note": [
-          "Goal: Show the repo has a friendly README.",
-          "Step 1, “Add one line to the README”: Append one line under the title.",
-          "The step could not push its branch: this repository has no remote."
-        ],
         "outcome": {
           "at": "2026-11-02T06:30:00+00:00",
           "choice": "resume",
@@ -95,33 +26,13 @@
           "via": "page",
           "words": "Resume · 01:30. The step starts again. Nothing else waits on you."
         },
-        "place": "Step 1 of 3 · started 20:00 · waited 5 h 29",
-        "program_id": "program-e02367132b91",
+        "program_id": "program-4aa54fede655",
         "program_title": "README touch",
         "question": "Start the step again, or stop it?",
-        "ref": "program:program-e02367132b91:step-55af84d8bd48:parked",
-        "since": "2026-11-02T01:00:37.878907+00:00",
+        "ref": "program:program-4aa54fede655:step-0fa4ed4deb7a:parked",
         "state": "decided",
-        "step_id": "step-55af84d8bd48",
-        "step_ordinal": 1,
-        "step_title": "Add one line to the README",
-        "track": [
-          {
-            "mark": "here",
-            "ordinal": 1,
-            "title": "Add one line to the README"
-          },
-          {
-            "mark": "blocked",
-            "ordinal": 2,
-            "title": "Link the README"
-          },
-          {
-            "mark": "blocked",
-            "ordinal": 3,
-            "title": "Announce it"
-          }
-        ]
+        "step_id": "step-0fa4ed4deb7a",
+        "step_ordinal": 1
       }
     ],
     "later": [
@@ -147,12 +58,12 @@
       }
     ],
     "package": {
-      "desk": "/?open=program:program-e02367132b91",
+      "desk": "/?open=program:program-4aa54fede655",
       "expires_at": "2026-11-03T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
       "head": "README touch · step 1",
       "hub": "the rig hub",
-      "id": "pkg-87bc6fcd4e46",
+      "id": "pkg-3828badd9d7e",
       "kind": "item"
     }
   },
@@ -193,18 +104,18 @@
       "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
       "changed": [
         {
-          "at": "2026-11-02T01:00:37.200450+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:44.856940+00:00",
+          "clock": "20:42",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-02T01:00:36.423206+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:44.623163+00:00",
+          "clock": "20:42",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-02T01:00:35.770281+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:44.350686+00:00",
+          "clock": "20:42",
           "line": "Handed to Claude Code."
         }
       ],
@@ -268,14 +179,14 @@
         "via": "page",
         "words": "Resume · 01:30. The step starts again. Nothing else waits on you."
       },
-      "place": "Step 1 of 3 · started 20:00 · waited 5 h 29",
-      "program_id": "program-e02367132b91",
+      "place": "Step 1 of 3 · started 20:42 · waited 4 h 47",
+      "program_id": "program-4aa54fede655",
       "program_title": "README touch",
       "question": "Start the step again, or stop it?",
-      "ref": "program:program-e02367132b91:step-55af84d8bd48:parked",
-      "since": "2026-11-02T01:00:37.878907+00:00",
+      "ref": "program:program-4aa54fede655:step-0fa4ed4deb7a:parked",
+      "since": "2026-11-02T01:42:45.055201+00:00",
       "state": "decided",
-      "step_id": "step-55af84d8bd48",
+      "step_id": "step-0fa4ed4deb7a",
       "step_ordinal": 1,
       "step_title": "Add one line to the README",
       "track": [
@@ -327,18 +238,18 @@
       "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
       "changed": [
         {
-          "at": "2026-11-02T01:00:37.200450+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:44.856940+00:00",
+          "clock": "20:42",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-02T01:00:36.423206+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:44.623163+00:00",
+          "clock": "20:42",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-02T01:00:35.770281+00:00",
-          "clock": "20:00",
+          "at": "2026-11-02T01:42:44.350686+00:00",
+          "clock": "20:42",
           "line": "Handed to Claude Code."
         }
       ],
@@ -403,14 +314,14 @@
         "via": "page",
         "words": "Later · back at 13:00."
       },
-      "place": "Step 1 of 3 · started 20:00 · waited 5 h 29",
-      "program_id": "program-e02367132b91",
+      "place": "Step 1 of 3 · started 20:42 · waited 4 h 47",
+      "program_id": "program-4aa54fede655",
       "program_title": "README touch",
       "question": "Start the step again, or stop it?",
-      "ref": "program:program-e02367132b91:step-55af84d8bd48:parked",
-      "since": "2026-11-02T01:00:37.878907+00:00",
+      "ref": "program:program-4aa54fede655:step-0fa4ed4deb7a:parked",
+      "since": "2026-11-02T01:42:45.055201+00:00",
       "state": "later",
-      "step_id": "step-55af84d8bd48",
+      "step_id": "step-0fa4ed4deb7a",
       "step_ordinal": 1,
       "step_title": "Add one line to the README",
       "track": [
@@ -435,16 +346,16 @@
   "log": {
     "kind": "code",
     "pane": "log",
-    "text": "program-check: commit 0645a6eb702a128d0e6039577383c6f92ab627a1\nprogram-check: tree clean\nprogram-check: command sh /repo/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
+    "text": "program-check: commit 041782887e5814d15e4bed0923685629234adc72\nprogram-check: tree clean\nprogram-check: command sh ~/dev/tools/wt-pg-imp6d/tests/fixtures/fake_program_check.sh\nquick_check: 3 changed files against origin/main\n== build\n   build ok\n== vitest related (1 files)\n   Tests  4 passed (4)\n== pytest affected (2 files)\n   12 passed in 2.10s\n== desk sweep\n   62 passed in 40.00s\n== canon guards\n   30 passed in 1.00s\n== repo guards\n   210 passed in 9.00s\nQUICK CHECK GREEN: merge; the main watcher runs the whole suite.\nprogram-check: exit 0"
   },
   "made": {
     "expires_at": "2026-11-03T06:30:00+00:00",
     "expires_clock": "01:30",
-    "id": "pkg-87bc6fcd4e46",
+    "id": "pkg-3828badd9d7e",
     "link": null,
     "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
     "refs": [
-      "program:program-e02367132b91:step-55af84d8bd48:parked"
+      "program:program-4aa54fede655:step-0fa4ed4deb7a:parked"
     ],
     "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
   },
@@ -469,18 +380,18 @@
         "blocked_words": "2 steps wait on this: 2 Link the README, 3 Announce it.",
         "changed": [
           {
-            "at": "2026-11-02T01:00:37.200450+00:00",
-            "clock": "20:00",
+            "at": "2026-11-02T01:42:44.856940+00:00",
+            "clock": "20:42",
             "line": "The check ran green in under a minute."
           },
           {
-            "at": "2026-11-02T01:00:36.423206+00:00",
-            "clock": "20:00",
+            "at": "2026-11-02T01:42:44.623163+00:00",
+            "clock": "20:42",
             "line": "The agent made a new commit."
           },
           {
-            "at": "2026-11-02T01:00:35.770281+00:00",
-            "clock": "20:00",
+            "at": "2026-11-02T01:42:44.350686+00:00",
+            "clock": "20:42",
             "line": "Handed to Claude Code."
           }
         ],
@@ -537,14 +448,14 @@
           "Step 1, “Add one line to the README”: Append one line under the title.",
           "The step could not push its branch: this repository has no remote."
         ],
-        "place": "Step 1 of 3 · started 20:00 · waited 5 h 29",
-        "program_id": "program-e02367132b91",
+        "place": "Step 1 of 3 · started 20:42 · waited 4 h 47",
+        "program_id": "program-4aa54fede655",
         "program_title": "README touch",
         "question": "Start the step again, or stop it?",
-        "ref": "program:program-e02367132b91:step-55af84d8bd48:parked",
-        "since": "2026-11-02T01:00:37.878907+00:00",
+        "ref": "program:program-4aa54fede655:step-0fa4ed4deb7a:parked",
+        "since": "2026-11-02T01:42:45.055201+00:00",
         "state": "open",
-        "step_id": "step-55af84d8bd48",
+        "step_id": "step-0fa4ed4deb7a",
         "step_ordinal": 1,
         "step_title": "Add one line to the README",
         "track": [
@@ -589,12 +500,12 @@
       }
     ],
     "package": {
-      "desk": "/?open=program:program-e02367132b91",
+      "desk": "/?open=program:program-4aa54fede655",
       "expires_at": "2026-11-03T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
       "head": "README touch · step 1",
       "hub": "the rig hub",
-      "id": "pkg-87bc6fcd4e46",
+      "id": "pkg-3828badd9d7e",
       "kind": "item"
     }
   },
@@ -604,11 +515,11 @@
     "rows": [
       {
         "label": "Checked:",
-        "value": "Commit 0645a6eb"
+        "value": "Commit 04178288"
       },
       {
         "label": "",
-        "value": "Check green on 0645a6eb"
+        "value": "Check green on 04178288"
       },
       {
         "label": "Files:",
@@ -620,6 +531,6 @@
   "text": {
     "kind": "code",
     "pane": "text",
-    "text": "# program text 1\nprogram README touch                              # Your turn · 0 of 3 done\n  goal\n  > Show the repo has a friendly README.\n  in app · main\n  template fast cycle\n  control secure\n  check sh /repo/tests/fixtures/fake_program_check.sh\n\nstep 1 Add one line to the README                 # Parked · under a minute\n  brief\n  > Append one line under the title.\n  > Keep the rest.\n\nstep 2 Link the README                            # Planned\n  after 1\n  brief\n  > Link it from the docs.\n\nstep 3 Announce it                                # Planned\n  after 2\n  brief\n  > Say so in the changelog.\n"
+    "text": "# program text 1\nprogram README touch                              # Your turn · 0 of 3 done\n  goal\n  > Show the repo has a friendly README.\n  in app · main\n  template fast cycle\n  control secure\n  check sh ~/dev/tools/wt-pg-imp6d/tests/fixtures/fake_program_check.sh\n\nstep 1 Add one line to the README                 # Parked · under a minute\n  brief\n  > Append one line under the title.\n  > Keep the rest.\n\nstep 2 Link the README                            # Planned\n  after 1\n  brief\n  > Link it from the docs.\n\nstep 3 Announce it                                # Planned\n  after 2\n  brief\n  > Say so in the changelog.\n"
   }
 }

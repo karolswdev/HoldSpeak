@@ -42,7 +42,7 @@ export type BriefingItem = {
   evidence: BriefingPane[];
   state: "open" | "later" | "decided" | "gone";
   /** DIR10: what the choice sends or writes, and where (shown before it). */
-  preview?: { destination: string; lines: string[]; reversible: boolean };
+  preview?: { destination: string; lines: string[]; reversible: boolean; whole?: boolean };
   /** DIR10: a question answered with his text (an agent asks). */
   text?: { id: string; label: string; max: number; consequence: string };
   /** DIR10: decided on this page only (a prepared send). */
