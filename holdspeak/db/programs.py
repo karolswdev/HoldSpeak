@@ -256,6 +256,13 @@ class ProgramStore:
             conn.execute("UPDATE program_checkpoints SET choice=?, undo_json=? WHERE id=?",
                          (choice, json.dumps(dict(undo or {})), int(checkpoint_id)))
 
+    def rewrite_checkpoint(self, checkpoint_id: int, line: str, undo: Mapping[str, Any]) -> None:
+        """A claim row the engine wrote first (a night's backlog read) gets
+        its result line and payload when the work is done."""
+        with self._db._connection() as conn:
+            conn.execute("UPDATE program_checkpoints SET line=?, undo_json=? WHERE id=?",
+                         (line, json.dumps(dict(undo or {})), int(checkpoint_id)))
+
     def mark_overturned(self, checkpoint_id: int, at: str) -> None:
         with self._db._connection() as conn:
             conn.execute("UPDATE program_checkpoints SET overturned_at=?, overturnable=0 WHERE id=?",

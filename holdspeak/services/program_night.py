@@ -166,8 +166,7 @@ def night_room(runner: Any, program: Mapping[str, Any], ready: list[dict[str, An
     most = night.get("max_steps")
     if not most:
         return None
-    ran = sum(1 for step in runner.service.store.list_steps(program["id"])
-              if not step.get("race_of") and _between(step.get("started_at"), start, end))
+    ran = len(_night_rows(runner, program, start, end))
     room = int(most) - ran
     if room <= 0:
         for step in ready:
@@ -177,8 +176,41 @@ def night_room(runner: Any, program: Mapping[str, Any], ready: list[dict[str, An
 
 
 def _night_rows(runner: Any, program: Mapping[str, Any], start: datetime, end: datetime) -> list[dict[str, Any]]:
+    """The steps of this night: started in its window, or handed in it (a
+    step resumed from an earlier night keeps its first ``started_at``;
+    Astra's post-merge check 2026-11-01)."""
+    key = night_key(start)
     return [step for step in runner.service.store.list_steps(program["id"])
-            if not step.get("race_of") and _between(step.get("started_at"), start, end)]
+            if not step.get("race_of") and (_between(step.get("started_at"), start, end)
+                                             or key in ((step.get("facts") or {}).get("nights") or []))]
+
+
+def admit(runner: Any, program: Mapping[str, Any], step: dict[str, Any]) -> None:
+    """A step handed inside a night window is that night's (its key on the
+    step), so ``at most`` counts it and the window's end parks it."""
+    night = program.get("night")
+    if not isinstance(night, Mapping) or not night.get("start"):
+        return
+    start, end = window(night, runner._now())
+    if not start <= runner._now().astimezone() < end:
+        return
+    fresh = runner.service.store.get_step(str(step["id"])) or step  # what the hand saved, not the loop's copy
+    facts = dict(fresh.get("facts") or {})
+    nights = [str(key) for key in facts.get("nights") or []]
+    key = night_key(start)
+    if key not in nights:
+        facts["nights"] = (nights + [key])[-14:]
+        fresh["facts"] = facts
+        runner.service.save_step(fresh)
+
+
+def still_inside(runner: Any, program: Mapping[str, Any]) -> bool:
+    """True when the Program has no night, or the window is open now: read
+    again right before each hand."""
+    night = program.get("night")
+    if not isinstance(night, Mapping) or not night.get("start"):
+        return True
+    return inside(night, runner._now())
 
 
 def _red(step: Mapping[str, Any]) -> bool:
@@ -341,7 +373,12 @@ def end_working(runner: Any, program: Mapping[str, Any], start: datetime, end: d
             if not (ended or late or turn_over):
                 waiting += 1
                 continue
-        head = runner.commit_worktree(program, step) or runner._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
+        if program.get("template") == "audit":
+            # An audit changes nothing: its night end never commits (Astra
+            # post-merge 2026-11-01); a dirty worktree stays as it is.
+            head = runner._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
+        else:
+            head = runner.commit_worktree(program, step) or runner._git(str(step.get("worktree") or ""), "rev-parse", "HEAD")
         with_commit = bool(head) and head != (facts.get("base_commit") or step.get("head_commit") or "")
         facts.pop("night_end", None)
         service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE, facts=facts,
@@ -412,6 +449,12 @@ def read_backlog(runner: Any, program: Mapping[str, Any], start: datetime, end: 
     if any(row.get("kind") == BACKLOG_KIND and (row.get("undo") or {}).get("night") == key
            for row in service.store.list_checkpoints(program["id"])):
         return 0
+    # The night's claim is written before any task is filed, so a read cut
+    # off between filing and its line never files a second set (Astra
+    # post-merge 2026-11-01); the line gets its result at the end.
+    claim = service.store.add_checkpoint(step_id="", program_id=program["id"], at=service._clock(), by="engine",
+                                         line="Reading the backlog for tonight", kind=BACKLOG_KIND,
+                                         undo={"night": key, "items": []})
     taken = {((step.get("facts") or {}).get("night_item") or {}).get("ref") for step in service.store.list_steps(program["id"])}
     items = [item for item in backlog_items(service, program) if f"action:{item['id']}" not in taken]
     night = program.get("night") or {}
@@ -443,8 +486,7 @@ def read_backlog(runner: Any, program: Mapping[str, Any], start: datetime, end: 
                 "Add to tonight takes each")
     else:
         line = "Read the backlog for tonight: nothing new"
-    service.store.add_checkpoint(step_id="", program_id=program["id"], at=service._clock(), by="engine", line=line,
-                                 kind=BACKLOG_KIND, undo={"night": key, "items": [item["id"] for item in items]})
+    service.store.rewrite_checkpoint(claim, line, {"night": key, "items": [item["id"] for item in items]})
     return added
 
 
@@ -747,8 +789,10 @@ def tick_nights(runner: Any) -> list[str]:
             elif plan_pending(runner, program["id"]):
                 moved.append(program["id"])
             continue
-        # After the window (the window that started last has ended): its digest.
-        if end <= local < end + timedelta(hours=DIGEST_HOURS):
+        # After the window (the window that started last has ended): its
+        # digest, once, however late the hub comes back (Astra post-merge
+        # 2026-11-01: a hub back at 19:01 never wrote that night's digest).
+        if end <= local:
             if end_working(runner, program, start, end):
                 continue  # the digest waits for the parked rows
             if write_digest(runner, program, start, end) is not None:

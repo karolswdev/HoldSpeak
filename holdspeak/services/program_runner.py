@@ -572,7 +572,13 @@ class ProgramRunner:
             if spend:
                 self.raise_core(program, step, "spend", spend)
                 continue
+            if not program_night.still_inside(self, program):
+                # The window is read again right before each hand (Astra
+                # post-merge 2026-11-01: a hand at 06:59 left the next at 07:01).
+                self._hold(step, f"sleeps until {(program.get('night') or {}).get('start')}")
+                break
             if self._hand_step(program, step, profile, engine):
+                program_night.admit(self, program, step)
                 slots -= 1
                 if profile == "pi-default":
                     busy_engines.add(engine)
