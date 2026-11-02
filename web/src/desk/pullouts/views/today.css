@@ -414,13 +414,22 @@
 /* THE FOLD (2026-11-01, direction B): Today's folds say Show or Hide at
    the right, no triangle; a fold with nothing in it has no verb. */
 .desk-next .today-fold-head[aria-expanded] { width: 100%; }
-.desk-next .today-fold-head[aria-expanded]::after {
+/* The word is the ::before: the library Button's ::after is its hit face
+   (absolute, inset -1px, global.css), and as the word it sat over the label
+   at the left (the live walk, 2026-11-01: "Show" drawn over "Since Friday").
+   Last in the flex row, at the right; it wraps to its own line when the
+   label needs the width. */
+.desk-next .today-fold-head[aria-expanded]::before {
   content: "Show";
+  order: 99;
+  flex: none;
   margin-left: auto;
   font: 500 13px / 1.4 var(--font-sans);
   color: var(--wb-sel);
 }
-.desk-next .today-fold-head[aria-expanded="true"]::after { content: "Hide"; }
+.desk-next .today-fold-head[aria-expanded="true"]::before { content: "Hide"; }
+/* A fold with nothing in it has no verb ("Nothing this week" read "Show"). */
+.desk-next .today-fold-head[aria-expanded]:disabled::before { content: none; }
 .desk-next .today-fold-mark {
   display: inline-block;
   width: 12px;
