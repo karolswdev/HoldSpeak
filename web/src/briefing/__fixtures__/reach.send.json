@@ -25,21 +25,21 @@
       ],
       "doing": "",
       "evidence": [],
-      "goal": "Payments ledger cutover — update r1 (2026-11-01) is ready to send to Team folder.",
+      "goal": "Payments ledger cutover — update r1 (2026-11-02) is ready to send to Team folder.",
       "happened": "",
-      "head": "Payments ledger cutover — update r1 (2026-11-01) · to Team folder",
+      "head": "Payments ledger cutover — update r1 (2026-11-02) · to Team folder",
       "kind": "send",
       "kind_words": "Ready to send",
       "level": "",
       "note": [
-        "Payments ledger cutover — update r1 (2026-11-01) is ready to send to Team folder."
+        "Payments ledger cutover — update r1 (2026-11-02) is ready to send to Team folder."
       ],
       "page_only": true,
       "place": "",
       "preview": {
         "destination": "Team folder",
         "lines": [
-          "# Payments ledger cutover · Update · 2026-11-01",
+          "# Payments ledger cutover · Update · 2026-11-02",
           "## Progress",
           "The ledger cutover is on track."
         ],
@@ -48,8 +48,8 @@
       "program_id": null,
       "program_title": "",
       "question": "Send it to Team folder?",
-      "ref": "send:chs_baf912d4a77bd3516a335cfa",
-      "since": "2026-11-01T22:32:30+00:00",
+      "ref": "send:chs_802ea7727397c77b1bcacd26",
+      "since": "2026-11-02T01:00:49+00:00",
       "source": "send",
       "state": "open",
       "step_id": "",
@@ -60,7 +60,7 @@
   ],
   "later": [
     {
-      "at": "18:32",
+      "at": "21:00",
       "id": "in_1h",
       "label": "In 1 hour"
     },
@@ -82,11 +82,11 @@
   ],
   "package": {
     "desk": "/",
-    "expires_at": "2026-11-02T22:32:30.071651+00:00",
+    "expires_at": "2026-11-03T01:00:49.199372+00:00",
     "expires_words": "Expires in 23 h",
-    "head": "Payments ledger cutover — update r1 (2026-11-01) · to Team folder",
+    "head": "Payments ledger cutover — update r1 (2026-11-02) · to Team folder",
     "hub": "Karols-MacBook-Pro",
-    "id": "pkg-42cb9fae2499",
+    "id": "pkg-c3820dafd7f5",
     "kind": "item"
   }
 }

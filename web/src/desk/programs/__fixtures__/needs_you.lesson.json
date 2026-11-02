@@ -14,7 +14,7 @@
     {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-11-01T22:32:06.601161+00:00",
+      "observed_at": "2026-11-02T01:00:14.454279+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -24,7 +24,7 @@
     {
       "kind": "send",
       "label": "Sends",
-      "observed_at": "2026-11-01T22:32:06.568131+00:00",
+      "observed_at": "2026-11-02T01:00:14.418823+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -35,16 +35,16 @@
   "failedMeetings": [],
   "items": [
     {
-      "ageToken": "2026-11-01T22:32:06.383996+00:00",
+      "ageToken": "2026-11-02T01:00:14.184519+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The words wave",
-      "id": "program:program-2f7dbb1ef34b:program-2f7dbb1ef34b:lesson:13",
+      "id": "program:program-c5871a6ffe2f:program-c5871a6ffe2f:lesson:13",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-2f7dbb1ef34b",
+      "openRef": "program:program-c5871a6ffe2f",
       "personId": null,
       "person_id": "",
       "program": {
@@ -53,23 +53,23 @@
           "keep_repo",
           "skip"
         ],
-        "decide": "/api/programs/program-2f7dbb1ef34b/steps/step-9cae340d9e4c/decide",
+        "decide": "/api/programs/program-c5871a6ffe2f/steps/step-9dfac29fff31/decide",
         "findingId": null,
         "kind": "lesson",
         "lessonId": 13,
         "ordinal": 2,
         "pr": null,
-        "programId": "program-2f7dbb1ef34b",
+        "programId": "program-c5871a6ffe2f",
         "requirementId": null,
-        "stepId": "step-9cae340d9e4c"
+        "stepId": "step-9dfac29fff31"
       },
       "projectId": "",
       "projectName": "",
       "rank": 1,
       "rankClass": "no_due_date",
-      "ref": "program:program-2f7dbb1ef34b:program-2f7dbb1ef34b:lesson:13",
+      "ref": "program:program-c5871a6ffe2f:program-c5871a6ffe2f:lesson:13",
       "severity": "warning",
-      "since": "2026-11-01T22:32:06.383996+00:00",
+      "since": "2026-11-02T01:00:14.184519+00:00",
       "source": "program",
       "title": "Lesson · the check is red with “FAILED”: 2 steps red for it",
       "verbHref": null,
@@ -80,7 +80,7 @@
   "members": [
     {
       "kind": "attention",
-      "ref": "program:program-2f7dbb1ef34b:program-2f7dbb1ef34b:lesson:13"
+      "ref": "program:program-c5871a6ffe2f:program-c5871a6ffe2f:lesson:13"
     },
     {
       "kind": "blocker",

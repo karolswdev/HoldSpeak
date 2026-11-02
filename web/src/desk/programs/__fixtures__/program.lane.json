@@ -9,30 +9,30 @@
     "shot_reason": "No shot command in this repository",
     "word": true
   },
-  "check_command": "sh /Users/karol/dev/tools/wt-racered/tests/fixtures/fake_program_check.sh",
+  "check_command": "sh /Users/karol/dev/tools/wt-walk2/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-01T22:33:10.276641+00:00",
+      "at": "2026-11-02T01:01:22.772239+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 4,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-b8ae2fa0d1a7",
+      "line": "Handed to Claude Code in hs-program-step-15955a209318",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-b8ae2fa0d1a7/1",
-      "ref_commit": "3a1f62ba6305afe42e830b86c3fd5a0ff09787c4",
+      "ref": "refs/holdspeak/checkpoints/step-15955a209318/1",
+      "ref_commit": "d2bbe45ac031a0e743155503232d31861a8a68a3",
       "rule": null,
-      "step_id": "step-b8ae2fa0d1a7",
+      "step_id": "step-15955a209318",
       "undo": {
         "pin": {
-          "commit": "3a1f62ba6305afe42e830b86c3fd5a0ff09787c4",
-          "head": "ece89999c7e4c5accf4f044cf160277d763f3ea1",
+          "commit": "d2bbe45ac031a0e743155503232d31861a8a68a3",
+          "head": "5149f93082bf4f10c6e192a6da59a6d32f7f795b",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-b8ae2fa0d1a7/1",
+          "ref": "refs/holdspeak/checkpoints/step-15955a209318/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -41,7 +41,7 @@
       }
     },
     {
-      "at": "2026-11-01T22:33:10.185086+00:00",
+      "at": "2026-11-02T01:01:22.686241+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -59,7 +59,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T22:33:10.153700+00:00",
+      "at": "2026-11-02T01:01:22.650766+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -77,7 +77,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T22:33:10.150588+00:00",
+      "at": "2026-11-02T01:01:22.646129+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -98,7 +98,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-01T22:33:10.150299+00:00",
+  "created_at": "2026-11-02T01:01:22.645789+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -122,30 +122,30 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "Atlas lane.",
-  "id": "program-24e5e42c03af",
+  "id": "program-1ff31ba1bc7a",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T22:33:10.276641+00:00",
+    "at": "2026-11-02T01:01:22.772239+00:00",
     "by": "engine",
     "choice": null,
     "decision_record_id": null,
     "id": 4,
     "kind": null,
-    "line": "Handed to Claude Code in hs-program-step-b8ae2fa0d1a7",
+    "line": "Handed to Claude Code in hs-program-step-15955a209318",
     "operation_id": null,
     "overturnable": false,
     "overturned_at": null,
     "pin_note": null,
-    "ref": "refs/holdspeak/checkpoints/step-b8ae2fa0d1a7/1",
-    "ref_commit": "3a1f62ba6305afe42e830b86c3fd5a0ff09787c4",
+    "ref": "refs/holdspeak/checkpoints/step-15955a209318/1",
+    "ref_commit": "d2bbe45ac031a0e743155503232d31861a8a68a3",
     "rule": null,
-    "step_id": "step-b8ae2fa0d1a7",
+    "step_id": "step-15955a209318",
     "undo": {
       "pin": {
-        "commit": "3a1f62ba6305afe42e830b86c3fd5a0ff09787c4",
-        "head": "ece89999c7e4c5accf4f044cf160277d763f3ea1",
+        "commit": "d2bbe45ac031a0e743155503232d31861a8a68a3",
+        "head": "5149f93082bf4f10c6e192a6da59a6d32f7f795b",
         "n": 1,
-        "ref": "refs/holdspeak/checkpoints/step-b8ae2fa0d1a7/1",
+        "ref": "refs/holdspeak/checkpoints/step-15955a209318/1",
         "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
       },
       "seen": {
@@ -157,8 +157,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-24e5e42c03af",
-  "note_window": "pullout:note:program-program-24e5e42c03af",
+  "note_id": "program-program-1ff31ba1bc7a",
+  "note_window": "pullout:note:program-program-1ff31ba1bc7a",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -173,7 +173,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-6n809hch/lane/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bd8h6aj3/lane/app"
   },
   "requirements": [],
   "review_depth": null,
@@ -200,7 +200,7 @@
       "brief": "Cite each anchor once.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-racered/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-walk2/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -252,29 +252,29 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-b8ae2fa0d1a7",
+      "id": "step-15955a209318",
       "last_checkpoint": {
-        "at": "2026-11-01T22:33:10.276641+00:00",
+        "at": "2026-11-02T01:01:22.772239+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 4,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-b8ae2fa0d1a7",
+        "line": "Handed to Claude Code in hs-program-step-15955a209318",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-b8ae2fa0d1a7/1",
-        "ref_commit": "3a1f62ba6305afe42e830b86c3fd5a0ff09787c4",
+        "ref": "refs/holdspeak/checkpoints/step-15955a209318/1",
+        "ref_commit": "d2bbe45ac031a0e743155503232d31861a8a68a3",
         "rule": null,
-        "step_id": "step-b8ae2fa0d1a7",
+        "step_id": "step-15955a209318",
         "undo": {
           "pin": {
-            "commit": "3a1f62ba6305afe42e830b86c3fd5a0ff09787c4",
-            "head": "ece89999c7e4c5accf4f044cf160277d763f3ea1",
+            "commit": "d2bbe45ac031a0e743155503232d31861a8a68a3",
+            "head": "5149f93082bf4f10c6e192a6da59a6d32f7f795b",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-b8ae2fa0d1a7/1",
+            "ref": "refs/holdspeak/checkpoints/step-15955a209318/1",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -313,7 +313,7 @@
           "profile": "claude-default"
         }
       ],
-      "started_at": "2026-11-01T22:33:10.276270+00:00",
+      "started_at": "2026-11-02T01:01:22.771894+00:00",
       "state": "working",
       "state_word": "Working",
       "station": 1,
@@ -327,15 +327,15 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T22:33:10.276641+00:00",
+          "at": "2026-11-02T01:01:22.772239+00:00",
           "line": "Handed to Claude Code."
         }
       ],
       "taken": false,
       "title": "Atlas anchors",
-      "updated_at": "2026-11-01T22:33:10.436811+00:00",
+      "updated_at": "2026-11-02T01:01:22.893501+00:00",
       "wait": null,
-      "worktree": "hs-program-step-b8ae2fa0d1a7"
+      "worktree": "hs-program-step-15955a209318"
     }
   ],
   "template": "fast-cycle",
@@ -348,7 +348,7 @@
       "title": "Atlas anchors"
     }
   ],
-  "updated_at": "2026-11-01T22:33:10.184854+00:00",
+  "updated_at": "2026-11-02T01:01:22.685997+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

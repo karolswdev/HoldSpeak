@@ -11,18 +11,18 @@
         "blocked_words": "Nothing else waits on this.",
         "changed": [
           {
-            "at": "2026-11-01T22:32:37.053312+00:00",
-            "clock": "17:32",
+            "at": "2026-11-02T01:00:44.518666+00:00",
+            "clock": "20:00",
             "line": "Audited · 3 findings · 1 MUST."
           },
           {
-            "at": "2026-11-01T22:32:36.853232+00:00",
-            "clock": "17:32",
+            "at": "2026-11-02T01:00:43.892270+00:00",
+            "clock": "20:00",
             "line": "Reported its findings."
           },
           {
-            "at": "2026-11-01T22:32:36.563591+00:00",
-            "clock": "17:32",
+            "at": "2026-11-02T01:00:43.407296+00:00",
+            "clock": "20:00",
             "line": "Handed to Claude Code."
           }
         ],
@@ -40,7 +40,7 @@
             "primary": false
           }
         ],
-        "doing": "The program: Your turn · 1 of 1 done · 3 waits on you · control Secure.",
+        "doing": "The program: Your turn · 1 of 1 done · 3 wait on you · control Secure.",
         "evidence": [
           {
             "label": "Brief",
@@ -66,29 +66,29 @@
         "level": "Secure",
         "note": [
           "Goal: Find what is wrong on the desk.",
-          "The program: Your turn · 1 of 1 done · 3 waits on you · control Secure.",
+          "The program: Your turn · 1 of 1 done · 3 wait on you · control Secure.",
           "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you."
         ],
         "outcome": {
-          "at": "2026-11-01T06:30:00+00:00",
+          "at": "2026-11-02T06:30:00+00:00",
           "choice": "file",
           "label": "File",
           "via": "page",
           "words": "File · 01:30. The findings are Door tasks. One more waits on you."
         },
-        "place": "The program · started 17:32 · waited under a minute",
-        "program_id": "program-41eb992328f3",
+        "place": "The program · started 20:00 · waited 5 h 29",
+        "program_id": "program-2f5f5c8f7859",
         "program_title": "Desk audit",
         "question": "File the findings as Door tasks?",
-        "ref": "program:program-41eb992328f3:program-41eb992328f3:audit_file",
-        "since": "2026-11-01T22:32:37.033453+00:00",
+        "ref": "program:program-2f5f5c8f7859:program-2f5f5c8f7859:audit_file",
+        "since": "2026-11-02T01:00:44.452020+00:00",
         "state": "decided",
-        "step_id": "step-b7cc920967c4",
+        "step_id": "step-7da5bc34533b",
         "step_ordinal": null,
         "step_title": "Notes window",
         "track": [
           {
-            "mark": "here",
+            "mark": "done",
             "ordinal": 1,
             "title": "Notes window"
           }
@@ -118,12 +118,12 @@
       }
     ],
     "package": {
-      "desk": "/?open=program:program-41eb992328f3",
-      "expires_at": "2026-11-02T06:30:00+00:00",
+      "desk": "/?open=program:program-2f5f5c8f7859",
+      "expires_at": "2026-11-03T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
       "head": "Desk audit",
       "hub": "the rig hub",
-      "id": "pkg-d1cb7a51ca62",
+      "id": "pkg-3c4a2e9734de",
       "kind": "item"
     }
   },
@@ -138,18 +138,18 @@
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-01T22:32:37.053312+00:00",
-          "clock": "17:32",
+          "at": "2026-11-02T01:00:44.518666+00:00",
+          "clock": "20:00",
           "line": "Audited · 3 findings · 1 MUST."
         },
         {
-          "at": "2026-11-01T22:32:36.853232+00:00",
-          "clock": "17:32",
+          "at": "2026-11-02T01:00:43.892270+00:00",
+          "clock": "20:00",
           "line": "Reported its findings."
         },
         {
-          "at": "2026-11-01T22:32:36.563591+00:00",
-          "clock": "17:32",
+          "at": "2026-11-02T01:00:43.407296+00:00",
+          "clock": "20:00",
           "line": "Handed to Claude Code."
         }
       ],
@@ -167,7 +167,7 @@
           "primary": false
         }
       ],
-      "doing": "The program: Your turn · 1 of 1 done · 3 waits on you · control Secure.",
+      "doing": "The program: Your turn · 1 of 1 done · 3 wait on you · control Secure.",
       "evidence": [
         {
           "label": "Brief",
@@ -193,29 +193,29 @@
       "level": "Secure",
       "note": [
         "Goal: Find what is wrong on the desk.",
-        "The program: Your turn · 1 of 1 done · 3 waits on you · control Secure.",
+        "The program: Your turn · 1 of 1 done · 3 wait on you · control Secure.",
         "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you."
       ],
       "outcome": {
-        "at": "2026-11-01T06:30:00+00:00",
+        "at": "2026-11-02T06:30:00+00:00",
         "choice": "file",
         "label": "File",
         "via": "page",
         "words": "File · 01:30. The findings are Door tasks. Two more wait on you."
       },
-      "place": "The program · started 17:32 · waited under a minute",
-      "program_id": "program-41eb992328f3",
+      "place": "The program · started 20:00 · waited 5 h 29",
+      "program_id": "program-2f5f5c8f7859",
       "program_title": "Desk audit",
       "question": "File the findings as Door tasks?",
-      "ref": "program:program-41eb992328f3:program-41eb992328f3:audit_file",
-      "since": "2026-11-01T22:32:37.033453+00:00",
+      "ref": "program:program-2f5f5c8f7859:program-2f5f5c8f7859:audit_file",
+      "since": "2026-11-02T01:00:44.452020+00:00",
       "state": "decided",
-      "step_id": "step-b7cc920967c4",
+      "step_id": "step-7da5bc34533b",
       "step_ordinal": null,
       "step_title": "Notes window",
       "track": [
         {
-          "mark": "here",
+          "mark": "done",
           "ordinal": 1,
           "title": "Notes window"
         }
@@ -223,13 +223,13 @@
     }
   },
   "made": {
-    "expires_at": "2026-11-02T06:30:00+00:00",
+    "expires_at": "2026-11-03T06:30:00+00:00",
     "expires_clock": "01:30",
-    "id": "pkg-d1cb7a51ca62",
+    "id": "pkg-3c4a2e9734de",
     "link": null,
     "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
     "refs": [
-      "program:program-41eb992328f3:program-41eb992328f3:audit_file"
+      "program:program-2f5f5c8f7859:program-2f5f5c8f7859:audit_file"
     ],
     "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
   },
@@ -244,18 +244,18 @@
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-01T22:32:37.053312+00:00",
-          "clock": "17:32",
+          "at": "2026-11-02T01:00:44.518666+00:00",
+          "clock": "20:00",
           "line": "Audited · 3 findings · 1 MUST."
         },
         {
-          "at": "2026-11-01T22:32:36.853232+00:00",
-          "clock": "17:32",
+          "at": "2026-11-02T01:00:43.892270+00:00",
+          "clock": "20:00",
           "line": "Reported its findings."
         },
         {
-          "at": "2026-11-01T22:32:36.563591+00:00",
-          "clock": "17:32",
+          "at": "2026-11-02T01:00:43.407296+00:00",
+          "clock": "20:00",
           "line": "Handed to Claude Code."
         }
       ],
@@ -273,7 +273,7 @@
           "primary": false
         }
       ],
-      "doing": "The program: Your turn · 1 of 1 done · 3 waits on you · control Secure.",
+      "doing": "The program: Your turn · 1 of 1 done · 3 wait on you · control Secure.",
       "evidence": [
         {
           "label": "Brief",
@@ -299,29 +299,29 @@
       "level": "Secure",
       "note": [
         "Goal: Find what is wrong on the desk.",
-        "The program: Your turn · 1 of 1 done · 3 waits on you · control Secure.",
+        "The program: Your turn · 1 of 1 done · 3 wait on you · control Secure.",
         "The audit is done. It found 1 MUST finding."
       ],
       "outcome": {
-        "at": "2026-11-01T06:30:00+00:00",
+        "at": "2026-11-02T06:30:00+00:00",
         "choice": "make",
         "label": "Make",
         "via": "page",
         "words": "Make · 01:30. The fix program waits for your Start. One more waits on you."
       },
-      "place": "The program · started 17:32 · waited under a minute",
-      "program_id": "program-41eb992328f3",
+      "place": "The program · started 20:00 · waited 5 h 29",
+      "program_id": "program-2f5f5c8f7859",
       "program_title": "Desk audit",
       "question": "Make a fix program from the MUST findings?",
-      "ref": "program:program-41eb992328f3:program-41eb992328f3:fix_program",
-      "since": "2026-11-01T22:32:37.033453+00:00",
+      "ref": "program:program-2f5f5c8f7859:program-2f5f5c8f7859:fix_program",
+      "since": "2026-11-02T01:00:44.452020+00:00",
       "state": "decided",
-      "step_id": "step-b7cc920967c4",
+      "step_id": "step-7da5bc34533b",
       "step_ordinal": null,
       "step_title": "Notes window",
       "track": [
         {
-          "mark": "here",
+          "mark": "done",
           "ordinal": 1,
           "title": "Notes window"
         }
@@ -340,18 +340,18 @@
         "blocked_words": "Nothing else waits on this.",
         "changed": [
           {
-            "at": "2026-11-01T22:32:37.053312+00:00",
-            "clock": "17:32",
+            "at": "2026-11-02T01:00:44.518666+00:00",
+            "clock": "20:00",
             "line": "Audited · 3 findings · 1 MUST."
           },
           {
-            "at": "2026-11-01T22:32:36.853232+00:00",
-            "clock": "17:32",
+            "at": "2026-11-02T01:00:43.892270+00:00",
+            "clock": "20:00",
             "line": "Reported its findings."
           },
           {
-            "at": "2026-11-01T22:32:36.563591+00:00",
-            "clock": "17:32",
+            "at": "2026-11-02T01:00:43.407296+00:00",
+            "clock": "20:00",
             "line": "Handed to Claude Code."
           }
         ],
@@ -369,7 +369,7 @@
             "primary": false
           }
         ],
-        "doing": "The program: Your turn · 1 of 1 done · 3 waits on you · control Secure.",
+        "doing": "The program: Your turn · 1 of 1 done · 3 wait on you · control Secure.",
         "evidence": [
           {
             "label": "Brief",
@@ -395,22 +395,22 @@
         "level": "Secure",
         "note": [
           "Goal: Find what is wrong on the desk.",
-          "The program: Your turn · 1 of 1 done · 3 waits on you · control Secure.",
+          "The program: Your turn · 1 of 1 done · 3 wait on you · control Secure.",
           "The audit found 3 things to fix or note. At Secure, HoldSpeak files none without you."
         ],
-        "place": "The program · started 17:32 · waited under a minute",
-        "program_id": "program-41eb992328f3",
+        "place": "The program · started 20:00 · waited 5 h 29",
+        "program_id": "program-2f5f5c8f7859",
         "program_title": "Desk audit",
         "question": "File the findings as Door tasks?",
-        "ref": "program:program-41eb992328f3:program-41eb992328f3:audit_file",
-        "since": "2026-11-01T22:32:37.033453+00:00",
+        "ref": "program:program-2f5f5c8f7859:program-2f5f5c8f7859:audit_file",
+        "since": "2026-11-02T01:00:44.452020+00:00",
         "state": "open",
-        "step_id": "step-b7cc920967c4",
+        "step_id": "step-7da5bc34533b",
         "step_ordinal": null,
         "step_title": "Notes window",
         "track": [
           {
-            "mark": "here",
+            "mark": "done",
             "ordinal": 1,
             "title": "Notes window"
           }
@@ -440,12 +440,12 @@
       }
     ],
     "package": {
-      "desk": "/?open=program:program-41eb992328f3",
-      "expires_at": "2026-11-02T06:30:00+00:00",
+      "desk": "/?open=program:program-2f5f5c8f7859",
+      "expires_at": "2026-11-03T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
       "head": "Desk audit",
       "hub": "the rig hub",
-      "id": "pkg-d1cb7a51ca62",
+      "id": "pkg-3c4a2e9734de",
       "kind": "item"
     }
   }

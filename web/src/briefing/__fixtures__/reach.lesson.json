@@ -10,13 +10,13 @@
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-01T22:32:38.051616+00:00",
-          "clock": "17:32",
+          "at": "2026-11-02T01:00:49.957756+00:00",
+          "clock": "20:00",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-01T22:32:36.463479+00:00",
-          "clock": "17:32",
+          "at": "2026-11-02T01:00:47.765780+00:00",
+          "clock": "20:00",
           "line": "Handed to Claude Code."
         }
       ],
@@ -70,20 +70,20 @@
         "The check was red for the same cause on 2 steps: FAILED."
       ],
       "outcome": {
-        "at": "2026-11-01T06:30:00+00:00",
+        "at": "2026-11-02T06:30:00+00:00",
         "choice": "keep_program",
         "label": "Keep for this program",
         "via": "page",
         "words": "Keep for this program · 01:30. Kept for this program. Nothing else waits on you."
       },
-      "place": "The program · started 17:32 · waited under a minute",
-      "program_id": "program-b7cf279985ac",
+      "place": "The program · started 20:00 · waited 5 h 29",
+      "program_id": "program-1c4f8dcd8f58",
       "program_title": "The words wave",
       "question": "Keep this lesson, and where?",
-      "ref": "program:program-b7cf279985ac:program-b7cf279985ac:lesson:13",
-      "since": "2026-11-01T22:32:38.592913+00:00",
+      "ref": "program:program-1c4f8dcd8f58:program-1c4f8dcd8f58:lesson:13",
+      "since": "2026-11-02T01:00:50.966997+00:00",
       "state": "decided",
-      "step_id": "step-86c1b662aa9f",
+      "step_id": "step-4672d3cae698",
       "step_ordinal": null,
       "step_title": "Step 2",
       "track": [
@@ -93,7 +93,7 @@
           "title": "Step 1"
         },
         {
-          "mark": "here",
+          "mark": "running",
           "ordinal": 2,
           "title": "Step 2"
         },
@@ -106,13 +106,13 @@
     }
   },
   "made": {
-    "expires_at": "2026-11-02T06:30:00+00:00",
+    "expires_at": "2026-11-03T06:30:00+00:00",
     "expires_clock": "01:30",
-    "id": "pkg-3ba2e3a59770",
+    "id": "pkg-cb58cebc4f1c",
     "link": null,
     "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
     "refs": [
-      "program:program-b7cf279985ac:program-b7cf279985ac:lesson:13"
+      "program:program-1c4f8dcd8f58:program-1c4f8dcd8f58:lesson:13"
     ],
     "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
   },
@@ -128,13 +128,13 @@
         "blocked_words": "Nothing else waits on this.",
         "changed": [
           {
-            "at": "2026-11-01T22:32:38.051616+00:00",
-            "clock": "17:32",
+            "at": "2026-11-02T01:00:49.957756+00:00",
+            "clock": "20:00",
             "line": "The agent made a new commit."
           },
           {
-            "at": "2026-11-01T22:32:36.463479+00:00",
-            "clock": "17:32",
+            "at": "2026-11-02T01:00:47.765780+00:00",
+            "clock": "20:00",
             "line": "Handed to Claude Code."
           }
         ],
@@ -187,14 +187,14 @@
           "The program: Running · 0 of 3 done · 1 waits on you · check: check.sh · control YOLO.",
           "The check was red for the same cause on 2 steps: FAILED."
         ],
-        "place": "The program · started 17:32 · waited under a minute",
-        "program_id": "program-b7cf279985ac",
+        "place": "The program · started 20:00 · waited 5 h 29",
+        "program_id": "program-1c4f8dcd8f58",
         "program_title": "The words wave",
         "question": "Keep this lesson, and where?",
-        "ref": "program:program-b7cf279985ac:program-b7cf279985ac:lesson:13",
-        "since": "2026-11-01T22:32:38.592913+00:00",
+        "ref": "program:program-1c4f8dcd8f58:program-1c4f8dcd8f58:lesson:13",
+        "since": "2026-11-02T01:00:50.966997+00:00",
         "state": "open",
-        "step_id": "step-86c1b662aa9f",
+        "step_id": "step-4672d3cae698",
         "step_ordinal": null,
         "step_title": "Step 2",
         "track": [
@@ -204,7 +204,7 @@
             "title": "Step 1"
           },
           {
-            "mark": "here",
+            "mark": "running",
             "ordinal": 2,
             "title": "Step 2"
           },
@@ -239,12 +239,12 @@
       }
     ],
     "package": {
-      "desk": "/?open=program:program-b7cf279985ac",
-      "expires_at": "2026-11-02T06:30:00+00:00",
+      "desk": "/?open=program:program-1c4f8dcd8f58",
+      "expires_at": "2026-11-03T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
       "head": "The words wave",
       "hub": "the rig hub",
-      "id": "pkg-3ba2e3a59770",
+      "id": "pkg-cb58cebc4f1c",
       "kind": "item"
     }
   }

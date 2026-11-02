@@ -12,7 +12,7 @@
   "check_command": null,
   "checkpoints": [
     {
-      "at": "2026-11-01T22:32:04.553318+00:00",
+      "at": "2026-11-02T01:00:13.242263+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T22:32:04.549945+00:00",
+      "at": "2026-11-02T01:00:13.239252+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -51,7 +51,7 @@
   "closed_at": null,
   "control": "secure",
   "control_word": "Secure",
-  "created_at": "2026-11-01T22:32:04.549562+00:00",
+  "created_at": "2026-11-02T01:00:13.238848+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -77,10 +77,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "Find what is wrong on the desk.",
-  "id": "program-f742ab2d43ec",
+  "id": "program-40fa03aa5264",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T22:32:04.553318+00:00",
+    "at": "2026-11-02T01:00:13.242263+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -101,8 +101,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-f742ab2d43ec",
-  "note_window": "pullout:note:program-program-f742ab2d43ec",
+  "note_id": "program-program-40fa03aa5264",
+  "note_window": "pullout:note:program-program-40fa03aa5264",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -202,7 +202,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-71f9e0ead4e3",
+      "id": "step-c934a611de2f",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -250,7 +250,7 @@
       "story": [],
       "taken": false,
       "title": "Notes window",
-      "updated_at": "2026-11-01T22:32:04.552538+00:00",
+      "updated_at": "2026-11-02T01:00:13.241434+00:00",
       "wait": null,
       "worktree": null
     },
@@ -320,7 +320,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-94f91da36c32",
+      "id": "step-2366a811d25a",
       "last_checkpoint": null,
       "launch_id": null,
       "limit": null,
@@ -368,7 +368,7 @@
       "story": [],
       "taken": false,
       "title": "Programs window",
-      "updated_at": "2026-11-01T22:32:04.552538+00:00",
+      "updated_at": "2026-11-02T01:00:13.241434+00:00",
       "wait": null,
       "worktree": null
     }
@@ -388,7 +388,7 @@
       "title": "Programs window"
     }
   ],
-  "updated_at": "2026-11-01T22:32:04.553408+00:00",
+  "updated_at": "2026-11-02T01:00:13.242372+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,
