@@ -26,10 +26,10 @@ def _screen(composer: str | None, *, wrap: int = 0) -> str:
     return f"{BANNER}\n\n{RULE}\n{inner}\n{RULE}\n  ⏵⏵ accept edits on (shift+tab to cycle)"
 
 
-def _claude_pane(rig, *, takes_first_enter: bool, draw_after: int = 3, wrap: int = 0):
+def _claude_pane(rig, *, takes_first_enter: bool, draw_after: int = 3, wrap: int = 0, lag: int = 0):
     """A pane that draws its composer after a few looks, shows typed text in
     it, and (``takes_first_enter=False``) drops the Enter typed with it."""
-    state = {"looks": 0, "entered": False, "composer_at": None, "typed_at": None}
+    state = {"looks": 0, "entered": False, "composer_at": None, "typed_at": None, "looks_since_typed": 0}
 
     class Pane(type(rig.tmux)):
         def __call__(self, argv, cwd=None):
@@ -38,8 +38,12 @@ def _claude_pane(rig, *, takes_first_enter: bool, draw_after: int = 3, wrap: int
                 typed = rig.typed[-1][1] if rig.typed else ""
                 if typed and state["typed_at"] is None:
                     state["typed_at"] = time.monotonic()
+                if typed:
+                    state["looks_since_typed"] += 1
                 if state["looks"] <= draw_after and not typed:
                     content = _screen(None)
+                elif typed and state["looks_since_typed"] <= lag:
+                    content = _screen("")   # the typed text is not drawn yet
                 elif typed and not state["entered"] and not takes_first_enter:
                     content = _screen(" ".join(typed.split())[:200], wrap=wrap)
                 else:
@@ -135,3 +139,22 @@ def test_a_dropped_enter_on_a_wrapped_brief_is_sent_again_once(tmp_path, db, mon
     assert state["entered"]
     # The brief waited the settle after the composer first showed.
     assert state["typed_at"] - state["composer_at"] >= 0.5
+
+
+def test_an_empty_composer_right_after_the_send_is_not_a_submit(tmp_path, db, monkeypatch) -> None:  # noqa: F811
+    """The fix proof of 2026-11-02 (pane %56): the guard's first look came
+    before the pane drew the typed brief, saw an empty composer, and took it
+    for a submit. It now decides only at the mark."""
+    _fast(monkeypatch)
+    rig = _rig(tmp_path, db, monkeypatch)
+    state = _claude_pane(rig, takes_first_enter=False, wrap=40, lag=3)
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
+    deadline = time.monotonic() + 10
+    while not (rig.launches.get(result["launch_id"]) or {}).get("enter_again") and time.monotonic() < deadline:
+        time.sleep(0.05)
+    record = rig.launches.get(result["launch_id"])
+    rig.tmux.ended = True
+    assert record.get("enter_again", {}).get("outcome") == "delivered", record.get("enter_again")
+    assert [keys for _pane, keys in rig.keys_sent] == [["C-m"]]   # once
+    assert state["entered"]
