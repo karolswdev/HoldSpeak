@@ -180,3 +180,43 @@ def test_the_hub_never_takes_scratch_only_from_the_agents_body(launched, tmp_pat
     assert proposal["state"] == DENIED
     stored = launched.db.gate.get("toolu_forged")
     assert (stored.operation or {}).get("tool_call", {}).get("scratch_only", "") == ""
+
+
+# ── a pattern is text, never a path (coordinator ruling 2026-11-02) ──
+
+@pytest.mark.parametrize("command", [
+    'grep -rn "/api/x" src',
+    'rg "/api/x" src',
+    'grep -e /api/x src',
+    'git log --grep "/api/x"',
+    'git log --grep="/api/x" --oneline',
+    'git grep "/api/x"',
+    'git commit -m "/api/x answers 404"',
+    'sed -n "/api/p" README.md',
+    'awk "/api/ {print}" README.md',
+])
+def test_a_search_pattern_is_not_a_path(tree, command) -> None:
+    (tree["wt"] / "src").mkdir(exist_ok=True)
+    (tree["wt"] / "README.md").write_text("x\n")
+    verdict = classify_tool_call("Bash", {"command": command}, cwd=str(tree["wt"]), root=str(tree["wt"]))
+    assert verdict.scope == "inside", (command, verdict)
+
+
+@pytest.mark.parametrize("command", [
+    "grep -rn x /etc",
+    "grep -f /etc/patterns src",
+    "sed -n p /etc/passwd",
+    "sed -i s/a/b/ /etc/hosts",
+    "rg x ../other",
+])
+def test_a_file_a_search_reads_is_still_a_path(tree, command) -> None:
+    (tree["wt"] / "src").mkdir(exist_ok=True)
+    verdict = classify_tool_call("Bash", {"command": command}, cwd=str(tree["wt"]), root=str(tree["wt"]))
+    assert verdict.scope == "outside", (command, verdict)
+
+
+def test_a_redirect_into_tmp_stays_outside(tree) -> None:
+    """The ruling: the scratch is the session folder, not /tmp."""
+    verdict = classify_tool_call("Bash", {"command": "uv run pytest -q > /tmp/out.log"}, cwd=str(tree["wt"]),
+                                 root=str(tree["wt"]))
+    assert verdict.scope == "outside"
