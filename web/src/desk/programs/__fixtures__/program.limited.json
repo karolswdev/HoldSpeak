@@ -9,30 +9,30 @@
     "shot_reason": "No shot command in this repository",
     "word": true
   },
-  "check_command": "sh /Users/karol/dev/tools/wt-racered/tests/fixtures/fake_program_check.sh",
+  "check_command": "sh /Users/karol/dev/tools/wt-walk2/tests/fixtures/fake_program_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-01T22:32:55.683806+00:00",
+      "at": "2026-11-02T01:01:08.740203+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 11,
       "kind": null,
-      "line": "Claude Code stopped at its usage limit until 19:02",
+      "line": "Claude Code stopped at its usage limit until 21:31",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-d91e23b63971/2",
-      "ref_commit": "23e0002224f2fc097ad04bd0fc0f311663ac42cf",
+      "ref": "refs/holdspeak/checkpoints/step-c39d892b46d8/2",
+      "ref_commit": "146793fe0e8ece7844a88915a755261c3fed1d74",
       "rule": null,
-      "step_id": "step-d91e23b63971",
+      "step_id": "step-c39d892b46d8",
       "undo": {
         "pin": {
-          "commit": "23e0002224f2fc097ad04bd0fc0f311663ac42cf",
-          "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+          "commit": "146793fe0e8ece7844a88915a755261c3fed1d74",
+          "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-d91e23b63971/2",
+          "ref": "refs/holdspeak/checkpoints/step-c39d892b46d8/2",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -41,7 +41,7 @@
       }
     },
     {
-      "at": "2026-11-01T22:32:55.624049+00:00",
+      "at": "2026-11-02T01:01:08.676227+00:00",
       "by": "owner",
       "choice": "1",
       "decision_record_id": null,
@@ -52,42 +52,42 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-772379927faf/5",
-      "ref_commit": "ad25073da473ae729af0b9642342308aa9edb6d3",
+      "ref": "refs/holdspeak/checkpoints/step-e0d762247202/5",
+      "ref_commit": "0f2627537aeb242cfc29e63e6d1953d98b80ca51",
       "rule": null,
-      "step_id": "step-772379927faf",
+      "step_id": "step-e0d762247202",
       "undo": {
         "pin": {
-          "commit": "ad25073da473ae729af0b9642342308aa9edb6d3",
-          "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+          "commit": "0f2627537aeb242cfc29e63e6d1953d98b80ca51",
+          "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
           "n": 5,
-          "ref": "refs/holdspeak/checkpoints/step-772379927faf/5",
+          "ref": "refs/holdspeak/checkpoints/step-e0d762247202/5",
           "tree": "95bb1df9123ba5d49a809b1a262178c14cf2d07f"
         }
       }
     },
     {
-      "at": "2026-11-01T22:32:55.100144+00:00",
+      "at": "2026-11-02T01:01:08.280944+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 9,
       "kind": null,
-      "line": "Claude Code stopped at its usage limit until 19:02",
+      "line": "Claude Code stopped at its usage limit until 21:31",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-772379927faf/4",
-      "ref_commit": "8d8aa14e65956045752aa743e439c7d874db39f7",
+      "ref": "refs/holdspeak/checkpoints/step-e0d762247202/4",
+      "ref_commit": "0313cf3ca0aad92bfea350c9d67cc32025abbbae",
       "rule": null,
-      "step_id": "step-772379927faf",
+      "step_id": "step-e0d762247202",
       "undo": {
         "pin": {
-          "commit": "8d8aa14e65956045752aa743e439c7d874db39f7",
-          "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+          "commit": "0313cf3ca0aad92bfea350c9d67cc32025abbbae",
+          "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
           "n": 4,
-          "ref": "refs/holdspeak/checkpoints/step-772379927faf/4",
+          "ref": "refs/holdspeak/checkpoints/step-e0d762247202/4",
           "tree": "95bb1df9123ba5d49a809b1a262178c14cf2d07f"
         },
         "seen": {
@@ -96,7 +96,7 @@
       }
     },
     {
-      "at": "2026-11-01T22:32:55.071987+00:00",
+      "at": "2026-11-02T01:01:08.263292+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -114,7 +114,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T22:32:54.922128+00:00",
+      "at": "2026-11-02T01:01:08.147791+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
@@ -125,16 +125,16 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-772379927faf/3",
-      "ref_commit": "720e2c02042607008db5061e4fae84ad0a982137",
+      "ref": "refs/holdspeak/checkpoints/step-e0d762247202/3",
+      "ref_commit": "778a30868f708d5f5cd641449948dc39f220bf91",
       "rule": null,
-      "step_id": "step-772379927faf",
+      "step_id": "step-e0d762247202",
       "undo": {
         "pin": {
-          "commit": "720e2c02042607008db5061e4fae84ad0a982137",
-          "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+          "commit": "778a30868f708d5f5cd641449948dc39f220bf91",
+          "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
           "n": 3,
-          "ref": "refs/holdspeak/checkpoints/step-772379927faf/3",
+          "ref": "refs/holdspeak/checkpoints/step-e0d762247202/3",
           "tree": "95bb1df9123ba5d49a809b1a262178c14cf2d07f"
         },
         "seen": {
@@ -143,7 +143,7 @@
       }
     },
     {
-      "at": "2026-11-01T22:32:54.757622+00:00",
+      "at": "2026-11-02T01:01:07.987512+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -154,42 +154,42 @@
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-772379927faf/2",
-      "ref_commit": "32738abb64f22bd0a9e9a01ba39f27a5fbd4da34",
+      "ref": "refs/holdspeak/checkpoints/step-e0d762247202/2",
+      "ref_commit": "83513f47143a6a734dac831dc8b2a94650bdaaf2",
       "rule": null,
-      "step_id": "step-772379927faf",
+      "step_id": "step-e0d762247202",
       "undo": {
         "pin": {
-          "commit": "32738abb64f22bd0a9e9a01ba39f27a5fbd4da34",
-          "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+          "commit": "83513f47143a6a734dac831dc8b2a94650bdaaf2",
+          "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
           "n": 2,
-          "ref": "refs/holdspeak/checkpoints/step-772379927faf/2",
+          "ref": "refs/holdspeak/checkpoints/step-e0d762247202/2",
           "tree": "95bb1df9123ba5d49a809b1a262178c14cf2d07f"
         }
       }
     },
     {
-      "at": "2026-11-01T22:32:54.660111+00:00",
+      "at": "2026-11-02T01:01:07.886050+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 5,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-d91e23b63971",
+      "line": "Handed to Claude Code in hs-program-step-c39d892b46d8",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-d91e23b63971/1",
-      "ref_commit": "0ee37a46149d2ee194e2e8554474892c3bcf64f6",
+      "ref": "refs/holdspeak/checkpoints/step-c39d892b46d8/1",
+      "ref_commit": "c6b3093cfe2fcc6a4d2879d861dbf6cf632a9acb",
       "rule": null,
-      "step_id": "step-d91e23b63971",
+      "step_id": "step-c39d892b46d8",
       "undo": {
         "pin": {
-          "commit": "0ee37a46149d2ee194e2e8554474892c3bcf64f6",
-          "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+          "commit": "c6b3093cfe2fcc6a4d2879d861dbf6cf632a9acb",
+          "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-d91e23b63971/1",
+          "ref": "refs/holdspeak/checkpoints/step-c39d892b46d8/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -198,27 +198,27 @@
       }
     },
     {
-      "at": "2026-11-01T22:32:54.485578+00:00",
+      "at": "2026-11-02T01:01:07.726510+00:00",
       "by": "engine",
       "choice": null,
       "decision_record_id": null,
       "id": 4,
       "kind": null,
-      "line": "Handed to Claude Code in hs-program-step-772379927faf",
+      "line": "Handed to Claude Code in hs-program-step-e0d762247202",
       "operation_id": null,
       "overturnable": false,
       "overturned_at": null,
       "pin_note": null,
-      "ref": "refs/holdspeak/checkpoints/step-772379927faf/1",
-      "ref_commit": "d4473cb5b45c47a36b16415981540a2820926a7e",
+      "ref": "refs/holdspeak/checkpoints/step-e0d762247202/1",
+      "ref_commit": "5e329dba4a06815341c3c0ccbfff3870b3b82737",
       "rule": null,
-      "step_id": "step-772379927faf",
+      "step_id": "step-e0d762247202",
       "undo": {
         "pin": {
-          "commit": "d4473cb5b45c47a36b16415981540a2820926a7e",
-          "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+          "commit": "5e329dba4a06815341c3c0ccbfff3870b3b82737",
+          "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
           "n": 1,
-          "ref": "refs/holdspeak/checkpoints/step-772379927faf/1",
+          "ref": "refs/holdspeak/checkpoints/step-e0d762247202/1",
           "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
         },
         "seen": {
@@ -227,7 +227,7 @@
       }
     },
     {
-      "at": "2026-11-01T22:32:54.403776+00:00",
+      "at": "2026-11-02T01:01:07.651934+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -245,7 +245,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T22:32:54.373329+00:00",
+      "at": "2026-11-02T01:01:07.620706+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -263,7 +263,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-01T22:32:54.370717+00:00",
+      "at": "2026-11-02T01:01:07.618379+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -284,7 +284,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-01T22:32:54.370349+00:00",
+  "created_at": "2026-11-02T01:01:07.618051+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -314,30 +314,30 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "People routes overnight.",
-  "id": "program-c35865940783",
+  "id": "program-0496c1f92c54",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-01T22:32:55.683806+00:00",
+    "at": "2026-11-02T01:01:08.740203+00:00",
     "by": "engine",
     "choice": null,
     "decision_record_id": null,
     "id": 11,
     "kind": null,
-    "line": "Claude Code stopped at its usage limit until 19:02",
+    "line": "Claude Code stopped at its usage limit until 21:31",
     "operation_id": null,
     "overturnable": false,
     "overturned_at": null,
     "pin_note": null,
-    "ref": "refs/holdspeak/checkpoints/step-d91e23b63971/2",
-    "ref_commit": "23e0002224f2fc097ad04bd0fc0f311663ac42cf",
+    "ref": "refs/holdspeak/checkpoints/step-c39d892b46d8/2",
+    "ref_commit": "146793fe0e8ece7844a88915a755261c3fed1d74",
     "rule": null,
-    "step_id": "step-d91e23b63971",
+    "step_id": "step-c39d892b46d8",
     "undo": {
       "pin": {
-        "commit": "23e0002224f2fc097ad04bd0fc0f311663ac42cf",
-        "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+        "commit": "146793fe0e8ece7844a88915a755261c3fed1d74",
+        "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
         "n": 2,
-        "ref": "refs/holdspeak/checkpoints/step-d91e23b63971/2",
+        "ref": "refs/holdspeak/checkpoints/step-c39d892b46d8/2",
         "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
       },
       "seen": {
@@ -345,12 +345,12 @@
       }
     }
   },
-  "line": "Step 1 of 2 waits on you since 17:32",
+  "line": "Step 1 of 2 waits on you since 20:01",
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-c35865940783",
-  "note_window": "pullout:note:program-program-c35865940783",
+  "note_id": "program-program-0496c1f92c54",
+  "note_window": "pullout:note:program-program-0496c1f92c54",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -371,7 +371,7 @@
   "repository": {
     "base_branch": "main",
     "label": "app",
-    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-6n809hch/rig-limited/app"
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bd8h6aj3/rig-limited/app"
   },
   "requirements": [],
   "review_depth": null,
@@ -388,7 +388,7 @@
   "spend_limit_usd": null,
   "state": "waiting",
   "state_word": "Your turn",
-  "status_line": "Your turn · 0 of 2 done · 2 waits on you · check: fake_program_check.sh · control Normal",
+  "status_line": "Your turn · 0 of 2 done · 2 wait on you · check: fake_program_check.sh · control Normal",
   "steps": [
     {
       "after": [],
@@ -398,7 +398,7 @@
       "brief": "31 handlers through run_in_threadpool.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-racered/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-walk2/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -449,12 +449,12 @@
       },
       "handoffs": [
         {
-          "at": "2026-11-01T22:32:55.623530Z",
-          "brief": "# Handoff brief\nHoldSpeak on step 1 of 2 of the program “People routes overnight”. Claude Code reached its usage limit, so HoldSpeak moved the step to you, Codex.\nThis brief is HoldSpeak's, built from the step's record without a model; the owner's words are quoted as his. You do not get the earlier agent's conversation.\n\n## Where\n- Step 1: People routes\n- Worktree: hs-program-step-772379927faf (the same one; continue here)\n- Branch: program/people-routes-overnight/1-people-routes (from main; do not make a new branch)\n- Continues from: `refs/holdspeak/checkpoints/step-772379927faf/5` (commit ad25073da473): the worktree as the earlier agent left it, with the changes it did not commit\n- Earlier turns on this step: 1 (not included)\n\n## The goal\nThe goal of the program, in the owner's words:\n```\nPeople routes overnight.\n```\n\n## This step\n```\n31 handlers through run_in_threadpool.\n```\n\n## The plan and progress\n`[x]` done, `[~]` this step or running, `[ ]` not started.\n- [~] 1 People routes (this step)\n- [~] 2 Projects routes (Working)\n\n## Checkpoints on this step\nOldest first.\n- Handed to Claude Code in hs-program-step-772379927faf\n- The turn ended with the change not committed; the commit waits for you\n- Claude Code stopped at its usage limit until 19:02\n\n## What the owner said since\nNewest first. These still apply.\n- Keep the 14-day rule\n\n## The worktree now\n`git status --porcelain`:\n```\n?? CLAUDE.md\n?? holdspeak/\n```\n`git diff --stat` against the step's base:\n```\n(no change)\n```\n\n## Open problems\n- The earlier agent stopped with: You've hit your limit · resets 2pm\n- Open: Step 1 “People routes”: the agent's commit waits for you\n\n## Repository instructions (CLAUDE.md)\n```\nRun one test at a time.\n[redacted]\n[redacted]\n```\n\n## How to continue\nCheck the worktree against this brief before you change anything. Do not redo finished work. Continue with what is left of this step, commit on this branch, and end your turn. HoldSpeak runs `sh /Users/karol/dev/tools/wt-racered/tests/fixtures/fake_program_check.sh` on your last commit. Write one line with program.checkpoint to say where you pick up, and call program.step_done with your report when you are done.\n",
-          "brief_ref": "program_step:step-772379927faf/handoff/1",
+          "at": "2026-11-02T01:01:08.675613Z",
+          "brief": "# Handoff brief\nHoldSpeak on step 1 of 2 of the program “People routes overnight”. Claude Code reached its usage limit, so HoldSpeak moved the step to you, Codex.\nThis brief is HoldSpeak's, built from the step's record without a model; the owner's words are quoted as his. You do not get the earlier agent's conversation.\n\n## Where\n- Step 1: People routes\n- Worktree: hs-program-step-e0d762247202 (the same one; continue here)\n- Branch: program/people-routes-overnight/1-people-routes (from main; do not make a new branch)\n- Continues from: `refs/holdspeak/checkpoints/step-e0d762247202/5` (commit 0f2627537aeb): the worktree as the earlier agent left it, with the changes it did not commit\n- Earlier turns on this step: 1 (not included)\n\n## The goal\nThe goal of the program, in the owner's words:\n```\nPeople routes overnight.\n```\n\n## This step\n```\n31 handlers through run_in_threadpool.\n```\n\n## The plan and progress\n`[x]` done, `[~]` this step or running, `[ ]` not started.\n- [~] 1 People routes (this step)\n- [~] 2 Projects routes (Working)\n\n## Checkpoints on this step\nOldest first.\n- Handed to Claude Code in hs-program-step-e0d762247202\n- The turn ended with the change not committed; the commit waits for you\n- Claude Code stopped at its usage limit until 21:31\n\n## What the owner said since\nNewest first. These still apply.\n- Keep the 14-day rule\n\n## The worktree now\n`git status --porcelain`:\n```\n?? CLAUDE.md\n?? holdspeak/\n```\n`git diff --stat` against the step's base:\n```\n(no change)\n```\n\n## Open problems\n- The earlier agent stopped with: You've hit your limit · resets 2pm\n- Open: Step 1 “People routes”: the agent's commit waits for you\n\n## Repository instructions (CLAUDE.md)\n```\nRun one test at a time.\n[redacted]\n[redacted]\n```\n\n## How to continue\nCheck the worktree against this brief before you change anything. Do not redo finished work. Continue with what is left of this step, commit on this branch, and end your turn. HoldSpeak runs `sh /Users/karol/dev/tools/wt-walk2/tests/fixtures/fake_program_check.sh` on your last commit. Write one line with program.checkpoint to say where you pick up, and call program.step_done with your report when you are done.\n",
+          "brief_ref": "program_step:step-e0d762247202/handoff/1",
           "by": "owner",
-          "continues_commit": "ad25073da473ae729af0b9642342308aa9edb6d3",
-          "continues_from": "refs/holdspeak/checkpoints/step-772379927faf/5",
+          "continues_commit": "0f2627537aeb242cfc29e63e6d1953d98b80ca51",
+          "continues_from": "refs/holdspeak/checkpoints/step-e0d762247202/5",
           "earlier_turns": 1,
           "from": "Claude Code",
           "from_engine": null,
@@ -470,14 +470,14 @@
           "to": "Codex",
           "to_engine": null,
           "to_profile": "codex-default",
-          "until": "2026-11-02T00:02:00Z"
+          "until": "2026-11-02T02:31:00Z"
         }
       ],
       "held_reason": null,
       "history": null,
-      "id": "step-772379927faf",
+      "id": "step-e0d762247202",
       "last_checkpoint": {
-        "at": "2026-11-01T22:32:55.624049+00:00",
+        "at": "2026-11-02T01:01:08.676227+00:00",
         "by": "owner",
         "choice": "1",
         "decision_record_id": null,
@@ -488,16 +488,16 @@
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-772379927faf/5",
-        "ref_commit": "ad25073da473ae729af0b9642342308aa9edb6d3",
+        "ref": "refs/holdspeak/checkpoints/step-e0d762247202/5",
+        "ref_commit": "0f2627537aeb242cfc29e63e6d1953d98b80ca51",
         "rule": null,
-        "step_id": "step-772379927faf",
+        "step_id": "step-e0d762247202",
         "undo": {
           "pin": {
-            "commit": "ad25073da473ae729af0b9642342308aa9edb6d3",
-            "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+            "commit": "0f2627537aeb242cfc29e63e6d1953d98b80ca51",
+            "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
             "n": 5,
-            "ref": "refs/holdspeak/checkpoints/step-772379927faf/5",
+            "ref": "refs/holdspeak/checkpoints/step-e0d762247202/5",
             "tree": "95bb1df9123ba5d49a809b1a262178c14cf2d07f"
           }
         }
@@ -541,7 +541,7 @@
           "profile": "codex-default"
         }
       ],
-      "started_at": "2026-11-01T22:32:54.485230+00:00",
+      "started_at": "2026-11-02T01:01:07.726177+00:00",
       "state": "working",
       "state_word": "Working",
       "station": 1,
@@ -555,23 +555,23 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T22:32:54.757622+00:00",
+          "at": "2026-11-02T01:01:07.987512+00:00",
           "line": "Keep the 14-day rule."
         },
         {
-          "at": "2026-11-01T22:32:54.922128+00:00",
+          "at": "2026-11-02T01:01:08.147791+00:00",
           "line": "The turn ended with the change not committed; the commit waits for you."
         },
         {
-          "at": "2026-11-01T22:32:55.100144+00:00",
-          "line": "Claude Code stopped at its usage limit until 19:02."
+          "at": "2026-11-02T01:01:08.280944+00:00",
+          "line": "Claude Code stopped at its usage limit until 21:31."
         }
       ],
       "taken": false,
       "title": "People routes",
-      "updated_at": "2026-11-01T22:32:55.647703+00:00",
+      "updated_at": "2026-11-02T01:01:08.694354+00:00",
       "wait": null,
-      "worktree": "hs-program-step-772379927faf"
+      "worktree": "hs-program-step-e0d762247202"
     },
     {
       "after": [],
@@ -581,7 +581,7 @@
       "brief": "20 handlers through run_in_threadpool.",
       "budget_tokens": null,
       "check": {
-        "command": "sh /Users/karol/dev/tools/wt-racered/tests/fixtures/fake_program_check.sh",
+        "command": "sh /Users/karol/dev/tools/wt-walk2/tests/fixtures/fake_program_check.sh",
         "commit": null,
         "log": null,
         "minutes": null,
@@ -604,7 +604,7 @@
       ],
       "effort": "low",
       "elapsed": "under a minute",
-      "elapsed_seconds": 1,
+      "elapsed_seconds": 0,
       "ended_at": null,
       "ending": "none",
       "engine": null,
@@ -633,29 +633,29 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-d91e23b63971",
+      "id": "step-c39d892b46d8",
       "last_checkpoint": {
-        "at": "2026-11-01T22:32:55.683806+00:00",
+        "at": "2026-11-02T01:01:08.740203+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
         "id": 11,
         "kind": null,
-        "line": "Claude Code stopped at its usage limit until 19:02",
+        "line": "Claude Code stopped at its usage limit until 21:31",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-d91e23b63971/2",
-        "ref_commit": "23e0002224f2fc097ad04bd0fc0f311663ac42cf",
+        "ref": "refs/holdspeak/checkpoints/step-c39d892b46d8/2",
+        "ref_commit": "146793fe0e8ece7844a88915a755261c3fed1d74",
         "rule": null,
-        "step_id": "step-d91e23b63971",
+        "step_id": "step-c39d892b46d8",
         "undo": {
           "pin": {
-            "commit": "23e0002224f2fc097ad04bd0fc0f311663ac42cf",
-            "head": "a847fbe8303d3de1060d76f715d77def11e4b1a2",
+            "commit": "146793fe0e8ece7844a88915a755261c3fed1d74",
+            "head": "bfb01aa3b0f9f9be48e7f27c37f039af89d2c7b8",
             "n": 2,
-            "ref": "refs/holdspeak/checkpoints/step-d91e23b63971/2",
+            "ref": "refs/holdspeak/checkpoints/step-c39d892b46d8/2",
             "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
           },
           "seen": {
@@ -675,11 +675,11 @@
         },
         "profile": "claude-default",
         "rule": "claude.usage_limit",
-        "seen_at": "2026-11-01T22:32:55.683613Z",
+        "seen_at": "2026-11-02T01:01:08.739998Z",
         "share": null,
-        "until": "2026-11-02T00:02:00Z",
+        "until": "2026-11-02T02:31:00Z",
         "waiting": false,
-        "words": "19:02"
+        "words": "21:31"
       },
       "may_call": false,
       "ordinal": 2,
@@ -718,9 +718,9 @@
           "profile": "codex-default"
         }
       ],
-      "started_at": "2026-11-01T22:32:54.659748+00:00",
+      "started_at": "2026-11-02T01:01:07.885714+00:00",
       "state": "limited",
-      "state_word": "Limited until 19:02 · continuing in Codex",
+      "state_word": "Limited until 21:31 · continuing in Codex",
       "station": 1,
       "stations": [
         "brief",
@@ -732,19 +732,19 @@
       ],
       "story": [
         {
-          "at": "2026-11-01T22:32:54.660111+00:00",
+          "at": "2026-11-02T01:01:07.886050+00:00",
           "line": "Handed to Claude Code."
         },
         {
-          "at": "2026-11-01T22:32:55.683806+00:00",
-          "line": "Claude Code stopped at its usage limit until 19:02."
+          "at": "2026-11-02T01:01:08.740203+00:00",
+          "line": "Claude Code stopped at its usage limit until 21:31."
         }
       ],
       "taken": false,
       "title": "Projects routes",
-      "updated_at": "2026-11-01T22:32:55.683643+00:00",
+      "updated_at": "2026-11-02T01:01:08.740034+00:00",
       "wait": null,
-      "worktree": "hs-program-step-d91e23b63971"
+      "worktree": "hs-program-step-c39d892b46d8"
     }
   ],
   "template": "fast-cycle",
@@ -762,7 +762,7 @@
       "title": "Projects routes"
     }
   ],
-  "updated_at": "2026-11-01T22:32:55.624165+00:00",
+  "updated_at": "2026-11-02T01:01:08.676401+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 2,
@@ -786,16 +786,16 @@
       ],
       "for_person_id": null,
       "hold": false,
-      "id": "step-772379927faf:commit",
+      "id": "step-e0d762247202:commit",
       "kind": "commit",
       "launch_id": "L3",
       "ordinal": 1,
       "pr": null,
-      "program_id": "program-c35865940783",
+      "program_id": "program-0496c1f92c54",
       "program_title": "People routes overnight",
       "project_id": "proj-holdspeak",
-      "since": "2026-11-01T22:32:55.647703+00:00",
-      "step_id": "step-772379927faf",
+      "since": "2026-11-02T01:01:08.694354+00:00",
+      "step_id": "step-e0d762247202",
       "step_title": "People routes",
       "title": "Step 1 “People routes”: the agent's commit waits for you"
     },
@@ -806,11 +806,11 @@
         "blocked_words": "",
         "consequences": {
           "continue": "Codex takes the step now, in the same worktree.",
-          "wait": "The step waits until 19:02."
+          "wait": "The step waits until 21:31."
         },
         "doing": "Step 2, “Projects routes”: 20 handlers through run in threadpool.",
         "goal": "Goal: People routes overnight.",
-        "happened": "Claude Code is at its usage limit until 19:02.",
+        "happened": "Claude Code is at its usage limit until 21:31.",
         "question": "Continue in Codex now, or wait for the reset?"
       },
       "choices": [
@@ -818,7 +818,7 @@
         "wait"
       ],
       "for_person_id": null,
-      "id": "step-d91e23b63971:limited",
+      "id": "step-c39d892b46d8:limited",
       "kind": "limited",
       "launch_id": "L2",
       "next": {
@@ -829,15 +829,15 @@
       },
       "ordinal": 2,
       "pr": null,
-      "program_id": "program-c35865940783",
+      "program_id": "program-0496c1f92c54",
       "program_title": "People routes overnight",
       "project_id": "proj-holdspeak",
-      "since": "2026-11-01T22:32:55.683643+00:00",
-      "step_id": "step-d91e23b63971",
+      "since": "2026-11-02T01:01:08.740034+00:00",
+      "step_id": "step-c39d892b46d8",
       "step_title": "Projects routes",
-      "title": "Claude Code is at its limit until 19:02: continue in Codex now, or wait?",
-      "until": "2026-11-02T00:02:00Z",
-      "until_words": "19:02",
+      "title": "Claude Code is at its limit until 21:31: continue in Codex now, or wait?",
+      "until": "2026-11-02T02:31:00Z",
+      "until_words": "21:31",
       "warning": false
     }
   ]

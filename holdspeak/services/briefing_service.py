@@ -478,7 +478,8 @@ class BriefingService:
         track = []
         for row in steps:
             state = str(row.get("state") or "")
-            if step is not None and row["id"] == step["id"]:
+            # An item about the whole program lights no step (the walk: a lesson lit step 2).
+            if step is not None and kind not in PROGRAM_LEVEL and row["id"] == step["id"]:
                 mark = "here"
             elif row["id"] in blocked_ids:
                 mark = "blocked"

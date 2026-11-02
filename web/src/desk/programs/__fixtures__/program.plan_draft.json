@@ -104,10 +104,10 @@
         "recent": 2,
         "template": "build-and-review"
       },
-      "latency_ms": 20,
+      "latency_ms": 22,
       "lowers": [],
       "patch": "--- current\n+++ proposed\n@@ -1,5 +1,5 @@\n # program text 1\n-program The text apply in its own module          # Drafting\n+program The text apply in its own module\n   goal\n   > Move the Program text apply (text_apply and _apply_text) out of holdspeak/services/program_service.py into its own module, holdspeak/services/program_text_apply.py. The service keeps a thin method that calls it. No behaviour changes: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.\n   in app · main · project HoldSpeak\n@@ -9,5 +9,20 @@\n   budget 64k\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n+\n+step + Create program_text_apply.py\n+  owns holdspeak/services/program_text_apply.py\n+  brief\n+  > Create holdspeak/services/program_text_apply.py with text_apply and _apply_text moved verbatim from program_service.py, plus the imports they need.\n+  > No other file is touched in this step.\n+\n+step + Delegate from program_service.py\n+  owns holdspeak/services/program_service.py\n+  after 1\n+  brief\n+  > Remove text_apply and _apply_text from program_service.py; add the import from program_text_apply.\n+  > The public text_apply method becomes a one-line delegation to the new module.\n+  > No behaviour change: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.\n+  R+ check: `python -m pytest tests/unit/test_program_text.py tests/integration/test_desk_programs.py` is green.\n",
-      "program_id": "program-cdc3557e7a7c",
+      "program_id": "program-9af557c3c5e9",
       "programs": [],
       "proposed_text": "# program text 1\nprogram The text apply in its own module\n  goal\n  > Move the Program text apply (text_apply and _apply_text) out of holdspeak/services/program_service.py into its own module, holdspeak/services/program_text_apply.py. The service keeps a thin method that calls it. No behaviour changes: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep + Create program_text_apply.py\n  owns holdspeak/services/program_text_apply.py\n  brief\n  > Create holdspeak/services/program_text_apply.py with text_apply and _apply_text moved verbatim from program_service.py, plus the imports they need.\n  > No other file is touched in this step.\n\nstep + Delegate from program_service.py\n  owns holdspeak/services/program_service.py\n  after 1\n  brief\n  > Remove text_apply and _apply_text from program_service.py; add the import from program_text_apply.\n  > The public text_apply method becomes a one-line delegation to the new module.\n  > No behaviour change: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.\n  R+ check: `python -m pytest tests/unit/test_program_text.py tests/integration/test_desk_programs.py` is green.\n",
       "refused": 0,
@@ -179,7 +179,7 @@
       "check_command": "scripts/quick_check.sh",
       "checkpoints": [
         {
-          "at": "2026-11-01T22:32:03.813686+00:00",
+          "at": "2026-11-02T01:00:11.459244+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -197,7 +197,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T22:32:03.807293+00:00",
+          "at": "2026-11-02T01:00:11.451519+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -218,7 +218,7 @@
       "closed_at": null,
       "control": "normal",
       "control_word": "Normal",
-      "created_at": "2026-11-01T22:32:03.806923+00:00",
+      "created_at": "2026-11-02T01:00:11.447884+00:00",
       "decided_for_you": [],
       "default": {
         "agent": "Claude Code",
@@ -242,10 +242,10 @@
       "for_person": null,
       "for_person_id": null,
       "goal": "Move the Program text apply (text_apply and _apply_text) out of holdspeak/services/program_service.py into its own module, holdspeak/services/program_text_apply.py. The service keeps a thin method that calls it. No behaviour changes: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.",
-      "id": "program-cdc3557e7a7c",
+      "id": "program-9af557c3c5e9",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T22:32:03.813686+00:00",
+        "at": "2026-11-02T01:00:11.459244+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -266,8 +266,8 @@
       "may_call": false,
       "may_handoff": false,
       "night": null,
-      "note_id": "program-program-cdc3557e7a7c",
-      "note_window": "pullout:note:program-program-cdc3557e7a7c",
+      "note_id": "program-program-9af557c3c5e9",
+      "note_window": "pullout:note:program-program-9af557c3c5e9",
       "origin_ref": null,
       "persons": [],
       "place": {
@@ -296,9 +296,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T22:32:03.807673+00:00",
+          "created_at": "2026-11-02T01:00:11.451905+00:00",
           "evidence": {},
-          "id": "req-af1329b2bc23",
+          "id": "req-072acfa1d584",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
@@ -306,7 +306,7 @@
           "label": "R1",
           "ordinal": 1,
           "parent_id": null,
-          "program_id": "program-cdc3557e7a7c",
+          "program_id": "program-9af557c3c5e9",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -325,9 +325,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T22:32:03.808145+00:00",
+          "created_at": "2026-11-02T01:00:11.452329+00:00",
           "evidence": {},
-          "id": "req-5895ec63681c",
+          "id": "req-73eb21ad8ea3",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
@@ -335,7 +335,7 @@
           "label": "R2",
           "ordinal": 2,
           "parent_id": null,
-          "program_id": "program-cdc3557e7a7c",
+          "program_id": "program-9af557c3c5e9",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -370,7 +370,7 @@
       "title": "The text apply in its own module",
       "total": 0,
       "track": [],
-      "updated_at": "2026-11-01T22:32:03.812987+00:00",
+      "updated_at": "2026-11-02T01:00:11.459021+00:00",
       "usage_warning_share": null,
       "within": [],
       "your_turn": 0,
@@ -510,10 +510,10 @@
         "recent": 2,
         "template": "build-and-review"
       },
-      "latency_ms": 12,
+      "latency_ms": 6,
       "lowers": [],
       "patch": "--- current\n+++ proposed\n@@ -1,5 +1,5 @@\n # program text 1\n-program The text apply in its own module          # Drafting\n+program The text apply in its own module\n   goal\n   > Move the Program text apply (text_apply and _apply_text) out of holdspeak/services/program_service.py into its own module, holdspeak/services/program_text_apply.py. The service keeps a thin method that calls it. No behaviour changes: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.\n   in app · main · project HoldSpeak\n@@ -9,5 +9,27 @@\n   budget 64k\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n+\n+step + Create program_text_apply.py\n+  owns holdspeak/services/program_text_apply.py\n+  brief\n+  > Create holdspeak/services/program_text_apply.py with text_apply and _apply_text moved verbatim from program_service.py, plus the imports they need.\n+  > No other file is touched in this step.\n+\n+step + Delegate text_apply in program_service.py\n+  owns holdspeak/services/program_service.py\n+  after 1\n+  brief\n+  > Add the import of text_apply from holdspeak.services.program_text_apply at the top of program_service.py.\n+  > Replace the body of the public text_apply method with a one-line delegation to the imported function.\n+  > Do not remove _apply_text yet; that is the next step.\n+\n+step + Remove _apply_text from program_service.py\n+  owns holdspeak/services/program_service.py\n+  after 2\n+  brief\n+  > Remove the _apply_text method (and any now-unused imports it required) from program_service.py.\n+  > No behaviour change: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.\n+  R+ check: `python -m pytest tests/unit/test_program_text.py tests/integration/test_desk_programs.py` is green.\n",
-      "program_id": "program-cdc3557e7a7c",
+      "program_id": "program-9af557c3c5e9",
       "programs": [],
       "proposed_text": "# program text 1\nprogram The text apply in its own module\n  goal\n  > Move the Program text apply (text_apply and _apply_text) out of holdspeak/services/program_service.py into its own module, holdspeak/services/program_text_apply.py. The service keeps a thin method that calls it. No behaviour changes: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nstep + Create program_text_apply.py\n  owns holdspeak/services/program_text_apply.py\n  brief\n  > Create holdspeak/services/program_text_apply.py with text_apply and _apply_text moved verbatim from program_service.py, plus the imports they need.\n  > No other file is touched in this step.\n\nstep + Delegate text_apply in program_service.py\n  owns holdspeak/services/program_service.py\n  after 1\n  brief\n  > Add the import of text_apply from holdspeak.services.program_text_apply at the top of program_service.py.\n  > Replace the body of the public text_apply method with a one-line delegation to the imported function.\n  > Do not remove _apply_text yet; that is the next step.\n\nstep + Remove _apply_text from program_service.py\n  owns holdspeak/services/program_service.py\n  after 2\n  brief\n  > Remove the _apply_text method (and any now-unused imports it required) from program_service.py.\n  > No behaviour change: tests/unit/test_program_text.py and tests/integration/test_desk_programs.py stay green.\n  R+ check: `python -m pytest tests/unit/test_program_text.py tests/integration/test_desk_programs.py` is green.\n",
       "refused": 0,
@@ -590,7 +590,7 @@
     "capability": "agent.plan",
     "engine": "Home Engine",
     "profile": "home-engine",
-    "program_id": "program-7156f72c1b95"
+    "program_id": "program-7ea1813f2507"
   },
   "j1": {
     "applied": {
@@ -754,7 +754,7 @@
         "check_command": "scripts/quick_check.sh",
         "checkpoints": [
           {
-            "at": "2026-11-01T22:32:02.819950+00:00",
+            "at": "2026-11-02T01:00:10.429815+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -772,7 +772,7 @@
             "undo": {}
           },
           {
-            "at": "2026-11-01T22:32:02.808887+00:00",
+            "at": "2026-11-02T01:00:10.418497+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -786,13 +786,13 @@
             "ref": null,
             "ref_commit": null,
             "rule": null,
-            "step_id": "step-3f3d31e2dc50",
+            "step_id": "step-fd7a5a36de59",
             "undo": {
-              "requirement_id": "req-073482b7d0e1"
+              "requirement_id": "req-a7fa318477a6"
             }
           },
           {
-            "at": "2026-11-01T22:32:02.791556+00:00",
+            "at": "2026-11-02T01:00:10.402457+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -806,13 +806,13 @@
             "ref": null,
             "ref_commit": null,
             "rule": null,
-            "step_id": "step-6bda92b1e235",
+            "step_id": "step-cc702d1a604f",
             "undo": {
-              "requirement_id": "req-27ba08e70a3f"
+              "requirement_id": "req-ede475e97d95"
             }
           },
           {
-            "at": "2026-11-01T22:32:02.774157+00:00",
+            "at": "2026-11-02T01:00:10.385979+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -826,13 +826,13 @@
             "ref": null,
             "ref_commit": null,
             "rule": null,
-            "step_id": "step-2ea05b927f36",
+            "step_id": "step-f9869fad5ac6",
             "undo": {
-              "requirement_id": "req-84594d3771ef"
+              "requirement_id": "req-f54adc7f057e"
             }
           },
           {
-            "at": "2026-11-01T22:32:02.766154+00:00",
+            "at": "2026-11-02T01:00:10.371838+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -846,13 +846,13 @@
             "ref": null,
             "ref_commit": null,
             "rule": null,
-            "step_id": "step-0890f6c4dc42",
+            "step_id": "step-6c1996d44847",
             "undo": {
-              "requirement_id": "req-a4c58ec152c0"
+              "requirement_id": "req-d8bd353dfed7"
             }
           },
           {
-            "at": "2026-11-01T22:32:02.753805+00:00",
+            "at": "2026-11-02T01:00:10.358902+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -868,11 +868,11 @@
             "rule": null,
             "step_id": "",
             "undo": {
-              "requirement_id": "req-0e73cf23f341"
+              "requirement_id": "req-7d974a9ac565"
             }
           },
           {
-            "at": "2026-11-01T22:32:02.742126+00:00",
+            "at": "2026-11-02T01:00:10.342578+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -888,11 +888,11 @@
             "rule": null,
             "step_id": "",
             "undo": {
-              "requirement_id": "req-81429d61295d"
+              "requirement_id": "req-ba6ebdcb6ff9"
             }
           },
           {
-            "at": "2026-11-01T22:32:02.725678+00:00",
+            "at": "2026-11-02T01:00:10.328105+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -910,7 +910,7 @@
             "undo": {}
           },
           {
-            "at": "2026-11-01T22:32:02.449543+00:00",
+            "at": "2026-11-02T01:00:10.093494+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -928,7 +928,7 @@
             "undo": {}
           },
           {
-            "at": "2026-11-01T22:32:02.441896+00:00",
+            "at": "2026-11-02T01:00:10.086545+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -949,7 +949,7 @@
         "closed_at": null,
         "control": "normal",
         "control_word": "Normal",
-        "created_at": "2026-11-01T22:32:02.440656+00:00",
+        "created_at": "2026-11-02T01:00:10.086190+00:00",
         "decided_for_you": [],
         "default": {
           "agent": "Claude Code",
@@ -973,10 +973,10 @@
         "for_person": null,
         "for_person_id": null,
         "goal": "After a meeting, the meeting's Note should end with a short recap: the decisions, the actions with their owners, and the open questions. It comes from the transcript we already keep, runs on the local model, and sends nothing out. It is a section of the Note that I can edit, not a new window.\n\nIt must be fast: under 20 seconds after Stop on this Mac. It must not make up owners: when nobody was named, it says \"No owner\". Alice asked for this for her team's standups, so she sees it before it ships.",
-        "id": "program-7156f72c1b95",
+        "id": "program-7ea1813f2507",
         "in_state_seconds": 0,
         "last_checkpoint": {
-          "at": "2026-11-01T22:32:02.819950+00:00",
+          "at": "2026-11-02T01:00:10.429815+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -997,8 +997,8 @@
         "may_call": false,
         "may_handoff": false,
         "night": null,
-        "note_id": "program-program-7156f72c1b95",
-        "note_window": "pullout:note:program-program-7156f72c1b95",
+        "note_id": "program-program-7ea1813f2507",
+        "note_window": "pullout:note:program-program-7ea1813f2507",
         "origin_ref": null,
         "persons": [],
         "place": {
@@ -1027,9 +1027,9 @@
             "choices": [
               "waive"
             ],
-            "created_at": "2026-11-01T22:32:02.442270+00:00",
+            "created_at": "2026-11-02T01:00:10.086803+00:00",
             "evidence": {},
-            "id": "req-eda80c9481a2",
+            "id": "req-739912969288",
             "judged_at": null,
             "judged_commit": null,
             "kind": "review",
@@ -1037,7 +1037,7 @@
             "label": "R1",
             "ordinal": 1,
             "parent_id": null,
-            "program_id": "program-7156f72c1b95",
+            "program_id": "program-7ea1813f2507",
             "required": true,
             "rounds": 0,
             "running": false,
@@ -1051,22 +1051,22 @@
               {
                 "ordinal": 1,
                 "state": "not_yet",
-                "step_id": "step-0890f6c4dc42"
+                "step_id": "step-6c1996d44847"
               },
               {
                 "ordinal": 2,
                 "state": "not_yet",
-                "step_id": "step-2ea05b927f36"
+                "step_id": "step-f9869fad5ac6"
               },
               {
                 "ordinal": 3,
                 "state": "not_yet",
-                "step_id": "step-6bda92b1e235"
+                "step_id": "step-cc702d1a604f"
               },
               {
                 "ordinal": 4,
                 "state": "not_yet",
-                "step_id": "step-3f3d31e2dc50"
+                "step_id": "step-fd7a5a36de59"
               }
             ],
             "text": "The change does only what its brief says.",
@@ -1077,9 +1077,9 @@
             "choices": [
               "waive"
             ],
-            "created_at": "2026-11-01T22:32:02.442692+00:00",
+            "created_at": "2026-11-02T01:00:10.087180+00:00",
             "evidence": {},
-            "id": "req-a9a932a0f87d",
+            "id": "req-7dbece944d69",
             "judged_at": null,
             "judged_commit": null,
             "kind": "review",
@@ -1087,7 +1087,7 @@
             "label": "R2",
             "ordinal": 2,
             "parent_id": null,
-            "program_id": "program-7156f72c1b95",
+            "program_id": "program-7ea1813f2507",
             "required": true,
             "rounds": 0,
             "running": false,
@@ -1101,22 +1101,22 @@
               {
                 "ordinal": 1,
                 "state": "not_yet",
-                "step_id": "step-0890f6c4dc42"
+                "step_id": "step-6c1996d44847"
               },
               {
                 "ordinal": 2,
                 "state": "not_yet",
-                "step_id": "step-2ea05b927f36"
+                "step_id": "step-f9869fad5ac6"
               },
               {
                 "ordinal": 3,
                 "state": "not_yet",
-                "step_id": "step-6bda92b1e235"
+                "step_id": "step-cc702d1a604f"
               },
               {
                 "ordinal": 4,
                 "state": "not_yet",
-                "step_id": "step-3f3d31e2dc50"
+                "step_id": "step-fd7a5a36de59"
               }
             ],
             "text": "Each new behaviour has a test.",
@@ -1127,9 +1127,9 @@
             "choices": [
               "waive"
             ],
-            "created_at": "2026-11-01T22:32:02.741951+00:00",
+            "created_at": "2026-11-02T01:00:10.342224+00:00",
             "evidence": {},
-            "id": "req-81429d61295d",
+            "id": "req-ba6ebdcb6ff9",
             "judged_at": null,
             "judged_commit": null,
             "kind": "measure",
@@ -1137,7 +1137,7 @@
             "label": "R3",
             "ordinal": 3,
             "parent_id": null,
-            "program_id": "program-7156f72c1b95",
+            "program_id": "program-7ea1813f2507",
             "required": true,
             "rounds": 0,
             "running": false,
@@ -1163,9 +1163,9 @@
               "unmet",
               "waive"
             ],
-            "created_at": "2026-11-01T22:32:02.753653+00:00",
+            "created_at": "2026-11-02T01:00:10.358799+00:00",
             "evidence": {},
-            "id": "req-0e73cf23f341",
+            "id": "req-7d974a9ac565",
             "judged_at": null,
             "judged_commit": null,
             "kind": "word",
@@ -1173,7 +1173,7 @@
             "label": "R4",
             "ordinal": 4,
             "parent_id": null,
-            "program_id": "program-7156f72c1b95",
+            "program_id": "program-7ea1813f2507",
             "required": true,
             "rounds": 0,
             "running": false,
@@ -1276,9 +1276,9 @@
             "handoffs": [],
             "held_reason": null,
             "history": null,
-            "id": "step-0890f6c4dc42",
+            "id": "step-6c1996d44847",
             "last_checkpoint": {
-              "at": "2026-11-01T22:32:02.766154+00:00",
+              "at": "2026-11-02T01:00:10.371838+00:00",
               "by": "owner",
               "choice": null,
               "decision_record_id": null,
@@ -1292,9 +1292,9 @@
               "ref": null,
               "ref_commit": null,
               "rule": null,
-              "step_id": "step-0890f6c4dc42",
+              "step_id": "step-6c1996d44847",
               "undo": {
-                "requirement_id": "req-a4c58ec152c0"
+                "requirement_id": "req-d8bd353dfed7"
               }
             },
             "launch_id": null,
@@ -1322,17 +1322,17 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.721308+00:00",
+                "created_at": "2026-11-02T01:00:10.325558+00:00",
                 "evidence": {},
-                "id": "req-3c4e3ad43216",
+                "id": "req-dafd01549983",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "review",
                 "kind_word": "Review",
                 "label": "R1",
                 "ordinal": 1,
-                "parent_id": "req-eda80c9481a2",
-                "program_id": "program-7156f72c1b95",
+                "parent_id": "req-739912969288",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1341,7 +1341,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-0890f6c4dc42",
+                "step_id": "step-6c1996d44847",
                 "text": "The change does only what its brief says.",
                 "waived_reason": null
               },
@@ -1350,17 +1350,17 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.722774+00:00",
+                "created_at": "2026-11-02T01:00:10.327844+00:00",
                 "evidence": {},
-                "id": "req-711b08782eeb",
+                "id": "req-74e8b74fe23c",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "review",
                 "kind_word": "Review",
                 "label": "R2",
                 "ordinal": 2,
-                "parent_id": "req-a9a932a0f87d",
-                "program_id": "program-7156f72c1b95",
+                "parent_id": "req-7dbece944d69",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1369,7 +1369,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-0890f6c4dc42",
+                "step_id": "step-6c1996d44847",
                 "text": "Each new behaviour has a test.",
                 "waived_reason": null
               },
@@ -1378,9 +1378,9 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.765965+00:00",
+                "created_at": "2026-11-02T01:00:10.370957+00:00",
                 "evidence": {},
-                "id": "req-a4c58ec152c0",
+                "id": "req-d8bd353dfed7",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "check",
@@ -1388,7 +1388,7 @@
                 "label": "R5",
                 "ordinal": 5,
                 "parent_id": null,
-                "program_id": "program-7156f72c1b95",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1399,7 +1399,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-0890f6c4dc42",
+                "step_id": "step-6c1996d44847",
                 "text": "`python -m pytest tests/unit/test_desk_note_outcomes.py -x` is green.",
                 "waived_reason": null
               }
@@ -1440,7 +1440,7 @@
             "story": [],
             "taken": false,
             "title": "Generate recap from transcript via local model",
-            "updated_at": "2026-11-01T22:32:02.716042+00:00",
+            "updated_at": "2026-11-02T01:00:10.324729+00:00",
             "wait": null,
             "worktree": null
           },
@@ -1512,9 +1512,9 @@
             "handoffs": [],
             "held_reason": null,
             "history": null,
-            "id": "step-2ea05b927f36",
+            "id": "step-f9869fad5ac6",
             "last_checkpoint": {
-              "at": "2026-11-01T22:32:02.774157+00:00",
+              "at": "2026-11-02T01:00:10.385979+00:00",
               "by": "owner",
               "choice": null,
               "decision_record_id": null,
@@ -1528,9 +1528,9 @@
               "ref": null,
               "ref_commit": null,
               "rule": null,
-              "step_id": "step-2ea05b927f36",
+              "step_id": "step-f9869fad5ac6",
               "undo": {
-                "requirement_id": "req-84594d3771ef"
+                "requirement_id": "req-f54adc7f057e"
               }
             },
             "launch_id": null,
@@ -1558,17 +1558,17 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.721308+00:00",
+                "created_at": "2026-11-02T01:00:10.325558+00:00",
                 "evidence": {},
-                "id": "req-ced8d79e991d",
+                "id": "req-301da28a83bb",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "review",
                 "kind_word": "Review",
                 "label": "R1",
                 "ordinal": 1,
-                "parent_id": "req-eda80c9481a2",
-                "program_id": "program-7156f72c1b95",
+                "parent_id": "req-739912969288",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1577,7 +1577,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-2ea05b927f36",
+                "step_id": "step-f9869fad5ac6",
                 "text": "The change does only what its brief says.",
                 "waived_reason": null
               },
@@ -1586,17 +1586,17 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.722774+00:00",
+                "created_at": "2026-11-02T01:00:10.327844+00:00",
                 "evidence": {},
-                "id": "req-11763d73116c",
+                "id": "req-f577b69dd145",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "review",
                 "kind_word": "Review",
                 "label": "R2",
                 "ordinal": 2,
-                "parent_id": "req-a9a932a0f87d",
-                "program_id": "program-7156f72c1b95",
+                "parent_id": "req-7dbece944d69",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1605,7 +1605,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-2ea05b927f36",
+                "step_id": "step-f9869fad5ac6",
                 "text": "Each new behaviour has a test.",
                 "waived_reason": null
               },
@@ -1614,9 +1614,9 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.774029+00:00",
+                "created_at": "2026-11-02T01:00:10.385740+00:00",
                 "evidence": {},
-                "id": "req-84594d3771ef",
+                "id": "req-f54adc7f057e",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "check",
@@ -1624,7 +1624,7 @@
                 "label": "R6",
                 "ordinal": 6,
                 "parent_id": null,
-                "program_id": "program-7156f72c1b95",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1635,7 +1635,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-2ea05b927f36",
+                "step_id": "step-f9869fad5ac6",
                 "text": "`python -m pytest tests/unit/test_action_owner_enforcer_plugin.py -x` is green.",
                 "waived_reason": null
               }
@@ -1676,7 +1676,7 @@
             "story": [],
             "taken": false,
             "title": "Enforce \"No owner\" when no name is in the transcript",
-            "updated_at": "2026-11-01T22:32:02.716042+00:00",
+            "updated_at": "2026-11-02T01:00:10.324729+00:00",
             "wait": null,
             "worktree": null
           },
@@ -1749,9 +1749,9 @@
             "handoffs": [],
             "held_reason": null,
             "history": null,
-            "id": "step-6bda92b1e235",
+            "id": "step-cc702d1a604f",
             "last_checkpoint": {
-              "at": "2026-11-01T22:32:02.791556+00:00",
+              "at": "2026-11-02T01:00:10.402457+00:00",
               "by": "owner",
               "choice": null,
               "decision_record_id": null,
@@ -1765,9 +1765,9 @@
               "ref": null,
               "ref_commit": null,
               "rule": null,
-              "step_id": "step-6bda92b1e235",
+              "step_id": "step-cc702d1a604f",
               "undo": {
-                "requirement_id": "req-27ba08e70a3f"
+                "requirement_id": "req-ede475e97d95"
               }
             },
             "launch_id": null,
@@ -1795,17 +1795,17 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.721308+00:00",
+                "created_at": "2026-11-02T01:00:10.325558+00:00",
                 "evidence": {},
-                "id": "req-dd7e471b01a3",
+                "id": "req-93796520dfbc",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "review",
                 "kind_word": "Review",
                 "label": "R1",
                 "ordinal": 1,
-                "parent_id": "req-eda80c9481a2",
-                "program_id": "program-7156f72c1b95",
+                "parent_id": "req-739912969288",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1814,7 +1814,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-6bda92b1e235",
+                "step_id": "step-cc702d1a604f",
                 "text": "The change does only what its brief says.",
                 "waived_reason": null
               },
@@ -1823,17 +1823,17 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.722774+00:00",
+                "created_at": "2026-11-02T01:00:10.327844+00:00",
                 "evidence": {},
-                "id": "req-a006510ac459",
+                "id": "req-44c7cfcfbba2",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "review",
                 "kind_word": "Review",
                 "label": "R2",
                 "ordinal": 2,
-                "parent_id": "req-a9a932a0f87d",
-                "program_id": "program-7156f72c1b95",
+                "parent_id": "req-7dbece944d69",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1842,7 +1842,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-6bda92b1e235",
+                "step_id": "step-cc702d1a604f",
                 "text": "Each new behaviour has a test.",
                 "waived_reason": null
               },
@@ -1851,9 +1851,9 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.790651+00:00",
+                "created_at": "2026-11-02T01:00:10.402235+00:00",
                 "evidence": {},
-                "id": "req-27ba08e70a3f",
+                "id": "req-ede475e97d95",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "check",
@@ -1861,7 +1861,7 @@
                 "label": "R7",
                 "ordinal": 7,
                 "parent_id": null,
-                "program_id": "program-7156f72c1b95",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -1872,7 +1872,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-6bda92b1e235",
+                "step_id": "step-cc702d1a604f",
                 "text": "`python -m pytest tests/integration/test_meeting_stop_and_conflicts.py -x` is green.",
                 "waived_reason": null
               }
@@ -1913,7 +1913,7 @@
             "story": [],
             "taken": false,
             "title": "Wire recap into meeting Stop and append to the Note",
-            "updated_at": "2026-11-01T22:32:02.716042+00:00",
+            "updated_at": "2026-11-02T01:00:10.324729+00:00",
             "wait": null,
             "worktree": null
           },
@@ -1985,9 +1985,9 @@
             "handoffs": [],
             "held_reason": null,
             "history": null,
-            "id": "step-3f3d31e2dc50",
+            "id": "step-fd7a5a36de59",
             "last_checkpoint": {
-              "at": "2026-11-01T22:32:02.808887+00:00",
+              "at": "2026-11-02T01:00:10.418497+00:00",
               "by": "owner",
               "choice": null,
               "decision_record_id": null,
@@ -2001,9 +2001,9 @@
               "ref": null,
               "ref_commit": null,
               "rule": null,
-              "step_id": "step-3f3d31e2dc50",
+              "step_id": "step-fd7a5a36de59",
               "undo": {
-                "requirement_id": "req-073482b7d0e1"
+                "requirement_id": "req-a7fa318477a6"
               }
             },
             "launch_id": null,
@@ -2031,17 +2031,17 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.721308+00:00",
+                "created_at": "2026-11-02T01:00:10.325558+00:00",
                 "evidence": {},
-                "id": "req-c92c9180a9e1",
+                "id": "req-001d996323dc",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "review",
                 "kind_word": "Review",
                 "label": "R1",
                 "ordinal": 1,
-                "parent_id": "req-eda80c9481a2",
-                "program_id": "program-7156f72c1b95",
+                "parent_id": "req-739912969288",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -2050,7 +2050,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-3f3d31e2dc50",
+                "step_id": "step-fd7a5a36de59",
                 "text": "The change does only what its brief says.",
                 "waived_reason": null
               },
@@ -2059,17 +2059,17 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.722774+00:00",
+                "created_at": "2026-11-02T01:00:10.327844+00:00",
                 "evidence": {},
-                "id": "req-61a9ecc2b478",
+                "id": "req-0c46f68d0c6b",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "review",
                 "kind_word": "Review",
                 "label": "R2",
                 "ordinal": 2,
-                "parent_id": "req-a9a932a0f87d",
-                "program_id": "program-7156f72c1b95",
+                "parent_id": "req-7dbece944d69",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -2078,7 +2078,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-3f3d31e2dc50",
+                "step_id": "step-fd7a5a36de59",
                 "text": "Each new behaviour has a test.",
                 "waived_reason": null
               },
@@ -2087,9 +2087,9 @@
                 "choices": [
                   "waive"
                 ],
-                "created_at": "2026-11-01T22:32:02.808753+00:00",
+                "created_at": "2026-11-02T01:00:10.418367+00:00",
                 "evidence": {},
-                "id": "req-073482b7d0e1",
+                "id": "req-a7fa318477a6",
                 "judged_at": null,
                 "judged_commit": null,
                 "kind": "shot",
@@ -2097,7 +2097,7 @@
                 "label": "R8",
                 "ordinal": 8,
                 "parent_id": null,
-                "program_id": "program-7156f72c1b95",
+                "program_id": "program-7ea1813f2507",
                 "required": true,
                 "rounds": 0,
                 "running": false,
@@ -2109,7 +2109,7 @@
                 "stale": false,
                 "state": "not_yet",
                 "state_word": "Not yet",
-                "step_id": "step-3f3d31e2dc50",
+                "step_id": "step-fd7a5a36de59",
                 "text": "The Note window at 1440 shows the Recap section as editable text at the bottom of the Note, with no clipped text.",
                 "waived_reason": null
               }
@@ -2150,7 +2150,7 @@
             "story": [],
             "taken": false,
             "title": "Render and edit the Recap section in the Note editor",
-            "updated_at": "2026-11-01T22:32:02.716042+00:00",
+            "updated_at": "2026-11-02T01:00:10.324729+00:00",
             "wait": null,
             "worktree": null
           }
@@ -2180,13 +2180,13 @@
             "title": "Render and edit the Recap section in the Note editor"
           }
         ],
-        "updated_at": "2026-11-01T22:32:02.820032+00:00",
+        "updated_at": "2026-11-02T01:00:10.429902+00:00",
         "usage_warning_share": null,
         "within": [],
         "your_turn": 0,
         "your_turn_items": []
       },
-      "program_id": "program-7156f72c1b95",
+      "program_id": "program-7ea1813f2507",
       "refused": 0,
       "revision": 9,
       "text": "# program text 1\nprogram Meeting recap in the Note                 # Drafting · 0 of 4 done\n  goal\n  > After a meeting, the meeting's Note should end with a short recap: the decisions, the actions with their owners, and the open questions. It comes from the transcript we already keep, runs on the local model, and sends nothing out. It is a section of the Note that I can edit, not a new window.\n  >\n  > It must be fast: under 20 seconds after Stop on this Mac. It must not make up owners: when nobody was named, it says \"No owner\". Alice asked for this for her team's standups, so she sees it before it ships.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n\nevery step\n  R1 review: The change does only what its brief says.  # Not yet\n  R2 review: Each new behaviour has a test.       # Not yet\n\nat the end\n  R3 measure: The recap appears in the Note within 20 seconds of Stop on the owner's Mac.  # Not measured yet\n    run scripts/quick_check.sh\n    bound total < 20 s\n  R4 word: Alice has seen the recap section in her team's standup Note before this ships.  # Not yet\n\nstep 1 Generate recap from transcript via local model  # Planned\n  owns holdspeak/services/note_outcomes_service.py, holdspeak/memory/local_model.py\n  brief\n  > Add a generate_recap function to the note outcomes service. It takes the meeting's stored transcript, calls the local model (no network egress), and returns a structured recap: a list of decisions, a list of actions each with an owner name, and a list of open questions. The output is plain text formatted as a \"Recap\" section ready to append to the Note.\n  R5 check: `python -m pytest tests/unit/test_desk_note_outcomes.py -x` is green.  # Not yet\n\nstep 2 Enforce \"No owner\" when no name is in the transcript  # Planned\n  owns holdspeak/plugins/builtin/action_owner_enforcer.py, holdspeak/runtime/ownership.py\n  after 1\n  brief\n  > In the recap's action list, if the transcript does not name a person for an action, the owner field is the literal string \"No owner\". The enforcer plugin never infers, guesses, or fabricates an owner from surrounding context.\n  R6 check: `python -m pytest tests/unit/test_action_owner_enforcer_plugin.py -x` is green.  # Not yet\n\nstep 3 Wire recap into meeting Stop and append to the Note  # Planned\n  owns holdspeak/runtime/meeting_stop.py, holdspeak/meeting_session/models.py\n  after 1, 2\n  brief\n  > On meeting Stop, call generate_recap with the transcript, then append the result as a \"Recap\" section to the meeting's Note record. The section is part of the Note's editable text, not a separate window or pullout.\n  R7 check: `python -m pytest tests/integration/test_meeting_stop_and_conflicts.py -x` is green.  # Not yet\n\nstep 4 Render and edit the Recap section in the Note editor  # Planned\n  owns web/src/desk/pullouts/editors/NoteEditor.tsx, web/src/desk/noteOutcomes.ts\n  after 3\n  brief\n  > The Note editor renders the \"Recap\" section as an editable block at the end of the Note. The owner can add, remove, or reword lines. No new window, pullout, or route is introduced.\n  R8 shot: The Note window at 1440 shows the Recap section as editable text at the bottom of the Note, with no clipped text.  # Not yet\n",
@@ -2456,10 +2456,10 @@
         "recent": 2,
         "template": "build-and-review"
       },
-      "latency_ms": 16,
+      "latency_ms": 10,
       "lowers": [],
       "patch": "--- current\n+++ proposed\n@@ -1,5 +1,5 @@\n # program text 1\n-program Meeting recap in the Note                 # Drafting\n+program Meeting recap in the Note\n   goal\n   > After a meeting, the meeting's Note should end with a short recap: the decisions, the actions with their owners, and the open questions. It comes from the transcript we already keep, runs on the local model, and sends nothing out. It is a section of the Note that I can edit, not a new window.\n   >\n@@ -9,7 +9,41 @@\n   control normal\n   check scripts/quick_check.sh\n   budget 64k\n+  for Alice\n \n every step\n-  R1 review: The change does only what its brief says.  # Not yet\n-  R2 review: Each new behaviour has a test.       # Not yet\n+  R1 review: The change does only what its brief says.\n+  R2 review: Each new behaviour has a test.\n+\n+at the end\n+  R+ measure: The recap appears in the Note within 20 seconds of Stop on the owner's Mac.\n+    run scripts/quick_check.sh\n+    bound total < 20 s\n+  R+ word: Alice has seen the recap section in her team's standup Note before this ships.\n+\n+step + Generate recap from transcript via local model\n+  owns holdspeak/services/note_outcomes_service.py, holdspeak/memory/local_model.py\n+  brief\n+  > Add a generate_recap function to the note outcomes service. It takes the meeting's stored transcript, calls the local model (no network egress), and returns a structured recap: a list of decisions, a list of actions each with an owner name, and a list of open questions. The output is plain text formatted as a \"Recap\" section ready to append to the Note.\n+  R+ check: `python -m pytest tests/unit/test_desk_note_outcomes.py -x` is green.\n+\n+step + Enforce \"No owner\" when no name is in the transcript\n+  owns holdspeak/plugins/builtin/action_owner_enforcer.py, holdspeak/runtime/ownership.py\n+  after 1\n+  brief\n+  > In the recap's action list, if the transcript does not name a person for an action, the owner field is the literal string \"No owner\". The enforcer plugin never infers, guesses, or fabricates an owner from surrounding context.\n+  R+ check: `python -m pytest tests/unit/test_action_owner_enforcer_plugin.py -x` is green.\n+\n+step + Wire recap into meeting Stop and append to the Note\n+  owns holdspeak/runtime/meeting_stop.py, holdspeak/meeting_session/models.py\n+  after 1, 2\n+  brief\n+  > On meeting Stop, call generate_recap with the transcript, then append the result as a \"Recap\" section to the meeting's Note record. The section is part of the Note's editable text, not a separate window or pullout.\n+  R+ check: `python -m pytest tests/integration/test_meeting_stop_and_conflicts.py -x` is green.\n+\n+step + Render and edit the Recap section in the Note editor\n+  owns web/src/desk/pullouts/editors/NoteEditor.tsx, web/src/desk/noteOutcomes.ts\n+  after 3\n+  brief\n+  > The Note editor renders the \"Recap\" section as an editable block at the end of the Note. The owner can add, remove, or reword lines. No new window, pullout, or route is introduced.\n+  R+ shot: The Note window at 1440 shows the Recap section as editable text at the bottom of the Note, with no clipped text.\n",
-      "program_id": "program-7156f72c1b95",
+      "program_id": "program-7ea1813f2507",
       "programs": [],
       "proposed_text": "# program text 1\nprogram Meeting recap in the Note\n  goal\n  > After a meeting, the meeting's Note should end with a short recap: the decisions, the actions with their owners, and the open questions. It comes from the transcript we already keep, runs on the local model, and sends nothing out. It is a section of the Note that I can edit, not a new window.\n  >\n  > It must be fast: under 20 seconds after Stop on this Mac. It must not make up owners: when nobody was named, it says \"No owner\". Alice asked for this for her team's standups, so she sees it before it ships.\n  in app · main · project HoldSpeak\n  template build and review\n  control normal\n  check scripts/quick_check.sh\n  budget 64k\n  for Alice\n\nevery step\n  R1 review: The change does only what its brief says.\n  R2 review: Each new behaviour has a test.\n\nat the end\n  R+ measure: The recap appears in the Note within 20 seconds of Stop on the owner's Mac.\n    run scripts/quick_check.sh\n    bound total < 20 s\n  R+ word: Alice has seen the recap section in her team's standup Note before this ships.\n\nstep + Generate recap from transcript via local model\n  owns holdspeak/services/note_outcomes_service.py, holdspeak/memory/local_model.py\n  brief\n  > Add a generate_recap function to the note outcomes service. It takes the meeting's stored transcript, calls the local model (no network egress), and returns a structured recap: a list of decisions, a list of actions each with an owner name, and a list of open questions. The output is plain text formatted as a \"Recap\" section ready to append to the Note.\n  R+ check: `python -m pytest tests/unit/test_desk_note_outcomes.py -x` is green.\n\nstep + Enforce \"No owner\" when no name is in the transcript\n  owns holdspeak/plugins/builtin/action_owner_enforcer.py, holdspeak/runtime/ownership.py\n  after 1\n  brief\n  > In the recap's action list, if the transcript does not name a person for an action, the owner field is the literal string \"No owner\". The enforcer plugin never infers, guesses, or fabricates an owner from surrounding context.\n  R+ check: `python -m pytest tests/unit/test_action_owner_enforcer_plugin.py -x` is green.\n\nstep + Wire recap into meeting Stop and append to the Note\n  owns holdspeak/runtime/meeting_stop.py, holdspeak/meeting_session/models.py\n  after 1, 2\n  brief\n  > On meeting Stop, call generate_recap with the transcript, then append the result as a \"Recap\" section to the meeting's Note record. The section is part of the Note's editable text, not a separate window or pullout.\n  R+ check: `python -m pytest tests/integration/test_meeting_stop_and_conflicts.py -x` is green.\n\nstep + Render and edit the Recap section in the Note editor\n  owns web/src/desk/pullouts/editors/NoteEditor.tsx, web/src/desk/noteOutcomes.ts\n  after 3\n  brief\n  > The Note editor renders the \"Recap\" section as an editable block at the end of the Note. The owner can add, remove, or reword lines. No new window, pullout, or route is introduced.\n  R+ shot: The Note window at 1440 shows the Recap section as editable text at the bottom of the Note, with no clipped text.\n",
       "refused": 1,
@@ -2553,7 +2553,7 @@
       "check_command": "scripts/quick_check.sh",
       "checkpoints": [
         {
-          "at": "2026-11-01T22:32:02.449543+00:00",
+          "at": "2026-11-02T01:00:10.093494+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -2571,7 +2571,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T22:32:02.441896+00:00",
+          "at": "2026-11-02T01:00:10.086545+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -2592,7 +2592,7 @@
       "closed_at": null,
       "control": "normal",
       "control_word": "Normal",
-      "created_at": "2026-11-01T22:32:02.440656+00:00",
+      "created_at": "2026-11-02T01:00:10.086190+00:00",
       "decided_for_you": [],
       "default": {
         "agent": "Claude Code",
@@ -2616,10 +2616,10 @@
       "for_person": null,
       "for_person_id": null,
       "goal": "After a meeting, the meeting's Note should end with a short recap: the decisions, the actions with their owners, and the open questions. It comes from the transcript we already keep, runs on the local model, and sends nothing out. It is a section of the Note that I can edit, not a new window.\n\nIt must be fast: under 20 seconds after Stop on this Mac. It must not make up owners: when nobody was named, it says \"No owner\". Alice asked for this for her team's standups, so she sees it before it ships.",
-      "id": "program-7156f72c1b95",
+      "id": "program-7ea1813f2507",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T22:32:02.449543+00:00",
+        "at": "2026-11-02T01:00:10.093494+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -2640,8 +2640,8 @@
       "may_call": false,
       "may_handoff": false,
       "night": null,
-      "note_id": "program-program-7156f72c1b95",
-      "note_window": "pullout:note:program-program-7156f72c1b95",
+      "note_id": "program-program-7ea1813f2507",
+      "note_window": "pullout:note:program-program-7ea1813f2507",
       "origin_ref": null,
       "persons": [],
       "place": {
@@ -2670,9 +2670,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T22:32:02.442270+00:00",
+          "created_at": "2026-11-02T01:00:10.086803+00:00",
           "evidence": {},
-          "id": "req-eda80c9481a2",
+          "id": "req-739912969288",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
@@ -2680,7 +2680,7 @@
           "label": "R1",
           "ordinal": 1,
           "parent_id": null,
-          "program_id": "program-7156f72c1b95",
+          "program_id": "program-7ea1813f2507",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -2699,9 +2699,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T22:32:02.442692+00:00",
+          "created_at": "2026-11-02T01:00:10.087180+00:00",
           "evidence": {},
-          "id": "req-a9a932a0f87d",
+          "id": "req-7dbece944d69",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
@@ -2709,7 +2709,7 @@
           "label": "R2",
           "ordinal": 2,
           "parent_id": null,
-          "program_id": "program-7156f72c1b95",
+          "program_id": "program-7ea1813f2507",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -2744,7 +2744,7 @@
       "title": "Meeting recap in the Note",
       "total": 0,
       "track": [],
-      "updated_at": "2026-11-01T22:32:02.449463+00:00",
+      "updated_at": "2026-11-02T01:00:10.093331+00:00",
       "usage_warning_share": null,
       "within": [],
       "your_turn": 0,
@@ -2762,7 +2762,7 @@
       "capability": null,
       "engine": null,
       "profile": null,
-      "program_id": "program-07117905fcb9"
+      "program_id": "program-4e059e4616e7"
     },
     "program": {
       "allowed_profiles": [],
@@ -2778,7 +2778,7 @@
       "check_command": "scripts/quick_check.sh",
       "checkpoints": [
         {
-          "at": "2026-11-01T22:32:04.818166+00:00",
+          "at": "2026-11-02T01:00:12.442927+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -2796,7 +2796,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-01T22:32:04.812646+00:00",
+          "at": "2026-11-02T01:00:12.431153+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -2817,7 +2817,7 @@
       "closed_at": null,
       "control": "normal",
       "control_word": "Normal",
-      "created_at": "2026-11-01T22:32:04.812298+00:00",
+      "created_at": "2026-11-02T01:00:12.429729+00:00",
       "decided_for_you": [],
       "default": {
         "agent": "Claude Code",
@@ -2841,10 +2841,10 @@
       "for_person": null,
       "for_person_id": null,
       "goal": "After a meeting, the meeting's Note should end with a short recap: the decisions, the actions with their owners, and the open questions. It comes from the transcript we already keep, runs on the local model, and sends nothing out. It is a section of the Note that I can edit, not a new window.\n\nIt must be fast: under 20 seconds after Stop on this Mac. It must not make up owners: when nobody was named, it says \"No owner\". Alice asked for this for her team's standups, so she sees it before it ships.",
-      "id": "program-07117905fcb9",
+      "id": "program-4e059e4616e7",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-01T22:32:04.818166+00:00",
+        "at": "2026-11-02T01:00:12.442927+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -2865,8 +2865,8 @@
       "may_call": false,
       "may_handoff": false,
       "night": null,
-      "note_id": "program-program-07117905fcb9",
-      "note_window": "pullout:note:program-program-07117905fcb9",
+      "note_id": "program-program-4e059e4616e7",
+      "note_window": "pullout:note:program-program-4e059e4616e7",
       "origin_ref": null,
       "persons": [],
       "place": {
@@ -2895,9 +2895,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T22:32:04.812864+00:00",
+          "created_at": "2026-11-02T01:00:12.432286+00:00",
           "evidence": {},
-          "id": "req-ff8c84453c75",
+          "id": "req-a090c2f54530",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
@@ -2905,7 +2905,7 @@
           "label": "R1",
           "ordinal": 1,
           "parent_id": null,
-          "program_id": "program-07117905fcb9",
+          "program_id": "program-4e059e4616e7",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -2924,9 +2924,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-01T22:32:04.813184+00:00",
+          "created_at": "2026-11-02T01:00:12.434061+00:00",
           "evidence": {},
-          "id": "req-38719da518ba",
+          "id": "req-85ff6b97c86e",
           "judged_at": null,
           "judged_commit": null,
           "kind": "review",
@@ -2934,7 +2934,7 @@
           "label": "R2",
           "ordinal": 2,
           "parent_id": null,
-          "program_id": "program-07117905fcb9",
+          "program_id": "program-4e059e4616e7",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -2969,7 +2969,7 @@
       "title": "Meeting recap in the Note",
       "total": 0,
       "track": [],
-      "updated_at": "2026-11-01T22:32:04.818089+00:00",
+      "updated_at": "2026-11-02T01:00:12.442742+00:00",
       "usage_warning_share": null,
       "within": [],
       "your_turn": 0,

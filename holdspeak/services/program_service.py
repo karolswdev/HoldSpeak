@@ -1702,7 +1702,8 @@ class ProgramService:
         if summary.get("skipped"):
             parts.append(f"{summary['skipped']} skipped")
         if summary["your_turn"]:
-            parts.append(f"{summary['your_turn']} waits on you")
+            # The walk (2026-11-01): "3 waits on you" read wrong.
+            parts.append(f"{summary['your_turn']} {'waits' if summary['your_turn'] == 1 else 'wait'} on you")
         if program.get("check_command"):
             parts.append(f"check: {_check_name(str(program['check_command']))}")
         parts.append(f"control {level_word(program['control'])}")

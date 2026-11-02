@@ -73,6 +73,7 @@ def test_a_lesson_is_a_held_item_the_page_decides(tmp_path, monkeypatch) -> None
     assert shown["question"] == "Keep this lesson, and where?" and shown["kind_words"] == "Lesson"
     assert shown["head"] == "The words wave"
     assert shown["doing"].startswith("The program: Running · ") and "Step" not in shown["doing"]
+    assert not [row for row in shown["track"] if row["mark"] == "here"]  # about the whole program: no step lit
     assert [choice["label"] for choice in shown["choices"]] == ["Keep for this program", "Keep for HoldSpeak", "Skip"]
     kept = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "keep_program"})
     assert kept.status_code == 200, kept.text
