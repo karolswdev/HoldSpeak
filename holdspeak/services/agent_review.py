@@ -367,6 +367,21 @@ class AgentReviewLoop:
             builder_id, builder_id, record, text, session_key=session_key,
         )
 
+    def _step_parked(self, builder: Mapping[str, Any]) -> bool:
+        """The builder's Program step is parked (a Program's park parks every
+        open step). An unreadable store never blocks a review."""
+        origin = builder.get("origin_ref") or {}
+        if origin.get("kind") != "program_step" or self.db is None:
+            return False
+        try:
+            from ..db.programs import ProgramStore
+
+            step = ProgramStore(self.db).get_step(str(origin.get("id") or ""))
+        except Exception as exc:
+            log.debug("review step read failed: %s", exc)
+            return False
+        return bool(step) and str(step.get("state") or "") == "parked"
+
     def _active_helper(self, builder_id: str) -> Optional[dict[str, Any]]:
         for record in reversed(self.ledger.list()):
             if str(record.get("helper_of") or "") != builder_id:
@@ -579,6 +594,11 @@ class AgentReviewLoop:
             if self._active_helper(builder_id):
                 continue
             if self._state(builder_id) != "done":
+                continue
+            if self._step_parked(raw):
+                # The rule of #1753 for reviews (the fix proof of 2026-11-02):
+                # a step parked (with its Program, or by the engine) gets no
+                # reviewer; its review starts after the Resume.
                 continue
             commit = self._commit(raw)
             if not commit or commit == pair.get("last_builder_commit"):

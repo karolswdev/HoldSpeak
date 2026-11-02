@@ -78,9 +78,9 @@ def test_send_text_to_pane_sends_literal_text_then_enter(monkeypatch: pytest.Mon
     assert delivery.submitted is True
     assert calls == [
         ["tmux", "send-keys", "-t", "%42", "-l", "hello there"],
-        # a literal \r, never the named Enter key -- the current Claude Code
-        # TUI drops a lone named-Enter but submits on the raw byte (HSM-17-04)
-        ["tmux", "send-keys", "-t", "%42", "-l", "\r"],
+        # the submit is the NAMED C-m: a literal CR was typed into Claude
+        # Code's composer as a character (2026-11-02, pane %56)
+        ["tmux", "send-keys", "-t", "%42", "C-m"],
     ]
 
 
@@ -125,5 +125,23 @@ def test_the_split_enter_takes_the_usual_pause_first(monkeypatch: pytest.MonkeyP
     assert events == [
         ("run", ["tmux", "send-keys", "-t", "%42", "-l", "1"]),
         ("sleep", tmux_transport.SUBMIT_PAUSE_SECONDS),
-        ("run", ["tmux", "send-keys", "-t", "%42", "-l", "\r"]),
+        ("run", ["tmux", "send-keys", "-t", "%42", "C-m"]),
     ]
+
+
+@pytest.mark.parametrize("text", ["fix it", "line one\nline two", "x" * 201, "a\r\nb", ""])
+def test_every_submit_is_the_named_c_m_and_no_text_carries_a_cr(monkeypatch: pytest.MonkeyPatch, text: str) -> None:
+    """The fix proof of 2026-11-02: the plain path, the paste path and the
+    split path's lone Enter all submit with the named C-m; nothing typed or
+    pasted carries a carriage return."""
+    calls: list = []
+    monkeypatch.setattr(tmux_transport.shutil, "which", lambda _name: "/usr/bin/tmux")
+    monkeypatch.setattr(tmux_transport.subprocess, "run",
+                        lambda cmd, **kwargs: calls.append((list(cmd), kwargs.get("input")))
+                        or SimpleNamespace(returncode=0, stdout="", stderr=""))
+    monkeypatch.setattr(tmux_transport.time, "sleep", lambda _s: None)
+    send_text_to_pane(pane="%9", text=text, submit=True)
+    assert calls[-1][0] == ["tmux", "send-keys", "-t", "%9", "C-m"]
+    for cmd, stdin in calls:
+        assert all("\r" not in part for part in cmd), cmd
+        assert "\r" not in str(stdin or ""), stdin

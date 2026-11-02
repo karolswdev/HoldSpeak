@@ -85,7 +85,7 @@ def test_a_multi_line_brief_is_one_bracketed_paste_then_cr(monkeypatch) -> None:
     buffer = load[load.index("-b") + 1]
     assert load == ["tmux", "load-buffer", "-b", buffer, "-"] and stdin == brief
     assert paste == ["tmux", "paste-buffer", "-p", "-r", "-d", "-b", buffer, "-t", "%3"]
-    assert enter == ["tmux", "send-keys", "-t", "%3", "-l", "\r"]
+    assert enter == ["tmux", "send-keys", "-t", "%3", "C-m"]
     assert buffer.startswith("hs-")
 
 
@@ -97,7 +97,7 @@ def test_a_long_single_line_is_pasted_and_a_short_answer_is_typed(monkeypatch) -
     tmux_transport.send_text_to_pane(pane="%3", text="restart", submit=True)
     assert [cmd for cmd, _ in calls] == [
         ["tmux", "send-keys", "-t", "%3", "-l", "restart"],
-        ["tmux", "send-keys", "-t", "%3", "-l", "\r"],
+        ["tmux", "send-keys", "-t", "%3", "C-m"],
     ]
 
 

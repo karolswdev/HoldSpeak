@@ -27,6 +27,12 @@ class TmuxTransportError(HoldSpeakError):
 #: at once (the text stays in its composer); after 0.1 s it submits
 #: (observed, Conductor R3). Claude Code submits either way.
 SUBMIT_PAUSE_SECONDS = 0.3
+#: The submit is a NAMED key, never a carriage return typed as text. The fix
+#: proof of 2026-11-02 (pane %56, Claude Code 2.1.316): a literal CR sent
+#: with ``send-keys -l`` after the text went into the composer as a
+#: character ("Removed 1 invisible character from your prompt") and the
+#: brief sat unsent; a named ``C-m`` submitted at once.
+SUBMIT_KEY = "C-m"
 
 
 @dataclass(frozen=True)
@@ -79,7 +85,7 @@ def send_text_to_pane(
         # first (ruling 2026-11-02): the only change from a plain send is the
         # second read of the wait.
         time.sleep(SUBMIT_PAUSE_SECONDS)
-        _run_tmux(["tmux", "send-keys", "-t", target, "-l", "\r"], timeout_s=timeout_s)
+        _submit(target, timeout_s)
         return TmuxDelivery(pane=target, submitted=True)
     if "\n" in message or len(message) > PASTE_ABOVE_CHARS:
         # One bracketed paste (Conductor R1). Typed fast with ``send-keys -l``,
@@ -99,12 +105,15 @@ def send_text_to_pane(
         _run_tmux(["tmux", "send-keys", "-t", target, "-l", message], timeout_s=timeout_s)
     if submit:
         time.sleep(SUBMIT_PAUSE_SECONDS)
-        # A LITERAL carriage return, not the named `Enter` key: current Claude
-        # Code TUIs (observed on 2.1.x) drop a lone named-Enter send-keys but
-        # submit on the raw \r byte. Found live by the HSM-17-04 inject proof --
-        # answers were "delivered" yet sat unsubmitted in the composer.
-        _run_tmux(["tmux", "send-keys", "-t", target, "-l", "\r"], timeout_s=timeout_s)
+        # The named C-m (``SUBMIT_KEY``): not the named ``Enter`` (Claude
+        # Code 2.1.x dropped it, HSM-17-04) and not a literal CR (typed as a
+        # character, 2026-11-02).
+        _submit(target, timeout_s)
     return TmuxDelivery(pane=target, submitted=submit)
+
+
+def _submit(target: str, timeout_s: float) -> None:
+    _run_tmux(["tmux", "send-keys", "-t", target, SUBMIT_KEY], timeout_s=timeout_s)
 
 
 def send_keys_to_pane(
