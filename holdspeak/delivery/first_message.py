@@ -88,6 +88,11 @@ _CODEX_CURSOR = "›"  # the › that marks the selected choice and the composer
 #: Enter dropped while Claude Code started).
 CLAUDE_READY_WAIT_SECONDS = 20.0
 CLAUDE_BANNER = "Claude Code v"
+#: The composer drawn is not yet a composer that takes an Enter (the fix
+#: proof of 2026-11-02: a brief typed 1 s after the spawn, the empty
+#: composer already shown, lost its Enter). The brief waits this long after
+#: the composer first appears.
+CLAUDE_READY_SETTLE_SECONDS = 2.0
 #: A delivered brief that still sits in Claude Code's composer this long
 #: after its send, on a pane that does not change, gets its Enter once more.
 ENTER_AGAIN_AFTER_SECONDS = 10.0
@@ -276,12 +281,17 @@ def _is_rule(row: str) -> bool:
 
 
 def claude_composer(lines: list[str]) -> Optional[str]:
-    """The text in Claude Code's composer (a rule, a ``❯`` line, a rule:
-    the last such box on the pane), or ``None`` when no composer is drawn."""
+    """The text in Claude Code's composer, or ``None`` when no composer is
+    drawn. The composer is every line between the last pair of rules whose
+    first inner line starts with ``❯``: a brief wraps over several lines
+    (the normal case), and its lines are joined."""
     rows = _live_rows(lines)
-    for index in range(len(rows) - 1, 1, -1):
-        if _is_rule(rows[index]) and _is_rule(rows[index - 2]) and rows[index - 1].lstrip().startswith(_CURSOR):
-            return rows[index - 1].lstrip()[len(_CURSOR):].strip()
+    rules = [index for index, row in enumerate(rows) if _is_rule(row)]
+    for upper, lower in reversed(list(zip(rules, rules[1:]))):
+        inner = rows[upper + 1:lower]
+        if inner and inner[0].lstrip().startswith(_CURSOR):
+            first = inner[0].lstrip()[len(_CURSOR):].strip()
+            return " ".join(part for part in [first, *(row.strip() for row in inner[1:])] if part)
     return None
 
 
@@ -670,25 +680,28 @@ class FirstMessage:
 
     def _await_claude_ready(self, launch_id: str) -> None:
         """Claude Code: wait while the pane shows its start banner and no
-        composer (``ready_state``: ``ready`` once the composer shows,
-        ``timeout`` past the wait; then the brief is typed as before)."""
+        composer, then ``CLAUDE_READY_SETTLE_SECONDS`` more once the
+        composer shows (``ready_state``: ``ready``, or ``timeout`` past
+        the wait; then the brief is typed)."""
         deadline = time.monotonic() + CLAUDE_READY_WAIT_SECONDS
-        waited = False
+        seen: Optional[float] = None
         while not self._stop.is_set():
             peek = self._peek(launch_id)
             if peek is None:
                 return
             lines = list(peek.get("lines") or [])
             if claude_composer(lines) is not None:
-                if waited:
+                seen = seen if seen is not None else time.monotonic()
+                if time.monotonic() - seen >= CLAUDE_READY_SETTLE_SECONDS:
                     self._svc._ledger.update(launch_id, ready_state="ready")
-                return
-            if not claude_starting(lines):
+                    return
+            elif not claude_starting(lines):
                 return  # not Claude Code's start screen: typed as before
+            else:
+                seen = None
             if time.monotonic() >= deadline:
                 self._svc._ledger.update(launch_id, ready_state="timeout")
                 return
-            waited = True
             time.sleep(LAUNCH_POLL_SECONDS)
 
     def _enter_again(self, launch_id: str, text: str, principal: Any, held: Mapping[str, Any]) -> None:
