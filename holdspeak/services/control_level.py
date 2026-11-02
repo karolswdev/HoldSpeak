@@ -64,31 +64,72 @@ def step_of_launch(launch_id: Any, *, db: Any = None) -> Optional[tuple[dict[str
         return None
 
 
-def level_for_launch(
-    launch_id: Any, *, db: Any = None, desk: Optional[Callable[[], Any]] = None,
-) -> str:
-    """``secure`` · ``normal`` · ``yolo``: the Program's control when the
-    launch belongs to a step, else the desk's Control mode on the ladder."""
+#: The ladder, narrowest first.
+_ORDER = {"secure": 0, "normal": 1, "yolo": 2}
+
+
+def _narrower(one: str, other: str) -> str:
+    return one if _ORDER.get(one, 0) <= _ORDER.get(other, 0) else other
+
+
+def _helper_record(launch_id: str, ledger: Any = None) -> Optional[Mapping[str, Any]]:
+    """The launch record of a helper (it names ``helper_of``), else None."""
+    try:
+        if ledger is None:
+            from ..delivery.factory_launch import LaunchLedger
+
+            ledger = LaunchLedger()
+        record = ledger.get(launch_id) or {}
+    except Exception:
+        return None
+    return record if isinstance(record, Mapping) and str(record.get("helper_of") or "").strip() else None
+
+
+def _launch_level(launch_id: Any, *, db: Any, desk: Optional[Callable[[], Any]], ledger: Any,
+                  depth: int = 0) -> Optional[str]:
+    """The level of a step's launch (its Program's control) or of a helper
+    (never wider than the launch that started it, nor than the level it was
+    started at: IMP4 by precedent, Astra's post-merge check 2026-11-01);
+    None for any other launch (the desk decides)."""
     from .program_rules import level_of
 
     found = step_of_launch(launch_id, db=db)
     if found is not None:
         return level_of(found[0].get("control"))
+    record = _helper_record(str(launch_id or "").strip(), ledger) if launch_id and depth < 8 else None
+    if record is None:
+        return None
+    parent = _launch_level(record.get("helper_of"), db=db, desk=desk, ledger=ledger, depth=depth + 1)
+    if parent is None:
+        parent = level_of((desk or _desk_mode)() or "yolo")
+    started = str(record.get("control_mode") or "").strip()
+    return _narrower(parent, level_of(started)) if started else parent
+
+
+def level_for_launch(
+    launch_id: Any, *, db: Any = None, desk: Optional[Callable[[], Any]] = None, ledger: Any = None,
+) -> str:
+    """``secure`` · ``normal`` · ``yolo``: the Program's control when the
+    launch belongs to a step; a helper's starter's level (never wider);
+    else the desk's Control mode on the ladder."""
+    from .program_rules import level_of
+
+    found = _launch_level(launch_id, db=db, desk=desk, ledger=ledger)
+    if found is not None:
+        return found
     return level_of((desk or _desk_mode)() or "yolo")
 
 
 def mode_for_launch(
-    launch_id: Any, *, db: Any = None, desk: Optional[Callable[[], Any]] = None,
+    launch_id: Any, *, db: Any = None, desk: Optional[Callable[[], Any]] = None, ledger: Any = None,
 ) -> str:
     """The same level as the desk's Control mode word (``safe`` ·
     ``neutral`` · ``yolo``), for the readers that speak it. A launch that is
-    not a step gets the desk's own word back unchanged."""
-    found = step_of_launch(launch_id, db=db)
+    neither a step nor a helper gets the desk's own word back unchanged."""
+    found = _launch_level(launch_id, db=db, desk=desk, ledger=ledger)
     if found is None:
         return str((desk or _desk_mode)() or "yolo").lower()
-    from .program_rules import level_of
-
-    return DESK_WORDS[level_of(found[0].get("control"))]
+    return DESK_WORDS[found]
 
 
 def program_of_step(step_id: Any, *, db: Any = None) -> Optional[dict[str, Any]]:
