@@ -171,6 +171,11 @@ class HubProducer:
         return {"launch_id": launch_id, "worktree": {"name": f"hs-action-a1-{number}-helper"}}
 
 
+def block(words: str) -> str:
+    """The REVIEW RESULT block the review brief asks for."""
+    return f"REVIEW RESULT\n{words}\nEND REVIEW RESULT"
+
+
 def test_findings_are_explicit_and_must_none_closes_the_pair():
     assert parse_findings("MUST: fix a.py:1\nSHOULD: add a check") == [
         {"level": "MUST", "text": "fix a.py:1"},
@@ -210,7 +215,7 @@ def test_real_hub_producer_runs_two_bounded_rounds_and_retains_history():
     ledger = Ledger(builder(review=pair))
     states = {"B1": "done"}
     commits = {"B1": "c1"}
-    words = {"R1": "MUST: fix the failing check (test_a.py:4)"}
+    words = {"R1": block("MUST: fix the failing check (test_a.py:4)")}
     prompted = []
     producer = HubProducer(ledger, states)
     loop = AgentReviewLoop(
@@ -240,7 +245,7 @@ def test_real_hub_producer_runs_two_bounded_rounds_and_retains_history():
     commits["B1"] = "c2"
     assert loop.tick()[0]["round"] == 2
     assert producer.calls[1][2]["helper_round"] == 2
-    words["R2"] = "MUST: none"
+    words["R2"] = block("MUST: none")
     states["R2"] = "done"
     assert loop.tick()[0]["status"] == "done"
     final = ledger.get("B1")["review"]
@@ -265,7 +270,7 @@ def test_done_without_new_commit_is_inert_and_round_two_must_stays_needs_you():
         ledger=ledger,
         state_reader=lambda launch_id: states.get(launch_id, ""),
         commit_reader=lambda record: "c2",
-        result_reader=lambda launch_id: "MUST: still broken",
+        result_reader=lambda launch_id: block("MUST: still broken"),
     )
     event = loop.tick()[0]
     assert event["status"] == "needs_you"
@@ -299,7 +304,7 @@ def test_the_nights_real_clear_review_has_no_finding():
     then "MUST: none"): no finding, and the pair is clear."""
     from holdspeak.services.agent_review import _review_result
 
-    findings, clear = _review_result(_night_words("clear"))
+    findings, clear = _review_result(block(_night_words("clear")))
     assert [row for row in findings if row["level"] == "MUST"] == [] and clear is True
 
 
@@ -308,7 +313,7 @@ def test_the_nights_real_must_review_has_one_must_not_its_count_line():
     closing "MUST: 1 remains (…)" count, which is not a second finding."""
     from holdspeak.services.agent_review import _review_result
 
-    findings, _clear = _review_result(_night_words("must"))
+    findings, _clear = _review_result(block(_night_words("must")))
     musts = [row for row in findings if row["level"] == "MUST"]
     assert len(musts) == 1 and "docs/faq.md:5" in musts[0]["text"]
     assert parse_findings("MUST: none.\nSHOULD: none!") == []
@@ -330,7 +335,7 @@ def test_an_empty_read_of_a_finished_reviewer_waits_before_it_is_unclear():
     for _ in range(EMPTY_READS_WAIT):
         loop.tick()
         assert ledger.get("B1")["review"]["status"] == "reviewing"
-    words["R1"] = "Findings:\n- MUST: none.\n\nMUST: none"
+    words["R1"] = block("Findings:\n- MUST: none.\n\nMUST: none")
     loop.tick()
     assert ledger.get("B1")["review"]["status"] == "done"
 
@@ -355,3 +360,53 @@ def test_a_should_none_required_after_its_place_is_no_finding():
     words = ("- SHOULD · docs/index.md:5 · None required. The heading style and single sentence match the brief.\n"
              "- SHOULD · docs/faq.md:5 · The phrase is not supported by the docs.\nMUST: none")
     assert parse_findings(words) == [{"level": "SHOULD", "text": "· docs/faq.md:5 · The phrase is not supported by the docs."}]
+
+
+# ── Astra's post-merge check (2026-11-01): the result block ──────────
+
+def test_quoted_clearance_outside_the_block_never_passes():
+    """Astra's case: the reviewer says it did not review, but quotes a
+    committed document's ``MUST: none`` and ``REQ R1: MET``."""
+    from holdspeak.services.agent_review import _review_result
+    from holdspeak.services.program_requirements import parse_review
+
+    words = ("I have not reviewed the change.\nThe document says:\nMUST: none\nREQ R1: MET · it holds\n"
+             "```diff\n+REVIEW RESULT\n+MUST: none\n+END REVIEW RESULT\n```")
+    assert _review_result(words) == ([], False)
+    assert parse_review(words) == {}
+    fenced = "```\nREVIEW RESULT\nMUST: none\nEND REVIEW RESULT\n```"
+    assert _review_result(fenced) == ([], False)
+    quoted = "> REVIEW RESULT\n> MUST: none"
+    assert _review_result(quoted) == ([], False)
+    # Inside the block, a quoted or fenced line does not count either.
+    inner = "REVIEW RESULT\n> MUST: none\n```\nMUST: none\n```\nEND REVIEW RESULT"
+    assert _review_result(inner) == ([], False)
+    # The last block is the result; REQ lines count only in it.
+    words = "REVIEW RESULT\nMUST: fix a.py:1\nEND REVIEW RESULT\nREVIEW RESULT\nMUST: none\nREQ R1: MET · ok\nEND REVIEW RESULT"
+    assert _review_result(words) == ([], True)
+    assert parse_review(words)[1]["answer"] == "MET"
+
+
+def test_a_must_with_words_after_its_number_is_a_finding():
+    assert parse_findings("MUST: 1 open connection per request leaks in client.py:42; close it on failure.") == [
+        {"level": "MUST", "text": "1 open connection per request leaks in client.py:42; close it on failure."}]
+    for count in ("MUST: 1 remains (the index)", "MUST: 2 left", "MUST: 0 findings", "MUST: 3 MUST remain"):
+        assert parse_findings(count) == [], count
+
+
+def test_words_with_no_block_ask_the_reviewer_once_then_are_unclear():
+    pair = initial_review("codex")
+    pair.update({"round": 1, "reviewer_launch_id": "R1", "last_builder_commit": "c1", "status": "reviewing",
+                 "rounds": [{"round": 1, "builder_commit": "c1", "reviewer_launch_id": "R1"}]})
+    ledger = Ledger(builder(review=pair), {"launch_id": "R1", "state": "registered", "helper_of": "B1"})
+    words = {"R1": "MUST: none"}
+    prompted: list = []
+    loop = AgentReviewLoop(None, object(), ledger=ledger, state_reader=lambda launch_id: "done",
+                           commit_reader=lambda record: "c1", result_reader=lambda launch_id: words["R1"],
+                           prompt=lambda launch_id, text: prompted.append((launch_id, text)))
+    loop.tick()
+    assert ledger.get("B1")["review"]["status"] == "reviewing"
+    assert prompted and prompted[0][0] == "R1" and "REVIEW RESULT" in prompted[0][1]
+    words["R1"] = block("MUST: none")
+    loop.tick()
+    assert ledger.get("B1")["review"]["status"] == "done" and len(prompted) == 1

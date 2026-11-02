@@ -18,11 +18,16 @@ the process edge only.
   when a test's words name no ``REQ`` line, the fake reviewer answers
   ``REQ Rn: MET`` for each owner's requirement its brief lists (a reviewer
   that finds every requirement holds); a test that drives an UNMET or a
-  missing answer writes its own ``REQ`` lines.
+  missing answer writes its own ``REQ`` lines. The fake reviewer puts its
+  words in the REVIEW RESULT block the brief asks for (``NO_BLOCK`` first:
+  none).
 """
 from __future__ import annotations
 
 import re
+
+#: A test's reviewer words that start with this get no REVIEW RESULT block.
+NO_BLOCK = "\x00no-block\x00"
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -331,11 +336,18 @@ class Rig:
     def reviewer_words(self, launch_id: str) -> str:
         """The fake reviewer's words (see the module note on REQ lines)."""
         words = self.words.get(launch_id, "")
-        if not words or "REQ" in words:
+        if not words:
             return words
-        acceptance = ((self.ledger.get(launch_id) or {}).get("review") or {}).get("acceptance") or []
-        asked = [found.group(1) for line in acceptance for found in [re.match(r"^R(\d+) · ", str(line))] if found]
-        return words + "".join(f"\nREQ R{n}: MET · the fake reviewer finds it holds" for n in asked)
+        if "REQ" not in words:
+            acceptance = ((self.ledger.get(launch_id) or {}).get("review") or {}).get("acceptance") or []
+            asked = [found.group(1) for line in acceptance for found in [re.match(r"^R(\d+) · ", str(line))] if found]
+            words = words + "".join(f"\nREQ R{n}: MET · the fake reviewer finds it holds" for n in asked)
+        # The review brief asks for the REVIEW RESULT block (Astra post-merge
+        # 2026-11-01); the fake reviewer writes it as told, unless a test
+        # types its own block (or none, by ``NO_BLOCK``).
+        if "REVIEW RESULT" in words or words.startswith(NO_BLOCK):
+            return words.removeprefix(NO_BLOCK)
+        return f"REVIEW RESULT\n{words}\nEND REVIEW RESULT"
 
     def _frame(self, frame: str, payload: Any) -> None:
         self.frames.append((frame, dict(payload)))
