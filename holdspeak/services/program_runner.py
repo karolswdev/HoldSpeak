@@ -81,7 +81,7 @@ _STOPPED = frozenset({"ended", "expired", "stopped_by_restart", "resume_failed",
 _TURN_END = frozenset({"done", "pr_open", "merged"})
 #: Ruling 2026-11-01: the brief of a step handed again only to give its
 #: reviewer a live parent (no build).
-REVIEW_WAIT_BRIEF = "Your work is checked green; wait for the review."
+REVIEW_WAIT_BRIEF = "Your work is checked green; wait for the review. Do not start a reviewer; HoldSpeak starts it."
 #: Why a step in review is handed again when its builder ended first.
 REVIEW_BUILDER_ENDED = "The review waited on its builder, and the builder ended with no turn end; the step is handed again for its review"
 #: AG12's words when the review loop could not start the reviewer.
