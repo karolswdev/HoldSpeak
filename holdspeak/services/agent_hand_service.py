@@ -1090,12 +1090,25 @@ def _hand_again_of(existing: Optional[Mapping[str, Any]]) -> Optional[tuple[str,
 
 
 def _launch_for_origin(launcher: Any, kind: str, item_id: str) -> Optional[dict[str, Any]]:
-    """The newest launch whose origin is this item."""
-    for record in reversed(launcher._ledger.list()):
+    """The newest launch of this item's builder. A helper (a reviewer) has
+    the same origin but is never the item's launch: a hand again continues
+    the builder in the builder's worktree, never its reviewer's. A launch
+    that runs in a helper's worktree (handed there before this rule) is
+    skipped too."""
+    records = list(launcher._ledger.list())
+    helper_trees = {str(r.get("worktree_id")) for r in records if _is_helper(r) and r.get("worktree_id")}
+    for record in reversed(records):
         origin = record.get("origin_ref") or {}
-        if origin.get("kind") == kind and origin.get("id") == item_id:
-            return record
+        if origin.get("kind") != kind or origin.get("id") != item_id or _is_helper(record):
+            continue
+        if record.get("worktree_id") and str(record.get("worktree_id")) in helper_trees:
+            continue
+        return record
     return None
+
+
+def _is_helper(record: Mapping[str, Any]) -> bool:
+    return bool(str(record.get("helper_of") or "").strip()) or str(record.get("role") or "") == "reviewer"
 
 
 def _config_control_mode() -> str:
