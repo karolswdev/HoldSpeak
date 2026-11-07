@@ -128,3 +128,26 @@ The detailed [HS-S43 plan](stories/HS-S43-obligation-coverage.md) expands **D22/
 The owner authorized one documentation-only draft PR in the public `karolswdev/HoldSpeak` repository, preserving the complete Markdown hierarchy. This authorizes the documentation branch, commit, push and draft PR. It does not approve or merge the PR, authorize deployment, select pending designs, or assign application implementation.
 
 The public copy replaces private conversation quotations with dated decision summaries and omits unrelated context and personal update-cadence details. Historical planning observations and pending gates retain their meaning.
+
+## Rulings of 2026-11-07 (Muad'Dib, under the owner's one-brain ruling of the same day)
+
+The owner merged this package as reference and ruled the same day that one brain decides and plans run as Programs (`CLAUDE.md`, "How we work now"). The pending gates below are resolved; each slice runs as one Program on his hub, built by Claude Code, gated by a test that fails on main and `scripts/quick_check.sh`, judged live on his desk.
+
+| Gate | Ruling |
+| --- | --- |
+| D13 / G11 | A: explicit project before global creation; G11 as the story writes it |
+| D14 / G21 | A: explicit add-only step binding |
+| D25 / G22 | A: explicit new-step input, D17 binding preserved |
+| D23 / G23 | As proposed: coverage comparison for expansion, narrowing, equivalence |
+| D20 / G24 | Disclosure-only now (the amount is a note, not a cap); an enforceable cap is a later Program |
+| G-REVIEW / G25 | A: current eligibility over remembered approval |
+| D21 / G32 | The first branch as the story writes it |
+| G-ADD / G33 | A: same-mount retained request |
+| D16 / G41 | The subset the story details (T41-02 and T41-03) |
+| D19 / G42 | The subset the story details |
+| D22 / G43 | A: the coverage note and ordinary People entry |
+| D06 / G52 | B: one open-review query boundary |
+| D15 / G13 | A: the inline current-Room branch |
+| D12 / G-OPEN | One explicit latest startup intent; S12 runs last, after every other slice |
+
+Waves (by the plan's own shared-file rules): 1 = S11, S23, S52, S43 and the dead-code audit on a real checkout; 2 = S21, S22, S13, S41, S42, S33; 3 = S25, S32, S12. The consolidation the plan left unexpanded (S51, S53, the bootstrap move, the four feature sets) follows as Programs under the same ruling.
