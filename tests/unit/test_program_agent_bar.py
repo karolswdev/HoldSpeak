@@ -239,19 +239,69 @@ def test_the_owners_step_update_lowers_the_bar_as_before(tmp_path) -> None:
 
 # ── within (§4.5) ────────────────────────────────────────────────────
 
-def test_removing_a_within_path_lowers_the_bar(tmp_path) -> None:
-    rig, pid = _agents_program(tmp_path)
-    rig.service.update(OWNER, pid, within=["src/", "docs/"])
+def _within_edits(rig: Rig, pid: str, *paths: str) -> tuple[str, str]:
+    rig.service.update(OWNER, pid, within=list(paths))
     text = rig.service.text_get(OWNER, pid)["text"]
-    assert "  within src/, docs/" in text
-    for edited in (_edit(text, ("  within src/, docs/\n", "")), _edit(text, ("  within src/, docs/", "  within src/"))):
-        dry = rig.service.text_apply(OWNER, pid, edited)
-        assert dry["lowers"] == ["program.within"]
-        assert rig.service.text_apply(OWNER, pid, edited, dry_run=False)["applied"] is False  # held for his press
-        row = next(row for row in rig.service.text_apply(AGENT, pid, edited, dry_run=False)["changes"]
-                   if row["id"] == "program.within")
-        assert (row["verdict"], row["code"]) == ("refused", "owner_required")
-    assert rig.service._program(pid)["within"] == ["src/", "docs/"]
-    removed = _edit(text, ("  within src/, docs/\n", ""))
+    line = "  within " + ", ".join(paths)
+    assert line in text
+    return text, line
+
+
+def _held_for_his_press(rig: Rig, pid: str, edited: str) -> None:
+    """The owner's dry run names the row, his bare apply is held, the
+    creator agent's apply is refused by name; the stored list is as it was."""
+    before = rig.service._program(pid)["within"]
+    dry = rig.service.text_apply(OWNER, pid, edited)
+    assert dry["lowers"] == ["program.within"], dry["changes"]
+    assert rig.service.text_apply(OWNER, pid, edited, dry_run=False)["applied"] is False
+    row = next(row for row in rig.service.text_apply(AGENT, pid, edited, dry_run=False)["changes"]
+               if row["id"] == "program.within")
+    assert (row["verdict"], row["code"]) == ("refused", "owner_required")
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.text_apply(AGENT, pid, edited, dry_run=False, allow_lower=["program.within"])
+    assert refused.value.code == "owner_required"
+    assert rig.service._program(pid)["within"] == before
+
+
+def test_removing_the_within_line_lowers_the_bar(tmp_path) -> None:
+    rig, pid = _agents_program(tmp_path)
+    text, line = _within_edits(rig, pid, "src/", "docs/")
+    removed = _edit(text, (line + "\n", ""))
+    _held_for_his_press(rig, pid, removed)
     answer = rig.service.text_apply(OWNER, pid, removed, dry_run=False, allow_lower=["program.within"])
     assert answer["applied"] is True and rig.service._program(pid)["within"] == []
+
+
+def test_widening_the_within_coverage_lowers_the_bar(tmp_path) -> None:
+    """The list is a union of allowed paths: a path the old list did not
+    cover (added, swapped in, or a parent of an old bound) widens it."""
+    rig, pid = _agents_program(tmp_path)
+    text, line = _within_edits(rig, pid, "src/api/")
+    for widened in ("  within src/api/, docs/", "  within docs/", "  within src/", "  within src/api/, src/"):
+        _held_for_his_press(rig, pid, _edit(text, (line, widened)))
+    added = _edit(text, (line, "  within src/api/, docs/"))
+    answer = rig.service.text_apply(OWNER, pid, added, dry_run=False, allow_lower=["program.within"])
+    assert answer["applied"] is True and rig.service._program(pid)["within"] == ["src/api/", "docs/"]
+
+
+def test_narrowing_or_keeping_the_within_coverage_is_an_ordinary_change(tmp_path) -> None:
+    """Dropping a path, moving to a child, adding a redundant child, a
+    reorder or a trailing-slash spelling admits nothing new: the row is
+    allowed, and the creator agent's apply writes it at YOLO."""
+    rig, pid = _agents_program(tmp_path)
+    text, line = _within_edits(rig, pid, "src/", "docs/")
+    for narrowed, stored in (("  within src/", ["src/"]), ("  within docs/, src/", ["docs/", "src/"]),
+                             ("  within src/, docs/, src/api/", ["src/", "docs/", "src/api/"]),
+                             ("  within src, docs", ["src", "docs"]), ("  within src/api/", ["src/api/"])):
+        edited = _edit(text, (line, narrowed))
+        dry = rig.service.text_apply(OWNER, pid, edited)
+        row = next(row for row in dry["changes"] if row["id"] == "program.within")
+        assert (row["verdict"], row["lowers_bar"], dry["lowers"]) == ("allowed", False, []), narrowed
+        answer = rig.service.text_apply(AGENT, pid, edited, dry_run=False)
+        assert answer["applied"] is True and rig.service._program(pid)["within"] == stored, narrowed
+        rig.service.update(OWNER, pid, within=["src/", "docs/"])
+    # A first line narrows the whole repository to its paths.
+    bare, _ = _within_edits(rig, pid, "src/")
+    rig.service.update(OWNER, pid, within=[])
+    opened = rig.service.text_apply(OWNER, pid, bare, dry_run=False)
+    assert opened["applied"] is True and opened["lowers"] == [] and rig.service._program(pid)["within"] == ["src/"]
