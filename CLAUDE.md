@@ -168,7 +168,10 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   other").** Every pytest, vitest, glass_for and graph-walk run, in every lane
   and the orchestrator's FAST alike, goes through the lock:
   `uv run python scripts/test_lock.py -- <command>`. It waits for the previous
-  run to finish, then runs yours. Under the lock use `-n 8` (measured 2026-10-11: the
+  run to finish, then runs yours. `scripts/quick_check.sh` takes the lock
+  itself, step by step: run it bare, never wrapped (the lock is reentrant since
+  2026-11-07, so a wrapped run no longer deadlocks for 7200 s; it is still wrong).
+  A docs-only diff runs only the doc check and the doc guards (seconds). Under the lock use `-n 8` (measured 2026-10-11: the
   whole browser suite 30 min at `-n 4`, 16.5 min at `-n 8`; FAST 11 → 6.5 min), not `-n auto`.
   A worker never runs FAST; a worker waits for the lock rather than running
   a smaller suite in parallel. Load above 60 means someone skipped the lock.
