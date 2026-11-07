@@ -69,8 +69,8 @@ is not active. Keep private People data separate from shared pages; one giant
 
 ## User experience
 
-The optional captures show a promising native direction: [/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/person-1440.png](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/person-1440.png)
-(1440) gives NEXT 1:1, TO RAISE, two owe plates, and quiet folds; [/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/person-393.png](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/person-393.png)
+The optional captures show a promising native direction: /Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/person-1440.png (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/person-1440.png`)
+(1440) gives NEXT 1:1, TO RAISE, two owe plates, and quiet folds; /Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/person-393.png (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/person-393.png`)
 (393) keeps the grammar without a modal. These are external captures, not
 baseline proof or owner acceptance. The narrow capture is a peer/engineer fixture,
 not proof of a report-specific agenda. Large Add controls and unused space also

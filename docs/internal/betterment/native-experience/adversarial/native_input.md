@@ -24,7 +24,7 @@ Converge with `notes_editor` on CodeMirror selection/history and the Thought wri
 
 ## User experience
 
-The optional note captures show a readable saved-note face at 1440 and 393, while Settings 393 shows a compact stacked form with mic affordance ([note-1440.png](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/note-1440.png), [note-393.png](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/note-393.png), [surface-settings-393.png](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/surface-settings-393.png)). They show idle/read states, not caret, IME, voice, undo, refusal, or return. Simple typing looks promising; interrupted voice editing is unproven.
+The optional note captures show a readable saved-note face at 1440 and 393, while Settings 393 shows a compact stacked form with mic affordance (note-1440.png (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/note-1440.png`), note-393.png (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/note-393.png`), surface-settings-393.png (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/surface-settings-393.png`)). They show idle/read states, not caret, IME, voice, undo, refusal, or return. Simple typing looks promising; interrupted voice editing is unproven.
 
 CONDITIONS: Re-scope by active consumer and insertion policy; record the existing caret/IME/focus/undo guards; add the cross-consumer acceptance assertions above. No new owner gate is implied.
 
