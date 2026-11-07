@@ -54,8 +54,8 @@ FINDINGS:
    (`web/src/pages/cores/design-reference/ControlsGallery.tsx:128-472`). The
    existing 393 capture shows Object species only partly visible above the
    footer
-   ([patterns-393.png](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/design-reference/patterns-393.png));
-   ([surface-components-1440.png](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/surface-components-1440.png)).
+   (patterns-393.png (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/design-reference/patterns-393.png`));
+   (surface-components-1440.png (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/surface-components-1440.png`)).
    This mid-scroll capture does not prove the content is unreachable. Owner cost:
    an architect looking for one species must hunt and cannot tell
    what is shared versus decorative. This fails Tenets 3 and 6. Correction:

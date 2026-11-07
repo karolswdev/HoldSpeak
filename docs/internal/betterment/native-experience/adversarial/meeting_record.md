@@ -24,7 +24,7 @@ Share `meeting_id`, capture status, `OP_OUTCOME`, runtime frames, receipts, and 
 
 ## User experience
 
-The existing [1440 Live capture](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/surface-live-1440.png) and [393 Live capture](/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/surface-live-393.png) show a promising fast path: one Start verb, four visible steps, no modal, and a readable 393 layout. Source inference shows the shared Button and saved return. These are idle states only; they do not prove active recording, stop feedback, hardware truth, accessibility, performance, or delight. Corrections preserve the quiet face and add facts at existing receipt/Meeting seams.
+The existing 1440 Live capture (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/surface-live-1440.png`) and 393 Live capture (`/Users/karol/dev/tools/wt-modernize-all-20261022/.tmp/evidence-shots/desk-sweep/surface-live-393.png`) show a promising fast path: one Start verb, four visible steps, no modal, and a readable 393 layout. Source inference shows the shared Button and saved return. These are idle states only; they do not prove active recording, stop feedback, hardware truth, accessibility, performance, or delight. Corrections preserve the quiet face and add facts at existing receipt/Meeting seams.
 
 CONDITIONS: Make the four contracts above explicit in the audit, name active source/tests for each, and add the acceptance challenges below. No new owner gate is implied.
 
