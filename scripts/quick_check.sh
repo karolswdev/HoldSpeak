@@ -191,11 +191,9 @@ fi
 #      the hub changed), then the canon guards ───────────────────────────────
 if [ -z "$webany$hubany" ]; then
   echo "== desk sweep: nothing under web/ or holdspeak/ changed, skipped"
-  src=0; swept="$SWEEP_MIN"; : >"$H/sweep.log"
 else
 echo "== desk sweep"
 lock uv run pytest -q -rs -n 8 --dist worksteal tests/e2e/test_desk_sweep.py >"$H/sweep.log" 2>&1; src=$?
-fi
 grep -E '^(FAILED|ERROR|SKIPPED)|passed|failed|skipped' "$H/sweep.log" | tail -12 | sed 's/^/   /'
 swept="$(grep -oE '[0-9]+ passed' "$H/sweep.log" | tail -1 | grep -oE '[0-9]+' || echo 0)"
 if grep -qiE 'skipped' "$H/sweep.log"; then
@@ -209,6 +207,7 @@ elif [ "$src" != 0 ]; then
   echo "   the desk sweep failed (rc=$src): RED (log: $kept)"; fail=1
 elif [ "${swept:-0}" -lt "$SWEEP_MIN" ]; then
   echo "   the desk sweep ran ${swept:-0} cases, under the floor of $SWEEP_MIN: RED"; fail=1
+fi
 fi
 
 echo "== canon guards"
