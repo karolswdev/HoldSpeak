@@ -39,7 +39,7 @@ FIXTURE = {
     "desk/lazy.test.ts": 'const m = await import("./a/AWin");\n',
     "desk/mocked.test.ts": 'vi.mock("./b/BWin");\n',
     "desk/reader.test.ts": 'readFileSync("src/desk/surface/gadgets.css", "utf8");\n',
-    # live code that re-exports a parked module (desk/components/SystemShade.tsx)
+    # live code that re-exports a parked module
     "desk/_parked/Shade.tsx": 'import { Gadget } from "../surface";\nexport const Shade = Gadget;\n',
     "desk/_parked/shade.test.tsx": 'import { Shade } from "./Shade";\n',
     "desk/Shade.tsx": 'export { Shade } from "./_parked/Shade";\n',

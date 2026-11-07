@@ -6,6 +6,7 @@ and original HoldSpeak skills. Seeded into the DB on first run.
 from __future__ import annotations
 
 import re
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -53,11 +54,14 @@ def list_builtin_skills() -> list[dict[str, Any]]:
     return skills
 
 
+def _new_id(prefix: str) -> str:
+    return f"{prefix}_{uuid.uuid4().hex[:12]}"
+
+
 def seed_skills_if_empty() -> int:
     """Seed the skills table from built-in library if it's empty. Returns count seeded."""
     try:
         from ..db import get_database
-        from ..web.routes.primitives._shared import _new_id
         db = get_database()
         existing = db.skills.list()
         if existing:

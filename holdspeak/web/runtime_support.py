@@ -9,8 +9,8 @@ Phase 26 decomposition is dismantling).
   device id is not registered; the meeting routes map it to a 404.
 - `meeting_callback_payload` — normalize a lifecycle-callback result (an object
   with `to_dict()`, a dict, or neither) into a JSON-able payload or `None`.
-- `parse_iso_datetime` — lenient ISO-8601 parse used by duration formatting and
-  the activity meeting-candidate routes.
+- `parse_iso_datetime` — lenient ISO-8601 parse; it lives in
+  `holdspeak/timestamps.py` and is re-exported here.
 
 The names keep their historical leading underscore via module-level aliases so
 existing call sites (`_UnknownDeviceError`, `_meeting_callback_payload`,
@@ -20,12 +20,12 @@ existing call sites (`_UnknownDeviceError`, `_meeting_callback_payload`,
 from __future__ import annotations
 
 import logging
-from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from fastapi.responses import JSONResponse
 
 from holdspeak.redaction import redact_error
+from holdspeak.timestamps import parse_iso_datetime  # noqa: F401  (moved; the old name stays importable here)
 
 
 class UnknownDeviceError(LookupError):
@@ -50,15 +50,6 @@ def meeting_callback_payload(result: Any) -> Any:
     if isinstance(result, dict):
         return result
     return None
-
-
-def parse_iso_datetime(value: Any) -> Optional[datetime]:
-    if not isinstance(value, str) or not value:
-        return None
-    try:
-        return datetime.fromisoformat(value)
-    except Exception:
-        return None
 
 
 def error_500(exc: Exception, logger: logging.Logger, detail: str) -> JSONResponse:

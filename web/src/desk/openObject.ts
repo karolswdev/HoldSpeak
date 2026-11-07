@@ -154,14 +154,6 @@ export function takeRoomUpdatesRequest(projectId: string | null | undefined): bo
   return !!projectId && roomUpdates.delete(projectId);
 }
 
-/** The event the Desk's attention drawer listens for to open the system
- * shade (its held tool calls, Needs you). */
-export const OPEN_SYSTEM_SHADE_EVENT = "hs-open-system-shade";
-
-export function openSystemShade(): void {
-  window.dispatchEvent(new CustomEvent(OPEN_SYSTEM_SHADE_EVENT));
-}
-
 /** Refs the citation species opens in a window of their own. */
 const WINDOW_REF = /^(meeting|decision|note|artifact|thread):\S/;
 // `action:` is memory's name for the same action item (a recall hit, a chat citation).
@@ -212,9 +204,12 @@ export function refOpener(ref: string | null | undefined, navigation?: DeskNavig
     return id ? () => openAgentLane(id) : null;
   }
   // Conductor R1: a held tool call of a launched agent is `gate:<proposal_id>`;
-  // it opens the system shade, where the held call is listed.
+  // it opens the Needs you window, where the held call is listed with
+  // Approve and Deny (the system shade it opened is parked).
   if (clean.startsWith("gate:")) {
-    return clean.length > "gate:".length ? () => openSystemShade() : null;
+    return clean.length > "gate:".length ? () => {
+      void import("./chair/chairWindows").then((m) => m.openChairWindow("chair:needs"));
+    } : null;
   }
   // S9: a Wrote row names the actual hub window that an Ask opened or
   // arranged.  Restore that window in the shared compositor; the hub frame

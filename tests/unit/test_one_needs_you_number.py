@@ -94,9 +94,8 @@ def _readers(hub: Hub) -> dict[str, int]:
     assert not is_error, mcp
     brief = _ok(hub.client.post("/api/brief/generate"))
     return {
-        # The bell, the Chair window, the Dock badge, the system shade and
-        # the palette all read this answer (web/src/desk/needsYou.ts,
-        # SystemShade.tsx, DeskToolShelf.tsx).
+        # The bell, the Chair window, the Dock badge and the palette all
+        # read this answer (web/src/desk/needsYou.ts, DeskToolShelf.tsx).
         "route": int(route["count"]),
         "route_members": len(route.get("members", route["items"])),
         "route_fresh": int(fresh["count"]),

@@ -56,8 +56,6 @@ TUESDAY_USE: dict[str, int] = {
     "PeopleCore": 6,
     "ThreadPullout": 6,
     "DeskComposer": 6,      # the Thread / Ask
-    "AttentionDrawer": 5,   # the shade / attention
-    "SystemShade": 5,
     "SpeakFace": 5,         # Speak
     "DictationCore": 5,
     # Tier 2 -- regular but not weekly

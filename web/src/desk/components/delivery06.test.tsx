@@ -11,7 +11,7 @@ import storyFixture from "../../../../apple/Tests/ContractsTests/Fixtures/delive
 import { PaneWell } from "../surface/Surface";
 import { censusByAgent } from "./MissionControlConveyor";
 import { DeliveryDossierWindow } from "./DeliveryDossierWindow";
-import { LifecycleChip } from "../../pages/cores/ProjectMemoryCore";
+import { LifecycleChip } from "../../features/project-room/ProjectRoomCore";
 
 function session(over: Partial<McSession>): McSession {
   return {

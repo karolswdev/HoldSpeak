@@ -5,15 +5,16 @@
 // The desk is minted by the REAL producers (`scripts/needs_you_faces_fixture.py`:
 // the PHILO-13 oracle week + one Room commitment the owner waits on Priya
 // for). Each face below gets the hub's real payloads and must say the hub's
-// number: the shade's Projects list and the palette's project badge say the
-// hub's members of that Project (`projectCounts`); the Chair's Brief caption
-// says the hub's `count`.
+// number: the palette's project badge says the hub's members of that Project
+// (`projectCounts`); the Chair's Brief caption says the hub's `count`. The
+// shade's Projects cases are parked with SystemShade
+// (web/src/desk/_parked/attention/__tests__/oneNumberFaces.test.tsx).
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -44,7 +45,6 @@ import { EMPTY_ITEMS } from "../api";
 import { usePalette } from "../chromeState";
 import { ChairHome } from "../chair/ChairHome";
 import { DeskToolShelf } from "../components/DeskToolShelf";
-import { SystemShade } from "../components/SystemShade";
 import { resetNeedsYou } from "../needsYou";
 import { useDesk } from "../store";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
@@ -119,34 +119,6 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
     // ... and the hub's one rule does not count it.
     expect(hub.projectCounts).toEqual({ [room.id]: roomRows.length - 1 });
     expect(hub.count).toBe(hub.members.length);
-  });
-
-  it("the shade's Projects list says the hub's members of each Project", async () => {
-    const hub = desk.needsYou as Json;
-    const room = projectsOf(desk.projects).find((p) => p.name === "A2 oracle room")!;
-    const muted = projectsOf(desk.projects).find((p) => p.name === "M1 muted room")!;
-    render(<SystemShade open onClose={() => {}} onOpenMemory={() => {}} />);
-    const section = await screen.findByTestId("shade-projects");
-    const total = Object.values(hub.projectCounts as Record<string, number>).reduce((a, b) => a + b, 0);
-    expect(within(section).getByRole("heading").textContent).toBe(`Projects · ${total} OPEN`);
-    const rows = within(section).getAllByTestId("shade-project-row");
-    const roomRow = rows.find((row) => row.textContent?.includes(room.name))!;
-    expect(roomRow.textContent).toContain(`${hub.projectCounts[room.id]} OPEN`);
-    const mutedRow = rows.find((row) => row.textContent?.includes(muted.name))!;
-    expect(mutedRow.textContent).toContain("MUTED");
-    expect(mutedRow.textContent).not.toMatch(/\d+ OPEN/);
-  });
-
-  it("Open on a Room row closes the shade and opens that Room", async () => {
-    // replaces: tests/e2e/test_hs171_shade_glass.py::test_shade_projects_1440 (the Open leg; the 393 twin is the same DOM)
-    const room = projectsOf(desk.projects).find((p) => p.name === "A2 oracle room")!;
-    const onClose = vi.fn();
-    render(<SystemShade open onClose={onClose} onOpenMemory={() => {}} />);
-    const section = await screen.findByTestId("shade-projects");
-    const row = within(section).getAllByTestId("shade-project-row").find((r) => r.textContent?.includes(room.name))!;
-    fireEvent.click(within(row).getByRole("button", { name: "Open" }));
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(shell.openProjectRoom).toHaveBeenCalledWith(room.id);
   });
 
   it("the palette's PROJECTS rows: the hub's counted Room first, the rest by name", async () => {

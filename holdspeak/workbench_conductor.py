@@ -300,8 +300,6 @@ def _auto_mint_artifact(
         return existing.result_artifact_id
 
     try:
-        from .web.routes.primitives._shared import _new_id
-
         # ── Kernel admission (Article XI) ─────────────────────────────
         # Use the context-bound public API, not the private _service().
         # The conductor sets the owner principal via _as_principal().

@@ -22,7 +22,7 @@ from typing import Any, Optional
 
 __all__ = [
     "utc_now", "utc_now_iso", "utc_iso", "local_now", "local_wall", "parse_stamp", "aware",
-    "sql_window", "in_window", "parse_wall", "sql_instant", "naive_local",
+    "sql_window", "in_window", "parse_wall", "sql_instant", "naive_local", "parse_iso_datetime",
 ]
 
 
@@ -68,6 +68,21 @@ def aware(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.astimezone()
     return value
+
+
+
+def parse_iso_datetime(value: Any) -> Optional[datetime]:
+    """A wire ISO string read as it is (no zone added), else None.
+
+    The meeting and activity routes' loose reader: a non-string, an empty
+    string or an unreadable one is None. Unlike ``parse_stamp`` it never makes
+    the value aware."""
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        return None
 
 
 def parse_stamp(value: Any) -> Optional[datetime]:

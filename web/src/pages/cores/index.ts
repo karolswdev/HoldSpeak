@@ -12,7 +12,5 @@ export type {
   SecretState,
 } from "./core-types";
 
-export type { ProjectTimelineEntry } from "./ProjectMemoryCore";
-
 export { useAction, useCoreWings } from "./core-hooks";
 export { renderHeroSlot, CoreResourceGuard } from "./core-layout";

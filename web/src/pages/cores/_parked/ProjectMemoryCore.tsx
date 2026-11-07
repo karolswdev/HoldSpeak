@@ -1,3 +1,5 @@
+// Parked 2026-11-07: no production importer (the Memory window loads MemoryCore,
+// which hosts features/project-room/ProjectRoomCore); its tests import that core.
 // HS-158-05 — thin compatibility re-export.  The implementation
 // graduated into features/project-room/ (WEB-ARC-001..004); this file
 // preserves every import path that tests, the barrel, and the lazy

@@ -1,10 +1,11 @@
-// Needs you and the system shade on the hub's OWN answers (the test diet,
+// Needs you on the hub's OWN answers (the test diet,
 // 2026-10-11). The answers under ./wire were captured on a real hub where an
 // agent's own credential held two calls outside its worktree through the real
 // gate route (`ls /etc`, and a 198-char call the hook cut), and are fenced
 // against the hub's shape on every run by
 // tests/integration/test_desk_agents_wire.py. Only apiFetch is a double; the
-// drawer, the shade, the gate store and the needs-you reader are the real ones.
+// drawer, the gate store and the needs-you reader are the real ones. The
+// shade's case is parked with SystemShade (web/src/desk/_parked/attention/).
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hubWire } from "./wire/hubWire";
@@ -29,8 +30,6 @@ vi.mock("../documentSendsLazy", () => ({
 import { openCoderSession } from "../shell";
 import { useAgentFlights } from "../agentFlights";
 import { NeedsDrawer } from "../needs/NeedsDrawer";
-import { SystemShade } from "../components/SystemShade";
-import { useGate } from "../gate";
 
 const NEEDS = hubWire("needs-you.gate");
 const HELD = hubWire("gate-proposals.held");
@@ -107,18 +106,6 @@ describe("a held call on Needs you (Conductor R1, PHILO-14 A5)", () => {
     // PHILO-15 20 (B63): Open opens the lane on Raw, where the cut call is approved.
     fireEvent.click(row.querySelector("[data-verb='open']")!);
     expect(openCoderSession).toHaveBeenCalledWith("claude:glass-r1", { raw: true });
-  });
-
-  /** replaces: tests/e2e/test_conductor_r1_gate_row_glass.py::test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it (the shade) */
-  it("the shade shows the cut call `… +90 CHARS` with Deny only", async () => {
-    render(<SystemShade open onClose={vi.fn()} onOpenMemory={vi.fn()} />);
-    await waitFor(() => expect(useGate.getState().held.length).toBe(2));
-    const cards = [...document.querySelectorAll<HTMLElement>(".desk-gate-item")];
-    const cut = cards.find((card) => (card.textContent ?? "").includes("psql -h staging-ledger"))!;
-    expect(cut).toBeTruthy();
-    expect(within(cut).getByTestId("shade-gate-command").textContent?.endsWith("… +90 CHARS")).toBe(true);
-    expect(within(cut).queryByRole("button", { name: "Approve" })).toBeNull();
-    expect(within(cut).getAllByRole("button", { name: "Deny" })).toHaveLength(1);
   });
 });
 
