@@ -1,0 +1,22 @@
+# HS-T22-03 · Verify the tree the next step actually receives
+
+**Independent review/test task; no source edits or shipping.** Requires accepted G22-A, final [HS-T22-02](HS-T22-02-start-input.md) report/diff and a named environment/role. Parent: [HS-S22](../stories/HS-S22-step-starting-input.md).
+
+## Mandatory context
+
+[Agent safety](../AGENT_START.md#authority-and-checkout-safety); accepted contract and final diff; story [matrix](../stories/HS-S22-step-starting-input.md#acceptance-matrix), [limits](../stories/HS-S22-step-starting-input.md#preservation-and-failure-boundaries), [rollback](../stories/HS-S22-step-starting-input.md#tasks-and-rollback); [V22](../VALIDATION.md#v22-step-starting-input-verification). Read the exact production-hand and launch tests, not only a helper unit test.
+
+## Review and proof
+
+1. Trace descriptor ownership, read-only validation, nested argument hash, admission/claim and execution. No fetch may occur in source/spec/preview/capacity paths or on a denied claim. Local placement and real server records bound the selection; nested client JSON grants no new authority.
+2. Trace exact ref advertisement, frozen object fetch success, commit validation, literal start point, known create result, pre-spawn verification and durable ledger. Check configured/effective remote identity, not just the source ID. No stale ref/local object may turn a failed fetch into fresh success.
+3. Verify every launch-row replacement preserves selection/verification and command/operation links. A generic worktree receipt or existing path alone cannot prove this attempt's input. Missing persistence/mismatched identity prevents spawn without destructive cleanup or blind replacement launch.
+4. Inspect the actual pre-spawn final-text path and byte check. The returned proof/text must be the held/sent input, including after restart. A finalizer called only after `launch()` returns is too late. Check that actual process.input admission hashes the delivered text and no held-message resume reselects input.
+5. Prove the real two-step case with the owner's local branch intentionally older than the remote. B must see and use A's dependency before any simulated builder writes. Review the [V22 fixture map](../VALIDATION.md#fixture-composition-and-failure-visibility): one temporary DB and actual ledger, local bare remote, no earlier FakeHand-created B, per-launch rider identity and actual sent-text synchronization. Check both Git delegates; an empty tmux.calls list proves no absence of Git because the fake forwards Git before recording. Reject unchecked/empty SHA equality and post-teardown tree inspection claims. Keep all old final-output assertions as regressions.
+6. Simulate immediate post-spawn HEAD movement. Initial proof and new diff base remain the pre-spawn value; current HEAD can differ. Dirty Hand again/handoff retains its prior baseline and work; legacy missing proof is not fabricated or newly treated as a blocker.
+7. Verify the separately accepted checkpoint tightening, missing/moved ref refusal and no-fetch behavior. Move the ref between comparison and creation: literal stored-commit input and pre-spawn HEAD verification must prevent substitution. Keep helper parent starts, owner-parked readiness, capacity waiting and Program repository binding intact. No final-delivery or ordinary queued-project policy change belongs here.
+8. Run final V22 collection/tests after the last edit under its explicit isolation/switch recipe; inspect selected node IDs/counts, skips, logs and in-test stored-state/owner-tree assertions before passing tmp_path cleanup. Lock timeout, failed/empty collection, a disabled direct runner or incomplete first-message proof is not a pass. Live provider/remote operations are not needed. Have the integration owner run the current gate; no-change exit zero or omitted focused tests is not proof.
+
+## Exit and stops
+
+Return the [completion report](../COMPLETION_REPORT_TEMPLATE.md) with C22 outcomes, exact diff, actual command support/run evidence, selected-input trace, preserved data and remaining concurrency/server/legacy limits. Hold for separately authorized shipping. Stop for an unresolved local-only choice, false freshness/atomicity claim, lost baseline, unverified first-message timing, unsafe fixtures or expanded framework/remote-executor scope. Request the smallest correction rather than editing outside the assigned review lane.

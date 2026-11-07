@@ -1,0 +1,65 @@
+# HS-E30 · Recover work without losing its identity
+
+**Proposed outcome workstream; implementation not assigned.** Parent: [ordered plan](../EXECUTION_INDEX.md#2-proposed-workstream-hierarchy). Planning does not select pending behavior or authorize repository/remote effects.
+
+## Outcome and boundaries
+
+When work stops between preparation, an external effect and its local receipt, the owner can understand what is known and continue the same work without accidentally repeating an effect. Keep completed work complete, preserve history and identify uncertainty plainly.
+
+This is a shared design question, not a shared recovery engine. Program delivery, queued Automation occurrences, People requests, Thread turns and optional checkpoints have different identities, authority and cancellation semantics. Their existing ledgers/services remain owners. Absence of a row is not proof that nothing happened; a failed response is not proof a remote operation failed.
+
+## Stories and local gates
+
+| ID | Outcome | Required decision/proof |
+| --- | --- | --- |
+| [HS-S31](#hs-s31-shared-queue-outcome-contract-gate) | Waiting occurrences reflect verified terminal queue outcomes | D18/G31: shared queue consumers, retained evidence and cancellation/dispatch boundary; contract gate only, implementation unexpanded |
+| **[HS-S32](../stories/HS-S32-delivery-recovery.md)** | Program delivery uses known PR identity and distinguishes uncertainty before another effect | D21/G32: explicit recovery stages, authoritative repository/PR match, safe retry versus read-only reconciliation; Program Done stays separate |
+| **[HS-S33](../stories/HS-S33-people-add-recovery.md)** | People Add resumes an acknowledged request instead of creating another | G-ADD/G33: same-mount receipt versus atomic operation design; known-ID Check/explicit Accept, unknown creation and private custody; no durable/cross-window guarantee |
+| HS-S34 | Observers detach from a Thread turn without conflating cancellation or persisted completion | Earlier D02: preserve Ask/Calls-specific behavior and late answers; no universal lifecycle abstraction |
+| HS-S35 | Optional checkpoint recoverability is visible without falsifying history | Earlier D04: pin failure remains nonblocking; stored ref is not perpetual availability and later pin is not original checkpoint |
+
+## HS-S31 shared queue outcome contract gate
+
+**Contract-readiness work, not an implementation task or accepted policy.** Resolve D18/G31 before expanding code/proof briefs. Read this gate, the [waiting-work and terminal-evidence trace](../NEXTGEN-JOURNEYS-AND-NAVIGATION.md#waiting-work-appendix-terminal-queue-outcomes-and-linked-occurrences), [execution safety](../AGENT_START.md#authority-and-checkout-safety) and the exact symbols below. Do not begin with a new Retry button or a generic recovery engine.
+
+### Source facts that constrain the design
+
+At pin `80b641fa41c7352280cfa52e933acf6dbe8d3857`, queue identity and occurrence identity have different cardinality:
+
+- `holdspeak/services/agent_hand_queue.py::HandQueue.add` (67–90) coalesces solely on source `(kind, id)`. A later add returns the retained row unchanged, including its original instruction/profile/project/review choice. `start_queued` (142–162) later consumes those stored fields. No Automation/workbench identity participates in that queue key.
+- `holdspeak/services/automation_runs.py::hand_item_id` (394–401) includes **workbench ID plus source reference**. `materialize_hand_items` (439–477) preserves an existing occurrence's context; `workbench_runner.py` (323–381) records the queue ID returned to each claimed occurrence. Different Automations can therefore retain distinct occurrence IDs pointing at the same queued source. This is a source-supported possibility, not a reproduced multi-Automation incident.
+- `automation_runs.py::sync_agent_hand_launches` (619–665) deliberately considers **all** nonparked rows matching queue ID, then validates the source reference and skips rows already carrying a launch ID. The relationship is potentially **zero to many matching consumers**, not a guaranteed one-to-one mapping. Direct hands need no Automation occurrence. `sync_agent_results` (547–616) and `_persist_agent_result` (488–544) later own Done/result handling per occurrence; dispatch-run completion is not that result.
+- `agent_hand_service.py` (573–591) may return the same retained queue ID while its queued response's profile/project describe the current request. Those fields alone do not establish the stored first entry's effective dispatch inputs. A projection must not silently overwrite the first entry or claim a later request's different configuration ran. Retained row values are not a frozen repository/profile configuration: `hand` runs again and ordinary source resolution is performed at start (`agent_hand_service.py` 462–485). Preserve that existing D17 boundary.
+- Refusal output currently contains queue ID/status/code but no source reference or retained terminal record (`agent_hand_queue.py` 153–159). Cancellation removes the shared queue entry (`web/routes/agent_hand.py` 168–178). The existing heartbeat projects only launched answers (`web_server.py` 383–388). A source match, terminal reason and dispatch state cannot be reconstructed merely from a now-missing queue row; malformed/unreadable queue storage also reads as empty (50–56).
+
+These facts refine the existing terminal-projection question. They do not select different coalescing, imply authority leakage, prove a runtime double launch, or authorize changing Automation/hand consent.
+
+### Required G31 contract output
+
+1. **Declare the effect and its consumers.** Record queue ID, canonical source identity, retained queue fields and separately established launch facts, each eligible occurrence ID and any actual launch/effect references. Preserve the current zero-to-many mapping and nonparked/already-launched guards unless a separate behavior change is accepted. Do not pick the first matching occurrence or use workbench/source identity as a new queue key by accident. Shared queued work and separately owned occurrence/result records remain distinct.
+2. **Locate readable outcome evidence before promising convergence.** Name the existing domain owner and proposed retained fields/read contract for cancellation/refusal, including safe reason/effect references and queue/source linkage. State which evidence fields each eligible consumer may display; shared linkage is not permission to fan out unrestricted exception context or instructions. Decide whether recovery after removal-before-projection or process restart is promised, and how that evidence remains available. The live queue and occurrence DB do not currently provide one atomic terminal transaction; logs, generic change events and an empty list are not an authoritative terminal record. No new table/file format, generic event registry or schema is selected here. If durable evidence is not designed, explicitly bound the result rather than claim reliable restart recovery.
+3. **Separate queue cancellation from an occurrence-only action.** The current endpoint removes the shared queue entry. Define what that means for every linked consumer and distinguish removal before dispatch from a request arriving after dispatch is committed. The file-edit lock does not cover snapshot→hand invocation; an already-started effect cannot be labeled prevented. A stronger prevention guarantee requires an explicit accepted arbitration/claim contract and proof before implementation. Do not add per-occurrence withdrawal or silently cancel a running hand as a projection side effect.
+4. **Define projection without redispatch.** Choose exact occurrence/nested hand states and safe owner wording for verified cancellation, refusal, launched, capacity waiting and unresolved evidence. Retain the existing source/queue/launch identity and unrelated context, do not downgrade an already-linked launch on stale terminal evidence, and do not infer no prior clone/effect from refusal. Repeated observation may update only the accepted projection; it must not launch work, run result delivery or create another occurrence. Changing coalescing or reconciling conflicting requested configurations is a separate local decision, not hidden cleanup.
+5. **Keep retries separate.** Workbench Run currently skips a retained queue/launch ID or terminal hand status (`workbench_runner.py` 323–340). `web/src/desk/components/WorkbenchWindow.tsx` Re-run (618–621/844–852) resets top-level result/status, not that nested identity. It is not an established same-work recovery route. A future intentional retry needs its own accepted identity/admission contract; clearing IDs, reviving cancellation or re-running completed work is not authorized by terminal projection.
+
+### Proof to specify before implementation
+
+Use these **existing source-read anchors**, not a new executable test budget: `tests/unit/test_agent_hand_cap.py` covers duplicate queue presses, capacity waiting and direct refusal/removal; `tests/unit/test_automation_agent_hand.py` covers per-workbench materialization/claim and result behavior; `tests/integration/test_automation_agent_hand_real.py` covers two distinct source items through queue→launch→Done; `tests/integration/test_desk_agents_wire.py` covers sequential direct cancellation/repeat-delete/disappearance. None of those inspected cases establishes the shared-consumer terminal contract by itself. The real-hub integration uses local Git/tmux/processes; its name is not permission to run it.
+
+The future accepted brief must name the smallest owned test paths, fixtures, commands and expected states for: two Automations sharing one source/queue plus a direct requester, with direct-first and Automation-first orderings; different later instruction/profile/project/review inputs without mutating the stored first entry or pretending to freeze later resolution; correct zero/one/multiple eligible consumer projection with safe evidence and parked/mismatched/unrelated rows excluded; stale outcome after an existing launch; capacity lost between checks; cancellation after queue snapshot; removal-before-projection/restart if promised; and repeated observation with zero new launches/results/delivery. Use deterministic barriers and isolated state/fakes, not sleeps or a live owner process. Preserve the current concurrent-Run claim separately from queue-consumer arbitration. These are proposed proof obligations, not reproduced incidents or tests already present/passing.
+
+Return a bounded contract/ownership map, the selected or unresolved G31 decisions, exact data/compatibility/authority changes if any, failure/replay limits and a proposed focused proof budget. Only then expand implementation tasks. Retaining current coalescing with clearer outcome projection is a valid scope; a new scheduler is not a prerequisite. Stop for missing terminal identity, unproved cancellation guarantees, unreviewed many-consumer effects, a need to erase history or a larger retry/storage design. No code, UI, storage or test edits are assigned by this gate.
+
+## Delivery and proof
+
+Each selected story begins with [HS-T00](../tasks/HS-T00-baseline.md), then resolves its own behavior gate and validates the producing side effect plus the consuming receipt/UI. No unrelated story blocks a bounded improvement. Unknown outcomes need explicit reconciliation limits before a Retry button is offered.
+
+The detailed S32 branch uses the existing Program delivery owner and ledger, not a new scheduler or all-product operation registry. Source-inspected happy-path fakes are not proof of duplicate handling, merge failure or uncertain remote effects. Focused fault injection must exercise the actual recovery consumer and assert which commands did **not** run.
+
+The detailed S33 branch preserves existing same-request acceptance and adds only in-memory UI recovery. Fresh creation still has no idempotency key; unacknowledged creation, full remount and independent windows remain explicit limits. Real encrypted producer proof and intercepted browser geometry are separate. A request is not yet an accepted promise, and a terminal commitment is not reopened by recovery.
+
+## Invariants and completion
+
+Preserve [I10/I11/I12/I16/I18/I21/I24](../INVARIANTS.md). Never infer permission to push, create/merge a PR, cancel a running hand, expose private data or rerun completed Program work from a recovery view. Future automated proof uses isolated fixtures/fakes and local repositories, never owner repositories or real remote services by implication.
+
+Each story supplies its own rollback and unknown-outcome stop. Code reversal cannot erase a remote PR, undo a merge or make a historical receipt untrue. No epic-wide schema migration, generic retry framework or broad lifecycle unification is assumed. Completion means the accepted slice has final-state proof and an honest residual-risk report, not that every recovery case in the product is solved.

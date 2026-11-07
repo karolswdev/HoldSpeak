@@ -1,0 +1,20 @@
+# HS-T41-04 · Prove the director identity journey
+
+**Independent verification brief; requires an assigned test environment.** Depends on [HS-T41-01](HS-T41-01-contract.md) and reports from the accepted [Meeting](HS-T41-02-meeting-identity.md)/[Room](HS-T41-03-alias-resolution.md) subset. Parent: [HS-S41](../stories/HS-S41-director-person-identity.md). No unaccepted branch is assumed complete.
+
+## Mandatory context
+
+[Safety](../AGENT_START.md#authority-and-checkout-safety); story [matrix](../stories/HS-S41-director-person-identity.md#acceptance-matrix), [custody](../stories/HS-S41-director-person-identity.md#interaction-and-outcome-custody) and [stops](../stories/HS-S41-director-person-identity.md#rollback-and-stops); [V41](../VALIDATION.md#v41-director-person-identity-verification); [I16/I17/I18/I21/I23/I25](../INVARIANTS.md); current scoped instructions and predecessor reports.
+
+## Procedure
+
+1. Recheck source drift, actual diff, accepted G41 subset, edit ownership and isolation. Only the two named UI files may have production changes without an amendment. No Room DTO/private-fields widening, ordinary person-ID persistence, backend alias change or new generic state machinery should be hidden in the diff.
+2. Collect and run the exact accepted V41 Python/web cases; collection can execute code and is not a pass. Wire-write flags stay unset. Independently inspect producer capture provenance and ordinary/encrypted stored state; typed mocked objects are not evidence of service authority or join identity.
+3. Exercise the real local producer chain and route refusals with synthetic encrypted People plus ordinary meeting/action/commitment records. Distinguish alias ownership, current Room commitment attribution and Door action-ID navigation. Verify two matching ordinary obligations keep identity/text while attribution changes; privacy projection and observer boundaries remain intact.
+4. Exercise app races and fault injection: same-name options, duplicate/conflicting Door mappings, fresh read failure, A→B→A, context change during Link, forbidden/read-only caller, known acknowledgement followed by refresh failure, uncertain POST, exact-literal/case-variant reconciliation and row eligibility loss. Count effects; no navigation/Check path may POST or auto-reconfirm.
+5. Run the proposed isolated browser lane after its prerequisites exist. Inspect current menu controls, deliberate selection/confirmation/inspection, cancel, read-only Check, keyboard/Escape/focus, actual target hit ownership and screenshots at all V41 layouts. For [exact-person return](../VALIDATION.md#exact-person-inspection-and-return-proof), use the actual pullout and existing Context Add, then explicit Room Check with no inline receipt/POST; a synthetic settings-updated event, forced remount or preseeded resolved Room response cannot substitute. Distinguish zero-write inspection, one deliberate inline Link and one external Context Add scenarios; preserve roster return separately. Do not claim focused owner-row reveal from project navigation, special focus return from exact-person close or identity certainty from duplicate-name screenshots.
+6. Review all C41 rows and report accepted subset passed/failed/blocked individually. The integration owner runs the current integrated gate, inspects real stage execution and final changed state, then completes the [report](../COMPLETION_REPORT_TEMPLATE.md). A prior pass before later shared edits is not final proof.
+
+## Exit, rollback and stops
+
+Complete only with actual focused/app/browser evidence, independent review, applicable integration checks and a truthful remaining-gap report. No live People data, owner keystore, provider/device or external communication is needed. A missing test/browser dependency is blocked proof, not permission to install or use the owner's environment. Do not fix implementation during independent verification without a new bounded assignment. Never unlink aliases or delete ordinary records to clean up the owner's state; test cleanup applies only to task-owned temporary state. No push/merge/deploy follows from a passing report.

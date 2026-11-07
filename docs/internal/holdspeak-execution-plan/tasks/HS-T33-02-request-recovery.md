@@ -1,0 +1,23 @@
+# HS-T33-02 · Retain and reconcile the saved People request
+
+**Conditional implementation brief, not present authority.** Requires [HS-T33-01](HS-T33-01-contract.md), accepted G33-A and explicit checkout/implementation assignment. Parent: [HS-S33](../stories/HS-S33-people-add-recovery.md).
+
+## Mandatory context
+
+[Agent safety](../AGENT_START.md#authority-and-checkout-safety); accepted contract report; story [design](../stories/HS-S33-people-add-recovery.md#narrow-implementation-design), [matrix](../stories/HS-S33-people-add-recovery.md#acceptance-matrix) and [rollback](../stories/HS-S33-people-add-recovery.md#rollback-and-stops); [V33](../VALIDATION.md#v33-people-add-recovery-verification); [I04/I16/I17/I18/I21/I23/I25](../INVARIANTS.md). Exact local context only.
+
+## Owned work
+
+1. Add missing producer assertions first, using real service/store/route objects, temporary encrypted state and isolated test-only keys (MemoryKeyStore in existing store tests, temporary FileKeyStore in the full-hub producer). Capture one complete synthetic bundle through the designated writer only. Preserve current opposite-direction report-owes wire fixtures. Fault injection must establish that a write committed before the simulated response failure; do not merely mock an error and call it post-commit proof.
+2. In existing PeopleCore, implement the accepted in-memory attempt/guard and acknowledgement validation. Use the original submitted relationship/body/visibility, not later drafts or display names. Distinguish network pending, request known, acceptance uncertain, saved and creation unknown. No new production file or persisted receipt.
+3. Bind person rendering and callbacks to current host intent with generation/identity checks. Back/unmount/person change/protection clearing invalidate continuation before a late create can trigger acceptance. Same-person read refresh and lens/fold changes keep the attempt; preserve per-person keyed drafts/lens and visible-on-outage policy.
+4. Add read-only exact-ID reconciliation and separate explicit same-ID acceptance. Use complete relationship arrays; validate relation, request and commitment linkage in all lifecycle states. Contradictory/absent/malformed data stays unresolved. Ensure current Asked-of-you acceptance cannot bypass the held request guard. Never add GET-request or accept from a read callback.
+5. Replace Add-specific false failure wording with truthful known/unknown outcome and preserve submitted words separately from the editable draft. Known pre-write refusals use exact codes. A new promise after an unknown result requires explicit acknowledgement, and only a subsequent intentional Add dispatches it.
+6. Gate clearing/closing on same live attempt/person, unchanged local revision, unchanged immutable draft map and raw text equality. If any check fails, leave the draft and report the saved result. Preserve same-text roundtrips and other-window edits without changing shared store APIs.
+7. Clear/hide new protected context on key/owner-auth failures, including 401/403. For ambiguous store503, use guarded read-only readiness: current ready permits outage retention, nonready clears, failed/malformed readiness takes the accepted protective fallback and loses the private in-memory binding rather than guessing. No read/restoration automatically accepts. Late callbacks cannot repopulate it. Avoid broad error-helper changes for unrelated operations; a scoped Add context may preserve protection behavior without asserting nothing changed.
+8. Replace only the misleading Owe-specific fixture path in the existing app test; keep agenda/report-owes draft cases. Add deferred/race, raw producer envelope, malformed and unknown cases under V33. Implement the bounded existing-rig browser test and inspect real controls/screenshots at wide/phone sizes with all domain writes intercepted.
+9. Run assigned focused checks, then recording-off final budget and type/architecture checks. Return actual diff, logs/counts, acceptance matrix and remaining limits for independent review. No app/backend/schema/authority changes outside the declared file and test budget; no shipping.
+
+## Exit and recovery
+
+Every accepted C33 row has named passed/failed/blocked proof. The existing store owns commitment durability/idempotence, while UI receipt controls only the same mounted attempt. Reverse owned code/tests/capture only when assigned; never delete encrypted records or retry a creation to “repair” proof. Stop for undecided semantics, drift, incomplete identity/protection/custody proof, required durable guarantees or unsafe test/provider behavior.

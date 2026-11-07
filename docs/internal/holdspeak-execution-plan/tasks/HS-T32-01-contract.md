@@ -1,0 +1,24 @@
+# HS-T32-01 · Set the bounded delivery recovery contract
+
+**Proposed characterization/decision task; no product edits.** Depends on [HS-T00](HS-T00-baseline.md). Parent: [HS-S32](../stories/HS-S32-delivery-recovery.md). G32 may remain pending at completion; dependent implementation then stays blocked.
+
+## Mandatory context
+
+[Agent safety](../AGENT_START.md#authority-and-checkout-safety); story [scope](../stories/HS-S32-delivery-recovery.md#outcome-and-explicit-scope), [choices](../stories/HS-S32-delivery-recovery.md#g32-choices-and-proposed-first-branch) and [matrix](../stories/HS-S32-delivery-recovery.md#acceptance-matrix); [V32](../VALIDATION.md#v32-delivery-recovery-verification), especially its source/ownership map; [I10/I16/I18/I21/I24](../INVARIANTS.md). Read current root/backend/web guides for the assigned paths, not the whole research library.
+
+## Work
+
+1. Revalidate the exact delivery producer, latest-line projection, owner decision lock and API/briefing consumers. Record that no durable pre-effect claim exists and that `changed`/`_deliver_once` do not independently hold the decision lock. Do not turn this limited slice into a general crash-recovery claim. Separate the proposed owner-Merge request barrier from the still-unprotected initial automatic and preparation-Retry paths.
+2. Resolve G32: explicit Check then owner recovery Merge; strict handled-stage Retry; incomplete legacy/uncertain-create blocking; additive displayed-checkpoint binding; provider-head guard/post-read; retained initial control-level behavior and the narrow committed owner-request receipt before every owner Merge (including fresh Secure). Confirm which supported adapters forward the binding and which legacy contexts must explicitly refuse. Resolve Skip’s local-terminal versus remote-result wording: preserve the known no-effect case and separately describe queued/unconfirmed effects, with no provider command or automatic recheck on Skip. This wording/representation choice remains pending G32, not approved by this task.
+3. Define an additive metadata schema and truth table. Keep credential-free original PR/repository identity, branch/base/head, target and phase evidence separate from observed current state. Preserve old fields/readability and existing checkpoint choices. Define missing/malformed metadata as insufficient evidence, not safe fresh work. Review how prior acknowledged identity and unresolved observation remain visible after an uncertain-result Skip removes the held row, including settled briefing output; do not infer a new schema from that display requirement.
+4. Specify Retry eligibility from actual attempted stages and relevant prior delivery history. A failure before PR creation but after push is not proof of no remote effect. Do not classify from English error text, absent search results or a title-derived branch.
+5. Specify one bounded read for Check; a fresh read, at most one conditional merge and a confirming read for recovery Merge. Parse unknown/malformed states as unknown. Queued/open is pending; no polling loop, force/admin flags or new repository registration is needed.
+6. Verify provider-command support from the official links in V32 and, only in an assigned environment, the installed CLI's non-network help/version surface. No real PR read/write is required for plan/test readiness. Missing conditional-head support blocks the strong guarantee rather than silently dropping it.
+7. Trace the displayed checkpoint ID end-to-end. An old briefing page must use its frozen ID, not the ID of a newer item looked up at answer time. Missing/stale bindings refuse/reload before effects. A completed Check on a one-answer briefing page needs fresh context for a later Merge, not silent mutation of the original choice.
+8. Establish baseline only when assigned. Record which tests execute real local Git/DW and verify GitHub is strictly fake; guard every unsupported gh branch against falling through. Select the exact V32 budget and fixture outputs.
+
+## Acceptance and stops
+
+Return the actual accepted choices or unresolved alternatives, metadata/truth table, adapter compatibility contract, command/result budget, exact owned paths, source drift and baseline/blocked proof. Capture rollback compatibility and residual crash/concurrent-process risks. Old code ignores the new marker, so no unguarded downgrade may resume against unconfirmed request rows. Use the [completion report](../COMPLETION_REPORT_TEMPLATE.md), marked characterization.
+
+Stop for missing assignment, unsafe fakes/real credentials, ambiguity about repository/PR identity, a general pre-effect/restart protocol beyond the accepted owner-Merge request barrier, automatic recovery beyond G32 or inability to bind a remote merge. Do not resolve those by inventing an operation registry, hidden permission or passing result. No product rollback is intended.

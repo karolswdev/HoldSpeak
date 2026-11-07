@@ -1,0 +1,23 @@
+# HS-T13-02 · Connect the current Room to existing Programs
+
+**Conditional implementation brief, not present authority.** Requires [HS-T13-01](HS-T13-01-contract.md), accepted G13-A and an explicit checkout/implementation assignment. Parent: [HS-S13](../stories/HS-S13-project-program-continuity.md).
+
+## Mandatory context
+
+[Agent safety](../AGENT_START.md#authority-and-checkout-safety); accepted contract report; story [design](../stories/HS-S13-project-program-continuity.md#narrow-implementation-design), [matrix](../stories/HS-S13-project-program-continuity.md#acceptance-matrix), [rollback](../stories/HS-S13-project-program-continuity.md#rollback-and-stop-conditions); [V13](../VALIDATION.md#v13-project-program-continuity-verification); [I02/I16/I17/I18/I21/I24/I25](../INVARIANTS.md). Read only the exact map, not all prior findings.
+
+## Owned work
+
+1. Add the missing C13 source-produced cases first in the V13 existing integration file, without starting a Program, running an agent or calling a provider. Only V13’s named capture-owner node writes the complete synthetic response bundle once; other nodes assert without writing, including under xdist. Assert IDs, scope, order and persisted state independently of its shape checker. Preserve existing producer helpers and unrelated captures.
+2. In existing `model.ts`, isolate Programs-only decode checks. Keep valid producer fields/order, absent and degraded meaning; do not turn malformed/duplicate/unidentified rows into a convincing zero or count. Do not throw away other Room sections, rewrite generic decoding or impose a new Program lifecycle enum.
+3. In existing controller, make the last-successful Room truth explicit on current Phase 1 full/quiet failure. Both success and error updates must honor the current sequence. An initial failure without a retained Room remains the existing load failure. Preserve snapshot, quiet catch-up baseline and draft custody; only a successful current Phase 1 clears the warning. Phase 2/3 failures do not affect this marker. Avoid an independent cache/timer or a broad load-lifecycle rewrite.
+4. In existing Core, compose the read-state wrapper after Files/before Sources. Reuse unchanged `RoomPrograms` for nonempty success; it already owns a fold. Explicit empty and unavailable surfaces use existing primitives. Preserve read layout registration and all action/from-project creation paths. No extra reader is needed because Programs arrives in Phase 1.
+5. Use the current debounced hook with a stable local kinds declaration including `program`; do not alter the shared known-kind fallback or add a second subscription. Test actual frame filtering and new/moved-in/moved-out rows, not just current-ID events.
+6. Feed the real envelope through decoder/controller/Room tests. Assert the exact ID reaches the actual store and host in the designated browser case, where the Program detail read is intercepted with its matching captured response. No Open acknowledgement is inferred from a void callback.
+7. Add only the scoped geometry/focus cases to the existing Room browser file under V13. Keep Program mutations fail-closed, inspect actual shots/controls, and record allowed Room/window bookkeeping separately. No CSS/host/file-budget expansion without a specific amendment.
+8. When D13 branch A/G11 and G13-A and the combined proof are explicitly assigned, implement [the creation-to-Room integration gate](../VALIDATION.md#creation-to-room-integration-gate) within the existing producer, bundle and consumer files. This conditionally makes the already listed `programs.app.test.tsx` editable for one linked consumer case, under serialized ownership with S11; other regressions remain read-only. No new production file, browser mutation permission or S12 dependency follows. If only S13 is assigned, leave this combined claim pending.
+9. Run assigned focused tests after each cohesive change, then the full accepted V13 budget with capture flags off. Distinguish collection, expected-red, final tests and browser results. Return the final diff and evidence for independent verification; do not ship.
+
+## Exit, recovery and stops
+
+All C13 cases have named proof and actual passed/failed/blocked status. No backend lifecycle, project association, repository migration, private People data or global list scope changes. A failed refresh retains a truthful last-read view and offers the existing read retry; it never retries Program effects. Reverse only owned code/test/fixture changes when assigned. Stop for unresolved semantics, source drift, unsafe fixture/provider behavior, required undeclared style/host edits, or incomplete identity/geometry proof.
