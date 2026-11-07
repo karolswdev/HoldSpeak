@@ -305,3 +305,30 @@ def test_narrowing_or_keeping_the_within_coverage_is_an_ordinary_change(tmp_path
     rig.service.update(OWNER, pid, within=[])
     opened = rig.service.text_apply(OWNER, pid, bare, dry_run=False)
     assert opened["applied"] is True and opened["lowers"] == [] and rig.service._program(pid)["within"] == ["src/"]
+
+
+def test_a_wider_within_on_a_stale_base_is_a_conflict_and_a_stranger_cannot_write(tmp_path) -> None:
+    """The coverage verdict never beats the other guards: a ``within`` that
+    changed since the base was read is a conflict even with his press, and
+    an agent that did not make the Program cannot write it at all. His own
+    press on the fresh text applies the row and moves the revision."""
+    rig, pid = _agents_program(tmp_path)
+    base, line = _within_edits(rig, pid, "src/")
+    rig.service.update(OWNER, pid, within=["src/", "lib/"])
+    wider = _edit(base, (line, "  within src/, docs/"))
+    stale = rig.service.text_apply(OWNER, pid, wider, base=base, dry_run=False, allow_lower=["program.within"])
+    row = next(row for row in stale["changes"] if row["id"] == "program.within")
+    assert (stale["applied"], row["verdict"], row["code"]) == (False, "conflict", "text_conflict")
+    assert rig.service._program(pid)["within"] == ["src/", "lib/"]
+    stranger = Principal(PrincipalKind.AGENT, "agent:stranger")
+    narrowed = _edit(rig.service.text_get(OWNER, pid)["text"], ("  within src/, lib/", "  within src/"))
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.text_apply(stranger, pid, narrowed, dry_run=False)
+    assert refused.value.code == "not_your_program"
+    assert rig.service._program(pid)["within"] == ["src/", "lib/"]
+    revision = int(rig.service._program(pid).get("revision") or 0)
+    fresh = _edit(rig.service.text_get(OWNER, pid)["text"], ("  within src/, lib/", "  within src/, lib/, docs/"))
+    answer = rig.service.text_apply(OWNER, pid, fresh, dry_run=False, allow_lower=["program.within"])
+    assert answer["applied"] is True and answer["lowers"] == ["program.within"]
+    assert rig.service._program(pid)["within"] == ["src/", "lib/", "docs/"]
+    assert answer["revision"] > revision
