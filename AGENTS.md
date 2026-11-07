@@ -7,9 +7,9 @@ Ask: **Can the owner, tired on a Tuesday, do this without our narration?**
 
 ## Start here
 
-1. Read [TWO-BRAINS](docs/internal/TWO-BRAINS.md) first each session, then
-   [CLAUDE.md, How we work now](CLAUDE.md#how-we-work-now-the-fast-cycle-owner-ruling-2026-10-12).
-   Read `pm/STATUS.md` for current work and open defects.
+1. Read [CLAUDE.md, How we work now](CLAUDE.md#how-we-work-now-one-brain-one-loop-three-checks-owner-ruling-2026-11-07)
+   (one brain, one loop, three checks; owner ruling 2026-11-07). Read
+   `pm/STATUS.md` for the last merges. Two Brains is retired history.
 2. The [Constitution](docs/internal/CONSTITUTION.md) and its Seven Tenets
    govern the product. Follow the latest explicit owner ruling where older
    process passages conflict. The 2026-10-12 fast cycle supersedes historical
@@ -25,6 +25,8 @@ Ask: **Can the owner, tired on a Tuesday, do this without our narration?**
 
    Scoped guides add detail; they do not override the Constitution or the
    current owner workflow. Check paths and anchors: other lanes move main.
+   The direction every change serves: effortless and powerful; glue the core
+   workflows; one implementation of each thing, never a second.
 
 ## Product priorities
 
@@ -46,25 +48,19 @@ unfinished job. Prefer improving a shared pattern over adding another face.
 
 ## Roles and delegation
 
-Astra (`gpt-6-astra`) is the reviewer. Muad'Dib (`claude-opus-5-5`) and his
-workers build product code. Astra reviews merged changes and fixes findings
-forward through the owning implementation lane; a security or data-loss
-finding is the exception for revert. A documentation task may change docs;
-it does not grant a new product-code lane. See TWO-BRAINS for dispatch roles.
+One brain decides: Muad'Dib (Claude). Workers are Opus 5.5
+(`claude-opus-5-5`, `.claude/agents/opus-worker.md`) or Claude Code builders
+run by the Programs engine. Codex (`gpt-6-astra`) is a reviewer profile
+inside a Program, one round after the merge, only for a step that touches a
+security surface (the gate boundary, token pages, egress, Telegram,
+credentials). There is no co-orchestrator, counsel round or pre-merge review.
+Two Brains and the Luna lanes are retired (owner ruling 2026-11-07).
 
-### Luna lanes
-
-Astra's delegated work uses `gpt-5.6-luna`, reasoning `xhigh`, with lowercase
-`snake_case` names. Do not substitute another model unless the owner orders
-it for the task. Muad'Dib's worker rules remain in CLAUDE.md and TWO-BRAINS.
-
-A worker brief contains the job/story path, settled design, exact owned
-paths, current anchors with a drift warning, other lanes' do-not-touch paths,
-focused test files, isolated-state requirements and **hold for SHIP**.
-Workers do not stage or commit. Serialize shipping in a shared tree. Reports
-that name tests include collection output and the run tail; face reports name
-the shots. Read reports and verify the claims that matter; the orchestrator
-owns the done call, scope honesty and open-work ledger.
+A worker brief is the Program step: the job, the settled design, exact owned
+paths, other steps' do-not-touch paths, the focused test files, and the
+isolated-state rule. A worker runs `scripts/quick_check.sh`, commits, opens
+the PR and reports; the test that fails on main is in the PR. The
+orchestrator merges on green and owns the done call.
 
 ## Worktree and change discipline
 

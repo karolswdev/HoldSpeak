@@ -91,3 +91,18 @@ def test_a_bad_priority_is_refused(tmp_path: Path) -> None:
     env = {**os.environ, "HOLDSPEAK_TEST_LOCK": str(tmp_path / "t.lock"), "HOLDSPEAK_TEST_LOCK_PRIORITY": "urgent"}
     run = subprocess.run([sys.executable, str(LOCK), "--", "true"], env=env, capture_output=True, text=True)
     assert run.returncode == 2 and "PRIORITY" in run.stderr
+
+
+def test_a_nested_call_inside_a_held_run_does_not_wait_on_itself(tmp_path: Path) -> None:
+    """2026-11-07: quick_check.sh takes the lock for each step; a caller that
+    wrapped the whole script in the lock deadlocked it for 7200 s. A nested
+    call under the holder runs at once."""
+    log = tmp_path / "log"
+    env = {**os.environ, "HOLDSPEAK_TEST_LOCK": str(tmp_path / "t.lock"), "HOLDSPEAK_TEST_LOCK_POLL": "0.05"}
+    inner = f"import time; open({str(log)!r},'a').write('inner %f\\n' % time.time())"
+    outer = subprocess.run(
+        [sys.executable, str(LOCK), "--", sys.executable, str(LOCK), "--", sys.executable, "-c", inner],
+        env=env, stderr=subprocess.PIPE, text=True, timeout=10)
+    assert outer.returncode == 0, outer.stderr
+    assert "inner" in log.read_text()
+    assert "waiting for" not in outer.stderr

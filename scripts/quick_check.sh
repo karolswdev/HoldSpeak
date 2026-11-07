@@ -47,6 +47,23 @@ if [ -n "$uncovered" ]; then
   printf '%s\n' "$uncovered" | sed 's/^/   /'
 fi
 
+# A docs-only change (2026-11-07: "how come our check takes this long?"): no
+# file under web/, holdspeak/, tests/, scripts/, apple/ or a build manifest
+# changed, so the build, vitest, pytest and the desk sweep can prove nothing
+# about it. It gets the doc navigation check and the guards that read docs.
+code="$(printf '%s\n' "$changed" | grep -E '^(web/|holdspeak/|tests/|scripts/|apple/|pyproject\.toml|uv\.lock|package\.json|\.holdspeak/|\.github/)' || true)"
+if [ -z "$code" ]; then
+  echo "== docs-only change: the build, vitest, pytest and the desk sweep are skipped"
+  H="$(mktemp -d)"; trap 'rm -rf "$H"' EXIT
+  HOME="$H" uv run python scripts/check_docs.py >"$H/docs.log" 2>&1 || { tail -5 "$H/docs.log"; red "the doc check failed"; }
+  tail -1 "$H/docs.log" | sed 's/^/   /'
+  echo "== doc guards"
+  HOME="$H" uv run python scripts/test_lock.py -- uv run pytest -q tests/unit/test_doc_drift_guard.py tests/unit/test_product_copy.py tests/unit/test_decisions.py tests/unit/test_graph_atlas.py tests/unit/test_ux_canon_scan.py >"$H/docguards.log" 2>&1 || { grep -E '^(FAILED|ERROR)' "$H/docguards.log" | head -8 | sed 's/^/   /'; red "the doc guards failed"; }
+  grep -E 'passed|failed' "$H/docguards.log" | tail -1 | sed 's/^/   /'
+  echo "QUICK CHECK GREEN: merge; the main watcher runs the whole suite."
+  exit 0
+fi
+
 # A caller that already isolated HOME (the Programs engine) names the real one.
 HOME_REAL="${HOME_REAL:-$HOME}"; H="$(mktemp -d)"
 log_dir="${QUICK_LOG_DIR:-.tmp/quick-check/$(date +%Y%m%d-%H%M%S)}"
@@ -64,9 +81,15 @@ fail=0
 
 # ── 2. the build, under the lock and the isolated HOME (it never replaces the
 #      bundle under a locked browser run) ───────────────────────────────────────
-echo "== build"
-lock npm --prefix web run build >"$H/build.log" 2>&1 || { tail -20 "$H/build.log"; red "the web build failed"; }
-echo "   build ok"
+webany="$(printf '%s\n' "$changed" | grep -E '^web/' || true)"
+hubany="$(printf '%s\n' "$changed" | grep -E '^holdspeak/' || true)"
+if [ -n "$webany" ]; then
+  echo "== build"
+  lock npm --prefix web run build >"$H/build.log" 2>&1 || { tail -20 "$H/build.log"; red "the web build failed"; }
+  echo "   build ok"
+else
+  echo "== build: nothing under web/ changed, skipped"
+fi
 
 # ── 3. vitest on the tests the change reaches ───────────────────────────────
 # Not `vitest related` (2026-10-31): it follows every barrel and the app
@@ -138,6 +161,9 @@ web_guards=(
   src/desk/surface/__tests__/chipWords.test.tsx          # no host on a chip (gadgets.css)
   src/desk/surface/__tests__/lampWords.test.tsx          # lamp words (gadgets.css, recordings.css, DeskChrome)
 )
+if [ -z "$webany" ]; then
+  echo "== web guards: nothing under web/ changed, skipped"
+else
 echo "== web guards (${#web_guards[@]} files)"
 out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest run --maxWorkers=8 "${web_guards[@]}" 2>&1)"; grc=$?
 printf '%s\n' "$out" >"$H/web-guards.log"
@@ -145,6 +171,7 @@ printf '%s\n' "$out" | grep -E '^ FAIL|×|Test Files|Tests ' | sort -u | sed 's/
 if [ "$grc" != 0 ] || ! printf '%s\n' "$out" | grep -qE 'Tests .*[0-9]+ passed' \
    || printf '%s\n' "$out" | grep -qE '^ FAIL|Tests .*[0-9]+ failed|Test Files .*[0-9]+ failed'; then
   echo "   the web guards failed (rc=$grc): RED"; fail=1
+fi
 fi
 
 # ── 4. pytest on the affected test files ─────────────────────────────────────
@@ -160,7 +187,11 @@ if [ -n "$py_tests" ]; then
   [ "$prc" = 0 ] || [ "$prc" = 5 ] || { echo "   pytest failed (rc=$prc): RED"; fail=1; }
 fi
 
-# ── 5. the desk sweep (it must prove it ran), then the canon guards ─────────
+# ── 5. the desk sweep (it must prove it ran; 2026-11-07: only when the desk or
+#      the hub changed), then the canon guards ───────────────────────────────
+if [ -z "$webany$hubany" ]; then
+  echo "== desk sweep: nothing under web/ or holdspeak/ changed, skipped"
+else
 echo "== desk sweep"
 lock uv run pytest -q -rs -n 8 --dist worksteal tests/e2e/test_desk_sweep.py >"$H/sweep.log" 2>&1; src=$?
 grep -E '^(FAILED|ERROR|SKIPPED)|passed|failed|skipped' "$H/sweep.log" | tail -12 | sed 's/^/   /'
@@ -176,6 +207,7 @@ elif [ "$src" != 0 ]; then
   echo "   the desk sweep failed (rc=$src): RED (log: $kept)"; fail=1
 elif [ "${swept:-0}" -lt "$SWEEP_MIN" ]; then
   echo "   the desk sweep ran ${swept:-0} cases, under the floor of $SWEEP_MIN: RED"; fail=1
+fi
 fi
 
 echo "== canon guards"

@@ -3,50 +3,55 @@
 This file is loaded automatically by Claude Code when it opens this
 repo. It tells you (the agent) the rules of the road.
 
-Practical instructions for both brains and their workers: read [AGENTS.md](AGENTS.md)
+Practical instructions for the workers: read [AGENTS.md](AGENTS.md)
 for the common development flow, [web/AGENTS.md](web/AGENTS.md) before interface
 work, and [holdspeak/AGENTS.md](holdspeak/AGENTS.md) before hub work. These guides
 summarize the current agreements; older passages below do not restore a gate
 superseded by the fast cycle.
 
-## How we work now: the fast cycle (owner ruling 2026-10-12)
+## How we work now: one brain, one loop, three checks (owner ruling 2026-11-07)
 
-The owner, 2026-10-12: "I am still very unhappy with how rigidly we have been
-going forward with everything… it doesn't seem to be an aggressive, yet with
-checks and balances methodology… How can we make fast iterations here without
-waiting HOURS for something of yours to finally hit the tape?" He adopted the
-fast cycle the same day. It replaces the 2026-10-03 rules (one Astra round
-BEFORE merge; the full suite before merge).
+The owner, 2026-11-07: "I can't afford to have so much ceremony… the whole
+'two-mind' thing? It's just caused massive delays… We've got to change
+something about the way we do things." He said yes to the seven lines below.
+They replace the 2026-10-12 fast cycle where the two differ; its mechanics
+(small changes, worktrees, quick check, main is his desk, fix forward) stay.
 
-1. **Small changes.** One change = one app or one concern, a few files. Branch
-   from `main` in your own worktree. Commit plainly.
-2. **The quick check before merge, 2–4 minutes:** `scripts/quick_check.sh`
-   (the web build, `vitest related` on the changed web files, pytest on the
-   affected test files, the desk sweep at 1440 and 393, the canon guards; all
-   under the lock with an isolated HOME). Green = open the PR and merge it at
-   once. Red = fix first.
-3. **Main is the owner's desk.** Every merge to main redeploys his running
-   desk (the orchestrator's main watcher). There is no integration branch and
-   no batch to wait for.
-4. **The tape runs after the merge.** The watcher runs the WHOLE suite on each
-   new main head. A red is traced to the merge that caused it and fixed forward
-   at once; it does not block other merges.
-5. **Astra reviews after the merge.** She reviews each merged change within
-   minutes; her findings are fixed forward. Only a security or data-loss
-   finding reverts the merge (`git revert`, one command).
-6. **Kept:** tests never touch the owner's real HOME, DB or Keychain; every
-   merge is revertible; if main breaks his desk, the desk goes back to the last
-   green head. Update `pm/STATUS.md` at merge (open work, last merged).
+1. **One brain decides.** Muad'Dib. No mutual check, no counsel or ask rounds,
+   no doctrine to read on entry. Two Brains is retired (`docs/internal/TWO-BRAINS.md`
+   is history).
+2. **Astra is a reviewer profile inside Programs, not a process.** One round,
+   after the merge, bounded to the diff, and only for a step that touches a
+   security surface: the gate boundary, token pages, egress, Telegram,
+   credentials. Everything else gets no second model.
+3. **Verification is exactly three checks; nothing else gates.** A test that
+   fails on main. `scripts/quick_check.sh` (2–4 min). His desk on main. A red
+   after the merge is fixed forward in the next Program, not debated.
+4. **Plans are Programs, never documents.** No contract tasks, completion
+   reports or planning packages. The brief is the step text.
+   `docs/internal/holdspeak-execution-plan/` (#1788) is reference; its slices
+   run as Programs.
+5. **`pm/STATUS.md` is one line per merge.**
+6. **Nights build, mornings judge.** Hands-off Programs at YOLO overnight, in
+   waves that share no files. The owner judges faces live on his desk in the
+   morning; one sentence from him is a ruling.
+7. **Measure.** Merges per day, presses per night, hours from finding to main;
+   one paragraph weekly; change again in two weeks if the numbers are flat.
 
-- No contracts, no evidence files, no per-story status flips.
-- A face (anything a user sees): the owner judges it LIVE on his desk; a
-  mockup is only for picking a direction, and then in our own material
-  (`docs/internal/UX-CANON.md`; the delight ruling of 2026-10-11).
-- Never delete; park instead. Never push `main` directly (merge via PR).
-- The git hooks are parked in `.githooks/_parked/` (see its README).
-  The `dw` CLI still runs, to read the old roadmap: `.githooks/dw next`,
-  `.githooks/dw context`.
-- `pm/roadmap/` is history. Do not update it.
+**The direction every change serves (owner, 2026-11-07):** "an effortless
+system, a powerful system at the same time… our desktop environment… is
+really powerful now… we're not gluing everything together properly… the
+flows are not frictionless… really nail the core workflows and adapt the
+architecture and the design around them… not an overcomplicated architecture
+with multiple implementations of the same thing." Pick work by core workflow,
+not by finding. A change removes a seam or a second implementation; it never
+adds one.
+
+- **Kept:** tests never touch the owner's real HOME, DB or Keychain; every
+  merge is revertible (`git revert`); never delete, park instead; never push
+  `main` directly (merge via PR); a face is judged LIVE on his desk, a mockup
+  only picks a direction (`docs/internal/UX-CANON.md`).
+- The git hooks are parked in `.githooks/_parked/`. `pm/roadmap/` is history.
 
 ## The Seven Tenets (owner's charter 2026-09-19)
 
@@ -58,22 +63,14 @@ never a million interfaces; ASD-STE100 (confirmed 2026-09-19) on product text an
 framework in the manner of Intuition; Workbench 2.0+ on steroids; the
 first user is a Senior Software Architect with reports.
 
-## Two brains (owner ruling 2026-09-19)
+## Two brains: retired (owner ruling 2026-11-07)
 
-**Astra is the reviewer, not a builder (owner ruling 2026-10-03: "let
-Astra be the uber-reviewer").** Muad'Dib's workers build everything,
-backend included. Astra owns no lanes and writes no product code; she
-gives the one final review round of each PR (at most 2 iterations).
-Text below that gives Astra lanes or file ownership is history.
-
-This repo has two orchestrators of equal standing: Muad'Dib (Claude,
-this harness) and Astra (`gpt-6-astra` via `codex exec --yolo`). Each
-checks the other before anything either authored is acted on; each
-orchestrates down to its own workers (Muad'Dib → Opus 5.5, `claude-opus-5-5` (owner ruling 2026-10-04) via
-`.claude/agents/opus-worker.md`; Astra → `gpt-5.6-luna` at `xhigh`).
-Canon: `docs/internal/TWO-BRAINS.md`. Astra's side of the same rules:
-`AGENTS.md` (repo root; codex reads it). Channel: `scripts/astra <role>
-<brief.md>` (roles check | lane | counsel | ask), or `/astra`.
+Two Brains (2026-09-19: Astra as Muad'Dib's equal, mutual checks, per-PR
+review rounds) caused "massive delays" and is retired. `docs/internal/TWO-BRAINS.md`
+and `scripts/astra` stay as history. Muad'Dib's workers (Opus 5.5,
+`claude-opus-5-5`, `.claude/agents/opus-worker.md`) build; the Programs engine
+runs the nights; Codex is one reviewer profile for security-surface steps
+(line 2 above).
 
 ## Status
 
@@ -171,7 +168,10 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   other").** Every pytest, vitest, glass_for and graph-walk run, in every lane
   and the orchestrator's FAST alike, goes through the lock:
   `uv run python scripts/test_lock.py -- <command>`. It waits for the previous
-  run to finish, then runs yours. Under the lock use `-n 8` (measured 2026-10-11: the
+  run to finish, then runs yours. `scripts/quick_check.sh` takes the lock
+  itself, step by step: run it bare, never wrapped (the lock is reentrant since
+  2026-11-07, so a wrapped run no longer deadlocks for 7200 s; it is still wrong).
+  A docs-only diff runs only the doc check and the doc guards (seconds). Under the lock use `-n 8` (measured 2026-10-11: the
   whole browser suite 30 min at `-n 4`, 16.5 min at `-n 8`; FAST 11 → 6.5 min), not `-n auto`.
   A worker never runs FAST; a worker waits for the lock rather than running
   a smaller suite in parallel. Load above 60 means someone skipped the lock.

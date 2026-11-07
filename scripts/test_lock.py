@@ -91,6 +91,14 @@ def main(argv: list[str]) -> int:
         sys.stderr.write(f"test_lock: HOLDSPEAK_TEST_LOCK_PRIORITY must be one of {PRIORITIES}\n")
         return 2
     poll = float(os.environ.get("HOLDSPEAK_TEST_LOCK_POLL", "1"))
+    # Reentrant (2026-11-07): a command that already runs under this lock
+    # (quick_check.sh, whose every step takes the lock) was wrapped in the lock
+    # again by a caller that followed CLAUDE.md to the letter; the inner call
+    # waited on the outer for the whole 7200 s. A nested call sees the holder's
+    # pid in the environment and runs at once.
+    held = os.environ.get("HOLDSPEAK_TEST_LOCK_HELD", "")
+    if held.isdigit() and _alive(int(held)) and os.environ.get("HOLDSPEAK_TEST_LOCK_HELD_PATH", path) == path:
+        return subprocess.call(cmd)
     waiters = Path(f"{path}.waiters")
     waiters.mkdir(parents=True, exist_ok=True)
     marker = waiters / f"{os.getpid()}.{prio}"
@@ -129,8 +137,9 @@ def main(argv: list[str]) -> int:
         waited = time.monotonic() - started
         if waited > 1:
             sys.stderr.write(f"test_lock: acquired after {waited:.0f} s\n")
+        env = dict(os.environ, HOLDSPEAK_TEST_LOCK_HELD=str(os.getpid()), HOLDSPEAK_TEST_LOCK_HELD_PATH=path)
         try:
-            return subprocess.call(cmd)
+            return subprocess.call(cmd, env=env)
         finally:
             fcntl.flock(handle, fcntl.LOCK_UN)
 
