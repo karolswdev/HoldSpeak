@@ -26,7 +26,10 @@ def compose_room_services(services: Any, ctx: Any, db: Any, observer: Any) -> No
         if delta is None:
             delta = ProjectDeltaService(db, collector=ProjectEvidenceCollector(db))
         if project is None:
-            project = ProjectService(db, observer=observer, delta_service=delta)
+            # S52: the Room's review section is a capability, read through
+            # the repository; the Project service never holds Delta.
+            project = ProjectService(db, observer=observer, review_available=True)
+        # Delta → Project is the one remaining edge (create_item in decide_proposal).
         if getattr(delta, "_project_service", None) is None:
             delta.attach_project_service(project)
     update = _held("project_update_service")

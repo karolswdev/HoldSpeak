@@ -646,6 +646,18 @@ class DeltaRepository(BaseRepository):
             )
         return [dict(r) for r in rows]
 
+    def get_open_review(self, project_id: str) -> Optional[dict[str, Any]]:
+        """The project's one open review row, or None (S52: the shared selector).
+
+        The Room's review section (``ProjectService``) and the Delta
+        commands (``ProjectDeltaService``) both select the same row; this
+        repository owns that query, so the read side never holds the
+        command service.  Same ordering, normalization and errors as
+        ``list_reviews(status="open", limit=1)``: newest open first.
+        """
+        reviews = self.list_reviews(project_id, status="open", limit=1)
+        return reviews[0] if reviews else None
+
     # ── HS-160-04: decision + recurrence helpers ────────────────────────
 
     def list_dismissed_proposals(
