@@ -164,6 +164,16 @@ class TestRoomReadsThroughRepository:
         assert svc.room(OWNER, pid)["review"]["pending_count"] == 2
 
 
+    def test_pending_count_is_the_returned_rows_capped_at_200(self, db) -> None:
+        # The count is the length of the existing proposal query (default
+        # limit 200), not a database total; S52 moves the read, not the policy.
+        svc = ProjectService(db, review_available=True)
+        pid = _project(svc)
+        _delta_rows(db, pid, "prev_cap", proposals=201)
+        room = svc.room(OWNER, pid)
+        assert room["review"]["pending_count"] == 200
+        assert _delta_needs(room)[0]["title"] == "200 proposals waiting"
+
 # ── C52-05: fault shapes stay exactly as they were ───────────────────────
 
 class TestFaultShapes:
@@ -191,6 +201,30 @@ class TestFaultShapes:
         assert (review["open_review_id"], review["pending_count"]) == ("prev_g", 0)
         assert _delta_needs(svc.room(OWNER, pid)) == []
 
+
+    def test_later_room_fields_fault_degrades_only_the_review_section(
+            self, db, monkeypatch) -> None:
+        # The review helper's own room-fields read sits outside its inner
+        # catch: it reaches the outer section wrapper.  The Room's earlier
+        # orientation read of the same fields is left to succeed.
+        import sys
+
+        svc = ProjectService(db, review_available=True)
+        pid = _project(svc)
+        _delta_rows(db, pid, "prev_h", proposals=1)
+        real = db.projects.get_project_room_fields
+        hits: list[str] = []
+
+        def targeted(project_id: str) -> Any:
+            if sys._getframe(1).f_code.co_name == "_read_room_review":
+                hits.append(project_id)
+                raise RuntimeError("room fields down")
+            return real(project_id)
+        monkeypatch.setattr(db.projects, "get_project_room_fields", targeted)
+        room = svc.room(OWNER, pid)
+        assert hits, "the fault must hit the review helper's read"
+        assert room["review"] == {"state": "degraded", "error_code": "review_read_failed"}
+        assert room["project"]["id"] == pid
 
 # ── C52-07 (wrapper) / C52-08 (composition identity) ────────────────────
 
@@ -251,3 +285,26 @@ class TestDeltaWrapperAndComposition:
         assert root.project_service is project
         assert root.project_delta_service is delta
         assert delta._project_service is None
+
+    def test_existing_bare_project_is_not_backfilled_when_delta_is_built(self, db) -> None:
+        project = ProjectService(db)
+
+        class Root:
+            project_service = project
+            project_delta_service = None
+            project_update_service = None
+            project_door_service = None
+            watch_service = None
+            project_steward_service = None
+            connections_service = None
+            suggested_source_service = None
+            channel_service = None
+
+            def emit_desk_changed(self, *a: Any) -> None:
+                pass
+
+        root = Root()
+        compose_room_services(root, Root(), db, None)
+        assert root.project_service is project
+        assert project._review_available is False
+        assert root.project_delta_service._project_service is project
