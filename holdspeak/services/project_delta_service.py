@@ -607,12 +607,14 @@ class ProjectDeltaService:
         self._ledger = ServiceEventLedger(db)
 
     def attach_project_service(self, project_service: Any) -> None:
-        """Late-bind the project service (mutual composition).
+        """Late-bind the project service (one-way composition, S52).
 
         ProjectDeltaService needs ProjectService for decide_proposal's
-        create_item handler.  ProjectService needs ProjectDeltaService
-        for the room review section.  This setter resolves the cycle:
-        construct both, then attach.
+        create_item handler.  ProjectService does NOT need this service
+        back: the Room's review section reads the open review through
+        ``DeltaRepository.get_open_review`` (S52).  The setter stays so
+        the hub can build the Project service after this one and attach
+        it; nothing cyclic remains.
         """
         self._project_service = project_service
 
@@ -1866,11 +1868,13 @@ class ProjectDeltaService:
     # ── Read-back helpers ─────────────────────────────────────────────
 
     def _find_open_review(self, project_id: str) -> Optional[dict[str, Any]]:
-        """Return the existing open review for a project, or None."""
-        reviews = self._db.project_observations.list_reviews(
-            project_id, status="open", limit=1,
-        )
-        return reviews[0] if reviews else None
+        """Return the existing open review for a project, or None.
+
+        S52: a delegating wrapper over the repository's one selector
+        (``DeltaRepository.get_open_review``); the MCP resource and the
+        commands above still call it by this name.
+        """
+        return self._db.project_observations.get_open_review(project_id)
 
     def _load_frozen_window(
         self, review_row: dict[str, Any],

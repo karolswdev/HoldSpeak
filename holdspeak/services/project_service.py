@@ -505,11 +505,22 @@ class ProjectService:
     """The durable project boundary; routes only parse and serialize."""
 
     def __init__(self, db: Database, *, observer: PipelineObserver | None = None,
+                 review_available: bool | None = None,
                  delta_service: Any = None) -> None:
         self._db = db
         self._observer = observer or NullObserver()
         self._ledger = ServiceEventLedger(db)
-        self._delta_service = delta_service
+        # S52: the Room's review section is a capability flag, not a held
+        # command service.  The review row is read through
+        # ``DeltaRepository.get_open_review``; this service never holds or
+        # calls ProjectDeltaService.  ``review_available`` says whether the
+        # review domain exists on this desk (a bare service: absent).
+        # ``delta_service=`` is the legacy spelling kept for callers that
+        # still compose it: a non-None value (even a falsey stand-in) means
+        # available; the object is not retained.  An explicit boolean wins.
+        if review_available is None:
+            review_available = delta_service is not None
+        self._review_available = bool(review_available)
 
     # ── reads (unchanged) ────────────────────────────────────────────
 
@@ -846,7 +857,7 @@ class ProjectService:
             "review": (
                 self._room_section(
                     "review", lambda: self._read_room_review(project_id))
-                if self._delta_service is not None
+                if self._review_available
                 else dict(_ABSENT_SECTION)
             ),
             # HS-169-04: the four questions (additive)
@@ -1101,9 +1112,11 @@ class ProjectService:
         open_review_id = None
         pending_count = 0
 
-        if self._delta_service is not None:
+        if self._review_available:
             try:
-                open_review = self._delta_service._find_open_review(project_id)
+                # S52: the repository owns the open-review selector; the
+                # Room never reaches into ProjectDeltaService for a read.
+                open_review = self._db.project_observations.get_open_review(project_id)
                 if open_review is not None:
                     open_review_id = open_review["id"]
                     proposals = self._db.project_observations.list_proposals(
@@ -1390,7 +1403,7 @@ class ProjectService:
         # ``watchIds``; the count is the number of things, not of reads.
         needs = self._fold_watch_duplicates(needs)
         # Delta proposals pending
-        if self._delta_service is not None:
+        if self._review_available:
             try:
                 review_data = self._read_room_review(project_id)
                 pending = review_data.get("pending_count", 0)

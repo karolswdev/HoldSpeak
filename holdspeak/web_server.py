@@ -1407,8 +1407,10 @@ class MeetingWebServer:
             meaning_search=memory_service.meaning,
             broker_provider=lambda: broker,
         )
-        # HS-160-05: extract the delta service so the project_service can
-        # use it for the room() review section (mutual composition).
+        # HS-160-05 / S52: the Delta service (commands, frozen windows). The
+        # Room's review section does not hold it: ProjectService reads the
+        # open review through the repository and is told the capability
+        # exists (``review_available=True`` below).
         _project_delta_service = ProjectDeltaService(
             get_database(),
             collector=ProjectEvidenceCollector(get_database()),
@@ -1447,7 +1449,7 @@ class MeetingWebServer:
             on_set_tags=self.on_set_tags,
             project_service=(_project_service := ProjectService(
                 get_database(), observer=obs,
-                delta_service=_project_delta_service,
+                review_available=True,
             )),
             projection_service=ProjectionService(get_database(), observer=obs),
             authority_service=AuthorityService(get_database(), observer=obs),
@@ -1655,9 +1657,10 @@ class MeetingWebServer:
             web_host=self.host,
             web_auth_token=self.auth_token,
         )
-        # HS-166-05: wire the project_service into the delta service
-        # (mutual composition: delta needs project for create_item in
-        # decide_proposal, project needs delta for room review section).
+        # HS-166-05 / S52: one-way composition. Delta needs the Project
+        # service for create_item inside decide_proposal; the Project
+        # service does not need Delta back (the review read is the
+        # repository's).
         _project_delta_service.attach_project_service(_project_service)
         # Owner ruling 2026-10-05: the onboarding backends compose the
         # settings and connections services above (detect + "Use it").
