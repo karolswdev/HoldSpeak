@@ -58,7 +58,7 @@ if [ -z "$code" ]; then
   HOME="$H" uv run python scripts/check_docs.py >"$H/docs.log" 2>&1 || { tail -5 "$H/docs.log"; red "the doc check failed"; }
   tail -1 "$H/docs.log" | sed 's/^/   /'
   echo "== doc guards"
-  HOME="$H" uv run python scripts/test_lock.py -- uv run pytest -q -n 4 tests/unit/test_doc_drift_guard.py tests/unit/test_product_copy.py tests/unit/test_decisions.py tests/unit/test_graph_atlas.py tests/unit/test_ux_canon_scan.py >"$H/docguards.log" 2>&1 || { grep -E '^(FAILED|ERROR)' "$H/docguards.log" | head -8 | sed 's/^/   /'; red "the doc guards failed"; }
+  HOME="$H" uv run python scripts/test_lock.py -- uv run pytest -q tests/unit/test_doc_drift_guard.py tests/unit/test_product_copy.py tests/unit/test_decisions.py tests/unit/test_graph_atlas.py tests/unit/test_ux_canon_scan.py >"$H/docguards.log" 2>&1 || { grep -E '^(FAILED|ERROR)' "$H/docguards.log" | head -8 | sed 's/^/   /'; red "the doc guards failed"; }
   grep -E 'passed|failed' "$H/docguards.log" | tail -1 | sed 's/^/   /'
   echo "QUICK CHECK GREEN: merge; the main watcher runs the whole suite."
   exit 0
