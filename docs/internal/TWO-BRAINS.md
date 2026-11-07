@@ -1,7 +1,13 @@
+> **RETIRED — owner ruling 2026-11-07.** Two Brains caused "massive delays"
+> and is history. One brain decides (Muad'Dib); Codex is a reviewer profile
+> inside Programs for security-surface steps only. See
+> [CLAUDE.md, How we work now](../../CLAUDE.md#how-we-work-now-one-brain-one-loop-three-checks-owner-ruling-2026-11-07).
+> Nothing below is current process.
+
 # Two Brains — Muad'Dib and Astra, equals of orchestration
 
 > **Current workflow — owner ruling 2026-10-12.**
-> [CLAUDE.md, How we work now](../../CLAUDE.md#how-we-work-now-the-fast-cycle-owner-ruling-2026-10-12)
+> [CLAUDE.md, How we work now](../../CLAUDE.md#how-we-work-now-one-brain-one-loop-three-checks-owner-ruling-2026-11-07)
 > supersedes the older process passages below: small worktree changes,
 > required quick check and screenshots before merge, immediate PR merge on
 > green, redeploy main, then full tape and Astra review. Findings are fixed
