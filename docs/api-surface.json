@@ -275,7 +275,8 @@
       ],
       "module": "web.routes.activity.nudges",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -2508,7 +2509,8 @@
       ],
       "module": "web.routes.delivery_dossiers",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -6238,7 +6240,9 @@
         "DELETE"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/resources/{resource_ref:path}",
@@ -6246,7 +6250,9 @@
         "PUT"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/restore",
