@@ -1,0 +1,222 @@
+/** Today's folds (moved out of TodayView, 2026-11-08): Since this morning
+ *  (the evening list), Since you were last here, the Programs and Phone
+ *  lines, This week, and the quiet read-failed line. */
+import { useState } from "react";
+import { Button } from "../../../../components/signal/Signal";
+import { openSurfaceOr } from "../../../shell";
+import { openProgram } from "../../../programs/open";
+import { openDecisionRecord, openRef } from "../../../openObject";
+import { openPhoneWing } from "../../../calls/phoneFocus";
+import { DotWord } from "../../../surface/kit";
+import type { NeedFace } from "../../../needs/needsFace";
+import type { ProgramsSinceMorning } from "../../../programs/lamp";
+import { clock, GLYPHS, localDay, SHORT_DAYS, startOfDay, WEEK_DAYS, when, type DayEvent, type DoorRead } from "./time";
+
+/** DELIGHT slice 5 (2026-10-28, canvases/delight-2026-10-27.html "Today
+ *  knows the hour", the evening): after 17:00 Today lists what got done
+ *  since the morning (`GET /api/today/since-morning`: tasks ticked,
+ *  decisions recorded, notes filed, sends sent, meetings held), newest
+ *  first, each an object row that opens its object. It is said once per
+ *  day: the first evening open shows the list; a later open the same day
+ *  folds it to one line (the "That is the day" pattern, slice 3). */
+export const EVENING_HOUR = 17;
+export const EVENING_SAID_KEY = "holdspeak.today.eveningSaid";
+export type DoneRow = { kind: string; ref: string; title: string; word: string; at: string };
+/** PG-IMPORT IMP3: what the Programs did while he was away (the hub's
+ *  `since_last_here`; null when nothing happened). */
+export type SinceLastHere = {
+  since: string;
+  lines: { program_id: string; title: string; line: string; at: string }[];
+  partial?: boolean; capped?: boolean; partial_words?: string; capped_words?: string;
+};
+export type DoneRead = { since?: string; items?: DoneRow[]; programs?: ProgramsSinceMorning | null; since_last_here?: SinceLastHere | null };
+export function readEveningSaid(): string | null {
+  try { return window.localStorage.getItem(EVENING_SAID_KEY); } catch { return null; }
+}
+export function writeEveningSaid(key: string): void {
+  try { window.localStorage.setItem(EVENING_SAID_KEY, key); } catch { /* a private window: said again */ }
+}
+/** A done row's 20 px glyph (the kind's own D object). */
+const DONE_SPRITE: Record<string, string> = {
+  action: "action-item", decision: "decision", note: "note", send: "artifact", meeting: "meeting",
+};
+/** A done row opens its object: a decision record in the Decisions reader,
+ *  every other ref through the one open grammar. */
+export function openDone(ref: string): void {
+  if (ref.startsWith("decision_record:")) openDecisionRecord(ref.slice("decision_record:".length));
+  else openRef(ref);
+}
+
+/** Programs (PG18): `Programs: 1 running, 1 waits on you`, one object row
+ *  that opens the Programs window. */
+export function ProgramsLine({ words }: { words: string }) {
+  return (
+    <Button variant="chrome" className="today-done-row today-programs" data-kind="program" data-testid="today-programs"
+      onClick={() => openSurfaceOr("open-programs", "/")}>
+      <img src={`${GLYPHS}program.png`} alt="" width={20} height={20} draggable={false} />
+      <span className="today-done-title">{words}</span>
+    </Button>
+  );
+}
+
+/** PG-IMPORT IMP3 (BroCrew's "Since you were last here"): one line per
+ *  Program, each opening it, and the honest lines when the read was not
+ *  whole. Nothing happened: nothing is drawn (no zero section). */
+export function SinceLastHereBlock({ read }: { read: SinceLastHere | null }) {
+  if (!read || (!read.lines.length && !read.partial)) return null;
+  return (
+    <section className="today-since-last" data-testid="today-since-last" aria-label="Since you were last here">
+      <p className="today-since-last-head">Since you were last here</p>
+      {read.lines.map((row) => (
+        <Button key={row.program_id} variant="chrome" className="today-done-row" data-kind="program"
+          data-testid="today-since-last-row" onClick={() => openProgram(row.program_id)}>
+          <img src={`${GLYPHS}program.png`} alt="" width={20} height={20} draggable={false} />
+          <span className="today-done-title">{row.title}</span>
+          <span className="today-done-word">{row.line}</span>
+        </Button>
+      ))}
+      {read.partial_words ? <p className="today-since-last-honest" data-testid="today-since-last-partial">{read.partial_words}</p> : null}
+      {read.capped_words ? <p className="today-since-last-honest" data-testid="today-since-last-capped">{read.capped_words}</p> : null}
+    </section>
+  );
+}
+
+/** Phone (PH16): `Reached you 3 times: 1 answered`, one object row that
+ *  opens the Phone wing. */
+export function PhoneLine({ words }: { words: string }) {
+  return (
+    <Button variant="chrome" className="today-done-row today-phone" data-kind="phone" data-testid="today-phone"
+      onClick={() => openPhoneWing()}>
+      <img src={`${GLYPHS}call.png`} alt="" width={20} height={20} draggable={false} />
+      <span className="today-done-title">{words}</span>
+    </Button>
+  );
+}
+
+export function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs = "", phone = "" }: {
+  rows: readonly DoneRow[]; failed: boolean; open: boolean; onToggle: () => void; onRetry: () => void; now: Date;
+  /** Programs (2026-10-28): `Programs: 1 running, 1 waits on you`, or "". */
+  programs?: string;
+  /** Phone (2026-10-28): `Reached you 2 times: 1 answered`, or "". */
+  phone?: string;
+}) {
+  if (failed) {
+    return (
+      <section className="today-fold today-done" data-testid="today-done" aria-label="Since this morning">
+        <ReadFailed what="today's work" onRetry={onRetry} testId="today-done-failed" />
+      </section>
+    );
+  }
+  const shown = open && rows.length > 0;
+  return (
+    <section className="today-fold today-done" data-testid="today-done" aria-label="Since this morning">
+      <Button variant="chrome" className="today-fold-head" aria-expanded={rows.length ? shown : undefined}
+        data-testid="today-done-toggle" onClick={onToggle} disabled={!rows.length}>
+        <span className="today-fold-label">Since this morning</span>
+        <span className="today-fold-counts" data-testid="today-done-counts">
+          {rows.length ? `${rows.length} done` : "Nothing done yet"}
+        </span>
+      </Button>
+      {programs ? <ProgramsLine words={programs} /> : null}
+      {phone ? <PhoneLine words={phone} /> : null}
+      {shown ? (
+        <ul className="today-done-list" data-testid="today-done-rows">
+          {rows.map((row) => {
+            const at = when(row.at);
+            return (
+              <li key={`${row.kind}:${row.ref}:${row.at}`}>
+                <Button variant="chrome" className="today-done-row" data-kind={row.kind} data-testid="today-done-row"
+                  onClick={() => openDone(row.ref)}>
+                  <img src={`${GLYPHS}${DONE_SPRITE[row.kind] ?? "artifact"}.png`} alt="" width={20} height={20} draggable={false} />
+                  <span className="today-done-title">{row.title}</span>
+                  <span className="today-done-word">{row.word}</span>
+                  <span className="today-done-time">{at ? (startOfDay(at) === startOfDay(now) ? clock(at) : SHORT_DAYS[at.getDay()]) : ""}</span>
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+/** A source that could not be read: one quiet line and Retry. */
+export function ReadFailed({ what, onRetry, testId }: { what: string; onRetry: () => void; testId: string }) {
+  return (
+    <div className="today-failed" data-testid={testId} role="status">
+      <DotWord tone="fail">{`Could not read ${what}`}</DotWord>
+      <Button dense variant="ghost" onClick={onRetry}>Retry</Button>
+    </div>
+  );
+}
+
+/** The seven local days of `now`'s week, Monday first. */
+export function weekDays(now: Date): Date[] {
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+}
+
+/** One day of This week: its meetings (the calendar's count) and the rows
+ *  of Needs you due that day. */
+export type WeekCount = { day: Date; meetings: number; due: NeedFace[]; events: DayEvent[] };
+
+export function weekCounts(now: Date, door: DoorRead | null, work: readonly NeedFace[]): WeekCount[] {
+  const calendar = new Map((door?.week?.days ?? []).map((d) => [d.date, d.count]));
+  return weekDays(now).map((day) => {
+    const key = localDay(day);
+    const events = (door?.upcoming ?? []).filter((event) => {
+      const start = when(event.starts_at);
+      return start && localDay(start) === key && event.source !== "scheduled_recording";
+    });
+    const due = work.filter((face) => {
+      const at = face.due ? when(face.due.length === 10 ? `${face.due}T00:00:00` : face.due) : null;
+      return at && localDay(at) === key;
+    });
+    return { day, meetings: Math.max(calendar.get(key) ?? 0, events.length), due, events };
+  });
+}
+
+/** `Mon 3 · Tue 2 · Thu 1`: the days with something, never a zero. */
+export function weekLine(days: readonly WeekCount[]): string {
+  return days
+    .map((d) => ({ d, n: d.meetings + d.due.length }))
+    .filter(({ n }) => n > 0)
+    .map(({ d, n }) => `${WEEK_DAYS[d.day.getDay()]} ${n}`)
+    .join(" · ");
+}
+
+/** This week, folded to a count per day; unfolded, each day's meetings and
+ *  the rows due that day. It replaces The week window (D5 parks it). */
+export function ThisWeek({ days }: { days: readonly WeekCount[] }) {
+  const [open, setOpen] = useState(false);
+  const line = weekLine(days);
+  const shown = days.filter((d) => d.events.length || d.due.length);
+  return (
+    <section className="today-fold" data-testid="today-week" aria-label="This week">
+      <Button variant="chrome" className="today-fold-head" aria-expanded={open} data-testid="today-week-toggle"
+        onClick={() => setOpen((value) => !value)} disabled={!line}>
+        <span className="today-fold-label">This week</span>
+        <span className="today-fold-counts" data-testid="today-week-counts">{line || "Nothing this week"}</span>
+      </Button>
+      {open && line ? (
+        <div className="today-fold-body" data-testid="today-week-days">
+          {shown.map((d) => (
+            <div key={localDay(d.day)} className="today-week-day">
+              <span className="today-fold-kind">{`${WEEK_DAYS[d.day.getDay()]} ${d.day.getDate()}`}</span>
+              <ul className="today-week-items">
+                {d.events.map((event) => {
+                  const start = when(event.starts_at);
+                  return <li key={event.id}><span className="today-week-time">{start ? clock(start) : ""}</span>{event.title || event.event_title || "Meeting"}</li>;
+                })}
+                {d.due.map((face) => (
+                  <li key={face.id}><span className="today-week-time">Due</span>{face.personName && face.direction === "theirs" ? `${face.personName}: ${face.name}` : face.name}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}

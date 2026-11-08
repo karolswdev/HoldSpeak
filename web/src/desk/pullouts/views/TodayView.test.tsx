@@ -115,7 +115,8 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     const { container } = render(<TodayView />);
     // The suite's clock: Monday 12 Oct 2026, 09:00.
     expect(screen.getByTestId("today-greeting").textContent).toBe("Monday morning");
-    expect(screen.getByTestId("today-day").textContent).toBe("Monday morning · 12 Oct");
+    expect(screen.getByTestId("today-day").textContent).toBe("Monday morning");
+    expect(screen.getByTestId("today-day").getAttribute("title")).toBe("Mon 12 Oct");
     expect(container.querySelector(".today")?.getAttribute("data-light")).toBe("warm");
     await screen.findByTestId("today-toolbar");
   });
@@ -160,7 +161,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     const next = await screen.findByTestId("today-next");
     expect(within(next).getByText("1:1 Priya")).toBeTruthy();
     expect(within(next).getByTestId("today-countdown").textContent).toBe("in 50 min");
-    expect(within(next).getByText("Prep", { selector: ".kit-step-word" }).closest("li")?.getAttribute("aria-current")).toBe("step");
+    expect(within(next).getByText("prep").closest("li")?.getAttribute("aria-current")).toBe("step");
     expect(within(next).getByRole("button", { name: "Prep" })).toBeTruthy();
     // Betterment D4: a row of Needs you leads; the record verb is secondary.
     await waitFor(() => expect(screen.getByTestId("today-needs").querySelector(".btn--primary")).toBeTruthy());
