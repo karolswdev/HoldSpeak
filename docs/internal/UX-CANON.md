@@ -14,6 +14,50 @@ touching anything a user sees, gathered from the owner's rulings and
 the scars of Phases 100–169. Where a face disagrees with this, the
 face is wrong. Every rule names its ruling.
 
+## The language, 2026-11-08
+
+The owner, 2026-11-08: "Make the color scheme a little more refined please.
+More contrast. Don't make it so bland." He rejected Space Grotesk, then
+Bricolage Grotesque, Archivo and Schibsted Grotesk: "modern, but unique".
+This section replaces the colour and display-face values below where they
+differ. The tokens are in `web/design-tokens.json` (`--hs-*`).
+
+- **Ink.** Words are `--hs-ink` `#10192b`; secondary words `--hs-ink-2`
+  `#44536b`. A word is never a mid grey. Each text and ground pair is
+  4.5:1 or more, 12 px labels too.
+- **Six colours, six meanings.** Steel `#2b55a7`: ours, running; the primary
+  Button. Brass `#b8800f`: waits on you; the ONLY warm colour. Moss `#1d7a4c`:
+  done, on track. Coral `#c23a26`: at risk. Graphite `#4a5568`: parked,
+  quiet. Navy `#0f1829`: the desk floor at night. Tints: steel `#d9e3f2`,
+  brass `#fcefcf`, moss `#dff3e8`, coral `#fbe3df`. A colour as a word uses
+  its ink token (`--hs-brass-ink`, `--hs-moss-ink`, `--hs-coral-ink`):
+  brass, moss and coral are fills and marks, not small text.
+- **Three material tiers.** Ground `#e6ebf3` (the window), plate `#f7f9fc`,
+  raised `#ffffff` with `--hs-raised-shadow` (a soft drop and a 1 px top
+  highlight). Title bar tint `#d9e3f2`, edges `#b3c0d3`, row lines `#d6dde8`.
+- **The display face is Fraunces**, a soft serif, with the metric twin
+  "Fraunces Fallback" so the swap moves no line. Weight 600 for masts and
+  section heads; 700 only for the HoldSpeak wordmark; letter-spacing
+  -0.01em at 20 px and more. Body stays Inter; facts stay JetBrains Mono.
+  A geometric or neo-grotesque display face is rejected.
+- **The brass Button** (`variant="brass"`) is the one verb that waits on
+  him: a deep brass plate (`--hs-brass-deep`, white words 4.6:1) with a
+  dark brass edge. One for each face.
+- **The mast** (`Mast`): the object's sprite at 32 px, the title in the
+  display face (24/28; 20/24 when the mast is under 560 px, by a container
+  query, never a viewport query), one mono 12 px facts line in secondary
+  ink, and the verbs as library Buttons.
+- **The spine** (`Spine`): a 4 px bar under a mast or in an object row, in
+  the meaning colours (steel, brass, moss, coral, graphite, idle), as
+  segments or as one tone and a fill.
+- **A glyph is always the desk's illustrated sprite**, never a coloured
+  block.
+- **Four motion words.** Settle 160 ms (a thing comes to rest), raise
+  220 ms (a thing comes forward), breathe 1.6 s (a thing that waits on you),
+  slide 200 ms (a thing moves on its track): `--motion-settle`,
+  `--motion-raise`, `--motion-breathe`, `--motion-slide`. Reduced motion
+  sets them to zero.
+
 ## Current material direction (owner, 2026-10-22)
 
 “Workbench meets PopOS”: modernize the shared shell, not only Ask. The older

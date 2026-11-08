@@ -101,6 +101,7 @@ _P79_PACKAGES = (
     _HS / "db" / "activity",
     _HS / "web" / "routes" / "system",
     _HS / "web" / "routes" / "primitives",
+    _HS / "db" / "schema",
 )
 
 
