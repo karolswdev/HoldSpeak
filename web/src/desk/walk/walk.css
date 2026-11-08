@@ -2,8 +2,8 @@
    a warm glow breathing at the viewport's edge, the guide's cursor (a
    two-tone ember dart that travels on an arc with a comet trail, hovers,
    taps with a ripple and breathes at rest), one caption line at the bottom
-   edge, the part itself lifted with a warm halo, and one card in kit
-   material beside the part (at phone width a sheet above the dock). No
+   edge, the part itself lifted with a warm halo, and one kit toolbar band
+   above the dock that asks (direction S3 "the bar", 2026-11-08). No
    character, no bubble, no ring, no dim. Over the windows, the dock and the
    popovers; under the feedback strip. Motion is transforms and opacity. */
 .walk-layer {
@@ -234,72 +234,80 @@
   translate: 0 1px;
 }
 
+/* The bar (direction S3, 2026-11-08; the sheet was "so ugly and
+   unprofessional"): one kit toolbar band above the dock, the kit's steel on
+   one hairline top border, square, the row depth only. Two rows, about
+   112 px plus the safe area: the question with the dots, then the verbs.
+   Full width on the phone; at desk width at most 720 px, centred. The
+   bottom, the ceiling and the dock's inset are set inline. */
 .walk-card {
   position: fixed;
   z-index: 1;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(340px, calc(100vw - 24px));
+  width: auto;
+  max-width: 720px;
+  margin: 0 auto;
   box-sizing: border-box;
-  padding: 14px 16px 12px;
+  padding: 8px 16px calc(12px + var(--walk-safe-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   color: var(--wb-ink);
-  border: 1px solid var(--wb-rule, #22313b);
-  border-radius: var(--desk-window-radius, 8px);
-  background: var(--wb-paper);
-  box-shadow: var(--depth-card), var(--depth-row);
+  border: 0;
+  border-top: 1px solid var(--wb-rule);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--depth-row);
   pointer-events: auto;
   font-size: 13px;
   line-height: 1.45;
 }
 
-.walk-card[data-docked] {
-  left: 12px;
-  right: 12px;
-  bottom: calc(var(--desk-dock-h, 0px) + 12px);
-  width: auto;
-  max-width: 520px;
-  margin: 0 auto;
-}
-
-/* The phone sheet (first run 2026-11-07, "totally fucked on a vertical
-   phone"): one full-width sheet in kit material above the dock, at most
-   40 % of the height (set inline), scrolling inside. The part scrolls into
-   the band above it; the backdrop and the ring still mark the part. */
-.walk-card[data-sheet] {
-  left: 0;
-  right: 0;
-  width: auto;
-  max-width: none;
-  margin: 0;
-  gap: 10px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  box-shadow: var(--depth-menu), var(--depth-row);
-  border-width: 1px 0 0;
-  border-radius: var(--desk-window-radius, 8px) var(--desk-window-radius, 8px) 0 0;
-  padding: 6px 16px calc(12px + var(--walk-safe-bottom));
-}
+.walk-card[data-sheet] { max-width: none; }
 
 .walk-card:focus { outline: none; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .walk-card[data-sheet] { animation: walk-sheet-up 320ms cubic-bezier(0.34, 1.4, 0.64, 1) 1; }
-  .walk-card:not([data-sheet]) { animation: walk-card-in 200ms var(--ease-standard, ease-out) 1; }
-}
-
-@keyframes walk-sheet-up {
-  from { translate: 0 100%; }
+  .walk-card { animation: walk-card-in var(--duration-medium) var(--ease-standard) 1; }
 }
 
 @keyframes walk-card-in {
-  from { opacity: 0; translate: 0 6px; }
+  from { opacity: 0; }
+}
+
+/* Row 1: the voice, the question on one line, the dots at the right end. */
+.walk-ask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.walk-question {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.walk-voice svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* The progress: one round dot a question; answered dots fill, the step
    now stretches into a short pill. */
 .walk-dots {
   display: inline-flex;
+  flex: none;
   gap: 5px;
   align-items: center;
 }
@@ -318,155 +326,71 @@
   background: var(--accent);
 }
 
-/* Keep in the confirm hue, Redo in the attention hue: equal, large. */
-.walk-choice {
-  gap: 8px;
-  font-weight: 650;
-}
-
-.walk-choice[data-tone="ok"] {
-  color: color-mix(in srgb, var(--ok-strong, #10b981) 70%, var(--wb-ink, #0f1a22));
-  background: color-mix(in srgb, var(--ok, #34d399) 16%, var(--wb-paper, #fff));
-  border-color: color-mix(in srgb, var(--ok-strong, #10b981) 45%, transparent);
-}
-
-.walk-choice[data-tone="warn"] {
-  color: color-mix(in srgb, var(--warn-strong, #f59e0b) 60%, var(--wb-ink, #0f1a22));
-  background: color-mix(in srgb, var(--warn-signal, #fbbf24) 18%, var(--wb-paper, #fff));
-  border-color: color-mix(in srgb, var(--warn-strong, #f59e0b) 45%, transparent);
-}
-
-.walk-choice-glyph { flex: none; fill: currentColor; }
-
-.walk-next-line {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-muted, var(--wb-ink));
-}
-
-/* The handle row: the walk's name quietly on the left, the dots, the
-   voice. Swipe it down to skip the step. "n of m" is read out, not shown,
-   when the dots show it. */
-.walk-handle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 32px;
-  color: var(--text-muted, var(--wb-ink));
-  font-size: 12px;
-  touch-action: none;
-}
-
-.walk-card[data-sheet] .walk-handle {
-  position: relative;
-  padding-top: 10px;
-}
-
-.walk-grip {
-  position: absolute;
-  top: 2px;
-  left: 50%;
-  width: 36px;
-  height: 4px;
-  translate: -50% 0;
-  border-radius: 2px;
-  background: var(--wb-rule, #22313b);
-}
-
-.walk-handle .walk-count { align-self: center; }
-
-.walk-handle .walk-count[data-quiet] {
+/* "n of m" is read out, not shown. */
+.walk-count {
   position: absolute;
   width: 1px;
   height: 1px;
+  margin: 0;
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
 }
 
-.walk-name {
-  flex: 1 1 auto;
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.walk-voice svg {
-  width: 14px;
-  height: 14px;
-}
-
+/* Row 2, the verbs, 44 px: Keep and Redo share the row, the mic is
+   square, Skip is quiet at the end. */
 .walk-choices {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
 .walk-choices .btn {
+  min-height: 44px;
+}
+
+.walk-choices .walk-choice {
   flex: 1 1 0;
-  min-height: 44px;
-}
-
-.walk-card[data-sheet] .walk-question {
-  font-size: 20px;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-}
-
-/* On the phone Keep and Redo are two equal big buttons side by side. */
-.walk-card[data-sheet] .walk-choices .btn {
-  min-height: 56px;
-  font-size: 16px;
-}
-
-.walk-more {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.walk-card[data-sheet] .walk-more > .btn {
-  min-height: 44px;
-}
-
-.walk-skip {
-  align-self: center;
-}
-
-.walk-words,
-.walk-line,
-.walk-question,
-.walk-title,
-.walk-count {
-  margin: 0;
-}
-
-.walk-question,
-.walk-title {
+  min-width: 0;
   font-size: 15px;
   font-weight: 600;
 }
 
-.walk-line {
-  color: var(--text-muted, var(--wb-ink));
+.walk-choices .walk-mic {
+  flex: none;
+  width: 44px;
+  padding: 0;
+  justify-content: center;
 }
 
-.walk-verbs {
+.walk-choices .walk-skip {
+  flex: none;
+}
+
+/* Row 3, with the mic: the words pad, and Send when words exist. */
+.walk-more {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
+  align-items: flex-end;
+  gap: 8px;
 }
 
-.walk-count {
-  align-self: flex-end;
+.walk-more > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.walk-more > .btn {
+  min-height: 44px;
+}
+
+.walk-card-end .walk-back {
+  flex: none;
+  min-height: 44px;
+}
+
+.walk-line {
+  margin: 0;
   color: var(--text-muted, var(--wb-ink));
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
 }
 
 .walk-refused {
