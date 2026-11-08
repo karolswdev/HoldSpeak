@@ -6,18 +6,18 @@ of a window, and asks one question about it. You answer with one press.
 ## Open a walk
 
 1. Open the link that you got. It starts with `/w/`.
-2. The Desk opens. A thin pixel frame in the accent colour goes around the
-   screen. The frame shows that the guide controls the walk. The guide is
-   the pixel robot at the top-left corner. Its bubble shows the words of
-   the step.
+2. The Desk opens. A slow warm glow at the edge of the screen shows that the
+   guide holds the walk. One caption line at the bottom edge shows the words
+   of the step; the voice says the same.
 3. If the voice is on, press **Tap to begin**. The guide speaks each step
    and each question through the Desk voice (the hub voice, else the
    browser voice). The speaker button on the bar turns the voice on or
    off on this device. The voice is on by default on a phone.
 4. The guide opens the windows and presses the buttons. You watch: a pixel
-   cursor goes to the button, and the button gets a ring.
-5. The walk makes the Desk dark, but not the part that you must look at. The
-   part has a ring in the accent colour.
+   cursor moves to the button like a hand, taps it, and leaves a soft
+   ripple. The window of the part comes to the front.
+5. The part that you must look at lifts with a halo in the accent colour.
+   The rest of the Desk stays as it is.
 6. Read the question. Press a choice, for example **Keep** or **Redo**.
 7. To add words, press the microphone button (**Say more**) next to the
    choices. A text box opens under the choices. Type or speak. Then press a
