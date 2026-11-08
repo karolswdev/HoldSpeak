@@ -37,11 +37,11 @@ import hashlib
 import json
 import re
 import time
-from datetime import datetime, timezone
 from typing import Any, Callable, Iterable, Optional, Protocol
 
 from ..logging_config import get_logger
 from .defense import redact, redact_clip
+from holdspeak.timestamps import utc_now_seconds as _now
 
 log = get_logger("memory.consolidate")
 
@@ -146,10 +146,6 @@ class ConsolidationOutputError(ValueError):
 class ConsolidationScopeError(ValueError):
     """A fact of the batch is not in the job's scope: the job fails whole and
     the engine is not called."""
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def _clip(value: Any, limit: int) -> str:

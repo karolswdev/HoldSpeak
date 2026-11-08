@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any, Mapping, Optional
 
 from .. import coder_steering
+from holdspeak.timestamps import utc_now_z as _iso_now
 
 #: How long a launch waits for its rider to register before it gives up on
 #: typing the first message (the owner may first answer a dialog in the pane).
@@ -922,12 +923,6 @@ _CLAIM_GUARD = threading.Lock()
 def _claim_lock(key: Any) -> threading.Lock:
     with _CLAIM_GUARD:
         return _CLAIM_LOCKS.setdefault(str(key), threading.Lock())
-
-
-def _iso_now() -> str:
-    from datetime import datetime, timezone
-
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 __all__ = [

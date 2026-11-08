@@ -14,6 +14,7 @@ from typing import Any
 
 from .crypto import Envelope, PeopleCryptoError, decrypt_payload, encrypt_payload
 from .keys import KeyStore, PeopleKeyError, new_key, new_key_id
+from holdspeak.timestamps import utc_now_seconds as _now
 
 
 DEFAULT_PEOPLE_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "people.v1.sqlite3"
@@ -483,11 +484,6 @@ class EncryptedPeopleStore:
     def _require_private_path(path: Path) -> None:
         if path.stat().st_mode & 0o077:
             raise PeopleStoreError(PeopleReadiness.UNSAFE_PERMISSIONS)
-
-
-def _now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 _UMASK_LOCK = threading.Lock()

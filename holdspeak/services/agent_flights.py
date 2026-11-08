@@ -57,6 +57,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Mapping, Optional
 
 from ..logging_config import get_logger
+from holdspeak.timestamps import parse_utc_iso as _stamp
 
 log = get_logger("agent_flights")
 
@@ -189,14 +190,6 @@ def _project_of(db: Any, kind: str, item_id: str) -> tuple[str, str]:
     except Exception:
         return "", ""
     return project_id, (str(project.name) if project is not None else "")
-
-
-def _stamp(value: Any) -> Optional[datetime]:
-    try:
-        moment = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return moment if moment.tzinfo is not None else moment.replace(tzinfo=timezone.utc)
 
 
 def _ended_at(record: Mapping[str, Any], state: str, session: Any, close: Any) -> Optional[str]:
