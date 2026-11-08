@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1894 The Project vocabulary has one owner, project_definitions.py (669 lines, imports only refs and errors); project_service.py 5,994 -> 5,457 lines, its importers 23 -> 19, definition-only importers 0; the Room's decision rows carry committed_to.
 - 2026-11-08 · #1893 Fix forward #1891: the eight decision record wires the face fences compare are re-recorded with committed_to (fences and newDecision.app.test.tsx green).
 - 2026-11-08 · #1892 Fix forward #1877/#1889: the one-decision-record browser case reads the Project as the record's filing (project_id) and checks the Decide well's one face (Decided HH:MM, the Project row with Filed, the row opens the record reader).
 - 2026-11-08 · #1891 A decision with an owner Person and a Project commits once in the record writer (one commit_decision_in_transaction, keyed by the record) and is that Person's row in Needs you; the Room word is left to the project_service lane.
