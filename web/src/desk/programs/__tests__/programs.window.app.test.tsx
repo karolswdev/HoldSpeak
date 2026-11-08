@@ -52,7 +52,7 @@ describe("the Program window (direction C, the ledger)", () => {
     const noted = { ...clone(running), spend_limit_usd: 40, spend_note: "spend note · 40 USD" };
     hub({ [`GET /api/programs/${running.id}`]: noted });
     render(<ProgramBody programId={running.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const fact = within(status()).getByTestId("programs-status-spend");
     expect(fact.textContent).toBe("spend note · 40 USD");
     expect(fact.querySelector(".pg-ref")).toBeTruthy();
@@ -60,7 +60,7 @@ describe("the Program window (direction C, the ledger)", () => {
     cleanup();
     hub({ [`GET /api/programs/${running.id}`]: running });
     render(<ProgramBody programId={running.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(within(status()).queryByTestId("programs-status-spend")).toBeNull();
   });
 

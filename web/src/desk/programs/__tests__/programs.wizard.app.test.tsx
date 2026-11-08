@@ -131,7 +131,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("the Spending note he types rides on the body and the summary says spend note · 40 USD", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
