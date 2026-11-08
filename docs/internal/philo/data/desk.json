@@ -722,8 +722,8 @@
         },
         {
           "path": "web/src/features/project-room/__tests__/ProjectRoomCore.test.tsx",
-          "node": "the head Review opens the recorded real task in the existing posture and returns to the Room",
-          "assertion": "Header Review enters the exact recorded review/task and Close returns to the same Room.",
+          "node": "the status line's Review opens the recorded real task in the existing posture and returns to the Room",
+          "assertion": "The status line's Review enters the exact recorded review/task and Close returns to the same Room.",
           "execution": "passed"
         }
       ],

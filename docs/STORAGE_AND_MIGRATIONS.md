@@ -43,7 +43,7 @@ in `people.v1.sqlite3` and are encrypted before persistence.
 
 ## How the schema repairs itself
 
-`SCHEMA_SQL` in `holdspeak/db/schema.py` declares the current shape.
+`SCHEMA_SQL` in `holdspeak/db/schema/` declares the current shape.
 `SCHEMA_VERSION` is informational. A newer or older stamp does not by itself
 block startup.
 
