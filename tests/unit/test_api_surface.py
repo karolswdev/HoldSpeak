@@ -55,6 +55,13 @@ def test_committed_manifest_matches_the_live_app(committed, live) -> None:
     )
 
 
+def test_committed_unresolved_calls_match_the_live_sources(committed, live) -> None:
+    assert committed["unresolved_dynamic_calls"] == live["unresolved_dynamic_calls"], (
+        "the committed unresolved dynamic calls drifted from web/src — "
+        "regenerate: uv run python scripts/gen_api_surface.py"
+    )
+
+
 def test_committed_markdown_matches_the_manifest(committed) -> None:
     assert MANIFEST_MD.read_text() == gen.render_markdown(committed), (
         "docs/API_SURFACE.md drifted from the manifest — regenerate: "
@@ -147,3 +154,63 @@ def test_a_non_api_string_is_ignored() -> None:
         "const href = `https://example.com/api/${id}`;\n"
     )
     assert gen.extract_from_text(source) == set()
+
+
+def _routes(*rows: tuple[str, str]) -> list[dict]:
+    return [{"path": path, "methods": [method], "module": "m"} for method, path in rows]
+
+
+def _web_tagged(routes: list[dict], source: str) -> set[tuple[str, str]]:
+    calls = {
+        site for site in gen.web_call_sites(source) if not gen._is_dynamic(site[1])
+    }
+    tagged, _, _ = gen.match_consumers(routes, set(), calls)
+    return {(r["methods"][0], r["path"]) for r in tagged if "web" in r["consumers"]}
+
+
+def test_a_put_call_does_not_tag_the_get_route_of_the_same_path() -> None:
+    routes = _routes(("GET", "/api/notes/{note_id}"), ("PUT", "/api/notes/{note_id}"))
+    source = 'await apiFetch(`/api/notes/${id}`, { method: "PUT", json: {} });\n'
+    assert _web_tagged(routes, source) == {("PUT", "/api/notes/{note_id}")}
+
+
+def test_a_delete_route_with_no_web_delete_call_is_server_only() -> None:
+    routes = _routes(("GET", "/api/chains/{chain_id}"), ("DELETE", "/api/chains/{chain_id}"))
+    source = "const chain = await apiFetch(`/api/chains/${id}`);\n"
+    assert _web_tagged(routes, source) == {("GET", "/api/chains/{chain_id}")}
+
+
+def test_the_method_comes_from_a_ternary_a_helper_or_a_variable_use() -> None:
+    source = (
+        'await apiFetch(`/api/kbs/${a}`, { method: on ? "DELETE" : "PUT" });\n'
+        "await apiDelete(`/api/skills/${b}`);\n"
+        "const url = `/api/briefs/${c}/keep`;\n"
+        'await apiFetch(url, { method: "POST" });\n'
+    )
+    assert gen.web_call_sites(source) == {
+        ("DELETE", "/api/kbs/*"),
+        ("PUT", "/api/kbs/*"),
+        ("DELETE", "/api/skills/*"),
+        ("POST", "/api/briefs/*/keep"),
+    }
+
+
+def test_a_route_named_in_a_comment_is_not_a_call() -> None:
+    source = "// POST /api/sync/push\n/** `/api/cadence/brief` */\n"
+    assert gen.web_call_sites(source) == set()
+
+
+def test_a_dynamic_call_tags_nothing_and_is_listed_unresolved(live) -> None:
+    source = 'await apiFetch(`/api/${path}/${encodeURIComponent(id)}`, { method: "DELETE" });\n'
+    assert gen.web_call_sites(source) == {("DELETE", "/api/*/*")}
+    assert gen.extract_from_text(source) == set()
+    routes = _routes(("DELETE", "/api/notes/{note_id}"), ("GET", "/api/cadence/loops/{loop_id}"))
+    assert _web_tagged(routes, source) == set()
+    assert {
+        "file": "web/src/desk/store/dataSlice.ts",
+        "method": "DELETE",
+        "path": "/api/*/*",
+    } in live["unresolved_dynamic_calls"]["web"]
+    loop = next(r for r in live["routes"] if r["path"] == "/api/cadence/loops/{loop_id}"
+                and r["methods"] == ["GET"])
+    assert "web" not in loop["consumers"]

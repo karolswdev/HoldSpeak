@@ -23,9 +23,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/action-items/{item_id}/edit",
@@ -49,9 +47,7 @@
         "GET"
       ],
       "module": "web.routes.activity.enrichment",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/briefing",
@@ -60,8 +56,7 @@
       ],
       "module": "web.routes.activity.enrichment",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -70,9 +65,7 @@
         "POST"
       ],
       "module": "web.routes.activity.ledger",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/domains/{domain}",
@@ -188,9 +181,7 @@
         "DELETE"
       ],
       "module": "web.routes.activity.candidates",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/meeting-candidates",
@@ -208,9 +199,7 @@
         "POST"
       ],
       "module": "web.routes.activity.candidates",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/meeting-candidates/preview",
@@ -295,9 +284,7 @@
         "POST"
       ],
       "module": "web.routes.activity.rules",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/project-rules/apply",
@@ -305,9 +292,7 @@
         "POST"
       ],
       "module": "web.routes.activity.rules",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/project-rules/preview",
@@ -315,9 +300,7 @@
         "POST"
       ],
       "module": "web.routes.activity.rules",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/project-rules/{rule_id}",
@@ -335,9 +318,7 @@
         "PUT"
       ],
       "module": "web.routes.activity.rules",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/records",
@@ -543,9 +524,7 @@
         "GET"
       ],
       "module": "web.routes.system.agent_capabilities",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/all-action-items",
@@ -701,9 +680,7 @@
         "POST"
       ],
       "module": "web.routes.authority",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/authority/grants",
@@ -711,9 +688,7 @@
         "GET"
       ],
       "module": "web.routes.authority",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/authority/grants",
@@ -721,9 +696,7 @@
         "POST"
       ],
       "module": "web.routes.authority",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/authority/grants/{grant_id}",
@@ -758,9 +731,7 @@
         "GET"
       ],
       "module": "web.routes.automations",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/automations/new",
@@ -778,9 +749,7 @@
         "GET"
       ],
       "module": "web.routes.automations",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/automations/practice-recipes/{recipe_id}",
@@ -814,9 +783,7 @@
         "GET"
       ],
       "module": "web.routes.automations",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/automations/reactions",
@@ -824,9 +791,7 @@
         "GET"
       ],
       "module": "web.routes.automations",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/automations/reactions",
@@ -834,9 +799,7 @@
         "POST"
       ],
       "module": "web.routes.automations",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/automations/reactions/process",
@@ -860,9 +823,7 @@
         "GET"
       ],
       "module": "web.routes.automations",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/automations/watches",
@@ -870,9 +831,7 @@
         "POST"
       ],
       "module": "web.routes.automations",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/automations/watches/{watch_id}/baseline",
@@ -974,9 +933,7 @@
         "GET"
       ],
       "module": "web.routes.monday_brief",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/brief/{brief_id}",
@@ -1024,9 +981,7 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/cadence/brief",
@@ -1034,9 +989,7 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/cadence/closeout",
@@ -1044,9 +997,7 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/cadence/closeout/apply",
@@ -1082,9 +1033,7 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/cadence/loops/{loop_id}/close",
@@ -1132,9 +1081,7 @@
         "POST"
       ],
       "module": "web.routes.cadence",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/cadence/status",
@@ -1152,9 +1099,7 @@
         "GET"
       ],
       "module": "web.routes.calendar_events",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/calendar/events/{event_id}/link",
@@ -1172,9 +1117,7 @@
         "POST"
       ],
       "module": "web.routes.calendar_events",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/calendar/snapshot",
@@ -1414,9 +1357,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/chains/runs/{parent_operation_id}/cancel",
@@ -1432,9 +1373,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/chains/{chain_id}",
@@ -1452,9 +1391,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/chains/{chain_id}/run",
@@ -1553,9 +1490,7 @@
         "POST"
       ],
       "module": "web.routes.channels",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/channels/sends/{send_id}/discard",
@@ -1583,9 +1518,7 @@
         "POST"
       ],
       "module": "web.routes.system.coders",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/coders/dismiss",
@@ -1594,8 +1527,7 @@
       ],
       "module": "web.routes.system.coders",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1647,8 +1579,7 @@
       ],
       "module": "web.routes.system.coders",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1658,8 +1589,7 @@
       ],
       "module": "web.routes.system.coder_relay_routes",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1669,8 +1599,7 @@
       ],
       "module": "web.routes.system.coder_relay_routes",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1680,8 +1609,7 @@
       ],
       "module": "web.routes.system.coder_relay_routes",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1702,8 +1630,7 @@
       ],
       "module": "web.routes.system.coder_relay_routes",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -2142,9 +2069,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.decisions",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/decisions/{decision_id}",
@@ -2274,8 +2199,7 @@
       ],
       "module": "web.routes.delivery_attempts",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -2284,9 +2208,7 @@
         "GET"
       ],
       "module": "web.routes.delivery",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/delivery/evidence/{bundle_id}/{asset_id}",
@@ -2487,8 +2409,7 @@
       ],
       "module": "web.routes.delivery",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -2498,8 +2419,7 @@
       ],
       "module": "web.routes.delivery",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -2791,9 +2711,7 @@
         "WS"
       ],
       "module": "device_audio_ws",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/devices/health",
@@ -2811,9 +2729,7 @@
         "GET"
       ],
       "module": "web.routes.dictation.agent",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/agent-context/clear",
@@ -2848,8 +2764,7 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -2881,8 +2796,7 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -2913,9 +2827,7 @@
         "DELETE"
       ],
       "module": "web.routes.dictation.pipeline",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/corrections",
@@ -2964,9 +2876,7 @@
         "GET"
       ],
       "module": "web.routes.dictation.floor",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/floor/claim",
@@ -3108,8 +3018,7 @@
       ],
       "module": "web.routes.dictation.agent",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -3118,9 +3027,7 @@
         "GET"
       ],
       "module": "web.routes.dictation.project_docs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/project-doc-suggestion/apply",
@@ -3154,9 +3061,7 @@
         "PUT"
       ],
       "module": "web.routes.dictation.project_docs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/project-kb",
@@ -3164,9 +3069,7 @@
         "DELETE"
       ],
       "module": "web.routes.dictation.kb",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/project-kb",
@@ -3256,9 +3159,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.directories",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/directories/{directory_id}",
@@ -3266,9 +3167,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.directories",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/directories/{directory_id}",
@@ -3354,9 +3253,7 @@
         "POST"
       ],
       "module": "web.routes.follow_through",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/follow-through/complete",
@@ -3414,9 +3311,7 @@
         "GET"
       ],
       "module": "web.routes.system.gate_routes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/gate/config",
@@ -3424,9 +3319,7 @@
         "GET"
       ],
       "module": "web.routes.system.gate_routes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/gate/proposals",
@@ -3444,9 +3337,7 @@
         "POST"
       ],
       "module": "web.routes.system.gate_routes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/gate/proposals/{proposal_id}",
@@ -3490,9 +3381,7 @@
         "POST"
       ],
       "module": "web.routes.system.gate_routes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/grounding/resolve",
@@ -3520,9 +3409,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference-targets/{target_id}",
@@ -3530,9 +3417,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference-targets/{target_id}",
@@ -3540,9 +3425,7 @@
         "GET"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference-targets/{target_id}",
@@ -3550,9 +3433,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference-targets/{target_id}/probe",
@@ -3652,9 +3533,7 @@
         "GET"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/capabilities/{capability_id}",
@@ -3768,9 +3647,7 @@
         "GET"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/intel/jobs",
@@ -3788,9 +3665,7 @@
         "POST"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/intel/retry/{meeting_id}",
@@ -3806,9 +3681,7 @@
         "GET"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/intents/control",
@@ -3826,9 +3699,7 @@
         "PUT"
       ],
       "module": "web.routes.dictation.intents",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/intents/preview",
@@ -3866,9 +3737,7 @@
         "GET"
       ],
       "module": "web.routes.primitives.invocations",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/invocations/{invocation_id}/cancel",
@@ -3894,9 +3763,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.kbs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/kbs/{kb_id}",
@@ -3904,9 +3771,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.kbs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/kbs/{kb_id}",
@@ -3924,9 +3789,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.kbs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/kbs/{kb_id}/members",
@@ -3942,9 +3805,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.kbs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/kbs/{kb_id}/members/{resource_ref:path}",
@@ -4014,9 +3875,7 @@
         "POST"
       ],
       "module": "web.routes.system.kernel_routes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/mcp",
@@ -4140,8 +3999,7 @@
       ],
       "module": "web.routes.meetings.crud",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -4464,8 +4322,7 @@
       ],
       "module": "web.routes.mesh",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -4475,8 +4332,7 @@
       ],
       "module": "web.routes.mesh",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -4630,9 +4486,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.model_profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/model-profiles/{profile_id}",
@@ -4640,9 +4494,7 @@
         "GET"
       ],
       "module": "web.routes.primitives.model_profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/model-profiles/{profile_id}/binding",
@@ -4712,9 +4564,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.notes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/notes/{note_id}",
@@ -4732,9 +4582,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.notes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/notes/{note_id}/outcomes",
@@ -4962,9 +4810,7 @@
         "GET"
       ],
       "module": "web.routes.people",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/people/one-on-ones/{session_id}/agenda",
@@ -5062,9 +4908,7 @@
         "GET"
       ],
       "module": "web.routes.people",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/people/relationships/{relationship_id}/notes",
@@ -5228,9 +5072,7 @@
         "POST"
       ],
       "module": "web.routes.phone",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/phone/calls/{call_id}",
@@ -5256,9 +5098,7 @@
         "GET"
       ],
       "module": "web.routes.phone",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/phone/devices",
@@ -5266,9 +5106,7 @@
         "POST"
       ],
       "module": "web.routes.phone",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/phone/devices/{device_id}",
@@ -5286,9 +5124,7 @@
         "GET"
       ],
       "module": "web.routes.phone",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/phone/messages",
@@ -5392,9 +5228,7 @@
         "WS"
       ],
       "module": "web.routes.phone",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/plugin-jobs",
@@ -5448,9 +5282,7 @@
         "POST"
       ],
       "module": "web.routes.system.gate_routes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/principals/agents/{identity}",
@@ -5466,9 +5298,7 @@
         "DELETE"
       ],
       "module": "web.routes.system.gate_routes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/profiles",
@@ -5484,9 +5314,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/profiles/{profile_id}",
@@ -5494,9 +5322,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/programs",
@@ -5564,9 +5390,7 @@
         "PATCH"
       ],
       "module": "web.routes.programs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/programs/{program_id}/checkpoints/{checkpoint_id}/start-from",
@@ -5858,9 +5682,7 @@
         "GET"
       ],
       "module": "web.routes.project_setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/project-setups/{session_id}/abandon",
@@ -5958,9 +5780,7 @@
         "POST"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/door",
@@ -6018,9 +5838,7 @@
         "PATCH"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/action-items",
@@ -6124,9 +5942,7 @@
         "POST"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/items/{item_id}",
@@ -6220,9 +6036,7 @@
         "POST"
       ],
       "module": "web.routes.agent_hand",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/resources",
@@ -6240,9 +6054,7 @@
         "DELETE"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/resources/{resource_ref:path}",
@@ -6508,9 +6320,7 @@
         "GET"
       ],
       "module": "web.routes.providers",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/providers/confluence/connections",
@@ -6584,9 +6394,7 @@
         "GET"
       ],
       "module": "web.routes.providers",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/providers/jira/connections",
@@ -6686,9 +6494,7 @@
         "GET"
       ],
       "module": "web.routes.briefing",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/reach/packages",
@@ -6756,9 +6562,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.recipes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/recipes/{recipe_id}",
@@ -6766,9 +6570,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.recipes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/recipes/{recipe_id}",
@@ -6786,9 +6588,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.recipes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/recipes/{recipe_id}/chat",
@@ -7114,9 +6914,7 @@
         "GET"
       ],
       "module": "web.routes.scheduled_recordings",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/scheduled-recordings/{schedule_id}",
@@ -7396,9 +7194,7 @@
         "GET"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/setup/lan",
@@ -7426,9 +7222,7 @@
         "POST"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/setup/local-ai/cancel",
@@ -7464,9 +7258,7 @@
         "GET"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/setup/runtime-test",
@@ -7515,9 +7307,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.workbenches",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/skills/{skill_id}",
@@ -7525,9 +7315,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.workbenches",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/skills/{skill_id}",
@@ -7555,9 +7343,7 @@
         "GET"
       ],
       "module": "web.routes.meetings.speakers",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/speakers/{speaker_id}",
@@ -7565,9 +7351,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.speakers",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/state",
@@ -7605,9 +7389,7 @@
         "POST"
       ],
       "module": "web.routes.steward",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/stop",
@@ -7635,8 +7417,7 @@
       ],
       "module": "web.routes.sync",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -7685,9 +7466,7 @@
         "GET"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/thoughts/default-context",
@@ -7725,9 +7504,7 @@
         "GET"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/thoughts/{thought_id}/complete",
@@ -8259,9 +8036,7 @@
         "GET"
       ],
       "module": "web.routes.walks",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/watches",
@@ -8277,9 +8052,7 @@
         "GET"
       ],
       "module": "web.routes.watches",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/watches/{watch_id}",
@@ -8287,9 +8060,7 @@
         "PATCH"
       ],
       "module": "web.routes.watches",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/watches/{watch_id}/baseline",
@@ -8401,9 +8172,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.workbenches",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/workbenches/{workbench_id}",
@@ -8709,9 +8478,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/workflows/runs/{parent_operation_id}/cancel",
@@ -8727,9 +8494,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/workflows/{workflow_id}",
@@ -8747,9 +8512,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/workflows/{workflow_id}/run",
@@ -9013,5 +8776,29 @@
   "unmatched_calls": {
     "ios": [],
     "web": []
+  },
+  "unresolved_dynamic_calls": {
+    "web": [
+      {
+        "file": "web/src/desk/components/DeskFilingStrip.tsx",
+        "method": "DELETE",
+        "path": "/api/*/*/*/*"
+      },
+      {
+        "file": "web/src/desk/components/DeskFilingStrip.tsx",
+        "method": "PUT",
+        "path": "/api/*/*/*/*"
+      },
+      {
+        "file": "web/src/desk/store/dataSlice.ts",
+        "method": "DELETE",
+        "path": "/api/*/*"
+      },
+      {
+        "file": "web/src/pages/cores/history/DoorSection.tsx",
+        "method": "POST",
+        "path": "/api/*/*"
+      }
+    ]
   }
 }
