@@ -8,16 +8,16 @@
           "doc": "near-white application paper"
         },
         "1": {
-          "value": "#eef2f7",
-          "doc": "cool pale steel surface"
+          "value": "#e6ebf3",
+          "doc": "window ground (the language 2026-11-08)"
         },
         "2": {
-          "value": "#e5ebf3",
-          "doc": "raised cool steel surface"
+          "value": "#dde4ee",
+          "doc": "a ground one step down (the language 2026-11-08)"
         },
         "3": {
-          "value": "#d9e2ee",
-          "doc": "hover steel surface"
+          "value": "#d9e3f2",
+          "doc": "the title bar tint, steel tint (the language 2026-11-08)"
         },
         "4": {
           "value": "#f2f5f9",
@@ -26,16 +26,16 @@
       },
       "paper": {
         "0": {
-          "value": "#253449",
-          "doc": "dark ink on near-white paper"
+          "value": "#10192b",
+          "doc": "ink: every word (the language 2026-11-08; 14.7:1 on the window ground)"
         },
         "1": {
-          "value": "#53647a",
-          "doc": "quiet ink on light shell"
+          "value": "#44536b",
+          "doc": "secondary ink (the language 2026-11-08; 6.5:1 on the window ground)"
         },
         "2": {
-          "value": "#63758b",
-          "doc": "faint text on light paper (at least 4.5:1)"
+          "value": "#56657c",
+          "doc": "faint ink (the language 2026-11-08; 4.9:1 on the window ground, 4.6:1 on the title tint)"
         }
       },
       "orange": {
@@ -66,42 +66,42 @@
       },
       "green": {
         "400": {
-          "value": "#34d399",
-          "doc": "ok"
+          "value": "#1d7a4c",
+          "doc": "moss: done, on track (the language 2026-11-08)"
         },
         "500": {
-          "value": "#10b981",
-          "doc": "ok strong"
+          "value": "#155c39",
+          "doc": "moss ink: an ok word on any ground (the language 2026-11-08; 6.7:1 on the window ground)"
         }
       },
       "amber": {
         "400": {
-          "value": "#fbbf24",
-          "doc": "warn"
+          "value": "#b8800f",
+          "doc": "brass: waits on you (the language 2026-11-08); a fill or a mark, never small text"
         },
         "500": {
-          "value": "#f59e0b",
-          "doc": "warn strong"
+          "value": "#7a5408",
+          "doc": "brass ink: a waits-on-you word, the brass Button edge (the language 2026-11-08; 5.7:1 on the window ground)"
         }
       },
       "red": {
         "400": {
-          "value": "#f87171",
-          "doc": "danger"
+          "value": "#c23a26",
+          "doc": "coral: at risk (the language 2026-11-08)"
         },
         "600": {
-          "value": "#dc2626",
-          "doc": "danger fill"
+          "value": "#b0321f",
+          "doc": "coral fill under white text (the language 2026-11-08; 6.2:1)"
         }
       },
       "cyan": {
         "300": {
-          "value": "#56c7f5",
-          "doc": "info / local"
+          "value": "#2b55a7",
+          "doc": "info rides steel (the language 2026-11-08)"
         },
         "400": {
-          "value": "#38bdf8",
-          "doc": "info strong"
+          "value": "#1f448c",
+          "doc": "info strong, deep steel (the language 2026-11-08)"
         }
       },
       "glowpool": {
@@ -179,10 +179,10 @@
       "wash": {
         "$doc": "ink washes for hairlines and hover fills on light paper",
         "035": {
-          "value": "rgba(37, 52, 73, 0.035)"
+          "value": "rgba(16, 25, 43, 0.035)"
         },
         "05": {
-          "value": "rgba(37, 52, 73, 0.05)"
+          "value": "rgba(16, 25, 43, 0.05)"
         },
         "08": {
           "value": "rgba(255, 255, 255, 0.08)"
@@ -190,14 +190,96 @@
       },
       "blue": {
         "450": {
-          "value": "#3b5d93",
-          "doc": "the Workbench blue primary and selection"
+          "value": "#2b55a7",
+          "doc": "steel: ours, running, the primary Button (the language 2026-11-08)"
+        }
+      },
+      "hs": {
+        "steel": {
+          "value": "#2b55a7",
+          "doc": "ours, running; the primary Button (the language 2026-11-08)"
+        },
+        "brass": {
+          "value": "#b8800f",
+          "doc": "the ONLY warm colour: waits on you (the language 2026-11-08)"
+        },
+        "brass-deep": {
+          "value": "#9c6b0b",
+          "doc": "the brass Button fill under white text (the language 2026-11-08; 4.6:1)"
+        },
+        "brass-ink": {
+          "value": "#7a5408",
+          "doc": "brass as a word and the brass Button edge (the language 2026-11-08)"
+        },
+        "moss": {
+          "value": "#1d7a4c",
+          "doc": "done, on track (the language 2026-11-08)"
+        },
+        "moss-ink": {
+          "value": "#155c39",
+          "doc": "moss as a word (the language 2026-11-08)"
+        },
+        "coral": {
+          "value": "#c23a26",
+          "doc": "at risk (the language 2026-11-08)"
+        },
+        "coral-ink": {
+          "value": "#9e2a18",
+          "doc": "coral as a word (the language 2026-11-08)"
+        },
+        "graphite": {
+          "value": "#4a5568",
+          "doc": "parked, quiet (the language 2026-11-08)"
+        },
+        "navy": {
+          "value": "#0f1829",
+          "doc": "the desk at night, the floor (the language 2026-11-08)"
+        },
+        "tint-steel": {
+          "value": "#d9e3f2",
+          "doc": "steel tint (the language 2026-11-08)"
+        },
+        "tint-brass": {
+          "value": "#fcefcf",
+          "doc": "brass tint (the language 2026-11-08)"
+        },
+        "tint-moss": {
+          "value": "#dff3e8",
+          "doc": "moss tint (the language 2026-11-08)"
+        },
+        "tint-coral": {
+          "value": "#fbe3df",
+          "doc": "coral tint (the language 2026-11-08)"
+        },
+        "ground": {
+          "value": "#e6ebf3",
+          "doc": "material tier 1: the window ground (the language 2026-11-08)"
+        },
+        "plate": {
+          "value": "#f7f9fc",
+          "doc": "material tier 2: a plate on the ground (the language 2026-11-08)"
+        },
+        "raised": {
+          "value": "#ffffff",
+          "doc": "material tier 3: a raised object (the language 2026-11-08)"
+        },
+        "title": {
+          "value": "#d9e3f2",
+          "doc": "the title bar tint (the language 2026-11-08)"
+        },
+        "edge": {
+          "value": "#b3c0d3",
+          "doc": "edges (the language 2026-11-08)"
+        },
+        "rule": {
+          "value": "#d6dde8",
+          "doc": "row lines (the language 2026-11-08)"
         }
       }
     },
     "font": {
       "display": {
-        "value": "\"Space Grotesk\", \"Inter\", system-ui, -apple-system, BlinkMacSystemFont,\n    \"Segoe UI\", sans-serif"
+        "value": "\"Fraunces\", \"Fraunces Fallback\", Georgia, \"Times New Roman\", serif"
       },
       "ui": {
         "value": "\"Inter\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    sans-serif"
@@ -228,11 +310,11 @@
       },
       {
         "name": "--surface-hover",
-        "value": "rgba(37, 52, 73, 0.06)"
+        "value": "rgba(16, 25, 43, 0.06)"
       },
       {
         "name": "--surface-active",
-        "value": "rgba(37, 52, 73, 0.10)"
+        "value": "rgba(16, 25, 43, 0.10)"
       },
       {
         "name": "--text",
@@ -285,7 +367,7 @@
       },
       {
         "name": "--accent-tint",
-        "value": "rgba(59, 93, 147, 0.12)"
+        "value": "rgba(43, 85, 167, 0.12)"
       },
       {
         "name": "--mark-bg",
@@ -299,15 +381,15 @@
       },
       {
         "name": "--accent-glow",
-        "value": "rgba(59, 93, 147, 0.20)"
+        "value": "rgba(43, 85, 167, 0.20)"
       },
       {
         "name": "--accent-gradient",
-        "value": "linear-gradient( 135deg, #e6eef9 0%, #3b5d93 100% )"
+        "value": "linear-gradient( 135deg, #d9e3f2 0%, #2b55a7 100% )"
       },
       {
         "name": "--bg-gradient",
-        "value": "linear-gradient( 180deg, #f7f9fc 0%, #eef2f7 100% )"
+        "value": "linear-gradient( 180deg, #f7f9fc 0%, #e6ebf3 100% )"
       },
       {
         "name": "--ok",
@@ -319,7 +401,7 @@
       },
       {
         "name": "--ok-soft",
-        "value": "rgba(52, 211, 153, 0.12)"
+        "value": "{primitive.color.hs.tint-moss}"
       },
       {
         "name": "--warn-signal",
@@ -331,7 +413,7 @@
       },
       {
         "name": "--warn-soft",
-        "value": "rgba(251, 191, 36, 0.12)"
+        "value": "{primitive.color.hs.tint-brass}"
       },
       {
         "name": "--danger-signal",
@@ -343,7 +425,7 @@
       },
       {
         "name": "--danger-soft",
-        "value": "rgba(248, 113, 113, 0.12)"
+        "value": "{primitive.color.hs.tint-coral}"
       },
       {
         "name": "--info",
@@ -355,20 +437,20 @@
       },
       {
         "name": "--info-soft",
-        "value": "rgba(86, 199, 245, 0.12)"
+        "value": "{primitive.color.hs.tint-steel}"
       },
       {
         "name": "--border-subtle",
-        "value": "#d9e1eb"
+        "value": "{primitive.color.hs.rule}"
       },
       {
         "name": "--border",
-        "value": "#bbc7d6",
+        "value": "{primitive.color.hs.edge}",
         "doc": "fine cool border"
       },
       {
         "name": "--border-strong",
-        "value": "#8fa4bd",
+        "value": "#7f90a8",
         "doc": "focused / front-window border"
       },
       {
@@ -494,7 +576,7 @@
       },
       {
         "name": "--disabled-fg",
-        "value": "#5e7086"
+        "value": "{primitive.color.paper.2}"
       },
       {
         "name": "--disabled-border",
@@ -528,11 +610,11 @@
       },
       {
         "name": "--field-border",
-        "value": "#bbc7d6"
+        "value": "{primitive.color.hs.edge}"
       },
       {
         "name": "--field-focus-border",
-        "value": "#3b5d93"
+        "value": "{primitive.color.hs.steel}"
       },
       {
         "name": "--local",
@@ -719,7 +801,7 @@
       },
       {
         "name": "--elev-1",
-        "value": "0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04)"
+        "value": "0 1px 2px rgba(16, 25, 43, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04)"
       },
       {
         "name": "--elev-2",
@@ -735,7 +817,7 @@
       },
       {
         "name": "--glow-accent",
-        "value": "0 0 0 1px rgba(168, 110, 74, 0.4), 0 4px 18px var(--accent-glow)"
+        "value": "0 0 0 1px rgba(43, 85, 167, 0.4), 0 4px 18px var(--accent-glow)"
       },
       {
         "name": "--duration-micro",
@@ -820,7 +902,7 @@
       },
       {
         "name": "--accent-glow-strong",
-        "value": "rgba(168, 110, 74, 0.5)",
+        "value": "rgba(184, 128, 15, 0.5)",
         "doc": "the stronger accent glow (recording/attention)"
       },
       {
@@ -874,8 +956,142 @@
       },
       {
         "name": "--accent-tint-faint",
-        "value": "rgba(168, 110, 74, 0.08)",
+        "value": "rgba(43, 85, 167, 0.08)",
         "doc": "Faint accent wash for project controls."
+      },
+      {
+        "$doc": "The language, 2026-11-08 (owner: \"more contrast… don't make it so bland\"): six meaning colours, their tints, three material tiers, four motion words. UX-CANON \"The language, 2026-11-08\"."
+      },
+      {
+        "name": "--hs-ink",
+        "value": "{primitive.color.paper.0}",
+        "doc": "every word"
+      },
+      {
+        "name": "--hs-ink-2",
+        "value": "{primitive.color.paper.1}",
+        "doc": "secondary words"
+      },
+      {
+        "name": "--hs-steel",
+        "value": "{primitive.color.hs.steel}",
+        "doc": "ours, running; the primary Button"
+      },
+      {
+        "name": "--hs-brass",
+        "value": "{primitive.color.hs.brass}",
+        "doc": "the ONLY warm colour: waits on you"
+      },
+      {
+        "name": "--hs-brass-deep",
+        "value": "{primitive.color.hs.brass-deep}",
+        "doc": "the brass Button fill (white text 4.6:1)"
+      },
+      {
+        "name": "--hs-brass-ink",
+        "value": "{primitive.color.hs.brass-ink}",
+        "doc": "brass as a word; the brass Button edge"
+      },
+      {
+        "name": "--hs-moss",
+        "value": "{primitive.color.hs.moss}",
+        "doc": "done, on track"
+      },
+      {
+        "name": "--hs-moss-ink",
+        "value": "{primitive.color.hs.moss-ink}",
+        "doc": "moss as a word"
+      },
+      {
+        "name": "--hs-coral",
+        "value": "{primitive.color.hs.coral}",
+        "doc": "at risk"
+      },
+      {
+        "name": "--hs-coral-ink",
+        "value": "{primitive.color.hs.coral-ink}",
+        "doc": "coral as a word"
+      },
+      {
+        "name": "--hs-graphite",
+        "value": "{primitive.color.hs.graphite}",
+        "doc": "parked, quiet"
+      },
+      {
+        "name": "--hs-navy",
+        "value": "{primitive.color.hs.navy}",
+        "doc": "the desk at night"
+      },
+      {
+        "name": "--hs-steel-tint",
+        "value": "{primitive.color.hs.tint-steel}"
+      },
+      {
+        "name": "--hs-brass-tint",
+        "value": "{primitive.color.hs.tint-brass}"
+      },
+      {
+        "name": "--hs-moss-tint",
+        "value": "{primitive.color.hs.tint-moss}"
+      },
+      {
+        "name": "--hs-coral-tint",
+        "value": "{primitive.color.hs.tint-coral}"
+      },
+      {
+        "name": "--hs-ground",
+        "value": "{primitive.color.hs.ground}",
+        "doc": "material tier 1: the window ground"
+      },
+      {
+        "name": "--hs-plate",
+        "value": "{primitive.color.hs.plate}",
+        "doc": "material tier 2: a plate"
+      },
+      {
+        "name": "--hs-raised",
+        "value": "{primitive.color.hs.raised}",
+        "doc": "material tier 3: a raised object"
+      },
+      {
+        "name": "--hs-raised-shadow",
+        "value": "0 4px 14px rgba(16, 25, 43, 0.18), inset 0 1px 0 #ffffff",
+        "doc": "the raised tier: a soft drop and a top highlight"
+      },
+      {
+        "name": "--hs-title",
+        "value": "{primitive.color.hs.title}",
+        "doc": "the title bar tint"
+      },
+      {
+        "name": "--hs-edge",
+        "value": "{primitive.color.hs.edge}",
+        "doc": "edges"
+      },
+      {
+        "name": "--hs-rule",
+        "value": "{primitive.color.hs.rule}",
+        "doc": "row lines"
+      },
+      {
+        "name": "--motion-settle",
+        "value": "160ms",
+        "doc": "a thing comes to rest (reduced motion: 0)"
+      },
+      {
+        "name": "--motion-raise",
+        "value": "220ms",
+        "doc": "a thing comes forward (reduced motion: 0)"
+      },
+      {
+        "name": "--motion-breathe",
+        "value": "1600ms",
+        "doc": "a thing that waits on you breathes once a cycle (reduced motion: still)"
+      },
+      {
+        "name": "--motion-slide",
+        "value": "200ms",
+        "doc": "a thing moves along its track (reduced motion: 0)"
       }
     ]
   },
@@ -1046,7 +1262,7 @@
       },
       {
         "name": "--desk-glass",
-        "value": "#e9edf3",
+        "value": "{primitive.color.hs.ground}",
         "doc": "cool pale shell chrome"
       },
       {
@@ -1076,7 +1292,7 @@
       },
       {
         "name": "--desk-window-shadow-rest",
-        "value": "0 5px 14px rgba(22, 40, 62, 0.10), 0 0 0 1px var(--wb-rule-soft)",
+        "value": "0 5px 14px rgba(16, 25, 43, 0.12), 0 0 0 1px var(--wb-rule-soft)",
         "doc": "reduced depth for a resting window"
       },
       {
@@ -1196,12 +1412,12 @@
       },
       {
         "name": "--desk-scrollbar-thumb",
-        "value": "rgba(83, 100, 122, 0.35)",
+        "value": "rgba(68, 83, 107, 0.4)",
         "doc": "quiet scrollbar thumb"
       },
       {
         "name": "--desk-scrollbar-thumb-hover",
-        "value": "rgba(83, 100, 122, 0.55)",
+        "value": "rgba(68, 83, 107, 0.6)",
         "doc": "quiet scrollbar thumb under the pointer"
       },
       {
@@ -1271,7 +1487,7 @@
       },
       {
         "name": "--desk-type-display-weight",
-        "value": "650",
+        "value": "600",
         "doc": "HS-101: display step weight (rides --font-display)"
       },
       {
@@ -1316,57 +1532,57 @@
       },
       {
         "name": "--desk-pill-neutral",
-        "value": "#edf1f6",
+        "value": "#e8edf4",
         "doc": "neutral status chip ground"
       },
       {
         "name": "--desk-pill-ok",
-        "value": "#e3f3ea",
+        "value": "{primitive.color.hs.tint-moss}",
         "doc": "ok status chip ground"
       },
       {
         "name": "--desk-pill-warn",
-        "value": "#fff2cf",
+        "value": "{primitive.color.hs.tint-brass}",
         "doc": "amber status chip ground"
       },
       {
         "name": "--desk-pill-danger",
-        "value": "#fde6e4",
+        "value": "{primitive.color.hs.tint-coral}",
         "doc": "danger status chip ground"
       },
       {
         "name": "--desk-pill-info",
-        "value": "#e6eef9",
+        "value": "{primitive.color.hs.tint-steel}",
         "doc": "info status chip ground"
       },
       {
         "name": "--desk-pill-accent",
-        "value": "#fff0df",
+        "value": "{primitive.color.hs.tint-brass}",
         "doc": "attention status chip ground"
       },
       {
         "name": "--wb-steel",
-        "value": "#e7ecf3",
+        "value": "#edf1f7",
         "doc": "cool pale steel for bars and controls"
       },
       {
         "name": "--wb-steel-2",
-        "value": "#f0f3f8",
+        "value": "#f5f7fb",
         "doc": "light hover steel"
       },
       {
         "name": "--wb-ink",
-        "value": "#253449",
+        "value": "{primitive.color.paper.0}",
         "doc": "dark Workbench ink for lines and words"
       },
       {
         "name": "--wb-paper",
-        "value": "#fafbfc",
+        "value": "{primitive.color.hs.plate}",
         "doc": "near-white window paper"
       },
       {
         "name": "--wb-blue",
-        "value": "#e6eef9",
+        "value": "{primitive.color.hs.title}",
         "doc": "pale blue active head and selection tint"
       },
       {
@@ -1381,22 +1597,22 @@
       },
       {
         "name": "--wb-backdrop",
-        "value": "#293847",
+        "value": "{primitive.color.hs.navy}",
         "doc": "quiet slate desktop floor"
       },
       {
         "name": "--wb-dither",
-        "value": "#293847",
+        "value": "{primitive.color.hs.navy}",
         "doc": "legacy floor pattern value, unused by the plain modern floor"
       },
       {
         "name": "--wb-rec",
-        "value": "#b3261e",
+        "value": "{primitive.color.hs.coral}",
         "doc": "PHILO-13-11 (C1) Workbench Steel: REC on paper (5.73:1)"
       },
       {
         "name": "--wb-hover",
-        "value": "rgba(37, 52, 73, 0.06)",
+        "value": "rgba(16, 25, 43, 0.06)",
         "doc": "quiet control hover wash"
       },
       {
@@ -1431,12 +1647,12 @@
       },
       {
         "name": "--wb-sel-vivid",
-        "value": "#2f67c8",
+        "value": "{primitive.color.hs.steel}",
         "doc": "vivid Workbench blue for a selected list row (paper ink 5.3:1)"
       },
       {
         "name": "--wb-link-ink",
-        "value": "#2f67c8",
+        "value": "{primitive.color.hs.steel}",
         "doc": "an object named in a note's text: a Project, a pull request, a Jira key, a decision (Note canvas A, 2026-10-27; paper ink 5.3:1)"
       },
       {
@@ -1491,27 +1707,27 @@
       },
       {
         "name": "--depth-paper",
-        "value": "0 22px 48px rgba(22, 40, 62, 0.24), 0 4px 12px rgba(22, 40, 62, 0.12)",
+        "value": "0 22px 48px rgba(16, 25, 43, 0.28), 0 4px 12px rgba(16, 25, 43, 0.14)",
         "doc": "DELIGHT 2026-10-27, the depth scale, step 1 of 5: the front window's paper over the floor"
       },
       {
         "name": "--depth-row",
-        "value": "0 1px 3px rgba(22, 40, 62, 0.12)",
+        "value": "0 1px 3px rgba(16, 25, 43, 0.14)",
         "doc": "DELIGHT 2026-10-27, the depth scale, step 2 of 5: a lifted row or a card that sits in its column (the Note's margin card)"
       },
       {
         "name": "--depth-card",
-        "value": "0 10px 28px rgba(8, 14, 22, 0.22)",
+        "value": "0 10px 28px rgba(16, 25, 43, 0.24)",
         "doc": "DELIGHT 2026-10-27, the depth scale, step 3 of 5: a card that floats over the text (the peek card, the completion list, the feedback strip)"
       },
       {
         "name": "--depth-menu",
-        "value": "0 8px 22px rgba(22, 40, 62, 0.12)",
+        "value": "0 8px 22px rgba(16, 25, 43, 0.16)",
         "doc": "DELIGHT 2026-10-27, the depth scale, step 4 of 5: a menu, a popover or a sheet"
       },
       {
         "name": "--depth-dock",
-        "value": "0 10px 30px rgba(8, 14, 22, 0.45), 0 2px 6px rgba(8, 14, 22, 0.3)",
+        "value": "0 10px 30px rgba(6, 10, 18, 0.5), 0 2px 6px rgba(6, 10, 18, 0.34)",
         "doc": "DELIGHT 2026-10-27, the depth scale, step 5 of 5: the dock glass over the floor"
       },
       {
@@ -1581,12 +1797,12 @@
       },
       {
         "name": "--desk-dock-glass",
-        "value": "rgba(30, 43, 58, 0.72)",
+        "value": "rgba(15, 24, 41, 0.76)",
         "doc": "the floating dock (2026-10-26): the floor's slate as glass, not paper"
       },
       {
         "name": "--desk-dock-glass-solid",
-        "value": "#222f3e",
+        "value": "#131d31",
         "doc": "the dock glass as one opaque tone, for the phone shelf's sticky gutter cover"
       },
       {
@@ -1656,12 +1872,12 @@
       },
       {
         "name": "--wb-ink-dim",
-        "value": "#4d5e75",
+        "value": "{primitive.color.paper.1}",
         "doc": "quiet inactive title ink on light steel"
       },
       {
         "name": "--wb-rule",
-        "value": "#c5cfdd",
+        "value": "{primitive.color.hs.edge}",
         "doc": "fine chrome hairline"
       },
       {
@@ -1671,62 +1887,62 @@
       },
       {
         "name": "--wb-steel-dim",
-        "value": "#d9e0ea",
+        "value": "#dde4ee",
         "doc": "resting window steel"
       },
       {
         "name": "--wb-umbra",
-        "value": "0 16px 36px rgba(22, 40, 62, 0.16)",
+        "value": "0 16px 36px rgba(16, 25, 43, 0.2)",
         "doc": "soft front-window depth"
       },
       {
         "name": "--wb-umbra-near",
-        "value": "0 8px 18px rgba(22, 40, 62, 0.10)",
+        "value": "0 8px 18px rgba(16, 25, 43, 0.12)",
         "doc": "reduced resting-window depth"
       },
       {
         "name": "--desk-veil-near",
-        "value": "rgba(37, 52, 73, 0.03)",
+        "value": "rgba(16, 25, 43, 0.03)",
         "doc": "quiet near-window wash"
       },
       {
         "name": "--desk-veil-far",
-        "value": "rgba(37, 52, 73, 0.07)",
+        "value": "rgba(16, 25, 43, 0.07)",
         "doc": "quiet far-window wash"
       },
       {
         "name": "--wb-field",
-        "value": "#edf1f6",
+        "value": "{primitive.color.hs.ground}",
         "doc": "cool pale slate window ground"
       },
       {
         "name": "--wb-field-hi",
-        "value": "#f7f9fc",
+        "value": "{primitive.color.hs.plate}",
         "doc": "light window ground"
       },
       {
         "name": "--wb-well",
-        "value": "#ffffff",
+        "value": "{primitive.color.hs.raised}",
         "doc": "white input and ledger well"
       },
       {
         "name": "--wb-text",
-        "value": "#253449",
+        "value": "{primitive.color.paper.0}",
         "doc": "dark ink inside a window"
       },
       {
         "name": "--wb-muted",
-        "value": "#53647a",
+        "value": "{primitive.color.paper.1}",
         "doc": "quiet ink on the light window ground"
       },
       {
         "name": "--wb-rule-soft",
-        "value": "#d9e1eb",
+        "value": "{primitive.color.hs.rule}",
         "doc": "fine hairline between rows"
       },
       {
         "name": "--wb-sel",
-        "value": "#3b5d93",
+        "value": "{primitive.color.hs.steel}",
         "doc": "deep Workbench blue for primary, focus and front accents"
       },
       {
@@ -1736,7 +1952,7 @@
       },
       {
         "name": "--desk-floor",
-        "value": "radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 65%), linear-gradient(180deg, #33495f 0%, var(--wb-backdrop) 100%)",
+        "value": "radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 65%), linear-gradient(180deg, #1b2a45 0%, var(--wb-backdrop) 100%)",
         "doc": "plain quiet slate floor with subtle tonal depth; no checker"
       },
       {
@@ -1746,38 +1962,38 @@
       },
       {
         "name": "--desk-raise-duration",
-        "value": "180ms",
+        "value": "var(--motion-raise)",
         "doc": "PHILO-16 (A1) the motion grammar: Raise, the frame and the umbra change plane"
       },
       {
         "name": "--desk-lamp-pulse",
-        "value": "1.6s",
+        "value": "var(--motion-breathe)",
         "doc": "PHILO-16 (A1) the title-bar lamp: an asking window pulses once every 1.6 s (reduced motion: static)"
       },
       {
         "name": "--wb-ember-ink",
-        "value": "#7a4a2c",
-        "doc": "PHILO-16 (A1) the interior: ember as TEXT or a filled verb on slate (4.9:1 on --wb-field; 6.6:1 under --text-on-accent); the accent remaps to it inside a window"
+        "value": "{primitive.color.hs.brass-ink}",
+        "doc": "PHILO-16 (A1) the interior: ember as TEXT or a filled verb on slate ; the accent remaps to it inside a window (the language 2026-11-08: rides the language ink)"
       },
       {
         "name": "--wb-ok-ink",
-        "value": "#1d5c2e",
-        "doc": "PHILO-16 (A1) the interior: an ok word on slate (5.3:1 on --wb-field; the C1 dock tag tone)"
+        "value": "{primitive.color.hs.moss-ink}",
+        "doc": "PHILO-16 (A1) the interior: an ok word on slate (the language 2026-11-08: rides the language ink)"
       },
       {
         "name": "--wb-warn-ink",
-        "value": "#6b4a00",
-        "doc": "PHILO-16 (A1) the interior: a warn word on slate (5.3:1 on --wb-field; the C1 dock tag tone)"
+        "value": "{primitive.color.hs.brass-ink}",
+        "doc": "PHILO-16 (A1) the interior: a warn word on slate (the language 2026-11-08: rides the language ink)"
       },
       {
         "name": "--wb-danger-ink",
-        "value": "#9b2219",
-        "doc": "PHILO-16 (A1) the interior: a danger word on slate (5.5:1 on --wb-field)"
+        "value": "{primitive.color.hs.coral-ink}",
+        "doc": "PHILO-16 (A1) the interior: a danger word on slate (the language 2026-11-08: rides the language ink)"
       },
       {
         "name": "--wb-info-ink",
-        "value": "#2f4f86",
-        "doc": "PHILO-16 (A1) the interior: an info word on slate (5.4:1 on --wb-field)"
+        "value": "{primitive.color.hs.steel}",
+        "doc": "PHILO-16 (A1) the interior: an info word on slate (the language 2026-11-08: rides the language ink)"
       },
       {
         "name": "--bevel-raised",
@@ -1821,8 +2037,8 @@
       },
       {
         "name": "--lamp-ask",
-        "value": "var(--p-color-orange-300)",
-        "doc": "PHILO-14 B1 (the object species): IconLamp tone ask: it asks you (an agent's question); the ember of the A boards"
+        "value": "{primitive.color.hs.brass}",
+        "doc": "IconLamp tone ask: it waits on you; brass, the one warm colour (the language 2026-11-08)"
       },
       {
         "name": "--desk-ghost-shadow",

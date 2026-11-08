@@ -52,7 +52,7 @@
 
 /* HS-172-05 — Prep enrichment: summary rows + display step + footer. */
 .people-prep-enriched { display: flex; flex-direction: column; gap: 16px; }
-.people-prep-display { font: 650 26px/1.15 var(--font-display, 'Space Grotesk', 'Inter', system-ui, sans-serif); color: var(--text); }
+.people-prep-display { font: 600 26px/1.15 var(--font-display, 'Fraunces', 'Fraunces Fallback', Georgia, serif); letter-spacing: -0.01em; color: var(--text); }
 .people-prep-summary { display: flex; flex-direction: column; }
 .people-prep-row { border-top: 1px solid var(--border); }
 .people-prep-row-main { display: flex; align-items: center; gap: 8px; padding: 10px 0; flex-wrap: wrap; }

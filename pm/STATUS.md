@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1932 The language, 2026-11-08: Fraunces replaces Space Grotesk (wordmark at 700, a metric twin so nothing shifts); a higher-contrast palette (ink #10192b, navy floor, ground/plate/raised, steel · brass · moss · coral · graphite · navy as --hs-*); motion tokens; kit Mast and Spine; Button variant="brass"; UX-CANON "The language, 2026-11-08".
 - 2026-11-08 · #1930 HS-S14 Program detail readers share the desk's keyed read (`deskResourceKey("program", id)`): the Program window, the Shot window and the two fresh reads go through one key; one request in flight per Program, one invalidation path on the Program frames, an old read never redraws the state before a press; a new Program draws from the create answer. Open of two windows on one Program: 2 → 1 read; a frame: 2 → 1.
 - 2026-11-08 · #1928 Fix forward #1923: the desk architecture metadata cites the status line's Review test (the head Review left Now).
 - 2026-11-08 · #1927 holdspeak/db/schema.py 5,436 lines → holdspeak/db/schema/, 17 domain modules of ≤474 lines and a 61-line __init__ that joins them; SCHEMA_SQL byte-identical (sha256 6f6b3b19…), same sqlite_master in the same order, same importers (4 in holdspeak, 30 tests); the package joins the density guard.

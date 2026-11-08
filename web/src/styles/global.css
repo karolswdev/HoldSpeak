@@ -9,8 +9,9 @@
 @import "./tokens.css";
 
 /* HS-30-03 "Signal" type system. Three faces:
- *   --font-display  Space Grotesk (600/700) — geometric, technical
- *                   character for titles, hero, brand.
+ *   --font-display  Fraunces (500/600/700) — a soft serif display face
+ *                   (owner, 2026-11-08): 600 for masts and section
+ *                   heads, 700 only for the HoldSpeak wordmark.
  *   --font-ui       Inter (400/500/600) — all body, UI, controls.
  *   --font-mono     JetBrains Mono (400/500) — data, stats, code.
  * The uppercase-tracked eyebrow (see components) carries the
@@ -19,9 +20,9 @@
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
-@import "@fontsource/space-grotesk/500.css";
-@import "@fontsource/space-grotesk/600.css";
-@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/fraunces/500.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/700.css";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
@@ -48,6 +49,33 @@
   src: local("Menlo-Bold"), local("Menlo Bold"), local("DejaVu Sans Mono Bold"), local("Liberation Mono Bold"), local("Courier New Bold");
   ascent-override: 102%;
   descent-override: 30%;
+  line-gap-override: 0%;
+}
+
+/* The language (2026-11-08): the metric twin of Fraunces, the same idea as
+   the mono twin above. Until the display webfont lands the stack falls back
+   to Georgia; the twin is Georgia with Fraunces' own vertical metrics
+   (ascent 1956, descent 510, line gap 0 per 2000) and its width (size-adjust
+   from the advance of a sample line), so the swap moves no line. The
+   overrides are divided by size-adjust because the browser scales them by
+   it. Every display stack names the twin second
+   (tests/unit/test_css_display_font_fallback.py). */
+@font-face {
+  font-family: "Fraunces Fallback";
+  font-weight: 100 500;
+  src: local("Georgia"), local("Times New Roman");
+  size-adjust: 107.5%;
+  ascent-override: 90.9%;
+  descent-override: 23.7%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Fraunces Fallback";
+  font-weight: 600 900;
+  src: local("Georgia Bold"), local("Georgia-Bold"), local("Times New Roman Bold");
+  size-adjust: 95.3%;
+  ascent-override: 102.6%;
+  descent-override: 26.8%;
   line-gap-override: 0%;
 }
 
@@ -257,6 +285,16 @@ small {
   color: var(--wb-muted);
 }
 
+/* `brass` (the language, 2026-11-08) is the one verb that waits on him:
+   the brass plate with its dark brass edge and white words (4.6:1). Its
+   hover and press go darker, never lighter, so the words keep 4.5:1. */
+:where(.btn--brass) {
+  border-color: var(--hs-brass-ink);
+  background: var(--hs-brass-deep);
+  color: var(--white);
+  font-weight: 600;
+}
+
 /* `danger` is the Workbench red with paper on it (REC, 5.73:1). */
 :where(.btn.danger, .btn--danger) {
   border-color: var(--danger-signal);
@@ -290,9 +328,16 @@ small {
   background: color-mix(in srgb, var(--danger-fill) 86%, var(--white));
 }
 
+:where(.btn--brass):hover:not(:disabled),
+:where(.btn--brass)[aria-pressed="true"]:not(:disabled) {
+  border-color: var(--hs-brass-ink);
+  background: color-mix(in srgb, var(--hs-brass-deep) 84%, var(--hs-brass-ink));
+  color: var(--white);
+}
+
 /* A generic pressed Button uses the quiet dark ink wash and dark ink so its
    state remains readable on the light shell. */
-:where(.btn)[aria-pressed="true"]:not(:disabled):where(:not(.btn--primary):not(.btn.primary):not(.btn--danger):not(.btn.danger)) {
+:where(.btn)[aria-pressed="true"]:not(:disabled):where(:not(.btn--primary):not(.btn.primary):not(.btn--danger):not(.btn.danger):not(.btn--brass)) {
   background: var(--surface-active);
   color: var(--wb-ink);
 }
