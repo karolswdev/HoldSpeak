@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1959 README shows the faces as they are today: the Room's Now face on the Desk (desk-project-room.jpg) and alone (project.png), the new programs.png (rail, mast, spine, a step plate waiting on Merge) and needs-you.png (Waits on you first, the ledger); retaken at 1440 on an isolated rig hub; captions and alt text say what is on the glass.
 - 2026-11-08 · #1958 One writer of the owner's name: ownerName.ts has no PUT of its own; the first-run You card and People write through useOwnerWriter (one Settings writer per window: the read's revision, the hub's 409 word, one queue); off the settingsWriters allowlist.
 - 2026-11-08 · #1957 Fix forward #1955: docs/programs.md names the engine, not the old Runs on word (engines name guard).
 - 2026-11-08 · #1956 Fix forward test_send_glass s5_s6[1440]: the send sheet's Cancel keeps the note open; openNoteSend (SendWell.tsx) stops its 50 ms SEND_OPEN retry at the first request the note window takes (it cancels the event), so a later tick no longer reopens Send after Cancel (latent since 07f28fb7e; red on main at 1440).
