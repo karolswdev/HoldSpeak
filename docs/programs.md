@@ -30,10 +30,10 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 
 1. Open **Go ▸ Programs** (after Agents), or press ⌃7.
 2. Press **New program** (or choose a template in **Templates ▾**). The Programs window shows the New program wizard in four steps. Press **Next** to go to the next step, **Back** to go to the step before, and Escape or **Cancel** to go back to the list. The wizard saves nothing until you press **Create**.
-   - **Where**: choose the project. When you open Programs from a project, or when you have only one project, that project is chosen. To use a repository that is not in a project, choose **A folder on this machine** and type its folder.
-   - **What**: type the title and the goal (the brief). Each field has a mic. Choose a template here if you want a different one.
-   - **How**: choose what the program can do by itself: **Runs by itself** (YOLO), **Asks before it merges or sends** (Normal) or **Asks at every step** (Secure). With no choice, the program uses your desk's level. Choose the agent, the reviewer and the check command if you do not want the template's. Spending is not capped.
-   - **Go**: read the summary and press **Create**. The Program window opens in **Drafting**.
+   - **Project**: choose the project. When you open Programs from a project, or when you have only one project, that project is chosen. To use a repository that is not in a project, choose **A folder on this machine** and type its folder.
+   - **Goal**: type the title and the goal (the brief). Each field has a mic. Choose a template here if you want a different one.
+   - **Runs**: choose what the program can do by itself: **Runs by itself** (YOLO), **Asks before it merges or sends** (Normal) or **Asks at every step** (Secure). With no choice, the program uses your desk's level. Choose the agent, the reviewer and the check command if you do not want the template's. Spending is not capped.
+   - **Create**: read the summary and press **Create**. The Program window opens in **Drafting**.
 3. To change the goal, press it at the top and type.
 4. Add the steps. Each step is one row; press it to open it in place: its title, agent, effort and "after", its brief, its **Gate** (the check, the review, who merges) and **What it must prove**. Paste a brief for each step. Give each step the files it owns. A step can start after other steps ("after 2, 3"). Or press **Plan it**, and the engine drafts the steps for you (see "Plan it from a goal"). Press **Ask me first** if you want the engine to ask you some questions before it plans (see "The interview rounds").
 5. Press **Start**. Under it the window says what Start checks first: the repository, the remote (when a step opens a pull request) and the check command.

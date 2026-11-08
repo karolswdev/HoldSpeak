@@ -34,7 +34,9 @@ import type { Control } from "./types";
 export const DEFAULT_TITLE = "New program";
 /** The "A folder on this machine" row's value. */
 const FOLDER = "folder";
-const STEPS = ["Where", "What", "How", "Go"] as const;
+// The steps have no names on the face (owner, 2026-11-08: "still uses the
+// super unprofessional what where how and why"); the keys order the dots.
+const STEPS = ["project", "goal", "runs", "create"] as const;
 /** The wizard always has its four steps (never a count of zero). */
 const STEP_TOTAL = STEPS.length;
 
@@ -201,7 +203,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, onClose
       );
     } else {
       page = (
-        <ListView label="Where" className="pg-wiz-where" data-testid="programs-wizard-where">
+        <ListView label="Project" className="pg-wiz-where" data-testid="programs-wizard-where">
           <ul className="kit-listrows">
             {rows.map((row) => (
               <ListRow key={row.id} data-testid="programs-wizard-project" openTestId="programs-wizard-pick" nameTestId="programs-wizard-name"
@@ -233,8 +235,8 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, onClose
   } else if (step === 2) {
     page = (
       <GadgetGroup material="inset">
-        <GadgetRow label="Control" controlWidth="full">
-          <FilterTokens label="Control" className="pg-wiz-control" value={control} onChange={(next) => setControl(next as Control)}
+        <GadgetRow label="Runs" controlWidth="full">
+          <FilterTokens label="Runs" className="pg-wiz-control" value={control} onChange={(next) => setControl(next as Control)}
             emptyLabel="Your desk's level" options={LEVELS.map((row) => ({ value: row.value, label: row.word }))} />
         </GadgetRow>
         <GadgetRow label="Agent">
@@ -261,9 +263,9 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, onClose
     page = (
       <GadgetGroup material="inset">
         <div className="pg-wiz-summary" data-testid="programs-wizard-summary">
-          <GadgetRow label="Where" fact={<span data-testid="programs-wizard-sum-where">{placeName}</span>}>{null}</GadgetRow>
+          <GadgetRow label="Project" fact={<span data-testid="programs-wizard-sum-where">{placeName}</span>}>{null}</GadgetRow>
           <GadgetRow label="Title" fact={<span data-testid="programs-wizard-sum-title">{`${title.trim() || DEFAULT_TITLE} · ${templateName(template)}`}</span>}>{null}</GadgetRow>
-          <GadgetRow label="How" fact={<span data-testid="programs-wizard-sum-how">{how}</span>}>{null}</GadgetRow>
+          <GadgetRow label="Runs" fact={<span data-testid="programs-wizard-sum-how">{how}</span>}>{null}</GadgetRow>
         </div>
       </GadgetGroup>
     );
@@ -280,7 +282,6 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, onClose
     <section className="pg-wiz" aria-label="New program" data-testid="programs-wizard" data-template={template} data-step={step + 1}
       onKeyDown={onKeyDown}>
       <div key={step} ref={stepRef} className="pg-wiz-step" data-dir={dir} data-testid={`programs-wizard-step-${step + 1}`}>
-        <h3 className="kit-listday-label pg-wiz-name">{STEPS[step]}</h3>
         {page}
       </div>
       {outcome.kind === "refused" ? (
