@@ -2,7 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-- 2026-11-08 · #<n> The floor: whole-word labels cut once at the end (128 px at 1440), the kind's sprite (a Program's note wears program.png), no "Program:"/"Note:" prefix in the label (kept in the accessible name), steel hover and selection.
+- 2026-11-08 · #1968 The floor: whole-word labels cut once at the end (128 px at 1440), the kind's sprite (a Program's note wears program.png), no "Program:"/"Note:" prefix in the label (kept in the accessible name), steel hover and selection.
 - 2026-11-08 · #1964 Fix forward #1963: the Fraunces twin and package leave; the guard now fences 'no display face'; the canon says so.
 - 2026-11-08 · #1963 No display face: titles, masts and the wordmark are Inter (owner: Fraunces 'I loathe this font'; the display-face idea is closed).
 - 2026-11-08 · #1962 Fix forward #1961: the write check compares the HTTP method case-free (the lamp-words guard counts toUpperCase).
