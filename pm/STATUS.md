@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1980 Park 4 /api/programs routes no client reads (from-desk, propose_fix, step checkpoint, step remove): hub routes 918 → 914; the MCP tools keep the service methods.
 - 2026-11-08 · #1977 Park 17 /api/activity routes no client reads: hub routes 935 → 918, live holdspeak+tests −930/+85 lines (handlers, handler-only service methods and their tests parked).
 - 2026-11-08 · #2007 Watch fold 4: ReactionService, its 11 MCP tools and 11 `/api/automations/*` routes are parked; an old event start reads "The event start must be set again"; MCP 305 → 294 tools. One watch: WatchService.
 - 2026-11-08 · #2001 Watch fold 3: the conductor tick no longer runs the legacy watch refresh or the Reaction projection; the heartbeat sweep is the one watch scheduler.
