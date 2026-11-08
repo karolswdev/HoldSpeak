@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1948 HS-S56 retire proven-obsolete compatibility surface: deferred_admission namespace and allowed_tools_for_thread parked, the shadowed _backfill_directory_name_normalized copy and 67 dead runtime imports/re-exports gone (−185 product lines); the history MeetingReview shim stays (the Philo graph cites it).
 - 2026-11-08 · #1942 Fix forward #1937: the Room glass waits for a completed steward run from Python (Playwright's wait_for_function returned at once on an async predicate; the run now takes 70 ms, not 18).
 - 2026-11-08 · #1942 Fix forward #1926/#1939: the two spend-note vitest cases read the Programs window's new face (the rail and Earlier steps).
 - 2026-11-08 · #1941 Fix forward #1936 (Codex): the observer's stored summary is byte-identical to the old one (no head read; same 1 MB guard and marker; kept answers of the leaf and whole-text redaction); fresh Needs-you build 90 → 61 ms median (the head read was 43, not exact).
