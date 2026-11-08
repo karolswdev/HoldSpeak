@@ -301,6 +301,7 @@
   "search_words": "desk audit find what is wrong on the desk. audit notes window audit",
   "skipped": 0,
   "spend_limit_usd": null,
+  "spend_note": null,
   "state": "waiting",
   "state_word": "Your turn",
   "status_line": "Your turn · 1 of 1 done · 3 wait on you · control Secure",

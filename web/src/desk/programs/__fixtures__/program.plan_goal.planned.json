@@ -458,6 +458,7 @@
   "search_words": "meeting recap in the note after a meeting, the meeting's note should end with a short recap: the decisions, the actions with their owners, and the open questions. it comes from the transcript we already keep, runs on the local model, and sends nothing out. it is a section of the note that i can edit, not a new window. it must be fast: under 20 seconds after stop on this mac. it must not make up owners: when nobody was named, it says \"no owner\". alice asked for this for her team's standups, so she sees it before it ships. build-and-review generate recap from transcript via local model enforce \"no owner\" when no name is in the transcript wire recap into meeting stop and append to the note render and edit the recap section in the note editor build and review",
   "skipped": 0,
   "spend_limit_usd": null,
+  "spend_note": null,
   "state": "drafting",
   "state_word": "Drafting",
   "status_line": "Drafting · 0 of 4 done · check: quick_check.sh · control Normal",

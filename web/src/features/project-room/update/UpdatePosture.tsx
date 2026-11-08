@@ -45,6 +45,7 @@ import { useEngine, refreshEngine } from "../../../desk/hooks/useEngine";
 import { spriteUrl } from "../../../desk/sprites";
 import { Token } from "../../../desk/surface/Token";
 import { countToken } from "../../../desk/surface/count";
+import { Mast } from "../../../desk/surface/patterns/Mast";
 
 /** The capability that drafts a project update (`project_update_service`). */
 const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
@@ -549,6 +550,23 @@ function EnginePassLine({
   );
 }
 
+/* ── The posture's mast (the language, 2026-11-08) ── */
+
+/** The owner, 2026-11-08: "'write update' … feels … like a button that
+ *  allows me to write an update (as a note)". The head says in one line what
+ *  happens: the engine drafts from the sources, he sends. */
+export function draftWords(engine: { state: string; model: string }): string {
+  const who = engine.state === "set" && engine.model ? engine.model : "HoldSpeak";
+  return `${who} drafts from the sources · you send`;
+}
+
+function UpdateMast({ engine }: { engine: { state: string; model: string } }) {
+  return (
+    <Mast kind="artifact" id="update" title="Status update" facts={draftWords(engine)}
+      className="update-mast" data-testid="update-mast" />
+  );
+}
+
 /* ── Main Update posture ── */
 
 export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
@@ -568,6 +586,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
     const updateCount = countToken(ctrl.updates.length, "update", "updates");
     return (
       <div className="update-posture" data-testid="update-posture" data-phase="list">
+        <UpdateMast engine={engine} />
         <SurfaceVerbs>
           <Button dense variant="ghost" onClick={ctrl.exitUpdates}>
             Close
@@ -581,7 +600,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
             data-testid="update-verb-draft"
             data-verb="draft-update"
           >
-            Write update
+            Draft update
           </Button>
         </SurfaceVerbs>
 
@@ -639,6 +658,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
   if (ctrl.posture === "editor") {
     return (
       <div className="update-posture" data-testid="update-posture" data-phase="editor">
+        <UpdateMast engine={engine} />
         {ctrl.error ? (
           <SurfaceState error={ctrl.error} errorTitle={ctrl.errorTitle} onRetry={ctrl.retryFailed ?? undefined} />
         ) : null}

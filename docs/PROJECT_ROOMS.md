@@ -1,7 +1,7 @@
 # Project Rooms
 
 A Project Room shows one Project in one window: where it stands, what needs
-you, who you wait on and what changed this week. Ask, updates and source
+you, what changed and what is open. Ask, updates and source
 Watches act inside the Project scope. That scope is narrower than whole-Desk
 Ask.
 
@@ -67,29 +67,39 @@ Open a Project to open its Room. The Room has two tabs: **Now** and
 **History**. The Room opens on **Now**. Opening the Room sets its read
 marker.
 
-### The head
+### The mast
 
-The head is the first line of **Now**.
+The mast is the top of **Now**: the Project's icon, the Project name and
+one facts line, for example `On track · last update Sat 7 Nov 23:40 · 3 need
+you`.
 
-- The status line gives the state and its reason: **On track**,
-  **At risk: <reason>** or **Blocked: <reason>**. A new Project with no
-  material says **New**. When the hub could not read health, or a source
-  was not read on time, the line says **Not all read**.
-- Press the status line to open the source of its reason.
-- The line under it gives the next date (the target or the next planned
-  milestone), the last published update, and the meetings of this week.
-  A part with nothing to say is not shown.
-- **Write update** drafts an update from the Project records at once. The
-  configured engine then writes its own draft. The draft opens in the
-  update posture.
-- **Review N** shows when proposals wait. It opens the review posture.
-- **Update draft** shows the time of the newest update draft. **Continue**
-  opens the draft in the update posture, with the text you did not save.
+- The state word comes first, in its colour: **On track** is green,
+  **At risk: <reason>** and **Blocked: <reason>** are red, an archived
+  Project is grey. A new Project with no material says **New**. When the
+  hub could not read health, or a source was not read on time, the line
+  says **Not all read**. Press the reason to open its source.
+- **last update** gives the day and time of the last published update.
+- **N need you** opens the **Needs you** rows under the mast. Press it
+  again to close them. It is not shown at zero.
+- A bar under the mast has the colour of the state.
+- **Draft update** tells the update engine to draft the Project's status
+  update from the sources. The records draft shows at once; the engine's
+  draft follows. You review the draft and you send it. **Draft update**
+  does not write a note.
+- **History** opens the **History** tab.
+
+Under the mast is the **Ask this project** field with its microphone. Type
+a question and press Enter. The question runs in the Ask window with this
+Project as its scope, and shows in Ask's Recent.
+
+On a phone, the verbs are **Draft update** and **Ask** on one row. **Ask**
+opens the Ask window with this Project as its scope. **History** is the
+second tab.
 
 ### Needs you
 
-**Needs you** lists the rows that are yours. The section is not shown when
-it has no rows.
+**Needs you** lists the rows that are yours. It opens from **N need you**
+on the mast.
 
 | Row | One press |
 | --- | --- |
@@ -98,95 +108,78 @@ it has no rows.
 | A review that waits on someone | **Nudge** opens the nudge card. **Open** opens that person in People. |
 | Your open item or action | **Hand to an agent session**, **Run as a program**, **Open source** or **Open**. |
 | A decision that waits | **Decide** opens its source. |
+| Proposals that wait for review | **Review N** opens the review posture. |
 
 **Open** on a meeting action opens its card in follow-through. There you
 set the owner and the date.
 
-### Waiting on
+### What changed
+
+**What changed** shows the first lines of the latest published update in
+large type, then one line: the day and time, who wrote it, and **open the
+update**. **open the update** opens it in the update posture.
+
+When an update draft is kept, the foot of the plate says **Update draft ·
+<time>**. **Continue** opens the draft in the update posture, with the text
+you did not save.
+
+Under it, **Files** and **Sources** are two folds side by side. A fold
+with rows shows its count. Press a fold to open or close it. **Plan** is
+there too when the Project has milestones or risks.
+
+| Fold | Content | One press |
+| --- | --- | --- |
+| **Files** | The Notes filed to this Project. Not shown when there are none. | Select a row and press **Open note**, or open the row. |
+| **Sources** | Each source, its Watch state (**Paused**, **Stale**, **Never checked** or the last check), suggested sources, **Add source**. | See "Control Watches". |
+| **Plan** | The milestones and risks on a timeline with **Today**. A late milestone shows **Late**. | |
+
+### What is open
+
+**What is open** has up to three plates. Each plate has an icon, a name, a
+count or word at the right, a coloured bar and one line. Press a plate to
+open what it names.
+
+| Plate | Line | Bar | Press |
+| --- | --- | --- | --- |
+| **Programs** | `2 running · 1 waits on you: <step>`, or **No Programs yet** with **New program** | Yellow for what waits on you, blue for what runs | Opens the Programs window for this Project. |
+| **People** | What others owe, for example `Bea owes a review · Dana owes 2`, or the people the Project names | The share of people who owe you | Opens **Waiting on** and the Project's people under the plate. |
+| **Decisions** | The latest decision and its day | The share of decisions committed to a person | Opens the decision in the decision reader. |
+
+The People plate is not shown when the Project names nobody. The Decisions
+plate is not shown when there is no decision. A hub that cannot read
+Programs says **Not read** with **Refresh**. It does not show an empty
+list.
 
 **Waiting on** lists the items that other people owe, one row for each
 person. The person with the most late work is first. An item shows its due
 date. **Nudge** shows when the item has a destination for a nudge.
 
-### This week
-
-**This week** has up to four groups: **Open**, **Decided**, **Risks** and
-**Changed**. A group with no lines is not shown. On a phone each group
-shows its first line and **N more**.
-
-- **Decided** lists the decisions recorded in the last seven days. Press a
-  line to open the decision in the decision reader. The meeting token
-  opens the meeting.
-- A decision that is committed to a Person shows **Committed · <name>** at
-  the end of its line.
-- **Risks** lists the risks of this week's meetings and notes. A line that
-  is an open risk item shows **At risk** and opens that item.
-- **Open** and **Changed** come from the Project's standing pages.
-
-A decision you confirm from a meeting proposal, or record in the meeting
-Decide well, is filed to the Project when it is written. It shows in
-**Decided** with its meeting as the source.
-
-### Ask this project
-
-The ask row is under **This week**. Type in **Ask this project** and press
-Enter or **Ask**. The question runs in the Ask window with this
-Project as its scope, and shows in Ask's Recent. The engine word opens
-**Settings > Engines** to choose the engine. Set **Result** to
-**Preparation brief** to open the prepare posture with your words.
-
-### The folds
-
-Under the ask row are the folds. Press a fold's **Show** or **Hide** to
-open or close it. A fold with rows shows its count.
-
-| Fold | Content | One press |
-| --- | --- | --- |
-| **Files** | The Notes filed to this Project. Not shown when there are none. | Select a row and press **Open note**, or open the row. |
-| **Programs** | Always shown. One row for each Program of the Project, with its state word and step dots. Open when there are rows. | A row opens its Program window. With no Program: "No Programs yet" and **New program**, which opens the Programs window for this Project. |
-| **Sources** | Each source, its Watch state (**Paused**, **Stale**, **Never checked** or the last check), suggested sources, **Add source**. | See "Control Watches". |
-| **People** | The people the Project names. | **Open** opens a person in People. **People** on the head opens People for this Project. |
-| **Plan** | The milestones and risks on a timeline with **Today**. A late milestone shows **Late**. | |
-
-A hub that cannot read Programs says **PROGRAMS NOT READ** with
-**Refresh**. It does not show an empty list.
-
-### People
-
 Each linked person row shows the person, their open commitments, and the
-PRs and assignments that wait on them. The row opens to show each
-commitment with its source and **Open source**.
+PRs and assignments that wait on them. An owner name that is not linked to
+a person shows **Owner not linked** and **Link**. A name that matches more
+than one person shows **Owner not clear** and **Resolve**.
 
-An owner name that is not linked to a person shows **Owner not linked** and
-**Link**. A name that matches more than one person shows **Owner not clear**
-and **Resolve**. **Resolve** shows the candidates under the row. A press on
-a candidate only selects it. **Link** writes the link. **Inspect** opens the
-selected person, and **Check** reads again. The caption says
-**PEOPLE 2 OF 3** when not all named people are linked.
+### The status bar
 
-When the People ledger is locked or not set up, the head verb is **Unlock**
-or **Set up People**. The fold is not shown when the Project names no
-people.
-
-### The update schedule
-
-The **Update** row is at the foot of **Now** when the Project has an
-update automation.
-
-- **Fridays 15:00** or **Only when pressed** says when the update runs.
-  Press it to open the automation.
-- The engine word says which engine writes it. Press it to open the
-  automation.
-- **NEW** shows when the latest result is not read.
-- **Open latest** opens the latest update in the update posture.
-- **Every Friday at 15:00** turns on the schedule.
+The status bar of **Now** says when the update runs and with which engine,
+for example `updates every friday 15:00 · Gemini CLI` or `updates only when
+pressed · Gemini CLI`. Press it to open the update automation, where you
+set the schedule and the engine. `saved <time>` gives the newest save of
+an update.
 
 ## History
 
-**History** lists the Project changes by day: **Today**, **Yesterday**,
-then the date. Search with **Search history**. Filter with **Source**.
-Press a row to open the object that it changed. A row about the Room itself
-has nothing to open.
+The **History** toolbar has **Source**, **Search history** and **Prepare a
+brief**. **Prepare a brief** opens the prepare posture.
+
+Under the toolbar, **Pages** lists the Project's standing pages: **Open**,
+**Risks** and **Changed**. A row shows the page's first sentence. Press a
+row to open the page under it: each sentence with its source. A page that
+is not served is not shown.
+
+The list gives the Project changes by day: **Today**, **Yesterday**, then
+the date. Press a row to open the object that it changed. A row about the
+Room itself has nothing to open.
 
 The **Writes** fold under the list shows each write to the Project. A
 refused or failed write shows its reason. The status bar gives the count
@@ -207,9 +200,11 @@ goes back to **Now**.
 
 ### The update posture
 
-The update posture holds the Project updates and one update editor. It
-opens from **Write update**, from **Open latest**, from **Continue**, from
-the palette's **Draft update**, and from a Send link to an update. The Room
+The update posture holds the Project updates and one update editor. Its
+head says what happens, for example `Gemini CLI drafts from the sources ·
+you send`. It opens from **Draft update**, from **open the update**, from
+**Continue**, from the palette's **Draft update for <project>**, and from a
+Send link to an update. The Room
 does not open in the update posture from an earlier visit.
 
 - **Save** keeps the draft. **Publish** publishes it.
@@ -237,7 +232,7 @@ scheduler ran.
 
 ### The prepare posture
 
-Set **Result** to **Preparation brief** in the ask row. The prepare
+Press **Prepare a brief** on the **History** toolbar. The prepare
 posture builds a brief from the Room's sources, its decisions and its open
 commitments. Press **Keep this brief** or **Copy the brief**. It needs no
 calendar.
@@ -277,9 +272,9 @@ successful request as proof that a provider source changed.
 | --- | --- |
 | A provider does not connect | Follow its recovery command in **Settings > Accounts > Connections**. Select **Recheck**. |
 | A count check fails | Check source scope, account, provider access, and the reason in the row. |
-| **Decided** shows no decision | Check that the meeting is filed to the Project. **Decided** shows only the last seven days. |
+| **Decisions** is not shown | Check that the meeting is filed to the Project. The plate shows the decisions of the last seven days. |
 | The status line says **Not all read** | Open **Sources** and check the stale source. Press **Retry** on the health line. |
-| **Programs** says **PROGRAMS NOT READ** | Press **Refresh**. |
+| **Programs** says **Not read** | Press **Refresh**. |
 | A Watch creates too much work | Adjust its source or select **Pause**. Check the effect before you resume it. |
 | A suggested source is not active | Select **Add**. A suggestion does not create a Watch. |
 | Unattended work does not run | Check policy, runtime, scheduler, and the refusal or receipt. |

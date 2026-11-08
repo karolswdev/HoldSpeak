@@ -14,7 +14,6 @@ import platform
 import re
 import uuid
 from dataclasses import dataclass, replace as _replace
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -22,6 +21,7 @@ from ..deployment_revisions import DeploymentIdentity, DeploymentRevision
 from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
 from .tool_capability_service import ToolCapabilityError, parse_capability_manifest
+from holdspeak.timestamps import utc_now_z_micro as _now
 
 
 _PROFILE_ID = re.compile(r"^[a-z][a-z0-9_-]{0,95}$")
@@ -74,10 +74,6 @@ _LEGACY_RUNTIME_FAMILIES = {
 }
 
 DependencyProvider = Callable[[Any, str], list[dict[str, str]]]
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 def _canonical(value: Any) -> str:

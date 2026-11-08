@@ -431,6 +431,7 @@
   "search_words": "proof run three parts. fast-cycle part 1 part 2 part 3 #101 fast cycle",
   "skipped": 0,
   "spend_limit_usd": null,
+  "spend_note": null,
   "state": "parked",
   "state_word": "Parked",
   "status_line": "Parked · 1 of 3 done · check: fake_program_check.sh · control YOLO",

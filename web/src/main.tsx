@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
+import { preloadSurface } from "./routes";
 import { bootstrapAuth } from "./lib/auth";
 import { DeskChangedRefresh } from "./desk/useDeskChangedRefresh";
 import { HubWindowsSync } from "./desk/compositor/HubWindowsSync";
@@ -15,7 +16,7 @@ bootstrapAuth();
 const root = document.getElementById("root");
 if (!root) throw new Error("HoldSpeak root element is missing");
 
-createRoot(root).render(
+const render = () => createRoot(root).render(
   <StrictMode>
     <BrowserRouter>
       <RuntimeBusProvider>
@@ -31,3 +32,7 @@ createRoot(root).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+// The surface's chunk first: a first render that suspends is revealed 300 ms
+// late (routes.tsx, preloadable). A failed read renders all the same.
+void preloadSurface(window.location.pathname).then(render, render);

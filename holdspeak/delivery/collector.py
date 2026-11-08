@@ -34,12 +34,12 @@ import subprocess
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
 from .read_model import build_snapshot, compose_cursor, parse_cursor, sanitize_event
 from .registry import DeliveryRegistry, SourceRecord
+from holdspeak.timestamps import utc_now_z as _utc_now
 
 DW_TIMEOUT_SECONDS = 30
 DEFAULT_MAX_AGE_SECONDS = 15.0
@@ -65,10 +65,6 @@ def _default_runner(argv: list[str], cwd: Optional[str] = None):
         errors="replace",
         timeout=DW_TIMEOUT_SECONDS,
     )
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 @dataclass

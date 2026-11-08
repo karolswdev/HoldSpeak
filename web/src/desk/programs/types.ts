@@ -556,6 +556,8 @@ export interface Program extends ProgramSummary {
   /** Phone (PHONE-DESIGN §6): the engine may call him for this Program. */
   may_call?: boolean;
   spend_limit_usd?: number | null;
+  /** HS-S24: the hub's one fact, "spend note · 40 USD"; null when none. */
+  spend_note?: string | null;
   /** He closed it (Secure). */
   closed_at?: string | null;
   /** PG-REQ: the Program's own and the every-step parents, in ordinal order. */

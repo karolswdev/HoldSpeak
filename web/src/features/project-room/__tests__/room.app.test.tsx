@@ -641,7 +641,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
           await screen.findByTestId("room-history");
         } else {
           await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
-          fireEvent.click(screen.getByRole("button", { name: "Write update" }));
+          fireEvent.click(screen.getByRole("button", { name: "Draft update" }));
           await screen.findByTestId("update-posture");
         }
         await waitFor(() => expect(selected()).toBeNull());
@@ -746,7 +746,7 @@ describe("the Room opens on Now; the update draft waits with Continue", () => {
       .filter((c) => c.key.includes("/updates"))).toEqual([]);
   });
 
-  it("Write update still opens the update posture", async () => {
+  it("Draft update still opens the update posture", async () => {
     wire(base(false));
     render(<WindowHarness scope={`project:${pid}`} />);
     await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
@@ -1222,7 +1222,7 @@ describe("History reader states", () => {
   });
 });
 
-/* ── Betterment P1: Write update, the records draft first, the engine after ──
+/* ── Betterment P1: Draft update, the records draft first, the engine after ──
  * The hub's own answers (scripts/record_room_wires.py write1): a real engine
  * route to a stub. It replaces the P0 head test: the press no longer asks the
  * engine first, so a refused engine draft never leaves him with nothing. */
@@ -1235,7 +1235,7 @@ type W1 = {
   fail: { records: Call; start: Call; polls: Call[] };
 };
 
-describe("Betterment P1: Write update shows the records draft at once; the engine's draft follows", () => {
+describe("Betterment P1: Draft update shows the records draft at once; the engine's draft follows", () => {
   const w = W1 as unknown as W1;
   const uidOf = (c: Call) => (c.answer as { update: { id: string } }).update.id;
   const jobOf = (c: Call) => (c.answer as { job: { id: string } }).job.id;
@@ -1249,7 +1249,7 @@ describe("Betterment P1: Write update shows the records draft at once; the engin
     clearEngineCache();
     render(<WindowHarness scope={`project:${w.pid}`} />);
     await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
-    expect(screen.getByTestId("updates-verb").textContent).toBe("Write update");
+    expect(screen.getByTestId("updates-verb").textContent).toBe("Draft update");
     const pressedAt = Date.now();
     fireEvent.click(screen.getByTestId("updates-verb"));
     await screen.findByTestId("update-plain-text");
@@ -1398,14 +1398,14 @@ describe("Betterment Q5: the Room's Ask field opens Ask with the project in Abou
   });
 });
 
-/* ── Betterment P4: `Write update for <project>` (⌘K, the Object menu) ──
+/* ── Betterment P4: `Draft update for <project>` (⌘K, the Object menu) ──
  * The palette row and the Object menu verb ask the Room to press its own
- * Write update (openObject.writeProjectUpdate). The Room takes the request
+ * Draft update (openObject.writeProjectUpdate). The Room takes the request
  * once the engine roster is read and writes the records draft, with no
  * press of his on the Room: the same outcome as the head's Button. */
 import { takeRoomWriteRequest, writeProjectUpdate } from "../../../desk/openObject";
 
-describe("Betterment P4: the palette's Write update writes in the Room", () => {
+describe("Betterment P4: the palette's Draft update writes in the Room", () => {
   const w = W1 as unknown as W1;
 
   it("a request from ⌘K opens the Room and writes the records draft once", async () => {
@@ -1471,14 +1471,14 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
   });
 
-  // R1 "the brief" (owner 2026-11-08): the Now face is the toolbar, the
-  // status line, What is open and the folds; This week, the chips and the
-  // Programs fold left it.
-  it("R1: the Now face draws the brief in its order; This week, the chips and the Programs fold are gone", async () => {
+  // The language (2026-11-08, the bold canvas RoomBold): the Now face is the
+  // mast (its facts line), the spine, the Ask field, What is open and the
+  // folds; This week, the chips and the Programs fold left it in R1.
+  it("the Now face draws the mast, the spine and the plates in order; This week, the chips and the Programs fold are gone", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
     const open = await screen.findByTestId("room-what-is-open");
-    const order = ["room-head", "room-status-line", "room-what-is-open", "room-folds"]
+    const order = ["room-mast", "room-status-line", "room-spine", "room-ask-well", "room-folds", "room-what-is-open"]
       .map((id) => screen.getByTestId(id));
     for (let i = 1; i < order.length; i += 1) {
       expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -1492,12 +1492,18 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     }
     expect(screen.getByTestId("room-fold-sources")).toBeTruthy();
     expect(screen.getByTestId("wing-slot").textContent).toContain("Now");
-    // The toolbar: Write update the one primary, History, the Ask field.
-    const toolbar = within(screen.getByTestId("room-head")).getByRole("toolbar");
-    expect(within(toolbar).getAllByRole("button").filter((b) => b.className.includes("btn--primary"))
-      .map((b) => b.textContent)).toEqual(["Write update"]);
-    expect(within(toolbar).getByTestId("room-head-history")).toHaveTextContent("History");
-    expect(within(toolbar).getByLabelText("Ask this project")).toBeTruthy();
+    // The mast: the project's name, Draft update the one primary, History;
+    // At risk is coral (never brass: brass means it waits on you); the
+    // spine is coral too. Each plate opens its thing.
+    const mast = screen.getByTestId("room-mast");
+    expect(mast.querySelector(".surface-mast-title")?.textContent).toBe((P3.room as { project: { name: string } }).project.name);
+    expect(within(mast).getAllByRole("button").filter((b) => b.className.includes("btn--primary"))
+      .map((b) => b.textContent)).toEqual(["Draft update"]);
+    expect(within(mast).getByTestId("room-head-history")).toHaveTextContent("History");
+    expect(screen.getByTestId("room-headline").getAttribute("data-meaning")).toBe("coral");
+    expect(screen.getByTestId("room-spine").getAttribute("data-meaning")).toBe("coral");
+    expect(within(screen.getByTestId("room-ask-well")).getByLabelText("Ask this project")).toBeTruthy();
+    expect(open.querySelectorAll(".room-plate")).toHaveLength(open.querySelectorAll(".room-plate-spine").length);
     expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
   });
 
@@ -1732,7 +1738,9 @@ describe("R1: the Now face is the brief", () => {
     await waitFor(() => expect(within(changed).getAllByTestId("room-brief-line").map((l) => l.textContent))
       .toEqual(["The ledger cutover is on track."]));
     const meta = within(changed).getByTestId("room-brief-meta");
-    expect(meta.textContent).toMatch(/^Sun 11 Oct \d\d:\d\d · by your records·Open the update$/);
+    expect(meta.textContent).toMatch(/^Sun 11 Oct \d\d:\d\d · by your records·open the update$/);
+    // The pull-quote: the update's first lines in a raised plate.
+    expect(within(changed).getByTestId("room-brief-plate").querySelector("blockquote")).toBeTruthy();
     // The status line says the same update's day.
     expect(screen.getByTestId("room-status-last-update")).toHaveTextContent("last update Sun 11 Oct");
     fireEvent.click(within(meta).getByTestId("room-brief-open"));
@@ -1748,7 +1756,8 @@ describe("R1: the Now face is the brief", () => {
     render(<WindowHarness scope={`project:${pid}`} />);
     const changed = await screen.findByTestId("room-what-changed");
     const row = within(changed).getByTestId("room-head-update-draft");
-    expect(row.textContent).toMatch(/^Update draft · Nov 1, \d\d:\d\d·Continue$/);
+    expect(row.textContent).toMatch(/^Update draft · Nov 1, \d\d:\d\dContinue$/);
+    expect(within(row).getByTestId("room-head-update-continue").className).toContain("btn--secondary");
     fireEvent.click(within(row).getByTestId("room-head-update-continue"));
     const editor = (await screen.findByTestId("update-plain-text")) as HTMLTextAreaElement;
     expect(editor.value).toBe("Kept words he was writing");
@@ -1758,8 +1767,8 @@ describe("R1: the Now face is the brief", () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
     const cadence = await screen.findByTestId("room-status-cadence");
-    expect(cadence.textContent).toBe(`Updates every Friday at 15:00 · ${automation.engine_label}`);
-    expect(screen.getByTestId("room-status-saved").textContent).toMatch(/^Saved \d\d:\d\d$/);
+    expect(cadence.textContent).toBe(`updates every friday 15:00 · ${automation.engine_label}`);
+    expect(screen.getByTestId("room-status-saved").textContent).toMatch(/^saved \d\d:\d\d$/);
     fireEvent.click(within(cadence).getByTestId("room-status-cadence-open"));
     expect(workbenches).toEqual([automation.id]);
   });
@@ -1768,7 +1777,7 @@ describe("R1: the Now face is the brief", () => {
     wire({ ...table(), [room(pid)]: () => clone(P7.manual) });
     render(<WindowHarness scope={`project:${pid}`} />);
     const cadence = await screen.findByTestId("room-status-cadence");
-    expect(cadence.textContent).toBe(`Updates only when pressed · ${P7.manual.updates.automation!.engine_label}`);
+    expect(cadence.textContent).toBe(`updates only when pressed · ${P7.manual.updates.automation!.engine_label}`);
     const body = screen.getByTestId("room-body");
     for (const gone of ["room-update-line", "room-update-when", "room-update-with", "room-update-open",
       "room-update-friday", "room-update-new"]) {
@@ -1784,5 +1793,197 @@ describe("R1: the Now face is the brief", () => {
     const line = await screen.findByTestId("room-status-line");
     expect(screen.queryByTestId("room-status-need")).toBeNull();
     expect(line.textContent).not.toMatch(/\b0\b/);
+  });
+});
+
+/* ── The language (2026-11-08): Prepare a brief lives in History ─────────
+ * R1 (#1923) took the Ask's Answer / Preparation cycle off the Now face and
+ * left the Prepare posture with no door; its five cases were parked
+ * (_parked/__tests__/roomR1.parked.test.tsx). History's toolbar now carries
+ * `Prepare a brief`, which opens the posture; the cases run again from it. */
+
+/** Open the History tab, then press `Prepare a brief`. */
+async function openPrepare() {
+  fireEvent.click(await screen.findByTestId("room-head-history"));
+  fireEvent.click(await screen.findByTestId("room-history-prepare"));
+}
+
+describe("HS-200-11: the Prepare face states coverage, sources and the route before the run", () => {
+  // replaces: tests/e2e/test_hs200_preparation_brief_glass.py::test_prepare_face_states_coverage_before_the_run
+  // (the purpose textarea's no-clip box is the generic sweep's, T3)
+  const pid = PREP_ROOM.project_id;
+
+  it("COVERAGE · 2 OF 4, SOURCES 4 with both gaps and their repairs, CARRIED FORWARD 1, the route READY on THIS DEVICE", async () => {
+    wire({
+      [room(pid)]: () => clone(PREP_ROOM),
+      [`GET /api/projects/${pid}/briefs/route`]: () => clone(PREP_ROUTE),
+      [`GET /api/projects/${pid}/briefs/manifest`]: () => clone(PREP_MANIFEST),
+      [`GET /api/projects/${pid}/briefs`]: () => ({ briefs: [] }),
+    });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await openPrepare();
+    const coverage = await screen.findByTestId("prepare-coverage");
+    const posture = screen.getByTestId("prepare-posture");
+    const words = (el: Element) => el.querySelector(".surface-state-chip")?.getAttribute("aria-label");
+    expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Prepare a brief");
+    expect(words(coverage)).toBe("Coverage · 2 of 4");
+    expect(coverage.getAttribute("data-complete")).toBe("false");
+    expect(screen.getByTestId("prepare-purpose-by-hand").textContent?.trim()).toBe("Purpose set by hand");
+    expect(screen.getByTestId("prepare-no-calendar").textContent?.trim()).toBe("No calendar");
+    const route = await screen.findByTestId("prepare-route");
+    expect(route.getAttribute("data-state")).toBe("ready");
+    expect(screen.getByTestId("prepare-route-model").textContent?.trim()).toBe("QWEN3 35B");
+    // Same-device work has no passive egress badge on the face.
+    expect(route.textContent).not.toContain("This device");
+
+    const captions = Array.from(posture.querySelectorAll(".surface-section-head h3")).map((h) => h.textContent?.trim());
+    expect(captions[0]).toBe("Sources 4");
+    expect(captions).toContain("Carried forward 1");
+    const states = screen.getAllByTestId("prepare-source-state");
+    expect(states.map((s) => s.getAttribute("data-state")).sort()).toEqual(["available", "available", "failed", "stale"]);
+    expect(states.map(words)).toContain("Credential expired · Confluence");
+    expect(screen.getAllByTestId("prepare-source-repair").map((b) => b.textContent?.trim()).sort()).toEqual(["Reconnect", "Retry"]);
+    const observed = screen.getAllByTestId("prepare-source-observed").map((o) => o.textContent?.trim() ?? "");
+    expect(observed).toHaveLength(4);
+    expect(observed.every((t) => t.startsWith("Observed "))).toBe(true);
+
+    // An empty purpose: Prepare is refused; the purpose is a textarea that persists.
+    expect((screen.getByTestId("prepare-verb") as HTMLButtonElement).disabled).toBe(true);
+    const purpose = screen.getByRole("textbox", { name: "Purpose" });
+    expect(purpose.tagName).toBe("TEXTAREA");
+    fireEvent.change(purpose, { target: { value: "Architecture review, cut-over sequencing, rollback rehearsal" } });
+    await waitFor(() => expect((screen.getByTestId("prepare-verb") as HTMLButtonElement).disabled).toBe(false));
+    expect(sessionStorage.getItem("hs.room.prepareDrafts")).toContain("rollback rehearsal");
+    // The route probe sends nothing: no prepare request left the face.
+    expect(calls.filter((c) => c.key.endsWith("/briefs/prepare"))).toEqual([]);
+    expect(Array.from(posture.querySelectorAll("button")).filter((b) => !(b.getAttribute("aria-label") || b.textContent || "").trim())).toEqual([]);
+  });
+});
+
+describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the hub answers", () => {
+  const pid = PREP2_ROOM.project_id;
+  const PURPOSE = "Architecture review, cut-over sequencing";
+  const prepareKey = `POST /api/projects/${pid}/briefs/prepare`;
+  const table = (prepare: Answer): Record<string, Answer> => ({
+    [room(pid)]: () => clone(PREP2_ROOM),
+    [`GET /api/projects/${pid}/briefs/route`]: () => clone(PREP2_ROUTE),
+    [`GET /api/projects/${pid}/briefs/manifest`]: () => clone(PREP2_MANIFEST),
+    [`GET /api/projects/${pid}/briefs`]: (_init, url) => (url.includes("lifecycle=kept") && kept ? clone(BRIEFS_KEPT) : { briefs: [] }),
+    [prepareKey]: prepare,
+    [`POST /api/briefs/${PREPARE_OK.brief.id}/keep`]: () => { kept = true; return clone(KEEP); },
+    [`POST /api/projects/${pid}/briefs/stop`]: () => clone(STOP),
+  });
+  let kept = false;
+  const refuse = async (payload: unknown) => {
+    const { ApiError } = await import("../../../lib/api");
+    return new ApiError(409, String((payload as { error: string }).error), clone(payload));
+  };
+  async function pressPrepare() {
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await openPrepare();
+    await screen.findByTestId("prepare-coverage");
+    await waitFor(() => expect(screen.getByTestId("prepare-route").getAttribute("data-state")).toBe("ready"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Purpose" }), { target: { value: PURPOSE } });
+    await waitFor(() => expect((screen.getByTestId("prepare-verb") as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByTestId("prepare-verb"));
+  }
+  beforeEach(() => { kept = false; });
+
+  // replaces: tests/e2e/_parked/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read
+  // (the face's receipt, egress and Keep legs at :754-:771; the claims ledger is the T1 successor's)
+  it("a sent and answered request: Brief ready, the receipt names the model, Keep keeps it and the receipt stays", async () => {
+    wire(table(() => clone(PREPARE_OK)));
+    await pressPrepare();
+    expect(calls.find((c) => c.key === prepareKey)?.json).toMatchObject({ purpose: PURPOSE, generator: "model" });
+    await screen.findByTestId("prepare-document");
+    expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Brief ready");
+    const lifecycle = () => screen.getByTestId("prepare-lifecycle").querySelector(".surface-state-chip")?.getAttribute("aria-label");
+    expect(lifecycle()).toBe("Draft");
+    expect(screen.queryByTestId("prepare-footer-egress")).toBeNull();
+    const receipt = screen.getByTestId("prepare-footer-receipt").textContent?.trim() ?? "";
+    expect(receipt.startsWith("QWEN3 35B")).toBe(true);
+    expect(screen.getByTestId("prepare-head").textContent).not.toContain("NOTHING SENT");
+    expect(screen.getAllByTestId("prepare-discard")).toHaveLength(1);
+
+    const keep = screen.getByTestId("prepare-keep");
+    fireEvent.click(keep);
+    await waitFor(() => expect(lifecycle()).toBe("Kept"));
+    expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Brief ready");
+    expect(screen.getByTestId("prepare-keep").getAttribute("aria-disabled")).toBe("true");
+    expect(screen.queryByTestId("prepare-discard")).toBeNull();
+    expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe(receipt);
+    fireEvent.click(screen.getByTestId("prepare-keep"));
+    expect(calls.filter((c) => c.key.endsWith("/keep"))).toHaveLength(1); // a second press writes nothing
+  });
+
+  // replaces: tests/e2e/_parked/test_hs200_preparation_brief_glass.py::test_a_sent_and_answered_request_is_never_reported_as_nothing_sent
+  // (the prose leg, :933-:945; the HTTP 500 leg reads NOT ANSWERED by the same refusalReceipt)
+  it("P0: a kernel success with a prose answer reads SENT · QWEN3 35B · NOTHING USABLE RECEIVED, never NOTHING SENT", async () => {
+    const error = await refuse(PREPARE_PROSE_409);
+    wire(table(() => { throw error; }));
+    await pressPrepare();
+    const sent = await screen.findByTestId("prepare-sent-token");
+    expect(screen.getByTestId("prepare-head").textContent).not.toContain("Nothing sent");
+    // Owner ruling 2026-10-25: the engine by name; never its address.
+    expect(sent.textContent?.trim()).toBe("Sent · QWEN3 35B · Nothing usable received");
+    expect(screen.queryByTestId("prepare-footer-egress")).toBeNull();
+    expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe("Sent · QWEN3 35B · Nothing usable received");
+    expect(screen.getByTestId("prepare-route").querySelector(".surface-state-chip")?.getAttribute("aria-label")).toBe("Output unusable");
+    expect(screen.getByTestId("prepare-purpose-kept").textContent?.trim()).toBe("Purpose kept");
+    expect((screen.getByRole("textbox", { name: "Purpose" }) as HTMLTextAreaElement).value).toBe(PURPOSE);
+    expect(screen.queryByTestId("prepare-document")).toBeNull();
+  });
+
+  // replaces: tests/e2e/_parked/test_hs200_preparation_brief_glass.py::test_stop_leaves_no_orphan_draft (the face half, :1030-:1040)
+  it("Stop: the request had left, the face is back on Prepare with his purpose, and no draft is drawn", async () => {
+    let answer!: () => void;
+    const error = await refuse(PREPARE_STOPPED_409);
+    wire(table(() => new Promise((_resolve, reject) => { answer = () => reject(error); })));
+    await pressPrepare();
+    await screen.findByTestId("prepare-running");
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    await waitFor(() => expect(screen.getByTestId("prepare-posture").getAttribute("data-posture")).toBe("prepare"));
+    const stopped = await screen.findByTestId("prepare-stopped");
+    expect(stopped.textContent?.trim().startsWith("Stopped · Request had left")).toBe(true);
+    const stopCall = calls.find((c) => c.key.endsWith("/briefs/stop"));
+    expect(stopCall?.json?.attempt_id).toBe(calls.find((c) => c.key === prepareKey)?.json?.attempt_id);
+    await act(async () => { answer(); await Promise.resolve(); });
+    expect(screen.queryByTestId("prepare-document")).toBeNull();
+    expect(screen.getByTestId("prepare-posture").getAttribute("data-posture")).toBe("prepare");
+    expect((screen.getByRole("textbox", { name: "Purpose" }) as HTMLTextAreaElement).value).toBe(PURPOSE);
+  });
+});
+
+describe("HS-200-16: the Prepare posture carries the earlier day's decision and commitment", () => {
+  const pid = LOOP_ROOM.project_id;
+  it("CARRIED FORWARD: the due is a DATE (DUE MM-DD, never a clock); the commitment is CMT, never DEC or CURRENT", async () => {
+    wire({
+      [room(pid)]: () => clone(LOOP_ROOM),
+      [`GET /api/projects/${pid}/proposals`]: () => clone(LOOP_PROPOSALS),
+      [`GET /api/projects/${pid}/briefs/route`]: () => clone(LOOP_ROUTE),
+      [`GET /api/projects/${pid}/briefs/manifest`]: () => clone(LOOP_MANIFEST),
+      [`GET /api/projects/${pid}/briefs`]: () => ({ briefs: [] }),
+    });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await openPrepare();
+    const carried = await screen.findByTestId("prepare-carried");
+    const posture = screen.getByTestId("prepare-posture");
+    const captions = Array.from(posture.querySelectorAll(".surface-section-head h3")).map((h) => h.textContent?.trim());
+    expect(captions.filter((c) => c?.startsWith("Carried forward"))).toEqual(["Carried forward 2"]);
+    const due = LOOP_MANIFEST.manifest.commitments[0].due_at; // "YYYY-MM-DD"
+    const dueTokens = Array.from(carried.querySelectorAll(".surface-token")).map((t) => t.textContent?.trim() ?? "")
+      .filter((t) => t.startsWith("Due"));
+    expect(dueTokens).toEqual([`Due ${due.slice(5)}`]);
+    expect(dueTokens.join(" ")).not.toMatch(/\d\d:\d\d/);
+    const rows = Array.from(carried.querySelectorAll("li")).map((li) => ({
+      emblem: li.querySelector(".prepare-emblem")?.textContent?.trim(),
+      text: li.querySelector(".surface-primary")?.textContent?.trim(),
+      chips: Array.from(li.querySelectorAll(".surface-state-chip")).map((c) => c.getAttribute("aria-label") || c.textContent?.trim()),
+    }));
+    const decision = rows.find((r) => r.text === LOOP_MANIFEST.manifest.decisions[0].text)!;
+    const commitment = rows.find((r) => r.text === LOOP_MANIFEST.manifest.commitments[0].text)!;
+    expect(decision.emblem).toBe("DEC");
+    expect(commitment.emblem).toBe("CMT");
+    expect(commitment.chips).not.toContain("Current");
   });
 });

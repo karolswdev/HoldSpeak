@@ -730,10 +730,14 @@ def program_list(db: Any, principal: Any = None, *, q: Any = None, project_id: A
     return out
 
 
-def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: Names, engine: Engines, estimate: Sizer) -> dict[str, Any]:
+def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: Names, engine: Engines, estimate: Sizer,
+        reach: Optional[Callable[[list[dict[str, Any]], Optional[str]], list[dict[str, Any]]]] = None) -> dict[str, Any]:
     program = require_program(db, program_id)
     steps = ProgramStore(db).list_steps(program["id"])
     wire = _wire(db, program, steps, clock=clock, person_name=person_name, engine=engine, estimate=estimate)
+    if reach is not None:
+        # HS-S35: each pinned checkpoint says whether its ref is reachable now.
+        wire["checkpoints"] = reach(wire["checkpoints"], program.get("repo_root"))
     # LANG5: the rows a call left for his press (only when there are some).
     from .program_spoken import on_desk
 
@@ -1314,12 +1318,27 @@ def _wire(db: Any, program: Mapping[str, Any], steps: list[dict[str, Any]], *, c
                       "shot_reason": shot_reason or None},
         "decided_for_you": decided_for_you(db, program["id"]),
         "control_word": level_word(program.get("control")),
-        "spend_limit_usd": program.get("spend_limit_usd"), "closed_at": program.get("closed_at"),
+        "spend_limit_usd": program.get("spend_limit_usd"), "spend_note": spend_note(program.get("spend_limit_usd")),
+        "closed_at": program.get("closed_at"),
         "revision": int(program.get("revision") or 0),
         "status_line": _status_line(program, summary),
         **_language_wire(db, program, engine=engine),
         **_audit_wire(program, steps, checkpoints),
     }
+
+
+def spend_note(amount: Any) -> Optional[str]:
+    """HS-S24 (D20/G24 ruled 2026-11-07, disclosure-only): the amount he
+    typed is a note he reads on the Program's face, never a cap. ``None``
+    when he set none. ``spend note · 40 USD``; cents only when he typed them."""
+    if amount is None or amount == "":
+        return None
+    try:
+        value = float(amount)
+    except (TypeError, ValueError):
+        return None
+    words = f"{value:.0f}" if value == int(value) else f"{value:.2f}"
+    return f"spend note · {words} USD"
 
 
 def _audit_wire(program: Mapping[str, Any], steps: list[dict[str, Any]],

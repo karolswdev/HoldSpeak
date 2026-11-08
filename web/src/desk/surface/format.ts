@@ -64,10 +64,16 @@ export function wireClock(value: unknown, seconds = false): string {
 
 /** A wire time as the local day and clock, `Oct 3, 21:06`; empty string
  * when the value is not a time. */
+// en-US `{ month: "short", day: "numeric" }` ("Nov 8") without Intl:
+// `toLocaleDateString` builds a new Intl.DateTimeFormat on each call, and the
+// desk names every meeting at each render (about 100 ms of a desk open, perf
+// lane 2026-11-08). Same words; the local zone as before.
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export function wireDayClock(value: unknown): string {
   const date = wireDate(value);
   if (!date) return "";
-  const day = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const day = `${SHORT_MONTHS[date.getMonth()]} ${date.getDate()}`;
   return `${day}, ${wireClock(date)}`;
 }
 

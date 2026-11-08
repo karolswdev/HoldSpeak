@@ -122,8 +122,8 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
     window.addEventListener(ROOM_UPDATES_EVENT, take);
     return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
   }, [ctrl.projectId, enterUpdates]);
-  // Betterment P4 (projects): the palette's and the Object menu's `Write
-  // update` press the head's own Write update here, once the engine roster
+  // Betterment P4 (projects): the palette's and the Object menu's `Draft
+  // update` press the head's own Draft update here, once the engine roster
   // is read (the head's Button waits for the same read).
   const writeEngine = useEngine("project.update_draft");
   const [writeAsked, setWriteAsked] = useState(false);
@@ -177,7 +177,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // History), and the selected row scrolls into view.
   // Every posture steps aside the way its own Close does; the Update posture
   // NEVER writes (Muad'Dib's ruling on Astra r2): its text, kept draft and
-  // failure stay; Write update brings the editor back. `keepSteward`: the
+  // failure stay; Draft update brings the editor back. `keepSteward`: the
   // Steward request.
   const leavePostures = (keepSteward = false) => {
     if (reviewCtrl.posture !== "off") reviewCtrl.exitReview();
@@ -361,9 +361,8 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           ) : null}
           {ctrl.view === "room" ? (
             <>
-              {/* R1 "the brief" (owner 2026-11-08): the toolbar, the status
-                  line, What changed, What is open, the folds, the status bar.
-                  On the phone, one column in that order. */}
+              {/* The mast (the language, 2026-11-08): the project, its facts,
+                  Draft update and History; the spine; the Ask field. */}
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
                 <RoomHead
                   room={ctrl.room}
@@ -389,40 +388,51 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                   />
                 ) : null}
               </RoomSlot>
-              <RoomSlot id="brief" place={place("brief")} delay="50ms">
-                <BriefSection room={ctrl.room} updateCtrl={updateCtrl} />
-              </RoomSlot>
-              <RoomSlot id="open" place={place("open")} delay="60ms">
-                <OpenSection room={ctrl.room} projectId={ctrl.projectId} nudges={ctrl.nudges}
-                  onReload={() => void ctrl.load()} onRefresh={handleRefresh} />
-              </RoomSlot>
-              {/* Filed work and Sources as two quiet folds on one line (stacked
-                  on the phone); the Plan, when the Project has items, beside
-                  them. Keep Files' place even if its read resolves after the
-                  Room cap. */}
-              <div className="room-folds room-folds-line" data-testid="room-folds">
-                <RoomSlot id="files" place={{ waiting: place("files").waiting }} delay="80ms">
-                  <RoomFiledNotes projectId={ctrl.projectId} ctrl={ctrl} request={fileRequest}
-                    onRequestHandled={onFileRequestHandled}
-                    presentationReady={shown && !place("files").waiting} />
-                </RoomSlot>
-                <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="82ms">
-                  <RoomFold title="Sources" token={sourceCount || undefined}
-                    open={addingSources || ctrl.room.sources.state === "degraded" || undefined} testId="room-fold-sources">
-                    <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
-                  </RoomFold>
-                </RoomSlot>
-                <RoomSlot id="items" place={place("items")} delay="85ms" data-section="items">
-                  <RoomFold title="Plan" token={itemsRead.items?.length || undefined} testId="room-fold-plan">
-                    <ItemsSection read={itemsRead} />
-                  </RoomFold>
-                </RoomSlot>
+              {/* The language, 2026-11-08 (the bold canvas RoomBold): What
+                  changed and the folds on the left, What is open on the right
+                  at 720 px of container width or more; one column under it. */}
+              <div className="room-now" data-testid="room-now">
+                <div className="room-now-cols">
+                  <div className="room-now-left">
+                    <RoomSlot id="brief" place={place("brief")} delay="50ms">
+                      <BriefSection room={ctrl.room} updateCtrl={updateCtrl} />
+                    </RoomSlot>
+                    {/* Files and Sources side by side (stacked on the phone);
+                        the Plan, when the Project has items, beside them. Keep
+                        Files' place even if its read resolves after the cap. */}
+                    <div className="room-folds room-folds-line" data-testid="room-folds">
+                      <RoomSlot id="files" place={{ waiting: place("files").waiting }} delay="80ms">
+                        <RoomFiledNotes projectId={ctrl.projectId} ctrl={ctrl} request={fileRequest}
+                          onRequestHandled={onFileRequestHandled}
+                          presentationReady={shown && !place("files").waiting} />
+                      </RoomSlot>
+                      <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="82ms">
+                        <RoomFold title="Sources" token={sourceCount || undefined}
+                          open={addingSources || ctrl.room.sources.state === "degraded" || undefined} testId="room-fold-sources">
+                          <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
+                        </RoomFold>
+                      </RoomSlot>
+                      <RoomSlot id="items" place={place("items")} delay="85ms" data-section="items">
+                        <RoomFold title="Plan" token={itemsRead.items?.length || undefined} testId="room-fold-plan">
+                          <ItemsSection read={itemsRead} />
+                        </RoomFold>
+                      </RoomSlot>
+                    </div>
+                  </div>
+                  <div className="room-now-right">
+                    <RoomSlot id="open" place={place("open")} delay="60ms">
+                      <OpenSection room={ctrl.room} projectId={ctrl.projectId} nudges={ctrl.nudges}
+                        onReload={() => void ctrl.load()} onRefresh={handleRefresh} />
+                    </RoomSlot>
+                  </div>
+                </div>
               </div>
             </>
           ) : (
             <>
               <HistoryWing room={ctrl.room}
-                itemIds={itemsRead.items?.map((item) => item.id) ?? []} onOpenItem={openHistoryItem} onRetry={handleRefresh} />
+                itemIds={itemsRead.items?.map((item) => item.id) ?? []} onOpenItem={openHistoryItem} onRetry={handleRefresh}
+                onPrepare={() => prepareCtrl.enterPrepare()} />
               {/* PHILO-17 U31: the writes are what happened: History holds
                   them, folded under the stream (PHILO-17 refit). */}
               <div className="room-folds room-history-folds">

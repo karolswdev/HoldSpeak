@@ -46,6 +46,7 @@ from . import channel_email  # noqa: F401 -- registers the email channel (PHILO-
 from . import channel_slack  # noqa: F401 -- registers the Slack channel (PHILO-11-02)
 from .channel_contract import ChannelRefused, Outcome
 from .errors import NotFound, ValidationError
+from holdspeak.timestamps import utc_now as _now
 
 log = get_logger("services.channel")
 
@@ -55,10 +56,6 @@ NO_ANSWER_GRACE = 30.0
 #: A failed send that says the account is not signed in (a good send is a good check).
 SIGN_IN_FAILURES = frozenset({"github_not_authenticated", "atlassian_not_logged_in",
                               "atlassian_unauthorized", "atlassian_identity_unverified"})
-
-
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
 
 
 def _when(text: Any) -> Optional[datetime]:

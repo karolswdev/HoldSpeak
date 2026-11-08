@@ -126,7 +126,7 @@ export async function fetchUpdateMarkdown(
   return String(text);
 }
 
-/* ── Betterment P1: the engine pass behind Write update ── */
+/* ── Betterment P1: the engine pass behind Draft update ── */
 
 export type EngineJob = {
   id: string;

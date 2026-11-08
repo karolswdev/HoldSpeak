@@ -47,6 +47,23 @@ describe("the Program window (direction C, the ledger)", () => {
     expect(screen.getByTestId("programs-place-person").textContent).toBe("For Alice");
   });
 
+  // HS-S24 (D20/G24): the hub's spend note is one mono fact; never "limit" or "cap".
+  it("the spend note: one mono fact in the status bar, absent when he set none", async () => {
+    const noted = { ...clone(running), spend_limit_usd: 40, spend_note: "spend note · 40 USD" };
+    hub({ [`GET /api/programs/${running.id}`]: noted });
+    render(<ProgramBody programId={running.id} />);
+    await screen.findByTestId("programs-board");
+    const fact = within(status()).getByTestId("programs-status-spend");
+    expect(fact.textContent).toBe("spend note · 40 USD");
+    expect(fact.querySelector(".pg-ref")).toBeTruthy();
+    expect(status().textContent).not.toMatch(/limit|cap/i);
+    cleanup();
+    hub({ [`GET /api/programs/${running.id}`]: running });
+    render(<ProgramBody programId={running.id} />);
+    await screen.findByTestId("programs-board");
+    expect(within(status()).queryByTestId("programs-status-spend")).toBeNull();
+  });
+
   it("the Gate fold of the red step: the verdict the verifier read and the red section", async () => {
     hub({ [`GET /api/programs/${running.id}`]: running });
     render(<ProgramBody programId={running.id} />);

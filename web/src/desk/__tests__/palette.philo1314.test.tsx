@@ -178,12 +178,12 @@ describe("PHILO-13-14 the palette knows his week", () => {
     expect(options().some((o) => o.startsWith("▸Send "))).toBe(false);
   });
 
-  // Betterment P4 (projects): the row writes the update in the Room (the
-  // Room's own Write update); the saved updates have their own row.
-  it("`Write update for <project>` opens the Room and asks it to write", async () => {
+  // Betterment P4 (projects): the row drafts the update in the Room (the
+  // Room's own Draft update); the saved updates have their own row.
+  it("`Draft update for <project>` opens the Room and asks it to draft", async () => {
     const input = await deck();
     await type(input, "draft update");
-    fireEvent.click(screen.getByRole("option", { name: /Write update for Payments ledger cutover/ }));
+    fireEvent.click(screen.getByRole("option", { name: /Draft update for Payments ledger cutover/ }));
     expect(opened.surfaces).toContainEqual(["open-project-memory", "project:p-ledger"]);
     expect(takeRoomWriteRequest("p-ledger")).toBe(true);
     expect(takeRoomWriteRequest("p-ledger")).toBe(false);

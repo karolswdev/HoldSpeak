@@ -13,6 +13,23 @@ from typing import Any, Optional
 from .base import BaseRepository
 
 
+#: HS-174-04: the pipeline events the shade shows as receipts (remote, or the
+#: heartbeat's), newest 20. Two indexed reads, not one OR: with the OR, SQLite
+#: walked the timestamp index over every row (60 ms at 300 k rows, on each
+#: desk open; perf lane 2026-11-08). ``origin != 'local'`` lets the first read
+#: use the partial origin index. Same rows: a remote heartbeat row comes from
+#: the first read only.
+RECEIPT_EVENTS_SQL = """SELECT * FROM (
+    SELECT * FROM (SELECT * FROM pipeline_events
+                   WHERE origin != 'local' AND origin = 'remote'
+                   ORDER BY timestamp DESC LIMIT 20)
+    UNION ALL
+    SELECT * FROM (SELECT * FROM pipeline_events
+                   WHERE service = 'HeartbeatService' AND origin != 'remote'
+                   ORDER BY timestamp DESC LIMIT 20))
+ORDER BY timestamp DESC LIMIT 20"""
+
+
 @dataclass(frozen=True)
 class DeskProjection:
     id: str
@@ -698,12 +715,7 @@ class ProjectionRepository(BaseRepository):
         """
         result: list[DeskProjection] = []
         try:
-            rows = conn.execute(
-                """SELECT * FROM pipeline_events
-                   WHERE origin = 'remote'
-                      OR service = 'HeartbeatService'
-                   ORDER BY timestamp DESC LIMIT 20"""
-            ).fetchall()
+            rows = conn.execute(RECEIPT_EVENTS_SQL).fetchall()
         except Exception:
             return result
         for row in rows:

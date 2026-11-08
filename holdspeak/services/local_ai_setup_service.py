@@ -51,6 +51,7 @@ from ..memory.local_model import (
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError
 from .tool_capability_service import sha256 as _sha
+from holdspeak.timestamps import utc_now_iso_z as _now
 
 log = get_logger("local_ai_setup")
 
@@ -75,10 +76,6 @@ _ERRORS = {
     "speech_backend_unavailable": "The speech library cannot run on this device. Install it, then check again.",
     "speech_not_covered": "Set up local AI cannot get the selected Whisper model. Select the base model, or add the model yourself.",
 }
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _canonical(value: Any) -> str:

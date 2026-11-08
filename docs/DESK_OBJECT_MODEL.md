@@ -76,7 +76,7 @@ The menu hides a verb when it cannot run for the current selection.
 | Menu | Verbs |
 | --- | --- |
 | **Desk** | **New Note**, **New Decision**, **New Automation**, **New Project**, **New Meeting**, **New Person**, and **New Drawer**. **Reset layout**, **Reset to seed…** and **Refresh from hub** are in Search. |
-| **Object** | **Open**, **Get Info**, **Ask about this**, **Write update**, **Hand to an agent session**, **Edit**, **Rename**, **Duplicate**, **Keep on desk**, **Remove from desk**, **Delete**, **Archive**. The selected object determines which verbs appear. |
+| **Object** | **Open**, **Get Info**, **Ask about this**, **Draft update**, **Hand to an agent session**, **Edit**, **Rename**, **Duplicate**, **Keep on desk**, **Remove from desk**, **Delete**, **Archive**. The selected object determines which verbs appear. |
 | **Go** | Apps from `DESK_APPLICATIONS`, grouped by their `go` entries, plus projects and drawers. An open window gets focus instead of a second copy. |
 | **Window** | **Close**, **Minimize**, **Next window**, **Tile left**, **Tile right**, **Zoom**, **To back**, **Overview**, **Stage**, **Arrange all**, **Gather**, **Back**, and the current-work windows |
 | System | **Search**, **Keyboard shortcuts** |

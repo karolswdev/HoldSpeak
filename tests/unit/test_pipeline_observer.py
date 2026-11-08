@@ -76,3 +76,31 @@ def test_an_in_transaction_method_is_not_observed() -> None:
     assert getattr(Probe.write_in_transaction, "__wrapped__", None) is None
     assert getattr(ProjectService.create_item_in_transaction, "__wrapped__", None) is None
     assert getattr(ProjectService.create_item, "__wrapped__", None) is not None
+
+
+def _whole_summary(value: object, limit: int = 2048) -> str:
+    """The summary as it was read before the perf lane (2026-11-08): the
+    whole value redacted and encoded, then cut."""
+    import json
+
+    from holdspeak.redaction import redact_bounded
+    from holdspeak.services.observer import _redact_tree
+
+    summary = redact_bounded(json.dumps(_redact_tree(value), default=str, separators=(",", ":")))
+    return summary[: limit - 1] + "…" if len(summary) > limit else summary
+
+
+def test_a_large_result_summary_is_the_summary_of_the_whole() -> None:
+    """The summary reads only the head of a large result; it is the same text
+    as the whole read, secrets redacted, at every size."""
+    from holdspeak.services.observer import _truncate
+
+    secret = "Bearer sk-live-0123456789abcdefghijklmnop"
+    row = {"title": "Review the cutover", "owner": "Priya", "api_key": "sk-0123456789abcdef0123",
+           "detail": f"Authorization: {secret}", "n": 3, "due": None, "tags": ("a", "b")}
+    big = {"items": [dict(row, id=f"row-{i}") for i in range(2000)], "count": 2000}
+    secret_head = {"items": [{"note": f"Authorization: {secret} " * 40} for _ in range(400)]}
+    one_long_string = {"text": "x" * 70000, "after": [1, 2, 3]}
+    for value in (big, secret_head, one_long_string, row, [row] * 3, "short", list(range(5000))):
+        assert _truncate(value) == _whole_summary(value)
+    assert "sk-live" not in _truncate(big)

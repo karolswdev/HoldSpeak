@@ -88,7 +88,67 @@ def _redact_tree(value: Any) -> Any:
     return value
 
 
+#: The leaf characters a summary reads before it stops taking items: twice
+#: the 2048-character cut; the encoding adds keys and quotes, so the cut falls
+#: inside the items it took (perf lane 2026-11-08). When redaction leaves the
+#: head too short, the whole is read.
+_HEAD_BUDGET = 4096
+
+
+def _head(value: Any, room: list[int]) -> tuple[Any, bool]:
+    """``value`` with the trailing items of its dicts and lists left out once
+    about ``room[0]`` leaf characters are taken; ``True`` when one was left
+    out. A string is never cut: each one is redacted whole (the rule of
+    ``redact_secrets``)."""
+    if isinstance(value, str):
+        room[0] -= len(value)
+        return value, False
+    if isinstance(value, dict):
+        out: dict[Any, Any] = {}
+        for key, item in value.items():
+            if room[0] <= 0:
+                return out, True
+            room[0] -= len(str(key))
+            out[key], cut = _head(item, room)
+            if cut:
+                return out, True
+        return out, False
+    if isinstance(value, (list, tuple)):
+        items: list[Any] = []
+        for item in value:
+            if room[0] <= 0:
+                return items, True
+            head, cut = _head(item, room)
+            items.append(head)
+            if cut:
+                return items, True
+        return items if isinstance(value, list) else tuple(items), False
+    room[0] -= 8
+    return value, False
+
+
 def _truncate(value: Any, limit: int = 2048) -> str:
+    # A summary keeps its first `limit` characters. A large result (the
+    # Needs-you aggregate: 100 KB) was redacted and encoded whole for that,
+    # 70 % of a Needs-you build (perf lane 2026-11-08). Its head is enough:
+    # the encoding of the head is the encoding of the whole up to the first
+    # item left out, which comes after the cut. When the head is too short
+    # after redaction, the whole is read as before.
+    try:
+        head, cut = _head(value, [_HEAD_BUDGET])
+    except Exception:
+        head, cut = value, False
+    if cut:
+        summary = _summary(head)
+        if len(summary) > limit + 64:
+            return summary[: limit - 1] + "…"
+    summary = _summary(value)
+    if len(summary) > limit:
+        return summary[: limit - 1] + "…"
+    return summary
+
+
+def _summary(value: Any) -> str:
     try:
         value = _redact_tree(value)
     except Exception:
@@ -104,10 +164,7 @@ def _truncate(value: Any, limit: int = 2048) -> str:
     # PHILO-17 redact: agents read pipeline events (MCP ``pipeline://events``),
     # so no credential a provider echoed is recorded. Redact first (the scan
     # is bounded at 64k, far past this cut), then cut.
-    summary = redact_bounded(summary)
-    if len(summary) > limit:
-        return summary[: limit - 1] + "…"
-    return summary
+    return redact_bounded(summary)
 
 
 #: What the observer never records (PHILO-15 20, Astra r1 on #1011): a

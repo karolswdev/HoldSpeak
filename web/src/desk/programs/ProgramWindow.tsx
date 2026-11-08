@@ -620,6 +620,8 @@ export function ProgramBody({ programId, host = "window" }: { programId: string;
     } : null,
     planner.busy ? { key: "planning", lamp: "info" as const, live: true, text: planner.engine ? `Planning · ${planner.engine}` : "Planning", testId: "programs-status-planning" } : null,
     program.check_command ? { key: "check", text: <span>{`check: ${checkName(program)}`}</span> } : null,
+    // HS-S24 (D20/G24): the amount is a note he reads, never a cap.
+    program.spend_note ? { key: "spend", text: <span className="pg-ref">{program.spend_note}</span>, testId: "programs-status-spend" } : null,
     // The ladder's own word (`YOLO` keeps its capitals: an element, not a wire token).
     { key: "control", text: <span>{`control ${program.control_word || controlWord(program.control)}`}</span>, testId: "programs-status-control" },
     ...placeItems(program, fileTo, compact),

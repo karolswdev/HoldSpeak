@@ -17,13 +17,10 @@ from ..kernel.prompt_adapter import CanonicalPromptAdapter
 from ..principals import Principal
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 from .inference_outcomes import map_inference_outcome
+from holdspeak.ids import new_id as _new_id
 
 
 Broadcast = Callable[..., None]
-
-
-def _new_id(prefix: str) -> str:
-    return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
 class _RecipeResultAdapter:

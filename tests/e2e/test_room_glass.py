@@ -101,7 +101,7 @@ def _open_needs(page: Any, timeout: int = 20_000) -> None:
 def _open_update_history(page: Any, project_id: str) -> None:
     """The palette's project command opens saved updates without drafting.
 
-    Betterment P4: `Write update for <project>` writes a draft now; the saved
+    Betterment P4: `Draft update for <project>` drafts a draft now; the saved
     updates have their own row, `Saved updates of <project>`."""
     page.locator("[aria-controls=desk-tool-shelf]:visible").click()
     page.locator("[aria-controls=desk-palette-listbox]").fill("Saved updates of")
@@ -1655,10 +1655,12 @@ class TestRoomFaceGlass:
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", WIDTHS)
     def test_the_now_face_is_the_brief(self, width: int) -> None:
-        """R1 (owner 2026-11-08, on the phone: "Looks like shit"): the toolbar
-        (Write update, History, the Ask field), the status line, What changed,
-        What is open, the folds, the status bar; on the phone one column in
-        that order, inside the window. No Update chips, no raw button."""
+        """R1 (owner 2026-11-08, on the phone: "Looks like shit") in the
+        language (2026-11-08, the bold canvas RoomBold): the Mast (Draft
+        update, History; the facts line), the spine, the Ask field, What
+        changed beside What is open (two columns at 1440), the folds, the
+        status bar; on the phone one column in that order, Draft update and
+        Ask on one row, inside the window. No Update chips, no raw button."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -1673,21 +1675,39 @@ class TestRoomFaceGlass:
                 page.get_by_test_id("room-brief-line").first.wait_for(timeout=T)
                 page.get_by_test_id("room-what-is-open").wait_for(timeout=T)
                 _rf_shot(page, "r1-now-face", width)
-                order = ["room-head", "room-status-line", "room-what-changed", "room-what-is-open", "room-folds"]
+                order = ["room-mast", "room-spine", "room-ask-well", "room-what-changed", "room-folds"]
+                if width < 720:
+                    order = ["room-mast", "room-spine", "room-what-changed", "room-what-is-open", "room-folds"]
                 boxes = [page.get_by_test_id(t).first.bounding_box() for t in order]
                 assert all(boxes), dict(zip(order, boxes))
                 tops = [b["y"] for b in boxes]
                 assert tops == sorted(tops), dict(zip(order, tops))
+                changed = page.get_by_test_id("room-what-changed").bounding_box()
+                is_open = page.get_by_test_id("room-what-is-open").bounding_box()
+                if width >= 720:
+                    # Two columns: What is open sits beside What changed, at its right.
+                    assert abs(is_open["y"] - changed["y"]) < 4, (changed, is_open)
+                    assert is_open["x"] >= changed["x"] + changed["width"], (changed, is_open)
+                    order = order + ["room-what-is-open"]
+                    boxes = boxes + [is_open]
                 win = page.locator(".desk-window:has([data-testid=room-body])").first.bounding_box()
                 for name, box in zip(order, boxes):
                     assert box["x"] >= win["x"] - 1 and box["x"] + box["width"] <= win["x"] + win["width"] + 1, (name, box, win)
                 assert page.get_by_test_id("room-brief-line").first.inner_text().strip() == "The ledger cutover is on track."
                 assert page.get_by_test_id("room-status-need").inner_text().strip() == "1 need you"
                 assert page.get_by_test_id("room-headline").inner_text().strip().startswith("At risk")
-                toolbar = page.get_by_test_id("room-head").get_by_role("toolbar")
-                assert toolbar.get_by_test_id("updates-verb").inner_text().strip() == "Write update"
-                assert toolbar.get_by_test_id("room-head-history").inner_text().strip() == "History"
-                assert toolbar.get_by_role("textbox", name="Ask this project").count() == 1
+                mast = page.get_by_test_id("room-mast")
+                assert mast.get_by_test_id("updates-verb").inner_text().strip() == "Draft update"
+                if width >= 720:
+                    assert mast.get_by_test_id("room-head-history").inner_text().strip() == "History"
+                    assert page.get_by_test_id("room-ask-well").get_by_role("textbox", name="Ask this project").is_visible()
+                else:
+                    # The phone: Draft update and Ask on one row.
+                    ask = mast.get_by_test_id("room-head-ask")
+                    assert ask.inner_text().strip() == "Ask"
+                    draft = mast.get_by_test_id("updates-verb").bounding_box()
+                    assert abs(ask.bounding_box()["y"] - draft["y"]) < 2, (draft, ask.bounding_box())
+                    assert not mast.get_by_test_id("room-head-history").is_visible()
                 for gone in ("room-update-line", "room-fold-programs", "room-this-week", "room-needs-you"):
                     assert page.get_by_test_id(gone).count() == 0, gone
                 # The status line's word opens the rows in place, no modal.
