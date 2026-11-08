@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · (PR) The Cadence next-action draft and the agent responder's answer draft run through the engine door; `inference_owner_draft.py` (249 lines) has no caller left and is parked in `holdspeak/services/_parked/`.
 - 2026-11-08 · (PR) The PR review draft runs through the engine door: one root invoke on the assigned engine, the review artifact published from its staged projection; no parent route bundle, no request identity or pre-story replay; each press drafts again.
 - 2026-11-08 · (PR) The decision promotion draft runs through the engine door: one root invoke on the assigned engine, the artifact published from its staged projection once the receipt says succeeded; no parent route bundle; the two parent-cancel fences are parked.
 - 2026-11-08 · (PR) The Rails journal summary runs through the engine door: one root invoke on the assigned engine (its kernel operation is the journal's route receipt), the egress badge from the engine's lamp, memory fitted to the engine's room; no bundle, frozen route or parent run.
