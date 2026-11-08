@@ -3,6 +3,7 @@
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
 - 2026-11-08 · #1898 The Program window's Drafting tray shows one thing from the plan_goal row (the planning row with no verb, Start with "4 steps", or the not-planned notice with Plan it) and no sentence under any of its verbs.
+- 2026-11-08 · #1896 The API surface tags a web route only when the call's path and method match (values followed through tables, path helpers and wrappers; the 3 dynamic calls resolved by hand in scripts/api_surface_web_dynamic_calls.json): web-consumed routes 716 -> 612, routes with any consumer 723 -> 632, unresolved dynamic calls 0.
 - 2026-11-08 · #1897 The Room's Decided line and the Decisions reader's head line draw "Committed · <name>" for a decision #1891 committed; the Needs you dirty marker already fired on the from-desk write (a cached read fences it).
 - 2026-11-08 · #1895 The morning walk: four questions on the night's faces (the wizard, the Needs you rows, the Programs fold, the Decide project row).
 - 2026-11-08 · #1894 The Project vocabulary has one owner, project_definitions.py (669 lines, imports only refs and errors); project_service.py 5,994 -> 5,457 lines, its importers 23 -> 19, definition-only importers 0; the Room's decision rows carry committed_to.
