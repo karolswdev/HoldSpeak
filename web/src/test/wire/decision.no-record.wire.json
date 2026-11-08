@@ -1,14 +1,14 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-11-08T09:36:20.706621Z",
+  "captured_at": "2026-11-08T11:26:09.483410Z",
   "wire": {
     "decision": {
-      "created_at": "2026-11-08T09:36:20.699861+00:00",
+      "created_at": "2026-11-08T11:26:09.477715+00:00",
       "date_basis": "meeting_date",
-      "decided_at": "2026-11-08T07:36:20+00:00",
+      "decided_at": "2026-11-08T09:26:09+00:00",
       "deleted": false,
       "id": "dec-eee0dbcac4e95493623b",
-      "last_modified": "2026-11-08T09:36:20.699861+00:00",
+      "last_modified": "2026-11-08T11:26:09.477715+00:00",
       "lifecycle": "recorded",
       "project_key": null,
       "provenance_label": null,
@@ -19,7 +19,7 @@
       "source_timestamp": null,
       "superseded_by": null,
       "text": "Freeze the old ledger on Nov 5",
-      "updated_at": "2026-11-08T09:36:20.699861+00:00"
+      "updated_at": "2026-11-08T11:26:09.477715+00:00"
     },
     "lineage": {
       "derived_artifacts": [],
