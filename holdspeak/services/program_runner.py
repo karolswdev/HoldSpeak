@@ -94,6 +94,9 @@ _CHECK_LOCK = threading.Lock()
 _PROGRAM_LOCKS: dict[str, threading.Lock] = {}
 _PROGRAM_LOCKS_GUARD = threading.Lock()
 _RUNNING_CHECKS: dict[str, threading.Thread] = {}
+#: 2026-11-08, Create plans itself: the Programs whose goal is being planned now.
+_PLANNING: set[str] = set()
+_PLANNING_GUARD = threading.Lock()
 #: PG12: the one pending frame tick per Program (the debounce).
 _FRAME_TIMERS: dict[str, threading.Timer] = {}
 _FRAME_GUARD = threading.Lock()
@@ -385,7 +388,9 @@ class ProgramRunner:
             moved += program_night.tick_nights(self)
         except Exception as exc:
             log.error(f"night tick failed: {exc}", exc_info=True)
-        for program in self.service.store.list_programs():
+        programs = self.service.store.list_programs()
+        moved += self._plan_goals(programs)
+        for program in programs:
             if program["state"] not in _TICKED:
                 continue
             try:
@@ -394,6 +399,74 @@ class ProgramRunner:
             except Exception as exc:
                 log.error(f"program {program['id']} tick failed: {exc}", exc_info=True)
         return moved
+
+    # ── Create plans itself (2026-11-08) ─────────────────────────────
+
+    def _plan_goals(self, programs: list[dict[str, Any]]) -> list[str]:
+        """A Program made with a goal (its claim row pending) is planned from
+        the goal: the steps are written; at yolo it then starts. The planner
+        call runs off the tick (a check's thread) when the runner is async."""
+        from .program_service import PLAN_GOAL_KIND
+
+        moved: list[str] = []
+        for program in programs:
+            if program["state"] != "drafting" or not str(program.get("goal_markdown") or "").strip():
+                continue
+            claim = next((row for row in self.service.store.list_checkpoints(program["id"])
+                          if row.get("kind") == PLAN_GOAL_KIND), None)
+            if claim is None or claim.get("choice") != "pending":
+                continue
+            with _PLANNING_GUARD:
+                if program["id"] in _PLANNING:
+                    continue
+                _PLANNING.add(program["id"])
+            if self._async:
+                threading.Thread(target=self._plan_goal, args=(program["id"],), daemon=True,
+                                 name=f"program-plan-{program['id']}").start()
+            elif self._plan_goal(program["id"]):
+                moved.append(program["id"])
+        return moved
+
+    def _plan_goal(self, program_id: str) -> bool:
+        from . import program_planner
+        from .program_service import PLAN_GOAL_KIND, PLAN_GOAL_NOT_NEEDED
+
+        settle = self.service.settle_plan_claim
+        try:
+            try:
+                answer = program_planner.plan_from_goal(self.service, self.principal, program_id)
+            except ProgramRefused as exc:
+                if exc.code == "plan_not_needed":
+                    settle(program_id, "skipped", PLAN_GOAL_NOT_NEEDED)
+                    return False
+                settle(program_id, "not_planned", f"The steps were not planned · {exc.detail}")
+                self.service.changed(program_id, verb="plan")
+                return True
+            except Exception as exc:
+                log.error(f"program {program_id}: planning from the goal failed: {exc}", exc_info=True)
+                settle(program_id, "not_planned", "The steps were not planned · the planner failed. Press Plan it.")
+                self.service.changed(program_id, verb="plan")
+                return True
+            count = int(answer.get("planned") or 0)
+            # The text apply settled the claim as written by hand; it is the engine's plan.
+            claim = next((row for row in self.service.store.list_checkpoints(program_id)
+                          if row.get("kind") == PLAN_GOAL_KIND), None)
+            if claim is not None:
+                self.service.store.rewrite_checkpoint(
+                    int(claim["id"]), f"Planned {count} step{'' if count == 1 else 's'} from the goal", {})
+                self.service.store.decide_checkpoint(int(claim["id"]), "planned", {})
+            program = self.service.store.get_program(program_id) or {}
+            if program.get("control") == "yolo" and program.get("state") == "drafting":
+                try:
+                    # Runs by itself: no press.
+                    self.service.start(self.principal, program_id, by="engine")
+                except ProgramRefused as exc:
+                    self.service._checkpoint(program, None, "engine", f"Not started · {exc.detail}", kernel=False)
+            self.service.changed(program_id, verb="plan")
+            return True
+        finally:
+            with _PLANNING_GUARD:
+                _PLANNING.discard(program_id)
 
     def tick_program(self, program_id: str) -> bool:
         lock = _program_lock(program_id)

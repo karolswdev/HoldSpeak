@@ -882,3 +882,54 @@ def test_the_room_row_carries_the_programs_window_track(tmp_path, monkeypatch) -
     row = next(item for item in room["programs"] if item["id"] == pid)
     assert row["track"] == listed["track"]
     assert [mark["title"] for mark in row["track"]] == ["Dock words"]
+
+
+# ── Create plans itself (2026-11-08) ──────────────────────────────────
+
+def _goal_body(rig: Rig, control: str) -> dict[str, Any]:
+    from tests.integration.program_plan_seed import CASES, seed_files
+    from tests.integration.program_rig import give_quick_check
+    from tests.unit.test_program_planner import case
+
+    give_quick_check(rig.repo)
+    seed_files(rig, case("j1")["file_bytes"])
+    j1 = CASES["j1"]
+    return {"title": j1["title"], "goal": j1["goal"], "repository": str(rig.repo), "check_command": j1["check"],
+            "template": j1["template"], "control": control}
+
+
+def test_create_through_the_route_at_runs_by_itself_plans_and_starts_on_the_next_tick(tmp_path, monkeypatch) -> None:
+    from tests.unit.test_program_planner import replies
+    from tests.unit.test_program_shaper import wire_engine
+
+    rig = Rig(tmp_path)
+    rig.engine = wire_engine(rig, monkeypatch)
+    rig.engine.replies = replies("j1")
+    client = _client(rig, monkeypatch)
+    made = client.post("/api/programs", json=_goal_body(rig, "yolo"))
+    assert made.status_code == 201, made.text
+    pid = made.json()["id"]
+    assert made.json()["state"] == "drafting" and made.json()["steps"] == []
+    rig.tick()
+    program = client.get(f"/api/programs/{pid}").json()
+    assert program["state"] == "running" and len(program["steps"]) == 4
+    assert rig.hand.calls, "the first step is handed with no press"
+
+
+def test_create_through_the_route_at_normal_plans_and_offers_only_start(tmp_path, monkeypatch) -> None:
+    from tests.unit.test_program_planner import replies
+    from tests.unit.test_program_shaper import wire_engine
+
+    rig = Rig(tmp_path)
+    rig.engine = wire_engine(rig, monkeypatch)
+    rig.engine.replies = replies("j1")
+    client = _client(rig, monkeypatch)
+    pid = client.post("/api/programs", json=_goal_body(rig, "normal")).json()["id"]
+    rig.tick()
+    program = client.get(f"/api/programs/{pid}").json()
+    assert program["state"] == "drafting" and len(program["steps"]) == 4
+    assert not [item for item in rig.service.needs_you_items() if item["program_id"] == pid]
+    assert rig.hand.calls == []
+    started = client.post(f"/api/programs/{pid}/start", json={})
+    assert started.status_code == 200, started.text
+    assert started.json()["state"] == "running"

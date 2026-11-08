@@ -364,7 +364,8 @@ def propose_fix(service: Any, principal: Any, program_id: str) -> dict[str, Any]
                           default_profile=program.get("default_profile") or None,
                           default_engine=program.get("default_engine") or None,
                           reviewer_profile=program.get("reviewer_profile") or None,
-                          reviewer_engine=program.get("reviewer_engine") or None)
+                          reviewer_engine=program.get("reviewer_engine") or None,
+                          plan_goal=False)  # its steps are the MUST findings, written below
     steps = []
     for row in rows:
         evidence = f" Evidence: {'; '.join(row['evidence'])}." if row["evidence"] else ""

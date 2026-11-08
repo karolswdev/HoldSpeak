@@ -717,7 +717,7 @@ function WorkspaceReady({
             goal, the note its origin. */}
         <Button dense variant="ghost" className="thought-note-verb" title="Run as a program" disabled={busy || !writer.draft.body.trim()}
           data-testid="note-run-as-program"
-          onClick={() => void runNoteAsProgram({ id: draftNoteId, title: writer.draft.title, body: writer.draft.body, projectId: placeProject?.id ?? null })
+          onClick={() => void runNoteAsProgram({ id: draftNoteId, title: writer.draft.title, body: writer.draft.body, projectId: placeProject?.id ?? null, scopeProjectId: projectReturn?.projectId ?? null })
             .then((failed) => { if (failed) say(failed.words); })}>
           <ToolGlyph kind="run" /><span className="thought-note-verb-label">Run as a program</span>
         </Button>
