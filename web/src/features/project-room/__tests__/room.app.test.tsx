@@ -44,6 +44,7 @@ import P7 from "./room-wires/updateAutomationP7.json";
 // test_project_program_continuity_records_scope_and_reads (HOLDSPEAK_WIRE_WRITE=1):
 // the full hub, a Program created with {title, template, project_id} only.
 import P13 from "./room-wires/programs13.json";
+import roomProgramsFixture from "../../../desk/programs/__fixtures__/room.programs.json";
 import { runAsk } from "../../../desk/ask";
 import { AskPanel } from "../../../desk/components/AskPanel";
 import ASK_THREAD from "../../../test/wire/ask.thread.wire.json";
@@ -1723,7 +1724,7 @@ describe("HS-S13: the Room lists the Programs filed to its project", () => {
     const empty = P13.roomEmpty as { project_id: string };
     wire({ [room(empty.project_id)]: () => clone(empty) });
     const first = render(<WindowHarness scope={`project:${empty.project_id}`} />);
-    expect((await screen.findByTestId("room-programs-empty")).textContent).toBe("No Programs filed to this project");
+    expect((await screen.findByTestId("room-programs-empty")).textContent).toBe("No Programs yet");
     expect(screen.queryByTestId("room-programs-unavailable")).toBeNull();
     first.unmount();
 
@@ -1809,5 +1810,96 @@ describe("HS-S13: the Room lists the Programs filed to its project", () => {
     fireEvent.click(within(screen.getByTestId("room-last-read")).getByRole("button", { name: "Refresh" }));
     await waitFor(() => expect(screen.queryByTestId("room-last-read")).toBeNull());
     expect(screen.getByTestId("room-program-row")).toBeTruthy();
+  });
+});
+
+/* ── Room fold 2026-11-08: the Now tab always has its Programs fold ──── */
+
+describe("Room fold 2026-11-08: the Programs fold is always on the Now tab", () => {
+  const hand = P13.creationHandoff;
+  const projectA = P13.projects.a;
+  const made = hand.create.response.body as { id: string };
+  // The Room read with the recorded Programs section that has step dots.
+  const withDots = { ...clone(hand.roomAfter), programs: clone(roomProgramsFixture) };
+
+  /** The fold draws: neither it nor a parent is display: none (the project
+   *  CSS is loaded; vitest `css: true`). */
+  const drawn = (el: Element) => {
+    for (let node: Element | null = el; node; node = node.parentElement) {
+      if (getComputedStyle(node).display === "none") return false;
+    }
+    return true;
+  };
+
+  beforeEach(() => {
+    useDesk.setState({ pullouts: [] });
+  });
+
+  it("a project with Programs: the fold is drawn and open, rows carry the step dots, a press opens the Program", async () => {
+    wire({ [room(projectA)]: () => clone(withDots) });
+    render(<WindowHarness scope={`project:${projectA}`} />);
+    const fold = await screen.findByTestId("room-fold-programs");
+    expect(drawn(fold)).toBe(true);
+    const details = fold.querySelector("details")!;
+    expect(details.open).toBe(true);
+    const summary = details.querySelector("summary")!;
+    expect(summary.textContent).toContain("Programs");
+    expect(summary.textContent).toContain(String(roomProgramsFixture.programs.length));
+    const rows = within(fold).getAllByTestId("room-program-row");
+    expect(rows).toHaveLength(roomProgramsFixture.programs.length);
+    const first = roomProgramsFixture.programs[0];
+    expect(rows[0].textContent).toContain(first.title);
+    expect(within(rows[0]).getByTestId("room-program-state").textContent).toContain(first.state_word);
+    const track = within(rows[0]).getByTestId("room-program-track");
+    expect(track.querySelectorAll(".pg-station")).toHaveLength(first.track.length);
+    fireEvent.click(within(rows[0]).getByTestId("room-program-open"));
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([`program:${first.id}`]);
+    expect(calls.filter((c) => c.key.includes("/api/programs"))).toEqual([]);
+    expect(rawButtons(document.body)).toEqual([]);
+    expect(made.id).toBeTruthy();
+  });
+
+  it("a project with none: the fold is drawn, says No Programs yet, and New program opens Programs scoped to the project", async () => {
+    const empty = P13.roomEmpty as { project_id: string };
+    const opened: Array<[string, string | undefined]> = [];
+    const real = useDesk.getState().openSurfaceWindow;
+    useDesk.setState({ openSurfaceWindow: (key: string, scope?: string) => { opened.push([key, scope]); } });
+    try {
+      wire({ [room(empty.project_id)]: () => clone(empty) });
+      render(<WindowHarness scope={`project:${empty.project_id}`} />);
+      const fold = await screen.findByTestId("room-fold-programs");
+      expect(drawn(fold)).toBe(true);
+      const summary = fold.querySelector("summary")!;
+      expect(summary.textContent).toContain("Programs");
+      expect(summary.querySelector(".gadget-fold-token")).toBeNull();
+      expect(within(fold).getByTestId("room-programs-empty").textContent).toBe("No Programs yet");
+      fireEvent.click(within(fold).getByTestId("room-programs-new"));
+      expect(opened).toEqual([["open-programs", `project:${empty.project_id}`]]);
+      expect(calls.filter((c) => c.key.includes("/api/programs"))).toEqual([]);
+      expect(rawButtons(document.body)).toEqual([]);
+    } finally {
+      useDesk.setState({ openSurfaceWindow: real });
+    }
+  });
+
+  it.each([[1440, false], [393, true]])("at %i the fold is in the Now tab's DOM, after Files", async (_width, compactView) => {
+    const media = vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+      matches: compactView && query.includes("max-width"), media: query, onchange: null,
+      addListener: () => {}, removeListener: () => {}, addEventListener: () => {}, removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList);
+    try {
+      const empty = P13.roomEmpty as { project_id: string };
+      wire({ [room(empty.project_id)]: () => clone(empty) });
+      render(<WindowHarness scope={`project:${empty.project_id}`} />);
+      const fold = await screen.findByTestId("room-fold-programs");
+      expect(within(screen.getByTestId("room-folds")).getByTestId("room-fold-programs")).toBe(fold);
+      expect(drawn(fold)).toBe(true);
+      const order = Array.from(screen.getByTestId("room-folds").querySelectorAll("[data-room-slot]"))
+        .map((el) => el.getAttribute("data-room-slot"));
+      expect(order.indexOf("programs")).toBe(order.indexOf("files") + 1);
+    } finally {
+      media.mockRestore();
+    }
   });
 });

@@ -1176,8 +1176,9 @@ class ProgramService:
             for program in self.store.list_programs() if program.get("project_id") == project_id
         ]
         _waiting_first(rows)
-        return [{key: row[key] for key in ("id", "title", "state", "state_word", "done", "total", "your_turn",
-                                            "updated_at")} for row in rows]
+        # The Room's row draws the Programs window's step dots: the same track.
+        return [{key: row.get(key) for key in ("id", "title", "state", "state_word", "done", "total", "your_turn",
+                                                "updated_at", "track")} for row in rows]
 
     def for_person(self, person_id: str, *, since: Optional[str] = None) -> list[dict[str, Any]]:
         """The person's Programs (§9b): the room's line, and the 1:1 brief's

@@ -28,17 +28,11 @@ import { useWindowInterior } from "../surface/interior";
 import { Token } from "../surface/Token";
 import { TEMPLATES, createProgram, readProjectChoices, usePrograms, type CreateBody, type ProjectChoice } from "./api";
 import { banded, bandedByProject, durationWords, matchesFind, metWords, personsOf, programTone } from "./model";
-import type { ListMark, ProgramState, ProgramSummary } from "./types";
-import { StationTrack, type TrackStation } from "./StationTrack";
+import type { ProgramState, ProgramSummary } from "./types";
+import { StationTrack, listStations } from "./StationTrack";
 import "./programs.css";
 
 export { openProgram };
-
-const MARK_STATION: Record<ListMark["mark"], { state: TrackStation["state"]; tone: string; live?: boolean }> = {
-  done: { state: "passed", tone: "ok" }, skipped: { state: "passed", tone: "idle" }, here: { state: "current", tone: "ask", live: true },
-  running: { state: "ahead", tone: "info", live: true }, red: { state: "ahead", tone: "fail" },
-  parked: { state: "ahead", tone: "idle" }, planned: { state: "ahead", tone: "idle" },
-};
 
 /** PG-WINDOW List (direction A): one row per Program that reads like a
  *  line from a chief of staff: the title, a lamp and the hub's line
@@ -54,9 +48,7 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
   const tone = programTone(row.state);
   // Done is a fact parking does not erase: every step finished keeps its green.
   const allFinished = Boolean(row.total) && row.done + (row.skipped ?? 0) >= row.total;
-  const stations: TrackStation[] = (row.track ?? []).map((dot) => ({
-    key: String(dot.ordinal), word: `${dot.ordinal} ${dot.title}`, mark: dot.mark, ...MARK_STATION[dot.mark],
-  }));
+  const stations = listStations(row.track);
   const finished = row.state === "done" ? row.finished_words : undefined;
   return (
     <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}

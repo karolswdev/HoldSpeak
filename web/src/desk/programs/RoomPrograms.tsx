@@ -1,13 +1,15 @@
-/* Programs (design §9b, "Where it lives: the Project"): the Room's
- * Programs fold, in the Project drawer. One row per Program, worst first:
- * the program sprite, the title, its StateChip, "4 of 6", the your-turn
- * DotWord only when it is not zero, and Open (the Program window). Nothing
- * when the Project has no Program. */
-import { Button } from "../../components/signal/Signal";
-import { DotWord, FoldGadget, ListView, StateChip } from "../surface";
+/* Programs (design §9b, "Where it lives: the Project"): a Project's
+ * Programs. One row per Program, worst first: the program sprite, the
+ * title, its state word and the step dots the Programs window draws
+ * (`listStations`, the same track). A press on the row opens the Program
+ * window. `RoomProgramRows` is the list; the Project Room puts it in its
+ * own Programs fold, the drawer in `RoomPrograms`. */
+import { FoldGadget, ListRow, ListView } from "../surface";
 import { spriteUrl } from "../sprites";
-import { programChip } from "./model";
+import { programTone } from "./model";
 import { openProgram } from "./open";
+import { StationTrack, listStations } from "./StationTrack";
+import type { ListMark } from "./types";
 import "./programs.css";
 
 export interface RoomProgram {
@@ -18,31 +20,36 @@ export interface RoomProgram {
   done: number;
   total: number;
   your_turn: number;
+  track?: ListMark[];
 }
 
+export function RoomProgramRows({ programs }: { programs: readonly RoomProgram[] }) {
+  return (
+    <ListView label="Programs" data-testid="room-programs" className="pg-room-rows">
+      <ul className="kit-listrows">
+        {programs.map((row) => {
+          const stations = listStations(row.track);
+          return (
+            <ListRow key={row.id} data-testid="room-program-row" openTestId="room-program-open" openLabel={`Open ${row.title}`}
+              glyph={spriteUrl("program", row.id, "rest", null, 20)} name={row.title} onOpen={() => openProgram(row.id)}
+              state={{ word: row.state_word, tone: programTone(row.state), live: row.state === "waiting" || row.state === "running",
+                testId: "room-program-state" }}
+              age={stations.length
+                ? <StationTrack stations={stations} label={`${row.done} of ${row.total} done`} data-testid="room-program-track" />
+                : undefined} />
+          );
+        })}
+      </ul>
+    </ListView>
+  );
+}
+
+/** The drawer's Programs fold: nothing when the Project has no Program. */
 export function RoomPrograms({ programs }: { programs: readonly RoomProgram[] }) {
   if (!programs.length) return null;
   return (
     <FoldGadget className="pg-room" title="Programs" token={String(programs.length)} open>
-      <ListView label="Programs" data-testid="room-programs">
-        <ul className="kit-listrows">
-          {programs.map((row) => (
-            <li key={row.id} className="kit-listrow pg-room-row" data-state={row.state} data-testid="room-program-row">
-              <span className="kit-listrow-main">
-                <img className="kit-listrow-glyph" src={spriteUrl("program", row.id, "rest", null, 20)} alt="" width={20} height={20} />
-                <span className="kit-listrow-name">{row.title}</span>
-              </span>
-              <StateChip state={programChip(row.state)} label={row.state_word} />
-              <span className="kit-listrow-age">{row.total ? `${row.done} of ${row.total}` : ""}</span>
-              {row.your_turn ? <DotWord tone="ask">{`${row.your_turn} ${row.your_turn === 1 ? "waits" : "wait"} on you`}</DotWord> : null}
-              <span className="kit-listrow-verbs">
-                <Button dense variant="secondary" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`}
-                  data-testid="room-program-open">Open program</Button>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </ListView>
+      <RoomProgramRows programs={programs} />
     </FoldGadget>
   );
 }

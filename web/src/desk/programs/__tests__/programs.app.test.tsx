@@ -156,7 +156,7 @@ vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
 import { ApiError } from "../../../lib/api";
 import { ProgramsCore } from "../ProgramsWindow";
 import { ProgramBody } from "../ProgramWindow";
-import { RoomPrograms } from "../RoomPrograms";
+import { RoomPrograms, type RoomProgram } from "../RoomPrograms";
 import { RoomDecisions } from "../RoomDecisions";
 import { decodeRoomSnapshot } from "../../../features/project-room/model";
 import { PersonPrograms, personProgramsOf } from "../PersonPrograms";
@@ -1074,13 +1074,14 @@ describe("the seams", () => {
     expect(face.fact).toContain("The words wave");
   });
 
-  it("the Room's Programs fold: one row per recorded Program, the your-turn word only when not zero", () => {
-    render(<RoomPrograms programs={roomFixture.programs} />);
+  it("the Room's Programs fold: one row per recorded Program, its state word and the list's step dots", () => {
+    render(<RoomPrograms programs={roomFixture.programs as RoomProgram[]} />);
     const rows = screen.getAllByTestId("room-program-row");
     expect(rows).toHaveLength(roomFixture.programs.length);
-    expect(rows[0].textContent).toContain("0 of 3");
-    expect(rows[0].textContent).toContain("4 wait on you");
-    expect(rows[1].textContent).not.toContain("wait on you");
+    expect(rows[0].textContent).toContain(roomFixture.programs[0].state_word);
+    const track = within(rows[0]).getByTestId("room-program-track");
+    expect(track.getAttribute("aria-label")).toBe("0 of 3 done");
+    expect(track.querySelectorAll(".pg-station")).toHaveLength(roomFixture.programs[0].track.length);
     fireEvent.click(within(rows[0]).getByTestId("room-program-open"));
     expect(mocks.openPullout).toHaveBeenCalledWith(`program:${roomFixture.programs[0].id}`);
   });

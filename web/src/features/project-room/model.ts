@@ -3,6 +3,8 @@
 // share them); this module re-exports the Project-scoped subset and adds
 // the typed decode layer WEB-ARC-004 requires.
 
+import type { ListMark } from "../../desk/programs/types";
+
 export type {
   ProjectResponse,
   ProjectMeetingsResponse,
@@ -570,6 +572,8 @@ export type RoomProgramRow = {
   done: number;
   total: number;
   your_turn: number;
+  /** The Programs window's step dots (one mark per step), as the hub sent them. */
+  track: ListMark[];
 };
 
 /** Betterment P3: one line of This week, with the source it rests on. */
@@ -680,9 +684,23 @@ export function decodeRoomPrograms(raw: unknown): RoomSection<{ programs: RoomPr
       done,
       total,
       your_turn: yourTurn,
+      track: decodeTrack(r.track),
     });
   }
   return { state: "ok", programs };
+}
+
+const TRACK_MARKS = new Set<ListMark["mark"]>(["done", "skipped", "here", "running", "red", "parked", "planned"]);
+
+/** A Program row's step dots: the marks the Room knows, in the hub's order. */
+function decodeTrack(raw: unknown): ListMark[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((entry) => {
+    const r = (entry ?? {}) as Record<string, unknown>;
+    const mark = r.mark as ListMark["mark"];
+    return typeof r.ordinal === "number" && TRACK_MARKS.has(mark)
+      ? [{ ordinal: r.ordinal, title: typeof r.title === "string" ? r.title : "", mark }] : [];
+  });
 }
 
 /** Decode a raw /room JSON response into a typed RoomSnapshot (WEB-ARC-004). */

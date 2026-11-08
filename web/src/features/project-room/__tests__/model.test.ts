@@ -533,7 +533,7 @@ describe("decodeRoomPrograms", () => {
       ["program-b", "parked", "Parked"], ["program-a", "landed", "Landed"], ["program-c", "someday", "Someday"]]);
     expect(decodeRoomSnapshot({ programs: recorded } as Record<string, unknown>).programs).toEqual({
       state: "ok",
-      programs: [{ id: row.id, title: "New program", state: "drafting", state_word: "Drafting", done: 0, total: 0, your_turn: 0 }],
+      programs: [{ id: row.id, title: "New program", state: "drafting", state_word: "Drafting", done: 0, total: 0, your_turn: 0, track: [] }],
     });
   });
 

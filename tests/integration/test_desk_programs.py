@@ -869,3 +869,16 @@ def test_creation_context_refusals_preserve_outcomes(tmp_path, monkeypatch) -> N
     persisted = rig.service.get(OWNER, new_ids.pop())
     assert persisted["state"] == "drafting" and persisted["project_id"] == "proj-holdspeak" and persisted["steps"] == []
     assert rig.ledger.list() == []
+
+
+def test_the_room_row_carries_the_programs_window_track(tmp_path, monkeypatch) -> None:
+    """Room fold 2026-11-08: the Room's Programs row draws the same step dots
+    as the Programs window, so the Room read carries the list's own track."""
+    rig, pid = _rig(tmp_path, "normal")
+    client = _client(rig, monkeypatch)
+    listed = next(row for row in client.get("/api/programs").json()["programs"] if row["id"] == pid)
+    room = ProjectService(rig.db).room(OWNER, "proj-holdspeak")["programs"]
+    assert room["state"] == "ok"
+    row = next(item for item in room["programs"] if item["id"] == pid)
+    assert row["track"] == listed["track"]
+    assert [mark["title"] for mark in row["track"]] == ["Dock words"]

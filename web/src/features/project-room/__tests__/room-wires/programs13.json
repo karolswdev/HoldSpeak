@@ -4,7 +4,7 @@
   "create": {
    "request": {
     "json": {
-     "project_id": "proj-14d08c6c6222",
+     "project_id": "proj-fb0c552dde33",
      "template": "fast-cycle",
      "title": "New program"
     },
@@ -26,7 +26,7 @@
      "check_command": null,
      "checkpoints": [
       {
-       "at": "2026-11-08T00:41:56.258117+00:00",
+       "at": "2026-11-08T06:27:32.294869+00:00",
        "by": "owner",
        "choice": null,
        "decision_record_id": null,
@@ -47,7 +47,7 @@
      "closed_at": null,
      "control": "yolo",
      "control_word": "YOLO",
-     "created_at": "2026-11-08T00:41:56.257828+00:00",
+     "created_at": "2026-11-08T06:27:32.294611+00:00",
      "decided_for_you": [],
      "default": {
       "agent": "Claude Code",
@@ -71,10 +71,10 @@
      "for_person": null,
      "for_person_id": null,
      "goal": "",
-     "id": "program-ea36de920016",
+     "id": "program-228dc966271d",
      "in_state_seconds": 0,
      "last_checkpoint": {
-      "at": "2026-11-08T00:41:56.258117+00:00",
+      "at": "2026-11-08T06:27:32.294869+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -95,25 +95,25 @@
      "may_call": false,
      "may_handoff": false,
      "night": null,
-     "note_id": "program-program-ea36de920016",
-     "note_window": "pullout:note:program-program-ea36de920016",
+     "note_id": "program-program-228dc966271d",
+     "note_window": "pullout:note:program-program-228dc966271d",
      "origin_ref": null,
      "persons": [],
      "place": {
       "origin": null,
       "person": null,
       "project": {
-       "id": "proj-14d08c6c6222",
+       "id": "proj-fb0c552dde33",
        "name": "Ledger cutover"
       }
      },
      "planner": null,
      "prefer_idle": false,
      "project": {
-      "id": "proj-14d08c6c6222",
+      "id": "proj-fb0c552dde33",
       "name": "Ledger cutover"
      },
-     "project_id": "proj-14d08c6c6222",
+     "project_id": "proj-fb0c552dde33",
      "repository": {
       "base_branch": "main",
       "label": "app",
@@ -140,7 +140,7 @@
      "title": "New program",
      "total": 0,
      "track": [],
-     "updated_at": "2026-11-08T00:41:56.257828+00:00",
+     "updated_at": "2026-11-08T06:27:32.294611+00:00",
      "usage_warning_share": null,
      "within": [],
      "your_turn": 0,
@@ -163,7 +163,7 @@
    "check_command": null,
    "checkpoints": [
     {
-     "at": "2026-11-08T00:41:56.258117+00:00",
+     "at": "2026-11-08T06:27:32.294869+00:00",
      "by": "owner",
      "choice": null,
      "decision_record_id": null,
@@ -184,7 +184,7 @@
    "closed_at": null,
    "control": "yolo",
    "control_word": "YOLO",
-   "created_at": "2026-11-08T00:41:56.257828+00:00",
+   "created_at": "2026-11-08T06:27:32.294611+00:00",
    "decided_for_you": [],
    "default": {
     "agent": "Claude Code",
@@ -208,10 +208,10 @@
    "for_person": null,
    "for_person_id": null,
    "goal": "",
-   "id": "program-ea36de920016",
+   "id": "program-228dc966271d",
    "in_state_seconds": 0,
    "last_checkpoint": {
-    "at": "2026-11-08T00:41:56.258117+00:00",
+    "at": "2026-11-08T06:27:32.294869+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -232,25 +232,25 @@
    "may_call": false,
    "may_handoff": false,
    "night": null,
-   "note_id": "program-program-ea36de920016",
-   "note_window": "pullout:note:program-program-ea36de920016",
+   "note_id": "program-program-228dc966271d",
+   "note_window": "pullout:note:program-program-228dc966271d",
    "origin_ref": null,
    "persons": [],
    "place": {
     "origin": null,
     "person": null,
     "project": {
-     "id": "proj-14d08c6c6222",
+     "id": "proj-fb0c552dde33",
      "name": "Ledger cutover"
     }
    },
    "planner": null,
    "prefer_idle": false,
    "project": {
-    "id": "proj-14d08c6c6222",
+    "id": "proj-fb0c552dde33",
     "name": "Ledger cutover"
    },
-   "project_id": "proj-14d08c6c6222",
+   "project_id": "proj-fb0c552dde33",
    "repository": {
     "base_branch": "main",
     "label": "app",
@@ -277,7 +277,7 @@
    "title": "New program",
    "total": 0,
    "track": [],
-   "updated_at": "2026-11-08T00:41:56.257828+00:00",
+   "updated_at": "2026-11-08T06:27:32.294611+00:00",
    "usage_warning_share": null,
    "within": [],
    "your_turn": 0,
@@ -287,17 +287,17 @@
    {
     "changes": [
      {
-      "id": "program-program-ea36de920016",
+      "id": "program-program-228dc966271d",
       "kind": "note",
       "op": "create"
      },
      {
-      "id": "program-ea36de920016",
+      "id": "program-228dc966271d",
       "kind": "program",
       "op": "create"
      }
     ],
-    "id": "program-program-ea36de920016",
+    "id": "program-program-228dc966271d",
     "kind": "note",
     "op": "create",
     "origin": "hub"
@@ -313,42 +313,42 @@
      "projects": [
       {
        "context": {},
-       "created_at": "2026-11-07T17:41:56.117211",
+       "created_at": "2026-11-07T23:27:32.134483",
        "description": "",
        "detection_threshold": 0.4,
-       "id": "proj-9ed177031be2",
+       "id": "proj-2b0526f0c5e0",
        "is_archived": false,
        "keywords": [],
        "meeting_count": 0,
        "name": "Card vault",
        "team_members": [],
-       "updated_at": "2026-11-07T17:41:56.240170"
+       "updated_at": "2026-11-07T23:27:32.274767"
       },
       {
        "context": {},
-       "created_at": "2026-11-07T17:41:56.110012",
+       "created_at": "2026-11-07T23:27:32.120381",
        "description": "",
        "detection_threshold": 0.4,
-       "id": "proj-14d08c6c6222",
+       "id": "proj-fb0c552dde33",
        "is_archived": false,
        "keywords": [],
        "meeting_count": 0,
        "name": "Ledger cutover",
        "team_members": [],
-       "updated_at": "2026-11-07T17:41:56.235487"
+       "updated_at": "2026-11-07T23:27:32.269286"
       },
       {
        "context": {},
-       "created_at": "2026-11-07T17:41:56.119699",
+       "created_at": "2026-11-07T23:27:32.137096",
        "description": "",
        "detection_threshold": 0.4,
-       "id": "proj-9e142155d2fc",
+       "id": "proj-b9cca865accc",
        "is_archived": false,
        "keywords": [],
        "meeting_count": 0,
        "name": "Quiet",
        "team_members": [],
-       "updated_at": "2026-11-07T17:41:56.119699"
+       "updated_at": "2026-11-07T23:27:32.137096"
       }
      ]
     },
@@ -363,13 +363,13 @@
       "after_hash": null,
       "before_hash": null,
       "change_kind": "project.resource.linked",
-      "command_id": "pcmd_44366738da6040ad95237d5fe02a4e3e",
-      "created_at": "2026-11-08T00:41:56.235487+00:00",
-      "id": "pchg_1160f9ced3b2cf634d354646e00de42d",
-      "project_id": "proj-14d08c6c6222",
+      "command_id": "pcmd_8863bda452fb42a7abc5226f91732383",
+      "created_at": "2026-11-08T06:27:32.269286+00:00",
+      "id": "pchg_8a06d364035d6170638b2065622a9d24",
+      "project_id": "proj-fb0c552dde33",
       "project_revision": 2,
-      "summary_json": "{\"resource_ref\": \"repository:src_8e7a86e3eb9f6e90\"}",
-      "target_ref": "repository:src_8e7a86e3eb9f6e90"
+      "summary_json": "{\"resource_ref\": \"repository:src_108f6cb8183eb4ee\"}",
+      "target_ref": "repository:src_108f6cb8183eb4ee"
      },
      {
       "actor_ref": "principal:owner-session",
@@ -377,12 +377,12 @@
       "before_hash": null,
       "change_kind": "project.created",
       "command_id": "s13-a",
-      "created_at": "2026-11-08T00:41:56.110012+00:00",
-      "id": "pchg_e3d8fd0d3a669003e0acfd33a29c9c40",
-      "project_id": "proj-14d08c6c6222",
+      "created_at": "2026-11-08T06:27:32.120381+00:00",
+      "id": "pchg_2b14d1cc83154fccc9b3d71daabae29f",
+      "project_id": "proj-fb0c552dde33",
       "project_revision": 1,
       "summary_json": "{\"name\": \"Ledger cutover\"}",
-      "target_ref": "project:proj-14d08c6c6222"
+      "target_ref": "project:proj-fb0c552dde33"
      }
     ],
     "state": "ok"
@@ -474,17 +474,18 @@
     "risks": [],
     "state": "ok"
    },
-   "observed_at": "2026-11-07T17:41:56.235487",
+   "observed_at": "2026-11-07T23:27:32.269286",
    "programs": {
     "programs": [
      {
       "done": 0,
-      "id": "program-ea36de920016",
+      "id": "program-228dc966271d",
       "state": "drafting",
       "state_word": "Drafting",
       "title": "New program",
       "total": 0,
-      "updated_at": "2026-11-08T00:41:56.257828+00:00",
+      "track": [],
+      "updated_at": "2026-11-08T06:27:32.294611+00:00",
       "your_turn": 0
      }
     ],
@@ -492,10 +493,10 @@
    },
    "project": {
     "context": {},
-    "created_at": "2026-11-07T17:41:56.110012",
+    "created_at": "2026-11-07T23:27:32.120381",
     "description": "",
     "detection_threshold": 0.4,
-    "id": "proj-14d08c6c6222",
+    "id": "proj-fb0c552dde33",
     "is_archived": false,
     "keywords": [],
     "last_review_at": null,
@@ -516,35 +517,35 @@
     "target_at": null,
     "team_members": [],
     "template_key": null,
-    "updated_at": "2026-11-07T17:41:56.235487"
+    "updated_at": "2026-11-07T23:27:32.269286"
    },
-   "project_id": "proj-14d08c6c6222",
+   "project_id": "proj-fb0c552dde33",
    "receipts": {
     "items": [
      {
-      "at": 1794098516.235248,
+      "at": 1794119252.269006,
       "caller": null,
-      "id": "18b5355f-08c8-4462-a2a3-e7302a1570e8",
+      "id": "b4192b04-5ad4-4c42-88d8-3164d7f4ab2c",
       "identity": null,
       "label": "ProjectService.add_resource",
       "op": "add_resource",
       "origin": null,
       "outcome": "ok",
       "reason": null,
-      "timestamp": 1794098516.235248,
+      "timestamp": 1794119252.269006,
       "title": "ProjectService.add_resource"
      },
      {
-      "at": 1794098516.107111,
+      "at": 1794119252.117425,
       "caller": null,
-      "id": "d9429e48-8828-49ad-b7d2-2ba3997c57b8",
+      "id": "c904e79b-7e19-415f-b6dd-d36b1dac206b",
       "identity": null,
       "label": "ProjectService.create_project",
       "op": "create_project",
       "origin": null,
       "outcome": "ok",
       "reason": null,
-      "timestamp": 1794098516.107111,
+      "timestamp": 1794119252.117425,
       "title": "ProjectService.create_project"
      }
     ],
@@ -554,13 +555,13 @@
     "count": 2,
     "latest": {
      "confidence": 1.0,
-     "created_at": "2026-11-08T00:41:56.260913+00:00",
+     "created_at": "2026-11-08T06:27:32.297967+00:00",
      "deleted": false,
-     "id": "proj-14d08c6c6222|note:program-program-ea36de920016",
-     "last_modified": "2026-11-08T00:41:56.260913+00:00",
-     "project_id": "proj-14d08c6c6222",
+     "id": "proj-fb0c552dde33|note:program-program-228dc966271d",
+     "last_modified": "2026-11-08T06:27:32.297967+00:00",
+     "project_id": "proj-fb0c552dde33",
      "relationship": "member",
-     "resource_ref": "note:program-program-ea36de920016",
+     "resource_ref": "note:program-program-228dc966271d",
      "source": "program"
     },
     "state": "ok"
@@ -581,7 +582,7 @@
     "count": 0,
     "items": [],
     "nextCheckAt": null,
-    "quietUntil": null,
+    "quietUntil": "2026-11-08T15:00:00+00:00",
     "state": "ok"
    },
    "steward": {
@@ -613,13 +614,13 @@
       "after_hash": null,
       "before_hash": null,
       "change_kind": "project.resource.linked",
-      "command_id": "pcmd_44366738da6040ad95237d5fe02a4e3e",
-      "created_at": "2026-11-08T00:41:56.235487+00:00",
-      "id": "pchg_1160f9ced3b2cf634d354646e00de42d",
-      "project_id": "proj-14d08c6c6222",
+      "command_id": "pcmd_8863bda452fb42a7abc5226f91732383",
+      "created_at": "2026-11-08T06:27:32.269286+00:00",
+      "id": "pchg_8a06d364035d6170638b2065622a9d24",
+      "project_id": "proj-fb0c552dde33",
       "project_revision": 2,
-      "summary_json": "{\"resource_ref\": \"repository:src_8e7a86e3eb9f6e90\"}",
-      "target_ref": "repository:src_8e7a86e3eb9f6e90"
+      "summary_json": "{\"resource_ref\": \"repository:src_108f6cb8183eb4ee\"}",
+      "target_ref": "repository:src_108f6cb8183eb4ee"
      },
      {
       "actor_ref": "principal:owner-session",
@@ -627,12 +628,12 @@
       "before_hash": null,
       "change_kind": "project.created",
       "command_id": "s13-a",
-      "created_at": "2026-11-08T00:41:56.110012+00:00",
-      "id": "pchg_e3d8fd0d3a669003e0acfd33a29c9c40",
-      "project_id": "proj-14d08c6c6222",
+      "created_at": "2026-11-08T06:27:32.120381+00:00",
+      "id": "pchg_2b14d1cc83154fccc9b3d71daabae29f",
+      "project_id": "proj-fb0c552dde33",
       "project_revision": 1,
       "summary_json": "{\"name\": \"Ledger cutover\"}",
-      "target_ref": "project:proj-14d08c6c6222"
+      "target_ref": "project:proj-fb0c552dde33"
      }
     ],
     "state": "ok"
@@ -724,17 +725,17 @@
     "risks": [],
     "state": "ok"
    },
-   "observed_at": "2026-11-07T17:41:56.235487",
+   "observed_at": "2026-11-07T23:27:32.269286",
    "programs": {
     "programs": [],
     "state": "ok"
    },
    "project": {
     "context": {},
-    "created_at": "2026-11-07T17:41:56.110012",
+    "created_at": "2026-11-07T23:27:32.120381",
     "description": "",
     "detection_threshold": 0.4,
-    "id": "proj-14d08c6c6222",
+    "id": "proj-fb0c552dde33",
     "is_archived": false,
     "keywords": [],
     "last_review_at": null,
@@ -755,35 +756,35 @@
     "target_at": null,
     "team_members": [],
     "template_key": null,
-    "updated_at": "2026-11-07T17:41:56.235487"
+    "updated_at": "2026-11-07T23:27:32.269286"
    },
-   "project_id": "proj-14d08c6c6222",
+   "project_id": "proj-fb0c552dde33",
    "receipts": {
     "items": [
      {
-      "at": 1794098516.235248,
+      "at": 1794119252.269006,
       "caller": null,
-      "id": "18b5355f-08c8-4462-a2a3-e7302a1570e8",
+      "id": "b4192b04-5ad4-4c42-88d8-3164d7f4ab2c",
       "identity": null,
       "label": "ProjectService.add_resource",
       "op": "add_resource",
       "origin": null,
       "outcome": "ok",
       "reason": null,
-      "timestamp": 1794098516.235248,
+      "timestamp": 1794119252.269006,
       "title": "ProjectService.add_resource"
      },
      {
-      "at": 1794098516.107111,
+      "at": 1794119252.117425,
       "caller": null,
-      "id": "d9429e48-8828-49ad-b7d2-2ba3997c57b8",
+      "id": "c904e79b-7e19-415f-b6dd-d36b1dac206b",
       "identity": null,
       "label": "ProjectService.create_project",
       "op": "create_project",
       "origin": null,
       "outcome": "ok",
       "reason": null,
-      "timestamp": 1794098516.107111,
+      "timestamp": 1794119252.117425,
       "title": "ProjectService.create_project"
      }
     ],
@@ -793,13 +794,13 @@
     "count": 1,
     "latest": {
      "confidence": 1.0,
-     "created_at": "2026-11-08T00:41:56.235487+00:00",
+     "created_at": "2026-11-08T06:27:32.269286+00:00",
      "deleted": false,
-     "id": "proj-14d08c6c6222|repository:src_8e7a86e3eb9f6e90",
-     "last_modified": "2026-11-08T00:41:56.235487+00:00",
-     "project_id": "proj-14d08c6c6222",
+     "id": "proj-fb0c552dde33|repository:src_108f6cb8183eb4ee",
+     "last_modified": "2026-11-08T06:27:32.269286+00:00",
+     "project_id": "proj-fb0c552dde33",
      "relationship": "member",
-     "resource_ref": "repository:src_8e7a86e3eb9f6e90",
+     "resource_ref": "repository:src_108f6cb8183eb4ee",
      "source": "manual"
     },
     "state": "ok"
@@ -820,7 +821,7 @@
     "count": 0,
     "items": [],
     "nextCheckAt": null,
-    "quietUntil": null,
+    "quietUntil": "2026-11-08T15:00:00+00:00",
     "state": "ok"
    },
    "steward": {
@@ -850,52 +851,54 @@
    {
     "changes": [
      {
-      "id": "program-program-bf53f1bcc501",
+      "id": "program-program-9e0590f6bf99",
       "kind": "note",
       "op": "update"
      },
      {
-      "id": "program-bf53f1bcc501",
+      "id": "program-9e0590f6bf99",
       "kind": "program",
       "op": "update"
      }
     ],
-    "id": "program-program-bf53f1bcc501",
+    "id": "program-program-9e0590f6bf99",
     "kind": "note",
     "op": "update",
     "origin": "hub"
    }
   ],
-  "program": "program-bf53f1bcc501",
+  "program": "program-9e0590f6bf99",
   "roomA": [
    {
     "done": 0,
-    "id": "program-ea36de920016",
+    "id": "program-228dc966271d",
     "state": "drafting",
     "state_word": "Drafting",
     "title": "New program",
     "total": 0,
-    "updated_at": "2026-11-08T00:41:56.257828+00:00",
+    "track": [],
+    "updated_at": "2026-11-08T06:27:32.294611+00:00",
     "your_turn": 0
    }
   ],
   "roomC": [
    {
     "done": 0,
-    "id": "program-bf53f1bcc501",
+    "id": "program-9e0590f6bf99",
     "state": "drafting",
     "state_word": "Drafting",
     "title": "Moves",
     "total": 0,
-    "updated_at": "2026-11-08T00:41:56.288934+00:00",
+    "track": [],
+    "updated_at": "2026-11-08T06:27:32.331325+00:00",
     "your_turn": 0
    }
   ]
  },
  "projects": {
-  "a": "proj-14d08c6c6222",
-  "b": "proj-9ed177031be2",
-  "c": "proj-9e142155d2fc"
+  "a": "proj-fb0c552dde33",
+  "b": "proj-2b0526f0c5e0",
+  "c": "proj-b9cca865accc"
  },
  "roomDegraded": {
   "changes": {
@@ -905,13 +908,13 @@
      "after_hash": null,
      "before_hash": null,
      "change_kind": "project.resource.linked",
-     "command_id": "pcmd_44366738da6040ad95237d5fe02a4e3e",
-     "created_at": "2026-11-08T00:41:56.235487+00:00",
-     "id": "pchg_1160f9ced3b2cf634d354646e00de42d",
-     "project_id": "proj-14d08c6c6222",
+     "command_id": "pcmd_8863bda452fb42a7abc5226f91732383",
+     "created_at": "2026-11-08T06:27:32.269286+00:00",
+     "id": "pchg_8a06d364035d6170638b2065622a9d24",
+     "project_id": "proj-fb0c552dde33",
      "project_revision": 2,
-     "summary_json": "{\"resource_ref\": \"repository:src_8e7a86e3eb9f6e90\"}",
-     "target_ref": "repository:src_8e7a86e3eb9f6e90"
+     "summary_json": "{\"resource_ref\": \"repository:src_108f6cb8183eb4ee\"}",
+     "target_ref": "repository:src_108f6cb8183eb4ee"
     },
     {
      "actor_ref": "principal:owner-session",
@@ -919,12 +922,12 @@
      "before_hash": null,
      "change_kind": "project.created",
      "command_id": "s13-a",
-     "created_at": "2026-11-08T00:41:56.110012+00:00",
-     "id": "pchg_e3d8fd0d3a669003e0acfd33a29c9c40",
-     "project_id": "proj-14d08c6c6222",
+     "created_at": "2026-11-08T06:27:32.120381+00:00",
+     "id": "pchg_2b14d1cc83154fccc9b3d71daabae29f",
+     "project_id": "proj-fb0c552dde33",
      "project_revision": 1,
      "summary_json": "{\"name\": \"Ledger cutover\"}",
-     "target_ref": "project:proj-14d08c6c6222"
+     "target_ref": "project:proj-fb0c552dde33"
     }
    ],
    "state": "ok"
@@ -1016,17 +1019,17 @@
    "risks": [],
    "state": "ok"
   },
-  "observed_at": "2026-11-07T17:41:56.235487",
+  "observed_at": "2026-11-07T23:27:32.269286",
   "programs": {
    "error_code": "programs_read_failed",
    "state": "degraded"
   },
   "project": {
    "context": {},
-   "created_at": "2026-11-07T17:41:56.110012",
+   "created_at": "2026-11-07T23:27:32.120381",
    "description": "",
    "detection_threshold": 0.4,
-   "id": "proj-14d08c6c6222",
+   "id": "proj-fb0c552dde33",
    "is_archived": false,
    "keywords": [],
    "last_review_at": null,
@@ -1047,35 +1050,35 @@
    "target_at": null,
    "team_members": [],
    "template_key": null,
-   "updated_at": "2026-11-07T17:41:56.235487"
+   "updated_at": "2026-11-07T23:27:32.269286"
   },
-  "project_id": "proj-14d08c6c6222",
+  "project_id": "proj-fb0c552dde33",
   "receipts": {
    "items": [
     {
-     "at": 1794098516.235248,
+     "at": 1794119252.269006,
      "caller": null,
-     "id": "18b5355f-08c8-4462-a2a3-e7302a1570e8",
+     "id": "b4192b04-5ad4-4c42-88d8-3164d7f4ab2c",
      "identity": null,
      "label": "ProjectService.add_resource",
      "op": "add_resource",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794098516.235248,
+     "timestamp": 1794119252.269006,
      "title": "ProjectService.add_resource"
     },
     {
-     "at": 1794098516.107111,
+     "at": 1794119252.117425,
      "caller": null,
-     "id": "d9429e48-8828-49ad-b7d2-2ba3997c57b8",
+     "id": "c904e79b-7e19-415f-b6dd-d36b1dac206b",
      "identity": null,
      "label": "ProjectService.create_project",
      "op": "create_project",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794098516.107111,
+     "timestamp": 1794119252.117425,
      "title": "ProjectService.create_project"
     }
    ],
@@ -1085,13 +1088,13 @@
    "count": 3,
    "latest": {
     "confidence": 1.0,
-    "created_at": "2026-11-08T00:41:56.283244+00:00",
+    "created_at": "2026-11-08T06:27:32.324151+00:00",
     "deleted": false,
-    "id": "proj-14d08c6c6222|note:program-program-bf53f1bcc501",
-    "last_modified": "2026-11-08T00:41:56.283244+00:00",
-    "project_id": "proj-14d08c6c6222",
+    "id": "proj-fb0c552dde33|note:program-program-9e0590f6bf99",
+    "last_modified": "2026-11-08T06:27:32.324151+00:00",
+    "project_id": "proj-fb0c552dde33",
     "relationship": "member",
-    "resource_ref": "note:program-program-bf53f1bcc501",
+    "resource_ref": "note:program-program-9e0590f6bf99",
     "source": "program"
    },
    "state": "ok"
@@ -1112,7 +1115,7 @@
    "count": 0,
    "items": [],
    "nextCheckAt": null,
-   "quietUntil": null,
+   "quietUntil": "2026-11-08T15:00:00+00:00",
    "state": "ok"
   },
   "steward": {
@@ -1145,12 +1148,12 @@
      "before_hash": null,
      "change_kind": "project.created",
      "command_id": "s13-c",
-     "created_at": "2026-11-08T00:41:56.119699+00:00",
-     "id": "pchg_fe2094cddd80bfa8f8dbb9520bd03d85",
-     "project_id": "proj-9e142155d2fc",
+     "created_at": "2026-11-08T06:27:32.137096+00:00",
+     "id": "pchg_bdf4cf47994237af084ec0c2939225f1",
+     "project_id": "proj-b9cca865accc",
      "project_revision": 1,
      "summary_json": "{\"name\": \"Quiet\"}",
-     "target_ref": "project:proj-9e142155d2fc"
+     "target_ref": "project:proj-b9cca865accc"
     }
    ],
    "state": "ok"
@@ -1242,17 +1245,17 @@
    "risks": [],
    "state": "ok"
   },
-  "observed_at": "2026-11-07T17:41:56.119699",
+  "observed_at": "2026-11-07T23:27:32.137096",
   "programs": {
    "programs": [],
    "state": "ok"
   },
   "project": {
    "context": {},
-   "created_at": "2026-11-07T17:41:56.119699",
+   "created_at": "2026-11-07T23:27:32.137096",
    "description": "",
    "detection_threshold": 0.4,
-   "id": "proj-9e142155d2fc",
+   "id": "proj-b9cca865accc",
    "is_archived": false,
    "keywords": [],
    "last_review_at": null,
@@ -1273,22 +1276,22 @@
    "target_at": null,
    "team_members": [],
    "template_key": null,
-   "updated_at": "2026-11-07T17:41:56.119699"
+   "updated_at": "2026-11-07T23:27:32.137096"
   },
-  "project_id": "proj-9e142155d2fc",
+  "project_id": "proj-b9cca865accc",
   "receipts": {
    "items": [
     {
-     "at": 1794098516.119673,
+     "at": 1794119252.137067,
      "caller": null,
-     "id": "2e7464d5-405c-4044-a680-d8f2f7fdd179",
+     "id": "40ba055e-04cf-4871-a48b-647b21890801",
      "identity": null,
      "label": "ProjectService.create_project",
      "op": "create_project",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794098516.119673,
+     "timestamp": 1794119252.137067,
      "title": "ProjectService.create_project"
     }
    ],
@@ -1315,7 +1318,7 @@
    "count": 0,
    "items": [],
    "nextCheckAt": null,
-   "quietUntil": null,
+   "quietUntil": "2026-11-08T15:00:00+00:00",
    "state": "ok"
   },
   "steward": {
@@ -1347,13 +1350,13 @@
      "after_hash": null,
      "before_hash": null,
      "change_kind": "project.resource.linked",
-     "command_id": "pcmd_de40c80c26b4450c96d1e1f8eaf318c4",
-     "created_at": "2026-11-08T00:41:56.240170+00:00",
-     "id": "pchg_833dc58ebdb2994089c98630b282a824",
-     "project_id": "proj-9ed177031be2",
+     "command_id": "pcmd_8dcaae8ffff0429093897d2789609e93",
+     "created_at": "2026-11-08T06:27:32.274767+00:00",
+     "id": "pchg_7a4da63d8b5b303e60522286604fce15",
+     "project_id": "proj-2b0526f0c5e0",
      "project_revision": 2,
-     "summary_json": "{\"resource_ref\": \"repository:src_8e7a86e3eb9f6e90\"}",
-     "target_ref": "repository:src_8e7a86e3eb9f6e90"
+     "summary_json": "{\"resource_ref\": \"repository:src_108f6cb8183eb4ee\"}",
+     "target_ref": "repository:src_108f6cb8183eb4ee"
     },
     {
      "actor_ref": "principal:owner-session",
@@ -1361,12 +1364,12 @@
      "before_hash": null,
      "change_kind": "project.created",
      "command_id": "s13-b",
-     "created_at": "2026-11-08T00:41:56.117211+00:00",
-     "id": "pchg_856aec3841e6ca06fdc017ab1d025bde",
-     "project_id": "proj-9ed177031be2",
+     "created_at": "2026-11-08T06:27:32.134483+00:00",
+     "id": "pchg_5f39c56d84d6f6e93377e01c52e3351c",
+     "project_id": "proj-2b0526f0c5e0",
      "project_revision": 1,
      "summary_json": "{\"name\": \"Card vault\"}",
-     "target_ref": "project:proj-9ed177031be2"
+     "target_ref": "project:proj-2b0526f0c5e0"
     }
    ],
    "state": "ok"
@@ -1458,17 +1461,18 @@
    "risks": [],
    "state": "ok"
   },
-  "observed_at": "2026-11-07T17:41:56.240170",
+  "observed_at": "2026-11-07T23:27:32.274767",
   "programs": {
    "programs": [
     {
      "done": 0,
-     "id": "program-5a6771bfcc69",
+     "id": "program-805acf03dff3",
      "state": "drafting",
      "state_word": "Drafting",
      "title": "New program",
      "total": 0,
-     "updated_at": "2026-11-08T00:41:56.264607+00:00",
+     "track": [],
+     "updated_at": "2026-11-08T06:27:32.302373+00:00",
      "your_turn": 0
     }
    ],
@@ -1476,10 +1480,10 @@
   },
   "project": {
    "context": {},
-   "created_at": "2026-11-07T17:41:56.117211",
+   "created_at": "2026-11-07T23:27:32.134483",
    "description": "",
    "detection_threshold": 0.4,
-   "id": "proj-9ed177031be2",
+   "id": "proj-2b0526f0c5e0",
    "is_archived": false,
    "keywords": [],
    "last_review_at": null,
@@ -1500,35 +1504,35 @@
    "target_at": null,
    "team_members": [],
    "template_key": null,
-   "updated_at": "2026-11-07T17:41:56.240170"
+   "updated_at": "2026-11-07T23:27:32.274767"
   },
-  "project_id": "proj-9ed177031be2",
+  "project_id": "proj-2b0526f0c5e0",
   "receipts": {
    "items": [
     {
-     "at": 1794098516.240053,
+     "at": 1794119252.274601,
      "caller": null,
-     "id": "7be5afb0-74ea-42a7-a315-243516027cf5",
+     "id": "193deded-38c4-4d80-8c49-1d99c2a65e3e",
      "identity": null,
      "label": "ProjectService.add_resource",
      "op": "add_resource",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794098516.240053,
+     "timestamp": 1794119252.274601,
      "title": "ProjectService.add_resource"
     },
     {
-     "at": 1794098516.117158,
+     "at": 1794119252.1344068,
      "caller": null,
-     "id": "27e76f71-ddeb-424c-ba1d-ee0e83396898",
+     "id": "cc383301-29c0-49f6-9389-5dafb78a8d7b",
      "identity": null,
      "label": "ProjectService.create_project",
      "op": "create_project",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794098516.117158,
+     "timestamp": 1794119252.1344068,
      "title": "ProjectService.create_project"
     }
    ],
@@ -1538,13 +1542,13 @@
    "count": 2,
    "latest": {
     "confidence": 1.0,
-    "created_at": "2026-11-08T00:41:56.265619+00:00",
+    "created_at": "2026-11-08T06:27:32.303461+00:00",
     "deleted": false,
-    "id": "proj-9ed177031be2|note:program-program-5a6771bfcc69",
-    "last_modified": "2026-11-08T00:41:56.265619+00:00",
-    "project_id": "proj-9ed177031be2",
+    "id": "proj-2b0526f0c5e0|note:program-program-805acf03dff3",
+    "last_modified": "2026-11-08T06:27:32.303461+00:00",
+    "project_id": "proj-2b0526f0c5e0",
     "relationship": "member",
-    "resource_ref": "note:program-program-5a6771bfcc69",
+    "resource_ref": "note:program-program-805acf03dff3",
     "source": "program"
    },
    "state": "ok"
@@ -1565,7 +1569,7 @@
    "count": 0,
    "items": [],
    "nextCheckAt": null,
-   "quietUntil": null,
+   "quietUntil": "2026-11-08T15:00:00+00:00",
    "state": "ok"
   },
   "steward": {
