@@ -9,7 +9,7 @@
 @import "./tokens.css";
 
 /* HS-30-03 "Signal" type system. Three faces:
- *   --font-display  Fraunces (500/600/700) — a soft serif display face
+ *   --font-display  Inter: no display face; titles by weight, size and tracking (owner, 2026-11-08)
  *                   (owner, 2026-11-08): 600 for masts and section
  *                   heads, 700 only for the HoldSpeak wordmark.
  *   --font-ui       Inter (400/500/600) — all body, UI, controls.
@@ -20,9 +20,6 @@
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
-@import "@fontsource/fraunces/500.css";
-@import "@fontsource/fraunces/600.css";
-@import "@fontsource/fraunces/700.css";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 

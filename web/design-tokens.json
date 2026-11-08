@@ -279,7 +279,7 @@
     },
     "font": {
       "display": {
-        "value": "\"Fraunces\", \"Fraunces Fallback\", Georgia, \"Times New Roman\", serif"
+        "value": "\"Inter\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
       },
       "ui": {
         "value": "\"Inter\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    sans-serif"
