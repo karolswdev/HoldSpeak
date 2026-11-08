@@ -311,6 +311,91 @@ class TestA8SkipsImportsAndBooleans:
         assert len(a8) == 1
 
 
+def _a8(body: str, rel: str = "features/test/Foo.tsx"):
+    mod = _load_scanner()
+    return [v for v in mod.scan_file(rel, body, body.splitlines()) if v.rule == "A8"]
+
+
+class TestA8CountsOnlyDrawnText:
+    """A8 reads JSX text only; a prop value is never drawn (2026-11-08)."""
+
+    @pytest.mark.parametrize("line", [
+        '  <CardStack count={cards.length} />',
+        '  <Strip label={`${cardCount} at`} />',
+        '  <ol aria-label={`Step ${n} of ${STEPS.length}`}>',
+        '  <ol aria-label={`Step ${n} of ${total}`}>',
+        '  <span title={items.length}>x</span>',
+        '  <li data-count={items.length}>x</li>',
+        '  <Field value={Number(val(path) ?? 0)} />',
+        '  <th colSpan={columnCount} scope="colgroup">{label}</th>',
+    ])
+    def test_attribute_value_is_not_a8(self, line):
+        hits = _a8(line)
+        assert not hits, f"A8 fired on an attribute value: {hits[0].text}"
+
+    @pytest.mark.parametrize("line", [
+        '  key: `${thread}:${current.length}:${id}`,',
+        '  const next = `${from}:${to}:${doc.length}`;',
+        '  style: { width: `calc(${(w.get(id) ?? 0) + 11}ch)` },',
+        '  { key: "count", text: countWords(rows.length, "row") },',
+    ])
+    def test_code_outside_jsx_is_not_a8(self, line):
+        assert not _a8(line)
+
+    def test_multiline_aria_label_template_is_not_a8(self):
+        body = (
+            '  <ol\n'
+            '    aria-label={\n'
+            '      `Step ${index + 1} of ${STEPS.length}`\n'
+            '    }\n'
+            '  >\n'
+        )
+        assert not _a8(body)
+
+    @pytest.mark.parametrize("line", [
+        '  <span>{items.length}</span>',
+        '  <span className="pill">{items.length} OVERDUE</span>',
+        '      {items.length}',
+        '      Confirm all {items.length}',
+        '      {`TO REPAIR ${items.length}`}',
+    ])
+    def test_text_content_length_is_a8(self, line):
+        assert len(_a8(line)) == 1, line
+
+    def test_block_comment_line_is_not_a8(self):
+        body = '/* the payload is\n   {run_id, index, total} with\n   more */\n'
+        assert not _a8(body)
+
+
+class TestFaceAttribution:
+    """A hit's face is its file's stem: one rule, the same for every tree."""
+
+    def test_face_is_the_file_stem(self):
+        mod = _load_scanner()
+        assert mod.file_to_face("desk/components/AskPanel.tsx") == "AskPanel"
+        assert mod.file_to_face("pages/cores/people/people.css") == "people"
+        assert mod.classify_face("pages/cores/PeopleCore.tsx") == "PeopleCore"
+        assert mod.face_for_file("desk/components/RepoWindow.css") == "RepoWindow"
+
+    def test_every_hit_lands_on_its_own_files_face(self, tmp_path: Path):
+        mod = _load_scanner()
+        src = tmp_path / "web" / "src"
+        (src / "desk" / "components").mkdir(parents=True)
+        (src / "pages" / "cores").mkdir(parents=True)
+        (src / "desk" / "components" / "AskPanel.tsx").write_text(
+            'export const A = () => <span>{rows.length}</span>;\n')
+        (src / "pages" / "cores" / "PeopleCore.tsx").write_text(
+            'export const B = () => <div>\n  <span>{a.length}</span>\n'
+            '  <span>{b.length}</span>\n</div>;\n')
+        first = mod.scan(tmp_path)["face_rule_counts"]
+        second = mod.scan(tmp_path)["face_rule_counts"]
+        assert first == second
+        assert first == {"AskPanel": {"A8": 1}, "PeopleCore": {"A8": 2}}
+        for face, hits in mod.scan(tmp_path)["faces"].items():
+            for hit in hits:
+                assert mod.file_to_face(hit["file"]) == face
+
+
 # ---------------------------------------------------------------------------
 # The voice law, per element (HS-176-04, ruling R9)
 # ---------------------------------------------------------------------------

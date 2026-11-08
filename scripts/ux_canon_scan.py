@@ -22,6 +22,13 @@ Outputs (only when asked for):
     the ceiling     — the ratchet file the guard test reads; a per-rule
                       number may fall freely and may only RISE with a new
                       --ceiling-reason (the dated, down-only shape of HS-200-03)
+
+Faces: a hit's face is its file's stem (file_to_face), one rule for every
+rule class, so the per-face counts of one tree never move between faces.
+
+Rule A8 (no counter of zero) reads only what a face draws: a `{...}` that is
+JSX text.  An attribute value (`count={n.length}`, `aria-label={...}`,
+`title`, `data-*`) is never A8 (_a8_text_exprs).
 """
 from __future__ import annotations
 
@@ -115,12 +122,11 @@ def classify_face(rel: str) -> str | None:
     # Only tsx files are faces (css files contribute to their parent face)
     if not rel.endswith(".tsx"):
         return None
-    stem = Path(rel).stem
     # Files under features/**, pages/cores/**, desk/** that render
     # a window/core/lane
     for d in FACE_DIRS:
         if rel.startswith(d):
-            return stem
+            return file_to_face(rel)
     return None
 
 
@@ -128,10 +134,21 @@ def face_for_file(rel: str) -> str | None:
     """For any file (tsx or css), return the face it belongs to."""
     if rel.endswith(".tsx"):
         return classify_face(rel)
-    # CSS: the face is the nearest tsx in the same directory, or the directory name
-    parent = str(Path(rel).parent)
-    stem = Path(rel).stem
-    return stem  # best effort: surface.css -> surface
+    return file_to_face(rel)
+
+
+def file_to_face(rel: str) -> str:
+    """The face a hit belongs to: the file stem, and nothing else.
+
+    One rule (2026-11-08): `desk/components/AskPanel.tsx` is the face
+    `AskPanel`, `pages/cores/people.css` is `people`.  The face depends on
+    the file's path alone -- never on the hit's line, its text, the scan
+    order or another file -- so the same tree always gives the same
+    per-face counts.  Two files with one stem in different directories
+    share a face name (the ceiling's per-face numbers are a report; the
+    gate is the per-rule total).
+    """
+    return Path(rel).stem
 
 
 # ---------------------------------------------------------------------------
@@ -528,6 +545,84 @@ _A3_PROSE_TAG = re.compile(r"<(?:p|small)\b[^>]*>([^<]+)")
 # Rule A8 stays per line: a whole-file rewrite crossed loop bodies and
 # template literals (109 hits, none a counter), and the tree holds no
 # `{\n  x.length\n}` shape (HS-200-44 audit).
+#
+# A8 counts only what the face DRAWS (2026-11-08): an expression `{...}` is
+# a counter candidate only when it is a JSX text child -- after a tag's `>`
+# (with any text between), alone on its line, or after plain words on a
+# line of JSX text.  A `{...}` after `=` is an attribute value (a prop such
+# as `count={cards.length}`, an `aria-label`, a `title`, a `data-*`) and is
+# never A8; neither is an object field, a key template or a `${...}` whose
+# enclosing brace sits on another line.  A template literal drawn as text
+# (`{`TO REPAIR ${n.length}`}`) is text and still counts.  Before this rule
+# builders moved code out of the scanner's sight (`STEP_TOTAL`, a count
+# variable at the end of a line) instead of fixing faces.
+# `count` / `total` / `num` / `len` as a word, or the tail of a camelCase
+# name (`cardCount`); never the inside of a word such as `Account`.
+_A8_COUNT_WORD = re.compile(
+    r"(?:\b(?:count|total|num|len)|[a-z0-9](?:Count|Total|Num|Len))\b")
+# Words that, before a `{`, open a code block rather than a text child.
+_A8_CODE_WORDS = frozenset({
+    "else", "return", "do", "try", "finally", "case", "default", "export",
+    "import", "const", "let", "var", "type", "interface", "from", "in", "of",
+})
+
+
+def _a8_outer_braces(line: str) -> list[tuple[int, int]]:
+    """Balanced top-level `{...}` spans on one line, as (open, close) offsets.
+
+    A `${` at top level belongs to a template whose enclosing brace is on
+    another line; it is not a span.  An unclosed brace ends the search.
+    """
+    spans: list[tuple[int, int]] = []
+    i = 0
+    while i < len(line):
+        if line[i] == "{" and (i == 0 or line[i - 1] != "$"):
+            depth = 0
+            for j in range(i, len(line)):
+                if line[j] == "{":
+                    depth += 1
+                elif line[j] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        spans.append((i, j))
+                        i = j
+                        break
+            else:
+                return spans
+        i += 1
+    return spans
+
+
+def _a8_text_exprs(line: str) -> list[tuple[str, str]]:
+    """The `{...}` expressions on ``line`` that JSX draws as text.
+
+    Returns (the `{...}` text, the line after its `}`).  A span is text when
+    it stands alone on its line or is followed by text or a tag, when the
+    line before it ends in text after a tag's closing `>` (never the `>` of
+    `=>`), or when the line before it is plain words that do not open a
+    block.  A span after `=` (an attribute value), an object literal ending
+    in `,` or `;`, or any code punctuation is not.
+    """
+    found: list[tuple[str, str]] = []
+    for start, end in _a8_outer_braces(line):
+        body = line[start + 1:end]
+        if body.lstrip().startswith("/*"):
+            continue  # a JSX comment
+        before = line[:start]
+        after = line[end + 1:]
+        head = before.rstrip()
+        if not head:
+            text = bool(re.match(r"\s*(?:$|<|[A-Za-z\u00b7])", after))
+        else:
+            tag = re.search(r"(?<!=)>[^<>{}=]*$", before)
+            if tag:
+                text = True
+            else:
+                words = re.fullmatch(r"\s*([A-Za-z][\w \t\u00b7'\u2019-]*?)\s*", before)
+                text = bool(words) and (words.group(1).split() or [""])[-1] not in _A8_CODE_WORDS
+        if text:
+            found.append((line[start:end + 1], after))
+    return found
 
 # Rule A9: a provider call whose verb and path Prettier split across lines.
 # A provider fetch (discover, recheck, evaluate) is an act where the choice is
@@ -715,42 +810,45 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
     # Line-shaped rules: the target is an attribute with its value, a tag
     # name, a CSS property name, or a single glyph — none of which Prettier
     # splits across lines.
+    in_block_comment = False
     for i, line_text in enumerate(lines, 1):
         stripped = line_text.strip()
+        # A8 reads no line inside a `/* ... */` that opened on a line above.
+        a8_commented = in_block_comment
+        if "/*" in line_text or "*/" in line_text:
+            in_block_comment = line_text.rfind("/*") > line_text.rfind("*/")
 
         if is_tsx:
-            # Rule A8: Counters of zero (best effort)
-            # Skip import lines entirely — identifiers like groundedMatchCount
-            # contain "count" but are not rendered counters.
-            if not stripped.startswith("import "):
-                # .length interpolations without zero guard
-                if re.search(r'\{[^}]*\.length\s*\}', line_text):
-                    # Check for a zero guard (boolean, ternary, logical, arithmetic)
-                    expr_match = re.search(r'\{([^}]*\.length[^}]*)\}', line_text)
-                    if expr_match:
-                        expr = expr_match.group(1)
-                        if not re.search(r'[!?&|+\-]|===?\s*0|!==?\s*0|>\s*0', expr):
+            # Rule A8: Counters of zero (best effort). Only an expression
+            # drawn as JSX TEXT counts (_a8_text_exprs); an attribute value,
+            # an object field or a template built in code is never drawn.
+            if (not a8_commented and not stripped.startswith("import ")
+                    and not stripped.startswith(("//", "*", "/*"))):
+                for seg, after in _a8_text_exprs(line_text):
+                    # .length interpolations without zero guard
+                    if re.search(r'\{[^}]*\.length\s*\}', seg):
+                        expr_match = re.search(r'\{([^}]*\.length[^}]*)\}', seg)
+                        if expr_match and not re.search(
+                                r'[!?&|+\-]|===?\s*0|!==?\s*0|>\s*0', expr_match.group(1)):
                             violations.append(Violation(rel_path, i, "A8",
                                 f"Counter may render zero (.length without guard): {stripped[:100]}",
                                 confidence="medium"))
-                # {count} Noun pattern
-                if re.search(r'\{[^}]*(?:count|Count|total|num|len)\b[^}]*\}\s*\w', line_text):
-                    if not re.search(r'[?&|]|===?\s*0|!==?\s*0|>\s*0', line_text):
+                    # {count} Noun pattern
+                    if re.search(r'\{[^}]*' + _A8_COUNT_WORD.pattern + r'[^}]*\}\s*\w', seg + after):
+                        if not re.search(r'[?&|]|===?\s*0|!==?\s*0|>\s*0', line_text):
+                            violations.append(Violation(rel_path, i, "A8",
+                                f"Counter may render zero (count pattern): {stripped[:100]}",
+                                confidence="low"))
+                    # ?? 0 pattern (explicitly renders 0 as fallback)
+                    if re.search(r'\{[^}]*\?\?\s*0[^}]*\}', seg):
                         violations.append(Violation(rel_path, i, "A8",
-                            f"Counter may render zero (count pattern): {stripped[:100]}",
-                            confidence="low"))
-                # Explicit "0 " or "{0}" patterns (rare but direct)
+                            f"Zero fallback rendered (?? 0): {stripped[:100]}",
+                            confidence="medium"))
+                # Explicit "0 " pattern (a literal zero in a text node)
                 if re.search(r'>\s*0\s+\w', line_text):
                     violations.append(Violation(rel_path, i, "A8",
                         f"Literal zero counter in text: {stripped[:100]}",
                         confidence="medium"))
-                # ?? 0 pattern (explicitly renders 0 as fallback)
-                if re.search(r'\?\?\s*0\b', line_text):
-                    # check if it's rendered as text
-                    if re.search(r'\{[^}]*\?\?\s*0[^}]*\}', line_text):
-                        violations.append(Violation(rel_path, i, "A8",
-                            f"Zero fallback rendered (?? 0): {stripped[:100]}",
-                            confidence="medium"))
 
             # Rule A3-sentence: string literals used as prop values (title=, label=, etc.)
             prop_texts = re.findall(r'(?:title|label|description|placeholder|children)=\{?"([^"]{60,})"', line_text)
@@ -884,13 +982,6 @@ def find_mic_files(root: Path) -> list[Path]:
             continue
         result.append(p)
     return result
-
-
-def file_to_face(rel: str) -> str:
-    """Map a relative path to a face name for grouping."""
-    stem = Path(rel).stem
-    # For CSS files, try to find the face they belong to (same directory tsx)
-    return stem
 
 
 def scan_all(root: Path) -> tuple[dict[str, list[Violation]], list[Violation]]:
