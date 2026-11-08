@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2000 Watch fold 2: an Automation's "when something happens" start is a WatchService watch (rule `event_type` → `automation.run`), each event mints one occurrence and runs it; the Reaction pair is no longer made.
 - 2026-11-08 · #1991 Watch fold 1: `normalize_snapshot` and `diff_snapshots` have one home, `holdspeak/services/snapshot_diff.py`; WatchService, project setup and the evidence collector import it (no behaviour change).
 - 2026-11-08 · Fix forward #1975: the doc audit links the parked InterviewPanel (dangling-link guard).
 - 2026-11-08 · #1988 One name for the automation tools: `automation.*` (the eight `workbench.*` twins left; the item tools stay `workbench.*`); MCP 313 → 305 tools.
