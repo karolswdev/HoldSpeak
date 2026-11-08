@@ -180,9 +180,6 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/features/runson/RunsOnCore.tsx": ("display-transport", "16-03"),
     # Betterment E5: What runs where; its presses write through useRunsOn.
     "web/src/features/runson/WhatRunsWhere.tsx": ("display-transport", "16-03"),
-    # First run FOUND (#859): the owner's "Use it" press on a #855 proposal; the
-    # server (InferenceDefaultService.use_proposal) writes the assignment.
-    "web/src/desk/firstrun/Found.tsx": ("inference-route", "143-13"),
     # Betterment A4: the automation's With line. The owner's Use / Add press
     # names one engine; the hub (WorkbenchService.set_engine) writes the
     # subject assignment and re-freezes a live schedule. The window and its

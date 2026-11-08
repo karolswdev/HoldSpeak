@@ -5,7 +5,6 @@ import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
 import type { ResourcefulPolicy } from "../../detail-types";
 import { InfoWindow } from "../InfoWindow";
-import { ZoneWindow } from "../ZoneWindow";
 import { WorkbenchResourceful } from "../WorkbenchResourceful";
 import { CapabilitySection, openCapabilityEngines } from "../../pullouts/shared/CapabilitySection";
 import { openSurfaceOr } from "../../shell";
@@ -84,13 +83,6 @@ describe("common controls keep their actions", () => {
     expect(screen.getByRole("button", { name: "note:missing" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Source note" }));
     expect(useDesk.getState().pullouts.map((pullout) => pullout.id)).toEqual(["note:shared"]);
-  });
-
-  it("shows a passive empty zone", () => {
-    useDesk.setState({ items: { ...EMPTY_ITEMS, directory: [{ id: "zone-empty", name: "Review", memberIds: [] }] } as never });
-    render(<ZoneWindow zoneId="zone-empty" />);
-    expect(screen.getByText("No items")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Drop items here" })).toBeNull();
   });
 
   it("keeps one resourceful policy write pending and releases its library actions", async () => {

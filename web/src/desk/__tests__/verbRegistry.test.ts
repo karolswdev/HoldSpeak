@@ -9,7 +9,6 @@ import { VERBS, menuVerbs, verbLabel, verbsFor, verbById } from "../verbRegistry
 import { DESK_TOOLS } from "../tools";
 import { GO_GROUPS, applicationForAction, applicationVerbId, goRows } from "../applications";
 import { registerSurface } from "../shell";
-import { THREAD_SLASH_COMMANDS } from "../components/ThreadComposer";
 import { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } from "../api";
 import { useDesk } from "../store";
 import { windowObjectEntry } from "../objectMenu";
@@ -179,14 +178,6 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "system.search": "⌘K",
       "system.sheet": "⌘/",
     });
-  });
-
-  it("every THREAD_SLASH_COMMANDS entry has a registered verb id (HS-153-02)", () => {
-    for (const cmd of THREAD_SLASH_COMMANDS) {
-      const verb = verbById(cmd.verbId);
-      expect(verb, `verb ${cmd.verbId} not found for slash command /${cmd.id}`).toBeDefined();
-      expect(verb!.scope).toBe("thread");
-    }
   });
 });
 

@@ -8,6 +8,8 @@ const files = [];
 const walk = (directory) => {
   for (const name of readdirSync(directory)) {
     const path = join(directory, name);
+    // Parked code is out of the build, tsc and vitest: out of the fences too.
+    if (name === "_parked") continue;
     if (statSync(path).isDirectory()) walk(path);
     else files.push(path);
   }
