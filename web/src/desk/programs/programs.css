@@ -1460,58 +1460,98 @@ span.pg-req-thumb { height: 150px; }
 .pg-race-agent { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pg-findings-fix { margin: 0; padding: 2px 12px 6px; }
 
-/* ── HS-S11: the New program well (in flow, under the toolbar). Its content
-   is the project choice: one kit list row per open project, the row grammar
-   of the Programs list below. A row press chooses (the lit row); its
-   trailing Create here makes. At 393 the row is the press and one Create in
-   <project> sits at the foot. ── */
-.pg-make {
+/* ── New program, the wizard (owner 2026-11-08): the window's body is the
+   wizard page; the toolbar and the status bar stay. One step a screen
+   (Where · What · How · Go), the step slides in on the motion tokens; the
+   bar holds the progress dots (the Walk's: 6 px, now a 16 px pill, done
+   filled) and Back · Next / Create. ── */
+.pg-wiz {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border-bottom: 1px solid var(--wb-rule-soft);
+  min-height: 0;
   background: var(--wb-paper);
-  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--wb-ink) 6%, transparent);
 }
-.pg-make-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 8px 12px 4px;
-}
-.pg-make .pg-make-ask {
-  position: static;
+.pg-wiz-step {
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-width: 0;
+  min-height: 0;
+  padding: 12px 16px;
+}
+.pg-wiz .pg-wiz-name {
+  position: static;
   padding: 0;
   border: 0;
   background: transparent;
 }
-.pg-make .pg-make-template { flex: none; margin-left: auto; }
-.pg-make-rows {
-  max-height: 264px;
-  overflow-y: auto;
-  border-top: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
-}
-.pg-make-rows .kit-listrow-main { cursor: pointer; }
-.pg-make-rows .kit-listrow[data-lit] .kit-listrow-name { font-weight: 600; }
-.pg-make-state .surface-state { padding: 10px 12px; }
-.pg-make > .surface-action-notice { margin: 6px 12px 0; }
-.pg-make-verbs {
+.pg-wiz-where {
   display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px 12px;
+  flex-direction: column;
+  min-height: 0;
+  /* A long project list stays one bounded well; the page never scrolls. */
+  overflow-y: auto;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 6px;
+  background: var(--wb-paper);
 }
-/* The foot's Create in <project> is the narrow form only. */
-.desk-next .pg-make .btn.pg-make-commit { display: none; }
+.pg-wiz-where .kit-listrow-main { cursor: pointer; }
+.pg-wiz-folder { padding: 8px 12px; border-top: 1px solid var(--wb-rule-soft); }
+.pg-wiz-state .surface-state { padding: 10px 12px; }
+.pg-wiz-what {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  max-width: 720px;
+}
+.pg-wiz-what .gadget-pad textarea { min-height: 120px; }
+.pg-wiz-step .gadget-group { max-width: 720px; }
+.pg-wiz > .surface-action-notice { margin: 0 16px 8px; }
+.pg-wiz-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.pg-wiz-verbs {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.pg-wiz-dots {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+.pg-wiz-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  transition: width var(--duration-long) var(--ease-standard), background-color var(--duration-long) var(--ease-standard);
+}
+.pg-wiz-dot[data-state="done"] { background: color-mix(in srgb, var(--accent) 70%, transparent); }
+.pg-wiz-dot[data-state="now"] { width: 16px; background: var(--accent); }
+@media (prefers-reduced-motion: no-preference) {
+  .pg-wiz-step[data-dir="on"] { animation: pg-wiz-on var(--duration-medium) var(--ease-decelerate); }
+  .pg-wiz-step[data-dir="back"] { animation: pg-wiz-back var(--duration-medium) var(--ease-decelerate); }
+  /* The made Program's row settles into the list. */
+  .pg-row[data-fresh] { animation: pg-row-settle var(--duration-long) var(--ease-decelerate); }
+}
+@keyframes pg-wiz-on { from { opacity: 0; translate: 16px 0; } }
+@keyframes pg-wiz-back { from { opacity: 0; translate: -16px 0; } }
+@keyframes pg-row-settle {
+  from { opacity: 0; translate: 0 -8px; background-color: color-mix(in srgb, var(--accent) 14%, transparent); }
+}
 @container surface (max-width: 520px) {
-  .pg-make-here { display: none; }
-  .desk-next .pg-make .btn.pg-make-commit { display: inline-flex; flex: 1 1 100%; justify-content: center; }
-  .pg-make-rows { max-height: none; }
-  .pg-make-verbs .btn { min-height: 44px; }
+  .pg-wiz-step { padding: 10px 12px; }
+  .pg-wiz-bar { padding: 8px 12px; }
+  .pg-wiz-verbs .btn { min-height: 44px; }
 }
 
 /* ── HS-S21: the Add well of a Program made from an action, and the

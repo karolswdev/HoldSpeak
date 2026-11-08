@@ -579,7 +579,7 @@ describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/t
   });
 });
 
-describe("HS-S11: New program is made in the project he chooses (recorded real wire)", () => {
+describe("New program is a wizard inside the window (owner, live walk 2026-11-08; recorded real wire)", () => {
   type Capture = { request: { method: string; path: string; json?: Record<string, unknown> }; response: { status: number; body: unknown } };
   const projects = createProjectsFixture as unknown as Capture;
   const made = createProjectFixture as unknown as Capture;
@@ -595,17 +595,15 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
   const posts = () => calls.filter((call) => call.startsWith("POST /api/programs"));
   /** The bodies he sent, parsed (the recorded fixture sorts its keys). */
   const sent = () => posts().map((call) => JSON.parse(call.slice("POST /api/programs ".length)));
-  const rowOf = (id: string) => screen.getAllByTestId("programs-make-row")
-    .find((node) => within(node).getByTestId("programs-make-name").textContent === nameOf(id))!;
-  /** A press on the project row: the choice. */
-  const choose = (id: string) => fireEvent.click(within(rowOf(id)).getByTestId("programs-make-pick"));
-  /** The row's own trailing verb. */
-  const here = (id: string) => within(rowOf(id)).getByTestId("programs-make-here");
-  /** The well's foot verb (the narrow form; drawn once a project is chosen). */
-  const create = () => screen.getByTestId("programs-make-create");
-  const ready = () => screen.findAllByTestId("programs-make-row");
+  const rowOf = (id: string) => screen.getAllByTestId("programs-wizard-project")
+    .find((node) => within(node).getByTestId("programs-wizard-name").textContent === nameOf(id))!;
+  const choose = (id: string) => fireEvent.click(within(rowOf(id)).getByTestId("programs-wizard-pick"));
+  const next = () => screen.getByTestId("programs-wizard-next") as HTMLButtonElement;
+  const ready = () => screen.findAllByTestId("programs-wizard-project");
   const templateItem = (name: string) => [...document.querySelectorAll<HTMLElement>("[role=menuitem],[role=menuitemradio]")]
     .find((node) => node.textContent?.startsWith(`${name} · `))!;
+  /** Where → Go with nothing but the project chosen. */
+  const toGo = () => { fireEvent.click(next()); fireEvent.click(next()); fireEvent.click(next()); };
 
   it("the recorded scenario is one coherent roster: the made Program and the refusal name its members", () => {
     expect(made.request.json).toEqual({ title: "New program", template: "fast-cycle", project_id: madeProgram.project_id });
@@ -616,7 +614,8 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     expect(required.request.json).toEqual({ title: "New program", template: "fast-cycle" });
   });
 
-  it("New opens the well with the projects as its rows (no cycle gadget, focus on the first row); Create here sends the recorded tuple once and opens it", async () => {
+  // Fails on main: New program there opens the inline "Choose a project" well (programs-make), no wizard.
+  it("New program replaces the list with the wizard at step 1 (Where): the projects as rows and a folder row; Next waits for a choice", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
@@ -624,136 +623,193 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     fireEvent.click(screen.getByTestId("programs-project"));
     fireEvent.click(menuItem("HoldSpeak"));
     fireEvent.click(screen.getByTestId("programs-new"));
-    const well = await screen.findByTestId("programs-make");
-    expect(well.getAttribute("data-template")).toBe("fast-cycle");
-    expect(screen.getByTestId("programs-new").getAttribute("aria-expanded")).toBe("true");
-    // The template is a quiet token, not a title line.
-    expect(screen.getByTestId("programs-make-template").textContent).toBe("Fast cycle");
+    const wizard = await screen.findByTestId("programs-wizard");
+    expect(wizard.getAttribute("data-template")).toBe("fast-cycle");
+    expect(screen.getByTestId("programs-wizard-step-1")).toBeTruthy();
+    // The body is the wizard: the list is gone, the toolbar and the status bar stay.
+    expect(screen.queryByTestId("programs-list")).toBeNull();
+    expect(screen.getByTestId("programs-toolbar")).toBeTruthy();
+    expect(screen.getByTestId("programs-status")).toBeTruthy();
+    expect(screen.queryByTestId("programs-make")).toBeNull();
     const rows = await ready();
-    // The project choice IS the content: no select, no dash, no dead Create.
-    expect(within(well).queryByRole("combobox")).toBeNull();
-    expect(well.querySelector("select")).toBeNull();
-    expect(well.textContent).not.toContain("—");
-    expect(screen.queryByTestId("programs-make-create")).toBeNull();
-    expect(screen.queryByTestId("programs-make-refresh")).toBeNull();
-    // Every open project is a row, also one with no Program in the list; none is chosen for him.
-    expect(rows.map((row) => within(row).getByTestId("programs-make-pick").textContent)).toEqual(roster.map((row) => row.name));
-    expect(list.programs.some((row) => row.project_id === noRepository.request.json!.project_id)).toBe(false);
-    expect(rows.some((row) => row.hasAttribute("data-lit"))).toBe(false);
-    for (const row of rows) expect(within(row).getByTestId("programs-make-here").className).toContain("btn--ghost");
-    await waitFor(() => expect(document.activeElement).toBe(within(rows[0]).getByTestId("programs-make-pick")));
+    expect(rows.map((row) => within(row).getByTestId("programs-wizard-pick").textContent)).toEqual(roster.map((row) => row.name));
+    expect(screen.getByTestId("programs-wizard-folder").textContent).toBe("A folder on this machine");
+    // Two projects: none is chosen for him; Next waits.
+    expect(rows.some((row) => row.hasAttribute("data-selected"))).toBe(false);
+    expect(next().disabled).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(within(rows[0]).getByTestId("programs-wizard-pick")));
+    fireEvent.click(next());
+    expect(screen.getByTestId("programs-wizard-step-1")).toBeTruthy();
+    choose(madeProgram.project_id as string);
+    expect(rowOf(madeProgram.project_id as string).hasAttribute("data-selected")).toBe(true);
+    expect(next().disabled).toBe(false);
+    // The progress: four dots, the first is now.
+    const dots = screen.getByTestId("programs-wizard-dots").querySelectorAll(".pg-wiz-dot");
+    expect([...dots].map((dot) => dot.getAttribute("data-state"))).toEqual(["now", null, null, null]);
     expect(posts()).toEqual([]);
-    // One press on the row's own verb makes it there and opens it.
-    const target = madeProgram.project_id as string;
-    fireEvent.click(here(target));
-    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
-    expect(sent()).toEqual([made.request.json]);
-    await waitFor(() => expect(screen.queryByTestId("programs-make")).toBeNull());
   });
 
-  it("a row press chooses it: the row lights, its Create here turns primary, and the foot says Create in <project>", async () => {
+  it("the four steps: Where, What (title, brief, templates), How (control in his words, agent, review, check, spending), Go; Create posts the recorded body once and opens it", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
-    const target = madeProgram.project_id as string;
-    choose(target);
-    expect(rowOf(target).hasAttribute("data-lit")).toBe(true);
-    expect(here(target).className).toContain("btn--primary");
-    const other = roster.find((row) => row.id !== target)!.id;
-    expect(here(other).className).toContain("btn--ghost");
+    choose(madeProgram.project_id as string);
+    fireEvent.click(next());
+    const what = screen.getByTestId("programs-wizard-step-2");
+    expect(within(what).getByLabelText("Title")).toBeTruthy();
+    expect(within(what).getByLabelText("Brief")).toBeTruthy();
+    expect(within(what).getByRole("group", { name: "Template" })).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(within(what).getByLabelText("Title")));
+    fireEvent.click(next());
+    const how = screen.getByTestId("programs-wizard-step-3");
+    expect(within(how).getByRole("button", { name: "Runs by itself" })).toBeTruthy();
+    expect(within(how).getByRole("button", { name: "Asks before it merges or sends" })).toBeTruthy();
+    expect(within(how).getByRole("button", { name: "Asks at every step" })).toBeTruthy();
+    expect(screen.getByTestId("programs-wizard-agent")).toBeTruthy();
+    expect(screen.getByTestId("programs-wizard-reviewer")).toBeTruthy();
+    expect(screen.getByTestId("programs-wizard-spending").textContent).toBe("Not capped");
+    fireEvent.click(next());
+    expect(screen.getByTestId("programs-wizard-step-4")).toBeTruthy();
+    expect(screen.getByTestId("programs-wizard-sum-where").textContent).toBe(nameOf(madeProgram.project_id));
+    expect(screen.getByTestId("programs-wizard-sum-title").textContent).toBe("New program · Fast cycle");
+    expect(screen.queryByTestId("programs-wizard-next")).toBeNull();
+    const dots = screen.getByTestId("programs-wizard-dots").querySelectorAll(".pg-wiz-dot");
+    expect([...dots].map((dot) => dot.getAttribute("data-state"))).toEqual(["done", "done", "done", "now"]);
+    // Back keeps what he chose.
+    fireEvent.click(screen.getByTestId("programs-wizard-back"));
+    expect(screen.getByTestId("programs-wizard-step-3")).toBeTruthy();
+    fireEvent.click(next());
     expect(posts()).toEqual([]);
-    expect(create().textContent).toBe(`Create in ${nameOf(target)}`);
-    fireEvent.click(create());
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
     await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
     expect(sent()).toEqual([made.request.json]);
+    // Back to the list, which reads again.
+    await waitFor(() => expect(screen.queryByTestId("programs-wizard")).toBeNull());
+    expect(await screen.findByTestId("programs-list")).toBeTruthy();
+    expect(calls.filter((call) => call === "GET /api/programs").length).toBeGreaterThan(1);
   });
 
-  it("a project row carries its one line: the outcome, else the first line of its description", async () => {
-    const body = clone(projects.response.body) as { projects: Array<Record<string, unknown>> };
-    body.projects[0].outcome_text = "Ship the desk he uses every day";
-    body.projects[1].description = "Notes for the week\nsecond line";
-    hub({ "GET /api/programs": list, "GET /api/projects": body });
+  it("what he sets in What and How rides on the body: title, brief, control and template", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
-    expect(within(rowOf(roster[0].id)).getByTestId("programs-make-line").textContent).toBe("Ship the desk he uses every day");
-    expect(within(rowOf(roster[1].id)).getByTestId("programs-make-line").textContent).toBe("Notes for the week");
+    choose(madeProgram.project_id as string);
+    fireEvent.click(next());
+    fireEvent.click(within(screen.getByRole("group", { name: "Template" })).getByRole("button", { name: /^Build and review/ }));
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Ship the wizard" } });
+    fireEvent.change(screen.getByLabelText("Brief"), { target: { value: "Four steps, one screen each." } });
+    fireEvent.click(next());
+    fireEvent.click(screen.getByRole("button", { name: "Runs by itself" }));
+    fireEvent.click(next());
+    expect(screen.getByTestId("programs-wizard-sum-title").textContent).toBe("Ship the wizard · Build and review");
+    expect(screen.getByTestId("programs-wizard-sum-how").textContent).toBe("Runs by itself");
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
+    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    expect(sent()).toEqual([{
+      ...made.request.json, title: "Ship the wizard", template: "build-and-review", goal: "Four steps, one screen each.", control: "yolo",
+    }]);
   });
 
-  it("each template entry and the empty object open the same well with their template; Escape, Cancel and New again make nothing", async () => {
+  it("the only project, or the scope's project, is chosen for him", async () => {
+    const one = { projects: [(projects.response.body as { projects: unknown[] }).projects[1]] };
+    hub({ "GET /api/programs": list, "GET /api/projects": one });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    expect(rowOf(roster[1].id).hasAttribute("data-selected")).toBe(true);
+    expect(next().disabled).toBe(false);
+    cleanup();
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
+    render(<ProgramsCore scope={`project:${roster[1].id}`} />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    expect(rowOf(roster[1].id).hasAttribute("data-selected")).toBe(true);
+    expect(rowOf(roster[0].id).hasAttribute("data-selected")).toBe(false);
+  });
+
+  it("A folder on this machine: Next waits for the folder, and the body names the repository, not a project", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    fireEvent.click(screen.getByTestId("programs-wizard-folder"));
+    expect(next().disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Folder"), { target: { value: "~/dev/tools/HoldSpeak" } });
+    toGo();
+    expect(screen.getByTestId("programs-wizard-sum-where").textContent).toBe("~/dev/tools/HoldSpeak");
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(sent()).toEqual([{ title: "New program", template: "fast-cycle", repository: "~/dev/tools/HoldSpeak" }]);
+  });
+
+  it("Escape, Cancel and New again return to the list with no POST; a template opens the wizard with its template", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
     render(<ProgramsCore />);
     fireEvent.click(await screen.findByTestId("programs-templates"));
     fireEvent.click(templateItem("Build and review"));
-    const well = await screen.findByTestId("programs-make");
-    expect(well.getAttribute("data-template")).toBe("build-and-review");
-    expect(screen.getByTestId("programs-make-template").textContent).toBe("Build and review");
+    expect((await screen.findByTestId("programs-wizard")).getAttribute("data-template")).toBe("build-and-review");
     await ready();
     choose(roster[0].id);
-    // A different template keeps his project choice.
-    fireEvent.click(screen.getByTestId("programs-templates"));
-    fireEvent.click(templateItem("Race"));
-    expect(screen.getByTestId("programs-make").getAttribute("data-template")).toBe("race");
-    expect(rowOf(roster[0].id).hasAttribute("data-lit")).toBe(true);
-    fireEvent.keyDown(within(rowOf(roster[0].id)).getByTestId("programs-make-pick"), { key: "Escape" });
-    expect(screen.queryByTestId("programs-make")).toBeNull();
+    fireEvent.click(next());
+    fireEvent.keyDown(screen.getByLabelText("Title"), { key: "Escape" });
+    expect(screen.queryByTestId("programs-wizard")).toBeNull();
+    expect(screen.getByTestId("programs-list")).toBeTruthy();
     expect(document.activeElement).toBe(screen.getByTestId("programs-new"));
-    // New program pressed again closes the well (a toggle).
+    // New program pressed again closes the wizard (a toggle).
     fireEvent.click(screen.getByTestId("programs-new"));
-    expect(await screen.findByTestId("programs-make")).toBeTruthy();
+    expect(await screen.findByTestId("programs-wizard-step-1")).toBeTruthy();
     fireEvent.click(screen.getByTestId("programs-new"));
-    expect(screen.queryByTestId("programs-make")).toBeNull();
-    expect(screen.getByTestId("programs-new").getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("programs-wizard")).toBeNull();
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    fireEvent.click(screen.getByTestId("programs-wizard-cancel"));
+    expect(screen.queryByTestId("programs-wizard")).toBeNull();
     cleanup();
-    calls = [];
     hub({ "GET /api/projects": projects.response.body });
     render(<ProgramsCore />);
     await screen.findByText("No program yet");
     // The empty object's own Button (not the toolbar's New program).
     fireEvent.click(screen.getAllByRole("button", { name: /New program/ }).find((node) => node.getAttribute("data-testid") !== "programs-new")!);
-    expect((await screen.findByTestId("programs-make")).getAttribute("data-template")).toBe("fast-cycle");
-    fireEvent.click(screen.getByTestId("programs-make-cancel"));
-    expect(screen.queryByTestId("programs-make")).toBeNull();
+    expect((await screen.findByTestId("programs-wizard")).getAttribute("data-template")).toBe("fast-cycle");
     expect(posts()).toEqual([]);
   });
 
-  it("the project read: loading, failed with the state species' retry, no project (no Create), then the rows", async () => {
+  it("the project read: loading, failed with the state species' retry, then the rows", async () => {
     let answer: unknown = new ApiError(503, "down", {});
     hub({ "GET /api/programs": list, "GET /api/projects": () => { if (answer instanceof Error) throw answer; return answer; } });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    expect(screen.getByTestId("programs-make-reading")).toBeTruthy();
-    expect(screen.queryByTestId("programs-make-create")).toBeNull();
-    const failed = await screen.findByTestId("programs-make-read-failed");
+    expect(screen.getByTestId("programs-wizard-reading")).toBeTruthy();
+    const failed = await screen.findByTestId("programs-wizard-read-failed");
     expect(failed.textContent).toContain("The projects did not load");
-    expect(screen.queryByTestId("programs-make-no-project")).toBeNull();
-    expect(screen.queryByTestId("programs-make-refresh")).toBeNull();
-    answer = { projects: [] };
+    expect(next().disabled).toBe(true);
+    answer = projects.response.body;
     fireEvent.click(within(failed).getByRole("button"));
-    const none = await screen.findByTestId("programs-make-no-project");
-    expect(none.textContent).toContain("No project yet");
-    expect(none.textContent).toContain("A program needs a project");
-    expect(screen.queryByTestId("programs-make-create")).toBeNull();
-    expect(screen.queryByTestId("programs-make-here")).toBeNull();
+    expect(await ready()).toHaveLength(roster.length);
     expect(posts()).toEqual([]);
   });
 
-  it("the recorded no_repository refusal names the project and keeps the choice; no window opens", async () => {
+  it("the recorded no_repository refusal names the project; no window opens", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": refusal(noRepository) });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     const target = noRepository.request.json!.project_id as string;
-    fireEvent.click(here(target));
-    const words = await screen.findByTestId("programs-make-refused");
+    choose(target);
+    toGo();
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
+    const words = await screen.findByTestId("programs-wizard-refused");
     expect(words.textContent).toBe(`Not made · ${nameOf(target)} has no local repository · Add one in the project, or choose a different project`);
     expect(sent()).toEqual([noRepository.request.json]);
-    expect(rowOf(target).hasAttribute("data-lit")).toBe(true);
     expect(mocks.openPullout).not.toHaveBeenCalled();
     expect(document.body.textContent).not.toContain("Nothing changed");
   });
@@ -771,21 +827,20 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
-    fireEvent.click(create());
-    expect((await screen.findByTestId("programs-make-unknown")).textContent)
+    toGo();
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
+    expect((await screen.findByTestId("programs-wizard-unknown")).textContent)
       .toBe("Not confirmed · The program can exist · Look at the list before you try again");
-    // The row stays.
-    expect(rowOf(madeProgram.project_id as string).hasAttribute("data-lit")).toBe(true);
     expect(posts()).toHaveLength(1);
     expect(mocks.openPullout).not.toHaveBeenCalled();
     expect(document.body.textContent).not.toContain("Nothing changed");
     const reads = calls.filter((call) => call === "GET /api/programs").length;
-    fireEvent.click(screen.getByTestId("programs-make-look"));
+    fireEvent.click(screen.getByTestId("programs-wizard-look"));
     await waitFor(() => expect(calls.filter((call) => call === "GET /api/programs").length).toBe(reads + 1));
     expect(posts()).toHaveLength(1);
   });
 
-  it("one press in flight: the pressed row is busy; a second press, Enter, another row or New cannot send or redirect the captured request", async () => {
+  it("one press in flight: Create is busy; a second press, Back, Escape or New cannot send again", async () => {
     let settle: (value: unknown) => void = () => undefined;
     mocks.apiFetch.mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
       const key = `${(init?.method ?? "GET").toUpperCase()} ${path}`;
@@ -799,22 +854,17 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
-    const target = madeProgram.project_id as string;
-    const other = roster.find((row) => row.id !== target)!.id;
-    fireEvent.click(here(target));
-    expect(here(target).getAttribute("aria-busy")).toBe("true");
-    fireEvent.click(here(target));
-    fireEvent.keyDown(here(target), { key: "Enter" });
-    fireEvent.click(create());
-    // No row is a choice while the create is in flight.
-    expect(screen.queryAllByTestId("programs-make-pick")).toEqual([]);
-    fireEvent.click(here(other));
-    expect((here(other) as HTMLButtonElement).disabled).toBe(true);
-    expect(rowOf(other).hasAttribute("data-lit")).toBe(false);
-    fireEvent.click(screen.getByTestId("programs-new"));
+    choose(madeProgram.project_id as string);
+    toGo();
+    const create = screen.getByTestId("programs-wizard-create");
+    fireEvent.click(create);
+    expect(create.getAttribute("aria-busy")).toBe("true");
+    fireEvent.click(create);
+    fireEvent.keyDown(create, { key: "Enter" });
+    expect((screen.getByTestId("programs-wizard-back") as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.keyDown(create, { key: "Escape" });
+    expect(screen.getByTestId("programs-wizard")).toBeTruthy();
     expect((screen.getByTestId("programs-new") as HTMLButtonElement).disabled).toBe(true);
-    expect((screen.getByTestId("programs-make-cancel") as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByTestId("programs-make")).toBeTruthy();
     expect(sent()).toEqual([made.request.json]);
     await act(async () => { settle(clone(madeProgram)); });
     await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
@@ -828,18 +878,19 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
-    fireEvent.click(here(madeProgram.project_id as string));
-    expect((await screen.findByTestId("programs-make-made")).textContent).toBe("Program made · Its window did not open");
-    expect(screen.queryByTestId("programs-make-create")).toBeNull();
-    expect((here(madeProgram.project_id as string) as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(screen.getByTestId("programs-make-open"));
+    choose(madeProgram.project_id as string);
+    toGo();
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
+    expect((await screen.findByTestId("programs-wizard-made")).textContent).toBe("Program made · Its window did not open");
+    expect(screen.queryByTestId("programs-wizard-create")).toBeNull();
+    fireEvent.click(screen.getByTestId("programs-wizard-open"));
     expect(mocks.openPullout).toHaveBeenLastCalledWith(`program:${madeProgram.id}`);
     expect(mocks.openPullout).toHaveBeenCalledTimes(2);
     expect(posts()).toHaveLength(1);
-    await waitFor(() => expect(screen.queryByTestId("programs-make")).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId("programs-wizard")).toBeNull());
   });
 
-  it("closing the window while the create is in flight: the late answer opens nothing and claims no cancel", async () => {
+  it("closing the window while the create is in flight: the late answer opens nothing", async () => {
     let settle: (value: unknown) => void = () => undefined;
     mocks.apiFetch.mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
       const key = `${(init?.method ?? "GET").toUpperCase()} ${path}`;
@@ -853,7 +904,9 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
-    fireEvent.click(here(madeProgram.project_id as string));
+    choose(madeProgram.project_id as string);
+    toGo();
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
     view.unmount();
     await act(async () => { settle(clone(madeProgram)); });
     expect(mocks.openPullout).not.toHaveBeenCalled();
@@ -868,16 +921,18 @@ describe("HS-S13 + HS-S11: the Program made for a project is the row its Room li
   const madeProgram = create.response.body as Program;
   const projectId = roomPrograms13.projects.a;
 
-  it("Create here in the chosen project sends the recorded tuple, opens its id, and that id is the Room's row and detail", async () => {
+  it("Create in the chosen project sends the recorded tuple, opens its id, and that id is the Room's row and detail", async () => {
     expect(create.request.json).toEqual({ title: "New program", template: "fast-cycle", project_id: projectId });
     hub({ "GET /api/programs": list, "GET /api/projects": hand.projects.response.body, "POST /api/programs": madeProgram });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    const rows = await screen.findAllByTestId("programs-make-row");
+    const rows = await screen.findAllByTestId("programs-wizard-project");
     const name = (hand.projects.response.body as { projects: Array<{ id: string; name: string }> }).projects.find((project) => project.id === projectId)!.name;
-    const row = rows.find((node) => within(node).getByTestId("programs-make-name").textContent === name)!;
-    fireEvent.click(within(row).getByTestId("programs-make-here"));
+    const row = rows.find((node) => within(node).getByTestId("programs-wizard-name").textContent === name)!;
+    fireEvent.click(within(row).getByTestId("programs-wizard-pick"));
+    for (let step = 0; step < 3; step += 1) fireEvent.click(screen.getByTestId("programs-wizard-next"));
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
     await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
     const posted = calls.filter((call) => call.startsWith("POST /api/programs"))
       .map((call) => JSON.parse(call.slice("POST /api/programs ".length)));

@@ -15,18 +15,17 @@
  * 12" in ok ink) · the last checkpoint. At 393 the toolbar keeps New
  * program and Find; Templates, Project, Person and Group fold into More ▾.
  * Empty: the 64 px program object, one line, one Button. */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ApiError } from "../../lib/api";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { WorkMenu } from "../components/DeskMenu";
 import { spriteUrl } from "../sprites";
 import { openProgram } from "./open";
-import { ActionNotice, DotWord, FoldGadget, ListRow, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
+import { DotWord, FoldGadget, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 import { useWindowInterior } from "../surface/interior";
-import { Token } from "../surface/Token";
-import { TEMPLATES, createProgram, readProjectChoices, usePrograms, type CreateBody, type ProjectChoice } from "./api";
+import { TEMPLATES, usePrograms } from "./api";
+import { ProgramWizard } from "./ProgramWizard";
 import { banded, bandedByProject, durationWords, matchesFind, metWords, personsOf, programTone } from "./model";
 import type { ProgramState, ProgramSummary } from "./types";
 import { StationTrack, listStations } from "./StationTrack";
@@ -39,7 +38,7 @@ export { openProgram };
  *  ("Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude
  *  Code, 11 min", "Done, 14 PRs, 28 Oct"), the mini track (one dot per
  *  step), and the Met count when it has requirements. */
-function ProgramRow({ row }: { row: ProgramSummary }) {
+function ProgramRow({ row, fresh }: { row: ProgramSummary; fresh?: boolean }) {
   // PG17: a Program of imported PRs says what merged and when.
   const fallback = row.state === "done" && row.history ? row.history.words
     : row.state === "done" && row.done_in ? `Done in ${row.done_in}` : `${row.state_word} · ${durationWords(row.in_state_seconds)}`;
@@ -52,7 +51,7 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
   const finished = row.state === "done" ? row.finished_words : undefined;
   return (
     <li className="kit-listrow pg-row" data-state={row.state} data-testid="programs-row" data-program={row.id}
-      data-all-done={allFinished ? "" : undefined}>
+      data-all-done={allFinished ? "" : undefined} data-fresh={fresh ? "" : undefined}>
       <Button variant="chrome" className="pg-row-main" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`}
         data-testid="programs-row-open">
         <img className="kit-listrow-glyph" src={spriteUrl("program", row.id, "rest", null, 20)} alt="" width={20} height={20} />
@@ -78,10 +77,10 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
 
 /** PG-IMPORT IMP7: a Program and, folded under it with the desk-wide
  *  Show/Hide word, the Programs it made. */
-function FamilyGroup({ row, children }: { row: ProgramSummary; children: ProgramSummary[] }) {
+function FamilyGroup({ row, children, fresh }: { row: ProgramSummary; children: ProgramSummary[]; fresh?: string }) {
   return (
     <>
-      <ProgramRow row={row} />
+      <ProgramRow row={row} fresh={row.id === fresh} />
       {children.length ? (
         <li className="pg-row-family" data-testid="programs-family-fold" data-parent={row.id}>
           <FoldGadget title={children.length === 1 ? "1 program it made" : `${children.length} programs it made`}>
@@ -123,188 +122,10 @@ const CARET = (
 
 type Group = "state" | "project";
 
-/* HS-S11 (D13 A, G11), redrawn 2026-11-07 (the owner: "not quite obvious
- * that the project choice is the next immediate step"): New program, a
- * template and the empty object open one in-flow well whose content IS the
- * project choice, one list row per open project (the hub's project list,
- * never a guess, never the Project filter). A row press chooses; its
- * trailing "Create here" sends one captured `{title, template, project_id}`.
- * At 393 the whole row is the press and one "Create in <project>" sits at
- * the well's foot. Only the two refusals the hub proves before a save (400
- * repository_required, 409 no_repository) say "Not made"; any other failure
- * is "not confirmed", never retried. */
-type Choices = { state: "loading" } | { state: "failed" } | { state: "ready"; rows: ProjectChoice[] };
-type Outcome =
-  | { kind: "idle" }
-  | { kind: "pending"; tuple: Readonly<CreateBody> }
-  | { kind: "refused"; words: string }
-  | { kind: "unknown" }
-  | { kind: "made"; id: string };
-
-const DEFAULT_TITLE = "New program";
-
-function refusalWords(cause: unknown, projectName: string): string | null {
-  if (!(cause instanceof ApiError)) return null;
-  const code = cause.payload && typeof cause.payload === "object" ? (cause.payload as { code?: unknown }).code : undefined;
-  if (cause.status === 409 && code === "no_repository") return `Not made · ${projectName} has no local repository · Add one in the project, or choose a different project`;
-  if (cause.status === 400 && code === "repository_required") return "Not made · Choose a project";
-  return null;
-}
-
-function templateName(id: string): string {
-  return TEMPLATES.find((template) => template.id === id)?.name ?? id;
-}
-
-function CreateWell({ template, onClose, onMade, onPending, reload }: {
-  template: string;
-  onClose(): void;
-  onMade(id: string): void;
-  onPending(pending: boolean): void;
-  reload(): Promise<void>;
-}) {
-  const [choices, setChoices] = useState<Choices>({ state: "loading" });
-  const [readNonce, setReadNonce] = useState(0);
-  const [pick, setPick] = useState("");
-  const [outcome, setOutcome] = useState<Outcome>({ kind: "idle" });
-  const inFlight = useRef(false);
-  const alive = useRef(true);
-  const listRef = useRef<HTMLUListElement>(null);
-  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
-  const pendingNow = outcome.kind === "pending";
-  useEffect(() => { onPending(pendingNow); }, [onPending, pendingNow]);
-  useEffect(() => () => onPending(false), [onPending]);
-
-  useEffect(() => {
-    let live = true;
-    setChoices({ state: "loading" });
-    readProjectChoices()
-      .then((rows) => { if (live && alive.current) setChoices({ state: "ready", rows }); })
-      .catch(() => { if (live && alive.current) setChoices({ state: "failed" }); });
-    return () => { live = false; };
-  }, [readNonce]);
-
-  // Focus goes into the list: the first project row.
-  useEffect(() => {
-    if (choices.state === "ready") listRef.current?.querySelector<HTMLButtonElement>("[data-testid=programs-make-pick]")?.focus();
-  }, [choices.state]);
-
-  const rows = choices.state === "ready" ? choices.rows : [];
-  const chosen = rows.find((row) => row.id === pick) ?? null;
-  const pending = outcome.kind === "pending";
-  const pendingId = outcome.kind === "pending" ? outcome.tuple.project_id : "";
-  const made = outcome.kind === "made" ? outcome.id : "";
-  const locked = pending || Boolean(made);
-
-  const choose = (id: string) => {
-    if (locked) return;
-    setPick(id);
-    if (id !== pick && (outcome.kind === "refused" || outcome.kind === "unknown")) setOutcome({ kind: "idle" });
-  };
-
-  const create = async (target: ProjectChoice) => {
-    if (inFlight.current || made) return;
-    inFlight.current = true;
-    setPick(target.id);
-    const tuple: Readonly<CreateBody> = Object.freeze({ title: DEFAULT_TITLE, template, project_id: target.id });
-    setOutcome({ kind: "pending", tuple });
-    try {
-      const answer = await createProgram({ ...tuple });
-      const id = answer && typeof answer === "object" ? (answer as { id?: unknown }).id : undefined;
-      if (typeof id !== "string" || !id) {
-        if (alive.current) setOutcome({ kind: "unknown" });
-        return;
-      }
-      // The made Program is a fact from here on: keep its id before any reveal.
-      if (!alive.current) { void reload(); return; }
-      setOutcome({ kind: "made", id });
-      onMade(id);
-      void reload();
-    } catch (cause) {
-      if (!alive.current) return;
-      const refused = refusalWords(cause, target.name);
-      setOutcome(refused ? { kind: "refused", words: refused } : { kind: "unknown" });
-    } finally {
-      inFlight.current = false;
-    }
-  };
-
-  let content: ReactNode;
-  if (choices.state === "loading") {
-    content = <div className="pg-make-state" data-testid="programs-make-reading"><SurfaceState loading /></div>;
-  } else if (choices.state === "failed") {
-    content = (
-      <div className="pg-make-state" data-testid="programs-make-read-failed">
-        <SurfaceState error="The projects did not load" onRetry={() => setReadNonce((value) => value + 1)} />
-      </div>
-    );
-  } else if (!rows.length) {
-    content = (
-      <div className="pg-make-state" data-testid="programs-make-no-project">
-        <SurfaceState empty emptyKind="project" emptyImage={spriteUrl("project", "programs")} emptyLabel="No project yet"
-          emptyHint="A program needs a project" />
-      </div>
-    );
-  } else {
-    content = (
-      <ul ref={listRef} className="kit-listrows pg-make-rows" aria-label="Projects" data-testid="programs-make-rows">
-        {rows.map((row) => {
-          const selected = row.id === pick;
-          const busyHere = pendingId === row.id;
-          return (
-            <ListRow key={row.id} data-testid="programs-make-row" openTestId="programs-make-pick" nameTestId="programs-make-name" openLabel={row.name}
-              glyph={spriteUrl("project", row.id, "rest", null, 20)} name={row.name}
-              meta={row.line ? <span data-testid="programs-make-line">{row.line}</span> : undefined}
-              lit={selected} onOpen={locked ? undefined : () => choose(row.id)}
-              verbs={(
-                <span className="pg-make-here">
-                  <Button dense variant={selected ? "primary" : "ghost"} loading={busyHere} disabled={locked && !busyHere}
-                    onClick={() => void create(row)} aria-label={`Create in ${row.name}`} data-testid="programs-make-here">
-                    Create here
-                  </Button>
-                </span>
-              )} />
-          );
-        })}
-      </ul>
-    );
-  }
-
-  return (
-    <section className="pg-make" aria-label="New program" data-testid="programs-make" data-template={template}
-      onKeyDown={(event) => { if (event.key === "Escape" && !pending) { event.preventDefault(); event.stopPropagation(); onClose(); } }}>
-      <div className="pg-make-top">
-        {rows.length && !made ? <h3 className="kit-listday-label pg-make-ask">Choose a project</h3> : null}
-        <Token className="surface-token pg-make-template" data-testid="programs-make-template">{templateName(template)}</Token>
-      </div>
-      {content}
-      {outcome.kind === "refused" ? (
-        <ActionNotice tone="danger" role="alert"><span data-testid="programs-make-refused">{outcome.words}</span></ActionNotice>
-      ) : null}
-      {outcome.kind === "unknown" ? (
-        <ActionNotice tone="warn" role="alert">
-          <span data-testid="programs-make-unknown">Not confirmed · The program can exist · Look at the list before you try again</span>
-        </ActionNotice>
-      ) : null}
-      {made ? (
-        <ActionNotice tone="ok" role="status"><span data-testid="programs-make-made">Program made · Its window did not open</span></ActionNotice>
-      ) : null}
-      <div className="pg-make-verbs">
-        {outcome.kind === "unknown" ? (
-          <Button dense variant="ghost" onClick={() => void reload()} data-testid="programs-make-look">Look at the list</Button>
-        ) : null}
-        <Button dense variant="ghost" disabled={pending} onClick={onClose} data-testid="programs-make-cancel">{made ? "Close" : "Cancel"}</Button>
-        {made ? (
-          <Button dense variant="primary" onClick={() => onMade(made)} data-testid="programs-make-open">Open the program</Button>
-        ) : chosen ? (
-          <Button dense variant="primary" className="pg-make-commit" loading={pending} disabled={pending}
-            onClick={() => void create(chosen)} data-testid="programs-make-create">
-            {`Create in ${chosen.name}`}
-          </Button>
-        ) : null}
-      </div>
-    </section>
-  );
-}
+/* New program (owner 2026-11-08: "I expected 'new program' to … launch
+ * some kind of a wizard"): New program, a template and the empty object
+ * open the wizard (ProgramWizard.tsx) as the window's body; the toolbar
+ * stays. One create path. */
 type MenuKey = "templates" | "project" | "person" | "group" | "more";
 
 /** The counts a status bar says for the rows shown (no zero). */
@@ -316,9 +137,12 @@ function countsOf(rows: readonly ProgramSummary[]): Partial<Record<ProgramState,
 
 const WORST: readonly ProgramState[] = ["waiting", "failed", "running", "drafting", "done", "parked"];
 
-export function ProgramsCore(_props: CoreProps) {
+export function ProgramsCore({ scope }: CoreProps) {
   const { loading, error, list, reload } = usePrograms();
-  // HS-S11: the open creation well (its template), or null.
+  const scopeProjectId = scope?.startsWith("project:") ? scope.slice("project:".length) : null;
+  // The made Program's row settles in (one breath) when the list shows it.
+  const [fresh, setFresh] = useState("");
+  // The open wizard (its template), or null.
   const [making, setMaking] = useState<{ template: string; flow: number } | null>(null);
   const [revealFailed, setRevealFailed] = useState("");
   const [busy, setBusy] = useState(false);
@@ -331,15 +155,15 @@ export function ProgramsCore(_props: CoreProps) {
   const [group, setGroup] = useState<Group>("state");
   useWindowInterior("list");
 
-  // A template press opens the well (or changes its template); it never makes a Program.
+  // A template press opens the wizard (or changes its template); it never makes a Program.
   const make = (template: string) => {
     if (busy) return;
-    // A well that already made its Program starts a fresh flow.
+    // A wizard that already made its Program starts a fresh flow.
     const fresh = !making || Boolean(revealFailed);
     setRevealFailed("");
     setMaking({ template, flow: fresh ? ++flows.current : making.flow });
   };
-  // The toolbar's New program toggles the well.
+  // The toolbar's New program toggles the wizard.
   const toggle = () => {
     if (busy) return;
     if (making) closeWell();
@@ -350,9 +174,10 @@ export function ProgramsCore(_props: CoreProps) {
     setRevealFailed("");
     newRef.current?.focus();
   };
-  // An acknowledged Program: open its window. A failed open keeps the well
-  // with the same id (Open the program), never a second create.
+  // An acknowledged Program: open its window. A failed open keeps the
+  // wizard with the same id (Open the program), never a second create.
   const reveal = (id: string) => {
+    setFresh(id);
     try {
       openProgram(id);
       setMaking(null);
@@ -430,7 +255,7 @@ export function ProgramsCore(_props: CoreProps) {
             <h3 className="kit-listday-label">{band.word}{band.count ? <span className="pg-band-count">{` · ${band.count}`}</span> : null}</h3>
             <ul className="kit-listrows">
               {band.rows.filter((row) => !row.parked_as && !(row.parent_id && shownIds.has(row.parent_id))).map((row) => (
-                <FamilyGroup key={row.id} row={row} children={childrenOf(row.id)} />
+                <FamilyGroup key={row.id} row={row} children={childrenOf(row.id)} fresh={fresh} />
               ))}
               {foldsOf(band.rows).map((fold) => (
                 <li key={fold.reason} className="pg-row-fold" data-reason={fold.reason} data-testid="programs-parked-fold">
@@ -516,9 +341,9 @@ export function ProgramsCore(_props: CoreProps) {
         {menuButton("more", "More", "programs-more", "pg-narrow")}
       </Toolbar>
       {making ? (
-        <CreateWell key={making.flow} template={making.template} onClose={closeWell} onMade={reveal} onPending={setBusy} reload={reload} />
-      ) : null}
-      <div className="pg-body">{body}</div>
+        <ProgramWizard key={making.flow} template={making.template} scopeProjectId={scopeProjectId}
+          onClose={closeWell} onMade={reveal} onPending={setBusy} reload={reload} />
+      ) : <div className="pg-body">{body}</div>}
       <StatusBar data-testid="programs-status" items={status} />
       {menu ? (
         <WorkMenu label={entries[menu.key].label} x={menu.rect.left} y={menu.rect.bottom} opener={menu.opener} autoFocus
