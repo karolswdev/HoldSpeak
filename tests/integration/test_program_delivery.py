@@ -595,3 +595,57 @@ def test_holdspeak_never_delivers_its_own_programs_to_dw(tmp_path) -> None:
         assert exc.detail == "HoldSpeak does not deliver its own programs to dw. Use dw for your projects."
     else:
         raise AssertionError("a delivery to dw on HoldSpeak's own repository was taken")
+
+
+# ── Codex on #1855: a bad head, URL or exception text never goes remote ──
+
+def _edge(kind: str, seen: list):
+    def edge(gh: Any, argv: list[str], cwd: Any = None, **kw: Any) -> Any:
+        from types import SimpleNamespace
+
+        delivery = str(cwd or "").endswith("-delivery")
+        if delivery and ("push" in argv or argv[:1] == ["gh"]):
+            seen.append(list(argv))
+        if kind == "head" and delivery and argv[-2:] == ["rev-parse", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout="abc\n", stderr="")
+        if kind == "raise" and delivery and "push" in argv:
+            raise OSError("[Errno 13] Permission denied: '/Users/karol/secret/app/.git' ghp_abcdef123456")
+        if kind == "url" and argv[1:3] == ["pr", "create"] and "Delivery:" in " ".join(argv):
+            gh.calls.append(list(argv))
+            return SimpleNamespace(returncode=0, stdout="https://evil.example/acme/app/pull/5\n", stderr="")
+        return gh(argv, cwd=cwd, **kw)
+    return edge
+
+
+def test_a_short_head_stops_before_any_remote_command_and_retries(tmp_path) -> None:
+    seen: list = []
+    rig, pid = _done(tmp_path, edge=_edge("head", seen))
+    [line] = _delivery_lines(rig, pid)
+    receipt = line["undo"]["receipt"]
+    assert line["choice"] == "failed" and receipt["stage"] == "head" and receipt["remote"] is False
+    assert "head" not in receipt["pr"]
+    assert seen == []  # no push, no gh call from the delivery
+    assert [call for call in rig.gh.calls if "Delivery:" in " ".join(call)] == []
+    [item] = rig.program(pid)["your_turn_items"]
+    assert item["choices"] == ["retry", "skip"] and item["delivery"]["state"] == "retry"
+
+
+def test_a_malformed_pr_url_never_reaches_gh_again(tmp_path) -> None:
+    seen: list = []
+    rig, pid = _done(tmp_path, edge=_edge("url", seen))
+    [line] = _delivery_lines(rig, pid)
+    receipt = line["undo"]["receipt"]
+    assert receipt["stage"] == "pr" and "url" not in receipt["pr"] and "number" not in receipt["pr"]
+    assert [call for call in rig.gh.calls if "evil.example" in " ".join(call)] == []
+    assert rig.program(pid)["your_turn_items"][0]["choices"] == ["skip"]
+
+
+def test_a_thrown_push_leaves_no_path_or_token_in_the_ledger(tmp_path, monkeypatch) -> None:
+    seen: list = []
+    rig, pid = _done(tmp_path, edge=_edge("raise", seen))
+    client = _client(rig, monkeypatch)
+    [line] = _delivery_lines(rig, pid)
+    assert line["undo"]["receipt"]["stage"] == "push" and line["undo"]["receipt"]["remote"] is True
+    assert line["undo"]["detail"] == "OSError at the push stage: the command stopped before it answered."
+    wire = json.dumps(client.get(f"/api/programs/{pid}").json())
+    assert "/Users/karol/secret" not in wire and "ghp_abcdef" not in wire and "Permission denied" not in wire

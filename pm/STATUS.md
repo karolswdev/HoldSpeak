@@ -3,6 +3,9 @@
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
 - 2026-11-08 · #1870 Settings is a composition: each section moves to pages/cores/settings/ (one writer, one file per section), SettingsCore.tsx 2,900 → 272 lines, Settings chunk 142.5 → 143.9 kB, fenced under 600 lines.
+- 2026-11-08 · #1868 Fix forward #1855: a delivery pushes, opens or merges only with a 40-hex head, a GitHub PR URL and git ref names; a thrown command leaves its class and stage, never its text.
+- 2026-11-08 · #1869 The canon's A1 claim reads the live ratchet (2, after #1865); two stale comments name compose_hub's watch fetcher.
+- 2026-11-08 · #1867 compose_hub hands its one Jira adapter to the watch fetcher (JiraProviderAdapter with an acli runner 2 → 1; web_server.py 1976 → 1958 lines).
 - 2026-11-08 · #1866 compose_hub builds each shared adapter and service once (GitHub and Jira adapters 5 → 1, Confluence, WatchService and the evidence collector 3 → 1, the pairing token store 2 → 1); hub_composition.py 566 → 529 lines, cold start 1.69 → 1.64 s (noise).
 - 2026-11-08 · #1865 Five faces never draw a count of zero (the Update footer drew "0 updates"): A8 5 → 0, A1 81 → 2.
 - 2026-11-08 · #1864 Every module imports a Program definition from program_definitions, never through the service (HS-S51 repoint): modules importing program_service 28 → 27, definition-only importers 1 → 0, definition imports through the service 24 → 0.

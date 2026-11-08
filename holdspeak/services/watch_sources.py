@@ -722,7 +722,7 @@ def default_snapshot_fetcher(
     """Build the canonical snapshot_fetcher callable.
 
     HS-166-03 rider-a / HS-174-07 / HS-175-04: ONE helper that web_server's
-    _gh_watch_service_kwargs AND project.py's _watch_service() both use,
+    compose_hub's watch fetcher AND project.py's _watch_service() both use,
     ensuring the same provider injection shape for gh, jira, confluence,
     AND meeting.
     """
