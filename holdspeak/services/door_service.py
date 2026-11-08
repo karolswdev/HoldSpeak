@@ -274,7 +274,7 @@ class DoorService:
 
     @staticmethod
     def _hand_verb(kind: str, item_id: str) -> dict[str, Any]:
-        """Hand to agent (docs/internal/CONDUCTOR.md step 2): the item kind
+        """Hand to an agent session (docs/internal/CONDUCTOR.md step 2): the item kind
         and id the ``agent.hand`` operation takes (the launch sheet opens first)."""
         return {"name": "agent.hand", "arguments": {"kind": kind, "id": item_id}}
 

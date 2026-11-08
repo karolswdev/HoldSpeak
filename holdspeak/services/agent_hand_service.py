@@ -1,4 +1,4 @@
-"""Hand to agent: one item in, one coding agent working on it out.
+"""Hand to an agent session: one item in, one coding agent working on it out.
 
 docs/internal/CONDUCTOR.md, steps 2 to 4. The verb joins parts that exist:
 
@@ -62,7 +62,7 @@ log = get_logger("agent_hand")
 DEFAULT_PROFILE_ID = "claude-default"
 #: The most HoldSpeak-launched agents that WORK at one time when the setting
 #: is not read (Betterment AG5: ``agents.working_at_once``, default 6). One
-#: more Hand to agent refuses ``launch_cap_reached``, or waits in the queue.
+#: more Hand to an agent session refuses ``launch_cap_reached``, or waits in the queue.
 MAX_LIVE_LAUNCHES = 6
 #: Launch states whose agent may still run.
 _LIVE_STATES = frozenset({"launched", "registered"})
@@ -349,7 +349,7 @@ def resolve_project_repository(
 
 
 class AgentHandService:
-    """The Hand to agent verb, transport-neutral (route, MCP, Thread)."""
+    """The Hand to an agent session verb, transport-neutral (route, MCP, Thread)."""
 
     def __init__(
         self,

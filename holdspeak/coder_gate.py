@@ -74,8 +74,8 @@ class GateConfig:
     armed: bool = False
     #: repo path (resolved, absolute) → held tool names.
     repos: dict[str, list[str]] = field(default_factory=dict)
-    #: Paths armed on their own, by a launch the owner pressed (Hand to
-    #: agent). Held whatever the master switch says; the switch still
+    #: Paths armed on their own, by a launch the owner pressed (Hand to an
+    #: agent session). Held whatever the master switch says; the switch still
     #: decides every other listed repo, so arming one worktree never holds
     #: another.
     armed_paths: list[str] = field(default_factory=list)

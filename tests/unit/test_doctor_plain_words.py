@@ -339,3 +339,20 @@ def test_an_adopted_profile_never_puts_a_path_or_url_in_the_face_words(
     assert "/" not in section["detail"] and "://" not in section["detail"], section["detail"]
     assert section["detail"].startswith("Runs on ")
     assert model in section["raw"]
+
+
+def test_tool_call_gate_names_the_agent_session_verb(tmp_path, monkeypatch) -> None:
+    """The gate row names the desk verb by its one name (#1884): "Hand to an
+    agent session", never the old "Hand to agent"."""
+    import holdspeak.coder_gate as coder_gate
+    from holdspeak.commands.doctor import _check_tool_call_gate
+
+    worktree = str(tmp_path / "wt")
+    config = coder_gate.GateConfig(
+        armed=False, repos={worktree: ["Bash"]}, armed_paths=[worktree]
+    )
+    monkeypatch.setattr(coder_gate, "load_gate_config", lambda path=None: config)
+    row = _check_tool_call_gate()
+    assert row.status == "PASS"
+    assert "launched by Hand to an agent session;" in row.detail
+    assert "Hand to agent" not in row.detail

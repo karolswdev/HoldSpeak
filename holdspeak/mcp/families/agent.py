@@ -1,4 +1,4 @@
-"""Agent family: Hand to agent over MCP (docs/internal/CONDUCTOR.md, step 2).
+"""Agent family: Hand to an agent session over MCP (docs/internal/CONDUCTOR.md, step 2).
 
 ``agent.hand`` is the declared operation of the same name
 (``holdspeak/agent_operations.py``), an egress row in the authority census

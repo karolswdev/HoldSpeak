@@ -3,7 +3,7 @@
 docs/internal/CONDUCTOR.md, step 5 (lane F2, the ratified boards K4a, K4b,
 K4c, K5a and K6). One read join over three records that exist:
 
-- the launch ledger (``factory_launch.LaunchLedger``): each Hand to agent
+- the launch ledger (``factory_launch.LaunchLedger``): each Hand to an agent session
   launch carries ``origin_ref`` (the item), its agent profile, its Work
   attempt and, after the Heartbeat followed it (K4), ``follow_through``
   with the selected PR and the close;

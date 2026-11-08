@@ -3,7 +3,7 @@
 The Door's GitHub row names a repository (``owner/name``). At create time the
 owner's press REGISTERS it for the Project (``project.repository.register``,
 an owner-only admitted kernel operation, one receipt). Nothing is cloned then.
-The first Hand to agent of an item in that Project clones it (``gh repo clone``,
+The first Hand to an agent session of an item in that Project clones it (``gh repo clone``,
 egress to github.com) into the HoldSpeak clone root, as its own admitted kernel
 operation (``project.repository.clone``, one receipt), registers the clone as a
 Delivery Source, and the launch goes on in a new worktree beside it.

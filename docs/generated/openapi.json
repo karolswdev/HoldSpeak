@@ -3538,7 +3538,7 @@
     },
     "/api/agent/hand/preview": {
       "post": {
-        "description": "The launch sheet's preview (K3): the brief, the repository and\nthe branch Hand to agent would use, with no side effect. Owner only.",
+        "description": "The launch sheet's preview (K3): the brief, the repository and\nthe branch Hand to an agent session would use, with no side effect.\nOwner only.",
         "operationId": "api_agent_hand_preview_api_agent_hand_preview_post",
         "responses": {
           "200": {

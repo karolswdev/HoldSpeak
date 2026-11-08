@@ -180,7 +180,7 @@ GITHUB_TEMPLATES: tuple[GitHubTemplate, ...] = (
         query_defaults={"base": "main"},
     ),
     # Conductor R4: the repository's open issues, for the Room's OPEN HERE
-    # rows (Hand to agent takes them). Armed with the PR review queue.
+    # rows (Hand to an agent session takes them). Armed with the PR review queue.
     GitHubTemplate(
         template_id="watch.github.open_issues",
         name="Open issues",

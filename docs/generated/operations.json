@@ -6299,7 +6299,7 @@
     {
       "name": "project.repository.register",
       "version": 1,
-      "description": "Register a GitHub repository (owner/name) for a Project, so Hand to agent can work in it. Nothing is cloned now: the first hand of an item in the Project clones it from github.com into the HoldSpeak clone folder (its own receipt). Only the owner registers.",
+      "description": "Register a GitHub repository (owner/name) for a Project, so Hand to an agent session can work in it. Nothing is cloned now: the first hand of an item in the Project clones it from github.com into the HoldSpeak clone folder (its own receipt). Only the owner registers.",
       "args_schema": {
         "type": "object",
         "properties": {

@@ -103,7 +103,7 @@ class WorkAttempt:
     updated_at: str
     ended_at: Optional[str]
     #: The desk object this attempt works on (``kind:id``), when a launch
-    #: named one (Hand to agent). ``None`` for every other attempt.
+    #: named one (Hand to an agent session). ``None`` for every other attempt.
     origin_ref: Optional[str] = None
 
     @property

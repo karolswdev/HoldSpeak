@@ -7,7 +7,7 @@ meaningful work; egress, authority and config stay at his press):
    is live (``principals.launch_reader``). People content is readable (owner
    ruling 2026-10-06, Conductor R7: "agents should totally be able to look it
    up via mcp"); secrets stay redacted where they always are.
-2. **Decision proposals.** At launch the owner's press on Hand to agent
+2. **Decision proposals.** At launch the owner's press on Hand to an agent session
    grants the launch identity a desk delegation for ``decision.create`` only.
    The CONDUCTOR call gate admits only a ``proposed`` decision
    (``mcp/palettes.py``), so the decision waits for the owner. Every other
@@ -89,7 +89,7 @@ def grant_decision_proposals(
 ) -> Optional[dict[str, Any]]:
     """Grant *identity* ``decision.create`` for the life of the launch.
 
-    The owner's press on Hand to agent is the gesture: *principal* must be
+    The owner's press on Hand to an agent session is the gesture: *principal* must be
     the OWNER. Returns the grant's kernel answer, or None when there is no
     hub database or no owner press (the launch runs; the agent's decision
     proposals are then refused ``desk_delegation_required``)."""
