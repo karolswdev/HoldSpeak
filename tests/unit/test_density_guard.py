@@ -198,6 +198,9 @@ def test_room_core_stays_a_composition() -> None:
         f"{_ROOM_CORE_BUDGET}). It composes the sections only; a section's rows, "
         "state and reads belong in web/src/features/project-room/core/<Section>.tsx. "
         "Carve, don't bump."
+    )
+
+
 def test_settings_files_live_in_the_settings_folder() -> None:
     """Every Settings file is in web/src/pages/cores/settings/ (2026-11-08).
 
