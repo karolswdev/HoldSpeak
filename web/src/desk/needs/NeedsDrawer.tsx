@@ -32,7 +32,7 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { ConfirmVerb, ScrollHint, StatusBar, StringGadget, SurfaceSection, SurfaceState, TickNumber, Toolbar, type StatusBarItem } from "../surface";
+import { ConfirmVerb, ScrollHint, StatusBar, StringGadget, SurfaceSection, SurfaceState, TickNumber, ToolGlyph, Toolbar, type StatusBarItem } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -1081,10 +1081,16 @@ function NeedsChipRow({ chips, setChips, counts, people, projects, muted, showMu
   return (
     <span className="needs-chips" data-testid="needs-filter">
       <span className="surface-filter-tokens needs-chip-row" role="group" aria-label="Needs you filter">
-        {directions.map(([value, label, count]) => (count > 0 || chips.direction === value ? (
-          <Chip key={value} label={label} count={count > 0 ? count : null} on={chips.direction === value} testId={`needs-chip-${value}`}
-            onPress={() => direction(value)} />
-        ) : null))}
+        {/* The scope: one segmented band (Mine, They owe me, To decide); the
+            other chips combine with it. */}
+        {directions.some(([value, , count]) => count > 0 || chips.direction === value) ? (
+          <span className="needs-scope" data-testid="needs-scope">
+            {directions.map(([value, label, count]) => (count > 0 || chips.direction === value ? (
+              <Chip key={value} label={label} count={count > 0 ? count : null} on={chips.direction === value} testId={`needs-chip-${value}`}
+                onPress={() => direction(value)} />
+            ) : null))}
+          </span>
+        ) : null}
         {counts.week > 0 || chips.week ? (
           <Chip label="This week" count={counts.week > 0 ? counts.week : null} on={chips.week} testId="needs-chip-week"
             onPress={() => setChips({ ...chips, week: !chips.week })} />
@@ -1365,6 +1371,17 @@ export function NeedsDrawer() {
         onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
     </span>
   ) : null;
+  // HS-S43 (D22/G43 = A, 2026-11-07; owner verdict the same night: the
+  // sentence over the list "looks really ugly"): the People overlay leaves
+  // out what his people owe him, so the toolbar carries one People Button
+  // at its right end in every settled state. Its title names the coverage;
+  // the face has no sentence. No read, no count, no scope.
+  const peopleVerb = (
+    <Button dense variant="ghost" className="needs-people" data-testid="needs-open-people"
+      title="What people owe you is in People" onClick={() => openSurfaceOr("open-people", "/")}>
+      <ToolGlyph kind="person" />People
+    </Button>
+  );
   const chipRow = faces.length + muted.length > 0 ? (
     <NeedsChipRow chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
       muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
@@ -1388,22 +1405,9 @@ export function NeedsDrawer() {
     <div className="needs-drawer kit-face" data-testid="needs-drawer"
       data-settling={settling ? "true" : undefined} aria-busy={settling ? true : undefined}>
       {settling ? <div className="needs-drawer-settling"><SurfaceState loading /></div> : null}
-      {chipRow || offer ? (
-        <Toolbar label="Needs you" data-testid="needs-toolbar" trailing={offer}>
-          {chipRow}
-        </Toolbar>
-      ) : null}
-      {/* HS-S43 (D22/G43 = A, 2026-11-07): the People overlay lists what the
-          owner owes his people (leader_owes) and leaves out what they owe him
-          (report_owes); `They owe me` never says so. One static line names
-          that coverage and opens the ordinary People place: no read, no
-          count, no scope. It is not a member, a source gap or a row, so it
-          sits outside the chip, muted and coverage conditions. */}
-      <p className="needs-coverage-note" data-testid="needs-people-coverage">
-        <span>They owe me does not show People commitments to you.</span>
-        <Button dense variant="ghost" data-testid="needs-open-people"
-          onClick={() => openSurfaceOr("open-people", "/")}>Open People</Button>
-      </p>
+      <Toolbar label="Needs you" data-testid="needs-toolbar" trailing={<>{offer}{peopleVerb}</>} trailingStays={!offer}>
+        {chipRow}
+      </Toolbar>
       {/* W5-WORDS: every source read is no row (`16 of 16 available` was a
           count that said nothing); a gap names how many and which. */}
       {!coverage.complete && coverage.expected > 0 ? (() => {

@@ -159,6 +159,8 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
     expect(screen.getByTestId("arrival-display").textContent).toBe("4 need you");
     // A second press clears a chip: the whole list again.
     fireEvent.click(within(bar).getByTestId("needs-chip-person"));
+    // The scope (Mine, They owe me, To decide) is one segmented band.
+    expect(within(bar).getByTestId("needs-chip-theirs").closest("[data-testid='needs-scope']")).toBeTruthy();
     fireEvent.click(within(bar).getByTestId("needs-chip-theirs"));
     await waitFor(() => expect(weekRows().length).toBe(9));
   });
