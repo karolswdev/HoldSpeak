@@ -25,6 +25,7 @@ never logged: a failure logs the route's name, not its path.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Callable
 
@@ -81,6 +82,42 @@ async def _body(request: Request) -> dict[str, Any]:
     except Exception:
         body = None
     return body if isinstance(body, dict) else {}
+
+
+#: The largest body a briefing page answer reads (a choice, a reason, a time).
+PAGE_BODY_BYTES = 1024 * 1024
+
+
+class BodyTooLarge(Exception):
+    """A token route's body is over its limit; the handler reads no more."""
+
+
+async def _bounded_body(request: Request, limit: int) -> dict[str, Any]:
+    """The JSON object of a token route's body, read to at most ``limit``
+    bytes: a larger Content-Length is refused before any read, and a streamed
+    body is refused at the first chunk past the limit (``BodyTooLarge``)."""
+    declared = request.headers.get("content-length")
+    if declared is not None:
+        try:
+            if int(declared) > limit:
+                raise BodyTooLarge()
+        except ValueError:
+            raise BodyTooLarge() from None
+    raw = bytearray()
+    async for chunk in request.stream():
+        raw += chunk
+        if len(raw) > limit:
+            raise BodyTooLarge()
+    try:
+        body = json.loads(bytes(raw)) if raw else None
+    except ValueError:
+        body = None
+    return body if isinstance(body, dict) else {}
+
+
+def _too_large(headers: dict[str, str] | None = None) -> JSONResponse:
+    return JSONResponse({"error": "body_too_large", "code": "body_too_large",
+                         "detail": "The answer is too large. Nothing changed."}, status_code=413, headers=headers)
 
 
 def _refused(exc: ServiceError, headers: dict[str, str] | None = None) -> JSONResponse:
@@ -163,7 +200,10 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/b/{token}/answer")
     async def api_briefing_answer(token: str, request: Request) -> Any:
-        body = await _body(request)
+        try:
+            body = await _bounded_body(request, PAGE_BODY_BYTES)
+        except BodyTooLarge:
+            return _too_large(PAGE_HEADERS)
         return await _page(request, lambda: _service().answer(
             token, body.get("ref"), body.get("choice"), reason=body.get("reason"), later=body.get("later"),
         ), what="answer")

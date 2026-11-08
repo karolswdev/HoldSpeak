@@ -127,17 +127,19 @@ def test_a_walk_is_made_served_by_its_token_and_answered(tmp_path, monkeypatch) 
     shot = tmp_path / ".local" / "share" / "holdspeak" / "feedback" / "walks" / walk_id / "s11-well.png"
     assert shot.read_bytes() == png
 
-    # Skip is always a choice; a second answer keeps the first.
+    # Skip is always a choice; a second answer keeps the first answer's text
+    # and replaces its image (one image per question).
     assert client.post(f"/api/w/{token}/answer", json={"ref": "needs-coverage", "choice": "skip"}).status_code == 200
     again = client.post(f"/api/w/{token}/answer", json={
         "ref": "s11-well", "choice": "Keep", "window_png": base64.b64encode(png).decode("ascii")})
-    assert again.json()["shot"] == "s11-well-2.png"
+    assert again.json()["shot"] == "s11-well.png"
 
     owner = client.get(f"/api/walks/{walk_id}")
     assert owner.status_code == 200
     full = owner.json()
     assert full["answers"]["s11-well"]["choice"] == "Keep"
     assert full["answers"]["s11-well"]["earlier"][0]["words"] == "The project name is cut."
+    assert "shot" not in full["answers"]["s11-well"]["earlier"][0]
     assert full["answers"]["needs-coverage"]["choice"] == "skip"
     assert full["directory"].endswith(walk_id) and "token_sha256" not in full
     assert client.get(f"/api/w/{token}").json()["answers"]["s11-well"]["choice"] == "Keep"
@@ -176,3 +178,130 @@ def test_the_edge_admits_the_walk_token_on_its_two_routes_only() -> None:
     assert principals.required_right("GET", f"/api/w/{token}/other") is PrincipalRight.OWNER
     assert principals.required_right("POST", "/api/walks") is PrincipalRight.OWNER
     assert principals.required_right("GET", "/api/walks/" + "0" * 32) is PrincipalRight.OWNER
+
+
+# ── the bounds (Codex review of #1808) ──────────────────────────────
+
+
+def _b64(raw: bytes) -> str:
+    return base64.b64encode(raw).decode("ascii")
+
+
+def test_one_walk_keeps_one_image_per_question_five_earlier_texts_and_a_byte_budget(tmp_path, monkeypatch) -> None:
+    client, _service = _client(tmp_path, monkeypatch)
+    made = client.post("/api/walks", json=SCRIPT).json()
+    token, walk_id = made["token"], made["id"]
+    folder = tmp_path / ".local" / "share" / "holdspeak" / "feedback" / "walks" / walk_id
+    png = _png()
+
+    for number in range(8):
+        answered = client.post(f"/api/w/{token}/answer", json={
+            "ref": "s11-well", "choice": "Redo", "words": f"Try {number}.", "window_png": _b64(png)})
+        assert answered.status_code == 200 and answered.json()["shot"] == "s11-well.png", answered.text
+    assert sorted(entry.name for entry in folder.glob("*.png")) == ["s11-well.png"]
+    stored = client.get(f"/api/walks/{walk_id}").json()["answers"]["s11-well"]
+    assert stored["words"] == "Try 7."
+    assert [row["words"] for row in stored["earlier"]] == [f"Try {n}." for n in range(2, 7)]
+    assert walk_module.MAX_EARLIER == 5 and walk_module.WALK_BYTES == 64 * 1024 * 1024
+
+    # Past the walk's byte budget an image is refused by name; the text lands.
+    monkeypatch.setattr(walk_module, "WALK_BYTES", len(png) + 10)
+    full = client.post(f"/api/w/{token}/answer", json={
+        "ref": "needs-coverage", "choice": "Keep", "words": "Clear.", "window_png": _b64(png)})
+    assert full.status_code == 200, full.text
+    receipt = full.json()
+    assert receipt["choice"] == "Keep" and "shot" not in receipt
+    assert receipt["shot_refused"]["code"] == "walk_shot_budget"
+    assert not (folder / "needs-coverage.png").exists()
+    assert client.get(f"/api/walks/{walk_id}").json()["answers"]["needs-coverage"]["words"] == "Clear."
+    # Its own image is replaced, so the same question still fits the budget.
+    assert client.post(f"/api/w/{token}/answer", json={
+        "ref": "s11-well", "choice": "Keep", "window_png": _b64(png)}).json()["shot"] == "s11-well.png"
+
+
+def test_the_answer_route_reads_no_body_for_a_blocked_address_or_an_unknown_token(tmp_path, monkeypatch) -> None:
+    from holdspeak.web.routes import walks as walks_routes
+
+    client, service = _client(tmp_path, monkeypatch)
+    token = client.post("/api/walks", json=SCRIPT).json()["token"]
+    monkeypatch.setattr(walks_routes, "WALK_BODY_BYTES", 1024)
+
+    def must_not_answer(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("the handler read an over-size body")
+
+    monkeypatch.setattr(service, "answer", must_not_answer)
+    big = json.dumps({"ref": "s11-well", "choice": "Keep", "words": "x" * 4096})
+    declared = client.post(f"/api/w/{token}/answer", content=big, headers={"Content-Type": "application/json"})
+    assert declared.status_code == 413 and declared.json()["code"] == "body_too_large"
+    assert declared.headers["cache-control"] == "no-store"
+    streamed = client.post(f"/api/w/{token}/answer", content=iter([big[:800].encode(), big[800:].encode()]))
+    assert streamed.status_code == 413
+
+    # An unknown token is a 404 and one miss before the body; a blocked address is 429.
+    wrong = "y" * 43
+    for _ in range(40):
+        answer = client.post(f"/api/w/{wrong}/answer", content=big, headers={"Content-Type": "application/json"})
+        if answer.status_code == 429:
+            break
+        assert answer.status_code == 404 and answer.json()["code"] == "walk_not_found"
+    assert answer.status_code == 429
+    assert client.post(f"/api/w/{token}/answer", content=big).status_code == 429
+
+
+def test_the_walk_token_through_the_real_edge_reaches_only_its_two_routes(tmp_path, monkeypatch) -> None:
+    """The real app and its principal gate, no owner header: the walk token
+    reads its walk and nothing else; a briefing page token reads no walk."""
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+    from tests.unit.test_reach_packages import OWNER as PROGRAM_OWNER, _briefing, _core, _ref
+
+    service = WalkService(home=tmp_path)
+    monkeypatch.setattr(walk_module, "default_walk_service", lambda: service)
+    monkeypatch.setattr(briefing_module, "MISSES", briefing_module._Misses())
+    made = service.create(SCRIPT)
+    token = made["token"]
+
+    rig, pid, item = _core(tmp_path / "rig")
+    briefing = _briefing(rig)
+    monkeypatch.setattr(briefing_module, "default_briefing_service", lambda db=None: briefing)
+    page_token = briefing.make(PROGRAM_OWNER, [_ref(pid, item)])["token"]
+
+    server = MeetingWebServer(WebRuntimeCallbacks(on_bookmark=lambda *_a, **_k: None,
+                                                  on_stop=lambda *_a, **_k: None, get_state=lambda: None),
+                              host="127.0.0.1")
+    client = TestClient(server.app, follow_redirects=False)
+    client.headers.pop("X-HoldSpeak-Token", None)  # the harness's owner header (tests/conftest.py)
+
+    assert client.get(f"/api/w/{token}").json()["title"] == "Wave two"
+    assert client.post(f"/api/w/{token}/answer", json={"ref": "s11-well", "choice": "Keep"}).status_code == 200
+    bearer = {"Authorization": f"Bearer {token}"}
+    # A sampled owner route: refused at the edge.
+    for verb, path in (("GET", f"/api/walks/{made['id']}"), ("POST", "/api/walks"), ("GET", "/api/programs"),
+                       ("GET", f"/api/reach/packages?token={token}")):
+        assert client.request(verb, path, headers=bearer).status_code in (401, 403), (verb, path)
+    # The briefing page's routes: the edge admits any page-shaped token there,
+    # and the briefing handler reads nothing for a walk token (its one 404).
+    read = client.get(f"/api/b/{token}")
+    assert read.status_code == 404 and "Wave two" not in read.text
+    assert client.post(f"/api/b/{token}/answer", json={"ref": "x", "choice": "y"}).status_code == 404
+
+    # A briefing page token reads no walk: 404, and each try counts a miss.
+    assert client.get(f"/api/b/{page_token}").status_code == 200  # the page token itself is good
+    before = len(briefing_module.MISSES._seen.get("testclient", []))
+    assert client.get(f"/api/w/{page_token}").status_code == 404
+    assert client.post(f"/api/w/{page_token}/answer", json={"ref": "s11-well", "choice": "Keep"}).status_code == 404
+    assert len(briefing_module.MISSES._seen.get("testclient", [])) == before + 2
+
+    # An unknown walk token is a 404 and a miss; enough misses block the address.
+    unknown = "z" * 43
+    codes = [client.get(f"/api/w/{unknown}").status_code for _ in range(40)]
+    assert codes[0] == 404 and codes[-1] == 429
+
+    # An over-size body is a 413 before the handler reads it.
+    def must_not_answer(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("the handler read an over-size body")
+
+    monkeypatch.setattr(briefing_module, "MISSES", briefing_module._Misses())
+    monkeypatch.setattr(service, "answer", must_not_answer)
+    over = client.post(f"/api/w/{token}/answer", content=b"{" + b" " * (25 * 1024 * 1024) + b"}",
+                       headers={"Content-Type": "application/json"})
+    assert over.status_code == 413 and over.json()["code"] == "body_too_large"

@@ -51,7 +51,22 @@ Each walk is one folder: `~/.local/share/holdspeak/feedback/walks/<id>/`.
 
 - `walk.json` keeps the script, the answers, and a hash of the link token.
 - Each answer keeps a PNG image of the window, for example `s11-well.png`.
-  The size limits are the same as for Desk feedback.
+  The size limits are the same as for Desk feedback: 16 MiB for one image.
 
 The link token reads only its walk and stores only its answers. It does not
-sign you in. A second answer to one question keeps the first answer.
+sign you in.
+
+The hub keeps these limits for one walk:
+
+- One image for each question. A new image for a question replaces the
+  earlier image.
+- A new answer to a question keeps the text of the earlier answers: the
+  choice, the words and the time. The hub keeps the last 5 earlier answers.
+- All the images of one walk are 64 MiB or less. After this limit, the hub
+  does not keep a new image, but it keeps the answer. The answer shows
+  `walk_shot_budget`.
+- One answer is 24 MiB or less. The hub refuses a larger answer with 413 and
+  does not read it.
+- The hub reads the answer only after it finds the walk. An unknown link gets
+  404 and counts as a wrong try. Too many wrong tries from one address in one
+  minute get 429.

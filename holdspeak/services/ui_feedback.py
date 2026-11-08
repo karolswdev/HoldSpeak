@@ -359,17 +359,25 @@ def walks_root(home: Path | None = None) -> Path:
     return feedback_root(home) / WALKS_DIR
 
 
-def save_walk_shot(directory: Path, name: str, screenshot_base64: Any) -> str:
-    """Validate one walk window PNG with the feedback limits and write it
-    once (``name`` is a plain file stem; an existing file is never replaced).
-    Returns the file name."""
+class WalkShotBudgetError(UIFeedbackError):
+    """The walk's folder has no room left for this image."""
+
+
+def save_walk_shot(directory: Path, name: str, screenshot_base64: Any, *, room: int | None = None) -> str:
+    """Validate one walk window PNG with the feedback limits and write it as
+    ``<name>.png`` (``name`` is a plain file stem). A later image of the same
+    name replaces the earlier one: one image per question. ``room`` is the
+    byte budget left in the walk's folder; a larger image is refused with
+    ``WalkShotBudgetError`` and nothing is written. Returns the file name."""
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", str(name or "")):
         raise _error("The shot name is not valid.")
     screenshot = _decode_attachment(screenshot_base64, "window_png", MAX_PNG_BYTES)
     _validate_png(screenshot)
+    if room is not None and len(screenshot) > room:
+        raise WalkShotBudgetError("This walk has no room for more images. The answer is kept without the image.")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     filename = f"{name}.png"
-    _durable_write(directory / filename, screenshot)
+    _atomic_replace(directory / filename, screenshot)
     return filename
 
 
