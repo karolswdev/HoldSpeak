@@ -75,6 +75,62 @@ def engine_for(broker: Any, job: str) -> Engine:
     return Engine(str(revision), str(assignment or ""), str(profile or ""))
 
 
+def egress_of(broker: Any, engine: Engine) -> str:
+    """Where the engine's bytes go, as a lamp word: local, mesh,
+    private_network or cloud (``unknown`` when the revision is not read)."""
+    from ..inference_locality import deployment_lamp
+
+    try:
+        revision = broker.database.deployment_revisions.get(engine.revision)
+    except Exception:
+        revision = None
+    if revision is None:
+        return "unknown"
+    return deployment_lamp(getattr(revision, "boundary", ""), getattr(revision, "endpoint", ""))
+
+
+DEFAULT_CONTEXT_TOKENS = 16384
+
+
+def room(broker: Any, engine: Engine, payload: Any, *, reserved_output_tokens: int) -> int:
+    """Tokens left on the engine after ``payload`` and the reserved answer
+    (one token for each 3.5 characters of the JSON payload, rounded up, plus
+    16). Negative means the payload does not fit."""
+    import json
+
+    try:
+        revision = broker.database.deployment_revisions.get(engine.revision)
+        ceiling = int(getattr(revision, "context_ceiling", 0) or 0)
+    except Exception:
+        ceiling = 0
+    ceiling = min(ceiling, DEFAULT_CONTEXT_TOKENS) if ceiling else DEFAULT_CONTEXT_TOKENS
+    text = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return ceiling - (-(-len(text) * 2 // 7) + 16 + int(reserved_output_tokens))
+
+
+def with_memory(
+    broker: Any, engine: Engine, payload: dict[str, Any], memory: Any, *,
+    reserved_output_tokens: int, field: str = "user_prompt",
+) -> dict[str, Any]:
+    """``payload`` with the MEMORY block put before ``field``, cut to what the
+    engine has room for. Memory never turns a job that fits into one that
+    does not; any memory error leaves the payload as it is."""
+    from .memory_grounding import fit_memory
+    from .memory_grounding import with_memory as prefixed
+
+    prompt = str(payload.get(field) or "")
+
+    def build(candidate: Any) -> dict[str, Any]:
+        return {**payload, field: prefixed(prompt, candidate)}
+
+    try:
+        fitted = fit_memory(memory(), lambda candidate: room(
+            broker, engine, build(candidate), reserved_output_tokens=reserved_output_tokens) >= 0)
+        return build(fitted)
+    except Exception:
+        return dict(payload)
+
+
 def run(
     broker: Any,
     principal: Any,
