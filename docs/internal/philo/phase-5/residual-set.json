@@ -2416,6 +2416,54 @@
       "entry_point": "program.add_to_night",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.from_action",
+      "discriminator": "",
+      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.plan_programs",
+      "discriminator": "",
+      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.race",
+      "discriminator": "",
+      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.shape_engine",
+      "discriminator": "",
+      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.shape_held_drop",
+      "discriminator": "",
+      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.step_hand_back",
+      "discriminator": "",
+      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.step_take",
+      "discriminator": "",
+      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.templates",
+      "discriminator": "",
+      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
     }
   ]
 }

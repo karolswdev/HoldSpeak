@@ -34,6 +34,12 @@ EGRESS = "egress"
 AUTHORITY = "authority"
 CONFIG = "config"
 
+def _program_authority() -> dict[str, str]:
+    from holdspeak.services.program_operations import AUTHORITY_CLASSES
+
+    return dict(AUTHORITY_CLASSES)
+
+
 #: Each non-work row carries its reason.
 TOOL_AUTHORITY: dict[str, str] = {
     "desk.list": WORK,
@@ -299,36 +305,12 @@ TOOL_AUTHORITY: dict[str, str] = {
     "interview.change_section": WORK,
     "interview.record_fact": WORK,
     "interview.suggest": WORK,
-    # Programs (2026-10-28, design §7): an orchestrating agent makes, plans
-    # and runs the Programs it created; a step's agent writes its own lines.
-    # The engine hands each step through agent.hand's service (the Start is
-    # the owner's or the orchestrating agent's own Program); merge and the
-    # findings are his alone.
-    "program.create": WORK,
-    "program.plan": WORK,
-    "program.update": WORK,
-    "program.start": WORK,
-    "program.park": WORK,
-    "program.resume": WORK,
-    "program.propose_fix": WORK,  # JRN10: a Drafting Program from an audit's MUST findings
-    "program.get": WORK,
-    "program.list": WORK,
-    "program.checkpoint": WORK,
-    "program.step_done": WORK,
-    "program.start_from": WORK,  # PG20: the service adds his call; an agent's ask goes up the ladder
-    "program.require": WORK,  # PG-REQ: his at once; an agent's is a proposal up the ladder
-    "program.step_update": WORK,  # PG-REQ: his at once; an orchestrator's change goes up the ladder
-    "program.amend": WORK,  # PG-REQ: his at once; an orchestrator's amendment goes up the ladder
-    "program.step_remove": WORK,  # PG-LANG: his at once; an orchestrator's removal goes up the ladder
-    "program.text": WORK,  # PG-LANG LANG1: the Program as its text (a read)
-    "program.text_apply": WORK,  # PG-LANG LANG1: a batch of the verbs above, each with its own rule
-    "program.plan_draft": WORK,  # PG-LANG LANG6: a goal becomes a drafted text (rows only; Apply writes)
-    "program.round": WORK,  # PG-LANG LANG9: the interview rounds (an agent's answer is a proposal)
-    "program.add_to_night": WORK,  # PG-LANG LANG12: his at once; an agent's lands at YOLO only
-    "program.shape": WORK,  # PG-LANG LANG3: a sentence becomes change rows; YOLO's apply is the level's
-    "program.decide": AUTHORITY,  # a merge and a finding's fate are the owner's press
-    "program.overturn": AUTHORITY,  # undoing the engine's decision is the owner's press
-    "program.handoff": AUTHORITY,  # PG19: which agent reads the repository next is the owner's press
+    # Programs (2026-10-28, design §7; one table 2026-11-08): an orchestrating
+    # agent makes, plans and runs the Programs it created; a step's agent
+    # writes its own lines; a merge, a finding's fate, an overturn, a handoff
+    # and a taken lane are his alone. The rows and their reasons are the
+    # table's (``services/program_operations.py``).
+    **_program_authority(),
     # Phone (2026-10-28, design §7): a launched agent messages the owner's
     # phone and reads his replies (CONDUCTOR); a call rings a real phone.
     "phone.send_message": WORK,

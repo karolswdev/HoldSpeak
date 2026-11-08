@@ -1,5 +1,10 @@
 """Programs transport (2026-10-28); the work is ``services/program_service.py``.
 
+The routes are produced from the one table of Programs operations
+(``services/program_operations.py``), the rows the MCP tools come from too
+(2026-11-08). The evidence read answers a file, so it stays hand-written
+(``HAND_WRITTEN``). The paths:
+
 GET    /api/programs?q=&project_id=&person_id=     the Programs, waiting first (PG-REQ: Find a program,
                                                    Project, Person; the group is the face's)
 POST   /api/programs                               create {title, goal, repository | project_id,
@@ -60,6 +65,7 @@ Every handler runs the service off the event loop (``run_in_threadpool``).
 """
 from __future__ import annotations
 
+import inspect
 from typing import Any, Callable
 
 from fastapi import APIRouter, Request
@@ -68,25 +74,11 @@ from starlette.concurrency import run_in_threadpool
 
 from ...logging_config import get_logger
 from ...principals import Principal, PrincipalKind
+from ...services import program_operations
 from ...services.errors import NotFound, ServiceError, ValidationError
 from ..context import WebContext
 
 log = get_logger("web.routes.programs")
-
-_CREATE_FIELDS = (
-    "title", "goal", "repository", "project_id", "base_branch", "control", "check_command", "template",
-    "default_profile", "default_engine", "reviewer_profile", "reviewer_engine", "prefer_idle", "origin_ref",
-    "for_person_id", "spend_limit_usd", "runs_on", "allowed_profiles", "may_handoff", "usage_warning_share", "may_call",
-)
-
-
-_UPDATE_FIELDS = (
-    "title", "goal", "control", "prefer_idle", "project_id", "spend_limit_usd", "default_profile", "default_engine",
-    "reviewer_profile", "reviewer_engine", "runs_on", "allowed_profiles", "may_handoff", "usage_warning_share", "may_call",
-    # PG-LANG: the fields the Program text writes.
-    "review_depth", "planner_engine", "budget_tokens", "night", "within", "delivery", "rounds_before_start",
-    "check_command", "for_person_id",
-)
 
 
 def _principal(request: Request) -> Any:
@@ -118,167 +110,18 @@ async def _call(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
                              "detail": "The program service failed. The log names the cause."}, status_code=500)
 
 
-def _service() -> Any:
-    from ...services.program_service import default_program_service
+def _evidence(op: program_operations.ProgramOperation) -> Callable[..., Any]:
+    """The log text or the shot image of one requirement (a file, not JSON)."""
 
-    return default_program_service()
+    call = op.call
 
-
-def build_programs_router(ctx: WebContext) -> APIRouter:
-    router = APIRouter()
-
-    @router.get("/api/programs")
-    async def api_programs_list(request: Request) -> Any:
-        principal, query = _principal(request), request.query_params
-        return await _call(lambda: _service().list(principal, q=query.get("q"), project_id=query.get("project_id"),
-                                                   person_id=query.get("person_id")))
-
-    @router.get("/api/programs/templates")
-    async def api_programs_templates() -> Any:
-        from ...program_templates import TEMPLATES
-
-        return await _call(lambda: {"templates": [
-            {key: template[key] for key in ("id", "name", "description")} for template in TEMPLATES]})
-
-    @router.post("/api/programs")
-    async def api_programs_create(request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        args = {key: body.get(key) for key in _CREATE_FIELDS if key in body}
-        args.setdefault("title", "")
-        return await _call(lambda: _service().create(principal, **args), status=201)
-
-    @router.post("/api/programs/from-action")
-    async def api_programs_from_action(request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().from_action(principal, body.get("action_id"),
-                                                          project_id=body.get("project_id")), status=201)
-
-    @router.post("/api/programs/tonight")
-    async def api_programs_add_to_night(request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().add_to_night(principal, kind=body.get("kind"), item_id=body.get("item_id"),
-                                                           line=body.get("line"), program_id=body.get("program_id")))
-
-    @router.get("/api/programs/{program_id}")
-    async def api_programs_get(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().get(principal, program_id))
-
-    @router.patch("/api/programs/{program_id}")
-    async def api_programs_update(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        fields = {key: body[key] for key in _UPDATE_FIELDS if key in body}
-        return await _call(lambda: _service().update(principal, program_id, **fields))
-
-    @router.post("/api/programs/{program_id}/plan")
-    async def api_programs_plan(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().plan(
-            principal, program_id, steps=body.get("steps") if isinstance(body.get("steps"), list) else [],
-            size=body.get("size"), replace=bool(body.get("replace")), before=body.get("before") or None,
-            waits=body.get("waits") is not False,
-        ))
-
-    @router.post("/api/programs/{program_id}/start")
-    async def api_programs_start(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().start(principal, program_id))
-
-    @router.post("/api/programs/{program_id}/park")
-    async def api_programs_park(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().park(principal, program_id, reason=body.get("reason")))
-
-    @router.post("/api/programs/{program_id}/resume")
-    async def api_programs_resume(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().resume(principal, program_id))
-
-    @router.post("/api/programs/{program_id}/steps/{step_id}/decide")
-    async def api_programs_decide(program_id: str, step_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().decide(
-            principal, program_id, step_id, kind=str(body.get("kind") or ""), choice=str(body.get("choice") or ""),
-            finding_id=body.get("finding_id"), reason=body.get("reason"), via=body.get("via"),
-            proposal_id=body.get("lesson_id"),  # JRN11: a Lesson row names its lesson
-            # HS-S32: a delivery press names the delivery line it answers.
-            expected_delivery_checkpoint_id=body.get("expected_delivery_checkpoint_id"),
-        ))
-
-    @router.post("/api/programs/{program_id}/steps/{step_id}/race")
-    async def api_programs_race(program_id: str, step_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().race(principal, program_id, step_id, int(body.get("n") or 0)))
-
-    @router.post("/api/programs/{program_id}/steps/{step_id}/handoff")
-    async def api_programs_handoff(program_id: str, step_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().handoff(
-            principal, program_id, step_id, body.get("to"), preview=bool(body.get("preview")),
-        ))
-
-    @router.post("/api/programs/{program_id}/checkpoints/{checkpoint_id}/start-from")
-    async def api_programs_start_from(program_id: str, checkpoint_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().start_from(principal, program_id, checkpoint_id))
-
-    @router.post("/api/programs/{program_id}/decisions/{decision_id}/overturn")
-    async def api_programs_overturn(program_id: str, decision_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().overturn(principal, program_id, decision_id))
-
-    @router.patch("/api/programs/{program_id}/steps/{step_id}")
-    async def api_programs_step_change(program_id: str, step_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().change_step(principal, program_id, step_id, **body))
-
-    # PG-IMPORT IMP6: Take it over / Hand it back on a step's lane (owner).
-    @router.post("/api/programs/{program_id}/steps/{step_id}/take")
-    async def api_programs_step_take(program_id: str, step_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().take_over(principal, program_id, step_id))
-
-    @router.post("/api/programs/{program_id}/steps/{step_id}/hand-back")
-    async def api_programs_step_hand_back(program_id: str, step_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().hand_back(principal, program_id, step_id))
-
-    @router.post("/api/programs/{program_id}/steps/{step_id}/amend")
-    async def api_programs_step_amend(program_id: str, step_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().amend(principal, program_id, step_id, body.get("line")))
-
-    @router.post("/api/programs/{program_id}/requirements")
-    async def api_programs_require(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        args = {key: body[key] for key in ("text", "kind", "step_id", "each_step", "required", "spec") if key in body}
-        return await _call(lambda: _service().require(principal, program_id, **args), status=201)
-
-    @router.patch("/api/programs/{program_id}/requirements/{requirement_id}")
-    async def api_programs_requirement_edit(program_id: str, requirement_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        args = {key: body[key] for key in ("text", "kind", "required", "spec") if key in body}
-        return await _call(lambda: _service().edit_requirement(principal, program_id, requirement_id, **args))
-
-    @router.post("/api/programs/{program_id}/requirements/{requirement_id}/decide")
-    async def api_programs_requirement_decide(program_id: str, requirement_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().decide_requirement(
-            principal, program_id, requirement_id, str(body.get("choice") or ""), line=body.get("line")))
-
-    @router.post("/api/programs/{program_id}/proposals/{proposal_id}/decide")
-    async def api_programs_proposal_decide(program_id: str, proposal_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().decide_proposal(principal, program_id, proposal_id,
-                                                              str(body.get("choice") or "")))
-
-    @router.get("/api/programs/{program_id}/requirements/{requirement_id}/evidence")
-    async def api_programs_requirement_evidence(program_id: str, requirement_id: str, request: Request) -> Any:
+    async def endpoint(program_id: str, requirement_id: str, request: Request) -> Any:
         principal = _principal(request)
 
         def read() -> Any:
             try:
-                found = _service().requirement_evidence(principal, program_id, requirement_id)
+                found = call(program_operations.program_service(), principal,
+                             {"program_id": program_id, "requirement_id": requirement_id})
             except ServiceError as exc:
                 return _refused(exc)
             if found["media"].startswith("image/"):
@@ -290,80 +133,49 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
 
         return await run_in_threadpool(read)
 
-    @router.get("/api/programs/{program_id}/text")
-    async def api_programs_text(program_id: str, request: Request) -> Any:
+    endpoint.__name__ = endpoint.__qualname__ = op.handler_name
+    return endpoint
+
+
+#: The routes the table cannot produce: each answers a file.
+HAND_WRITTEN: dict[str, Callable[[program_operations.ProgramOperation], Callable[..., Any]]] = {
+    "program.requirement_evidence": _evidence,
+}
+
+
+def _endpoint(op: program_operations.ProgramOperation) -> Callable[..., Any]:
+    """One row's handler: the path parameters over the JSON body (the query for
+    a GET), the row's HTTP call off the event loop, its status."""
+    method, path = op.http or ("", "")
+    call = op.web or op.call
+    names = [part[1:-1] for part in path.split("/") if part.startswith("{")]
+
+    async def endpoint(request: Request, **params: str) -> Any:
         principal = _principal(request)
-        return await _call(lambda: _service().text_get(principal, program_id))
+        source = dict(request.query_params) if method == "GET" else await _body(request)
+        args = {**source, **params}
+        return await _call(lambda: call(program_operations.program_service(), principal, args), status=op.status)
 
-    @router.post("/api/programs/{program_id}/text")
-    async def api_programs_text_apply(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        dry = body.get("dry_run", body.get("preview", True))
-        allow = body.get("allow_lower") if isinstance(body.get("allow_lower"), list) else []
-        return await _call(lambda: _service().text_apply(
-            principal, program_id, body.get("text"), dry_run=dry is not False, base=body.get("base"),
-            allow_lower=[str(item) for item in allow]))
+    # FastAPI reads the path parameters and the handler name from the
+    # signature and the name: the OpenAPI document stays the one it was.
+    endpoint.__signature__ = inspect.Signature(  # type: ignore[attr-defined]
+        [inspect.Parameter(name, inspect.Parameter.KEYWORD_ONLY, annotation=str) for name in names]
+        + [inspect.Parameter("request", inspect.Parameter.KEYWORD_ONLY, annotation=Request)],
+        return_annotation=Any,
+    )
+    endpoint.__name__ = endpoint.__qualname__ = op.handler_name
+    return endpoint
 
-    @router.get("/api/programs/{program_id}/shape")
-    async def api_programs_shape_engine(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().shape_engine(principal, program_id))
 
-    @router.post("/api/programs/{program_id}/shape")
-    async def api_programs_shape(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        pending = body.get("pending") if isinstance(body.get("pending"), str) else None
-        return await _call(lambda: _service().shape(principal, program_id, body.get("sentence"),
-                                                    apply=body.get("apply") is True, pending=pending))
-
-    @router.delete("/api/programs/{program_id}/shape/held")
-    async def api_programs_shape_held_drop(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().drop_held_shape(principal, program_id))
-
-    @router.post("/api/programs/{program_id}/plan/draft")
-    async def api_programs_plan_draft(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().plan_draft(
-            principal, program_id, goal=body.get("goal"), template=body.get("template"), budget=body.get("budget"),
-            text=body.get("text"), split=body.get("split")))
-
-    @router.post("/api/programs/{program_id}/plan/programs")
-    async def api_programs_plan_programs(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().apply_programs(principal, program_id, body.get("programs"),
-                                                             body.get("which", "all")))
-
-    @router.post("/api/programs/{program_id}/rounds")
-    async def api_programs_rounds_open(program_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        names = body.get("names") if isinstance(body.get("names"), list) else None
-        return await _call(lambda: _service().rounds_open(principal, program_id, names))
-
-    @router.post("/api/programs/{program_id}/rounds/{name}/next")
-    async def api_programs_round_next(program_id: str, name: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().round_next(principal, program_id, name))
-
-    @router.post("/api/programs/{program_id}/rounds/{name}/answer")
-    async def api_programs_round_answer(program_id: str, name: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().round_answer(
-            principal, program_id, name, answer=body.get("answer"), option=body.get("option"),
-            question_id=body.get("question_id"), skip=body.get("skip") is True, not_this=body.get("not_this") is True,
-            apply=body.get("apply") is True))
-
-    @router.post("/api/programs/{program_id}/rounds/{name}/decide")
-    async def api_programs_round_decide(program_id: str, name: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().round_decide(principal, program_id, name, body.get("choice")))
-
-    @router.post("/api/programs/{program_id}/close")
-    async def api_programs_close(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().close(principal, program_id))
-
+def build_programs_router(ctx: WebContext) -> APIRouter:
+    router = APIRouter()
+    for op in program_operations.OPERATIONS:
+        if op.http is None:
+            continue
+        method, path = op.http
+        make = HAND_WRITTEN.get(op.name, _endpoint)
+        router.add_api_route(path, make(op), methods=[method])
     return router
 
 
-__all__ = ["build_programs_router"]
+__all__ = ["HAND_WRITTEN", "build_programs_router"]

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Operation parity census: the service operations (``<service>.<method>`` calls) that HTTP, MCP and the
-CLI reach, read statically from every live route handler, every MCP tool's dispatch branch and
-``holdspeak/commands`` (a CLI ``/api/...`` call reaches that route's). ``registry.invoke(p, "op")`` resolves
-through its ``OperationDescriptor``; helpers are followed two calls deep; ``--rows`` adds every route.
+"""Operation parity census: the ``<service>.<method>`` calls HTTP, MCP and the CLI reach, read statically from each
+live route handler, MCP dispatch branch or declared table row (``services/*_operations.py``) and CLI command
+(its ``/api/...`` call reaches that route's); ``invoke(p, "op")`` resolves through its ``OperationDescriptor``.
 """
 from __future__ import annotations
 
 import ast
 import importlib
 import inspect
+import linecache
 import re
 import sys
 import textwrap
@@ -42,10 +42,9 @@ def _load_descriptors() -> None:
     for path in sorted((REPO / "holdspeak").glob("*operations.py")):
         module = importlib.import_module(f"holdspeak.{path.stem}")
         TOOL_OPS.update({k: v for k, v in getattr(module, "TOOL_OPERATIONS", {}).items() if isinstance(v, str)})
-        for value in vars(module).values():
-            for item in value if isinstance(value, (tuple, list)) else (value,):
-                if isinstance(item, OperationDescriptor):
-                    DESCRIPTORS[item.name] = (_norm(item.service) or item.service, item.method)
+        items = [i for v in vars(module).values() for i in (v if isinstance(v, (tuple, list)) else (v,))]
+        DESCRIPTORS.update({i.name: (_norm(i.service) or i.service, i.method) for i in items
+                            if isinstance(i, OperationDescriptor)})
 
 
 def _text(node: ast.AST) -> str | None:  # a string constant, or an f-string with * for each hole
@@ -54,9 +53,18 @@ def _text(node: ast.AST) -> str | None:  # a string constant, or an f-string wit
     return node.value if isinstance(node, ast.Constant) and isinstance(node.value, str) else None
 
 
-def _parse(fn: Any) -> tuple[list[ast.stmt], dict[str, Any]] | None:
-    """A function's source statements and its scope (globals plus closure cells)."""
-    if (tree := _quiet(lambda: ast.parse(textwrap.dedent(inspect.getsource(fn))))) is None:
+def _source(fn: Any) -> str:  # a lambda's own text: the span its instructions cover
+    if fn.__name__ != "<lambda>":
+        return textwrap.dedent(inspect.getsource(fn))
+    spots = [p for p in fn.__code__.co_positions() if None not in p and (p[0], p[2]) != (p[1], p[3])]
+    first, last = min(spots, key=lambda p: (p[0], p[2])), max(spots, key=lambda p: (p[1], p[3]))
+    lines = [line.encode() for line in linecache.getlines(fn.__code__.co_filename)[first[0] - 1:last[1]]]
+    lines[-1], lines[0] = lines[-1][:last[3]], (lines[-1][:last[3]] if len(lines) == 1 else lines[0])[first[2]:]
+    return "(" + b"".join(lines).decode() + ")"
+
+
+def _parse(fn: Any) -> tuple[list[ast.stmt], dict[str, Any]] | None:  # its statements; globals and closure cells
+    if (tree := _quiet(lambda: ast.parse(_source(fn)))) is None:
         return None
     cells = zip(fn.__code__.co_freevars, fn.__closure__ or ())
     return tree.body, {**fn.__globals__, **{name: _quiet(lambda c=cell: c.cell_contents) for name, cell in cells}}
@@ -64,15 +72,12 @@ def _parse(fn: Any) -> tuple[list[ast.stmt], dict[str, Any]] | None:
 
 def _assigns(nodes: Iterable[ast.AST]) -> dict[str, list[ast.AST]]:  # name -> every value it was given
     found: dict[str, list[ast.AST]] = defaultdict(list)
-    for n in nodes:
-        if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name):
-            found[n.targets[0].id].append(n.value)
+    for n in (n for n in nodes if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name)):
+        found[n.targets[0].id].append(n.value)
     return found
 
 
-class Reader:
-    """Collect the operations one body (and the helpers it calls) reaches."""
-
+class Reader:  # the operations one body, and the helpers it calls, reach
     def __init__(self, scope: dict[str, Any], bound: dict[str, str] | None = None) -> None:
         self.scope, self.seen, self.bound = scope, set(), bound or {}
 
@@ -83,8 +88,7 @@ class Reader:
         bound = {p: s for p, s in zip(fn.__code__.co_varnames[: fn.__code__.co_argcount], args) if s}
         return Reader(parsed[1], bound).nodes(parsed[0], depth, self.seen)
 
-    def nodes(self, body: Iterable[ast.AST], depth: int, seen: set | None = None,
-              around: Iterable[ast.AST] = ()) -> set[Op]:
+    def nodes(self, body: Iterable[ast.AST], depth: int, seen: set | None = None, around: Iterable[ast.AST] = ()) -> set[Op]:
         self.seen = self.seen if seen is None else seen
         body, ops = list(body), set()
         assigns = _assigns(n for stmt in [*body, *around] for n in ast.walk(stmt))
@@ -141,16 +145,15 @@ class Reader:
 
 
 def web_routes() -> list[tuple[str, str, set[Op]]]:
-    gen, rows = importlib.import_module("gen_api_surface"), []
-    for route in gen.build_reference_app().routes:
+    rows = []
+    for route in importlib.import_module("gen_api_surface").build_reference_app().routes:
         if (endpoint := getattr(route, "endpoint", None)) is not None and type(route).__name__ != "Mount":
             methods = ",".join(sorted((getattr(route, "methods", None) or {"WS"}) - {"HEAD", "OPTIONS"}))
             rows.append((methods, route.path, Reader({}).function(endpoint)))
     return rows
 
 
-def _branches(fn: Any, names: set[str]) -> tuple[dict[str, list[ast.AST]], list[ast.AST]]:
-    """Each tool name -> its ``if name == ...`` branch (unnamed tools get the fall-through)."""
+def _branches(fn: Any, names: set[str]) -> tuple[dict[str, list[ast.AST]], list[ast.AST]]:  # tool -> if-branch
     whole = ast.parse(textwrap.dedent(inspect.getsource(fn))).body[0].body
     out, tail = defaultdict(list), []
 
@@ -176,9 +179,7 @@ def _branches(fn: Any, names: set[str]) -> tuple[dict[str, list[ast.AST]], list[
 
 
 def mcp_tools() -> dict[str, set[Op]]:
-    from holdspeak.mcp import tools
-    from holdspeak.mcp.families import FAMILIES
-
+    tools, FAMILIES = importlib.import_module("holdspeak.mcp.tools"), importlib.import_module("holdspeak.mcp.families").FAMILIES
     owners, result = [(family, family.dispatch, {t["name"] for t in family.TOOLS}) for family in FAMILIES], {}
     owners.append((tools, tools._dispatch, {t["name"] for t in tools.TOOLS} - set().union(*(o[2] for o in owners))))
     for module, dispatch, names in owners:
@@ -188,14 +189,18 @@ def mcp_tools() -> dict[str, set[Op]]:
             result[name] = Reader(dict(vars(module))).nodes(stmts, 0, around=whole)
             if isinstance(mapped.get(name), str) and mapped[name] in DESCRIPTORS:
                 result[name].add(DESCRIPTORS[mapped[name]])
+    for path in sorted((REPO / "holdspeak" / "services").glob("*_operations.py")):  # a declared table's rows
+        for row in getattr(importlib.import_module(f"holdspeak.services.{path.stem}"), "OPERATIONS", ()):
+            if row.schema is not None:  # its tool reaches what the row's call reaches on <x>_service
+                result[row.name] = Reader({}).function(row.call, 0, [path.stem.replace("_operations", "_service")])
     return result
 
 
 def cli_ops(routes: list[tuple[str, str, set[Op]]]) -> set[Op]:
     ops: set[Op] = set()
     for path in sorted((REPO / "holdspeak" / "commands").glob("*.py")):
-        tree = ast.parse(path.read_text())
-        ops |= Reader(dict(vars(importlib.import_module(f"holdspeak.commands.{path.stem}")))).nodes(tree.body, 1)
+        module, tree = importlib.import_module(f"holdspeak.commands.{path.stem}"), ast.parse(path.read_text())
+        ops |= Reader(dict(vars(module))).nodes(tree.body, 1)
         for call in (n for n in ast.walk(tree) if isinstance(n, ast.Call)):  # call("POST", "/api/...")
             words = [_text(a) for a in call.args if _text(a)]
             verb = next((w for w in words if w in ("GET", "POST", "PATCH", "PUT", "DELETE")), None)
@@ -205,12 +210,11 @@ def cli_ops(routes: list[tuple[str, str, set[Op]]]) -> set[Op]:
     return ops
 
 
-def _expand(ops: set[Op], universe: set[Op]) -> set[Op]:  # list_*s: every concrete method it matches
+def _expand(ops: set[Op], universe: set[Op]) -> set[Op]:
     out = {op for op in ops if "*" not in op[1]}
     for service, pattern in (op for op in ops if "*" in op[1]):
         shape = re.compile(re.escape(pattern).replace(r"\*", r"\w+") + "$")
-        found = {op for op in universe if op[0] == service and "*" not in op[1] and shape.match(op[1])}
-        out |= found or {(service, pattern)}
+        out |= {op for op in universe if op[0] == service and "*" not in op[1] and shape.match(op[1])} or {(service, pattern)}
     return out
 
 
@@ -218,30 +222,26 @@ def main() -> int:
     _load_descriptors()
     routes, tools = web_routes(), mcp_tools()
     web, mcp, cli = {op for r in routes for op in r[2]}, {op for ops in tools.values() for op in ops}, cli_ops(routes)
-    web, mcp, cli = (_expand(ops, web | mcp | cli) for ops in (web, mcp, cli))
+    web, mcp, cli = (_expand(ops, web | mcp | cli) for ops in (web, mcp, cli))  # list_*s: each method it matches
     tools = {name: _expand(ops, web | mcp | cli) for name, ops in tools.items()}
-    blind_routes, blind_tools = Counter("/".join(p.split("/")[:3]) for _m, p, o in routes if not o), sorted(
-        n for n, ops in tools.items() if not ops)
+    blind_routes, blind_tools = Counter("/".join(p.split("/")[:3]) for _m, p, o in routes if not o), sorted(n for n, o in tools.items() if not o)
     print(f"# Operation parity census\n\nGenerated by `scripts/operation_parity.py`. An operation is one "
           f"`<service>.<method>` call.\n\n- live HTTP routes: {len(routes)} ({len(routes) - blind_routes.total()} "
           f"reach a service operation)\n- MCP tools: {len(tools)} ({len(tools) - len(blind_tools)} reach a service "
           f"operation)\n- operations: {len(web | mcp | cli)}; web only {len(web - mcp)}, MCP only "
           f"{len(mcp - web)}, both {len(web & mcp)}, CLI {len(cli)}\n\n"
           "| service | web only | MCP only | both | CLI |\n|---|---:|---:|---:|---:|")
-    by = {name: Counter(s for s, _ in ops) for name, ops in
-          (("web", web - mcp), ("mcp", mcp - web), ("both", web & mcp), ("cli", cli))}
+    by = {name: Counter(s for s, _ in ops) for name, ops in (("web", web - mcp), ("mcp", mcp - web), ("both", web & mcp), ("cli", cli))}
     rank = sorted({s for s, _ in web | mcp | cli}, key=lambda s: (-by["web"][s], s))
-    for s in rank:
-        print(f"| {s} | {by['web'][s]} | {by['mcp'][s]} | {by['both'][s]} | {by['cli'][s]} |")
-    print("\n## Web-only operations, by service (largest first)\n")
-    for s in (s for s in rank if by["web"][s]):
-        print(f"- **{s}** ({by['web'][s]}): " + ", ".join(f"`{m}`" for m in sorted(m for v, m in web - mcp if v == s)))
+    print("\n".join(f"| {s} | {by['web'][s]} | {by['mcp'][s]} | {by['both'][s]} | {by['cli'][s]} |" for s in rank))
+    print("\n## Web-only operations, by service (largest first)\n\n" + "\n".join(
+        f"- **{s}** ({by['web'][s]}): " + ", ".join(f"`{m}`" for m in sorted(m for v, m in web - mcp if v == s))
+        for s in rank if by["web"][s]))
     print(f"\n## Not read ({blind_routes.total()} routes, {len(blind_tools)} tools)\n\nNo service operation was "
           "found in these bodies: a page, a socket, a probe, a store or ledger called without a service, or a shape "
           "the reader misses.\n\n- tools: " + ", ".join(f"`{n}`" for n in blind_tools) + "\n- routes: " + ", ".join(f"`{k}` {v}" for k, v in sorted(blind_routes.items(), key=lambda kv: (-kv[1], kv[0]))))
     if "--rows" in sys.argv:
-        print("\n## Route rows\n\n" + "\n".join(f"- {m} {p}: " + ", ".join(sorted(f"{s}.{x}" for s, x in ops))
-                                              for m, p, ops in routes))
+        print("\n## Route rows\n\n" + "\n".join(f"- {m} {p}: " + ", ".join(sorted(f"{s}.{x}" for s, x in o)) for m, p, o in routes))
     return 0
 
 
