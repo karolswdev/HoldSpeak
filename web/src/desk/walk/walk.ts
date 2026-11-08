@@ -4,7 +4,7 @@
  * ONLY its own walk and posts its answers (`/api/w/<token>`); it is no owner
  * session. A step opens windows through the desk's own openers (the surface
  * registry and the registry verbs the Dock and Go run), never a new path. */
-import { apiFetch } from "../../lib/api";
+import { ApiError, apiFetch } from "../../lib/api";
 import { DESK_APPLICATIONS, applicationVerbId } from "../applications";
 import { openSurface, openSurfaceOr } from "../shell";
 
@@ -51,15 +51,18 @@ export function clearWalkFromLocation(): void {
 }
 
 async function walkFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  let response: Response;
+  // The walk runs inside the desk, so its wire is the typed client (the
+  // null-read guard: only lib/api.ts calls fetch). The hub admits the token
+  // in the path; an owner header beside it changes nothing.
   try {
-    response = await fetch(path, { ...init, cache: "no-store", referrerPolicy: "no-referrer" });
-  } catch {
+    return await apiFetch<T>(path, { ...init, cache: "no-store", referrerPolicy: "no-referrer" });
+  } catch (cause) {
+    if (cause instanceof ApiError) {
+      const body = (cause.payload ?? {}) as { code?: unknown; detail?: unknown };
+      throw new WalkError(cause.status, String(body.code ?? "walk_failed"), String(body.detail ?? cause.message ?? ""));
+    }
     throw new WalkError(0, "unreachable", "The hub does not answer.");
   }
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new WalkError(response.status, String(body?.code ?? "walk_failed"), String(body?.detail ?? ""));
-  return body as T;
 }
 
 export function readWalk(token: string): Promise<WalkPage> {
