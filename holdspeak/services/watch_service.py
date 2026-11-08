@@ -31,7 +31,7 @@ from holdspeak.services.observer import (
     PipelineObserver,
     observe_service,
 )
-from holdspeak.services.reaction_service import diff_snapshots, normalize_snapshot
+from holdspeak.services.snapshot_diff import diff_snapshots, normalize_snapshot
 from holdspeak.watch_condition_matcher import match_condition
 from holdspeak.watch_validation import (
     validate_action,

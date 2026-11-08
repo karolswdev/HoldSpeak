@@ -624,7 +624,7 @@ class TestBranchCi:
         """HS-169-05 law: branch_ci entities carry a run id derived from
         the URL, so normalize_snapshot validates them (the baseline_watch
         path that every default CI watch hits)."""
-        from holdspeak.services.reaction_service import normalize_snapshot
+        from holdspeak.services.snapshot_diff import normalize_snapshot
 
         def runner(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
             return subprocess.CompletedProcess(command, 0, json.dumps([{
@@ -652,7 +652,7 @@ class TestBranchCi:
     def test_branch_ci_normalize_snapshot_fallback_id(self) -> None:
         """HS-169-05 law: when the URL has no run id, the entity id falls
         back to {base}-{idx}."""
-        from holdspeak.services.reaction_service import normalize_snapshot
+        from holdspeak.services.snapshot_diff import normalize_snapshot
 
         def runner(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
             return subprocess.CompletedProcess(command, 0, json.dumps([{

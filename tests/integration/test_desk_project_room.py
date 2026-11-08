@@ -2330,7 +2330,7 @@ def hs164_seed_graduated_watch(db: Any, project_id: str, watch_id: str = "cw_gla
     """A graduated watch (state active, due now, baseline established) bound
     to the project, with a rule that runs the steward on any PR change, and
     its baseline snapshot."""
-    from holdspeak.services.reaction_service import normalize_snapshot
+    from holdspeak.services.snapshot_diff import normalize_snapshot
 
     now_iso = datetime.now().isoformat()
     past_iso = (datetime.now() - timedelta(minutes=5)).isoformat()

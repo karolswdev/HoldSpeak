@@ -28,9 +28,8 @@ from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 from holdspeak.services.reaction_service import (
     DEFAULT_WATCH_REFRESH_MINUTES,
     ReactionService,
-    diff_snapshots,
-    normalize_snapshot,
 )
+from holdspeak.services.snapshot_diff import diff_snapshots, normalize_snapshot
 
 
 OWNER = Principal(PrincipalKind.OWNER, "legacy-test-owner")

@@ -36,7 +36,7 @@ from holdspeak.services.project_evidence_collector import (
     WatchAdapter,
     _content_hash,
 )
-from holdspeak.services.reaction_service import normalize_snapshot
+from holdspeak.services.snapshot_diff import normalize_snapshot
 
 
 OWNER = Principal(PrincipalKind.OWNER, "collector-test-owner")
