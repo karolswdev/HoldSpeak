@@ -23,8 +23,8 @@
     "schedule_enabled": false,
     "schedule_revision": 3,
     "item_order": [],
-    "created_at": "2026-11-08T22:38:35Z",
-    "last_modified": "2026-11-08T22:38:35Z",
+    "created_at": "2026-11-08T23:24:11Z",
+    "last_modified": "2026-11-08T23:24:11Z",
     "deleted": false,
     "items": [],
     "item_count": 0,
@@ -51,7 +51,7 @@
     "when_kind": "event",
     "event_starts": [
      {
-      "id": "w_0153e8f53785",
+      "id": "w_057b03643d21",
       "name": "PR review requested",
       "enabled": true,
       "event_pattern": "github.pr.review_requested"

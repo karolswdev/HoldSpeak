@@ -54,21 +54,30 @@ def running(step_id: str) -> bool:
         return step_id in _RUNNING
 
 
-def brief_of(db: Any, step: Mapping[str, Any]) -> tuple[str, str, list[str]]:
-    """``(system, user, refs)``: the call's prompt and the source refs it read."""
+def brief_of(db: Any, step: Mapping[str, Any], principal: Any = None) -> tuple[str, str, list[str], list[str]]:
+    """``(system, user, refs, excluded)``: the call's prompt, the source refs
+    it read, and (a project update) the refs a tool-capable engine must not
+    read. A project update reads its P2-eligible refs, the records draft and
+    the standing pages (``automation_runs.project_update_material``)."""
     from ..workbench_conductor import _hydrate_item_grounding
-    from .automation_runs import PLAIN_SYSTEM_PROMPT, expand_sources
+    from .automation_runs import PLAIN_SYSTEM_PROMPT, PROJECT_UPDATES_PREFIX, expand_sources, project_update_material
 
     body = str(step.get("brief_markdown") or "").strip()
     refs, about = expand_sources(db, [str(ref) for ref in step.get("sources") or []])
     if about:
         body = f"{body}\n\n[ABOUT]\n" + "\n".join(about)
+    deliver = str(step.get("deliver") or "")
+    eligible: Optional[list[str]] = None
+    material, excluded = "", []
+    if deliver.startswith(PROJECT_UPDATES_PREFIX):
+        eligible, material, excluded = project_update_material(db, principal, deliver[len(PROJECT_UPDATES_PREFIX):])
     grounding = ""
     if refs:
         grounding = _hydrate_item_grounding(
-            db, json.dumps({"refs": refs}), query=f"{step.get('title') or ''}\n{body}")
-    parts = [part for part in (grounding, f"[TASK]\n{step.get('title') or ''}", body) if part]
-    return PLAIN_SYSTEM_PROMPT, "\n\n".join(parts), refs
+            db, json.dumps({"refs": refs}), query=f"{step.get('title') or ''}\n{body}",
+            project_update_refs=eligible)
+    parts = [part for part in (grounding, material, f"[TASK]\n{step.get('title') or ''}", body) if part]
+    return PLAIN_SYSTEM_PROMPT, "\n\n".join(parts), refs, excluded
 
 
 def _default_broker() -> Any:
@@ -86,14 +95,18 @@ def claim(step_id: str) -> bool:
         return True
 
 
+def release(step_id: str) -> None:
+    with _RUNNING_GUARD:
+        _RUNNING.discard(step_id)
+
+
 def run_claimed(runner: Any, program: Mapping[str, Any], step: dict[str, Any], *,
                 broker: Optional[Callable[[], Any]] = None) -> None:
     """Run one claimed prompt step to its end, then give the hand back."""
     try:
         _run(runner, program, step, broker or _default_broker)
     finally:
-        with _RUNNING_GUARD:
-            _RUNNING.discard(step["id"])
+        release(step["id"])
 
 
 def hand(runner: Any, program: Mapping[str, Any], step: dict[str, Any], *,
@@ -117,7 +130,7 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
     if step["state"] == "briefed":
         service.transition(program, step, "working")
     try:
-        system, user, refs = brief_of(service.db, step)
+        system, user, refs, excluded = brief_of(service.db, step, runner.principal)
     except Exception as exc:  # a source that cannot be read fails the step before any call
         service.transition(program, step, "failed", line=f"The sources were not read · {exc}"[:400])
         return
@@ -131,10 +144,14 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
         # save its text through the CONDUCTOR set, as an automation did.
         "tool_palette": "CONDUCTOR" if project_id else "ASK",
         "output_target": deliver,
+        "project_update_excluded_refs": excluded if project_id else None,
     }
     try:
         door = broker()
-        answer = engine_door.run(door, runner.principal, JOB, payload, adapter=adapter,
+        wb = _automation_of(service.db, program)
+        # An automation's run is on the engine its With line names.
+        engine = engine_door.engine_for(door, JOB, subject=("workbench", str(wb.id)) if wb is not None else None)
+        answer = engine_door.run(door, runner.principal, JOB, payload, engine=engine, adapter=adapter,
                                  result_ref=f"program-step:{step['id']}")
     except engine_door.EngineDoorError as exc:
         facts = dict(step.get("facts") or {})
@@ -162,6 +179,31 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
     step["facts"] = facts
     line = f"Answered on {answer.model or 'the engine'} · {_delivered_words(delivered)}"
     service.transition(program, step, "done", line=line[:400])
+    _finished_notice(service.db, program)
+
+
+def _automation_of(db: Any, program: Mapping[str, Any]) -> Any:
+    """The automation that started this Program (its origin), or None."""
+    from .automation_runs import PROGRAM_ORIGIN_PREFIX
+
+    origin = str(program.get("origin_ref") or "")
+    if not origin.startswith(PROGRAM_ORIGIN_PREFIX):
+        return None
+    return db.workbenches.get(origin[len(PROGRAM_ORIGIN_PREFIX):], include_deleted=True)
+
+
+def _finished_notice(db: Any, program: Mapping[str, Any]) -> None:
+    """An automation's run made a new result: one quiet notice
+    (``HeartbeatService.finished_notice``). A failed notice is a log line."""
+    wb = _automation_of(db, program)
+    if wb is None or getattr(wb, "deleted", False):
+        return
+    try:
+        from .heartbeat_service import HeartbeatService
+
+        HeartbeatService(db).finished_notice(str(wb.id), str(wb.name or "Automation"), 1)
+    except Exception as exc:
+        log.warning(f"program {program['id']}: finished notice failed: {exc}")
 
 
 def _deliver(service: Any, program: Mapping[str, Any], step: Mapping[str, Any], deliver: str, text: str,
@@ -175,12 +217,19 @@ def _deliver(service: Any, program: Mapping[str, Any], step: Mapping[str, Any], 
             title=str(program.get("title") or step.get("title") or "Result"), body=text,
             refs=refs or [str(ref) for ref in step.get("sources") or []],
             generator=f"agent:program:{program['id']}",
-            origin_words=f"From the program [{program.get('title') or 'Program'}](/?open=program:{program['id']}).",
+            origin_words=_origin_words(service.db, program),
             used_item_id=str(step["id"]),
         )
     except Exception as exc:  # the answer stays on the step; the delivery is named failed
         log.warning(f"prompt step {step['id']}: delivery to {deliver} failed: {exc}")
         return {"target": deliver, "outcome": "failed", "error": str(exc)[:400]}
+
+
+def _origin_words(db: Any, program: Mapping[str, Any]) -> str:
+    wb = _automation_of(db, program)
+    if wb is not None:
+        return f"From the automation [{wb.name or 'Automation'}](/?open=workbench:{wb.id})."
+    return f"From the program [{program.get('title') or 'Program'}](/?open=program:{program['id']})."
 
 
 def _delivered_words(delivered: Mapping[str, Any]) -> str:

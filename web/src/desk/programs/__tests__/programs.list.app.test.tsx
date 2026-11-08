@@ -251,3 +251,17 @@ describe("PG-IMPORT IMP7: the forest (recorded: scripts/record_program_fixtures.
   });
 });
 
+
+describe("an automation's runs (2026-11-08: each run is a Program of one prompt step)", () => {
+  it("the rail keeps one tile per automation, its latest run", async () => {
+    const { railGroups } = await import("../ProgramRail");
+    const recorded = clone(list).programs;
+    const [first, second, ...rest] = recorded;
+    const older = { ...first, automation_id: "workbench-morning-prep", created_at: "2026-11-02T07:30:00Z", state: "done" as const, updated_at: "2026-11-02T07:31:00Z" };
+    const newer = { ...second, automation_id: "workbench-morning-prep", created_at: "2026-11-03T07:30:00Z", state: "done" as const, updated_at: "2026-11-03T07:31:00Z" };
+    const groups = railGroups([older, newer, ...rest], Date.parse("2026-11-03T12:00:00Z"));
+    const ids = [...groups.active, ...groups.done].map((row) => row.id);
+    expect(ids).toContain(newer.id);
+    expect(ids).not.toContain(older.id);
+  });
+});

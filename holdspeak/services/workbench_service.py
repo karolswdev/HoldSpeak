@@ -916,7 +916,12 @@ class WorkbenchService:
         return _service().parent_run_controller.cancel_by_operation_id(principal, parent_operation_id)
 
     def list_runs(self, principal: Principal, workbench_id: str) -> list[dict[str, Any]]:
-        return [r.to_dict() for r in self._db.workbench_runs.list_for_workbench(workbench_id)]
+        from .automation_runs import program_run_rows
+
+        # 2026-11-08: a run is a Program of one prompt step; earlier runs are workbench_runs rows.
+        rows = [r.to_dict() for r in self._db.workbench_runs.list_for_workbench(workbench_id)]
+        rows.extend(program_run_rows(self._db, workbench_id))
+        return sorted(rows, key=lambda row: str(row.get("started_at") or ""), reverse=True)
 
     # ── Templates and skills ─────────────────────────────────────────────
 

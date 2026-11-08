@@ -49,7 +49,6 @@ content inside the body.  Sort everything canonically.
 """
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 import re as _re
@@ -1479,7 +1478,9 @@ def _parse_model_output(
     return sections, claims
 
 
-def _route_plan_deployment(broker: Any, capability_id: str) -> tuple[str, str, str]:
+def _route_plan_deployment(
+    broker: Any, capability_id: str, *, subject_kind: str | None = None, subject_id: str | None = None,
+) -> tuple[str, str, str]:
     """The authoritative resolution: profile -> plan -> frozen leg (HS-200-08).
 
     This is the SAME resolver the Ask path runs (``route_probe.preview_route``
@@ -1496,6 +1497,7 @@ def _route_plan_deployment(broker: Any, capability_id: str) -> tuple[str, str, s
 
         plan = plans.resolve_route_plan(
             ROUTE_PLANNING_AUTHORITY, capability_id=capability_id,
+            subject_kind=subject_kind, subject_id=subject_id,
         )
     except Exception as exc:  # planner refusals are a fallback, never a crash
         _log.warning(
@@ -2379,26 +2381,26 @@ class ProjectUpdateService:
     def _run_automation_pass(
         self, principal: Principal, job_id: str, project_id: str, automation_id: str,
     ) -> None:
-        """Run the project's Workbench and retain its delivered update row.
+        """Run the project's update automation and retain its delivered row.
 
-        The P1 job is only the existing face-facing wait state.  The producer
-        is the real Workbench runner, whose delivery writes the one
-        ``project_updates`` row and carries the run's looked-at refs.
+        The P1 job is only the existing face-facing wait state.  The run is a
+        Program of one prompt step (2026-11-08), run here while the job
+        waits; its delivery writes the one ``project_updates`` row and
+        carries the run's looked-at refs.
         """
         state, reason, detail, result = "succeeded", None, None, None
         try:
-            from .workbench_service import WorkbenchService
+            from . import automation_runs
 
-            run = asyncio.run(WorkbenchService(self._db).run(
-                principal, automation_id, memory_enabled=False,
-            ))
-            deliveries = run.get("deliveries", []) if isinstance(run, dict) else []
-            written = next(
-                (delivery for delivery in deliveries
-                 if str(delivery.get("project_id") or "") == project_id
-                 and str(delivery.get("outcome") or "") == "written"),
-                None,
-            )
+            automation = self._db.workbenches.get(automation_id)
+            if automation is None:
+                raise ServiceError("project_update_automation_missing", "The project update automation is missing.",
+                                   context={"status": 409, "reason": "did_not_answer"})
+            run = automation_runs.run_as_program(self._db, principal, automation, wait=True)
+            written = automation_runs.program_delivery(self._db, run["program_id"])
+            if not (str(written.get("project_id") or "") == project_id
+                    and str(written.get("outcome") or "") == "written"):
+                written = {}
             update_id = str((written or {}).get("update_id") or "")
             update = self._db.project_updates.get_update(update_id) if update_id else None
             if update is None:

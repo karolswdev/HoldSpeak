@@ -378,11 +378,12 @@ def test_a_scheduled_instruction_makes_one_inbox_note_per_tick_that_reads_both_n
     assert [(r["items_completed"], r["items_attempted"], r["status"]) for r in runs] == [(1, 1, "completed")] * 2
 
     # A result is NEW until it is opened (decision 5), never "pending-review".
+    # 2026-11-08: each run is a Program of one prompt step; its result id is the step's.
     artifact_id = results[0]["artifact_id"]
-    assert db.plugins.get_artifact(artifact_id).status == "new"
+    assert all(r["program"]["state"] == "done" for r in results)
     opened = client.post(f"/api/workbenches/{wb}/results/{artifact_id}/open")
     assert opened.status_code == 200, opened.text
-    assert db.plugins.get_artifact(artifact_id).status == "read"
+    assert opened.json()["result"]["status"] == "read"
     after = client.get(f"/api/workbenches/{wb}").json()["workbench"]["results"]
     assert [r["new"] for r in after] == [False, True]
 

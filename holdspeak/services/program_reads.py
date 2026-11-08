@@ -999,6 +999,10 @@ def _summary(db: Any, program: Mapping[str, Any], steps: list[dict[str, Any]], *
         "last_checkpoint": last,
         "in_state_seconds": _seconds_between(program["updated_at"]),
     }
+    origin = str(program.get("origin_ref") or "")
+    if origin.startswith("workbench:"):
+        # 2026-11-08: a run of an automation; the rail shows one tile per automation.
+        summary["automation_id"] = origin.partition(":")[2]
     if state == "parked":
         # The park's reason (``program.park reason``): the list folds the row.
         parked = next((row for row in checkpoints if row.get("kind") == PARK_KIND), None)

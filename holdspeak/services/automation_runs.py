@@ -222,6 +222,232 @@ def mint_occurrence(
     )
 
 
+# ── a run is a Program of one prompt step (2026-11-08) ─────────────────
+
+#: A Program an automation started names it as its origin.
+PROGRAM_ORIGIN_PREFIX = "workbench:"
+
+
+def runs_as_program(wb: Any) -> bool:
+    """An automation with its own instruction (no agent hand, no Program
+    template) runs each time as a Program of one prompt step."""
+    return bool(str(getattr(wb, "instruction", "") or "").strip()) and str(
+        getattr(wb, "do_kind", "run") or "run") not in ("hand_to_agent", "run_program")
+
+
+def program_runs(db: Any, workbench_id: str) -> list[dict[str, Any]]:
+    """The Programs an automation started, newest first (store rows)."""
+    from ..db.programs import ProgramStore
+
+    with db._connection() as conn:
+        ids = [str(row["id"]) for row in conn.execute(
+            "SELECT id FROM programs WHERE origin_ref = ? ORDER BY created_at DESC, id DESC",
+            (PROGRAM_ORIGIN_PREFIX + workbench_id,))]
+    store = ProgramStore(db)
+    return [row for row in (store.get_program(pid) for pid in ids) if row is not None]
+
+
+def run_as_program(
+    db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = None,
+    event: Optional[dict[str, Any]] = None, title: Optional[str] = None,
+    start: bool = True, wait: bool = False, key: Optional[str] = None,
+) -> dict[str, Any]:
+    """Start one run of an instruction automation: a Program titled
+    "<name>, <date>" (or the event's title) with one prompt step that does
+    the instruction about the automation's sources and delivers where Put
+    it in says. One Program per minute: a second start in the same minute
+    returns the first. ``key`` names the run (a scheduled minute): a second
+    start with the same key returns the first Program and starts nothing.
+    ``wait``: the step's call runs in this thread before the return.
+    ``{"program_id", "run_id", "started"}``."""
+    from ..db.programs import ProgramStore
+    from .program_service import default_program_service
+
+    if key:
+        store = ProgramStore(db)
+        for row in program_runs(db, str(wb.id)):
+            if any((step.get("facts") or {}).get("run_key") == key for step in store.list_steps(row["id"])):
+                return {"program_id": row["id"], "run_id": row["id"], "started": False}
+    brief = str(wb.instruction or "").strip()
+    if event is not None:
+        brief = f"{brief}\n\n{_event_block(event)}"
+    target = str(wb.output_target or "inbox")
+    project_id = target[len(PROJECT_UPDATES_PREFIX):] if target.startswith(PROJECT_UPDATES_PREFIX) else None
+    service = default_program_service(db)
+    owner = _delivery_principal(principal)
+    made = service.create(
+        owner, title=str(title or occurrence_title(wb, now)), project_id=project_id,
+        # His schedule (or his press) is the go-ahead: a prompt step merges
+        # nothing, so the run asks him nothing on the way.
+        control="yolo", origin_ref=PROGRAM_ORIGIN_PREFIX + str(wb.id),
+        spend_limit_usd=getattr(wb, "spend_limit_usd", None),
+        steps=[{"title": str(wb.name or "Automation"), "brief": brief, "kind": "prompt",
+                "deliver": target, "sources": sources_of(wb)}],
+    )
+    if key:
+        store = ProgramStore(db)
+        for step in store.list_steps(made["id"]):
+            step["facts"] = {**(step.get("facts") or {}), "run_key": key}
+            store.save_step(step)
+    if wait:
+        # A caller waits on the answer (the Room's Draft update): the step's
+        # call runs here, in this thread, through the same hand the tick uses.
+        from . import program_prompt
+
+        steps = made["steps"]
+        claimed = [step["id"] for step in steps if program_prompt.claim(step["id"])]
+        try:
+            service.start(owner, made["id"], by="engine")
+            runner = service.runner()
+            for step_id in claimed:
+                program = service.store.get_program(made["id"])
+                step = service.store.get_step(step_id)
+                if program is not None and step is not None:
+                    program_prompt.run_claimed(runner, program, step, broker=getattr(runner, "_broker", None))
+        finally:
+            # run_claimed gives its hand back; a step it never reached is released here.
+            for step_id in claimed:
+                program_prompt.release(step_id)
+        service.changed(made["id"], verb="step")
+    elif start:
+        service.start(owner, made["id"], by="engine")
+    return {"program_id": made["id"], "run_id": made["id"], "started": start or wait}
+
+
+def project_update_material(
+    db: Any, principal: Any, project_id: str,
+) -> tuple[list[str], str, list[str]]:
+    """What a project update run reads: ``(refs, material, excluded_refs)``.
+
+    ``refs`` are the P2-eligible leaf refs a ``project:`` source becomes;
+    ``material`` is the records draft and the three standing project pages
+    (P8's no-tool contract), read sentence by sentence with the same P2
+    exclusions, so a stale private source cannot come back at this seam;
+    ``excluded_refs`` are the refs a tool-capable engine must not read.
+    When the source list cannot be established the run reads nothing broad:
+    ``([], "", [])``."""
+    try:
+        from .memory_grounding import MemoryContext, page_excerpts, project_pages
+        from .project_service import ProjectService
+        from .project_update_service import ProjectUpdateService
+
+        update_service = ProjectUpdateService(db, project_service=ProjectService(db))
+        refs = update_service.project_update_grounding_refs(principal, project_id)
+        records = update_service.draft_update(principal, project_id, generator="deterministic", persist=False)
+        excluded = update_service.project_update_excluded_refs(principal, project_id)
+        excluded_folded = {str(ref).casefold() for ref in excluded}
+
+        def page_sentence_is_safe(sentence: Any) -> bool:
+            found = sentence.get("refs") if isinstance(sentence, dict) else []
+            return not any(str(ref.get("ref") or "").split("#", 1)[0].casefold() in excluded_folded
+                           for ref in found or [] if isinstance(ref, dict))
+
+        pages = page_excerpts(
+            db, project_pages(project_id, "what-we-decided", "what-is-open", "what-changed-this-week"),
+            exclude_refs=excluded, sentence_filter=page_sentence_is_safe,
+        )
+        records_body = str(records.get("body_md") or "").strip()
+        page_body = MemoryContext(tuple(pages)).prompt_block("PROJECT PAGES")
+        material = "\n\n".join(part for part in (
+            f"[RECORDS DRAFT]\n{records_body}\n[END RECORDS DRAFT]" if records_body else "", page_body) if part)
+        return list(refs), material, sorted(excluded)
+    except Exception:
+        return [], "", []
+
+
+def program_delivery(db: Any, program_id: str) -> dict[str, Any]:
+    """Where the run's prompt step put its answer (``facts.delivered``), or ``{}``."""
+    from ..db.programs import ProgramStore
+
+    step = next((row for row in ProgramStore(db).list_steps(program_id) if row.get("kind") == "prompt"), None)
+    return dict(((step or {}).get("facts") or {}).get("delivered") or {})
+
+
+def _program_results(db: Any, workbench_id: str, limit: int) -> list[dict[str, Any]]:
+    """The automation's Program runs as result rows (the shape of
+    ``results_of``): the prompt step's report is the text."""
+    from ..db.programs import ProgramStore
+    from .run_trace import use_by_item
+
+    store = ProgramStore(db)
+    rows: list[dict[str, Any]] = []
+    for program in program_runs(db, workbench_id)[:limit]:
+        step = next((row for row in store.list_steps(program["id"]) if row.get("kind") == "prompt"), None)
+        if step is None:
+            continue
+        facts = step.get("facts") or {}
+        prompt = facts.get("prompt") or {}
+        state = str(step.get("state") or "")
+        status = "done" if state == "done" else ("failed" if state == "failed" else "running")
+        rows.append({
+            # The result's own id is the step's: Open marks it read (``open_result``).
+            "item_id": str(step["id"]), "title": str(program.get("title") or ""), "status": status,
+            "artifact_id": str(step["id"]), "new": status == "done" and not facts.get("opened_at"),
+            "update_id": (facts.get("delivered") or {}).get("update_id"),
+            "error": _failure_line(store, step) if status == "failed" else None,
+            "text": str(step.get("report") or "") if status == "done" else None,
+            "completed_at": step.get("ended_at"),
+            "seconds": _seconds_between(step.get("started_at"), step.get("ended_at")) if step.get("ended_at") else None,
+            "model": str(prompt.get("model") or ""), "boundary": str(prompt.get("egress") or ""),
+            "note_id": (facts.get("delivered") or {}).get("note_id"),
+            "cost_usd": None, "used": use_by_item(db, [str(step["id"])]).get(str(step["id"])),
+            "program": {"id": program["id"], "title": program["title"], "state": program["state"]},
+            "_at": str(step.get("ended_at") or program.get("created_at") or ""),
+        })
+    return rows
+
+
+def program_run_rows(db: Any, workbench_id: str) -> list[dict[str, Any]]:
+    """The automation's Program runs in the Runs wing's shape (one step each)."""
+    from ..db.programs import ProgramStore
+
+    store = ProgramStore(db)
+    rows = []
+    for program in program_runs(db, workbench_id):
+        step = next((row for row in store.list_steps(program["id"]) if row.get("kind") == "prompt"), None)
+        if step is None:
+            continue
+        prompt = (step.get("facts") or {}).get("prompt") or {}
+        state = str(step.get("state") or "")
+        rows.append({
+            "id": program["id"], "workbench_id": workbench_id,
+            "started_at": step.get("started_at") or program.get("created_at"), "completed_at": step.get("ended_at"),
+            "items_attempted": 1 if state in ("done", "failed") else 0,
+            "items_completed": 1 if state == "done" else 0, "items_failed": 1 if state == "failed" else 0,
+            "mint_failures": 0, "total_tokens": int(prompt.get("tokens") or 0),
+            "egress_boundary": str(prompt.get("egress") or ""), "model": str(prompt.get("model") or ""),
+            "constitutional_context_revision": 0, "constitutional_context_hash": "", "skills_injected": [],
+            "status": "completed" if state == "done" else ("failed" if state == "failed" else "running"),
+            "program_id": program["id"],
+        })
+    return rows
+
+
+def _open_program_result(db: Any, workbench_id: str, step_id: str) -> Optional[dict[str, Any]]:
+    """Open a Program run's result: it is read from now on. None when the id
+    is not a run of this automation."""
+    from ..db.programs import ProgramStore
+
+    store = ProgramStore(db)
+    step = store.get_step(step_id)
+    if step is None or step.get("kind") != "prompt":
+        return None
+    program = store.get_program(str(step["program_id"])) or {}
+    if str(program.get("origin_ref") or "") != PROGRAM_ORIGIN_PREFIX + workbench_id:
+        return None
+    facts = dict(step.get("facts") or {})
+    if not facts.get("opened_at"):
+        facts["opened_at"] = utc_now_iso()
+        step["facts"] = facts
+        store.save_step(step)
+    return {"artifact_id": step_id, "status": "read"}
+
+
+def _failure_line(store: Any, step: Mapping[str, Any]) -> str:
+    rows = [row for row in store.list_checkpoints(str(step["program_id"])) if row.get("step_id") == step["id"]]
+    return str((rows[0] if rows else {}).get("line") or "The engine gave no answer")
+
+
 def _week_start(now: Optional[datetime] = None) -> datetime:
     """Monday 00:00 of this week, on the hub's own clock."""
     from datetime import timedelta
@@ -828,6 +1054,9 @@ def open_result(db: Any, workbench_id: str, artifact_id: str) -> dict[str, Any]:
             (artifact_id, workbench_id),
         ).fetchone()
         if row is None:
+            opened = _open_program_result(db, workbench_id, artifact_id)
+            if opened is not None:
+                return opened
             raise NotFound("result", artifact_id)
         if str(row["status"]) == "new":
             conn.execute(
@@ -858,12 +1087,29 @@ def new_results(db: Any) -> list[dict[str, Any]]:
                  AND json_extract(i.context_json, '$.occurrence') = 1
                GROUP BY w.id ORDER BY newest_at DESC, w.id""",
         ).fetchall()
-    return [{
+    found = {str(row["workbench_id"]): {
         "workbench_id": str(row["workbench_id"]),
         "name": str(row["name"] or "Automation"),
         "new_count": int(row["new_count"]),
         "newest_at": row["newest_at"],
-    } for row in rows]
+    } for row in rows}
+    # A run that is a Program: its result is NEW until it is opened.
+    with db._connection() as conn:
+        origins = [str(r["origin_ref"]) for r in conn.execute(
+            "SELECT DISTINCT origin_ref FROM programs WHERE origin_ref LIKE ?", (PROGRAM_ORIGIN_PREFIX + "%",))]
+    for origin in origins:
+        wb = db.workbenches.get(origin[len(PROGRAM_ORIGIN_PREFIX):])
+        if wb is None or getattr(wb, "deleted", False):
+            continue
+        fresh = [row for row in _program_results(db, str(wb.id), 50) if row["new"]]
+        if not fresh:
+            continue
+        row = found.setdefault(str(wb.id), {"workbench_id": str(wb.id), "name": str(wb.name or "Automation"),
+                                            "new_count": 0, "newest_at": None})
+        row["new_count"] += len(fresh)
+        newest = max(str(r["completed_at"] or "") for r in fresh)
+        row["newest_at"] = max(str(row["newest_at"] or ""), newest)
+    return sorted(found.values(), key=lambda r: (str(r["newest_at"] or ""), r["workbench_id"]), reverse=True)
 
 
 def prepared_for_today(db: Any, principal: Any) -> Optional[dict[str, Any]]:
@@ -874,21 +1120,20 @@ def prepared_for_today(db: Any, principal: Any) -> Optional[dict[str, Any]]:
     With line's name) and what its agent looked at. None when no such
     automation has a done result: Today then draws no block at all."""
     sync_agent_results(db)
-    with db._connection() as conn:
-        row = conn.execute(
-            """SELECT w.id AS workbench_id FROM workbench_items i
-               JOIN workbenches w ON w.id = i.workbench_id
-               WHERE w.deleted = 0 AND w.output_target = 'today' AND i.parked = 0 AND i.status = 'done'
-                 AND json_extract(i.context_json, '$.occurrence') = 1
-               ORDER BY COALESCE(i.completed_at, i.created_at) DESC, i.id DESC LIMIT 1""",
-        ).fetchone()
-    if row is None:
+    newest: Optional[tuple[str, Any, dict[str, Any]]] = None
+    for wb in db.workbenches.list():
+        if getattr(wb, "deleted", False) or str(wb.output_target or "") != "today":
+            continue
+        # A run is a Program of one prompt step (its report is the text); the
+        # runs before it are occurrence items. ``results_of`` reads both.
+        result = next((r for r in results_of(db, str(wb.id), limit=5) if r["status"] == "done"), None)
+        at = str((result or {}).get("completed_at") or "")
+        if result is not None and (newest is None or at > newest[0]):
+            newest = (at, wb, result)
+    if newest is None:
         return None
-    workbench_id = str(row["workbench_id"])
-    wb = db.workbenches.get(workbench_id)
-    result = next((r for r in results_of(db, workbench_id, limit=5) if r["status"] == "done"), None)
-    if wb is None or result is None:
-        return None
+    _at, wb, result = newest
+    workbench_id = str(wb.id)
     return {
         "workbench_id": workbench_id,
         "name": str(wb.name or "Morning prep"),
@@ -1045,8 +1290,15 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
             "used": uses.get(str(row["id"])),
             # PG14: a run_program run's result links the Program it started.
             **({"program": programs[str(row["program_id"])]} if row["program_id"] in programs else {}),
+            "_at": str(row["completed_at"] or row["created_at"] or ""),
         })
-    return results
+    # 2026-11-08: a run is a Program of one prompt step; its rows join the
+    # occurrence rows of the runs before it, newest first.
+    results.extend(_program_results(db, workbench_id, max(1, int(limit))))
+    results.sort(key=lambda row: row["_at"], reverse=True)
+    for row in results:
+        row.pop("_at", None)
+    return results[:max(1, int(limit))]
 
 
 def _program_links(db: Any, program_ids: list[str]) -> dict[str, dict[str, Any]]:

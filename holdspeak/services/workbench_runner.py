@@ -731,65 +731,8 @@ class WorkbenchRunner:
         project_update_material = ""
         project_update_excluded_refs: list[str] | None = None
         if output_target.startswith("project_updates:"):
-            project_target = output_target.removeprefix("project_updates:")
-            try:
-                from .project_service import ProjectService
-                from .memory_grounding import MemoryContext, page_excerpts, project_pages
-                from .project_update_service import ProjectUpdateService
-
-                update_service = ProjectUpdateService(
-                    self.db, project_service=ProjectService(self.db),
-                )
-                project_update_refs = update_service.project_update_grounding_refs(
-                    principal, project_target,
-                )
-                # P8's no-tool contract: the engine receives the existing
-                # records draft and the three project standing pages as
-                # material. Pages are read sentence-by-sentence with the same
-                # P2 exclusions, so a stale private source cannot re-enter at
-                # this second context seam.
-                records = update_service.draft_update(
-                    principal, project_target, generator="deterministic", persist=False,
-                )
-                excluded = update_service.project_update_excluded_refs(
-                    principal, project_target,
-                )
-                project_update_excluded_refs = sorted(excluded)
-                excluded_folded = {str(ref).casefold() for ref in excluded}
-
-                def page_sentence_is_safe(sentence: Any) -> bool:
-                    refs = sentence.get("refs") if isinstance(sentence, dict) else []
-                    return not any(
-                        str(ref.get("ref") or "").split("#", 1)[0].casefold()
-                        in excluded_folded
-                        for ref in refs or [] if isinstance(ref, dict)
-                    )
-
-                pages = page_excerpts(
-                    self.db,
-                    project_pages(
-                        project_target,
-                        "what-we-decided",
-                        "what-is-open",
-                        "what-changed-this-week",
-                    ),
-                    exclude_refs=excluded,
-                    sentence_filter=page_sentence_is_safe,
-                )
-                records_body = str(records.get("body_md") or "").strip()
-                page_body = MemoryContext(tuple(pages)).prompt_block("PROJECT PAGES")
-                project_update_material = "\n\n".join(
-                    part for part in (
-                        f"[RECORDS DRAFT]\n{records_body}\n[END RECORDS DRAFT]"
-                        if records_body else "",
-                        page_body,
-                    ) if part
-                )
-            except Exception:
-                # An update run must never fall back to broad project
-                # hydration when its P2 source list cannot be established.
-                project_update_refs = []
-                project_update_material = ""
+            project_update_refs, project_update_material, project_update_excluded_refs = (
+                automation.project_update_material(self.db, principal, output_target.removeprefix("project_updates:")))
         try:
             for ordinal,item in enumerate(items,1):
                 if self.broker.parent_run_controller.expire_if_due(parent.context,principal):
@@ -973,4 +916,13 @@ class WorkbenchRunner:
                     idempotency_key=f"schedule:{workbench_id}:{minute}", reason=exc.code,
                 )
             raise
+        from . import automation_runs as automation
+
+        wb = self.db.workbenches.get(workbench_id)
+        if wb is not None and automation.runs_as_program(wb):
+            # 2026-11-08: the run is a Program of one prompt step; the
+            # schedule stays here, the work runs on the Programs engine.
+            # The conductor's tick waits on it, as it waited on the item run.
+            return await asyncio.to_thread(
+                automation.run_as_program, self.db, scheduler_principal, wb, wait=True, key=f"schedule:{minute}")
         return await self.run(scheduler_principal, workbench_id, request_id=f"schedule:{workbench_id}:{minute}", delegation=delegation, due_minute=minute)
