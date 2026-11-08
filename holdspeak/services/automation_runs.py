@@ -558,6 +558,11 @@ def sync_agent_results(db: Any, workbench_id: Optional[str] = None) -> int:
         event_log.drain_spool(db._connection)
     except Exception as exc:
         log.debug("agent hand event spool not drained: %s", exc)
+    # HS-S31: a Waiting occurrence first reads its queue id's terminal outcome.
+    try:
+        sync_queue_outcomes(db, workbench_id=workbench_id)
+    except Exception as exc:
+        log.debug("queue outcomes not read: %s", exc)
 
     query = "SELECT * FROM workbench_items WHERE json_extract(context_json, '$.agent_hand.launch_id') IS NOT NULL AND parked=0"
     params: list[Any] = []
@@ -663,6 +668,73 @@ def sync_agent_hand_launches(db: Any, answers: list[dict[str, Any]]) -> int:
                     (json.dumps(context, sort_keys=True), utc_now_iso(), row["id"]),
                 )
                 changed += 1
+    return changed
+
+
+def sync_queue_outcomes(db: Any, queue: Any = None, workbench_id: Optional[str] = None) -> int:
+    """HS-S31: each Waiting occurrence (its hand ``queued``, a queue id, no
+    launch) reads its queue id's outcome (``agent_hand_queue.queue_outcome``)
+    and shows a terminal one. Every matching nonparked occurrence reads the
+    same answer (zero to many consumers; never the first match only).
+
+    - ``waiting`` and ``unknown``: nothing is written (an unknown is never
+      read as failed and never handed again);
+    - ``launched``: the launch id is attached the way the heartbeat does
+      (``sync_agent_hand_launches``: the source must match; a linked launch
+      is never replaced), so the Done projector can follow it;
+    - ``cancelled`` / ``failed``: the occurrence ends with the reason; its
+      queue id stays, so a later Run skips it (a cancelled entry is never
+      revived).
+
+    A read never starts, re-queues or repeats a hand. Returns the rows changed."""
+    from .agent_hand_queue import CANCELLED, FAILED, LAUNCHED, HandQueue
+
+    queue = queue or HandQueue()
+    sql = ("SELECT id, context_json FROM workbench_items WHERE parked=0 AND status='pending' "
+           "AND json_extract(context_json, '$.agent_hand.status')='queued' "
+           "AND json_extract(context_json, '$.agent_hand.queue_id') IS NOT NULL")
+    args: tuple[Any, ...] = ()
+    if workbench_id:
+        sql, args = sql + " AND workbench_id=?", (workbench_id,)
+    with db._connection() as conn:
+        rows = conn.execute(sql, args).fetchall()
+    answers: dict[str, dict[str, Any]] = {}
+    changed = 0
+    for row in rows:
+        try:
+            context = json.loads(row["context_json"] or "{}")
+        except (TypeError, ValueError):
+            continue
+        hand = context.get("agent_hand") if isinstance(context, dict) else None
+        if not isinstance(hand, dict) or hand.get("launch_id"):
+            continue
+        queue_id = str(hand.get("queue_id") or "")
+        if queue_id not in answers:
+            answers[queue_id] = queue.outcome(queue_id)
+        answer = answers[queue_id]
+        source_ref = str(hand.get("source_ref") or "")
+        if answer["outcome"] == LAUNCHED:
+            kind, _, source_id = str(answer.get("source_ref") or "").partition(":")
+            if answer.get("launch_id") and kind and source_id:
+                changed += sync_agent_hand_launches(db, [{
+                    "status": "launched", "launch_id": answer["launch_id"], "queue_id": queue_id,
+                    "origin_ref": {"kind": kind, "id": source_id},
+                }])
+            continue
+        if answer["outcome"] not in (CANCELLED, FAILED) or answer.get("source_ref") != source_ref:
+            continue
+        cancelled = answer["outcome"] == CANCELLED
+        words = "Cancelled before it started" if cancelled else f"Not started · {answer.get('code') or 'refused'}"
+        hand.update({"status": "cancelled" if cancelled else "refused",
+                     "queue_outcome": {key: answer.get(key) for key in ("outcome", "code", "at")}})
+        context["agent_hand"] = hand
+        now = utc_now_iso()
+        with db._connection() as conn:
+            changed += conn.execute(
+                "UPDATE workbench_items SET status='failed', result=?, context_json=?, completed_at=?, last_modified=? "
+                "WHERE id=? AND status='pending'",
+                (f"Error: {words}", json.dumps(context, sort_keys=True), now, now, row["id"]),
+            ).rowcount
     return changed
 
 

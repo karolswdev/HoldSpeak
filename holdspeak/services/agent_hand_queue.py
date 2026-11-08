@@ -8,9 +8,19 @@ queued hand, and the hub's heartbeat starts it when an agent is free
 
 The file is ``agent_hand_queue.json`` beside the launch ledger. Each entry:
 ``{queue_id, kind, id, instruction, profile, project_id, queued_at}``. An
-entry leaves the file when its hand starts, or when the start is refused
-(the refusal is logged; the owner's next press shows it). Nothing here
-deletes a launch or a worktree.
+entry leaves the file when its hand starts, when the start is refused, or
+when he cancels it. Nothing here deletes a launch or a worktree.
+
+HS-S31 (the shared queue outcome contract, D18/G31): an entry that leaves
+keeps one retained terminal record in the same file (``outcomes``, the
+newest ``OUTCOMES_KEPT``): ``{queue_id, source_ref, outcome, code,
+launch_id, at}``. ``queue_outcome`` answers an entry's outcome from that
+evidence only: ``waiting`` (the live row), ``launched``, ``failed`` (the
+start was refused), ``cancelled``, or ``unknown`` (no row and no record:
+an absent row is never proof that nothing ran). One queue id can have zero
+to many consumers (direct hands, Automation occurrences); each reads the
+same answer, and a read never starts, re-queues or repeats anything. The
+first record of an id wins: a replay of the same id answers the same.
 """
 from __future__ import annotations
 
@@ -27,6 +37,9 @@ log = get_logger("agent_hand_queue")
 
 QUEUE_SCHEMA = 1
 QUEUED = "queued"
+OUTCOMES_KEPT = 500
+# The terminal outcomes a queue id can have (HS-S31).
+WAITING, LAUNCHED, FAILED, CANCELLED, UNKNOWN = "waiting", "launched", "failed", "cancelled", "unknown"
 _LOCK = threading.Lock()
 
 
@@ -47,18 +60,30 @@ class HandQueue:
     def __init__(self, path: Optional[Path] = None) -> None:
         self._path = Path(path) if path else default_queue_path()
 
-    def _read(self) -> list[dict[str, Any]]:
+    def _read_document(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         try:
             raw = json.loads(self._path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            return []
-        rows = raw.get("queue") if isinstance(raw, dict) else None
-        return [dict(row) for row in rows if isinstance(row, dict)] if isinstance(rows, list) else []
+            return [], []
+        if not isinstance(raw, dict):
+            return [], []
 
-    def _write(self, rows: list[dict[str, Any]]) -> None:
+        def rows_of(key: str) -> list[dict[str, Any]]:
+            rows = raw.get(key)
+            return [dict(row) for row in rows if isinstance(row, dict)] if isinstance(rows, list) else []
+
+        return rows_of("queue"), rows_of("outcomes")
+
+    def _read(self) -> list[dict[str, Any]]:
+        return self._read_document()[0]
+
+    def _write(self, rows: list[dict[str, Any]], outcomes: Optional[list[dict[str, Any]]] = None) -> None:
         from ..delivery.factory_launch import _write_document
 
-        _write_document(self._path, {"queue_schema": QUEUE_SCHEMA, "queue": rows})
+        if outcomes is None:
+            outcomes = self._read_document()[1]
+        _write_document(self._path, {"queue_schema": QUEUE_SCHEMA, "queue": rows,
+                                     "outcomes": outcomes[-OUTCOMES_KEPT:]})
 
     def list(self) -> list[dict[str, Any]]:
         with _LOCK:
@@ -89,14 +114,59 @@ class HandQueue:
             self._write(rows)
             return dict(entry)
 
-    def remove(self, queue_id: str) -> bool:
+    def remove(
+        self, queue_id: str, *, outcome: str = CANCELLED, code: Optional[str] = None,
+        launch_id: Optional[str] = None,
+    ) -> bool:
+        """Take one entry out and retain its terminal record (HS-S31). A
+        press on Cancel is ``cancelled``; ``start_queued`` records
+        ``launched`` or ``failed``. False when no live entry has that id."""
         with _LOCK:
-            rows = self._read()
-            kept = [row for row in rows if row.get("queue_id") != queue_id]
-            if len(kept) == len(rows):
+            rows, outcomes = self._read_document()
+            gone = [row for row in rows if row.get("queue_id") == queue_id]
+            if not gone:
                 return False
-            self._write(kept)
+            kept = [row for row in rows if row.get("queue_id") != queue_id]
+            if not any(record.get("queue_id") == queue_id for record in outcomes):
+                entry = gone[0]
+                outcomes.append({
+                    "queue_id": queue_id,
+                    "source_ref": f"{entry.get('kind') or ''}:{entry.get('id') or ''}",
+                    "outcome": outcome, "code": code, "launch_id": launch_id, "at": _now(),
+                })
+            self._write(kept, outcomes)
             return True
+
+    def outcome(self, queue_id: str) -> dict[str, Any]:
+        """HS-S31: this id's terminal outcome from retained evidence only.
+        See ``queue_outcome``."""
+        with _LOCK:
+            rows, outcomes = self._read_document()
+        live = next((row for row in rows if row.get("queue_id") == queue_id), None)
+        if live is not None:
+            return {"queue_id": queue_id, "outcome": WAITING,
+                    "source_ref": f"{live.get('kind') or ''}:{live.get('id') or ''}",
+                    "code": None, "launch_id": None, "at": live.get("queued_at")}
+        record = next((row for row in outcomes if row.get("queue_id") == queue_id), None)
+        if record is None:
+            return {"queue_id": queue_id, "outcome": UNKNOWN, "source_ref": None, "code": None,
+                    "launch_id": None, "at": None}
+        word = str(record.get("outcome") or "")
+        return {"queue_id": queue_id,
+                "outcome": word if word in (LAUNCHED, FAILED, CANCELLED) else UNKNOWN,
+                "source_ref": record.get("source_ref"), "code": record.get("code"),
+                "launch_id": record.get("launch_id"), "at": record.get("at")}
+
+
+def queue_outcome(queue_id: str, queue: Optional[HandQueue] = None) -> dict[str, Any]:
+    """HS-S31, the shared queue outcome contract: one queue id's outcome,
+    ``waiting`` / ``launched`` / ``failed`` / ``cancelled`` / ``unknown``,
+    from retained evidence only (the live row, else the retained record).
+    It never counts consumers, never starts, re-queues or repeats a hand;
+    ``unknown`` (no row, no record, or an unreadable file) is never read as
+    failed or as safe to hand again. ``launched`` is the queue's own end
+    (the hand started); an Automation occurrence's Done stays its own."""
+    return (queue or HandQueue()).outcome(str(queue_id or ""))
 
 
 def queued_flights(db: Any, queue: Optional[HandQueue] = None) -> list[dict[str, Any]]:
@@ -155,12 +225,16 @@ def start_queued(
             if code == "launch_cap_reached":
                 break   # taken meanwhile: it stays queued
             log.warning(f"queued hand {queue_id} ({entry.get('kind')}:{entry.get('id')}) refused: {code}")
-            queue.remove(queue_id)
+            queue.remove(queue_id, outcome=FAILED, code=str(code))
             started.append({"queue_id": queue_id, "status": "refused", "code": code})
             continue
-        queue.remove(queue_id)
+        launch_id = answer.get("launch_id") if isinstance(answer, Mapping) else None
+        queue.remove(queue_id, outcome=LAUNCHED, launch_id=str(launch_id) if launch_id else None)
         started.append({"queue_id": queue_id, **answer})
     return started
 
 
-__all__ = ["HandQueue", "QUEUED", "default_queue_path", "queued_flights", "start_queued"]
+__all__ = [
+    "CANCELLED", "FAILED", "HandQueue", "LAUNCHED", "QUEUED", "UNKNOWN", "WAITING", "default_queue_path",
+    "queue_outcome", "queued_flights", "start_queued",
+]
