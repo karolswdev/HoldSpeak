@@ -1,0 +1,15 @@
+{
+  "title": "The Room and the row · 2026-11-08",
+  "steps": [
+    {"open": {"app": "open-project-memory", "scope": "@first-project"},
+     "say": {"words": "Two questions. First, the Room's Now face, rebuilt as the brief."},
+     "highlight": {"target": "room-body", "window": "open-project-memory", "thing": "the Now face",
+                   "words": "Write update, the ask, one status line, what changed, what is open, the folds, the cadence in the status bar."},
+     "ask": {"ref": "room-r1", "question": "Is the Room's Now face the brief now?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "chair:needs"},
+     "press": {"target": "[data-testid=needs-list] li[data-opens] .needs-row-name", "words": "I press a row."},
+     "highlight": {"target": "needs-reader", "window": "chair:needs", "thing": "the item",
+                   "words": "A row with no other home opens itself: the whole text, the facts, the verbs. Back returns to the list."},
+     "ask": {"ref": "needs-reader", "question": "Does the row open itself now?", "choices": ["Keep", "Redo"]}}
+  ]
+}
