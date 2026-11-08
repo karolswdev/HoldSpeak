@@ -185,14 +185,3 @@ def test_select_missing_record_id_is_400(client, db: Database) -> None:
     assert resp.status_code == 400
 
 
-@pytest.mark.integration
-def test_select_clear_drops_the_pin(client, db: Database) -> None:
-    from holdspeak import dictation_selection as ds
-
-    record_id = _seed_record(db, url="https://example.com/x", minutes_ago=5)
-    client.post("/api/activity/nudges/select", json={"record_id": record_id})
-    assert ds.peek_selected_record() == record_id
-    resp = client.post("/api/activity/nudges/select/clear")
-    assert resp.status_code == 200
-    assert resp.json() == {"cleared": True}
-    assert ds.peek_selected_record() is None

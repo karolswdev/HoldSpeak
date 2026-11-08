@@ -42,14 +42,6 @@
       "consumers": []
     },
     {
-      "path": "/api/activity/annotations",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
       "path": "/api/activity/briefing",
       "methods": [
         "GET"
@@ -58,22 +50,6 @@
       "consumers": [
         "ios"
       ]
-    },
-    {
-      "path": "/api/activity/domains",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.activity.ledger",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/domains/{domain}",
-      "methods": [
-        "DELETE"
-      ],
-      "module": "web.routes.activity.ledger",
-      "consumers": []
     },
     {
       "path": "/api/activity/enrichment/connectors",
@@ -86,30 +62,6 @@
       ]
     },
     {
-      "path": "/api/activity/enrichment/connectors/{connector_id}",
-      "methods": [
-        "PUT"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/enrichment/connectors/{connector_id}/annotations",
-      "methods": [
-        "DELETE"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/enrichment/connectors/{connector_id}/candidates",
-      "methods": [
-        "DELETE"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
       "path": "/api/activity/enrichment/connectors/{connector_id}/dry-run",
       "methods": [
         "GET"
@@ -118,54 +70,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/activity/enrichment/connectors/{connector_id}/runs",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/enrichment/github/preview",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/enrichment/github/run",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/enrichment/jira/preview",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/enrichment/jira/run",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/enrichment/pipelines/{pipeline_id}/run",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.activity.enrichment",
-      "consumers": []
     },
     {
       "path": "/api/activity/extension/events",
@@ -202,14 +106,6 @@
       "consumers": []
     },
     {
-      "path": "/api/activity/meeting-candidates/preview",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.activity.candidates",
-      "consumers": []
-    },
-    {
       "path": "/api/activity/meeting-candidates/{candidate_id}/start",
       "methods": [
         "POST"
@@ -218,14 +114,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/activity/meeting-candidates/{candidate_id}/status",
-      "methods": [
-        "PUT"
-      ],
-      "module": "web.routes.activity.candidates",
-      "consumers": []
     },
     {
       "path": "/api/activity/nudges",
@@ -250,14 +138,6 @@
       ]
     },
     {
-      "path": "/api/activity/nudges/select/clear",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.activity.nudges",
-      "consumers": []
-    },
-    {
       "path": "/api/activity/nudges/{nudge_id}/dismiss",
       "methods": [
         "POST"
@@ -280,14 +160,6 @@
     },
     {
       "path": "/api/activity/project-rules",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.activity.rules",
-      "consumers": []
-    },
-    {
-      "path": "/api/activity/project-rules/apply",
       "methods": [
         "POST"
       ],
@@ -5036,14 +4908,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/plugin-jobs/{job_id}/cancel",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.activity.plugin_jobs",
-      "consumers": []
     },
     {
       "path": "/api/plugin-jobs/{job_id}/retry-now",

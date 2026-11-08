@@ -33,10 +33,7 @@ login command is refused.
 Connector routes include:
 
 - `GET /api/activity/enrichment/connectors`
-- `PUT /api/activity/enrichment/connectors/{connector_id}`
 - `GET /api/activity/enrichment/connectors/{connector_id}/dry-run`
-- `GET /api/activity/enrichment/connectors/{connector_id}/runs`
-- scoped annotation and candidate clear routes
 
 ## Provider routes
 

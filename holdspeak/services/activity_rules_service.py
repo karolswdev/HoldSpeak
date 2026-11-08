@@ -43,5 +43,3 @@ class ActivityRulesService:
         except ValueError as exc: raise ValidationError(str(exc)) from exc
         return {"count": len(matches), "matches": [self._record(r) for r in matches]}
 
-    def apply(self, principal: Principal, limit: int | None) -> dict[str, Any]:
-        return {"updated": self._db.activity.apply_activity_project_rules(limit=limit)}

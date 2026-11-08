@@ -6,8 +6,7 @@ from fastapi.responses import JSONResponse
 from ....db import get_database, get_observer
 from ....principals import UNAUTHENTICATED
 from ....services.activity_ledger_service import ActivityLedgerService
-from ....services.errors import ValidationError
-from ....web_requests import _ActivityDomainRuleRequest, _ActivitySettingsRequest
+from ....web_requests import _ActivitySettingsRequest
 from ...context import WebContext
 from ...runtime_support import error_500
 from ....logging_config import get_logger
@@ -32,15 +31,6 @@ def build_ledger_router(ctx: WebContext) -> APIRouter:
  def settings(request:Request,payload:_ActivitySettingsRequest)->Any:
   try:return JSONResponse(_svc().update_settings(_principal(request),payload.model_dump()))
   except Exception as e:return error_500(e,log,"Failed to update activity settings")
- @router.post("/api/activity/domains")
- def domain(request:Request,payload:_ActivityDomainRuleRequest)->Any:
-  try:return JSONResponse(_svc().upsert_domain_rule(_principal(request),payload.domain,payload.action))
-  except ValidationError as e:return JSONResponse({"error":str(e)},status_code=400)
-  except Exception as e:return error_500(e,log,"Failed to update activity domain rule")
- @router.delete("/api/activity/domains/{domain}")
- def delete_domain(request:Request,domain:str)->Any:
-  try:return JSONResponse(_svc().delete_domain_rule(_principal(request),domain))
-  except Exception as e:return error_500(e,log,"Failed to delete activity domain rule")
  @router.delete("/api/activity/records")
  def delete_records(request:Request,domain:Optional[str]=None,project_id:Optional[str]=None)->Any:
   try:return JSONResponse(_svc().delete_records(_principal(request),domain,project_id))

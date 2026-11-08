@@ -40,9 +40,4 @@ def build_plugin_jobs_router(ctx:WebContext)->APIRouter:
   try:return JSONResponse(_svc().retry(_principal(request),job_id))
   except (NotFound,ConflictError) as e:return _err(e)
   except Exception as e:log.error(f"Failed to retry deferred plugin job {job_id}: {e}");return JSONResponse({"success":False,"error":str(e)},status_code=500)
- @router.post("/api/plugin-jobs/{job_id}/cancel")
- def cancel(request:Request,job_id:int)->Any:
-  try:return JSONResponse(_svc().cancel(_principal(request),job_id))
-  except (NotFound,ConflictError) as e:return _err(e)
-  except Exception as e:log.error(f"Failed to cancel deferred plugin job {job_id}: {e}");return JSONResponse({"success":False,"error":str(e)},status_code=500)
  return router

@@ -10046,10 +10046,7 @@
     {
       "apis": [
         "GET /api/activity/enrichment/connectors",
-        "PUT /api/activity/enrichment/connectors/{connector_id}",
-        "GET /api/activity/enrichment/connectors/{connector_id}/dry-run",
-        "GET /api/activity/enrichment/connectors/{connector_id}/runs",
-        "POST /api/activity/enrichment/pipelines/{pipeline_id}/run"
+        "GET /api/activity/enrichment/connectors/{connector_id}/dry-run"
       ],
       "authority": "Manifest permission gate plus persisted connector enablement; dry-run is mutation-free.",
       "configuration": [
@@ -10199,10 +10196,7 @@
       "trust_boundary": "First-party packs and user pack Python execute with user permissions; manifest permissions are checked before connector runtime effects."
     },
     {
-      "apis": [
-        "GET /api/activity/enrichment/github/preview",
-        "POST /api/activity/enrichment/github/run"
-      ],
+      "apis": [],
       "authority": "Connector enabled state, manifest permissions, local gh auth and command allowlist.",
       "configuration": [
         "gh path",
@@ -10309,17 +10303,6 @@
           },
           "node": "test_preview_github_cli_enrichment_plans_read_only_commands",
           "path": "tests/unit/test_activity_github.py"
-        },
-        {
-          "assertion": "A GitHub connector run is recorded as a connector_runs row.",
-          "execution": {
-            "cases": 1,
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "status": "passed"
-          },
-          "node": "test_github_run_records_a_connector_run_row",
-          "path": "tests/integration/test_web_activity_api.py"
         }
       ],
       "trust_boundary": "Local gh subprocess is constrained to read-only argv prefixes before execution."
@@ -10331,8 +10314,6 @@
         "GET /api/providers/confluence/connections",
         "POST /api/providers/jira/connections/{ref}/recheck",
         "POST /api/providers/confluence/connections/{ref}/recheck",
-        "GET /api/activity/enrichment/jira/preview",
-        "POST /api/activity/enrichment/jira/run",
         "GET /api/calendar/events"
       ],
       "authority": "Manifest permission gate and configured provider auth; candidate derivation writes only local candidate rows.",
