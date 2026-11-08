@@ -1873,6 +1873,15 @@ class MeetingWebServer:
         @app.on_event("startup")
         async def _startup() -> None:
             import anyio.to_thread
+            # 2026-11-07: `kill -USR1 <hub pid>` writes every thread's Python
+            # stack to stderr (the hub log). A stalled route names itself
+            # without root (py-spy needs sudo on macOS).
+            try:
+                import faulthandler, signal
+
+                faulthandler.register(signal.SIGUSR1, all_threads=True, chain=True)
+            except Exception as exc:  # pragma: no cover - platform without SIGUSR1
+                log.info(f"thread dump signal not registered: {exc}")
 
             anyio.to_thread.current_default_thread_limiter().total_tokens = HUB_THREAD_TOKENS
             # PERF-HUB 2026-10-28: HOLDSPEAK_LOOP_WATCH=1 names any handler
