@@ -35,8 +35,9 @@ export async function apiRequest(
   // wrong, or rotated). Forget it so the next page load does not reuse it.
   if (response.status === 401) forgetAuthToken(headers.get("X-HoldSpeak-Token") ?? "");
   // A write the hub accepted: a keyed read of that path is read again.
-  const method = (init.method ?? "GET").toUpperCase();
-  if (response.ok && method !== "GET" && method !== "HEAD") forgetWrittenPath(input);
+  // The method is an HTTP token, not a face word: compare it case-free.
+  const isRead = /^(get|head)$/i.test(init.method ?? "GET");
+  if (response.ok && !isRead) forgetWrittenPath(input);
   return response;
 }
 
