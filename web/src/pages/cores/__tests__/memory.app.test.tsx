@@ -177,7 +177,8 @@ describe("Q12 Memory", () => {
     expect(within(projects).getByRole("button", { name: "Ledger, 3 meetings" })).toBeTruthy();
     const people = screen.getByTestId("memory-people");
     expect(within(people).getByRole("button", { name: "Mira Kovacs, Direct report · You owe 2" })).toBeTruthy();
-    expect(within(people).getByText("MK")).toBeTruthy();
+    // The language (#1965): a person row leads with the person sprite, not initials.
+    expect(within(people).queryByText("MK")).toBeNull();
   });
 
   it("shows one empty message and the background engine picker when no page exists", async () => {

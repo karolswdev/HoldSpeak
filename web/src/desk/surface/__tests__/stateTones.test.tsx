@@ -17,6 +17,16 @@ describe("STATE_TONES", () => {
     ["Parked", "parked"],
     ["Parked 2 at 10:00", "parked"],
     ["Waits on you", "ask"],
+    ["Your turn", "ask"],
+    // The language in every window (2026-11-08): the quiet states are graphite (warn), never brass.
+    ["To review", "warn"],
+    ["To decide", "warn"],
+    ["Unassigned", "warn"],
+    ["No engine for answers", "warn"],
+    ["Not set", "warn"],
+    ["Your name is not set", "warn"],
+    ["Stale", "warn"],
+    ["Offline", "warn"],
   ])("%s → %s", (word, tone) => {
     expect(stateTone(word)).toBe(tone);
   });
@@ -24,7 +34,7 @@ describe("STATE_TONES", () => {
   it("does not read a longer word as a state word", () => {
     expect(stateTone("Later")).toBeUndefined();
     expect(stateTone("Doneness")).toBeUndefined();
-    expect(stateTone("No engine for answers")).toBeUndefined();
+    expect(stateTone("Unassignedness")).toBeUndefined();
   });
 
   it("DotWord draws a state word in the table's tone, whatever the face passed", () => {

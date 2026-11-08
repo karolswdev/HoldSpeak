@@ -762,14 +762,12 @@ describe("ObjectList dense: avatar, idle tone, fold join (window grammar kit pol
     { key: "owe", word: "Owe" },
     { key: "state", word: "State" },
   ];
-  it("leads an avatar row with the initials disc, not the sprite", () => {
+  it("leads every dense row with the object's sprite, an avatar row too (the language in every window)", () => {
     render(<ObjectList label="People" density="dense" rows={rows} columns={columns} sort={{ key: "name", dir: "asc" }} />);
     const avery = document.querySelector("[data-object-id='a']")!;
-    const disc = avery.querySelector(".object-list-avatar")!;
-    expect(disc.textContent).toBe("AC");
-    expect(disc.getAttribute("data-hue")).toBe("1");
-    expect(avery.querySelector(".object-list-open img")).toBeNull();
-    expect(avery.hasAttribute("data-avatar")).toBe(true);
+    expect(avery.querySelector(".object-list-avatar")).toBeNull();
+    expect(avery.querySelector(".object-list-open img")).not.toBeNull();
+    expect(avery.hasAttribute("data-avatar")).toBe(false);
     expect(document.querySelector("[data-object-id='b'] .object-list-open img")).not.toBeNull();
   });
   it("draws idle as the grey dot and word, and marks a live state", () => {
