@@ -381,6 +381,13 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       get().openSurfaceWindow("review-meetings", `meeting:${resolved.resolvedId}`);
       return;
     }
+    // The one decision face (2026-11-08): a Desk decision opens its record in
+    // the Decisions window reader; the Decision pullout is parked.
+    if (resolved.kind === "decision") {
+      const decisionId = resolved.resolvedId;
+      void import("../openObject").then(({ openDeskDecisionRecord }) => openDeskDecisionRecord(decisionId));
+      return;
+    }
     if (resolved.kind === "people" && resolved.resolvedId !== "people" && !resolved.resolvedId.startsWith("project:")) {
       openCard(`people:${resolved.resolvedId}`);
       return;

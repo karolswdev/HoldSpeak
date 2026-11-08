@@ -2998,7 +2998,7 @@
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
-        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
         "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
@@ -3024,7 +3024,7 @@
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
-        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
         "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
@@ -3050,7 +3050,7 @@
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
-        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
         "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
@@ -3076,7 +3076,7 @@
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
-        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
         "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],
@@ -3102,7 +3102,7 @@
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
         "web/src/desk/components/DeskToolShelf.tsx",
-        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
         "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
         "web/src/desk/components/ThreadComposer.tsx"
       ],

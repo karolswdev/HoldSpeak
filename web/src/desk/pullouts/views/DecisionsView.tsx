@@ -1,14 +1,15 @@
 import { wireDate } from "../../surface/format";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
-import { requestDecisionEdit } from "../decisionEdit";
-import { acceptDecision } from "../../decide";
+import { writeDecisionStatus } from "../../decide";
+import { DeskDecisionEditor, useDeskDecisionEdit } from "./DeskDecisionEdit";
+import { useCopyReceipt } from "../../hooks/useCopyReceipt";
+import { DeskFilingStrip } from "../../components/DeskFilingStrip";
 import { plainReason } from "../../surface/plainFailure";
 import { Button } from "../../../components/signal/Signal";
 import { RunAsProgramVerb } from "../../programs/RunAsProgram";
-import { holdObject, qualifiedRef } from "../../api";
+import { qualifiedRef } from "../../api";
 import { decisionRecordSourceRef, openRef } from "../../openObject";
-import { allObjects } from "../../world";
 import { useDesk } from "../../store";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
@@ -17,12 +18,12 @@ import { MicButton } from "../../surface";
 import { StringGadget } from "../../surface/gadgets";
 import { DecisionRecordSendSheet, DecisionRecordSendWells } from "../../documentSendsLazy";
 import { spriteUrl } from "../../sprites";
-import { openProjectRoom } from "../../shell";
+import { openProjectRoom, openSurfaceOr } from "../../shell";
 import { Material } from "../../surface/Material";
 import { FoldGadget, GadgetGroup, GadgetRow } from "../../surface/gadgets";
 import { StateChip } from "../../surface";
 import { CheckGadget } from "../../surface/gadgets";
-import { DotWord, Loading, StatusBar, ToolGlyph, Toolbar, countWords } from "../../surface/kit";
+import { DotWord, Loading, StatusBar, ToolGlyph, Toolbar, ToolbarFold, countWords } from "../../surface/kit";
 import { useWindowInterior } from "../../surface/interior";
 import { useHasWindowBack, useWindowBack } from "../../surface/back";
 import { useCompactViewport } from "../../useCompactViewport";
@@ -107,7 +108,12 @@ const CURRENT = new Set(["recorded", "accepted", "active", "published"]);
 /** The state word a row shows; empty when the decision stands. Its
  *  lifecycle is its record's when it has one (the ledger answers it). */
 function stateWord(row: DeskDecision): string {
-  if (String(row.status ?? "").toLowerCase() === "proposed") return "PROPOSED";
+  const status = String(row.status ?? "").toLowerCase();
+  if (status === "proposed") return "PROPOSED";
+  // A Desk decision retired or rejected in its reader says so (its record
+  // stays active; the state is the Desk decision's, `_decorate`).
+  if (status === "deprecated") return "RETIRED";
+  if (status === "rejected") return "REJECTED";
   const lifecycle = String(row.lifecycle ?? "").toLowerCase();
   if (CURRENT.has(lifecycle) || !lifecycle) return "";
   if (lifecycle === "superseded") return "REPLACED";
@@ -125,20 +131,15 @@ function fromReceipt(receipt: Receipt & { created_at?: string | null }): DeskDec
 /** One page of the desk's decisions. */
 const PAGE = 100;
 
-/** A Desk decision opens its window; one the Desk did not load is held
- *  (read by its id) first, so the open is never dead. */
+/** A Desk decision opens its record here, in this reader (the one face of a
+ *  decision, 2026-11-08; `openDeskDecisionRecord`). */
 function openDeskDecision(id: string): void {
-  const ref = qualifiedRef("decision", id);
-  const open = () => openRef(`desk_decision:${id}`);
-  const present = allObjects(useDesk.getState().items).some((o) => qualifiedRef(o.kind, o.id) === ref);
-  if (present || !holdObject(ref)) { open(); return; }
-  void useDesk.getState().refresh().then(open, open);
+  openRef(`desk_decision:${id}`);
 }
 
 /** Window grammar: a decision's state as a dot and a word. Open: proposed,
  *  not decided yet. Accepted: it stands. Superseded: a newer one replaced
- *  it. W1-TRUTH: the same words as the decision's own window
- *  (DecisionPullout DECISION_STATES). */
+ *  it. Retired: its owner retired it. */
 function decisionState(row: DeskDecision): { word: string; tone: ObjectTone; rank: number } {
   const word = stateWord(row);
   if (word === "PROPOSED") return { word: "Open", tone: "ask", rank: 0 };
@@ -395,6 +396,15 @@ export function DecisionsView({
       .finally(() => { if (order === detailReads.current) setDetailLoading(false); });
   };
 
+  // A write made in the reader (Accept, Retire, Save) reads its record again
+  // in place: no loading state, and the record shown stays when it fails.
+  const rereadReceipt = (receiptId: string) => {
+    const order = detailReads.current;
+    void apiFetch<Receipt>(`/api/decision-records/${encodeURIComponent(receiptId)}`)
+      .then((receipt) => { if (order === detailReads.current && receipt?.id) setSelected(receipt); })
+      .catch(() => undefined);
+  };
+
   // The window opened again with no record (Go ▸ Decisions, the phone's
   // Back): the list, with the record read last still selected.
   const lastReceiptId = useRef(receiptId);
@@ -482,6 +492,7 @@ export function DecisionsView({
           else if (requested) readDecision(requested.id);
         }}
         onBack={() => { showResults(); if (receiptId || decisionId) onBackToList?.(); }}
+        onReread={() => { if (selected?.id) rereadReceipt(selected.id); }}
         onOpenReceipt={openReceipt}
         onOpenSource={openSource}
         onOpenWork={(work) => openPullout(qualifiedRef(work.work_type, work.work_ref))}
@@ -779,6 +790,7 @@ function DecisionReader({
   loading,
   error,
   onRetry,
+  onReread,
   onBack,
   onOpenReceipt,
   onOpenSource,
@@ -788,13 +800,17 @@ function DecisionReader({
   loading: boolean;
   error: string;
   onRetry: () => void;
+  /** Read the record again in place, after a write made here. */
+  onReread: () => void;
   onBack: () => void;
   onOpenReceipt: (id: string, label?: string) => void;
   onOpenSource: (source: ReceiptSource) => void;
   onOpenWork: (work: ReceiptWork) => void;
 }) {
   const [sending, setSending] = useState(false);
-  useEffect(() => { setSending(false); }, [receipt?.id]);
+  const [filing, setFiling] = useState(false);
+  const [filed, setFiled] = useState("");
+  useEffect(() => { setSending(false); setFiling(false); setFiled(""); }, [receipt?.id]);
   // On the phone the window's title-bar Back is the one Back: it returns to
   // the list (the toolbar then draws no ‹ Decisions of its own).
   const backRef = useRef(onBack);
@@ -802,34 +818,43 @@ function DecisionReader({
   const compact = useCompactViewport();
   useWindowBack(compact ? { onBack: () => backRef.current(), testId: "decision-reader-back" } : null, [compact]);
   const viaFrame = useHasWindowBack() && compact;
-  const proposed = String(receipt?.status || "").toLowerCase() === "proposed";
-  // W6 (atlas pass 3, defect 18): an open decision's verbs. Its state lives
-  // on the Desk decision the record came from (decision_record_service
-  // `_decorate`), so Accept writes that decision's status and Edit opens its
-  // own window in its editor.
+  const status = String(receipt?.status || "").toLowerCase();
+  const proposed = status === "proposed";
+  // The one decision face (2026-11-08): a record made from a Desk decision
+  // carries that decision's verbs here. Its state lives on the Desk decision
+  // (decision_record_service `_decorate`), so Accept and Retire write that
+  // decision's status, and Edit edits its words in this reader.
   const deskId = receipt?.source_type === "desk" && receipt.source_id ? String(receipt.source_id) : "";
-  const [accepting, setAccepting] = useState(false);
-  const [acceptFailure, setAcceptFailure] = useState("");
-  useEffect(() => { setAccepting(false); setAcceptFailure(""); }, [receipt?.id]);
-  const accept = async () => {
-    if (!deskId || accepting) return;
-    setAccepting(true);
-    setAcceptFailure("");
+  const edit = useDeskDecisionEdit(deskId, onReread);
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
+  const items = useDesk((state) => state.items);
+  const [writing, setWriting] = useState<"" | "accepted" | "deprecated">("");
+  const [writeFailure, setWriteFailure] = useState("");
+  // DELIGHT 2 (small joys): an Accept pressed here makes the status bar count
+  // what is left ("Accepted · 3 open"); the last one reads "all decided".
+  const [acceptedHere, setAcceptedHere] = useState(false);
+  useEffect(() => { setWriting(""); setWriteFailure(""); setAcceptedHere(false); }, [receipt?.id]);
+  const writeStatus = async (next: "accepted" | "deprecated") => {
+    if (!deskId || writing || edit.saving) return;
+    setWriting(next);
+    setWriteFailure("");
+    setAcceptedHere(false);
     try {
-      await acceptDecision(deskId);
+      await writeDecisionStatus(deskId, next);
+      setAcceptedHere(next === "accepted");
       void useDesk.getState().refresh();
-      onRetry();
+      onReread();
     } catch (cause) {
-      setAcceptFailure(`Could not accept it · ${plainReason(cause)}`);
+      setWriteFailure(`${next === "accepted" ? "Could not accept it" : "Could not retire it"} · ${plainReason(cause)}`);
     } finally {
-      setAccepting(false);
+      setWriting("");
     }
   };
-  const edit = () => {
-    if (!deskId) return;
-    requestDecisionEdit(deskId);
-    openDeskDecision(deskId);
-  };
+  const decisionWords = receipt ? [
+    `# ${(receipt.title || "").trim() || receipt.decision_text}`,
+    (receipt.title || "").trim() && receipt.title!.trim() !== receipt.decision_text.trim() ? receipt.decision_text : "",
+    receipt.rationale || "",
+  ].filter((part) => part.trim()).join("\n\n") : "";
   const toolbar = (
     <Toolbar label="Decision" data-testid="decision-reader-toolbar">
       {viaFrame ? null : (
@@ -837,24 +862,33 @@ function DecisionReader({
           <span aria-hidden="true">‹</span> Decisions
         </Button>
       )}
-      {receipt && proposed && deskId ? (
+      {receipt && edit.editing ? (
         <>
-          <Button dense variant="primary" loading={accepting} disabled={accepting} onClick={() => void accept()}
-            data-testid="decision-reader-accept">
-            <ToolGlyph kind="done" />Accept
-          </Button>
-          <Button dense variant="secondary" onClick={edit} data-testid="decision-reader-edit">
-            <ToolGlyph kind="edit" />Edit
-          </Button>
+          <Button dense variant="primary" disabled={edit.saving || Boolean(writing)} loading={edit.saving}
+            onClick={() => void edit.commit()} data-testid="decision-reader-save">Save</Button>
+          <Button dense variant="secondary" disabled={edit.saving} onClick={edit.cancel}
+            data-testid="decision-reader-cancel">Cancel</Button>
         </>
       ) : null}
-      {receipt && !proposed ? (
+      {receipt && !edit.editing && proposed && deskId ? (
+        <Button dense variant="primary" loading={writing === "accepted"} disabled={Boolean(writing)} onClick={() => void writeStatus("accepted")}
+          data-testid="decision-reader-accept">
+          <ToolGlyph kind="done" />Accept
+        </Button>
+      ) : null}
+      {receipt && !edit.editing && deskId ? (
+        <Button dense variant="secondary" loading={edit.opening} disabled={edit.opening} onClick={() => void edit.start()}
+          data-testid="decision-reader-edit">
+          <ToolGlyph kind="edit" />Edit
+        </Button>
+      ) : null}
+      {receipt && !edit.editing && !proposed ? (
         <Button dense variant="secondary" aria-expanded={sending} onClick={() => setSending((open) => !open)}
           data-testid="decision-reader-send">
           <ToolGlyph kind="send" />Send…
         </Button>
       ) : null}
-      {receipt && !proposed ? (
+      {receipt && !edit.editing && !proposed ? (
         <RunAsProgramVerb variant="secondary" testId="decision-reader-program"
           title={(receipt.title || "").trim() || receipt.decision_text}
           origin={{
@@ -863,6 +897,25 @@ function DecisionReader({
             goal: [receipt.decision_text, receipt.rationale].filter((part) => (part || "").trim()).join("\n\n"),
             projectId: receipt.sources?.find((source) => source.source_type === "project")?.source_ref || null,
           }} />
+      ) : null}
+      {receipt && !edit.editing && status === "accepted" && deskId ? (
+        <Button dense variant="ghost" loading={writing === "deprecated"} disabled={Boolean(writing)} onClick={() => void writeStatus("deprecated")}
+          data-testid="decision-reader-retire">
+          Retire
+        </Button>
+      ) : null}
+      {receipt && !edit.editing ? (
+        <ToolbarFold
+          foldAt="medium"
+          data-testid="decision-reader-fold"
+          verbs={[
+            { key: "copy", label: "Copy", glyph: "copy", testId: "decision-reader-copy", onSelect: () => void copy(decisionWords) },
+            ...(deskId ? [{
+              key: "dictate", label: "Dictate about this", glyph: "record" as const, testId: "decision-reader-dictate",
+              onSelect: () => openSurfaceOr("dictate", "/dictation", qualifiedRef("decision", deskId)),
+            }] : []),
+          ]}
+        />
       ) : null}
     </Toolbar>
   );
@@ -887,6 +940,17 @@ function DecisionReader({
   const predecessorId = receipt.predecessor_id;
   const successorId = receipt.successor_id;
   const history = Boolean(predecessorId || successorId || receipt.revisions?.length);
+  // The receipt counts the other open decisions on the desk; no count of zero.
+  const leftOpen = (items.decision || []).filter((candidate) => candidate.id !== deskId && candidate.status === "proposed").length;
+  const acceptedWords = acceptedHere && state.word === "Accepted"
+    ? `Accepted · ${leftOpen > 0 ? `${leftOpen} open` : "all decided"}` : "";
+  const receiptWords = copyReceipt || (edit.editing ? "Draft kept" : edit.saved ? "Saved" : "");
+  // The filing strip files the Desk decision; its Projects axis is this
+  // record's (HS-S42: the record is the durable identity).
+  const filingProps = {
+    objectRef: qualifiedRef("decision", deskId), objectKind: "decision" as const, objectId: deskId, bare: true, onSummary: setFiled,
+    projectRef: `decision_record:${receipt.id}`,
+  };
   const evidence = Boolean(sources.length || receipt.work?.length);
   const facts: Array<[string, ReactNode]> = [];
   // About: the Project the producer linked opens its Room; a name with no
@@ -909,7 +973,9 @@ function DecisionReader({
     <div className="decision-reader-window" data-testid="decision-reader">
       {toolbar}
       <article className="decision-reader" aria-labelledby={`decision-reader-title-${receipt.id}`}>
-        {sending ? (
+        {edit.editing ? (
+          <DeskDecisionEditor edit={edit} />
+        ) : sending ? (
           <DecisionRecordSendSheet id={receipt.id} text={receipt.decision_text} onBack={() => setSending(false)} />
         ) : (
           <>
@@ -962,15 +1028,34 @@ function DecisionReader({
                 </li>)}
               </ol> : null}
             </FoldGadget> : null}
+            {filing && deskId ? (
+              <div className="desk-decision-filing" data-testid="decision-reader-filing">
+                <DeskFilingStrip {...filingProps} />
+              </div>
+            ) : null}
           </>
         )}
       </article>
+      {/* Where the decision is filed: the strip reads it once, hidden, so the
+          status bar can say "Filed in: …"; the press shows the strip. */}
+      {deskId && !filing ? (
+        <span hidden aria-hidden="true"><DeskFilingStrip {...filingProps} /></span>
+      ) : null}
       <StatusBar
         data-testid="decision-reader-status"
         items={[
-          { key: "state", lamp: state.tone, text: accepting ? "Accepting" : `${state.word}${when}`, testId: "decision-reader-state" },
-          acceptFailure ? { key: "failure", lamp: "fail", text: acceptFailure, testId: "decision-reader-failure" } : null,
+          { key: "state", lamp: writing || edit.saving ? "info" : state.tone, testId: "decision-reader-state",
+            text: writing === "accepted" ? "Accepting" : writing === "deprecated" ? "Retiring" : edit.saving ? "Saving"
+              : acceptedWords || `${state.word}${when}` },
+          writeFailure || edit.openFailure
+            ? { key: "failure", lamp: "fail", text: writeFailure || edit.openFailure, testId: "decision-reader-failure" } : null,
+          receiptWords ? { key: "receipt", text: receiptWords, testId: "decision-reader-receipt" } : null,
         ]}
+        trailing={filed && deskId ? (
+          <Button dense variant="ghost" aria-expanded={filing} onClick={() => setFiling((open) => !open)} data-testid="decision-reader-filed">
+            {`Filed in: ${filed}`}
+          </Button>
+        ) : undefined}
       />
     </div>
   );

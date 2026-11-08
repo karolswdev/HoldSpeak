@@ -3643,8 +3643,8 @@
           "claim": "the status change is ADMITTED; HTTP only (over MCP it is decision.update)"
         },
         {
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "const writeStatus = async (next: string) => {",
+          "path": "web/src/desk/pullouts/views/DecisionsView.tsx",
+          "symbol": "const writeStatus = async (next: \"accepted\" | \"deprecated\") => {",
           "claim": "the pullout's status picker writes the explicit Proposed, Accepted, Replaced or Retired choice through the existing PUT"
         },
         {
@@ -3653,7 +3653,7 @@
           "claim": "the brief lists each proposed desk decision as 'Review decision: <title>'"
         },
         {
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "symbol": "Previous decision \u00b7 {String(candidate.title || \"Decision\")}",
           "claim": "a successor's card names the decision it supersedes"
         },

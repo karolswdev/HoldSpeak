@@ -317,7 +317,7 @@ Workbench automation is the only face of the older system.
 
 | Route file | Prefix | What it owns | Web callers |
 |---|---|---|---|
-| `web/routes/primitives/decisions.py` | `/api/decisions` | The desk decision you write (create, edit, status, delete) | The Desk: `desk/api.ts`, `desk/store/dataSlice.ts`, `DecisionPullout.tsx`, `desk/decide.ts` |
+| `web/routes/primitives/decisions.py` | `/api/decisions` | The desk decision you write (create, edit, status, delete) | The Desk: `desk/api.ts`, `desk/store/dataSlice.ts`, `pullouts/views/DecisionsView.tsx` (the reader; its editor `DeskDecisionEdit.tsx`), `desk/decide.ts` |
 | `web/routes/decisions.py` | `/api/decisions` | Meeting decisions (accept, reject, moment, promote); it also answers list, read and supersede for both kinds, by a probe of both tables | The Room (`features/project-room/api.ts`), and the Desk reads |
 | `web/routes/decision_records.py` | `/api/decision-records` | The durable record (receipt): search, review, carry, dispute | `DecisionsView.tsx`, `WhyControl.tsx`, `FollowThroughView.tsx`, `intelligenceAttention.ts`, Recall |
 

@@ -1212,8 +1212,8 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "export function DecisionPullout",
+          "path": "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
+          "symbol": "export function useDeskDecisionEdit(deskId: string, onSaved: () => void)",
           "claim": "Decision-first editor saves actual record and shows its document."
         }
       ],

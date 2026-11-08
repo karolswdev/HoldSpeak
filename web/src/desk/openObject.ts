@@ -276,11 +276,11 @@ export function refOpener(ref: string | null | undefined, navigation?: DeskNavig
     const id = followThrough[1];
     return () => openIntelligence({ view: "follow-through", followThroughId: id });
   }
-  // A desk decision has one ref name (`desk_decision:<id>`); its window is
-  // the decision window.
+  // A desk decision has one ref name (`desk_decision:<id>`); it opens its
+  // record in the Decisions window reader, the one face of a decision.
   if (clean.startsWith("desk_decision:")) {
     const id = clean.slice("desk_decision:".length);
-    return id ? () => openSourceRef(`decision:${id}`) : null;
+    return id ? () => openDeskDecisionRecord(id) : null;
   }
   if (clean.startsWith("decision:")) return () => openDecision(clean);
   if (WINDOW_REF.test(clean)) return navigation === undefined
@@ -299,19 +299,20 @@ export function openRef(ref: string, navigation?: DeskNavigation): void {
   else openSourceRef(clean, navigation);
 }
 
-/** A decision ref names a Desk decision (its own window) or a decision a
- * meeting recorded (`decisions` lifecycle rows, no Desk window). PHILO-17:
- * that one opens itself (its words, its date, its meeting), not the meeting
- * that hid it. One read tells which. The owner, 2026-10-25: a meeting
- * decision that has a record opens that record in the Decisions window
- * reader; one with no record yet opens there too, in its reader from the
- * meeting (`decision:<id>`). */
+/** A decision ref names a Desk decision or a decision a meeting recorded
+ * (`decisions` lifecycle rows). Both open in the Decisions window reader, the
+ * one face of a decision (2026-11-08); one read tells which. A Desk decision
+ * opens its record (`openDeskDecisionRecord`). The owner, 2026-10-25: a
+ * meeting decision that has a record opens that record; one with no record
+ * yet opens in its reader from the meeting (`decision:<id>`). A failed read
+ * opens the Decisions window on the decision by its id. */
 function openDecision(ref: string): void {
   const id = ref.slice("decision:".length);
+  if (!id) return;
   void apiFetch<{ decision?: { source_meeting_id?: string | null } }>(`/api/decisions/${encodeURIComponent(id)}`)
     .then(async (body) => {
       const meeting = (body?.decision?.source_meeting_id ?? "").trim();
-      if (!meeting) return openSourceRef(ref);
+      if (!meeting) return openDeskDecisionRecord(id);
       const records = await apiFetch<{ id?: string }[]>(
         `/api/decision-records/source/meeting/${encodeURIComponent(id)}`,
       ).catch(() => []);
@@ -319,7 +320,7 @@ function openDecision(ref: string): void {
       if (record) openDecisionRecord(String(record.id));
       else useDesk.getState().openSurfaceWindow("open-decisions", `decision:${id}`);
     })
-    .catch(() => openSourceRef(ref));
+    .catch(() => useDesk.getState().openSurfaceWindow("open-decisions", `decision:${id}`));
 }
 
 /** PHILO-14 A2b (Astra r1 on #945) — the ref of the decision a record
