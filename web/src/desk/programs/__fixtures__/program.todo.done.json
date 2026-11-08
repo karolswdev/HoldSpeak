@@ -323,6 +323,7 @@
     "search_words": "atlas at 393 atlas at 393. fast-cycle atlas anchors atlas index atlas links fast cycle",
     "skipped": 0,
     "spend_limit_usd": null,
+    "spend_note": null,
     "state": "waiting",
     "state_word": "Your turn",
     "status_line": "Your turn · 0 of 3 done · 1 waits on you · check: fake_program_check.sh · control Normal",

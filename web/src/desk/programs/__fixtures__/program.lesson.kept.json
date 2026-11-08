@@ -567,6 +567,7 @@
     "search_words": "the words wave plain words. fast-cycle step 1 step 2 step 3 fast cycle",
     "skipped": 0,
     "spend_limit_usd": null,
+    "spend_note": null,
     "state": "running",
     "state_word": "Running",
     "status_line": "Running · 0 of 3 done · check: check.sh · control YOLO",
