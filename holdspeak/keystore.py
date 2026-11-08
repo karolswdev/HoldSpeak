@@ -21,9 +21,15 @@ Now:
   good.
 - **Migration**: a slot that is not in the file is looked for once per
   process in its old Keychain item (the per-module service names). A value
-  found there is written to the file, read back, and only then is the old
-  item deleted. :func:`warm` does this at startup for the fixed slots;
-  People and channel keys move at their first read.
+  found there is written to the file, synced to disk, read back from disk,
+  and only then is the old item deleted. :func:`warm` does this at startup
+  for the fixed slots; People and channel keys move at their first read.
+  The move holds the store lock, and a value or a delete already in the
+  file wins over the old item. A deleted slot keeps a tombstone in the
+  sealed file, so an old item that survived its delete never comes back.
+- **One writer**: every file transaction and the master-key creation hold
+  the thread lock and an ``flock`` on ``keystore.enc.lock``, so two hub
+  processes never lose each other's writes.
 - **The rig file**: ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE`` names a plain 0600
   JSON file of the same shape. A rig hub keeps its secrets there and never
   asks a keychain.
@@ -31,6 +37,7 @@ Now:
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import os
 import secrets as _secrets
@@ -39,7 +46,12 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Iterator, Optional
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows: the thread lock only
+    fcntl = None  # type: ignore[assignment]
 
 from .logging_config import get_logger
 
@@ -59,6 +71,10 @@ _NONCE = 12
 SECURITY = "/usr/bin/security"
 #: ``security`` exit code: the item is not in the keychain.
 _NOT_FOUND = 44
+#: ``security`` exit code: the item is already in the keychain.
+_DUPLICATE = 45
+#: The top-level entry of the sealed file that holds the deleted slots.
+TOMBSTONES = "~deleted"
 
 NATIVE_BACKENDS = frozenset({
     "keyring.backends.macOS.Keyring",
@@ -78,6 +94,49 @@ FIXED_SLOTS: tuple[tuple[str, str], ...] = (
 )
 
 _file_lock = threading.RLock()
+_held = threading.local()
+
+
+@contextlib.contextmanager
+def _locked(path: Path) -> Iterator[None]:
+    """The store lock: the thread lock, then an ``flock`` on ``<file>.lock``.
+
+    The flock keeps another hub process out of the read-modify-write. It is
+    re-entrant per thread: a thread that holds it does not take it again."""
+    lock_path = path.with_name(path.name + ".lock")
+    with _file_lock:
+        depth = getattr(_held, "depth", None)
+        if depth is None:
+            depth = _held.depth = {}
+        ident = str(lock_path)
+        if depth.get(ident):
+            depth[ident] += 1
+            try:
+                yield
+            finally:
+                depth[ident] -= 1
+            return
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+        except OSError:
+            raise KeystoreError("locked") from None
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            depth[ident] = 1
+            try:
+                yield
+            finally:
+                depth[ident] = 0
+                if fcntl is not None:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+
+
+class MasterExists(RuntimeError):
+    """A create-only master-key write found a key already there."""
 
 
 class KeystoreError(RuntimeError):
@@ -161,9 +220,12 @@ class SecurityMaster:
         self._run = run or subprocess.run
         self._seconds = seconds
 
-    def _call(self, args: list[str]) -> Any:
+    def _call(self, args: list[str], stdin: Optional[str] = None) -> Any:
+        kwargs: dict[str, Any] = {"capture_output": True, "text": True, "timeout": self._seconds}
+        if stdin is not None:
+            kwargs["input"] = stdin
         try:
-            return self._run([SECURITY, *args], capture_output=True, text=True, timeout=self._seconds)
+            return self._run([SECURITY, *args], **kwargs)
         except subprocess.TimeoutExpired:
             raise TimeoutError("keystore") from None
 
@@ -176,7 +238,16 @@ class SecurityMaster:
         return str(done.stdout or "").strip() or None
 
     def write(self, value: str) -> None:
-        done = self._call(["add-generic-password", "-U", "-s", SERVICE, "-a", MASTER_ACCOUNT, "-w", value])
+        """Create the item; never replace one (:class:`MasterExists`).
+
+        The command goes on stdin to ``security -i``: the key is never in
+        argv, where every process on the machine can read it."""
+        if not value or any(ch.isspace() or ch == '"' for ch in value):
+            raise ValueError("master key form")
+        done = self._call(["-i"], stdin=f"add-generic-password -s {SERVICE} -a {MASTER_ACCOUNT} -w {value}\n")
+        said = f"{done.stdout or ''}{done.stderr or ''}"
+        if done.returncode == _DUPLICATE or "already exists" in said:
+            raise MasterExists("keystore")
         if done.returncode != 0:
             raise RuntimeError(f"security exit {done.returncode}")
 
@@ -254,7 +325,8 @@ class Keystore:
             if self._failed_at is not None and now - self._failed_at < RETRY_SECONDS:
                 return None
             try:
-                key = self._read_or_make()
+                with _locked(self.path):
+                    key = self._read_or_make()
             except TimeoutError:
                 self._failed_at = now
                 self._say(f"the keychain did not answer in {self._seconds:g} s")
@@ -270,20 +342,32 @@ class Keystore:
             log.info("keystore: open")
             return key
 
+    @staticmethod
+    def _decode(encoded: str) -> bytes:
+        key = base64.b64decode(encoded.encode("ascii"), validate=True)
+        if len(key) != KEY_BYTES:
+            raise ValueError("master key length")
+        return key
+
     def _read_or_make(self) -> Optional[bytes]:
+        """Under the store lock: read the master key, or make it create-only."""
         encoded = self._master.read()
         if encoded:
-            key = base64.b64decode(encoded.encode("ascii"), validate=True)
-            if len(key) != KEY_BYTES:
-                raise ValueError("master key length")
-            return key
+            return self._decode(encoded)
         if self.path.exists():
             # Never seal over a file another master key holds: keep it.
             self._say(f"the master key is gone; {self.path.name} is kept as it is")
             return None
         key = _secrets.token_bytes(KEY_BYTES)
         encoded = base64.b64encode(key).decode("ascii")
-        self._master.write(encoded)
+        try:
+            self._master.write(encoded)
+        except MasterExists:
+            # Another process made it first: use that one, never replace it.
+            again = self._master.read()
+            if not again:
+                raise RuntimeError("master key did not read back") from None
+            return self._decode(again)
         if self._master.read() != encoded:
             raise RuntimeError("master key did not read back")
         log.info("keystore: made the master key (one Keychain item)")
@@ -294,12 +378,40 @@ class Keystore:
 
     # the file
 
-    def _load(self) -> dict[str, dict[str, str]]:
+    def _key_or_fail(self) -> bytes:
         key = self._open()
         if key is None:
             raise KeystoreError("unavailable")
+        return key
+
+    def _transaction(self) -> Any:
+        return _locked(self.path)
+
+    def _read_disk(self) -> bytes:
+        """The file's bytes, past the OS file cache where the OS allows it."""
+        fd = os.open(self.path, os.O_RDONLY)
         try:
-            raw = self.path.read_bytes()
+            nocache = getattr(fcntl, "F_NOCACHE", None) if fcntl is not None else None
+            if nocache is not None:
+                try:
+                    fcntl.fcntl(fd, nocache, 1)
+                except OSError:
+                    pass
+            chunks = []
+            while True:
+                chunk = os.read(fd, 1 << 16)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            return b"".join(chunks)
+        finally:
+            os.close(fd)
+
+    def _load(self, key: Optional[bytes] = None) -> dict[str, Any]:
+        if key is None:
+            key = self._key_or_fail()
+        try:
+            raw = self._read_disk()
         except FileNotFoundError:
             return {}
         except OSError:
@@ -319,25 +431,36 @@ class Keystore:
             raise KeystoreError("locked")
         return data
 
-    def _save(self, data: dict[str, dict[str, str]]) -> None:
-        key = self._open()
+    def _save(self, data: dict[str, Any], key: Optional[bytes] = None) -> None:
+        """Write the file durably: a unique temp file, fsync, rename, fsync the folder."""
         if key is None:
-            raise KeystoreError("unavailable")
+            key = self._key_or_fail()
         body = json.dumps(data, sort_keys=True).encode("utf-8")
         if not self.plain:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
             nonce = _secrets.token_bytes(_NONCE)
             body = _MAGIC + nonce + AESGCM(key).encrypt(nonce, body, _MAGIC)
-        tmp = self.path.with_suffix(self.path.suffix + ".tmp")
+        tmp = self.path.with_name(f"{self.path.name}.{os.getpid()}.{_secrets.token_hex(4)}.tmp")
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-            os.fchmod(fd, 0o600)  # an existing .tmp keeps its mode through O_CREAT
-            with os.fdopen(fd, "wb") as handle:
-                handle.write(body)
-            os.replace(tmp, self.path)
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            try:
+                with os.fdopen(fd, "wb") as handle:
+                    handle.write(body)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.replace(tmp, self.path)
+            except BaseException:
+                with contextlib.suppress(OSError):
+                    os.unlink(tmp)
+                raise
             os.chmod(self.path, 0o600)
+            folder = os.open(self.path.parent, os.O_RDONLY)
+            try:
+                os.fsync(folder)
+            finally:
+                os.close(folder)
         except OSError:
             raise KeystoreError("locked") from None
 
@@ -350,22 +473,47 @@ class Keystore:
             raise KeystoreError("locked")
         return bucket
 
+    @staticmethod
+    def _tombstoned(data: dict, service: str, slot: str) -> bool:
+        tombs = data.get(TOMBSTONES)
+        return isinstance(tombs, dict) and slot in (tombs.get(service) or ())
+
+    @staticmethod
+    def _set_tombstone(data: dict, service: str, slot: str, on: bool) -> None:
+        tombs = data.get(TOMBSTONES)
+        tombs = dict(tombs) if isinstance(tombs, dict) else {}
+        slots = set(tombs.get(service) or ())
+        if on:
+            slots.add(slot)
+        else:
+            slots.discard(slot)
+        if slots:
+            tombs[service] = sorted(slots)
+        else:
+            tombs.pop(service, None)
+        if tombs:
+            data[TOMBSTONES] = tombs
+        else:
+            data.pop(TOMBSTONES, None)
+
     # the slots
 
     def get(self, service: str, slot: str) -> str:
-        with _file_lock:
-            value = self._bucket(self._load(), service).get(str(slot))
+        key = self._key_or_fail()
+        with self._transaction():
+            value = self._bucket(self._load(key), service).get(str(slot))
         if isinstance(value, str) and value:
             return value
-        moved = self._move_legacy(service, str(slot))
+        moved = self._move_legacy(service, str(slot), key)
         if moved:
             return moved
         raise KeystoreError("missing")
 
     def put(self, service: str, slot: str, value: Optional[str]) -> None:
-        """Keep ``value``; an empty value forgets the slot."""
-        with _file_lock:
-            data = self._load()
+        """Keep ``value``; an empty value forgets the slot and leaves a tombstone."""
+        key = self._key_or_fail()
+        with self._transaction():
+            data = self._load(key)
             bucket = dict(self._bucket(data, service))
             if value:
                 bucket[str(slot)] = str(value)
@@ -375,32 +523,54 @@ class Keystore:
                 data[service] = bucket
             else:
                 data.pop(service, None)
-            self._save(data)
-        self._checked.add((service, str(slot)))
+            if not self.plain:
+                self._set_tombstone(data, service, str(slot), not value)
+            self._save(data, key)
+            self._checked.add((service, str(slot)))
 
     def delete(self, service: str, slot: str) -> None:
         self.put(service, slot, "")
 
     # the move from the old per-secret items
 
-    def _move_legacy(self, service: str, slot: str) -> str:
+    def _move_legacy(self, service: str, slot: str, key: bytes) -> str:
+        """Move one old item into the file, under the store lock.
+
+        A same-slot get, put or delete waits for the move. A value or a
+        tombstone already in the file wins over the old item."""
         legacy = self._legacy
-        if legacy is None or self.plain or (service, slot) in self._checked:
+        if legacy is None or self.plain:
             return ""
-        self._checked.add((service, slot))
-        try:
-            value = bounded(lambda: legacy.get_password(service, slot), self._seconds)
-        except Exception as exc:  # noqa: BLE001 - a slow old item: stop asking old items
-            self._legacy = None
-            log.warning(f"keystore: the old Keychain items did not answer ({type(exc).__name__}); "
-                        "they stay where they are")
-            return ""
-        if not value:
-            return ""
-        value = str(value)
-        self.put(service, slot, value)
-        with _file_lock:
-            if self._bucket(self._load(), service).get(slot) != value:
+        with self._transaction():
+            data = self._load(key)
+            current = self._bucket(data, service).get(slot)
+            if isinstance(current, str) and current:
+                return current
+            if (service, slot) in self._checked or self._tombstoned(data, service, slot):
+                return ""
+            self._checked.add((service, slot))
+            try:
+                value = bounded(lambda: legacy.get_password(service, slot), self._seconds)
+            except Exception as exc:  # noqa: BLE001 - a slow old item: stop asking old items
+                self._legacy = None
+                log.warning(f"keystore: the old Keychain items did not answer ({type(exc).__name__}); "
+                            "they stay where they are")
+                return ""
+            if not value:
+                return ""
+            value = str(value)
+            # Recheck right before the commit: the file's own state wins.
+            data = self._load(key)
+            current = self._bucket(data, service).get(slot)
+            if isinstance(current, str) and current:
+                return current
+            if self._tombstoned(data, service, slot):
+                return ""
+            bucket = dict(self._bucket(data, service))
+            bucket[slot] = value
+            data[service] = bucket
+            self._save(data, key)  # fsyncs the file and its folder
+            if self._bucket(self._load(key), service).get(slot) != value:  # read back from disk
                 log.warning(f"keystore: {service} / {slot} did not read back; the old item is kept")
                 return value
         if not self._delete_old:
@@ -511,7 +681,8 @@ class Slots:
 
 
 __all__ = [
-    "CHANNEL_KEYSTORE_ENV", "FIXED_SLOTS", "KeyringMaster", "Keystore", "KeystoreError", "READ_SECONDS",
+    "CHANNEL_KEYSTORE_ENV", "FIXED_SLOTS", "KeyringMaster", "Keystore", "KeystoreError", "MasterExists",
+    "READ_SECONDS", "TOMBSTONES",
     "SecurityMaster", "Slots", "bounded", "default", "default_path", "forget", "home_has_a_keychain",
     "native_backend", "rig_path", "use", "warm",
 ]

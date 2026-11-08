@@ -5,6 +5,7 @@ Keychain, and ``keyring.get_keyring`` fails the test if it is reached.
 """
 from __future__ import annotations
 
+import contextlib
 import subprocess
 import threading
 import time
@@ -161,10 +162,11 @@ def test_a_security_timeout_is_unavailable_and_asks_again_after_the_retry(tmp_pa
     now[0] += keystore.RETRY_SECONDS + 1
     stored: dict[str, str] = {}
 
-    def run_ok(args: list[str], **_kw: Any) -> Any:
+    def run_ok(args: list[str], **kw: Any) -> Any:
         calls.append(args)
-        if args[1] == "add-generic-password":
-            stored["v"] = args[args.index("-w") + 1]
+        if args[1] == "-i":
+            words = kw["input"].split()
+            stored["v"] = words[words.index("-w") + 1]
             return subprocess.CompletedProcess(args, 0, "", "")
         if "v" in stored:
             return subprocess.CompletedProcess(args, 0, stored["v"] + "\n", "")
@@ -173,8 +175,8 @@ def test_a_security_timeout_is_unavailable_and_asks_again_after_the_retry(tmp_pa
     master._run = run_ok
     assert store.available() is True
     assert all(c[0] == "/usr/bin/security" for c in calls)
-    assert [c[1] for c in calls[1:]] == ["find-generic-password", "add-generic-password", "find-generic-password"]
-    assert calls[2][calls[2].index("-s") + 1] == "HoldSpeak" and "-U" in calls[2]
+    assert [c[1] for c in calls[1:]] == ["find-generic-password", "-i", "find-generic-password"]
+    assert calls[2] == ["/usr/bin/security", "-i"]
 
 
 def test_migration_moves_each_old_item_into_the_file_then_deletes_it(tmp_path: Path) -> None:
@@ -208,10 +210,10 @@ def test_migration_moves_each_old_item_into_the_file_then_deletes_it(tmp_path: P
 def test_migration_never_loses_a_secret(tmp_path: Path) -> None:
     # The file cannot be written: the old item stays.
     old = FakeKeyring({("HoldSpeak Reach", "reach.telegram.bot_token"): "tok"})
-    blocked = tmp_path / "ro"
-    blocked.mkdir()
-    store = Keystore(blocked / "sub" / "keystore.enc", master=FakeMaster(), legacy=old)
-    store.available()  # the master key is made before the folder is closed
+    blocked = tmp_path / "ro" / "sub"
+    blocked.mkdir(parents=True)
+    store = Keystore(blocked / "keystore.enc", master=FakeMaster(), legacy=old)
+    store.available()  # the master key (and the lock file) are made before the folder is closed
     blocked.chmod(0o500)
     try:
         with pytest.raises(KeystoreError, match="locked"):
@@ -293,3 +295,158 @@ def test_a_home_with_no_keychain_is_unavailable_without_asking(
     assert keystore.warm() is False
     with pytest.raises(KeystoreError, match="unavailable"):
         store.put("HoldSpeak Reach", "x", "y")
+
+
+# ── the 2026-11-08 review (#1830 fixed forward) ─────────────────────
+
+
+def test_the_master_key_goes_on_stdin_never_in_argv(tmp_path: Path) -> None:
+    """Fails on #1830: the key followed ``-w`` on the command line."""
+    calls: list[tuple[list[str], Optional[str]]] = []
+    stored: dict[str, str] = {}
+
+    def run(args: list[str], **kw: Any) -> Any:
+        calls.append((args, kw.get("input")))
+        if args[1] == "-i":
+            words = kw["input"].split()
+            stored["v"] = words[words.index("-w") + 1]
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if "v" in stored:
+            return subprocess.CompletedProcess(args, 0, stored["v"] + "\n", "")
+        return subprocess.CompletedProcess(args, 44, "", "")
+
+    store = _store(tmp_path, master=keystore.SecurityMaster(run=run))
+    assert store.available() is True
+    key = stored["v"]
+    assert all(key not in " ".join(args) for args, _ in calls)
+    adds = [stdin for args, stdin in calls if args[1] == "-i"]
+    assert adds == [f"add-generic-password -s HoldSpeak -a keystore-master-key -w {key}\n"]
+    assert "-U" not in adds[0].split()  # create-only
+
+
+def test_an_existing_master_key_is_never_replaced(tmp_path: Path) -> None:
+    """Another process made the key between the read and the add: use its key."""
+    theirs = keystore.base64.b64encode(b"t" * 32).decode("ascii")
+    reads = [0]
+
+    def run(args: list[str], **kw: Any) -> Any:
+        if args[1] == "-i":
+            return subprocess.CompletedProcess(
+                args, 45, "", "security: The specified item already exists in the keychain.")
+        reads[0] += 1
+        if reads[0] == 1:
+            return subprocess.CompletedProcess(args, 44, "", "")
+        return subprocess.CompletedProcess(args, 0, theirs + "\n", "")
+
+    store = _store(tmp_path, master=keystore.SecurityMaster(run=run))
+    assert store.available() is True
+    assert store._key == b"t" * 32
+
+
+def test_a_deleted_slot_is_not_imported_again_after_a_restart(tmp_path: Path) -> None:
+    """Fails on #1830: the old item survived its delete and came back (Unpair undone)."""
+    slot = ("HoldSpeak Reach", "reach.telegram.chat")
+    old = FakeKeyring({slot: '{"id": "42"}'}, fail_delete=True)
+    master = FakeMaster()
+    first = _store(tmp_path, master=master, legacy=old)
+    assert first.get(*slot) == '{"id": "42"}'
+    assert slot in old.items  # the old item survived
+    first.delete(*slot)
+    again = Keystore(first.path, master=master, legacy=old)  # the hub restarts
+    with pytest.raises(KeystoreError, match="missing"):
+        again.get(*slot)
+    assert slot not in again._load().get("HoldSpeak Reach", {})
+    # A new value clears the tombstone.
+    again.put(*slot, '{"id": "7"}')
+    assert keystore.TOMBSTONES not in again._load()
+    assert Keystore(first.path, master=master, legacy=old).get(*slot) == '{"id": "7"}'
+
+
+def test_a_write_during_migration_wins_over_the_old_item(tmp_path: Path) -> None:
+    """Fails on #1830: the move wrote the old value over a save made while it read."""
+    slot = ("HoldSpeak Reach", "reach.telegram.bot_token")
+    inside, release = threading.Event(), threading.Event()
+
+    class SlowOld(FakeKeyring):
+        def get_password(self, service: str, name: str) -> Optional[str]:
+            inside.set()
+            release.wait(5)
+            return super().get_password(service, name)
+
+    store = _store(tmp_path, legacy=SlowOld({slot: "old"}), seconds=5)
+    store.available()
+    got: dict[str, Any] = {}
+    mover = threading.Thread(target=lambda: got.setdefault("move", store.get(*slot)))
+    mover.start()
+    assert inside.wait(5)
+    writer = threading.Thread(target=lambda: store.put(*slot, "new"))
+    reader = threading.Thread(target=lambda: got.setdefault("read", store.get(*slot)))
+    writer.start()
+    time.sleep(0.05)
+    reader.start()
+    time.sleep(0.05)
+    release.set()
+    for thread in (mover, writer, reader):
+        thread.join(5)
+    assert store.get(*slot) == "new"
+    assert got["read"] in ("old", "new")  # never "missing" while the move runs
+
+
+def test_two_processes_on_one_file_do_not_lose_a_write(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Two stores whose thread locks are separate (two processes): the flock alone serializes them."""
+    monkeypatch.setattr(keystore, "_file_lock", contextlib.nullcontext())
+    flocks: list[int] = []
+    real_flock = keystore.fcntl.flock
+
+    def flock(fd: int, op: int) -> None:
+        flocks.append(op)
+        real_flock(fd, op)
+
+    monkeypatch.setattr(keystore.fcntl, "flock", flock)
+    real_load = Keystore._load
+
+    def slow_load(self: Keystore, key: Optional[bytes] = None) -> Any:
+        data = real_load(self, key)
+        time.sleep(0.002)  # widen the read-modify-write window
+        return data
+
+    monkeypatch.setattr(Keystore, "_load", slow_load)
+    master = FakeMaster()
+    one = _store(tmp_path, master=master)
+    two = Keystore(one.path, master=master)
+    one.available(), two.available()
+
+    def write(store: Keystore, tag: str) -> None:
+        for n in range(25):
+            store.put("HoldSpeak Reach", f"{tag}{n}", "v")
+
+    threads = [threading.Thread(target=write, args=(one, "a")), threading.Thread(target=write, args=(two, "b"))]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(30)
+    assert len(one._load()["HoldSpeak Reach"]) == 50
+    assert keystore.fcntl.LOCK_EX in flocks
+    assert (tmp_path / "keystore.enc.lock").exists()
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_the_old_item_is_deleted_only_after_fsync_and_a_disk_read_back(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    events: list[str] = []
+    real_fsync, real_disk = keystore.os.fsync, Keystore._read_disk
+    monkeypatch.setattr(keystore.os, "fsync", lambda fd: (events.append("fsync"), real_fsync(fd))[1])
+    monkeypatch.setattr(Keystore, "_read_disk", lambda self: (events.append("disk"), real_disk(self))[1])
+
+    class Old(FakeKeyring):
+        def delete_password(self, service: str, slot: str) -> None:
+            events.append("delete")
+            super().delete_password(service, slot)
+
+    old = Old({("HoldSpeak Line", "calls.line.sip_password"): "sip"})
+    store = _store(tmp_path, legacy=old)
+    assert store.get("HoldSpeak Line", "calls.line.sip_password") == "sip"
+    assert old.items == {}
+    at = events.index("delete")
+    assert events[at - 3:at] == ["fsync", "fsync", "disk"]  # file, folder, then the disk read-back
