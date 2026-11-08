@@ -14,7 +14,6 @@ With both jobs off the thread never starts.
 from __future__ import annotations
 
 from holdspeak.timestamps import local_now
-from typing import Optional
 
 from ..logging_config import get_logger
 

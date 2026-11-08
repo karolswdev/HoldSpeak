@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 from typing import Any, Optional
 
-import numpy as np
 
 from ..logging_config import get_logger
 from ..plugins.router import (
