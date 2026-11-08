@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import signal
 import sys
@@ -10,43 +9,29 @@ import threading
 import time
 import webbrowser
 from holdspeak.timestamps import utc_now
-from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
-import numpy as np
 
 from .audio import AudioRecorder
 from .config import Config
 from .config.meeting import effective_routing_profile
-from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
 from .web_auth import authenticated_browser_url, ensure_web_token, reachable_urls
 from .device_recording_tick import RecordingTicker
-from .device_meeting_stats import pick_next_view
 from .device_status import (
     DeviceStatusEmitter,
-    push_intel_to_devices,
-    push_segment_to_devices,
 )
 from .desktop_presence import DesktopPresenceHost, build_desktop_presence_host
-from .dictation_runner import dispatch_voice_command, run_dictation_pipeline
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
 from .meeting_session import MeetingSession
 from .plugins.router import (
-    DEFAULT_INTENT_THRESHOLD,
-    SUPPORTED_INTENTS,
-    available_profiles,
-    normalize_override_intents,
     normalize_profile,
-    preview_route,
 )
 from .plugins.builtin import register_builtin_plugins
-from .plugins.host import PluginHost, build_idempotency_key
+from .plugins.host import PluginHost
 from .plugins.project_detector import ProjectDetectorPlugin
-from .plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
-from .plugins.signals import extract_intent_signals
 from .activity_tracker import RuntimeActivityTracker
 from .text_processor import TextProcessor
 from .transcribe import Transcriber

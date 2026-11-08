@@ -251,22 +251,6 @@ def mode_for_thread(db: "Database", thread_id: str) -> Optional[Mode]:
     )
 
 
-def allowed_tools_for_thread(db: "Database", thread_id: str) -> frozenset[str]:
-    """Return the effective tool palette for a thread.
-
-    mode allow-list intersected with TOOL_NAMES; no mode -> Desk's list.
-
-    .. deprecated:: HS-153-01
-        Callers in ThreadService should use ``palette_for`` instead,
-        which returns None when no mode is bound (caller uses CHAT_PALETTE).
-        This function is kept for backward compat.
-    """
-    palette = palette_for(db, thread_id)
-    if palette is None:
-        return _DESK_TOOLS & TOOL_NAMES
-    return palette
-
-
 def palette_for(db: "Database", thread_id: str) -> Optional[frozenset[str]]:
     """Return the mode's palette for a thread, or None when no mode is bound.
 

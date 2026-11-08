@@ -10,7 +10,6 @@ from __future__ import annotations
 from holdspeak.timestamps import utc_now
 from typing import Optional
 
-import numpy as np
 
 from ..logging_config import get_logger
 from ..plugins.router import (

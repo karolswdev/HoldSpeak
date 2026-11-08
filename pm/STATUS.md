@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1948 HS-S56 retire proven-obsolete compatibility surface: deferred_admission namespace and allowed_tools_for_thread parked, the shadowed _backfill_directory_name_normalized copy and 67 dead runtime imports/re-exports gone (−185 product lines); the history MeetingReview shim stays (the Philo graph cites it).
 - 2026-11-08 · #1947 Fix forward #1944: program_runner imports programs_on from program_definitions (the HS-S51 repoint fence).
 - 2026-11-08 · #1946 HS-S34 A Thread turn has one lifecycle (`services/thread_turns.py`): detach is explicit and idempotent, a cancel after the answer is saved is refused (it said "stopped" before), a failed terminal frame no longer leaves the turn registered, a late answer is saved and never sent to a detached Ask.
 - 2026-11-08 · #1945 Needs you is the desk of today: the kit mast (the lamp, "Sunday · 3 must fix", mono counts, Mine · People, Later) and spine, the one thing that waits most as a raised plate with the brass Button, the ledger by weight in 46 px bold rows (Today draws the same row), one column at 393; NeedsDrawer.tsx 1,599 → 403 lines.

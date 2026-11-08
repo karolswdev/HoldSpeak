@@ -15,7 +15,6 @@ from .base import BaseRepository
 from .connection import (
     ConnectionCache,
     make_connection_factory,
-    connection as _raw_connection,  # noqa: F401  re-exported for callers
 )
 
 # Import every repository module so __init_subclass__ fires and the registry

@@ -24,8 +24,10 @@ module name and the file name, on branch `chore/finish-housekeeping`.
 | `holdspeak/web/routes/meetings/_shared.py` | 24 | none | No importer, no string reference |
 | `holdspeak/workrooms.py` | 114 | its own test only | HS-93-02 workroom context; no product caller. Its test is parked at `tests/_parked/dead-code/tests/unit/test_workroom_context.py` |
 | `holdspeak/db/models/mixins.py` | 16 | none | `Serializable`, the base class of the six model copies parked above. No class in `holdspeak/db/models/__init__.py` inherits it; only its own definition named it (parked 2026-11-07) |
+| `holdspeak/meeting_session/deferred_admission.py` | 21 | two tests, now redirected | HS-S56: the retired v1 namespace re-exported four names of `deferred_bound.py`; `test_meeting_service.py` and `test_meeting_deferred_admission.py` now import `deferred_bound` (parked 2026-11-08) |
+| `holdspeak/services/thread_modes_allowed_tools.py` | 16 | its own tests only | HS-S56: `allowed_tools_for_thread`, deprecated by HS-153-01 (default-to-Desk was wrong for unbound threads); `palette_for` is the one palette read. Its tests are parked at `tests/_parked/dead-code/tests/unit/test_thread_modes_allowed_tools.py`; the Plan-mode case moved to `TestPaletteFor` (parked 2026-11-08) |
 
-Total: 1,379 lines.
+Total: 1,416 lines.
 
 To bring a file back: `git mv parked/<path> <path>` (and its test from
 `tests/_parked/dead-code/`).
