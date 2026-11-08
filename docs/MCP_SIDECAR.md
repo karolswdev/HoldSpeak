@@ -137,7 +137,7 @@ lists every tool name.
 | `people` | The encrypted People ledger. |
 | `cadence`, `heartbeat`, `scheduled_recording`, `door` | The Cadence engine, the Heartbeat sweep, scheduled recordings and the Door. |
 | `model_library`, `inference`, `inference_assignment`, `concierge`, `settings` | Models, assignments and settings. |
-| `sequence`, `workflow`, `workbench`, `automation`, `recipe`, `practice_recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. `automation.*` are the `workbench.*` tools by the user's word. |
+| `workbench`, `automation`, `recipe`, `practice_recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. `automation.*` are the `workbench.*` tools by the user's word. |
 | `memory`, `dictation`, `event`, `pipeline`, `kernel`, `plugin_job`, `coder` | Search, journals, events, receipts, queued jobs and Coder sessions. |
 
 ### Automations
