@@ -132,3 +132,19 @@ def test_action_only_card_can_complete(db: Database) -> None:
 
     assert result["commitment_ids"] == []
     assert _states(db) == ("done", "closed", None)
+
+
+def test_done_receipt_names_the_row_its_status_and_done_at(db: Database) -> None:
+    """One done receipt (2026-11-08): the Desk's one `markDone` reads
+    card_id, status and done_at from every Done; People's transition answers
+    the same shape (tests/unit/test_people_routes.py)."""
+    _seed_card(db, with_commitment=False)
+    service = FollowThroughService(db)
+
+    done = service.complete(OWNER, "action-1", "done")
+    assert (done["card_id"], done["status"]) == ("action-1", "done")
+    assert done["done_at"]
+    replay = service.complete(OWNER, "action-1", "done")
+    assert (replay["status"], replay["done_at"], replay["replayed"]) == ("done", done["done_at"], True)
+    reopened = service.complete(OWNER, "action-1", "reopen")
+    assert (reopened["status"], reopened["done_at"]) == ("open", None)

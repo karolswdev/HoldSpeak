@@ -443,7 +443,7 @@ class FollowThroughService:
 
         with self._db._connection() as conn:
             action = conn.execute(
-                "SELECT id, task, owner, due, status FROM action_items WHERE id = ?", (card_id,)
+                "SELECT id, task, owner, due, status, completed_at FROM action_items WHERE id = ?", (card_id,)
             ).fetchone()
             if action is None:
                 raise ValueError(f"Action item not found: {card_id}")
@@ -467,6 +467,8 @@ class FollowThroughService:
                     "SELECT id FROM decision_commitments WHERE action_item_id = ?", (card_id,)).fetchall()]
                 return {
                     "card_id": card_id, "verb": normalized_verb,
+                    "status": current_status,
+                    "done_at": action["completed_at"] if current_status == "done" else None,
                     "loop_ids": loop_ids, "commitment_ids": commitment_ids,
                     "replayed": True,
                 }
@@ -643,9 +645,15 @@ class FollowThroughService:
             except Exception:
                 pass
 
+        # One done receipt (2026-11-08): the row's id, its status after the
+        # verb and when it was done; People's transition answers the same.
+        status = {"done": "done", "dismiss": "dismissed", "reopen": "open"}.get(
+            normalized_verb, current_status)
         return {
             "card_id": card_id,
             "verb": normalized_verb,
+            "status": status,
+            "done_at": now if status == "done" else None,
             "loop_ids": loop_ids,
             "commitment_ids": commitment_ids,
         }

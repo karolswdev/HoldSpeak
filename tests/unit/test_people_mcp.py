@@ -200,7 +200,9 @@ def test_people_mcp_write_flow_uses_domain_service_and_encrypted_authority(
         "verb": "done",
     })
     assert failed is False
-    assert transition == {"card_id": f"people:{commitment['id']}", "verb": "done"}
+    assert {k: transition[k] for k in ("card_id", "verb", "status")} == {
+        "card_id": f"people:{commitment['id']}", "verb": "done", "status": "done"}
+    assert transition["done_at"]
     assert people_service.list_cards(OWNER) == []
 
 
