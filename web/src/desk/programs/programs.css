@@ -1676,12 +1676,8 @@ span.pg-req-thumb { height: 150px; }
 }
 .pg-wiz-dot[data-state="done"] { background: color-mix(in srgb, currentColor 70%, transparent); }
 .pg-wiz-dot[data-state="now"] { width: 16px; background: currentColor; }
-/* The phone head keeps its title beside the dots (the head's one row). */
-@media (max-width: 720px) {
-  .desk-next .desk-window.desk-window-shell > .desk-pullout-head.has-wings:has(> .pg-wiz-dots) .desk-pullout-title { display: block; }
-  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .pg-wiz-dots { order: 1; }
-}
-
+/* The phone head keeps its title beside the dots: the frame's own rule
+   (pullout.css, data-keeps-title on the wings slot). */
 @media (prefers-reduced-motion: no-preference) {
   .pg-wiz-step[data-dir="on"] { animation: pg-wiz-on var(--duration-medium) var(--ease-decelerate); }
   .pg-wiz-step[data-dir="back"] { animation: pg-wiz-back var(--duration-medium) var(--ease-decelerate); }

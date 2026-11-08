@@ -160,7 +160,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
   useWindowBack({ onBack: leave, testId: "programs-wizard-back-frame", label: "Cancel" }, [pending]);
   // The progress dots ride the title bar's right end.
   useWindowWings(
-    <span className="pg-wiz-dots" aria-label={`Step ${step + 1} of ${STEP_TOTAL}`} role="img" data-testid="programs-wizard-dots">
+    <span className="pg-wiz-dots" data-keeps-title="" aria-label={`Step ${step + 1} of ${STEP_TOTAL}`} role="img" data-testid="programs-wizard-dots">
       {STEPS.map((word, at) => (
         <span key={word} className="pg-wiz-dot" data-state={at === step ? "now" : at < step ? "done" : undefined} />
       ))}

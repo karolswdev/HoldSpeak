@@ -682,6 +682,15 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-window-icon {
     display: none;
   }
+  /* A wings slot that says data-keeps-title (the New program wizard's
+     progress dots) keeps the title beside it: the head's one row reads
+     the object and the dots (W2, 2026-11-08). */
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head.has-wings:has(> [data-keeps-title]) .desk-pullout-title {
+    display: block;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > [data-keeps-title] {
+    order: 1;
+  }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-pullout-title {
     flex: 1 1 0;
     max-width: none;
