@@ -593,12 +593,15 @@ def plan_from_goal(service: Any, principal: Any, program_id: str, *,
         program = service.store.get_program(program_id)
         return bool(program and program.get("state") == "drafting" and not service.store.list_steps(program_id))
 
-    if not _open():
+    from . import program_spoken
+
+    if not _open() or program_spoken.waiting(program_id):
+        # His spoken rows are the plan: the engine never plans over them.
         raise ProgramRefused("plan_not_needed", "The program has steps already, or it is not in Drafting.")
     draft = plan_draft(service, principal, program_id, invoke_fn=invoke_fn)
     if not int((draft.get("counts") or {}).get("steps") or 0):
         raise ProgramRefused("plan_empty", "The engine planned no step. Write more of the goal, then press Plan it.")
-    if not _open():
+    if not _open() or program_spoken.waiting(program_id):
         raise ProgramRefused("plan_not_needed", "The program has steps already, or it is not in Drafting.")
     # His Apply in the change well: the allowed text (a refused row put back as
     # it was). The head stays the Program's own as made (his Control, check,
