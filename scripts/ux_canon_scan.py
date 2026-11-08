@@ -208,6 +208,8 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "ChoiceCard radio — not a text input"),
     # Parked: ("desk/pullouts/ThreadPullout.tsx", "thread-elicitation-boolean",
     # "Elicitation boolean checkbox — not a text input"). It now uses CheckGadget.
+    # Parked 2026-11-08 (no entry reaches it): desk/components/ThreadComposer.tsx's
+    # 'label="Thread message"' and 'label={placeholder ?? "Edit message"}'.
     # Parked by Betterment Q4 with the Thread window: ("desk/pullouts/ThreadPullout.tsx",
     # 'type="number"', "Elicitation numeric field — a number, not dictatable text").
     # DIR10 (2026-11-01): the briefing page is outside the desk; its thin kit
@@ -263,14 +265,12 @@ MIC_HOST_AUTHORITIES: tuple[tuple[str, str, str], ...] = (
      "Ask's host MicButton appends to the latest durable prompt"),
     ("desk/components/DeskComposer.tsx", 'label={placeholder || actionLabel}',
      "Both reply editor variants share one explicit scoped MicButton in their ComposerWell capture slot"),
-    ("desk/components/ThreadComposer.tsx", 'label="Thread message"',
-     "The Thread composer MicButton appends to the latest draft"),
-    ("desk/components/ThreadComposer.tsx", 'label={placeholder ?? "Edit message"}',
-     "The inline editor MicButton appends inside its editor focus group"),
     ("features/project-room/core/Ask.tsx", 'label="Ask this project"',
      "The Room's Ask composer row (askFace AskComposer) carries its host MicButton in the capture slot"),
     ("pages/cores/MemoryCore.tsx", 'label="Find or ask your desk"',
      "Memory's Ask composer row (askFace AskComposer) carries its host MicButton in the capture slot"),
+    # Parked 2026-11-08 (no entry reaches it): desk/components/ThreadComposer.tsx's
+    # 'label="Thread message"' and 'label={placeholder ?? "Edit message"}'.
     # Parked by Betterment Q4 with the Thread window: ("desk/pullouts/ThreadPullout.tsx",
     # 'label="Comment"', "The annotation MicButton appends to the current comment").
 )

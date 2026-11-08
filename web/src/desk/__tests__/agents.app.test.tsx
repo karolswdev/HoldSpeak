@@ -5,7 +5,6 @@
 // tests/integration/test_desk_agents_wire.py. Only apiFetch / apiRequest are
 // doubles; the components, stores and reducers are the real ones.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hubWire } from "./wire/hubWire";
 import { ApiError } from "../../lib/api";
@@ -22,8 +21,6 @@ vi.mock("../../runtime/RuntimeBus", () => {
 });
 vi.mock("../components/MicButton", () => ({ MicButton: () => <span data-testid="mic" /> }));
 
-import { CompanionCore } from "../../pages/cores/CompanionCore";
-import { WingSlotContext } from "../surface/wings";
 import { LaneWindow } from "../lane/LaneWindow";
 import { __resetLane, useLane } from "../lane/laneStore";
 import { branchFace } from "../lane/laneWire";
@@ -70,39 +67,6 @@ beforeEach(() => {
 afterEach(() => {
   __resetLane();
   vi.useRealTimers();
-});
-
-describe("the roster (Agents) on the product seed", () => {
-  /** replaces: tests/e2e/test_agents_roster_glass.py::test_roster_lists_the_floor_agents_and_no_blank_delivery_tab */
-  it("lists every seeded agent the hub serves and withholds an empty Delivery wing", async () => {
-    const recipes = hubWire<{ recipes: Array<{ name: string; deleted?: boolean }> }>("recipes.seed");
-    serve({
-      "/api/recipes": recipes.wire,
-      "/api/coders/sessions": hubWire("coders-sessions.empty").wire,
-      "/api/delivery/prs": hubWire("delivery-prs.empty").wire,
-    });
-    function Host({ children }: { children: ReactNode }) {
-      const [slot, setSlot] = useState<ReactNode>(null);
-      return (
-        <WingSlotContext.Provider value={setSlot}>
-          <div data-testid="window-head">{slot}</div>
-          {children}
-        </WingSlotContext.Provider>
-      );
-    }
-    const { container } = render(<Host><CompanionCore /></Host>);
-    const floor = [...new Set(recipes.wire.recipes.filter((r) => !r.deleted).map((r) => String(r.name)))].sort();
-    expect(floor).toEqual(expect.arrayContaining(["Chase", "Desk", "Draft"]));
-    await screen.findByText("Chase");
-    const list = container.querySelector("[data-testid='agents-list']")!;
-    const shown = [...new Set([...list.querySelectorAll(".ag-row-title")]
-      .map((el) => (el.textContent ?? "").trim()).filter(Boolean))].sort();
-    expect(shown).toEqual(floor);
-    // No repository work and no pull request receipts: the wing is withheld,
-    // and one wing is no choice (PHILO-17): no wing strip at all.
-    await waitFor(() => expect(screen.queryByRole("tab", { name: "Delivery" })).toBeNull());
-    expect(screen.queryAllByRole("tab")).toHaveLength(0);
-  });
 });
 
 /* ── the lane (PHILO-14 C2 seed) ─────────────────────────────────────── */

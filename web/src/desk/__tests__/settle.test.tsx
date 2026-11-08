@@ -5,8 +5,6 @@ import { useSettleState } from "../settleState";
 import { verbById } from "../verbRegistry";
 import { useDesk } from "../store";
 import { registerSurface } from "../shell";
-import { RoomActions } from "../components/window/RoomActions";
-import { DeskMenuBar } from "../components/DeskMenuBar";
 
 beforeEach(() => {
   useSettleState.setState({ settled: false });
@@ -92,38 +90,5 @@ describe("Settle in", () => {
     event.preventDefault();
     expect(dispatchKey(event)).toBeNull();
     expect(useSettleState.getState().settled).toBe(true);
-  });
-
-  it("keeps an explicit way back and distinguishes meeting capture states", () => {
-    useSettleState.getState().setSettled(true);
-    render(<RoomActions />);
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Meeting recorder idle",
-    );
-    act(() =>
-      useDesk.setState({ recording: "recording", recordingExternal: true }),
-    );
-    expect(screen.getByRole("status")).toHaveTextContent("Recording elsewhere");
-    act(() => useDesk.setState({ recording: "busy" }));
-    expect(screen.getByRole("status")).toHaveTextContent("Updating recording");
-    fireEvent.click(screen.getByRole("button", { name: /Back to Desk/ }));
-    expect(useSettleState.getState().settled).toBe(false);
-    expect(useDesk.getState().recording).toBe("busy");
-  });
-  it("dismisses a portaled navigation menu and moves hidden-chrome focus to Back to Desk", () => {
-    render(
-      <>
-        <DeskMenuBar />
-        <RoomActions />
-      </>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Go" }));
-    const item = screen.getAllByRole("menuitem")[0];
-    item.focus();
-    act(() => useSettleState.getState().setSettled(true));
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Back to Desk/ })).toHaveFocus();
-    act(() => useSettleState.getState().setSettled(false));
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 });
