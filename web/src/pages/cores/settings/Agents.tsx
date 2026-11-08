@@ -4,7 +4,7 @@ import type { AuthorityPolicyResponse } from "../core-types";
 import { apiFetch, readableError } from "../../../lib/api";
 import { CONTROL_MODES, controlModeLabel } from "../../../lib/productLanguage";
 import { CycleGadget, GadgetGroup, GadgetRow } from "../../../desk/surface/gadgets";
-import { PeopleAccessModule } from "../settingsPeople";
+import { PeopleAccessModule } from "./People";
 import type { SettingsBindings } from "./bindings";
 import type { SettingsWriter } from "./writer";
 

@@ -316,7 +316,8 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(within(row("#412 Add the ledger freeze flag")).getByRole("button", { name: /Open PR/ }).getAttribute("title")).toMatch(/^https:\/\/github\.com\//);
 
     expect(face(row("Run a second ops interview"))).toMatchObject({
-      kind: "decision", fact: "Staff hiring loop", lamps: ["To review"], verbs: ["Decide"],
+      // One meaning for Decide (it opens choices): a decision to review opens.
+      kind: "decision", fact: "Staff hiring loop", lamps: ["To review"], verbs: ["Open item"],
     });
     expect(face(row("Sam: send the status by Thursday"))).toMatchObject({
       kind: "action", fact: "Sam Rivera · 1:1", lamps: ["Due today"], verbs: ["Done"],
@@ -1744,5 +1745,84 @@ describe("a Program row is the object (owner walk 2026-11-08)", () => {
     expect(face(row(title)).verbs).toEqual(["Open"]);
     fireEvent.click(within(row(title)).getByRole("button", { name: `Open: ${title}` }));
     await waitFor(() => expect(openPullout).toHaveBeenCalledWith(ask.openRef));
+  });
+});
+
+// Glue 2026-11-08 (the row is the object, one verb): Decide decides in place
+// on a Program row, the row's open carries the step, and one function writes
+// a decision's status. Replays the hub's recorded Decide ask (a core question
+// with Go on / Park, needs_you.page_none.json, recorded by
+// tests/integration/test_desk_reach.py) and the Merge ask of needs_you.rows.json.
+describe("Decide decides in place; the step travels (glue 2026-11-08)", () => {
+  const item = needsPageNone.items[0];
+  const title = item.group;
+  const openPullout = vi.fn();
+  const REAL_PULLOUT = useDesk.getState().openPullout;
+  let posts: Array<{ path: string; json: unknown }>;
+  let decided: boolean;
+
+  beforeEach(() => {
+    posts = [];
+    decided = false;
+    openPullout.mockClear();
+    useDesk.setState({ openPullout } as never);
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const value = String(path);
+      const method = (init as { method?: string } | undefined)?.method ?? "GET";
+      if (method !== "GET") {
+        posts.push({ path: value, json: (init as { json?: unknown }).json });
+        if (value === item.program.decide) decided = true;
+        return {} as never;
+      }
+      if (value.startsWith("/api/desk/needs-you")) {
+        return { items: decided ? [] : needsPageNone.items, blockers: [], failedMeetings: [], coverage: [], complete: true } as never;
+      }
+      if (value === "/api/door") return DOOR as never;
+      return {} as never;
+    });
+    return () => useDesk.setState({ openPullout: REAL_PULLOUT } as never);
+  });
+
+  it("Decide opens the hub's choices under the row; a choice posts to the step's decide route and the row goes", async () => {
+    render(<NeedsDrawer />);
+    const li = await waitFor(() => row(title));
+    expect(face(li).verbs).toEqual(["Decide"]);
+    fireEvent.click(within(li).getByRole("button", { name: `Decide: ${title}` }));
+    const panel = await screen.findByRole("region", { name: `Decide: ${title}` });
+    // The same panel the meeting's decision uses, built from the hub's choices.
+    expect(panel.getAttribute("data-testid")).toBe("needs-decide");
+    expect(within(panel).getAllByRole("button").map((b) => b.textContent)).toEqual(["Go on", "Park", "Open item"]);
+    expect(openPullout).not.toHaveBeenCalled();
+    fireEvent.click(within(panel).getByRole("button", { name: `Go on: ${title}` }));
+    await waitFor(() => expect(posts).toEqual([{ path: item.program.decide, json: { kind: "core", choice: "go_on" } }]));
+    await waitFor(() => expect(screen.queryByRole("region", { name: `Decide: ${title}` })).toBeNull());
+    await waitFor(() => expect(() => row(title)).toThrow());
+  });
+
+  it("the row's open carries the step: the Program window opens with that step asked for", async () => {
+    const { takeProgramStepRequest } = await import("../../openObject");
+    render(<NeedsDrawer />);
+    fireEvent.click((await waitFor(() => row(title))).querySelector(".needs-row-name")!);
+    await waitFor(() => expect(openPullout).toHaveBeenCalledWith(`program:${item.program.programId}`));
+    expect(takeProgramStepRequest(item.program.programId)).toBe(item.program.stepId);
+    // Once: the request is taken.
+    expect(takeProgramStepRequest(item.program.programId)).toBeNull();
+  });
+
+  it("one accept: no face writes a decision's status but decide.ts", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const root = path.resolve(__dirname, "../../..");
+    const writers: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { if (!["__tests__", "_parked", "node_modules"].includes(entry.name)) walk(full); continue; }
+        if (!/\.tsx?$/.test(entry.name) || /\.test\.tsx?$/.test(entry.name)) continue;
+        if (/\/api\/decisions\/\$\{[^}]+\}\/status/.test(fs.readFileSync(full, "utf8"))) writers.push(path.relative(root, full));
+      }
+    };
+    walk(root);
+    expect(writers).toEqual(["desk/decide.ts"]);
   });
 });

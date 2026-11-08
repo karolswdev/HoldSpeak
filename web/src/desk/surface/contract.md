@@ -88,7 +88,7 @@ been adopted by a production feature.
 
 | Reference | Shared implementation | Real consumers of those species |
 | --- | --- | --- |
-| Forms | PrefWindow/PrefSection (settingsWindow), PrefStatus → kit StatusBar, OwnerNameFields + useOwnerPreferences(useOwnerName), GadgetGroup/GadgetRow, StringGadget, OwnerAliasField, Button | Settings is the production consumer; Components renders the same rail, pane and kit status bar with fixture-only IO |
+| Forms | PrefWindow/PrefSection (settings/window), PrefStatus → kit StatusBar, OwnerNameFields + useOwnerPreferences(useOwnerName), GadgetGroup/GadgetRow, StringGadget, OwnerAliasField, Button | Settings is the production consumer; Components renders the same rail, pane and kit status bar with fixture-only IO |
 | Reading | ReadingDocument/Material, source doors, SurfaceWell | Ask results, Automation results, notes and source readers |
 | Lists | SurfaceRows/SurfaceRow, SurfaceSplit, StringGadget | People, Memory and object readers use these list/detail species |
 | Resources | RepositoryBrowserView + useRepositoryBrowser, DeskSortableTable fold/roving, ScrollHint, read adapter | RepoWindow is the production consumer; Components runs the same view/controller with an isolated fixture adapter |

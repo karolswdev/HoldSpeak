@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // in every quick check of the day at load 30 to 50.
 vi.setConfig({ testTimeout: 20_000 });
 import { SettingsCore } from "../../pages/cores/SettingsCore";
-import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
+import { PREF_MODULES } from "../../pages/cores/settings/prefs";
 import connectionsWire from "./fixtures/connections-wire/connections-cold.json";
 import destinationsWire from "./fixtures/destinations-wire/list-empty.json";
 import authorityWire from "./fixtures/settings-wire/authority-policy.json";

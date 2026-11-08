@@ -1,13 +1,13 @@
-import { Button } from "../../components/signal/Signal";
-import { ATMOSPHERES } from "../../desk/gl/atmosphereRegistry";
-import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
-import { useAtmosphereControls } from "../../desk/gl/atmosphereControls";
+import { Button } from "../../../components/signal/Signal";
+import { ATMOSPHERES } from "../../../desk/gl/atmosphereRegistry";
+import { useAtmospherePreference } from "../../../desk/gl/atmospherePreference";
+import { useAtmosphereControls } from "../../../desk/gl/atmosphereControls";
 import {
   CheckGadget,
   GadgetGroup,
   GadgetRow,
-} from "../../desk/surface";
-import { useAtmosphereFavorites } from "../../desk/gl/atmosphereFavorites";
+} from "../../../desk/surface";
+import { useAtmosphereFavorites } from "../../../desk/gl/atmosphereFavorites";
 
 /** Card names are short sentences. Keep the registry's stable names and
  * present them in the Settings face's sentence case. */
